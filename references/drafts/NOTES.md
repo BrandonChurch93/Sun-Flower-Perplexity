@@ -2,7 +2,7 @@
 
 **Run started: 2026-11-20 21:58:59 UTC (14:58:59 MST, America/Boise).** Three-hour limit ends 2026-11-21 00:58:59 UTC (17:58:59 MST). The start is the first tool call of the run (the repo clone). The clock was checked before every take; each take below records the elapsed time when it was started.
 
-Last written: 2026-11-20T22:43:36Z (0h44m into the run). Status: run in progress.
+Last written: 2026-11-20T22:47:25Z (0h48m into the run). Status: run in progress.
 
 ## Best take of each shot
 
@@ -12,7 +12,7 @@ Last written: 2026-11-20T22:43:36Z (0h44m into the run). Status: run in progress
 | `dawn-seedling` | not finished | | | 0 |
 | `rain` | not finished | | | 0 |
 | `night` | not finished | | | 0 |
-| `frost` | not finished | | | 0 |
+| `frost` | `references/drafts/frost-take1.png` | `seedream_5` | (a) pass | 2 |
 | `bloom-opening` | `references/drafts/bloom-opening-take4.png` | `seedream_5` | (a) pass | 4 |
 | `bloom-hero` | `references/drafts/bloom-hero-take4.png` | `seedream_5` | (a) pass | 4 |
 | `field` | `references/drafts/field-take4.png` | `seedream_5` | (a) pass | 4 |
@@ -450,6 +450,66 @@ Look: the grade of a cinema release, shot on motion picture negative, matching i
 Nothing else in the frame: no people, animals, birds, insects, buildings, roads, fences, poles, wires, machines, text, labels, borders, letterbox bars or watermarks.
 
 Reference images, by position. Image 1 is a later frame of this same film: the same plant, fully open, in the same place on the same evening, from almost the same camera position. Keep its place, its sun, its sky, its stem and leaves and its film grade, and show the head as it was a few seconds earlier, half open. Image 2 is a wide frame of the same film: the same field and horizon seen from high up. Keep the same place. Image 3 is a frame of this same shot from a moment before, when the camera was still too close and the head was not clearly resolved. Keep its place, its light, its sky, its background and its film grade, and show the same thing from a little further back: the head is only about two thirds as tall in the frame as in image 3, there is more sky above it, and more of the stem and the leaves shows below it. Give the head the clear structure of image 4. Image 4 is a real photograph of a sunflower head half open: match its folding green bracts and its creased, unevenly unfurling petals. Use image 4 only for botanical truth. Do not copy its framing, its background, its color or its brightness, and ignore any watermark or text on it.
+```
+
+### `frost`
+
+Best take: **take 1**. Both takes passed the judge, so the shot stops at two. Take 1 shows the bud and the frost on its bract tips most clearly, which is the subject of the row; in take 2 the bud is dark and its judge named it the weakest part.
+
+#### `references/drafts/frost-take1.png` (best take of this shot)
+
+- Model: `seedream_5`
+- Made: 22:43:27 to 22:46:09 UTC, started 0h44m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/drafts/bloom-opening-take4.png`, `references/cache/04-bud-6.jpg`, `references/cache/09-hoarfrost-on-leaves-2-crop.jpg`, `references/cache/09-hoarfrost-on-leaves-6.jpg`
+- Judge `image_viewer_13` (spawned 22:46:25, answered 22:47:01 UTC): **(a)**, pass. Answer in full: "Answer: (a) — it reads most like a frame from a cinema nature documentary: 16:9 framing, muted teal-grey grade, a frosted sunflower bud in sharp focus against a foggy field with a low, diffused sun. Weakest part: the leaves, especially the lower-left one. It folds over itself in an ambiguous, doubled shape, its surface looks smooth and waxy rather than veined and rough like a real sunflower leaf, and the frost forms an overly uniform fringe along every edge. Secondary weak spots are the slightly smeary midground plants and the featureless blown-out sun disc."
+- My own check: My look: tight green bud a little above the center, facing up, on a hairy stem a little right of center, seen slightly from below; white frost crystals along every leaf edge, on the stem hairs and on the bract tips, frozen beads at the leaf tips; thick pale fog, a soft white sun disc at the right with a faint peach glow, color almost drained; the other plants with buds fade into the fog. Nothing forbidden, one sun, right plant and age. Faults: the bud with its bracts is about 21 percent of the frame height, so the frame shows roughly the top quarter of the plant rather than the top third; the lower left leaf folds over itself; the frost fringe is very even.
+- Best take of its shot: yes
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: a cold foggy dawn, weeks before it flowers. Photographed on a large-format digital cinema camera with a 37 mm spherical prime lens near wide open, in natural light only. It must read as a frame from a film, not as a stock photograph. Full-bleed 16:9.
+
+Framing: the same plant as in images 1 and 2, in the same place, the front row at the near edge of a sunflower field in open farmland, seen weeks earlier in its life. It is about 1.4 m tall and has not flowered: at its tip sits one tight green bud, about 6 cm across, closed, wrapped in overlapping pointed green bracts. The camera is about 1.3 m from the plant and 1.1 m above the ground, looking slightly up at it. Only the upper third of the plant is in frame: the thick hairy stem rises from the bottom edge of the frame, a little right of center, carrying several large rough heart-shaped leaves on long stalks, which spread to both sides and hang a little with the cold, and it ends in the bud, which sits a little above the center of the frame. The bud is small in the frame, about a tenth of the frame height. The bud, the stem and the nearest leaves are sharp.
+
+Frost: the plant is covered in white hoarfrost. Fine white ice crystals stand like tiny needles along every leaf edge, on every stiff hair of the stem and the leaf stalks, and on the tips of the bracts round the bud. The leaf surfaces are dusted with frost that thins toward the veins, so the dull green of the leaves still shows through. Frozen beads of dew sit on the leaves and hang from their tips: small, clear and solid.
+
+Light and weather: thick pale fog. The sun is a soft white disc low at the right side of the frame, seen through the fog, with no rays, dim enough to look at. Round it the fog carries a faint peach warmth. It is the only sun in the picture. Everything else is almost without color: pearl grey fog, grey-green leaves, white frost. The exposure is held so that the fog is a soft luminous grey, never blank white, and the sun disc is the one brightest thing in the frame. The plant stands a little darker than the fog, its shape clear and every leaf readable. The frost crystals on the sun side catch the light and glitter as tiny points; on the shadow side they are soft grey-white. There is no fill light and no front light.
+
+Background: the other sunflowers of the field, the same age and height, each with a closed bud at its tip, stand in rows behind as pale grey shapes that fade into the fog, each row fainter than the last, until nothing is left but fog. No horizon can be seen. Shallow depth of field: even the nearest of them are soft.
+
+Look: the grade of a cinema release, shot on motion picture negative: low contrast, almost drained of color, cold neutral greys with a trace of green in the leaves and the faint peach round the sun, soft blacks that keep their detail, gentle highlight roll-off, nothing glossy and nothing commercial. Visible fine film grain over the whole frame, a soft glow round the sun disc, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no open flower, no yellow petals, no snow on the ground, no people, animals, birds, insects, buildings, roads, fences, poles, wires, machines, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is a later frame of this same film: the same plant in the same place weeks later, in flower on a summer evening. Keep the same plant, with its thick hairy stem and the shape and set of its leaves, the same place, the same lens character and the same film grain. Do not copy its light, its color or its open flower: this is a freezing dawn and the plant carries only a closed green bud. Image 2 is another later frame of the same film, with the head half open: the same rule applies. Image 3 is a real photograph of a sunflower bud: match the form of the closed green bud wrapped in pointed bracts. Images 4 and 5 are real photographs of hoarfrost on leaves: match the way the ice crystals stand along the edges of the leaves. Use images 3, 4 and 5 only for botanical and physical truth. Do not copy their framing, their backgrounds, their color or their brightness, and ignore any watermark or text on them.
+```
+
+#### `references/drafts/frost-take2.png`
+
+- Model: `seedream_5`
+- Made: 22:43:27 to 22:45:53 UTC, started 0h44m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/drafts/bloom-opening-take4.png`, `references/cache/04-bud-6.jpg`, `references/cache/09-hoarfrost-on-leaves-2-crop.jpg`, `references/cache/09-hoarfrost-on-leaves-6.jpg`
+- Judge `image_viewer_14` (spawned 22:46:25, answered 22:47:01 UTC): **(a)**, pass. Answer in full: "(a) — it reads as a frame from a top-budget film or cinema nature documentary: 16:9 framing, muted desaturated grade, shallow depth of field, a frosted sunflower bud against a hazy low sun over a misty field. Weakest part: the bud head itself. It is underexposed and a little muddy and waxy, with less crisp detail than the frost-rimmed leaves below it, so the nominal subject is the least resolved element. Secondary nit: the frost and liquid droplets coexist on the same leaves, and the sun is a flat, clipped disc."
+- My own check: My look: same scene in a lower key, bud in three-quarter view and darker, frost crystals and beads on the leaves, sun disc lower at the right. Nothing forbidden, one sun, right plant and age. Faults: the bud is the darkest and least resolved part, some beads read as liquid drops rather than ice.
+- Best take of its shot: no
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: a cold foggy dawn, weeks before it flowers. Photographed on a large-format digital cinema camera with a 37 mm spherical prime lens near wide open, in natural light only. It must read as a frame from a film, not as a stock photograph. Full-bleed 16:9.
+
+Framing: the same plant as in images 1 and 2, in the same place, the front row at the near edge of a sunflower field in open farmland, seen weeks earlier in its life. It is about 1.4 m tall and has not flowered: at its tip sits one tight green bud, about 6 cm across, closed, wrapped in overlapping pointed green bracts. The camera is about 1.3 m from the plant and 1.1 m above the ground, looking slightly up at it. Only the upper third of the plant is in frame: the thick hairy stem rises from the bottom edge of the frame, a little right of center, carrying several large rough heart-shaped leaves on long stalks, which spread to both sides and hang a little with the cold, and it ends in the bud, which sits a little above the center of the frame. The bud is small in the frame, about a tenth of the frame height. The bud, the stem and the nearest leaves are sharp.
+
+Frost: the plant is covered in white hoarfrost. Fine white ice crystals stand like tiny needles along every leaf edge, on every stiff hair of the stem and the leaf stalks, and on the tips of the bracts round the bud. The leaf surfaces are dusted with frost that thins toward the veins, so the dull green of the leaves still shows through. Frozen beads of dew sit on the leaves and hang from their tips: small, clear and solid.
+
+Light and weather: low-key and still. Thick pale fog. The sun is a soft white disc low at the right side of the frame, seen through the fog, with no rays, dim enough to look at. Round it the fog glows with a faint peach warmth that fades quickly into cold grey. It is the only sun in the picture. Everything else is almost without color: pearl grey fog, dark grey-green leaves, white frost. The exposure is set for the sun disc and the glowing fog, as a cinema camera holds a bright sky: the fog is a luminous mid grey, never blank white, and the plant stands against it as a dark, clearly readable shape, lit from behind. Its rim of frost crystals burns white along every edge on the sun side and glitters as tiny points; the side that faces the camera is in soft cold shade with its frost a dim grey-white. There is no fill light and no front light.
+
+Background: the other sunflowers of the field, the same age and height, each with a closed bud at its tip, stand in rows behind as pale grey shapes that fade into the fog, each row fainter than the last, until nothing is left but fog. No horizon can be seen. Shallow depth of field: even the nearest of them are soft.
+
+Look: the grade of a cinema release, shot on motion picture negative: low contrast, almost drained of color, cold neutral greys with a trace of green in the leaves and the faint peach round the sun, soft blacks that keep their detail, gentle highlight roll-off, nothing glossy and nothing commercial. Visible fine film grain over the whole frame, a soft glow round the sun disc, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no open flower, no yellow petals, no snow on the ground, no people, animals, birds, insects, buildings, roads, fences, poles, wires, machines, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is a later frame of this same film: the same plant in the same place weeks later, in flower on a summer evening. Keep the same plant, with its thick hairy stem and the shape and set of its leaves, the same place, the same lens character and the same film grain. Do not copy its light, its color or its open flower: this is a freezing dawn and the plant carries only a closed green bud. Image 2 is another later frame of the same film, with the head half open: the same rule applies. Image 3 is a real photograph of a sunflower bud: match the form of the closed green bud wrapped in pointed bracts. Images 4 and 5 are real photographs of hoarfrost on leaves: match the way the ice crystals stand along the edges of the leaves. Use images 3, 4 and 5 only for botanical and physical truth. Do not copy their framing, their backgrounds, their color or their brightness, and ignore any watermark or text on them.
 ```
 
 ## Looked-up photographs
