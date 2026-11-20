@@ -43,7 +43,7 @@ The budget report comes before all of it. When the report is due you stop, even 
 ### Count limits
 
 - Every loop in this kit has a limit in the config. The table in `kit/07-QUALITY-BAR.md` lists them all.
-- A round is counted when it starts. Write its number into `kit/PROGRESS.md` before doing anything else in it, so a restart or a compaction cannot reset the count.
+- A round is counted when it starts. Write its number and the commit it judges into `kit/PROGRESS.md` and push before doing anything else in it, so a restart or a compaction cannot reset the count. `kit/07-QUALITY-BAR.md` says how a round that was interrupted is carried on.
 - Anything you find yourself repeating that is not in that table gets three tries. Then it becomes an open item and you move on.
 - A limit is not permission to stop early. While a severe or major issue is open and both the count and the clock allow another round, run it.
 - No single item may hold up the rest of the film.
@@ -110,7 +110,7 @@ An extension is one more polish pass Brandon asks for after completion. `kit/08-
 
 Brandon watches this build from the task thread. In two earlier builds he went most of a day with almost nothing to look at, and the pictures that were shared arrived as files he had to download. Neither may happen here. If the film is drifting off course he wants to see it within the half hour, not twenty hours later.
 
-- Inline pictures. Every picture meant for Brandon is displayed in the thread itself, so he sees it without opening or downloading anything. What worked in an earlier build: pack the pictures as JPEG data into one file and show that file with the inline visualization tool as a grid with captions. Phase 0 proves a method with the spike still and records it under "Tool record". A file attachment on its own does not count.
+- Inline pictures. Every picture meant for Brandon is displayed in the thread itself, so he sees it without opening or downloading anything. What worked in an earlier build: pack the pictures as JPEG data into one file and show that file with the inline visualization tool as a grid with captions. Phase 0 proves a method in its first steps, by showing the approved contact sheet, and records it under "Tool record". A file attachment on its own does not count.
 - The rhythm. Post a status at least every `budget.statusMaxGapMinutes` of working time, in every phase, including while a long job runs or agents are working. Also post one at the end of every round, at every finished unit and at every phase gate. Outside those moments, do not post more often than every `status.minGapMinutes`. He wants a steady stream, not a flood.
 - What a status is. Two or three lines: the phase, the unit and the round, what changed since the last status, what is next, and the time used out of the time allowed, as the clock prints them. Then one to `status.maxPictures` pictures with a one line caption each. Then the review page link.
 - Which pictures. Show what you and your agents are looking at. Every still, sheet, crop and comparison that anyone renders in order to look at it is logged by the harness as a look. A status shows the newest looks that best show where the film is. When a key frame of the unit in hand can be rendered, its comparison beside the approved image comes first.
