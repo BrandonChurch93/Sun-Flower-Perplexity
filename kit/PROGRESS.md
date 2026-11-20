@@ -16,7 +16,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Last push: none
 - Last status: none
 
-"Build" is one of `not started`, `in progress` or `complete`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
+"Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
 ## Latest pictures
 
@@ -39,6 +39,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 6 | `budget.phaseHours.6` | |
 | Whole build | `budget.runHours` | |
 
+Continuations and extensions are listed under this table with their own hours.
+
 ## Phases
 
 | Phase | State | Gate evidence | Commit |
@@ -55,7 +57,7 @@ State is one of `not started`, `in progress` or `done`.
 
 ## Units
 
-State is one of `not started`, `stand-in`, `in progress` or `finished`. A finished unit names the commit it was finished on and what ended its loop: `passed`, `round limit`, `clock` or `budget`.
+State is one of `not started`, `stand-in`, `in progress` or `finished`. A finished unit names the commit it was finished on and what ended its loop: `passed`, `round limit` or `clock`. A unit is never marked finished because of a budget report. It stays `in progress`.
 
 | Unit | State | Rounds run | R1 | R2 | R3 | R4 | Ended by | Commit | Open items |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -132,9 +134,15 @@ One entry per long job while it runs: the command, the frame range, the log file
 
 None.
 
+## Running agents
+
+One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
+
+None.
+
 ## Rounds
 
-One line per round, written when the round starts: number, phase, unit, and whether it is a floor round or an extra round. Scores and what changes next are added when it ends.
+One entry per round, written and pushed when the round starts: number, phase, unit, the commit it judges, and whether it is a floor round or an extra round. Each part is ticked off as it finishes: checks, measures, pack, each critic, fixes. Scores and what changes next are added when it ends.
 
 None yet.
 
@@ -153,6 +161,12 @@ Not reached yet.
 ## Failed QA items
 
 None.
+
+## Last report block
+
+The last `BUDGET REPORT` or `BUILD COMPLETE` block, word for word as it was posted, so a later task can print it again.
+
+None yet.
 
 ## Push log
 

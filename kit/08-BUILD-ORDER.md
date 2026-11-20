@@ -16,9 +16,10 @@ Every loop below has a limit in `kit/07-QUALITY-BAR.md`. The clock rules and the
 1. Check stop condition 1 in `AGENTS.md`: the reference images are approved.
 2. Read `AGENTS.md` and `kit/00-README.md`.
 3. Fetch and merge `repo.branch`. Read `kit/PROGRESS.md` and every file in `kit/addenda/`.
-4. If "Build" says `complete`, follow stop condition 4. If "Budget" says `reported`, follow "The budget report" in `AGENTS.md`.
-5. If `npm run clock` exists, run `npm run clock -- --start`.
-6. If a phase is already in progress, continue it. Never redo a phase marked `done`. Check "Running jobs" and pick up or restart anything listed there.
+4. If "Build" says `complete`, follow stop condition 4. If it says `extension N in progress`, carry that extension on from "Extensions" below. If "Budget" says `reported`, follow "The budget report" in `AGENTS.md`.
+5. If `npm run clock` exists, run `npm run clock -- --start`, then tick. If it prints `budget report: due`, go straight to "The budget report" in `AGENTS.md`. Start nothing first.
+6. Post the status that opens the task.
+7. If a phase is already in progress, continue it. Never redo a phase marked `done`. Check "Rounds" for a round that was interrupted, "Running jobs" for jobs to pick up or restart, and "Running agents" for branches to fetch and work to hand to new agents.
 
 ## Phase 0 · Ground truth
 
@@ -26,21 +27,24 @@ Read first: `AGENTS.md`, `kit/00-README.md`, `kit/05-ARCHITECTURE.md`, `kit/06-A
 
 Steps:
 
-1. Push a small change to `kit/PROGRESS.md` to `repo.url`. If it fails, retry once. If it still fails, stop as `AGENTS.md` says.
+1. Write `in progress` under "Build" in `kit/PROGRESS.md` and push it to `repo.url`. If the push fails, retry once. If it still fails, stop as `AGENTS.md` says.
 2. Create `package.json` at the repo root before installing anything.
-3. Record the workspace: OS, cores, memory, disk, Node and npm versions, the browser and its exact version, the WebGL2 limits and extensions under software rendering, and which codec strings the browser can encode for `export.videoCodec`. Write the limits to `config/webgl-caps.json`.
-4. Confirm `ffmpeg` and `ffprobe` run. If either is missing, install a static build through npm.
-5. Test whether a detached process outlives a scripted step. Test whether a sandbox agent gets its own VM, can clone the repo, can return a video file as an attachment and can push a branch.
-6. Measure the image limit: view a test image with fine numbered marks and find the longest edge that arrives without being downscaled. If it is smaller than `critics.maxImageLongEdgePx`, lower that key.
-7. Record what you can call: the image models, the largest size each returns and how many reference images each accepts, any tool that turns a still into video, app hosting and the largest site it accepts, and the model families available for supporting agents and which of them can see images.
-8. Prove the inline display. Show one test picture in the task thread so that it is visible without opening or downloading a file. Record the method under "Tool record". If no method works, record that and follow the last rule but one of "Showing the work" in `AGENTS.md`.
-9. Verify current stable versions of the stack from each project's own documentation. Pin them.
-10. Scaffold the app: config import and validation, seeded random, sampler, accumulator, the timeline with every segment and cut, the asset loader, the frame interface with `state()` and the stand-in list, `capture` mode.
-11. Build the harness commands `still`, `determinism`, `gate`, `caps`, `budget`, `clock`, `look`, `status` and `review`. Run `npm run clock -- --start`, then tick.
-12. Build a spike scene: a simple plant with a stem and a few leaves that let light through, standing on textured ground under one sky, with bloom, depth of field from the lens samples, and accumulation at every tier.
-13. Measure seconds per sample at each format, the fixed cost of starting a render, and the texture memory. Write the render budget table: the time for one judged still at the `final` tier, and the time for the whole film at each tier and format.
-14. Publish the spike build with its review page. Record the URL in `kit/PROGRESS.md` and `README.md`.
-15. Post the first status, with the spike still shown inline.
+3. Build `npm run clock` and `npm run look`. Run `npm run clock -- --start` and tick. From here on, every status and every poll ticks the clock.
+4. Prove the inline display. Show `references/approved/contact-sheet.jpg` in the task thread so that it is visible without opening or downloading a file. `references/drafts/NOTES.md` says how the reference run did it. Record the method under "Tool record". If no method works, record that and follow the fallback rule in "Showing the work" in `AGENTS.md`. Post this as the first status.
+5. Record the workspace: OS, cores, memory, disk, Node and npm versions, the browser and its exact version, the WebGL2 limits and extensions under software rendering, and which codec strings the browser can encode for `export.videoCodec`. Write the limits to `config/webgl-caps.json`.
+6. Confirm `ffmpeg` and `ffprobe` run. If either is missing, install a static build through npm.
+7. Test whether a detached process outlives a scripted step. Test whether a sandbox agent gets its own VM, can clone the repo, can return a video file as an attachment and can push a branch.
+8. Measure the image limit: view a test image with fine numbered marks and find the longest edge that arrives without being downscaled. If it is smaller than `critics.maxImageLongEdgePx`, lower that key.
+9. Record what you can call: the image models, the largest size each returns and how many reference images each accepts, any tool that turns a still into video, app hosting and the largest site it accepts, and the model families available for supporting agents and which of them can see images.
+10. Verify current stable versions of the stack from each project's own documentation. Pin them.
+11. Scaffold the app: config import and validation, seeded random, sampler, accumulator, the timeline with every segment and cut, the asset loader, the frame interface with `state()` and the stand-in list, `capture` mode.
+12. Build the harness commands `still`, `determinism`, `gate`, `caps`, `budget`, `status` and `review`.
+13. Build a spike scene: a simple plant with a stem and a few leaves that let light through, standing on textured ground under one sky, with bloom, depth of field from the lens samples, and accumulation at every tier.
+14. Measure seconds per sample at each format, the fixed cost of starting a render, and the texture memory. Write the render budget table: the time for one judged still at the `final` tier, and the time for the whole film at each tier and format.
+15. Publish the spike build with its review page. Record the URL in `kit/PROGRESS.md` and `README.md`.
+16. Post a status with the spike still shown inline.
+
+Statuses are due from step 4 on, at the rhythm in `AGENTS.md`, whatever step you are in.
 
 Gate:
 
@@ -48,7 +52,7 @@ Gate:
 - G1, G2, G3, G4 and G10 are met on the spike.
 - The workspace record, the tool record, the pinned versions and the render budget table are in `kit/PROGRESS.md`.
 - The inline display method is recorded, or the log says none exists.
-- The clock has ticks and a status has been posted.
+- The clock has ticks, and statuses have been posted since step 4.
 - The app is published, or the log says why it could not be.
 
 ## Phase 1 · Rough cut
@@ -158,7 +162,7 @@ For each unit:
 6. Mark the unit `finished` in the "Units" table of `kit/PROGRESS.md` with the commit and what ended its loop.
 7. Commit, push, run `npm run review`, publish and post the status for that unit with its comparison images.
 
-Clock rules 3 and 4 in `AGENTS.md` apply to every unit here. Once half of this phase's planned box is used, a unit with no stand-in left goes to its round at once. At the end of the planned box, whatever is still a stand-in is finished with its fallback.
+Clock rules 3 and 4 in `AGENTS.md` apply to every unit here. Once the clock prints `half point: reached`, a unit with no stand-in left goes to its round at once. Once it prints `box end: reached`, whatever is still a stand-in is finished with its fallback and its unit goes to its round.
 
 Gate:
 
@@ -180,7 +184,7 @@ Steps:
 5. Build `npm run stress` if it is not built, and run it.
 6. Measure the render budget again and update the table.
 7. Run the first whole film round: R5, R6 and R7, R2 on every judged frame, and R4 on the cuts pack. It is a floor round. Run more only while the count and the clock allow, up to `quality.wholeFilmMaxRounds`.
-8. From the final build of this phase: render the preview film, run `npm run keep`, run `npm run review`, publish and post the status.
+8. From the final build of this phase: render the preview film at the `draft` tier with the units split across sandbox agents, run `npm run keep`, run `npm run review`, publish and post the status.
 
 Gate:
 
@@ -198,7 +202,7 @@ Steps:
 2. Freeze the build. From here on, nothing under `src/`, `public/` or `config/` changes except to fix a machine check or a failed QA item.
 3. Render every judged still and every comparison image from the frozen build.
 4. Run the record round, as `kit/07-QUALITY-BAR.md` defines it. Write the scores into `kit/PROGRESS.md` as the final scores.
-5. Render the film once in `formats.master`, one chunk per unit, at the highest tier the render budget says fits in `sandbox.previewFilmMaxHours` with the units split across sandbox agents, and never below `draft`. If even `draft` does not fit in `formats.master`, render in `formats.preview` and log it.
+5. Render the film once in `formats.master`, one chunk per unit, with the units split across sandbox agents, at the highest tier whose wall-clock time the render budget says fits in `sandbox.previewFilmMaxHours`, and never below `draft`. If even `draft` does not fit in `formats.master`, render in `formats.preview` at `draft` and log it.
 6. Cut the six clips from those chunks with `npm run clip`. Make `out/preview.mp4` with `npm run film -- --format preview --from-master`. If `deliver.sandboxMaster` is true, also join the chunks into the master file and share it in the final message.
 7. Run `npm run keep -- --clips`.
 8. Run `npm run proof` and `npm run proof -- --memory` on the frozen build.
@@ -207,7 +211,7 @@ Steps:
 11. Run `npm run review` and publish the final build.
 12. Run every item in `kit/09-QA-GAUNTLET.md` and record the evidence. If an item fails, fix it, do step 13, and only then run the gauntlet again, for at most `quality.gauntletMaxPasses` passes in all.
 13. If a fix in step 12 changed anything under `src/`, `public/` or `config/`: run `npm run proof` again, render the judged stills of the units it touched again, run `npm run compare` for their keys, run `npm run keep`, and run the record round again, for at most `quality.recordRoundMaxRuns` runs in all. If the fix changed what the film shows, render the affected chunks again, once, remake the affected clips and the preview film from them, then run `npm run keep -- --clips`, `npm run review` and publish.
-14. Write `complete` under "Build" in `kit/PROGRESS.md`. Commit and push.
+14. Write `complete` under "Build" and the filled-in `BUILD COMPLETE` block under "Last report block" in `kit/PROGRESS.md`. Commit and push.
 
 Gate:
 
@@ -261,9 +265,15 @@ To continue: send the continue prompt from kit/10-KICKOFF.md
 
 ## Extensions
 
-`AGENTS.md` defines an extension. When a task's prompt contains the line `Extension.` and "Build" says `complete`:
+An extension is one more polish pass Brandon asks for after completion. It starts when a task's prompt contains the line `Extension.` and "Build" says `complete`. It carries on when a task starts and "Build" says `extension N in progress`.
 
-1. Log "Extension N" in `kit/PROGRESS.md` and tick the clock with `--extension N`.
-2. Unfreeze. Run up to `quality.polishMaxRounds` polish rounds inside `budget.extendHours`, worst open item first, with statuses as always.
-3. Do Phase 6 steps 2 to 14 again. The record round and the QA gauntlet each run once in an extension.
-4. End with the `BUILD COMPLETE` block again.
+1. Write `extension N in progress` under "Build" in `kit/PROGRESS.md`, where N is one more than "Extensions", and push. Tick the clock with `--extension N`. Statuses in an extension tick with `--extension N` too.
+2. Run up to `quality.polishMaxRounds` polish rounds, worst open item first, as Phase 6 step 1 describes. Start a round only while the extension's clock prints `extra rounds: yes`.
+3. Freeze the build.
+4. Render every judged still and every comparison image from the frozen build.
+5. Run the record round once.
+6. Do Phase 6 steps 5 to 11 once: the film, the clips, the proofs, the cues, the README, the review page and the publish.
+7. Run the QA gauntlet once. An item that fails is fixed if the fix changes no pixel. Otherwise it is listed under "Failed QA items". There is no second pass and no second record round in an extension.
+8. Add one to "Extensions", write `complete` under "Build" and the new block under "Last report block", commit, push, and end with the `BUILD COMPLETE` block.
+
+If the extension's clock prints `budget report: due` before step 3, stop polishing and go to step 3.

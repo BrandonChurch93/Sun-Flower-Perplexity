@@ -161,7 +161,7 @@ Rules:
 - Judged stills and comparison images are rendered with the `full` asset set. If the `full` set cannot be loaded under software rendering, log it, render with the largest size that loads, and say so in the record.
 - Any command that can exceed `sandbox.chunkBudgetMinutes` does its work in chunks and can be run again to continue.
 - At most `sandbox.maxRenderProcesses` render processes run at once in one VM. Sandbox agents in their own VMs can each render a range of frames in parallel.
-- Preview films are rendered at the highest tier whose time, from the render budget, fits in `sandbox.previewFilmMaxHours`, and never below `draft`. The blockout preview in Phase 2 is always `draft`.
+- The preview films of Phases 2 and 5 are rendered at the `draft` tier. The Phase 6 film is rendered at the highest tier whose wall-clock time, from the render budget with the units split across sandbox agents, fits in `sandbox.previewFilmMaxHours`, and never below `draft`.
 - Every harness output is written under `out/work/`, which git ignores.
 
 ### Films, chunks and disk
@@ -174,28 +174,31 @@ Rules:
 
 ### The clock
 
-`npm run clock` keeps `kit/CLOCK.json`. It is committed with every status.
+`npm run clock` keeps `kit/CLOCK.json`. It is the first harness command built, and it is committed with every status.
 
-- `npm run clock -- --start` marks the start of a task. It adds no time.
-- `npm run clock -- --phase N` is a tick. It adds the time since the previous tick to phase N. If that gap is longer than `budget.idleGapMinutes`, it adds nothing, because no task was running.
-- It prints, in plain words:
-  - Time used in this phase, and this phase's planned box from `budget.phaseHours`.
-  - Time used by the whole build, and the time allowed: `budget.runHours` plus `budget.continueHours` for every continuation logged.
-  - `extra rounds: yes` or `no`. Inside the run budget the answer is no once the whole build's time used has reached the sum of the planned boxes up to and including this phase. That one rule carries unused time forward and takes overruns out of the next phase. In a continuation the answer is no once the allowed time is used up.
-  - `half box: reached` once this phase has used half of its planned box.
-  - `planned box: reached` once this phase has used all of its planned box.
-  - `budget report: due` once the whole build's time used has reached the time allowed.
-  - Minutes since the last status.
-- `npm run clock -- --extension N` ticks an extension after completion. Its box is `budget.extendHours`.
+- `npm run clock -- --start` marks the start of a task. It adds no time, and the next tick counts from it. A tick made on a different machine boot from the last one is treated the same way, so a forgotten `--start` cannot count the time between two tasks.
+- `npm run clock -- --phase N` is a tick. It adds the whole time since the previous tick or start to phase N.
+- `npm run clock -- --continue N` records continuation N. It gives each phase that is not `done` a new box: `budget.continueHours` split in proportion to those phases' boxes in `budget.phaseHours`. From then on the lines below are measured from the start of the continuation against the new boxes.
+- `npm run clock -- --extension N` ticks an extension after completion. Its one box is `budget.extendHours`, and its time is kept apart from the build's.
+- A tick prints, in plain words:
+  - Time used in this phase and by the whole build, and the time allowed: `budget.runHours`, or the continuation's hours.
+  - `extra rounds: yes` or `no`. It is no once this phase's box has ended: once the time used has reached the sum of the boxes up to and including this phase.
+  - `half point: reached` once the time used has reached that same sum less half of this phase's own box.
+  - `box end: reached` once this phase's box has ended.
+  - `budget report: due` once the time used has reached the time allowed.
+  - Minutes since the last status, and `status overdue` once that passes `budget.statusMaxGapMinutes`.
 - The Builder reads those lines and follows the clock rules in `AGENTS.md`. The script decides nothing by itself.
 
 ### Looks and status
 
 - A look is any picture someone rendered in order to look at it. `still`, `sheet`, `seq`, `crops` and `compare` each append a line to `out/work/looks/index.jsonl`: the file, a short caption, the time and who made it.
-- A supporting agent attaches the looks it made to its report. The Builder adds them with `npm run look`.
+- A build or render agent pushes its newest looks to its own branch under `looks/` with every heartbeat. A short-lived agent attaches its looks to its report. The Builder adds both to the log with `npm run look`.
+- A long render job writes one finished frame out of every chunk as a look, so a status has something new to show while the job runs.
 - `npm run status -- --phase N --unit ID` does this:
-  1. Runs a clock tick for phase N.
-  2. Chooses up to `status.maxPictures` pictures. First, for the unit in hand, each of its key frames beside its approved image, reusing a still whose record matches the current build and otherwise rendering one at the `review` tier. Then the newest looks that are not already shown. With no `--unit` it uses the whole film sheets.
+  1. Runs a clock tick for phase N. With `--extension N` in place of `--phase N` it ticks that extension.
+  2. Chooses up to `status.maxPictures` pictures. First, for the unit in hand, each of its key frames beside its approved image, reusing a still whose record matches the current build and otherwise rendering one at the `review` tier. Then the newest looks that are not already shown, the Builder's and the ones fetched from agent branches. With no `--unit` it uses the whole film sheets.
+  - It never waits for the render slot. If a render job is running in this VM it renders nothing and uses the newest frames that job has written and the newest looks.
+  - It never comes back empty. If no sheet, still or look exists yet, it uses `references/approved/contact-sheet.jpg`.
   3. Resizes each to at most `status.pictureLongEdgePx` on the long edge.
   4. Writes them to `out/stills/status/`, replacing the last set, with `STATUS.md` holding the captions and the time.
   5. Writes whatever file the inline display method from Phase 0 needs under `out/work/status/`.
@@ -218,7 +221,7 @@ Rules:
 
 - One page with three choices and a start button: the format (`formats.master` or `formats.uhd`), the range (the whole film, or one unit's clip), and the tier.
 - Defaults: `formats.master`, the whole film, the `final` tier, the `full` asset set.
-- Before the start button is enabled, the page renders one key frame, `bloom-hero`, on this machine and shows it beside the kept still from `out/stills/`. Brandon sees at a glance whether this machine draws the film the way the critics saw it.
+- Before the start button is enabled, the page renders one key frame, `bloom-hero`, on this machine and shows it beside the kept still of that frame. `npm run build` copies that still from `out/stills/` into `dist/`. If no kept still exists yet, the page says so and skips the comparison. Brandon sees at a glance whether this machine draws the film the way the critics saw it.
 - Renders through the same code path as `renderFrame`.
 - The `first` and `last` parameters limit the run to a range of frames. These exist for testing.
 - Encodes with WebCodecs to `export.videoCodec` at `export.bitrateMbps`, muxes to `export.container`, and downloads the file named in `export.files`, with `{unit}` replaced by the unit id for a clip.
@@ -227,7 +230,7 @@ Rules:
 - Yields between frames through a message channel or the encoder's own callbacks. It does not use timers or `requestAnimationFrame`.
 - Requests a screen wake lock and carries on if the request is refused.
 - If the WebGL context is lost it stops and says so in plain words. It never writes a file with missing frames.
-- Before starting, the page checks three things and says in plain words if one fails: the browser can encode `export.videoCodec`, the machine accepts a texture of the largest size in the chosen asset set, and the machine reports enough memory for the asset set. If the `full` set does not fit, it offers the `web` set.
+- Before starting, the page checks two things and says in plain words if one fails: the browser can encode `export.videoCodec`, and the machine can load the chosen asset set, tested by loading it. If the `full` set does not load, it offers the `web` set.
 - `formats.uhd` is offered as it is. Nothing in the kit is gated on it.
 - Proof in this workspace, made by `npm run proof`: run Export end to end at `formats.preview` and the `draft` tier for `export.proofSeconds` seconds of film, and confirm the file with `ffprobe`. If this workspace's browser cannot encode `export.videoCodec`, prove the pipeline with a codec it has and log that `export.videoCodec` is unproven here.
 - Memory test, made by `npm run proof -- --memory`: run Export at `formats.preview` and the `draft` tier across the first cut and `export.memoryTestSeconds` seconds each side of it. Log the page's memory and the loader's texture total at intervals. The total must stay at or under `assetSets.<set>.maxTextureMb`.
@@ -259,5 +262,5 @@ Brandon reviews on a tablet. He needs one link where everything plays.
 - Timeline: every segment boundary and key maps to the right frame, the list of cuts is right, and the judged frame list follows the rule in `kit/07-QUALITY-BAR.md`.
 - The plant: height never falls across the film, every organ's growth curve starts at zero and is continuous, and the same time always gives the same plant.
 - Continuity: across every cut, the camera and plant numbers from `state()` change by no more than they do between ordinary neighboring frames.
-- The clock: gaps longer than `budget.idleGapMinutes` add nothing, `--start` adds nothing, and each printed line switches at the right moment.
+- The clock: `--start` adds nothing, a tick on a new machine boot adds nothing, every other gap is counted in full, `--continue` gives the unfinished phases new boxes, and each printed line switches at the right moment.
 - Sampler: sequences are deterministic and cover the pixel, the shutter and the lens.

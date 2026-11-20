@@ -219,7 +219,7 @@
       "emerge": [0, 3],
       "seedLeaves": [3, 8],
       "leaves": [8, 34],
-      "bud": [30, 44],
+      "bud": [27, 44],
       "bloom": [43, 51]
     },
     "leafCount": 24,
@@ -231,70 +231,16 @@
   "camera": {
     "gateWidthMm": 36,
     "keys": [
-      {
-        "time": 0,
-        "distanceM": 0.14,
-        "heightM": 0.02,
-        "aimHeightM": 0.01,
-        "azimuthDeg": 0,
-        "focalMm": 60
-      },
-      {
-        "time": 8,
-        "distanceM": 0.3,
-        "heightM": 0.05,
-        "aimHeightM": 0.05,
-        "azimuthDeg": 2,
-        "focalMm": 55
-      },
-      {
-        "time": 20,
-        "distanceM": 0.75,
-        "heightM": 0.28,
-        "aimHeightM": 0.3,
-        "azimuthDeg": 6,
-        "focalMm": 45
-      },
-      {
-        "time": 30,
-        "distanceM": 1.2,
-        "heightM": 0.75,
-        "aimHeightM": 0.8,
-        "azimuthDeg": 10,
-        "focalMm": 40
-      },
-      {
-        "time": 40,
-        "distanceM": 1.35,
-        "heightM": 1.45,
-        "aimHeightM": 1.5,
-        "azimuthDeg": 14,
-        "focalMm": 35
-      },
-      {
-        "time": 46,
-        "distanceM": 1.35,
-        "heightM": 1.7,
-        "aimHeightM": 1.72,
-        "azimuthDeg": 20,
-        "focalMm": 35
-      },
-      {
-        "time": 52,
-        "distanceM": 1.4,
-        "heightM": 1.75,
-        "aimHeightM": 1.75,
-        "azimuthDeg": 26,
-        "focalMm": 35
-      },
-      {
-        "time": 60,
-        "distanceM": 8,
-        "heightM": 4.5,
-        "aimHeightM": 1.2,
-        "azimuthDeg": 34,
-        "focalMm": 24
-      }
+      {"time": 0, "distanceM": 0.14, "heightM": 0.02, "aimHeightM": 0.01, "azimuthDeg": 0, "focalMm": 60},
+      {"time": 8, "distanceM": 0.3, "heightM": 0.05, "aimHeightM": 0.05, "azimuthDeg": 2, "focalMm": 55},
+      {"time": 14, "distanceM": 0.75, "heightM": 0.15, "aimHeightM": 0.13, "azimuthDeg": 4, "focalMm": 45},
+      {"time": 20, "distanceM": 1.0, "heightM": 0.25, "aimHeightM": 0.3, "azimuthDeg": 6, "focalMm": 42},
+      {"time": 30, "distanceM": 1.25, "heightM": 0.6, "aimHeightM": 0.95, "azimuthDeg": 10, "focalMm": 40},
+      {"time": 40, "distanceM": 1.35, "heightM": 1.45, "aimHeightM": 1.5, "azimuthDeg": 14, "focalMm": 35},
+      {"time": 46, "distanceM": 1.35, "heightM": 1.7, "aimHeightM": 1.72, "azimuthDeg": 20, "focalMm": 35},
+      {"time": 52, "distanceM": 1.4, "heightM": 1.75, "aimHeightM": 1.75, "azimuthDeg": 26, "focalMm": 35},
+      {"time": 58.5, "distanceM": 7.4, "heightM": 4.2, "aimHeightM": 2.5, "azimuthDeg": 33, "focalMm": 25},
+      {"time": 60, "distanceM": 8, "heightM": 4.5, "aimHeightM": 2.65, "azimuthDeg": 34, "focalMm": 24}
     ]
   },
   "field": {
@@ -364,18 +310,17 @@
     "phaseHours": {
       "0": 1.5,
       "1": 0.5,
-      "2": 4,
+      "2": 3.5,
       "3": 9,
-      "4": 9,
+      "4": 8.5,
       "5": 3,
-      "6": 3
+      "6": 4
     },
     "continueHours": 10,
     "extendHours": 8,
     "wrapUpMinutes": 20,
     "floorFixMinutes": 90,
     "statusMaxGapMinutes": 30,
-    "idleGapMinutes": 120,
     "jobOverrunFactor": 2,
     "agentWaitMinutes": 45,
     "toolRetryMax": 3
@@ -383,7 +328,7 @@
   "sandbox": {
     "stepTimeoutMinutes": 10,
     "chunkBudgetMinutes": 7,
-    "previewFilmMaxHours": 4,
+    "previewFilmMaxHours": 1.5,
     "maxRenderProcesses": 1,
     "maxFramesOnDisk": 450,
     "minFreeDiskGb": 3,

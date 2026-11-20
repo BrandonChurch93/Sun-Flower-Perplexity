@@ -27,7 +27,7 @@ Run every item at the end of Phase 6. Record the evidence for each in `kit/PROGR
 | --- | --- | --- |
 | 11 | The record round ran the measures and every critic on the full judged list from the frozen build | The record round `SUMMARY.md` and the hashes |
 | 12 | Every key has a comparison image from the final build | File list with records |
-| 13 | No stand-in is left. `info().standIns` is empty on the frozen build, and the `standins` view of every judged frame shows none | The output and the stills |
+| 13 | No stand-in is left. `info().standIns` is empty on the frozen build, and the `standins` view of every judged frame shows none. If one is found, finish it with its fallback before going on | The output and the stills |
 | 14 | Every judged still in the record round was rendered at the `final` tier | The records |
 | 15 | Every open item is logged with its unit, its frame, the critic's words and what was tried | "Open items" in `kit/PROGRESS.md` |
 | 16 | Every declined issue is logged with its reason, and every part finished with a fallback is listed | "Declined issues" and "Open items" in `kit/PROGRESS.md` |

@@ -32,6 +32,7 @@ They test the code, not the picture. They are cheap and they run on the current 
 
 - A red machine check is a bug. Fix it before critics see the round.
 - If a machine check is still red after `quality.gateFixMaxAttempts` attempts in one round, or in one phase when no round is running, log it as a severe open item. A round goes on to the critics if frames can still be rendered, and ends there if they cannot. A phase goes on to its next step.
+- G13 is the one exception. A stand-in is never logged away. A red G13 is fixed by finishing the part with its fallback from `kit/03-METHOD.md`, which always ends it.
 
 ### Measures
 
@@ -239,8 +240,10 @@ For the whole film, in Phase 5:
 ## Rounds and their limits
 
 - One round: build, machine checks, measures, pack, critics, read every issue, fix, log, status, commit, push.
-- A round is counted when it starts. Write its number into `kit/PROGRESS.md` before doing anything else in it, and tick off each part of the round there as it finishes.
-- A round that a task ending interrupted is carried on under the same number from the last part ticked off. It is never counted twice and never started over.
+- A round is counted when it starts. Write its number and the commit it judges into `kit/PROGRESS.md` and push before doing anything else in it. Tick off each part of the round there as it finishes, and push each tick.
+- `npm run pack` is deterministic: the same commit, round and unit always give the same files, the same neutral names and the same key. So a pack lost with `out/work/` is simply built again.
+- Each critic's answer is written into `scorecards/round-NNN/` and pushed as soon as it arrives. The key is added there only after every answer for the round is in.
+- A round that a task ending interrupted is carried on under the same number from the last part ticked off: the pack is rebuilt if it is gone, and only the critics whose answers are not in the repo are asked again. It is never counted twice and never started over.
 - Each round writes `scorecards/round-NNN/`: the pack manifest, the key, the measures, each critic's JSON, the jurors' answers, and `SUMMARY.md` with the scores, the top issues and what changes next. Text files only.
 - `kit/PROGRESS.md` gets one line per round.
 

@@ -47,7 +47,7 @@ Times are in `segments` and `plant.stages` in the config. This table says what h
 | --- | --- | --- | --- | --- |
 | `dawn` | Dawn with dew | The soil cracks. A pale hooked stem pushes up with the striped seed husk still clamped on. It straightens, the husk falls, two seed leaves open | Sunrise, low and warm from the right. Dew on grass and soil. Thin glowing mist | A macro lens a finger's width above the soil, drifting back and lifting slightly |
 | `rain` | Downpour | The stem thickens and climbs. Pairs of true leaves unfold one after another | Hard cut to a dark downpour. Splashes, puddles, water running off the leaves | Still backing away and rising. The whole young plant is in frame |
-| `night` | Night under stars | It keeps climbing. Leaves lower a little, the way they do at night. Near the end the tip tightens into a bud | Hard cut to a clear night. The Milky Way, a cold rim of moonlight, low mist | Rising, tilting up a little so the sky opens behind the plant |
+| `night` | Night under stars | It keeps climbing. Leaves lower a little, the way they do at night. In its last seconds the tip tightens into a bud | Hard cut to a clear night. The Milky Way, a cold rim of moonlight, low mist | Rising, tilting up a little so the sky opens behind the plant |
 | `frost` | Cold fog and frost | Taller still. The bud swells inside its green bracts | Hard cut to thick pale fog and hoarfrost on every edge. A white sun low on the right | Rising to the height of the bud, now close enough to it to see the frost crystals |
 | `bloom` | Golden hour | The bud leans to the sun. The bracts fold back, the petals unfurl, the disc opens ring by ring, and the head turns to face us | Hard cut to golden hour. Low sun at the left, haze lit gold, pollen in the air | Level with the head, holding its distance and arcing slowly round it |
 | `field` | Golden hour | Fully open, swaying gently | No cut. The same golden light | Cranes up and back. First the whole plant, then the field: thousands of sunflowers to the horizon |
@@ -64,7 +64,7 @@ Times are in `segments` and `plant.stages` in the config. This table says what h
 ## The camera
 
 - One continuous move for the whole film. No cut, no jump, no stop. The camera is always travelling, even when it is slow.
-- The starting path is `camera.keys` in the config: distance from the plant, lens height, the height it aims at, the angle round the plant and the focal length, at eight times. The path between them is smooth.
+- The starting path is `camera.keys` in the config: distance from the plant, lens height, the height it aims at, the angle round the plant and the focal length, at a list of times. The path between them is smooth.
 - The camera backs away and rises as the plant grows. Its distance from the plant never gets smaller, except by the small amount the arc in `bloom` needs.
 - Through `dawn` and the first part of `rain` the whole plant is in frame. After that the frame follows the growing tip, and the lower stem leaves the bottom of the frame. `field` shows the whole plant again, and then everything.
 - Focus follows the growing tip all the way: the hook, the seed leaves, the newest leaf, the bud, the face of the flower.

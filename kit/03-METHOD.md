@@ -4,7 +4,9 @@ The plant is true 3D, grown by code. The world round it is a mix: real 3D near t
 
 Use the simplest technique that gets a key frame to match its approved image. This file gives the starting technique for each kind of picture, a test for it, and a fallback. The ladder in `kit/04-LOOK.md` says what to try when a picture falls short.
 
-A fallback is a technique that always works. It is used only by clock rule 4 in `AGENTS.md`: when the planned technique has not produced a finished part by the end of the phase's planned box. A part finished with its fallback is logged as an open item.
+A fallback is a technique that always works, because it is deliberately simple. It is used only by clock rule 4 in `AGENTS.md`: when the planned technique has not produced a finished part by the end of the phase's box. A part finished with its fallback is no longer a stand-in. It is logged as an open item marked `fallback`.
+
+Every part has a fallback. Where this file names none, the fallback is the general one: plain geometry of the right shape, size and motion, carrying color and relief maps made by the image tool from the approved image for the nearest key. If even that cannot be made, the part is shown as plain geometry in the right color, taken off the stand-in list, and logged as a severe open item marked `fallback failed`. Either way the unit goes to its round. Nothing waits on a part.
 
 ## 1. The plant
 
@@ -55,9 +57,11 @@ A fallback is a technique that always works. It is used only by clock rule 4 in 
 
 ### Fallback for a plant part
 
+- The stem: a plain tube along the same curve, carrying generated color and relief maps.
 - A leaf, bract or petal: a bent card with thickness, carrying color, relief and translucency maps made by the image tool from the approved image.
 - The disc: a shallow dome carrying a generated color and relief map of the spiral, with the outer two rings of florets as real shapes.
 - Hairs: folded into the shading of the surface.
+- The seedling and its husk: simple smooth shapes with generated maps, straightening and opening on simple curves.
 
 ## 2. The ground
 
@@ -76,6 +80,8 @@ A fallback is a technique that always works. It is used only by clock rule 4 in 
 ### Fallback for the ground
 
 - The ground of the approved image for that key, cut out and laid on a surface with height estimated from the image, with the real plant standing in it.
+- The emergence: the surface lifting as one smooth bulge with a painted crack that widens.
+- Puddles: flat glossy patches with moving ring patterns in their surface detail.
 
 ## 3. The field
 
@@ -104,6 +110,7 @@ A fallback is a technique that always works. It is used only by clock rule 4 in 
 ### Fallback for the sky and far background
 
 - The sky and background of the approved image for that key, with the plant painted out, on a curved backdrop.
+- The night stars: the stars of the approved `night` image, kept in the painted sky.
 
 ## 5. The weather
 

@@ -53,7 +53,7 @@ Use supporting agents wherever the kit calls for them. Do not lower the bar to f
 
 ## What you will see, in order
 
-1. A first status with a test picture, proving pictures show up inline.
+1. A first status showing your eight approved images, proving pictures show up inline.
 2. A link to the app, and a review page at the same address under `review.html`. Everything the build shows you also plays there.
 3. A status with pictures at least every half hour, and one at the end of every round and every finished unit. Each has a few lines on what changed and what is next, and the time used so far.
 4. The rough cut: the whole minute made from your approved stills, so you can judge the pacing. The build does not wait for you.
