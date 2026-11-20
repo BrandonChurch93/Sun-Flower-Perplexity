@@ -6,7 +6,7 @@ How a gate line is met:
 
 - A line that asks for something to be published or pushed is met when it was done, or when the failure is logged. After Phase 0 neither one holds the build.
 - A line that names a loop is met when its pass bar holds or its limit was reached. Reaching a limit means logging what is open.
-- A line that names a machine check is met when the check is green, or when it has been logged as a severe open item after `quality.gateFixMaxAttempts` attempts.
+- A line that names a machine check is met when the check is green, or when it has been logged as a severe open item after `quality.gateFixMaxAttempts` attempts. G13 is the exception: it is met only when it is green. A stand-in is ended with its fallback, as `kit/07-QUALITY-BAR.md` says, never logged.
 - A line that names a deliverable check is met when it is green, or when it has been logged as a failed item after three tries.
 
 Every loop below has a limit in `kit/07-QUALITY-BAR.md`. The clock rules and the budget report are in `AGENTS.md`. Post a status at least every `budget.statusMaxGapMinutes`, whatever step you are in.
@@ -16,8 +16,12 @@ Every loop below has a limit in `kit/07-QUALITY-BAR.md`. The clock rules and the
 1. Check stop condition 1 in `AGENTS.md`: the reference images are approved.
 2. Read `AGENTS.md` and `kit/00-README.md`.
 3. Fetch and merge `repo.branch`. Read `kit/PROGRESS.md` and every file in `kit/addenda/`.
-4. If "Build" says `complete`, follow stop condition 4. If it says `extension N in progress`, carry that extension on from "Extensions" below. If "Budget" says `reported`, follow "The budget report" in `AGENTS.md`.
-5. If `npm run clock` exists, run `npm run clock -- --start`, then tick. If it prints `budget report: due`, go straight to "The budget report" in `AGENTS.md`. Start nothing first.
+4. If `npm run clock` exists, run `npm run clock -- --start`.
+5. Look at "Build" and "Budget" in `kit/PROGRESS.md`, in this order:
+   - "Build" says `complete`: follow stop condition 4 in `AGENTS.md`.
+   - "Build" says `extension N in progress`: carry that extension on from the step after "Extension step", as "Extensions" below describes. Skip the rest of this list.
+   - "Budget" says `reported`: follow "The budget report" in `AGENTS.md`.
+   - Otherwise tick the clock for the current phase. If it prints `budget report: due`, go straight to "The budget report" in `AGENTS.md`. Start nothing first.
 6. Post the status that opens the task.
 7. If a phase is already in progress, continue it. Never redo a phase marked `done`. Check "Rounds" for a round that was interrupted, "Running jobs" for jobs to pick up or restart, and "Running agents" for branches to fetch and work to hand to new agents.
 
@@ -267,13 +271,15 @@ To continue: send the continue prompt from kit/10-KICKOFF.md
 
 An extension is one more polish pass Brandon asks for after completion. It starts when a task's prompt contains the line `Extension.` and "Build" says `complete`. It carries on when a task starts and "Build" says `extension N in progress`.
 
+After each step below, write its number under "Extension step" in `kit/PROGRESS.md` and push. A task that carries an extension on starts at the step after that number and never repeats a finished one.
+
 1. Write `extension N in progress` under "Build" in `kit/PROGRESS.md`, where N is one more than "Extensions", and push. Tick the clock with `--extension N`. Statuses in an extension tick with `--extension N` too.
-2. Run up to `quality.polishMaxRounds` polish rounds, worst open item first, as Phase 6 step 1 describes. Start a round only while the extension's clock prints `extra rounds: yes`.
+2. Unfreeze. Run up to `quality.polishMaxRounds` polish rounds, worst open item first, as Phase 6 step 1 describes. Start a round only while the extension's clock prints `extra rounds: yes`.
 3. Freeze the build.
 4. Render every judged still and every comparison image from the frozen build.
 5. Run the record round once.
 6. Do Phase 6 steps 5 to 11 once: the film, the clips, the proofs, the cues, the README, the review page and the publish.
 7. Run the QA gauntlet once. An item that fails is fixed if the fix changes no pixel. Otherwise it is listed under "Failed QA items". There is no second pass and no second record round in an extension.
-8. Add one to "Extensions", write `complete` under "Build" and the new block under "Last report block", commit, push, and end with the `BUILD COMPLETE` block.
+8. Add one to "Extensions", clear "Extension step", write `complete` under "Build" and the new block under "Last report block", commit, push, and end with the `BUILD COMPLETE` block.
 
-If the extension's clock prints `budget report: due` before step 3, stop polishing and go to step 3.
+An extension has no budget report. When its clock prints `extra rounds: no`, finish the one fix in hand and go to step 3.

@@ -4,7 +4,7 @@ The plant is true 3D, grown by code. The world round it is a mix: real 3D near t
 
 Use the simplest technique that gets a key frame to match its approved image. This file gives the starting technique for each kind of picture, a test for it, and a fallback. The ladder in `kit/04-LOOK.md` says what to try when a picture falls short.
 
-A fallback is a technique that always works, because it is deliberately simple. It is used only by clock rule 4 in `AGENTS.md`: when the planned technique has not produced a finished part by the end of the phase's box. A part finished with its fallback is no longer a stand-in. It is logged as an open item marked `fallback`.
+A fallback is a technique that always works, because it is deliberately simple. It is used in three places: by clock rule 4 in `AGENTS.md`, when the planned technique has not produced a finished part by the end of the phase's box, by a red G13 or QA item 13, and as the last rung of a ladder in `kit/04-LOOK.md`. A part finished with its fallback is no longer a stand-in. It is logged as an open item marked `fallback`.
 
 Every part has a fallback. Where this file names none, the fallback is the general one: plain geometry of the right shape, size and motion, carrying color and relief maps made by the image tool from the approved image for the nearest key. If even that cannot be made, the part is shown as plain geometry in the right color, taken off the stand-in list, and logged as a severe open item marked `fallback failed`. Either way the unit goes to its round. Nothing waits on a part.
 

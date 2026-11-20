@@ -12,6 +12,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Budget: running
 - Continuations: 0
 - Extensions: 0
+- Extension step: none
 - App URL: not published yet
 - Last push: none
 - Last status: none

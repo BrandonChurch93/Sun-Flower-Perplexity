@@ -179,12 +179,12 @@ Rules:
 - `npm run clock -- --start` marks the start of a task. It adds no time, and the next tick counts from it. A tick made on a different machine boot from the last one is treated the same way, so a forgotten `--start` cannot count the time between two tasks.
 - `npm run clock -- --phase N` is a tick. It adds the whole time since the previous tick or start to phase N.
 - `npm run clock -- --continue N` records continuation N. It gives each phase that is not `done` a new box: `budget.continueHours` split in proportion to those phases' boxes in `budget.phaseHours`. From then on the lines below are measured from the start of the continuation against the new boxes.
-- `npm run clock -- --extension N` ticks an extension after completion. Its one box is `budget.extendHours`, and its time is kept apart from the build's.
+- `npm run clock -- --extension N` ticks an extension after completion. Its time is kept apart from the build's. It prints the time used in the extension out of `budget.extendHours`, and `extra rounds: yes` or `no`, which is no once those hours are used. It never prints `budget report: due`.
 - A tick prints, in plain words:
   - Time used in this phase and by the whole build, and the time allowed: `budget.runHours`, or the continuation's hours.
-  - `extra rounds: yes` or `no`. It is no once this phase's box has ended: once the time used has reached the sum of the boxes up to and including this phase.
-  - `half point: reached` once the time used has reached that same sum less half of this phase's own box.
-  - `box end: reached` once this phase's box has ended.
+  - `extra rounds: yes` or `no`. It is no once the whole build's time used has reached the sum of the boxes up to and including this phase.
+  - `half point: reached` once this phase has itself used half of its own box.
+  - `box end: reached` once this phase has itself used all of its own box.
   - `budget report: due` once the time used has reached the time allowed.
   - Minutes since the last status, and `status overdue` once that passes `budget.statusMaxGapMinutes`.
 - The Builder reads those lines and follows the clock rules in `AGENTS.md`. The script decides nothing by itself.
@@ -192,8 +192,8 @@ Rules:
 ### Looks and status
 
 - A look is any picture someone rendered in order to look at it. `still`, `sheet`, `seq`, `crops` and `compare` each append a line to `out/work/looks/index.jsonl`: the file, a short caption, the time and who made it.
-- A build or render agent pushes its newest looks to its own branch under `looks/` with every heartbeat. A short-lived agent attaches its looks to its report. The Builder adds both to the log with `npm run look`.
-- A long render job writes one finished frame out of every chunk as a look, so a status has something new to show while the job runs.
+- A build or render agent pushes its newest looks to its looks branch, `agent/<folder>-looks`, with every heartbeat. That branch is fetched and never merged. A short-lived agent attaches its looks to its report. The Builder adds both to the log with `npm run look`.
+- A long render job writes a finished frame as a look at least every `budget.statusMaxGapMinutes` of rendering, so a status has something new to show while the job runs.
 - `npm run status -- --phase N --unit ID` does this:
   1. Runs a clock tick for phase N. With `--extension N` in place of `--phase N` it ticks that extension.
   2. Chooses up to `status.maxPictures` pictures. First, for the unit in hand, each of its key frames beside its approved image, reusing a still whose record matches the current build and otherwise rendering one at the `review` tier. Then the newest looks that are not already shown, the Builder's and the ones fetched from agent branches. With no `--unit` it uses the whole film sheets.
@@ -202,7 +202,7 @@ Rules:
   3. Resizes each to at most `status.pictureLongEdgePx` on the long edge.
   4. Writes them to `out/stills/status/`, replacing the last set, with `STATUS.md` holding the captions and the time.
   5. Writes whatever file the inline display method from Phase 0 needs under `out/work/status/`.
-  6. Prints the lines of the status message, including the time used out of `budget.runHours`.
+  6. Prints the lines of the status message, including the time used out of the time allowed.
 - The Builder then shows the gallery in the thread and posts the lines, as "Showing the work" in `AGENTS.md` says.
 
 ## The rough cut

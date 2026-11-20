@@ -53,31 +53,34 @@ The budget report comes before all of it. When the report is due you stop, even 
 - Phase 0 builds `npm run clock` before anything else. `kit/05-ARCHITECTURE.md` describes it. It adds up working time in `kit/CLOCK.json` and prints, in plain words, where the build stands against its boxes and its budget.
 - Only you tick the clock. Tick at every status and at every poll of a running job or agent, with `npm run clock -- --phase N`.
 - `budget.phaseHours` gives each phase a box. The boxes add up to `budget.runHours`.
-- A phase's box ends when the whole build's time used reaches the sum of the boxes up to and including that phase. So unused time passes forward, and an overrun comes out of the phases that follow. A phase's half point is half of its own box before its end.
+- Extra rounds are counted against the whole build: they stop for a phase once the whole build's time used reaches the sum of the boxes up to and including that phase. So unused time passes forward, and an overrun eats later extra rounds.
+- The half point and the box end of a phase are counted against that phase alone: half, and all, of its own box in time it has used itself. So an overrun somewhere else never forces a fallback here.
 - The clock does four things:
   1. Extra rounds. Before every extra round, run the clock. If it prints `extra rounds: no`, the round does not start and the loop closes as a limit reached.
-  2. Fix work. When a box ends during fix work, finish the one fix in hand and close the loop. After a floor round there is always one fix pass of at most `budget.floorFixMinutes`, even when the box has ended, so a floor round is never wasted.
+  2. Fix work. When the clock prints `extra rounds: no` during fix work between rounds, finish the one fix in hand and close the loop. After a floor round there is always one fix pass of at most `budget.floorFixMinutes`, even when no extra round is left, so a floor round is never wasted.
   3. First round. A unit goes to its first round as soon as none of it is a stand-in. Once the clock prints `half point: reached`, no polishing is allowed on a unit before that round.
   4. Fallback. Once the clock prints `box end: reached`, every part of a unit that is still a stand-in is finished with its fallback from `kit/03-METHOD.md`, logged as an open item, and the unit goes to its round. A stand-in is never logged away and never shipped.
+- Rules 3 and 4 apply in the phases that build units: Phase 3 and Phase 4. In Phase 2 everything is a stand-in on purpose.
 - The clock never changes a threshold, a sample count or the judged list.
 
 ### The budget report
 
 Brandon set `budget.runHours` as the most this build may run before he looks at it.
 
-- When the clock prints `budget report: due` and the build is not complete, stop and report. This is stop condition 2. It comes before the floor, before a round in progress and before any step in hand.
+- When the clock prints `budget report: due`, stop and report. This is stop condition 2. It comes before the floor, before a round in progress and before any step in hand.
+- The budget report belongs to the build. An extension has none: its clock never prints that line, and it is bounded by its own steps and `budget.extendHours`.
 - Stop starting things: no new round, no new numbered step, no new agent, no new job. Within `budget.wrapUpMinutes`, bring the code to a state that builds, collect what running agents and jobs have pushed, stop them, and log exactly where each piece of work stands. Do not try to finish the step.
 - Units and phases keep the state they are really in. A unit that is not finished stays `in progress`.
-- Then: run `npm run status` for the whole film, write `reported` under "Budget" and the filled-in block under "Last report block" in `kit/PROGRESS.md`, commit, push, publish, and end the task with the `BUDGET REPORT` block from `kit/08-BUILD-ORDER.md`.
+- Then: run `npm run status` for the whole film with the pictures that already exist, rendering nothing new, write `reported` under "Budget" and the filled-in block under "Last report block" in `kit/PROGRESS.md`, commit, push, publish, and end the task with the `BUDGET REPORT` block from `kit/08-BUILD-ORDER.md`.
 - A task that starts while "Budget" says `reported` looks for the line `Continue past the budget.` in its prompt. With it: run `npm run clock -- --continue N`, log "Continuation N", write `running` and carry on exactly where the build stopped. Without it: print the block under "Last report block" again and build nothing.
 - A continuation adds `budget.continueHours`. The clock gives the phases that are not done new boxes out of those hours, and every clock rule applies to them as before. When the clock prints `budget report: due` again, report again the same way.
 
 ## Waits
 
-Nothing waits without a limit.
+Nothing waits without a limit, and waiting is polling. While you wait for a job, an agent or a critic, tick the clock at least every `status.minGapMinutes` and post every status that falls due.
 
 - Jobs. Every long job is written under "Running jobs" in `kit/PROGRESS.md` with the time the render budget says it should take. Poll it. Past `budget.jobOverrunFactor` times that, stop it, log it and start it once more in smaller chunks or on a sandbox agent. After a second overrun it becomes an open item and the best output that exists is used. If the job was a judged still, render it at the highest tier that finishes, say so in its record, and the unit cannot pass in that round.
-- Agents. Write every agent under "Running agents" in `kit/PROGRESS.md` when it starts. A render agent's limit is the time the render budget gives its job, times `budget.jobOverrunFactor`. A critic or a lookup has `budget.agentWaitMinutes`. A build agent has a heartbeat: it pushes its work and its newest looks to its own branch at least every `budget.statusMaxGapMinutes`. A build agent that has pushed nothing for `budget.agentWaitMinutes`, and any other agent past its limit, is replaced once, starting from what the first one pushed. If the replacement fails too, do the work yourself, or drop it and log it when the film does not depend on it.
+- Agents. Write every agent under "Running agents" in `kit/PROGRESS.md` when it starts. A render agent's limit is the time the render budget gives its job, times `budget.jobOverrunFactor`. A critic or a lookup has `budget.agentWaitMinutes`. A build agent has a heartbeat: at least every `budget.statusMaxGapMinutes` it pushes its work to its own branch and its newest looks to a second branch named `agent/<folder>-looks`. A looks branch is only ever fetched. It is never merged, so those pictures never enter the history of `repo.branch`. A build agent that has pushed nothing for `budget.agentWaitMinutes`, and any other agent past its limit, is replaced once, starting from what the first one pushed. If the replacement fails too, do the work yourself, or drop it and log it when the film does not depend on it.
 - Agents do not survive the end of a task. A new task fetches the branch of every agent listed under "Running agents", takes what it pushed, and starts a new agent for what is left.
 - A critic that never answers is logged as missing. Its part of the pass bar does not hold in that round.
 - Tools. A failing tool call gets `budget.toolRetryMax` tries, then a substitute or an open item.
@@ -109,10 +112,10 @@ Brandon watches this build from the task thread. In two earlier builds he went m
 
 - Inline pictures. Every picture meant for Brandon is displayed in the thread itself, so he sees it without opening or downloading anything. What worked in an earlier build: pack the pictures as JPEG data into one file and show that file with the inline visualization tool as a grid with captions. Phase 0 proves a method with the spike still and records it under "Tool record". A file attachment on its own does not count.
 - The rhythm. Post a status at least every `budget.statusMaxGapMinutes` of working time, in every phase, including while a long job runs or agents are working. Also post one at the end of every round, at every finished unit and at every phase gate. Outside those moments, do not post more often than every `status.minGapMinutes`. He wants a steady stream, not a flood.
-- What a status is. Two or three lines: the phase, the unit and the round, what changed since the last status, what is next, and the time used out of `budget.runHours`. Then one to `status.maxPictures` pictures with a one line caption each. Then the review page link.
+- What a status is. Two or three lines: the phase, the unit and the round, what changed since the last status, what is next, and the time used out of the time allowed, as the clock prints them. Then one to `status.maxPictures` pictures with a one line caption each. Then the review page link.
 - Which pictures. Show what you and your agents are looking at. Every still, sheet, crop and comparison that anyone renders in order to look at it is logged by the harness as a look. A status shows the newest looks that best show where the film is. When a key frame of the unit in hand can be rendered, its comparison beside the approved image comes first.
 - Unfinished is fine. Never hold a picture back because it looks bad. A bad picture seen early is the point.
-- Agents. What an agent is looking at is shown too. A build or render agent pushes its newest looks to its own branch with every heartbeat, and you fetch them for each status. A short-lived agent returns its looks with its report. Say so in every agent's brief.
+- Agents. What an agent is looking at is shown too. A build or render agent pushes its newest looks to its looks branch with every heartbeat, and you fetch them for each status. A short-lived agent returns its looks with its report. Say so in every agent's brief.
 - While a render job holds the render slot of this VM, a status renders nothing new. It shows the newest frames that job has produced and the newest looks.
 - Until `npm run status` exists in Phase 0, post statuses by hand at the same rhythm, with whatever picture is newest.
 - `npm run status` builds the gallery. `kit/05-ARCHITECTURE.md` describes it.
