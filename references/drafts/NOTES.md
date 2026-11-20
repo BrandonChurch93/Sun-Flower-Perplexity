@@ -2,7 +2,7 @@
 
 **Run started: 2026-11-20 21:58:59 UTC (14:58:59 MST, America/Boise).** Three-hour limit ends 2026-11-21 00:58:59 UTC (17:58:59 MST). The start is the first tool call of the run (the repo clone). The clock was checked before every take; each take below records the elapsed time when it was started.
 
-Last written: 2026-11-20T22:22:06Z (0h23m into the run). Status: run in progress.
+Last written: 2026-11-20T22:34:26Z (0h35m into the run). Status: run in progress.
 
 ## Best take of each shot
 
@@ -15,7 +15,7 @@ Last written: 2026-11-20T22:22:06Z (0h23m into the run). Status: run in progress
 | `frost` | not finished | | | 0 |
 | `bloom-opening` | not finished | | | 0 |
 | `bloom-hero` | `references/drafts/bloom-hero-take4.png` | `seedream_5` | (a) pass | 4 |
-| `field` | not finished | | | 0 |
+| `field` | `references/drafts/field-take4.png` | `seedream_5` | (a) pass | 4 |
 
 ## Model chosen and why
 
@@ -30,7 +30,61 @@ With the prompt rewritten against the judges' answers, the next two `seedream_5`
 
 ## How pictures were displayed inline in the thread
 
-Not written yet.
+Every best take, and the contact sheet, was put in the thread as a picture the reader sees straight away, using the `visualize` tool with the picture passed in as a data URL. Attaching the PNG with `share_file` is not enough on its own: an attachment shows as a file card that has to be opened or downloaded. The full-size PNG was attached as well, straight after, so the original is one click away.
+
+Why it has to be done this way: a `visualize` widget runs in a sandboxed frame whose content policy blocks external image URLs and workspace file paths. Only `data:` URLs load. A 2816 x 1584 PNG is too big to paste into widget code, so a small JPEG copy is passed through the tool's `sources` argument instead (each source can be up to 10 MB).
+
+The steps, exactly:
+
+1. Make the thread copy. 1440 px wide, JPEG quality 84, base64, written as JSON in the shape `{"pics": [{"label": "...", "w": 1440, "h": 810, "src": "data:image/jpeg;base64,..."}]}`. One picture is about 200 to 350 KB of JSON. The script used (kept outside the repo, as `runtools/inline.py`):
+
+```python
+#!/usr/bin/env python3
+"""Build the JSON an inline picture viewer reads.
+usage: inline.py <out-name> "<label>=<image path>" ...   -> runtools/inline/<out-name>.json
+Each picture becomes a 1440 px wide JPEG (quality 84) stored as a base64 data URL."""
+import sys, os, io, json, base64
+from PIL import Image
+name = sys.argv[1]; pics = []
+W = int(os.environ.get('INLINE_W', '1440'))
+for arg in sys.argv[2:]:
+    label, path = arg.split('=', 1)
+    im = Image.open(path).convert('RGB')
+    w, h = im.size
+    if w > W: im = im.resize((W, round(h * W / w)), Image.LANCZOS)
+    b = io.BytesIO(); im.save(b, 'JPEG', quality=84, optimize=True)
+    pics.append({'label': label, 'w': im.size[0], 'h': im.size[1], 'src': 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()})
+out = f'/home/user/workspace/runtools/inline/{name}.json'
+json.dump({'pics': pics}, open(out, 'w'))
+print(out, os.path.getsize(out), [(p['label'], p['w'], p['h']) for p in pics])
+```
+
+   Called as: `python3 runtools/inline.py bloom-hero "bloom-hero, take 4 (best take)=references/drafts/bloom-hero-take4.png"`
+
+2. Call `visualize` with
+
+   - `name`: a short title, for example `bloom-hero (take 4, best take)`
+   - `sources`: `{"pics": {"workspace_path": "/home/user/workspace/runtools/inline/bloom-hero.json", "format": "json"}}`
+   - `widget_code`: exactly this. The script is placed last so the `img` exists before it runs, and it guards against a source that failed to load:
+
+```html
+<div style="margin:0;padding:0">
+<img id="shot" alt="bloom-hero, take 4" style="width:100%;aspect-ratio:16/9;height:auto;display:block;background:#111">
+<div id="cap" style="font:13px/1.4 system-ui,sans-serif;padding:6px 2px;color:var(--text-secondary,#666)"></div>
+</div>
+<script>
+(function(){
+  var s = window.visualization && window.visualization.sources && window.visualization.sources.pics;
+  var img = document.getElementById('shot'), cap = document.getElementById('cap');
+  if (!s || s.error || !s.data) { cap.textContent = 'Picture could not be loaded: ' + (s && s.error ? s.error : 'no data'); return; }
+  var p = s.data.pics[0]; img.src = p.src; cap.textContent = p.label;
+})();
+</script>
+```
+
+3. Straight after, attach the full-size file with `share_file` (`file_path` the PNG, a `name`, a `preview_text`, `media_subtype: "ai"`).
+
+Limits found: the widget is about 720 px wide in the thread and its height is capped near 640 px, so one 16:9 picture per widget fits without scrolling; `aspect-ratio:16/9` on the `img` reserves the space before the data URL decodes. External `https://` image URLs, including raw GitHub URLs, do not load inside the widget.
 
 ## The judge
 
@@ -50,6 +104,10 @@ Only (a) passes.
 - 22:14 UTC (0h15m): Judging: each take is copied to a file named image.png with the same pixels and no metadata, and sent to a new agent in its own sandbox with exactly the judge text from the brief and nothing else. The judge cannot see the repo, the brief, the file name, the model or the prompt.
 - 22:14 UTC (0h15m): seedream_5 returns JPEG bytes under a .png name. Every take is checked and, where needed, re-saved losslessly as a real PNG with the same pixels, so each file is what its name says. Nothing else is done to a take: no grading, grain, cropping or retouching.
 - 22:14 UTC (0h15m): bloom-hero takes 1 and 2 both judged (b) stock photograph. Both also frame the head at 70 to 80 percent of the frame height against the brief's nearly 40 percent, so the camera is about twice too close. Model chosen from these two: seedream_5 (see the model section). Takes 3 and 4, the last two allowed, go on seedream_5 in parallel with the prompt rewritten against both judges' answers: exposure held for the sky so it is not blank white, the face of the flower on its shadow side with no fill, the head at 40 percent with air round it, uneven leaves, clean optical blur, a stronger film grade. Take 4 is the lower-key variant. Fewer reference photographs (three) and none that shows a front-lit face, so the stock look of the references is not copied.
+- 22:29 UTC (0h30m): field: takes 1 and 2 both passed the judge, but in both the camera sits about 2.3 m up and 4.4 m back against the row's 4.2 m and 7.4 m (hero plant about half the frame height where the row's numbers give a quarter), and the heads face the camera instead of the sun. Brief method 6 says to remake a take whose camera is far from the row's position, so the two remaining takes are spent on the geometry. Take 3 is given take 1 as a reference and told to move the camera up and back from it; take 4 gets the geometry from the text alone.
+- 22:34 UTC (0h35m): Display: each best take is shown inline through the visualization widget and also attached as a file, so it can be seen without downloading and still be opened at full size.
+- 22:34 UTC (0h35m): Pushes go straight to main after every finished shot, as the brief asks for a push after each shot and names no branch.
+- 22:34 UTC (0h35m): Per shot: two takes in parallel, one with a softer light paragraph and one with a low-key light paragraph. If both pass the judge and neither breaks method 6, the shot is done at two takes. Otherwise two more in parallel, revised against the judge's notes, up to the limit of four.
 
 ## Takes, in the order the shots were made
 
@@ -167,6 +225,114 @@ Look: the grade of a cinema release, shot on motion picture negative: warm amber
 Nothing else in the frame: no people, animals, birds, insects, buildings, roads, fences, poles, wires, machines, text, labels, borders, letterbox bars or watermarks.
 
 Reference images, by position. Image 1 is a real photograph of a sunflower disc at this stage: match its floret structure, the open outer rings carrying pollen and the tight green center. Image 2 is a real macro photograph of open disc florets: match that fine detail. Image 3 is a real photograph of a sunflower lit from behind: match the way light passes through the petals and the look of the dark hairy bracts. Use the references only for botanical truth. Do not copy their framing, their backgrounds, their color or their brightness, and ignore any watermark or text on them.
+```
+
+### `field`
+
+Best take: **take 4**. All four takes passed the judge. Takes 3 and 4 hold the camera nearest the row (horizon about a fifth down, hero plant smallest). Take 4 looks down on the field most, has no merged heads, and has the best lit grass strip and the cleanest rim on the hero plant. Take 3 has the better pink clouds but merged heads at the right.
+
+#### `references/drafts/field-take1.png`
+
+- Model: `seedream_5`
+- Made: 22:21:56 to 22:24:07 UTC, started 0h22m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/cache/08-field-golden-hour-5-crop.jpg`, `references/cache/08-field-golden-hour-6.jpg`
+- Judge `image_viewer_05` (spawned 22:24:35, answered 22:25:09 UTC): **(a)**, pass. Answer in full: "Answer: (a) — it reads most like a frame from a top-budget film or cinema nature documentary: wide 16:9 framing, low backlit sun with ground mist, restrained teal-and-amber grade, and a single hero sunflower held against a receding field. Weakest part: the bottom foreground band. The strip of grass and the lower stalks are underexposed and muddy, with little detail, so the lower fifth of the frame is dead space. A secondary flaw is that the hero sunflower's face is lit brightly from the front although the sun is behind and to the left."
+- My own check: My look: wide graded frame, one sun low at the left in gold haze, hills and tree line, pink-lit thin clouds, whole hero plant visible to the soil with a grass strip below. Nothing forbidden in frame, one sun. Camera lower and closer than the row: horizon about 28 percent down (row: a fifth), hero plant about half the frame height (the row's 4.2 m up, 7.4 m back and 25 mm work out at about a quarter), which reads as about 2.3 m up and 4.4 m back. Heads face the camera, not turned left toward the sun.
+- Best take of its shot: no
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: its closing shot, a crane rising and pulling back over the whole field. Photographed on a large-format digital cinema camera with a 25 mm spherical prime lens, at golden hour, in natural light only. It must read as a frame from a film, not as a stock photograph and not as a drone picture. Full-bleed 16:9.
+
+Framing: a high wide shot. The camera is on a crane about 4.2 m above the ground and 7.4 m back from the front row of a sunflower field in open farmland, looking down a little. The horizon is level and high in the frame, about a fifth of the way down from the top, with a band of sky above it. Across the bottom of the frame runs a strip of rough grass and bare soil outside the field. Just beyond it stands the front row of the field, and in that row, in the lower middle of the frame, stands the hero sunflower: the same plant as in image 1, a common sunflower (Helianthus annuus) about 1.85 m tall with one large open head. Its whole length is visible, from the soil at its foot to its head. It is small in this wide frame, about a quarter of the frame height, it stands a little clear of its neighbors, and it is sharp. Round it and behind it thousands of sunflowers of the same age stand in straight rows that run away from the camera to the horizon, their heads all turned the same way, toward the low sun at the left.
+
+Light: the same evening and the same light as image 1. The sun is low at the left, in frame just above the horizon near the left edge, veiled by gold haze. It is the only sun in the picture. The exposure is held for the highlights, as a cinema camera with wide latitude holds a sunset: the sky is never blank white. The low light rakes across the field from the left and from behind. Every head and leaf has a bright rim on its sun side, petals glow where the light passes through them, and long shadows lie between the rows. Gold haze hangs over the field in layers and thickens toward the horizon. Low rolling hills and a line of trees close the horizon as soft layered silhouettes. The sky is the sky of image 1 seen wider: dusky blue-grey above, and across it a few high thin clouds lit pink and gold from below by the low sun.
+
+Plant detail: the hero plant is true in every part: a thick hairy stem, large rough heart-shaped leaves set in an uneven spiral, a few of them torn or drooping, and one large head with slightly crumpled, uneven petals round a dark disc. The plants round it are individuals, not copies: heads at slightly different heights and tilts, some leaves ragged, a gap here and there in a row.
+
+Look: the grade of a cinema release, restrained and filmic, matching image 1: warm amber highlights, deep olive and blue-green shadows, rich blacks that keep their detail, gentle highlight roll-off, muted saturation, nothing glossy and nothing commercial. Focus holds from the front row far into the field; distance softens only through the haze. Fine organic film grain over the whole frame, faint red-orange halation round the sun, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no people, animals, birds, insects, buildings, roads, tracks, paths, fences, poles, wires, machines, aircraft, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is an earlier frame of this same film: the same plant in the same place on the same evening, seen close a few seconds before, in the same continuous camera move. Keep its plant, its place, its sun, its sky and its film grade, and show them from the new camera position. Image 2 is a real photograph of a sunflower field with hills and a line of trees behind it: match how real plants stand together in rows, with their mix of heads and big leaves. Image 3 is a real photograph of a sunflower field running to the horizon under a low sun: match that scale. Use images 2 and 3 only for the truth of the plants and the land. Do not copy their framing, their color or their brightness, and ignore any watermark or text on them.
+```
+
+#### `references/drafts/field-take2.png`
+
+- Model: `seedream_5`
+- Made: 22:21:56 to 22:24:19 UTC, started 0h22m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/cache/08-field-golden-hour-5-crop.jpg`, `references/cache/08-field-golden-hour-6.jpg`
+- Judge `image_viewer_06` (spawned 22:24:37, answered 22:26:07 UTC): **(a)**, pass. Answer in full: "Answer: (a) — it reads as a frame from a top-budget film or cinema nature documentary. Image: a wide (about 16:9) backlit sunflower field at low sun, with ground mist under a tree line, a teal-and-amber grade, film-like grain, and soft red lens-flare ghosts that sit roughly on the correct axis through the sun and frame centre. Weakest part: the lighting on the central hero sunflower. The sun is behind and to the left, yet the flower's face is evenly and brightly lit from the front, with no visible source for that fill, and its stem carries rim light on both sides. It looks slightly composited against the otherwise correctly shadowed field. Secondary weakness: the bottom foreground strip of grass and dirt is murky, underexposed and low in detail."
+- My own check: My look: same scene, lower key, stronger haze shafts. Nothing forbidden in frame, one sun. Camera lower and closer than the row: horizon about 31 percent down, hero plant larger than in take 1 with its foot at the bottom edge, so the whole plant to the soil is not clearly shown. Red lens-flare ghost blobs at the right. Hero face lit from the front although the sun is behind it, as the judge said.
+- Best take of its shot: no
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: its closing shot, a crane rising and pulling back over the whole field. Photographed on a large-format digital cinema camera with a 25 mm spherical prime lens, at golden hour, in natural light only. It must read as a frame from a film, not as a stock photograph and not as a drone picture. Full-bleed 16:9.
+
+Framing: a high wide shot. The camera is on a crane about 4.2 m above the ground and 7.4 m back from the front row of a sunflower field in open farmland, looking down a little. The horizon is level and high in the frame, about a fifth of the way down from the top, with a band of sky above it. Across the bottom of the frame runs a strip of rough grass and bare soil outside the field. Just beyond it stands the front row of the field, and in that row, in the lower middle of the frame, stands the hero sunflower: the same plant as in image 1, a common sunflower (Helianthus annuus) about 1.85 m tall with one large open head. Its whole length is visible, from the soil at its foot to its head. It is small in this wide frame, about a quarter of the frame height, it stands a little clear of its neighbors, and it is sharp. Round it and behind it thousands of sunflowers of the same age stand in straight rows that run away from the camera to the horizon, their heads all turned the same way, toward the low sun at the left.
+
+Light: low-key and dramatic, the same evening and the same light as image 1. The sun is low at the left, in frame just above the horizon near the left edge, burning through gold haze. It is the only sun in the picture. The exposure is set for the sun and the lit haze, as a cinema camera holds a sunset: the sky is never blank white, and everything the sun does not touch sits in rich, readable shadow. The low light rakes across the field from the left and from behind. Every head and leaf has a burning rim on its sun side, petals glow where the light passes through them, and long deep shadows lie between the rows. Shafts of light stand in the gold haze that hangs over the field in layers and thickens toward the horizon. Low rolling hills and a line of trees close the horizon as dark layered silhouettes. The sky is the sky of image 1 seen wider: dusky blue-grey above, and across it a few high thin clouds lit pink and gold from below by the low sun.
+
+Plant detail: the hero plant is true in every part: a thick hairy stem, large rough heart-shaped leaves set in an uneven spiral, a few of them torn or drooping, and one large head with slightly crumpled, uneven petals round a dark disc. The plants round it are individuals, not copies: heads at slightly different heights and tilts, some leaves ragged, a gap here and there in a row.
+
+Look: the grade of a cinema release, shot on motion picture negative, matching image 1: warm amber highlights, deep olive and blue-green shadows, rich blacks that keep their detail, gentle highlight roll-off, muted saturation, nothing glossy and nothing commercial. Focus holds from the front row far into the field; distance softens only through the haze. Visible fine film grain over the whole frame, red-orange halation round the sun and the brightest rims, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no people, animals, birds, insects, buildings, roads, tracks, paths, fences, poles, wires, machines, aircraft, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is an earlier frame of this same film: the same plant in the same place on the same evening, seen close a few seconds before, in the same continuous camera move. Keep its plant, its place, its sun, its sky and its film grade, and show them from the new camera position. Image 2 is a real photograph of a sunflower field with hills and a line of trees behind it: match how real plants stand together in rows, with their mix of heads and big leaves. Image 3 is a real photograph of a sunflower field running to the horizon under a low sun: match that scale. Use images 2 and 3 only for the truth of the plants and the land. Do not copy their framing, their color or their brightness, and ignore any watermark or text on them.
+```
+
+#### `references/drafts/field-take3.png`
+
+- Model: `seedream_5`
+- Made: 22:29:10 to 22:32:09 UTC, started 0h30m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/drafts/field-take1.png`, `references/cache/08-field-golden-hour-6.jpg`
+- Judge `image_viewer_07` (spawned 22:32:30, answered 22:33:18 UTC): **(a)**, pass. Answer in full: "Answer: (a) — it reads as a frame from a high-budget film or cinema nature documentary. Wide 16:9 sunflower field at low sun, backlit with drifting ground mist, restrained filmic grade (warm highlights, deep green-teal shadows), believable atmospheric falloff to a hazy tree line, natural plant variation (differing head sizes, angles, drooping lower leaves, rim-lit stems). Not clean/bright enough for stock, not isolated/diagnostic like a catalog, no plastic CG look. Weakest part: the bottom fifth to quarter of the frame — a dark, muddy, underexposed strip of bare grass/dirt with almost no detail that acts as dead space and weighs the composition down. Secondary nits found on zoomed crops: a few mid-distance flower heads on the right are smeared or partially merged (doubled/blobby discs), and the flower faces look slightly too bright and saturated for heads turned away from the sun; the sun itself is a blown-out, featureless hot spot at upper left."
+- My own check: My look: horizon about 22 percent down (row: a fifth), hero plant about 44 percent of the frame height (row's numbers give a quarter), whole plant visible to the soil, sun low near the left edge in haze, thin clouds lit pink and gold, hills and tree line. Nothing forbidden, one sun. Faults: heads face the camera rather than the sun, a few mid-distance heads at the right are merged, grass strip dark.
+- Best take of its shot: no
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: its closing shot, a crane rising and pulling back over the whole field. Photographed on a large-format digital cinema camera with a 25 mm spherical prime lens, at golden hour, in natural light only. It must read as a frame from a film, not as a stock photograph and not as a drone picture. Full-bleed 16:9.
+
+Framing: a high wide shot from a crane, looking down across the field. The lens is 4.2 m above the ground, more than twice the height of the plants, and 7.4 m back from the front row of a sunflower field in open farmland, tilted down a little. Because the camera is so far above the plants, the field is seen from above as one broad surface that fills the middle of the frame: thousands of heads show as small gold points that shrink with distance to fine grain, and the gaps between the straight rows show as dark lines converging toward the horizon. The horizon is level and very high in the frame: one fifth of the way down from the top edge. The sky is only the top fifth of the picture. The bottom sixth of the frame is a strip of rough grass and bare soil outside the field, seen from above, the low light catching the tips of the grass, with long shadows lying across it: readable, not murky. At the far edge of that strip stands the front row of the field, and in it, in the lower middle of the frame, stands the hero sunflower: the same plant as in image 1, a common sunflower (Helianthus annuus) about 1.85 m tall with one large open head. Its whole length is visible, from the soil at its foot to its head, and it is small, because the camera is far away: its foot is five sixths of the way down the frame and its head is a little below the middle of the frame, so from foot to head it spans only one quarter of the frame height, and its head is only about one twentieth of the frame height across. It stands half a step in front of its row, a little clear of its neighbors, and it is sharp. Round it and behind it thousands of sunflowers of the same age stand in straight rows that run away from the camera to the horizon. Every head in the field, the hero's included, is turned the same way: to the left, toward the low sun, so the camera sees each head in three-quarter view from its right side, its face angled away to the left.
+
+Light: the same evening and the same light as image 1. The sun is low at the left, in frame just above the horizon near the left edge, veiled by gold haze. It is the only sun in the picture. The exposure is held for the highlights, as a cinema camera with wide latitude holds a sunset: the sky is never blank white. The low light rakes across the field from the left and from behind. Every head and leaf has a bright rim on its sun side, petals glow where the light passes through them, and long shadows lie between the rows. Gold haze hangs over the field in layers and thickens toward the horizon. Low rolling hills and a line of trees close the horizon as soft layered silhouettes. The sky is the sky of image 1 seen wider: dusky blue-grey above, and across it a few high thin clouds lit pink and gold from below by the low sun. The sun only grazes the faces of the heads: the petals on the sun side burn with light passing through them, and the side of every head and every plant that faces the camera is in soft open shade, lit only by the sky. Nothing is lit from the front and there is no fill light. One soft warm veil of flare lies round the sun and nowhere else: no colored ghost circles, rings or blobs anywhere in the frame.
+
+Plant detail: the hero plant is true in every part: a thick hairy stem, large rough heart-shaped leaves set in an uneven spiral, a few of them torn or drooping, and one large head with slightly crumpled, uneven petals round a dark disc. The plants round it are individuals, not copies: heads at slightly different heights and tilts, some leaves ragged, a gap here and there in a row.
+
+Look: the grade of a cinema release, restrained and filmic, matching image 1: warm amber highlights, deep olive and blue-green shadows, rich blacks that keep their detail, gentle highlight roll-off, muted saturation, nothing glossy and nothing commercial. Focus holds from the front row far into the field; distance softens only through the haze. Fine organic film grain over the whole frame, faint red-orange halation round the sun, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no people, animals, birds, insects, buildings, roads, tracks, paths, fences, poles, wires, machines, aircraft, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is an earlier frame of this same film: the same plant in the same place on the same evening, seen close a few seconds before, in the same continuous camera move. Keep its plant, its place, its sun, its sky and its film grade. Image 2 is a frame of this same closing shot from two seconds earlier in the crane move, when the camera was still too low and too close, only about 2.3 m up and 4.4 m back. Keep its place, its sun, its sky, its haze, its hills and tree line and its film grade, and show the same scene from where the crane ends, higher and further back: compared with image 2 the hero plant is half as tall in the frame, the horizon is higher in the frame, the camera looks down more steeply so more of the field's surface and of the gaps between its rows shows, the heads are turned to the left, and the strip of grass and soil across the bottom is deeper and better lit. Image 3 is a real photograph of a sunflower field running to the horizon under a low sun: match that scale and that sense of thousands of small heads. Use image 3 only for the truth of the plants and the land. Do not copy its framing, its color or its brightness, and ignore any watermark or text on it.
+```
+
+#### `references/drafts/field-take4.png` (best take of this shot)
+
+- Model: `seedream_5`
+- Made: 22:29:10 to 22:31:34 UTC, started 0h30m into the run, generator tries: 1, size 2816x1584
+- Reference images passed in, in this order: `references/drafts/bloom-hero-take4.png`, `references/cache/08-field-golden-hour-6.jpg`
+- Judge `image_viewer_08` (spawned 22:32:30, answered 22:33:05 UTC): **(a)**, pass. Answer in full: "Answer: (a) — it reads as a frame from a top-budget film or cinema nature documentary: wide 16:9 framing, low backlit sun through atmospheric haze, filmic teal-and-amber grade, soft highlight roll-off, fine grain, and a single hero sunflower standing apart from the field as a deliberate composition. Weakest part: the lone foreground sunflower's flower head. Its face is evenly and brightly lit from the camera side even though the sun sits low behind it and to the left, so it should be mostly in shadow with only rim light (the stem and leaves do show correct rim light, which makes the mismatch stand out). Secondary weak spots: the field heads point in mixed directions rather than uniformly, and the bottom foreground grass strip is murky and underexposed with little detail."
+- My own check: My look: horizon about 23 percent down, hero plant about 42 percent of the frame height (row's numbers give a quarter), whole plant visible to the soil with a lit grass strip below, the field seen more from above than in the other takes, sun low in haze about a fifth in from the left edge, thin clouds lit gold, hills and tree line. Nothing forbidden, one sun. Faults: field heads point in mixed directions rather than all toward the sun, the hero's face is brighter than a sun behind it explains, the rows do not read as separate rows, grass strip dark.
+- Best take of its shot: yes
+- Prompt, exactly:
+
+```text
+A frame grab from a feature-length cinema nature documentary about the life of one sunflower: its closing shot, a crane rising and pulling back over the whole field. Photographed on a large-format digital cinema camera with a 25 mm spherical prime lens, at golden hour, in natural light only. It must read as a frame from a film, not as a stock photograph and not as a drone picture. Full-bleed 16:9.
+
+Framing: a high wide shot from a crane, looking down across the field. The lens is 4.2 m above the ground, more than twice the height of the plants, and 7.4 m back from the front row of a sunflower field in open farmland, tilted down a little. Because the camera is so far above the plants, the field is seen from above as one broad surface that fills the middle of the frame: thousands of heads show as small gold points that shrink with distance to fine grain, and the gaps between the straight rows show as dark lines converging toward the horizon. The horizon is level and very high in the frame: one fifth of the way down from the top edge. The sky is only the top fifth of the picture. The bottom sixth of the frame is a strip of rough grass and bare soil outside the field, seen from above, the low light catching the tips of the grass, with long shadows lying across it: readable, not murky. At the far edge of that strip stands the front row of the field, and in it, in the lower middle of the frame, stands the hero sunflower: the same plant as in image 1, a common sunflower (Helianthus annuus) about 1.85 m tall with one large open head. Its whole length is visible, from the soil at its foot to its head, and it is small, because the camera is far away: its foot is five sixths of the way down the frame and its head is a little below the middle of the frame, so from foot to head it spans only one quarter of the frame height, and its head is only about one twentieth of the frame height across. It stands half a step in front of its row, a little clear of its neighbors, and it is sharp. Round it and behind it thousands of sunflowers of the same age stand in straight rows that run away from the camera to the horizon. Every head in the field, the hero's included, is turned the same way: to the left, toward the low sun, so the camera sees each head in three-quarter view from its right side, its face angled away to the left.
+
+Light: low-key and dramatic, the same evening and the same light as image 1. The sun is low at the left, in frame just above the horizon near the left edge, burning through gold haze. It is the only sun in the picture. The exposure is set for the sun and the lit haze, as a cinema camera holds a sunset: the sky is never blank white, and everything the sun does not touch sits in rich, readable shadow. The low light rakes across the field from the left and from behind. Every head and leaf has a burning rim on its sun side, petals glow where the light passes through them, and long deep shadows lie between the rows. Shafts of light stand in the gold haze that hangs over the field in layers and thickens toward the horizon. Low rolling hills and a line of trees close the horizon as dark layered silhouettes. The sky is the sky of image 1 seen wider: dusky blue-grey above, and across it a few high thin clouds lit pink and gold from below by the low sun. The sun only grazes the faces of the heads: the petals on the sun side burn with light passing through them, and the side of every head and every plant that faces the camera is in soft open shade, lit only by the sky. Nothing is lit from the front and there is no fill light. One soft warm veil of flare lies round the sun and nowhere else: no colored ghost circles, rings or blobs anywhere in the frame.
+
+Plant detail: the hero plant is true in every part: a thick hairy stem, large rough heart-shaped leaves set in an uneven spiral, a few of them torn or drooping, and one large head with slightly crumpled, uneven petals round a dark disc. The plants round it are individuals, not copies: heads at slightly different heights and tilts, some leaves ragged, a gap here and there in a row.
+
+Look: the grade of a cinema release, shot on motion picture negative, matching image 1: warm amber highlights, deep olive and blue-green shadows, rich blacks that keep their detail, gentle highlight roll-off, muted saturation, nothing glossy and nothing commercial. Focus holds from the front row far into the field; distance softens only through the haze. Visible fine film grain over the whole frame, red-orange halation round the sun and the brightest rims, slight softness and vignetting toward the corners.
+
+Nothing else in the frame: no people, animals, birds, insects, buildings, roads, tracks, paths, fences, poles, wires, machines, aircraft, text, labels, borders, letterbox bars or watermarks.
+
+Reference images, by position. Image 1 is an earlier frame of this same film: the same plant in the same place on the same evening, seen close a few seconds before, in the same continuous camera move. Keep its plant, its place, its sun, its sky and its film grade, and show them from the new camera position, far higher and further back. Image 2 is a real photograph of a sunflower field running to the horizon under a low sun: match that scale and that sense of thousands of small heads. Use image 2 only for the truth of the plants and the land. Do not copy its framing, its color or its brightness, and ignore any watermark or text on it.
 ```
 
 ## Looked-up photographs
