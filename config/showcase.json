@@ -1,0 +1,396 @@
+{
+  "name": "Sunflower",
+  "slug": "sunflower-film",
+  "seed": 20261120,
+  "repo": {
+    "url": "https://github.com/BrandonChurch93/Sun-Flower-Perplexity",
+    "branch": "main",
+    "maxFileMb": 95,
+    "maxTreeGb": 2,
+    "maxPushGb": 1
+  },
+  "film": {
+    "fps": 30,
+    "durationSeconds": 60,
+    "shutterDegrees": 180,
+    "hookSeconds": 2
+  },
+  "formats": {
+    "master": {
+      "id": "16x9",
+      "width": 1920,
+      "height": 1080
+    },
+    "preview": {
+      "id": "preview",
+      "width": 960,
+      "height": 540
+    },
+    "uhd": {
+      "id": "uhd",
+      "width": 3840,
+      "height": 2160
+    }
+  },
+  "platform": {
+    "name": "X",
+    "maxWidth": 1920,
+    "maxHeight": 1200,
+    "maxFps": 40,
+    "maxBitrateMbps": 25,
+    "standardAccountMaxSeconds": 140,
+    "loopsUnderSeconds": 60
+  },
+  "export": {
+    "container": "mp4",
+    "videoCodec": "h264",
+    "bitrateMbps": 20,
+    "audio": "none",
+    "proofSeconds": 1,
+    "memoryTestSeconds": 4,
+    "files": {
+      "master": "sunflower-16x9.mp4",
+      "uhd": "sunflower-uhd.mp4",
+      "clip": "sunflower-{unit}.mp4",
+      "preview": "proof-preview.mp4"
+    }
+  },
+  "previewFilm": {
+    "bitrateMbps": 4
+  },
+  "tiers": {
+    "draft": {
+      "samplesPerFrame": 1
+    },
+    "review": {
+      "samplesPerFrame": 8
+    },
+    "final": {
+      "samplesPerFrame": 48
+    }
+  },
+  "assetSets": {
+    "web": {
+      "skyWidth": 4096,
+      "plantMapWidth": 2048,
+      "groundMapWidth": 2048,
+      "maxTextureMb": 800
+    },
+    "full": {
+      "skyWidth": 8192,
+      "plantMapWidth": 4096,
+      "groundMapWidth": 4096,
+      "maxTextureMb": 2400
+    }
+  },
+  "worlds": [
+    {
+      "id": "dawn",
+      "name": "Dawn with dew"
+    },
+    {
+      "id": "rain",
+      "name": "Downpour"
+    },
+    {
+      "id": "night",
+      "name": "Night under stars"
+    },
+    {
+      "id": "frost",
+      "name": "Cold fog and frost"
+    },
+    {
+      "id": "golden",
+      "name": "Golden hour"
+    }
+  ],
+  "segments": [
+    {
+      "id": "dawn",
+      "world": "dawn",
+      "start": 0,
+      "end": 8
+    },
+    {
+      "id": "rain",
+      "world": "rain",
+      "start": 8,
+      "end": 20
+    },
+    {
+      "id": "night",
+      "world": "night",
+      "start": 20,
+      "end": 30
+    },
+    {
+      "id": "frost",
+      "world": "frost",
+      "start": 30,
+      "end": 40
+    },
+    {
+      "id": "bloom",
+      "world": "golden",
+      "start": 40,
+      "end": 52
+    },
+    {
+      "id": "field",
+      "world": "golden",
+      "start": 52,
+      "end": 60
+    }
+  ],
+  "lookLockUnit": "bloom",
+  "buildOrderAfterLookLock": [
+    "dawn",
+    "field",
+    "rain",
+    "night",
+    "frost"
+  ],
+  "keys": [
+    {
+      "id": "dawn-sprout",
+      "unit": "dawn",
+      "time": 1.5,
+      "image": "references/approved/dawn-sprout.png"
+    },
+    {
+      "id": "dawn-seedling",
+      "unit": "dawn",
+      "time": 6.5,
+      "image": "references/approved/dawn-seedling.png"
+    },
+    {
+      "id": "rain",
+      "unit": "rain",
+      "time": 14,
+      "image": "references/approved/rain.png"
+    },
+    {
+      "id": "night",
+      "unit": "night",
+      "time": 26,
+      "image": "references/approved/night.png"
+    },
+    {
+      "id": "frost",
+      "unit": "frost",
+      "time": 36,
+      "image": "references/approved/frost.png"
+    },
+    {
+      "id": "bloom-opening",
+      "unit": "bloom",
+      "time": 45,
+      "image": "references/approved/bloom-opening.png"
+    },
+    {
+      "id": "bloom-hero",
+      "unit": "bloom",
+      "time": 50.5,
+      "image": "references/approved/bloom-hero.png"
+    },
+    {
+      "id": "field",
+      "unit": "field",
+      "time": 58.5,
+      "image": "references/approved/field.png"
+    }
+  ],
+  "plant": {
+    "fullHeightM": 1.85,
+    "headDiameterM": 0.3,
+    "discDiameterM": 0.16,
+    "heightM": [
+      [0, 0.0],
+      [3, 0.02],
+      [8, 0.07],
+      [20, 0.42],
+      [30, 1.0],
+      [40, 1.6],
+      [47, 1.82],
+      [60, 1.85]
+    ],
+    "stages": {
+      "emerge": [0, 3],
+      "seedLeaves": [3, 8],
+      "leaves": [8, 34],
+      "bud": [30, 44],
+      "bloom": [43, 51]
+    },
+    "leafCount": 24,
+    "rayFlorets": 34,
+    "discFlorets": 1500,
+    "goldenAngleDeg": 137.508,
+    "leanEaseSeconds": 2
+  },
+  "camera": {
+    "gateWidthMm": 36,
+    "keys": [
+      {
+        "time": 0,
+        "distanceM": 0.14,
+        "heightM": 0.02,
+        "aimHeightM": 0.01,
+        "azimuthDeg": 0,
+        "focalMm": 60
+      },
+      {
+        "time": 8,
+        "distanceM": 0.3,
+        "heightM": 0.05,
+        "aimHeightM": 0.05,
+        "azimuthDeg": 2,
+        "focalMm": 55
+      },
+      {
+        "time": 20,
+        "distanceM": 0.75,
+        "heightM": 0.28,
+        "aimHeightM": 0.3,
+        "azimuthDeg": 6,
+        "focalMm": 45
+      },
+      {
+        "time": 30,
+        "distanceM": 1.2,
+        "heightM": 0.75,
+        "aimHeightM": 0.8,
+        "azimuthDeg": 10,
+        "focalMm": 40
+      },
+      {
+        "time": 40,
+        "distanceM": 1.35,
+        "heightM": 1.45,
+        "aimHeightM": 1.5,
+        "azimuthDeg": 14,
+        "focalMm": 35
+      },
+      {
+        "time": 46,
+        "distanceM": 1.35,
+        "heightM": 1.7,
+        "aimHeightM": 1.72,
+        "azimuthDeg": 20,
+        "focalMm": 35
+      },
+      {
+        "time": 52,
+        "distanceM": 1.4,
+        "heightM": 1.75,
+        "aimHeightM": 1.75,
+        "azimuthDeg": 26,
+        "focalMm": 35
+      },
+      {
+        "time": 60,
+        "distanceM": 8,
+        "heightM": 4.5,
+        "aimHeightM": 1.2,
+        "azimuthDeg": 34,
+        "focalMm": 24
+      }
+    ]
+  },
+  "field": {
+    "plantSpacingM": 0.45,
+    "rowSpacingM": 0.75,
+    "minPlantsInView": 3000
+  },
+  "continuity": {
+    "maxStepRatio": 1.5
+  },
+  "detail": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1.0,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "reference": {
+    "photosPerPart": 6,
+    "motionStudies": 4
+  },
+  "assets": {
+    "maxTakesPerAsset": 6
+  },
+  "quality": {
+    "passScore": 9,
+    "blockoutPass": 7,
+    "blockoutMaxRounds": 2,
+    "lookLockMaxRounds": 4,
+    "maxRoundsPerUnit": 3,
+    "wholeFilmMaxRounds": 2,
+    "polishMaxRounds": 2,
+    "plateauRounds": 2,
+    "recordRoundMaxRuns": 2,
+    "gauntletMaxPasses": 2,
+    "gateFixMaxAttempts": 5,
+    "compressionStressMbps": 5,
+    "stress": {
+      "seconds": 0.5,
+      "units": [
+        "dawn",
+        "rain",
+        "night",
+        "field"
+      ],
+      "tier": "review"
+    },
+    "jury": {
+      "jurors": 5,
+      "maxShareGap": 0.2
+    },
+    "crossMachineMinPsnr": 45
+  },
+  "critics": {
+    "maxImageLongEdgePx": 1400,
+    "contactSheetFrames": 12,
+    "phonePreviewWidthPx": 400,
+    "maxFilesPerMessage": 10
+  },
+  "status": {
+    "minGapMinutes": 10,
+    "maxPictures": 4,
+    "pictureLongEdgePx": 1200
+  },
+  "budget": {
+    "runHours": 30,
+    "phaseHours": {
+      "0": 1.5,
+      "1": 0.5,
+      "2": 4,
+      "3": 9,
+      "4": 9,
+      "5": 3,
+      "6": 3
+    },
+    "continueHours": 10,
+    "extendHours": 8,
+    "wrapUpMinutes": 20,
+    "floorFixMinutes": 90,
+    "statusMaxGapMinutes": 30,
+    "idleGapMinutes": 120,
+    "jobOverrunFactor": 2,
+    "agentWaitMinutes": 45,
+    "toolRetryMax": 3
+  },
+  "sandbox": {
+    "stepTimeoutMinutes": 10,
+    "chunkBudgetMinutes": 7,
+    "previewFilmMaxHours": 4,
+    "maxRenderProcesses": 1,
+    "maxFramesOnDisk": 450,
+    "minFreeDiskGb": 3,
+    "maxDownloadGb": 2,
+    "maxAgents": 12
+  },
+  "deliver": {
+    "sandboxMaster": false
+  }
+}
