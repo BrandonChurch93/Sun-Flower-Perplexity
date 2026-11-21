@@ -80,12 +80,12 @@ void main() {
   body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
   // The thin edges and the far end let the most light through, and it comes out pale.
   float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
-  body = mix(body, vec3(1.0, 0.78, 0.32), 0.65 * pale * (1.0 - fresh));
+  body = mix(body, vec3(1.0, 0.78, 0.32), 0.12 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.6, 0.36, 0.02), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
   vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(1.9, 1.12, 0.11), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(2.4, 1.45, 0.62), 0.8 * pale);
+  through = mix(through, vec3(2.2, 1.25, 0.26), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.48, 0.3), vec3(1.0), unfolded);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
