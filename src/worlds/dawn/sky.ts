@@ -16,6 +16,7 @@ uniform vec3 uDisc;
 uniform float uGain;
 uniform float uDrift;
 uniform float uSamples;
+uniform float uDay;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
@@ -35,7 +36,17 @@ void main() {
   // One lens sample stands for its share of the disc of confusion: the picture and the sun are drawn that wide, so the samples close into a smooth blur.
   float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
   float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
-  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.45 * exp(-theta / 0.16)) * mix(vec3(0.7, 1.3, 1.62), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.15, 0.8, 0.5), exp(-theta / 0.25));
+  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.45 * exp(-theta / 0.16)) * mix(vec3(0.7, 1.3, 1.62), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.15, 0.8, 0.5), exp(-theta / 0.25) * (1.0 - smoothstep(0.05, 0.11, max(el, 0.0))));
+
+  // Low over the land the sky turns to peach; high and away from the sun it is a cool cyan that lightens with the day, and over the sun it pales. Thin cloud lies over it in long faint streaks.
+  float up = max(el, 0.0);
+  float away = 1.0 - exp(-theta / 0.3);
+  color *= mix(vec3(1.0), vec3(1.05, 0.85, 0.74), exp(-up / 0.06));
+  float high = away * smoothstep(0.035, 0.105, up);
+  color *= mix(vec3(1.0), vec3(0.6, 1.12, 1.16), high * (1.0 - 0.5 * uDay)) * (1.0 + 0.6 * uDay * high);
+  color *= 1.0 - 0.2 * exp(-theta / 0.4) * smoothstep(0.02, 0.06, up) * (1.0 - smoothstep(0.07, 0.11, up));
+  vec2 streak = vec2((turn / (2.0 * PI) + uDrift) * 6.2832 * 9.0, el * 35.0);
+  color *= 1.0 + 0.4 * (valueNoise(streak) + 0.5 * valueNoise(streak * 2.3 + vec2(7.0, 3.0)) - 0.75);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
@@ -57,6 +68,9 @@ void main() {
 
 export const SKY_FILE = 'sky.jpg'
 const DRIFT_TURNS_PER_SECOND = 0.00001
+// The sky away from the sun lightens and pales as the sun climbs, between these seconds of the film.
+const DAY_FROM_S = 1.5
+const DAY_TO_S = 6.5
 
 export class DawnSky {
   private readonly pass: FullscreenPass
@@ -74,6 +88,7 @@ export class DawnSky {
       uGain: { value: gain },
       uDrift: { value: 0 },
       uSamples: { value: 1 },
+      uDay: { value: 0 },
     })
   }
 
@@ -88,6 +103,8 @@ export class DawnSky {
     const u = this.pass.uniforms
     u.uSamples.value = Math.max(1, samples)
     u.uDrift.value = time * DRIFT_TURNS_PER_SECOND
+    const t = Math.min(1, Math.max(0, (time - DAY_FROM_S) / (DAY_TO_S - DAY_FROM_S)))
+    u.uDay.value = t * t * (3 - 2 * t)
   }
 
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, width: number): void {
