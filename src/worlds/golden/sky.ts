@@ -94,7 +94,7 @@ void main() {
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
   color = mix(color, mix(vec3(0.08, 0.125, 0.14), vec3(0.42, 0.33, 0.25), exp(-theta / 0.5)), uHigh * (1.0 - 0.7 * uLate) * (0.25 + 0.6 * exp(-theta / 0.5)) * exp(-max(el, 0.0) / 0.5));
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * ((0.5 - 0.37 * uHigh) * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * ((0.45 - 0.37 * uHigh) * exp(-theta / 0.2)) * mix(1.0, 0.66 + 0.78 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale) * (1.0 - 0.8 * uLate));
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * ((0.5 - 0.37 * uHigh) * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * ((0.45 - 0.37 * uHigh) * exp(-theta / 0.2)) * mix(1.0, 0.66 + 0.78 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
   color += uGlow * vec3(1.0, 0.74, 0.56) * ((0.39 - 0.37 * uPale) * (1.0 - 0.9 * uHigh) * exp(-theta * theta / 0.115) * smoothstep(0.06, 0.13, el));
   color += vec3(0.098, 0.17, 0.2) * (1.0 - 0.7 * uLate) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el) + vec3(0.0, 0.024, 0.036) * smoothstep(0.25, 0.6, theta) * smoothstep(0.06, 0.12, el);
   color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), max(0.7 * uPale, min(0.9, exp(-theta / 0.1) + uPale + 0.4 * smoothstep(0.4, 0.75, theta)) * exp(-max(el, 0.0) / 0.07)) * (1.0 - 0.6 * uLate) * smoothstep(0.015, 0.06, theta));

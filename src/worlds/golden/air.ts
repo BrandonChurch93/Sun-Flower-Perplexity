@@ -5,6 +5,9 @@ import { windToward } from '../../plant/wind.ts'
 
 const SEED = streamSeed('golden air')
 const PEAK = 0.35
+// The specks belong to the close view of the plant: as the lens cranes away over the field they thin, between these seconds of the film.
+const LEAVE_FROM_S = 55
+const LEAVE_TO_S = 58
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
@@ -121,7 +124,7 @@ export function makeAir(): Air {
       uniforms.uPixelAngle.value = pixelAngle
       uniforms.uSamples.value = Math.max(1, samples)
       uniforms.uWidth.value = width
-      const gone = Math.min(1, Math.max(0, (time - 52) / 2))
+      const gone = Math.min(1, Math.max(0, (time - LEAVE_FROM_S) / (LEAVE_TO_S - LEAVE_FROM_S)))
       uniforms.uStay.value = 1 - gone * gone * (3 - 2 * gone)
     },
   }
