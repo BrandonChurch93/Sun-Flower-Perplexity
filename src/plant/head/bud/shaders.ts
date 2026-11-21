@@ -102,8 +102,12 @@ void main() {
     vec3 neck = vec3(0.2, 0.3, 0.09);
     vec3 body = mix(vec3(0.085, 0.15, 0.04), vec3(0.17, 0.26, 0.07), grain);
     t.albedo = mix(neck, body, smoothstep(0.08, 0.4, v)) * (0.92 + 0.16 * rib);
-    height = 0.0004 * grain + 0.0002 * rib;
+    float pits = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 90.0);
+    t.albedo *= 0.8 + 0.3 * pits;
+    height = 0.0005 * grain + 0.0002 * rib + 0.00035 * pits;
     t.occlusion = mix(1.0, 0.4, smoothstep(0.3, 0.75, v));
+    t.rough = 0.93;
+    t.wax = 0.03;
   }
   t.normal = reliefNormal(face, vWorld, height, 1.0);
 #endif

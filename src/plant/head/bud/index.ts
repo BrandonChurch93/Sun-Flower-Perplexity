@@ -37,6 +37,9 @@ const HAIR_WIDTH_M = 0.00006
 // A bract folds back just ahead of the rays behind it: until they open it runs this many seconds behind the timing of growth.ts, which has no sectors.
 const SECTOR_LAG = 2.2
 const SECTOR_LEAD = 0.3
+// Past this angle from the head's axis a bract swings back less than growth.ts says, so its point still shows between the rays from the front.
+const REFLEX_FROM = 1.62
+const REFLEX_EASE = 0.55
 // How far past the widest ring the innermost feet sit, as a share of the way to the rim.
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
@@ -331,7 +334,8 @@ export function create(options: PartOptions): PlantPart | null {
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
       const own = time - SECTOR_LAG * smoothstep(bloom0 - 4, bloom0, time) * (1 - opened)
-      const angle = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
+      const swing = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
+      const angle = swing - REFLEX_EASE * Math.max(0, swing - REFLEX_FROM)
       const pushed = smoothstep(0.15, 0.75, rayLong / Math.max(L, 1e-6))
       const closed = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
       const curl = lerp(closed, Math.min(closed, 0.12), pushed)
