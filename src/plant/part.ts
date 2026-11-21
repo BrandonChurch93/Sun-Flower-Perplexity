@@ -91,7 +91,7 @@ vec3 plantWorld(vec3 local) {
   // Before the bloom every bud is its own size: 32 steps above the other three in aVary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
     q = local - uHeadAt.xyz;
-    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 1.45, floor(aVary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
+    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 2.6, floor(aVary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   }
   vec3 p = local * aPlace.w;
   p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
@@ -99,7 +99,7 @@ vec3 plantWorld(vec3 local) {
   // Before the bloom every neighbor has its own stalk, its own leaves and their own droop: 32 steps of each in aVary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
     float stalk = mix(0.75, 1.3, mod(aVary.w, 32.0) / 31.0);
-    float leaf = mix(0.75, 1.25, mod(floor(aVary.w / 32.0), 32.0) / 31.0);
+    float leaf = mix(0.75, 1.6, mod(floor(aVary.w / 32.0), 32.0) / 31.0);
     float droop = mix(-0.15, 0.6, mod(floor(aVary.w / 1024.0), 32.0) / 31.0);
     float reach = length(p.xz);
     p.y = p.y * mix(1.0, stalk, uEarly) - uEarly * droop * max(reach - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
@@ -176,6 +176,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float lit = max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
   // Late in the bloom the lens is over the crop and the sun lower still: it lies along the tops and reaches twice as far down among the leaves.
   if (uLate > 0.0) lit = max(lit, mix(1.0, top + 0.6 * uLate * (1.0 - top), closed) * exp(-mix(1.0, mix(12.0 - 6.0 * uLate, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)));
+  // The moon stands a quarter of the way up the sky: the tops are in its light, and it dies off down among the leaves.
+  if (uMoon > 0.0) lit = mix(lit, exp(-2.5 * under), uMoon);
   return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
