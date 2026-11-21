@@ -17,7 +17,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 54, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000, downHairs: 72000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000, downHairs: 54000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
 }
@@ -28,8 +28,8 @@ const WIDEST = 0.2
 const SHOULDER = 0.04
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
-const HAIR_WIDTH_M = 0.00003
-const DOWN_WIDTH_M = 0.00016
+const HAIR_WIDTH_M = 0.00005
+const DOWN_WIDTH_M = 0.00012
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
 // A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
@@ -41,7 +41,7 @@ const STAND = [0.5, -0.5, -1.2]
 // Where a bract stands once it has let go of the cone, on its way back.
 const LOOSE = [0.5, 0.42, 0.14]
 // From a second before the bloom stage the whole involucre lets go of the cone and stands round it as a collar, at these angles.
-const COLLAR = [1.25, 0.95, 0.65]
+const COLLAR = [1.3, 1.1, 0.9]
 const COLLAR_FROM = -1
 const COLLAR_TAKES = 2.5
 // Bracts on the side away from the first rays stay on the body this much longer, in seconds.
@@ -68,12 +68,12 @@ const LOW_HOOK = 0.6
 // and swings sideways round the head by up to this much as it folds, so it passes beside the head, not under it.
 const LOW_SWING = 0.5
 // Once it stands free in the collar a bract is folded along its midrib like a boat, by up to this angle each side, so it shows a lit flank and a dark one from any side. Flat again against the cone and behind the rays, where a deep fold would cut into them.
-const KEEL = 0.8
+const KEEL = 0.55
 // In the collar a bract under the head lies back toward the stem, from this angle off the axis, and curls under by up to this much, each by its own amount, so the lower ones are uneven and half hidden. The head looks up, so anything less would hang straight down.
 const LOW_AWAY = 2.3
 const LOW_CURL = 1.4
 // With more bracts than this each one is narrower, so they still overlap by the same share.
-const BRACTS_BROAD = 43
+const BRACTS_BROAD = 56
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
@@ -120,7 +120,7 @@ export function create(options: PartOptions): PlantPart | null {
       point: 0.7 + 0.1 * rnd(903, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
       side: (rnd(7, i) - 0.5) * 0.4,
-      tip: (rnd(8, i) - 0.35) * 1.5,
+      tip: (rnd(8, i) - 0.35) * 0.9,
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: HOOK * (0.5 + 0.5 * rnd(18, i)),
       low: series === 2 ? LOW_CURL * (0.9 + 0.45 * rnd(17, i)) : LOW_CURL * (0.35 + 0.75 * rnd(17, i)),
@@ -430,7 +430,7 @@ export function create(options: PartOptions): PlantPart | null {
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
-      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.5 * collar)
+      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.75 * collar)
       const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
@@ -538,7 +538,7 @@ export function create(options: PartOptions): PlantPart | null {
         const uy = ny * cw - t1y * sw
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
-        const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 1.2) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
+        const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
         const half = W * lerp(body, tail, smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u)))
