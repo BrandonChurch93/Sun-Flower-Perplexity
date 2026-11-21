@@ -16,6 +16,7 @@ out float vAcross;
 out float vAlong;
 out float vShare;
 out float vSeed;
+out float vSeen;
 out vec3 vWorld;
 void main() {
   vec3 a = (viewMatrix * vec4(aOpen.xyz, 1.0)).xyz;
@@ -39,6 +40,7 @@ void main() {
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
   vShare = min(1.0, uGain * mix(1.0, 0.3, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
+  vSeen = clamp(r / (halfPx * pixelM) * 1.5 - 0.5, 0.0, 1.0);
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
   if (-a.z < 0.02 || -b.z < 0.02) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -50,6 +52,7 @@ in float vAcross;
 in float vAlong;
 in float vShare;
 in float vSeed;
+in float vSeen;
 in vec3 vWorld;
 uniform vec3 uLight;
 uniform vec3 uShade;
@@ -59,19 +62,20 @@ void main() {
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
   float core = exp(-u / 0.09) * swing;
-  vec3 color = mix(uShade, uLight, 0.3 + 0.7 * core);
-  float body = 1.5 * (1.0 - u);
+  // Where the drop is wider than a pixel and the blur, only that line and a faint body show; where it is not, the strip is the blur itself and holds the line's light evenly.
+  vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, vSeen));
+  float body = (1.0 - u) * mix(1.5, 0.35, vSeen);
   // Seen from above, a drop shows the dark land behind it and little of the band.
   float level = smoothstep(-0.12, 0.0, normalize(vWorld - uCamPos).y);
-  outColor = vec4(applyFog(color, vWorld), saturate(vShare * body * (0.6 + 0.9 * core)) * mix(0.3, 1.0, level));
+  outColor = vec4(applyFog(color, vWorld), saturate(vShare * mix(body, body + 1.5 * core, vSeen)) * mix(0.3, 1.0, level));
 }
 `
 
 const MAX_STREAKS = 60000
-const HEAVY_REACH_M = 12
+const HEAVY_REACH_M = 6
 // The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
-const FINE_NEAR = 0.68
-const FINE_REACH = 1.6
+const FINE_NEAR = 0.8
+const FINE_REACH = 1.34
 const SLOWEST_M_PER_S = 0.5
 
 export interface Streaks {
