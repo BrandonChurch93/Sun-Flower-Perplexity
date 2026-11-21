@@ -5,7 +5,7 @@ import { makeFarLayers } from './layers.ts'
 import { FrostSky } from './sky.ts'
 
 export const world: WorldSettings = {
-  standIn: true,
+  standIn: false,
   sun: { azimuthDeg: 178.82, elevationDeg: 8.47, color: [0.3, 0.27, 0.24], softnessDeg: 20, lean: 0.4, lift: 0.45 },
   sky: { zenith: [0.58, 0.6, 0.6], horizon: [0.6, 0.62, 0.62], bounce: [0.3, 0.31, 0.3], ambient: 0.42, glow: [1.97, 0.6, 0.15], glowPower: 22, disc: 4.4, even: 1 },
   backdrop: { file: null, key: 'frost', sunAt: null, gain: 1, blur: 0.25 },
