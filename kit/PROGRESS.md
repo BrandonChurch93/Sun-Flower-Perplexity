@@ -15,7 +15,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
 - Last push: 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
-- Last status: 06 · 2026-11-21 02:25 UTC · Phase 2
+- Last status: 07 · 2026-11-21 02:49 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 - 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
 - 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 - 2026-11-21 01:56 UTC · status 04 · Phase 0 · `status-1.jpg`: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; `status-2.jpg`: Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; `status-3.jpg`: Spike frame 1080 (36 s, frost world) at the review tier
@@ -38,12 +39,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 0.44 h |
+| 2 | 3.50 h | 0.83 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.56 h |
+| Whole build | 30.00 h | 1.96 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -334,4 +335,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Rough cut, frame 420 (14 s, rain). Made from the approved still; Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; Rough cut check: one frame from every segment and the frame each side of every cut.
 - Status 06, 2026-11-21 02:25 UTC, Phase 2. Phase 2 has started. Six supporting agents are at work: three gather real photographs for the reference board, one studies real time-lapse footage, one builds the remaining harness commands and one builds the Export page. The page can now report where the growing tip lands and how sharp it is. A bug from the spike is fixed: the ground had never been drawn, because its triangles faced down. Backdrops with the plant painted out are being generated. Next: the plant as a function of time with its hook, husk, seed leaves, bud and opening head, then the painted-out backdrops, the field and the camera fit at every key. Time used: 1.6 h of 30 h.
   Pictures: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; Frame 60 (2 s, dawn world), draft tier, with the ground; Frame 1755 (58.5 s): the high wide view. The field is not built yet; Texel view of frame 60: how many texture samples each pixel gets, used by a measure.
+- Status 07, 2026-11-21 02:49 UTC, Phase 2. All four scouts have reported: the reference board holds 90 real photographs across 15 parts of the plant and its weather, each part with five written observations, and four motion studies read from real time-lapse footage. The Export page and its proof command are built on their own branch and wait to be checked and merged. Each world now has a backdrop made from its approved image with the plant painted out; one take in ten was kept per world after checking that nothing else had moved. Next: lock each backdrop to the camera of its key, rebuild the plant as a function of time with hook, husk, seed leaves, bud and opening head, then the field. Time used: 2.0 h of 30 h.
+  Pictures: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; Dawn and rain with the plant painted out; Night and frost with the plant painted out.
 

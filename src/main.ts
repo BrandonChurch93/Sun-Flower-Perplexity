@@ -25,7 +25,10 @@ try {
       if (options.mode === 'export') startExport(film, options, host)
       else startLive(film, options, host)
     },
-    (error: unknown) => say(`The scene could not load. ${error instanceof Error ? error.message : String(error)}`),
+    (error: unknown) => {
+      if (options.mode === 'export') startExport(film, options, host)
+      else say(`The scene could not load. ${error instanceof Error ? error.message : String(error)}`)
+    },
   )
 } catch (error) {
   say(`This browser cannot draw the film. ${error instanceof Error ? error.message : String(error)}`)

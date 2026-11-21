@@ -10,14 +10,15 @@ import { samplesOf } from '../core/tiers.ts'
 import { applyWorld, sunDirection, type WorldDef } from '../core/world.ts'
 import { breathe } from '../core/yield.ts'
 import { Ground } from '../ground/index.ts'
-import { heightAt, plantReach } from '../plant/growth.ts'
+import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { Post } from '../post/post.ts'
 import { Sky } from '../weather/sky.ts'
-import { farPlane, nearPlane, rigAt } from './camera.ts'
-import { plantInputsAt } from './inputs.ts'
+import { rigAt } from './camera.ts'
+import { plantInputsAt, plantInputsFor } from './inputs.ts'
+import { farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
 import { worldOf } from './registry.ts'
-import { poseAtTime, stateAt, type FrameState } from './state.ts'
+import { stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
 
 
@@ -39,6 +40,8 @@ export class Film {
   diag: DiagName = 'beauty'
   lastTier: TierId = 'draft'
   lastFrame = -1
+  // What the live mode may change: the camera turned about the plant, and a world held whatever the time is.
+  readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, world: null }
   private readonly casters: Caster[]
   private readonly tip = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
@@ -86,8 +89,23 @@ export class Film {
     await this.load()
   }
 
+  private rigOf(time: number): Rig {
+    const rig = rigAt(time)
+    const v = this.view
+    return v.azimuthDeg === 0 && v.elevationDeg === 0 && v.dolly === 1 ? rig : orbited(rig, v)
+  }
+
+  private inputsAt(time: number): PlantInputs {
+    return this.view.world ? plantInputsFor(worldOf(this.view.world)) : plantInputsAt(time)
+  }
+
   poseAt(time: number): CameraPose {
-    return poseAtTime(time, this.tip)
+    tipAt(time, this.inputsAt(time), this.tip)
+    return poseOf(this.rigOf(time), this.tip)
+  }
+
+  worldIdAt(frameIndex: number): string {
+    return this.view.world ?? worldAt(clampFrame(frameIndex))
   }
 
   state(frameIndex: number): FrameState {
@@ -129,7 +147,7 @@ export class Film {
     await this.load()
     const frame = clampFrame(frameIndex)
     const time = timeOf(frame)
-    const def = worldOf(worldAt(frame))
+    const def = worldOf(this.worldIdAt(frame))
     const { stage, camera } = this
     const { renderer } = stage
     const count = samplesOf(tier)
@@ -141,7 +159,7 @@ export class Film {
     this.sky.setWorld(def)
     this.ground.setState(def.ground)
     this.ground.mesh.visible = !alone
-    this.plant.prepare(time, time + shutterSeconds, plantInputsAt(time), plantInputsAt(time + shutterSeconds))
+    this.plant.prepare(time, time + shutterSeconds, this.inputsAt(time), this.inputsAt(time + shutterSeconds))
     const height = heightAt(time + shutterSeconds)
     const radius = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
     this.center.set(0, 0.5 * height, 0)
@@ -150,7 +168,7 @@ export class Film {
     for (const s of samples) {
       const at = time + shutterSeconds * s.shutter
       const pose = this.poseAt(at)
-      const rig = rigAt(at)
+      const rig = this.rigOf(at)
       shared.uShutter.value = s.shutter
       const lit = this.light(def, pose)
       shared.uSunDir.value.copy(this.sun)
@@ -233,6 +251,8 @@ export class Film {
     return this.assets.megabytes()
   }
 }
+
+export interface FilmView { azimuthDeg: number; elevationDeg: number; dolly: number; world: string | null }
 
 export interface TexelCheck { frame: number; pixels: number; textured: number; soft: number; texturedOutsideSharpZone: number; softShare: number }
 
