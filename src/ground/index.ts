@@ -11,13 +11,10 @@ import { clodScatter, crumbFragment, crumbScatter, crumbVertex, fineReachM, grai
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
-import { clodReliefM, clodScale, detailScale, emergence, furrow, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
+import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
-
-// A place given across the rows and away from the field, as a place on the ground.
-const across = (at: number[]): [number, number] => [at[0] * right.x - at[1] * toward.x, at[0] * right.z - at[1] * toward.z]
 
 export interface GroundState { wet: number; frost: number; dew?: number }
 
@@ -62,10 +59,12 @@ export class Ground {
       uHole: { value: new THREE.Vector4(hole.fromS, hole.toS, hole.radiusM, hole.depthM) },
       uDome: { value: new THREE.Vector3(hole.domeM, hole.flatM, hole.wayOpen) },
       uSunWay: { value: new THREE.Vector2(sunWayDir.x, sunWayDir.z) },
-      uFurrow: { value: new THREE.Vector4(...across(furrow.footM), ...across(furrow.lensM)) },
-      uFurrowShape: { value: new THREE.Vector4(furrow.halfM[0], furrow.halfM[1], furrow.depthM, furrow.bankM) },
-      uFurrowTime: { value: new THREE.Vector4(furrow.fromS, furrow.toS, furrow.before, furrow.windM) },
-      uFurrowClear: { value: furrow.clearM },
+      uFurrow: { value: new THREE.Vector4(furrow.leftM, furrow.slope, furrow.fromM, furrow.toM) },
+      uFurrowAxes: { value: new THREE.Vector4(right.x, right.z, toward.x, toward.z) },
+      uFurrowAt: { value: new THREE.Vector4(...furrow.atM) },
+      uFurrowHalf: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / furrowShare(waterLevelsM[1]))) },
+      uFurrowShape: { value: new THREE.Vector4(furrow.depthM, furrow.bankM, furrow.windM, furrow.clearM) },
+      uFurrowTime: { value: new THREE.Vector3(furrow.fromS, furrow.toS, furrow.before) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
       uWater: { value: new THREE.Vector2(waterLevelsM[0], waterLevelsM[1]) },

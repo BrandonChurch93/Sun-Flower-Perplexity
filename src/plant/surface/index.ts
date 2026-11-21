@@ -100,7 +100,7 @@ vec3 tissueSky(vec3 n, float shown) {
   vec3 sky = skyAmbient(n);
   float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
   float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
-  level *= saturate(1.15 - 26.0 * uFogDensity);
+  level *= 1.0 - uSkyEven;
   // A sun no brighter than the sky over it stands in mist or cloud: that sky is even all round.
   level *= smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
   float side = saturate(0.5 + 0.5 * toward);
@@ -262,7 +262,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 nx = dFdx(N);
   vec3 ny = dFdy(N);
   float a = max(rough * rough, 0.03);
-  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))) + 0.03 * (1.0 - saturate(1.15 - 26.0 * uFogDensity)), 1.0);
+  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))) + 0.03 * uSkyEven, 1.0);
   a = sqrt(a2);
 
   float f5 = 1.0 - vdh;

@@ -28,9 +28,21 @@ export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
 
-// The furrow the rain cuts beside the plant, where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: it runs from its end by the plant's foot to its end by the lens of the rain, winding a little, widening on the way.
-// It is a shallow dip until the rain, cuts down to its depth between these seconds and stays. Its banks stand up beside it, but not within clearM of the stem and not in the camera's way.
-export const furrow = { footM: [-0.045, 0.03], lensM: [-0.2, -0.75], halfM: [0.03, 0.1], depthM: 0.03, bankM: 0.03, windM: 0.02, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+// The furrow the rain cuts beside the plant, where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: its middle lies leftM to the left of the plant and drifts by slope for each meter away from the lens, winding by windM, from fromM toward the lens to toM behind the plant, where it closes round.
+// halfM is half the width of the standing water at each of the places atM along it. The floor lies depthM under the mean ground and the banks bankM over it; the banks stay off the plant within clearM. Until fromS the furrow has only the share before of its depth, and all of it by toS.
+export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.03, bankM: 0.03, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+// How far out the floor's slope meets a level, as a share of the hollow's whole half width: the slope runs from 0.3 to 1 of it.
+export const furrowShare = (levelM: number): number => {
+  const want = 1 - Math.min(1, Math.max(0, -levelM / furrow.depthM))
+  let lo = 0
+  let hi = 1
+  for (let i = 0; i < 30; i++) {
+    const u = (lo + hi) / 2
+    if (u * u * (3 - 2 * u) < want) lo = u
+    else hi = u
+  }
+  return 0.3 + 0.7 * lo
+}
 
 function hashU(x: number): number {
   x ^= x >>> 16
@@ -101,24 +113,25 @@ float sunWay(vec2 p) {
   return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along);
 }
 uniform vec4 uFurrow;
+uniform vec4 uFurrowAxes;
+uniform vec4 uFurrowAt;
+uniform vec4 uFurrowHalf;
 uniform vec4 uFurrowShape;
-uniform vec4 uFurrowTime;
-uniform float uFurrowClear;
+uniform vec3 uFurrowTime;
 // The height the furrow adds: under the mean ground along its middle, over it on its banks.
 float furrow(vec2 p) {
-  vec2 run = uFurrow.zw - uFurrow.xy;
-  float len = length(run);
-  vec2 dir = run / len;
-  vec2 q = p - uFurrow.xy;
-  float along = dot(q, dir);
-  float t = saturate(along / len);
-  float side = dot(q, vec2(-dir.y, dir.x)) - uFurrowTime.w * sin(along * 9.0) * smoothstep(0.0, 0.3, t);
-  float x = length(vec2(side, along - t * len)) / mix(uFurrowShape.x, uFurrowShape.y, t);
-  if (x > 2.4) return 0.0;
+  float a = dot(p, uFurrowAxes.xy);
+  float d = -dot(p, uFurrowAxes.zw);
+  float dc = clamp(d, uFurrow.z, uFurrow.w);
+  float side = a + uFurrow.x - uFurrow.y * dc - uFurrowShape.z * sin(dc * 13.0 + 1.0);
+  vec3 part = saturate((vec3(dc) - uFurrowAt.xyz) / (uFurrowAt.yzw - uFurrowAt.xyz));
+  float wide = uFurrowHalf.x + dot(part, uFurrowHalf.yzw - uFurrowHalf.xyz);
+  float x = length(vec2(side, d - dc)) / wide;
+  if (x > 2.0) return 0.0;
   float cut = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
   float bed = 1.0 - smoothstep(0.3, 1.0, x);
-  float bank = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.4, x)) * smoothstep(uFurrowClear, uFurrowClear * 4.0, length(p)) * (1.0 - lane(p));
-  return cut * (bank * uFurrowShape.w - bed * uFurrowShape.z);
+  float bank = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.0, x)) * smoothstep(uFurrowShape.w, uFurrowShape.w * 2.0, length(p)) * (1.0 - lane(p));
+  return cut * (bank * uFurrowShape.y - bed * uFurrowShape.x);
 }
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;

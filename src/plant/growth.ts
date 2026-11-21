@@ -64,12 +64,18 @@ export function heightAt(time: number): number {
   return heightCurve.at(time)
 }
 
+// A sprout is 2.4 mm through and thickens fast once its leaves work. From 40.3 s, when the youngest neighbor in the bloom is that old, the girth is the old curve to the last bit.
 export function stemBaseRadius(time: number): number {
-  return 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, heightAt(time)), 0.8)
+  const h = heightAt(time)
+  const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
+  const settled = smoothstep(30, 40.3, time)
+  if (settled >= 1) return full
+  return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled)
 }
 
 export function stemRadius(time: number, u: number): number {
-  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time))
+  // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(14, 36, time) * (1 - smoothstep(36.5, 40.3, time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
 }
 
@@ -89,7 +95,7 @@ export function paleness(time: number): number {
 // The bud body grows into the disc.
 const bodyCurve = new Monotone([
   [bud0, 0],
-  [inStage(bud0, bud1, 0.053), 0.015],
+  [inStage(bud0, bud1, 0.053), 0.009],
   [inStage(bud0, bud1, 0.263), 0.02],
   [inStage(bud0, bud1, 0.579), 0.037],
   [inStage(bud0, bud1, 0.79), 0.054],
@@ -288,8 +294,17 @@ export function huskSize(time: number): number {
 }
 export const huskRest: Vec3 = { x: -0.0165, y: 0.0028, z: 0.006 }
 
-export function leafBirth(i: number): number {
+// When a leaf leaves the tip for good and grows at its own pace.
+function leafStart(i: number): number {
   return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
+}
+
+// The first pair shows early, small and upright between the seed leaves, and waits there for the rain.
+const PAIR_EARLY_S = 2.8
+const PAIR_PACE = 0.28
+
+export function leafBirth(i: number): number {
+  return i < 2 ? leafStart(i) - PAIR_EARLY_S : leafStart(i)
 }
 
 // Where a plant's leaf spiral starts is its own, from its seed. The director may turn one neighbor by hand, as a gardener turns a pot.
@@ -324,7 +339,10 @@ export function leafAzimuth(i: number, time?: number): number {
 }
 
 export function leafAge(i: number, time: number): number {
-  return time - leafBirth(i)
+  const start = leafStart(i)
+  if (i >= 2 || time >= 20) return time - start
+  const head = PAIR_PACE * PAIR_EARLY_S
+  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, 20, time))
 }
 
 export function leafStemFraction(i: number, time: number): number {
@@ -333,8 +351,18 @@ export function leafStemFraction(i: number, time: number): number {
   if (age <= 0 || h <= 0) return 0.97
   const rank = i / (leafCount - 1)
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
-  const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
-  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
+  const settled = heightAt(leafStart(i) + seconds * (1 - Math.exp(-age / seconds)))
+  const grown = lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
+  const late = smoothstep(20, 40, time)
+  if (late >= 1) return grown
+  // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
+  const quick = Math.min(seconds, 1.6)
+  // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
+  const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
+  const tip = 0.99 * heightAt(start)
+  const rest = Math.max(tip, (0.9 + 0.075 * rank * rank) * heightAt(start + quick))
+  const young = Math.min(0.992 - 0.004 * Math.min(age, 6), lerp(tip, rest, 1 - Math.exp(-Math.max(0, time - start) / quick)) / h)
+  return lerp(young, grown, late)
 }
 
 export function leafLength(i: number, time: number): number {
@@ -342,7 +370,11 @@ export function leafLength(i: number, time: number): number {
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
   const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
-  const length = full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
+  const slow = lerp(7, 3.6, smoothstep(0.45, 0.8, rank))
+  const late = smoothstep(20, 40, time)
+  const share = (seconds: number): number => 1 - Math.exp(-Math.pow(age / seconds, 1.1))
+  // The first leaves of the young plant fill out fast: in the rain the largest is a third of the plant's height.
+  const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))
   const hold = heldLeaf(i)
   return hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
 }
