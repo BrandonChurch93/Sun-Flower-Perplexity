@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
-- Last status: 18 · 2026-11-21 07:17 UTC · Phase 3 · unit bloom
+- Last push: 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
+- Last status: 19 · 2026-11-21 07:38 UTC · Phase 3
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 07:38 UTC · status 19 · Phase 3 · `status-1.jpg`: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); `status-2.jpg`: Frame 1515, the same: the open head is sharp; `status-3.jpg`: Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second
 - 2026-11-21 07:17 UTC · status 18 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin; `status-2.jpg`: Frame 1515 today, the stand-in open head; `status-3.jpg`: Approved image for 1350; `status-4.jpg`: Approved image for 1515
 - 2026-11-21 06:54 UTC · status 17 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
 - 2026-11-21 06:39 UTC · status 16 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 03:55 UTC · status 10 · Phase 2 · `status-1.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-2.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
-- 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 0.38 h |
+| 3 | 9.00 h | 0.73 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.43 h |
+| Whole build | 30.00 h | 6.78 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -485,6 +485,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 06:52 UTC · Phase 2: whole preview film, proofs, M1 open item
 - 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
 - 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
+- 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
 
 ## Session log
 
@@ -531,4 +532,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Autopilot on the hosted app: seven screenshots taken while the film played.
 - Status 18, 2026-11-21 07:17 UTC, Phase 3 · unit bloom. The look lock is under way. The plant is now built from parts that each replace a piece of the gray stand-in, and ten agents started at 07:16, each owning one part: stem, leaves, bud, florets, petals, hairs, the skin shader, the golden sky, the lens and the field. Until their work lands, the pictures still show the stand-in, now lit by the shared skin. Next: My own list while they work: hold focus on the visible surface of the bud, sway in the stem and the field, a tighter shadow for close-ups, the leaves that cross the sun at the left edge. Their reports are due by 08:56, the first critic round by about 09:55. Time used: 6.4 h of 30 h.
   Pictures: Frame 1350 today, the stand-in bud lit by the shared skin; Frame 1515 today, the stand-in open head; Approved image for 1350; Approved image for 1515.
+- Status 19, 2026-11-21 07:38 UTC, Phase 3. The lens now holds the surface of the bud that faces it, not a point inside it, so the face of the bud is sharp at both bloom key frames and the focus measure is green there. The wind now sways the plant, the companion and every one of the 12,687 neighbors, each with the swell that reaches its own place, so a wave crosses the field. Shapes and colors are still the stand-in: ten supporting agents are building the real stem, leaves, bud, disc, petals, hairs, skin, golden world, lens and field. Next: A finer shadow map for close-ups and the companion's leaves across the sun at the left edge, then the agents' work is merged as it arrives (due by 08:56 UTC) and the first critic round on bloom starts. Time used: 6.8 h of 30 h.
+  Pictures: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); Frame 1515, the same: the open head is sharp; Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second.
 
