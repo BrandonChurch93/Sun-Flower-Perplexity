@@ -40,7 +40,7 @@ uniform vec3 uHairColor;
 uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
-const float SUN_THROUGH = 4.2;
+const float SUN_THROUGH = 1.8;
 // A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
 const float SUN_PALE = 0.2;
 // What comes through a hair is warm white going to pink, as the approved pictures have it, where the low sun alone would make it yellow.
