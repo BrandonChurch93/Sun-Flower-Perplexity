@@ -1,4 +1,4 @@
-import { PACKING, RIM_SHARE, RING_SHARE, RIPE_FROM, SHOWN_FROM } from './opening.ts'
+import { RIM_SHARE, RING_SHARE, RIPE_FROM, SHOWN_FROM } from './opening.ts'
 
 // The head's frame at both ends of the shutter, and the floor of the head as `floorAt` in the skeleton gives it.
 const headGlsl = /* glsl */ `
@@ -42,7 +42,6 @@ export const floretVertex = /* glsl */ `
 #define RIPE_FROM ${RIPE_FROM.toFixed(3)}
 #define RIM_SHARE ${RIM_SHARE.toFixed(3)}
 #define RING_SHARE ${RING_SHARE.toFixed(3)}
-#define PACKING ${PACKING.toFixed(3)}
 in vec4 aShape;
 in vec4 aFloret;
 in vec4 aSeed;
@@ -61,8 +60,7 @@ out float vUnder;
 void main() {
   float rho = aFloret.x;
   Floor f = floorAt(rho, aFloret.y);
-  // The florets are packed finer toward the middle.
-  float w = f.radius * uCell * sqrt(PACKING) * pow(max(rho / RIM_SHARE, 0.004), (PACKING - 1.0) / PACKING);
+  float w = f.radius * uCell;
   float grown = smoothstep(SHOWN_FROM, SHOWN_FROM + 3.0, f.time);
   float swell = smoothstep(-6.0, 0.0, f.time - aFloret.z);
   float rim = smoothstep(0.55, 0.93, rho);
@@ -81,11 +79,13 @@ void main() {
   float lobes = smoothstep(0.1, 0.75, phase) * (1.0 - under);
   float rise = smoothstep(0.2, 1.05, phase) * (1.0 - under);
   float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 2.0) * (1.0 - under);
-  // Buds of uneven girth while they are shut.
-  float girth = mix(0.62 + 0.72 * h2, 1.0, open);
+  // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
+  float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge);
+  // No floret is wider than its share of the floor.
+  float girth = mix(0.88 + 0.2 * h2, 1.0, open);
 
   float tilt = aSeed.w * 6.2832;
-  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.17 + 0.28 * open) * aSeed.x);
+  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.1 + 0.2 * open) * aSeed.x);
   vec3 fx = normalize(f.outward - axis * dot(f.outward, axis));
   vec3 fy = cross(axis, fx);
   float ct = cos(aSeed.y);
@@ -94,10 +94,10 @@ void main() {
   vec3 ey = fy * ct - fx * st;
 
   float middle = smoothstep(0.0, 0.24, rho);
-  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (0.68 + 0.64 * h1) * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung) * (1.0 + 0.1 * blotch) * (1.0 - 0.8 * under);
+  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (0.8 + 0.4 * h1) * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung) * (1.0 + 0.1 * blotch) * (1.0 - 0.8 * under);
   float tube = w * 2.6 * (0.72 + 0.5 * aSeed.x) * (1.0 + 0.1 * blotch);
   float throat = mix(0.78 * tall, tube, open);
-  float rc = w * 0.66;
+  float rc = w * 0.5;
   float top = throat - 0.12 * tall + rise * w * 1.3 * (0.45 + 1.1 * h1);
 
   float piece = aShape.x;
@@ -115,27 +115,27 @@ void main() {
     float r;
     float z;
     if (level < 0.5) {
-      // The foot is the widest part: the feet of neighbors run into each other and no floor shows between them.
-      r = rc * 1.25;
+      // The feet of neighbors meet, so no floor shows between them.
+      r = rc * 1.3;
       z = -0.18 * w * grown;
       normal = radial;
       occ = 0.06;
     } else if (level < 1.5) {
-      r = rc * girth * mix(mix(1.06, 0.93, ripe), 0.4 * corner, open);
+      r = rc * girth * mix(mix(0.96, 0.9, ripe), 0.55 * corner, open);
       z = min(0.45 * tall + 0.4 * w * open, throat);
       normal = radial;
       along = 0.33;
       occ = mix(mix(0.2, 0.07, ripe), 0.12, open);
     } else if (level < 2.5) {
-      r = rc * corner * girth * mix(0.5 + 0.26 * h2 + 0.2 * (1.0 - ripe), 0.56, open);
+      r = rc * corner * girth * mix(0.68 + 0.1 * h2 + 0.12 * (1.0 - ripe), 0.7, open);
       z = throat;
       normal = normalize(radial + axis * 0.55 * (1.0 - open));
       along = 0.66;
       occ = mix(mix(0.6, 0.4, ripe), 0.7, open);
     } else {
       float spread = lobes * (1.5 + 0.7 * aSeed.x);
-      float reach = w * 0.52;
-      r = lobes * (rc * 0.56 + reach * sin(spread));
+      float reach = w * 0.2;
+      r = lobes * (rc * 0.7 + reach * sin(spread));
       z = throat + mix(0.22 * tall, reach * cos(spread), lobes);
       normal = normalize(mix(axis, radial * cos(spread) - axis * sin(spread), lobes));
       along = 1.0;
@@ -144,7 +144,7 @@ void main() {
     local = f.at + radial * r + axis * z;
   } else if (piece < 1.5) {
     vec3 radial = ex * cos(aShape.z + 0.6) + ey * sin(aShape.z + 0.6);
-    float r = w * (level < 0.5 ? 0.16 : level < 1.5 ? 0.2 + (0.02 + 0.17 * lump) * rise : level < 2.5 ? 0.17 + (0.03 + 0.28 * lump) * rise : 0.0);
+    float r = w * (level < 0.5 ? 0.16 : level < 1.5 ? 0.2 + (0.02 + 0.17 * lump) * rise : level < 2.5 ? 0.17 + (0.03 + 0.2 * lump) * rise : 0.0);
     float z = level < 0.5 ? max(top - 1.7 * w, 0.1 * tall) : level < 1.5 ? max(top - (0.5 + 0.3 * lump) * w, 0.1 * tall) : level < 2.5 ? top : top + (0.08 + (0.17 + 0.45 * lump) * rise) * w;
     r *= 1.0 + rise * (-0.28 + 0.56 * fract(sin(aShape.z * 3.7 + level * 5.3 + aSeed.x * 91.0 + aSeed.w * 37.0) * 43758.5));
     normal = level < 2.5 ? radial : axis;
@@ -170,8 +170,6 @@ void main() {
     float twin = step(3.5, level);
     level -= 4.0 * twin;
     float hs = fract(h3 + 0.37 * twin + 0.61 * h1 * twin);
-    // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
-    float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge);
     float high = w * 1.4 * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown * (1.0 - 0.3 * twin);
     float lid = tall * (0.98 + 0.14 * aSeed.x) + (0.12 + 0.1 * twin) * w * grown;
     float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, (hs - 0.5) * 0.8 + (twin - 0.5) * 0.4, over);
@@ -180,7 +178,7 @@ void main() {
     vec3 across = cross(axis, away);
     float far = (1.3 + 1.5 * hs) * (1.0 - 0.25 * twin);
     float x = w * (level < 0.5 ? 0.52 : level < 1.5 ? mix(aShape.w > 0.5 ? 0.58 : 0.42, -0.1, over) : mix(0.4, -far, over));
-    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.07, over));
+    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.13, over));
     float z = level < 0.5 ? -0.08 * high : level < 1.5 ? mix(0.62 * high, lid + 0.06 * w * aShape.w, over) : mix(high, lid + 0.05 * w, over);
     local = f.at + away * x + across * y + axis * z;
     normal = normalize(away * mix(1.0, 0.25, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
@@ -207,7 +205,8 @@ void main() {
   vInfo = vec4(piece, along, around, occ);
   vState = vec4(state, rho, aSeed.x, swell);
   vKind = vec4(ripe, lump, 0.62 + 0.76 * h3, h1);
-  vUnder = under;
+  // The thatch shades the buds it lies over.
+  vUnder = piece < 2.5 ? max(under, 0.7 * over) : under;
   vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
@@ -255,8 +254,8 @@ void main() {
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(0.3, 0.85, along);
-    vec3 dark = mix(vec3(0.1, 0.03, 0.004), vec3(0.04, 0.055, 0.007), centre);
-    vec3 pale = mix(vec3(0.3, 0.125, 0.016), vec3(0.11, 0.16, 0.024), centre);
+    vec3 dark = mix(vec3(0.125, 0.04, 0.005), vec3(0.045, 0.06, 0.008), centre);
+    vec3 pale = mix(vec3(0.38, 0.155, 0.02), vec3(0.125, 0.18, 0.027), centre);
     vec3 ochre = vec3(0.35, 0.125, 0.014);
     dark = mix(dark, ochre * 0.3, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
