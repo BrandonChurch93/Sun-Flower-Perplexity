@@ -429,7 +429,7 @@ export function create(options: PartOptions): PlantPart {
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
-    const thick = Math.min(0.4 * stem, 0.0135 * size * REACH)
+    const thick = Math.min(0.42 * stem, 0.0165 * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
