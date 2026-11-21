@@ -93,7 +93,7 @@ void main() {
   float furrow = saturate(-rib * 2.6);
   vec3 grown = mix(vec3(0.05, 0.115, 0.026), vec3(0.19, 0.3, 0.078), tone);
   grown *= 1.0 + ribbed * (0.19 * crest - 0.22 * furrow);
-  vec3 young = mix(vec3(0.25, 0.41, 0.09), vec3(0.46, 0.6, 0.19), tone);
+  vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
@@ -101,7 +101,7 @@ void main() {
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   vec3 sprout = mix(vec3(0.84, 0.81, 0.6), vec3(0.72, 0.77, 0.36), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * pale);
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.5, 0.13, 0.2), pale) * (0.55 + 0.9 * tone), vSkin3.z * (0.3 + 0.35 * streak + 0.3 * dust));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.5, 0.13, 0.2), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.3 + 0.35 * streak + 0.3 * dust, pale));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(0.84, 0.38, thin);
   float wax = mix(0.1, 0.55, thin);

@@ -125,7 +125,7 @@ export function create(options: PartOptions): PlantPart {
     const hasHead = smoothstep(0, 0.012, headR)
     const neckShare = stemBend(time, pose.inputs).neckShare
     const rFoot = stemRadius(time, 0) * grown
-    const footLength = Math.min(0.03, 0.25 * length + 0.002)
+    const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
     const flareTo = NECK_FLARE * headR
 
