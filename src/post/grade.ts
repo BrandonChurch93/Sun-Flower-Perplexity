@@ -140,9 +140,9 @@ void main() {
   c = max(mix(vec3(l), c, uSaturation), 0.0);
   c = c + uLift * (1.0 - c);
   c = toSrgb(clamp(c, 0.0, 1.0));
-  // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: full in the middle tones, well under half in deep shadow, a third in the highlights.
+  // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: strongest in the middle tones, under half of that in deep shadow, a third in the highlights.
   float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  float weight = mix(0.27, 0.9, smoothstep(0.0, 0.4, luma)) * mix(1.0, 0.35, smoothstep(0.55, 0.9, luma));
+  float weight = mix(0.33, 0.8, smoothstep(0.0, 0.4, luma)) * mix(1.0, 0.35, smoothstep(0.55, 0.9, luma));
   vec3 fine = tri3(gl_FragCoord.xy, uSeed);
   float body = (fine.r + fine.g + fine.b) * 0.5774 + 0.5 * clump(gl_FragCoord.xy * 0.53 + 11.0, uSeed + 0.19);
   c += (vec3(body) + 0.22 * (fine - (fine.r + fine.g + fine.b) / 3.0) * 1.5) * (uGrain * weight);
