@@ -20,8 +20,8 @@ const SHAPE: Record<PartDetail, Shape> = {
 
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
-// A shut ray is a strap folded to two ridges with a furrow between, so each reads as two slender straps lying side by side.
-const FOLD_BUD = [-0.7, -0.7, 0.7, -0.7, 0.7, 0.7]
+// A shut ray is a strap pleated to three ridges; the skin parts it along the two creases, so each reads as three slender straps.
+const FOLD_BUD = [-0.7, 0.7, -0.7, 0.7, -0.7, 0.7]
 // A lifting ray is cupped like a boat about its midrib and shows most of its open width.
 const FOLD_LIFT = [-0.75, -0.6, -0.45, 0.45, 0.6, 0.75]
 // A shut strap fills its own place round the rim and narrows toward the eye, and each is rolled the same way so its edge lies on the next one.
@@ -174,7 +174,7 @@ export function create(options: PartOptions): PlantPart | null {
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
   const normals = new Float32Array(count * 3)
-  const state = new Float32Array(count * 3)
+  const state = new Float32Array(count * 4)
   const uv = new Float32Array(count * 2)
   const info = new Float32Array(count * 4)
   const index: number[] = []
@@ -209,7 +209,7 @@ export function create(options: PartOptions): PlantPart | null {
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
   const normal = dynamic(normals, 3)
-  const states = dynamic(state, 3)
+  const states = dynamic(state, 4)
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
   geometry.setAttribute('normal', normal)
@@ -306,7 +306,7 @@ export function create(options: PartOptions): PlantPart | null {
       const along = smooth(0, 1, open * 2.7 - 0.22 * Math.pow(e, 1.5))
       const flat = smooth(0, 1, unfold * 1.25 - 0.25 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
-      const shut = 1.75 + 0.55 * smooth(0, 0.15, e) + 0.95 * e + 0.12 * (ray.arch - 0.5) - 0.35 * alone * smooth(0.1, 0.6, e) + (0.2 * ray.hook + TIP_TUCK * tuck) * smooth(0.75, 1, e) + RANK_PITCH * (0.5 - ray.rank) * smooth(0.15, 0.6, e)
+      const shut = 1.58 + 0.52 * smooth(0, 0.15, e) + 1.15 * e + 0.12 * (ray.arch - 0.5) - 0.35 * alone * smooth(0.1, 0.6, e) + (0.2 * ray.hook + TIP_TUCK * tuck) * smooth(0.75, 1, e) + RANK_PITCH * (0.5 - ray.rank) * smooth(0.15, 0.6, e)
       const openPitch = ray.lay + ray.cup * unfold + young - shaped * (ray.droop * Math.pow(e, 1.3) - ray.nod * smooth(0.25, 0.9, e) + ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) + ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.2 * (1 - unfold) * smooth(0.7, 1, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
@@ -401,10 +401,11 @@ export function create(options: PartOptions): PlantPart | null {
         out[at + 1] = py + wy * x + ny * y + ty * reach
         out[at + 2] = pz + wz * x + nz * y + tz * reach
         if (slot === 0) {
-          const st = (base + i * nv + j) * 3
+          const st = (base + i * nv + j) * 4
           state[st] = fresh
           state[st + 1] = flat
           state[st + 2] = ripe
+          state[st + 3] = fresh * (1 - 0.6 * alone)
         }
       }
     }
