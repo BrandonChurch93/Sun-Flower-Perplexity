@@ -76,13 +76,9 @@ void main() {
   float fresh = vState.x;
   float unfolded = vState.y;
 #ifndef PLANT_FIELD
-  // A shut ray is pleated into three slender straps that part toward the tip, the outer two ending short of the middle one.
-  float partAt = 0.3 * hash11(vRay.x * 23.9 + 1.7);
-  float parted = vState.w * smoothstep(0.03 + partAt, 0.3 + partAt, u);
-  float wing = step(0.3333, abs(across));
-  float endAt = mix(1.0, 0.5 + 0.45 * hash11(vRay.x * 37.1 + sign(across) * 5.3), wing);
-  float slender = mix(0.34, (0.2 + 0.09 * hash11(vRay.x * 71.3 + sign(across) * wing * 2.9)) * (1.0 - smoothstep(endAt - 0.3, endAt, u)), parted);
-  if (abs(abs(across) - 0.6667 * wing) > slender) discard;
+  // A shut ray is a middle strap lying on two narrower ones, and each of those ends short of it at its own length, drawn to a point.
+  float endAt = 0.8 + 0.2 * hash11(vRay.x * 37.1 + sign(across) * 5.3);
+  if (abs(across) > mix(1.0, 0.5, vState.w * smoothstep(endAt - 0.25, endAt, u))) discard;
 #endif
   float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
@@ -90,7 +86,7 @@ void main() {
   vec3 body = mix(vec3(0.55, 0.53, 0.015), vec3(0.62, 0.64, 0.035), smoothstep(0.1, 0.8, u));
   // A ray that is lifting is amber, darker toward its foot.
   body = mix(body, vec3(0.8, 0.56, 0.07) * mix(0.4, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
-  body = mix(body, mix(vec3(0.43, 0.47, 0.08), vec3(0.2, 0.36, 0.1), smoothstep(0.25, 0.9, u)), 0.95 * fresh);
+  body = mix(body, mix(vec3(0.4, 0.5, 0.09), vec3(0.17, 0.35, 0.1), smoothstep(0.3, 0.9, u)), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.94 + 0.1 * own, 0.88 + 0.2 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
@@ -167,10 +163,10 @@ void main() {
   float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
-  // A shut strap is pleated to three ridges: dark in the two creases between them and along its edges, brightest on the ridges.
-  float crest = min(abs(across), abs(abs(across) - 0.6667));
-  float seam = max(smoothstep(0.85, 1.0, abs(across)), 1.0 - smoothstep(0.0, 0.13, abs(abs(across) - 0.3333))) * fresh * smoothstep(1.0, 0.6, u);
-  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.6 * fresh * (1.0 - smoothstep(0.0, 0.15, crest)));
+  // The middle strap of a shut ray shades the two it lies on, most beside its own edge; its back is the brightest part.
+  float beside = smoothstep(0.3, 0.38, abs(across)) * (1.0 - smoothstep(0.42, 0.8, abs(across)));
+  float seam = max(smoothstep(0.9, 1.0, abs(across)), beside) * fresh * smoothstep(1.0, 0.6, u);
+  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.5 * fresh * (1.0 - smoothstep(0.08, 0.34, abs(across))));
   t.through *= 1.0 - 0.85 * seam;
   t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
