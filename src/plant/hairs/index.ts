@@ -62,13 +62,13 @@ const float SKY_BACK = 0.12;
 const float SKY_THROUGH = 0.5;
 const float STRAND_GAIN = SUN_THROUGH * 2.5066 * TT_SPREAD / 0.714;
 const vec3 RIME = vec3(0.92, 0.96, 1.0);
-const float RIME_SUN = 0.12;
+const float RIME_SUN = 0.3;
 const float RIME_SKY = 1.5;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
 const float RIME_FACE = 0.0;
-const float RIME_VELVET = 0.1;
+const float RIME_VELVET = 0.28;
 // A needle on the outline is seen from its shaded side, against the bright air.
-const float RIME_SHADE = 0.4;
+const float RIME_SHADE = 0.85;
 const float RIME_M = ${RIME_M.toFixed(6)};
 
 struct Strand {
@@ -147,7 +147,7 @@ void readHair(int k) {
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
     // Rime grows on a hair, not on the felt a strand of down stands for.
-    hairShare *= mix(1.0, hairSlim * hairSlim, uPlantFrost);
+    hairShare *= mix(1.0, hairSlim, uPlantFrost);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
