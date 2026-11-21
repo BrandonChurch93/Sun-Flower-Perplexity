@@ -1,0 +1,139 @@
+{
+  "critic": "R2",
+  "round": 4,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 10,
+    "a": 6,
+    "share": 0.6
+  },
+  "controlFromRound": 3,
+  "judged": {
+    "votes": 10,
+    "a": 4,
+    "share": 0.4
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-01.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1515,
+      "key": "bloom-hero",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "a",
+        "b"
+      ]
+    },
+    "set-B-04.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1350,
+      "key": "bloom-opening",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "e",
+        "b"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_29",
+      "family": "GPT",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 70,
+      "answer": "e, 70/100. The foreground leaves have visibly angular, polygon-like silhouettes despite the realistic lighting."
+    },
+    {
+      "juror": "reviewer_30",
+      "family": "Gemini",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 85,
+      "answer": "e, 85 — The visibly angular, low-polygon silhouettes on the foreground leaves (especially the upper-left leaf), paired with lightweight procedural textures, rim-lit spike hairs, and simple instanced background flowers, point to real-time 3D rendering under web geometry budgets rather than photography, generated art, or a top-budget cinematic."
+    },
+    {
+      "juror": "reviewer_31",
+      "family": "Claude",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 50,
+      "answer": "(a), confidence 50. The biggest factor was that this looks like a high-end path-traced CG render rather than a photo. The backlit fuzz on the stem and leaf edges is physically accurate, and the sun flare, depth of field and color grade look cinematic. Against that, the background sunflowers are repetitive and all face the same way, which could point to a skilled hobbyist render (d)."
+    },
+    {
+      "juror": "reviewer_32",
+      "family": "GLM",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 83,
+      "answer": "a, 83/100. The cinematic sunset backlighting picks out individual hairs along the sunflower’s silhouetted stem."
+    },
+    {
+      "juror": "reviewer_33",
+      "family": "Grok",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "b",
+      "confidence": 64,
+      "answer": "b, 64, It is a real commercially composed beauty still: one flawless sunflower on the right third, sun on the left, storm-and-gold grade, with backlit hairs and light direction that match a photograph rather than a catalog plate, a live web 3D demo, or generated art."
+    },
+    {
+      "juror": "reviewer_34",
+      "family": "GPT",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 83,
+      "answer": "a, 83/100. The sunset rim light catches individual sunflower hairs, giving the frame a polished cinematic look."
+    },
+    {
+      "juror": "reviewer_35",
+      "family": "Gemini",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 88,
+      "answer": "(e), confidence: 88. The most influential detail is the real-time 3D geometry and shader artifacts on the hero plant—specifically the faceted low-poly leaf silhouettes, sparse uniform spike meshes used for stem/leaf rim hairs, and procedural ribbon-like petals paired with WebGL-style post-processing bloom and instanced background flowers."
+    },
+    {
+      "juror": "reviewer_36",
+      "family": "Claude",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 50,
+      "answer": "(a), confidence 50. What most influenced me: it is a high-end, cinematic CG render. It has a 16:9 widescreen frame, a strong backlit sunset with fine rim-lit stem hairs, and heavy film-style depth of field. The sunflower bud has stylized, unnatural folded petals, so it is clearly not a stock photo or a catalog picture. The polish is above a typical real-time web demo or amateur art, but those remain the main alternatives."
+    },
+    {
+      "juror": "reviewer_37",
+      "family": "GLM",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 63,
+      "answer": "e, 63/100. The uniformly spaced, sharply rim-lit hairs around the foreground sunflower look procedurally rendered."
+    },
+    {
+      "juror": "reviewer_38",
+      "family": "Grok",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "b",
+      "confidence": 70,
+      "answer": "b, 70, It is a real professional photo staged as a generic sellable beauty shot: one backlit sunflower, empty sky, and no specific natural event."
+    }
+  ]
+}
