@@ -174,6 +174,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   fuzz *= 1.0 - 0.8 * rained;
 
   float dew = uPlantDew * (1.0 - wet);
+  through *= 1.0 - DEW_SHADE * dew * sheet;
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
   float mist = 0.0;
 #ifndef PLANT_FIELD

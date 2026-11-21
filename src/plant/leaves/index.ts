@@ -523,7 +523,7 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
     // A new blade sits on the stem: its stalk grows out under it in its first seconds.
-    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(9, 14, i) : 1)
+    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(9, 14, i) : 1) * (main && i >= 2 ? 1 + 0.3 * (1 - smoothstep(18, 23, time)) : 1)
     const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
     const firm = main ? early : 0.5 * early
@@ -559,13 +559,14 @@ export function create(options: PartOptions): PlantPart {
     }
     // From the night to the bloom the leaves under the bud are held up round it: narrow, pointed and angled upward.
     const crown = main ? smoothstep(7, 11, i) * early : 0
-    // Those leaves stand to the sides of the stem as the lens sees it, not in front of it.
-    if (crown > 0) {
+    // Before the bloom the leaves stand to the sides of the stem as the lens sees it, not in front of it.
+    const round = main && i >= 2 ? early : 0
+    if (round > 0) {
       const so = Math.sin(OPEN_SIDE)
       const co = Math.cos(OPEN_SIDE)
       const side = Math.atan2(frame.mx * co - frame.mz * so, frame.mx * so + frame.mz * co)
       const back = Math.PI - Math.abs(side)
-      const turn = crown * (side < 0 ? -1 : 1) * ((Math.abs(side) / (Math.abs(side) + 0.04)) * Math.max(0, SIDE_ANGLE - Math.abs(side)) - (back / (back + 0.04)) * Math.max(0, SIDE_ANGLE - back))
+      const turn = round * (side < 0 ? -1 : 1) * ((Math.abs(side) / (Math.abs(side) + 0.04)) * Math.max(0, SIDE_ANGLE - Math.abs(side)) - (back / (back + 0.04)) * Math.max(0, SIDE_ANGLE - back))
       const c = Math.cos(turn)
       const k = Math.sin(turn)
       const foot = stemRadius(time, leafStemFraction(i, time)) / Math.max(Math.hypot(frame.mx, frame.mz), 1e-4)
