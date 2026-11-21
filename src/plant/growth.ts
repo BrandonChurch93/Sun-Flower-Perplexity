@@ -334,7 +334,7 @@ export function leafStemFraction(i: number, time: number): number {
   const rank = i / (leafCount - 1)
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
   const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
-  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank) * settled) / h), smoothstep(1.5, 7, age))
+  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
 }
 
 export function leafLength(i: number, time: number): number {
