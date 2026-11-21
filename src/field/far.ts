@@ -18,7 +18,7 @@ const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const UNDER_FROM_M = 3
 const UNDER_BAND_M = 6
 // The dark layers, as shares of the height of the tops.
-const UNDER_LEVELS = [0.55, 0.9]
+const UNDER_LEVELS = [0.5, 0.68, 0.84]
 // From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
 const HEADS_FROM_M = 40
 const HEAD_AT = 0.9
@@ -142,7 +142,7 @@ void main() {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
     float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
-    float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
+    float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
