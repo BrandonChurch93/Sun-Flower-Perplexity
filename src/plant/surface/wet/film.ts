@@ -6,6 +6,14 @@ const float WET_ROUGH_DEEP = 0.08;
 const float WET_WAX = 0.4;
 const float WET_DARK = 0.3;
 const float WET_SHEER = 1.0;
+// How far the water levels the relief under it: little where the skin is damp, more under a standing sheet.
+const float WET_LEVEL_THIN = 0.25;
+const float WET_LEVEL_DEEP = 0.45;
+// The share of the sky behind it that a soaked blade passes between its veins, and how little a vein passes.
+const float WET_PASS = 0.05;
+const float WET_VEIN = 0.03;
+const float WET_RIPPLE_M = 0.0014;
+const float WET_RIPPLE = 0.4;
 const float WET_FORWARD = 0.6;
 
 // Water in a tissue keeps the light inside it for longer: each color is taken again, so the dark deepens and the hue grows.
@@ -27,6 +35,14 @@ float wetRuns(vec2 at) {
   float run = smoothstep(0.66, 0.72, track + 0.12 * (wander - 0.5));
   float fine = valueNoise(at * (1.0 / 0.0022) + 5.0);
   return saturate(0.12 + 0.3 * smoothstep(0.55, 0.8, fine) + 0.85 * run);
+}
+
+// How the small rises of a wet skin turn its mirror, along the two directions of the face. Finer than a pixel they are no longer turned one by one.
+vec3 wetRipple(vec2 at, vec3 t1, vec3 t2) {
+  vec2 g = at * (1.0 / WET_RIPPLE_M);
+  float seen = 1.0 - smoothstep(0.35, 1.1, length(fwidth(g)));
+  vec2 turn = vec2(valueNoise(g + 3.0), valueNoise(g + 71.0)) - 0.5;
+  return (t1 * turn.x + t2 * turn.y) * (2.0 * WET_RIPPLE * seen);
 }
 
 // The sky a blade is seen against: the dome, and the break in the cloud low over the land.

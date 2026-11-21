@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uMoon: { value: 0 }, uEarly: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uMoon: { value: 0 }, uDark: { value: 0 }, uEarly: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -91,7 +91,7 @@ vec3 plantWorld(vec3 local) {
   // Before the bloom every bud is its own size: 32 steps above the other three in aVary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
     q = local - uHeadAt.xyz;
-    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 1.45, floor(aVary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
+    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 2.6, floor(aVary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   }
   vec3 p = local * aPlace.w;
   p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
@@ -99,7 +99,7 @@ vec3 plantWorld(vec3 local) {
   // Before the bloom every neighbor has its own stalk, its own leaves and their own droop: 32 steps of each in aVary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
     float stalk = mix(0.75, 1.3, mod(aVary.w, 32.0) / 31.0);
-    float leaf = mix(0.75, 1.25, mod(floor(aVary.w / 32.0), 32.0) / 31.0);
+    float leaf = mix(0.75, 1.6, mod(floor(aVary.w / 32.0), 32.0) / 31.0);
     float droop = mix(-0.15, 0.6, mod(floor(aVary.w / 1024.0), 32.0) / 31.0);
     float reach = length(p.xz);
     p.y = p.y * mix(1.0, stalk, uEarly) - uEarly * droop * max(reach - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
@@ -147,6 +147,7 @@ uniform vec3 uEdge;
 uniform float uHang;
 uniform float uLate;
 uniform float uMoon;
+uniform float uDark;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -176,6 +177,10 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float lit = max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
   // Late in the bloom the lens is over the crop and the sun lower still: it lies along the tops and reaches twice as far down among the leaves.
   if (uLate > 0.0) lit = max(lit, mix(1.0, top + 0.6 * uLate * (1.0 - top), closed) * exp(-mix(1.0, mix(12.0 - 6.0 * uLate, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)));
+  // The moon stands a quarter of the way up the sky: the tops are in its light, and it dies off down among the leaves.
+  if (uMoon > 0.0) lit = mix(lit, exp(-2.5 * under), uMoon);
+  // In the night's own frames the moon is too weak to show a leaf lit: a third of it is left.
+  if (uDark > 0.0) lit *= 0.33;
   return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
@@ -207,6 +212,7 @@ vec3 cropAmbient(vec3 n) {
   vec3 fill = mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * uClosed);
   // Under the moon a neighbor's leaves get the sky the plant's own get, no more.
   if (uMoon > 0.0) fill = mix(fill, sky, uMoon);
+  if (uDark > 0.0) fill *= 0.33;
   return fill;
 }
 #define skyAmbient(n) cropAmbient(n)

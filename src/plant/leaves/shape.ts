@@ -34,12 +34,12 @@ export function veinAt(v: Vein, w: number): number {
 }
 
 // The half width of the blade at s, as a share of its greatest half width. `cord` is how heart shaped the base is, `tip` how drawn out the tip.
-export function widthAt(s: number, cord: number, tip: number): number {
+export function widthAt(s: number, cord: number, tip: number, straight = 0.65): number {
   const h0 = 0.1 + 0.46 * cord
   if (s < WIDEST) return h0 + (1 - h0) * Math.pow(Math.sin((0.5 * Math.PI * s) / WIDEST), 0.75)
   const q = (s - WIDEST) / (1 - WIDEST)
   // Past its widest the blade narrows almost straight to a drawn out point: a heart, not an oval.
-  return lerp(Math.pow(Math.max(0, 1 - Math.pow(q, 1.7)), 0.9), Math.pow(Math.max(0, 1 - q), 0.8), 0.65) * (1 - tip * smoothstep(0.5, 0.97, q))
+  return lerp(Math.pow(Math.max(0, 1 - Math.pow(q, 1.7)), 0.9), Math.pow(Math.max(0, 1 - q), 0.8), straight) * (1 - tip * smoothstep(0.5, 0.97, q))
 }
 
 // How far the lobes of a heart shaped base reach back past the end of the stalk, as a share of the length.

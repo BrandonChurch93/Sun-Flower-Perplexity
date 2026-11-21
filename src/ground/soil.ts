@@ -1,4 +1,5 @@
 import { config } from '../config.ts'
+import { segmentById } from '../director/timeline.ts'
 import { world as dawn } from '../worlds/dawn/index.ts'
 import { grassCover, stemFoot, turfCover } from './cover.ts'
 import { cropLight } from './light.ts'
@@ -24,6 +25,7 @@ const SUNWAY = (dawn.sun.azimuthDeg * Math.PI) / 180
 export const sunWayDir = { x: Math.sin(SUNWAY), z: Math.cos(SUNWAY) }
 export const sunWayRise = Math.tan((dawn.sun.elevationDeg * Math.PI) / 180)
 
+export const MATT_EASE_S = 3.5
 export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
@@ -31,6 +33,15 @@ export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, dom
 // The furrow the rain fills beside the plant, a shallow hollow where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: its middle lies leftM to the left of the plant and drifts by slope for each meter away from the lens, winding by windM, from fromM toward the lens to toM behind the plant, where it closes round.
 // halfM is half the width of the standing water at each of the places atM along it, and the shore wanders by wanderM. The floor lies depthM under the mean ground and rises over easeM beyond the water's edge; the banks stand bankM over the ground and stay off the plant within clearM. Until fromS the furrow has only the share before of its depth, and all of it by toS.
 export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.0155, bankM: 0.006, easeM: 0.05, wanderM: 0.012, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+// As the stem thickens in the rain it heaps the mud round its foot: this high at the stem, reaching this far, risen while the furrow is cut and settled again before the bloom.
+export const collar = { heightM: 0.004, reachM: 0.013 }
+const collarAt = (x: number, z: number, time: number, keptS: number): number => {
+  const k = step(furrow.fromS, furrow.toS, time) * (1 - step(keptS - MATT_EASE_S, keptS, time))
+  if (k <= 0) return 0
+  const a = Math.atan2(z, x)
+  const reach = collar.reachM * (1 + 0.25 * Math.sin(a * 3 + 1.3) + 0.15 * Math.sin(a * 7 + 4))
+  return k * collar.heightM * Math.exp(-(x * x + z * z) / (reach * reach))
+}
 // How far along the floor's slope a level is met, from 0 at the floor to 1 at the mean ground.
 // From the golden hour on the furrow is the deep cut it was when that unit was judged, with banks as high as it is deep and a floor that starts 0.3 of the way out.
 export const furrowKept = { depthM: 0.03, bankM: 0.03, flat: 0.3 }
@@ -69,7 +80,8 @@ const step = (a: number, b: number, v: number): number => {
 export function soilHeightAt(x: number, z: number, time: number): number {
   const e = emergence
   const r = Math.hypot(x, z)
-  if (r > e.radiusM * 1.7) return 0
+  const heap = collarAt(x, z, time, segmentById('bloom').start)
+  if (r > e.radiusM * 1.7) return heap
   const rise = step(-0.8, e.riseS, time) * (1 - 0.3 * step(e.riseS, e.riseS + 5, time))
   const a = Math.atan2(z, x)
   const s = (a * e.cracks) / 6.2832 + 0.07 * Math.sin(r * 420 + a * 2) + 0.05 * Math.sin(r * 1300)
@@ -85,7 +97,7 @@ export function soilHeightAt(x: number, z: number, time: number): number {
   const across = Math.abs(x * laneDir.z - z * laneDir.x)
   const way = Math.max(step(0.002, 0.012, along) * (1 - step(0.012, 0.03, across)), step(0.004, 0.016, x * sunWayDir.x + z * sunWayDir.z))
   const plate = (0.5 + 0.5 * hash11(id + 3)) * reach * (1 - 0.75 * gap) * (1 - hole.wayOpen * way)
-  return e.liftM * rise * (plate - 0.6 * crack * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r))
+  return e.liftM * rise * (plate - 0.6 * crack * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r)) + heap
 }
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
@@ -174,18 +186,25 @@ vec2 emerge(vec2 p) {
   float h = uEmerge.y * rise * (plate - 0.6 * crack * plate) + uDome.x * (1.0 - open) * (1.0 - smoothstep(0.003, 0.008, r)) - uHole.w * open * (1.0 - smoothstep(0.25 * uHole.z, uHole.z, r));
   return vec2(h, max(crack, 0.5 * gap * gap * rise));
 }
+float collar(vec2 p) {
+  float k = smoothstep(uFurrowTime.x, uFurrowTime.y, uTime) * (1.0 - smoothstep(uFurrowKept.x - ${MATT_EASE_S.toFixed(1)}, uFurrowKept.x, uTime));
+  if (k <= 0.0) return 0.0;
+  float a = atan(p.y, p.x);
+  float reach = ${collar.reachM} * (1.0 + 0.25 * sin(a * 3.0 + 1.3) + 0.15 * sin(a * 7.0 + 4.0));
+  return k * ${collar.heightM} * exp(-dot(p, p) / (reach * reach));
+}
 float soilHeight(vec2 p, float lod) {
   float fine = textureLod(tData, p * uTiles.x, lod).a - 0.55;
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
   float foot = 1.0 - smoothstep(uDome.y, uDome.y * 1.7, length(p));
-  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p);
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p) + collar(p);
 }
 `
 
 // With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
 export const dampFill = [1, 1.12, 1.1]
-const MATT_EASE_S = 3.5
+export const dawnSky = [0.85, 0.78, 0.66]
 export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
@@ -208,6 +227,12 @@ uniform float uKeptS;
 float soilMatt() {
   return 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
 }
+// The dawn alone: under its dew the soil gives back less of the sky and less of its blue, so it stays a warm black beside the sun's own light.
+uniform vec2 uRainS;
+float dawnOnly() {
+  return uTime < uRainS.x ? soilMatt() : 0.0;
+}
+const vec3 DAWN_SKY = vec3(${dawnSky.join(', ')});
 // The stem stands in its own shade: the soil round its foot is dark, in a ring that widens as the stem thickens.
 float footShade(vec2 p, float dull) {
   float reach = mix(0.006, 0.014, smoothstep(2.0, 20.0, uTime));
@@ -361,6 +386,8 @@ void main() {
   float ridge = 1.0;
   vec2 broken = emerge(p);
   vec2 tilt = g - vec2(emerge(p + vec2(0.0003, 0.0)).x - broken.x, emerge(p + vec2(0.0, 0.0003)).x - broken.x) / 0.0003;
+  float heaped = collar(p);
+  tilt -= vec2(collar(p + vec2(0.0003, 0.0)) - heaped, collar(p + vec2(0.0, 0.0003)) - heaped) / 0.0003;
   albedo *= 1.0 - 0.35 * broken.y;
   vec2 boxed = abs(vec2(dot(p, uRight), -dot(p, uToward)) - uWaterBox.xy);
   float pool = pooled(vWorld.y, uWet) * fade * smoothstep(0.92, 1.0, max(boxed.x, boxed.y) / uWaterBox.z);
@@ -439,7 +466,7 @@ void main() {
 #ifdef NEAR
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);

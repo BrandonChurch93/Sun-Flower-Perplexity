@@ -23,6 +23,7 @@ const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
 // The dew on a stem is finer than the shared bead sizes.
+const RAIN_FROM_S = 8
 const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
 
@@ -175,6 +176,7 @@ export function create(options: PartOptions): PlantPart {
     const pale = paleness(time)
     const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
+    const grounded = 1 - smoothstep(36.5, 40, time)
 
     const base = (u: number, s: number): number => {
       let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
@@ -328,10 +330,10 @@ export function create(options: PartOptions): PlantPart {
         if (reach <= 0 || d < -nodeR[k]) continue
         sky *= 1 - (0.4 * smoothstep(-nodeR[k], 3 * nodeR[k], d) * reach * reach) / (reach * reach + d * d)
       }
-      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky) * (1 - 0.8 * collared)
+      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky) * (1 - 0.8 * collared) * lerp(1, 0.3 + 0.7 * smoothstep(0, 0.004 + 1.6 * rFoot, s + off), grounded)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.002, 0.012, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.3, 0.55, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.001, 0.007, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
@@ -462,7 +464,7 @@ export function create(options: PartOptions): PlantPart {
         // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
         const patch = stretched * Math.min(1, r0 / c.thick[i])
         const own = c.own[w + 5]
-        const shown = c.sprout ? shed * smoothstep(0.2 * own, 0.2 * own + 0.25, time) * smoothstep(0.0005, 0.0025, S[SEED_ANCHOR] - s) : smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
+        const shown = c.sprout ? shed * smoothstep(0.3 + 0.2 * own, 0.55 + 0.2 * own, time) * smoothstep(0.0005, 0.0025, S[SEED_ANCHOR] - s) : smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
         const reach = shown > 0 ? radius : 0
         root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * reach
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
@@ -478,7 +480,7 @@ export function create(options: PartOptions): PlantPart {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
       if (first) dewDrawn = 0
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
       const tint = dew.tint()
       const sLow = 0.0015
       const sHigh = Math.max(S[SEED_ANCHOR] - 0.0012, 0.9 * ringS[main - 1])
@@ -511,7 +513,8 @@ export function create(options: PartOptions): PlantPart {
         seat[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         seat[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         seat[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
-        seat[o + 3] = Math.min(size, 0.45 * radius)
+        // On the thin young stem the dew stands in fine beads, never in drops as wide as the stem.
+        seat[o + 3] = Math.min(size, lerp(0.45, 0.11, (1 - rain) * (1 - smoothstep(9, 12, time))) * radius)
         tint[i * 3] = lerp(0.34, 0.04, rain)
         tint[i * 3 + 1] = lerp(0.34, 0.075, rain)
         tint[i * 3 + 2] = lerp(0.13, 0.04, rain)

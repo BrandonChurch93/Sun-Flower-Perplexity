@@ -18,18 +18,19 @@ const leaves0 = config.plant.stages.leaves[0]
 const HUSK_HALF_WIDTH = 0.31
 const HUSK_HALF_DEPTH = 0.25
 const HUSK_WALL = 0.023
-const REST_AXIS = unit(-0.42, 0.86, 0.28)
-const REST_SIDE = unit(0.87, 0, 0.5)
+const REST_AXIS = unit(-0.36, 0.9, 0.2)
+const REST_SIDE = unit(1, 0, 0.12)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
-const CRUMB_MAX_M = 0.00075
-const HUSK_ON_SOIL_M = 0.003
+const CRUMB_MAX_M = 0.0006
+const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
+const RAIN_FROM_S = 8
 const DEW_FACE = 0.28
-const DEW_EDGE = 0.32
+const DEW_EDGE = 0.2
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -123,12 +124,12 @@ function lump(seed: number, x: number, y: number, z: number, out: Float32Array, 
     const d = x * cr * Math.cos(ca) + y * cz + z * cr * Math.sin(ca)
     r += lerp(-0.2, 0.3, hash01(seed, 10 + k, 2)) * smoothstep(0.1, 1, d)
   }
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < 1; k++) {
     const cz = 2 * hash01(seed, 20 + k, 0) - 1
     const ca = TAU * hash01(seed, 20 + k, 1)
     const cr = Math.sqrt(Math.max(0, 1 - cz * cz))
     const d = x * cr * Math.cos(ca) + y * cz + z * cr * Math.sin(ca)
-    if (d > 0) r = Math.min(r, lerp(0.72, 0.95, hash01(seed, 20 + k, 2)) / d)
+    if (d > 0) r = Math.min(r, lerp(0.86, 1.05, hash01(seed, 20 + k, 2)) / d)
   }
   r *= lumpAt(x, y, z, 10 * hash01(seed, 33), 0) / 0.75
   out[at] = x * r * size * lerp(0.75, 1.3, hash01(seed, 30))
@@ -154,8 +155,8 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
     const onHusk = i >= shape.stemCrumbs
     // Three of the husk's crumbs are in the air at the dawn's first key, one below the other.
     const staged = onHusk && i - shape.stemCrumbs < CRUMBS_IN_AIR.length ? CRUMBS_IN_AIR[i - shape.stemCrumbs] : 0
-    const size = staged ? lerp(0.00038, 0.00048, hash01(own, 1)) : lerp(CRUMB_MIN_M, CRUMB_MAX_M, hash01(own, 1) ** 2.2)
-    const fall = lerp(0.75, 1.1, hash01(own, 40))
+    const size = staged ? lerp(0.0003, 0.00042, hash01(own, 1)) : lerp(CRUMB_MIN_M, CRUMB_MAX_M, hash01(own, 1) ** 2.2)
+    const fall = lerp(0.09, 0.14, hash01(own, 40))
     const far = lerp(0.004, 0.0095, hash01(own, 6))
     const where = onHusk ? toHusk + lerp(-0.7, 0.7, hash01(own, 7)) : TAU * hash01(own, 7)
     const az = 2 * hash01(own, 8) - 1
@@ -167,7 +168,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       around: onHusk ? lerp(-1.2, 1.2, hash01(own, 4)) : TAU * hash01(own, 4),
       size,
       seat: 0.4 * size,
-      from: staged ? CRUMBS_KEY_S - staged * fall : onHusk ? lerp(1.25, 3.05, hash01(own, 5)) : lerp(1.2, 3.6, hash01(own, 5)),
+      from: staged ? CRUMBS_KEY_S - staged * fall : onHusk ? lerp(1.25, 3.05, hash01(own, 5)) : lerp(1.7, 4.6, hash01(own, 5)),
       fall,
       landX: Math.cos(where) * far,
       landZ: Math.sin(where) * far,
@@ -349,7 +350,7 @@ export function create(options: PartOptions): PlantPart | null {
       const b = leaves.bodies[i % leaves.bodies.length]
       const edge = own > 0.85
       // Round the loop: 0 and a half are the two margins, the quarter between them is the middle of the upper face.
-      const round = edge ? (hash01(beadSeed, i, 1) < 0.5 ? 0 : 0.5) + lerp(-0.02, 0.02, hash01(beadSeed, i, 2)) : hash01(beadSeed, i, 1) < 0.72 ? lerp(0.04, 0.46, hash01(beadSeed, i, 2)) : lerp(0.54, 0.96, hash01(beadSeed, i, 2))
+      const round = edge ? (hash01(beadSeed, i, 1) < 0.5 ? 0 : 0.5) + lerp(-0.02, 0.02, hash01(beadSeed, i, 2)) : hash01(beadSeed, i, 1) < 0.72 ? lerp(0.03, 0.46, hash01(beadSeed, i, 2) ** 2.2) : lerp(0.54, 0.96, hash01(beadSeed, i, 2))
       beadSpot[i * 4] = lerp(edge ? 0.3 : 0.22, 0.93, hash01(beadSeed, i, 3)) * (b.rings - 1)
       beadSpot[i * 4 + 1] = (((round % 1) + 1) % 1) * b.loop
       beadSpot[i * 4 + 2] = own
@@ -394,18 +395,17 @@ export function create(options: PartOptions): PlantPart | null {
     const h1x = huskRest.x
     const h1z = huskRest.z
     const h1y = soilHeightAt(h1x, h1z, time) + HUSK_ON_SOIL_M
-    const lift = 0.005 * grown
-    const cx = h0x + tx * lift + 0.5 * (h1x - h0x)
-    const cy = h0y + ty * lift + 0.5 * (h1y - h0y)
-    const cz = h0z + tz * lift + 0.5 * (h1z - h0z)
-    const ka = (1 - drop) * (1 - drop)
-    const kb = 2 * drop * (1 - drop)
-    const kc = drop * drop
-    const hx = ka * h0x + kb * cx + kc * h1x
-    const hy = ka * h0y + kb * cy + kc * h1y - (1 - kept) * 0.016
-    const hz = ka * h0z + kb * cz + kc * h1z
+    // The shell is pushed off the tips along their own line, and only then falls beside the stem.
+    const beat = Math.sqrt(drop)
+    const off = 0.7 * huskLength * smoothstep(0, 0.84, beat)
+    const freed = clamp((beat - 0.84) / 0.16)
+    const fall = freed * freed
+    const hx = lerp(h0x + tx * off, h1x, fall)
+    const hy = lerp(h0y + ty * off, h1y, fall) - (1 - kept) * 0.016
+    // It falls clear of the seed leaves on the near side before it comes down.
+    const hz = lerp(h0z + tz * off, h1z, 1 - (1 - freed) * (1 - freed))
     // The shell tumbles from hanging mouth down on the tips to standing mouth up in the crumbs.
-    const turn = smoothstep(0.12, 0.95, drop)
+    const turn = smoothstep(0, 1, freed)
     let ax = -ty * REST_AXIS[2] + tz * REST_AXIS[1]
     let ay = -tz * REST_AXIS[0] + tx * REST_AXIS[2]
     let az = -tx * REST_AXIS[1] + ty * REST_AXIS[0]
@@ -443,7 +443,8 @@ export function create(options: PartOptions): PlantPart | null {
     const qy = B[2] * px - B[0] * pz
     const qz = B[0] * py - B[1] * px
     const loosen = smoothstep(seed0 - 1.5, seed0 + 0.2, time)
-    const gape = lerp(0.06, 0.2, loosen) + 0.42 * smoothstep(0, 0.3, drop) - 0.29 * smoothstep(0.6, 1, drop) + 0.5 * (1 - kept)
+    const gape = lerp(0.035, 0.12, loosen) + 0.03 * smoothstep(0, 0.84, beat) + 0.14 * freed + 0.5 * (1 - kept)
+    const pinch = (1 - 0.3 * freed) * (1 - smoothstep(seed0 + 0.7, seed0 + 1.6, time))
 
     for (const g of groups) {
       const out = g.slots[slot]
@@ -457,9 +458,10 @@ export function create(options: PartOptions): PlantPart | null {
           const f = roll(seedLeafFrameAt(pose, i), (i === 0 ? -0.15 : LEAF_TURN) * spread)
           const rs = stemRadius(time, seedLeafFraction(time)) * youngGirth(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time)) * (1 + (1 + STURDY) * collarAt(time))
           const half = length * lerp(lerp(0.186, 0.39, spread), lerp(0.16, 0.31, spread), wither) * (1 - 0.3 * wither)
-          const thick = length * lerp(lerp(0.122, 0.064, spread), lerp(0.105, 0.056, spread), wither) * (1 - 0.5 * wither)
-          const sag = 0.08 * spread + 0.6 * wither
+          const thick = length * lerp(lerp(0.122, 0.05, spread), lerp(0.105, 0.045, spread), wither) * (1 - 0.5 * wither)
+          const sag = 0.14 * spread + 0.6 * wither - 1.55 * Math.sin(seedLeafAngle(i, time)) * pinch
           const shut = lerp(0.35, 1, spread)
+          const canopy = lerp(1, 0.4, smoothstep(leaves0 + 0.3, leaves0 + 2.3, time))
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = leafOutline(s) * (1 + 0.035 * Math.sin(11 * s + 1.7 * b.side) * Math.sin(4.3 * s + 0.6 * b.side))
@@ -478,7 +480,7 @@ export function create(options: PartOptions): PlantPart | null {
               const c = Math.cos(phi)
               const e = Math.sin(phi)
               const x = h * c
-              const y = (e >= 0 ? top * e ** 0.8 : -bottom * (-e) ** 0.7) + 0.3 * wither * h * c * c
+              const y = (e >= 0 ? top * e ** 0.8 : -bottom * (-e) ** 0.7) + (0.3 * wither + 0.1 * spread) * h * c * c
               const at = b.base + a * row + k
               out[at * 3] = mx + f.wx * x + f.nx * y
               out[at * 3 + 1] = my + f.wy * x + f.ny * y
@@ -486,7 +488,7 @@ export function create(options: PartOptions): PlantPart | null {
               if (!first) continue
               state[at * 4] = pale
               state[at * 4 + 1] = wither
-              state[at * 4 + 2] = lerp(1, shut, Math.max(0, Math.min(1, 0.5 + 2 * e)))
+              state[at * 4 + 2] = lerp(1, shut, Math.max(0, Math.min(1, 0.5 + 2 * e))) * canopy
               state[at * 4 + 3] = 0
             }
           }
@@ -502,15 +504,16 @@ export function create(options: PartOptions): PlantPart | null {
           const arc = b.loop / 2
           const shown = kept > 0 ? 1 : 0
           const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
+          const shell = huskLength * (1 + 0.3 * freed)
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = huskOutline(s) * shown
-            const hw = huskLength * HUSK_HALF_WIDTH * o
-            const dp = huskLength * HUSK_HALF_DEPTH * o ** 0.9
-            const wall = a === b.rings - 1 ? 0 : Math.min(huskLength * HUSK_WALL, 0.6 * dp)
-            const reach = huskLength * s * shown
+            const hw = shell * HUSK_HALF_WIDTH * o
+            const dp = shell * HUSK_HALF_DEPTH * o ** 0.9
+            const wall = a === b.rings - 1 ? 0 : Math.min(shell * HUSK_WALL, 0.6 * dp)
+            const reach = shell * s * shown
             // The halves tore apart along a ragged line, wider toward the mouth.
-            const torn = 1 - smoothstep(0.1, 0.7, s) * (0.1 + 0.07 * Math.sin(19 * s + 2.1 * b.side) * Math.sin(7.3 * s + 1.3))
+            const torn = 1 - smoothstep(0.1, 0.7, s) * (0.05 + 0.035 * Math.sin(19 * s + 2.1 * b.side) * Math.sin(7.3 * s + 1.3) + 0.022 * Math.sin(47 * s + 4.4 * b.side) * Math.sin(29 * s + 0.7))
             const mx = hx + bx * reach
             const my = hy + by * reach
             const mz = hz + bz * reach
@@ -528,8 +531,8 @@ export function create(options: PartOptions): PlantPart | null {
               if (!first) continue
               state[at * 4] = 0
               state[at * 4 + 1] = 0
-              state[at * 4 + 2] = outer ? 1 : inside
-              state[at * 4 + 3] = lerp(0.55, 0.14, drop)
+              state[at * 4 + 2] = (outer ? 1 : inside) * lerp(1, lerp(0.3, 1, smoothstep(0, 0.4, s)), drop)
+              state[at * 4 + 3] = lerp(0.55, 0.42, drop)
             }
           }
         }
@@ -575,7 +578,7 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
       const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length
@@ -608,7 +611,8 @@ export function create(options: PartOptions): PlantPart | null {
         const open = smoothstep(0.07, 0.6, seedLeafAngle(b.side < 0 ? 0 : 1, time))
         const out0 = beadSpot[i * 4 + 3] * 0.6
         const wetSize = own > 0.85 ? 0.0003 + 0.002 * (own - 0.85) : 0.00012 + 0.0002 * beadSpot[i * 4 + 3]
-        const dewSize = beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        const dewed = beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM
+        const dewSize = own > 0.85 ? dewed * DEW_EDGE : 0.00008 + 0.5 * DEW_FACE * dewed + 0.00006 * beadSpot[i * 4 + 3]
         const size = lerp(dewSize, wetSize, rain)
         const lit = b.side < 0 ? 0 : 1
         tint[i * 3] = lerp(lerp(0.07, 0.2, lit), 0.02, rain)
@@ -633,7 +637,7 @@ export function create(options: PartOptions): PlantPart | null {
       let z: number
       if (c.half === 0) {
         // A crumb on the stem keeps its seat: the stem grows up through it, so it slides down to the foot and stays there.
-        const slid = c.along * (1 - smoothstep(c.from, c.from + 2.6, time))
+        const slid = c.along
         const n = stemAt(pose, slid)
         const ca2 = Math.cos(c.around)
         const sa2 = Math.sin(c.around)
@@ -668,11 +672,11 @@ export function create(options: PartOptions): PlantPart | null {
         z = hz + bz * reach + qz * across + oz * outward + uz * c.seat
       }
       // It lets go, falls and lies where it lands; the rain takes it into the ground.
-      const gone = c.half === 0 ? 0 : clamp((time - c.from) / c.fall)
+      const gone = clamp((time - c.from) / c.fall)
       const landY = soilHeightAt(fx + c.landX, fz + c.landZ, time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
       x = lerp(x, fx + c.landX, gone)
       z = lerp(z, fz + c.landZ, gone)
-      y = c.half === 0 ? y - under * (0.004 + 2.5 * c.size) : lerp(y, landY, gone * gone)
+      y = lerp(y, landY, gone * gone)
       const scale = under >= 1 ? 0 : 1
       const angle = c.angle + c.turns * gone
       const cs = Math.cos(angle)

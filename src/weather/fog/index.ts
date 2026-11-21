@@ -12,24 +12,54 @@ uniform vec3 uFogHigh;
 uniform vec3 uFogGlow;
 uniform float uFogThin;
 const float FOG_LOW_SHARE = 0.45;
-const float FOG_RING = 0.07;
-const vec3 FOG_RING_TAKES = vec3(0.0, 0.07, 0.15);
+const float FOG_RING = 0.052;
+const vec3 FOG_RING_TAKES = vec3(0.05, 0.145, 0.22);
+const float FOG_RING_UP = 0.5;
+const float FOG_WIDE = 1.28;
+const float FOG_HALO = 0.058;
+const float FOG_HALO_GAIN = 1.16;
+const float FOG_HALO_OVER = 0.3;
+const float FOG_SHAPE = 0.5;
+const float FOG_MIST = 0.5;
+const float FOG_RING_MIST = 0.9;
+const float FOG_HALO_LOW = 0.3;
+const float FOG_SKIRT_AT = 0.135;
+const float FOG_SKIRT_WIDE = 0.045;
+const float FOG_SKIRT_FAR = 0.25;
+const vec3 FOG_SKIRT_TAKES = vec3(0.0, 0.055, 0.085);
+const vec3 FOG_SKIRT_ADDS = vec3(0.14, 0.02, 0.0);
 vec3 fogCalm(vec3 dir) {
   return mix(uFogColor, uFogHigh, smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0))));
 }
-vec3 fogLight(vec3 dir) {
+// mist is how much thicker (above 0) or thinner the drifting fog is in this direction than on average: thick fog spreads the sun's halo wider and colors it more, so the halo has the fog's shape and not a circle's.
+vec3 fogLightIn(vec3 dir, float mist) {
   float toSun = saturate(dot(dir, uSunDir));
   float theta = acos(min(toSun, 1.0));
   float up = smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0)));
   // The fog is thickest along the ground, so the sun's light through it is weakest and reddest there: uFogSunTint is what it is at eye level, where the far things fade into it.
   float through = mix(1.0, 1.0 / FOG_LOW_SHARE, up);
-  vec3 color = mix(uFogColor, uFogHigh, up) + uFogSunTint * mix(vec3(1.0), vec3(1.0, 1.16, 1.35), up) * (through * pow(toSun, 6.0));
+  float wide = toSun * toSun;
+  wide *= wide;
+  wide *= wide;
+  vec3 color = mix(uFogColor, uFogHigh, up) + uFogSunTint * mix(vec3(1.0), vec3(1.0, 1.1, 1.22), up) * (through * FOG_WIDE * wide);
   // Close round the sun the glow is strong and less red, farther out it is the faint peach of the world's glow.
   vec3 near = vec3(4.2, 4.9, 8.9) * ((1.0 + 0.5 * uFogThin) * exp(-theta / (0.03 + 0.008 * uFogThin)));
-  color += uFogGlow * (FOG_LOW_SHARE * through) * (near + exp(-theta / 0.12));
-  // Between the disc and the wide glow the fog takes the blue out of the sun's light: the ring of peach round it.
-  float ring = theta / FOG_RING;
-  return color * (1.0 - FOG_RING_TAKES * (ring * ring * exp(2.0 - 2.0 * ring)));
+  float halo = theta * (1.0 - FOG_SHAPE * mist);
+  float above = (dir.y - uSunDir.y) / max(theta, 0.001);
+  float over = 0.5 + 0.5 * above;
+  // Down in the thick fog along the ground the halo is spent: there the sun's side is only paler, not colored.
+  float reach = mix(FOG_HALO_LOW, 1.0, smoothstep(0.02, 0.13, asin(clamp(dir.y, 0.0, 1.0))));
+  color += uFogGlow * (FOG_LOW_SHARE * through) * (near + FOG_HALO_GAIN * (1.0 + FOG_MIST * mist) * (reach * (1.0 - FOG_HALO_OVER * over * over)) * exp(-halo / FOG_HALO));
+  // Between the disc and the wide glow the fog takes the blue out of the sun's light: the ring of amber round it, deeper under the sun where the fog is thicker than over it.
+  float ring = halo / FOG_RING;
+  color *= 1.0 - FOG_RING_TAKES * (reach * (1.0 - FOG_RING_UP * above) * max(1.0 + FOG_RING_MIST * mist, 0.0) * ring * ring * exp(2.0 - 2.0 * ring));
+  // Farther out, level with the sun and over it, the fog keeps a faint peach skirt: a little green and blue gone about 0.135 rad out, a little red more beyond that.
+  float skirt = (halo - FOG_SKIRT_AT) / FOG_SKIRT_WIDE;
+  float beyond = smoothstep(0.08, 0.2, halo) * exp(-halo / FOG_SKIRT_FAR);
+  return color * (1.0 + (over * reach) * (FOG_SKIRT_ADDS * beyond - FOG_SKIRT_TAKES * exp(-skirt * skirt)));
+}
+vec3 fogLight(vec3 dir) {
+  return fogLightIn(dir, 0.0);
 }
 `
 
@@ -57,14 +87,15 @@ uniform float uSpeed;
 uniform float uLayer;
 uniform vec2 uToward;
 uniform float uCanopyM;
+uniform vec2 uUnder;
 uniform float uSunShare;
 uniform float uDeep;
 ${fogLight}
 const float BANK_SOLID = 0.5;
 const float BANK_UNDER = 0.12;
-const vec2 SUN_SIDE = vec2(0.15, 0.4);
-const vec3 BANK_AMONG = vec3(0.72, 1.0, 0.8);
-const vec3 SUN_AMONG = vec3(0.65, 1.12, 1.75);
+const vec2 SUN_SIDE = vec2(0.12, 0.34);
+const vec3 BANK_AMONG = vec3(0.5, 1.0, 0.82);
+const vec3 SUN_AMONG = vec3(0.65, 1.08, 1.9);
 float bankBroad(vec2 q, float y) {
   return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
 }
@@ -90,7 +121,7 @@ void main() {
   float thick = mix(smoothstep(0.3, 0.72, here), 1.0, BANK_SOLID) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.85, 1.0, vInfo.y / vInfo.z);
   // Under the leaves the drifting fog is thin: it lies over the closed canopy. Toward the sun it glows all the way down.
-  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(0.3 * uCanopyM, 0.7 * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
+  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(uUnder.x * uCanopyM, uUnder.y * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
   // Down among the plants little of the sky and none of the sun's glow reaches the fog.
   float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
   vec3 calm = fogCalm(v);
@@ -99,27 +130,34 @@ void main() {
 }
 `
 
-interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
+interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number; under?: [number, number] }
+
+// Where a sheet is thin under the leaves, as shares of the plant's height. The first sheet stands between the plant and the first row: it veils that row's heads and leaves its bodies dark. It is gone as the far shapes come out, so the ridge shows through the unit's last second as it did without it.
+const UNDER: [number, number] = [0.3, 0.7]
+const UNDER_FIRST: [number, number] = [0.6, 1]
 
 const BANKS: Bank[] = [
-  { radiusM: 1.9, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.05 },
-  { radiusM: 2.5, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.08 },
-  { radiusM: 3, topM: 1.55, scaleM: 3, alpha: 0.14, speed: 0.07 },
-  { radiusM: 3.8, topM: 1.7, scaleM: 3.5, alpha: 0.26, speed: 0.06 },
-  { radiusM: 5, topM: 1.9, scaleM: 4, alpha: 0.4, speed: 0.09 },
-  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.55, speed: 0.08 },
+  { radiusM: 1.9, topM: 1.55, scaleM: 2.5, alpha: 0.07, speed: 0.05 },
+  { radiusM: 2.5, topM: 1.55, scaleM: 2.5, alpha: 0.08, speed: 0.08 },
+  { radiusM: 3, topM: 1.55, scaleM: 3, alpha: 0.09, speed: 0.07 },
+  { radiusM: 3.8, topM: 1.7, scaleM: 3.5, alpha: 0.17, speed: 0.06 },
+  { radiusM: 5, topM: 1.9, scaleM: 4, alpha: 0.34, speed: 0.09 },
+  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.52, speed: 0.08 },
   { radiusM: 11, topM: 1.9, scaleM: 8, alpha: 0.65, speed: 0.11 },
   { radiusM: 20, topM: 1.65, scaleM: 15, alpha: 0.7, speed: 0.1 },
 ]
+
+const FIRST: Bank = { radiusM: 1.2, topM: 1.55, scaleM: 2.5, alpha: 0.05, speed: 0.06, under: UNDER_FIRST }
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
 const CLOSE_OVER_S = 4
-const SUN_NEAR = 0.5
+const SUN_NEAR = 1.2
 const SUN_FAR = 2.4
 const DEEP_NEAR = 0.12
 const DEEP_FAR = 0.33
+const NEAR_M = 1.9
 const FAR_M = 4.5
 
 const smooth = (a: number, b: number, x: number): number => {
@@ -164,14 +202,15 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
   const now = { value: 0 }
   const canopy = { value: 1 }
   const toward = { value: new THREE.Vector2(windToward.x, windToward.z) }
-  const meshes = BANKS.map((bank, i) => {
-    const far = smooth(BANKS[0].radiusM, FAR_M, bank.radiusM)
+  const first = { value: FIRST.alpha }
+  const sheet = (bank: Bank, layer: number, order: number, alpha: { value: number }): THREE.Mesh => {
+    const far = smooth(NEAR_M, FAR_M, bank.radiusM)
     const geometry = ringStrip(96, () => ({ radius: bank.radiusM, top: bank.topM }))
     const surface = makeSurface({
-      name: `fog bank ${i}`,
+      name: `fog bank ${layer}`,
       vertex,
       fragment,
-      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
+      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: alpha, uUnder: { value: new THREE.Vector2().fromArray(bank.under ?? UNDER) }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * layer + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
@@ -179,9 +218,11 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
     const mesh = new THREE.Mesh(geometry, surface.main)
     mesh.frustumCulled = false
     mesh.matrixAutoUpdate = false
-    mesh.renderOrder = BANK_ORDER + (BANKS.length - 1 - i)
+    mesh.renderOrder = order
     return mesh
-  })
+  }
+  const last = BANK_ORDER + BANKS.length - 1
+  const meshes = [...BANKS.map((bank, i) => sheet(bank, i, last - i, { value: bank.alpha })), sheet(FIRST, BANKS.length, last + 0.5, first)]
   return {
     meshes,
     uniforms,
@@ -189,6 +230,7 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
       now.value = time
       canopy.value = heightAt(time)
       uniforms.uFogThin.value = fogThinAt(time)
+      first.value = FIRST.alpha * (1 - fogFarAt(time))
     },
   }
 }

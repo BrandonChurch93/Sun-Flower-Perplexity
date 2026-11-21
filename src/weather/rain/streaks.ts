@@ -20,6 +20,7 @@ out float vAlong;
 out float vShare;
 out float vSeed;
 out float vSeen;
+out float vRun;
 out vec3 vWorld;
 void main() {
   vec3 a = (viewMatrix * vec4(aOpen.xyz, 1.0)).xyz;
@@ -39,16 +40,17 @@ void main() {
   float lengthM = distance(aOpen.xyz, aClose.xyz);
   mid.xy += across * (position.x * halfM) + along * ((2.0 * position.y - 1.0) * halfM);
   vAcross = position.x;
+  vRun = position.y;
   float whole = (lengthM + 2.0 * halfM) / halfM;
   vEnds = vec2(position.y, 1.0 - position.y) * whole;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
   // No two drops catch the band alike: most are dim and a few of the fine ones flare. Off the focus one fine drop in a few is drawn, the brighter for the rest.
-  float catchLight = mix(0.3, mix(2.6, 1.0, smoothstep(0.0003, 0.0007, r)), pow(fract(aClose.w * 13.7 + 0.31), 3.0));
+  float catchLight = mix(0.2, mix(2.6, 1.0, smoothstep(0.0003, 0.0007, r)), pow(fract(aClose.w * 13.7 + 0.31), 3.0));
   float nearFocus = smoothstep(uBand.x, uBand.y, depth / uFocusM) * (1.0 - smoothstep(uBand.z, uBand.w, depth / uFocusM));
-  // A heavy drop past twice the focus is a soft bar wider than 5 px under this lens: it dims to nearly nothing there and goes into the haze.
-  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0 - 0.93 * smoothstep(1.3, 2.4, depth / uFocusM);
-  vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
+  // A heavy drop off the focus is a soft bar wider than 5 px under this lens, and one near the lens is in the frame for a single exposure: both dim to nearly nothing and go into the haze.
+  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : (1.0 - 0.93 * smoothstep(1.1, 1.5, depth / uFocusM)) * (0.07 + 0.93 * smoothstep(0.5, 0.8, depth / uFocusM));
+  vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.05, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
   float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
   vSeen = min(1.0, max(0.09, least * least));
@@ -65,6 +67,7 @@ in float vAlong;
 in float vShare;
 in float vSeed;
 in float vSeen;
+in float vRun;
 in vec3 vWorld;
 uniform vec3 uLight;
 uniform vec3 uShade;
@@ -82,7 +85,9 @@ void main() {
   // Seen from above, a drop shows the dark land behind it and little of the band.
   float rise = normalize(vWorld - uCamPos).y;
   float level = smoothstep(-0.12, 0.0, rise);
-  float cover = saturate(vShare * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
+  // The line a drop gathers swells in and out of sight as the drop swings, so a streak has no hard end.
+  float ends = smoothstep(0.0, 0.3, min(vRun, 1.0 - vRun));
+  float cover = saturate(vShare * 1.25 * ends * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
   outColor = vec4(applyFog(color, vWorld), cover);
 }
 `
@@ -90,12 +95,14 @@ void main() {
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 6
 // The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
-const FINE_NEAR = 0.82
-const FINE_REACH = 1.28
+const FINE_NEAR = 0.92
+const FINE_REACH = 1.1
 // A little way off the focus the same drops are soft and a few pixels thick, and a share of them is drawn there.
-const SOFT_NEAR = 0.74
-const SOFT_REACH = 1.5
-const SOFT_KEEP = 0.3
+const SOFT_NEAR = 0.85
+const SOFT_REACH = 1.21
+const SOFT_KEEP = 0.6
+// The air holds more of the finest rain than marks the puddles.
+const FINE_IN_AIR = 3.5
 const SLOWEST_M_PER_S = 0.5
 // The wind carries a light drop farther than a heavy one, and gusts carry each a little differently, so no two fall at one angle. Every path still ends at its own landing.
 const CARRY_SPREAD = 0.32
@@ -130,7 +137,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 16 },
+    uGain: { value: 14 },
     uKeep: { value: SOFT_KEEP },
     uBand: { value: new THREE.Vector4(SOFT_NEAR, FINE_NEAR, FINE_REACH, SOFT_REACH) },
     uLight: { value: new THREE.Vector3().fromArray(light) },
@@ -176,7 +183,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
           if (off > room * tanX * 1.2 + 0.3) continue
           // The highest a drop over this cell can be and still show in the frame.
           const top = Math.max(0.3, eye.y + room * (rise + tanY * 1.2) + 0.2)
-          const series = depth > fineFrom - RAIN_CELL_M && depth < fineTo + RAIN_CELL_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
+          const series = depth > fineFrom - RAIN_CELL_M && depth < fineTo + RAIN_CELL_M ? RAIN_SERIES + Math.round(RAIN_FINE_SERIES * FINE_IN_AIR) : RAIN_SERIES
           for (let s = 0; s < series && n < MAX_STREAKS; s++) {
             const period = seriesPeriod(i, j, s)
             const last = close + top / (SLOWEST_M_PER_S * down)

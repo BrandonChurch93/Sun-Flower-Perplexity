@@ -110,7 +110,7 @@ void main() {
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
     albedo *= mix(vec3(1.0), mix(mix(vec3(1.15, 2.0, 0.85), mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), uBudEarly), vec3(2.6), smoothstep(0.78, 1.0, ax) * (1.0 - uBudEarly)), uBudShut);
     // A young bract thins and pales from its keel to its lip.
-    albedo = mix(albedo, vec3(0.3, 0.37, 0.25), saturate(0.85 * pow(smoothstep(0.0, 0.9, ax), 1.3) + 0.45 * smoothstep(0.3, 1.0, u)) * smoothstep(0.03, 0.35, u) * (1.0 - 0.6 * smoothstep(0.5, 1.0, rank)) * uBudEarly * uBudShut);
+    albedo = mix(albedo, vec3(0.36, 0.43, 0.3), saturate(0.85 * pow(smoothstep(0.0, 0.9, ax), 1.3) + 0.8 * smoothstep(0.25, 0.9, u)) * smoothstep(0.03, 0.35, u) * (1.0 - 0.3 * smoothstep(0.5, 1.0, rank)) * uBudEarly * uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
@@ -135,14 +135,14 @@ void main() {
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     // Shut, the foot of a bract lies under the points of the row below it.
-    t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.2, 1.0, smoothstep(0.0, 0.5, u)), uBudEarly), uBudShut);
+    t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.42, 1.0, smoothstep(0.0, 0.4, u)), uBudEarly), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
     // Rime settles on the points and on a lip the air reaches: where a lip lies tucked under its neighbor there is none.
-    float open = smoothstep(0.25, 0.7, u) * smoothstep(-0.25, 0.25, sin(u * 11.0 + seed * 40.0 + step(0.0, x) * 2.1) * sin(u * 5.3 + seed * 17.0 + 1.0) + 0.15);
-    gather = max(max(smoothstep(0.82, 1.0, ax) * mix(1.0, open, uBudEarly * uBudShut), smoothstep(0.8, 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
+    float open = smoothstep(0.1, 0.35, u) * (0.75 + 0.25 * smoothstep(-0.25, 0.25, sin(u * 11.0 + seed * 40.0 + step(0.0, x) * 2.1) * sin(u * 5.3 + seed * 17.0 + 1.0) + 0.15));
+    gather = max(max(smoothstep(mix(0.82, 0.64, uBudEarly * uBudShut), 1.0, ax) * mix(1.0, open, uBudEarly * uBudShut), smoothstep(mix(0.8, 0.5, uBudEarly * uBudShut), 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
