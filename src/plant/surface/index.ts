@@ -50,33 +50,39 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
 }
 
 // The share of the sun a thin tissue passes when 'through' is 1. With it a part never returns more than arrives: albedo plus what comes through stays under 1.
-const float TISSUE_THROUGH = 0.34;
+const float TISSUE_THROUGH = 0.25;
 // How much of the light through goes on toward where it was heading, and how tight that lobe is. The lobe keeps its energy: (k + 2) / 2 at its peak.
 const float TISSUE_FORWARD = 0.4;
 // Wax over a cell wall: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 // The fuzz at its brightest, as a share of the sun.
 const float TISSUE_FUZZ = 0.25;
-// A thin part in shadow still gets the sun that came through whatever shades it, taken as one more layer of its own kind.
+// A thin part shaded by another thin part lying against it still gets the sun that came through that one, taken as a layer of its own kind. Anything farther than this toward the sun shades it fully.
 const float TISSUE_LAYER = 1.6;
+const float TISSUE_LAYER_M = 0.006;
 
-// The sky is not even: it is brighter and warmer on the sun's side, dimmer and cooler away from it. This keeps the mean of skyAmbient.
+// The sky is not even. With the sun low, most of its light comes from the sun's side and that side is warm; away from it the sky is dim and takes the color of the zenith. Over all directions this keeps the mean of skyAmbient.
 vec3 tissueSky(vec3 n) {
   vec3 sky = skyAmbient(n);
-  float toward = dot(n.xz, uSunDir.xz);
+  float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
+  float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
+  float side = saturate(0.5 + 0.5 * toward);
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
   float cool = dot(uSkyZenith, vec3(0.3, 0.6, 0.1));
-  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.55 * saturate(-toward) * smoothstep(-0.3, 0.3, n.y));
+  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.75 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
 #endif
-  return sky * (1.0 + 0.5 * toward);
+  return sky * mix(1.0, 0.2 + 2.56 * side * side * side, level);
 }
 
 vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
-  vec3 N = t.normal;
+  // A part that hands over normals on the far side is turned round instead of lit from inside.
+  float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
+  vec3 N = t.normal * turn;
+  vec3 F = t.face * turn;
   vec3 L = uSunDir;
   float ndl = dot(N, L);
-  float fdl = dot(t.face, L);
+  float fdl = dot(F, L);
   float ndv = min(abs(dot(N, view)) + 0.002, 1.0);
   float against = saturate(dot(-view, L));
   float grazing = 1.0 - ndv;
@@ -107,7 +113,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
 
   // Frost: the tissue under it turns a dull cold green, and a thin pale bloom lies on it, thicker on faces that look up, on edges and on hair.
   float frost = uPlantFrost;
-  float bloom = frost * saturate(0.14 + 0.4 * saturate(N.y) * saturate(N.y) + 0.55 * grazing * grazing) * (0.55 + 0.45 * t.sheen);
+  float bloom = frost * (0.1 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(0.92, 1.0, 1.04) * grey, 0.4) * 0.85, frost);
   albedo = mix(albedo, vec3(0.7, 0.76, 0.84), bloom);
@@ -115,7 +121,8 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
 
-  float sun = plantSun(world, fdl >= 0.0 ? t.face : -t.face);
+  vec3 lee = fdl >= 0.0 ? F : -F;
+  float sun = plantSun(world, lee);
   float open = plantSky(world) * t.occlusion;
   vec3 skyFront = tissueSky(N);
   vec3 skyBack = tissueSky(-N);
@@ -129,14 +136,18 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float slant = saturate(0.6 * (1.0 / max(ndv, 0.3) - 1.0));
   vec3 passed = through * mix(vec3(1.0), hue, slant) * (1.0 - 0.3 * slant);
   float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * 2.5 * against * against * against;
-  vec3 layer = min(through * TISSUE_LAYER, vec3(1.0));
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
   color += passed * (uSunColor * (wrap * lobe * sun) + skyBack * open);
-  color += (uSunColor * (sun * saturate((ndl + 0.7) / 1.7) * (0.15 + 0.85 * against * against)) + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
+  color += (uSunColor * (sun * (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against)) + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
   return color;
 #else
+  vec3 glow = vec3(sun);
+  if (peak > 0.0 && sun < 0.98 && uShadowOn > 0.5) {
+    float beyond = sunShadow(world + L * TISSUE_LAYER_M, lee, uShadowTexelM * 2.5);
+    glow += min(through * TISSUE_LAYER, vec3(1.0)) * saturate(beyond - sun);
+  }
   vec3 H = normalize(L + view);
   float ndh = saturate(dot(N, H));
   float vdh = saturate(dot(view, H));
@@ -183,9 +194,11 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 direct = uSunColor * (sun * crease);
   vec3 color = albedo * (direct * (matte * enter * under) + skyFront * buried * under);
   color += direct * gloss + skyGloss * (mirror * open);
-  color += passed * (uSunColor * (crease * wrap * lobe) * mix(layer, vec3(1.0), sun) + skyBack * open);
-  float catches = saturate((ndl + 0.7) / 1.7) * (0.15 + 0.85 * against * against);
-  color += (direct * catches + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
+  color += passed * (uSunColor * glow * (crease * wrap * lobe) + skyBack * open);
+  float catches = (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against);
+  // Hair is colorless, but what it scatters has already met the skin under it.
+  vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
+  color += (direct * catches + skyFront * (0.5 * open)) * pale * (TISSUE_FUZZ * fuzz * rim);
   return color;
 #endif
 }
