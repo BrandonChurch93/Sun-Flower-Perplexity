@@ -86,6 +86,7 @@ uniform vec2 uDetailSize;
 uniform float uVeinPad;
 uniform float uGlow;
 uniform float uWarm;
+uniform float uFresh;
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
@@ -120,7 +121,7 @@ void main() {
   float cells = smoothstep(0.96, 1.25, fine);
 
   vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.7 + 0.3 * vRipe));
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe));
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
@@ -137,10 +138,10 @@ void main() {
   // A young blade lets the light through evenly: the thin patches come with age.
   float thin = (0.16 + mix(0.3, smoothstep(0.35, 0.85, mark.g), vRipe) + 4.6 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
   // A leaf holds back red: what comes through is a fresh green, yellower where the blade is thinnest and against the low sun.
-  vec3 through = mix(vec3(0.2, 0.3, 0.07), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
+  vec3 through = mix(mix(vec3(0.2, 0.3, 0.07), vec3(0.25, 0.27, 0.08), uFresh), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
   through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
-  through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe);
+  through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe) * (1.0 - 0.7 * uFresh);
   through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
