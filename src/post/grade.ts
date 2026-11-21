@@ -18,6 +18,8 @@ uniform float uKeep;
 uniform float uPunch;
 uniform float uPale;
 uniform float uGreens;
+uniform float uTop;
+uniform float uWhiten;
 uniform sampler2D tHot;
 uniform vec2 uSunAt;
 uniform float uStar;
@@ -59,8 +61,11 @@ vec3 tone(vec3 c) {
   float burn = smoothstep(0.75, 1.05, max(y.r, max(y.g, y.b)));
   float hi = max(y.r, max(y.g, y.b));
   y += vec3(1.0, 1.0, 0.8) * (uPale * burn * burn * smoothstep(0.3, 0.6, (hi - min(y.r, min(y.g, y.b))) / max(hi, 1e-5)));
+  // The brightest light loses its hue: on film the area round a sun in the frame is near white, not the sun's own color.
+  float white = dot(y, vec3(0.2126, 0.7152, 0.0722));
+  y = mix(y, vec3(white), uWhiten * smoothstep(0.6, 1.0, white));
   vec3 over = max(y - 0.88, 0.0);
-  return min(y, 0.88) + 0.12 * (1.0 - exp(-over / 0.12));
+  return min(y, 0.88) + uTop * (1.0 - exp(-over / uTop));
 }
 // The star the edges of the aperture blades draw round a point of light: seven blades, fourteen soft rays, one pair far longer than the rest, widest at the light and fading to nothing, as bright as what shows of the light itself.
 vec3 star(vec2 px) {
@@ -104,7 +109,9 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
   float tight = 1.0 + r * r / 0.0012;
-  float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0056);
+  // The tight lobe's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
+  float tail = r * r / 0.0289;
+  float glow = 0.64 / (tight * sqrt(tight)) * exp(-tail * tail) + 0.36 * exp(-r * r / 0.0056);
   vec3 glass = mix(vec3(1.0, 0.92, 0.82), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
