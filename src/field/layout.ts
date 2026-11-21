@@ -26,7 +26,7 @@ export const lagOf = (index: number, count: number): number => -MAX_LAG_S * (((i
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
 export const fieldNearM = 12
-export const fieldFarM = 42
+export const fieldFarM = 40
 export const fieldPicturesM = 150
 export const fieldEndM = 600
 const NEAR_BAND_M = 4
@@ -116,7 +116,7 @@ export function fieldPlaces(): FieldPlaces {
         continue
       }
       // The pictures thin out with distance and hand over to the carpet plant by plant.
-      const keep = (1 - 0.55 * step(70, 120, reach)) * (1 - step(fieldPicturesM - carpetBandM, fieldPicturesM, reach))
+      const keep = (1 - 0.6 * step(58, 110, reach)) * (1 - step(fieldPicturesM - carpetBandM, fieldPicturesM, reach))
       if (hash01(SEED, 13, id) >= keep) continue
       pictures.push(x, z, Math.floor(hash01(SEED, 14, id) * pictureCount), size, leanX, leanZ, tone, id)
     }

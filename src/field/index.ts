@@ -10,7 +10,7 @@ import { PLACE, farVariants, fieldPlaces, lagOf, nearVariants, shareOf } from '.
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.775
 
-interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; lag: number; plant: Plant | null }
+interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; lag: number; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, lag: number): Group {
@@ -33,28 +33,27 @@ export class Field {
       ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), lagOf(i, farVariants.length))),
     ]
     this.far = new FarField(places.pictures)
-    this.groups.push({ plant: null, all: places.pictures, seen: this.far.places, count: this.far.count, lag: 0 })
-    this.meshes = [...this.groups.flatMap((g) => g.plant?.meshes ?? []), ...this.far.meshes]
+    this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
   }
 
   get plants(): number {
-    return this.groups.reduce((sum, g) => sum + g.count, 0)
+    return this.groups.reduce((sum, g) => sum + g.count, this.far.count)
   }
 
   async load(assets: Assets): Promise<void> {
-    for (const g of this.groups) await g.plant?.load(assets)
+    for (const g of this.groups) await g.plant.load(assets)
     await this.far.load(assets)
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number): void {
-    for (const g of this.groups) g.plant?.prepare(Math.max(0, timeOpen + g.lag), Math.max(0, timeClose + g.lag), open, close)
+    for (const g of this.groups) g.plant.prepare(Math.max(0, timeOpen + g.lag), Math.max(0, timeClose + g.lag), open, close)
     const canopy = heightAt(timeOpen) * CANOPY
     fieldUniforms.uCanopy.value = canopy
     this.far.prepare(timeOpen, timeClose, open, close, eyeHeightM, canopy)
   }
 
   show(on: boolean): void {
-    for (const g of this.groups) if (g.plant) g.plant.visible = on
+    for (const g of this.groups) g.plant.visible = on
     this.far.show(on)
   }
 
@@ -82,8 +81,7 @@ export class Field {
         n += PLACE
       }
       g.seen.needsUpdate = true
-      if (g.plant) g.plant.show(n / PLACE)
-      else (this.far.pictures.geometry as THREE.InstancedBufferGeometry).instanceCount = n / PLACE
+      g.plant.show(n / PLACE)
       total += n / PLACE
     }
     this.far.look(pose)

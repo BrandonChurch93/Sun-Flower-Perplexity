@@ -5,8 +5,7 @@ import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
-import { fieldUniforms, makePartSurface } from '../plant/part.ts'
-import { tissueGlsl } from '../plant/surface/index.ts'
+import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, lagOf, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
@@ -20,7 +19,7 @@ const UNDER_BAND_M = 9
 const UNDER_LEVELS = [0.5, 0.76]
 
 const pictureVertex = /* glsl */ `
-in vec3 position;
+in vec2 aCorner;
 in vec4 aPlace;
 in vec4 aVary;
 out vec2 vUv;
@@ -35,9 +34,13 @@ uniform float uPlantWind;
 uniform float uPlantHeight;
 ${swayGlsl}
 void main() {
-  float v = mix(1.0 - uCrop, 1.0, position.y);
+  // Seen from above and far off, only the head and the leaves beside it clear the rows in front: the picture is cut to them.
+  float above = step(uCrop, 0.99);
+  float off = above * smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz));
+  float across = aCorner.x * mix(1.0, mix(0.8, 0.56, off), above);
+  float v = mix(1.0 - uCrop * mix(1.0, 0.6, off), 1.0, aCorner.y);
   float h = v * uTile.y * aPlace.w;
-  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (position.x * uTile.x * aPlace.w);
+  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (across * uTile.x * aPlace.w);
   world.xz += aVary.xy * h;
   // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
   float tall = max(uPlantHeight * aPlace.w, 0.001);
@@ -46,7 +49,7 @@ void main() {
   world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
-  vUv = vec2((aPlace.z + mix(inset, 1.0 - inset, position.x + 0.5)) / uCount, v);
+  vUv = vec2((aPlace.z + clamp(across + 0.5, inset, 1.0 - inset)) / uCount, v);
   vWorld = world;
   vDepth = -view.z;
   vTone = 0.78 + 0.44 * aVary.z;
@@ -97,7 +100,7 @@ void main() {
 }
 `
 
-const sheetCommon = /* glsl */ `
+const sheetFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
 in vec3 vTop;
@@ -105,88 +108,33 @@ in vec3 vMid;
 uniform vec2 uToward;
 uniform vec2 uStart;
 uniform float uCover;
-// A share of the plants, each one whole: the sheet comes in plant by plant.
-float present(out float along, out float across) {
-  along = -dot(vWorld.xz, uToward);
-  across = vWorld.x * uToward.y - vWorld.z * uToward.x;
-  vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
-  float share = uCover * smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
-  return share - hash21(cell);
-}
-`
-
-const carpetFragment = /* glsl */ `
-${sheetCommon}
+uniform float uLevel;
 void main() {
-  float along;
-  float across;
-  if (present(along, across) < 0.0) discard;
-  float grain = valueNoise(vec2(across * 2.2, along * 0.045));
-  float patchy = valueNoise(vWorld.xz * 0.028);
-  vec3 color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
+  float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  vec3 color;
+  if (uLevel > 0.0) {
+    // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
+    vec2 p = vWorld.xz + uLevel * 37.0;
+    float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
+    float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
+    if (clump > share) discard;
+    float inside = (share - clump) / max(share, 0.01);
+    color = vMid * mix(0.3, 0.95, inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)});
+  } else {
+    // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
+    float along = -dot(vWorld.xz, uToward);
+    float across = vWorld.x * uToward.y - vWorld.z * uToward.x;
+    vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
+    if (uCover * reach < hash21(cell)) discard;
+    float grain = valueNoise(vec2(across * 2.2, along * 0.045));
+    float patchy = valueNoise(vWorld.xz * 0.028);
+    color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
+  }
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
     return;
   }
   outColor = finish(color, vWorld, vDepth, -1.0);
-}
-`
-
-const underVertex = /* glsl */ `
-in vec3 position;
-out vec3 vWorld;
-out float vDepth;
-uniform float uHeight;
-void main() {
-  vec4 world = vec4(position.x, uHeight, position.z, 1.0);
-  vec4 view = viewMatrix * world;
-  vWorld = world.xyz;
-  vDepth = -view.z;
-  vPlantTone = 0.5;
-  gl_Position = projectionMatrix * view;
-}
-`
-
-const underFragment = /* glsl */ `
-in vec3 vWorld;
-in float vDepth;
-uniform vec2 uStart;
-uniform float uCover;
-uniform float uLevel;
-${tissueGlsl}
-// Clumps of leaves with holes between them, fewer toward the front of the field, lit as leaves deep under the tops.
-void main() {
-  vec2 p = vWorld.xz + uLevel * 37.0;
-  float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
-  float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz)));
-  if (clump > share) discard;
-  float inside = (share - clump) / max(share, 0.01);
-  Tissue t;
-  t.albedo = mix(vec3(0.04, 0.12, 0.025), vec3(0.1, 0.3, 0.06), inside);
-  t.through = vec3(0.14, 0.5, 0.05);
-  // A leaf in the mass tips toward the viewer, so the light behind it comes through.
-  t.normal = normalize(vec3(-uSunDir.x, 0.9, -uSunDir.z));
-  t.face = t.normal;
-  t.rough = 0.8;
-  t.wax = 0.1;
-  t.sheen = 0.0;
-  t.occlusion = 0.45 + 0.55 * inside;
-  // The layer stands for the upper leaves of the mass, so it takes their light.
-  vec3 lit = vec3(vWorld.x, uCanopy * mix(0.74, 0.97, inside * uLevel / 0.76), vWorld.z);
-  outColor = finish(shadeTissue(t, lit, normalize(uCamPos - vWorld)), vWorld, vDepth, -1.0);
-}
-`
-
-const hookVertex = /* glsl */ `
-in vec3 position;
-void main() {
-  gl_Position = vec4(position, 1.0);
-}
-`
-
-const hookFragment = /* glsl */ `
-void main() {
-  outColor = vec4(0.0);
 }
 `
 
@@ -223,7 +171,7 @@ const maxLeaf = (time: number): number => {
 // The far field. Pictures of the simpler plants, drawn once a frame from the plants themselves as the camera sees them, stand in rows
 // past the last real plant. Past the pictures one carpet carries their color on. Under both lies the dark of the leaves.
 export class FarField {
-  readonly places: THREE.InstancedInterleavedBuffer
+  readonly count: number
   readonly pictures: THREE.Mesh
   readonly carpet: THREE.Mesh
   readonly under: THREE.Mesh[]
@@ -248,7 +196,6 @@ export class FarField {
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
   private readonly eye = new THREE.Vector3()
   private readonly clear = new THREE.Color()
-  private readonly hook: THREE.Mesh
   private stale = false
   private above = false
 
@@ -276,40 +223,44 @@ export class FarField {
     this.scene.matrixWorldAutoUpdate = false
     this.camera.matrixAutoUpdate = false
 
-    this.places = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
-    this.places.setUsage(THREE.DynamicDrawUsage)
-    const quad = new THREE.InstancedBufferGeometry()
-    quad.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.5, 0, 0, 0.5, 0, 0, -0.5, 1, 0, 0.5, 1, 0]), 3))
-    quad.setIndex([0, 1, 2, 1, 3, 2])
-    quad.setAttribute('aPlace', new THREE.InterleavedBufferAttribute(this.places, 4, 0))
-    quad.setAttribute('aVary', new THREE.InterleavedBufferAttribute(this.places, 4, 4))
-    quad.instanceCount = this.places.count
+    // Every picture is in one piece of geometry: a software rasterizer pays for each copy of a drawn shape, not for each triangle.
+    const count = places.length / PLACE
+    const CORNER = 10
+    const data = new Float32Array(count * 4 * CORNER)
+    const index = new Uint32Array(count * 6)
+    for (let i = 0; i < count; i++) {
+      for (let c = 0; c < 4; c++) {
+        const at = (i * 4 + c) * CORNER
+        data.set(places.subarray(i * PLACE, i * PLACE + PLACE), at)
+        data[at + 8] = (c % 2) - 0.5
+        data[at + 9] = c >> 1
+      }
+      index.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 3, i * 4 + 2], i * 6)
+    }
+    const corners = new THREE.InterleavedBuffer(data, CORNER)
+    const quad = new THREE.BufferGeometry()
+    quad.setAttribute('aPlace', new THREE.InterleavedBufferAttribute(corners, 4, 0))
+    quad.setAttribute('aVary', new THREE.InterleavedBufferAttribute(corners, 4, 4))
+    quad.setAttribute('aCorner', new THREE.InterleavedBufferAttribute(corners, 2, 8))
+    quad.setIndex(new THREE.BufferAttribute(index, 1))
+    this.count = count
     const picture = makeSurface({ name: 'field pictures', vertex: pictureVertex, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms })
     this.pictures = plain(quad, picture)
 
-    const carpet = makeSurface({ name: 'field carpet', vertex: sheetVertex, fragment: carpetFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uHeight: this.carpetHeight, uStart: { value: new THREE.Vector2(fieldPicturesM - carpetBandM, carpetBandM) } } })
-    this.carpet = plain(sheetGeometry([fieldPicturesM - carpetBandM - 2, 220, 360, fieldEndM]), carpet)
-    const depths = [UNDER_FROM_M - 2.5, fieldFarM, 100, fieldPicturesM + 12]
-    this.under = UNDER_LEVELS.map((level, i) => {
-      const surface = makePartSurface({ detail: 'far', variant: 0, places: this.places }, { name: `field under layer ${i}`, vertex: underVertex, fragment: underFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { uCover: this.uniforms.uCover, uHeight: this.underHeights[i], uLevel: { value: level }, uStart: { value: new THREE.Vector2(UNDER_FROM_M, UNDER_BAND_M) } } })
-      return plain(sheetGeometry(depths), surface)
-    })
+    const sheet = (level: number, height: { value: number }, startM: number, bandM: number, depths: number[]): THREE.Mesh => {
+      const uniforms = { ...this.uniforms, uHeight: height, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
+      return plain(sheetGeometry(depths), makeSurface({ name: level > 0 ? 'field leaf layer' : 'field carpet', vertex: sheetVertex, fragment: sheetFragment, side: THREE.DoubleSide, castShadow: false, uniforms }))
+    }
+    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, 220, 360, fieldEndM])
+    this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, 100, fieldPicturesM + 12]))
 
-    // Drawn before everything else in the frame, and it draws nothing: its place in the order is where the pictures are made.
-    const nothing = new THREE.BufferGeometry()
-    nothing.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3))
-    this.hook = plain(nothing, makeSurface({ name: 'field pictures hook', vertex: hookVertex, fragment: hookFragment, castShadow: false }))
-    this.hook.renderOrder = -1000
-    this.hook.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
+    // The pictures are made just before the first surface that reads them is drawn.
+    this.pictures.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
     // Solid surfaces all: the order only lets the nearer ones hide the sheets before the sheets are shaded.
     this.pictures.renderOrder = 10
     this.under.forEach((m, i) => (m.renderOrder = 12 - i))
     this.carpet.renderOrder = 13
-    this.meshes = [this.hook, this.pictures, ...this.under, this.carpet]
-  }
-
-  get count(): number {
-    return this.places.count
+    this.meshes = [this.pictures, ...this.under, this.carpet]
   }
 
   async load(assets: Assets): Promise<void> {
@@ -328,7 +279,7 @@ export class FarField {
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
     const above = eyeHeightM > canopy + 0.03 && canopy > 0.06
     // From above only the tops of the far plants show, over the dark layer.
-    this.uniforms.uCrop.value = above ? 0.52 : 1
+    this.uniforms.uCrop.value = above ? 0.46 : 1
     this.above = above
     this.stale = true
   }
@@ -365,7 +316,6 @@ export class FarField {
   }
 
   show(on: boolean): void {
-    this.hook.visible = on
     this.pictures.visible = on
     this.carpet.visible = on && this.above
     for (const m of this.under) m.visible = on && this.above
