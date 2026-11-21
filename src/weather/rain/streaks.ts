@@ -36,7 +36,8 @@ void main() {
   mid.xy += across * (position.x * halfM) + along * ((2.0 * position.y - 1.0) * halfM);
   vAcross = position.x;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
-  vShare = min(1.0, uGain * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
+  // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
+  vShare = min(1.0, uGain * mix(1.0, 0.3, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
@@ -60,13 +61,15 @@ void main() {
   float core = exp(-u / 0.09) * swing;
   vec3 color = mix(uShade, uLight, 0.3 + 0.7 * core);
   float body = 1.5 * (1.0 - u);
-  outColor = vec4(applyFog(color, vWorld), saturate(vShare * body * (0.6 + 0.9 * core)));
+  // Seen from above, a drop shows the dark land behind it and little of the band.
+  float level = smoothstep(-0.12, 0.0, normalize(vWorld - uCamPos).y);
+  outColor = vec4(applyFog(color, vWorld), saturate(vShare * body * (0.6 + 0.9 * core)) * mix(0.3, 1.0, level));
 }
 `
 
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 12
-const FINE_REACH_M = 2.6
+const FINE_REACH_M = 1.7
 const SLOWEST_M_PER_S = 1
 
 export interface Streaks {
@@ -92,7 +95,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 6 },
+    uGain: { value: 24 },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
   }
