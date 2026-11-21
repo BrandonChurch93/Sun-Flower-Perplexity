@@ -8,8 +8,6 @@ const end = config.film.durationSeconds
 
 // The outermost floret stands at this share of the head's radius.
 export const RIM_SHARE = 0.93
-// How much finer the florets are packed toward the middle: a floret's share of the floor grows with its place to this power.
-export const PACKING = 1.3
 // The bud is closed over the disc before this.
 export const SHOWN_FROM = bloom0 - 5
 // The side of the head whose rays open first, as an angle round the axis. The disc leads there too.
