@@ -4,6 +4,7 @@ import { makeSurface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
 
 const SEED = streamSeed('golden air')
+const PEAK = 5
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
@@ -35,15 +36,17 @@ void main() {
   float d = length(world - uCamPos);
   vec3 v = (world - uCamPos) / d;
   float toSun = saturate(dot(v, uSunDir));
-  float sizeM = mix(0.0001, 0.0008, aSeed.x * aSeed.x);
+  float sizeM = mix(0.0001, 0.0022, aSeed.x * aSeed.x * aSeed.x);
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
   float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
   float need = max(angle / uPixelAngle, 2.4 * coc / sqrt(uSamples));
   float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
-  float lit = smoothstep(1.0, 1.7, world.y);
-  vColor = uSunColor * (0.15 + 0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.006, 0.02, coc / uWidth));
+  float lit = smoothstep(0.9, 1.3, world.y);
+  float behind = smoothstep(0.955, 0.985, toSun) * (1.0 - smoothstep(0.06, 0.1, v.y));
+  float amount = 5.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.02, 0.05, coc / uWidth));
+  vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(1)} / (px > 2.0 ? 3.0 : 1.0));
   vSize = px;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;
@@ -65,8 +68,8 @@ void main() {
 interface Cloud { count: number; box: [number, number, number]; center: [number, number, number] }
 
 const CLOUDS: Cloud[] = [
-  { count: 1100, box: [1.3, 0.7, 1.3], center: [0, 1.85, 0] },
-  { count: 760, box: [5.5, 1.3, 5.5], center: [0, 2.3, 0] },
+  { count: 350, box: [1.3, 0.7, 1.3], center: [0, 1.85, 0] },
+  { count: 1500, box: [5.5, 1.3, 5.5], center: [0, 2.3, 0] },
 ]
 
 export interface Air { meshes: THREE.Points[]; sample(time: number, wind: number, pixelAngle: number, samples: number, width: number): void }
