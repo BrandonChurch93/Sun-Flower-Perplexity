@@ -382,7 +382,7 @@ void main() {
   vec2 g = dD.rg * 2.0 - 1.0 + (grit.rg * 2.0 - 1.0) * TURN_K * 0.9;
   vec3 smoothN = normalize(vNormal);
   smoothN *= sign(dot(smoothN, v) + 0.35);
-  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(0.9, 0.25, vSeed.z));
+  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(mix(0.9, 0.45, uDew), 0.25, vSeed.z));
   vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
