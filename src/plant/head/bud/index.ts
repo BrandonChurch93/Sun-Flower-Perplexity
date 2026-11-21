@@ -17,7 +17,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000, downHairs: 54000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 40000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
 }
@@ -29,7 +29,7 @@ const SHOULDER = 0.04
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
 const HAIR_WIDTH_M = 0.00005
-const DOWN_WIDTH_M = 0.00012
+const DOWN_WIDTH_M = 0.00016
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
 // A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
@@ -250,7 +250,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = (0.02 + 0.98 * Math.pow(rnd(1023 + b, i), 0.75)) * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -3 : 3
-        hairLong[n] = 0.0004 + 0.0005 * rnd(1123 + b, i)
+        hairLong[n] = 0.0005 + 0.0006 * rnd(1123 + b, i)
       }
     }
   }

@@ -48,7 +48,7 @@ float bractRelief(float x, float u, float seed) {
   float keel = smoothstep(0.09, 0.0, ax);
   float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
   float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
-  return 0.0003 * grain + 0.0003 * line + 0.0006 * keel + 0.0003 * rib + 0.00006 * fine;
+  return 0.0003 * grain + 0.0006 * line + 0.0009 * keel + 0.0005 * rib + 0.00008 * fine;
 }
 
 void main() {
