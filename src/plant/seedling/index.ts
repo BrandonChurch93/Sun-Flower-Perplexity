@@ -18,7 +18,7 @@ const leaves0 = config.plant.stages.leaves[0]
 const HUSK_HALF_WIDTH = 0.31
 const HUSK_HALF_DEPTH = 0.25
 const HUSK_WALL = 0.023
-const REST_AXIS = unit(-0.32, 0.84, 0.44)
+const REST_AXIS = unit(-0.36, 0.9, 0.2)
 const REST_SIDE = unit(1, 0, 0.12)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
@@ -28,6 +28,7 @@ const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
+const RAIN_FROM_S = 8
 const DEW_FACE = 0.28
 const DEW_EDGE = 0.2
 const CRUMBS_SINK_S = 9
@@ -442,7 +443,7 @@ export function create(options: PartOptions): PlantPart | null {
     const qy = B[2] * px - B[0] * pz
     const qz = B[0] * py - B[1] * px
     const loosen = smoothstep(seed0 - 1.5, seed0 + 0.2, time)
-    const gape = lerp(0.035, 0.12, loosen) + 0.03 * smoothstep(0, 0.84, beat) + 0.18 * freed + 0.5 * (1 - kept)
+    const gape = lerp(0.035, 0.12, loosen) + 0.03 * smoothstep(0, 0.84, beat) + 0.14 * freed + 0.5 * (1 - kept)
     const pinch = (1 - 0.3 * freed) * (1 - smoothstep(seed0 + 0.7, seed0 + 1.6, time))
 
     for (const g of groups) {
@@ -458,7 +459,7 @@ export function create(options: PartOptions): PlantPart | null {
           const rs = stemRadius(time, seedLeafFraction(time)) * youngGirth(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time)) * (1 + (1 + STURDY) * collarAt(time))
           const half = length * lerp(lerp(0.186, 0.39, spread), lerp(0.16, 0.31, spread), wither) * (1 - 0.3 * wither)
           const thick = length * lerp(lerp(0.122, 0.05, spread), lerp(0.105, 0.045, spread), wither) * (1 - 0.5 * wither)
-          const sag = 0.14 * spread + 0.6 * wither - 1.8 * Math.sin(seedLeafAngle(i, time)) * pinch
+          const sag = 0.14 * spread + 0.6 * wither - 1.55 * Math.sin(seedLeafAngle(i, time)) * pinch
           const shut = lerp(0.35, 1, spread)
           const canopy = lerp(1, 0.4, smoothstep(leaves0 + 0.3, leaves0 + 2.3, time))
           for (let a = 0; a < b.rings; a++) {
@@ -503,13 +504,14 @@ export function create(options: PartOptions): PlantPart | null {
           const arc = b.loop / 2
           const shown = kept > 0 ? 1 : 0
           const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
+          const shell = huskLength * (1 + 0.3 * freed)
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = huskOutline(s) * shown
-            const hw = huskLength * HUSK_HALF_WIDTH * o
-            const dp = huskLength * HUSK_HALF_DEPTH * o ** 0.9
-            const wall = a === b.rings - 1 ? 0 : Math.min(huskLength * HUSK_WALL, 0.6 * dp)
-            const reach = huskLength * s * shown
+            const hw = shell * HUSK_HALF_WIDTH * o
+            const dp = shell * HUSK_HALF_DEPTH * o ** 0.9
+            const wall = a === b.rings - 1 ? 0 : Math.min(shell * HUSK_WALL, 0.6 * dp)
+            const reach = shell * s * shown
             // The halves tore apart along a ragged line, wider toward the mouth.
             const torn = 1 - smoothstep(0.1, 0.7, s) * (0.05 + 0.035 * Math.sin(19 * s + 2.1 * b.side) * Math.sin(7.3 * s + 1.3) + 0.022 * Math.sin(47 * s + 4.4 * b.side) * Math.sin(29 * s + 0.7))
             const mx = hx + bx * reach
@@ -576,7 +578,7 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
       const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length

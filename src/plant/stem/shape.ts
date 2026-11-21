@@ -163,5 +163,6 @@ export function wrapAngle(d: number): number {
 export function youngGirth(time: number, u: number): number {
   const young = 1 - smoothstep(3, 6, time)
   const at = (u - 0.8) / 0.13
-  return 1 + young * (0.1 - 0.2 * u + 0.12 * Math.exp(-at * at) + 0.045 * Math.sin(31 * u + 1.3) * Math.sin(11.7 * u + 0.4))
+  const stout = 1 + 0.3 * (1 - smoothstep(4, 6.5, time))
+  return stout * (1 + young * (0.1 - 0.2 * u + 0.12 * Math.exp(-at * at) + 0.045 * Math.sin(31 * u + 1.3) * Math.sin(11.7 * u + 0.4)))
 }

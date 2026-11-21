@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uMoon: { value: 0 }, uEarly: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uMoon: { value: 0 }, uDark: { value: 0 }, uEarly: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -147,6 +147,7 @@ uniform vec3 uEdge;
 uniform float uHang;
 uniform float uLate;
 uniform float uMoon;
+uniform float uDark;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -178,6 +179,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   if (uLate > 0.0) lit = max(lit, mix(1.0, top + 0.6 * uLate * (1.0 - top), closed) * exp(-mix(1.0, mix(12.0 - 6.0 * uLate, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)));
   // The moon stands a quarter of the way up the sky: the tops are in its light, and it dies off down among the leaves.
   if (uMoon > 0.0) lit = mix(lit, exp(-2.5 * under), uMoon);
+  // In the night's own frames the moon is too weak to show a leaf lit: a third of it is left.
+  if (uDark > 0.0) lit *= 0.33;
   return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
@@ -209,6 +212,7 @@ vec3 cropAmbient(vec3 n) {
   vec3 fill = mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * uClosed);
   // Under the moon a neighbor's leaves get the sky the plant's own get, no more.
   if (uMoon > 0.0) fill = mix(fill, sky, uMoon);
+  if (uDark > 0.0) fill *= 0.33;
   return fill;
 }
 #define skyAmbient(n) cropAmbient(n)
