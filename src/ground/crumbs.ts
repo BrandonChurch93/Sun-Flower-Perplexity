@@ -6,10 +6,11 @@ import { cropLight } from './light.ts'
 import { groundStates, soilHeight } from './soil.ts'
 
 // Loose soil on the near ground: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
-export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number }
+// `beside` is the share of a scatter laid in a band across the way to the camera at the plant's own distance, where the dawn lens is sharp.
+export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number }
 export const crumbScatter: Scatter = { count: 5000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.38 }
 export const clodScatter: Scatter = { count: 220, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
-export const lumpScatter: Scatter = { count: 80, detail: 5, minM: 0.004, maxM: 0.014, skew: 1.5, innerM: 0.016, outerM: 0.14, spread: 1.9, stones: 0, sink: 0.42 }
+export const lumpScatter: Scatter = { count: 80, detail: 5, minM: 0.004, maxM: 0.015, skew: 1.5, innerM: 0.016, outerM: 0.14, spread: 1.9, stones: 0, sink: 0.42, beside: 0.45 }
 
 // The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
 const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
@@ -37,8 +38,16 @@ export function scatter(name: string, s: Scatter): THREE.InstancedMesh {
   const size = new THREE.Vector3()
   const at = new THREE.Vector3()
   for (let i = 0; i < s.count; i++) {
-    const r = s.innerM + (s.outerM - s.innerM) * Math.pow(random.next(), s.spread)
-    const a = random.next() * Math.PI * 2
+    let r = s.innerM + (s.outerM - s.innerM) * Math.pow(random.next(), s.spread)
+    let a = random.next() * Math.PI * 2
+    if (s.beside !== undefined && random.next() < s.beside) {
+      const across = (random.next() < 0.5 ? -1 : 1) * (0.012 + 0.09 * Math.pow(random.next(), 1.3))
+      const along = -0.004 + 0.03 * (random.next() - 0.5)
+      const x = along * laneDir.x + across * laneDir.z
+      const z = along * laneDir.z - across * laneDir.x
+      r = Math.hypot(x, z)
+      a = Math.atan2(z, x)
+    }
     const open = 1 - lane(Math.cos(a) * r, Math.sin(a) * r, 0.8 * s.maxM)
     const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open)
     axis.set(random.next() - 0.5, random.next() - 0.5, random.next() - 0.5).normalize()
@@ -154,7 +163,7 @@ void main() {
   vec4 cD = texture(tColor, uv);
   vec4 dD = texture(tData, uv);
   vec2 g = dD.rg * 2.0 - 1.0;
-  vec3 n = normalize(mix(face, normalize(vNormal), 0.6) + vec3(g.x, 0.0, g.y) * mix(1.1, 0.25, vSeed.z));
+  vec3 n = normalize(mix(face, normalize(vNormal), 0.85) + vec3(g.x, 0.0, g.y) * mix(1.1, 0.25, vSeed.z));
   vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
@@ -164,13 +173,13 @@ void main() {
 
   vec2 p = vWorld.xz;
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
-  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.35 + 0.85 * dD.a) * proud(vWorld.y);
-  vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + groundAmbient(n) * open);
+  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a));
+  vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + groundAmbient(n) * open * proud(vWorld.y));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.35, 0.1, uWet) * open;
-  color += uSunColor * sparkle(vWorld, v, normalize(mix(n, vNormal, 0.5))) * lit * gloss * 14.0;
+  color += uSunColor * sparkle(vWorld, v, normalize(mix(n, vNormal, 0.5))) * lit * gloss * 20.0;
   vec3 cell = vWorld * 650.0;
   float bead = step(0.9, hash31(floor(cell))) * smoothstep(0.34, 0.22, length(fract(cell) - 0.5)) * uDew * smoothstep(-0.1, 0.5, n.y) * (1.0 - smoothstep(0.25, 0.9, length(fwidth(cell))));
   color = mix(color, color * 0.6, bead) + bead * smoothstep(0.2, 0.05, length(fract(cell) - 0.5 + uSunDir * 0.12)) * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);
