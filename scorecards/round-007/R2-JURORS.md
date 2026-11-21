@@ -17,4 +17,5 @@ Which file is a control is in `KEY.json`.
 ## set-B-02.png
 
 - `reviewer_73` (GPT): a, 86/100: the carefully staged sunset backlight isolates the central sunflower like a cinematic hero shot.
+- `reviewer_74` (Gemini): a, confidence: 82. The one thing that most influenced my answer is the deliberate 16:9 cinema staging and color grade—isolating a single rim-lit hero sunflower in front of a moody, low-key backlit field with fine 35mm-style film grain and atmospheric mist, rather than the bright, clean, evenly lit look of stock or catalog photography.
 - `reviewer_75` (Claude): a, confidence 65. The biggest factor was the cinematic look: a widescreen ~16:9 frame with teal-and-orange film grading, a lifted, film-like black level and haze, and a single sunflower placed as the center hero subject in front of a backlit sunset. That reads like a film still more than stock photography. Runner-up is (b) stock photo.
