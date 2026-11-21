@@ -1,4 +1,3 @@
-// The receptacle (the green body of the head and its floor), the bracts round it and the hairs of both.
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
@@ -30,7 +29,6 @@ const WIDEST = 0.2
 const SHOULDER = 0.07
 // The stand-in shortens its bracts by this share while the head opens. A real bract does not shrink, so it is taken out again.
 const WRAP = 0.3
-// How far a bract stays behind the ray in front of it, in radians.
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.08
 const HAIR_WIDTH_M = 0.00006
@@ -40,7 +38,6 @@ const SECTOR_LEAD = 0.3
 // Past this angle from the head's axis a bract swings back less than growth.ts says, so its point still shows between the rays from the front.
 const REFLEX_FROM = 1.62
 const REFLEX_EASE = 0.55
-// How far past the widest ring the innermost feet sit, as a share of the way to the rim.
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
@@ -68,7 +65,7 @@ export function create(options: PartOptions): PlantPart | null {
       az: turn + i * GOLDEN,
       foot: lerp(0.2, 1.5, Math.pow(rank, 0.8)) + (rnd(2, i) - 0.5) * 0.05,
       long: lerp(1.32, 1, rank) * (0.92 + 0.16 * rnd(3, i)),
-      wide: lerp(1.18, 0.86, rank) * (0.88 + 0.24 * rnd(4, i)),
+      wide: lerp(1.18, 0.96, rank) * (0.88 + 0.24 * rnd(4, i)),
       tail: 0.22 + 0.1 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.9,
       side: (rnd(7, i) - 0.5) * 0.5,
@@ -77,7 +74,7 @@ export function create(options: PartOptions): PlantPart | null {
       waves: 2 + 2.5 * rnd(10, i),
       hug: 0.3 + 0.14 * rnd(11, i),
       rmin: 0.0008 + 0.0045 * rnd(12, i),
-      fold: 0.32 + 0.3 * rnd(13, i),
+      fold: 0.14 + 0.26 * rnd(13, i),
       seed: rnd(14, i),
     })
   }
@@ -133,7 +130,6 @@ export function create(options: PartOptions): PlantPart | null {
   const surface = makePartSurface(options, { name: 'bud', vertex, fragment, side: THREE.DoubleSide, uniforms })
   const mesh = partMesh(geometry, surface)
 
-  // Each hair keeps its own place for the whole film: the grid it grows on, where on that grid, what kind it is and how long.
   const share = options.variant === 0 ? 1 : 0.25
   const backHairs = Math.floor(shape.backHairs * share)
   const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
@@ -192,7 +188,6 @@ export function create(options: PartOptions): PlantPart | null {
   const rowT = new Float32Array(Math.max(shape.nu, 1))
   const hugs = new Float32Array(shape.bracts)
 
-  // Normals of one grid from its neighbors. `wrap` joins the last column to the first, as round a ring.
   const gridNormals = (pos: Float32Array, nor: Float32Array, base: number, nu: number, nv: number, wrap: boolean, fx: number, fy: number, fz: number) => {
     for (let a = 0; a < nu; a++) {
       const a0 = Math.max(0, a - 1)
@@ -510,7 +505,6 @@ export function create(options: PartOptions): PlantPart | null {
           dy = ny + uy * 0.5 + j1 * 0.5
           dz = nz + uz * 0.5 + j2 * 0.5
         } else {
-          // Out across the margin: along the grid row, away from the midrib.
           let ex = (pos[v01] - pos[v00]) * kind
           let ey = (pos[v01 + 1] - pos[v00 + 1]) * kind
           let ez = (pos[v01 + 2] - pos[v00 + 2]) * kind
