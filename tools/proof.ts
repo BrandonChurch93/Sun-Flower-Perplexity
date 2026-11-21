@@ -98,13 +98,13 @@ async function runExport(first: number, last: number, target: string, family: st
       if (done !== seen) {
         seen = done
         moved = Date.now()
-        if (now.progress && done % 30 === 0) console.log(`frame ${first + done} · ${done} of ${now.progress.total}`)
+        if (now.progress && done % 30 === 0) console.log(`${done} of ${now.progress.total} frames done`)
       }
       if (cdp && now.progress && (done - sampledAt >= SAMPLE_EVERY || now.result)) {
         sampledAt = done
         const { metrics } = await cdp.send('Performance.getMetrics')
         const heap = metrics.find((m) => m.name === 'JSHeapUsedSize')
-        cdpSamples.push({ frame: first + done, heapMb: heap ? heap.value / 1048576 : 0, textureMb: now.progress.textureMb })
+        cdpSamples.push({ frame: first + Math.max(0, done - 1), heapMb: heap ? heap.value / 1048576 : 0, textureMb: now.progress.textureMb })
       }
       result = now.result
       if (!result) {
@@ -120,7 +120,7 @@ async function runExport(first: number, last: number, target: string, family: st
     const info = await page.evaluate(() => window.showcase.info())
     const inPage = memory ? await page.evaluate(() => window.exportSamples ?? []) : []
     const precise = inPage.length > 0 && inPage.every((s) => s.heapMb !== null)
-    const samples = precise ? inPage.map((s) => ({ frame: first + s.done, heapMb: s.heapMb as number, textureMb: s.textureMb })) : cdpSamples
+    const samples = precise ? inPage.map((s) => ({ frame: first + Math.max(0, s.done - 1), heapMb: s.heapMb as number, textureMb: s.textureMb })) : cdpSamples
     return { result, saved: download !== null && fs.existsSync(target), info, browser: browser.version(), samples, heapSource: precise ? 'performance.memory' : 'Performance.getMetrics JSHeapUsedSize' }
   } finally {
     await browser.close().catch(() => undefined)

@@ -155,6 +155,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   let heroUrl = ''
   let fileUrl = ''
   let lock: WakeLockSentinel | null = null
+  let lostTold = false
 
   host.classList.add(css.page)
   const shell = make('div', css.shell)
@@ -214,7 +215,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   if (rangeId === 'frames') rangeChoices.push({ value: 'frames', text: `Test range · frames ${testFirst} to ${testLast}` })
   const formatSelect = field('format', 'Format', formats.map((f) => ({ value: f.format.id, text: `${f.label} · ${f.format.width} x ${f.format.height}` })), format.id)
   const rangeSelect = field('range', 'Range', rangeChoices, rangeId)
-  const tierSelect = field('tier', 'Quality tier', tierIds.map((id) => ({ value: id, text: `${capital(id)} · ${samplesOf(id)} ${samplesOf(id) === 1 ? 'sample' : 'samples'} a frame` })), tier)
+  const tierSelect = field('tier', 'Quality tier', tierIds.map((id) => ({ value: id, text: `${capital(id)} · ${samplesOf(id)} ${samplesOf(id) === 1 ? 'sample' : 'samples'}` })), tier)
   const summary = make('p', css.summary)
   settings.append(make('h2', css.heading, 'Settings'), fields, summary)
 
@@ -310,7 +311,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   const describe = () => {
     const { first, last } = frameRange()
     const total = last - first + 1
-    const parts = [`${total} ${total === 1 ? 'frame' : 'frames'} at ${fps} frames a second`, `${config.export.bitrateMbps} Mbit a second`, `saved as ${fileName()}`]
+    const parts = [`${total} ${total === 1 ? 'frame' : 'frames'} at ${fps} frames a second`, `${samplesOf(tier)} ${samplesOf(tier) === 1 ? 'sample' : 'samples'} a frame`, `${config.export.bitrateMbps} Mbit a second`, `saved as ${fileName()}`]
     if (secondsPerSample > 0) parts.push(`${about(secondsPerSample * samplesOf(tier) * total)} on this machine`)
     summary.textContent = `${parts.join(' · ')}.`
   }
@@ -444,6 +445,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     stopAsked = false
     setControls(false)
     start.disabled = true
+    start.textContent = 'Export running'
     stop.hidden = false
     saved.hidden = true
     delete window.exportResult
@@ -534,8 +536,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     } catch (caught) {
       const message = words(caught)
       if (message === 'stopped') error = `Stopped at frame ${first + done}. No file was written.`
-      else if (message === 'lost' || lost()) error = `The graphics context of this browser was lost at frame ${first + done}, so the export stopped. No file was written. Reload the page and start again.`
-      else error = `The export stopped at frame ${first + done} (${message}). No file was written.`
+      else if (message === 'lost' || lost()) {
+        lostTold = true
+        error = `The graphics context of this browser was lost at frame ${first + done}, so the export stopped. No file was written. Reload the page and start again.`
+      } else error = `The export stopped at frame ${first + done} (${message}). No file was written.`
       say(error)
     } finally {
       if (encoder.state !== 'closed') encoder.close()
@@ -544,6 +548,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       lock = null
       running = false
       stop.hidden = true
+      start.textContent = 'Start the export'
       setControls(true)
       start.disabled = !ready || lost()
       window.exportResult = { ok: error === null, frames: error === null ? total : done, fileName: name, codec: choice.codec, seconds: seconds(), error }
@@ -574,10 +579,8 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     say('Stopping after this frame.')
   })
   canvas.addEventListener('webglcontextlost', () => {
-    if (!running) {
-      start.disabled = true
-      say('The graphics context of this browser was lost. Reload the page to try again.')
-    }
+    start.disabled = true
+    if (!running && !lostTold) say('The graphics context of this browser was lost. Reload the page to try again.')
   })
 
   describe()
