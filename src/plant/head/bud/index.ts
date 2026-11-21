@@ -91,7 +91,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.16, 0.14, 0.1]
+const BULGE = [0.1, 0.08, 0.06]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
 const BULGE_HIGH = 0.7
@@ -99,9 +99,9 @@ const BULGE_HIGH = 0.7
 const FEET_LOW = [0.52, 0.12, 0]
 // The shut bud is a flattened globe: its widest ring lies this share of its depth lower, and the feet of its bracts stand this much higher on it.
 const SHUT_LOW = 0.6
-const FEET_UP = [0.05, 0.3, 0.33]
+const FEET_UP = [0.05, 0, 0.25]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.25, 1.1, 0.7]
+const SHUT_BROAD = [1.25, 1.1, 0.9]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
@@ -110,7 +110,7 @@ const SHUT_CURL = [0.9, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [0.62, 1.12, 0.95]
+const SHUT_LONG = [0.5, 1.02, 0.95]
 const SHUT_TIP = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 0.6
@@ -118,8 +118,10 @@ const CROWN_LONG = 0.12
 const CROWN_TIP = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
-const SPREAD_OUT = 0.4
+const SPREAD_OUT = 0.55
 const SPREAD_OPEN = 0.1
+const SPREAD_UP = 0.5
+const SPREAD_SLIM = 0.2
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
@@ -168,7 +170,7 @@ export function create(options: PartOptions): PlantPart | null {
       fold: 0.14 + 0.26 * rnd(13, i),
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
-      spread: series === 0 ? SHUT_SPREAD * smoothstep(0.4, 0.75, rnd(904, i)) : 0,
+      spread: series === 0 ? SHUT_SPREAD * smoothstep(0.3, 0.6, rnd(904, i)) : 0,
       crown: series === 2 && Math.floor(i / 3) % 2 === 0 ? 1 : 0,
     })
   }
@@ -451,7 +453,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young) * (1 + (CROWN_LONG * k.crown + SPREAD_LONG * k.spread) * globe)
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight) * (1 - SPREAD_SLIM * k.spread * globe)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -503,7 +505,7 @@ export function create(options: PartOptions): PlantPart | null {
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
 
-      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight + FEET_UP[k.series] * globe)
+      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight + (FEET_UP[k.series] + SPREAD_UP * k.spread) * globe)
       let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(foot, 1)
       let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((foot - 1) / 0.5)
       let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
