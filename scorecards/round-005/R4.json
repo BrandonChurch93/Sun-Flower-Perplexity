@@ -1,0 +1,28 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "horizon and background field across the cut from f1199 (39.97 s) to f1200 (40.00 s)",
+      "what": "only the foreground sunflower aligns across the cut; the horizon jumps upward by about 34 native pixels as isolated frost-scene trees are replaced by a higher continuous dark ridge, and the background stalks in the field snap to different positions and spacing",
+      "fix": "lock the horizon line, distant silhouette placement, and background field stalk positions across f1199 and f1200 so only lighting and season change in one frame"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "full-frame camera move from f1363 (45.4 s) to f1559 (52.0 s), especially f1461-f1526 and f1526-f1559",
+      "what": "after trucking smoothly left from 40.0 s to 45.4 s, horizontal camera motion stops and reverses direction around 45.4-46.5 s, nearly stalls from 48.7 s to 50.9 s, and then abruptly pulls back and tilts down between f1526 (50.9 s) and f1559 (52.0 s), dropping and shrinking the flower head by about 56 native pixels while jumping the treeline upward",
+      "fix": "replace the piecewise camera animation with one continuous, monotonic trajectory with inertia across 40.0-52.0 s with no direction reversal, stall, or end lurch"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "distant treeline horizon and sky across f1332-f1334 (44.40-44.47 s) and f1339-f1341 (44.63-44.70 s), also visible at the lower left and right edges of set-D-03.png",
+      "what": "the distant horizon and sky jump upward by about 3 to 5 native pixels on f1333 and snap back down on f1334, with a smaller opposite bounce on f1340-f1341, while the foreground plant does not move correspondingly",
+      "fix": "eliminate single-frame vertical jitter in the background layer or camera pitch so the horizon translates smoothly from frame to frame"
+    }
+  ]
+}
