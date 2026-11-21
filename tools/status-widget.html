@@ -1,0 +1,24 @@
+<div style="width:100%;font-family:var(--font-sans)"><div id="st" style="font-size:13px;line-height:1.45;color:var(--color-text-primary);padding:2px 2px 10px"></div><div id="g" style="display:grid;grid-template-columns:1fr;gap:10px;width:100%"></div></div>
+<script>
+(function(){
+  var v = window.visualization || {};
+  var s = v.sources && v.sources.pics;
+  var st = document.getElementById('st');
+  var g = document.getElementById('g');
+  if (!s || s.error || !s.data || !s.data.pics) { g.textContent = 'The pictures did not load.'; g.style.color = 'var(--color-text-secondary)'; return; }
+  var lines = s.data.lines || (v.data && v.data.lines) || [];
+  lines.forEach(function(t, i){ var d = document.createElement('div'); d.textContent = t; if (i > 0) d.style.color = 'var(--color-text-secondary)'; st.appendChild(d); });
+  var pics = s.data.pics;
+  g.style.gridTemplateColumns = pics.length > 1 ? '1fr 1fr' : '1fr';
+  pics.forEach(function(p){
+    var f = document.createElement('figure'); f.style.margin = '0';
+    if (pics.length === 3 && p === pics[0]) f.style.gridColumn = '1 / span 2';
+    var im = document.createElement('img'); im.alt = p.label;
+    im.style.cssText = 'display:block;width:100%;height:auto;aspect-ratio:' + p.w + '/' + p.h + ';border-radius:var(--border-radius-md);background:var(--color-background-secondary)';
+    im.src = p.src;
+    var c = document.createElement('figcaption'); c.textContent = p.label;
+    c.style.cssText = 'font-size:12px;line-height:1.35;color:var(--color-text-secondary);padding:4px 2px 0';
+    f.appendChild(im); f.appendChild(c); g.appendChild(f);
+  });
+})();
+</script>
