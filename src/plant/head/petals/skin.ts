@@ -78,9 +78,9 @@ void main() {
   float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
-  vec3 body = mix(vec3(0.62, 0.55, 0.015), vec3(0.7, 0.66, 0.03), smoothstep(0.1, 0.8, u));
-  // A ray that is lifting is yellow before it deepens.
-  body = mix(body, vec3(0.85, 0.66, 0.09), 0.9 * (1.0 - vState.z));
+  vec3 body = mix(vec3(0.55, 0.53, 0.015), vec3(0.62, 0.64, 0.035), smoothstep(0.1, 0.8, u));
+  // A ray that is lifting is amber, darker toward its foot.
+  body = mix(body, vec3(0.8, 0.5, 0.06) * mix(0.35, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
   body = mix(body, vec3(0.36, 0.46, 0.1), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
@@ -88,32 +88,35 @@ void main() {
   // The thin edges and the far end let the most light through, and it comes out pale.
   float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
   body = mix(body, vec3(1.0, 0.62, 0.1), 0.12 * pale * (1.0 - fresh));
-  vec3 albedo = mix(body, vec3(0.6, 0.28, 0.012), 0.6 * foot);
+  vec3 albedo = mix(body, vec3(0.5, 0.26, 0.012), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.62, 0.48, 0.015), vec3(1.25, 0.78, 0.06), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.62, 0.48, 0.015), vec3(1.25, 0.78, 0.12), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(1.4, 0.76, 0.45), 0.5 * pale);
+  through = mix(through, vec3(1.4, 0.78, 0.8), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.66, 0.5), vec3(1.0), unfolded);
   // A lifting ray is still creased double, yet the low sun comes through it amber.
-  through *= mix(vec3(1.4, 1.72, 3.0), vec3(1.0), vState.z);
+  float far = smoothstep(0.05, 0.9, u);
+  through *= mix(vec3(1.4, 1.5, 3.0) * vec3(mix(0.5, 1.4, far), mix(0.36, 1.7, far * sqrt(far)), mix(0.4, 3.0, far * far * far)), vec3(1.0), vState.z);
   through = mix(through, vec3(0.5, 0.72, 0.16), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
   float groove = 1.0 - smoothstep(0.0, 0.05, abs(across));
   through *= 1.0 - 0.4 * (fold + groove) * smoothstep(1.0, 0.75, u);
+  // The one crease of a lifting ray is a dark line down its middle.
+  through *= 1.0 - 0.55 * (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - vState.z) * (1.0 - fresh);
   // The veins run the length of a ray and pass less light than the tissue between them.
   float streak = smoothstep(0.72, 1.0, abs(sin(across * 21.0 + own * 6.0))) * smoothstep(1.0, 0.8, u) * smoothstep(0.02, 0.2, u);
-  through *= 1.0 - 0.45 * streak;
+  through *= 1.0 - 0.3 * streak * mix(0.5, 1.0, vState.z);
   albedo *= 1.0 - 0.15 * streak;
 
   Tissue t;
   t.face = n;
 #ifdef PLANT_FIELD
   // Far heads are seen through haze that already pales them.
-  albedo *= vec3(0.92, 0.82, 0.5);
-  through *= vec3(0.92, 0.82, 0.5);
+  albedo *= vec3(0.95, 0.98, 0.45);
+  through *= vec3(1.0, 1.03, 0.45);
   t.normal = n;
   float texels = -1.0;
 #else
@@ -155,9 +158,9 @@ void main() {
   float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
-  // A shut ray is a strap with a ridge down its middle: the ridge catches the light and the edges lie in the dark between two straps.
-  float seam = smoothstep(0.5, 1.0, abs(across)) * fresh * smoothstep(1.0, 0.6, u);
-  t.albedo *= (1.0 - 0.75 * seam) * (1.0 + 0.35 * fresh * (1.0 - smoothstep(0.0, 0.3, abs(across))));
+  // A shut strap is folded to two ridges: dark along its edges and down the furrow between them, brightest on the ridges.
+  float seam = max(smoothstep(0.6, 1.0, abs(across)), 0.8 * (1.0 - smoothstep(0.0, 0.14, abs(across)))) * fresh * smoothstep(1.0, 0.6, u);
+  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.35 * fresh * (1.0 - smoothstep(0.0, 0.2, abs(abs(across) - 0.36))));
   t.through *= 1.0 - 0.85 * seam;
   t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);

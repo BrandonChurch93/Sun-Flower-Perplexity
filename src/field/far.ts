@@ -22,8 +22,8 @@ const UNDER_LEVELS = [0.5, 0.68, 0.84]
 // From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
 const HEADS_FROM_M = 40
 const HEAD_AT = 0.9
-const RAY_DEEP = [0.66, 0.25]
-const LEAF_SKY = 1.0
+const RAY_DEEP = [0.82, 0.25]
+const LEAF_SKY = 2.0
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -141,16 +141,18 @@ void main() {
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
-    float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
+    float clump = 0.45 * valueNoise(p * 3.1) + 0.3 * valueNoise(p * 7.7) + 0.25 * valueNoise(p * 17.0);
     float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
     color = vMid * mix(0.3, 0.95, lift);
     // Seen from over the tops the upper leaves show the faces they turn to the sky.
-    color += vec3(0.05, 0.09, 0.035) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
-    // The low sun comes through the upper leaves of a clump, green.
-    color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
+    color += vec3(0.045, 0.09, 0.022) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
+    // The low sun comes through the upper leaves of a clump, green, and here and there a leaf catches it whole. Looking into the sun the eye meets the shaded side of every clump.
+    float lit = smoothstep(0.5, 0.72, valueNoise(p * 9.0 + 5.0));
+    float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz))));
+    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.1 + 0.8 * lit) * lee * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);
