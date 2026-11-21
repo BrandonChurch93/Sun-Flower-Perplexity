@@ -25,12 +25,14 @@ const air = /* glsl */ `
 uniform vec3 uAirCool;
 uniform vec3 uAirWarm;
 uniform float uAir;
+vec3 airTone(vec3 dir) {
+  float toSun = saturate(dot(dir, uSunDir));
+  return uAirCool + uAirWarm * (0.1 * toSun * toSun + pow(toSun, 24.0));
+}
 vec3 aerial(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
-  float toSun = saturate(dot(v / d, uSunDir));
-  vec3 tone = uAirCool + uAirWarm * (0.1 * toSun * toSun + pow(toSun, 24.0));
-  return mix(color, tone, 1.0 - exp(-d * uAir));
+  return mix(color, airTone(v / d), 1.0 - exp(-d * uAir));
 }
 `
 
@@ -43,10 +45,15 @@ uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
 ${air}
+float crown(float x, float w, float salt) {
+  float f = fract(x / w) * 2.0 - 1.0;
+  return sqrt(max(1.0 - f * f, 0.0)) * (0.45 + 0.55 * hash21(vec2(floor(x / w), salt)));
+}
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  top *= 0.74 + 0.18 * valueNoise(vec2(vInfo.x * 0.085, uLayer)) + 0.08 * valueNoise(vec2(vInfo.x * 0.4, uLayer + 7.0));
+  float crowns = max(max(crown(vInfo.x, 13.0, uLayer), crown(vInfo.x + 6.1, 19.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 8.0, uLayer + 5.0));
+  top *= 0.52 + 0.4 * crowns + 0.08 * valueNoise(vec2(vInfo.x * 0.6, uLayer + 7.0));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -56,7 +63,9 @@ void main() {
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.5 + 0.5 * f);
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * uRim * smoothstep(0.7, 1.0, f) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
-  outColor = finish(aerial(color, vWorld), vWorld, vDepth, -1.0);
+  // Mist lies at the foot of every layer.
+  color = mix(aerial(color, vWorld), 1.6 * airTone(v), 0.55 * exp(-max(vInfo.y, 0.0) / (0.3 * max(top, 6.0))));
+  outColor = finish(color, vWorld, vDepth, -1.0);
 }
 `
 
@@ -137,9 +146,9 @@ interface Strip {
 const STRIPS: Strip[] = [
   { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.7, highDeg: 2.0, cells: 9, segments: 720, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.45, highDeg: 1.5, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.6, highDeg: 1.9, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.2, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.3, highDeg: 2.8, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
 ]
 
 const VEILS = [

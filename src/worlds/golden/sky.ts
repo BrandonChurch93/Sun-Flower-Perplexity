@@ -39,22 +39,22 @@ void main() {
   float lum = dot(color, vec3(0.3, 0.6, 0.1));
   vec3 pale = mix(vec3(1.14, 1.0, 0.76), vec3(1.05, 1.0, 0.92), smoothstep(0.2, 0.9, theta));
   color = mix(color, lum * pale, 0.62 * smoothstep(0.15, 1.2, lum));
-  color = mix(color, lum * vec3(0.74, 0.95, 1.32), 0.62 * smoothstep(0.03, 0.1, el) * smoothstep(0.2, 0.7, theta) * (1.0 - smoothstep(0.3, 1.2, lum)));
+  color = mix(color, lum * vec3(0.66, 0.96, 1.34), 0.74 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta) * (1.0 - smoothstep(0.35, 1.2, lum)));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.65 * valueNoise(vec2(fan * 4.3, 3.7)) + 0.35 * valueNoise(vec2(fan * 10.7, 9.1));
-  rays = smoothstep(0.3, 0.8, rays);
-  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.24) * smoothstep(0.0, 0.07, el);
-  color *= 1.0 + 0.3 * (rays - 0.4) * reach;
-  color += uGlow * (0.07 * rays * reach);
+  float rays = 0.7 * valueNoise(vec2(fan * 2.9, 3.7)) + 0.3 * valueNoise(vec2(fan * 6.7, 9.1));
+  rays = smoothstep(0.2, 0.9, rays);
+  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.34) * smoothstep(0.0, 0.07, el);
+  color *= 1.0 + 0.5 * (rays - 0.4) * reach;
+  color += uGlow * (0.13 * rays * reach);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.009) + 1.6 * exp(-theta / 0.03) + 0.18 * exp(-theta / 0.12)) + uGlow * vec3(1.0, 0.76, 0.5) * (0.75 * exp(-theta / 0.2));
+  color += uGlow * (60.0 * exp(-theta / 0.009) + 1.6 * exp(-theta / 0.03) + 0.18 * exp(-theta / 0.12)) + uGlow * vec3(1.0, 0.76, 0.5) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 

@@ -14,7 +14,7 @@ export const world: WorldSettings = {
   wind: 0.5,
 }
 
-const SKY_GAIN = 1.6
+const SKY_GAIN = 1.4
 
 export const stage: WorldStageMaker = (def) => {
   const sky = new GoldenSky(def)
