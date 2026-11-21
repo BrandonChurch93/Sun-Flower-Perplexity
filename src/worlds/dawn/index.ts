@@ -27,7 +27,7 @@ export const mist: MistSettings = {
   sheets: 7,
   heightM: 0.013,
   thickness: 0.955,
-  lit: [0.07, 0.038, 0.024],
+  lit: [0.04, 0.026, 0.02],
   shade: [0.33, 0.44, 0.38],
   forward: 1,
   drift: [0.05, 0.02],

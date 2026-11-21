@@ -7,10 +7,11 @@ import { groundStates, soilHeight } from './soil.ts'
 
 // The grass close to the plant, where the dawn lens sees single blades: each blade is a folded ribbon with a mid line, and carries beads of dew that are small balls of their own.
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame. Where beadsSeen is given, only that many of each blade's beads are made.
-// The first stands at the left edge of the dawn's opening frames, in front of the plant. The second comes up between the plant and the sun while the lens pulls back. The rest are sprouts on the left.
+// The first stands at the left edge of the dawn's opening frames, in front of the plant. The second stands between the plant and the sun, low at the frame's edge in the first frame, and grows through the dawn no faster than the seedling. The rest are sprouts on the left.
 export interface Clump { x: number; z: number; blades: number; heightM: [number, number]; widthM: [number, number]; spreadM: number; lean: [number, number]; bornS: [number, number]; growS: number; beads: number; headingRad?: [number, number]; beadsSeen?: number }
-export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number }
-export const beadSizes: BeadSizes = { tipM: [0.0006, 0.0009], leastM: 0.00025, moreM: 0.0006 }
+// Where `drops` is given the dew is drops, not balls: only `share` of them are kept, most are small, each lies on the blade with a flat foot and sags down it, and a tip's drop hangs under the tip as a tear. The blades then bow sideways and their edges run unevenly.
+export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number; drops?: { share: number; tipShare: number; flat: number; sag: number; bowM: number; uneven: number } }
+export const beadSizes: BeadSizes = { tipM: [0.0005, 0.0008], leastM: 0.00012, moreM: 0.0008, drops: { share: 0.3, tipShare: 0.5, flat: 0.55, sag: 0.45, bowM: 0.1, uneven: 0.12 } }
 export const beadSizesKept: BeadSizes = { tipM: [0.00045, 0.0007], leastM: 0.00016, moreM: 0.0004 }
 export const clumpsKept: Clump[] = [
   { x: -0.042, z: 0.034, blades: 3, heightM: [0.034, 0.048], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
@@ -19,8 +20,8 @@ export const clumpsKept: Clump[] = [
   { x: -0.088, z: -0.04, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
 export const clumps: Clump[] = [
-  { x: -0.032, z: 0.06, blades: 3, heightM: [0.036, 0.048], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1], beadsSeen: 1 },
-  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 20 },
+  { x: -0.032, z: 0.06, blades: 3, heightM: [0.036, 0.048], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1], beadsSeen: 5 },
+  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [-2.5, -0.5], growS: 9.5, beads: 20 },
   { x: -0.15, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
   { x: -0.138, z: -0.036, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
@@ -30,6 +31,8 @@ const FOLD = 0.35
 
 export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const random = stream('ground blades')
+  const loose = stream('ground blades drops')
+  const drops = bead.drops
   const ball = mergeVertices(new THREE.IcosahedronGeometry(1, 2).deleteAttribute('normal').deleteAttribute('uv'), 1e-4)
   const dirs = ball.getAttribute('position').array as Float32Array
   const faces = ball.getIndex()!.array
@@ -45,6 +48,8 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const side = new THREE.Vector3()
   const face = new THREE.Vector3()
   const n = new THREE.Vector3()
+  const down = new THREE.Vector3()
+  const out = new THREE.Vector3()
   for (const clump of clumps) {
     for (let b = 0; b < clump.blades; b++) {
       const place = random.next() * Math.PI * 2
@@ -63,7 +68,15 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
       const born = random.range(clump.bornS[0], clump.bornS[1])
       const tipBead = random.next() < 0.45
       const droop = (tipBead ? 0.16 : 0.05) + 0.012 * clump.beads
-      const spine = (t: number, out: THREE.Vector3): THREE.Vector3 => out.set(rx + hx * height * (lean * Math.pow(t, 1.7) + droop * t * t * t), height * (t - 0.28 * lean * t * t - 0.5 * droop * t * t * t), rz + hz * height * (lean * Math.pow(t, 1.7) + droop * t * t * t))
+      const bow = drops ? loose.range(-drops.bowM, drops.bowM) : 0
+      const turn = drops ? loose.range(0.6, 1.5) : 0
+      const edges = drops ? [loose.range(0, 6.28), loose.range(0, 6.28), loose.range(0, 6.28), loose.range(0, 6.28)] : [0, 0, 0, 0]
+      const spine = (t: number, out: THREE.Vector3): THREE.Vector3 => {
+        const reach = lean * Math.pow(t, 1.7) + droop * t * t * t
+        const aside = bow * t * Math.sin(turn * 3.1416 * t)
+        return out.set(rx + height * (hx * reach - hz * aside), height * (t - 0.28 * lean * t * t - 0.5 * droop * t * t * t), rz + height * (hz * reach + hx * aside))
+      }
+      const ragged = (t: number, a: number): number => (drops ? 1 + drops.uneven * (Math.sin(t * 19 + edges[a < 0 ? 0 : 1]) + 0.5 * Math.sin(t * 43 + edges[a < 0 ? 2 : 3])) * Math.abs(a) : 1)
       const frame = (t: number): number => {
         spine(t, c)
         spine(Math.min(1, t + 0.01), ahead)
@@ -85,9 +98,10 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
         const t = r / ROWS
         const half = frame(t)
         for (const a of [-1, 0, 1]) {
-          const px = c.x + side.x * half * a + face.x * half * FOLD * Math.abs(a)
-          const py = c.y + side.y * half * a + face.y * half * FOLD * Math.abs(a)
-          const pz = c.z + side.z * half * a + face.z * half * FOLD * Math.abs(a)
+          const w = half * ragged(t, a)
+          const px = c.x + side.x * w * a + face.x * w * FOLD * Math.abs(a)
+          const py = c.y + side.y * w * a + face.y * w * FOLD * Math.abs(a)
+          const pz = c.z + side.z * w * a + face.z * w * FOLD * Math.abs(a)
           n.copy(face).addScaledVector(side, -FOLD * a).normalize()
           push(px, py, pz, n.x, n.y, n.z, px, py, pz, 0, t, a, seed)
         }
@@ -111,6 +125,46 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
         const start = position.length / 3
         const own = random.next()
         if (k >= (clump.beadsSeen ?? count)) continue
+        if (drops) {
+          if (loose.next() > (tip ? drops.tipShare : drops.share)) continue
+          if (tip) {
+            const r = size
+            const hy = c.y - 0.75 * r
+            for (let v = 0; v < dirs.length; v += 3) {
+              const dy = dirs[v + 1]
+              const neck = dy > 0 ? 1 - 0.8 * dy * dy : 1
+              const tall = dy > 0 ? 1.6 : 1
+              n.set(dirs[v], dy > 0 ? dy * 0.45 : dy, dirs[v + 2]).normalize()
+              push(c.x + dirs[v] * r * neck, hy + dy * r * tall, c.z + dirs[v + 2] * r * neck, n.x, n.y, n.z, c.x, hy, c.z, 2, t, 0, own)
+            }
+          } else {
+            const r = Math.min(bead.leastM + bead.moreM * Math.pow((size - bead.leastM) / bead.moreM, 1.5), 0.8 * half)
+            const fit = Math.max(0, 1 - (0.9 * r) / half)
+            const at = Math.max(-fit, Math.min(fit, across))
+            const rise = half * FOLD * Math.abs(at)
+            out.copy(face).multiplyScalar(upper)
+            down.set(0, -1, 0).addScaledVector(out, out.y)
+            const slope = down.length()
+            if (slope > 1e-4) down.multiplyScalar(1 / slope)
+            const sag = drops.sag * slope * (0.4 + 0.6 * Math.min(1, r / bead.moreM))
+            const cx = c.x + side.x * half * at + face.x * rise
+            const cy = c.y + side.y * half * at + face.y * rise
+            const cz = c.z + side.z * half * at + face.z * rise
+            for (let v = 0; v < dirs.length; v += 3) {
+              const up = Math.max(0, dirs[v] * out.x + dirs[v + 1] * out.y + dirs[v + 2] * out.z)
+              const fx = dirs[v] - out.x * (dirs[v] * out.x + dirs[v + 1] * out.y + dirs[v + 2] * out.z)
+              const fy = dirs[v + 1] - out.y * (dirs[v] * out.x + dirs[v + 1] * out.y + dirs[v + 2] * out.z)
+              const fz = dirs[v + 2] - out.z * (dirs[v] * out.x + dirs[v + 1] * out.y + dirs[v + 2] * out.z)
+              const along = fx * down.x + fy * down.y + fz * down.z
+              const lean = sag * (up + 0.5 * Math.max(0, along))
+              const h = up * drops.flat + 0.04
+              n.set(fx * drops.flat + out.x * up + down.x * sag * 0.5, fy * drops.flat + out.y * up + down.y * sag * 0.5, fz * drops.flat + out.z * up + down.z * sag * 0.5).normalize()
+              push(cx + (fx + down.x * lean + out.x * h) * r, cy + (fy + down.y * lean + out.y * h) * r, cz + (fz + down.z * lean + out.z * h) * r, n.x, n.y, n.z, cx, cy, cz, 2, t, 0, own)
+            }
+          }
+          for (let f = 0; f < faces.length; f++) index.push(start + faces[f])
+          continue
+        }
         for (let v = 0; v < dirs.length; v += 3) push(bx + dirs[v] * size, by + dirs[v + 1] * size * 0.9, bz + dirs[v + 2] * size, dirs[v], dirs[v + 1], dirs[v + 2], bx, by, bz, 2, t, 0, own)
         for (let f = 0; f < faces.length; f++) index.push(start + faces[f])
       }
@@ -176,7 +230,6 @@ in float vKind;
 uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
-uniform float uKeptS;
 uniform vec2 uToward;
 ${groundStates}
 ${cropLight}
@@ -206,8 +259,12 @@ void main() {
   vec3 through = albedo * vec3(2.4, 2.0, 0.5) * (0.55 + 0.45 * edge) * (1.0 - 0.4 * rib) * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
   if (uTime < uKeptS) {
-    through = albedo * vec3(0.6, 0.8, 0.4) * (0.06 + 0.9 * edge) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
-    color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.6;
+    float fine = saturate(1.0 - fwidth(vAlong.y) * 5.0);
+    float vein = mix(0.5, 0.5 + 0.5 * cos(vAlong.y * 28.3), fine) * (1.0 - rib);
+    float mottle = valueNoise(vec2(t * 13.0 + vAlong.z * 40.0, vAlong.y * 1.5 + vAlong.z * 90.0));
+    albedo *= mix(0.84, 1.06, vein) * mix(0.8, 1.12, mottle);
+    through = albedo * vec3(0.45, 0.55, 0.3) * (0.07 + 0.4 * edge) * mix(0.7, 1.2, vein) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
+    color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.45;
   }
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * (0.05 + 0.25 * saturate(uWet + uDew)) * lit;
