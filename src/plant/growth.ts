@@ -54,6 +54,7 @@ const goldenRad = config.plant.goldenAngleDeg * RAD
 const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
+const STACK_SECONDS = 5.5
 const HOOK_MAX = 172 * RAD
 const HOOK_BACK = 0.3
 const discRadius = config.plant.discDiameterM / 2
@@ -361,7 +362,8 @@ export function leafStemFraction(i: number, time: number): number {
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
   // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
-  const quick = Math.min(seconds, lerp(1.6, 8, smoothstep(16, 21, leafStart(i))))
+  // A joint born late in the rain goes on rising through the night to near its last height: the leaves stand in a close stack under the bud.
+  const quick = Math.min(seconds, Math.max(lerp(1.6, 8, smoothstep(16, 21, leafStart(i))), lerp(1.6, STACK_SECONDS, smoothstep(13, 14.5, leafStart(i)))))
   // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
   const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
   const tip = 0.99 * heightAt(start)

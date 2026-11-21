@@ -109,9 +109,9 @@ export class Post {
     uGlowNear: { value: new THREE.Vector3(1, 0.9, 0.76) },
     uGlowFar: { value: new THREE.Vector3(1, 0.5, 0.2) },
     uAirTint: { value: new THREE.Vector3(1, 0.4, 0.12) },
-    uLowRays: { value: 0 },
-    uRayLen: { value: 0.1 },
-    uRayWide: { value: 1 },
+    uLowSun: { value: 0 },
+    uBloomWide: { value: 0.1 },
+    uLowFlare: { value: 1 },
     uKnee: { value: 0.88 },
     uDisc: { value: 0 },
     uFarFill: { value: 1 },
@@ -303,9 +303,9 @@ export class Post {
       g.uGlowNear.value.fromArray(look.glowNear)
       g.uGlowFar.value.fromArray(look.glowFar)
       g.uAirTint.value.fromArray(look.airTint)
-      g.uLowRays.value = look.lowRays
-      g.uRayLen.value = look.rayLen
-      g.uRayWide.value = look.rayWide
+      g.uLowSun.value = look.lowSun
+      g.uBloomWide.value = look.bloomWide
+      g.uLowFlare.value = look.lowFlare
       g.uKnee.value = look.knee
       g.uDisc.value = look.disc
       g.tRaw.value = frame
