@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
-import { heightAt, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
+import { headOpen, heightAt, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
@@ -13,10 +13,8 @@ import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opens
 const CANOPY = 0.72
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
-// Over which seconds the open heads of the field fill out to nearly the size of the plant's own.
-const HEADS_FILL = [51.5, 57.5]
 
-interface Group { head: { value: THREE.Vector4 }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; grow: { value: number }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
@@ -24,8 +22,9 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   seen.setUsage(THREE.DynamicDrawUsage)
   const plant = new Plant({ detail, variant, places: seen })
   const head = { value: new THREE.Vector4(0, 0, 0, 1) }
-  for (const m of plant.meshes) (m.material as THREE.RawShaderMaterial).uniforms.uHeadAt = head
-  return { head, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
+  const grow = { value: 0 }
+  for (const m of plant.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: head, uHeadGrow: grow })
+  return { head, grow, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -65,10 +64,10 @@ export class Field {
       usePlant(g.plant.variant, null)
       const h = headAt(clock, open)
       g.head.value.set(h.center.x, h.center.y, h.center.z, h.radius + rayLength(0, clock) + 0.03)
+      // A head opens to nearly the size of the plant's own, however short its stalk.
+      g.grow.value = headOpen(clock)
       usePlant(0)
     }
-    // Once open the heads of the field go on filling out.
-    fieldUniforms.uHeadGrow.value = THREE.MathUtils.smoothstep(timeOpen, HEADS_FILL[0], HEADS_FILL[1])
     const canopy = heightAt(timeOpen) * CANOPY
     fieldUniforms.uCanopy.value = canopy
     // The leaves in the gaps come up as the crop closes over them.

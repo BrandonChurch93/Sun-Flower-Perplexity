@@ -3,7 +3,7 @@ import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
-import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
+import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
@@ -24,6 +24,7 @@ const HEADS_FROM_M = 16
 const HEAD_AT = 0.9
 const RAY_DEEP = [0.82, 0.25]
 const LEAF_SKY = 1.2
+const HEAD_GROWS = 0.35
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -36,6 +37,7 @@ out float vTone;
 uniform vec3 uRight;
 uniform vec2 uTile;
 uniform vec2 uCrop;
+uniform float uOpen;
 uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
@@ -47,7 +49,8 @@ void main() {
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
   float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 30).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
   float draw = fract(aVary.w * 0.6180339);
-  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away);
+  // An open head is nearly as large as the plant's own: the picture of a short neighbor is drawn larger about its head.
+  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away) * (1.0 + ${HEAD_GROWS.toFixed(2)} * uOpen);
   float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
   float flip = fract(draw * 13.0) < 0.5 ? -1.0 : 1.0;
   float top = ${HEAD_AT.toFixed(2)} * uTile.y * aPlace.w;
@@ -228,6 +231,7 @@ export class FarField {
     uPlantHeight: fieldUniforms.uPlantHeight,
     uToward: { value: new THREE.Vector2(toward.x, toward.z) },
     uCover: { value: 0 },
+    uOpen: { value: 0 },
     uAbove: { value: 0 },
   }
   private readonly carpetHeight = { value: 0 }
@@ -312,6 +316,7 @@ export class FarField {
     this.plants.forEach((plant, i) => {
       plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
     })
+    this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
     // How far the eye stands over the tops, in heights of the tops. As it rises the leaf layers and the carpet come in and
