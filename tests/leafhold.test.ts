@@ -15,7 +15,7 @@ const airs: PlantInputs[] = [
   { leanX: 0, leanZ: 0, lift: 1, wind: 0 },
   { leanX: 0.1, leanZ: -0.05, lift: 0.3, wind: 0.6 },
 ]
-const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6, rollDeg: -40, foldScale: 0.4 }
+const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6, rollDeg: -40, foldScale: 0.4, sinkDeg: 9 }
 
 // Every number the holds can touch, for one plant from one time to another.
 function numbers(variant: number, from: number, to: number): Float64Array {
@@ -79,6 +79,11 @@ describe('a leaf held by hand', () => {
     expect(leafRoll(20, bloom)).toBeCloseTo(hold.rollDeg * RAD, 12)
     expect(leafFoldScale(20, bloom)).toBeCloseTo(hold.foldScale, 12)
     expect(leafElevation(20, bloom, air)).toBeCloseTo((hold.elevationDeg + hold.liftDeg) * RAD, 12)
+    const { sinkDeg, ...unsunk } = hold
+    setLeafHold(NEIGHBOR, 20, unsunk)
+    const up = leafElevation(20, last, air)
+    setLeafHold(NEIGHBOR, 20, hold)
+    expect(leafElevation(20, last, air)).toBeCloseTo(up - sinkDeg * RAD, 12)
     setLeafHold(NEIGHBOR, 20, { liftDeg: hold.liftDeg })
     expect(leafElevation(20, bloom, air)).toBeCloseTo(free.up + hold.liftDeg * RAD, 12)
     setLeafHold(NEIGHBOR, 20, hold)
