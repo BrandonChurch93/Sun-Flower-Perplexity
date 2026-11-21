@@ -32,13 +32,13 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 5.0 + floor(5.0 * seed);
-  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 0.8, onWater);
+  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 0.55, onWater);
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
-    float r = wide * (0.04 + 0.55 * pow(1.0 - v, 2.5) + 0.13 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * sqrt(stands);
-    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.6 * wide * v * v * stands;
-    return vec3(cos(th) * r + lean.x, wide * (1.6 + 1.2 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
+    float r = wide * (0.06 + 0.8 * pow(1.0 - v, 2.5) + 0.19 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * sqrt(stands);
+    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.87 * wide * v * v * stands;
+    return vec3(cos(th) * r + lean.x, wide * (2.3 + 1.7 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
   float tall = wide * mix(0.7, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, mix(0.22, 0.12, onWater), x) * (1.0 - smoothstep(mix(0.5, 0.72, onWater), 1.0, x));
@@ -49,7 +49,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
   float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v;
-  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.8), onWater) * (mix(0.5, 0.8, onWater) * v + mix(1.1, 0.9, onWater) * finger);
+  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.8, onWater) * v + mix(1.1, 0.9, onWater) * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
   float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (0.8 + foot + 0.2 * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
