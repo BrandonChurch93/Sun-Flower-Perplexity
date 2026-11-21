@@ -19,7 +19,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: steps(3, 1), floor: steps(10).reverse(), bracts: 48, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: steps(3, 1), floor: steps(10).reverse(), bracts: 55, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 14, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
@@ -185,6 +185,7 @@ export function create(options: PartOptions): PlantPart | null {
   const rowR = new Float32Array(Math.max(shape.nu, 1))
   const rowH = new Float32Array(Math.max(shape.nu, 1))
   const rowT = new Float32Array(Math.max(shape.nu, 1))
+  const hugs = new Float32Array(shape.bracts)
 
   // Normals of one grid from its neighbors. `wrap` joins the last column to the first, as round a ring.
   const gridNormals = (pos: Float32Array, nor: Float32Array, base: number, nu: number, nv: number, wrap: boolean, fx: number, fy: number, fz: number) => {
@@ -327,7 +328,11 @@ export function create(options: PartOptions): PlantPart | null {
       }
       const own = time - SECTOR_LAG * smoothstep(bloom0 - 4, bloom0, time) * (1 - opened)
       const angle = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
-      const curl = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
+      const pushed = smoothstep(0.15, 0.75, rayLong / Math.max(L, 1e-6))
+      const closed = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
+      const curl = lerp(closed, Math.min(closed, 0.12), pushed)
+      const hugEnd = lerp(k.hug, HUG_FROM + 0.08, clamp((k.foot - 0.75) / 0.4))
+      hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
       const rayC = Math.cos(behind - RAY_CLEAR)
       const gap = RAY_GAP * smoothstep(0, 0.008, rayLong)
@@ -353,7 +358,7 @@ export function create(options: PartOptions): PlantPart | null {
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(R * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
         const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW * (1 - 0.6 * Math.max(curl, 0)) + sway * u * u
-        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, k.hug, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
+        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
         const Re = R + lift
         if (h < hw) {
           const e = (r * r) / (Re * Re) + ((h - hw) * (h - hw)) / ((Hb + lift) * (Hb + lift))
@@ -416,7 +421,7 @@ export function create(options: PartOptions): PlantPart | null {
         const body = 0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.46))
         const tail = 0.34 * Math.pow(1 - u, 0.9) + 0.012
         const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.45, u))
-        const hug = 1 - smoothstep(HUG_FROM, k.hug, u)
+        const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
         const soft = 0.2 * half + 1e-6
         const keel = 0.0007 * size * (1 - 0.6 * u)
