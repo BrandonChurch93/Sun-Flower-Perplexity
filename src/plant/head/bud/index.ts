@@ -91,7 +91,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.1, 0.08, 0.06]
+const BULGE = [0.1, 0.16, 0.06]
 const BULGE_LATE = [0.16, 0.14, 0.1]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
@@ -119,11 +119,11 @@ const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
 const SHUT_TIP = [0.35, 0.7, 0.5]
 const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
-const CROWN_ANGLE = 0.55
+const CROWN_ANGLE = 0.8
 const CROWN_ANGLE_LATE = 0.6
 const CROWN_LONG = 0
 const CROWN_LONG_LATE = 0.12
-const CROWN_TIP = -1.0
+const CROWN_TIP = -1.6
 const CROWN_TIP_LATE = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
@@ -184,10 +184,10 @@ export function create(options: PartOptions): PlantPart | null {
       fold: 0.14 + 0.26 * rnd(13, i),
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
-      spread: series === 0 ? SHUT_SPREAD * smoothstep(0.3, 0.6, rnd(904, i)) : 0,
+      spread: series === 0 ? SHUT_SPREAD * (Math.floor(i / 3) % 2 === 0 ? 0.75 + 0.25 * rnd(904, i) : 0.25 * rnd(904, i)) : 0,
       star: series === 0 ? SHUT_SPREAD * rnd(904, i) : 0,
       crown: series === 2 && Math.floor(i / 3) % 2 === 0 ? 1 : 0,
-      leafy: series === 0 ? smoothstep(0.3, 0.6, rnd(904, i)) : series === 1 ? smoothstep(0.6, 0.8, rnd(905, i)) : 0,
+      leafy: series === 0 ? (Math.floor(i / 3) % 2 === 0 ? 0.75 + 0.25 * rnd(904, i) : 0.25 * rnd(904, i)) : series === 1 ? smoothstep(0.6, 0.8, rnd(905, i)) : 0,
     })
   }
 
