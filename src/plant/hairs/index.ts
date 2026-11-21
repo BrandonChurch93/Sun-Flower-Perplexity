@@ -36,8 +36,14 @@ const EXTRA_SHARE = 0.4
 const DEW_FROM_M = 0.00015
 const DEW_SHARE = 0.05
 // A damp hair is drawn at least this wide and this long on the screen, and that much fainter: the same light, spread, so it is a soft stroke and never a row of single lit pixels.
-const SOFT_HALF_PX = 0.75
+const SOFT_HALF_PX = 0.5
 const SOFT_LONG_PX = 3
+// A wide strand stands for the down round it. Under dew or rain each hair of that down shows, so the strand is drawn as itself and this many more beside it, each with its own length, lean and light.
+const TUFT = 6
+const TUFT_LIGHT = 0.22
+// The night ends in a cut to the frost, where each strand wears its rime alone: the hairs beside it draw back into it before the cut.
+const TUFT_OUT_FROM_S = 28.5
+const TUFT_OUT_BY_S = 29.9
 // A wet hair long enough may carry a drop: six in a hundred do.
 const DROP_FROM_M = 0.0005
 const DROP_SHARE = 0.06
@@ -56,6 +62,8 @@ out vec3 vSky;
 out float vSkyY;
 uniform vec3 uHairColor;
 uniform float uHairWidth;
+uniform float uHairTuft;
+uniform float uHairTufted;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
 const float SUN_THROUGH = 1.8;
@@ -88,11 +96,17 @@ const float DEW_OF_HAIR = 0.3;
 const float DEW_FACE = 0.0;
 const float SOFT_HALF_PX = ${SOFT_HALF_PX.toFixed(2)};
 const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
-const float WET_BACK = 0.3;
-const float WET_THROUGH = 6.0;
+const float WET_BACK = 0.05;
+const float WET_THROUGH = 1.7;
 const float DEW_GLOW = 0.2;
-const float DEW_GLOW_SIDE = 0.6;
+const float DEW_GLOW_SIDE = 0.7;
+const float DEW_FAR_SIDE = 0.1;
 const float DEW_SHARE = ${DEW_SHARE.toFixed(2)};
+const float DEW_FROM_M = ${DEW_FROM_M.toFixed(5)};
+const float TUFT_LIGHT = ${TUFT_LIGHT.toFixed(2)};
+const float TUFT_ALONG_M = 0.003;
+const float TUFT_ACROSS_M = 0.0004;
+const float TUFT_ROUND_M = 0.02;
 
 struct Strand {
   vec3 world;
@@ -117,6 +131,7 @@ float hairWide;
 float hairBead;
 float hairSlim;
 float hairCoat;
+float hairGiven;
 
 vec3 hairPoint(float t) {
   return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
@@ -133,6 +148,7 @@ void readHair(int k) {
   hairDir = normalize(mix(c.xyz, d.xyz, uShutter));
   hairStand = hairDir;
   hairOwn = b.w;
+  hairGiven = a.w;
   hairShare = c.w;
   float h1 = fract(hairOwn * 13.37 + 0.21);
   float h2 = fract(hairOwn * 47.13 + 0.67);
@@ -143,6 +159,22 @@ void readHair(int k) {
   vec3 ref = abs(hairDir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 e1 = normalize(cross(hairDir, ref));
   vec3 e2 = cross(hairDir, e1);
+  float tufted = max(uPlantDew, uPlantWet) > 0.0 ? uHairTufted : 0.0;
+  hairShare *= uHairTuft > 0.0 ? TUFT_LIGHT * tufted : mix(1.0, TUFT_LIGHT, tufted);
+  if (uHairTuft > 0.0) {
+    float t1 = fract(hairOwn * 127.13 + 0.6180340 * uHairTuft);
+    float t2 = fract(hairOwn * 311.71 + 0.4142136 * uHairTuft);
+    vec2 off = vec2((2.0 * t1 - 1.0) * TUFT_ALONG_M, (2.0 * t2 - 1.0) * TUFT_ACROSS_M);
+    vec3 rise = vec3(0.0, 1.0, 0.0) - hairDir * hairDir.y;
+    hairRoot.xyz += rise * off.x + cross(hairDir, rise) * off.y - hairDir * (dot(off, off) * dot(rise, rise) / TUFT_ROUND_M);
+    hairOwn = fract(hairOwn * 3.0 + 0.2360680 * uHairTuft + 0.5 * t1);
+    h1 = fract(hairOwn * 13.37 + 0.21);
+    h2 = fract(hairOwn * 47.13 + 0.67);
+    h4 = fract(hairOwn * 233.31 + 0.09);
+    h5 = fract(hairOwn * 71.93 + 0.5);
+    h6 = fract(hairOwn * 317.77 + 0.21);
+    h7 = fract(hairOwn * 173.19 + 0.83);
+  }
   float turn = h1 * 6.2832;
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
   // No two hairs stand alike: each leans its own way off the line it was given, has its own length and its own slight curve. A long hair wanders and curves more than short down, which stands straight.
@@ -182,15 +214,16 @@ void readHair(int k) {
     float d3 = fract(hairOwn * 331.71 + 0.59);
     // Down under dew or rain shows at its full length, each strand outlined by the water on it; dry, only its felted foot does.
     float downy = smoothstep(0.0003, 0.0004, a.w) * (1.0 - coat) * step(0.0001, uHairWidth);
-    float longer = mix(1.0, 1.4 + 2.4 * d1, downy * damp);
-    hairRoot.w *= mix(1.0, mix(0.5 + 0.9 * d1 * d1, 0.3 + 0.6 * d1 * d1, coat), (1.0 - downy) * damp) * longer;
-    hairDir = normalize(hairDir + (e1 * cos(6.2832 * d2) + e2 * sin(6.2832 * d2)) * (0.7 * damp * d3));
-    hairBend *= 1.0 + 3.0 * damp * d3 * d3;
+    float longer = mix(1.0, 1.7 + 1.4 * d1, downy * damp);
+    hairRoot.w *= mix(1.0, mix(0.5 + 0.9 * d1 * d1, 0.15 + 0.3 * d1 * d1, coat), (1.0 - downy) * damp) * longer;
+    hairDir = normalize(hairDir + (e1 * cos(6.2832 * d2) + e2 * sin(6.2832 * d2)) * (0.7 * damp * d3) + vec3(0.0, 0.3 * downy * damp, 0.0));
+    hairBend = hairBend * (1.0 + 3.0 * damp * d3 * d3) + (e1 * cos(6.2832 * d2 + 1.9) + e2 * sin(6.2832 * d2 + 1.9)) * (0.6 * damp * d3);
+    // Nor do they hold the same water: a few carry most of the light and many carry little.
+    float d4 = fract(hairOwn * 419.57 + 0.23);
+    hairShare *= mix(1.0, 0.35 + 1.5 * d4 * d4, damp);
   }
-  // These hairs are stiff and rain does not lay them flat. A wet one hangs a little, one in three carries a film of water that thickens its foot, and a few carry a drop.
+  // These hairs are stiff and rain does not lay them flat. A wet one hangs a little and curls under its water, and a few carry a drop.
   if (uPlantWet > 0.0) {
-    float point = step(h4, 0.34);
-    hairWide *= 1.0 + 0.6 * uPlantWet * point;
     hairDir = normalize(hairDir + (aside * 0.15 + vec3(0.0, -0.25, 0.0)) * uPlantWet);
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
   }
@@ -237,7 +270,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), 0.7, max(uPlantDew, uPlantWet)), pow(t, 1.3 + h1));
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
@@ -256,8 +289,9 @@ Strand strandAt(float t) {
   // Rime is not clear: it hides what is behind it, so it fades by how much of it shows and the air between is laid over it in the fragment.
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
-  // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair. Straight against the sun the light that goes on past is nearly all there is.
-  vSun += lit * THROUGH_TINT * (mix(DEW_GLOW_SIDE, DEW_GLOW, against) * uPlantDew * (1.0 - uPlantWet) * shade * veil);
+  // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair. Straight against the sun the light that goes on past is nearly all there is. From the side, the hairs on the body's far side stand in its shade and have only what the air sends round.
+  float facing = mix(DEW_FAR_SIDE, 1.0, smoothstep(-0.2, 0.35, dot(out3, uSunDir)));
+  vSun += lit * THROUGH_TINT * (mix(DEW_GLOW_SIDE * facing, DEW_GLOW, against) * uPlantDew * (1.0 - uPlantWet) * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
   // A wet hair is a thread of water: it throws the bright low sky behind it on to the lens, far more than a dry hair does.
@@ -396,7 +430,9 @@ void main() {
     // Dew: each hair that was picked holds one bead at its tip, no larger than the hair can carry. On a face turned to the eye a clear bead shows the skin behind it and little else.
     if (uPlantFrost < 0.5) {
       s = strandAt(mix(0.6, 0.8, tip) + 0.15 * hA);
-      float dew = fract(hairOwn * 211.31 + 0.77) <= DEW_SHARE ? sqrt(uPlantDew * (1.0 - uPlantWet)) : 0.0;
+      // A hair that is still growing out gathers its bead as it lengthens: none stands on it at once.
+      float grown = smoothstep(DEW_FROM_M, 4.0 * DEW_FROM_M, hairGiven * plantSize());
+      float dew = fract(hairOwn * 211.31 + 0.77) <= DEW_SHARE ? sqrt(uPlantDew * (1.0 - uPlantWet)) * grown : 0.0;
       // The drop a wet hair carries hangs below the bead of dew, if it has both.
       radius = mix(hairBead, min(DEW_M * (0.6 + 1.4 * hB), DEW_OF_HAIR * hairRoot.w) * dew, tip) * plantSize();
       shows = mix(DEW_FACE, 1.0, 1.0 - smoothstep(0.0, 0.6, dot(plantDirection(hairStand), s.toEye)));
@@ -407,7 +443,7 @@ void main() {
     vUp = cross(s.toEye, vRight);
     float reachPx = max(rPx, 0.5) + 0.75;
     vAt = vec2(sx, sy) * reachPx;
-    vShape = vec3(1.0, rPx, min(1.0, s.share) * shows);
+    vShape = vec3(1.0, rPx, min(1.0, s.share * mix(hairSlim, 1.0, step(0.5, uPlantFrost))) * shows);
     gl_Position = projectionMatrix * viewMatrix * vec4(s.world + (vRight * vAt.x + vUp * vAt.y) * (radius > 0.0 ? s.pixel : 0.0), 1.0);
   }
 }
@@ -496,6 +532,9 @@ export class HairSet {
   private readonly ribbons = new THREE.BufferGeometry()
   private readonly linesSharp = new THREE.BufferGeometry()
   private readonly ribbonsSharp = new THREE.BufferGeometry()
+  private readonly tufts: THREE.BufferGeometry[] = []
+  private readonly tufted = { value: 0 }
+  private readonly tufty: boolean
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
   private readonly pickTexture: THREE.DataTexture
@@ -540,7 +579,7 @@ export class HairSet {
     }
     this.lines.setIndex(new THREE.BufferAttribute(lineIndex, 1))
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
-    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture } }
+    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture }, uHairTuft: { value: 0 }, uHairTufted: this.tufted }
     const make = (label: string, vertex: string, define: string, sharp = false): Surface =>
       makePartSurface(options, { name: label, vertex, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: own })
     this.surface = make(name, lineVertex, '')
@@ -586,6 +625,19 @@ export class HairSet {
     barbs.renderOrder = HAIR_ORDER + 3
     barbsSharp.renderOrder = HAIR_ORDER + 4
     this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp]
+    // Only the stem's coats: its strands are far apart, and on a bud that is still coming out the down is as close as it shows.
+    this.tufty = widthM >= 0.0001 && name.startsWith('stem')
+    for (let t = 1; this.tufty && t <= TUFT; t++) {
+      const geometry = new THREE.BufferGeometry()
+      geometry.setIndex(this.ribbons.getIndex())
+      geometry.setDrawRange(0, 0)
+      const surface = makePartSurface(options, { name: `${name} tuft ${t}`, vertex: ribbonVertex, fragment: `#define RIBBON 1\n${fragment}`, side: THREE.DoubleSide, transparent: true, additive: true, castShadow: false, uniforms: { ...own, uHairTuft: { value: t } } })
+      const mesh = partMesh(geometry, surface)
+      mesh.renderOrder = HAIR_ORDER + 1
+      mesh.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, mesh, true)
+      this.tufts.push(geometry)
+      this.meshes.push(mesh)
+    }
   }
 
   // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
@@ -674,7 +726,7 @@ export class HairSet {
       if (long > longest) longest = long
     }
     // Rime is matt and does not burn: a crust of it may stand as close as it grows.
-    const limit = CROWD_COVER * (1 + 15 * stateUniforms.uPlantFrost.value)
+    const limit = CROWD_COVER * (1 + 15 * stateUniforms.uPlantFrost.value) * (1 + 2 * Math.max(stateUniforms.uPlantDew.value, stateUniforms.uPlantWet.value))
     for (let k = 0; k < n; k++) {
       const px = at[k * 2]
       const py = at[k * 2 + 1]
@@ -738,6 +790,7 @@ export class HairSet {
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
       sharp.setDrawRange(0, 0)
+      if (ribbon) for (const tuft of this.tufts) tuft.setDrawRange(0, 0)
       return
     }
     const lengthPx = this.longest / pixel
@@ -747,6 +800,9 @@ export class HairSet {
     } else if (lengthPx < 5) geometry.setDrawRange(0, this.kept * 2)
     else geometry.setDrawRange(this.count * 2, this.kept * 4)
     sharp.setDrawRange(geometry.drawRange.start, rimed ? geometry.drawRange.count : 0)
+    const out = Math.min(1, Math.max(0, (shared.uTime.value - TUFT_OUT_FROM_S) / (TUFT_OUT_BY_S - TUFT_OUT_FROM_S)))
+    this.tufted.value = this.tufty ? 1 - out * out * (3 - 2 * out) : 0
+    if (ribbon) for (const tuft of this.tufts) tuft.setDrawRange(geometry.drawRange.start, damp && !rimed && this.tufted.value > 0 ? geometry.drawRange.count : 0)
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.
