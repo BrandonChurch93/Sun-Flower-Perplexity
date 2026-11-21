@@ -16,13 +16,13 @@ export const world: WorldSettings = {
 }
 
 // Cold and low: a thin layer in the crop under eye level, and a broken bank over the far field to the foot of the hills.
-const MIST: MistSettings = { fromM: 6.5, toM: 60, sheets: 10, heightM: 0.14, thickness: 0.92, lit: [0.4, 0.4, 0.36], shade: [8.2, 5.4, 3.3], forward: 1, drift: [0.55, 0.2], bankM: 6, broken: 0.6, lobeRad: 0.34, rise: 0.6 }
-const BANK: MistSettings = { fromM: 50, toM: 75, sheets: 3, heightM: 0.34, thickness: 0.999, lit: [0.55, 0.55, 0.5], shade: [6.8, 4.5, 2.8], forward: 1, drift: [0.9, 0.35], bankM: 8, broken: 0.85, lobeRad: 0.34 }
+const MIST: MistSettings = { fromM: 9, toM: 60, sheets: 10, heightM: 0.14, thickness: 0.92, lit: [0.4, 0.4, 0.36], shade: [7.4, 5.4, 3.7], forward: 1, drift: [0.55, 0.2], bankM: 6, broken: 0.9, lobeRad: 0.34, rise: 0.6 }
+const BANK: MistSettings = { fromM: 50, toM: 75, sheets: 3, heightM: 0.34, thickness: 0.6, lit: [0.55, 0.55, 0.5], shade: [5.4, 4.0, 2.7], forward: 1, drift: [0.9, 0.35], bankM: 16, broken: 1, lobeRad: 0.34 }
 
 // The sky is painted for the grade below: its curve undoes the grade's contrast and its saturation the grade's, so the sky keeps the approved's tones while the plant gets the harder light.
-const SKY_GAIN = 0.69
-const SKY_CURVE = 0.79
-const SKY_SATURATION = 0.9
+const SKY_GAIN = 0.84
+const SKY_CURVE = 0.86
+const SKY_SATURATION = 0.96
 const STAR_GAIN = 3.2
 
 export const stage: WorldStageMaker = (def) => {
