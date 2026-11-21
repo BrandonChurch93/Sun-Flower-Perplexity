@@ -4,7 +4,7 @@ import { makeSurface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
 
 const SEED = streamSeed('golden air')
-const PEAK = 5
+const PEAK = 2.2
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
@@ -20,12 +20,13 @@ uniform float uSamples;
 uniform float uWidth;
 out vec3 vColor;
 out float vSize;
+flat out vec3 vAt;
 void main() {
   float t = uNow;
   vec3 p = position;
   float along = dot(p.xz, uToward) - t * 1.6;
   float wave = 0.55 * sin(along * 0.9) + 0.3 * sin(along * 2.3 + 1.7);
-  p.xz += uToward * (uWind * (0.18 + 0.3 * aSeed.z) * t + 0.05 * uWind * wave);
+  p.xz += uToward * (uWind * (0.07 + 0.12 * aSeed.z) * t + 0.05 * uWind * wave);
   p.x += 0.05 * sin(t * (0.35 + 0.5 * aSeed.x) + aSeed.y * 40.0);
   p.z += 0.05 * cos(t * (0.3 + 0.4 * aSeed.y) + aSeed.x * 31.0);
   p.y += 0.04 * sin(t * (0.4 + 0.3 * aSeed.w) + aSeed.z * 23.0) + 0.012 * t * (aSeed.w - 0.45);
@@ -36,7 +37,7 @@ void main() {
   float d = length(world - uCamPos);
   vec3 v = (world - uCamPos) / d;
   float toSun = saturate(dot(v, uSunDir));
-  float sizeM = mix(0.0001, 0.0022, aSeed.x * aSeed.x * aSeed.x);
+  float sizeM = mix(0.0001, 0.0014, aSeed.x * aSeed.x * aSeed.x);
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
   float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
@@ -45,9 +46,10 @@ void main() {
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(0.9, 1.3, world.y);
   float behind = smoothstep(0.955, 0.985, toSun) * (1.0 - smoothstep(0.06, 0.1, v.y));
-  float amount = 5.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.02, 0.05, coc / uWidth));
+  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.02, 0.05, coc / uWidth));
   vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(1)} / (px > 2.0 ? 3.0 : 1.0));
   vSize = px;
+  vAt = world;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;
   if (uDiag > 1) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -57,11 +59,12 @@ void main() {
 const fragment = /* glsl */ `
 in vec3 vColor;
 in float vSize;
+flat in vec3 vAt;
 void main() {
   float r = 2.0 * length(gl_PointCoord - 0.5);
   float fall = max(1.0 - r * r, 0.0);
   float disc = vSize > 2.0 ? 3.0 * fall * fall : 1.0;
-  outColor = vec4(vColor * disc, 0.0);
+  outColor = vec4(vColor * disc * sunShadow(vAt, vec3(0.0), 0.0), 0.0);
 }
 `
 

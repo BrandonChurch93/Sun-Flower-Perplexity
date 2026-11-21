@@ -47,15 +47,11 @@ uniform float uRim;
 uniform float uFogShare;
 uniform vec3 uGlow;
 ${air}
-float crown(float x, float w, float salt) {
-  float f = fract(x / w) * 2.0 - 1.0;
-  return sqrt(max(1.0 - f * f, 0.0)) * (0.3 + 0.7 * hash21(vec2(floor(x / w), salt)));
-}
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  float crowns = 0.42 * crown(vInfo.x, 26.0, uLayer) + 0.26 * crown(vInfo.x + 6.1, 13.0, uLayer + 3.0) + 0.12 * crown(vInfo.x + 2.7, 6.0, uLayer + 5.0);
-  top *= 0.45 + 0.75 * crowns;
+  float outline = 0.5 * valueNoise(vec2(vInfo.x * 0.021, uLayer)) + 0.32 * valueNoise(vec2(vInfo.x * 0.067, uLayer + 3.0)) + 0.18 * valueNoise(vec2(vInfo.x * 0.19, uLayer + 5.0));
+  top *= 0.4 + 0.9 * outline;
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -64,10 +60,10 @@ void main() {
   float f = saturate(vInfo.y / max(top, 1.0));
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.07 + 0.07 * f);
   vec3 v = normalize(vWorld - uCamPos);
-  color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
+  color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.03 + pow(saturate(dot(v, uSunDir)), 8.0));
   color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.2 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
   float sunward = pow(saturate(dot(v, uSunDir)), 20.0);
-  color = mix(color, uGlow * vec3(1.0, 1.05, 1.35), sunward * (0.2 + 0.5 * smoothstep(0.3, 1.0, f)));
+  color = mix(color, uGlow * vec3(1.0, 1.05, 1.35), 0.18 * sunward);
   outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -151,19 +147,17 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.4, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.013], rim: 0.56 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.0, highDeg: 2.1, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.016], rim: 0.56 },
 ]
 
 const VEILS = [
-  { radiusM: 14, heightM: 30, scaleM: 5, share: 0.21 },
-  { radiusM: 30, heightM: 40, scaleM: 6, share: 0.25 },
-  { radiusM: 60, heightM: 50, scaleM: 6, share: 0.28 },
-  { radiusM: 120, heightM: 60, scaleM: 7, share: 0.32 },
-  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.33 },
-  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.28 },
-  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.28 },
-  { radiusM: 3200, heightM: 260, scaleM: 60, share: 0.75 },
-  { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.75 },
+  { radiusM: 70, heightM: 50, scaleM: 6, share: 0.22 },
+  { radiusM: 130, heightM: 60, scaleM: 7, share: 0.32 },
+  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.38 },
+  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.34 },
+  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.3 },
+  { radiusM: 3200, heightM: 260, scaleM: 60, share: 0.5 },
+  { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.5 },
 ]
 
 const SUN_GAP_DEG = 9
@@ -177,9 +171,9 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
-    uAirCool: { value: new THREE.Vector3(0.024, 0.026, 0.03) },
+    uAirCool: { value: new THREE.Vector3(0.03, 0.046, 0.046) },
     uAirWarm: { value: new THREE.Vector3(0.3, 0.17, 0.07) },
-    uAir: { value: 0.0001 },
+    uAir: { value: 0.0003 },
   }
   const sunAz = sunAzimuthDeg * RAD
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
