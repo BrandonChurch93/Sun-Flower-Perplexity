@@ -4,7 +4,7 @@ import { at } from './lib/paths.ts'
 
 // Stand-in backdrops: each world's approved image with the plant painted out by an image model.
 // The takes live under out/work/backdrops/ and are not committed. The recipes say how each was made.
-// A world leaves this list when its real sky is built: the golden hour world has.
+// A world leaves this list when its real sky is built: the golden hour world and the frost world have.
 interface Source { key: string; take: string; model: string; steps: string[]; why: string; thrown: string; up: number; fit: string }
 
 const TAIL =
@@ -46,18 +46,6 @@ const SOURCES: Record<string, Source> = {
     thrown: 'the other take (model nano_banana_pro) also removed the plant, but at the left edge and the top it sat a few pixels off the approved image where this one sits exactly on it.',
     up: 0,
     fit: 'best shift 0 px in the left, right and top strips',
-  },
-  frost: {
-    key: 'frost',
-    take: 'frost-n1.png',
-    model: 'nano_banana_pro',
-    steps: [
-      `Edit this photograph. Remove the large sunflower plant in the foreground completely: its thick stem, its big frosted leaves and its large closed bud at the top. Fill the place where it stood with what would be seen behind it: the cold fog, the pale glow of the low sun, and the rows of small frosted sunflower buds of the field in the distance. Keep the far field of small buds as it is. ${TAIL}`,
-    ],
-    why: 'take 1 of 2. The plant is gone, the pale sun, the fog and the far buds are unchanged. The model returns 2752 x 1536; stretched back to 2816 x 1584 it lay 4 px low, so the script moves it up by 4 px.',
-    thrown: 'the other take (model seedream_5) recolored the fog and added a new plant.',
-    up: 4,
-    fit: 'best shift 4 px down in the left and right strips before the script moved it up by 4 px',
   },
 }
 const FULL = { width: 2816, height: 1584 }
