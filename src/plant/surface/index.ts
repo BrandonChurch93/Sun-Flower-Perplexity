@@ -186,11 +186,14 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float soft = gf * gf * inside * blade;
 
   float frost = uPlantFrost;
-  float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  // Rime is seen thick where the eye looks along the face itself, not along each fold of its relief.
+  float brink = gf * gf;
+  brink *= brink * gf;
+  float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * brink) * (0.55 + 0.45 * t.sheen);
   float flash = 0.0;
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
-    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, rim);
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink);
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
