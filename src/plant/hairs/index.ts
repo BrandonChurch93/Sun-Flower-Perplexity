@@ -10,7 +10,6 @@ export const HAIR_ORDER = 20
 
 // A hair wider than this many pixels is drawn as a ribbon turned to the camera. Thinner, it is a one pixel line that carries its true share of light.
 const RIBBON_FROM_PX = 0.45
-// Hairs to a row of the texture that holds them, four texels each.
 const ROW = 512
 // A hair whose blur circle is wider than this many pixels shares its place: fewer are drawn and each stands for several.
 const THIN_FROM_PX = 10
@@ -18,7 +17,6 @@ const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
 
-// The strand: where a point of it lies, which way it runs there, how thick it is, and the light it sends to the eye.
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
 uniform sampler2D uHairs;
@@ -30,8 +28,8 @@ out float vSkyY;
 uniform vec3 uHairColor;
 uniform float uHairWidth;
 
-const float STRAND_GAIN = 6.2832;
-const float TT_SPREAD = 0.22;
+const float STRAND_GAIN = 12.0;
+const float TT_SPREAD = 0.34;
 const float TT_TURN = 3.5;
 const float R_SPREAD = 0.16;
 const float EVEN = 0.035;
@@ -139,7 +137,6 @@ void main() {
   vec2 b = tip.xy / max(tip.w, 1e-5);
   vec2 run = (b - a) * 0.5 * uSize;
   float major = max(abs(run.x), abs(run.y));
-  // A one pixel line lights one pixel for each step along its longer side, so a slanted line needs more of each pixel to carry the same light.
   float slant = length(run) / max(major, 1e-4);
   // A hair seen end on is shorter than a pixel and would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, so it does not sparkle.
   float stretch = max(1.0, 2.0 / max(major, 1e-3));
@@ -265,7 +262,7 @@ export class HairSet {
     this.meshes = [far as unknown as THREE.Mesh, near]
   }
 
-  // The hairs this frame can show, packed for the shader. A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
+  // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
   private gather(camera: THREE.Camera, object: THREE.Object3D): void {
     const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
     const m = object.matrixWorld.elements
@@ -332,7 +329,6 @@ export class HairSet {
     this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
 
-  // Which form is drawn in this sample and in how many steps, from how large the nearest hairs stand in the picture.
   private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean): void {
     // The samples of one frame differ by the width of the lens. A camera farther than that from where the hairs were gathered is another view.
     if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
