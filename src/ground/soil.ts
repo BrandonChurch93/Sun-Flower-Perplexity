@@ -88,6 +88,17 @@ vec3 groundAmbient(vec3 n) {
   float away = saturate(0.6 - dot(n.xz, normalize(uSunDir.xz + vec2(1e-5, 0.0)))) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
   return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.3, 0.95 * away);
 }
+// Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
+float proud(float heightM) {
+  return mix(1.0, mix(0.6, 1.7, smoothstep(-0.002, 0.014, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+}
+// Moist grains along a rim throw the sun at the lens when it stands behind them.
+float sparkle(vec3 world, vec3 v, vec3 n) {
+  vec3 cell = world * 1900.0;
+  float grain = step(0.7, hash31(floor(cell))) * smoothstep(0.42, 0.15, length(fract(cell) - 0.5)) * (1.0 - smoothstep(0.3, 1.0, length(fwidth(cell))));
+  float skim = 1.0 - max(dot(n, v), 0.0);
+  return grain * skim * skim * smoothstep(0.3, -0.5, dot(v, uSunDir));
+}
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
   float skim = 1.0 - saturate(dot(v, hv));
@@ -230,6 +241,7 @@ void main() {
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
+  open *= mix(1.0, proud(vWorld.y), fade);
 #endif
   open *= 1.0 - 0.35 * thatch;
   lit *= 1.0 - 0.5 * thatch;
