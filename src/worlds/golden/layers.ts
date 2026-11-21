@@ -126,7 +126,7 @@ const smooth = (a: number, b: number, x: number): number => {
 }
 
 function ridged(az: number, cells: number, salt: number): number {
-  return 0.42 * wrapNoise(az, cells, salt) + 0.3 * wrapNoise(az, cells * 2, salt + 1) + 0.19 * wrapNoise(az, cells * 5, salt + 2) + 0.09 * wrapNoise(az, cells * 11, salt + 3)
+  return 0.56 * wrapNoise(az, cells, salt) + 0.27 * wrapNoise(az, cells * 2, salt + 1) + 0.12 * wrapNoise(az, cells * 5, salt + 2) + 0.05 * wrapNoise(az, cells * 11, salt + 3)
 }
 
 interface Strip {
@@ -144,9 +144,9 @@ interface Strip {
 }
 
 const STRIPS: Strip[] = [
-  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.7, highDeg: 2.0, cells: 9, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
-  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.6, highDeg: 1.9, cells: 13, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.5, highDeg: 2.3, cells: 22, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
+  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 2.0, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.9, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
   { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.3, highDeg: 2.8, cells: 40, segments: 2880, trees: true, base: [0.03, 0.045, 0.02], rim: 0.035 },
 ]
