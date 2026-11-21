@@ -181,6 +181,8 @@ export interface SurfaceOptions {
   additive?: boolean
   standIn?: boolean
   castShadow?: boolean
+  // The body of the shadow pass, for a surface with holes cut in it: it may only discard. It gets the same varyings as the fragment shader.
+  depthFragment?: string
 }
 
 export interface Surface { main: THREE.RawShaderMaterial; depth: THREE.RawShaderMaterial | null }
@@ -218,7 +220,7 @@ export function makeSurface(o: SurfaceOptions): Surface {
         name: `${o.name} depth`,
         glslVersion: THREE.GLSL3,
         vertexShader: `${glslHead}#define DEPTH_PASS 1\n${glslVertex}${glslCommon}\n${o.vertex}`,
-        fragmentShader: depthFragment,
+        fragmentShader: o.depthFragment ? `${glslHead}${glslCommon}\nlayout(location = 0) out vec4 outColor;\n${o.depthFragment}` : depthFragment,
         uniforms,
         side: THREE.DoubleSide,
         colorWrite: false,

@@ -137,7 +137,7 @@ const rz = new Float64Array(STEM_RINGS)
 const dir: Vec3 = { x: 0, y: 1, z: 0 }
 let bend: StemBend = stemBend(0, { leanX: 0, leanZ: 0, lift: 1 })
 
-function layStem(time: number, inputs: PlantInputs): void {
+export function layStem(time: number, inputs: PlantInputs): void {
   bend = stemBend(time, inputs)
   let x = 0
   let y = 0
@@ -176,11 +176,11 @@ function layStem(time: number, inputs: PlantInputs): void {
   }
 }
 
-interface Node { x: number; y: number; z: number; tx: number; ty: number; tz: number; rx: number; ry: number; rz: number; bx: number; by: number; bz: number }
+export interface Node { x: number; y: number; z: number; tx: number; ty: number; tz: number; rx: number; ry: number; rz: number; bx: number; by: number; bz: number }
 const node: Node = { x: 0, y: 0, z: 0, tx: 0, ty: 1, tz: 0, rx: 1, ry: 0, rz: 0, bx: 0, by: 0, bz: -1 }
 
 // A place on the stem at a share u of its length, with the stem's direction and two directions across it.
-function stemNode(u: number, length: number): Node {
+export function stemNode(u: number, length: number): Node {
   const f = clamp(u) * (STEM_RINGS - 1)
   const i = Math.min(STEM_RINGS - 2, Math.floor(f))
   const k = f - i
@@ -214,11 +214,11 @@ function stemNode(u: number, length: number): Node {
   return node
 }
 
-interface Frame { ox: number; oy: number; oz: number; mx: number; my: number; mz: number; wx: number; wy: number; wz: number; nx: number; ny: number; nz: number }
+export interface Frame { ox: number; oy: number; oz: number; mx: number; my: number; mz: number; wx: number; wy: number; wz: number; nx: number; ny: number; nz: number }
 const frame: Frame = { ox: 0, oy: 0, oz: 0, mx: 1, my: 0, mz: 0, wx: 0, wy: 0, wz: 1, nx: 0, ny: 1, nz: 0 }
 
 // A blade that leaves the point o. It runs outward along `out`, raised toward `axis` by the angle `rise`.
-function setFrame(ox: number, oy: number, oz: number, ax: number, ay: number, az: number, outX: number, outY: number, outZ: number, rise: number): Frame {
+export function setFrame(ox: number, oy: number, oz: number, ax: number, ay: number, az: number, outX: number, outY: number, outZ: number, rise: number): Frame {
   const c = Math.cos(rise)
   const s = Math.sin(rise)
   frame.ox = ox
@@ -237,7 +237,7 @@ function setFrame(ox: number, oy: number, oz: number, ax: number, ay: number, az
 }
 
 // Turns a blade about its own length.
-function roll(f: Frame, angle: number): Frame {
+export function roll(f: Frame, angle: number): Frame {
   const c = Math.cos(angle)
   const s = Math.sin(angle)
   const wx = f.wx * c + f.nx * s
@@ -252,17 +252,17 @@ function roll(f: Frame, angle: number): Frame {
   return f
 }
 
-type Outline = (s: number) => number
+export type Outline = (s: number) => number
 
-const leafOutline: Outline = (s) => {
+export const leafOutline: Outline = (s) => {
   const q = clamp((s - 0.2) / 0.8)
   return 0.06 * (1 - s) + 0.94 * Math.pow(Math.sin(Math.PI * Math.pow(q, 0.55)), 0.9)
 }
-const ovalOutline: Outline = (s) => Math.pow(Math.sin(Math.PI * Math.pow(s, 0.8)), 0.6)
-const pointOutline: Outline = (s) => Math.pow(1 - s, 0.75) * (0.55 + 0.45 * smoothstep(0, 0.3, s))
-const rayOutline: Outline = (s) => Math.pow(Math.sin(Math.PI * Math.pow(s, 0.62)), 0.7)
+export const ovalOutline: Outline = (s) => Math.pow(Math.sin(Math.PI * Math.pow(s, 0.8)), 0.6)
+export const pointOutline: Outline = (s) => Math.pow(1 - s, 0.75) * (0.55 + 0.45 * smoothstep(0, 0.3, s))
+export const rayOutline: Outline = (s) => Math.pow(Math.sin(Math.PI * Math.pow(s, 0.62)), 0.7)
 
-function blade(pos: Float32Array, base: number, nu: number, nv: number, f: Frame, length: number, half: number, outline: Outline, droop: number, fold: number, curl: number): void {
+export function blade(pos: Float32Array, base: number, nu: number, nv: number, f: Frame, length: number, half: number, outline: Outline, droop: number, fold: number, curl: number): void {
   const cf = Math.cos(fold)
   const sf = Math.sin(fold)
   for (let a = 0; a < nu; a++) {
@@ -285,7 +285,7 @@ function blade(pos: Float32Array, base: number, nu: number, nv: number, f: Frame
   }
 }
 
-function gridNormals(pos: Float32Array, nor: Float32Array, base: number, nu: number, nv: number): void {
+export function gridNormals(pos: Float32Array, nor: Float32Array, base: number, nu: number, nv: number): void {
   for (let a = 0; a < nu; a++) {
     for (let b = 0; b < nv; b++) {
       const a0 = Math.max(0, a - 1)
@@ -324,7 +324,7 @@ function gridNormals(pos: Float32Array, nor: Float32Array, base: number, nu: num
 }
 
 // A rounded body about the axis a through the point c, with two directions p and q across it.
-function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: number, rings: number, sides: number, cx: number, cy: number, cz: number, ax: number, ay: number, az: number, px: number, py: number, pz: number, across: number, along: number): void {
+export function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: number, rings: number, sides: number, cx: number, cy: number, cz: number, ax: number, ay: number, az: number, px: number, py: number, pz: number, across: number, along: number): void {
   const qx = ay * pz - az * py
   const qy = az * px - ax * pz
   const qz = ax * py - ay * px
@@ -360,14 +360,14 @@ function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: number, ri
 }
 
 // How deep the bud sits on the end of the stem: under 1 its base is inside the stem's end.
-const SEAT = 0.86
-const NECK_FLARE = 0.44
+export const SEAT = 0.86
+export const NECK_FLARE = 0.44
 
-interface Head { cx: number; cy: number; cz: number; ax: number; ay: number; az: number; px: number; py: number; pz: number; qx: number; qy: number; qz: number; radius: number; depth: number }
+export interface Head { cx: number; cy: number; cz: number; ax: number; ay: number; az: number; px: number; py: number; pz: number; qx: number; qy: number; qz: number; radius: number; depth: number }
 const head: Head = { cx: 0, cy: 0, cz: 0, ax: 0, ay: 1, az: 0, px: 1, py: 0, pz: 0, qx: 0, qy: 0, qz: 1, radius: 0, depth: 0 }
 
 // The bud and the head sit on the end of the stem. Their axis is the direction of the stem's end with the whole tilt of the head in it.
-function layHead(time: number, length: number): Head {
+export function layHead(time: number, length: number): Head {
   const end = stemNode(1, length)
   headDirection(bend, dir)
   head.ax = dir.x
@@ -393,6 +393,55 @@ function layHead(time: number, length: number): Head {
   head.cy = end.y + head.ay * head.depth * SEAT
   head.cz = end.z + head.az * head.depth * SEAT
   return head
+}
+
+// Where each organ leaves the plant, with the stem already laid by `layStem` and the head by `layHead`. The real parts start from the same frames.
+export function seedLeafFrame(i: number, time: number, length: number): Frame {
+  const seedAt = seedLeafFraction(time)
+  const grown = smoothstep(0, 0.006, heightAt(time))
+  const n = stemNode(seedAt, length)
+  const side = i === 0 ? -1 : 1
+  const radius = stemRadius(time, seedAt) * 0.6 * grown
+  const f = setFrame(n.x + n.rx * side * radius, n.y + n.ry * side * radius, n.z + n.rz * side * radius, n.tx, n.ty, n.tz, n.rx * side, n.ry * side, n.rz * side, Math.PI / 2 - seedLeafAngle(i, time))
+  return roll(f, side * 0.7 * smoothstep(0.2, 0.9, seedLeafAngle(i, time)))
+}
+
+export function leafFrame(i: number, time: number, inputs: PlantInputs, length: number): Frame {
+  const grown = smoothstep(0, 0.006, heightAt(time))
+  const u = leafStemFraction(i, time)
+  const n = stemNode(u, length)
+  const az = leafAzimuth(i)
+  const c = Math.cos(az)
+  const s = Math.sin(az)
+  const ox = n.rx * s - n.bx * c
+  const oy = n.ry * s - n.by * c
+  const oz = n.rz * s - n.bz * c
+  const radius = stemRadius(time, u) * 0.7 * grown
+  return setFrame(n.x + ox * radius, n.y + oy * radius, n.z + oz * radius, n.tx, n.ty, n.tz, ox, oy, oz, leafElevation(i, time, inputs))
+}
+
+export function bractFrame(j: number, time: number, h: Head): Frame {
+  const around = (j / bractCount) * Math.PI * 2 + 0.1
+  const c = Math.cos(around)
+  const s = Math.sin(around)
+  const ox = h.px * c + h.qx * s
+  const oy = h.py * c + h.qy * s
+  const oz = h.pz * c + h.qz * s
+  const at = h.radius * 0.92
+  const back = -0.35 * h.depth
+  return setFrame(h.cx + h.ax * back + ox * at, h.cy + h.ay * back + oy * at, h.cz + h.az * back + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - bractAngle(j, time))
+}
+
+export function rayFrame(k: number, time: number, h: Head): Frame {
+  const around = (k / rayCount) * Math.PI * 2
+  const c = Math.cos(around)
+  const s = Math.sin(around)
+  const ox = h.px * c + h.qx * s
+  const oy = h.py * c + h.qy * s
+  const oz = h.pz * c + h.qz * s
+  const at = h.radius * 0.95
+  const front = 0.5 * h.depth
+  return setFrame(h.cx + h.ax * front + ox * at, h.cy + h.ay * front + oy * at, h.cz + h.az * front + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - rayAngle(k, time))
 }
 
 // Builds the whole plant on a stem of the given length and returns the height of its highest point.
@@ -427,14 +476,9 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
   }
 
   const seedLength = seedLeafLength(time)
-  const seedAt = seedLeafFraction(time)
   if (d.seedU > 0) {
     for (let i = 0; i < 2; i++) {
-      const n = stemNode(seedAt, length)
-      const side = i === 0 ? -1 : 1
-      const radius = stemRadius(time, seedAt) * 0.6 * grown
-      const f = setFrame(n.x + n.rx * side * radius, n.y + n.ry * side * radius, n.z + n.rz * side * radius, n.tx, n.ty, n.tz, n.rx * side, n.ry * side, n.rz * side, Math.PI / 2 - seedLeafAngle(i, time))
-      roll(f, side * 0.7 * smoothstep(0.2, 0.9, seedLeafAngle(i, time)))
+      const f = seedLeafFrame(i, time, length)
       blade(pos, plan.seed0 + i * d.seedU * d.seedV, d.seedU, d.seedV, f, seedLength, seedLength * 0.3, ovalOutline, 0.12, 0.12, 0)
     }
   }
@@ -468,16 +512,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const i = m * d.leafStep
     const base = plan.leaf0 + m * d.leafU * d.leafV
     const size = leafLength(i, time)
-    const u = leafStemFraction(i, time)
-    const n = stemNode(u, length)
-    const az = leafAzimuth(i)
-    const c = Math.cos(az)
-    const s = Math.sin(az)
-    const ox = n.rx * s - n.bx * c
-    const oy = n.ry * s - n.by * c
-    const oz = n.rz * s - n.bz * c
-    const radius = stemRadius(time, u) * 0.7 * grown
-    const f = setFrame(n.x + ox * radius, n.y + oy * radius, n.z + oz * radius, n.tx, n.ty, n.tz, ox, oy, oz, leafElevation(i, time, inputs))
+    const f = leafFrame(i, time, inputs, length)
     blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
   }
 
@@ -485,30 +520,14 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
   ellipsoid(pos, nor, plan.body0, d.bodyRings, d.bodySides, h.cx, h.cy, h.cz, h.ax, h.ay, h.az, h.px, h.py, h.pz, h.radius, h.depth)
   for (let m = 0; m < plan.bracts; m++) {
     const j = m * d.bractStep
-    const around = (j / bractCount) * Math.PI * 2 + 0.1
-    const c = Math.cos(around)
-    const s = Math.sin(around)
-    const ox = h.px * c + h.qx * s
-    const oy = h.py * c + h.qy * s
-    const oz = h.pz * c + h.qz * s
-    const at = h.radius * 0.92
-    const back = -0.35 * h.depth
     const size = bractLength(j, time)
-    const f = setFrame(h.cx + h.ax * back + ox * at, h.cy + h.ay * back + oy * at, h.cz + h.az * back + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - bractAngle(j, time))
+    const f = bractFrame(j, time, h)
     blade(pos, plan.bract0 + m * d.bractU * d.bractV, d.bractU, d.bractV, f, size, size * 0.4 * wide(d.bractStep), pointOutline, -bractCurl(j, time), 0.3, 0)
   }
   for (let m = 0; m < plan.rays; m++) {
     const k = m * d.rayStep
-    const around = (k / rayCount) * Math.PI * 2
-    const c = Math.cos(around)
-    const s = Math.sin(around)
-    const ox = h.px * c + h.qx * s
-    const oy = h.py * c + h.qy * s
-    const oz = h.pz * c + h.qz * s
-    const at = h.radius * 0.95
-    const front = 0.5 * h.depth
     const size = rayLength(k, time)
-    const f = setFrame(h.cx + h.ax * front + ox * at, h.cy + h.ay * front + oy * at, h.cz + h.az * front + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - rayAngle(k, time))
+    const f = rayFrame(k, time, h)
     blade(pos, plan.ray0 + m * d.rayU * d.rayV, d.rayU, d.rayV, f, size, size * 0.2 * wide(d.rayStep), rayOutline, 0.12 * rayOpen(k, time), 0.4 * (1 - rayOpen(k, time)), 0)
   }
 
@@ -556,8 +575,19 @@ export function stemLength(time: number, inputs: PlantInputs): number {
   return length
 }
 
-export function buildStandIn(time: number, inputs: PlantInputs, pos: Float32Array, nor: Float32Array | null, d: Detail = HERO): number {
-  return place(time, inputs, stemLength(time, inputs), pos, nor, d)
+// `hide` is a set of bits, one per part id in `PART`. A hidden part is folded to a point, so it draws nothing, and the plant stands exactly as tall as before.
+export function buildStandIn(time: number, inputs: PlantInputs, pos: Float32Array, nor: Float32Array | null, d: Detail = HERO, hide = 0): number {
+  const top = place(time, inputs, stemLength(time, inputs), pos, nor, d)
+  if (hide) {
+    const plan = planOf(d)
+    const starts = [0, plan.leaf0, plan.seed0, plan.husk0, plan.body0, plan.bract0, plan.ray0]
+    const ends = [plan.seed0, plan.body0, plan.husk0, plan.leaf0, plan.bract0, plan.ray0, plan.count]
+    for (let part = 0; part < starts.length; part++) {
+      if (!(hide & (1 << part))) continue
+      pos.fill(0, starts[part] * 3, ends[part] * 3)
+    }
+  }
+  return top
 }
 
 // The point the lens holds: the top of the arch, then the end of the stem, then the bud, then the middle of the open face.

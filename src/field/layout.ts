@@ -1,5 +1,8 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
+import { PLACE } from '../plant/part.ts'
+
+export { PLACE }
 
 const SEED = streamSeed('field')
 const RAD = Math.PI / 180
@@ -15,7 +18,6 @@ export const companionVariant = 37
 
 export const fieldNearM = 12
 export const fieldFarM = 60
-export const PLACE = 8
 
 export const fieldHalfWidth = (depth: number): number => 10 + 0.85 * depth
 
