@@ -4,8 +4,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 ## Status
 
-- Build: not started
-- Current phase: none
+- Build: in progress
+- Current phase: 0 · Ground truth (step 1)
 - Current unit: none
 - Current round: none
 - Blocked: no
@@ -46,7 +46,7 @@ Continuations and extensions are listed under this table with their own hours.
 
 | Phase | State | Gate evidence | Commit |
 | --- | --- | --- | --- |
-| 0 · Ground truth | not started | | |
+| 0 · Ground truth | in progress | | |
 | 1 · Rough cut | not started | | |
 | 2 · Engine and blockout | not started | | |
 | 3 · The look lock | not started | | |
@@ -179,4 +179,8 @@ None yet.
 
 One entry per task: when it started, the prompt it was started with, what it did, where it stopped. Every status is also written here as two lines, in case the thread did not show it.
 
-None yet.
+### Task 1 · started 2026-11-21 00:51:51 UTC
+
+- Prompt: `BUILD MODE.` (the build prompt from `kit/10-KICKOFF.md`, run 2).
+- Stop condition 1 checked at 00:53 UTC: `references/approved/MANIFEST.sha256` exists, all eight key images exist, all eight hashes match. Not blocked.
+- Fetched and merged `main` at `593fb73`. No addenda. Read `AGENTS.md` and the kit in its reading order. "Build" was `not started`, so the build starts at Phase 0, step 1.
