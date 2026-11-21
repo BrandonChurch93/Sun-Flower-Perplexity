@@ -39,9 +39,9 @@ const HUG = [0.3, 0.24, 0.25]
 const STAND = [0.5, -0.5, -1.2]
 // Where a bract stands once it has let go of the cone, on its way back.
 const LOOSE = [0.5, 0.42, 0.14]
-// From three seconds into the bloom the whole involucre lets go of the cone and stands round it as a collar, at these angles.
-const COLLAR = [0.75, 0.45, 0.2]
-const COLLAR_FROM = 3
+// From half a second before the bloom stage the whole involucre lets go of the cone and stands round it as a collar, at these angles.
+const COLLAR = [1.25, 0.95, 0.65]
+const COLLAR_FROM = -0.5
 const COLLAR_TAKES = 2
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
