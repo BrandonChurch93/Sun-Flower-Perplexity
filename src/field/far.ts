@@ -19,6 +19,10 @@ const UNDER_FROM_M = 5
 const UNDER_BAND_M = 9
 // The dark layers, as shares of the height of the tops.
 const UNDER_LEVELS = [0.5, 0.84]
+// From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
+const HEADS_FROM_M = 40
+const HEAD_AT = 0.9
+const RAY_DEEP = [0.66, 0.25]
 const LEAF_SKY = 1.0
 
 const pictureVertex = /* glsl */ `
@@ -40,8 +44,17 @@ void main() {
   float across = aCorner.x;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
-  float h = v * uTile.y * aPlace.w;
-  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (across * uTile.x * aPlace.w);
+  // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
+  float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 40).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
+  float draw = fract(aVary.w * 0.6180339);
+  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away);
+  float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
+  float flip = fract(draw * 13.0) < 0.5 ? -1.0 : 1.0;
+  float top = ${HEAD_AT.toFixed(2)} * uTile.y * aPlace.w;
+  vec2 off = vec2(across * uTile.x * aPlace.w, v * uTile.y * aPlace.w - top) * scale;
+  off = vec2(cos(tip) * off.x - sin(tip) * off.y, sin(tip) * off.x + cos(tip) * off.y);
+  float h = top + off.y;
+  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * off.x;
   world.xz += aVary.xy * h;
   // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
   float tall = max(uPlantHeight * aPlace.w, 0.001);
@@ -50,7 +63,7 @@ void main() {
   world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
-  vUv = vec2((aPlace.z + clamp(across + 0.5, inset, 1.0 - inset)) / uCount, v);
+  vUv = vec2((floor(aPlace.z) + clamp(across * flip + 0.5, inset, 1.0 - inset)) / uCount, v);
   vWorld = world;
   vDepth = -view.z;
   vTone = 0.78 + 0.44 * aVary.z;
@@ -69,6 +82,9 @@ void main() {
   float cover = 1.0 - t.a;
   if (cover < 0.42) discard;
   vec3 color = t.rgb / cover;
+  // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
+  float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
+  color.gb *= mix(vec2(1.0), vec2(${RAY_DEEP[0].toFixed(2)}, ${RAY_DEEP[1].toFixed(2)}), ray);
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
     return;

@@ -6,7 +6,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, shareOf } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -82,7 +82,7 @@ export class Field {
         if (depth < -reach) continue
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
-        placeTurned(all, i, seen, still, n, budTurn(this.time, all[i + 7]))
+        placeTurned(all, i, seen, still, n, opensEarly(g.index, g.of) ? 0 : budTurn(this.time, all[i + 7]))
         n += PLACE
       }
       g.seen.needsUpdate = true
