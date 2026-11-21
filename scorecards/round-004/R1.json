@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "region 1, the flower head (also set-A-05.png)",
+      "what": "the open flower head is rotated nearly front-on toward the camera instead of facing three-quarters left toward the sun, making the seed disc circular rather than foreshortened, surrounding the right side with forward-facing ray petals instead of the dark green bract cup, giving petals overly uniform orange central stripes, and leaving the floret disc flat and dark",
+      "fix": "turn the flower head three-quarters left toward the sun so the disc is horizontally foreshortened, show the layered dark green phyllary cup on the back right instead of right-side petals, make the petals thinner and more irregularly crinkled and translucent, and add warm grazing sunlight across the left florets of the disc"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "region 1, the head or bud (also set-A-02.png)",
+      "what": "the half-open bud tilts forward to expose an unnatural dark seed ring crossed by thick, stiff, rubbery green-yellow strips in a geometric pattern, with too few outer phyllaries and waxy, opaque yellow petals on the left",
+      "fix": "angle the bud three-quarters left toward the sun, replace the exposed dark ring and rubbery strips with softly layered, finely spiraling inner petals and bracts cupped inside a denser multi-row hairy green involucre, and give the emerging left petals thin, papery, backlit translucency"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "region 5, the sun and the sky round it (also set-A-03.png, set-A-04-b.png, and set-A-06.png)",
+      "what": "the sun is a huge blown-out, featureless white-orange wash with no radial sunbeams and no sunlit airborne dust or pollen motes, and in set-A-04-b.png the upper-left leaf sits too high to partially occlude the solar disc",
+      "fix": "tighten the sun into a compact core tucked right behind the tip of the upper-left neighbor leaf in both frames, restore distinct radial diffraction rays fanning up into the clouds and down across the field, and add warm backlit dust and pollen specks in the air"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "region 6, the field behind the plant (also set-A-03.png, set-A-04-b.png, and set-A-06.png)",
+      "what": "the background sunflower crop sits too low and sparse, and distant flowers face forward as flat orange-ringed bullseyes under smooth Gaussian blur instead of dense, taller backlit silhouettes with golden rim-lit petals, bright stem highlights, and optical bokeh",
+      "fix": "raise the height and density of the background sunflowers especially on the right, turn distant heads into dark backlit silhouettes rimmed with warm golden petal halos and specular stalk highlights, and render out-of-focus areas with textured optical lens bokeh"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, the near neighbor at the edge of the frame (also set-A-05.png, set-A-01-b.png, and set-A-04-b.png)",
+      "what": "the left-edge neighbor plant is reduced to sparse cutout leaves with dark flat interiors, missing stems and foliage cluster complexity, inconsistent upper-left leaf placement between 45.0 s and 50.5 s, and a hard straight horizontal edge under the upper-left leaf in set-A-01-b.png",
+      "fix": "build a fuller backlit neighbor plant cluster along the left frame edge with visible stems, warm rim highlights, organic serrated leaf silhouettes, and consistent leaf positioning across both moments"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3, a leaf seen from the front and hero foliage (also set-A-05.png, set-A-01-b.png, and set-A-04-b.png)",
+      "what": "the hero leaves attach lower on the stem, lack bright olive-gold subsurface scattering and crisp dark venation on sun-facing surfaces, carry coarse thorny marginal bristles, and show blotchy brown-yellow discoloration on the right leaf instead of a curled backlit green tip",
+      "fix": "raise the upper leaf petioles closer to the head, increase warm backlit translucency and vein definition on the lower-left and upper-right green leaves, soften marginal hairs into fine fuzz, and replace the blotchy brown right-leaf patch with a naturally curled backlit green leaf tip"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs (also set-A-05.png)",
+      "what": "the stem is thicker with sparser, coarse spiky tufts of bristles rather than dense, short velvety hairs, and its shaded right edge lacks a crisp continuous rim-light line",
+      "fix": "slim the stem slightly, replace the clumped spiky bristles with a dense coat of fine short translucent hairs, and restore a clean continuous golden rim highlight down both edges of the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7, the far background at the skyline (also set-A-06.png)",
+      "what": "the horizon on the right is a flat, ruler-straight dark horizontal band with a parallel stripe below it instead of an organic, undulating treeline and rolling hills",
+      "fix": "replace the flat horizontal band with a varied silhouette of distant trees and gently rolling hills that softens into warm atmospheric haze toward the sun on the left"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 8, the sky, grain, and shadow contrast (also set-A-06.png, set-A-01-b.png, and set-A-04-b.png)",
+      "what": "the sky is smooth and grainless with flatter cloud mottling and no diagonal warm light shafts on the upper left, while unlit foliage shadows shift toward a muddy olive-brown cast instead of deep photographic blacks",
+      "fix": "add fine photographic film grain across the entire frame, increase stratocumulus cloud texture and deep cool-teal density on the upper right with subtle warm diagonal sunbeams toward the left, and deepen shadow blacks in the foliage for crisper contrast"
+    }
+  ]
+}
