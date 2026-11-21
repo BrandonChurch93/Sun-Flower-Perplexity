@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 11:59 UTC · Status 28: round 4 running; the neighbor's leaf aim corrected (broadside, in front of the sun at both keys)
+- Last push: 2026-11-21 12:40 UTC · Round 4 judged (R1 4, R3 5, R4 6); prep merges for round 5 on main: leaves, disc, ground, skin, lens, golden, companion, hairs with stem, petals, bud, field
 - Last status: 28 · 2026-11-21 11:59 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -612,6 +612,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 11:38 UTC · Second set of merges after round 3: leaf holds for the neighbor, bud collar, leaves pass 6, petals pass 6, darker disc, RAY_FIRST 2.8
 - 2026-11-21 11:53 UTC · Round 4 starts: the third set of merges after round 3 (bud's star of bracts, disc on the exact spiral, lens pass 7, field pass 5, skin pass 6, finer hairs, petals' colour), judged at e099145
 - 2026-11-21 11:59 UTC · Status 28: round 4 running; the neighbor's leaf aim corrected (broadside, in front of the sun at both keys)
+- 2026-11-21 12:40 UTC · Round 4 judged (R1 4, R3 5, R4 6); prep merges for round 5 on main: leaves, disc, ground, skin, lens, golden, companion, hairs with stem, petals, bud, field
 
 ## Session log
 
