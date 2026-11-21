@@ -533,7 +533,7 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
     // A new blade sits on the stem: its stalk grows out under it in its first seconds.
-    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(7, 11, i) : 1) * (main && i >= 2 ? 1 - 0.1 * (1 - smoothstep(18, 23, time)) : 1)
+    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(7, 11, i) : 1) * (main && i >= 2 ? 1 - 0.2 * (1 - smoothstep(18, 23, time)) : 1)
     const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
     const firm = main ? early : 0.5 * early
@@ -660,7 +660,7 @@ export function create(options: PartOptions): PlantPart {
     // A leaf held up round the bud bends its tip down.
     const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
-    const fall = round > 0 ? FALL * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
+    const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
     const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
     const lay = (hang: number): number => {
@@ -936,7 +936,7 @@ export function create(options: PartOptions): PlantPart {
             const run = 0.5 + 0.5 * Math.sin((hair.a / (leaf.nu - 1)) * (17 + 11 * ((leaf.i * 0.618) % 1)) + 3.9 * leaf.i + (hair.b === 1 ? 0 : 2.1))
             const heavy = smoothstep(0.3, 0.75, run) * lerp(0.55, 1.25, smoothstep(-0.4, 0.5, oy))
             const bare = !spike && ((c === 0 ? r2 > 0.6 : r3 > 0.25) || run < 0.3 * r1 + 0.18)
-            cr[q + 3] = bare ? 0 : (point ? 0.004 : spike ? 0.003 : (0.0025 + 0.002 * r1) * lerp(0.6, 2.4, heavy * heavy)) * scale * rime
+            cr[q + 3] = bare ? 0 : (point ? 0.004 : spike ? 0.003 : (0.0025 + 0.002 * r1) * lerp(0.6, 3.2, heavy * heavy)) * scale * rime
             cl[q] = ox + ux * (stand + (r3 - 0.5) * 0.8) + sx * (r1 - 0.5) * 0.6
             cl[q + 1] = oy + uy * (stand + (r3 - 0.5) * 0.8) + sy * (r1 - 0.5) * 0.6
             cl[q + 2] = oz + uz * (stand + (r3 - 0.5) * 0.8) + sz * (r1 - 0.5) * 0.6
