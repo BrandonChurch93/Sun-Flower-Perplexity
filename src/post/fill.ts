@@ -16,7 +16,6 @@ uniform sampler2D tFrame;
 uniform sampler2D tNear;
 uniform float uRadiusScale;
 uniform float uSpecks;
-uniform float uFarSoft;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -45,9 +44,7 @@ void main() {
   float own = max(rgb.r, max(rgb.g, rgb.b));
   // With specks in the air a lone bright pixel in a blurred area is one copy of a light, and the fill draws its disc from it.
   rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, uSpecks * smoothstep(1.5, 3.0, c.a));
-  // Well out of focus the reach has its own floor: the disc of a far thing keeps its size and loses its edge.
-  float scale = mix(uRadiusScale, max(uRadiusScale, uFarSoft), smoothstep(6.0, 14.0, a));
-  outColor = vec4(rgb, min(max(a, 0.0) * scale, ${maxFillPx.toFixed(1)}));
+  outColor = vec4(rgb, min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
 }
 `
 
