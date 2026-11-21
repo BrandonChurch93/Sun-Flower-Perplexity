@@ -37,12 +37,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 0.00 h |
+| 2 | 3.50 h | 0.14 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.13 h |
+| Whole build | 30.00 h | 1.26 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -51,7 +51,7 @@ Continuations and extensions are listed under this table with their own hours.
 | Phase | State | Gate evidence | Commit |
 | --- | --- | --- | --- |
 | 0 · Ground truth | done | 2026-11-21 01:54 UTC: `npm run gate -- --phase 0` all green (G1 build clean, G2 48 of 48 tests, G3 frames 45, 780 and 1515 pixel identical across fresh page loads and in another order, G4 stills 1920 x 1080, 960 x 540 and 3840 x 2160 and `frameCount` 1800, G10 needs only EXT_color_buffer_float and sizes inside the record). Four pushes. Workspace record, tool record, pinned versions and render budget table are above. Inline display proven at status 01. Published 01:56 UTC at https://sunflower-film.pplx.app | `0cbd576` |
-| 1 · Rough cut | done | 2026-11-21 02:01 UTC: `npm run gate -- --phase 1` green (D1: `out/roughcut.mp4` has 1800 frames at 960 x 540, 30 fps, 16.6 MB, h264 High, a keyframe on every cut). Order and timing checked on `out/work/roughcut/check-sheet.jpg`: one frame from each segment, the frames each side of cuts 240, 600, 900 and 1200, frame 0 and frame 1799, each showing the right approved still and the right label. On the review page under Films. Status 05 posted | the status 05 push |
+| 1 · Rough cut | done | 2026-11-21 02:01 UTC: `npm run gate -- --phase 1` green (D1: `out/roughcut.mp4` has 1800 frames at 960 x 540, 30 fps, 16.6 MB, h264 High, a keyframe on every cut). Order and timing checked on `out/work/roughcut/check-sheet.jpg`: one frame from each segment, the frames each side of cuts 240, 600, 900 and 1200, frame 0 and frame 1799, each showing the right approved still and the right label. On the review page under Films. Status 05 posted | `ada2748` |
 | 2 · Engine and blockout | in progress | | |
 | 3 · The look lock | not started | | |
 | 4 · The other units | not started | | |

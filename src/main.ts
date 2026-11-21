@@ -1,4 +1,5 @@
 import './main.css'
+import { startExport } from './capture/export.ts'
 import { installShowcase } from './capture/showcase.ts'
 import { Film } from './director/film.ts'
 import { startLive } from './director/live.ts'
@@ -21,7 +22,8 @@ try {
   ready.then(
     () => {
       if (options.mode === 'capture') return
-      startLive(film, options, host)
+      if (options.mode === 'export') startExport(film, options, host)
+      else startLive(film, options, host)
     },
     (error: unknown) => say(`The scene could not load. ${error instanceof Error ? error.message : String(error)}`),
   )

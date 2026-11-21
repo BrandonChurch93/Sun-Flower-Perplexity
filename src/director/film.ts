@@ -38,6 +38,7 @@ export class Film {
   format: Format
   diag: DiagName = 'beauty'
   lastTier: TierId = 'draft'
+  lastFrame = -1
   private readonly casters: Caster[]
   private readonly tip = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
@@ -170,11 +171,47 @@ export class Film {
     this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag)
     stage.finish()
     if (stage.lost) throw new Error('the WebGL context was lost')
+    this.lastFrame = frame
+  }
+
+  // Reads the accumulated frame, before lens and grade, and says where the growing tip landed in it.
+  check(frameIndex: number): FrameCheck {
+    const frame = clampFrame(frameIndex)
+    if (frame !== this.lastFrame) throw new Error(`frame ${frame} is not the frame on the canvas`)
+    const { stage } = this
+    const { width, height } = stage
+    const pixels = new Float32Array(width * height * 4)
+    stage.renderer.readRenderTargetPixels(stage.accumulator.target, 0, 0, width, height, pixels)
+    let invalid = 0
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (!Number.isFinite(pixels[i]) || !Number.isFinite(pixels[i + 1]) || !Number.isFinite(pixels[i + 2]) || !Number.isFinite(pixels[i + 3])) invalid++
+    }
+    const pose = this.poseAt(timeOf(frame))
+    const v = this.tip.clone().sub(pose.position)
+    const depth = v.dot(pose.forward)
+    const scale = pose.focalMm / config.camera.gateWidthMm
+    const x = 0.5 + (v.dot(pose.right) / depth) * scale
+    const y = 0.5 - (v.dot(pose.up) / depth) * scale * (width / height)
+    let cocPx = Infinity
+    const px = Math.round(x * width - 0.5)
+    const py = Math.round((1 - y) * height - 0.5)
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const qx = px + dx
+        const qy = py + dy
+        if (qx < 0 || qy < 0 || qx >= width || qy >= height) continue
+        const a = pixels[(qy * width + qx) * 4 + 3]
+        if (Number.isFinite(a) && a < cocPx) cocPx = a
+      }
+    }
+    return { frame, invalid, tip: { x, y, depthM: depth, cocPx: Number.isFinite(cocPx) ? cocPx : -1 } }
   }
 
   textureMb(): number {
     return this.assets.megabytes()
   }
 }
+
+export interface FrameCheck { frame: number; invalid: number; tip: { x: number; y: number; depthM: number; cocPx: number } }
 
 export type { FrameState }
