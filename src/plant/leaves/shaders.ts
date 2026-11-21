@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.05, 0.095, 0.028) : vec3(0.075, 0.115, 0.048)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.06, 0.09, 0.006) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.036, 0.04, 0.007) * (1.0 - 0.4 * rib) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -98,7 +98,8 @@ void main() {
   if (vMark.z > 1.5 && vUv.x > 0.0) tear = (vUv.x - 0.42) * 0.085 - abs(vUv.y - 0.5 - 0.1 * (vUv.x - 1.0) + 0.02 * (mark.g - 0.5));
   if (hole > 0.0 || tear > 0.0) discard;
   float scar = max(smoothstep(-0.05, -0.008, hole), smoothstep(-0.012, -0.002, tear));
-  float dry = vMark.z > 0.5 && vMark.z < 1.5 ? smoothstep(0.8, 0.93, vUv.y + 0.1 * (mark.g - 0.5)) : 0.0;
+  float dryFrom = 0.8 - (vMark.z - 1.0);
+  float dry = vMark.z > 0.5 && vMark.z < 1.5 ? smoothstep(dryFrom, dryFrom + 0.13, vUv.y + 0.1 * (mark.g - 0.5) + 0.25 * (vMark.z - 1.0) * abs(vUv.x)) * vState.w : 0.0;
   float speck = smoothstep(0.74, 0.82, mark.b) * smoothstep(0.5, 0.7, mark.g) * vMark.w * vState.w;
   float brown = max(max(scar, dry), speck);
   float yellow = saturate(vState.y * (0.35 + 1.3 * mark.g) + 0.4 * smoothstep(-0.07, -0.02, hole) * (1.0 - scar) + 0.7 * smoothstep(0.7, 0.86, vUv.y + 0.1 * (mark.g - 0.5)) * step(0.5, vMark.z) * step(vMark.z, 1.5));
@@ -116,14 +117,14 @@ void main() {
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
-  // The blade is thick and felted: it lets light through only in the patches where it is thin, and along its margin. The main veins hold the light back.
+  // The blade is thick and felted: against the sun it passes a dull warm olive, and more only in small thin spots. The main veins hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  float thin = 0.06 + 0.26 * smoothstep(0.55, 0.92, mark.g) + 0.2 * smoothstep(0.88, 1.0, abs(vUv.x));
-  vec3 through = vec3(0.34, 0.5, 0.03) * thin * (0.35 + 0.65 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
+  float thin = 1.0 + 2.2 * smoothstep(0.8, 0.95, mark.g);
+  vec3 through = vec3(0.036, 0.04, 0.007) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
   through *= 1.0 - 0.6 * vein.r;
   through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.5, 0.4, 0.05) * thin * (0.5 + 0.5 * lum), yellow);
-  through = mix(through, vec3(0.1, 0.04, 0.008), brown);
+  through = mix(through, vec3(0.05, 0.04, 0.006) * thin * (0.5 + 0.5 * lum), yellow);
+  through = mix(through, vec3(0.02, 0.01, 0.003), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
@@ -132,14 +133,16 @@ void main() {
   if (!top) high = -high;
   float fold = vState.z;
 
+  // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
+  float margin = 1.0 - 0.85 * smoothstep(0.9, 1.0, abs(vUv.x)) * smoothstep(0.8, 0.4, mark.r);
   Tissue t;
-  t.albedo = albedo;
+  t.albedo = albedo * margin;
   t.through = through;
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.9;
-  t.wax = top ? 0.3 : 0.12;
-  t.sheen = top ? 0.6 : 0.85;
+  t.wax = (top ? 0.3 : 0.12) * margin;
+  t.sheen = (top ? 0.6 : 0.85) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
