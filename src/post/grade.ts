@@ -39,6 +39,8 @@ uniform float uKnee;
 uniform float uDisc;
 uniform vec3 uBlack;
 uniform float uFarFill;
+uniform float uAirSoft;
+uniform float uSpokes;
 uniform float uSaturation;
 uniform float uVignette;
 uniform float uGrain;
@@ -162,12 +164,20 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
   float fan = 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0);
   float beams = mix(0.8 + 0.2 * smoothstep(0.0, 1.0, fan) * (0.4 + 0.6 * fanNoise(r * 9.0 + 4.0 * fanNoise(turn * 13.0, 13.0, 5.0), 64.0, 9.0)), 0.5 + 0.5 * smoothstep(0.15, 0.9, fan), down);
+  // Over the whole field the spokes are many, thin and of no two widths.
+  if (uSpokes > 0.0) {
+    float fine = 0.45 * fanNoise(turn * 38.0, 38.0, 3.0) + 0.35 * fanNoise(turn * 94.0, 94.0, 7.0) + 0.2 * fanNoise(turn * 210.0, 210.0, 11.0);
+    float spoke = smoothstep(0.2, 0.85, fine);
+    beams = mix(beams, mix(0.4, 0.7, down) + mix(1.5, 0.9, down) * spoke * sqrt(spoke), uSpokes);
+  }
   float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
   // Nothing in focus and nothing nearer than the focus is behind the lit air. Far things blur up to the circle of infinity, near leaves beyond it.
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
   // Above the sun only the open sky is behind the lit air: what else stands there is a near leaf.
   float open = uShafts > 0.0 && uLowRays <= 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
+  // Over the whole field nothing near stands above the sun's line: whatever is far there is sky or the land under it, cloud included.
+  if (uSpokes > 0.0) open = max(open, uSpokes * smoothstep(0.2, 0.24, depth) * (1.0 - smoothstep(1.03, 1.25, depth)) * smoothstep(-0.01, 0.0, d.y));
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.6, 1.0, smoothstep(0.004, 0.05, under)), down);
@@ -175,6 +185,10 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
   float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
+  // Seen from over the whole field the lit air lies as a wide warm veil on the land to both sides of the sun, thinner the farther from it, and leaves the sun's own size alone.
+  // Beside the sun a dark wood stays dark and the sky above keeps its own tone: the air there is thin.
+  air *= 1.0 - uSpokes * (1.0 - down) * mix(0.7, 0.45, smoothstep(-0.012, 0.0, d.y));
+  air += uSpokes * 0.6 * down * (0.6 + 0.4 * beams) * exp(-r / 0.25) * smoothstep(0.04, 0.15, r) * hold;
   if (uLowRays > 0.0) air = 0.4 * exp(-r / 0.09) * hold + uRays * lowRays(turn, r) * near;
   return glass + uAirTint * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
@@ -202,7 +216,10 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, abs(f.a), dot(c, vec3(0.2126, 0.7152, 0.0722)));
+  // Where the air has softened the far land the fill's reach no longer tells how far a thing stands, so that is read from the frame as it was drawn.
+  float circle = abs(f.a);
+  if (uAirSoft > 0.0) { float own = texelFetch(tRaw, ivec2(gl_FragCoord.xy), 0).a; circle = own * uFarFill / max(uFar, 1e-6); }
+  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, circle, dot(c, vec3(0.2126, 0.7152, 0.0722)));
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;

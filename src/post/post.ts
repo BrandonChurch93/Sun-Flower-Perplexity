@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { config } from '../config.ts'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
@@ -67,7 +68,7 @@ export class Post {
   private readonly sunTarget = halfTarget(2, 2)
   private readonly sunRead = new FullscreenPass(sunReadFragment, { tHot: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
-  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 } })
+  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uAirSoft: { value: 0 }, uAirFloor: { value: 0 } })
   private readonly fillWide = fillPass(3)
   private readonly fillTight = fillPass(2)
   private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 } })
@@ -117,6 +118,8 @@ export class Post {
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
     uGrain: { value: 0 },
+    uAirSoft: { value: 0 },
+    uSpokes: { value: 0 },
     uSeed: { value: 0 },
     uMode: { value: 0 },
   })
@@ -164,7 +167,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number, specks: number, skyHold: number): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number, specks: number, skyHold: number, airSoft: number, airFloor: number): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0) {
       const n = this.near.uniforms
@@ -181,6 +184,8 @@ export class Post {
     r.uFar.value = farCircle
     r.uSpecks.value = specks
     r.uSkyHold.value = skyHold
+    r.uAirSoft.value = airSoft
+    r.uAirFloor.value = airFloor
     this.reach.render(renderer, this.fillA)
     let from = this.fillA
     let to = this.fillB
@@ -241,10 +246,11 @@ export class Post {
     g.uSeed.value = frameIndex
     let source = frame
     if (mode === 0) {
-      const look = lensLook(def)
+      const look = lensLook(def, frameIndex / config.film.fps)
+      const airSoft = sun ? (look.air * this.fillA.height) / 1080 : 0
       // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
       const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
-      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0, look.specks, look.skyHold)
+      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0, look.specks, look.skyHold, airSoft, sun ? sun.y - 0.25 : 2)
       const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core, look.veilTint)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget
@@ -309,7 +315,9 @@ export class Post {
       g.uStarLen.value = 0.2 * this.fillA.width
       g.uSaturation.value = def.grade.saturation
       g.uVignette.value = def.grade.vignette
-      g.uGrain.value = def.grade.grain
+      g.uGrain.value = def.grade.grain * look.grain
+      g.uAirSoft.value = airSoft
+      g.uSpokes.value = look.spokes
     }
     g.tFrame.value = source
     this.grade.render(renderer, null)
