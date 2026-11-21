@@ -27,7 +27,7 @@ void main() {
   float fade = ${RING_FADE_S[0].toFixed(2)} + ${RING_FADE_S[1].toFixed(2)} * size;
   float life = ${RING_FADES.toFixed(1)} * fade;
   float rc = 0.002 + (0.18 + 0.1 * size + 0.03 * seed) * t;
-  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.05 + 0.09 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size * sqrt(size);
+  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.05 + 0.09 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size;
   amp *= smoothstep(0.0003, 0.003, waterDepth(drop.xy));
   if (amp < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
