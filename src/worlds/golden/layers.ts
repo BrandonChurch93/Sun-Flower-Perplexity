@@ -27,7 +27,7 @@ uniform vec3 uAirWarm;
 uniform float uAir;
 vec3 airTone(vec3 dir) {
   float toSun = saturate(dot(dir, uSunDir));
-  return uAirCool + uAirWarm * (0.1 * toSun * toSun + pow(toSun, 24.0));
+  return uAirCool + uAirWarm * (0.1 * toSun * toSun);
 }
 vec3 aerial(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
@@ -45,7 +45,6 @@ uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
 uniform float uFogShare;
-uniform vec3 uGlow;
 ${air}
 void main() {
   float top = vInfo.z;
@@ -61,9 +60,7 @@ void main() {
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.07 + 0.07 * f);
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.03 + pow(saturate(dot(v, uSunDir)), 8.0));
-  color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.2 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
-  float sunward = pow(saturate(dot(v, uSunDir)), 20.0);
-  color = mix(color, uGlow * vec3(1.0, 1.05, 1.35), 0.18 * sunward);
+  color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.1 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
   outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -90,7 +87,7 @@ void main() {
 }
 `
 
-// A veil of lit haze: it adds the light the air between here and there scatters toward the lens, most round the sun and near the ground.
+// A veil of lit ground mist: it lies below eye level, so it shows over the field and leaves the land above the horizon to the lens.
 const veilFragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vInfo;
@@ -104,7 +101,7 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
-  float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
+  float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z)) * (1.0 - smoothstep(-0.008, 0.001, v.y));
   outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
 }
 `
@@ -140,28 +137,31 @@ interface Strip {
   trees: boolean
   base: [number, number, number]
   rim: number
+  // Toward the sun the layer stands this high instead, as one dark ridge under the sun.
+  sunward?: [number, number]
 }
 
 const STRIPS: Strip[] = [
   { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.5, highDeg: 1.9, cells: 22, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.04, 0.045, 0.03], rim: 0.01, sunward: [1.1, 1.75] },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
   { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.0, highDeg: 2.1, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.016], rim: 0.56 },
 ]
 
 const VEILS = [
-  { radiusM: 70, heightM: 50, scaleM: 6, share: 0.22 },
-  { radiusM: 130, heightM: 60, scaleM: 7, share: 0.32 },
-  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.38 },
-  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.34 },
-  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.3 },
+  { radiusM: 70, heightM: 50, scaleM: 6, share: 0.11 },
+  { radiusM: 130, heightM: 60, scaleM: 7, share: 0.16 },
+  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.19 },
+  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.17 },
+  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.15 },
   { radiusM: 3200, heightM: 260, scaleM: 60, share: 0.5 },
   { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.5 },
 ]
 
 const SUN_GAP_DEG = 9
 const SUN_GAP_TOP_DEG = 1.1
+const SUN_RIDGE_TOP_DEG = 1.5
 const LAND_FROM_M = 540
 const LAND_TO_M = 5900
 
@@ -260,7 +260,11 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       if (off > Math.PI) off = 2 * Math.PI - off
       const gap = Math.max(0, 1 - off / (SUN_GAP_DEG * RAD))
       const open = gap * gap * (3 - 2 * gap)
-      deg = deg * (1 - open) + Math.min(deg, SUN_GAP_TOP_DEG * (0.55 + 0.45 * i / (STRIPS.length - 1))) * open
+      if (layer.sunward) {
+        const near = smooth(48, 14, off / RAD)
+        deg = deg * (1 - near) + (layer.sunward[0] + (layer.sunward[1] - layer.sunward[0]) * shape) * near
+      }
+      deg = deg * (1 - open) + Math.min(deg, layer.sunward ? SUN_RIDGE_TOP_DEG : SUN_GAP_TOP_DEG * (0.55 + 0.45 * i / (STRIPS.length - 1))) * open
       if (layer.trees) {
         // The trees stand in stretches with open country between them, and the widest opening lies just right of the sun, where the far ridges show.
         const right = ((((sunAz - az) / RAD + 180) % 360) + 360) % 360 - 180
@@ -273,7 +277,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.03 : 0.02 }, uGlow: { value: new THREE.Vector3().fromArray(glow) } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.01 : 0 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
