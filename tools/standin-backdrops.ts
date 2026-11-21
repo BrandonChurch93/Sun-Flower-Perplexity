@@ -23,7 +23,6 @@ const SOURCES: Record<string, Source> = {
     up: 0,
     fit: 'best shift 0 px in the left, right and top strips',
   },
-  },
 }
 const FULL = { width: 2816, height: 1584 }
 const WEB = { width: 2048, height: 1152 }
