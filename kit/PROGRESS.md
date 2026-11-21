@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 1.71 h |
+| 3 | 9.00 h | 1.78 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 7.76 h |
+| Whole build | 30.00 h | 7.83 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -354,6 +354,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · The stem tapers less. Under the head the approved stem is about 24 mm thick and the build's was 14.5 mm. The share the stem loses from foot to top goes from 0.55 to 0.28 (`stemRadius` in `src/plant/growth.ts`); the foot is unchanged.
 - 2026-11-21 · Phase 3 · Neighbors lead the plant into bloom, they do not lag it. Both approved bloom images show the field's heads open and dim gold, also at 45 s when the plant has ten rays out, and the image outranks the words. The kit allows small differences in timing. The field agent is asked for a lead of 1.0 to 2.8 s by kind during the bloom only, never past the end of the film, with the same age before the bud.
 - 2026-11-21 · Phase 3 · The head's and the disc's widths stay as the config has them (fixed facts). In the approved hero image the disc shows about 142 mm across and the rays reach about 158 mm from the middle; the config says 160 mm and 150 mm. The feet of the rays lie over the outer ring of florets, which gives the 142 mm without touching a fact. The ray agent is asked for that.
+- 2026-11-21 · Phase 3 · The lens in `bloom`: f/4 at the opening key and f/5.6 at the hero key (it was f/2 at both, set on the blockout). Rendered at f/2, f/4 and f/5.6 with the real parts and laid beside the approved pair: at f/2 the bracts at the rim of the bud were soft and the field's heads were blank discs; the approved head is sharp from the near rays to the bracts behind it, its stem and leaves are sharp, and the heads behind keep a ring and a dark middle. At 45 s the approved field is softer than at 50.5 s, so the lens closes a little as the head opens (one smooth curve, on toward f/8 in `field`).
+- 2026-11-21 · Phase 3 · The ground gets an owner now. The entry above that left it for Phase 4 said it would be looked at again in the first integrated frames. The `standins` view of frames 1200, 1260, 1350, 1440, 1515 and 1559 shows the stand-in soil between the plants of the real field in the lower third of every frame (the stand-in field hid it). A unit goes to its round only when nothing its frames show is a stand-in, so `ground_builder` is started on `src/ground/` (not its `puddles/` and `frost/`): first the soil under the crop from a scanned CC0 material with tilled rows, then, without a pause, the meter round the plant and the grass strip that `dawn` and `field` need in Phase 4. The stand-in that remains is declared as `ground near` for the units whose frames show it. The field agent is asked at the same time to close the canopy.
 
 ## Notes from Brandon
 
@@ -409,6 +411,7 @@ Ten agents of the look lock, all started 2026-11-21 07:16 UTC as sandbox agents 
 | `golden_builder` | `src/worlds/golden/`, new files in `src/weather/`, assets `worlds/golden` | `agent/golden` | The stage of the golden world: sky dome, the sun's true brightness, far layers, haze, pollen, its settings | reported 08:18 UTC at `9cc949d`, merged at `04f81ea`; second pass (ragged cloud, dark hills and tree line, a sun star) asked 08:50, due 09:25 |
 | `lens_builder` | `src/post/` | `agent/post` | Out of focus fill, glow and flare, the film tone curve, vignette, grain, dither | first pass merged at `2fb7c51`; second pass (grade against the approved pair, the sun's star and rays, grain by brightness) asked 08:50, due 09:25 |
 | `field_builder` | `src/field/`, assets `plant/field` | `agent/field` | Variants so no neighbor is a copy, the far field as pictures and carpet, the heads behind the hero | reported 08:14 UTC at `2614a50`, merged at `dd326d7`; second pass (a dark green readable field, heads leading the bloom, its own weak list) asked 08:50, due 09:25 |
+| `ground_builder` | `src/ground/` except `puddles/` and `frost/`, assets `ground` | `agent/ground` | Step 1: the soil under the crop from a scanned material, tilled rows, no stand-in in a bloom frame. Step 2: the meter round the plant as real geometry, the grass strip, the states | started 08:57 UTC (sandbox, default model); step 1 due 09:45 |
 
 Finished in this task:
 
