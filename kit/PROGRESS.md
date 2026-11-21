@@ -818,6 +818,58 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [ ] Fixes
 - [x] Summary, status, push: `scorecards/round-007/SUMMARY.md`, `MEASURES.json` and the four manifests written 17:33 UTC and pushed (`72a8ce9`); Status 39 (17:10 UTC) carries the judged frame, Status 40 (17:34 UTC) the result
 
+### Round 8 · Phase 4 · `frost` · floor round
+
+- Started 2026-11-21 17:50 UTC. Judges commit `0c3751f` (engine `1b119ecb00e043d9`, unit `frost` `0700abdea97005f6`): `main` with the Phase 4 line `93aad1d` merged in. Rounds 8 to 11 started together at 17:50 UTC on this one commit, because all four units left have no stand-in now and a unit goes to its first round as soon as that is so; the machine checks are one run on the commit and count for all four rounds, the measures and the pack are each unit's own. Unit `frost` (30 to 40 s, frames 900 to 1199), the first of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 1080 (`frost`, 36.0 s). Families: R1 Claude, R3 GPT, R4 Gemini; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame and five on each control (the approved image of each of the unit's keys), collected in this round and reused in the unit's later rounds. Before the round: type check clean on `main`, 104 of 104 tests on the line's head, the Builder's own `review` still of 1080 beside the approved image (`out/work/scratch/r8-own-1080-pair.jpg`, on `f885c49`, whose frost is this commit's but for the bud). What the Builder sees in it before any critic does: the neighbors are dark sharp cut-outs against pale fog where the approved's are soft, veiled and frosted; the plant's leaves are broad, dark and flat with a thick white band on the margin where the approved has fine frost hairs and a grey bloom over the blade; the sky is an even grey lavender with no warm glow round the sun.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 9 · Phase 4 · `dawn` · floor round
+
+- Started 2026-11-21 17:50 UTC. Judges commit `0c3751f` (engine `1b119ecb00e043d9`, unit `dawn` `85722e6710beaa69`): `main` with the Phase 4 line `93aad1d` merged in. Rounds 8 to 11 started together at 17:50 UTC on this one commit, because all four units left have no stand-in now and a unit goes to its first round as soon as that is so; the machine checks are one run on the commit and count for all four rounds, the measures and the pack are each unit's own. Unit `dawn` (0 to 8 s, frames 0 to 239), the first of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frames 0, 45 (`dawn-sprout`, 1.5 s), 60 and 195 (`dawn-seedling`, 6.5 s). Families: R1 GPT, R3 Gemini, R4 Claude; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame and five on each control (the approved image of each of the unit's keys), collected in this round and reused in the unit's later rounds. Before the round: the Builder's own `draft` stills of 0, 45, 60 and 195 beside the approved images (`out/work/scratch/r8-line-draft-sheet.jpg`). What the Builder sees: at frame 0 only the mound, no sprout yet; the soil is fine crumbs in focus from near to far where the approved has large clods and a shallow focus; the seedling's stem is thinner and its seed leaves wider than the approved's; the far band is a level stripe.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 10 · Phase 4 · `rain` · floor round
+
+- Started 2026-11-21 17:50 UTC. Judges commit `0c3751f` (engine `1b119ecb00e043d9`, unit `rain` `0709fa6e53394e89`): `main` with the Phase 4 line `93aad1d` merged in. Rounds 8 to 11 started together at 17:50 UTC on this one commit, because all four units left have no stand-in now and a unit goes to its first round as soon as that is so; the machine checks are one run on the commit and count for all four rounds, the measures and the pack are each unit's own. Unit `rain` (8 to 20 s, frames 240 to 599), the first of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 420 (`rain`, 14.0 s). Families: R1 Gemini, R3 Claude, R4 GPT; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame and five on each control (the approved image of each of the unit's keys), collected in this round and reused in the unit's later rounds. Before the round: the Builder's own `draft` still of 420 beside the approved image (same sheet). What the Builder sees: the neighbors stand taller than the lens and show as dark shapes against the band where the approved's rows are low, leafy and green; the water is pale flat sheets and one hard-edged ribbon; the plant's upper leaves are dark and stand far above its tip.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 11 · Phase 4 · `night` · floor round
+
+- Started 2026-11-21 17:50 UTC. Judges commit `0c3751f` (engine `1b119ecb00e043d9`, unit `night` `7fcfe88ccc4c04c8`): `main` with the Phase 4 line `93aad1d` merged in. Rounds 8 to 11 started together at 17:50 UTC on this one commit, because all four units left have no stand-in now and a unit goes to its first round as soon as that is so; the machine checks are one run on the commit and count for all four rounds, the measures and the pack are each unit's own. Unit `night` (20 to 30 s, frames 600 to 899), the first of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 780 (`night`, 26.0 s). Families: R1 Claude, R3 GPT, R4 Gemini; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame and five on each control (the approved image of each of the unit's keys), collected in this round and reused in the unit's later rounds. Before the round: the night key was fitted again (the horizon at 0.84 of the frame's height, decision of 17:45 UTC) and the Builder's own `review` still of 780 stands beside the approved image (`out/work/scratch/r9-own-780-pair.jpg`). What the Builder sees: the plant has about half the approved's leaves and its low leaves are large pale shapes; the crop is one level dark mass where the approved has single plants standing into the mist; the hills are lower than the approved's.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
 ## Final scores
 
 Written by the record round in Phase 6.
