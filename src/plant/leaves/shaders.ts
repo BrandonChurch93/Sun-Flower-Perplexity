@@ -110,8 +110,8 @@ void main() {
   // The small net of veins between the side veins: pale lines on the face, dark lines in the glow.
   float net = smoothstep(1.02, 1.45, lum);
   // The same net read at the size it was photographed: the smallest veinlets and the cells they close, 2 to 3 mm across.
-  vec2 fUv = vPlane * 20.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
-  float fine = dot(texture(uDetail, fUv, -0.5).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
+  vec2 fUv = vPlane * 16.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
+  float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.98, 1.4, fine);
 
   vec3 upper = vec3(0.028, 0.06, 0.03) * mix(vec3(1.0), var, 0.85) * tone;
@@ -139,7 +139,7 @@ void main() {
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + (fine - 1.0) * 0.00012 * (1.0 - smoothstep(24.0, 70.0, texels * 2.86))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + (fine - 1.0) * 0.0002 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
   float fold = vState.z;
 
