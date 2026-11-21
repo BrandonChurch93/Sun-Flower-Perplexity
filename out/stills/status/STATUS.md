@@ -1,12 +1,12 @@
-# Status 27
+# Status 28
 
-2026-11-21 11:34 UTC
+2026-11-21 11:59 UTC
 
-- Status 27 · Phase 3 · unit bloom. Twelve passes merged since Status 26: the lens now shares its focus between the head and the stem under it (the stem went from 2.6 to 1.75 px of blur at 50.5 s), a round warm bloom with no star, a darker field with fewer and larger heads on staggered clocks, yellow lifting rays and broader open rays, a 57 bract hairy bud, blades turned to the lens, gold hairs as countable strands, a darker disc, and the neighbor's three leaves held at the left edge with the sun under the upper one. Measured at the review tier: M1 and M2 pass, M3 0.790 at 45.0 s (needs 0.8) and 0.817 at 50.5 s. 91 tests green.
-- Next: Still off against the approved pair: the bud at 45 s is more closed and its lifted rays hook where the approved's stand straight and creased; the hero's leaves are too large and too light; rays at 50.5 s are too orange and flat; the disc's florets read coarser. Fixes for those are with the agents until 11:50, then round 4 starts at about 12:00 UTC with the judged stills at the final tier. Time used: 10.7 h of 30 h.
+- Status 28 · Phase 3 · unit bloom. Round 4 (an extra round) started at 11:54 judging e099145: the third set of merges after round 3 is in (bud's bracts spread as a star, disc on the exact spiral, lens pass 7, field pass 5, skin pass 6, finer hairs, petals' colour). Its machine gate, final tier measure and pack are running, about 28 min. At review tier before the round M1 and M2 pass and M3 reads 0.801 at 45 s and 0.888 at 50.5 s against a floor of 0.8; the gate reads M3 at final tier. Pictures are review tier at 02bbe22, one merge before the judged commit.
+- Next: When the chain ends (about 12:22) tick the round's checks, look at the pack, send it to three fresh critics and ten jurors, save their words in scorecards/round-004, then the fix pass on the agents' 12:45 reports. Largest differences still open: the cap of folded rays reads as a comb of strings, the bracts lack modelling, the neighbor's leaf stands edge on above a clear sun where the approved has it broadside in front of the sun, the field is browner with orange ring heads. Time used: 11.1 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frame 1350 (45.0 s), approved left, build right, review tier
-- `status-2.jpg`: Frame 1515 (50.5 s), approved left, build right, review tier
-- `status-3.jpg`: Head at 45.0 s, approved left, build right
-- `status-4.jpg`: Head at 50.5 s, approved left, build right
+- `status-1.jpg`: 45 s · approved left, build right (review tier)
+- `status-2.jpg`: 50.5 s · approved left, build right (review tier)
+- `status-3.jpg`: 45 s · the bud at native size, approved left, build right
+- `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
