@@ -4,6 +4,7 @@ import { FullscreenPass } from '../../core/fullscreen.ts'
 import { stream } from '../../core/random.ts'
 import { glslCommon, shared } from '../../core/shading.ts'
 import { DENSITY, DENSITY_SIZE, GLOW_COVER } from './density.ts'
+import { RIDGE_BODY, RIDGE_FOOT, RIDGE_SIZE, RIDGE_TOP } from './ridge.ts'
 
 const RAD = Math.PI / 180
 
@@ -26,6 +27,28 @@ const METEOR_FROM_DEG: [number, number] = [-188.1, 18.9]
 const METEOR_TO_DEG: [number, number] = [-182.1, 13.6]
 const METEOR_LIGHT = 0.5
 
+// The wooded hills of the night stand where the approved night has them: their line, their tone and the tone of the mist at their foot are read from it by bearing. They come out of the haze after the cut into the night and go back into it before the cut out, so both cuts show the land every world shares.
+const HILLS_IN_S: [number, number] = [20, 23]
+const HILLS_OUT_S: [number, number] = [27.5, 30]
+const HORIZON_V = 0.5 - (Math.tan(MAP_EL_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
+const MIST_TOP_DEG = 1.9
+const MIST_TOP_V = HORIZON_V + (Math.tan(MIST_TOP_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
+
+const ridgeGlsl = /* glsl */ `
+uniform sampler2D tRidge;
+uniform mat3 uLandMap;
+uniform vec2 uLandScale;
+uniform float uLand;
+float ridgeAt(vec3 d, out vec2 lu, out int li) {
+  vec3 lm = uLandMap * d;
+  lu = 0.5 + lm.xy / max(lm.z, 0.2) * uLandScale;
+  float lx = clamp(lu.x, 0.0, 1.0) * ${RIDGE_SIZE.toFixed(1)} - 0.5;
+  li = int(clamp(floor(lx), 0.0, ${(RIDGE_SIZE - 2).toFixed(1)}));
+  float top = mix(texelFetch(tRidge, ivec2(li, 0), 0).r, texelFetch(tRidge, ivec2(li + 1, 0), 0).r, clamp(lx - float(li), 0.0, 1.0));
+  return lm.z > 0.2 ? top : -1.0;
+}
+`
+
 const STARS = 200000
 const FAINTEST = 0.0147
 const BRIGHTEST = 12
@@ -33,6 +56,9 @@ const SLOPE = 1.3
 const IN_RIVER = 6
 
 const glowFragment = /* glsl */ `${glslCommon}
+${ridgeGlsl}
+uniform vec2 uMistRows;
+uniform float uLandTime;
 uniform mat4 uCamWorld;
 uniform vec4 uProj;
 uniform sampler2D tGlow;
@@ -64,6 +90,20 @@ void main() {
   vec3 m = uToMap * d;
   vec2 uv = 0.5 + m.xy / max(m.z, 0.2) * uMapScale;
   vec3 paint = texture(tGlow, clamp(uv, 0.002, 0.998)).rgb;
+  vec2 lu;
+  int li;
+  float ridge = ridgeAt(d, lu, li);
+  float cover = smoothstep(-0.0015, 0.0015, ridge - lu.y);
+  if (cover > 0.0) {
+    vec3 under = texelFetch(tRidge, ivec2(li, 1), 0).rgb;
+    vec3 mist = texelFetch(tRidge, ivec2(li, 2), 0).rgb;
+    float bank = valueNoise(vec2(lu.x * 14.0 + 0.012 * uLandTime, 0.05 * uLandTime));
+    float knot = valueNoise(vec2(lu.x * 47.0 - 0.02 * uLandTime, lu.y * 90.0 + 0.04 * uLandTime));
+    float topV = uMistRows.x + 0.022 * (bank - 0.5) + 0.006 * (knot - 0.5);
+    float thick = 1.0 - smoothstep(uMistRows.y, topV, lu.y);
+    vec3 hill = mix(under, mist * (0.8 + 0.4 * bank), pow(thick, 1.8));
+    paint = mix(paint, hill, uLand * cover);
+  }
   vec3 shown = uGain * pow(max(paint, 1e-5), vec3(uCurve));
   shown = clamp(mix(vec3(dot(shown, vec3(0.2126, 0.7152, 0.0722))), shown, uSaturation), 0.0, 0.97 * uTone.y);
   paint = pow(uTone.x * shown / (uTone.y - shown), vec3(uTone.z)) * uTint;
@@ -108,16 +148,20 @@ uniform float uFogDensity;
 uniform float uFogFalloff;
 uniform vec3 uCamPos;
 uniform int uDiag;
+${ridgeGlsl}
 out vec3 vLight;
 out float vSigma;
 void main() {
   vec3 w = uTurn * position;
+  vec2 lu;
+  int li;
+  float ridge = ridgeAt(w, lu, li);
   vec3 v = uView * w;
   float sigma = aLight.a * uWidth / 1920.0;
   float size = ceil(6.0 * sigma) + 2.0;
   float air = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) / (uFogFalloff * max(w.y, 1e-4));
   float dim = exp(-air) * exp(-0.12 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
-  vLight = aLight.rgb * (uGain * dim / (6.2832 * sigma * sigma));
+  vLight = aLight.rgb * (uGain * dim / (6.2832 * sigma * sigma)) * (lu.y < ridge ? 1.0 - uLand : 1.0);
   vSigma = sigma;
   bool hidden = v.z > -0.05 || uDiag > 1;
   gl_Position = hidden ? vec4(2.0, 2.0, 2.0, 1.0) : vec4(uProj.x * v.x / -v.z - uProj.z, uProj.y * v.y / -v.z - uProj.w, 0.0, 1.0);
@@ -198,6 +242,32 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
 
 export const GLOW_FILE = 'glow.jpg'
 
+const ease = (a: number, b: number, x: number): number => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
+export const nightLand = (time: number): number => ease(HILLS_IN_S[0], HILLS_IN_S[1], time) * (1 - ease(HILLS_OUT_S[0], HILLS_OUT_S[1], time))
+
+const toLinear = (v: number): number => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
+
+function ridgeTable(): THREE.DataTexture {
+  const data = new Float32Array(RIDGE_SIZE * 3 * 4)
+  for (let i = 0; i < RIDGE_SIZE; i++) {
+    data[i * 4] = parseInt(RIDGE_TOP.slice(i * 4, i * 4 + 4), 16) / 65535
+    for (let c = 0; c < 3; c++) {
+      data[(RIDGE_SIZE + i) * 4 + c] = toLinear(parseInt(RIDGE_BODY.slice(i * 6 + c * 2, i * 6 + c * 2 + 2), 16) / 255)
+      data[(2 * RIDGE_SIZE + i) * 4 + c] = toLinear(parseInt(RIDGE_FOOT.slice(i * 6 + c * 2, i * 6 + c * 2 + 2), 16) / 255)
+    }
+  }
+  const table = new THREE.DataTexture(data, RIDGE_SIZE, 3, THREE.RGBAFormat, THREE.FloatType)
+  table.minFilter = THREE.NearestFilter
+  table.magFilter = THREE.NearestFilter
+  table.generateMipmaps = false
+  table.needsUpdate = true
+  return table
+}
+
 export interface NightSkyLook { gain: number; curve: number; saturation: number; tint: [number, number, number]; tone: [number, number, number]; fall: number; stars: number; glow: [number, number, number]; glowPower: number; zenith: [number, number, number]; horizon: [number, number, number] }
 
 export class NightSky {
@@ -215,6 +285,12 @@ export class NightSky {
   private readonly back3 = new THREE.Matrix3()
   private readonly view3 = new THREE.Matrix3()
   private readonly flat = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+  private readonly land = {
+    tRidge: { value: ridgeTable() },
+    uLandMap: { value: this.mapBasis },
+    uLandScale: { value: new THREE.Vector2(MAP_SCALE_X / GLOW_COVER, MAP_SCALE_Y / GLOW_COVER) },
+    uLand: { value: 0 },
+  }
 
   constructor(look: NightSkyLook) {
     const forward = direction(MAP_AZ_DEG, MAP_EL_DEG)
@@ -227,6 +303,9 @@ export class NightSky {
       uProj: { value: new THREE.Vector4() },
       tGlow: { value: null },
       uToMap: { value: new THREE.Matrix3() },
+      ...this.land,
+      uMistRows: { value: new THREE.Vector2(MIST_TOP_V, HORIZON_V) },
+      uLandTime: { value: 0 },
       uMapScale: { value: new THREE.Vector2(MAP_SCALE_X / GLOW_COVER, MAP_SCALE_Y / GLOW_COVER) },
       uPixelAngle: { value: 0.001 },
       uMeteorHead: { value: this.meteorHead },
@@ -249,6 +328,7 @@ export class NightSky {
       fragmentShader: starFragment,
       uniforms: {
         uTurn: { value: this.turn3 },
+        ...this.land,
         uView: { value: this.view3 },
         uProj: { value: new THREE.Vector4() },
         uWidth: { value: 1920 },
@@ -285,6 +365,8 @@ export class NightSky {
     const toMap = this.pass.uniforms.uToMap.value as THREE.Matrix3
     toMap.copy(this.mapBasis).multiply(this.back3)
     const u = this.pass.uniforms
+    this.land.uLand.value = nightLand(time)
+    u.uLandTime.value = time
     const s = (time - METEOR_AT_S) / METEOR_SECONDS
     u.uMeteor.value = s > 0 && s < 1 ? METEOR_LIGHT * Math.sin(Math.PI * s) : 0
     this.meteorHead.copy(this.meteorFrom).lerp(this.meteorTo, Math.min(1, Math.max(0, s))).normalize()
