@@ -172,7 +172,7 @@ export function create(options: PartOptions): PlantPart {
     const rFoot = stemRadius(time, 0) * grown
     const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
-    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time)))
+    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(20, 30, time)))
     const flareTo = NECK_FLARE * headR
 
     const base = (u: number, s: number): number => {

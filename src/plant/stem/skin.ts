@@ -59,9 +59,10 @@ ${tissueGlsl}
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
-  float tender = floor(vSkin.y * 0.25);
-  float youth = saturate(vSkin.y - 4.0 * tender - 1.0);
-  tender *= 0.015625;
+  float age = floor(vSkin.y * 0.25);
+  float youth = saturate(vSkin.y - 4.0 * age - 1.0);
+  float fresh = saturate((age - 64.0) * 0.0625);
+  float tender = min(age, 64.0) * 0.015625;
   float pale = vSkin.z;
   float foot = vSkin.w;
   float thin = vSkin2.w;
@@ -103,7 +104,6 @@ void main() {
   grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.06 + 0.2 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   // The seedling's own warmth is gone before the field's youngest plants reach the bloom.
-  float fresh = smoothstep(0.62, 0.9, tender);
   young = mix(young, mix(mix(vec3(0.06, 0.125, 0.03), vec3(0.1, 0.19, 0.05), tone), mix(vec3(0.08, 0.15, 0.04), vec3(0.13, 0.225, 0.064), tone), fresh), tender);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
@@ -136,7 +136,7 @@ void main() {
   color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
 #else
   // The young stem is clear, moist flesh: the sun enters at its outline and leaves toward the lens.
-  vec3 color = shadeTissueClear(t, vWorld, view, vec2(vCoord.x * 0.08, vCoord.z * ${TOP_M.toFixed(4)}), 0.0, 0.7 * max(pale, tender));
+  vec3 color = shadeTissueClear(t, vWorld, view, vec2(vCoord.x * 0.08, vCoord.z * ${TOP_M.toFixed(4)}), 0.0, 0.7 * max(pale, fresh));
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }
