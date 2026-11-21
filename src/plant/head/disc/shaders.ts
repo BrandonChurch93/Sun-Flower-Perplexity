@@ -203,7 +203,7 @@ void main() {
   t.rough = 0.85;
   t.wax = 0.12;
   t.sheen = 0.35;
-  vec3 pollen = vec3(0.98, 0.74, 0.1);
+  vec3 pollen = vec3(0.9, 0.63, 0.15);
 
   if (piece < 0.5) {
     float centre = 1.0 - smoothstep(0.14, 0.7, rho);
@@ -232,7 +232,7 @@ void main() {
     t.rough = mix(0.5, 1.0, dust);
     t.wax = mix(0.35, 0.0, dust);
     t.sheen = mix(0.3, 1.0, dust);
-    t.through = pollen * dust * 0.8;
+    t.through = pollen * dust * 0.5;
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.82, 0.55, 0.06), pollen, 0.5 * grain);
     t.through = vec3(0.9, 0.5, 0.05);
@@ -240,9 +240,10 @@ void main() {
     t.wax = 0.0;
     t.sheen = 1.0;
   } else {
-    vec3 green = mix(vec3(0.3, 0.38, 0.13), vec3(0.5, 0.56, 0.24), uYoung);
+    float centre = 1.0 - smoothstep(0.2, 0.62, rho);
+    vec3 green = mix(mix(vec3(0.3, 0.38, 0.13), vec3(0.36, 0.5, 0.15), centre), vec3(0.5, 0.56, 0.24), uYoung);
     vec3 dry = vec3(0.26, 0.17, 0.06);
-    t.albedo = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - 0.7 * uYoung)) * (0.85 + 0.3 * around);
+    t.albedo = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - 0.7 * uYoung) * (1.0 - 0.8 * centre)) * (0.85 + 0.3 * around);
     t.through = vec3(0.3, 0.38, 0.06) * 0.6;
     t.sheen = 0.6;
   }
