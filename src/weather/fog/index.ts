@@ -57,12 +57,13 @@ uniform float uSpeed;
 uniform float uLayer;
 uniform vec2 uToward;
 uniform float uCanopyM;
+uniform vec2 uUnder;
 uniform float uSunShare;
 uniform float uDeep;
 ${fogLight}
 const float BANK_SOLID = 0.5;
 const float BANK_UNDER = 0.12;
-const vec2 SUN_SIDE = vec2(0.15, 0.4);
+const vec2 SUN_SIDE = vec2(0.12, 0.34);
 const vec3 BANK_AMONG = vec3(0.72, 1.0, 0.8);
 const vec3 SUN_AMONG = vec3(0.65, 1.12, 1.75);
 float bankBroad(vec2 q, float y) {
@@ -90,7 +91,7 @@ void main() {
   float thick = mix(smoothstep(0.3, 0.72, here), 1.0, BANK_SOLID) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.85, 1.0, vInfo.y / vInfo.z);
   // Under the leaves the drifting fog is thin: it lies over the closed canopy. Toward the sun it glows all the way down.
-  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(0.3 * uCanopyM, 0.7 * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
+  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(uUnder.x * uCanopyM, uUnder.y * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
   // Down among the plants little of the sky and none of the sun's glow reaches the fog.
   float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
   vec3 calm = fogCalm(v);
@@ -99,7 +100,11 @@ void main() {
 }
 `
 
-interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
+interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number; under?: [number, number] }
+
+// Where a sheet is thin under the leaves, as shares of the plant's height. The first sheet stands between the plant and the first row: it veils that row's heads and leaves its bodies dark. It is gone as the far shapes come out, so the ridge shows through the unit's last second as it did without it.
+const UNDER: [number, number] = [0.3, 0.7]
+const UNDER_FIRST: [number, number] = [0.6, 1]
 
 const BANKS: Bank[] = [
   { radiusM: 1.9, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.05 },
@@ -112,6 +117,8 @@ const BANKS: Bank[] = [
   { radiusM: 20, topM: 1.65, scaleM: 15, alpha: 0.7, speed: 0.1 },
 ]
 
+const FIRST: Bank = { radiusM: 1.2, topM: 1.55, scaleM: 2.5, alpha: 0.09, speed: 0.06, under: UNDER_FIRST }
+
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
@@ -120,6 +127,7 @@ const SUN_NEAR = 0.5
 const SUN_FAR = 2.4
 const DEEP_NEAR = 0.12
 const DEEP_FAR = 0.33
+const NEAR_M = 1.9
 const FAR_M = 4.5
 
 const smooth = (a: number, b: number, x: number): number => {
@@ -164,14 +172,15 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
   const now = { value: 0 }
   const canopy = { value: 1 }
   const toward = { value: new THREE.Vector2(windToward.x, windToward.z) }
-  const meshes = BANKS.map((bank, i) => {
-    const far = smooth(BANKS[0].radiusM, FAR_M, bank.radiusM)
+  const first = { value: FIRST.alpha }
+  const sheet = (bank: Bank, layer: number, order: number, alpha: { value: number }): THREE.Mesh => {
+    const far = smooth(NEAR_M, FAR_M, bank.radiusM)
     const geometry = ringStrip(96, () => ({ radius: bank.radiusM, top: bank.topM }))
     const surface = makeSurface({
-      name: `fog bank ${i}`,
+      name: `fog bank ${layer}`,
       vertex,
       fragment,
-      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
+      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: alpha, uUnder: { value: new THREE.Vector2().fromArray(bank.under ?? UNDER) }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * layer + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
@@ -179,9 +188,11 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
     const mesh = new THREE.Mesh(geometry, surface.main)
     mesh.frustumCulled = false
     mesh.matrixAutoUpdate = false
-    mesh.renderOrder = BANK_ORDER + (BANKS.length - 1 - i)
+    mesh.renderOrder = order
     return mesh
-  })
+  }
+  const last = BANK_ORDER + BANKS.length - 1
+  const meshes = [...BANKS.map((bank, i) => sheet(bank, i, last - i, { value: bank.alpha })), sheet(FIRST, BANKS.length, last + 0.5, first)]
   return {
     meshes,
     uniforms,
@@ -189,6 +200,7 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
       now.value = time
       canopy.value = heightAt(time)
       uniforms.uFogThin.value = fogThinAt(time)
+      first.value = FIRST.alpha * (1 - fogFarAt(time))
     },
   }
 }

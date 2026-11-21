@@ -511,7 +511,8 @@ export function create(options: PartOptions): PlantPart {
         seat[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         seat[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         seat[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
-        seat[o + 3] = Math.min(size, 0.45 * radius)
+        // On the thin young stem the dew stands in fine beads, never in drops as wide as the stem.
+        seat[o + 3] = Math.min(size, lerp(0.45, 0.11, (1 - rain) * (1 - smoothstep(9, 12, time))) * radius)
         tint[i * 3] = lerp(0.34, 0.04, rain)
         tint[i * 3 + 1] = lerp(0.34, 0.075, rain)
         tint[i * 3 + 2] = lerp(0.13, 0.04, rain)
