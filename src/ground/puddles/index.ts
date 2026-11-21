@@ -2,14 +2,14 @@ import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { right, toward } from '../../field/layout.ts'
-import { nearGeometry, nearRadiusM } from '../geometry.ts'
+import { nearRadiusM } from '../geometry.ts'
 import { waterLevelsM } from '../soil.ts'
 import { rainSkyUniforms } from '../../worlds/rain/sky.ts'
 import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { LANDING_FLOATS, fineLandings, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
-import { rivuletFragment, rivuletVertex } from './rivulets.ts'
+import { rivuletFragment, rivuletGeometry, rivuletVertex } from './rivulets.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
@@ -58,15 +58,15 @@ export class Puddles {
     this.crowns.frustumCulled = false
     this.crowns.visible = false
     this.crowns.renderOrder = -9
-    const thread = makeSurface({ name: 'rivulets', vertex: rivuletVertex, fragment: rivuletFragment, uniforms: { ...this.uniforms, uSpan: this.span }, transparent: true, castShadow: false })
+    const thread = makeSurface({ name: 'rivulets', vertex: rivuletVertex, fragment: rivuletFragment, uniforms: { ...this.uniforms, uSpan: this.span }, side: THREE.DoubleSide, transparent: true, castShadow: false })
     thread.main.polygonOffset = true
     thread.main.polygonOffsetFactor = -1
     thread.main.polygonOffsetUnits = -2
-    this.rivulets = new THREE.Mesh(nearGeometry(), thread.main)
+    this.rivulets = new THREE.Mesh(rivuletGeometry(), thread.main)
     this.rivulets.frustumCulled = false
     this.rivulets.visible = false
     this.rivulets.renderOrder = -11
-    this.meshes = [this.water, this.crowns]
+    this.meshes = [this.water, this.crowns, this.rivulets]
   }
 
   // Once a frame, with the film second at the open shutter and at its close.
