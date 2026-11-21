@@ -5,7 +5,7 @@ import { makeFarLayers } from './layers.ts'
 import { NightSky } from './sky.ts'
 
 export const world: WorldSettings = {
-  standIn: true,
+  standIn: false,
   sun: { azimuthDeg: 250, elevationDeg: 10, color: [1.6, 1.87, 2.3], softnessDeg: 1.5, lean: 0, lift: 0 },
   sky: { zenith: [0.012, 0.022, 0.06], horizon: [0.03, 0.05, 0.1], bounce: [0.004, 0.006, 0.012], ambient: 1.3, glow: [0, 0, 0], glowPower: 8, disc: 0, even: 0.6 },
   backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
