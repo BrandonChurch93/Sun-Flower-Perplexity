@@ -120,12 +120,12 @@ void main() {
   float cells = smoothstep(0.96, 1.25, fine);
 
   vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.6 + 0.4 * vRipe));
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.7 + 0.3 * vRipe));
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
-  float grain = 0.35 + 0.65 * vRipe;
-  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(vec3(1.25, 1.7, 0.95), vec3(1.0), vRipe);
+  float grain = 0.5 + 0.5 * vRipe;
+  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(top ? vec3(1.25, 1.7, 0.95) : vec3(0.85, 1.05, 0.9), vec3(1.0), vRipe);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
