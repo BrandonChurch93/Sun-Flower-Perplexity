@@ -95,7 +95,7 @@ export function paleness(time: number): number {
 // The bud body grows into the disc.
 const bodyCurve = new Monotone([
   [bud0, 0],
-  [inStage(bud0, bud1, 0.053), 0.015],
+  [inStage(bud0, bud1, 0.053), 0.009],
   [inStage(bud0, bud1, 0.263), 0.02],
   [inStage(bud0, bud1, 0.579), 0.037],
   [inStage(bud0, bud1, 0.79), 0.054],

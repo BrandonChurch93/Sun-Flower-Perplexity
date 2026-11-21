@@ -135,6 +135,11 @@ export function ringStrip(segments: number, at: (az: number) => { radius: number
 
 export const skylineLayerSalt = (i: number): number => i * 17.3 + 1.7
 
+// The near rows stand low early in the film and reach their full height in the frost, before the bloom. One curve of film time for every world, so no cut moves the line. A world sets it as the y scale of a layer's strip.
+export function skylineRowScale(i: number, time: number): number {
+  return SKYLINE[i].rowM ? 0.3 + 0.7 * smooth(30, 38, time) : 1
+}
+
 export function skylineStrip(i: number, sunAzimuthDeg: number): THREE.BufferGeometry {
   return ringStrip(SKYLINE[i].segments, (az) => skylineAt(i, az, sunAzimuthDeg))
 }
