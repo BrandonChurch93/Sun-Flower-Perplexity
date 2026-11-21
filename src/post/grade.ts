@@ -22,6 +22,7 @@ uniform float uStar;
 uniform float uStarLen;
 uniform float uGlow;
 uniform float uShafts;
+uniform float uSunClear;
 uniform float uFarFill;
 uniform float uSaturation;
 uniform float uVignette;
@@ -81,22 +82,26 @@ float fanNoise(float a, float s) {
   f = f * f * (3.0 - 2.0 * f);
   return mix(hash31(vec3(i, s, 1.0)), hash31(vec3(i + 1.0, s, 1.0)), f);
 }
-// What a low sun in the frame does beyond the glass's own scatter: a wide warm glow round it, and broad soft shafts fanning down and away from it through the haze. Both follow how much of the sun shows.
-vec3 sunAir(vec2 px, float circle) {
+// What a low sun in the frame does beyond the glass's own scatter: a wide warm glow round it, and broad soft shafts fanning down and away from it through the haze. The glow follows how much of the sun shows. The shafts do too, but only down to a floor: a leaf across the disc shades the lens, not the air behind it.
+vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   vec2 d = (px - uSunAt * uSize) / uSize.x;
   float r = length(d);
   float tight = 1.0 + r * r / 0.0009;
-  float glow = 0.88 / (tight * sqrt(tight)) + 0.12 * exp(-r / 0.05);
+  float glow = 0.78 / (tight * sqrt(tight)) + 0.22 * exp(-r * r / 0.0025);
   float ang = atan(d.y, d.x);
   float fan = smoothstep(-3.1, -2.5, ang) * (1.0 - smoothstep(-0.35, 0.0, ang));
-  float beams = 0.45 + 0.55 * smoothstep(0.15, 0.9, 0.65 * fanNoise(ang * 4.0, 3.0) + 0.35 * fanNoise(ang * 10.0, 7.0));
+  float beams = 0.6 + 0.4 * smoothstep(0.15, 0.9, 0.65 * fanNoise(ang * 4.0, 3.0) + 0.35 * fanNoise(ang * 10.0, 7.0));
   float reach = saturate(1.0 - r / 0.26);
   // The shafts hang in the air of the field: nothing in focus and nothing nearer than the focus is behind them. Far things blur up to the circle of infinity, near leaves beyond it.
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
   float shafts = fan * beams * reach * reach * r / (r + 0.02) * behind;
-  return texture(tHot, uSunAt).rgb * (vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.7, 0.45) * (uShafts * shafts));
+  vec3 hot = texture(tHot, uSunAt).rgb;
+  float lit = max(dot(hot, vec3(0.2126, 0.7152, 0.0722)), 0.6 * uSunClear);
+  // Lit haze in front of a dark field leaves its deepest holes dark.
+  float hold = mix(0.3, 1.0, smoothstep(0.004, 0.05, under));
+  return hot * vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.43, 0.31) * (lit * uShafts * shafts * hold);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
@@ -121,7 +126,8 @@ void main() {
   if (uMode == 2) { outColor = vec4(clamp(c, 0.0, 1.0), 1.0); return; }
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
-  c = max(c, 0.0) * uExposure + texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a);
+  c = max(c, 0.0) * uExposure;
+  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a, dot(c, vec3(0.2126, 0.7152, 0.0722)));
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;
@@ -134,9 +140,9 @@ void main() {
   c = max(mix(vec3(l), c, uSaturation), 0.0);
   c = c + uLift * (1.0 - c);
   c = toSrgb(clamp(c, 0.0, 1.0));
-  // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, full in the middle tones, a little less in the shadows and much less in the bright sky.
+  // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: full in the middle tones, well under half in deep shadow, a third in the highlights.
   float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  float weight = mix(0.75, 1.0, smoothstep(0.0, 0.3, luma)) * mix(1.0, 0.3, smoothstep(0.5, 0.9, luma));
+  float weight = mix(0.27, 0.9, smoothstep(0.0, 0.4, luma)) * mix(1.0, 0.35, smoothstep(0.55, 0.9, luma));
   vec3 fine = tri3(gl_FragCoord.xy, uSeed);
   float body = (fine.r + fine.g + fine.b) * 0.5774 + 0.5 * clump(gl_FragCoord.xy * 0.53 + 11.0, uSeed + 0.19);
   c += (vec3(body) + 0.22 * (fine - (fine.r + fine.g + fine.b) / 3.0) * 1.5) * (uGrain * weight);
