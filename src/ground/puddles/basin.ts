@@ -30,8 +30,11 @@ ${soilHeight}
 uniform vec2 uLevel;
 ${course}
 ${standInBank}
+float waterDepthOver(vec2 p, float height) {
+  return uLevel.x - height - furrowBank(p, uLevel.y);
+}
 float waterDepth(vec2 p) {
-  return uLevel.x - soilHeight(p, soilLod(p)) - furrowBank(p, uLevel.y);
+  return waterDepthOver(p, soilHeight(p, soilLod(p)));
 }
 `
 

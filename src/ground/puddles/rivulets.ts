@@ -1,18 +1,23 @@
-import { basin, course } from './basin.ts'
+import { basin } from './basin.ts'
 import { skyMirror } from './water.ts'
 
-// Threads of water this far apart on average run down the furrow's banks into it.
-const SPACING_M = 0.045
-const REACH_M = 0.3
+// The ground smoothed over this many more levels of its maps is the lie of the land the films of water follow.
+const SMOOTH_LODS = 2.5
+// How far under that smoothed ground a film's surface stands on open ground and in its valleys, in meters, and how much lower it starts when the rain does.
+const FILM_M = [-0.004, -0.0015]
+const FILM_STARTS_M = -0.004
 
 export const rivuletVertex = /* glsl */ `
 in vec3 position;
 out vec3 vWorld;
 out float vDepth;
+out float vLie;
 ${basin}
 void main() {
   vec4 world = modelMatrix * vec4(position, 1.0);
-  world.y += soilHeight(world.xz, soilLod(world.xz));
+  float lod = soilLod(world.xz);
+  world.y += soilHeight(world.xz, lod);
+  vLie = soilHeight(world.xz, lod + ${SMOOTH_LODS.toFixed(1)});
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -20,43 +25,40 @@ void main() {
 }
 `
 
+// Water that stands between the crumbs above the pools: a film in every hollow of the fine soil, fuller in the valleys between the clods, creeping downhill.
 export const rivuletFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
-uniform sampler2D tData;
-uniform vec4 uRelief;
-uniform vec2 uLevel;
+in float vLie;
 uniform vec2 uSpan;
-${course}
+${basin}
 ${skyMirror}
-const mat2 TURN = mat2(0.891, 0.454, -0.454, 0.891);
 void main() {
   vec2 p = vWorld.xz;
-  vec2 f = furrowPlace(p);
-  float d = f.y;
-  float across = f.x;
-  float side = abs(across);
-  float band = smoothstep(${REACH_M.toFixed(2)}, ${(REACH_M * 0.55).toFixed(3)}, side) * smoothstep(-0.95, -0.7, d) * smoothstep(0.45, 0.3, d);
-  if (band <= 0.0) discard;
-  float clod = textureLod(tData, TURN * p * uRelief.z + vec2(0.5, 0.2), 1.0).a;
-  float along = d / ${SPACING_M.toFixed(3)} + 2.6 * (clod - 0.5) + 0.7 * (valueNoise(p * 31.0) - 0.5) + 0.35 * sin(side * 37.0 + d * 9.0);
-  float id = floor(along);
-  float runs = step(0.42, hash11(id * 1.37 + 5.0)) * uLevel.y;
+  float height = soilHeight(p, soilLod(p));
+  float valley = 1.0 - smoothstep(-0.006, 0.004, vLie);
+  float film = vLie + mix(${FILM_M[0].toFixed(4)}, ${FILM_M[1].toFixed(4)}, valley) + ${FILM_STARTS_M.toFixed(4)} * (1.0 - uLevel.y) - height;
+  float open = 1.0 - smoothstep(0.0, 0.001, waterDepthOver(p, height));
+  float cover = smoothstep(0.0, 0.0006, film) * open;
+  float damp = 0.25 * smoothstep(-0.0025, 0.0, film) * (1.0 - cover) * open;
+  if (cover + damp <= 0.002) discard;
+  mat2 across = mat2(dFdx(p), dFdy(p));
+  vec2 fall = vec2(dFdx(vLie), dFdy(vLie)) * inverse(across);
+  float steep = length(fall);
+  vec2 down = -fall / max(steep, 1e-4);
   float t = mix(uSpan.x, uSpan.y, uShutter);
-  float width = (0.05 + 0.07 * hash11(id + 0.61)) * (0.75 + 0.25 * sin(t * 0.9 + id * 2.3)) * (1.0 - 0.6 * smoothstep(0.1, ${REACH_M.toFixed(2)}, side));
-  float off = abs(fract(along) - 0.5);
-  float thread = runs * band * (1.0 - smoothstep(0.55 * width, width, off)) * smoothstep(0.62, 0.46, clod);
-  if (thread <= 0.003) discard;
-  vec3 face = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-  face = face.y < 0.0 ? -face : face;
-  vec2 down = uRight * sign(-across);
-  float wave = sin(side * 420.0 + t * 14.0 + id * 1.7) * 0.14 + sin(side * 190.0 + t * 8.0 + id) * 0.1;
-  vec3 n = normalize(mix(face, vec3(0.0, 1.0, 0.0), 0.35) + vec3(down.x, 0.0, down.y) * wave);
+  float run = saturate(steep * 4.0) * smoothstep(0.0, 0.002, film);
+  float wave = 0.07 * sin(dot(p, down) * 900.0 - t * 11.0) + 0.05 * sin(dot(p, down) * 410.0 - t * 6.0 + 2.0);
+  vec3 n = normalize(vec3(fall.x * 0.5 + down.x * wave * run, 1.0, fall.y * 0.5 + down.y * wave * run));
   vec3 v = normalize(uCamPos - vWorld);
   float mirror = 0.02 + 0.98 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
   vec3 r = reflect(-v, n);
   vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 2.0), smoothstep(-0.06, 0.02, r.y));
-  float alpha = saturate(mirror + 0.25);
-  outColor = vec4(finish(sky * mirror / alpha, vWorld, vDepth, -1.0).rgb, alpha * thread);
+  float deep = 1.0 - exp(-max(film, 0.0) / 0.003);
+  float body = mirror + (1.0 - mirror) * 0.5 * deep;
+  vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * 0.5 * deep;
+  float alpha = cover * body + damp;
+  vec3 color = ((sky * mirror + murk) * cover + vec3(0.012, 0.011, 0.01) * skyAmbient(vec3(0.0, 1.0, 0.0)) * damp) / max(alpha, 1e-3);
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
 }
 `
