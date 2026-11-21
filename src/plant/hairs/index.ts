@@ -91,6 +91,7 @@ const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
 const float WET_BACK = 0.3;
 const float WET_THROUGH = 6.0;
 const float DEW_GLOW = 0.2;
+const float DEW_GLOW_SIDE = 0.6;
 const float DEW_SHARE = ${DEW_SHARE.toFixed(2)};
 
 struct Strand {
@@ -183,7 +184,6 @@ void readHair(int k) {
     float downy = smoothstep(0.0003, 0.0004, a.w) * (1.0 - coat) * step(0.0001, uHairWidth);
     float longer = mix(1.0, 1.4 + 2.4 * d1, downy * damp);
     hairRoot.w *= mix(1.0, mix(0.5 + 0.9 * d1 * d1, 0.3 + 0.6 * d1 * d1, coat), (1.0 - downy) * damp) * longer;
-    hairShare /= sqrt(longer);
     hairDir = normalize(hairDir + (e1 * cos(6.2832 * d2) + e2 * sin(6.2832 * d2)) * (0.7 * damp * d3));
     hairBend *= 1.0 + 3.0 * damp * d3 * d3;
   }
@@ -256,8 +256,8 @@ Strand strandAt(float t) {
   // Rime is not clear: it hides what is behind it, so it fades by how much of it shows and the air between is laid over it in the fragment.
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
-  // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair.
-  vSun += lit * THROUGH_TINT * (DEW_GLOW * uPlantDew * (1.0 - uPlantWet) * shade * veil);
+  // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair. Straight against the sun the light that goes on past is nearly all there is.
+  vSun += lit * THROUGH_TINT * (mix(DEW_GLOW_SIDE, DEW_GLOW, against) * uPlantDew * (1.0 - uPlantWet) * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
   // A wet hair is a thread of water: it throws the bright low sky behind it on to the lens, far more than a dry hair does.
