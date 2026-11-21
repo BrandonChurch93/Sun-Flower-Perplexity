@@ -259,7 +259,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 skyBack = tissueSky(-N, shown);
   // What a soaked blade passes is most of all the sky that stands straight behind it.
   if (wet > 0.0) skyBack = mix(skyBack, wetBehind(-view), WET_FORWARD * wet);
-  if (dew > 0.0) skyBack = mix(skyBack, dewBehind(), DEW_FORWARD * dew * sheet) * (1.0 + DEW_SHEER * dew * sheet);
+  if (dew > 0.0) skyBack = mix(skyBack, dewBehind(), DEW_FORWARD * dew * sheet);
 
   float back = -(0.65 * fdl + 0.35 * ndl);
   float wrap = saturate((back + 0.35) / 1.35);
@@ -281,6 +281,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // Never more than the blade has left after what it returns.
   float room = max((1.0 - max(albedo.r, max(albedo.g, albedo.b))) / max(peak, 1e-4) - 1.0, 0.0);
   vec3 lamp = through * uSunColor * (min(TISSUE_LATE * dusk * (0.2 + 1.6 * wrap * saturate(-ndl)), room) * wrap * lobe * crossed);
+  if (dew > 0.0) skyBack *= 1.0 + min(mix(DEW_SHEER, DEW_SHEER_DRY, saturate(1.0 - 4.0 * wet)) * dew * sheet, room);
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
@@ -351,6 +352,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   color += direct * (gloss * skin) + skyGloss * (mirror * open * cover * (1.0 - 0.85 * dusk));
   // What hides the sun hides the brightest of the sky behind as well: a shaded blade does not glow by itself.
   float behind = 0.6 + 0.4 * lit1;
+  if (dew > 0.0) behind = mix(behind, DEW_BEHIND, dew * sheet);
   color += passed * (uSunColor * glow * (crease * wrap * lobe * crossed) + skyBack * (open * behind)) + lamp * glow * crease;
   if (wet > 0.0) color += evened * skyBack * (open * behind);
   // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.

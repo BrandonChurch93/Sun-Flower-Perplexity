@@ -6,9 +6,13 @@ const float DEW_SKY = 0.07;
 // The share of the light that the beads on a sheet's face send back to an eye on the lit side.
 const float DEW_FACE = 0.02;
 // The share of the sun that a full mist on both faces of a sheet turns back before it can cross it.
-const float DEW_SHADE = 0.95;
+const float DEW_SHADE = 1.0;
 // Of the sky's light a misted sheet passes more, and the mist spreads it: every blade passes the same even sky, whatever stands behind it.
 const float DEW_SHEER = 1.0;
+// On a dry skin the mist stands as separate beads, each a lens that throws the sky forward through the blade.
+const float DEW_SHEER_DRY = 10.0;
+// What hides the sun from a misted sheet hides less of the sky behind it: the mist gathers the sky from every side.
+const float DEW_BEHIND = 0.8;
 const float DEW_FORWARD = 1.0;
 const float DEW_ROUGH = 0.42;
 const float DEW_WAX = 0.7;
