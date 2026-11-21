@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
-- Last status: 13 · 2026-11-21 05:06 UTC · Phase 2 · round 1
+- Last push: 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
+- Last status: 14 · 2026-11-21 05:31 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 05:31 UTC · status 14 · Phase 2 · round 2 · `status-1.jpg`: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; `status-2.jpg`: Night, frost and bloom-opening keys: approved image (left), blockout frame (right); `status-3.jpg`: Bloom-hero and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:06 UTC · status 13 · Phase 2 · round 1 · `status-1.jpg`: Whole film after the fix pass, 12 frames in order; `status-2.jpg`: The cuts into night, frost and bloom: last frame before (left), first frame after (right)
 - 2026-11-21 04:57 UTC · status 12 · Phase 2 · round 1 · `status-1.jpg`: Night key: approved (left), film (right); `status-2.jpg`: Frost key: approved (left), film (right); `status-3.jpg`: Bloom-opening key: approved (left), film (right); `status-4.jpg`: Bloom-hero key: approved (left), film (right)
 - 2026-11-21 04:22 UTC · status 11 · Phase 2 · round 1 · `status-1.jpg`: The film from 0 to 19 s, twelve frames in order; `status-2.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-3.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 - 2026-11-21 01:56 UTC · status 04 · Phase 0 · `status-1.jpg`: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; `status-2.jpg`: Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; `status-3.jpg`: Spike frame 1080 (36 s, frost world) at the review tier
 - 2026-11-21 01:38 UTC · status 03 · Phase 0 · `status-1.jpg`: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; `status-2.jpg`: Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; `status-3.jpg`: Spike frame at 26 s (night world), 1 sample; `status-4.jpg`: Frame 1515 (50.5 s, bloom) at the review tier
-- 2026-11-21 01:20 UTC · status 02 · Phase 0 · `status-1.jpg`: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact)
 
 ## Clock
 
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 3.35 h |
+| 2 | 3.50 h | 3.54 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.48 h |
+| Whole build | 30.00 h | 4.66 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -402,6 +402,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:09 UTC · Round 2: machine checks green
 - 2026-11-21 05:21 UTC · Round 2: pack made, critic started
 - 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
+- 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
 
 ## Session log
 
@@ -438,4 +439,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Night key: approved (left), film (right); Frost key: approved (left), film (right); Bloom-opening key: approved (left), film (right); Bloom-hero key: approved (left), film (right).
 - Status 13, 2026-11-21 05:06 UTC, Phase 2 · round 1. Round 1 of the blockout is closed: score 7, not passed because of one severe issue. The fix pass took 37 minutes: the bud is seated in the stem, the crowns at night and frost are fuller, the bloom-opening head is lower and closed over its disc, field heads are smaller. One issue stays open for the look lock: the large foliage at the left edge of the two bloom frames. Tests 68 of 68 and all 12 machine checks are green. Next: Round 2, an extra round the clock still allows: new pack of the fixed film, a fresh critic from another model family. Time used: 4.2 h of 30 h.
   Pictures: Whole film after the fix pass, 12 frames in order; The cuts into night, frost and bloom: last frame before (left), first frame after (right).
+- Status 14, 2026-11-21 05:31 UTC, Phase 2 · round 2. Round 2 of the blockout is with its critic, a fresh agent on a different model family from round 1, looking at ten files made from the film after the round 1 fixes. The render budget is being measured on the new scene meanwhile: one sample of a 1920 x 1080 frame takes 0.9 s at dawn and 3.0 s in the bloom, and one finished frame at 48 samples took 141 s. While both run, the plant's pose code is being opened up in a side copy of the repo so the real stem, leaves, bud, disc and petals of Phase 3 can start from the same frames as the stand-in. Next: Read the critic's answer, do the one fix pass the limit allows, close the blockout loop, then build the whole preview film and run the Phase 2 gate. Time used: 4.7 h of 30 h.
+  Pictures: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; Night, frost and bloom-opening keys: approved image (left), blockout frame (right); Bloom-hero and field keys: approved image (left), blockout frame (right).
 
