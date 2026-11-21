@@ -21,7 +21,7 @@ const SHAPE: Record<PartDetail, Shape> = {
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_SHUT = [-1, 1, -1, 1, -1, 1]
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
-const SHUT_ANGLE = 0.88
+const SHUT_ANGLE = 0.8
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
 const SAG = 0.38
@@ -321,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = mix(0.94, 0.76, smooth(0.04, 0.4, u)) * (0.06 + 0.94 * Math.pow(1 - Math.pow(u, 2.4), 0.8))
+      const strap = mix(1.0, 0.72, smooth(0.3, 0.75, u)) * (0.06 + 0.94 * Math.pow(1 - Math.pow(u, 2.4), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
