@@ -25,7 +25,7 @@ export class Monotone {
   private readonly ys: number[]
   private readonly ms: number[]
 
-  constructor(points: readonly (readonly [number, number])[]) {
+  constructor(points: readonly (readonly [number, number])[], held: readonly (readonly [number, number])[] = []) {
     const n = points.length
     if (n < 2) throw new Error('a monotone curve needs two points')
     this.xs = points.map((p) => p[0])
@@ -47,7 +47,18 @@ export class Monotone {
     }
     m[0] = Monotone.end(h[0], h[1] ?? h[0], d[0], d[1] ?? d[0])
     m[n - 1] = Monotone.end(h[n - 2], h[n - 3] ?? h[n - 2], d[n - 2], d[n - 3] ?? d[n - 2])
+    for (const [x, slope] of held) {
+      const i = this.xs.indexOf(x)
+      if (i < 0) throw new Error(`no point at ${x} to hold a slope at`)
+      m[i] = slope
+    }
     this.ms = m
+  }
+
+  slopeAt(x: number): number {
+    const i = this.xs.indexOf(x)
+    if (i < 0) throw new Error(`no point at ${x}`)
+    return this.ms[i]
   }
 
   private static end(h0: number, h1: number, d0: number, d1: number): number {

@@ -104,15 +104,16 @@ const TONES: [number, number, number][] = [
   [0.018, 0.024, 0.02],
 ]
 
+// Far sheets stand in front of dark land and under the bright band, so they read paler than the spray at the plant's foot.
 const VEILS = [
-  { radiusM: 1.6, heightM: 0.5, scaleM: 0.035, share: 0.05 },
-  { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.06 },
-  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.09 },
-  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.08 },
-  { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.08 },
-  { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.1 },
-  { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.12 },
-  { radiusM: 600, heightM: 60, scaleM: 6, share: 0.15 },
+  { radiusM: 1.6, heightM: 0.5, scaleM: 0.035, share: 0.05, light: 1 },
+  { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.06, light: 1 },
+  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.09, light: 1 },
+  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.08, light: 1.3 },
+  { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.2, light: 2.2 },
+  { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.7, light: 3.6 },
+  { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.3, light: 3.6 },
+  { radiusM: 600, heightM: 60, scaleM: 6, share: 0.15, light: 2.6 },
 ]
 
 export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; setTime(time: number): void }
@@ -120,7 +121,7 @@ export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; 
 export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, number, number], mist: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
-  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.0095 }, uFlash: flash }
+  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.004 }, uFlash: flash }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -179,7 +180,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
       name: `rain veil ${i}`,
       vertex,
       fragment: veilFragment,
-      uniforms: { uMist: { value: new THREE.Vector3().fromArray(mist) }, uShare: { value: veil.share }, uLayer: { value: i + 1 }, uScaleM: { value: veil.scaleM }, uFlash: flash },
+      uniforms: { uMist: { value: new THREE.Vector3().fromArray(mist).multiplyScalar(veil.light) }, uShare: { value: veil.share }, uLayer: { value: i + 1 }, uScaleM: { value: veil.scaleM }, uFlash: flash },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
