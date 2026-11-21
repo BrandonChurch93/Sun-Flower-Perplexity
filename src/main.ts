@@ -1,6 +1,7 @@
 import './main.css'
 import { startExport } from './capture/export.ts'
 import { installShowcase } from './capture/showcase.ts'
+import { startAutopilot } from './director/autopilot.ts'
 import { Film } from './director/film.ts'
 import { startLive } from './director/live.ts'
 import { readOptions } from './director/modes.ts'
@@ -10,7 +11,13 @@ const canvas = document.getElementById('film') as HTMLCanvasElement
 const host = document.getElementById('ui') as HTMLElement
 const note = document.getElementById('note') as HTMLElement
 
+document.documentElement.dataset.mode = options.mode
+
 function say(text: string): void {
+  if (options.mode === 'autopilot') {
+    console.error(text)
+    return
+  }
   note.textContent = text
 }
 
@@ -23,6 +30,7 @@ try {
     () => {
       if (options.mode === 'capture') return
       if (options.mode === 'export') startExport(film, options, host)
+      else if (options.mode === 'autopilot') startAutopilot(film, options, host)
       else startLive(film, options, host)
     },
     (error: unknown) => {
