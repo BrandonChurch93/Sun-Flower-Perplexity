@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 11:38 UTC · Second set of merges after round 3: leaf holds for the neighbor, bud collar, leaves pass 6, petals pass 6, darker disc, RAY_FIRST 2.8
+- Last push: 2026-11-21 11:53 UTC · Round 4 starts: the third set of merges after round 3 (bud's star of bracts, disc on the exact spiral, lens pass 7, field pass 5, skin pass 6, finer hairs, petals' colour), judged at e099145
 - Last status: 27 · 2026-11-21 11:34 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 4.66 h |
+| 3 | 9.00 h | 4.97 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 10.71 h |
+| Whole build | 30.00 h | 11.02 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -404,6 +404,14 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · `RAY_FIRST` 3.2 to 2.8 (`b5098d0`, 11:38 UTC). Why: with the petals' sixth pass the rays of the first sector stand as straight creased blades at 45 s, and the fan pointed left and a little down where the approved bloom-opening points up and left. Tested at 2.8, 3.2 and 3.6 in draft stills of frame 1350 beside the approved (`out/work/scratch/rf-grid.jpg`): 2.8 puts the fan between about 8:30 and 11 o'clock as in the approved. The disc's first side and the petals' lag read the same constant, so they follow. At 50.5 s every ray is open, so frame 1515 does not change. 91 tests green.
 - 2026-11-21 · Phase 3 · The disc's florets: `disc_builder` counted 13 to 14 florets along a radius of ours against 22 to 24 in the approved and asked for `plant.discFlorets` 1500 to 4000. Not taken yet, and why: 44 pitches across is what about 1,750 evenly packed florets give, so the approved does not show more florets than our 1,500; ours read coarser because `src/plant/head/disc/` places them with the distance growing as n to the power 0.65 (`PACKING` 1.3) where `kit/03-METHOD.md` asks for the square root of n, and because an open floret's knob is wider than its cell. The agent tests the exact square root rule with no floret wider than its cell for round 5 and reports the count along a radius; the config number changes only if the approved is still finer after that.
 
+- 2026-11-21 · Phase 3 · 11:39 UTC, the merged `main` (`83f0586`) announced to all twelve agents, each with what to judge on it: round 4 renders from `main` at 12:00 UTC, so only small and safe changes reported by 11:52 UTC go in; larger work goes on for round 5 (reports by 12:45 UTC). Answers given with it: `petal_builder` may add its inner ring of short curled straps only inside its triangle budget (otherwise the unopened florets under the lifted rays are made dark by `disc_builder`, who was asked for exactly that from 43 to 48 s); `leaf_builder` is told the hero's leaf 20 stays where growth puts it (the plant itself is never held); `ground_builder`'s `68c72b9` is not merged, because the sharpness ratio (M3) of frame 45 fell from 0.874 to 0.742 at the `review` tier after it merged `main` `ce417e9` with its own ground code unchanged, so the fall came with `main` (candidates: `src/post/`, growth, the plant's surface); it isolates the cause and reports by 12:15 UTC.
+- 2026-11-21 · Phase 3 · 11:40 UTC, measures of the merged `main` (`83f0586`, engine `a12219f0ea17aa41`) at the `review` tier: M1 passes on both judged frames with the shared focus, M2 passes, M3 is 0.787 at frame 1350 (fails, 0.8 needed; it was 0.530 before the focus was shared and 0.790 one merge earlier) and 0.881 at frame 1515 (passes). The gate reads M3 at `final`, where round 3 had 0.659 and 0.881. Seen by the Builder in the review stills beside the approved pair: at 45 s the fan of first rays now stands up and to the left as approved, but the bud still shows less of its face (bracts hug its right side), the cap's folded rays are thin strings with dark gaps, the neighbor's upper leaf is a black cut out with a hard lower edge where the approved one is lit green with light through it, the hairs read as bright separate dots where the approved has a fine dense fringe, and the field is browner and darker with less green; at 50.5 s the head is close, with rays more orange and broader, a darker and coarser disc, and the same neighbor leaf and field differences. Draft stills of frames 45, 420, 780, 1080 and 1755 on `5b80c89`: nothing broken in another unit.
+
+- 2026-11-21 · Phase 3 · 11:43 to 11:52 UTC, third set of merges of the fix pass, the last before round 4; 91 tests green after them (engine `255dacf4303c4105`): the golden sky whiter close to the sun `09e7099` (`0aa8028`), the stem's hair count back to 80000 `cfa80b0` (`c18ceb4`), the lens's seventh pass `76975d1` (`777974c`: the bloom's tail ends inside a fifth of the width, the near white round the sun loses hue and tops out lower), the skin's sixth pass taken as one commit `06eb752` (content of `agent/surface` `28c777b`), the neighbor's holds `567b088` (`2056d04`), the field's fifth pass `7f57698` (`9fcbcb2`), the disc on the exact square root spiral `857c61a` (`e8329e3`), the bud's spread `3c16147` (`861ae8f`: every bract out by 44.5 s on every side, ahead of the rays), the hairs `98067f0` (`02bbe22`), the petals' colour `03fe7a5` (`e099145`).
+- 2026-11-21 · Phase 3 · 11:45 UTC, decision: `agent/surface` is not merged again. Its commit `a51220b` (a merge of `main` made by the agent) has no `Co-authored-by` trailer, and no commit without it may enter `main`. The Builder undid its own merge of that branch in the worktree before anything was pushed, took the same change as one commit (`06eb752`) and told `skin_builder` to go on from a fresh branch `agent/surface-b`.
+- 2026-11-21 · Phase 3 · 11:48 UTC, decision: the hairs' brighter pass `eac558e` (gain against the sun 1.8 to 4.2) was merged, rendered with the stem's doubled count and taken out again by its correction `98067f0` (gain back to 1.8, strands twice as many and half as bright). With `eac558e` the measure at `review` read M3 0.871 at frame 1350 and 0.883 at 1515, both passing, but the stills showed white beaded rails along the stem, the leaf margins and the bracts, which the approved pair does not have and which round 3's R3 named as fireflies; `hair_builder` warned of the same on its own. A sharpness reading bought with specks is not kept. With `98067f0`, the bud's spread and the new disc: M1 and M2 pass, M3 0.801 at frame 1350 and 0.888 at 1515 at `review` (`out/work/logs/r4-measure-merged6.log`); the gate reads them at `final` in round 4.
+- 2026-11-21 · Phase 3 · 11:47 to 11:52 UTC, decisions passed to agents for round 5 (reports by 12:45 UTC): `disc_builder` keeps 1,500 florets on the exact rule (its measure: the outer peg band now matches the approved at about 39 pitches across, the inner band is 10 to 20 percent coarse; the count is a fact of the config); `lens_builder` may make the blur circle signed as one tested patch that touches `src/core/shading.ts` and its readers, with M1 unchanged; `golden_builder` tests `skin_builder`'s proposal of `sky.ambient` 3 to 2.4 against the field's darker p50 and keeps 3 if the two pull apart; `hair_builder` and `stem_builder` are asked for two populations of hair (a dense short down that makes the thin bright rim line of the approved, and sparse long fine strands), and the request to `skin_builder` to dim the stem's sun side stripe is withdrawn where it fights that rim; `harness_builder` measures why the neighbor's upper leaf reads as a black cut out and turns it so the sun comes through the blade; `petal_builder` built broad overlapping cap straps that read closer to the approved but put the cap 8 mm nearer the lens, where M1 fails at frame 1350 (1.62 px); it is held for round 5.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -433,6 +441,7 @@ None.
 
 Finished in this task:
 
+- Check of the merged `main` (`83f0586`) · `npm run measure -- --unit bloom --tier review` · started 11:38 UTC, ended 11:40 UTC · log `out/work/logs/r4-measure-merged4.log` · M1 pass, M2 pass, M3 0.787 at frame 1350 (fail) and 0.881 at frame 1515 (pass). Before it, at 11:33 UTC, draft preview stills of frames 45, 420, 780, 1080 and 1755 on `5b80c89` (log `out/work/logs/r4-others-merged3.log`): nothing broken in another unit.
 - Check of the merged `main` (`09ef64a`) · build, `npx vitest run`, review 16x9 stills of 1350 and 1515, draft preview stills of 45, 420, 780, 1080, 1755 · started 10:24 UTC, ended 10:26 UTC · logs `out/work/logs/r3b-build.log`, `r3b-test.log`, `r3b-stills.log`, `r3b-others.log` · build clean (engine `3b2b0328238032c4`), 86 of 86 tests, review stills 47.1 s and 41.3 s (the first includes the page load), nothing broken in another unit's frame.
 - Round 3 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom`, then `npm run pack -- --phase 3 --round 3 --unit bloom` · started 2026-11-21 09:54:55 UTC, ended 10:23 UTC (28 minutes, 20 to 25 expected; two judged stills at `final` took 223 s each) · logs `out/work/logs/r3-gate.log`, `r3-measure.log`, `r3-pack.log` · results in the Round 3 entry.
 
@@ -466,6 +475,8 @@ Ten agents of the look lock, all started 2026-11-21 07:16 UTC as sandbox agents 
 | `modes_builder` (again) | nothing; it reports a cause and a patch | `agent/probe-determinism` | Why frame 1515 rendered twice is not pixel identical on `main` | reported 09:36 UTC with the cause and `873ceaf`, merged at `5f9baa9` (09:37); idle |
 
 State at 11:10 UTC, after round 3 (12 running, the limit): `bud_builder`, `petal_builder`, `skin_builder`, `stem_builder` (pass 4 merged at `8c4ab88`, checks the node under the new growth next), `leaf_builder`, `field_builder`, `golden_builder`, `hair_builder` (pass 4 merged at `a4e1dbd`), `lens_builder` (pass 5 merged at `c86bb30`), `disc_builder` (round 4 pass reported 11:08 UTC at `9b6c550`, to merge), `harness_builder` (the companion's place, lean and leaf turn, on `agent/companion`), `ground_builder` (step 2 merged at `653c869`; next the cost and the rain frame). All report by 11:35 UTC. `modes_builder` reported the determinism cause at about 10:50 UTC (`50cd31b`, merged at `b3fcf5d`) and is idle. Critics `reviewer_03` to `reviewer_05` and jurors `reviewer_06` to `reviewer_25` are idle between rounds.
+
+State at 11:42 UTC, in the fix pass after round 3 (12 running, the limit). On `main` `83f0586`: disc `9b6c550`, `ef3c987`, `adc8fac`; stem final `20b5a3c`; golden `b0c0c3b`; skin pass 5 `d2e539f`; the shared focus `24522da`; companion fit `58749c1` and leaf holds `391f30d`; leaves passes 5 and 6 (`6aa7730`, `ff0e218`); lens pass 6 `6fc43d0`; bud `98918d8` and `b8674e0`; petals passes 5 and 6 (`f7b51b7`, `cf9f240`); field pass 4 `d7924fd`; hairs pass 5 `7fb8ca6`. Working now: `bud_builder` (bracts reflexed away from the lifted fan, the covered right side of the bud), `petal_builder` (broader overlapping cap straps, colour at 50.5 s), `disc_builder` (the kit's square root packing as a test for round 5, dark unopened florets from 43 to 48 s; report by 12:40), `leaf_builder` (sharp creases for round 5; reported 11:42 UTC that its branch equals `main` and that the leaf fringe now reads as separate gold dashes), `hair_builder` (light through the strands, strand width on the shared focus), `skin_builder` (the pale see through ray, a tighter forward lobe, the stem's pale stripe), `lens_builder` (the field toward the sun, a smaller whiter core, softer far heads), `field_builder` (leaf masses, the left group of heads, greens, the field key), `golden_builder` (a narrower whiter band at the sun), `stem_builder` (hair count on the shared focus), `harness_builder` (`agent/companion`: blur of the three held leaves, the lower leaf's brightness, frames 1081 to 1319), `ground_builder` (`agent/ground`, not merged, isolating the fall at frame 45; report by 12:15). Idle: `modes_builder`, critics `reviewer_03` to `reviewer_05`, jurors `reviewer_06` to `reviewer_25`.
 
 Finished in this task:
 
@@ -510,9 +521,22 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R2 jury answers: jurors `reviewer_06` to `reviewer_25`, sent in four waves from 10:30 UTC because at most 12 agents run at once; the last answered at 10:35 UTC, none had to be replaced. Each image had one juror from each of five families (GPT, Gemini, Claude, GLM, Grok). Controls: 6 of 10 votes were (a). Judged frames: 7 of 10 (frame 1350 three of five, frame 1515 four of five). R2 passes (0.7 against 0.6 minus 0.2). `scorecards/round-003/R2-JURORS.md` word for word, tally in `R2.json`, key copied in as `KEY.json` after the last answer
 - [x] R3 answer: `reviewer_04`, Gemini family, sent 10:25 UTC, answered 10:33 UTC. Score 4, not a pass: 1 severe, 6 major, 1 minor. `scorecards/round-003/R3.json`
 - [x] R4 answer: `reviewer_05`, Claude family, sent 10:25 UTC, answered 10:28 UTC. Score 4, not a pass: 1 severe, 3 major, 2 minor. `scorecards/round-003/R4.json`
-- [ ] Fixes (the fix pass ends by 12:10 UTC at the latest: 90 minutes after a floor round)
+- [x] Fixes: one fix pass, 10:40 to 11:53 UTC (73 min of the 90 allowed), with twelve agents. Three sets of merges, listed under "Decisions": the focus shared between the head and the stem so M1 holds with the head sharp, a growth change (the head lifted at 45 s, rays grown folded inside the bud, the first rays lifting higher round the rim), the determinism fix (G3), the bud's star of bracts ahead of the rays, straight creased lifting rays, the disc on the exact spiral, finer gold hairs, a smaller glass bloom, a denser crop, the neighbor's three held leaves at the left edge. Not fixed in the pass and carried into round 4 as known: the cap's folded rays read as separate straps, the bracts have no modelling, the neighbor's upper leaf is a black cut out, the white round the sun is larger than approved, the crop is browner than approved, the hairs are stubby
 - [x] Summary, status, push: `scorecards/round-003/SUMMARY.md`, Status 25
 - Result: not a pass. R1 5, R3 4, R4 4, R2 passes, G3 red, M3 fails at 1350. 8 severe and 19 major issues open
+
+### Round 4 · Phase 3 · `bloom` · extra round
+
+- Started 2026-11-21 11:54 UTC. Judges commit `e099145`. Unit `bloom`, the second round of its loop (the look lock allows 4: rounds 3 to 6); judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Extra round: the clock printed `extra rounds: yes` at 11:52 UTC (Phase 3 4.97 h of its 9 h box, whole build 11.02 h of 30 h). Critics, each a fresh sandbox agent that gets attachments only: R1 match, R3 surface and detail, R4 motion, and the R2 jury (5 jurors for each of the 2 judged images; the controls' share of round 3, 6 of 10, is reused as the kit allows). Families rotate against round 3: R1 Gemini, R3 Claude, R4 GPT; each image's five jurors come from five families.
+- [ ] Machine checks (`npm run gate -- --phase 3 --machine`)
+- [ ] Measures (`npm run measure -- --unit bloom`)
+- [ ] Pack (`npm run pack -- --phase 3 --round 4 --unit bloom`)
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
 
 ## Final scores
 
@@ -581,6 +605,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 11:09 UTC · Status 26: growth after round 3, stem pass 4 and ground step 2 merged, decisions logged
 - 2026-11-21 11:35 UTC · Status 27: shared focus, twelve passes of the fix round merged, the neighbor's leaves held
 - 2026-11-21 11:38 UTC · Second set of merges after round 3: leaf holds for the neighbor, bud collar, leaves pass 6, petals pass 6, darker disc, RAY_FIRST 2.8
+- 2026-11-21 11:53 UTC · Round 4 starts: the third set of merges after round 3 (bud's star of bracts, disc on the exact spiral, lens pass 7, field pass 5, skin pass 6, finer hairs, petals' colour), judged at e099145
 
 ## Session log
 
