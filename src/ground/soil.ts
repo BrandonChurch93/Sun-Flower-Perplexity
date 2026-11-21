@@ -17,6 +17,7 @@ uniform sampler2D tData;
 uniform vec3 uTiles;
 uniform vec4 uNear;
 uniform vec4 uRelief;
+uniform vec2 uLane;
 const mat2 TURN_C = mat2(0.891, 0.454, -0.454, 0.891);
 const mat2 TURN_M = mat2(0.208, 0.978, -0.978, 0.208);
 float nearFade(vec2 p) {
@@ -24,6 +25,11 @@ float nearFade(vec2 p) {
 }
 float soilLod(vec2 p) {
   return max(0.0, log2(length(p) * uNear.z / uNear.w));
+}
+float lane(vec2 p) {
+  float along = dot(p, uLane);
+  float across = abs(p.x * uLane.y - p.y * uLane.x);
+  return (1.0 - smoothstep(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * smoothstep(0.0, 0.03, along);
 }
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;
@@ -33,7 +39,7 @@ float soilHeight(vec2 p, float lod) {
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
   float foot = 1.0 - smoothstep(0.004, 0.02, length(p));
-  return mix((fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p), 0.002, foot);
+  return mix((fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.55 * lane(p)), 0.002, foot);
 }
 `
 
