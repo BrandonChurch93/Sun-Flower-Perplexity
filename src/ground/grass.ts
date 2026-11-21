@@ -4,13 +4,13 @@ import { right, toward } from '../field/layout.ts'
 import { grassMask, grassTimes, patchy } from './cover.ts'
 import { lane } from './crumbs.ts'
 import { cropLight } from './light.ts'
-import { soilHeight } from './soil.ts'
+import { groundStates, soilHeight } from './soil.ts'
 
 const TUFTS = 14000
 const BLADES = 7
 const HALF_WIDTH_M = 6.5
-const FRONT_M = 2.0
-const BACK_M = -1.3
+const FRONT_M = 1.5
+const BACK_M = -1.8
 const PIONEERS = 0.045
 const WEEDS = 0.14
 
@@ -101,7 +101,7 @@ export function tufts(): THREE.InstancedMesh[] {
     const r = Math.hypot(x, z)
     if (chance > grassMask(x, z) * (0.5 + 0.5 * clump) || r < 0.035) continue
     if (early && (inLane > 0.02 || r < 0.06)) continue
-    const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : 1)
+    const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : seed > 0.93 ? 1.8 : 1)
     const born = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
     turn.setFromAxisAngle(up, spin)
     size.set(height * wide, height, height * wide)
@@ -169,6 +169,7 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
 uniform vec2 uToward;
+${groundStates}
 ${cropLight}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -186,8 +187,8 @@ void main() {
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward)) * deep;
   float ndl = dot(n, uSunDir);
-  vec3 through = albedo * vec3(1.5, 1.7, 0.5) * 0.8 * max(-ndl, 0.0);
-  vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * skyAmbient(n) * deep;
+  vec3 through = albedo * vec3(2.6, 1.25, 0.45) * 0.7 * max(-ndl, 0.0);
+  vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
   float bead = step(0.9, hash31(floor(vWorld * 700.0))) * uDew * (1.0 - smoothstep(0.25, 0.9, vDepth));
