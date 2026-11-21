@@ -90,6 +90,8 @@ void main() {
     float fine = valueNoise(vec2(x * 11.0, u * 60.0) + seed * 50.0);
     float vein = abs(fract(x * 3.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
     float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
+    // Shut and young, the veins have not yet raised their pale lines.
+    line *= 1.0 - 0.7 * uBudShut;
     float keel = smoothstep(0.09, 0.0, ax);
     float blotch = valueNoise(vec2(x * 2.3 + seed * 37.0, u * 7.0 + seed * 53.0));
     float toTip = smoothstep(0.3, 1.0, u);
@@ -105,14 +107,16 @@ void main() {
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
-    albedo *= mix(vec3(1.0), mix(mix(vec3(0.8, 1.45, 0.6), vec3(2.0, 2.7, 0.9), smoothstep(0.5, 1.0, rank)), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
+    albedo *= mix(vec3(1.0), mix(mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
     float margin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
-    float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
+    float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u)) * (1.0 - 0.7 * uBudShut);
     float thin = mix(margin, blade, lit);
+    // The inner bracts of a shut bud are young and thin through their whole blade.
+    thin = mix(thin, 0.9, uBudShut * smoothstep(0.5, 1.0, rank) * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.65 * max(max(keel, line), 0.6 * rib);
     t.albedo = albedo;
     t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.66, 0.78, 0.1), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain);

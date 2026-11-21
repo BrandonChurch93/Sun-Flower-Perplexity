@@ -111,7 +111,7 @@ const SHUT_CURL = [0.9, 0, 0]
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
 const SHUT_LONG = [0.5, 1.02, 0.95]
-const SHUT_TIP = [0.35, 0.7, 0.7]
+const SHUT_TIP = [0.35, 0.7, 0.5]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 0.6
 const CROWN_LONG = 0.12
@@ -309,7 +309,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = lerp(0.0015, 0.0025, u * u) * (0.75 + 0.5 * rnd(2123 + b, i))
+        hairLong[n] = lerp(0.0015, 0.0025, u * u) * (0.75 + 0.5 * rnd(2123 + b, i)) * (bracts[b].series === 2 ? 0.4 : 1)
       }
     }
   }
