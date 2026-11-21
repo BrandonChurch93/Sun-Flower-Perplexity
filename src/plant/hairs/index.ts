@@ -65,7 +65,7 @@ const vec3 RIME = vec3(0.92, 0.96, 1.0);
 const float RIME_SUN = 0.12;
 const float RIME_SKY = 1.5;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
-const float RIME_FACE = 0.02;
+const float RIME_FACE = 0.0;
 const float RIME_VELVET = 0.1;
 // A needle on the outline is seen from its shaded side, against the bright air.
 const float RIME_SHADE = 0.4;
@@ -223,7 +223,7 @@ Strand strandAt(float t) {
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
-  float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
+  float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
   vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(1.0, RIME_SHADE, open)), uPlantFrost) * veil;
   // Of the needles on a face turned to the eye few show, each whole: seen end on a needle is a point, and a coat of points is a haze.
   float shows = smoothstep(0.0, 0.08, mix(RIME_FACE, 1.0, open) * behind - 0.92 * fract(hairOwn * 139.71 + 0.57));
