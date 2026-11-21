@@ -284,7 +284,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float fresnel = TISSUE_F0 + (1.0 - TISSUE_F0) * f5;
   float d = ndh * ndh * (a2 - 1.0) + 1.0;
   float vis = 0.5 / max(lit * (ndv * (1.0 - a) + a) + ndv * (lit * (1.0 - a) + a), 1e-4);
-  float gloss = min(wax * fresnel * (a2 / (d * d)) * vis * lit, 2.0);
+  // The mist of beads that breaks the mirror of the sky breaks the mirror of the sun.
+  float gloss = min(wax * fresnel * (a2 / (d * d)) * vis * lit, 2.0) * (1.0 - DEW_BREAK * mist);
 
   float g5 = grazing * grazing;
   g5 = g5 * g5 * grazing;
@@ -351,8 +352,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
     vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
     color += direct * own * (TISSUE_CLEAR * clear * line * line * side * (0.2 + 0.8 * against * against));
   }
-  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
-  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
+  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin. The beads stand on the down and send the light on, not back: seen face on they are the skin's own shade, along the outline they are a bright rim.
+  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against) * (0.03 + 0.97 * rim)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
+  // On the face of a sheet that sees the light the beads lie open to it: a cold sheen in the light's own color, never on a face turned from it.
+  color += direct * (DEW_FACE * sheet * smoothstep(0.0, 0.3, min(ndl, fdl)) * (0.35 + 1.65 * against * against) * (1.0 - rim) * mist * under);
 
   return color;
 #endif
