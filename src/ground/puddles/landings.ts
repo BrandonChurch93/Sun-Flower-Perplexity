@@ -22,8 +22,8 @@ export function landings(cx: number, cz: number, half: number, y: number, from: 
   return n
 }
 
-// The same for the fine rain, kept only where `keep` says so, written after the first `start` drops of `out`. Returns the new count.
-export function fineLandings(x0: number, z0: number, x1: number, z1: number, keep: (x: number, z: number) => boolean, y: number, from: number, to: number, out: Float32Array, start: number): number {
+// The same for the fine rain, kept only where `keep` says so and only drops of at least the radius `least`, written after the first `start` drops of `out`. Returns the new count.
+export function fineLandings(x0: number, z0: number, x1: number, z1: number, keep: (x: number, z: number) => boolean, y: number, from: number, to: number, out: Float32Array, start: number, least = 0): number {
   const [i0, j0] = cellOf(x0, z0)
   const [i1, j1] = cellOf(x1, z1)
   const max = out.length / LANDING_FLOATS
@@ -35,7 +35,7 @@ export function fineLandings(x0: number, z0: number, x1: number, z1: number, kee
         const last = first + Math.ceil((to - from + 0.02) / seriesPeriod(i, j, s))
         for (let k = first; k <= last; k++) {
           const drop = dropOf(i, j, s, k)
-          if (!drop) continue
+          if (!drop || drop.radius < least) continue
           const hit = dropCrossing(drop, y)
           if (hit.time < from || hit.time >= to || n >= max || !keep(hit.x, hit.z)) continue
           out[n * 4] = hit.x

@@ -14,6 +14,8 @@ import { waterFragment, waterVertex } from './water.ts'
 const MAX_DROPS = 2048
 const MAX_RINGS = 6144
 const FINE_REACH_M = 0.11
+// The largest of the fine drops raise a small crown where they land in the water.
+const FINE_CROWN_M = 0.00025
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
 
@@ -74,7 +76,8 @@ export class Puddles {
     const count = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M), y, time - FINE_RING_LIFE_S, timeClose, this.drops, heavy)
     this.ripples.set(count, time, timeClose, cx, cz, rippleBox.halfM)
     const geometry = this.crowns.geometry as THREE.InstancedBufferGeometry
-    geometry.instanceCount = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
+    const struck = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
+    geometry.instanceCount = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M), y, time - SPLASH_LIFE_S, timeClose, this.splashes, struck, FINE_CROWN_M)
     this.splashDrop.needsUpdate = true
     this.span.value.set(time, timeClose)
     this.stands.value = (timeClose - time) / Math.max(1, samples)
