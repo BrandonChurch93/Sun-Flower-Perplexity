@@ -7,6 +7,7 @@ import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInput
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
+import { leavesApart, placeTurned } from './turn.ts'
 import { PLACE, budTurn, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
@@ -17,7 +18,8 @@ const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const UNDER_FROM_M = 5
 const UNDER_BAND_M = 9
 // The dark layers, as shares of the height of the tops.
-const UNDER_LEVELS = [0.5, 0.76]
+const UNDER_LEVELS = [0.5, 0.84]
+const LEAF_SKY = 1.0
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -127,7 +129,10 @@ void main() {
     float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
-    color = vMid * mix(0.3, 0.95, inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)});
+    float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
+    color = vMid * mix(0.3, 0.95, lift);
+    // Seen from over the tops the upper leaves show the faces they turn to the sky.
+    color += vec3(0.05, 0.09, 0.035) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
     // The low sun comes through the upper leaves of a clump, green.
     color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
@@ -188,6 +193,7 @@ export class FarField {
   readonly meshes: THREE.Mesh[]
   private readonly plants: Plant[] = []
   private readonly spots: THREE.InstancedInterleavedBuffer[] = []
+  private readonly stills: THREE.InstancedInterleavedBuffer[] = []
   private readonly atlas: THREE.WebGLRenderTarget
   private readonly scene = new THREE.Scene()
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, 0, 0.1, 200)
@@ -228,6 +234,7 @@ export class FarField {
       const plant = new Plant({ detail: 'far', variant, places: spot })
       plant.show(pictureTurns)
       this.spots.push(spot)
+      this.stills.push(leavesApart(plant, pictureTurns))
       this.plants.push(plant)
       this.scene.add(...plant.meshes)
     })
@@ -309,11 +316,14 @@ export class FarField {
     const tile = this.uniforms.uTile.value
     this.spots.forEach((spot, i) => {
       const a = spot.array as Float32Array
+      const still = this.stills[i]
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
-        a.set([rx * across, rz * across, pictureTurn(j) + budTurn(this.time, 1 + i * pictureTurns + j), 1, 0, 0, 0.5, 1 + i * pictureTurns + j], j * PLACE)
+        const id = 1 + i * pictureTurns + j
+        placeTurned([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(this.time, id))
       }
       spot.needsUpdate = true
+      still.needsUpdate = true
     })
     const cam = this.camera
     const half = (pictureCount * tile.x) / 2
