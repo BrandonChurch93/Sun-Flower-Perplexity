@@ -136,8 +136,8 @@ const SPREAD_OPEN = 0.1
 const SPREAD_UP = 0.5
 const SPREAD_SLIM = 0.2
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
-const YOUNG_OUT = [0.75, 0.5, 0.3]
-const YOUNG_WIDE = [0.7, 0.7, 0.3]
+const YOUNG_OUT = [0.4, 0.3, 0.2]
+const YOUNG_WIDE = [1.3, 1.1, 0.3]
 const YOUNG_LONG = [2.6, 2.0, 0]
 const YOUNG_SHORT = [0, 0, 0.2]
 // A young bract wears its hairs long for its size, as a young leaf does.
