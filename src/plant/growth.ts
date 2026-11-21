@@ -64,12 +64,19 @@ export function heightAt(time: number): number {
   return heightCurve.at(time)
 }
 
+// A sprout is 2.4 mm through and thickens fast once its leaves work. From 40.3 s, when the youngest neighbor in the bloom is that old, the girth is the old curve to the last bit.
 export function stemBaseRadius(time: number): number {
-  return 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, heightAt(time)), 0.8)
+  const h = heightAt(time)
+  const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
+  const settled = smoothstep(30, 40.3, time)
+  if (settled >= 1) return full
+  const lean = 1 - 0.14 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
+  return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled) * lean
 }
 
 export function stemRadius(time: number, u: number): number {
-  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time))
+  // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(14, 36, time) * (1 - smoothstep(36.5, 40.3, time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
 }
 
@@ -89,7 +96,7 @@ export function paleness(time: number): number {
 // The bud body grows into the disc.
 const bodyCurve = new Monotone([
   [bud0, 0],
-  [inStage(bud0, bud1, 0.053), 0.015],
+  [inStage(bud0, bud1, 0.053), 0.009],
   [inStage(bud0, bud1, 0.263), 0.02],
   [inStage(bud0, bud1, 0.579), 0.037],
   [inStage(bud0, bud1, 0.79), 0.054],
@@ -100,12 +107,14 @@ const bodyCurve = new Monotone([
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
-// A neighbor carries a smaller head than the plant.
+// A neighbor carries a smaller head than the plant. Its bud swells like the plant's until it has the size its own head starts the bloom's unit with, and waits there.
 const NEIGHBOR_HEAD = 0.7
 const headScale = (): number => (variant === 0 ? 1 : NEIGHBOR_HEAD)
+const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(config.segments.find((s) => s.id === 'bloom')!.start)
 
 export function bodyRadius(time: number): number {
-  return bodyCurve.at(time) * headScale()
+  const body = bodyCurve.at(time)
+  return variant === 0 ? body : Math.max(NEIGHBOR_HEAD * body, Math.min(body, NEIGHBOR_HELD))
 }
 
 export function headOpen(time: number): number {
@@ -198,21 +207,21 @@ export function rayLength(k: number, time: number): number {
   return rayFull * headScale() * grown * lerp(RAY_SHUT, 1, rayOpen(k, time)) * (0.92 + 0.16 * rnd(40, k))
 }
 
-// Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together, then the front travels round the head
-// both ways. Past `RAY_NEAR` each ray keeps its own start and its own pace, so the far side lifts ray by ray and never as one block.
+// Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together and the front travels on to `RAY_NEAR`.
+// Past `RAY_NEAR` no front runs: each ray has its own start, well apart from its neighbors', and its own pace.
+// Whatever a ray had done by `RAY_HELD` it keeps.
 const RAY_SECONDS = 3
 const RAY_NEAR = 95 * RAD
+const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
+const RAY_FLAT = config.keys.find((key) => key.id === 'field')!.time - 0.2
+const RAY_CUP = 32
+const GOLDEN = (Math.sqrt(5) - 1) / 2
 const frontCurve = new Monotone([
   [0, bloom0],
   [45 * RAD, bloom0],
   [RAY_NEAR, bloom0 + 2.4],
   [140 * RAD, bloom0 + 4],
   [Math.PI, bloom1 - RAY_SECONDS - 0.3],
-])
-const farCurve = new Monotone([
-  [RAY_NEAR, bloom0 + 2.4],
-  [140 * RAD, bloom0 + 2.9],
-  [Math.PI, bloom0 + 3.2],
 ])
 
 function raySpan(k: number): [number, number, number] {
@@ -222,9 +231,10 @@ function raySpan(k: number): [number, number, number] {
     return [start, start + RAY_SECONDS, 0]
   }
   const far = (away - RAY_NEAR) / (Math.PI - RAY_NEAR)
-  const start = farCurve.at(away) + lerp(0.3, 0.8, far) * rnd(41, k)
-  const seconds = lerp(RAY_SECONDS, 4.4, far) * (1 + 0.15 * (rnd(43, k) - 0.5) * smoothstep(0, 0.25, far))
-  return [start, Math.min(start + seconds, bloom1), smoothstep(0, 0.3, far)]
+  const turn = (k * GOLDEN + rnd(46)) % 1
+  const start = RAY_HELD + 0.004 + (0.3 * far + 0.1 * rnd(41, k)) * smoothstep(0, 0.3, turn) + turn
+  const seconds = lerp(1.8, lerp(RAY_SECONDS, 3.8, far), smoothstep(0, 0.5, turn)) * (0.9 + 0.2 * rnd(43, k))
+  return [start, Math.min(start + seconds, bloom1), 1]
 }
 
 const rayRise = (span: [number, number, number], time: number): number => lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
@@ -234,10 +244,6 @@ export function rayOpen(k: number, time: number): number {
 }
 
 // A ray lies folded in over the face until it opens. It arrives cupped forward and flattens over the seconds that follow.
-// Whatever a ray had done by `RAY_HELD` it keeps.
-const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
-const RAY_CUP = 32
-
 export function rayAngle(k: number, time: number): number {
   const span = raySpan(k)
   const open = rayRise(span, time)
@@ -246,7 +252,7 @@ export function rayAngle(k: number, time: number): number {
   if (open <= held) return lift * RAD
   const cup = Math.min(RAY_CUP, 76 * (1 - held)) * (0.85 + 0.3 * rnd(44, k))
   const from = lerp(span[0], span[1], 0.69)
-  const flat = smootherstep(from, from + lerp(4.5, 8, rnd(45, k)), time)
+  const flat = smootherstep(from, Math.min(from + lerp(4.5, 8, rnd(45, k)) + 3.5 * span[2], RAY_FLAT), time)
   return (lift - cup * smoothstep(held, 1, open) * (1 - flat)) * RAD
 }
 
@@ -283,16 +289,25 @@ export function huskDrop(time: number): number {
   return k * k
 }
 
-export const huskLengthM = 0.011
+export const huskLengthM = 0.0143
 
 // The husk lies in the crumbs until the rain has beaten the soil over it.
 export function huskSize(time: number): number {
   return 1 - smoothstep(leaves0 + 3, leaves0 + 10, time)
 }
-export const huskRest: Vec3 = { x: -0.0165, y: 0.0028, z: 0.006 }
+export const huskRest: Vec3 = { x: -0.0185, y: 0.0028, z: 0.022 }
+
+// When a leaf leaves the tip for good and grows at its own pace.
+function leafStart(i: number): number {
+  return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
+}
+
+// The first pair shows early, small and upright between the seed leaves, and waits there for the rain.
+const PAIR_EARLY_S = 2.8
+const PAIR_PACE = 0.28
 
 export function leafBirth(i: number): number {
-  return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
+  return i < 2 ? leafStart(i) - PAIR_EARLY_S : leafStart(i)
 }
 
 // Where a plant's leaf spiral starts is its own, from its seed. The director may turn one neighbor by hand, as a gardener turns a pot.
@@ -327,7 +342,10 @@ export function leafAzimuth(i: number, time?: number): number {
 }
 
 export function leafAge(i: number, time: number): number {
-  return time - leafBirth(i)
+  const start = leafStart(i)
+  if (i >= 2 || time >= 20) return time - start
+  const head = PAIR_PACE * PAIR_EARLY_S
+  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, 20, time))
 }
 
 export function leafStemFraction(i: number, time: number): number {
@@ -336,8 +354,19 @@ export function leafStemFraction(i: number, time: number): number {
   if (age <= 0 || h <= 0) return 0.97
   const rank = i / (leafCount - 1)
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
-  const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
-  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank) * settled) / h), smoothstep(1.5, 7, age))
+  const settled = heightAt(leafStart(i) + seconds * (1 - Math.exp(-age / seconds)))
+  const grown = lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
+  const late = smoothstep(20, 40, time)
+  if (late >= 1) return grown
+  // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
+  // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
+  const quick = Math.min(seconds, lerp(1.6, 8, smoothstep(16, 21, leafStart(i))))
+  // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
+  const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
+  const tip = 0.99 * heightAt(start)
+  const rest = Math.max(tip, (0.9 + 0.075 * rank * rank) * heightAt(start + quick))
+  const young = Math.min(0.992 - 0.004 * Math.min(age, 6), lerp(tip, rest, 1 - Math.exp(-Math.max(0, time - start) / quick)) / h)
+  return lerp(young, grown, late)
 }
 
 export function leafLength(i: number, time: number): number {
@@ -345,7 +374,11 @@ export function leafLength(i: number, time: number): number {
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
   const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
-  const length = full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
+  const slow = lerp(7, 3.6, smoothstep(0.45, 0.8, rank))
+  const late = smoothstep(20, 40, time)
+  const share = (seconds: number): number => 1 - Math.exp(-Math.pow(age / seconds, 1.1))
+  // The first leaves of the young plant fill out fast: in the rain the largest is a third of the plant's height.
+  const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))
   const hold = heldLeaf(i)
   return hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
 }

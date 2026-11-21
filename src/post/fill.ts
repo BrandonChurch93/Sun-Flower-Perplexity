@@ -16,6 +16,7 @@ uniform sampler2D tFrame;
 uniform sampler2D tNear;
 uniform float uRadiusScale;
 uniform float uSpecks;
+uniform float uSkyHold;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -44,7 +45,9 @@ void main() {
   float own = max(rgb.r, max(rgb.g, rgb.b));
   // With specks in the air a lone bright pixel in a blurred area is one copy of a light, and the fill draws its disc from it.
   rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, uSpecks * smoothstep(1.5, 3.0, c.a));
-  outColor = vec4(rgb, min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
+  float reach = min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)});
+  // A held sky pixel carries its reach with the sign turned: the fill reads that as a place that gathers but is never gathered. Only pure sky is held: one lens sample of a far hill in the pixel and it is the first step of that hill's edge, which has to be smoothed.
+  outColor = vec4(rgb, uSkyHold > 0.5 && uFar > 0.0 && abs(c.a / uFar - 1.0) < 0.0002 ? -reach : reach);
 }
 `
 
@@ -101,12 +104,14 @@ uniform float uSpread;
 uniform float uEdge;
 uniform float uSeed;
 layout(location = 0) out vec4 outColor;
-#define TAP(o, len, gain) { vec4 s = texelFetch(tFrame, clamp(p + ivec2(round(turn * o)), ivec2(0), top), 0); float w = saturate(s.a * uSpread - len * radius + 1.0) * gain; sum += s.rgb * w; total += w; }
+#define TAP(o, len, gain) { vec4 s = texelFetch(tFrame, clamp(p + ivec2(round(turn * o)), ivec2(0), top), 0); float w = saturate(abs(s.a) * uSpread - len * radius + 1.0) * gain; sum += (s.a < 0.0 ? (held ? c.rgb : min(s.rgb, 2.0 * c.rgb + 0.004)) : s.rgb) * w; total += w; }
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 top = ivec2(uSize) - 1;
   vec4 c = texelFetch(tFrame, p, 0);
-  float radius = c.a * uSpread;
+  float radius = abs(c.a) * uSpread;
+  // A held sky pixel keeps its own color for the sky's share, and its neighbors take the sky from it without its points of light.
+  bool held = c.a < 0.0;
   if (radius < 0.6) { outColor = c; return; }
   mat2 turn = mat2(radius, 0.0, 0.0, radius);
   if (radius > 12.0) {

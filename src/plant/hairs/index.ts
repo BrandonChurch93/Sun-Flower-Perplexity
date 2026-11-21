@@ -22,6 +22,14 @@ const CROWD_COVER = 0.35
 const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
+// How thick the rime on a hair is, in meters, whatever the hair.
+const RIME_M = 0.00014
+const MOST_PICKS = 24000
+const EXTRA_FROM_M = 0.002
+const EXTRA_SHARE = 0.4
+// Dew beads sit on one hair in six of those long enough to hold one.
+const DEW_FROM_M = 0.00015
+const DEW_SHARE = 0.16
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
@@ -57,10 +65,17 @@ const float SKY_BACK = 0.12;
 const float SKY_THROUGH = 0.5;
 const float STRAND_GAIN = SUN_THROUGH * 2.5066 * TT_SPREAD / 0.714;
 const vec3 RIME = vec3(0.92, 0.96, 1.0);
-const float RIME_SUN = 0.4;
-const float RIME_SKY = 0.85;
+const float RIME_SUN = 0.3;
+const float RIME_SKY = 1.5;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
-const float RIME_FACE = 0.2;
+const float RIME_FACE = 0.0;
+const float RIME_VELVET = 0.28;
+// A needle on the outline is seen from its shaded side, against the bright air.
+const float RIME_SHADE = 0.85;
+const float RIME_M = ${RIME_M.toFixed(6)};
+const float DEW_M = 0.00004;
+const float DEW_OF_HAIR = 0.3;
+const float DEW_FACE = 0.03;
 
 struct Strand {
   vec3 world;
@@ -84,6 +99,7 @@ float hairShare;
 float hairWide;
 float hairBead;
 float hairSlim;
+float hairCoat;
 
 vec3 hairPoint(float t) {
   return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
@@ -114,11 +130,12 @@ void readHair(int k) {
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
   // No two hairs stand alike: each leans its own way off the line it was given, has its own length and its own slight curve. A long hair wanders and curves more than short down, which stands straight.
   float reach = smoothstep(0.001, 0.005, hairRoot.w);
-  hairDir = normalize(hairDir + aside * ((0.35 + 0.5 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
+  hairDir = normalize(hairDir + aside * ((0.35 + 0.95 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
   hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
   // Most hairs are short and a few are long, and they do not stand evenly: there are stretches with few, and those few are short. Down is even.
   float coat = smoothstep(0.0008, 0.002, hairRoot.w);
+  hairCoat = coat;
   vec3 q = hairRoot.xyz * 260.0;
   float stand = 0.5 + 0.25 * (sin(q.x + 2.3 * q.y + 1.7 * sin(1.3 * q.z)) + sin(3.1 * q.y - 1.7 * q.z + 1.3 * sin(2.1 * q.x)));
   float few = mix(1.0, smoothstep(0.15, 0.6, stand), coat);
@@ -131,10 +148,12 @@ void readHair(int k) {
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
-    hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
-    hairWide *= 1.0 + uPlantFrost * (3.5 + 3.5 * h4) * hairSlim;
+    hairRoot.w *= 1.0 + uPlantFrost * (0.3 + 0.4 * h2);
+    hairWide += uPlantFrost * RIME_M * (0.6 + 0.8 * h4) / uHairWidth * hairSlim;
+    // Ice grows straight.
+    hairBend *= 1.0 - 0.75 * uPlantFrost;
     // Rime grows on a hair, not on the felt a strand of down stands for.
-    hairShare *= mix(1.0, hairSlim * hairSlim, uPlantFrost);
+    hairShare *= mix(1.0, hairSlim, uPlantFrost);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
@@ -145,8 +164,6 @@ void readHair(int k) {
     hairRoot.w *= 1.0 - 0.2 * uPlantWet;
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
   }
-  // Dew sits as a bead near the tip of one hair in three.
-  if (uPlantDew > 0.0) hairBead += one * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
   mat4 toClip = projectionMatrix * viewMatrix;
   hairFoot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
   hairTip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
@@ -190,7 +207,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.1 + 0.3 * uPlantFrost, hairSlim), pow(t, 0.8 + h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 + 0.2 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
@@ -206,11 +223,17 @@ Strand strandAt(float t) {
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
-  vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
+  // Rime is not clear: it hides what is behind it, so it fades by how much of it shows and the air between is laid over it in the fragment.
+  float veil = mix(fog * behind, 1.0, uPlantFrost);
+  vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
-  float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
-  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(RIME_FACE, 1.0, open)), uPlantFrost) * (fog * behind);
-  vSkyY = normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y;
+  float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
+  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(1.0, RIME_SHADE, open)), uPlantFrost) * veil;
+  // Of the needles on a face turned to the eye few show, each whole: seen end on a needle is a point, and a coat of points is a haze.
+  float shows = smoothstep(0.0, 0.08, mix(RIME_FACE, 1.0, open) * behind - 0.92 * fract(hairOwn * 139.71 + 0.57));
+  // Rimed down is a velvet: every strand of it shows, faintly, and more where the eye looks along the skin.
+  s.share *= mix(1.0, mix(mix(RIME_VELVET, 1.0, open) * behind, shows, hairCoat), uPlantFrost);
+  vSkyY = mix(normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y, mix(0.25, -0.3, open), uPlantFrost);
   vBead = vec3(t, hairBead * plantSize() / s.pixel, 1.0);
   return s;
 }
@@ -266,6 +289,124 @@ void main() {
 }
 `
 
+// A bead or a drop is a ball of clear water or ice: it mirrors the sun as a point, and what is seen through it is the world behind it turned over. A frozen one is clouded and shows mostly its own white.
+export const ball = /* glsl */ `
+const float BALL_GLINT = 30.0;
+const float BALL_SHARP = 400.0;
+const float BALL_SUN = 40.0;
+const float BALL_WATER_SUN = 0.25;
+const float BALL_WATER = 0.1;
+const vec3 BALL_ICE = vec3(0.9, 0.95, 1.0);
+vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen, float px) {
+  float off = min(length(d), 0.999);
+  vec3 toEye = normalize(uCamPos - world);
+  vec3 out2 = (right * d.x + up * d.y) / max(length(d), 1e-3);
+  vec3 n = out2 * off + toEye * sqrt(1.0 - off * off);
+  float turn = 2.0 * (asin(off) - asin(off / 1.33));
+  vec3 through = -toEye * cos(turn) - out2 * sin(turn);
+  float edge = 0.02 + 0.98 * pow(1.0 - saturate(dot(n, toEye)), 5.0);
+  float sky = plantSky(world);
+  vec3 lens = skyAmbient(through) * sky + uSunColor * (BALL_SUN * mix(BALL_WATER_SUN, 1.0, frozen) * sun * pow(saturate(dot(through, uSunDir)), 60.0));
+  vec3 mirror = skyAmbient(reflect(-toEye, n)) * sky;
+  vec3 matt = BALL_ICE * skyAmbient(n) * sky;
+  // Clear water mirrors little of the sun: its sparkle is the sun seen through it. A highlight smaller than a pixel is spread over the pixel.
+  float fine = mix(clamp(px * px * 0.0625, 0.01, 1.0), 1.0, frozen);
+  return mix(mix(lens, matt, 0.85 * frozen), mirror, edge) + uSunColor * (BALL_GLINT * mix(BALL_WATER, 1.0, frozen) * fine * sun * pow(saturate(dot(n, normalize(toEye + uSunDir))), BALL_SHARP * fine));
+}
+`
+
+// What rime and dew add to a long hair: two side barbs of ice and two beads, one near the tip and a smaller one below it.
+const extraVertex = /* glsl */ `
+uniform sampler2D uPicks;
+out vec2 vAt;
+out vec3 vShape;
+out vec3 vRight;
+out vec3 vUp;
+${strand}
+void main() {
+  int p = gl_VertexID / 16;
+  int j = gl_VertexID % 16;
+  int piece = j >> 2;
+  float sx = float(j & 1) * 2.0 - 1.0;
+  float end = float((j >> 1) & 1);
+  readHair(int(texelFetch(uPicks, ivec2(p & 2047, p >> 11), 0).r + 0.5));
+  float n = float(piece);
+  float hA = fract(hairOwn * (419.3 + 61.7 * n) + 0.13 * n);
+  float hB = fract(hairOwn * (523.9 + 37.1 * n) + 0.41);
+  if (piece < 2) {
+    Strand s = strandAt(0.25 + 0.3 * n + 0.2 * hA);
+    vec3 ref = abs(s.along.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 e1 = normalize(cross(s.along, ref));
+    vec3 aside = e1 * cos(6.2832 * hB) + cross(s.along, e1) * sin(6.2832 * hB);
+    vec3 axis = normalize(s.along * 0.7 + aside);
+    float reach = hairRoot.w * plantSize() * (0.12 + 0.2 * hB);
+    float longPx = reach * length(cross(axis, s.toEye)) / s.pixel;
+    float stretch = max(1.0, 1.5 / max(longPx, 1e-3));
+    vec3 here = s.world + axis * (reach * (0.5 + (end - 0.5) * stretch));
+    float halfPx = 0.35 * s.width * (1.0 - 0.9 * end) / s.pixel;
+    vAt = vec2(sx * (halfPx + 0.75), 0.0);
+    vShape = vec3(0.0, halfPx, s.share / stretch);
+    vRight = vec3(0.0);
+    vUp = vec3(0.0);
+    gl_Position = uPlantFrost > 0.5 ? projectionMatrix * viewMatrix * vec4(here + normalize(cross(axis, s.toEye)) * (vAt.x * s.pixel), 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
+  } else {
+    float tip = piece == 2 ? 1.0 : 0.0;
+    Strand s = strandAt(mix(0.35 + 0.3 * hA, 0.75 + 0.15 * hA, tip));
+    // One long hair in ten holds a bead near its tip, and one in twenty a smaller one below it.
+    float radius = 0.00006 * (1.2 + 1.8 * hB) * mix(0.6, 1.0, tip) * plantSize() * (hA < mix(0.1, 0.2, tip) ? 1.0 : 0.0);
+    float shows = 1.0;
+    // Dew: each hair that was picked holds one bead at its tip, no larger than the hair can carry. On a face turned to the eye a clear bead shows the skin behind it and little else.
+    if (uPlantFrost < 0.5) {
+      s = strandAt(0.8 + 0.15 * hA);
+      radius = min(DEW_M * (0.6 + 1.4 * hB), DEW_OF_HAIR * hairRoot.w) * plantSize() * tip * sqrt(uPlantDew * (1.0 - uPlantWet));
+      shows = mix(DEW_FACE, 1.0, 1.0 - smoothstep(0.0, 0.6, dot(plantDirection(hairStand), s.toEye)));
+    }
+    float rPx = radius / s.pixel;
+    float sy = end * 2.0 - 1.0;
+    vRight = normalize(cross(vec3(0.0, 1.0, 0.0), s.toEye));
+    vUp = cross(s.toEye, vRight);
+    float reachPx = max(rPx, 0.5) + 0.75;
+    vAt = vec2(sx, sy) * reachPx;
+    vShape = vec3(1.0, rPx, min(1.0, s.share) * shows);
+    gl_Position = projectionMatrix * viewMatrix * vec4(s.world + (vRight * vAt.x + vUp * vAt.y) * (radius > 0.0 ? s.pixel : 0.0), 1.0);
+  }
+}
+`
+
+const extraFragment = /* glsl */ `
+in vec3 vWorld;
+in vec3 vLitAt;
+in float vDepth;
+in vec3 vSun;
+in vec3 vSky;
+in float vSkyY;
+in vec2 vAt;
+in vec3 vShape;
+in vec3 vRight;
+in vec3 vUp;
+${ball}
+void main() {
+  float cover;
+  vec3 color;
+  float sun = plantSun(vLitAt, uSunDir);
+  if (vShape.x < 0.5) {
+    float x = abs(vAt.x);
+    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z);
+    color = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+  } else {
+    float r = max(vShape.y, 0.5);
+    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z;
+    color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost, vShape.y);
+  }
+#ifdef BLUR_CIRCLE
+  outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
+#else
+  if (cover < 0.004) discard;
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, cover);
+#endif
+}
+`
+
 const fragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vLitAt;
@@ -291,7 +432,16 @@ void main() {
   float cover = vCover;
 #endif
   float sun = plantSun(vLitAt, uSunDir);
-  vec3 color = (vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld)) * cover;
+  vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+  if (uPlantFrost > 0.5) {
+#ifdef BLUR_CIRCLE
+    outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
+#else
+    outColor = vec4(finish(light, vWorld, vDepth, -1.0).rgb, saturate(cover));
+#endif
+    return;
+  }
+  vec3 color = light * cover;
   // A bead of water is a lens: it throws the sun on toward an eye that looks against it, and shows the bright low sky from anywhere.
   if (vBead.y > 0.0) {
     float against = exp(-4.0 * (1.0 + dot(normalize(uCamPos - vWorld), uSunDir)));
@@ -321,6 +471,11 @@ export class HairSet {
   private readonly leans: [Float32Array, Float32Array]
   private readonly lines = new THREE.BufferGeometry()
   private readonly ribbons = new THREE.BufferGeometry()
+  private readonly linesSharp = new THREE.BufferGeometry()
+  private readonly ribbonsSharp = new THREE.BufferGeometry()
+  private readonly extras = new THREE.BufferGeometry()
+  private readonly picks: Float32Array
+  private readonly pickTexture: THREE.DataTexture
   private readonly data: Float32Array
   private readonly texture: THREE.DataTexture
   private shown: number
@@ -363,24 +518,51 @@ export class HairSet {
     this.lines.setIndex(new THREE.BufferAttribute(lineIndex, 1))
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
     const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture } }
-    const make = (label: string, vertex: string, define: string): Surface => {
-      const surface = makePartSurface(options, { name: label, vertex, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: true, castShadow: false, uniforms: own })
-      surface.main.blendEquationAlpha = THREE.MinEquation
-      surface.main.blendSrcAlpha = THREE.OneFactor
-      surface.main.blendDstAlpha = THREE.OneFactor
-      return surface
-    }
+    const make = (label: string, vertex: string, define: string, sharp = false): Surface =>
+      makePartSurface(options, { name: label, vertex, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: own })
     this.surface = make(name, lineVertex, '')
     const close = make(`${name} close`, ribbonVertex, '#define RIBBON 1\n')
-    const far = new THREE.LineSegments(this.lines, this.surface.main)
-    far.frustumCulled = false
-    far.matrixAutoUpdate = false
+    const line = (geometry: THREE.BufferGeometry, surface: Surface): THREE.Mesh => {
+      const mesh = new THREE.LineSegments(geometry, surface.main)
+      mesh.frustumCulled = false
+      mesh.matrixAutoUpdate = false
+      return mesh as unknown as THREE.Mesh
+    }
+    const far = line(this.lines, this.surface)
     const near = partMesh(this.ribbons, close)
+    // Rime hides what is behind it, and a thing drawn that way does not keep its own blur circle: a second pass keeps it.
+    this.linesSharp.setIndex(this.lines.getIndex())
+    this.ribbonsSharp.setIndex(this.ribbons.getIndex())
+    const farSharp = line(this.linesSharp, make(`${name} blur circle`, lineVertex, '#define BLUR_CIRCLE 1\n', true))
+    const nearSharp = partMesh(this.ribbonsSharp, make(`${name} close blur circle`, ribbonVertex, '#define RIBBON 1\n#define BLUR_CIRCLE 1\n', true))
     far.renderOrder = HAIR_ORDER
     near.renderOrder = HAIR_ORDER + 1
+    farSharp.renderOrder = HAIR_ORDER + 2
+    nearSharp.renderOrder = HAIR_ORDER + 2
     far.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, far, false)
     near.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, near, true)
-    this.meshes = [far as unknown as THREE.Mesh, near]
+    const most = Math.min(count, MOST_PICKS)
+    this.picks = new Float32Array(2048 * Math.max(1, Math.ceil(most / 2048)))
+    this.pickTexture = new THREE.DataTexture(this.picks, 2048, this.picks.length / 2048, THREE.RedFormat, THREE.FloatType)
+    this.pickTexture.colorSpace = THREE.NoColorSpace
+    this.pickTexture.minFilter = THREE.NearestFilter
+    this.pickTexture.magFilter = THREE.NearestFilter
+    this.pickTexture.generateMipmaps = false
+    this.pickTexture.needsUpdate = true
+    const extraIndex = new Uint32Array(most * 24)
+    for (let k = 0; k < most * 4; k++) {
+      const v = k * 4
+      extraIndex.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
+    }
+    this.extras.setIndex(new THREE.BufferAttribute(extraIndex, 1))
+    const extraUniforms = { ...own, uPicks: { value: this.pickTexture } }
+    const extra = (label: string, define: string, sharp: boolean): THREE.Mesh =>
+      partMesh(this.extras, makePartSurface(options, { name: label, vertex: extraVertex, fragment: `${define}${extraFragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: sharp, castShadow: false, uniforms: extraUniforms }))
+    const barbs = extra(`${name} barbs and beads`, '', false)
+    const barbsSharp = extra(`${name} barbs and beads blur circle`, '#define BLUR_CIRCLE 1\n', true)
+    barbs.renderOrder = HAIR_ORDER + 3
+    barbsSharp.renderOrder = HAIR_ORDER + 4
+    this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp]
   }
 
   // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
@@ -401,7 +583,7 @@ export class HairSet {
     crowd.fill(0)
     const at = this.at
     const perM = (camera.projectionMatrix.elements[5] * height) / 2
-    const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     let n = 0
     let nearest = Infinity
     let longest = 0
@@ -477,6 +659,22 @@ export class HairSet {
       const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
       out[k * 16 + 11] *= Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
     }
+    // Rime grows barbs and beads on the long hairs that show.
+    let picked = 0
+    const rimed = stateUniforms.uPlantFrost.value > 0.5
+    const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0
+    if (rimed || dewy) {
+      const most = this.extras.getIndex()!.count / 24
+      const from = rimed ? EXTRA_FROM_M : DEW_FROM_M
+      const share = rimed ? EXTRA_SHARE : DEW_SHARE
+      for (let k = 0; k < n && picked < most; k++) {
+        const q = k * 16
+        if (out[q + 3] * size < from || out[q + 11] <= 0 || (out[q + 7] * 211.31 + 0.77) % 1 > share) continue
+        this.picks[picked++] = k
+      }
+      this.pickTexture.needsUpdate = true
+    }
+    this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : picked * 24)
     this.kept = n
     this.nearest = nearest
     this.longest = longest
@@ -489,14 +687,23 @@ export class HairSet {
     // The samples of one frame differ by the width of the lens. A camera farther than that from where the hairs were gathered is another view.
     if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
     const geometry = ribbon ? this.ribbons : this.lines
+    const sharp = ribbon ? this.ribbonsSharp : this.linesSharp
+    // A clear hair adds its light to what is behind it. Rimed, it covers it.
+    const rimed = stateUniforms.uPlantFrost.value > 0.5
+    const material = (object as THREE.Mesh).material as THREE.Material
+    material.blendSrc = rimed ? THREE.SrcAlphaFactor : THREE.OneFactor
+    material.blendDst = rimed ? THREE.OneMinusSrcAlphaFactor : THREE.OneFactor
+    material.blendEquationAlpha = rimed ? THREE.AddEquation : THREE.MinEquation
+    material.blendSrcAlpha = rimed ? THREE.ZeroFactor : THREE.OneFactor
     const m = object.matrixWorld.elements
     const size = Math.hypot(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
-    const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
     const close = (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
+      sharp.setDrawRange(0, 0)
       return
     }
     const lengthPx = this.longest / pixel
@@ -505,6 +712,7 @@ export class HairSet {
       else geometry.setDrawRange(this.count * 12, this.kept * 24)
     } else if (lengthPx < 5) geometry.setDrawRange(0, this.kept * 2)
     else geometry.setDrawRange(this.count * 2, this.kept * 4)
+    sharp.setDrawRange(geometry.drawRange.start, rimed ? geometry.drawRange.count : 0)
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.

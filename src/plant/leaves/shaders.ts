@@ -15,11 +15,13 @@ in vec3 normal;
 in vec2 uv;
 in vec4 aLeaf;
 uniform vec4 uLeafState[${LEAVES}];
+uniform float uLeafRipe[${LEAVES}];
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vLeaf;
 out vec4 vState;
+out float vRipe;
 out float vDepth;
 void main() {
 #ifdef PLANT_FIELD
@@ -36,6 +38,7 @@ void main() {
   vUv = uv;
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
+  vRipe = uLeafRipe[int(aLeaf.x + 0.5)];
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
@@ -50,6 +53,7 @@ in vec3 vNormal;
 in vec2 vUv;
 in vec4 vLeaf;
 in vec4 vState;
+in float vRipe;
 in float vDepth;
 ${tissueGlsl}
 #ifdef PLANT_FIELD
@@ -81,6 +85,7 @@ uniform sampler2D uMarks;
 uniform vec2 uDetailSize;
 uniform float uVeinPad;
 uniform float uGlow;
+uniform float uWarm;
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
@@ -109,13 +114,18 @@ void main() {
   float tone = 0.86 + 0.28 * mark.g;
   // The small net of veins between the side veins: pale lines on the face, dark lines in the glow.
   float net = smoothstep(1.02, 1.45, lum);
+  // The same net read at the size it was photographed: the smallest veinlets and the cells they close, 2 to 3 mm across.
+  vec2 fUv = vPlane * 16.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
+  float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
+  float cells = smoothstep(0.96, 1.25, fine);
 
-  vec3 upper = vec3(0.03, 0.06, 0.019) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
+  vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.7 + 0.3 * vRipe));
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
-  vec3 albedo = (top ? upper * (1.0 + 0.5 * net) : under * (1.0 + 0.8 * net)) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
+  float grain = 0.5 + 0.5 * vRipe;
+  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(top ? vec3(1.0, 1.3, 0.52) : vec3(0.8, 1.0, 0.8), vec3(1.0), vRipe);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
@@ -123,19 +133,24 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.5 + 1.3 * smoothstep(0.35, 0.85, mark.g)) * taper * uGlow;
-  vec3 through = vec3(0.14, 0.15, 0.012) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.3 * thick);
+  float sheer = smoothstep(0.5, 0.92, mark.g);
+  // A young blade lets the light through evenly: the thin patches come with age.
+  float thin = (0.16 + mix(0.3, smoothstep(0.35, 0.85, mark.g), vRipe) + 4.6 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
+  // A leaf holds back red: what comes through is a fresh green, yellower where the blade is thinnest and against the low sun.
+  vec3 through = mix(vec3(0.2, 0.3, 0.07), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
-  through = mix(through, vec3(0.06, 0.071, 0.006) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
-  through *= 1.0 - 0.88 * vein.r;
+  through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
+  through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe);
   through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
+  // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
+  if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + (fine - 1.0) * 0.0002 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
   float fold = vState.z;
 
@@ -147,10 +162,12 @@ void main() {
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.95;
-  t.wax = (top ? 0.12 : 0.04) * margin;
-  t.sheen = (top ? 0.3 : 0.12) * margin;
+  t.wax = (top ? 0.45 : 0.04) * margin;
+  t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
-  vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  // The skin's states stand thickest at the margin, the tip and along the veins.
+  float brim = max(max(smoothstep(0.55, 1.0, abs(vUv.x)), smoothstep(0.85, 1.0, vUv.y)), 0.7 * vein.r);
+  vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;
   outColor = shaded;
@@ -206,7 +223,7 @@ void main() {
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
   t.albedo = mix(vec3(0.06, 0.09, 0.012), vec3(0.14, 0.185, 0.025), 0.45 * ribs + 0.55 * streak);
-  t.through = vec3(0.04, 0.06, 0.006);
+  t.through = vec3(0.012, 0.018, 0.003);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);
   t.rough = 0.78;

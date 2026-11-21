@@ -1,3 +1,5 @@
+import { config } from '../config.ts'
+import { world as dawn } from '../worlds/dawn/index.ts'
 import { grassCover } from './cover.ts'
 import { cropLight } from './light.ts'
 
@@ -13,7 +15,78 @@ export const litterTileM = 2.9
 export const ridgeHeightM = 0.07
 
 // The plant breaking the surface: the soil round the stem lifts over riseS seconds into plates of this height and reach, split by this many cracks.
+// The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
+const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
+export const laneDir = { x: Math.sin(LANE), z: Math.cos(LANE) }
+
+// The way to the sun of the dawn, which stands a few degrees over the soil: the ground lies low along it, so its light reaches the plant's foot.
+const SUNWAY = (dawn.sun.azimuthDeg * Math.PI) / 180
+export const sunWayDir = { x: Math.sin(SUNWAY), z: Math.cos(SUNWAY) }
+export const sunWayRise = Math.tan((dawn.sun.elevationDeg * Math.PI) / 180)
+
 export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
+// The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
+export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
+
+// The furrow the rain fills beside the plant, a shallow hollow where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: its middle lies leftM to the left of the plant and drifts by slope for each meter away from the lens, winding by windM, from fromM toward the lens to toM behind the plant, where it closes round.
+// halfM is half the width of the standing water at each of the places atM along it, and the shore wanders by wanderM. The floor lies depthM under the mean ground and rises over easeM beyond the water's edge; the banks stand bankM over the ground and stay off the plant within clearM. Until fromS the furrow has only the share before of its depth, and all of it by toS.
+export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.0155, bankM: 0.006, easeM: 0.05, wanderM: 0.012, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+// How far along the floor's slope a level is met, from 0 at the floor to 1 at the mean ground.
+// From the golden hour on the furrow is the deep cut it was when that unit was judged, with banks as high as it is deep and a floor that starts 0.3 of the way out.
+export const furrowKept = { depthM: 0.03, bankM: 0.03, flat: 0.3 }
+export const furrowShare = (levelM: number, depthM: number = furrow.depthM): number => {
+  const want = 1 - Math.min(1, Math.max(0, -levelM / depthM))
+  let lo = 0
+  let hi = 1
+  for (let i = 0; i < 30; i++) {
+    const u = (lo + hi) / 2
+    if (u * u * (3 - 2 * u) < want) lo = u
+    else hi = u
+  }
+  return lo
+}
+
+function hashU(x: number): number {
+  x ^= x >>> 16
+  x = Math.imul(x, 0x7feb352d)
+  x ^= x >>> 15
+  x = Math.imul(x, 0x846ca68b)
+  x ^= x >>> 16
+  return x >>> 0
+}
+const bits = new Float32Array(1)
+const asInt = new Uint32Array(bits.buffer)
+function hash11(p: number): number {
+  bits[0] = p
+  return hashU(asInt[0]) / 4294967296
+}
+const step = (a: number, b: number, v: number): number => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
+// The height of the bare soil round the stem, in meters, with the plant at the origin: what the shader below draws within hole.flatM of the stem. Farther out the map adds its relief, which this does not know, and the loose crumbs lie on top of it everywhere.
+export function soilHeightAt(x: number, z: number, time: number): number {
+  const e = emergence
+  const r = Math.hypot(x, z)
+  if (r > e.radiusM * 1.7) return 0
+  const rise = step(-0.8, e.riseS, time) * (1 - 0.3 * step(e.riseS, e.riseS + 5, time))
+  const a = Math.atan2(z, x)
+  const s = (a * e.cracks) / 6.2832 + 0.07 * Math.sin(r * 420 + a * 2) + 0.05 * Math.sin(r * 1300)
+  const id = ((Math.floor(s) % e.cracks) + e.cracks) % e.cracks
+  const f = s - Math.floor(s)
+  const reach = 1 - step(e.radiusM * 0.25, e.radiusM * (1.1 + 0.5 * hash11(id + 11)), r)
+  const toCrack = ((Math.min(f, 1 - f) * 6.2832) / e.cracks) * r
+  const crack = (1 - step(0, 0.0003 + 0.0016 * rise * reach, toCrack)) * reach * rise
+  const open = step(hole.fromS, hole.toS, time)
+  const radius = hole.radiusM * (0.18 + 0.82 * open)
+  const gap = 1 - step(0.3 * radius, radius, r)
+  const along = x * laneDir.x + z * laneDir.z
+  const across = Math.abs(x * laneDir.z - z * laneDir.x)
+  const way = Math.max(step(0.002, 0.012, along) * (1 - step(0.012, 0.03, across)), step(0.004, 0.016, x * sunWayDir.x + z * sunWayDir.z))
+  const plate = (0.5 + 0.5 * hash11(id + 3)) * reach * (1 - 0.75 * gap) * (1 - hole.wayOpen * way)
+  return e.liftM * rise * (plate - 0.6 * crack * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r))
+}
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
 export const soilHeight = /* glsl */ `
@@ -35,10 +108,52 @@ float lane(vec2 p) {
   float across = abs(p.x * uLane.y - p.y * uLane.x);
   return (1.0 - smoothstep(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * smoothstep(0.0, 0.03, along);
 }
+uniform vec2 uSunWay;
+float sunWay(vec2 p) {
+  float along = dot(p, uSunWay);
+  float across = abs(p.x * uSunWay.y - p.y * uSunWay.x);
+  return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along);
+}
+uniform vec4 uFurrow;
+uniform vec4 uFurrowAxes;
+uniform vec4 uFurrowAt;
+uniform vec4 uFurrowHalf;
+uniform vec4 uFurrowShape;
+uniform vec4 uFurrowShore;
+uniform vec3 uFurrowTime;
+uniform vec4 uFurrowWas;
+uniform vec3 uFurrowKept;
+// The height the furrow adds: under the mean ground along its middle, a little over it on its banks.
+float furrow(vec2 p) {
+  float a = dot(p, uFurrowAxes.xy);
+  float d = -dot(p, uFurrowAxes.zw);
+  float dc = clamp(d, uFurrow.z, uFurrow.w);
+  float side = a + uFurrow.x - uFurrow.y * dc - uFurrowShape.z * sin(dc * 13.0 + 1.0);
+  vec3 part = saturate((vec3(dc) - uFurrowAt.xyz) / (uFurrowAt.yzw - uFurrowAt.xyz));
+  if (uTime >= uFurrowKept.x) {
+    float was = uFurrowWas.x + dot(part, uFurrowWas.yzw - uFurrowWas.xyz);
+    float x = length(vec2(side, d - dc)) / was;
+    if (x > 2.0) return 0.0;
+    float full = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
+    float floorWas = 1.0 - smoothstep(0.3, 1.0, x);
+    float bankWas = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.0, x)) * smoothstep(uFurrowShape.w, uFurrowShape.w * 2.0, length(p)) * (1.0 - lane(p));
+    return full * (bankWas * uFurrowKept.z - floorWas * uFurrowKept.y);
+  }
+  float wide = uFurrowHalf.x + dot(part, uFurrowHalf.yzw - uFurrowHalf.xyz);
+  wide += uFurrowShore.z * (sin(d * 47.0 + side * 31.0) + 0.6 * sin(d * 83.0 - side * 59.0 + 2.1)) * smoothstep(0.0, 0.02, wide - 0.015);
+  float s = length(vec2(side, d - dc));
+  if (s > wide + uFurrowShore.w) return 0.0;
+  float cut = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
+  float bed = 1.0 - smoothstep(wide - uFurrowShore.x, wide + uFurrowShore.y, s);
+  float bank = smoothstep(wide, wide + uFurrowShore.y, s) * (1.0 - smoothstep(wide + uFurrowShore.y, wide + uFurrowShore.w, s)) * smoothstep(uFurrowShape.w, uFurrowShape.w * 2.0, length(p)) * (1.0 - lane(p));
+  return cut * (bank * uFurrowShape.y - bed * uFurrowShape.x);
+}
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;
 }
 uniform vec4 uEmerge;
+uniform vec4 uHole;
+uniform vec3 uDome;
 // x is the height the breaking soil adds, y how deep inside a crack the point is, from 0 to 1.
 vec2 emerge(vec2 p) {
   float r = length(p);
@@ -51,19 +166,24 @@ vec2 emerge(vec2 p) {
   float reach = 1.0 - smoothstep(uEmerge.z * 0.25, uEmerge.z * (1.1 + 0.5 * hash11(id + 11.0)), r);
   float toCrack = min(f, 1.0 - f) * 6.2832 / uEmerge.w * r;
   float crack = (1.0 - smoothstep(0.0, 0.0003 + 0.0016 * rise * reach, toCrack)) * reach * rise;
-  float hole = 1.0 - smoothstep(0.002, 0.009, r);
-  float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * hole);
-  return vec2(uEmerge.y * rise * (plate - 0.6 * crack * plate) + 0.002 * (1.0 - smoothstep(0.003, 0.008, r)), max(crack, 0.5 * hole * hole * rise));
+  float open = smoothstep(uHole.x, uHole.y, uTime);
+  float radius = uHole.z * (0.18 + 0.82 * open);
+  float gap = 1.0 - smoothstep(0.3 * radius, radius, r);
+  float way = max(smoothstep(0.002, 0.012, dot(p, uLane)) * (1.0 - smoothstep(0.012, 0.03, abs(p.x * uLane.y - p.y * uLane.x))), smoothstep(0.004, 0.016, dot(p, uSunWay)));
+  float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * gap) * (1.0 - uDome.z * way);
+  float h = uEmerge.y * rise * (plate - 0.6 * crack * plate) + uDome.x * (1.0 - open) * (1.0 - smoothstep(0.003, 0.008, r)) - uHole.w * open * (1.0 - smoothstep(0.25 * uHole.z, uHole.z, r));
+  return vec2(h, max(crack, 0.5 * gap * gap * rise));
 }
 float soilHeight(vec2 p, float lod) {
   float fine = textureLod(tData, p * uTiles.x, lod).a - 0.55;
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
-  float foot = 1.0 - smoothstep(0.004, 0.022, length(p));
-  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * foot) + emerge(p).x;
+  float foot = 1.0 - smoothstep(uDome.y, uDome.y * 1.7, length(p));
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p);
 }
 `
 
+export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
 export const waterLevelsM = [-0.03, -0.0075]
@@ -81,7 +201,7 @@ vec3 dampened(vec3 albedo, float damp) {
   return mix(albedo, mix(albedo, vec3(luma) * vec3(0.85, 1.1, 1.0), 0.9) * mix(0.3, 0.07, damp * damp * damp * damp), damp);
 }
 float sheen(float wet, float dew) {
-  return max(wet * wet, 0.65 * dew);
+  return max(wet * wet, 0.35 * dew);
 }
 // The sky's light on a face. When the sun is low its glow fills only its own side of the horizon, so faces turned away from it get the cool sky overhead.
 vec3 groundAmbient(vec3 n) {
@@ -89,8 +209,8 @@ vec3 groundAmbient(vec3 n) {
   return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.3, 0.95 * away);
 }
 // Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
-vec3 proud(float heightM) {
-  return mix(vec3(1.0), mix(vec3(0.85), vec3(2.1, 1.65, 1.8), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+vec3 proud(float heightM, float dew) {
+  return mix(vec3(1.0), mix(vec3(0.85), mix(vec3(2.1, 1.65, 1.8), vec3(1.6, 1.35, 1.5), dew), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
 float grains(vec3 world, float share) {
@@ -114,6 +234,11 @@ vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
 float glare(vec3 v, vec3 hv) {
   float skim = 1.0 - saturate(dot(v, hv));
   return 0.8 + 5.5 * skim * skim * skim * skim;
+}
+// With the sun lower than about a degree and a half the far field hides it from all the low soil, and the shadow map cannot tell one crumb from the next: then the sun reaches only the upper side of what stands up out of the ground.
+float lowSun(float mapped, float up, float heightM) {
+  float low = 1.0 - smoothstep(0.02, 0.035, uSunDir.y);
+  return mix(mapped, smoothstep(0.05, 0.7, up) * smoothstep(-0.003, 0.006, heightM), low);
 }
 // Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
 float selfShade() {
@@ -164,6 +289,7 @@ ${groundStates}
 ${cropLight}
 ${grassCover}
 
+const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
 
@@ -175,7 +301,7 @@ void main() {
   vec4 cA = texture(tColor, uvA);
   vec4 dA = texture(tData, uvA);
   float density = texelDensity(uvA, uColorSize);
-  float damp = saturate(uWet + 0.6 * uDew);
+  float damp = saturate(uWet + 0.3 * uDew);
 
 #ifdef NEAR
   vec3 albedo = cA.rgb;
@@ -245,7 +371,7 @@ void main() {
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, d);
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, d);
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
@@ -254,36 +380,24 @@ void main() {
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
   open *= 1.0 - 0.35 * thatch;
+  open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR
-  shade *= mix(vec3(1.0), proud(vWorld.y), fade);
+  shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade);
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
   float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade();
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * selfShade() * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
-  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
   color += wetGlints(vWorld, v, n, uWet) * open * fade * (1.0 - pool) * (1.0 - thatch);
-  if (uDew > 0.0) {
-    vec2 cell = p / 0.0021;
-    vec2 id = floor(cell);
-    float pick = hash21(id);
-    vec2 at = fract(cell) - 0.5 - (vec2(hash21(id + 17.0), hash21(id + 43.0)) - 0.5) * 0.5;
-    float size = 0.06 + 0.12 * hash21(id + 71.0);
-    float sharp = 1.0 - smoothstep(0.25, 0.9, length(fwidth(cell)));
-    float bead = step(0.9, pick) * step(0.5, h) * smoothstep(size, size * 0.7, length(at)) * uDew * sharp * fade;
-    float spark = smoothstep(size * 0.45, size * 0.1, length(at + normalize(uSunDir.xz + 1e-5) * size * 0.4));
-    color = mix(color, color * 0.55 + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.06, bead);
-    color += bead * spark * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);
-  }
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }

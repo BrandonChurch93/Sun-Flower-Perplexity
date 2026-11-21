@@ -9,7 +9,7 @@ export const world: WorldSettings = {
   sky: { zenith: [0.055, 0.075, 0.115], horizon: [0.26, 0.2, 0.135], bounce: [0.04, 0.028, 0.014], ambient: 3, glow: [1, 0.62, 0.27], glowPower: 40, disc: 90 },
   backdrop: { file: null, key: 'bloom-hero', sunAt: null, gain: 1, blur: 0.25 },
   fog: { color: [0.02, 0.026, 0.022], sunTint: [1.6, 0.95, 0.45], density: 0.003, falloff: 0.5 },
-  grade: { exposure: 0.74, contrast: 1.3, white: 9, saturation: 1.06, gain: [1.03, 1, 0.96], lift: [0.0034, 0.005, 0.0036], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
+  grade: { exposure: 0.74, contrast: 1.3, white: 9, saturation: 1.06, gain: [1.03, 1, 0.96], lift: [0.0016, 0.005, 0.0042], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0, frost: 0, dew: 0 },
   wind: 0.5,
 }
@@ -33,6 +33,7 @@ export const stage: WorldStageMaker = (def) => {
       width = frame.width
       samples = frame.samples
       sky.prepare(frame.time, SKY_GAIN, frame.samples)
+      far.setTime(frame.time)
     },
     sample(camera, shutter) {
       const e = camera.projectionMatrix.elements

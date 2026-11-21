@@ -14,6 +14,7 @@ import { isMain } from './lib/main.ts'
 import { WORK } from './lib/paths.ts'
 import { matches, readRecord, writeRecord, type Record_ } from './lib/record.ts'
 import { openSession, recordBase, type Session } from './lib/render.ts'
+import { missingRanges, tileRanges, type Range } from './lib/tiling.ts'
 import { bitrateFor, encodeAgain, encodeFrames, joinChunks, probe, probeLine } from './lib/video.ts'
 
 export interface FilmOptions { tier: string; format: string; assets: string }
@@ -103,6 +104,59 @@ export function chunkIsCurrent(unit: string, o: FilmOptions, range: [number, num
   const record = readRecord(file)
   if (!matches(record, computeHashes(), { kind: 'chunk', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units: [unit] }) || !sameFrames(record?.frames, range)) return null
   return { unit, file, frames: range, m1: record?.m1 as M1Summary, m1Details: (record?.m1Details ?? {}) as Record<string, M1Result>, reused: true }
+}
+
+export function currentParts(unit: string, o: FilmOptions): Chunk[] {
+  const prefix = `chunk-${unit}-${o.format}-${o.tier}-${o.assets}-`
+  if (!fs.existsSync(FILM)) return []
+  const found: Chunk[] = []
+  for (const name of fs.readdirSync(FILM).sort()) {
+    const m = name.startsWith(prefix) ? /^(\d+)-(\d+)\.mp4$/.exec(name.slice(prefix.length)) : null
+    if (!m) continue
+    const c = chunkIsCurrent(unit, o, [Number(m[1]), Number(m[2])])
+    if (c) found.push(c)
+  }
+  return found
+}
+
+export function joinParts(unit: string, o: FilmOptions): Chunk | null {
+  const s = segmentById(unit)
+  const whole: Range = [s.firstFrame, s.lastFrame]
+  const found = currentParts(unit, o)
+  const picked = tileRanges(found.map((c) => c.frames), whole)
+  if (!picked) {
+    const gaps = missingRanges(found.map((c) => c.frames), whole)
+    console.log(`parts · unit ${unit} · ${found.length} parts from the current build do not cover frames ${whole[0]} to ${whole[1]}${gaps.length ? ` · missing ${gaps.map(([a, b]) => `${a} to ${b}`).join(', ')}` : ' · they overlap'}`)
+    return null
+  }
+  const parts = picked.map((i) => found[i])
+  const file = chunkPath(unit, o, whole)
+  ensureDir(file)
+  if (parts.length === 1) fs.copyFileSync(parts[0].file, file)
+  else joinChunks(parts.map((c) => c.file), file)
+  const count = whole[1] - whole[0] + 1
+  const p = probe(file)
+  const size = formatById(o.format)
+  if (p.frames !== count || Math.abs(p.fps - fps) > 1e-6 || p.width !== size.width || p.height !== size.height) throw new Error(`the joined chunk came out wrong: ${probeLine(file, p)} (wanted ${count} frames at ${fps} fps, ${size.width} x ${size.height})`)
+  const failed = parts.flatMap((c) => c.m1.failed)
+  const checked = parts.reduce((a, c) => a + c.m1.checked, 0)
+  if (checked !== count) throw new Error(`the parts hold M1 results for ${checked} frames, the unit has ${count}`)
+  const m1Details: Record<string, M1Result> = {}
+  for (const c of parts) Object.assign(m1Details, c.m1Details)
+  const records = parts.map((c) => readRecord(c.file) as Record_)
+  writeRecord(file, {
+    ...records[0],
+    kind: 'chunk',
+    at: new Date().toISOString(),
+    frames: whole,
+    unit,
+    bitrateMbps: bitrateFor(o.format),
+    m1: { checked, failed },
+    m1Details,
+    parts: parts.map((c, i) => ({ file: path.basename(c.file), frames: c.frames, at: records[i].at, machine: records[i].machine, browser: records[i].browser })),
+  })
+  console.log(`parts · unit ${unit} · joined ${parts.length} parts · M1 failed on ${failed.length} of ${count} frames · ${probeLine(file, p)}`)
+  return { unit, file, frames: whole, m1: { checked, failed }, m1Details, reused: true }
 }
 
 const frameName = (frame: number): string => `f${String(frame).padStart(6, '0')}.png`
@@ -316,7 +370,8 @@ if (isMain(import.meta.url)) {
     const chunks: Chunk[] = []
     if (flag(args, 'join')) {
       for (const w of wanted) {
-        const c = chunkIsCurrent(w.unit, o, w.range)
+        const s = segmentById(w.unit)
+        const c = chunkIsCurrent(w.unit, o, w.range) ?? (w.range[0] === s.firstFrame && w.range[1] === s.lastFrame ? joinParts(w.unit, o) : null)
         if (c) chunks.push(c)
         else console.log(`join · no chunk from the current build for unit ${w.unit} (${rel(chunkPath(w.unit, o, w.range))})`)
       }
