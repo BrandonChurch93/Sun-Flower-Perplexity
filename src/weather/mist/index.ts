@@ -34,6 +34,8 @@ export interface Mist {
   triangles: number
   // Once a lens sample: the film time of that sample, in seconds.
   sample(time: number): void
+  // The layer's height at a time of the film, in meters, where it settles: never above the height it was made with.
+  settle(heightM: number): void
 }
 
 const vertex = /* glsl */ `
@@ -93,6 +95,7 @@ const SIDES = 128
 
 export function makeMist(name: string, settings: MistSettings, order = 60): Mist {
   const time = { value: 0 }
+  const height = { value: settings.heightM }
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const count = Math.max(2, Math.round(settings.sheets))
@@ -108,7 +111,7 @@ export function makeMist(name: string, settings: MistSettings, order = 60): Mist
         uMistTime: time,
         uSlabM: { value: radius * step },
         uRadiusM: { value: radius },
-        uHeightM: { value: settings.heightM },
+        uHeightM: height,
         uThickness: { value: -Math.log(1 - Math.min(0.999, Math.max(0, settings.thickness))) },
         uLit: { value: new THREE.Vector3().fromArray(settings.lit) },
         uShade: { value: new THREE.Vector3().fromArray(settings.shade) },
@@ -136,6 +139,9 @@ export function makeMist(name: string, settings: MistSettings, order = 60): Mist
     triangles,
     sample(t: number): void {
       time.value = t
+    },
+    settle(heightM: number): void {
+      height.value = Math.min(settings.heightM, Math.max(1e-4, heightM))
     },
   }
 }
