@@ -9,7 +9,7 @@ export const tissueGuide = {
   seedLeaf: { rough: 0.38, wax: 0.8, sheen: 0, through: 0.7 },
   stalk: { rough: 0.78, wax: 0.2, sheen: 0.9, through: 0.15 },
   stem: { rough: 0.78, wax: 0.2, sheen: 0.8, through: 0 },
-  bract: { rough: 0.85, wax: 0.15, sheen: 1, through: 0.15 },
+  bract: { rough: 0.85, wax: 0.15, sheen: 0.45, through: 0.3 },
   receptacle: { rough: 0.9, wax: 0.1, sheen: 0.8, through: 0 },
   ray: { rough: 0.62, wax: 0.35, sheen: 0.25, through: 1 },
   floret: { rough: 0.7, wax: 0.3, sheen: 0.15, through: 0.5 },
@@ -70,9 +70,11 @@ const float TISSUE_BOUNCE = 0.06;
 // A shadow on the far side of a sheet is seen through the sheet: spread this wide, and wider for what stands off it.
 const float TISSUE_SPREAD_M = 0.005;
 const float TISSUE_SPREAD_FAR_M = 0.012;
+// What hides the sun hides the bright sky round it: the share of that sky left to a part in shade.
+const float TISSUE_HID = 0.35;
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
-vec3 tissueSky(vec3 n) {
+vec3 tissueSky(vec3 n, float shown) {
   vec3 sky = skyAmbient(n);
   float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
   float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
@@ -84,7 +86,7 @@ vec3 tissueSky(vec3 n) {
   sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.35 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
   // The sky round a low sun takes the sun's own color: the bright side of a round body is warm, not pale.
   vec3 near = uSunColor * (lum / max(dot(uSunColor, vec3(0.3, 0.6, 0.1)), 1e-4));
-  return sky * mix(1.0, 0.25, level) + mix(sky, near, 0.6) * (2.4 * side * side * side * level);
+  return sky * mix(1.0, 0.25, level) + mix(sky, near, 0.6) * (2.4 * side * side * side * level * shown);
 #else
   return sky * mix(1.0, 0.25 + 2.4 * side * side * side, level);
 #endif
@@ -139,6 +141,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 lee = fdl >= 0.0 || peak <= 0.0 ? F : -F;
 #ifdef PLANT_FIELD
   float sun = plantSun(world, lee);
+  float lit1 = sun;
 #else
   // The spread is one or two lookups turned with the sample of the frame: the samples together make the soft edge.
   float spin = 6.2832 * uShutter;
@@ -152,6 +155,15 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   } else {
     sun = plantSun(world, lee);
   }
+  vec3 glow = vec3(sun);
+  float reach = 1.0;
+  if (peak > 0.0 && sun < 0.98 && uShadowOn > 0.5) {
+    float beyond = sunShadow(world + L * TISSUE_LAYER_M + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
+    glow += min(through * TISSUE_LAYER, vec3(1.0)) * saturate(beyond - sun);
+    // The bounce never switches off along a shadow's edge: the creases of the part dim it instead.
+    reach = 0.5 + 0.5 * beyond;
+  }
+  float lit1 = max(glow.r, max(glow.g, glow.b));
 #endif
   // At the outline the eye meets the tips of the hairs, which the hair part draws, and not the skin: within two pixels of it the sun on the skin fades, so no term can draw a line one pixel wide.
   float fv = abs(dot(F, view));
@@ -163,8 +175,9 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float blade = 1.0 - smoothstep(15.0, 45.0, sqrt(dot(fw, fw) / max(dot(ww, ww), 1e-12)));
   float soft = gf * gf * inside * blade;
   float open = plantSky(world) * t.occlusion;
-  vec3 skyFront = tissueSky(N);
-  vec3 skyBack = tissueSky(-N);
+  float shown = mix(TISSUE_HID, 1.0, saturate(lit1));
+  vec3 skyFront = tissueSky(N, shown);
+  vec3 skyBack = tissueSky(-N, shown);
 
   float back = -(0.65 * fdl + 0.35 * ndl);
   float wrap = saturate((back + 0.35) / 1.35);
@@ -187,14 +200,6 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim));
   return color;
 #else
-  vec3 glow = vec3(sun);
-  float reach = 1.0;
-  if (peak > 0.0 && sun < 0.98 && uShadowOn > 0.5) {
-    float beyond = sunShadow(world + L * TISSUE_LAYER_M + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
-    glow += min(through * TISSUE_LAYER, vec3(1.0)) * saturate(beyond - sun);
-    // The bounce never switches off along a shadow's edge: the creases of the part dim it instead.
-    reach = 0.5 + 0.5 * beyond;
-  }
   vec3 H = normalize(L + view);
   float ndh = saturate(dot(N, H));
   float vdh = saturate(dot(view, H));
@@ -219,7 +224,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   // The rise of the mirror at grazing is a line thinner than a pixel on a small round part: it fades with the outline.
   float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside);
   vec3 R = reflect(-view, N);
-  vec3 skyGloss = tissueSky(normalize(mix(R, N, a2)));
+  vec3 skyGloss = tissueSky(normalize(mix(R, N, a2)), shown);
 
   // What gets under the wax is what the wax did not send back.
   float l5 = 1.0 - max(ndl, 0.0);
@@ -240,7 +245,6 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float crease = 0.4 + 0.6 * t.occlusion;
 
   vec3 direct = uSunColor * (sun * crease);
-  float lit1 = max(glow.r, max(glow.g, glow.b));
   // The neighbors are taken to be as bright as the part itself: petals light each other far more than leaves do.
   float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
