@@ -105,6 +105,14 @@ export class Post {
     tSun: { value: null },
     uRays: { value: 0 },
     uSunClear: { value: 0 },
+    uGlowNear: { value: new THREE.Vector3(1, 0.9, 0.76) },
+    uGlowFar: { value: new THREE.Vector3(1, 0.5, 0.2) },
+    uAirTint: { value: new THREE.Vector3(1, 0.4, 0.12) },
+    uLowRays: { value: 0 },
+    uRayLen: { value: 0.1 },
+    uRayWide: { value: 1 },
+    uKnee: { value: 0.88 },
+    uDisc: { value: 0 },
     uFarFill: { value: 1 },
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
@@ -286,6 +294,14 @@ export class Post {
       g.uShafts.value = sun ? look.shafts * sun.weight * seen : 0
       g.uRays.value = look.rays
       g.uSunClear.value = look.sunClear
+      g.uGlowNear.value.fromArray(look.glowNear)
+      g.uGlowFar.value.fromArray(look.glowFar)
+      g.uAirTint.value.fromArray(look.airTint)
+      g.uLowRays.value = look.lowRays
+      g.uRayLen.value = look.rayLen
+      g.uRayWide.value = look.rayWide
+      g.uKnee.value = look.knee
+      g.uDisc.value = look.disc
       g.tRaw.value = frame
       g.uFar.value = sun ? sun.farCircle : 0
       g.uFarFill.value = sun ? Math.min(sun.farCircle * scale, maxFillPx) : 1
