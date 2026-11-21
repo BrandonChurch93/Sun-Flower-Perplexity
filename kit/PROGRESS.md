@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
-- Last status: 18 · 2026-11-21 07:17 UTC · Phase 3 · unit bloom
+- Last push: 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
+- Last status: 19 · 2026-11-21 07:38 UTC · Phase 3
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 07:38 UTC · status 19 · Phase 3 · `status-1.jpg`: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); `status-2.jpg`: Frame 1515, the same: the open head is sharp; `status-3.jpg`: Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second
 - 2026-11-21 07:17 UTC · status 18 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin; `status-2.jpg`: Frame 1515 today, the stand-in open head; `status-3.jpg`: Approved image for 1350; `status-4.jpg`: Approved image for 1515
 - 2026-11-21 06:54 UTC · status 17 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
 - 2026-11-21 06:39 UTC · status 16 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 03:55 UTC · status 10 · Phase 2 · `status-1.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-2.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
-- 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 0.38 h |
+| 3 | 9.00 h | 0.73 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.43 h |
+| Whole build | 30.00 h | 6.78 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -342,6 +342,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · Ten supporting agents build the look lock, one folder each: stem, leaves, bud (receptacle and bracts), disc, petals, hairs, tissue shading, the golden world with its air, the lens and grade, the field. The Builder keeps the skeleton, the director, the focus, the sway of the stem and of the field, the shadow map, the companion's foliage at the left edge, the fit of the camera, the integration, the rounds and the gate.
 - 2026-11-21 · Phase 3 · Focus: the lens now holds the visible surface of the bud and the head. `tipAt` (the growing tip) is unchanged up to the bud and from the bud on stays inside the head (when open it is the middle of the floor, where it was 1.2 cm in front of it). `focusAt` in `src/plant/standin.ts` takes the lens position and returns where the line from the lens to the tip first meets the head's ellipsoid, and both the film (`Film.poseAt`) and the state the tests read (`poseAtTime`) focus there. The tip lands on the same pixel as before, so the framing checks do not move. It is one smooth function of time: `tests/focus.test.ts` checks that the point is on the line and on the surface, on the lens side, and that the focus distance never steps more than its neighbors. Measured at the draft tier in the master format: M1 passes on frames 1350 and 1515 (before: blur circle 1.5 to 2 px at the tip on frames 1277 to 1388); the focus plane moved 5.5 cm toward the lens at 1350. The sharp zone at f/2 is about 2 cm either side at 1350, so the rim of the bud and the stem under it are soft; the f-number of the two bloom keys is set against the approved images once the real head is in.
 - 2026-11-21 · Phase 3 · Wind on whole plants. The stem of the plant and of the companion leans with the slowest swell of the wind alone (`sway` in `src/plant/wind.ts`, one wave about 4.4 s long at a fixed place), a steady 0.03 rad downwind and 0.05 rad of swing round it at full wind, in the same upper part of the stem that leans to the sun. The faster parts of the gust are left to the leaves and petals: a stem carrying a head is too heavy for them, and they would smear the head by 3 px in a close-up. At golden hour (wind 0.5) the head moves about 1.6 cm either way, under 1 px of motion blur in the master format. The stem is as long as it takes to stand its height in still air, so the wind bends it and never stretches it. The neighbors are one shape drawn many times, so their stems are not bent on the CPU: `plantWorld` in `src/plant/part.ts` carries every vertex of a neighbor sideways by the same bend, from the swell that reaches that neighbor's own place, so a wave crosses the field. The wind is 0 on every cut, as before. `tests/wind.test.ts` holds these rules.
+- 2026-11-21 · Phase 3 · The shadow map follows the lens in a close-up. Until now it always covered the whole plant (and the companion in the golden world), 3.3 m of ground on 2048 texels, 1.6 mm a texel, which is coarser than a bract's edge in the master format at 0.7 m. The square is now sized to what the lens sees at the depth it focuses on (`seen` in `Film.draw`: 1.25 times the half diagonal there, plus 2 cm) and centered on the lens axis at that depth; it goes back to the whole plant as soon as that square would be three quarters of the whole plant, and always once the lens is 1.8 m away, so `dawn`, `rain` and the pull-back keep the map they had. The near and far planes still span every caster (`reach` in `ShadowMap.render`), so a leaf outside the square still shades what is inside it. At frame 1350 the map is 1.03 m wide, 0.5 mm a texel, about three times finer. Checked by rendering frames 45, 420, 780, 1080, 1199, 1350, 1515 and 1755: no picture changed but the bloom close-ups, where the shadow edges on the bud are finer.
+- 2026-11-21 · Phase 3 · The companion is drawn only when the lens can see it. `companionInView` in `src/director/companion.ts` tests a set of balls round its stem, head and leaves against the frame, generously (each ball is larger than the part it holds, plus 1.2 cm), and the film skips the companion's build, its draw and its shadow in a frame where it says no and the lens is within 1.0 m; farther back it is always drawn. It is left out of frames 0 to 612, 695 to 712 and 1017 to 1100, and never in `bloom` or `field`. Two checks that this changes no pixel. `tests/companion.test.ts` projects every vertex of the companion on every third frame of the film and fails if a frame that shows any vertex is one where it would be left out. And frames 45, 195, 300, 420, 560, 605, 700, 1040 and 1080 were rendered in the master format with the companion left out and with it forced in: all nine pairs are the same to the last bit, so its shadow reaches nothing the lens sees in those frames. For that to hold, the depth the shadow map spans is the same whether the companion is drawn or not (a first try let it shrink, and 1 to 16 values out of 6.2 million moved on four of the nine frames, at single points on a shadow edge). The companion's matrix is now one function, `companionMatrix()`, with a lean (`COMPANION_LEAN`, a slope, zero for now) that keeps its top at the height the config gives.
 
 ## Notes from Brandon
 
@@ -485,6 +487,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 06:52 UTC · Phase 2: whole preview film, proofs, M1 open item
 - 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
 - 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
+- 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
 
 ## Session log
 
@@ -531,4 +534,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Autopilot on the hosted app: seven screenshots taken while the film played.
 - Status 18, 2026-11-21 07:17 UTC, Phase 3 · unit bloom. The look lock is under way. The plant is now built from parts that each replace a piece of the gray stand-in, and ten agents started at 07:16, each owning one part: stem, leaves, bud, florets, petals, hairs, the skin shader, the golden sky, the lens and the field. Until their work lands, the pictures still show the stand-in, now lit by the shared skin. Next: My own list while they work: hold focus on the visible surface of the bud, sway in the stem and the field, a tighter shadow for close-ups, the leaves that cross the sun at the left edge. Their reports are due by 08:56, the first critic round by about 09:55. Time used: 6.4 h of 30 h.
   Pictures: Frame 1350 today, the stand-in bud lit by the shared skin; Frame 1515 today, the stand-in open head; Approved image for 1350; Approved image for 1515.
+- Status 19, 2026-11-21 07:38 UTC, Phase 3. The lens now holds the surface of the bud that faces it, not a point inside it, so the face of the bud is sharp at both bloom key frames and the focus measure is green there. The wind now sways the plant, the companion and every one of the 12,687 neighbors, each with the swell that reaches its own place, so a wave crosses the field. Shapes and colors are still the stand-in: ten supporting agents are building the real stem, leaves, bud, disc, petals, hairs, skin, golden world, lens and field. Next: A finer shadow map for close-ups and the companion's leaves across the sun at the left edge, then the agents' work is merged as it arrives (due by 08:56 UTC) and the first critic round on bloom starts. Time used: 6.8 h of 30 h.
+  Pictures: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); Frame 1515, the same: the open head is sharp; Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second.
 
