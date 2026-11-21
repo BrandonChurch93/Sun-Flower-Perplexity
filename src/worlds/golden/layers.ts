@@ -44,16 +44,17 @@ in float vDepth;
 uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
+uniform float uFogShare;
 ${air}
 float crown(float x, float w, float salt) {
   float f = fract(x / w) * 2.0 - 1.0;
-  return sqrt(max(1.0 - f * f, 0.0)) * (0.45 + 0.55 * hash21(vec2(floor(x / w), salt)));
+  return sqrt(max(1.0 - f * f, 0.0)) * (0.3 + 0.7 * hash21(vec2(floor(x / w), salt)));
 }
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  float crowns = max(max(crown(vInfo.x, 17.0, uLayer), crown(vInfo.x + 6.1, 26.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 11.0, uLayer + 5.0));
-  top *= 0.74 + 0.2 * crowns * (0.5 + valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.03 * valueNoise(vec2(vInfo.x * 0.12, uLayer + 7.0));
+  float crowns = 0.42 * crown(vInfo.x, 26.0, uLayer) + 0.26 * crown(vInfo.x + 6.1, 13.0, uLayer + 3.0) + 0.12 * crown(vInfo.x + 2.7, 6.0, uLayer + 5.0);
+  top *= 0.45 + 0.75 * crowns;
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -62,10 +63,9 @@ void main() {
   float f = saturate(vInfo.y / max(top, 1.0));
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.07 + 0.07 * f);
   vec3 v = normalize(vWorld - uCamPos);
-  color += uBase * uSunColor * uRim * smoothstep(0.7, 1.0, f) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
-  // Mist lies at the foot of every layer.
+  color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
   color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.2 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -87,7 +87,7 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
   vec3 color = albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * (0.05 + 0.12 * toSun * toSun));
-  outColor = finish(aerial(color, vWorld), vWorld, vDepth, -1.0);
+  outColor = finish(aerial(color, vWorld), vWorld, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
 }
 `
 
@@ -144,21 +144,23 @@ interface Strip {
 }
 
 const STRIPS: Strip[] = [
-  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.5, highDeg: 2.3, cells: 22, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
-  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 2.0, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.9, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.5, highDeg: 1.9, cells: 22, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
+  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.7, highDeg: 3.1, cells: 40, segments: 2880, trees: true, base: [0.03, 0.045, 0.02], rim: 0.035 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.4, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.013], rim: 0.56 },
 ]
 
 const VEILS = [
-  { radiusM: 14, heightM: 30, scaleM: 5, share: 0.24 },
-  { radiusM: 30, heightM: 40, scaleM: 6, share: 0.28 },
-  { radiusM: 60, heightM: 50, scaleM: 6, share: 0.32 },
-  { radiusM: 120, heightM: 60, scaleM: 7, share: 0.36 },
-  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.36 },
-  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.3 },
-  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.3 },
+  { radiusM: 14, heightM: 30, scaleM: 5, share: 0.21 },
+  { radiusM: 30, heightM: 40, scaleM: 6, share: 0.25 },
+  { radiusM: 60, heightM: 50, scaleM: 6, share: 0.28 },
+  { radiusM: 120, heightM: 60, scaleM: 7, share: 0.32 },
+  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.33 },
+  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.28 },
+  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.28 },
+  { radiusM: 3200, heightM: 260, scaleM: 60, share: 0.75 },
+  { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.75 },
 ]
 
 const SUN_GAP_DEG = 9
@@ -274,7 +276,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.03 : 0.02 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
