@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -20,7 +20,7 @@ const UNDER_BAND_M = 6
 // The dark layers, as shares of the height of the tops.
 const UNDER_LEVELS = [0.5, 0.68, 0.84]
 // From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
-const HEADS_FROM_M = 40
+const HEADS_FROM_M = 16
 const HEAD_AT = 0.9
 const RAY_DEEP = [0.82, 0.25]
 const LEAF_SKY = 2.0
@@ -43,9 +43,9 @@ ${swayGlsl}
 void main() {
   float across = aCorner.x;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
-  float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
+  float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
-  float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 40).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
+  float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 30).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
   float draw = fract(aVary.w * 0.6180339);
   float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away);
   float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
@@ -141,7 +141,7 @@ void main() {
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
-    float clump = 0.45 * valueNoise(p * 3.1) + 0.3 * valueNoise(p * 7.7) + 0.25 * valueNoise(p * 17.0);
+    float clump = 0.25 * valueNoise(p * 3.1) + 0.35 * valueNoise(p * 7.7) + 0.4 * valueNoise(p * 17.0);
     float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
@@ -159,7 +159,7 @@ void main() {
     float across = at.x * uToward.y - at.y * uToward.x;
     vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
     if (uCover * reach < hash21(cell)) discard;
-    float grain = valueNoise(vec2(across * 2.2, along * 0.045));
+    float grain = valueNoise(vec2(across, along) * 1.7);
     float patchy = valueNoise(at * 0.028);
     color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
   }
@@ -287,8 +287,8 @@ export class FarField {
       const uniforms = { ...this.uniforms, uHeight: height, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
       return plain(sheetGeometry(depths), makeSurface({ name: level > 0 ? 'field leaf layer' : 'field carpet', vertex: sheetVertex, fragment: sheetFragment, side: THREE.DoubleSide, castShadow: false, uniforms }))
     }
-    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, 220, 360, fieldEndM])
-    this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, 100, fieldPicturesM + 12]))
+    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldPicturesM])
+    this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, fieldPicturesM]))
 
     // The pictures are made just before the first surface that reads them is drawn.
     this.pictures.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
@@ -338,7 +338,7 @@ export class FarField {
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
         const id = 1 + i * pictureTurns + j
-        placeTurned([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(kindTime(this.time, i, 'pictures'), id))
+        placeTurned([rx * across, rz * across, pictureTurn(i, j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(kindTime(this.time, i, 'pictures'), id))
       }
       spot.needsUpdate = true
       still.needsUpdate = true

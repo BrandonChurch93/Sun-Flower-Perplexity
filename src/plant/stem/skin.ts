@@ -95,7 +95,7 @@ void main() {
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.065, 0.095, 0.008), vec3(0.155, 0.2, 0.018), tone);
+  vec3 grown = mix(vec3(0.052, 0.095, 0.007), vec3(0.124, 0.2, 0.016), tone);
   grown = mix(grown, vec3(0.29, 0.33, 0.05), 0.7 * thread);
   grown *= 1.0 - 0.15 * ribbed * furrow;
   grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.06 + 0.2 * streak));
@@ -120,6 +120,13 @@ void main() {
   t.wax = wax;
   t.sheen = mix(0.3, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.12 * ribbed * furrow);
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
+  vec3 color = shadeTissue(t, vWorld, view);
+#ifdef PLANT_FIELD
+  // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.
+  float graze = 1.0 - abs(dot(face, view));
+  float toSun = saturate(dot(-view, uSunDir));
+  color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
+#endif
+  outColor = finish(color, vWorld, vDepth, density);
 }
 `

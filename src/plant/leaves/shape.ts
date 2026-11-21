@@ -53,8 +53,10 @@ export function toothAt(s: number, seed: number, count: number, depth: number): 
   const x = count * Math.pow(s, 0.85) + 3 * hash01(seed, 1) + 0.4 * Math.sin(7.3 * s + 6.28 * hash01(seed, 2))
   const id = Math.floor(x)
   const f = x - id
-  const saw = f < 0.72 ? f / 0.72 : (1 - f) / 0.28
-  const size = depth * (0.45 + 1.1 * hash01(seed, 3, id)) * smoothstep(0, 0.1, s) * smoothstep(1, 0.78, s)
+  const edge = f < 0.62 ? f / 0.62 : (1 - f) / 0.38
+  // A tooth is a rounded point between rounded bays, and now and then one is all but missing.
+  const saw = edge * edge * (3 - 2 * edge)
+  const size = depth * (0.45 + 1.1 * hash01(seed, 3, id)) * (hash01(seed, 4, id) < 0.22 ? 0.3 : 1) * smoothstep(0, 0.1, s) * smoothstep(1, 0.78, s)
   return size * (saw - 0.35)
 }
 
