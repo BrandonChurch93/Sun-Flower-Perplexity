@@ -97,13 +97,16 @@ const BULGE_TOP = 0.3
 const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
 const FEET_LOW = [0.52, 0.12, 0]
+// The shut bud is a flattened globe: its widest ring lies this share of its depth lower, and the feet of its bracts stand this much higher on it.
+const SHUT_LOW = 0.6
+const FEET_UP = [0.05, 0.3, 0.33]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.35, 1.1, 0.7]
+const SHUT_BROAD = [1.25, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.95, 0, -0.8]
-const SHUT_CURL = [0.8, 0, 0]
+const SHUT_ANGLE = [1.15, 0, -0.8]
+const SHUT_CURL = [0.9, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
@@ -114,7 +117,9 @@ const CROWN_ANGLE = 0.6
 const CROWN_LONG = 0.12
 const CROWN_TIP = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
-const SPREAD_LONG = 1.6
+const SPREAD_LONG = 1.4
+const SPREAD_OUT = 0.2
+const SPREAD_OPEN = 0.35
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
@@ -369,7 +374,9 @@ export function create(options: PartOptions): PlantPart | null {
       if (nor) for (let v = 0; v < count; v++) nor.set([0, 1, 0], v * 3)
       return
     }
-    const hw = WIDEST * D
+    const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
+    const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
+    const hw = (WIDEST - SHUT_LOW * globe) * D
     const hr = FLOOR_RIM * D
     const Hb = hw + D
     const grown = Math.min(1, heightAt(time) / 0.006)
@@ -438,8 +445,6 @@ export function create(options: PartOptions): PlantPart | null {
     const over = 1 - smoothstep(bloom0 - 0.7, bloom0 + 0.3, time)
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
-    const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
-    const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
     const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, time)
     const wind = pose.inputs.wind
     for (let i = 0; i < shape.bracts; i++) {
@@ -481,12 +486,12 @@ export function create(options: PartOptions): PlantPart | null {
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
-      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + k.spread) * young, SHUT_ANGLE[k.series] + CROWN_ANGLE * k.crown + k.lean + k.spread, globe), stand, ready)
+      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + k.spread) * young, SHUT_ANGLE[k.series] + CROWN_ANGLE * k.crown + k.lean + SPREAD_OUT * k.spread, globe), stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
       const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.9 * collar)
-      const curl = lerp(lerp(lerp(bractCurl(j, inBud), SHUT_CURL[k.series] + k.spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
+      const curl = lerp(lerp(lerp(bractCurl(j, inBud), SHUT_CURL[k.series] - SPREAD_OPEN * k.spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
@@ -498,7 +503,7 @@ export function create(options: PartOptions): PlantPart | null {
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
 
-      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight)
+      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight + FEET_UP[k.series] * globe)
       let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(foot, 1)
       let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((foot - 1) / 0.5)
       let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
