@@ -114,7 +114,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
   // The tops are uneven in long streaks that run the way the light does.
   vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
-  float under = max(uCanopy * (0.93 + 0.2 * streak) - world.y, 0.0);
+  float under = max(uCanopy * (1.0 + 0.22 * streak) - world.y, 0.0);
   return exp(-1.5 * under / max(uSunDir.y, 0.06));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);

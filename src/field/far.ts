@@ -162,7 +162,7 @@ void main() {
   if (clump > share) discard;
   float inside = (share - clump) / max(share, 0.01);
   Tissue t;
-  t.albedo = mix(vec3(0.06, 0.13, 0.03), vec3(0.13, 0.25, 0.07), inside);
+  t.albedo = mix(vec3(0.04, 0.12, 0.025), vec3(0.1, 0.3, 0.06), inside);
   t.through = vec3(0.14, 0.5, 0.05);
   // A leaf in the mass tips toward the viewer, so the light behind it comes through.
   t.normal = normalize(vec3(-uSunDir.x, 0.9, -uSunDir.z));
@@ -301,6 +301,10 @@ export class FarField {
     this.hook = plain(nothing, makeSurface({ name: 'field pictures hook', vertex: hookVertex, fragment: hookFragment, castShadow: false }))
     this.hook.renderOrder = -1000
     this.hook.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
+    // Solid surfaces all: the order only lets the nearer ones hide the sheets before the sheets are shaded.
+    this.pictures.renderOrder = 10
+    this.under.forEach((m, i) => (m.renderOrder = 12 - i))
+    this.carpet.renderOrder = 13
     this.meshes = [this.hook, this.pictures, ...this.under, this.carpet]
   }
 

@@ -26,11 +26,11 @@ export const lagOf = (index: number, count: number): number => -MAX_LAG_S * (((i
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
 export const fieldNearM = 12
-export const fieldFarM = 52
+export const fieldFarM = 42
 export const fieldPicturesM = 150
 export const fieldEndM = 600
 const NEAR_BAND_M = 4
-const FAR_BAND_M = 16
+const FAR_BAND_M = 12
 export const carpetBandM = 30
 
 // Two turns of each simpler kind are drawn as pictures.
