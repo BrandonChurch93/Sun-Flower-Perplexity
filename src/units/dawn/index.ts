@@ -1,5 +1,5 @@
 import type { UnitFit } from '../../director/fit.ts'
 
 export const fit: UnitFit = {
-  fNumber: { keys: [22, 22] },
+  fNumber: { keys: [22, 11] },
 }

@@ -85,12 +85,12 @@ void main() {
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 4, topM: 2.2, scaleM: 3.5, alpha: 0.1, speed: 0.06 },
-  { radiusM: 7, topM: 2.8, scaleM: 5, alpha: 0.14, speed: 0.09 },
-  { radiusM: 11, topM: 3.6, scaleM: 7, alpha: 0.18, speed: 0.08 },
-  { radiusM: 16, topM: 4.6, scaleM: 10, alpha: 0.25, speed: 0.11 },
-  { radiusM: 24, topM: 5.8, scaleM: 15, alpha: 0.35, speed: 0.1 },
-  { radiusM: 42, topM: 8.2, scaleM: 26, alpha: 0.5, speed: 0.13 },
+  { radiusM: 5, topM: 2.4, scaleM: 3.5, alpha: 0.14, speed: 0.06 },
+  { radiusM: 7, topM: 2.8, scaleM: 5, alpha: 0.28, speed: 0.09 },
+  { radiusM: 11, topM: 3.6, scaleM: 7, alpha: 0.4, speed: 0.08 },
+  { radiusM: 16, topM: 4.6, scaleM: 10, alpha: 0.5, speed: 0.11 },
+  { radiusM: 24, topM: 5.8, scaleM: 15, alpha: 0.48, speed: 0.1 },
+  { radiusM: 42, topM: 8.2, scaleM: 26, alpha: 0.6, speed: 0.13 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
@@ -106,6 +106,14 @@ const smooth = (a: number, b: number, x: number): number => {
 export function fogThinAt(time: number): number {
   const unit = config.segments.find((s) => s.world === 'frost')
   return unit ? smooth(unit.end - THIN_OVER_S, unit.end, time) : 0
+}
+
+const FAR_HOLD_S = 1
+
+// How far the far shapes have come out of the thinning fog, 0 to 1: full through the unit's last second.
+export function fogFarAt(time: number): number {
+  const unit = config.segments.find((s) => s.world === 'frost')
+  return unit ? smooth(unit.end - THIN_OVER_S, unit.end - FAR_HOLD_S, time) : 0
 }
 
 export interface Fog {

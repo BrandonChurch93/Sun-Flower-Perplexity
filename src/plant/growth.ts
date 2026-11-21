@@ -106,12 +106,14 @@ const bodyCurve = new Monotone([
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
-// A neighbor carries a smaller head than the plant.
+// A neighbor carries a smaller head than the plant. Its bud swells like the plant's until it has the size its own head starts the bloom's unit with, and waits there.
 const NEIGHBOR_HEAD = 0.7
 const headScale = (): number => (variant === 0 ? 1 : NEIGHBOR_HEAD)
+const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(config.segments.find((s) => s.id === 'bloom')!.start)
 
 export function bodyRadius(time: number): number {
-  return bodyCurve.at(time) * headScale()
+  const body = bodyCurve.at(time)
+  return variant === 0 ? body : Math.max(NEIGHBOR_HEAD * body, Math.min(body, NEIGHBOR_HELD))
 }
 
 export function headOpen(time: number): number {
@@ -356,7 +358,8 @@ export function leafStemFraction(i: number, time: number): number {
   const late = smoothstep(20, 40, time)
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
-  const quick = Math.min(seconds, 1.6)
+  // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
+  const quick = Math.min(seconds, lerp(1.6, 8, smoothstep(16, 21, leafStart(i))))
   // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
   const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
   const tip = 0.99 * heightAt(start)

@@ -53,10 +53,17 @@ vec3 rainSky(vec3 d, float lod) {
   float up = max(asin(clamp(d.y, -1.0, 1.0)), 0.0);
   float turn = mod(uRainSkyCenter - atan(d.x, d.z) + 3.14159265, 6.2831853) - 3.14159265;
   float row = up < RAIN_SKY_BAND_TOP ? RAIN_SKY_BAND_ROWS * up / RAIN_SKY_BAND_TOP : RAIN_SKY_BAND_ROWS + (1.0 - RAIN_SKY_BAND_ROWS) * (up - RAIN_SKY_BAND_TOP) / RAIN_SKY_CLOUD_TALL;
-  vec3 sky = textureLod(tRainSky, vec2(fract(0.25 + turn / RAIN_SKY_SPAN + uRainSkyDrift), clamp(row, 0.004, 0.996)), lod).rgb;
+  vec2 at = vec2(fract(0.25 + turn / RAIN_SKY_SPAN + uRainSkyDrift), clamp(row, 0.004, 0.996));
+  vec3 sky = textureLod(tRainSky, at, lod).rgb;
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
   float cloud = 1.0 - smoothstep(0.12, 0.35, lum);
-  vec3 color = sky * mix(vec3(1.0), vec3(1.14, 1.24, 1.17), cloud) * uRainSkyGain;
+  // Seen through kilometres of rain the cloud keeps its great masses and loses its wisps.
+  vec3 mass = textureLod(tRainSky, at, max(lod, 6.0)).rgb;
+  sky = mix(sky, mass, 0.65 * cloud);
+  vec3 color = sky * mix(vec3(1.0), vec3(1.0, 1.08, 1.0), cloud) * uRainSkyGain;
+  // The paint holds the lit bellies of those masses back: they stand pale and greyer than the depths, which go darker.
+  float body = dot(mass, vec3(0.3, 0.6, 0.1));
+  color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body)));
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
   float toSun = (turn + uRainSkySunTurn) / 0.26;
   float sunward = exp(-toSun * toSun);
@@ -64,7 +71,7 @@ vec3 rainSky(vec3 d, float lod) {
   color *= mix(vec3(1.0), vec3(3.4, 2.9, 2.3), open);
   // The cloud's foot hangs into the band in rags, lower the farther from the sun, so the band opens wide only where the sun stands.
   float rags = 0.6 * valueNoise(vec2(turn * 14.0 + 3.0, up * 40.0)) + 0.4 * valueNoise(vec2(turn * 43.0 + 1.0, up * 90.0 + 5.0));
-  float foot = smoothstep(0.25, 0.95, up / RAIN_SKY_BAND_TOP + 0.9 * (rags - 0.5) + 0.4 - 0.75 * sunward);
+  float foot = smoothstep(0.25, 0.95, up / RAIN_SKY_BAND_TOP + 0.9 * (rags - 0.5) + 0.55 - 0.9 * sunward);
   color = mix(color, uRainSkyTone * 0.9, (1.0 - cloud) * 0.9 * foot);
   // Far rain hangs between the lens and the sky, lit grey by the band: an even haze that thickens toward the land, and leaning curtains under the cloud that drift.
   float lean = turn - 0.21 * up;

@@ -62,13 +62,13 @@ const float SKY_BACK = 0.12;
 const float SKY_THROUGH = 0.5;
 const float STRAND_GAIN = SUN_THROUGH * 2.5066 * TT_SPREAD / 0.714;
 const vec3 RIME = vec3(0.92, 0.96, 1.0);
-const float RIME_SUN = 0.12;
+const float RIME_SUN = 0.3;
 const float RIME_SKY = 1.5;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
-const float RIME_FACE = 0.02;
-const float RIME_VELVET = 0.1;
+const float RIME_FACE = 0.0;
+const float RIME_VELVET = 0.28;
 // A needle on the outline is seen from its shaded side, against the bright air.
-const float RIME_SHADE = 0.4;
+const float RIME_SHADE = 0.85;
 const float RIME_M = ${RIME_M.toFixed(6)};
 
 struct Strand {
@@ -147,7 +147,7 @@ void readHair(int k) {
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
     // Rime grows on a hair, not on the felt a strand of down stands for.
-    hairShare *= mix(1.0, hairSlim * hairSlim, uPlantFrost);
+    hairShare *= mix(1.0, hairSlim, uPlantFrost);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
@@ -223,7 +223,7 @@ Strand strandAt(float t) {
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
-  float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
+  float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
   vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(1.0, RIME_SHADE, open)), uPlantFrost) * veil;
   // Of the needles on a face turned to the eye few show, each whole: seen end on a needle is a point, and a coat of points is a haze.
   float shows = smoothstep(0.0, 0.08, mix(RIME_FACE, 1.0, open) * behind - 0.92 * fract(hairOwn * 139.71 + 0.57));

@@ -69,7 +69,9 @@ void main() {
 
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 12
-const FINE_REACH_M = 1.7
+const FINE_REACH_M = 1.3
+// Nearer than this a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
+const FINE_NEAR_M = 0.55
 const SLOWEST_M_PER_S = 1
 
 export interface Streaks {
@@ -134,7 +136,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
           if (off > room * tanX * 1.2 + 0.3) continue
           // The highest a drop over this cell can be and still show in the frame.
           const top = Math.max(0.3, eye.y + room * (rise + tanY * 1.2) + 0.2)
-          const series = depth < FINE_REACH_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
+          const series = depth > FINE_NEAR_M && depth < FINE_REACH_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
           for (let s = 0; s < series && n < MAX_STREAKS; s++) {
             const period = seriesPeriod(i, j, s)
             const last = close + top / (SLOWEST_M_PER_S * down)
