@@ -19,7 +19,7 @@ const REGATHER_M = 0.03
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
-const STRAND_PX = 0.2
+const STRAND_PX = 0.1
 const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 
@@ -81,6 +81,7 @@ float hairOwn;
 float hairShare;
 float hairWide;
 float hairBead;
+float hairSlim;
 
 vec3 hairPoint(float t) {
   return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
@@ -109,11 +110,14 @@ void readHair(int k) {
   vec3 e2 = cross(hairDir, e1);
   float turn = h1 * 6.2832;
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
-  // No two hairs stand alike: each leans its own way off the line it was given, up to 35 degrees and mostly upward, has its own length and its own slight curve.
-  hairDir = normalize(hairDir + aside * (0.7 * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
-  hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * (0.08 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
+  // No two hairs stand alike: each leans its own way off the line it was given, has its own length and its own slight curve. A long hair wanders and curves more than short down, which stands straight.
+  float reach = smoothstep(0.001, 0.005, hairRoot.w);
+  hairDir = normalize(hairDir + aside * ((0.35 + 0.5 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
+  hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
   hairRoot.w *= 0.5 + h6;
+  // A strand given a width past an eighth of its length stands for the down round it. It is drawn that slim and carries the rest as light, so close up it is still a hair and not a grain.
+  hairSlim = min(1.0, hairRoot.w / (8.0 * uHairWidth * (0.5 + fract(hairOwn * 91.71 + 0.43))));
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
@@ -174,8 +178,8 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairWide * mix(1.0, 0.25 + 0.15 * uPlantFrost, pow(t, 2.0 + h1));
-  s.share = hairShare;
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, 0.25 + 0.15 * uPlantFrost, pow(t, 2.0 + h1));
+  s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
   vWorld = s.world;
@@ -184,7 +188,9 @@ Strand strandAt(float t) {
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairStand);
-  float shade = smoothstep(-0.95, -0.6, dot(out3, uSunDir) - FACE_SHADE * max(dot(out3, s.toEye), 0.0));
+  // How far round the dark side a hair still reaches the sun goes with its length: down is in the body's shade a few degrees past the edge of the light.
+  float clear = min(0.95, sqrt(hairRoot.w * plantSize() / 0.004));
+  float shade = smoothstep(-clear, -0.63 * clear, dot(out3, uSunDir) - FACE_SHADE * max(dot(out3, s.toEye), 0.0));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
@@ -212,13 +218,15 @@ void main() {
   vec2 b = tip.xy / max(tip.w, 1e-5);
   vec2 run = (b - a) * 0.5 * uSize;
   float major = max(abs(run.x), abs(run.y));
-  float slant = length(run) / max(major, 1e-4);
-  // A hair seen end on is shorter than a pixel and would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, level in depth, so it does not sparkle.
-  float stretch = max(1.0, 2.0 / max(major, 1e-3));
+  // A hair shorter than two pixels would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, level in depth, so it does not sparkle. Shorter than a pixel it has no direction to show and is laid across its own, which on an outline is along it: down adds up to a line there, not to a row of beads.
+  float stretch = max(1.0, min(2.0 / sqrt(hairSlim), 4.0) / max(major, 1e-3));
+  float across = 1.5708 * (1.0 - smoothstep(0.75, 1.5, major));
+  mat2 lay = mat2(cos(across), sin(across), -sin(across), cos(across));
   vec2 mid = 0.5 * (a + b);
-  vec2 at = mid + (here.xy / max(here.w, 1e-5) - mid) * stretch;
+  vec2 at = mid + lay * ((here.xy / max(here.w, 1e-5) - mid) * uSize) * stretch / uSize;
+  vec2 laid = lay * run * stretch;
   float level = 0.5 * (foot.z / max(foot.w, 1e-5) + tip.z / max(tip.w, 1e-5));
-  vCover = s.width / s.pixel * slant * s.share / stretch;
+  vCover = s.width / s.pixel * s.share * length(run) / max(max(abs(laid.x), abs(laid.y)), 1e-3);
   vBead.y *= sqrt(s.share);
   vBead.z = max(major, 2.0);
   gl_Position = stretch > 1.0 ? vec4(at * here.w, level * here.w, here.w) : here;
@@ -473,7 +481,8 @@ export class HairSet {
     const size = Math.hypot(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
-    const close = (this.widthM * thick * 1.5 * size) / pixel > RIBBON_FROM_PX
+    // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
+    const close = (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
       return
