@@ -335,7 +335,7 @@ export function create(options: PartOptions): PlantPart {
     const stalk = leaf.stalk
     const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
-    const droop = leafDroop(i, pose.inputs)
+    const droop = leafDroop(i, pose.inputs, time)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
     // A blade that points away shows its underside instead, so it turns the other way.
