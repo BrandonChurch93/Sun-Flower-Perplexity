@@ -20,4 +20,4 @@
 ## Not maps
 
 - The stand-in `backdrop.jpg` (the approved image with the plant painted out) is gone: the world is built and no code reads it.
-- The stars (a seeded catalogue), the tree lines and the far land are drawn by code in `src/worlds/night/sky.ts` and `src/worlds/night/layers.ts` and use no file. The tall wooded hills are painted by the sky pass from the tables of `ridge.ts` (step 6 above), fixed to the land: they rise after the cut at 20 s (full by 23 s) and are gone again by the cut at 30 s (from 27.5 s), so each cut shows only the low land that the other worlds share.
+- The stars (a seeded catalogue), the tree lines and the far land are drawn by code in `src/worlds/night/sky.ts` and `src/worlds/night/layers.ts` and use no file. The tall wooded hills are painted by the sky pass from the tables of `ridge.ts` (step 6 above), fixed to the land: they stand at their full height all night and only their tone changes: as faint as the sky behind them at the cut at 20 s, dark by 22 s, paling again from 28 s to the cut at 30 s, so each cut shows only the low land that the other worlds share.
