@@ -37,7 +37,7 @@ const FOLD_LAG = [0.45, 0.65, 0.85]
 const FEET = [0.5, 0.78, 1]
 const HUG = [0.3, 0.24, 0.25]
 const STAND = [0.4, 0.36, 0.14]
-const FLARE = [0.85, 0.8, 0.75]
+const FLARE = [0.25, 0.25, 0.5]
 // While the bud is shut each series leans in this much further than growth.ts says, so the inner points close over the face. In radians.
 const SHUT = [0.3, 0.9, 1.7]
 // A folded bract curls back on itself toward its point by up to this much, in radians.
@@ -51,7 +51,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 
-interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hang: boolean; hook: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hang: boolean; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -83,6 +83,7 @@ export function create(options: PartOptions): PlantPart | null {
       lean: (rnd(16, i) - 0.5) * 0.3,
       hang: series === 0 && rnd(17, i) < 0.16,
       hook: series === 2 ? 0 : HOOK * (0.35 + 0.65 * rnd(18, i)),
+      reflex: series === 2 ? 0.4 * rnd(19, i) : 0.5 + 1.1 * rnd(19, i) - 0.15 * series,
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: HUG[series] + 0.05 * rnd(11, i),
@@ -346,6 +347,7 @@ export function create(options: PartOptions): PlantPart | null {
       const stand = k.hang ? HANG : STAND[k.series] + k.lean
       const angle = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready), FOLD[k.series] + 0.5 * k.lean, folded)
       const hook = k.hook * folded
+      const reflex = k.reflex * ready * (1 - folded)
       const curl = lerp(lerp(bractCurl(j, inBud), k.hang ? 0.1 : -FLARE[k.series], ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
@@ -373,7 +375,7 @@ export function create(options: PartOptions): PlantPart | null {
         const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * tipW * tipW * (1 - 0.7 * over * shut) + hook * smoothstep(0.3, 1, u) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(0.22, 0.55, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
         const fr = r / (R + lift)
         const fh = Math.max(0, h - hr) / (Hf + lift)
         const onFace = over * (1 - smoothstep(1, 1.1, fr * fr + fh * fh))
@@ -444,8 +446,8 @@ export function create(options: PartOptions): PlantPart | null {
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
-        const tail = 0.5 * (1 - u) + 0.008
-        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.55, u))
+        const tail = 0.5 * (1 - u) + 0.006
+        const half = W * lerp(body, tail, smoothstep(k.tail + 0.06, k.tail + 0.5, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
         const soft = 0.2 * half + 1e-6
