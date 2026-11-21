@@ -109,14 +109,14 @@ const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
 const SHUT_ANGLE = [1.05, 0, -0.6]
 const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
-const SHUT_CURL = [0.9, 0, 0]
+const SHUT_CURL = [1.25, 0, 0]
 const SHUT_CURL_LATE = [0.8, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [0.5, 0.85, 0.9]
+const SHUT_LONG = [0.5, 0.95, 0.98]
 const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
-const SHUT_TIP = [0.35, 0.7, -0.4]
+const SHUT_TIP = [0.35, 0.7, 0.1]
 const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // One bract in three of the inner series (every other one in the old build the bloom keeps) stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 1.0
@@ -137,7 +137,7 @@ const TUFT_FOLD = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
 const SPREAD_LONG_LATE = 1.6
-const SPREAD_OUT = 0.55
+const SPREAD_OUT = 0.4
 const SPREAD_OPEN = 0.1
 const SPREAD_UP = 0.5
 const SPREAD_SLIM = 0.2
@@ -148,6 +148,8 @@ const YOUNG_LONG = [2.6, 2.0, 0]
 const YOUNG_SHORT = [0, 0, 0.2]
 // A young bract wears its hairs long for its size, as a young leaf does.
 const YOUNG_FRINGE = 1.8
+// Under rime the fringe of a margin stands out at its full length.
+const FROST_FRINGE = 0.9
 // The bud comes out wrapped: its first bracts stand on the stem's own tip, lean in over it by this much and take this long to unfold, so nothing comes out through the stem's skin.
 // No two bracts of the shut bud are alike: each has its own length, width, lean and bend of the point.
 const VARY = { long: 0.14, wide: 0.22, lean: 0.24, tip: 0.55 }
@@ -357,8 +359,8 @@ export function create(options: PartOptions): PlantPart | null {
     const i = furCount + n
     const u = hairAt[i * 2] / (shape.nu - 1)
     const seed = bracts[(hairBase[i] - bodyCount) / perBract].seed
-    const reached = smoothstep(0.25, 0.7, u) * smoothstep(-0.25, 0.25, Math.sin(u * 11 + seed * 40 + (hairKind[i] > 0 ? 2.1 : 0)) * Math.sin(u * 5.3 + seed * 17 + 1) + 0.15)
-    iceOpen[n] = u >= 0.9 ? 1.3 : rnd(2323, n) < 0.2 ? 0 : 0.85 * reached
+    const reached = smoothstep(0.1, 0.35, u) * (0.75 + 0.25 * smoothstep(-0.25, 0.25, Math.sin(u * 11 + seed * 40 + (hairKind[i] > 0 ? 2.1 : 0)) * Math.sin(u * 5.3 + seed * 17 + 1) + 0.15))
+    iceOpen[n] = u >= 0.9 ? 1.3 : rnd(2323, n) < 0.1 ? 0 : 1.4 * reached
   }
   const jitter = hairs ? Float32Array.from({ length: allCount * 4 }, (_, i) => hash01(seed, 700 + (i % 4), i >> 2)) : null
 
@@ -781,7 +783,7 @@ export function create(options: PartOptions): PlantPart | null {
       const lean = i < hairCount ? hairLean : i < furCount ? downLean : iceLean
       const o = (i < hairCount ? i : i < furCount ? i - hairCount : i - furCount) * 4
       // Shut, the bud wears a short fringe and only part of its down: the rest grows as the bracts loosen.
-      const worn = kind === 2 ? Math.max(1 - tight, 0.8 * young) : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : lerp(1, iceOpen[i - furCount], early)
+      const worn = kind === 2 ? Math.max(1 - tight, 0.8 * young) : kind === 1 || kind === -1 ? Math.max(fringe, FROST_FRINGE * early) : kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : lerp(1, iceOpen[i - furCount], early)
       root[o] = x
       root[o + 1] = y
       root[o + 2] = z
