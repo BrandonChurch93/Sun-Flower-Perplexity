@@ -98,8 +98,8 @@ void main() {
   albedo *= 0.85 + 0.3 * tone;
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
-  vec3 color = 0.3 * albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * max(uSunDir.y, 0.0));
-  outColor = finish(aerial(color, vWorld), mix(uCamPos, vWorld, mix(1.0, 0.02, clearAir(v))), min(vDepth, 100.0 * uFocusM), -1.0);
+  vec3 color = 0.3 * mix(1.0, 0.25, uValleyOn) * albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * max(uSunDir.y, 0.0));
+  outColor = finish(aerial(color, vWorld), mix(uCamPos, vWorld, mix(1.0, 0.35, clearAir(v))), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -120,7 +120,7 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
 const VALLEY_DEG = 215
 const RAD = Math.PI / 180
 // While the tall hills of the sky pass stand, the shared rows are the low growth at their foot: they keep this share of their height, so the line against the sky is the hills' alone and as sharp as the stars.
-const HILLS_LOW = 0.45
+const HILLS_LOW = 0.2
 // In the valley the far rows stand in the mist: the lit haze takes this share of them.
 const VALLEY_FOG = 0.75
 
