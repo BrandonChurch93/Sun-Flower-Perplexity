@@ -48,17 +48,23 @@ uniform float uSpeed;
 uniform float uLayer;
 uniform vec2 uToward;
 ${fogLight}
-float bankField(vec3 p) {
-  vec2 q = vec2(dot(p.xz, uToward), dot(p.xz, vec2(-uToward.y, uToward.x)));
-  vec2 a = vec2(q.x + 0.31 * q.y, 2.6 * p.y + 0.53 * q.y) / uScaleM;
-  vec2 b = vec2(q.x - 0.42 * q.y, 2.6 * p.y - 0.29 * q.y) * (2.3 / uScaleM);
-  return 0.65 * valueNoise(a + uLayer) + 0.35 * valueNoise(b + 3.1 * uLayer);
+float bankBroad(vec2 q, float y) {
+  return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
+}
+float bankFine(vec2 q, float y) {
+  return valueNoise(vec2(q.x - 0.42 * q.y, 2.6 * y - 0.29 * q.y) * (2.3 / uScaleM) + 3.1 * uLayer);
+}
+vec2 alongWind(vec3 p) {
+  return vec2(dot(p.xz, uToward), dot(p.xz, vec2(-uToward.y, uToward.x)));
 }
 void main() {
   if (uDiag > 1) discard;
   vec3 p = vWorld - vec3(uToward.x, 0.0, uToward.y) * (uSpeed * uNow);
-  float here = bankField(p);
-  float sunward = bankField(p + uSunDir * (0.3 * uScaleM));
+  vec2 q = alongWind(p);
+  float broad = bankBroad(q, p.y);
+  float here = 0.65 * broad + 0.35 * bankFine(q, p.y);
+  vec3 s = p + uSunDir * (0.3 * uScaleM);
+  float lit = broad - bankBroad(alongWind(s), s.y);
   vec3 v = vWorld - uCamPos;
   float d = length(v);
   v /= d;
@@ -67,20 +73,18 @@ void main() {
   float thick = smoothstep(0.3, 0.72, here) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.012, 0.045, theta);
   float edge = 1.0 - smoothstep(0.55, 1.0, vInfo.y / vInfo.z);
   float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d);
-  outColor = vec4(fogLight(v) * (1.0 + 0.5 * (here - sunward)), alpha);
+  outColor = vec4(fogLight(v) * (1.0 + 0.33 * lit), alpha);
 }
 `
 
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 5.2, topM: 7, scaleM: 3.6, alpha: 0.03, speed: 0.06 },
-  { radiusM: 7.5, topM: 9, scaleM: 5, alpha: 0.06, speed: 0.09 },
-  { radiusM: 11, topM: 11, scaleM: 7, alpha: 0.14, speed: 0.08 },
-  { radiusM: 16, topM: 14, scaleM: 10, alpha: 0.25, speed: 0.11 },
-  { radiusM: 24, topM: 18, scaleM: 15, alpha: 0.35, speed: 0.1 },
-  { radiusM: 36, topM: 24, scaleM: 22, alpha: 0.4, speed: 0.13 },
-  { radiusM: 54, topM: 32, scaleM: 32, alpha: 0.45, speed: 0.12 },
+  { radiusM: 11, topM: 3.6, scaleM: 7, alpha: 0.16, speed: 0.08 },
+  { radiusM: 16, topM: 4.6, scaleM: 10, alpha: 0.25, speed: 0.11 },
+  { radiusM: 24, topM: 5.8, scaleM: 15, alpha: 0.35, speed: 0.1 },
+  { radiusM: 36, topM: 7.4, scaleM: 22, alpha: 0.4, speed: 0.13 },
+  { radiusM: 54, topM: 9.5, scaleM: 32, alpha: 0.45, speed: 0.12 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
