@@ -57,18 +57,22 @@ void main() {
   color = mix(color, lum * pale, 0.75 * smoothstep(0.15, 1.2, lum));
   color = mix(color, lum * vec3(0.9, 1.5, 1.62), 0.86 * max(shelf, 0.35 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta)) * (1.0 - smoothstep(0.35, 1.2, lum)));
   color *= mix(vec3(1.0), vec3(1.22, 0.93, 0.68), exp(-max(el, 0.0) / 0.12) * smoothstep(0.1, 0.6, lum) * (1.0 - 0.6 * smoothstep(0.35, 0.8, theta)));
+  color *= 1.0 + vec3(0.22, 0.08, -0.03) * under * smoothstep(0.045, rim, el);
   float lit = dot(color, vec3(0.3, 0.6, 0.1));
   color = mix(color, lit * vec3(1.2, 0.95, 0.7), shelf * smoothstep(0.08, 0.4, lit)) / (1.0 + 5.5 * shelf * lit);
   vec2 deck = d.xz / (max(d.y, 0.0) + 0.12);
-  float bands = 0.5 * valueNoise(deck * 0.8 + 3.0) + 0.3 * valueNoise(deck * 1.9 + 7.0) + 0.2 * valueNoise(deck * 4.6 + 11.0);
-  color *= 1.0 + 0.55 * (bands - 0.5) * smoothstep(0.075, 0.13, el);
+  // The deck lies in long lanes across the sun's bearing, so they run level over the horizon.
+  vec2 bearing = normalize(uSunDir.xz);
+  vec2 lane = vec2(dot(deck, bearing), dot(deck, vec2(-bearing.y, bearing.x)));
+  float bands = smoothstep(0.28, 0.72, 0.5 * valueNoise(lane * vec2(3.6, 0.5) + 3.0) + 0.3 * valueNoise(lane * vec2(7.5, 1.1) + 7.0) + 0.2 * valueNoise(deck * 4.6 + 11.0));
+  color *= 1.0 + 1.3 * (bands - 0.5) * smoothstep(0.075, 0.13, el);
   color += vec3(0.05, 0.03, 0.012) * (0.4 + 1.2 * bands) * shelf * (1.0 - smoothstep(0.11, 0.22, el));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.62 * valueNoise(vec2(fan * 3.4, 3.7)) + 0.38 * valueNoise(vec2(fan * 9.3, 9.1));
-  rays = smoothstep(0.25, 0.8, rays);
+  float rays = 0.6 * valueNoise(vec2(fan * 2.4, 3.7)) + 0.4 * valueNoise(vec2(fan * 8.0, 9.1));
+  rays = smoothstep(0.35, 0.75, rays);
   float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.3) * smoothstep(0.0, 0.07, el) * (0.55 + uPale);
   color *= 1.0 + 0.7 * (rays - 0.45) * reach;
   color += uGlow * (0.2 * (rays - 0.3) * reach);
@@ -80,7 +84,7 @@ void main() {
   color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.58 + 0.95 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
   color += uGlow * vec3(1.0, 0.74, 0.56) * ((0.39 - 0.37 * uPale) * exp(-theta * theta / 0.115) * smoothstep(0.06, 0.13, el));
   color += vec3(0.098, 0.17, 0.2) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el) + vec3(0.0, 0.024, 0.036) * smoothstep(0.25, 0.6, theta) * smoothstep(0.06, 0.12, el);
-  color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), min(0.9, exp(-theta / 0.1) + uPale + 0.4 * smoothstep(0.4, 0.75, theta)) * exp(-max(el, 0.0) / 0.07) * smoothstep(0.015, 0.06, theta));
+  color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), max(0.7 * uPale, min(0.9, exp(-theta / 0.1) + uPale + 0.4 * smoothstep(0.4, 0.75, theta)) * exp(-max(el, 0.0) / 0.07)) * smoothstep(0.015, 0.06, theta));
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 
