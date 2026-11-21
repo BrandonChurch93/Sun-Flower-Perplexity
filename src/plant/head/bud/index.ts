@@ -96,7 +96,7 @@ const BULGE = [0.25, 0.24, 0.2]
 const BULGE_TOP = 0.3
 const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
-const FEET_LOW = [0.34, 0.25, 0.1]
+const FEET_LOW = [0.52, 0.25, 0.1]
 // and each blade is this much broader and tapers evenly to its point.
 const SHUT_BROAD = [1.45, 1.4, 0.9]
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
@@ -293,7 +293,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = lerp(0.001, 0.0022, u * u) * (0.75 + 0.5 * rnd(2123 + b, i))
+        hairLong[n] = lerp(0.0015, 0.0025, u * u) * (0.75 + 0.5 * rnd(2123 + b, i))
       }
     }
   }
@@ -489,7 +489,7 @@ export function create(options: PartOptions): PlantPart | null {
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
 
-      const foot = k.foot - FEET_LOW[k.series] * tight
+      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight)
       let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(foot, 1)
       let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((foot - 1) / 0.5)
       let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
@@ -587,7 +587,7 @@ export function create(options: PartOptions): PlantPart | null {
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
-        const even = lerp(1.04, 0.18, smoothstep(0.38, 0.74, u)) * (1 - Math.pow(clamp((u - 0.7) / 0.3), 1.4)) + 0.004
+        const even = lerp(1.04, 0.16, smoothstep(0.42, 0.84, u)) * (1 - Math.pow(clamp((u - 0.7) / 0.3), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight)
@@ -723,7 +723,7 @@ export function create(options: PartOptions): PlantPart | null {
     },
     finish(time) {
       uniforms.uBudOpen.value = headOpen(time)
-      uniforms.uBudShut.value = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
+      uniforms.uBudShut.value = (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time)
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true

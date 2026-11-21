@@ -55,7 +55,7 @@ void main() {
   vec3 v = normalize(uCamPos - vWorld);
   float mirror = 0.02 + 0.98 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
   vec3 r = reflect(-v, n);
-  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 3.5), smoothstep(-0.06, 0.02, r.y));
+  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 2.0), smoothstep(-0.06, 0.02, r.y));
   float alpha = saturate(mirror + 0.25);
   outColor = vec4(finish(sky * mirror / alpha, vWorld, vDepth, -1.0).rgb, alpha * thread);
 }
