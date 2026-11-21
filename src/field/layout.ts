@@ -148,7 +148,19 @@ const EDGE = [
   { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 3, more: true },
 ]
 
-export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array; under: Float32Array }
+// The crop's front comes forward round the companion, so that only the plant stands free: the first row is at full height at its side,
+// and five neighbors stand before the rows, each set by hand: how far behind the plant's line, how far to its right, its size, its turn and its kind.
+const FRONT_ROW = { left: -2.6, right: -0.85 }
+const FRONT = [
+  { along: 0.78, across: -1.32, size: 0.7, turn: 0.35, kind: 1 },
+  { along: 0.7, across: -1.8, size: 0.78, turn: -0.15, kind: 5 },
+  { along: 0.83, across: -2.22, size: 0.62, turn: 0.7, kind: 3 },
+  { along: 0.04, across: -1.52, size: 0.67, turn: 0.25, kind: 6 },
+  { along: -0.03, across: -1.98, size: 0.6, turn: -0.4, kind: 0 },
+]
+export const frontM = config.field.plantAheadOfRowM
+
+export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array; under: Float32Array; front: Float32Array }
 
 let made: FieldPlaces | null = null
 
@@ -174,7 +186,7 @@ export function fieldPlaces(): FieldPlaces {
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
       const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
-      const skirt = k < edgeRows(across) - 0.5
+      const skirt = k < edgeRows(across) - 0.5 && !(across > FRONT_ROW.left && across < FRONT_ROW.right)
       if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -184,7 +196,7 @@ export function fieldPlaces(): FieldPlaces {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
         const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
-        if (k < edgeRows(off) - 0.5) continue
+        if (k < edgeRows(off) - 0.5 && !(off > FRONT_ROW.left && off < FRONT_ROW.right)) continue
         const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
         under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
       }
@@ -226,7 +238,20 @@ export function fieldPlaces(): FieldPlaces {
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
-  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under) }
+  const front: number[] = []
+  FRONT.forEach((f, n) => {
+    do id++
+    while (kindOf(id) !== f.kind)
+    const lean = (channel: number) => Math.max(-0.2, Math.min(0.2, bell(id, channel) * 0.075))
+    front.push(-toward.x * f.along + right.x * f.across, -toward.z * f.along + right.z * f.across, meanTurn + f.turn, f.size, lean(30), lean(33), 0.35 + 0.5 * hash01(SEED, 8, id), id)
+    for (let u = 0; u < UNDER_PER_GAP; u++) {
+      const uid = UNDER_ID * 2 + n * UNDER_PER_GAP + u
+      const off = f.across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
+      const back = f.along + (hash01(SEED, 52, uid) - 0.5) * 0.1
+      under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.3 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
+    }
+  })
+  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under), front: new Float32Array(front) }
   return made
 }
 

@@ -391,7 +391,7 @@ export class FarField {
     const target = renderer.getRenderTarget()
     const alpha = renderer.getClearAlpha()
     renderer.getClearColor(this.clear)
-    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value, wind: fieldUniforms.uPlantWind.value, canopy: fieldUniforms.uCanopy.value }
+    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value, wind: fieldUniforms.uPlantWind.value, canopy: fieldUniforms.uCanopy.value, edge: fieldUniforms.uEdge.value.z }
     shared.uCamPos.value.copy(this.eye)
     shared.uFogDensity.value = 0
     shared.uCocScale.value = 0
@@ -399,6 +399,7 @@ export class FarField {
     fieldUniforms.uPlantWind.value = 0
     // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as a neighbor of middle height is.
     fieldUniforms.uCanopy.value = keep.canopy / PICTURE_SIZE
+    fieldUniforms.uEdge.value.z = -1000
     renderer.setRenderTarget(this.atlas)
     renderer.setClearColor(0x000000, 1)
     renderer.clear(true, true, false)
@@ -409,6 +410,7 @@ export class FarField {
     shared.uShadowOn.value = keep.shadow
     fieldUniforms.uPlantWind.value = keep.wind
     fieldUniforms.uCanopy.value = keep.canopy
+    fieldUniforms.uEdge.value.z = keep.edge
     renderer.setRenderTarget(target)
     renderer.setClearColor(this.clear, alpha)
   }

@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, hangAt, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -39,13 +39,17 @@ export class Field {
 
   constructor() {
     const places = fieldPlaces()
+    const near = new Float32Array(places.near.length + places.front.length)
+    near.set(places.near)
+    near.set(places.front, places.near.length)
     this.groups = [
-      ...nearVariants.map((v, i) => group('near', v, shareOf(places.near, i, nearVariants.length), i)),
+      ...nearVariants.map((v, i) => group('near', v, shareOf(near, i, nearVariants.length), i)),
       ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i)),
       ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, true)),
     ]
     this.far = new FarField(places.pictures)
     this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
+    fieldUniforms.uEdge.value.set(toward.x, toward.z, frontM)
   }
 
   get plants(): number {
