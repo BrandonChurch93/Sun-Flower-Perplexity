@@ -28,7 +28,9 @@ const WIDEST = 0.2
 const SHOULDER = 0.07
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
-const HAIR_WIDTH_M = 0.00006
+const HAIR_WIDTH_M = 0.00008
+// Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
+const ROLL = 0.16
 // A bract folds back with the rays in front of it, this many seconds ahead of them. growth.ts has no sectors for bracts.
 const SECTOR_LEAD = 0.35
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
@@ -165,7 +167,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -1 : 1
-        hairLong[n] = (0.001 + 0.001 * rnd(123 + b, i)) * (1 - 0.3 * u)
+        hairLong[n] = (0.0012 + 0.001 * rnd(123 + b, i)) * (1 - 0.25 * u)
       }
       for (let i = 0; i < faceEach; i++, n++) {
         const keel = rnd(223 + b, i) < 0.3
@@ -418,7 +420,7 @@ export function create(options: PartOptions): PlantPart | null {
         const ux = nx * cw - tx * sw
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
-        const body = (0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.42))) * lerp(0.82, 1, smoothstep(0, 0.1, u))
+        const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.5 * (1 - u) + 0.008
         const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.55, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
@@ -426,11 +428,12 @@ export function create(options: PartOptions): PlantPart | null {
         const soft = 0.2 * half + 1e-6
         const keel = 0.0007 * size * (1 - 0.6 * u)
         const round = Math.max(rowR[a], 0.25 * R)
+        const roll = ROLL * (1 - smoothstep(0.15, 0.6, u))
         for (let b = 0; b < shape.nv; b++) {
           const x = (b / (shape.nv - 1)) * 2 - 1
           const xi = x * half
           const wave = 0.07 * half * smoothstep(0.1, 0.4, u) * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
-          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave
+          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave + (xi + half) * roll
           const v = (base + a * shape.nv + b) * 3
           out[v] = mx + wx * xi + ux * dn
           out[v + 1] = my + wy * xi + uy * dn
