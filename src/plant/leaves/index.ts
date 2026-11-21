@@ -16,6 +16,9 @@ import { SETS, sweepAt, toothAt, veinAt, veinField, veinsOf, widthAt, type Vein 
 const REACH = 1.25
 const STALK = 0.36
 const PATH = 48
+// The blades of the main plant turn their faces to the open side of the row, where the lens stands in the bloom.
+const OPEN_SIDE = 0.35
+const FACING = 1.2
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
 const TROUGH = 0.0045
@@ -164,7 +167,7 @@ export function create(options: PartOptions): PlantPart {
       tipCurl: withered ? 1.5 : dry ? 1.1 : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
-      rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
+      rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
       crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
@@ -352,6 +355,9 @@ export function create(options: PartOptions): PlantPart {
     const droop = leafDroop(i, pose.inputs)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
+    // A blade that points away shows its underside instead, so it turns the other way.
+    const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
+    const facing = main ? -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE)) : 0
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
@@ -393,7 +399,7 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + sway * (0.3 + 0.7 * s)
+      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const cx = frame.ox + frame.mx * at.x + frame.nx * at.z
@@ -444,7 +450,7 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + sway * (0.3 + 0.7 * s)
+      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const tx = frame.mx * ca + frame.nx * sa
@@ -459,8 +465,8 @@ export function create(options: PartOptions): PlantPart {
       const nx = ux * ct - frame.wx * st
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
-      const flare = ring === 0 ? 1 : 1 + 0.5 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) * flare
+      const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
