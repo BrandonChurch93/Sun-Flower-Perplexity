@@ -123,7 +123,9 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float closed = smoothstep(0.2, 0.85, uCanopy);
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
-  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 1.6, lane), closed) * under / (0.6 + uSunDir.y));
+  // Below the tops the sun in a lane comes through the leaves in flecks: a piece of a stalk, the edge of a leaf.
+  float fleck = smoothstep(0.5, 0.68, valueNoise(vec2(world.y * 6.0 + across * 2.3, along * 1.7 + world.y * 2.0)));
+  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
