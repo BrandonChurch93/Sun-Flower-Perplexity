@@ -22,7 +22,7 @@ setLeafTurn(companionVariant, 228.3 * RAD)
 // on a stalk that rises from the lower left, a small dark one above it, three under it and two in the bottom corner. The one that grew toward the sun
 // is swung out of the frame. They sink through the bloom as the stem carries them up, so that they stay where they are in the frame.
 setLeafHold(companionVariant, 20, { droop: 0.2, lengthScale: 0.7, swingDeg: 180 })
-setLeafHold(companionVariant, 19, { droop: 0.1, liftDeg: 45.1, sinkDeg: 2.2, lengthScale: 1.135, rollDeg: -85.2, foldScale: 0.738, swingDeg: 171.7 })
+setLeafHold(companionVariant, 19, { droop: 0.1, liftDeg: 44.3, sinkDeg: 2.2, lengthScale: 1.135, rollDeg: -85.2, foldScale: 0.738, swingDeg: 171.7 })
 setLeafHold(companionVariant, 18, { droop: 0.107, liftDeg: 22.9, sinkDeg: 12.3, lengthScale: 1.079, rollDeg: 1.9, foldScale: 0.093, swingDeg: -23.7 })
 setLeafHold(companionVariant, 16, { droop: 0.194, liftDeg: 5.7, sinkDeg: -8.3, lengthScale: 2.391, rollDeg: 8.1, foldScale: 0.741, swingDeg: -95 })
 setLeafHold(companionVariant, 14, { droop: 0.005, liftDeg: 67.6, sinkDeg: -4.2, lengthScale: 1.853, rollDeg: 65.8, foldScale: 0.037, swingDeg: 146.3 })
