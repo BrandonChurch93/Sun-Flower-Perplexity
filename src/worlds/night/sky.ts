@@ -26,7 +26,7 @@ const METEOR_FROM_DEG: [number, number] = [-188.1, 18.9]
 const METEOR_TO_DEG: [number, number] = [-182.1, 13.6]
 const METEOR_LIGHT = 0.5
 
-const STARS = 150000
+const STARS = 200000
 const FAINTEST = 0.0147
 const BRIGHTEST = 12
 const SLOPE = 1.3
@@ -187,7 +187,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     light[n * 4] = flux * tint[0]
     light[n * 4 + 1] = flux * tint[1]
     light[n * 4 + 2] = flux * tint[2]
-    light[n * 4 + 3] = 0.5 + 0.12 * width + 0.8 * Math.min(1, Math.sqrt(drawn / BRIGHTEST))
+    light[n * 4 + 3] = 0.5 + 0.12 * width + 0.5 * Math.min(1, Math.sqrt(drawn / BRIGHTEST))
     n++
   }
   const geometry = new THREE.BufferGeometry()

@@ -20,7 +20,7 @@ const srgb = (v) => Math.round(255 * Math.min(1, Math.max(0, v <= 0.0031308 ? v 
 
 const small = sharp(TAKE).resize(W, H, { kernel: 'lanczos3' })
 const points = await raw(small.clone())
-const FINE = Number(process.argv[4] ?? 11)
+const FINE = Number(process.argv[4] ?? 7)
 const WIDE = Number(process.argv[5] ?? 25)
 const LEFT = Number(process.argv[6] ?? 0.6)
 const take = await raw(sharp(TAKE))
