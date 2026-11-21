@@ -18,7 +18,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 12000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 20000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
 }
@@ -100,11 +100,11 @@ const FEET_LOW = [0.34, 0.25, 0.1]
 // and each blade is this much broader and tapers evenly to its point.
 const SHUT_BROAD = 1.45
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.35, -0.35, -0.95]
-const SHUT_CURL = [0.5, 0, 0]
+const SHUT_ANGLE = [0.35, -0.25, -0.95]
+const SHUT_CURL = [0.25, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.5
-const SHUT_TIP = [0, 0.7, 1.3]
+const SHUT_TIP = [1.3, 1.3, 1.4]
 
 interface Bract { spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
@@ -201,7 +201,7 @@ export function create(options: PartOptions): PlantPart | null {
   geometry.setAttribute('normal', normal)
   geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 4))
   geometry.setIndex(index)
-  const uniforms = { uBudOpen: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
+  const uniforms = { uBudOpen: { value: 0 }, uBudShut: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
   const surface = makePartSurface(options, { name: 'bud', vertex, fragment, side: THREE.DoubleSide, uniforms })
   const mesh = partMesh(geometry, surface)
 
@@ -286,7 +286,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = (0.12 + 0.88 * Math.pow(rnd(2023 + b, i), 0.6)) * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = 0.0006 + 0.0006 * rnd(2123 + b, i)
+        hairLong[n] = 0.0009 + 0.0009 * rnd(2123 + b, i)
       }
     }
   }
@@ -579,7 +579,7 @@ export function create(options: PartOptions): PlantPart | null {
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
-        const even = lerp(1, 0.17, smoothstep(0.3, 0.8, u)) * (1 - Math.pow(clamp((u - 0.72) / 0.28), 1.6)) + 0.004
+        const even = lerp(1.04, 0.18, smoothstep(0.38, 0.74, u)) * (1 - Math.pow(clamp((u - 0.7) / 0.3), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight)
@@ -690,7 +690,7 @@ export function create(options: PartOptions): PlantPart | null {
       const lean = i < hairCount ? hairLean : i < furCount ? downLean : iceLean
       const o = (i < hairCount ? i : i < furCount ? i - hairCount : i - furCount) * 4
       // Shut, the bud wears a short fringe and only part of its down: the rest grows as the bracts loosen.
-      const worn = kind === 1 || kind === -1 || kind === 2 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
+      const worn = kind === 2 ? 1 - tight : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
       root[o] = x
       root[o + 1] = y
       root[o + 2] = z
@@ -715,6 +715,7 @@ export function create(options: PartOptions): PlantPart | null {
     },
     finish(time) {
       uniforms.uBudOpen.value = headOpen(time)
+      uniforms.uBudShut.value = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true
