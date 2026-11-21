@@ -7,8 +7,8 @@ import { soilHeight } from './soil.ts'
 
 // Loose soil on the near ground: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
 export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number }
-export const crumbScatter: Scatter = { count: 3000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.25 }
-export const clodScatter: Scatter = { count: 220, detail: 2, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.15 }
+export const crumbScatter: Scatter = { count: 3000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.38 }
+export const clodScatter: Scatter = { count: 220, detail: 2, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 
 // The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
 const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
@@ -42,7 +42,7 @@ export function scatter(name: string, s: Scatter): THREE.InstancedMesh {
     const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open)
     axis.set(random.next() - 0.5, random.next() - 0.5, random.next() - 0.5).normalize()
     turn.setFromAxisAngle(axis, random.next() * Math.PI * 2)
-    size.set(radius * (0.8 + 0.5 * random.next()), radius * (0.55 + 0.35 * random.next()), radius * (0.8 + 0.5 * random.next()))
+    size.set(radius * (0.7 + 0.7 * random.next()), radius * (0.45 + 0.4 * random.next()), radius * (0.7 + 0.7 * random.next()))
     at.set(Math.cos(a) * r, radius * (0.55 - s.sink), Math.sin(a) * r)
     matrix.compose(at, turn, size)
     mesh.setMatrixAt(i, matrix)
@@ -68,7 +68,7 @@ ${soilHeight}
 void main() {
   vec3 q = position * 2.3 + aSeed.x;
   float knob = 0.5 + 0.2 * sin(q.x + 1.7 * sin(q.z)) + 0.17 * sin(q.y * 1.3 + 1.9 * sin(q.x)) + 0.13 * sin(q.z * 1.9 + q.y);
-  float lump = 0.62 + mix(0.3, 0.12, aSeed.z) * knob + mix(0.14, 0.03, aSeed.z) * hash31(position * 7.0 + aSeed.x);
+  float lump = 0.5 + mix(0.5, 0.14, aSeed.z) * knob + mix(0.16, 0.03, aSeed.z) * hash31(position * 7.0 + aSeed.x);
   mat4 place = modelMatrix * instanceMatrix;
   vec2 c = place[3].xz;
   float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
@@ -126,7 +126,7 @@ void main() {
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(uWet * uWet, 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
-  color += skyAmbient(reflect(-v, n)) * pow(1.0 - max(dot(n, v), 0.0), 5.0) * gloss * 0.3 * open;
+  color += skyAmbient(reflect(-v, n)) * pow(1.0 - max(dot(n, v), 0.0), 5.0) * gloss * 0.1 * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `

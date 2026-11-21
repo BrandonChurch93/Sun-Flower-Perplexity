@@ -40,7 +40,7 @@ float soilHeight(vec2 p, float lod) {
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
   float foot = 1.0 - smoothstep(0.004, 0.02, length(p));
-  return mix((fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.55 * lane(p)), 0.002, foot);
+  return mix((fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)), 0.002, foot);
 }
 `
 
@@ -112,7 +112,7 @@ void main() {
   float lump = mix(0.5, smoothstep(0.3, 0.62, dC.a), fade);
   h = mix(h, 0.6 * h + 0.4 * dM.a, fade);
   vec2 uvD = TURN_B * p * (uTiles.x * uScales.x) + vec2(0.37, 0.61);
-  float close = 1.0 - smoothstep(0.4, 1.3, density);
+  float close = 1.0 - smoothstep(1.3, 2.6, density);
   vec4 cD = texture(tColor, uvD);
   vec4 dD = texture(tData, uvD);
   albedo *= mix(vec3(1.0), cD.rgb * uMeanInv, 0.75 * close);
@@ -161,7 +161,9 @@ void main() {
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, d);
-  lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - uCast));
+  vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
+  float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
+  lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
   float open = (0.5 + 0.5 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade);
@@ -176,7 +178,7 @@ void main() {
   float gloss = uWet * uWet * (1.3 - rough);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += skyAmbient(reflect(-v, n)) * graze * gloss * 0.3 * open * (1.0 - 0.8 * under);
+  color += skyAmbient(reflect(-v, n)) * graze * gloss * 0.1 * open * (1.0 - 0.8 * under);
 
 #ifdef NEAR
   if (uDew > 0.0) {
