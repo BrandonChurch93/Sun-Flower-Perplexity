@@ -89,6 +89,7 @@ export class Field {
     fieldUniforms.uWide.value = wideAt(timeOpen)
     fieldUniforms.uLate.value = lateAt(timeOpen)
     fieldUniforms.uMoon.value = night
+    fieldUniforms.uDark.value = timeOpen > 19.99 && timeOpen < 29.99 ? 1 : 0
     fieldUniforms.uEarly.value = earlyAt(timeOpen)
     fieldUniforms.uCanopy.value = canopy
     // How closed the crop is follows how far its leaves reach.
