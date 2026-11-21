@@ -29,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 30000 },
+  hero: { step: 1, rows: 96, wide: 1, hairs: 54000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -309,7 +309,7 @@ export function create(options: PartOptions): PlantPart {
   }
 
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
-  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs') : null
+  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', undefined, 0.00003) : null
   const plan: Hair[] = []
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
@@ -329,7 +329,7 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.3) {
+      if (pick < 0.6) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
@@ -579,7 +579,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.002 + 0.002 * hair.r1) * scale
+          long = (0.0006 + 0.0012 * hair.r1 + (hair.r4 > 0.88 ? 0.0016 : 0)) * scale
         }
       }
       root[o] = px
