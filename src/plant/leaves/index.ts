@@ -289,17 +289,18 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.5) {
+      if (pick < 0.2) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
-      } else if (pick < 0.7) {
+      } else if (pick < 0.68) {
         hair.kind = 1
         const side = r(6) < 0.5 ? 0 : 1
         const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
         let w = 0
         let s = 0.02 + 0.9 * r(5)
-        if (r(7) > 0.4) {
+        if (r(7) > 0.65) w = 0.05 + 0.85 * r(9)
+        else if (r(7) > 0.25) {
           const v = veins[2 + Math.floor(r(8) * (veins.length - 2))]
           w = 0.04 + 0.9 * r(9)
           s = Math.min(0.97, veinAt(v, w))

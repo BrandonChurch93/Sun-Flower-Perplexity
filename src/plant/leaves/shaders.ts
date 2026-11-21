@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.06, 0.135, 0.03) : vec3(0.11, 0.17, 0.07)) * shade;
   t.albedo = mix(t.albedo, vec3(0.42, 0.4, 0.1), vState.y * 0.7);
-  t.through = vec3(0.34, 0.5, 0.03) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.2, 0.3, 0.018) * (1.0 - 0.4 * rib) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
