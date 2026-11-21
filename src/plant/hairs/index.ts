@@ -33,6 +33,8 @@ const float TT_SPREAD = 0.34;
 const float TT_TURN = 3.5;
 const float R_SPREAD = 0.16;
 const float EVEN = 0.035;
+const float SKY_BACK = 0.12;
+const float SKY_THROUGH = 0.5;
 
 struct Strand {
   vec3 world;
@@ -116,8 +118,10 @@ Strand strandAt(float t) {
   float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   vSun = uSunColor * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
-  vSky = uHairColor * (0.1 * fog * behind);
-  vSkyY = normalize(s.toEye + vec3(0.0, 0.6, 0.0)).y;
+  // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has.
+  float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
+  vSky = uHairColor * ((SKY_BACK + SKY_THROUGH * open) * fog * behind);
+  vSkyY = normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y;
   return s;
 }
 `
