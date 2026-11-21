@@ -44,7 +44,7 @@ export function fieldPlaces(): FieldPlaces {
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
       const list = Math.hypot(x, z) < fieldNearM ? near : far
-      list.push(x, z, (hash01(SEED, 4, id) - 0.5) * 1.0, 0.8 + 0.13 * hash01(SEED, 5, id), (hash01(SEED, 6, id) - 0.5) * 0.1, (hash01(SEED, 7, id) - 0.5) * 0.1, hash01(SEED, 8, id), id)
+      list.push(x, z, (hash01(SEED, 4, id) - 0.5) * 1.0, 0.7 + 0.15 * hash01(SEED, 5, id), (hash01(SEED, 6, id) - 0.5) * 0.1, (hash01(SEED, 7, id) - 0.5) * 0.1, hash01(SEED, 8, id), id)
     }
   }
   return { near: new Float32Array(near), far: new Float32Array(far) }

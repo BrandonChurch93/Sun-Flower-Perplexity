@@ -127,20 +127,17 @@ const elevationCurve = new Monotone([
   [turnEnd, 9],
   [config.film.durationSeconds, 5],
 ])
-const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 25) * RAD
-const SUN_TURN = 34 * RAD
+const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
+const EARLY_TURN = 4 * RAD
 const RAY_FIRST = 2.4
 
-// The head stands upright as a bud, leans over toward the light, then turns to the side it will face for good.
+// The head stands upright as a bud, then leans over to the side it will face for good. It never turns back.
 export function headElevation(time: number): number {
   return elevationCurve.at(time) * RAD
 }
 
-export function headAzimuth(time: number, inputs: PlantInputs): number {
-  const lean = Math.hypot(inputs.leanX, inputs.leanZ)
-  const toSun = Math.atan2(inputs.leanX, inputs.leanZ) - FACE_AZIMUTH
-  const turn = SUN_TURN * Math.sin(toSun) * smoothstep(0, 0.3, lean)
-  return FACE_AZIMUTH + turn * (1 - smootherstep(turnStart, turnEnd, time))
+export function headAzimuth(time: number): number {
+  return FACE_AZIMUTH - EARLY_TURN * (1 - smootherstep(turnStart, turnEnd, time))
 }
 
 const outerBracts = new Monotone([
@@ -299,7 +296,7 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const circle = 0.016 + 0.085 * young * smoothstep(seed0, seed1, time)
   const phase = TAU * (time / NUTATION_SECONDS + rnd(1))
   const tilt = Math.PI / 2 - headElevation(time)
-  const az = headAzimuth(time, inputs)
+  const az = headAzimuth(time)
   return {
     leanX: inputs.leanX * lean + Math.sin(phase) * circle,
     leanZ: inputs.leanZ * lean + Math.cos(phase) * circle,

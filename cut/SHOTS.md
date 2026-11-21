@@ -10,8 +10,8 @@ Lens: a 36 mm wide gate. Focus sits on the growing tip of the plant in every fra
 | `rain` | 8 to 20 s | 240 to 599 | 54 to 43 mm | f/5.6 | 0.37 to 0.95 m | 0.06 to 0.26 m | 0.07 to 0.47 m |
 | `night` | 20 to 30 s | 600 to 899 | 43 to 39 mm | f/2.8 | 0.95 to 1.00 to 0.91 m | 0.26 to 0.76 m | 0.47 to 1.00 m |
 | `frost` | 30 to 40 s | 900 to 1199 | 39 to 36 mm | f/4 | 0.90 to 0.73 to 0.74 m | 0.76 to 1.41 m | 1.00 to 1.56 m |
-| `bloom` | 40 to 52 s | 1200 to 1559 | 36 to 35 mm | f/2 | 0.74 to 0.97 m | 1.41 to 1.69 m | 1.56 to 1.83 m |
-| `field` | 52 to 60 s | 1560 to 1799 | 35 to 24 mm | f/8 | 0.97 to 5.24 m | 1.69 to 3.01 m | 1.83 to 1.85 m |
+| `bloom` | 40 to 52 s | 1200 to 1559 | 36 to 35 mm | f/2 | 0.74 to 0.97 m | 1.41 to 1.70 m | 1.56 to 1.83 m |
+| `field` | 52 to 60 s | 1560 to 1799 | 35 to 24 mm | f/8 | 0.97 to 5.25 m | 1.70 to 3.02 m | 1.83 to 1.85 m |
 
 ## `dawn` · 0 to 8 s
 
@@ -56,19 +56,19 @@ Lens: a 36 mm wide gate. Focus sits on the growing tip of the plant in every fra
 ## `bloom` · 40 to 52 s
 
 - Lens: 36 mm easing to 35 mm, f/2.
-- Move: the camera rises the last 0.3 m with the head, 1.41 m to 1.69 m, and eases back from 0.74 m to 0.97 m as the head opens and turns toward it. It swings 7° further around the plant, toward the side the head faces.
+- Move: the camera rises the last 0.3 m with the head, 1.41 m to 1.70 m, and eases back from 0.74 m to 0.97 m as the head opens. It swings 6° further around the plant. The head does not follow it: from the bud on it holds one facing, a third of the way round from the lens toward the sun on the left, and it never turns back.
 - Start framing: the same frame the frost ended on. The bud at (0.58, 0.30).
-- Keys: at 45 s the opening head is at (0.565, 0.345), its first petals out on the sun side and the rest still folded over the disc, with the sun on the left at x 0.15 and the horizon at y 0.47, as `bloom-opening` has it. At 50.5 s the open head faces the lens at (0.545, 0.42) and fills 0.63 of the frame's height, as `bloom-hero` has it.
-- End framing: the open head at (0.52, 0.45), its top petals at y 0.18, horizon at y 0.44.
+- Keys: at 45 s the opening head is at (0.565, 0.345), its first petals out on the sun side and the rest still folded over the disc, with the sun on the left at x 0.15 and the horizon at y 0.47, as `bloom-opening` has it. At 50.5 s the open head is at (0.545, 0.42), turned 35° to the left of the lens, and fills 0.63 of the frame's height, as `bloom-hero` has it.
+- End framing: the open head at (0.52, 0.45), its top petals at y 0.17, horizon at y 0.44.
 - Focus: on the center of the head.
 - In frame: the head, the neck and the top leaves. Behind them the field in bloom, soft, and the low sun under cloud on the left. The companion's nearest leaves are at the left edge.
 
 ## `field` · 52 to 60 s
 
 - Lens: 35 mm widening to 24 mm, f/8.
-- Move: the crane. The camera pulls straight back from 0.97 m to 5.24 m and rises from 1.69 m to 3.01 m, looking down more and more, and swings 3° further around the plant.
+- Move: the crane. The camera pulls straight back from 0.97 m to 5.25 m and rises from 1.70 m to 3.02 m, looking down more and more, and swings 3° further around the plant.
 - Start framing: the same frame the bloom ended on. The open head at (0.52, 0.45).
-- Key: at 58.5 s the plant stands whole in the lower middle of the frame, base at (0.505, 0.90) and head at y 0.505, with the horizon high at y 0.215 and the sun at x 0.20, as `field` has it.
+- Key: at 58.5 s the plant stands whole in the lower middle of the frame, base at (0.505, 0.90) and head at y 0.505, turned 33° to the left of the lens, with the horizon high at y 0.215 and the sun at x 0.20, as `field` has it.
 - End framing: base at (0.51, 0.84), head at (0.50, 0.51), horizon at y 0.21. The film ends on this picture, with no fade.
 - Focus: on the head of the plant. At f/8 and 24 mm the field is sharp far back.
 - In frame: the plant and the companion a short step to its left, each with its shadow on the open soil in front of the first row. Behind them the whole field in bloom to the horizon, heads toward the camera, a tree line and the sun under cloud.

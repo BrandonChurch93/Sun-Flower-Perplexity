@@ -7,15 +7,15 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 2 · Engine and blockout
 - Current unit: none
-- Current round: 2 · blockout · extra round
+- Current round: none (the blockout loop closed after round 2, by its round limit)
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:49 UTC · Round 2: the R4 blockout answer, word for word, with its manifest and key
-- Last status: 14 · 2026-11-21 05:31 UTC · Phase 2 · round 2
+- Last push: 2026-11-21 06:05 UTC · Round 2: fix pass (the head holds one facing, cameras fitted again, shorter neighbors), summary, status 15; the blockout loop closes at its round limit
+- Last status: 15 · 2026-11-21 06:04 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 06:04 UTC · status 15 · Phase 2 · round 2 · `status-1.jpg`: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; `status-2.jpg`: Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); `status-3.jpg`: Night, frost and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:31 UTC · status 14 · Phase 2 · round 2 · `status-1.jpg`: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; `status-2.jpg`: Night, frost and bloom-opening keys: approved image (left), blockout frame (right); `status-3.jpg`: Bloom-hero and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:06 UTC · status 13 · Phase 2 · round 1 · `status-1.jpg`: Whole film after the fix pass, 12 frames in order; `status-2.jpg`: The cuts into night, frost and bloom: last frame before (left), first frame after (right)
 - 2026-11-21 04:57 UTC · status 12 · Phase 2 · round 1 · `status-1.jpg`: Night key: approved (left), film (right); `status-2.jpg`: Frost key: approved (left), film (right); `status-3.jpg`: Bloom-opening key: approved (left), film (right); `status-4.jpg`: Bloom-hero key: approved (left), film (right)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
 - 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 - 2026-11-21 01:56 UTC · status 04 · Phase 0 · `status-1.jpg`: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; `status-2.jpg`: Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; `status-3.jpg`: Spike frame 1080 (36 s, frost world) at the review tier
-- 2026-11-21 01:38 UTC · status 03 · Phase 0 · `status-1.jpg`: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; `status-2.jpg`: Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; `status-3.jpg`: Spike frame at 26 s (night world), 1 sample; `status-4.jpg`: Frame 1515 (50.5 s, bloom) at the review tier
 
 ## Clock
 
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 3.74 h |
+| 2 | 3.50 h | 4.09 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.87 h |
+| Whole build | 30.00 h | 5.22 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -327,6 +327,11 @@ One line each: the date, the phase, the decision and why.
 
 - 2026-11-21 · Phase 2 · What the Phase 2 render budget means for the phases after it (measured 05:36 UTC on stand-ins): a frame of the bloom costs 2.95 s a sample in 1920 x 1080, so a judged still at `final` costs about 2.4 minutes and a pack of ten review stills about 10 minutes, and the whole film at `final` in 1920 x 1080 would take 47 h on one VM of this speed. `deliver.sandboxMaster` is false, so the sandbox never renders that master; it stays an export for a machine with a GPU. The real plant must not make a sample dearer than it has to: every agent that writes a shader in Phase 3 is told that the film is drawn by software WebGL, that the noise in the stand-in's shaders is the dearest thing in them, and to read maps instead. The budget is measured again in Phase 3.
 - 2026-11-21 · Phase 2 · While the round 2 critic and the budget job ran, the Builder began the Phase 3 scaffold in a second working tree (`sf-p3`, local branch `p3-scaffold`, never rendered from while the main tree renders). It changes nothing a frame shows: the stand-in still draws every piece. It is merged into `main` only after the Phase 2 gate, as the first step of Phase 3.
+- 2026-11-21 · Phase 2 · Round 2 fix pass, the head's path (the severe issue). The head no longer swings toward the sun and back. `headAzimuth(time)` in `src/plant/growth.ts` now holds one facing from the bud on: `field.companion.fromAzimuthDeg` minus 27°, with 4° more to the left before the head opens, eased away between 45 s and 50.5 s. The camera keeps moving round the plant, so the face stays to the left of the lens the whole way: `tools/fit.ts` prints 39.9° left at the bloom-opening key, 35.0° at the hero key and 33.1° at the field key. The lean toward each world's light is unchanged. Checked on frames 1234, 1285, 1336, 1388, 1439, 1491, 1542, 1593, 1696 and 1755: the head turns one way only.
+- 2026-11-21 · Phase 2 · Round 2 fix pass, the camera. `tools/fit.ts --write` after the change of facing. Bloom-opening key: distance 0.7878 m, lens height 1.6016 m, aim 1.5881 m, `frameX` 0.6482, angle 17.88° (was 0.7636, 1.6029, 1.5898, 0.6779, 15.94°). Hero key: 0.8685, 1.6595, 1.6445, 0.6115 (was 0.869, 1.6586, 1.6436, 0.6075). Field key: 4.643, 2.7843, 1.7125, 0.5054, 23.24° (was 4.6388, 2.7818, 1.711, 0.5054, 23.01°). The keys at 52 s and 60 s follow their neighbors. The stem now crosses the lower frame at x 0.632 at the opening key (approved 0.625) and x 0.607 at the hero key (approved 0.615); the critic measured 0.655 and 0.645 before. `cut/SHOTS.md` has the new numbers and says the head holds its facing.
+- 2026-11-21 · Phase 2 · Round 2 fix pass, the field. A neighbor is 0.70 to 0.85 of the plant's height (`src/field/layout.ts`; it was 0.80 to 0.93). Measured on the approved `field` image, the plants of the first rows stand about 0.75 to 0.8 of the hero's height. Their heads now sit lower behind the hero in the bloom frames and reach down to the level of the hero's head at the field key. Night (frame 780) and frost (1080, 1199) were checked after it: the neighbors' buds stand a little lower, nothing else changed, and no part of the companion is in those frames.
+- 2026-11-21 · Phase 2 · Round 2, what the fix pass did not change, and why. The head's width across the petals is `plant.headDiameterM` and the plant's height is `plant.fullHeightM`, both fixed facts in `kit/02-SUBJECT.md`, so the hero's head was not made larger for the field key. The first row stands `field.plantAheadOfRowM` behind the plant and the lens at the bloom keys is the one the approved image was measured with, so neither was moved to make the heads behind the hero smaller, and a neighbor's head stays 0.7 of the hero's as round 1 set it. The companion was not moved again: `tools/fit.ts --companion` shows it 0.045 of the frame outside the left edge at its nearest before the bloom (frame 825) and reaching x 0.114 and 0.134 in the two bloom keys. All three are under "Open items" with the phase that settles them.
+- 2026-11-21 · Phase 2 · The blockout loop is closed by its round limit (`rounds.blockout` is 2): R4 blockout scored 7 in round 1 and 6 in round 2, each with one severe issue, so the bar (7 with no severe issue open) was not met in a judged round. The build that goes on is the round 1 build with every later fix, machine checks green. Both severe issues were fixed after they were raised and checked by the Builder on frames, not by a critic. This is a limit reached and is reported as one.
 
 ## Notes from Brandon
 
@@ -344,7 +349,9 @@ None yet.
 
 One entry per issue left open by a limit: the unit, the frame, the critic and its words, what was tried, what to try next. Parts finished with a fallback are listed here too, marked `fallback`. Issues carried from the blockout are marked with the phase that will settle them.
 
-- Blockout · `bloom` · frames 1350 and 1515 · round 1, R4 blockout: "The bloom close-up loses the large cropped left-edge foliage that frames the target". Carried to Phase 3 (the look lock on `bloom`). Tried: the companion's place and which neighbor it is, scanned twice over 90 neighbors and 52 places; larger and faster upper leaves. Its leaves now reach x 0.12 and x 0.13 low in the two bloom frames; the approved images have them to about x 0.2 and up across the sun. What limits it is the rule in `kit/02-SUBJECT.md`: "Through `dawn`, `rain` and `night`, and at the `frost` key, no part of the companion is in the frame" and "keeping it out comes first". Next: the real leaves of Phase 3 are broad where the stand-in blades are narrow, which fills the edge without moving the plant. If the mass still cannot be reached with the companion out of the early frames, the rest is contested under that rule and is not worked on again.
+- Blockout · `bloom` · frames 1350 and 1515 · the foliage at the left edge. Round 1, R4 blockout: "The bloom close-up loses the large cropped left-edge foliage that frames the target". Round 2, R4 blockout, pair 6: "in 6-a a close foreground plant fills the entire left margin (y = 55 to 394) with an upper leaf crossing the sun, whereas in 6-b only a single small leaf tip enters at the bottom-left (y = 300 to 355), leaving the upper three-quarters of the left edge empty", and pair 7: "in 7-a the close left foreground plant frames the entire left edge (y = 55 to 394) across the sun, whereas in 7-b only one small leaf tip enters near the bottom-left (y = 280 to 348)". Carried to Phase 3 (the look lock on `bloom`). Tried: the companion's place and which neighbor it is, scanned twice over 90 neighbors and 52 places; larger and faster upper leaves. Its leaves reach x 0.114 and x 0.134 low in the two bloom frames; the approved images have them to about x 0.2 and up across the sun. What limits it is the rule in `kit/02-SUBJECT.md`: "Through `dawn`, `rain` and `night`, and at the `frost` key, no part of the companion is in the frame" and "keeping it out comes first". Next: the real leaves of Phase 3 are broad where the stand-in blades are narrow, and the companion's upper leaves can be given their own reach and height, which fills the edge without moving the plant; the place is scanned once more with the real leaves. If the mass still cannot be reached with the companion out of the early frames, the rest is contested under that rule and is not worked on again.
+- Blockout · `bloom` · frame 1515 · the size of the heads behind the hero. Round 2, R4 blockout, pair 7: "the background blooms behind it are nearly twice as large as in 7-a (~55-68 px tall vs ~30-40 px)". Carried to Phase 3 (the look lock on `bloom`). Tried: a neighbor's head is 0.7 of the hero's (round 1) and the neighbors are shorter (round 2), so the heads stand lower and smaller behind the hero, but the nearest are still about 1.3 times the approved size. What limits it: the first row is `field.plantAheadOfRowM` (1.5 m) behind the plant and the approved image shows its nearest heads about 3 m back, while the approved `field` image shows the first row about 1 m back; no settled line covers the difference. Next: in Phase 3 the field behind the hero is a dark canopy with the lens wide open, so the heads are soft discs and their size is judged again there; if they still read too large, the nearest two rows behind the hero get heads turned further from the lens and held lower in the leaves, which is how the approved image has them.
+- Blockout · `field` · frame 1755 · the hero's head and the band of field heads. Round 2, R4 blockout, pair 8: "the foreground hero plant head (at x ~ 344) is ~35% too small vertically (~31 px tall vs ~48 px in 8-a for the same ~180 px plant height) and faces flat front-on instead of three-quarters left, while the background field blooms sit entirely in a high band (y = 92 to 195) above the hero head center rather than extending down around y = 175 to 240 as in 8-a". Carried to Phase 4 (unit `field`). Fixed in the round 2 fix pass: the head is turned 33° to the left of the lens. Tried for the rest: shorter neighbors, so the first row's heads now reach down to the level of the hero's head (y 0.45 to 0.53 of the frame). Not changed: the head's width and the plant's height are fixed facts (`plant.headDiameterM`, `plant.fullHeightM`), and the approved image draws the head at about 0.28 of the plant's height where the facts give 0.16. Next: in Phase 4 the real head with its bracts and reflexed petals is measured against the approved image again, and the field's heads round the hero are judged on the real field with the grass strip in front.
 
 ## Running jobs
 
@@ -392,8 +399,9 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Machine checks (`npm run gate -- --phase 2 --machine`): 05:09 UTC, all 12 green (G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
 - [x] Pack (`npm run pack -- --phase 2 --round 2`): 05:20 UTC, 10 files in 10.4 minutes (budget said about 12), the same make-up as round 1: three whole film sheets, four cut sheets, the eight key pairs on three images, all at the `review` tier, each at most 1400 px, no metadata, the settled line of the `field` key with pair 8 word for word. The Builder looked at every file before sending it
 - [x] R4 blockout answer in `scorecards/round-002/R4-blockout.json`: arrived 05:47 UTC, 25 minutes after the critic started. Score 6, one severe issue and five major ones, so the pass bar (7 with no severe issue open) does not hold. The pack's manifest and the key are in the round folder beside it
-- [ ] Fixes
-- [ ] Summary, status, push
+- [x] Fixes: one fix pass, 05:50 to 06:05 UTC (15 min). Issue 1 (severe, the head bent toward the sun and then reversed to face the camera): fixed, the head holds one facing a third of the way round from the lens toward the sun, checked on ten frames from 41 s to 58.5 s. Issue 3 (major, bloom-opening head and stem): the head is 39.9° left of the lens where it was near profile, and the stem crosses at x 0.632 (approved 0.625). Issue 5 (major, hero head, stem and the heads behind): the head is 35.0° left of the lens, the stem crosses at x 0.607 (approved 0.615), the neighbors are shorter; the size of the heads behind stays open. Issue 6 (major, field key): the head is 33.1° left of the lens and the first row's heads reach down to the hero's head; the head's size and the rest of the band stay open. Issues 2 and 4 (major, the foliage at the left edge): not changed, the open item from round 1 with this round's words added. None was declined. Every changed value is under "Decisions made by the Builder". After the pass: build clean, 68 of 68 tests, machine checks all 12 green at 06:01 UTC
+- [x] Summary, status, push: `scorecards/round-002/SUMMARY.md`, status 15
+- Round 2 in one line: R4 blockout 6 with one severe issue and five major ones, so not passed; the severe issue (the head reversing) and the framing of the bloom keys were fixed in one pass; three issues stay open for Phases 3 and 4; the blockout loop is closed by its round limit of 2, a limit reached and not a pass.
 
 ## Final scores
 
@@ -444,6 +452,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
 - 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
 - 2026-11-21 05:49 UTC · Round 2: the R4 blockout answer, word for word, with its manifest and key
+- 2026-11-21 06:05 UTC · Round 2: fix pass (the head holds one facing, cameras fitted again, shorter neighbors), summary, status 15; the blockout loop closes at its round limit
 
 ## Session log
 
@@ -482,4 +491,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Whole film after the fix pass, 12 frames in order; The cuts into night, frost and bloom: last frame before (left), first frame after (right).
 - Status 14, 2026-11-21 05:31 UTC, Phase 2 · round 2. Round 2 of the blockout is with its critic, a fresh agent on a different model family from round 1, looking at ten files made from the film after the round 1 fixes. The render budget is being measured on the new scene meanwhile: one sample of a 1920 x 1080 frame takes 0.9 s at dawn and 3.0 s in the bloom, and one finished frame at 48 samples took 141 s. While both run, the plant's pose code is being opened up in a side copy of the repo so the real stem, leaves, bud, disc and petals of Phase 3 can start from the same frames as the stand-in. Next: Read the critic's answer, do the one fix pass the limit allows, close the blockout loop, then build the whole preview film and run the Phase 2 gate. Time used: 4.7 h of 30 h.
   Pictures: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; Night, frost and bloom-opening keys: approved image (left), blockout frame (right); Bloom-hero and field keys: approved image (left), blockout frame (right).
+- Status 15, 2026-11-21 06:04 UTC, Phase 2 · round 2. Round 2 of the blockout is closed: score 6, not passed, one severe issue and five major ones. The severe one is fixed: the head no longer swings toward the sun and back, it holds one facing a third of the way toward the sun from the bud to the last frame. The bloom and field cameras were fitted again and the field's plants are shorter, so their heads sit lower behind the hero. Two rounds is the limit for the blockout, so the loop ends as a limit reached, not a pass. Three things stay open for later phases: the foliage at the left edge of the bloom frames, the size of the heads behind the hero, and the hero's head size and the band of heads at the field key. Next: The final build of Phase 2: the whole preview film, the export proofs, the gate, then the look lock on the bloom starts with its agents. Time used: 5.2 h of 30 h.
+  Pictures: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); Night, frost and field keys: approved image (left), blockout frame (right).
 
