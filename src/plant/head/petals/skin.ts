@@ -112,7 +112,11 @@ void main() {
   // The one crease of a lifting ray is a dark line down its middle.
   through *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.07, abs(across))) * (1.0 - vState.z) * (1.0 - fresh);
   // The veins run the length of a ray and pass less light than the tissue between them.
-  float streak = smoothstep(0.72, 1.0, abs(sin(across * 21.0 + own * 6.0))) * smoothstep(1.0, 0.8, u) * smoothstep(0.02, 0.2, u);
+  // No two rays have the same veins: each has its own spacing, unevenly kept, and they die out at its own length short of the tip.
+  float lane = across + 0.11 * sin(across * 4.3 + own * 31.0);
+  float lanes = 15.0 + 12.0 * hash11(vRay.x * 23.9 + 1.7);
+  float lasts = 0.72 + 0.28 * hash11(vRay.x * 41.3 + 5.9);
+  float streak = smoothstep(0.72, 1.0, abs(sin(lane * lanes + own * 6.0))) * (1.0 - smoothstep(lasts - 0.3, lasts, u)) * smoothstep(0.02, 0.2, u) * (0.6 + hash11(vRay.x * 67.1 + 0.3));
   through *= 1.0 - 0.18 * streak * mix(2.0, 1.0, vState.z);
   albedo *= 1.0 - 0.08 * streak;
 
@@ -145,7 +149,7 @@ void main() {
   float grooveSlope = -6.0 * gx * (1.0 - gx) / 0.05 * sign(across);
   acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00034;
   // The veins stand out as ribs on the back of a ray, most on one still folded.
-  acrossSlope += cos(across * 12.0 + own * 6.0) * 0.011 * (1.0 - 0.7 * vState.z) * smoothstep(0.02, 0.2, u) * smoothstep(1.0, 0.8, u);
+  acrossSlope += cos(lane * (0.6 * lanes) + own * 6.0) * 0.016 * (0.6 + hash11(vRay.x * 13.7 + 2.9)) * (1.0 - 0.7 * vState.z) * smoothstep(0.02, 0.2, u) * (1.0 - smoothstep(lasts - 0.3, lasts, u));
   float side = front ? 1.0 : -1.4;
   vec3 wx = dFdx(vWorld);
   vec3 wy = dFdy(vWorld);
@@ -158,7 +162,7 @@ void main() {
   if (!front) albedo = mix(albedo, vec3(0.8, 0.46, 0.05), 0.3 * (1.0 - fresh)) * 0.92;
   t.albedo = albedo;
   t.through = through;
-  t.rough = front ? 0.62 : 0.8;
+  t.rough = front ? 0.86 : 0.8;
   t.wax = front ? 0.2 : 0.08;
   t.sheen = front ? 0.12 : 0.2 + 0.3 * foot;
   // The valley between the two folds and the hollow under each rolled edge see less sky than the ridges.

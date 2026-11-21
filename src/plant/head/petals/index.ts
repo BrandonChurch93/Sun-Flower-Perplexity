@@ -253,7 +253,9 @@ export function create(options: PartOptions): PlantPart | null {
     const open = rayOpen(k, time)
     // An open ray lies in over the outer florets, and it is that much longer so its tip stays where the growth puts it.
     const lifted = smooth(0.1, 0.9, open)
-    const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
+    // A ray that is up but still cupped stands on the rim; its foot slides in over the outer florets only as it lies back.
+    const seat = smooth(0.2, 0.65, Math.PI / 2 - rayAngle(k, time)) * smooth(0.8, 1, open)
+    const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted) + 0.7 * (FOOT_SHUT - FOOT_OPEN) * seat
     // A shut ray lies over the face as far as the eye in the middle. Once the ray across from it has opened it draws back toward the rim.
     const around = (k / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
@@ -272,7 +274,7 @@ export function create(options: PartOptions): PlantPart | null {
     const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted)) * full
+    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted) + 0.05 * seat) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
