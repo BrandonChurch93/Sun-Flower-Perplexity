@@ -1,12 +1,12 @@
-# Status 29
+# Status 31
 
-2026-11-21 12:56 UTC
+2026-11-21 13:49 UTC
 
-- Status 29 · Phase 3 · unit bloom. Round 4 is judged and is not a pass: match 4, surface 5, motion 6, the jury 4 of 10 votes against 6 of 10 for the approved pair (passes at the edge), all 13 machine checks green, sharpness at 45 s 0.722 of the 0.8 needed. Since the judged frames, 15 merges are on main: the bud shows its lifted orange rays and a striped cap, the neighbor's upper leaf stands in front of the sun at both keys, the field's leaves break up, the disc floor is closed. Open against the approved: the dense dark field, the tree line, the head's cupped right side at 50.5 s, the leaf outlines.
-- Next: Twelve agents work the critics' notes until 13:20 UTC; the rays' opening has its own owner now. Round 5 renders at about 13:30 UTC, round 6 at about 15:10 if the clock allows. Time used: 12.1 h of 30 h.
+- Status 31 · Phase 3 · unit bloom. Round 5 is rendering on 11207fd. Machine checks 13 of 13 green. The judged stills at 48 samples are in: M1 and M2 pass, M3 fails at both frames (0.672 at 45 s, 0.786 at 50.5 s, 0.8 needed), lower than round 4, because the rays' veins are quieter and the bracts' relief is faded. All twelve builders have their round 6 jobs with the numbers to reach.
+- Next: The pack ends at about 14:03, then three critics and ten jurors. Reports for round 6 by 14:45, the last round the look lock allows, to start before 15:21 UTC. Time used: 13.0 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier)
-- `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier)
-- `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left
-- `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
+- `status-1.jpg`: Round 5 judged still, 45.0 s, approved left, ours right (48 samples)
+- `status-2.jpg`: Round 5 judged still, 50.5 s, approved left, ours right (48 samples)
+- `status-3.jpg`: The crown at 45 s at native size: approved left, ours right. The approved's bracts are slender and lit through
+- `status-4.jpg`: The opening every 0.25 s on the opening agent's branch: right side rays now start one by one from 45.02 s
