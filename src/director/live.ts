@@ -384,7 +384,9 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
   }
   canvas.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
-    canvas.setPointerCapture(event.pointerId)
+    try {
+      canvas.setPointerCapture(event.pointerId)
+    } catch {}
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
     holding++
     canvas.dataset.drag = 'yes'

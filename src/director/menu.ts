@@ -38,7 +38,7 @@ export interface Menu {
 const FILM = 'film'
 const FORMAT_NAMES: Record<FormatKey, string> = { preview: 'Preview', master: 'Master', uhd: 'UHD' }
 const DIAG_NAMES: Record<DiagName, string> = { beauty: 'Beauty', ungraded: 'Ungraded', plant: 'Plant alone', backlight: 'Backlight', texels: 'Texels', depth: 'Depth', focus: 'Focus', standins: 'Stand-ins' }
-const HELP: [string, string][] = [['Drag', 'orbit'], ['Wheel', 'zoom'], ['0', 'film camera'], ['Space', 'play'], ['Arrows', 'step'], ['Shift', 'ten frames'], ['M', 'menu']]
+const HELP: [string, string][] = [['Drag', 'orbit'], ['Wheel', 'zoom'], ['0', 'reset'], ['Space', 'play'], ['Arrows', 'step'], ['Shift', 'ten'], ['M', 'menu']]
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -78,7 +78,7 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
   }
 
   const unitButtons = new Map<string, HTMLButtonElement>()
-  const units = group('Units', 3)
+  const units = group('Units', 6)
   for (const s of segments) {
     const b = make('button', css.chip, s.id)
     b.type = 'button'
@@ -100,7 +100,7 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
   }
 
   const worldInputs = new Map<string, HTMLInputElement>()
-  const worlds = group('Hold a world', 3)
+  const worlds = group('Hold a world', 6)
   worlds.grid.setAttribute('role', 'radiogroup')
   const world = (value: string, text: string, title: string) => {
     const label = make('label', css.choice)
