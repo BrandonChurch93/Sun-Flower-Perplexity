@@ -20,7 +20,7 @@ const JOINT_OVERLAP_M = 0.004
 const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
-const SPROUT_WIDTH_M = 0.00005
+const SPROUT_WIDTH_M = 0.00004
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean }
@@ -29,8 +29,8 @@ interface Shape { main: number; sides: number; below: number; cap: number; hairs
 function shapeOf(options: PartOptions): Shape {
   if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
   if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 500, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 1600, full: true }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 1100, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 3600, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -113,7 +113,7 @@ export function create(options: PartOptions): PlantPart {
     const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low: 0.0004, high: 0.00075, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
+    const c: Coat = { set, low: 0.00016, high: 0.00042, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
     for (let i = 0; i < n; i++) {
       const x = (i + hash01(seed, salt, i)) / n
       c.seg[i] = x < 0.5 ? 0 : 1
@@ -308,7 +308,7 @@ export function create(options: PartOptions): PlantPart {
       const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.002, 0.012, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)

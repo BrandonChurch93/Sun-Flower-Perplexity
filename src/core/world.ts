@@ -8,7 +8,8 @@ export type RGB = [number, number, number]
 export interface WorldSettings {
   standIn: boolean
   sun: { azimuthDeg: number; elevationDeg: number; color: RGB; softnessDeg: number; lean: number; lift: number }
-  sky: { zenith: RGB; horizon: RGB; bounce: RGB; ambient: number; glow: RGB; glowPower: number; disc: number }
+  // `even` is how far thick air evens the sky's light on the plant, 0 to 1. Left out, it follows the fog's density as it did.
+  sky: { zenith: RGB; horizon: RGB; bounce: RGB; ambient: number; glow: RGB; glowPower: number; disc: number; even?: number }
   // The backdrop is placed where the camera of `key` sees it. `sunAt` is where the sun sits in that picture (x from the left, y from the top) and sets the direction of the light.
   backdrop: { file: string | null; key: string; sunAt: [number, number] | null; gain: number; blur: number }
   fog: { color: RGB; sunTint: RGB; density: number; falloff: number }
@@ -67,4 +68,5 @@ export function applyWorld(def: WorldDef): void {
   shared.uFogSunTint.value.fromArray(def.fog.sunTint)
   shared.uFogDensity.value = def.fog.density
   shared.uFogFalloff.value = def.fog.falloff
+  shared.uSkyEven.value = def.sky.even ?? Math.min(1, Math.max(0, 26 * def.fog.density - 0.15))
 }
