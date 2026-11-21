@@ -14,7 +14,8 @@ export interface WorldSettings {
   backdrop: { file: string | null; key: string; sunAt: [number, number] | null; gain: number; blur: number }
   fog: { color: RGB; sunTint: RGB; density: number; falloff: number }
   grade: { exposure: number; contrast: number; white: number; saturation: number; gain: RGB; lift: RGB; bloom: number; bloomKnee: number; vignette: number; grain: number }
-  ground: { wet: number; frost: number; dew: number }
+  // `plantWet` is how wet the plants are where that differs from the ground. Left out, they are as wet as the ground.
+  ground: { wet: number; frost: number; dew: number; plantWet?: number }
   // How hard the wind blows on the plants, 0 to 1.
   wind: number
 }
