@@ -1,0 +1,129 @@
+{
+  "kind": "roughcut",
+  "at": "2026-11-21T01:58:42.298Z",
+  "frames": 1800,
+  "width": 960,
+  "height": 540,
+  "fps": "30/1",
+  "megabytes": 16.59,
+  "segments": [
+    {
+      "id": "dawn",
+      "firstFrame": 0,
+      "lastFrame": 239
+    },
+    {
+      "id": "rain",
+      "firstFrame": 240,
+      "lastFrame": 599
+    },
+    {
+      "id": "night",
+      "firstFrame": 600,
+      "lastFrame": 899
+    },
+    {
+      "id": "frost",
+      "firstFrame": 900,
+      "lastFrame": 1199
+    },
+    {
+      "id": "bloom",
+      "firstFrame": 1200,
+      "lastFrame": 1559
+    },
+    {
+      "id": "field",
+      "firstFrame": 1560,
+      "lastFrame": 1799
+    }
+  ],
+  "cuts": [
+    240,
+    600,
+    900,
+    1200
+  ],
+  "layers": [
+    {
+      "segment": "dawn",
+      "key": "dawn-sprout",
+      "image": "references/approved/dawn-sprout.png",
+      "sha256": "a4353a8e0424cdb4325e238af78e7b96f4c540b368822694769e2dd9b91fd9d0",
+      "fromSeconds": 0,
+      "toSeconds": 6.5,
+      "push": 1.1,
+      "direction": "out"
+    },
+    {
+      "segment": "dawn",
+      "key": "dawn-seedling",
+      "image": "references/approved/dawn-seedling.png",
+      "sha256": "a6e467971cebc3d9621b244db1dd93dcf04d148506c968eb78a1a2443ded6557",
+      "fromSeconds": 1.5,
+      "toSeconds": 8,
+      "push": 1.1,
+      "direction": "out"
+    },
+    {
+      "segment": "rain",
+      "key": "rain",
+      "image": "references/approved/rain.png",
+      "sha256": "9b29c8f046cc54412ec84978d0eb0ccfd0d953e8251fc8d695341d0d22255d51",
+      "fromSeconds": 8,
+      "toSeconds": 20,
+      "push": 1.1,
+      "direction": "out"
+    },
+    {
+      "segment": "night",
+      "key": "night",
+      "image": "references/approved/night.png",
+      "sha256": "b4ede5532a0ad96e68fe9555cc7745462e485035942466b38adfbf0473c23ec6",
+      "fromSeconds": 20,
+      "toSeconds": 30,
+      "push": 1.1,
+      "direction": "out"
+    },
+    {
+      "segment": "frost",
+      "key": "frost",
+      "image": "references/approved/frost.png",
+      "sha256": "c23d8c57d02f1f2b711e7e26d61cfef702c59bdf7c80a1a795b94192a895bd5b",
+      "fromSeconds": 30,
+      "toSeconds": 40,
+      "push": 1.1,
+      "direction": "in"
+    },
+    {
+      "segment": "bloom",
+      "key": "bloom-opening",
+      "image": "references/approved/bloom-opening.png",
+      "sha256": "63a52ab1789cbc809ffc8f70674076bc1137de9f3427a7171d30d765d1a7e5d1",
+      "fromSeconds": 40,
+      "toSeconds": 50.5,
+      "push": 1.0858,
+      "direction": "out"
+    },
+    {
+      "segment": "bloom",
+      "key": "bloom-hero",
+      "image": "references/approved/bloom-hero.png",
+      "sha256": "5a872de165a40e0620bd84a17d06679aeb367a1be75b2e42acd523541e4c9465",
+      "fromSeconds": 45,
+      "toSeconds": 52,
+      "push": 1.1,
+      "direction": "out"
+    },
+    {
+      "segment": "field",
+      "key": "field",
+      "image": "references/approved/field.png",
+      "sha256": "1ea7a0ca3be036d0b66471b62a307f16c5b7e7e0355f3a3bd4374c8ecf371da9",
+      "fromSeconds": 52,
+      "toSeconds": 60,
+      "push": 1.1,
+      "direction": "out"
+    }
+  ]
+}

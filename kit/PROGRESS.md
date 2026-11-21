@@ -5,7 +5,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 ## Status
 
 - Build: in progress
-- Current phase: 1 · Rough cut
+- Current phase: 2 · Engine and blockout
 - Current unit: none
 - Current round: none
 - Blocked: no
@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 01:57 UTC · Phase 0 gate met: harness, budget, review page, app published
-- Last status: 04 · 2026-11-21 01:56 UTC · Phase 0
+- Last push: 2026-11-21 02:00 UTC · Phase 1 gate met: rough cut from the approved stills, status 05
+- Last status: 05 · 2026-11-21 01:59 UTC · Phase 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 - 2026-11-21 01:56 UTC · status 04 · Phase 0 · `status-1.jpg`: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; `status-2.jpg`: Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; `status-3.jpg`: Spike frame 1080 (36 s, frost world) at the review tier
 - 2026-11-21 01:38 UTC · status 03 · Phase 0 · `status-1.jpg`: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; `status-2.jpg`: Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; `status-3.jpg`: Spike frame at 26 s (night world), 1 sample; `status-4.jpg`: Frame 1515 (50.5 s, bloom) at the review tier
 - 2026-11-21 01:20 UTC · status 02 · Phase 0 · `status-1.jpg`: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact)
@@ -35,13 +36,13 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | Phase | Planned box | Time used |
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
-| 1 | 0.50 h | 0.00 h |
+| 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 0.00 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.08 h |
+| Whole build | 30.00 h | 1.13 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -49,9 +50,9 @@ Continuations and extensions are listed under this table with their own hours.
 
 | Phase | State | Gate evidence | Commit |
 | --- | --- | --- | --- |
-| 0 · Ground truth | done | 2026-11-21 01:54 UTC: `npm run gate -- --phase 0` all green (G1 build clean, G2 48 of 48 tests, G3 frames 45, 780 and 1515 pixel identical across fresh page loads and in another order, G4 stills 1920 x 1080, 960 x 540 and 3840 x 2160 and `frameCount` 1800, G10 needs only EXT_color_buffer_float and sizes inside the record). Four pushes. Workspace record, tool record, pinned versions and render budget table are above. Inline display proven at status 01. Published 01:56 UTC at https://sunflower-film.pplx.app | the status 04 push |
-| 1 · Rough cut | in progress | | |
-| 2 · Engine and blockout | not started | | |
+| 0 · Ground truth | done | 2026-11-21 01:54 UTC: `npm run gate -- --phase 0` all green (G1 build clean, G2 48 of 48 tests, G3 frames 45, 780 and 1515 pixel identical across fresh page loads and in another order, G4 stills 1920 x 1080, 960 x 540 and 3840 x 2160 and `frameCount` 1800, G10 needs only EXT_color_buffer_float and sizes inside the record). Four pushes. Workspace record, tool record, pinned versions and render budget table are above. Inline display proven at status 01. Published 01:56 UTC at https://sunflower-film.pplx.app | `0cbd576` |
+| 1 · Rough cut | done | 2026-11-21 02:01 UTC: `npm run gate -- --phase 1` green (D1: `out/roughcut.mp4` has 1800 frames at 960 x 540, 30 fps, 16.6 MB, h264 High, a keyframe on every cut). Order and timing checked on `out/work/roughcut/check-sheet.jpg`: one frame from each segment, the frames each side of cuts 240, 600, 900 and 1200, frame 0 and frame 1799, each showing the right approved still and the right label. On the review page under Films. Status 05 posted | the status 05 push |
+| 2 · Engine and blockout | in progress | | |
 | 3 · The look lock | not started | | |
 | 4 · The other units | not started | | |
 | 5 · The whole film | not started | | |
@@ -231,6 +232,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 0 · G8 reads a generated file as covered when `assets-src/<owner>/RECIPE.md` exists and names the file. The owner is `plant`, `ground` or `worlds/<id>`.
 - 2026-11-21 · Phase 0 · The review page keeps the whole site under 450 MB (the hosting took about 500 MB in an earlier build). If the videos do not fit, the largest are left out and the page says so.
 - 2026-11-21 · Phase 0 · The app was published at the address `sunflower-film` without asking first. The reasons: the build prompt orders the whole kit and says not to ask questions, `kit/05-ARCHITECTURE.md` says to publish `dist/` with the workspace's own app hosting at `slug` from the config, and the site's visibility is Organization, so only people signed in to the organization can open it.
+- 2026-11-21 · Phase 1 · The rough cut pushes each approved still by at most 10 percent about the point where the plant's stem stands in the frame (`frameX`, half height), in or out as the camera's focal length over distance changes across the segment. `dawn` and `bloom` have two keys each and dissolve from the first still to the second between the two key times on a smooth ramp. Between `bloom` and `field` the film has no cut, but the rough cut changes still there, because the two stills are different pictures.
 
 ## Notes from Brandon
 
@@ -297,6 +299,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 01:20 UTC · Phase 0: workspace record, tool record, caps tool, engine core modules, status 02
 - 2026-11-21 01:39 UTC · Phase 0: app scaffold renders its first spike frames; still command and render session
 - 2026-11-21 01:57 UTC · Phase 0 gate met: harness, budget, review page, app published
+- 2026-11-21 02:00 UTC · Phase 1 gate met: rough cut from the approved stills, status 05
 
 ## Session log
 
@@ -315,4 +318,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; Spike frame at 26 s (night world), 1 sample; Frame 1515 (50.5 s, bloom) at the review tier.
 - Status 04, 2026-11-21 01:56 UTC, Phase 0. Phase 0 gate met. The harness is complete for this phase: determinism, gate, budget and review commands, 48 unit tests, and the five machine checks of the phase are green. The render budget is measured (one 1920 x 1080 sample takes about 0.34 s here, a final tier still 17 s). The app and its review page are published. These are spike frames: every part is a stand-in. Next: Phase 1, the rough cut made from the approved stills, then the engine and the blockout of the whole film. Time used: 1.1 h of 30 h.
   Pictures: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; Spike frame 1080 (36 s, frost world) at the review tier.
+- Status 05, 2026-11-21 01:59 UTC, Phase 1. Phase 1 gate met. The rough cut exists: the whole minute made from the eight approved stills, each with a slow push in the direction the camera moves, hard cuts on frames 240, 600, 900 and 1200, and a small label naming the segment. It is there so the pacing can be judged before the scene is built, and it plays on the review page under Films. The build is not waiting: it continues with the engine and the blockout. Next: Phase 2, the engine and the blockout: the plant growing through the whole film with stand-in worlds, the camera move through all eleven keys, the three modes and the rest of the harness. Time used: 1.1 h of 30 h.
+  Pictures: Rough cut, frame 420 (14 s, rain). Made from the approved still; Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; Rough cut check: one frame from every segment and the frame each side of every cut.
 
