@@ -180,6 +180,8 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
   float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
+  // Seen from over the whole field the lit air lies as a wide warm veil on the land to both sides of the sun, thinner the farther from it, and leaves the sun's own size alone.
+  air += uSpokes * 0.6 * down * (0.6 + 0.4 * beams) * exp(-r / 0.25) * smoothstep(0.04, 0.15, r) * hold;
   if (uLowRays > 0.0) air = 0.4 * exp(-r / 0.09) * hold + uRays * lowRays(turn, r) * near;
   return glass + uAirTint * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
