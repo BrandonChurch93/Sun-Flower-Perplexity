@@ -4,7 +4,7 @@ import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, type Pose } from '../../skeleton.ts'
 import { tissueGlsl } from '../../surface/index.ts'
-import { FIRST_SIDE, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
+import { FIRST_OPEN, FIRST_SIDE, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
 import { fieldFragment, fieldVertex, floretFragment, floretVertex } from './shaders.ts'
 import { domeShape, floretShape } from './shape.ts'
 
@@ -99,6 +99,8 @@ export function create(options: PartOptions): PlantPart | null {
     const theta = n * GOLDEN
     const ragged = (hash01(seed, 1, n) - 0.5) * 0.085 + 0.022 * Math.sin(3 * theta + wave) + 0.014 * Math.sin(7 * theta + wave * 2.3) + 0.02 * Math.cos(theta - FIRST_SIDE)
     const when = schedule(rho + ragged)
+    when.start = Math.max(FIRST_OPEN, when.start + (hash01(seed, 6, n) - 0.5) * 1.4)
+    when.length *= 0.75 + 0.6 * hash01(seed, 7, n)
     each.set([rho, theta, when.start, when.length, hash01(seed, 2, n), hash01(seed, 3, n) * Math.PI * 2, 0.9 + 0.2 * hash01(seed, 4, n), hash01(seed, 5, n)], n * 8)
     sets[when.start > config.film.durationSeconds + 0.25 ? 1 : 0].florets.push(n)
   }

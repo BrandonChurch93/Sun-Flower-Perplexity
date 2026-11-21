@@ -71,14 +71,16 @@ export function floretShape(full: boolean): Shape {
     }
   }
 
-  // The chaff scale on the outer side of the floret: folded along its keel, pointed.
-  const bl = add(PIECE.chaff, 0, -1, 0)
-  const br = add(PIECE.chaff, 0, 1, 0)
-  const ml = add(PIECE.chaff, 1, -1, 0)
-  const mk = add(PIECE.chaff, 1, 0, 1)
-  const mr = add(PIECE.chaff, 1, 1, 0)
-  const tip = add(PIECE.chaff, 2, 0, 1)
-  index.push(bl, mk, ml, bl, br, mk, br, mr, mk, ml, mk, tip, mk, mr, tip)
+  // Two chaff scales by the floret, each folded along its keel and pointed. The second one's levels start at 4.
+  for (const from of [0, 4]) {
+    const bl = add(PIECE.chaff, from, -1, 0)
+    const br = add(PIECE.chaff, from, 1, 0)
+    const ml = add(PIECE.chaff, from + 1, -1, 0)
+    const mk = add(PIECE.chaff, from + 1, 0, 1)
+    const mr = add(PIECE.chaff, from + 1, 1, 0)
+    const tip = add(PIECE.chaff, from + 2, 0, 1)
+    index.push(bl, mk, ml, bl, br, mk, br, mr, mk, ml, mk, tip, mk, mr, tip)
+  }
 
   return { shape: new Float32Array(v), index: new Uint16Array(index), triangles: index.length / 3 }
 }
