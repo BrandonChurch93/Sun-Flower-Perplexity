@@ -138,6 +138,8 @@ void main() {
   through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
+  // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
+  if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
