@@ -85,7 +85,8 @@ void main() {
   color += uGlow * (0.2 * (rays - 0.3) * reach);
 
   vec3 clear = textureLod(tLate, uv, lod).rgb;
-  clear = mix(vec3(dot(clear, vec3(0.3, 0.6, 0.1))), clear, 0.55) * mix(vec3(1.16, 1.0, 0.9), vec3(1.2, 0.97, 0.8), exp(-theta / 0.4)) * uGain * (1.2 + 0.15 * exp(-theta / 0.3)) * (1.0 + vec3(0.5, 0.3, 0.1) * exp(-max(el, 0.0) / 0.05));
+  clear = mix(vec3(dot(clear, vec3(0.3, 0.6, 0.1))), clear, 0.55) * mix(vec3(1.16, 1.0, 0.9), vec3(1.2, 0.97, 0.8), exp(-theta / 0.4)) * uGain * (1.68 + 0.05 * exp(-theta / 0.3)) * (1.0 + vec3(0.38, 0.16, -0.04) * exp(-max(el, 0.0) / 0.05));
+  clear /= 1.0 + 0.6 * dot(clear, vec3(0.3, 0.6, 0.1));
   color = mix(color, clear, uLate);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
