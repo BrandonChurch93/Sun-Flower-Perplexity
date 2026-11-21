@@ -145,7 +145,7 @@ void main() {
   float grooveSlope = -6.0 * gx * (1.0 - gx) / 0.05 * sign(across);
   acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00034;
   // The veins stand out as ribs on the back of a ray, most on one still folded.
-  acrossSlope += cos(across * 12.0 + own * 6.0) * 0.004 * (1.0 - 0.7 * vState.z) * smoothstep(0.02, 0.2, u) * smoothstep(1.0, 0.8, u);
+  acrossSlope += cos(across * 12.0 + own * 6.0) * 0.011 * (1.0 - 0.7 * vState.z) * smoothstep(0.02, 0.2, u) * smoothstep(1.0, 0.8, u);
   float side = front ? 1.0 : -1.4;
   vec3 wx = dFdx(vWorld);
   vec3 wy = dFdy(vWorld);
