@@ -115,9 +115,12 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float along = dot(world.xz, toSun);
   float across = world.x * toSun.y - world.z * toSun.x;
   float streak = valueNoise(vec2(along * 0.11, across * 0.8));
-  float lane = smoothstep(0.45, 0.72, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
-  float under = max(uCanopy * (1.1 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
-  return exp(-mix(1.0, mix(12.0, 0.8, lane), smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
+  float lane = smoothstep(0.42, 0.68, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
+  float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
+  float closed = smoothstep(0.2, 0.85, uCanopy);
+  // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
+  float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
+  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.7, lane), closed) * under / (0.6 + uSunDir.y));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -126,14 +129,25 @@ float plantSun(vec3 world, vec3 offsetDir) {
 // How much of the sky a point sees, 0 to 1.
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
-  // The sky comes from above whatever the sun does: a closed crop keeps two thirds of it at the floor.
+  // The sky comes from above whatever the sun does: a closed crop keeps most of it down to mid height and under half at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(0.8, 0.74, closed), 1.0, exp(-mix(1.2, 1.3, closed) * under));
+  return mix(mix(1.0, 0.8, closed), mix(0.8, 0.45, closed), smoothstep(0.25, 1.0, under));
 #else
   return 1.0;
 #endif
 }
+
+#ifdef PLANT_FIELD
+// Inside the crop the neighbors hide the horizon away from the sun: there the fill keeps its strength and takes the color of the sky overhead.
+vec3 cropAmbient(vec3 n) {
+  vec3 sky = skyAmbient(n);
+  vec3 over = uSkyZenith * (dot(sky, vec3(0.3, 0.6, 0.1)) / max(dot(uSkyZenith, vec3(0.3, 0.6, 0.1)), 1e-4));
+  float away = 0.5 - 0.5 * dot(n.xz, uSunDir.xz) * inversesqrt(max(dot(n.xz, n.xz) * dot(uSunDir.xz, uSunDir.xz), 1e-4));
+  return mix(sky, over, 0.85 * away * smoothstep(0.2, 0.85, uCanopy));
+}
+#define skyAmbient(n) cropAmbient(n)
+#endif
 
 // A neighbor's own tone, about 0.78 to 1.22. 1 for the plant.
 float plantTone() {

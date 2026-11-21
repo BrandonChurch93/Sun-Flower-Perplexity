@@ -30,7 +30,7 @@ const ramp = (a: number, b: number, t: number): number => {
 export const kindTime = (time: number, index: number, count: number): number => {
   const order = (index * 3) % count
   const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (order / Math.max(1, count - 1))
-  return time + lead * ramp(41, 51, time) * (1 - ramp(53, 59, time))
+  return time + lead * ramp(43, 51, time) * (1 - ramp(53, 59, time))
 }
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
