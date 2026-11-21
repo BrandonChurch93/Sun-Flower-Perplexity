@@ -70,7 +70,7 @@ vec3 rainSky(vec3 d, float lod) {
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
   float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
-  float open = (1.0 - cloud) * smoothstep(0.0, 0.012, up) * exp(-up / 0.045) * (0.15 + 0.85 * sunward);
+  float open = (1.0 - cloud) * smoothstep(0.0, 0.002, up) * exp(-up / 0.045) * (0.15 + 0.85 * sunward);
   color *= mix(vec3(1.0), vec3(5.6, 4.4, 3.0), open);
   // The cloud's foot hangs into the band in rags, lower the farther from the sun, so the band opens wide only where the sun stands.
   float rags = 0.6 * valueNoise(vec2(turn * 14.0 + 3.0, up * 40.0)) + 0.4 * valueNoise(vec2(turn * 43.0 + 1.0, up * 90.0 + 5.0));
