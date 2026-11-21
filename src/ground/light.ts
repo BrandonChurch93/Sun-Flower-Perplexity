@@ -1,6 +1,6 @@
 // From the field shot on the light comes through the crop in patches, most of it round the plant's foot and to its right, and none under the crop itself.
 // What comes through is share of the open sun; each stem throws a shadow stemM wide at its foot, wider by stemSpread for each meter, that fades over stemReachM.
-export const fieldLight = { share: 0.5, stemM: 0.03, stemSpread: 0.025, stemReachM: 1.6, rightM: 0.55, aheadM: 0, reachM: 0.65, underFromM: 1.15, underToM: 1.7 }
+export const fieldLight = { share: 0.6, stemM: 0.03, stemSpread: 0.025, stemReachM: 1.6, rightM: 0.55, aheadM: 0, reachM: 0.65, underFromM: 1.15, underToM: 1.7 }
 export const fieldGate = /* glsl */ `
 uniform vec4 uField;
 uniform vec4 uStems;

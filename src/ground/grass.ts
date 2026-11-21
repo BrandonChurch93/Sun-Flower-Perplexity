@@ -268,7 +268,7 @@ void main() {
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward)) * deep;
   if (vField.x > 0.5) lit = max(lit, fieldPatch(p, -dot(p, uToward)) * deep);
   float ndl = dot(n, uSunDir);
-  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 1.7, 1.1) : vec3(2.6, 1.25, 0.45)) * 0.7 * max(-ndl, 0.0);
+  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45)) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
   if (vField.x > 0.5) color *= shut;
   vec3 hv = normalize(v + uSunDir);
