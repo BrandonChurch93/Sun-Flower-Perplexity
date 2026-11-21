@@ -4,6 +4,7 @@ import { at } from './lib/paths.ts'
 
 // Stand-in backdrops: each world's approved image with the plant painted out by an image model.
 // The takes live under out/work/backdrops/ and are not committed. The recipes say how each was made.
+// A world leaves this list when its real sky is built: the golden hour world has.
 interface Source { key: string; take: string; model: string; steps: string[]; why: string; thrown: string; up: number; fit: string }
 
 const TAIL =
@@ -57,19 +58,6 @@ const SOURCES: Record<string, Source> = {
     thrown: 'the other take (model seedream_5) recolored the fog and added a new plant.',
     up: 4,
     fit: 'best shift 4 px down in the left and right strips before the script moved it up by 4 px',
-  },
-  golden: {
-    key: 'bloom-hero',
-    take: 'golden-n2.png',
-    model: 'nano_banana_pro',
-    steps: [
-      `Edit this photograph. Remove the large sunflower in the foreground completely: its big yellow flower head, its stem and its leaves. Also remove the big out-of-focus green leaves at the left edge of the frame. Fill the places where they were with what would be seen behind them: the golden hour sky with its clouds, the low sun, the haze and the blurred field of sunflowers stretching to the horizon. Keep the far field of sunflowers as it is. ${TAIL}`,
-      'Edit this photograph. Remove the out-of-focus green leaves and stems in the lower left corner of the frame completely. Fill the place where they were with what would be seen behind them: the blurred field of sunflowers in warm evening light, continuing the field that is already there. Keep everything else exactly as it is and exactly where it is: the framing, the horizon line, the hills, the sun and its position, the sky and its clouds, the colors, the light, the depth of field blur and the film grain. Do not add anything: no plant in the foreground, no large leaves, no people, no animals, no insects, no objects, no text, no watermark, no border.',
-    ],
-    why: 'take 3 of 4, made in two steps: the first step removed the plant but left the companion\'s leaves at the lower left, the second step was given the result of the first and removed them. The sun, the clouds, the hills and the horizon are unchanged.',
-    thrown: 'one take (model seedream_5) moved the horizon, one left the companion\'s leaves, one (model seedream_5, second step) shifted the whole picture sideways by 2 px.',
-    up: 2,
-    fit: 'best shift 2 px down in the right strip before the script moved it up by 2 px; the left strip is where the companion\'s leaves were painted out, so it cannot be compared',
   },
 }
 const FULL = { width: 2816, height: 1584 }

@@ -110,8 +110,12 @@ uniform float uCanopy;
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
 float plantSun(vec3 world, vec3 offsetDir) {
 #ifdef PLANT_FIELD
-  float high = saturate(world.y / max(uCanopy, 0.001));
-  return mix(smoothstep(0.5, 0.95, high), 1.0, saturate(uSunDir.y * 1.5));
+  // The sun crosses the field on a slant: a point under the tops is lit through as many meters of leaves as its depth over the sun's height.
+  // The tops are uneven in long streaks that run the way the light does.
+  vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
+  float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
+  float under = max(uCanopy * (1.0 + 0.22 * streak) - world.y, 0.0);
+  return exp(-mix(0.4, 1.5, smoothstep(0.2, 0.85, uCanopy)) * under / max(uSunDir.y, 0.06));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -120,8 +124,9 @@ float plantSun(vec3 world, vec3 offsetDir) {
 // How much of the sky a point sees, 0 to 1.
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
-  float high = saturate(world.y / max(uCanopy, 0.001));
-  return mix(0.22, 1.0, smoothstep(0.25, 0.95, high));
+  float under = max(uCanopy * 1.04 - world.y, 0.0);
+  float closed = smoothstep(0.2, 0.85, uCanopy);
+  return mix(mix(0.6, 0.05, closed), 1.0, exp(-mix(1.5, 4.5, closed) * under / max(uCanopy, 0.05)));
 #else
   return 1.0;
 #endif
