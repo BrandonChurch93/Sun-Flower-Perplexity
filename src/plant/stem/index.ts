@@ -75,6 +75,8 @@ export function create(options: PartOptions): PlantPart {
   const hairSeg = new Uint8Array(hairCount)
   const hairAt = new Float32Array(hairCount)
   const hairTop = new Float32Array(hairCount)
+  // The hairs are kept in order from the foot up, so the ones on tissue that has not grown out yet are the last and are left undrawn.
+  let hairsDrawn = 0
   if (hairCount) {
     const fixed = fixedLabels()
     const from = fixed[SEED_ANCHOR]
@@ -260,7 +262,7 @@ export function create(options: PartOptions): PlantPart {
       const open = 0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - 0.45 * pale) * (1 - pale * smoothstep(0.1, 0.55, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
@@ -342,6 +344,7 @@ export function create(options: PartOptions): PlantPart {
     const lean = hairs.lean(slot)
     const S = anchors.s
     const M = anchors.m
+    if (first) hairsDrawn = 0
     for (let i = 0; i < hairCount; i++) {
       const k = hairSeg[i]
       const span = S[k + 1] - S[k]
@@ -392,9 +395,11 @@ export function create(options: PartOptions): PlantPart {
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
       const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
-      root[o] = n.x + ox * radius
-      root[o + 1] = n.y + oy * radius
-      root[o + 2] = n.z + oz * radius
+      const reach = shown > 0 ? radius : 0
+      root[o] = n.x + ox * reach
+      root[o + 1] = n.y + oy * reach
+      root[o + 2] = n.z + oz * reach
+      if (shown > 0) hairsDrawn = Math.max(hairsDrawn, i + 1)
       root[o + 3] = Math.min(0.0035, (0.0011 + 0.0024 * q * Math.sqrt(q)) * (0.7 + 0.3 * hairTop[i]) * onRib) * mature * shown
       lean[o] = ox + n.tx * up + wx * round
       lean[o + 1] = oy + n.ty * up + wy * round
@@ -416,7 +421,7 @@ export function create(options: PartOptions): PlantPart {
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true
       for (const a of sent) a.needsUpdate = true
-      hairs?.finish()
+      hairs?.finish(hairsDrawn)
     },
   }
 }

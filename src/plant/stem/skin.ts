@@ -1,5 +1,6 @@
 import { tissueGlsl } from '../surface/index.ts'
 import { SKIN_H, SKIN_W } from './maps.ts'
+import { TOP_M } from './shape.ts'
 
 export const vertex = /* glsl */ `
 in vec3 position;
@@ -74,6 +75,10 @@ void main() {
   vec4 fine = texture(uSkin, vCoord.xy);
   vec4 wide = texture(uSkin, vec2(vCoord.x + 0.37, vCoord.y * 0.173 + 0.61));
   float rib = mix(vSkin.x, (texture(uRibs, vec2(vCoord.x, vCoord.z)).r - 0.34) / 0.6, 0.7);
+  // Tissue that has not grown out yet is packed under the tip: its marks are too close together to show.
+  float packed = smoothstep(25.0, 90.0, length(vec2(dFdx(vCoord.z), dFdy(vCoord.z))) * ${TOP_M.toFixed(4)} / max(length(vec2(length(dFdx(vWorld)), length(dFdy(vWorld)))), 1e-7));
+  fine = mix(fine, vec4(0.5), packed);
+  wide = mix(wide, vec4(0.5), packed);
   float tone = 0.58 * wide.g + 0.42 * fine.g;
   tone = mix(saturate(0.5 + (tone - 0.5) * 1.45), 0.5, 0.45 * thin);
   float streak = wide.g;
@@ -92,11 +97,11 @@ void main() {
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
-  albedo = mix(albedo, vec3(0.23, 0.045, 0.075) * (0.55 + 0.9 * tone), vSkin3.z * (0.3 + 0.5 * streak));
   albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   vec3 sprout = mix(vec3(0.84, 0.81, 0.6), vec3(0.72, 0.77, 0.36), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * pale);
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.5, 0.13, 0.2), pale) * (0.55 + 0.9 * tone), vSkin3.z * (0.3 + 0.35 * streak + 0.3 * dust));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(0.84, 0.38, thin);
   float wax = mix(0.1, 0.55, thin);
@@ -108,7 +113,7 @@ void main() {
   rough = mix(rough, 0.95, rime);
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(vec3(0.012, 0.022, 0.004), mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale), 0.65 * thin);
+  t.through = mix(vec3(0.012, 0.022, 0.004), mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale), 0.22 * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
