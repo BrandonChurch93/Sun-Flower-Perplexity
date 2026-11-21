@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
-import { leafCount, leafDroop, leafElevation, leafLength, setLeafHold, usePlant, type LeafHold, type PlantInputs } from '../src/plant/growth.ts'
+import { create as createLeaves } from '../src/plant/leaves/index.ts'
+import { poseAt } from '../src/plant/skeleton.ts'
+import { leafCount, leafDroop, leafElevation, leafFoldScale, leafLength, leafRoll, setLeafHold, usePlant, type LeafHold, type PlantInputs } from '../src/plant/growth.ts'
 
 const NEIGHBOR = 77
 const OTHER = 41
@@ -13,7 +15,7 @@ const airs: PlantInputs[] = [
   { leanX: 0, leanZ: 0, lift: 1, wind: 0 },
   { leanX: 0.1, leanZ: -0.05, lift: 0.3, wind: 0.6 },
 ]
-const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6 }
+const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6, rollDeg: -40, foldScale: 0.4 }
 
 // Every number the holds can touch, for one plant from one time to another.
 function numbers(variant: number, from: number, to: number): Float64Array {
@@ -21,7 +23,7 @@ function numbers(variant: number, from: number, to: number): Float64Array {
   usePlant(variant)
   for (let time = from; time <= to; time += STEP) {
     for (let i = 0; i < leafCount; i++) {
-      out.push(leafLength(i, time))
+      out.push(leafLength(i, time), leafRoll(i, time), leafFoldScale(i, time))
       for (const air of airs) out.push(leafElevation(i, time, air), leafDroop(i, air, time))
     }
   }
@@ -54,7 +56,7 @@ describe('a leaf held by hand', () => {
     const other = numbers(OTHER, 0, last)
     setLeafHold(NEIGHBOR, 20, hold)
     const after = numbers(NEIGHBOR, 0, last)
-    const per = 1 + airs.length * 2
+    const per = 3 + airs.length * 2
     let changed = 0
     for (let k = 0; k < before.length; k++) {
       const leaf = Math.floor(k / per) % leafCount
@@ -69,9 +71,13 @@ describe('a leaf held by hand', () => {
     usePlant(NEIGHBOR)
     const air = airs[0]
     const free = { length: leafLength(20, bloom), up: leafElevation(20, bloom, air) }
+    expect(Object.is(leafRoll(20, bloom), 0)).toBe(true)
+    expect(Object.is(leafFoldScale(20, bloom), 1)).toBe(true)
     setLeafHold(NEIGHBOR, 20, hold)
     expect(leafLength(20, bloom)).toBeCloseTo(free.length * hold.lengthScale, 12)
     expect(leafDroop(20, air, bloom)).toBeCloseTo(hold.droop, 12)
+    expect(leafRoll(20, bloom)).toBeCloseTo(hold.rollDeg * RAD, 12)
+    expect(leafFoldScale(20, bloom)).toBeCloseTo(hold.foldScale, 12)
     expect(leafElevation(20, bloom, air)).toBeCloseTo((hold.elevationDeg + hold.liftDeg) * RAD, 12)
     setLeafHold(NEIGHBOR, 20, { liftDeg: hold.liftDeg })
     expect(leafElevation(20, bloom, air)).toBeCloseTo(free.up + hold.liftDeg * RAD, 12)
@@ -82,6 +88,31 @@ describe('a leaf held by hand', () => {
     }
     expect(step).toBeLessThan(0.2)
     usePlant(0)
+  })
+
+  it('rolls and flattens only the held blade, and only after the frost key', () => {
+    const built = (variant: number, time: number): { at: Float32Array; leaf: Float32Array } => {
+      const part = createLeaves({ detail: 'hero', variant, places: null })!
+      const mesh = part.meshes.find((m) => m.geometry.getAttribute('aLeaf'))!
+      usePlant(variant)
+      part.fill(0, poseAt(time, airs[0]))
+      usePlant(0)
+      return { at: Float32Array.from(mesh.geometry.getAttribute('position').array), leaf: mesh.geometry.getAttribute('aLeaf').array as Float32Array }
+    }
+    const turned: LeafHold = { rollDeg: hold.rollDeg, foldScale: hold.foldScale }
+    const free = { plant: built(0, bloom), early: built(NEIGHBOR, frost), late: built(NEIGHBOR, bloom) }
+    setLeafHold(NEIGHBOR, 20, turned)
+    const held = { plant: built(0, bloom), early: built(NEIGHBOR, frost), late: built(NEIGHBOR, bloom) }
+    const alike = (a: Float32Array, b: Float32Array): boolean => a.length === b.length && a.every((v, k) => Object.is(v, b[k]))
+    expect(alike(held.plant.at, free.plant.at)).toBe(true)
+    expect(alike(held.early.at, free.early.at)).toBe(true)
+    let moved = 0
+    for (let v = 0; v < held.late.at.length / 3; v++) {
+      const same3 = [0, 1, 2].every((k) => Object.is(held.late.at[v * 3 + k], free.late.at[v * 3 + k]))
+      if (held.late.leaf[v * 4] !== 20) expect(same3).toBe(true)
+      else if (!same3) moved++
+    }
+    expect(moved).toBeGreaterThan(0)
   })
 
   it('lets go when the hold is taken away', () => {

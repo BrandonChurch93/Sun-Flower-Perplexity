@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { leafAge, leafCount, leafDroop, leafFold, leafLength, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
+import { leafAge, leafCount, leafDroop, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -344,6 +344,7 @@ export function create(options: PartOptions): PlantPart {
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
     const facing = main ? -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE)) : 0
+    const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
@@ -376,8 +377,9 @@ export function create(options: PartOptions): PlantPart {
       lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
-    const cf = Math.cos(fold + leaf.crease * grown)
-    const sf = Math.sin(fold + leaf.crease * grown)
+    const crease = main ? fold + leaf.crease * grown : (fold + leaf.crease * grown) * leafFoldScale(i, time)
+    const cf = Math.cos(crease)
+    const sf = Math.sin(crease)
     const { nu, nv } = leaf
     for (let a = 0; a < nu; a++) {
       const s = Math.max(0, leaf.sig[a])
@@ -385,7 +387,8 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const turn = held === 0 ? free : free + held
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const cx = frame.ox + frame.mx * at.x + frame.nx * at.z
@@ -436,7 +439,8 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const turn = held === 0 ? free : free + held
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const tx = frame.mx * ca + frame.nx * sa
