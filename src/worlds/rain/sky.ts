@@ -87,7 +87,7 @@ vec3 rainSky(vec3 d, float lod) {
   // The rain between the lens and the cloud lays its own grey green over it: the depths lift and the lit bellies stay.
   color = mix(color, vec3(0.11, 0.17, 0.18), vec3(0.2, 0.35, 0.38) * cloud);
   // Its lit bellies are grey, not blue: they take back the red the paint keeps from them.
-  color.r *= 1.0 + 0.27 * cloud * smoothstep(0.13, 0.22, dot(color, vec3(0.3, 0.6, 0.1)));
+  color.r *= 1.0 + 0.27 * cloud * smoothstep(0.08, 0.16, dot(color, vec3(0.3, 0.6, 0.1)));
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
   float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.012);
   color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.05 + 0.8 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);

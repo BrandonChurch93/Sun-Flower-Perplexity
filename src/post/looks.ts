@@ -63,7 +63,7 @@ export interface LensLook {
 const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowSun: 0, bloomWide: 0.1, lowFlare: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
-  dawn: { veil: 1.4, flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
+  dawn: { veil: 1.4, veilTint: [1.1, 0.72, 0.45], flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
   rain: { flare: 0, halation: 0.2 },
   night: { veil: 0, flare: 0, halation: 0.2, skyHold: 1 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
