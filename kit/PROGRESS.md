@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 17:20 UTC · Round 7: R3 answer (4), word for word
+- Last push: 2026-11-21 17:21 UTC · Round 7: R4 answer (6), word for word
 - Last status: 39 · 2026-11-21 17:10 UTC · Phase 4 · unit field · round 7
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -814,7 +814,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [ ] R1 answer
 - [ ] R2 jury answers
 - [x] R3 answer: `reviewer_66`, Claude family, sent 17:18 UTC, answered 17:20 UTC. Score 4, not a pass: 6 major, 3 minor. `scorecards/round-007/R3.json`, word for word. Major: the far plain under the sun ("a thin dark, jagged, aliased line runs along the top of the far plain like the edge of a cut-out card"), the far end of the crop ("the field ends in a hard straight horizontal line against a featureless tan/brown band"), the hills ("a single flat near-black silhouette with a blobby, regular outline and no aerial-perspective layering"), the leaves of both plants ("a single desaturated grey-blue green with a waxy sheen, they look like flat cards with a bright painted rim, and no light passes through them even with the sun behind"), the stems ("smooth tubes with a single thin bright rim line; no hairs are seen against the backlight"), the crop ("near-identical copies, all the same size, all facing the lens at the same angle in an even scatter"). Minor: no contact shadow or soil where the stems enter the grass, petals uniform, grass an even carpet with dry tufts in regular diagonal bands
-- [ ] R4 answer
+- [x] R4 answer: `reviewer_67`, GPT family, sent 17:20 UTC, answered 17:22 UTC. Score 6, not a pass: 1 severe, 1 minor. `scorecards/round-007/R4.json`, word for word. Severe: "Even in the designated fastest-growth stretch, the bloom stays fully open and its petals retain nearly the same shapes and overlaps. There is slight flex, but it reads as an already-grown flower swaying during the camera pullback, not as time-lapse growth." Minor: the pullback "eases to a near-hold" over 59.2 to 60.0 s
 - [ ] Fixes
 - [ ] Summary, status, push
 
@@ -914,6 +914,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 17:10 UTC · Status 39: round 7 checked (13 green, pack here), frost on the line with its lens at f/11; 12 heads merged on the line
 - 2026-11-21 17:17 UTC · Round 7: measures green at final (M3 0.802), pack's judged frame pixel identical to the Builder's own
 - 2026-11-21 17:20 UTC · Round 7: R3 answer (4), word for word
+- 2026-11-21 17:21 UTC · Round 7: R4 answer (6), word for word
 
 ## Session log
 
