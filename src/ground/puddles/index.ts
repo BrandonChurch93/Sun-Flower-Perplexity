@@ -23,6 +23,7 @@ export class Puddles {
   private readonly water: THREE.Mesh
   private readonly crowns: THREE.Mesh
   private readonly span = { value: new THREE.Vector2() }
+  private readonly stands = { value: 0 }
   private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
   private readonly splashDrop: THREE.InstancedBufferAttribute
   private readonly ripples: Ripples
@@ -47,7 +48,7 @@ export class Puddles {
     this.water.renderOrder = -10
     this.water.visible = false
     this.water.onBeforeRender = (renderer) => this.ripples.render(renderer)
-    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: this.span }, side: THREE.DoubleSide, transparent: true, castShadow: false })
+    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: this.span, uStands: this.stands }, side: THREE.DoubleSide, transparent: true, castShadow: false })
     const made = crownGeometry(this.splashes, LANDING_FLOATS)
     this.splashDrop = made.drop
     this.crowns = new THREE.Mesh(made.geometry, crown.main)
@@ -58,7 +59,7 @@ export class Puddles {
   }
 
   // Once a frame, with the film second at the open shutter and at its close.
-  prepare(def: WorldDef, time: number, timeClose: number, shown = true): void {
+  prepare(def: WorldDef, time: number, timeClose: number, shown = true, samples = 1): void {
     const wet = def.ground.wet
     this.water.visible = shown && wet > 0.5 && !!rainSkyUniforms.tRainSky.value
     this.crowns.visible = this.water.visible
@@ -75,5 +76,6 @@ export class Puddles {
     geometry.instanceCount = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
     this.splashDrop.needsUpdate = true
     this.span.value.set(time, timeClose)
+    this.stands.value = (timeClose - time) / Math.max(1, samples)
   }
 }
