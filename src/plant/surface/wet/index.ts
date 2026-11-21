@@ -8,6 +8,9 @@ export const real = true
 
 export const BEAD_ORDER = 19
 
+// How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
+const beadUniforms = { uBeadLee: { value: 0 } }
+
 const vertex = /* glsl */ `
 in vec2 aCorner;
 in vec4 aSeatA;
@@ -15,7 +18,7 @@ in vec4 aSeatB;
 in vec4 aRestA;
 in vec4 aRestB;
 in vec3 aTint;
-uniform float uPlantWet;
+uniform float uBeadLee;
 out vec3 vWorld;
 out vec3 vMiddle;
 out vec3 vBase;
@@ -35,7 +38,7 @@ void main() {
   vec3 up = plantDirection(normalize(rest.xyz + vec3(0.0, 1e-6, 0.0)));
   float hang = saturate(rest.w);
   // Rain wets the side it comes from: on the side turned from the light the beads are few and fine.
-  r *= mix(1.0, 0.55 + 0.45 * smoothstep(-0.5, 0.3, dot(up, uSunDir)), uPlantWet * (1.0 - hang));
+  r *= mix(1.0, 0.55 + 0.45 * smoothstep(-0.5, 0.3, dot(up, uSunDir)), uBeadLee * (1.0 - hang));
   // Water sags down the slope it sits on, a large bead more than a small one, and one that runs draws out behind.
   vec3 fall = vec3(0.0, -1.0, 0.0) + up * up.y;
   float slope = length(fall);
@@ -77,6 +80,8 @@ in float vHang;
 in float vDepth;
 in float vWide;
 
+const float BEAD_LENS = 1.5;
+
 // The world as a bead shows it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
   float band = exp(-(d.y - 0.12) * (d.y - 0.12) * 22.0);
@@ -107,7 +112,7 @@ void main() {
   float ndv = saturate(dot(n, view));
   float f = 1.0 - ndv;
   float f2 = f * f;
-  float fresnel = 0.02 + 0.98 * f2 * f2 * f;
+  float fresnel = 0.02 + 0.6 * f2 * f2 * f;
   vec3 mirror = reflect(ray, n);
   float sun = sunShadow(vMiddle + up * vShape.x, up, uShadowTexelM * 2.5);
   // One highlight: the sun itself where it is clear, a soft window where it stands in cloud.
@@ -129,9 +134,10 @@ void main() {
   farSun *= farSun;
   farSky *= farSky;
   // Under a bead on a face turned from the sun the skin is lit through the blade.
-  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.4 + 2.4 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (1.0 + 1.8 * farSky);
-  vec3 body = vTint * lit * (0.7 + 0.3 * ndv);
-  // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water.
+  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.55 + 2.2 * farSky);
+  // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
+  vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
+  // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
   vec3 qn = normalize(q);
   vec3 dn = normalize(d);
   vec3 inside = refract(dn, qn, 0.75);
@@ -140,7 +146,14 @@ void main() {
   if (dot(out3, out3) < 0.5) out3 = reflect(inside, -leave);
   vec3 beyond = normalize(side * out3.x + up * out3.y + down * out3.z);
   float clearOfSkin = smoothstep(0.0, 0.6, leave.y - mix(0.3, -2.0, vHang)) * smoothstep(-0.1, 0.25, dot(beyond, up) + vHang);
-  body = mix(body, beadSky(beyond) * 0.9, 0.5 * clearOfSkin);
+  body = mix(body, beadSky(beyond) * 0.9, mix(0.35, 0.92, vHang) * clearOfSkin);
+  // A clear sun behind a bead is seen through it, bent to one small bright place on the side away from the sun.
+  float lens = saturate(dot(beyond, uSunDir));
+  lens *= lens;
+  lens *= lens;
+  lens *= lens;
+  lens *= lens;
+  body += uSunColor * (BEAD_LENS * clear * sun * clearOfSkin * lens * lens);
 
   vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * glint);
   outColor = finish(color, p, vDepth, -1.0);
@@ -174,7 +187,7 @@ export class BeadSet {
     const names = ['aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aTint']
     names.forEach((n, i) => this.geometry.setAttribute(n, this.sent[i]))
     this.geometry.instanceCount = 0
-    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false })
+    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: beadUniforms })
     const mesh = partMesh(this.geometry, this.surface)
     mesh.renderOrder = BEAD_ORDER
     this.meshes = [mesh]
@@ -225,6 +238,9 @@ const HANG = 0.94
 const STAY = 0.8
 // How far a bead slides in one go, as a share of the part's length.
 const REACH = 0.3
+// The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
+const DEW_MARGIN = 0.4
+const DEW_TIP = 0.035
 
 function own2(own: number, k: number): number {
   const x = Math.sin(own * k + k * 0.37) * 43758.5453
@@ -236,12 +252,94 @@ function ease(a: number, b: number, x: number): number {
   return t * t * (3 - 2 * t)
 }
 
-// What reacts to the weather reacts after the cut: the time a bead knows is the time since its world began.
-function sinceCut(time: number): number {
-  let start = 0
-  for (const s of config.segments) if (s.start <= time) start = s.start
-  return time - start
+// How long what stood on the skin before a cut takes to become what the new weather makes of it.
+const CARRY = 1.5
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t
 }
+
+let worldStart = 0
+let worldBefore = -1
+
+// When the world of a film time began, and when the one before it began: -1 for the first.
+function worldAt(time: number): void {
+  worldStart = 0
+  worldBefore = -1
+  for (const s of config.segments) {
+    if (s.start <= time && s.start > worldStart) {
+      worldBefore = worldStart
+      worldStart = s.start
+    }
+  }
+}
+
+// Rain: `since` is the time the rain has fallen.
+function rainBead(own: number, along: number, across: number, since: number, wet: number, out: Bead): void {
+  const kind = own2(own, 53.3)
+  if (kind < STAY) {
+    // A small bead forms and stays: most are fine, few are not.
+    const t = since - 3 * own2(own, 311.7)
+    const fine = own2(own, 127.1)
+    out.radiusM = (0.0003 + 0.0022 * fine * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
+    return
+  }
+  // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
+  const period = 7 + 6 * own2(own, 127.1)
+  const t = since - 5 * own2(own, 311.7) + 3
+  if (t < 0) return
+  const turn = t / period
+  const p = turn - Math.floor(turn)
+  const full = (0.0014 + 0.0012 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet * ease(0, 1.5, since)
+  if (p < SIT) {
+    out.radiusM = full * Math.cbrt(p / SIT) * ease(0, 0.06, p)
+  } else if (p < RUN) {
+    const q = (p - SIT) / (RUN - SIT)
+    const e = q * q * (1.5 - 0.5 * q) + 0.02 * Math.sin(6 * Math.PI * q)
+    out.along = along + Math.min(1 - along, REACH) * e
+    out.across = across * (1 - 0.85 * Math.sqrt(Math.max(e, 0)))
+    out.radiusM = full * (1 + 0.3 * e)
+  } else {
+    const q = Math.min(1, (p - RUN) / (HANG - RUN))
+    out.across = across * 0.15
+    if (1 - along > REACH) {
+      // One that does not reach the tip spreads into the film where it stops.
+      out.along = along + REACH
+      out.radiusM = full * 1.3 * (1 - q) * (1 - q)
+      return
+    }
+    out.along = 1
+    out.hang = q * q * (3 - 2 * q)
+    out.radiusM = full * (1.3 + 0.1 * q)
+    if (p >= HANG) {
+      const fall = (p - HANG) * period
+      out.fallM = 0.5 * G * fall * fall
+      out.radiusM = full * 1.25
+    }
+  }
+}
+
+// Dew stays where it formed: a few beads large enough to see as lenses, the rest a fine scatter of every size under them. `dry` is 1 on a skin that holds no rain.
+function dewBead(own: number, along: number, across: number, dew: number, dry: number, out: Bead): void {
+  const fine = own2(own, 127.1)
+  const large = Math.max(0, (own - 0.85) / 0.15)
+  out.radiusM = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * Math.sqrt(dew) * (1 - 0.6 * across * across)
+  if (dry <= 0 || across === 0) return
+  // Through a still night the dew of a blade runs together: it stands in drops along the margin and one hangs from a tip.
+  const where = own2(own, 91.7)
+  if (where < DEW_MARGIN) {
+    out.across = lerp(across, (across < 0 ? -1 : 1) * (0.82 + 0.15 * own2(own, 17.3)), dry)
+    out.hang = 0.75 * dry
+    out.radiusM = lerp(out.radiusM, (0.0016 + 0.0014 * fine) * Math.sqrt(dew), dry)
+  } else if (where > 1 - DEW_TIP && along > 0.45) {
+    out.along = lerp(along, 1, dry)
+    out.across = across * (1 - dry)
+    out.hang = dry
+    out.radiusM = lerp(out.radiusM, (0.0028 + 0.001 * fine) * Math.sqrt(dew), dry)
+  }
+}
+
+const carried: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
 
 // Where a bead is at a film time, in closed form. `own` is the bead's own number from 0 to 1; `along` and `across` are where it forms.
 export function beadAt(own: number, along: number, across: number, time: number, out: Bead): Bead {
@@ -252,54 +350,54 @@ export function beadAt(own: number, along: number, across: number, time: number,
   out.fallM = 0
   const wet = stateUniforms.uPlantWet.value
   const dew = stateUniforms.uPlantDew.value
+  const frost = stateUniforms.uPlantFrost.value
+  worldAt(time)
+  const since = time - worldStart
+  const settled = worldBefore < 0 ? 1 : ease(0, CARRY, since)
+  beadUniforms.uBeadLee.value = wet > 0.5 ? settled : dew > 0 ? 1 - settled : 0
   // Beads run only where it rains: a skin that is merely damp, as at dawn and at night, keeps its dew.
-  if (wet > 0.5) {
-    const kind = own2(own, 53.3)
-    if (kind < STAY) {
-      // A small bead forms and stays: most are fine, few are not.
-      const t = sinceCut(time) - 3 * own2(own, 311.7)
-      const fine = own2(own, 127.1)
-      out.radiusM = (0.0003 + 0.0022 * fine * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
-      return out
-    }
-    // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
-    const period = 7 + 6 * own2(own, 127.1)
-    const t = sinceCut(time) - 5 * own2(own, 311.7) + 3
-    if (t < 0) return out
-    const turn = t / period
-    const p = turn - Math.floor(turn)
-    const full = (0.0014 + 0.0012 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet * ease(0, 1.5, sinceCut(time))
-    if (p < SIT) {
-      out.radiusM = full * Math.cbrt(p / SIT) * ease(0, 0.06, p)
-    } else if (p < RUN) {
-      const q = (p - SIT) / (RUN - SIT)
-      const e = q * q * (1.5 - 0.5 * q) + 0.02 * Math.sin(6 * Math.PI * q)
-      out.along = along + Math.min(1 - along, REACH) * e
-      out.across = across * (1 - 0.85 * Math.sqrt(Math.max(e, 0)))
-      out.radiusM = full * (1 + 0.3 * e)
+  if (wet > 0.5) rainBead(own, along, across, since, wet, out)
+  else if (dew > 0) dewBead(own, along, across, dew, 1 - Math.min(1, 4 * wet), out)
+  else if (!(frost > 0)) return out
+  if (worldBefore < 0 || since >= CARRY) return out
+  // What reacts to the weather reacts after the cut: the water that stood on the skin one frame before is still there, in its place, and turns into the new weather's in its first moments. Rain comes over a damp dawn, dew and then frost over what the weather before them left.
+  const was = carried
+  was.along = along
+  was.across = across
+  was.radiusM = 0
+  was.hang = 0
+  was.fallM = 0
+  if (wet > 0.5) dewBead(own, along, across, 1, 0, was)
+  else if (dew > 0) rainBead(own, along, across, worldStart - worldBefore, 1, was)
+  else dewBead(own, along, across, 1, 1, was)
+  if (was.fallM > 0) {
+    // A drop in the air at the cut goes on falling; the bead that follows it grows in after.
+    const fell = Math.sqrt((2 * was.fallM) / G) + since
+    const next = out.radiusM * ease(0.5 * CARRY, CARRY, since)
+    if (since < 0.5 * CARRY) {
+      out.along = was.along
+      out.across = was.across
+      out.hang = was.hang
+      out.radiusM = was.radiusM
+      out.fallM = 0.5 * G * fell * fell
     } else {
-      const q = Math.min(1, (p - RUN) / (HANG - RUN))
-      out.across = across * 0.15
-      if (1 - along > REACH) {
-        // One that does not reach the tip spreads into the film where it stops.
-        out.along = along + REACH
-        out.radiusM = full * 1.3 * (1 - q) * (1 - q)
-        return out
-      }
-      out.along = 1
-      out.hang = q * q * (3 - 2 * q)
-      out.radiusM = full * (1.3 + 0.1 * q)
-      if (p >= HANG) {
-        const fall = (p - HANG) * period
-        out.fallM = 0.5 * G * fall * fall
-        out.radiusM = full * 1.25
-      }
+      out.radiusM = next
     }
-  } else if (dew > 0) {
-    // Dew stays where it formed: a few beads large enough to see as lenses, the rest a fine scatter of every size under them.
-    const fine = own2(own, 127.1)
-    const large = Math.max(0, (own - 0.85) / 0.15)
-    out.radiusM = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * Math.sqrt(dew) * (1 - 0.6 * across * across)
+    return out
+  }
+  const k = ease(0, CARRY, since)
+  if (was.radiusM <= 0) {
+    out.radiusM *= k
+  } else if (out.radiusM <= 0) {
+    out.along = was.along
+    out.across = was.across
+    out.hang = was.hang
+    out.radiusM = was.radiusM * (1 - k)
+  } else {
+    out.along = lerp(was.along, out.along, k)
+    out.across = lerp(was.across, out.across, k)
+    out.hang = lerp(was.hang, out.hang, k)
+    out.radiusM = lerp(was.radiusM, out.radiusM, k)
   }
   return out
 }

@@ -4,7 +4,7 @@ import { right, toward } from '../field/layout.ts'
 import { grassMask, grassTimes, patchy, patchyCover, stemFoot, turfCover } from './cover.ts'
 import { lane } from './crumbs.ts'
 import { cropLight, fieldGate } from './light.ts'
-import { groundStates, soilHeight, sunWayDir } from './soil.ts'
+import { MATT_EASE_S, groundStates, soilHeight, sunWayDir } from './soil.ts'
 
 const TUFTS = 14000
 const BLADES = 7
@@ -13,6 +13,12 @@ const FRONT_M = 1.5
 const BACK_M = -1.8
 const PIONEERS = 0.045
 const WEEDS = 0.14
+// Until the bloom a weed's blades are this broad, as a grass's are, eased to their own breadth over the last seconds before it. A tuft born early enough comes up from nothing over the first share of its growth. It is slim and upright then, a sprout, and eases to the tuft's own shape by half its growth.
+const WEED_YOUNG = '1.2'
+const SPROUT = '0.08'
+const SPROUT_BY_S = '6.0'
+const SPROUT_SLIM = '0.3'
+const SPROUT_TALL = '2.0'
 
 function tuft(): THREE.BufferGeometry {
   const random = stream('ground tuft')
@@ -191,6 +197,7 @@ out vec3 vAlong;
 out vec4 vTuft;
 out vec3 vField;
 uniform vec4 uGrassTimes;
+uniform float uKeptS;
 ${soilHeight}
 ${fieldGate}
 ${turfCover}
@@ -202,7 +209,13 @@ void main() {
   float tall = length(place[1].xyz);
   float seen = tall * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
   float thin = max(1.0, 1.4 / max(seen * 0.03 * aTuft.z, 1e-3));
-  vec3 local = (position * vec3(1.0, mix(0.25, 1.0, grown), 1.0) + aSide * aTuft.z * min(thin, 4.0)) * step(0.001, grown) * mix(0.4, 1.0, grown);
+  float early = 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
+  float broad = aTuft.z > 2.0 ? mix(aTuft.z, ${WEED_YOUNG}, early) : aTuft.z;
+  vec3 local = (position * vec3(1.0, mix(0.25, 1.0, grown), 1.0) + aSide * broad * min(thin, 4.0)) * step(0.001, grown) * mix(0.4, 1.0, grown);
+  float young = aTuft.x < uKeptS - ${SPROUT_BY_S} ? 1.0 : 0.0;
+  float older = smoothstep(0.0, 0.5, grown);
+  local *= mix(1.0, smoothstep(0.0, ${SPROUT}, grown), young);
+  local *= mix(vec3(1.0), vec3(mix(${SPROUT_SLIM}, 1.0, older), mix(${SPROUT_TALL}, 1.0, older), mix(${SPROUT_SLIM}, 1.0, older)), young);
   vField = vec3(0.0);
   if (fieldOn()) {
     vec2 tf = turf(c);
@@ -217,7 +230,10 @@ void main() {
   vec4 world = place * vec4(local, 1.0);
   world.y += soilHeight(c, soilLod(c));
   float bend = aAlong.x * aAlong.x * tall;
-  world.xz += vec2(sin(uTime * 1.7 + aTuft.w * 6.28 + aAlong.y * 2.0), cos(uTime * 1.3 + aTuft.w * 4.1)) * 0.035 * bend;
+  float own = (aTuft.w + aAlong.y) * 6.2832;
+  vec2 sway = vec2(sin(uTime * 1.7 + aTuft.w * 6.28 + aAlong.y * 2.0), cos(uTime * 1.3 + aTuft.w * 4.1));
+  vec2 gust = vec2(sin(uTime * 3.3 + own * 3.0) + 0.6 * sin(uTime * 5.9 + own * 7.0), cos(uTime * 2.7 + own * 5.0) + 0.6 * cos(uTime * 4.9 + own * 11.0));
+  world.xz += (sway + early * 1.3 * gust) * 0.035 * bend;
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -268,7 +284,8 @@ void main() {
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward)) * deep;
   if (vField.x > 0.5) lit = max(lit, fieldPatch(p, -dot(p, uToward)) * deep);
   float ndl = dot(n, uSunDir);
-  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45)) * 0.7 * max(-ndl, 0.0);
+  float warm = saturate((uSunColor.r / max(uSunColor.b, 1e-4) - 1.0) / 0.2);
+  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45) * warm + vec3(1.1, 1.3, 0.9) * (1.0 - warm)) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
   if (vField.x > 0.5) color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
