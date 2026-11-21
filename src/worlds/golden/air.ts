@@ -44,10 +44,10 @@ void main() {
   float need = max(angle / uPixelAngle, 2.4 * coc / sqrt(uSamples));
   float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
-  float lit = smoothstep(0.9, 1.3, world.y);
+  float lit = smoothstep(0.9, 1.3, world.y) * (1.0 - smoothstep(2.1, 2.5, world.y));
   float behind = smoothstep(0.88, 0.97, toSun) * (1.0 - smoothstep(0.06, 0.1, v.y));
   float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(0.003, 0.006, coc / uWidth));
-  vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(2)} * max(1.0, 3.1416 * coc * coc / (px * px))) * mix(0.05, 1.0, smoothstep(0.0016, 0.003, coc / uWidth));
+  vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(2)} * max(1.0, 3.1416 * coc * coc / (px * px)));
   vSize = px;
   vAt = world;
   gl_PointSize = px;
