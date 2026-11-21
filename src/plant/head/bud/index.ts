@@ -43,15 +43,16 @@ const SHUT = [0.3, 0.9, 1.7]
 // A folded bract curls back on itself toward its point by up to this much, in radians.
 const HOOK = 1.3
 const FOLD_SLOW = 0.7
-const HANG = 2.35
 const FOLD = [2.3, 2.22, 2.12]
+// A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
+const FOLD_FIRST = [1.95, 1.9, 1.86]
 const LONG = [0.92, 0.9, 0.84]
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 
-interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hang: boolean; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -81,9 +82,8 @@ export function create(options: PartOptions): PlantPart | null {
       side: (rnd(7, i) - 0.5) * 0.3,
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
-      hang: series === 0 && rnd(17, i) < 0.16,
       hook: series === 2 ? 0 : HOOK * (0.35 + 0.65 * rnd(18, i)),
-      reflex: series === 2 ? 0.4 * rnd(19, i) : 0.5 + 1.1 * rnd(19, i) - 0.15 * series,
+      reflex: series === 2 ? 0.4 * rnd(19, i) : 0.4 + 1.0 * rnd(19, i) - 0.15 * series,
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: HUG[series] + 0.05 * rnd(11, i),
@@ -321,6 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
     const open = headOpen(time)
     const ready = smoothstep(bloom0 - 0.7, bloom0 + 1.2, time)
     const shut = smoothstep(bloom0 - 13, bloom0 - 5, time)
+    const back = smoothstep(0.15, 0.9, open)
     const over = 1 - smoothstep(bloom0 - 0.7, bloom0 + 0.3, time)
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
@@ -344,11 +345,11 @@ export function create(options: PartOptions): PlantPart | null {
       }
       const folded = smoothstep(0, 1, opened)
       const inBud = Math.min(time, bloom0 - 3)
-      const stand = k.hang ? HANG : STAND[k.series] + k.lean
-      const angle = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready), FOLD[k.series] + 0.5 * k.lean, folded)
+      const stand = STAND[k.series] + k.lean
+      const angle = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready), lerp(FOLD_FIRST[k.series], FOLD[k.series], back) + 0.5 * k.lean, folded)
       const hook = k.hook * folded
       const reflex = k.reflex * ready * (1 - folded)
-      const curl = lerp(lerp(bractCurl(j, inBud), k.hang ? 0.1 : -FLARE[k.series], ready), -0.22, folded)
+      const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series], ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
@@ -375,7 +376,7 @@ export function create(options: PartOptions): PlantPart | null {
         const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(0.22, 0.55, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(0.36, 0.66, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
         const fr = r / (R + lift)
         const fh = Math.max(0, h - hr) / (Hf + lift)
         const onFace = over * (1 - smoothstep(1, 1.1, fr * fr + fh * fh))
