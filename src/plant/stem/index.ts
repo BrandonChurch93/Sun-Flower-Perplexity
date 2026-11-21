@@ -406,18 +406,18 @@ export function create(options: PartOptions): PlantPart {
       const q = hash01(seed, 83, i)
       const up = 0.16 - slope + 0.7 * (hash01(seed, 84, i) - 0.5)
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
-      const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
+      const tall = hash01(seed, 86, i) < 0.15 ? 1.35 : 1
       const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
       // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
       const patch = stretched * Math.min(1, r0 / hairThick[i])
-      const own = 0.88 * hash01(seed, 87, i)
-      const shown = smoothstep(own, own + 0.12, patch) * smoothstep(0.03, 0.2, stretched)
+      const own = 0.78 * hash01(seed, 87, i)
+      const shown = smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
       const reach = shown > 0 ? radius : 0
       root[o] = n.x + ox * reach
       root[o + 1] = n.y + oy * reach
       root[o + 2] = n.z + oz * reach
       if (shown > 0) hairsDrawn = Math.max(hairsDrawn, i + 1)
-      root[o + 3] = Math.min(0.9 * r0, (q > 0.96 ? 0.005 + 0.025 * (q - 0.96) : 0.002 + 0.002 * q) * (0.8 + 0.2 * hairTop[i]) * onRib) * mature * shown
+      root[o + 3] = Math.min(0.9 * r0, (q > 0.96 ? 0.005 + 0.025 * (q - 0.96) : 0.002 + 0.002 * q) * (0.8 + 0.2 * hairTop[i]) * tall) * mature * shown
       lean[o] = ox + n.tx * up + wx * round
       lean[o + 1] = oy + n.ty * up + wy * round
       lean[o + 2] = oz + n.tz * up + wz * round
