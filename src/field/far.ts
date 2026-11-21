@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -41,9 +41,13 @@ uniform float uOpen;
 uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
+uniform float uAhead;
+uniform float uSquat;
 ${swayGlsl}
+${sizeGlsl}
 void main() {
   float across = aCorner.x;
+  float size = sizeAt(aPlace.w, aVary.z, uAhead);
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
@@ -53,14 +57,14 @@ void main() {
   float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away) * (1.0 + ${HEAD_GROWS.toFixed(2)} * uOpen);
   float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
   float flip = fract(draw * 13.0) < 0.5 ? -1.0 : 1.0;
-  float top = ${HEAD_AT.toFixed(2)} * uTile.y * aPlace.w;
-  vec2 off = vec2(across * uTile.x * aPlace.w, v * uTile.y * aPlace.w - top) * scale;
+  float top = ${HEAD_AT.toFixed(2)} * uTile.y * size * (1.0 - uSquat);
+  vec2 off = vec2(across * uTile.x * size, v * uTile.y * size * (1.0 - uSquat) - top) * scale;
   off = vec2(cos(tip) * off.x - sin(tip) * off.y, sin(tip) * off.x + cos(tip) * off.y);
   float h = top + off.y;
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * off.x;
   world.xz += aVary.xy * h;
   // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
-  float tall = max(uPlantHeight * aPlace.w, 0.001);
+  float tall = max(uPlantHeight * size * (1.0 - uSquat), 0.001);
   float k = clamp((h / tall - 0.3) / 0.7, 0.0, 1.0);
   float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, aPlace.xy));
   world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
@@ -130,6 +134,7 @@ uniform vec2 uStart;
 uniform float uCover;
 uniform float uAbove;
 uniform float uLevel;
+uniform float uThrough;
 uniform float uHeight;
 uniform float uPlantWind;
 uniform float uPlantHeight;
@@ -158,7 +163,7 @@ void main() {
     // The low sun comes through the upper leaves of a clump, green, and here and there a leaf catches it whole. Looking into the sun the eye meets the shaded side of every clump.
     float lit = smoothstep(0.6, 0.78, valueNoise(p * 9.0 + 5.0));
     float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz))));
-    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * low * smoothstep(0.0, 0.1, uSunDir.y));
+    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * low * uThrough * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);
@@ -233,6 +238,9 @@ export class FarField {
     uCover: { value: 0 },
     uOpen: { value: 0 },
     uAbove: { value: 0 },
+    uAhead: { value: 1 },
+    uThrough: { value: 1 },
+    uSquat: fieldUniforms.uSquat,
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -316,6 +324,9 @@ export class FarField {
     this.plants.forEach((plant, i) => {
       plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
     })
+    this.uniforms.uAhead.value = plantAhead(timeOpen)
+    // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
+    this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, 30, 40)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
