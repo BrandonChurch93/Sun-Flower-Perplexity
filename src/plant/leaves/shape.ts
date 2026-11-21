@@ -4,7 +4,6 @@ import { clamp, smoothstep } from '../../core/curves.ts'
 import { hash01 } from '../../core/random.ts'
 
 export const SETS = 3
-// Where the widest part of the blade is, as a share of its length.
 const WIDEST = 0.3
 // The length of a blade over its half width, for the map, which is drawn for one average leaf.
 const ASPECT = 2.45
@@ -59,11 +58,8 @@ export function toothAt(s: number, seed: number, count: number, depth: number): 
 }
 
 export interface VeinField {
-  // The distance to the nearest main vein, as a share of the blade's length.
   near: number
-  // 1 on a main vein, falling to 0 beside it.
   main: number
-  // 1 on one of the small veins that run from one side vein to the next.
   rung: number
 }
 
@@ -81,7 +77,6 @@ const keptAt: number[] = []
 const keptSlope: number[] = []
 const keptHalf: number[] = []
 
-// The veins at a place on the blade.
 export function veinField(veins: Vein[], w: number, s: number): VeinField {
   const a = Math.abs(w)
   if (veins !== keptVeins || a !== keptAcross) {

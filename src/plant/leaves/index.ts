@@ -241,7 +241,6 @@ export function create(options: PartOptions): PlantPart {
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
   const mesh = partMesh(geometry, surface)
 
-  // The stalks and the rib under each blade, for the plant and the companion.
   const tubeSlots = hero ? [new Float32Array(tubes * 3), new Float32Array(tubes * 3)] : null
   const tubeNormals = hero ? new Float32Array(tubes * 3) : null
   const tubeUv = hero ? new Float32Array(tubes * 2) : null
@@ -332,18 +331,30 @@ export function create(options: PartOptions): PlantPart {
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
 
-    let x = 0
-    let z = 0
-    for (let k = 0; k <= PATH; k++) {
-      const share = k / PATH
-      const bladeShare = Math.max(0, (share - STALK) / (1 - STALK))
-      const tipward = smoothstep(0.68, 1, share)
-      const a = Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - leaf.kink * grown * smoothstep(STALK * 0.8, STALK + 0.14, share) - leaf.tipCurl * grown * tipward * tipward + rock + trail * bladeShare * bladeShare
-      pathX[k] = x
-      pathZ[k] = z
-      pathA[k] = a
-      x += (Math.cos(a) * total) / PATH
-      z += (Math.sin(a) * total) / PATH
+    const lay = (hang: number): number => {
+      let x = 0
+      let z = 0
+      let low = 0
+      for (let k = 0; k <= PATH; k++) {
+        const share = k / PATH
+        const bladeShare = Math.max(0, (share - STALK) / (1 - STALK))
+        const tipward = smoothstep(0.68, 1, share)
+        const a = Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(STALK * 0.8, STALK + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
+        pathX[k] = x
+        pathZ[k] = z
+        pathA[k] = a
+        low = Math.min(low, frame.my * x + frame.ny * z)
+        x += (Math.cos(a) * total) / PATH
+        z += (Math.sin(a) * total) / PATH
+      }
+      return low
+    }
+    // A low leaf hangs only as far as the ground lets it, and lifts off it if it must.
+    const room = frame.oy - 0.012 - 0.16 * size
+    const most = -lay(1)
+    if (most > room) {
+      const least = -lay(0)
+      lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
     const cf = Math.cos(fold)
