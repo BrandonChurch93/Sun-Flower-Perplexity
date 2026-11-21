@@ -21,10 +21,24 @@ const PACKS = path.join(WORK, 'packs')
 const roundName = (round: number): string => `round-${String(round).padStart(3, '0')}`
 const source = (file: string): string => path.relative(ROOT, file)
 
+const PIXEL_CHUNKS = new Set(['IHDR', 'PLTE', 'tRNS', 'IDAT', 'IEND'])
+
+export function pixelsOnly(png: Buffer): Buffer {
+  const parts: Buffer[] = [png.subarray(0, 8)]
+  let at = 8
+  while (at + 12 <= png.length) {
+    const size = png.readUInt32BE(at)
+    const end = at + 12 + size
+    if (PIXEL_CHUNKS.has(png.toString('latin1', at + 4, at + 8))) parts.push(png.subarray(at, end))
+    at = end
+  }
+  return Buffer.concat(parts)
+}
+
 async function asPng(input: Buffer | string | Sharp): Promise<Buffer> {
   const image = typeof input === 'string' || Buffer.isBuffer(input) ? sharp(input) : input
   const flat = await image.removeAlpha().png().toBuffer()
-  return sharp(flat).resize(longEdge, longEdge, { fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer()
+  return pixelsOnly(await sharp(flat).resize(longEdge, longEdge, { fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer())
 }
 
 function list(numbers: number[]): string {

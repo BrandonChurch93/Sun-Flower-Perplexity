@@ -34,9 +34,8 @@ export class Job {
   private done = 0
   private rendered = 0
   private renderSeconds = 0
-  private left = 0
   private lastLook = Date.now()
-  constructor(readonly o: FilmOptions, private total: number, readonly what = 'film') {}
+  constructor(readonly o: FilmOptions, private total: number, readonly what = 'film', private lookMinutes = LOOK_MINUTES) {}
 
   async open(): Promise<Session> {
     if (!this.session) {
@@ -50,9 +49,8 @@ export class Job {
     return this.base
   }
 
-  begin(unit: string, toRender: number): void {
+  begin(unit: string): void {
     this.unit = unit
-    this.left = toRender
     if (!this.timer) {
       this.timer = setInterval(() => this.print(), PRINT_SECONDS * 1000)
       this.timer.unref()
@@ -67,8 +65,7 @@ export class Job {
     this.done++
     this.rendered++
     this.renderSeconds += seconds
-    this.left--
-    if (Date.now() - this.lastLook >= LOOK_MINUTES * 60000) {
+    if (Date.now() - this.lastLook >= this.lookMinutes * 60000) {
       this.lastLook = Date.now()
       addLook(file, `Film job: frame ${frame} (${timeOf(frame).toFixed(1)} s, ${this.unit}) at the ${this.o.tier} tier in the ${this.o.format} format`, 'film job', true)
     }
@@ -182,9 +179,7 @@ export async function renderChunk(unit: string, job: Job, range: [number, number
     return true
   }
   const have = (f: number): boolean => checks.has(f) && fs.existsSync(path.join(dir, frameName(f)))
-  let toRender = 0
-  for (const p of parts) if (!partDone(p)) for (let f = p.first; f <= p.last; f++) if (!have(f)) toRender++
-  job.begin(unit, toRender)
+  job.begin(unit)
   makeRoom(dir, Math.min(step, count))
   let base = saved?.base ?? null
   for (const p of parts) {
@@ -204,13 +199,14 @@ export async function renderChunk(unit: string, job: Job, range: [number, number
         base = job.recordBase()
         fs.writeFileSync(jobFile, JSON.stringify({ identity, base }, null, 2) + '\n')
       }
-      const { png: data, seconds } = await session.render(f, o.tier)
+      const began = Date.now()
+      const { png: data } = await session.render(f, o.tier)
       const check = await frameCheck(session, f)
       fs.writeFileSync(`${png}.tmp`, data)
       fs.renameSync(`${png}.tmp`, png)
       fs.appendFileSync(checksFile, JSON.stringify(check) + '\n')
       checks.set(f, check)
-      job.frame(f, seconds, png)
+      job.frame(f, (Date.now() - began) / 1000, png)
     }
     encodeFrames(path.join(dir, 'f%06d.png'), p.first, n, p.file, bitrateFor(o.format))
     for (let f = p.first; f <= p.last; f++) fs.rmSync(path.join(dir, frameName(f)), { force: true })
