@@ -198,21 +198,21 @@ export function rayLength(k: number, time: number): number {
   return rayFull * headScale() * grown * lerp(RAY_SHUT, 1, rayOpen(k, time)) * (0.92 + 0.16 * rnd(40, k))
 }
 
-// Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together, then the front travels round the head
-// both ways. Past `RAY_NEAR` each ray keeps its own start and its own pace, so the far side lifts ray by ray and never as one block.
+// Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together and the front travels on to `RAY_NEAR`.
+// Past `RAY_NEAR` no front runs: each ray has its own start, well apart from its neighbors', and its own pace.
+// Whatever a ray had done by `RAY_HELD` it keeps.
 const RAY_SECONDS = 3
 const RAY_NEAR = 95 * RAD
+const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
+const RAY_FLAT = config.keys.find((key) => key.id === 'field')!.time - 0.2
+const RAY_CUP = 32
+const GOLDEN = (Math.sqrt(5) - 1) / 2
 const frontCurve = new Monotone([
   [0, bloom0],
   [45 * RAD, bloom0],
   [RAY_NEAR, bloom0 + 2.4],
   [140 * RAD, bloom0 + 4],
   [Math.PI, bloom1 - RAY_SECONDS - 0.3],
-])
-const farCurve = new Monotone([
-  [RAY_NEAR, bloom0 + 2.4],
-  [140 * RAD, bloom0 + 2.9],
-  [Math.PI, bloom0 + 3.2],
 ])
 
 function raySpan(k: number): [number, number, number] {
@@ -222,9 +222,10 @@ function raySpan(k: number): [number, number, number] {
     return [start, start + RAY_SECONDS, 0]
   }
   const far = (away - RAY_NEAR) / (Math.PI - RAY_NEAR)
-  const start = farCurve.at(away) + lerp(0.3, 0.8, far) * rnd(41, k)
-  const seconds = lerp(RAY_SECONDS, 4.4, far) * (1 + 0.15 * (rnd(43, k) - 0.5) * smoothstep(0, 0.25, far))
-  return [start, Math.min(start + seconds, bloom1), smoothstep(0, 0.3, far)]
+  const turn = (k * GOLDEN + rnd(46)) % 1
+  const start = RAY_HELD + 0.004 + (0.3 * far + 0.1 * rnd(41, k)) * smoothstep(0, 0.3, turn) + turn
+  const seconds = lerp(1.8, lerp(RAY_SECONDS, 3.8, far), smoothstep(0, 0.5, turn)) * (0.9 + 0.2 * rnd(43, k))
+  return [start, Math.min(start + seconds, bloom1), 1]
 }
 
 const rayRise = (span: [number, number, number], time: number): number => lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
@@ -234,10 +235,6 @@ export function rayOpen(k: number, time: number): number {
 }
 
 // A ray lies folded in over the face until it opens. It arrives cupped forward and flattens over the seconds that follow.
-// Whatever a ray had done by `RAY_HELD` it keeps.
-const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
-const RAY_CUP = 32
-
 export function rayAngle(k: number, time: number): number {
   const span = raySpan(k)
   const open = rayRise(span, time)
@@ -246,7 +243,7 @@ export function rayAngle(k: number, time: number): number {
   if (open <= held) return lift * RAD
   const cup = Math.min(RAY_CUP, 76 * (1 - held)) * (0.85 + 0.3 * rnd(44, k))
   const from = lerp(span[0], span[1], 0.69)
-  const flat = smootherstep(from, from + lerp(4.5, 8, rnd(45, k)), time)
+  const flat = smootherstep(from, Math.min(from + lerp(4.5, 8, rnd(45, k)) + 3.5 * span[2], RAY_FLAT), time)
   return (lift - cup * smoothstep(held, 1, open) * (1 - flat)) * RAD
 }
 
@@ -337,7 +334,7 @@ export function leafStemFraction(i: number, time: number): number {
   const rank = i / (leafCount - 1)
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
   const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
-  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank) * settled) / h), smoothstep(1.5, 7, age))
+  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
 }
 
 export function leafLength(i: number, time: number): number {
