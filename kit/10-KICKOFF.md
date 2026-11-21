@@ -32,7 +32,7 @@ Done. You approved all eight on 2026-11-20, as the reference run chose them. The
 
 Two things were settled with the approval:
 
-- The pictures frame the plant closer than the plan did from the night onward. The pictures win, so the camera path in the config was measured again from them. In the frost the camera now drifts in toward the bud instead of only backing away.
+- The pictures frame the plant closer than the plan did from the night onward. The pictures win, so the camera path in the config was measured again from them. From the night into the frost the camera now drifts in toward the bud instead of only backing away.
 - The two bloom close-ups have the leaves of a second sunflower at their left edge, and the wide field picture shows your flower standing alone. The film keeps the second sunflower, so it also stands a short step from yours in the last shot. This is recorded as a settled difference, so the critics do not ask for the picture on that point.
 
 ## Run 2 · The build

@@ -110,7 +110,7 @@ Every part has a fallback. Where this file names none, the fallback is the gener
 
 ### Fallback for the sky and far background
 
-- The sky and background of the approved image for that key, with the plant painted out, on a curved backdrop.
+- The sky and background of the approved image for that key, with the plant and any leaves of the companion painted out, on a curved backdrop.
 - The night stars: the stars of the approved `night` image, kept in the painted sky.
 
 ## 5. The weather
@@ -143,7 +143,8 @@ Every weather effect is a closed-form function of time, so any frame can be rend
 ## 7. The camera
 
 - One path, a smooth function of time through `camera.keys`.
-- Fit the path to the approved images: at each key's time, adjust the camera so the plant sits in the frame as it does in the image. Then smooth the whole path again and check every key. The values in the config were measured from the images, so the fit starts close. At `night` and `frost` they sit between the two images' framings on purpose, to keep the drift toward the bud gentle. Move them toward the images only as far as the move stays smooth.
+- Interpolate each value with a monotone curve, so between two keys a value never goes outside the range those two keys give. The lens height and the angle round the plant only rise. The focal length never rises.
+- Fit the path to the approved images: at each key's time, adjust the camera so the plant sits in the frame as it does in the image. Then smooth the whole path again and check every key. The values in the config were measured from the images, so the fit starts close. Two keys are off their images on purpose, to keep the drift toward the bud gentle: at the `night` key the config frames the plant a little closer than its image does, and at the `frost` key a little wider. Move either toward its image only as far as the move stays smooth.
 - Depth of field is real: it comes from the lens, the focus distance and the aperture. `kit/04-LOOK.md` has the rules.
 
 ## 8. The reveal

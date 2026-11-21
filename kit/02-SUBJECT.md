@@ -6,8 +6,8 @@ Two things are on screen: one plant, and whatever world it is standing in. This 
 
 - The near edge of a sunflower field, in open farmland.
 - The plant stands on its own, `field.plantAheadOfRowM` meters out from the front row, where the tilled soil meets a strip of grass. The camera is on the grass side, looking at the field.
-- One more sunflower grows out there with it. This file calls it the companion. `field.companion` places it as seen from the camera at the `bloom-hero` key: to the left of the plant and a little nearer the camera. Its height is the plant's height times `heightRatio`. Its longest leaves are the dark soft shapes at the left edge of the `bloom-opening` and `bloom-hero` images, with the sun just past their tips.
-- Through `dawn`, `rain` and `night`, and at the `frost` key, no part of the companion is in the frame: its leaves are still short and it stands wide of the camera. Its leaves may start to enter at the left edge as `frost` ends. If keeping it out of those frames and having its leaves at the edge of the two bloom frames cannot both hold, keeping it out comes first.
+- One more sunflower grows out there with it. This file calls it the companion. `field.companion` places it in the ground, so tuning the camera never moves it. `field.companion.leftM` and `field.companion.towardCameraM` are horizontal meters from the foot of the plant's stem. Toward the camera means along the line from the plant to a camera standing at the angle `field.companion.fromAzimuthDeg` round the plant. Left is at a right angle to that line, on that camera's left. The companion's height is the plant's height times `field.companion.heightRatio`. Its upper leaves are the dark soft shapes at the left edge of the `bloom-opening` and `bloom-hero` images, with the sun just past their tips.
+- Through `dawn`, `rain` and `night`, and at the `frost` key, no part of the companion is in the frame: its leaves are still short and it stands wide of the camera. Its leaves may start to enter at the left edge as `frost` ends. If keeping it out of those frames and having its leaves at the edge of the two bloom frames cannot both hold, keeping it out comes first. The leaves missing from the bloom frames are then a contested issue, as `kit/07-QUALITY-BAR.md` defines one: log it once as an open item naming this rule and do not work on it again.
 - Behind them the field runs away from the camera. Every sunflower in it, and the companion, is the same age as the plant at every moment of the film.
 - Low rolling hills and a line of trees close the horizon.
 - It is the same place in every world. Only the weather changes.
@@ -125,7 +125,7 @@ Each world replaces the sky, the light, the air and the state of the ground. The
 Used by `bloom` and `field`.
 
 - Sky: one sky for both segments. A bright gold band along the horizon. Above it a layer of slate blue cloud, heavy overhead as in the two bloom images and thinning into lit streaks lower down as in the `field` image.
-- Light: the sun low on the left, partly behind the plant. Petals and leaves on the sun side glow with light passing through them. Hairs and edges carry a bright rim. A soft warm flare crosses the lens.
+- Light: the sun low on the left. In the two bloom frames it sits at the left edge of the frame with the companion's upper leaves partly across it. Petals and leaves on the sun side glow with light passing through them. Hairs and edges carry a bright rim. A soft warm flare crosses the lens.
 - Air: gold haze. Pollen and fine dust drifting in the light.
 - Ground: warm, dry, long shadows between the rows.
 - Motion: a light wind. Slow waves cross the field. The haze drifts.

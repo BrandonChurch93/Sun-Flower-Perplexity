@@ -88,7 +88,7 @@ Steps:
 
 1. Build the shared engine: the director with the timeline and the cuts, the camera path through `camera.keys`, the lens with focus on the growing tip, the sampler, the lens and grade chain.
 2. Build the stand-in plant as a real function of time that follows `plant.heightM` and `plant.stages`: a stem, simple leaves that appear in the right order, a simple bud and a head that opens. The shapes are simple. The timing is real.
-3. Give every world a stand-in: a backdrop made from its approved image, a main light of the right color on the right side, and plain ground. No weather yet beyond a tint.
+3. Give every world a stand-in: a backdrop made from its approved image with the plant and any leaves of the companion painted out, a main light of the right color on the right side, and plain ground. No weather yet beyond a tint.
 4. Build the stand-in field: simple plants in rows, the plant standing out in front of them, and the companion placed from `field.companion`.
 5. Animate the whole film. At each key's time, frame the plant as its approved image does.
 6. Build the `live`, `autopilot` and `export` modes and the menu.

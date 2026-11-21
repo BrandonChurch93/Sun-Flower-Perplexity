@@ -19,9 +19,9 @@ Brandon approved these eight images on 2026-11-20. Each is the target for the fi
 - `references/drafts/NOTES.md` records the model, the prompt and the inputs of every take, and the faults the run saw in each best take.
 - Nothing in this folder is ever edited, replaced or regenerated.
 
-## What was settled when they were approved
+## What was decided when they were approved
 
 - Framing. From `night` onward the images frame the plant closer than the brief asked. The images win. `camera.keys`, `plant.heightM` and `plant.stages` in the config were set again from the images.
-- The companion. The two bloom images have the leaves of a second sunflower at their left edge. The `field` image shows the plant standing alone. The film keeps the second sunflower in every world, out of frame until the bloom, so it also stands a short step from the plant in the last shot. This is the settled difference listed for the `field` key in the config.
-- The golden hour sky. The two bloom images have a heavier cloud layer than the `field` image. `kit/02-SUBJECT.md` describes the one sky that serves both.
+- The companion. The two bloom images have the leaves of a second sunflower at their left edge. The `field` image shows the plant standing alone. The film keeps the second sunflower in every world, out of frame until late in the frost, so it also stands a short step from the plant in the last shot. This is the one settled difference. It is listed for the `field` key in the config.
+- The golden hour sky. The two bloom images have a heavier cloud layer than the `field` image. `kit/02-SUBJECT.md` describes one sky that matches both, so nothing had to be settled.
 - Small points where the image wins over the brief: the split husk resting beside the seedling, and eight or nine leaves on the plant in the rain.
