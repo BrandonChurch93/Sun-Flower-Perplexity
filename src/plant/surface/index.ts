@@ -36,18 +36,32 @@ struct Tissue {
   float occlusion;
 };
 
-// A normal bent by a height in meters, with no need of tangents.
-vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
+vec3 reliefTilt(vec3 n, vec3 world, float hx, float hy, float strength) {
   vec3 dx = dFdx(world);
   vec3 dy = dFdy(world);
-  float hx = dFdx(height);
-  float hy = dFdy(height);
   vec3 r1 = cross(dy, n);
   vec3 r2 = cross(n, dx);
   float det = dot(dx, r1);
   vec3 grad = sign(det) * (hx * r1 + hy * r2) * (strength / max(abs(det), 1e-12));
   // A slope past about 50 degrees is finer than the pixel or a mistake: eased off so it cannot sparkle.
   return normalize(n - grad * inversesqrt(1.0 + 0.7 * dot(grad, grad)));
+}
+
+// A normal bent by a height in meters, with no need of tangents.
+vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
+  return reliefTilt(n, world, dFdx(height), dFdy(height), strength);
+}
+
+// Half the reach of one pixel in a part's own coordinates. A height differenced from one such step back to one ahead fades by itself where it is finer than a pixel.
+vec2 reliefReach(vec2 at) {
+  vec2 ax = dFdx(at);
+  vec2 ay = dFdy(at);
+  return max(0.5 * sqrt(ax * ax + ay * ay), vec2(1e-7));
+}
+
+// As reliefNormal, for a part that knows the slope of its height in its own coordinates, in meters per unit of 'at'. The screen takes differences in blocks of two pixels, which shows on a fine height; the coordinates themselves run smooth.
+vec3 reliefSlope(vec3 n, vec3 world, vec2 at, vec2 slope, float strength) {
+  return reliefTilt(n, world, dot(slope, dFdx(at)), dot(slope, dFdy(at)), strength);
 }
 
 // The share of the sun a thin tissue passes when 'through' is 1.
