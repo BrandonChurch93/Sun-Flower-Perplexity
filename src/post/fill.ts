@@ -15,6 +15,7 @@ export const reachFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
 uniform sampler2D tNear;
 uniform float uRadiusScale;
+uniform float uSpecks;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -41,8 +42,8 @@ void main() {
     most = max(most, max(n.r, max(n.g, n.b)));
   }
   float own = max(rgb.r, max(rgb.g, rgb.b));
-  // Only where the picture is sharp: in a blurred area a lone bright pixel is one copy of a light, and the fill draws its disc from it.
-  rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, smoothstep(1.5, 3.0, c.a));
+  // With specks in the air a lone bright pixel in a blurred area is one copy of a light, and the fill draws its disc from it.
+  rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, uSpecks * smoothstep(1.5, 3.0, c.a));
   outColor = vec4(rgb, min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
 }
 `
