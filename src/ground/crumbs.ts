@@ -73,12 +73,22 @@ void main() {
   vec2 c = place[3].xz;
   float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
   float keep = smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04);
-  vec4 world = place * vec4(position * lump * keep, 1.0);
-  world.y += soilHeight(c, soilLod(c));
+  float r = length(c);
+  vec2 out2 = c / max(r, 1e-4);
+  float start = 0.2 + 1.5 * hash11(aSeed.x);
+  float go = smoothstep(start, start + 0.9, uTime) * (1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r));
+  float angle = go * (1.0 + 2.6 * hash11(aSeed.x + 5.0));
+  vec3 axis = vec3(out2.y, 0.0, -out2.x);
+  vec3 rel = mat3(place) * (position * lump * keep);
+  vec3 ball = mat3(place) * position;
+  rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));
+  ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
+  c += out2 * go * (0.003 + 0.007 * hash11(aSeed.x + 9.0));
+  vec4 world = vec4(c.x + rel.x, place[3].y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
-  vBall = normalize(mat3(place) * position);
+  vBall = normalize(ball);
   vSeed = aSeed;
   gl_Position = projectionMatrix * view;
 }
@@ -116,7 +126,7 @@ void main() {
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
   float damp = saturate(uWet + 0.6 * uDew) * mix(1.0, 0.6, vSeed.z);
   luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.3, damp);
+  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   vec2 p = vWorld.xz;
@@ -127,6 +137,9 @@ void main() {
   float gloss = mix(uWet * uWet, 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
   color += skyAmbient(reflect(-v, n)) * pow(1.0 - max(dot(n, v), 0.0), 5.0) * gloss * 0.1 * open;
+  vec3 cell = vWorld * 650.0;
+  float bead = step(0.9, hash31(floor(cell))) * smoothstep(0.34, 0.22, length(fract(cell) - 0.5)) * uDew * smoothstep(-0.1, 0.5, n.y) * (1.0 - smoothstep(0.25, 0.9, length(fwidth(cell))));
+  color = mix(color, color * 0.6, bead) + bead * smoothstep(0.2, 0.05, length(fract(cell) - 0.5 + uSunDir * 0.12)) * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `

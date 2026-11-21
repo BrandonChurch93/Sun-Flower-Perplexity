@@ -10,7 +10,7 @@ import { clodScatter, crumbFragment, crumbScatter, crumbVertex, laneDir, scatter
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
-import { clodReliefM, clodScale, detailScale, litterTileM, ridgeHeightM, soilFragment, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex } from './soil.ts'
+import { clodReliefM, clodScale, detailScale, emergence, litterTileM, ridgeHeightM, soilFragment, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex } from './soil.ts'
 
 const WIDE = 8.3
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
@@ -48,6 +48,7 @@ export class Ground {
       uNear: { value: new THREE.Vector4(0.55 * nearRadiusM, 0.95 * nearRadiusM, nearGrowth - 1, 1) },
       uRelief: { value: new THREE.Vector4(soilReliefM, clodReliefM, 1 / (soilTileM * clodScale), 1 / soilReliefM) },
       uGrassTimes: { value: new THREE.Vector4(grassTimes.firstS, grassTimes.lastS, grassTimes.growS, grassTimes.laneS) },
+      uEmerge: { value: new THREE.Vector4(emergence.riseS, emergence.liftM, emergence.radiusM, emergence.cracks) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
       uMeanInv: { value: new THREE.Vector3(1 / soilMean[0], 1 / soilMean[1], 1 / soilMean[2]) },

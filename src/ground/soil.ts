@@ -12,6 +12,9 @@ export const detailScale = 13
 export const litterTileM = 2.9
 export const ridgeHeightM = 0.07
 
+// The plant breaking the surface: the soil round the stem lifts over riseS seconds into plates of this height and reach, split by this many cracks.
+export const emergence = { riseS: 2.3, liftM: 0.0045, radiusM: 0.018, cracks: 5 }
+
 // The height of the near ground, shared by its surface and by everything that sits on it.
 export const soilHeight = /* glsl */ `
 uniform sampler2D tData;
@@ -35,12 +38,29 @@ float lane(vec2 p) {
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;
 }
+uniform vec4 uEmerge;
+// x is the height the breaking soil adds, y how deep inside a crack the point is, from 0 to 1.
+vec2 emerge(vec2 p) {
+  float r = length(p);
+  if (r > uEmerge.z * 1.7) return vec2(0.0);
+  float rise = smoothstep(-0.8, uEmerge.x, uTime) * (1.0 - 0.3 * smoothstep(uEmerge.x, uEmerge.x + 5.0, uTime));
+  float a = atan(p.y, p.x);
+  float s = a * uEmerge.w / 6.2832 + 0.07 * sin(r * 420.0 + a * 2.0) + 0.05 * sin(r * 1300.0);
+  float id = mod(floor(s), uEmerge.w);
+  float f = fract(s);
+  float reach = 1.0 - smoothstep(uEmerge.z * 0.25, uEmerge.z * (1.1 + 0.5 * hash11(id + 11.0)), r);
+  float toCrack = min(f, 1.0 - f) * 6.2832 / uEmerge.w * r;
+  float crack = (1.0 - smoothstep(0.0, 0.0003 + 0.0016 * rise * reach, toCrack)) * reach * rise;
+  float hole = 1.0 - smoothstep(0.002, 0.009, r);
+  float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * hole);
+  return vec2(uEmerge.y * rise * (plate - 0.6 * crack * plate) + 0.002 * (1.0 - smoothstep(0.003, 0.008, r)), max(crack, 0.5 * hole * hole * rise));
+}
 float soilHeight(vec2 p, float lod) {
   float fine = textureLod(tData, p * uTiles.x, lod).a - 0.55;
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
-  float foot = 1.0 - smoothstep(0.004, 0.02, length(p));
-  return mix((fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)), 0.002, foot);
+  float foot = 1.0 - smoothstep(0.004, 0.022, length(p));
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * foot) + emerge(p).x;
 }
 `
 
@@ -123,7 +143,9 @@ void main() {
   albedo *= mix(0.82, 1.16, big) * mix(0.7, 1.1, lump);
   float rowAmt = 0.0;
   float ridge = 1.0;
-  vec2 tilt = g;
+  vec2 broken = emerge(p);
+  vec2 tilt = g - vec2(emerge(p + vec2(0.0003, 0.0)).x - broken.x, emerge(p + vec2(0.0, 0.0003)).x - broken.x) / 0.0003;
+  albedo *= 1.0 - 0.35 * broken.y;
 #else
   vec2 uvB = TURN_B * p * (uTiles.x * 0.73) + vec2(0.37, 0.61);
   vec4 cB = texture(tColor, uvB);
@@ -154,7 +176,7 @@ void main() {
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.25, 0.6, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.3, damp);
+  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
   albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.85 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under));
 
@@ -166,7 +188,7 @@ void main() {
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
   float open = (0.5 + 0.5 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
-  open *= mix(1.0, 0.45 + 0.55 * lump, fade);
+  open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
   open *= 1.0 - 0.35 * thatch;
   lit *= 1.0 - 0.5 * thatch;
