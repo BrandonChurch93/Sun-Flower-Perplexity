@@ -40,7 +40,7 @@ void main() {
   // The cloud's own light and dark are drawn out against its smooth mean, so its breaks and undersides survive the lens.
   float rim = 0.075 + 0.014 * smoothstep(0.62, 0.8, theta);
   float under = (1.0 - smoothstep(rim - 0.004, rim + 0.016, el)) * smoothstep(0.2, 0.5, theta);
-  vec3 mean = textureLod(tSky, vec2(uv.x, mix(uv.y, min(uv.y, 0.19), under)), lod + 4.5).rgb;
+  vec3 mean = textureLod(tSky, uv, lod + 4.5).rgb;
   vec3 detail = sky - mean;
   detail = mix(vec3(dot(detail, vec3(0.3, 0.6, 0.1))), detail, 0.45);
   float shelf = smoothstep(rim, rim + 0.03, el) * smoothstep(0.2, 0.5, theta);
