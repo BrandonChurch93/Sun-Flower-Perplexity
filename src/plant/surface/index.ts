@@ -60,7 +60,7 @@ const float TISSUE_FUZZ = 0.22;
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
 // The share of the sun a shaded thin tissue gets off its lit neighbors, and how far toward the sun the head is asked whether it is lit.
-const float TISSUE_BOUNCE = 0.05;
+const float TISSUE_BOUNCE = 0.04;
 const float TISSUE_BOUNCE_M = 0.15;
 // Hairs too short to draw: a line of light along the outline of a hairy part.
 const float TISSUE_FELT = 0.6;
@@ -131,7 +131,7 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   vec3 lee = fdl >= 0.0 || peak <= 0.0 ? F : -F;
   // How far inside the outline the pixel is, in pixels, from how fast the face turns away.
   float fv = abs(dot(F, view));
-  float line = max(1.0 - smoothstep(0.6, 2.2, 0.5 * fv / max(fwidth(fv), 1e-5)), edge);
+  float line = max(1.0 - smoothstep(0.6, 2.6, 0.5 * fv / max(fwidth(fv), 1e-5)), edge);
   // On the outline of a thick part the sun is asked where the tips of its hairs are, clear of the part itself.
   float sun = plantSun(world + L * (TISSUE_FELT_M * line * step(peak, 0.0)), lee);
   float open = plantSky(world) * t.occlusion;
@@ -206,15 +206,15 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   float lit1 = max(glow.r, max(glow.g, glow.b));
   float behind = 0.6 + 0.4 * lit1;
   color += passed * (uSunColor * glow * (crease * wrap * lobe) + skyBack * (open * behind));
-  // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.
+  // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm, and most where they crowd.
   float thin = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
-  color += albedo * hue * uSunColor * (TISSUE_BOUNCE * thin * reach * (1.0 - saturate(lit1)) * under);
+  color += albedo * hue * uSunColor * (TISSUE_BOUNCE * (1.3 - 0.6 * t.occlusion) * thin * reach * (1.0 - saturate(lit1)) * under);
   float catches = (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against);
   vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
   color += (direct * catches + skyFront * (0.5 * open)) * pale * (TISSUE_FUZZ * fuzz * rim);
 
   float px = length(fwidth(world));
-  float lumps = 1.0 + 0.2 * saturate(2.0 - 420.0 * px) * sin(world.y * 420.0 + 2.0 * sin(world.x * 190.0 + world.z * 230.0))
+  float lumps = 1.0 + 0.3 * saturate(2.0 - 420.0 * px) * sin(world.y * 420.0 + 2.0 * sin(world.x * 190.0 + world.z * 230.0))
     + 0.15 * saturate(2.0 - 2100.0 * px) * sin(world.y * 2100.0 + world.x * 900.0 - world.z * 700.0);
   float toSun = (0.2 + 0.8 * against * against) * (0.35 + 0.65 * saturate(0.5 + 0.5 * fdl));
   color += direct * pale * (TISSUE_FELT * fuzz * line * lumps * toSun);
