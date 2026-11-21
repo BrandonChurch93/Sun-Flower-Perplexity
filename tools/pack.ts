@@ -45,7 +45,7 @@ async function blockoutPack(): Promise<Pack> {
   }
   const pairs: { number: number; key: (typeof keys)[number]; file: string }[] = []
   for (let i = 0; i < keys.length; i++) pairs.push({ number: i + 1, key: keys[i], file: await comparePair(keys[i].id, 'review') })
-  const STRIP = 20
+  const STRIP = 24
   const GAP = 10
   const first = await sharp(pairs[0].file).metadata()
   const rowW = first.width

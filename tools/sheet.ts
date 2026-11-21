@@ -36,8 +36,8 @@ function cellSize(format: string): { w: number; h: number } {
   return { w, h }
 }
 
-export function frameLabel(frame: number): string {
-  return `f${pad4(frame)} · ${timeOf(frame).toFixed(1)} s · ${segmentAt(frame).id}`
+export function frameLabel(frame: number, digits = 1): string {
+  return `f${pad4(frame)} · ${timeOf(frame).toFixed(digits)} s · ${segmentAt(frame).id}`
 }
 
 async function makeSheet(file: string, frames: number[], caption: string, o: SheetOptions): Promise<Sheet> {
@@ -51,11 +51,12 @@ async function makeSheet(file: string, frames: number[], caption: string, o: She
   const stills = await renderStills(frames.map((frame) => ({ frame, tier: o.tier, format: o.format, assets: o.assets, diag: 'beauty' })), { look: false })
   const { w, h } = cellSize(o.format)
   const parts: Placed[] = []
+  const digits = new Set(frames.map((f) => timeOf(f).toFixed(1))).size < frames.length ? 2 : 1
   for (let i = 0; i < frames.length; i++) {
     const left = GAP + (i % COLS) * (w + GAP)
     const top = GAP + Math.floor(i / COLS) * (h + STRIP + GAP)
     parts.push({ input: await scaled(stills[i], w, h), left, top })
-    parts.push({ input: strip(w, STRIP, frameLabel(frames[i])), left, top: top + h })
+    parts.push({ input: strip(w, STRIP, frameLabel(frames[i], digits)), left, top: top + h })
   }
   const rows = Math.ceil(frames.length / COLS)
   ensureDir(file)

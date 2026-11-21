@@ -42,17 +42,27 @@ function finish(tmp: string, file: string): void {
   fs.renameSync(tmp, file)
 }
 
-export function encodeFrames(pattern: string, start: number, count: number, file: string, mbps: number): void {
+function encode(input: string[], filter: string, file: string, mbps: number, passes: number): void {
   const tmp = `${file}.tmp.mp4`
-  run('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(fps), '-start_number', String(start), '-i', pattern, '-frames:v', String(count), '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p', ...codecArgs(mbps), tmp])
+  const head = ['-y', '-loglevel', 'error', ...input, '-vf', filter, ...codecArgs(mbps)]
+  if (passes > 1) {
+    const log = `${file}.pass`
+    try {
+      run('ffmpeg', [...head, '-pass', '1', '-passlogfile', log, '-f', 'null', '/dev/null'])
+      run('ffmpeg', [...head, '-pass', '2', '-passlogfile', log, tmp])
+    } finally {
+      for (const name of fs.readdirSync(path.dirname(file))) if (name.startsWith(`${path.basename(file)}.pass`)) fs.rmSync(path.join(path.dirname(file), name), { force: true })
+    }
+  } else run('ffmpeg', [...head, tmp])
   finish(tmp, file)
 }
 
-export function encodeAgain(source: string, file: string, mbps: number, size?: { width: number; height: number }): void {
-  const tmp = `${file}.tmp.mp4`
-  const filter = size ? `scale=${size.width}:${size.height}:flags=lanczos,format=yuv420p` : 'format=yuv420p'
-  run('ffmpeg', ['-y', '-loglevel', 'error', '-i', source, '-vf', filter, ...codecArgs(mbps), tmp])
-  finish(tmp, file)
+export function encodeFrames(pattern: string, start: number, count: number, file: string, mbps: number, passes = 2): void {
+  encode(['-framerate', String(fps), '-start_number', String(start), '-i', pattern, '-frames:v', String(count)], 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709,format=yuv420p', file, mbps, passes)
+}
+
+export function encodeAgain(source: string, file: string, mbps: number, size?: { width: number; height: number }, passes = 2): void {
+  encode(['-i', source], size ? `scale=${size.width}:${size.height}:flags=lanczos,format=yuv420p` : 'format=yuv420p', file, mbps, passes)
 }
 
 export function joinChunks(chunks: string[], file: string): void {
