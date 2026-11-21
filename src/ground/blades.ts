@@ -7,7 +7,7 @@ import { groundStates, soilHeight } from './soil.ts'
 
 // The grass close to the plant, where the dawn lens sees single blades: each blade is a folded ribbon with a mid line, and carries beads of dew that are small balls of their own.
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame. Where beadsSeen is given, only that many of each blade's beads are made.
-// The first stands at the left edge of the dawn's opening frames, in front of the plant. The second comes up between the plant and the sun while the lens pulls back. The rest are sprouts on the left.
+// The first stands at the left edge of the dawn's opening frames, in front of the plant. The second stands between the plant and the sun, low at the frame's edge in the first frame, and grows through the dawn no faster than the seedling. The rest are sprouts on the left.
 export interface Clump { x: number; z: number; blades: number; heightM: [number, number]; widthM: [number, number]; spreadM: number; lean: [number, number]; bornS: [number, number]; growS: number; beads: number; headingRad?: [number, number]; beadsSeen?: number }
 export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number }
 export const beadSizes: BeadSizes = { tipM: [0.0006, 0.0009], leastM: 0.00025, moreM: 0.0006 }
@@ -20,7 +20,7 @@ export const clumpsKept: Clump[] = [
 ]
 export const clumps: Clump[] = [
   { x: -0.032, z: 0.06, blades: 3, heightM: [0.036, 0.048], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1], beadsSeen: 1 },
-  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 20 },
+  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [-2.5, -0.5], growS: 9.5, beads: 20 },
   { x: -0.15, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
   { x: -0.138, z: -0.036, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
