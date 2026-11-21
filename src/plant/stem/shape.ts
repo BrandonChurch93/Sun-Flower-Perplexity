@@ -1,7 +1,7 @@
 import { config } from '../../config.ts'
-import { smoothstep } from '../../core/curves.ts'
+import { clamp, smoothstep } from '../../core/curves.ts'
 import { hash01 } from '../../core/random.ts'
-import { heightAt, leafAge, leafCount, leafStemFraction, seedLeafFraction } from '../growth.ts'
+import { heightAt, leafAge, leafCount, leafStemFraction, seedLeafFraction, stemRadius } from '../growth.ts'
 import type { Pose } from '../skeleton.ts'
 
 const TAU = Math.PI * 2
@@ -12,6 +12,11 @@ const END = config.film.durationSeconds
 export const ANCHORS = leafCount + 4
 export const SEED_ANCHOR = 2
 export const TOP_M = heightAt(END)
+
+// How thick the tissue with this label is at the end of the film.
+export function finalRadius(label: number): number {
+  return stemRadius(END, clamp(label / TOP_M))
+}
 
 let fixed: Float64Array | null = null
 

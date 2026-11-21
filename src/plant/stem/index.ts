@@ -7,7 +7,7 @@ import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
-import { ANCHORS, Anchors, SEED_ANCHOR, TOP_M, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
+import { ANCHORS, Anchors, SEED_ANCHOR, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
 
 const TAU = Math.PI * 2
@@ -17,13 +17,14 @@ const RIB_HEIGHT = 0.05
 const BUMP_MAX = 0.5
 const JOINT_OVERLAP_M = 0.004
 
+// `hairs` is how many stand on a square meter of grown skin.
 interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
   if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, full: false }
   if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 7500, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 30000, full: true }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 11000, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 44000, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -69,22 +70,29 @@ export function create(options: PartOptions): PlantPart {
 
   // On the field tiers one ring spacing is far longer than the foot, so the foot's color would spread up the stem.
   const footShown = shape.full ? 1 : shape.main > 3 ? 0.35 : 0.1
-  const hairs: HairSet | null = createHairs(options, shape.hairs, 'stem hairs')
+  const hairTable = new Float64Array(CELLS + 1)
+  const hairFrom = fixedLabels()[SEED_ANCHOR]
+  let hairySkin = 0
+  for (let c = 0; c < CELLS; c++) {
+    const label = hairFrom + ((c + 0.5) / CELLS) * (TOP_M - hairFrom)
+    const x = label / TOP_M
+    const patch = (TAU * finalRadius(label) * (TOP_M - hairFrom)) / CELLS
+    hairySkin += patch
+    hairTable[c + 1] = hairTable[c] + patch * (0.7 + 0.5 * smoothstep(0.55, 0.9, x) + 1.1 * smoothstep(0.9, 0.985, x))
+  }
+  const hairs: HairSet | null = shape.hairs ? createHairs(options, Math.round(shape.hairs * hairySkin), 'stem hairs') : null
   const hairCount = hairs ? hairs.count : 0
   // A hair belongs to a stretch of tissue between two anchors and keeps its share of that stretch for the whole film.
   const hairSeg = new Uint8Array(hairCount)
   const hairAt = new Float32Array(hairCount)
   const hairTop = new Float32Array(hairCount)
+  const hairThick = new Float32Array(hairCount)
   // The hairs are kept in order from the foot up, so the ones on tissue that has not grown out yet are the last and are left undrawn.
   let hairsDrawn = 0
   if (hairCount) {
     const fixed = fixedLabels()
-    const from = fixed[SEED_ANCHOR]
-    const table = new Float64Array(CELLS + 1)
-    for (let c = 0; c < CELLS; c++) {
-      const x = (from + ((c + 0.5) / CELLS) * (TOP_M - from)) / TOP_M
-      table[c + 1] = table[c] + 0.55 + 0.9 * smoothstep(0.55, 0.9, x) + 5 * smoothstep(0.9, 0.985, x)
-    }
+    const from = hairFrom
+    const table = hairTable
     for (let i = 0; i < hairCount; i++) {
       const want = ((i + hash01(seed, 80, i)) / hairCount) * table[CELLS]
       let c = Math.min(CELLS - 1, Math.floor((i / hairCount) * CELLS))
@@ -96,6 +104,7 @@ export function create(options: PartOptions): PlantPart {
       hairSeg[i] = k
       hairAt[i] = clamp((label - fixed[k]) / (fixed[k + 1] - fixed[k]))
       hairTop[i] = label / TOP_M
+      hairThick[i] = finalRadius(label)
     }
   }
 
@@ -132,10 +141,12 @@ export function create(options: PartOptions): PlantPart {
     const base = (u: number, s: number): number => {
       let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot)))
       if (!full) return r
-      r *= 1 + 0.16 * hasHead * smoothstep(1 - neckShare * 1.15, 0.975, u)
+      // The bud's own neck rings sit on the plain radius and a straight flare, so the last centimeter comes back to them.
+      const near = smoothstep(length - 0.02, length - 0.007, s)
+      r *= 1 + 0.16 * hasHead * smoothstep(1 - neckShare * 1.15, 0.975, u) * (1 - near)
       const x = clamp((u - 0.97) / 0.03)
-      if (flareTo > r) r += (flareTo - r) * x * x * x
-      return r
+      const curved = r + Math.max(0, flareTo - r) * x ** 1.6
+      return lerp(curved, Math.max(r, flareTo * x), near)
     }
 
     anchors.set(pose)
@@ -210,7 +221,7 @@ export function create(options: PartOptions): PlantPart {
     }
 
     const rEnd = base(1, length)
-    const slopeEnd = length > 0 ? (3 * Math.max(0, flareTo - stemRadius(time, 1) * grown * (1 + 0.16 * hasHead))) / (0.03 * length) : 0
+    const slopeEnd = length > 0 ? (flareTo / (0.03 * length)) * smoothstep(1, 1.3, flareTo / Math.max(stemRadius(time, 1) * grown, 1e-6)) : 0
     for (let j = 0; j < rings; j++) {
       let s = 0
       let off = 0
@@ -349,7 +360,7 @@ export function create(options: PartOptions): PlantPart {
       const k = hairSeg[i]
       const span = S[k + 1] - S[k]
       // Tissue that has not stretched out yet holds its hairs folded away.
-      const shown = smoothstep(0.03, 0.3, span / (M[k + 1] - M[k]))
+      const stretched = span / (M[k + 1] - M[k])
       const o = i * 4
       lean[o] = 0
       lean[o + 1] = 1
@@ -395,12 +406,16 @@ export function create(options: PartOptions): PlantPart {
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
       const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
+      // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
+      const patch = stretched * Math.min(1, r0 / hairThick[i])
+      const own = 0.88 * hash01(seed, 87, i)
+      const shown = smoothstep(own, own + 0.12, patch) * smoothstep(0.03, 0.2, stretched)
       const reach = shown > 0 ? radius : 0
       root[o] = n.x + ox * reach
       root[o + 1] = n.y + oy * reach
       root[o + 2] = n.z + oz * reach
       if (shown > 0) hairsDrawn = Math.max(hairsDrawn, i + 1)
-      root[o + 3] = Math.min(0.0035, (0.0011 + 0.0024 * q * Math.sqrt(q)) * (0.7 + 0.3 * hairTop[i]) * onRib) * mature * shown
+      root[o + 3] = Math.min(0.0035, (0.0015 + 0.0018 * q) * (0.75 + 0.25 * hairTop[i]) * onRib) * mature * shown
       lean[o] = ox + n.tx * up + wx * round
       lean[o + 1] = oy + n.ty * up + wy * round
       lean[o + 2] = oz + n.tz * up + wz * round

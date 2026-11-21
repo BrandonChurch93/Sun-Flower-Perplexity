@@ -1,6 +1,8 @@
-import { tissueGlsl } from '../surface/index.ts'
+import { tissueGlsl, tissueGuide } from '../surface/index.ts'
 import { SKIN_H, SKIN_W } from './maps.ts'
 import { TOP_M } from './shape.ts'
+
+const GUIDE = tissueGuide.stem
 
 export const vertex = /* glsl */ `
 in vec3 position;
@@ -103,22 +105,16 @@ void main() {
   albedo = mix(albedo, sprout, 0.92 * pale);
   albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.5, 0.13, 0.2), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.3 + 0.35 * streak + 0.3 * dust, pale));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
-  float rough = mix(0.84, 0.38, thin);
-  float wax = mix(0.1, 0.55, thin);
-  albedo *= 1.0 - 0.3 * uPlantWet;
-  rough = mix(rough, 0.22, uPlantWet);
-  wax = mix(wax, 0.9, max(uPlantWet, 0.5 * uPlantDew));
-  float rime = uPlantFrost * (0.2 + 0.8 * smoothstep(0.45, 0.85, 0.6 * dust + 0.25 * crest + 0.3 * tone + 0.3 * face.y));
-  albedo = mix(albedo, vec3(0.8, 0.86, 0.92), 0.42 * rime);
-  rough = mix(rough, 0.95, rime);
+  float rough = mix(${GUIDE.rough}, 0.5, thin);
+  float wax = mix(${GUIDE.wax}, 0.45, thin);
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(vec3(0.012, 0.022, 0.004), mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale), 0.22 * thin);
+  t.through = mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale) * (0.25 * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(0.5, 1.0, vSkin2.z) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.sheen = ${GUIDE.sheen} * mix(0.7, 1.0, vSkin2.z) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.32 * ribbed * furrow);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
 }
