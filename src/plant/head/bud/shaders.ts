@@ -78,7 +78,7 @@ void main() {
     albedo = mix(albedo, pale * 1.1, smoothstep(0.82, 1.0, ax) * 0.5);
     albedo *= 0.93 + 0.14 * fine;
     if (inner) albedo = mix(albedo, vec3(0.3, 0.43, 0.12), 0.65);
-    float thin = saturate(0.08 + 0.92 * smoothstep(0.22, 0.7, u) + 0.55 * ax * ax * ax);
+    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.5 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
     t.through = vec3(0.52, 0.74, 0.07) * thin * (0.75 + 0.5 * grain);

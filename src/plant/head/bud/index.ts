@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, stemRadius } from '../../growth.ts'
+import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, stemRadius } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, floorAt, stemAt, type FloorPoint, type Pose } from '../../skeleton.ts'
@@ -31,6 +31,15 @@ const WRAP = 0.3
 // How far a bract stays behind the ray in front of it, in radians.
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.08
+const HAIR_WIDTH_M = 0.00006
+// A bract folds back just ahead of the rays behind it: until they open it runs this many seconds behind the timing of growth.ts, which has no sectors.
+const SECTOR_LAG = 2.2
+const SECTOR_LEAD = 0.3
+// How far past the widest ring the innermost feet sit, as a share of the way to the rim.
+const SIDE_FEET = 0.6
+// Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
+const RAY_FOOT = 0.95
+const RAY_GAP = 0.003
 
 interface Bract { rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
@@ -52,16 +61,16 @@ export function create(options: PartOptions): PlantPart | null {
     bracts.push({
       rank,
       az: turn + i * GOLDEN,
-      foot: clamp(lerp(0.2, 0.97, Math.pow(rank, 0.85)) + (rnd(2, i) - 0.5) * 0.05, 0.12, 0.99),
-      long: lerp(1.14, 0.8, rank) * (0.92 + 0.16 * rnd(3, i)),
-      wide: lerp(1, 0.84, rank) * (0.88 + 0.24 * rnd(4, i)),
-      tail: 0.25 + 0.1 * rnd(5, i),
+      foot: lerp(0.2, 1.33, Math.pow(rank, 0.85)) + (rnd(2, i) - 0.5) * 0.05,
+      long: lerp(1.32, 1, rank) * (0.92 + 0.16 * rnd(3, i)),
+      wide: lerp(1.18, 0.86, rank) * (0.88 + 0.24 * rnd(4, i)),
+      tail: 0.22 + 0.1 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.9,
       side: (rnd(7, i) - 0.5) * 0.5,
       tip: -0.25 + 1.6 * Math.pow(rnd(8, i), 2),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
-      hug: 0.4 + 0.18 * rnd(11, i),
+      hug: 0.3 + 0.14 * rnd(11, i),
       rmin: 0.0008 + 0.0045 * rnd(12, i),
       fold: 0.32 + 0.3 * rnd(13, i),
       seed: rnd(14, i),
@@ -125,7 +134,7 @@ export function create(options: PartOptions): PlantPart | null {
   const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
   const faceEach = shape.bracts > 0 ? Math.floor((shape.faceHairs * share) / shape.bracts) : 0
   const hairCount = backHairs + shape.bracts * (edgeEach * 2 + faceEach)
-  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs') : null
+  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', undefined, HAIR_WIDTH_M) : null
   const hairBase = new Int32Array(hairCount)
   const hairWidth = new Int32Array(hairCount)
   const hairAt = new Float32Array(hairCount * 2)
@@ -302,18 +311,26 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3
       const outer = 1 - k.rank
-      const angle = lerp(bractAngle(j, time), bractAngle(j + 2, time), outer)
-      const curl = lerp(bractCurl(j, time), bractCurl(j + 2, time), outer)
       const L = bractLength(j, time) * unwrap * k.long
       const W = Math.min(0.3 * L, 0.33 * R) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
       let behind = -Math.PI
+      let opened = 0
+      let rayLong = 0
       for (let m = -1; m <= 2; m++) {
         const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
         behind = Math.max(behind, lerp(-Math.PI, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0, 0.008, rayLength(ray, time))))
+        opened += rayOpen(ray, time + SECTOR_LEAD) / 4
+        rayLong = Math.max(rayLong, rayLength(ray, time))
       }
+      const own = time - SECTOR_LAG * smoothstep(bloom0 - 4, bloom0, time) * (1 - opened)
+      const angle = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
+      const curl = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
+      const rayS = Math.sin(behind - RAY_CLEAR)
+      const rayC = Math.cos(behind - RAY_CLEAR)
+      const gap = RAY_GAP * smoothstep(0, 0.008, rayLong)
       const sway = wind * 0.05 * flutter(time, k.seed)
       const co = Math.cos(k.az)
       const so = Math.sin(k.az)
@@ -324,9 +341,9 @@ export function create(options: PartOptions): PlantPart | null {
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
 
-      let psi = psi0 + (Math.PI / 2 - psi0) * k.foot
+      let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(k.foot, 1)
       let r = R * Math.sin(psi)
-      let h = hw - Hb * Math.cos(psi)
+      let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((k.foot - 1) / 0.33)
       const total = (shape.nu - 1) * sub
       const ds = L / total
       for (let step = 0; step <= total; step++) {
@@ -336,7 +353,7 @@ export function create(options: PartOptions): PlantPart | null {
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(R * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
         const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW * (1 - 0.6 * Math.max(curl, 0)) + sway * u * u
-        const theta = lerp(surfaceAngle, free, smoothstep(HUG_FROM, k.hug, u))
+        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, k.hug, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
         const Re = R + lift
         if (h < hw) {
           const e = (r * r) / (Re * Re) + ((h - hw) * (h - hw)) / ((Hb + lift) * (Hb + lift))
@@ -349,6 +366,17 @@ export function create(options: PartOptions): PlantPart | null {
         else {
           const f = (h - hr) / (Hf + lift)
           if (f < 1) r = Math.max(r, Re * Math.sqrt(1 - f * f))
+        }
+        if (gap > 0) {
+          const vr = r - RAY_FOOT * R
+          const vh = h - hr
+          const along = vr * rayS + vh * rayC
+          const clear = vr * rayC - vh * rayS
+          const need = (gap - clear) * smoothstep(-0.004, 0, along) * (1 - smoothstep(rayLong, rayLong + 0.004, along)) * smoothstep(-0.012, -0.006, clear)
+          if (need > 0) {
+            r += rayC * need
+            h -= rayS * need
+          }
         }
         r = Math.max(r, k.rmin * small)
         if (step % sub === 0) {
@@ -386,8 +414,8 @@ export function create(options: PartOptions): PlantPart | null {
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
         const body = 0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.46))
-        const tail = 0.24 * Math.pow(1 - u, 0.75) + 0.012
-        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.3, u))
+        const tail = 0.34 * Math.pow(1 - u, 0.9) + 0.012
+        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.45, u))
         const hug = 1 - smoothstep(HUG_FROM, k.hug, u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
         const soft = 0.2 * half + 1e-6
@@ -396,7 +424,7 @@ export function create(options: PartOptions): PlantPart | null {
         for (let b = 0; b < shape.nv; b++) {
           const x = (b / (shape.nv - 1)) * 2 - 1
           const xi = x * half
-          const wave = 0.12 * half * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
+          const wave = 0.07 * half * smoothstep(0.1, 0.4, u) * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
           const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave
           const v = (base + a * shape.nv + b) * 3
           out[v] = mx + wx * xi + ux * dn
