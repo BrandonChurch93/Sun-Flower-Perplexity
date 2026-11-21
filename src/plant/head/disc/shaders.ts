@@ -111,7 +111,7 @@ void main() {
 
   if (piece < 0.5) {
     vec3 radial = ex * cos(aShape.z) + ey * sin(aShape.z);
-    float corner = mix(mix(0.82, 1.0, aShape.w), mix(0.94, 1.0, aShape.w), open);
+    float corner = mix(mix(0.93, 1.0, aShape.w), mix(0.94, 1.0, aShape.w), open);
     float r;
     float z;
     if (level < 0.5) {
@@ -253,10 +253,11 @@ void main() {
   vec3 pollen = vec3(0.6, 0.27, 0.03) * (0.7 + 0.6 * vKind.w);
 
   if (piece < 0.5) {
-    float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
+    // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
+    float ridge = (0.5 + 0.5 * around * around) * smoothstep(0.3, 0.85, along);
     vec3 dark = mix(vec3(0.15, 0.045, 0.005), vec3(0.065, 0.085, 0.01), centre);
-    vec3 pale = mix(vec3(0.4, 0.17, 0.02), vec3(0.17, 0.25, 0.035), centre);
-    vec3 ochre = vec3(0.42, 0.15, 0.015);
+    vec3 pale = mix(vec3(0.33, 0.14, 0.018), vec3(0.14, 0.2, 0.03), centre);
+    vec3 ochre = vec3(0.35, 0.125, 0.014);
     dark = mix(dark, ochre * 0.3, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
