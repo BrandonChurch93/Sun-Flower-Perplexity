@@ -16,14 +16,17 @@ export const world: WorldSettings = {
 }
 
 // Cold and low: a thin layer over the field under eye level, and a bank standing between the field's far edge and the foot of the hills.
-const MIST: MistSettings = { fromM: 3, toM: 50, sheets: 16, heightM: 0.3, thickness: 0.06, lit: [0.4, 0.4, 0.36], shade: [9, 7.6, 3.6], forward: 1, drift: [0.04, 0.015], bankM: 8, broken: 0.6 }
+const MIST: MistSettings = { fromM: 3, toM: 50, sheets: 10, heightM: 0.3, thickness: 0.06, lit: [0.4, 0.4, 0.36], shade: [9, 7.6, 3.6], forward: 1, drift: [0.04, 0.015], bankM: 8, broken: 0.6 }
 const BANK: MistSettings = { fromM: 50, toM: 90, sheets: 6, heightM: 0.3, thickness: 0.5, lit: [0.55, 0.55, 0.5], shade: [9, 7.6, 3.6], forward: 1, drift: [0.03, 0.01], bankM: 14, broken: 0.7 }
 
-const SKY_GAIN = 0.9
-const STAR_GAIN = 4
+// The sky is painted for the grade below: its curve undoes the grade's contrast and its saturation the grade's, so the sky keeps the approved's tones while the plant gets the harder light.
+const SKY_GAIN = 0.69
+const SKY_CURVE = 0.79
+const SKY_SATURATION = 1.1
+const STAR_GAIN = 3.2
 
 export const stage: WorldStageMaker = (def) => {
-  const sky = new NightSky({ gain: SKY_GAIN, stars: STAR_GAIN, glow: def.sky.glow, glowPower: def.sky.glowPower, zenith: def.sky.zenith, horizon: def.sky.horizon })
+  const sky = new NightSky({ gain: SKY_GAIN, curve: SKY_CURVE, saturation: SKY_SATURATION, stars: STAR_GAIN, glow: def.sky.glow, glowPower: def.sky.glowPower, zenith: def.sky.zenith, horizon: def.sky.horizon })
   const far = makeFarLayers(golden.sun.azimuthDeg)
   const mist = makeMist('night', MIST)
   const bank = makeMist('night bank', BANK, 40)
