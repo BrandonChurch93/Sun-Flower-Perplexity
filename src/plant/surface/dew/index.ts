@@ -5,6 +5,7 @@ const float DEW_SUN = 0.09;
 const float DEW_SKY = 0.07;
 const float DEW_ROUGH = 0.42;
 const float DEW_WAX = 0.7;
+const float DEW_BREAK = 0.8;
 
 // The share of the skin under dew at a place, 0 to 1. 'at' is in meters, 'gather' rises to 1 at an edge or a tip, where dew stands thickest.
 float dewMist(vec2 at, float gather) {
