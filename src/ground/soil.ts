@@ -173,11 +173,11 @@ void main() {
 #endif
 
   vec3 n = normalize(vec3(tilt.x, 1.0, tilt.y));
-  float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.25, 0.6, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
+  float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
-  albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.85 * thatch);
+  albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under));
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);

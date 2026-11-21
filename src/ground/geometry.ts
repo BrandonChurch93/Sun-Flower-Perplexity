@@ -34,6 +34,7 @@ function disc(rings: number[], sides: number): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
   geometry.setIndex(index)
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), rings[rings.length - 1] + 0.1)
   return geometry
 }
 

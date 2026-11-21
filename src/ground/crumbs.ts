@@ -52,7 +52,7 @@ export function scatter(name: string, s: Scatter): THREE.InstancedMesh {
     seed[i * 4 + 3] = radius
   }
   geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seed, 4))
-  mesh.frustumCulled = false
+  mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), s.outerM + 0.1)
   return mesh
 }
 

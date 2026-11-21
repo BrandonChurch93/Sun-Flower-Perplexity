@@ -24,7 +24,7 @@ export class Ground {
   readonly grass: Surface
   readonly loose: Surface
   readonly mesh = new THREE.Group()
-  private readonly cast: THREE.Mesh[]
+  private readonly cast: Caster[] = []
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor() {
@@ -57,25 +57,27 @@ export class Ground {
     this.near = makeSurface({ name: 'soil near', vertex: `#define NEAR\n${soilVertex}`, fragment: `#define NEAR\n${soilFragment}`, castShadow: true, uniforms: this.uniforms })
     this.grass = makeSurface({ name: 'grass', vertex: grassVertex, fragment: grassFragment, side: THREE.DoubleSide, castShadow: true, uniforms: this.uniforms })
     this.loose = makeSurface({ name: 'soil crumbs', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: this.uniforms })
-    const add = (mesh: THREE.Mesh, material: THREE.Material): THREE.Mesh => {
-      mesh.material = material
-      mesh.frustumCulled = false
+    const add = (mesh: THREE.Mesh, surface: Surface, casts: boolean): void => {
+      mesh.material = surface.main
       this.mesh.add(mesh)
-      return mesh
+      if (casts) this.cast.push({ mesh, surface })
     }
-    add(new THREE.Mesh(soilGeometry()), this.surface.main)
-    this.cast = [add(new THREE.Mesh(nearGeometry()), this.near.main), add(scatter('ground crumbs', crumbScatter), this.loose.main), add(scatter('ground clods', clodScatter), this.loose.main), add(tufts(), this.grass.main)]
+    add(new THREE.Mesh(soilGeometry()), this.surface, false)
+    add(new THREE.Mesh(nearGeometry()), this.near, true)
+    add(scatter('ground crumbs', crumbScatter), this.loose, true)
+    add(scatter('ground clods', clodScatter), this.loose, true)
+    for (const mesh of tufts()) add(mesh, this.grass, true)
   }
 
   // What throws shadows. The film adds these to the scene itself and to its shadow pass, and from then on the soil stops estimating its own shadows.
   get casters(): Caster[] {
     this.uniforms.uCast.value = 1
-    return this.cast.map((mesh, i) => ({ mesh, surface: [this.near, this.loose, this.loose, this.grass][i] }))
+    return this.cast
   }
 
   show(visible: boolean): void {
     this.mesh.visible = visible
-    for (const mesh of this.cast) mesh.visible = visible
+    for (const c of this.cast) c.mesh.visible = visible
   }
 
   async load(assets: Assets): Promise<void> {

@@ -6,12 +6,12 @@ import { lane } from './crumbs.ts'
 import { cropLight } from './light.ts'
 import { soilHeight } from './soil.ts'
 
-const TUFTS = 9000
+const TUFTS = 14000
 const BLADES = 7
 const HALF_WIDTH_M = 6.5
 const FRONT_M = 2.0
 const BACK_M = -1.3
-const PIONEERS = 0.035
+const PIONEERS = 0.045
 const WEEDS = 0.14
 
 function tuft(): THREE.BufferGeometry {
@@ -70,11 +70,13 @@ function tuft(): THREE.BufferGeometry {
   return geometry
 }
 
-export function tufts(): THREE.InstancedMesh {
+// The tufts in cells of this size, each drawn only when the lens or the shadow map can see it.
+const CELL_M = 1.6
+
+export function tufts(): THREE.InstancedMesh[] {
   const random = stream('ground grass')
   const geometry = tuft()
-  const matrices: THREE.Matrix4[] = []
-  const seeds: number[] = []
+  const cells = new Map<string, { matrices: THREE.Matrix4[]; seeds: number[] }>()
   const turn = new THREE.Quaternion()
   const up = new THREE.Vector3(0, 1, 0)
   const size = new THREE.Vector3()
@@ -97,21 +99,28 @@ export function tufts(): THREE.InstancedMesh {
     const seed = random.next()
     const inLane = lane(x, z)
     const r = Math.hypot(x, z)
-    if (chance > grassMask(x, z) * (0.3 + 0.7 * clump) || r < 0.035) continue
+    if (chance > grassMask(x, z) * (0.5 + 0.5 * clump) || r < 0.035) continue
     if (early && (inLane > 0.02 || r < 0.06)) continue
-    const height = early ? 0.012 + 0.03 * tall : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : 1)
+    const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : 1)
     const born = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
     turn.setFromAxisAngle(up, spin)
     size.set(height * wide, height, height * wide)
     at.set(x, -0.002, z)
-    matrices.push(new THREE.Matrix4().compose(at, turn, size))
-    seeds.push(born, tone, weed ? 2.6 : early ? 1.5 : 1, seed)
+    const key = `${Math.floor(u / CELL_M)} ${Math.floor(c / CELL_M)}`
+    const cell = cells.get(key) ?? { matrices: [], seeds: [] }
+    cells.set(key, cell)
+    cell.matrices.push(new THREE.Matrix4().compose(at, turn, size))
+    cell.seeds.push(born, tone, weed ? 2.6 : early ? 1.5 : 1, seed)
   }
-  const mesh = new THREE.InstancedMesh(geometry, undefined, matrices.length)
-  matrices.forEach((m, i) => mesh.setMatrixAt(i, m))
-  geometry.setAttribute('aTuft', new THREE.InstancedBufferAttribute(new Float32Array(seeds), 4))
-  mesh.frustumCulled = false
-  return mesh
+  return Array.from(cells.values()).map((cell) => {
+    const shape = geometry.clone()
+    const mesh = new THREE.InstancedMesh(shape, undefined, cell.matrices.length)
+    cell.matrices.forEach((m, i) => mesh.setMatrixAt(i, m))
+    shape.setAttribute('aTuft', new THREE.InstancedBufferAttribute(new Float32Array(cell.seeds), 4))
+    mesh.computeBoundingSphere()
+    if (mesh.boundingSphere) mesh.boundingSphere.radius += 0.1
+    return mesh
+  })
 }
 
 export const grassVertex = /* glsl */ `
