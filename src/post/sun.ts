@@ -20,22 +20,23 @@ export function sunInFrame(pose: CameraPose, toSun: THREE.Vector3, gateMm: numbe
 // The sun's disc as a share of the frame width, as the golden sky draws it at the shot's lens.
 export const sunDisc = 0.0095
 
-// How much of the sun's disc shows and where the showing part sits: thirteen readings across the disc of the frame's hottest light. Red is their mean, green and blue the offset of their center of light from the disc's center, in frame widths.
+// How much of the sun shows and where the showing part sits: readings on four rings from half the disc's radius to two and a half of it, so the glow hard by the disc counts when a leaf hides the disc itself. Red is their mean, green and blue the offset of their center of light from the disc's center, in frame widths.
 export const sunReadFragment = /* glsl */ `
 uniform sampler2D tHot;
 uniform vec2 uSunAt;
 uniform float uAspect;
 layout(location = 0) out vec4 outColor;
 void main() {
-  float sum = 0.0;
+  float sum = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
   vec2 at = vec2(0.0);
-  for (int i = 0; i < 13; i++) {
-    float a = float(i) * 1.0471976 + (i > 6 ? 0.5235988 : 0.0);
-    vec2 o = i == 0 ? vec2(0.0) : vec2(cos(a), sin(a)) * (i > 6 ? 1.0 : 0.5) * ${sunDisc};
+  for (int i = 0; i < 36; i++) {
+    int ring = i < 6 ? 0 : i < 12 ? 1 : i < 24 ? 2 : 3;
+    float a = float(i) * (ring < 2 ? 1.0471976 : 0.5235988) + 0.4 * float(ring);
+    vec2 o = vec2(cos(a), sin(a)) * (ring == 0 ? 0.5 : ring == 1 ? 1.0 : ring == 2 ? 1.75 : 2.5) * ${sunDisc};
     float l = dot(texture(tHot, uSunAt + vec2(o.x, o.y * uAspect)).rgb, vec3(0.2126, 0.7152, 0.0722));
     sum += l;
     at += l * o;
   }
-  outColor = vec4(sum / 13.0, at / max(sum, 1e-6), 1.0);
+  outColor = vec4(sum / 37.0, at / max(sum, 1e-6), 1.0);
 }
 `
