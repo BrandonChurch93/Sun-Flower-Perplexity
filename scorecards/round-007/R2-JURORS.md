@@ -12,6 +12,8 @@ Which file is a control is in `KEY.json`.
 - `reviewer_69` (Gemini): e, 95 — The visibly faceted low-polygon geometry on the two foreground sunflower stalks alongside the abrupt LOD transition from uniform instanced meshes to billboarded background flowers.
 - `reviewer_70` (Claude): e — confidence 45. The biggest clue: it's clearly CG rather than a photo. The sunflowers are copies of a few identical models, with thin, sparse stems and leaves, simple grass, and a sun glare that looks like a stock lens effect. That looks like real-time rendering, more than top-budget film-quality work. My second choice would be (d), amateur generated art.
 - `reviewer_71` (GLM): e, 94/100. The same sunflower geometry appears visibly repeated across the field, like instanced 3D assets.
+- `reviewer_72` (Grok): (e) 86 — stiff low-poly leaves and card-like grass tufts on a flat ground, with repeated instanced flower heads and weak contact shadows, which read as a real-time engine demo rather than a cinematic or a photograph.
 
 ## set-B-02.png
 
+- `reviewer_73` (GPT): a, 86/100: the carefully staged sunset backlight isolates the central sunflower like a cinematic hero shot.
