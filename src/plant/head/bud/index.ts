@@ -156,6 +156,8 @@ const UNFOLD_S = [0, 0.3, 0.7]
 const UNFOLD_TAKES_S = 1.6
 const LENGTHEN_S = [0.1, 1.9]
 const TIP_WIDE = 1.2
+// Folded, the first bracts are long enough to meet in a point over the tip.
+const WRAP_LONG = 0.9
 const TIP_HIGH = 0.0048
 
 interface Bract { leafy: number; claw: number; crown: number; spread: number; star: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
@@ -509,7 +511,7 @@ export function create(options: PartOptions): PlantPart | null {
       const unfold = smoothstep(bloom0 - 18 + UNFOLD_S[k.series], bloom0 - 18 + UNFOLD_S[k.series] + UNFOLD_TAKES_S, time)
       const mine = own[i]
       const vary = early * globe
-      const L = bractLength(i, time) * k.long * (1 + VARY.long * mine.long * vary) * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy * lengthen - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * crown + TUFT_LONG * tuft * early + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
+      const L = bractLength(i, time) * k.long * (1 + WRAP_LONG * (1 - smoothstep(bloom0 - 17.8, bloom0 - 17, time))) * (1 + VARY.long * mine.long * vary) * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy * lengthen - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * crown + TUFT_LONG * tuft * early + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * (1 + VARY.wide * mine.wide * vary) * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early) * (1 + TUFT_BROAD * tuft * globe * early) * (1 - CROWN_SLIM * crown * globe * early)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
