@@ -121,7 +121,9 @@ void main() {
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
-    t.occlusion *= 1.0 - 0.35 * smoothstep(0.35, 0.9, uBudOpen);
+    float shaded = smoothstep(0.35, 0.9, uBudOpen);
+    t.occlusion *= 1.0 - 0.45 * shaded;
+    t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
   } else if (kind > 0.5) {
     float rho = vInfo.x;

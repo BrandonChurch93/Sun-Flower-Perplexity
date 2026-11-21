@@ -51,7 +51,7 @@ const LATE_SHARE = [0.25, 1, 1]
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
 // On the side away from the first rays the folded bracts stay spread behind the rays by this share and do not lie back on the stem.
-const FOLD_STAY = 0.8
+const FOLD_STAY = 0.65
 const FLARE = [0.25, 0.25, 0.5]
 // The shut rays stand up from the rim and arch over the face as a tall cone. A bract lies on a shell this much wider and higher than that cone, as shares of the radius, until the rays in front of it open.
 const CONE_WIDE = 0.1
