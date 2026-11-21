@@ -114,7 +114,7 @@ in float vKind;
 in float vTop;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 1.0), smoothstep(-0.08, 0.03, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.08, 0.03, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -132,9 +132,10 @@ void main() {
       alpha = saturate(mirror + lens + 0.06);
       color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
     } else {
-      float mirror = 0.06 + 0.94 * pow(1.0 - facing, 3.0);
-      alpha = saturate(mirror + 0.05 + 0.2 * vTop * vTop);
-      color = (seen(reflect(-v, n)) * mirror + vec3(0.04, 0.036, 0.032) * skyAmbient(n) * 0.1) / alpha;
+      float mirror = 0.04 + 0.96 * pow(1.0 - facing, 4.0);
+      float rim = 0.45 * smoothstep(0.8, 1.0, vTop);
+      alpha = saturate(mirror + rim + 0.1);
+      color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.8)) * rim + vec3(0.04, 0.036, 0.032) * skyAmbient(n) * 0.1) / alpha;
     }
   }
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
