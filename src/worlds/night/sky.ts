@@ -18,6 +18,14 @@ const POLE_AZ_DEG = 180
 const POLE_EL_DEG = 42
 const TURN_DEG_PER_SECOND = 0.6
 
+// One faint meteor, once, well before the key: where it enters and where it burns out, by bearing and height in degrees.
+const METEOR_AT_S = 22.3
+const METEOR_SECONDS = 0.5
+const METEOR_TRAIL = 0.3
+const METEOR_FROM_DEG: [number, number] = [-187.7, 16.7]
+const METEOR_TO_DEG: [number, number] = [-181.7, 11.4]
+const METEOR_LIGHT = 0.5
+
 const STARS = 52000
 const FAINTEST = 0.028
 const BRIGHTEST = 12
@@ -29,10 +37,11 @@ uniform vec4 uProj;
 uniform sampler2D tGlow;
 uniform mat3 uToMap;
 uniform vec2 uMapScale;
-uniform float uTexelAngle;
 uniform float uPixelAngle;
-uniform float uSamples;
 uniform float uGain;
+uniform vec3 uMeteorHead;
+uniform vec3 uMeteorTail;
+uniform float uMeteor;
 uniform vec3 uGlow;
 uniform float uGlowPower;
 uniform vec3 uZenith;
@@ -48,15 +57,19 @@ void main() {
   float el = asin(clamp(d.y, -1.0, 1.0));
   vec3 m = uToMap * d;
   vec2 uv = 0.5 + m.xy / max(m.z, 0.2) * uMapScale;
-  float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
-  float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
-  vec3 paint = textureLod(tGlow, clamp(uv, 0.002, 0.998), lod).rgb * uGain;
+  vec3 paint = texture(tGlow, clamp(uv, 0.002, 0.998)).rgb * uGain;
   vec3 plain = mix(uHorizon, uZenith, smoothstep(0.0, 0.6, el));
   vec2 off = abs(uv - 0.5);
   float inside = (1.0 - smoothstep(0.44, 0.5, max(off.x, off.y))) * smoothstep(0.2, 0.5, m.z);
   vec3 color = mix(plain, paint, inside);
   float toMoon = saturate(dot(normalize(d.xz), normalize(uSunDir.xz)));
   color += uGlow * pow(toMoon, uGlowPower) * exp(-max(el, 0.0) / 0.12);
+  if (uMeteor > 0.0) {
+    vec3 trail = uMeteorHead - uMeteorTail;
+    float along = clamp(dot(d - uMeteorTail, trail) / dot(trail, trail), 0.0, 1.0);
+    float off = length(d - (uMeteorTail + trail * along)) / uPixelAngle;
+    color += vec3(0.75, 0.9, 1.0) * (uMeteor * along * along * exp(-off * off));
+  }
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(dot(d, uSunDir)), 6.0), 1.0 - exp(-depth));
@@ -69,7 +82,7 @@ void main() {
 }
 `
 
-// A star is a point: it is placed through the middle of the lens in every sample, so the lens never spreads it, and its width is set in pixels.
+// The whole night sky is seen through the middle of the lens in every sample, so the lens never spreads it. A star is a point whose width is set in pixels.
 const starVertex = /* glsl */ `precision highp float;
 in vec3 position;
 in vec4 aLight;
@@ -177,6 +190,10 @@ export class NightSky {
   private readonly stars: THREE.Points
   private readonly starMaterial: THREE.RawShaderMaterial
   private readonly pole = direction(POLE_AZ_DEG, POLE_EL_DEG)
+  private readonly meteorFrom = direction(METEOR_FROM_DEG[0], METEOR_FROM_DEG[1])
+  private readonly meteorTo = direction(METEOR_TO_DEG[0], METEOR_TO_DEG[1])
+  private readonly meteorHead = new THREE.Vector3(0, 1, 0)
+  private readonly meteorTail = new THREE.Vector3(0, 1, 0)
   private readonly mapBasis = new THREE.Matrix3()
   private readonly turn = new THREE.Matrix4()
   private readonly turn3 = new THREE.Matrix3()
@@ -196,9 +213,10 @@ export class NightSky {
       tGlow: { value: null },
       uToMap: { value: new THREE.Matrix3() },
       uMapScale: { value: new THREE.Vector2(MAP_SCALE_X / GLOW_COVER, MAP_SCALE_Y / GLOW_COVER) },
-      uTexelAngle: { value: 0.001 },
       uPixelAngle: { value: 0.001 },
-      uSamples: { value: 1 },
+      uMeteorHead: { value: this.meteorHead },
+      uMeteorTail: { value: this.meteorTail },
+      uMeteor: { value: 0 },
       uGain: { value: look.gain },
       uGlow: { value: new THREE.Vector3().fromArray(look.glow) },
       uGlowPower: { value: look.glowPower },
@@ -236,13 +254,7 @@ export class NightSky {
 
   async load(assets: Assets): Promise<void> {
     const map = await assets.texture('worlds/night', GLOW_FILE)
-    const u = this.pass.uniforms
-    u.tGlow.value = map
-    u.uTexelAngle.value = (GLOW_COVER / MAP_SCALE_X) / (map.userData.size as { width: number }).width
-  }
-
-  prepare(samples: number): void {
-    this.pass.uniforms.uSamples.value = Math.max(1, samples)
+    this.pass.uniforms.tGlow.value = map
   }
 
   // The sky turns about the pole. The time is that of this sample, so the shutter's open and close each have their own sky.
@@ -252,13 +264,18 @@ export class NightSky {
     this.back3.copy(this.turn3).transpose()
     const toMap = this.pass.uniforms.uToMap.value as THREE.Matrix3
     toMap.copy(this.mapBasis).multiply(this.back3)
+    const u = this.pass.uniforms
+    const s = (time - METEOR_AT_S) / METEOR_SECONDS
+    u.uMeteor.value = s > 0 && s < 1 ? METEOR_LIGHT * Math.sin(Math.PI * s) : 0
+    this.meteorHead.copy(this.meteorFrom).lerp(this.meteorTo, Math.min(1, Math.max(0, s))).normalize()
+    this.meteorTail.copy(this.meteorFrom).lerp(this.meteorTo, Math.min(1, Math.max(0, s - METEOR_TRAIL))).normalize()
   }
 
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, pixelX: number, pixelY: number, width: number, height: number): void {
     const u = this.pass.uniforms
     const e = camera.projectionMatrix.elements
     u.uCamWorld.value.copy(camera.matrixWorld)
-    u.uProj.value.set(1 / e[0], 1 / e[5], e[8], e[9])
+    u.uProj.value.set(1 / e[0], 1 / e[5], (2 * pixelX) / width, (2 * pixelY) / height)
     u.uPixelAngle.value = 2 / (e[0] * width)
     this.pass.render(renderer, target)
     const s = this.starMaterial.uniforms

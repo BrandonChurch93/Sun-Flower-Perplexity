@@ -1,4 +1,5 @@
 import type { WorldSettings, WorldStageMaker } from '../../core/world.ts'
+import { makeMist, type MistSettings } from '../../weather/mist/index.ts'
 import { makeFarLayers } from './layers.ts'
 import { NightSky } from './sky.ts'
 
@@ -13,24 +14,29 @@ export const world: WorldSettings = {
   wind: 0.1,
 }
 
+// Cold and low: it lies over the field under eye level and thickens toward the foot of the hills.
+const MIST: MistSettings = { fromM: 8, toM: 900, sheets: 14, heightM: 0.9, thickness: 0.025, lit: [0.3, 0.33, 0.36], shade: [0.6, 0.7, 0.8], forward: 0.5, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
+
 const SKY_GAIN = 0.9
 const STAR_GAIN = 4
 
 export const stage: WorldStageMaker = (def) => {
   const sky = new NightSky({ gain: SKY_GAIN, stars: STAR_GAIN, glow: def.sky.glow, glowPower: def.sky.glowPower, zenith: def.sky.zenith, horizon: def.sky.horizon })
   const far = makeFarLayers()
+  const mist = makeMist('night', MIST)
   let open = 0
   let close = 0
   return {
-    objects: far.meshes,
+    objects: [...far.meshes, ...mist.meshes],
     load: (assets) => sky.load(assets),
     prepare(frame) {
       open = frame.time
       close = frame.timeClose
-      sky.prepare(frame.samples)
     },
     sample(_camera, shutter) {
-      sky.sample(open + (close - open) * shutter)
+      const time = open + (close - open) * shutter
+      sky.sample(time)
+      mist.sample(time)
     },
     sky(renderer, target, camera, pixelX, pixelY, width, height) {
       sky.render(renderer, target, camera, pixelX, pixelY, width, height)
