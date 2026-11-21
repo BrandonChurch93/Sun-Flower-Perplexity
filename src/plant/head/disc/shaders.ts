@@ -165,7 +165,7 @@ void main() {
     state = over;
   }
 
-  occ *= mix(1.0, 0.5 + 0.4 * (1.0 - rho), uCover);
+  occ *= mix(1.0, 0.25 + 0.2 * (1.0 - rho), uCover);
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -200,6 +200,7 @@ void main() {
   float swell = vState.w;
   // Fine marks fade once a pixel is wider than they are.
   float fine = saturate(0.0011 / max(vMore.y, 1e-6) - 0.6);
+  float coarse = smoothstep(0.0007, 0.002, vMore.y);
   float grain = mix(0.5, valueNoise(vec2(around * 4.0 + seed * 61.0, along * 9.0 + vMore.z * 37.0)), fine);
 
   Tissue t;
@@ -207,7 +208,7 @@ void main() {
   t.rough = 0.85;
   t.wax = 0.12;
   t.sheen = 0.35;
-  vec3 pollen = vec3(0.56, 0.25, 0.05);
+  vec3 pollen = vec3(0.48, 0.2, 0.045);
 
   if (piece < 0.5) {
     float centre = 1.0 - smoothstep(0.2, 0.72, rho);
@@ -218,7 +219,7 @@ void main() {
     dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge) * (0.8 + 0.4 * seed) * (1.0 + 0.18 * vMore.w);
-    vec3 young = mix(vec3(0.09, 0.14, 0.035), vec3(0.26, 0.34, 0.12), ridge) * (0.85 + 0.3 * seed);
+    vec3 young = mix(vec3(0.06, 0.1, 0.025), vec3(0.19, 0.26, 0.085), ridge) * (0.85 + 0.3 * seed);
     closed = mix(closed, young, uYoung);
     vec3 flower = mix(vec3(0.055, 0.026, 0.008), vec3(0.11, 0.052, 0.012), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.05, 0.018, 0.008), smoothstep(0.78, 1.0, along) * 0.85);
@@ -231,11 +232,11 @@ void main() {
   } else if (piece < 1.5) {
     float dust = smoothstep(0.5, 0.8, along + 0.4 * (grain - 0.5));
     dust = max(dust, 0.5 * smoothstep(0.62, 0.8, grain) * fine);
-    dust *= (1.0 - 0.35 * vMore.x) * smoothstep(0.02, 0.3, seed + 0.2 * vMore.w);
+    dust *= (1.0 - 0.35 * vMore.x) * smoothstep(0.02, 0.3, seed + 0.2 * vMore.w) * (1.0 - 0.6 * coarse);
     t.albedo = mix(vec3(0.05, 0.02, 0.018) * (0.7 + 0.6 * grain), pollen, dust);
     t.rough = mix(0.5, 1.0, dust);
     t.wax = mix(0.35, 0.0, dust);
-    t.sheen = mix(0.3, 1.0, dust);
+    t.sheen = mix(0.3, 0.7, dust);
     t.through = pollen * dust * 0.3;
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.62, 0.36, 0.05), pollen, 0.5 * grain);
@@ -244,7 +245,7 @@ void main() {
     t.wax = 0.0;
     t.sheen = 1.0;
   } else {
-    vec3 green = mix(mix(vec3(0.07, 0.09, 0.03), vec3(0.05, 0.09, 0.024), open), vec3(0.3, 0.36, 0.14), uYoung);
+    vec3 green = mix(mix(vec3(0.07, 0.09, 0.03), vec3(0.05, 0.09, 0.024), open), vec3(0.19, 0.26, 0.085), uYoung);
     vec3 dry = vec3(0.07, 0.042, 0.016);
     t.albedo = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - 0.7 * uYoung) * (1.0 - open)) * (0.85 + 0.3 * around) * (0.75 + 0.5 * seed);
     t.through = vec3(0.05, 0.08, 0.012);
