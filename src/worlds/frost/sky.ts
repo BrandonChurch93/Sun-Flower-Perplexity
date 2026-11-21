@@ -20,7 +20,9 @@ ${fogLight}
 const float DISC = 0.0165;
 const float DISC_SOFT = 0.65;
 const float WISPS = 0.33;
+const float WISPS_SUN = 0.2;
 const float SHAFTS = 0.3;
+const vec3 SLATE = vec3(0.05, 0.03, 0.01);
 
 void main() {
   vec2 ndc = vUv * 2.0 - 1.0;
@@ -43,7 +45,11 @@ void main() {
   vec2 round = normalize(vec2(dot(off, vec3(-uSunDir.z, 0.0, uSunDir.x)), off.y * length(uSunDir.xz)) + 1.0e-6);
   float shafts = (valueNoise(round * 2.3 + vec2(3.0, 0.01 * uNow)) - 0.5) * smoothstep(0.02, 0.08, theta) * (1.0 - smoothstep(0.15, 0.35, theta));
   vec3 color = fogLightIn(d, 2.0 * (0.2 * wide + 0.35 * mid + 0.45 * small - 0.5) + SHAFTS * shafts);
-  color *= 1.0 + WISPS * (banks - 0.5) * smoothstep(0.0, 0.1, el);
+  float lift = smoothstep(0.0, 0.1, el);
+  float toSun = dot(d, uSunDir);
+  color *= 1.0 + WISPS * (1.0 + WISPS_SUN * smoothstep(0.9, 0.98, toSun)) * (banks - 0.5) * lift;
+  // Away from the sun the thinner patches of the deck are deeper and bluer, on their own pattern, so the grey is not one grey.
+  color *= 1.0 - SLATE * (saturate(0.5 + mid - wide) * lift * (1.0 - smoothstep(0.75, 0.95, toSun)));
   // The disc is white through the fog and has no hard edge of its own. As the fog thins round it, it stands out a little more.
   float soft = DISC * (DISC_SOFT - 0.15 * uFogThin);
   color = mix(color, uDisc * (1.0 + 0.3 * uFogThin), 1.0 - smoothstep(DISC - soft, DISC + soft, theta));
