@@ -42,7 +42,8 @@ export class ShadowMap {
   }
 
   // The light is turned inside a cone softnessDeg wide by the sample's own point, so the average of the samples is a soft shadow.
-  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, casters: Caster[], sun: THREE.Vector3, softnessDeg: number, jitterX: number, jitterY: number, center: THREE.Vector3, radius: number): void {
+  // The map covers a square 2 x radius wide round the center, seen from the sun. reach is how far from the center, along the light, anything that throws or takes a shadow can be.
+  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, casters: Caster[], sun: THREE.Vector3, softnessDeg: number, jitterX: number, jitterY: number, center: THREE.Vector3, radius: number, reach = radius): void {
     const spread = Math.tan((softnessDeg * Math.PI) / 360)
     this.u.crossVectors(Math.abs(sun.y) > 0.99 ? SIDE : UP, sun).normalize()
     this.v.crossVectors(sun, this.u).normalize()
@@ -50,9 +51,9 @@ export class ShadowMap {
     this.u.crossVectors(Math.abs(this.lightDir.y) > 0.99 ? SIDE : UP, this.lightDir).normalize()
     this.v.crossVectors(this.lightDir, this.u).normalize()
     const lift = Math.max(this.lightDir.y, 0.02)
-    const behind = (center.y + radius * Math.sqrt(1 - Math.min(1, this.lightDir.y * this.lightDir.y))) / lift
-    const front = radius * 1.05
-    const far = front + Math.max(radius, behind) + radius * 0.2
+    const behind = (center.y + reach * Math.sqrt(1 - Math.min(1, this.lightDir.y * this.lightDir.y))) / lift
+    const front = reach * 1.05
+    const far = front + Math.max(reach, behind) + reach * 0.2
     const cam = this.camera
     cam.left = -radius
     cam.right = radius
