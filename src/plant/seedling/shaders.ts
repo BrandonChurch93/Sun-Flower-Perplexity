@@ -64,7 +64,7 @@ void main() {
   float lens = 1.0 - across * across;
   vec3 glow = mix(vec3(0.066, 0.108, 0.074), vec3(0.0105, 0.021, 0.0135), lens) * (1.0 - 0.5 * mid);
   // The thin margin of the leaf passes the sun almost whole.
-  glow = mix(glow, vec3(0.4, 0.39, 0.28), 0.6 * smoothstep(0.965, 1.0, abs(across)));
+  glow = mix(glow, vec3(0.2, 0.25, 0.13), 0.3 * smoothstep(0.97, 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
   float leafHeight = -0.00016 * mid * upper + (grain - 0.5) * 0.000012 + (cloud - 0.5) * 0.00006 * wither;
