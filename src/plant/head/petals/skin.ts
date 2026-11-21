@@ -67,9 +67,13 @@ void main() {
 
   vec3 body = mix(vec3(0.84, 0.45, 0.018), vec3(0.93, 0.56, 0.03), smoothstep(0.25, 1.0, u));
   body = mix(body, vec3(0.86, 0.74, 0.05), 0.8 * fresh);
+  // Each ray has its own depth of yellow.
+  float own = hash11(vRay.x * 91.7 + 3.1);
+  body *= vec3(0.9 + 0.16 * own, 0.86 + 0.2 * own, 1.0);
   vec3 albedo = mix(body, vec3(0.50, 0.33, 0.03), 0.75 * foot);
   albedo = mix(albedo, vec3(0.30, 0.34, 0.05), claw);
   vec3 through = mix(vec3(1.0, 0.62, 0.035), vec3(1.0, 0.74, 0.06), smoothstep(0.3, 1.0, u));
+  through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(0.80, 0.86, 0.10), 0.7 * fresh);
   through = mix(through, vec3(0.62, 0.24, 0.01), 0.85 * foot);
 

@@ -47,6 +47,7 @@ interface Ray {
   hardAt: number
   twist: number
   yaw: number
+  lean: number
   pleat: number
   trough: number
   lay: number
@@ -63,7 +64,7 @@ interface Ray {
 
 function outline(u: number): number {
   const peak = 0.36
-  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.85)
+  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.7)
   const s = Math.max(0, (u - peak) / (1 - peak))
   return (0.18 + 0.82 * rise) * (0.1 + 0.9 * Math.pow(1 - Math.pow(s, 1.8), 0.75))
 }
@@ -80,7 +81,7 @@ function makeRays(seed: number): Ray[] {
   const nick = order(22, (k) => !hard.includes(k) && !half.includes(k))[0]
   return Array.from({ length: rayCount }, (_, k) => {
     const rank = k % 2
-    const strong = r(5, k) > 0.86 ? 3 : 1
+    const strong = r(5, k) > 0.8 ? 3 : 1
     return {
       rank,
       width: 0.34 + 0.045 * r(1, k),
@@ -90,6 +91,7 @@ function makeRays(seed: number): Ray[] {
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) - 0.5) * 0.9 * strong,
       yaw: (r(6, k) - 0.5) * 0.5,
+      lean: 0.11 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.12,
       pleat: half.includes(k) ? 0.8 : 0.16 + 0.2 * r(7, k),
       trough: half.includes(k) ? 0.7 : 0.12 + 0.2 * r(8, k),
       lay: (rank ? -0.11 : 0.05) + (r(9, k) - 0.5) * 0.09,
@@ -231,7 +233,7 @@ export function create(options: PartOptions): PlantPart | null {
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const pitch = mix(shutPitch, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e
-      const yaw = mix(0.45 * e, ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy
+      const yaw = mix(0.45 * e, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy
       const twist = mix(0.5, ray.roll + ray.twist * Math.pow(e, 1.8), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
@@ -280,7 +282,7 @@ export function create(options: PartOptions): PlantPart | null {
       u0 = u
 
       const halfWidth = wide * outline(u)
-      const ragged = 0.05 * smooth(0.05, 0.3, u)
+      const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
       const right = 1 + ragged * (Math.sin(u * 8.3 + ray.seed * 31) + 0.6 * Math.sin(u * 19.7 + ray.seed * 11))
       const fold = mix(SHUT_ANGLE, ray.pleat, across)
