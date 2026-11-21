@@ -34,7 +34,7 @@ const t = (what: What, axis: 'x' | 'y', value: number): Target => ({ what, axis,
 const specs: Spec[] = [
   { key: 'dawn-sprout', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX', 'azimuthDeg'], targets: [t('base', 'x', 0.6), t('base', 'y', 0.77), t('top', 'y', 0.22), t('horizon', 'y', 0.33), t('sun', 'x', 0.84)], checks: [t('top', 'x', 0.63), t('sun', 'y', 0.27)] },
   { key: 'dawn-seedling', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX'], targets: [t('base', 'x', 0.605), t('base', 'y', 0.775), t('stemEnd', 'y', 0.42), t('horizon', 'y', 0.33)], checks: [t('stemEnd', 'x', 0.6), t('top', 'y', 0.21)] },
-  { key: 'rain', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX'], targets: [t('base', 'x', 0.62), t('base', 'y', 0.8), t('top', 'y', 0.12), t('horizon', 'y', 0.5)], checks: [t('tip', 'x', 0.61), t('tip', 'y', 0.17)] },
+  { key: 'rain', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX'], targets: [t('base', 'x', 0.62), t('base', 'y', 0.8), t('top', 'y', 0.12), t('horizon', 'y', 0.55)], checks: [t('tip', 'x', 0.61), t('tip', 'y', 0.17)] },
   { key: 'night', free: ['heightM', 'aimHeightM', 'frameX'], targets: [t('tip', 'x', 0.575), t('tip', 'y', 0.3), t('horizon', 'y', 0.84)], checks: [t('top', 'y', 0.265), t('stemLow', 'x', 0.585)] },
   { key: 'frost', free: ['heightM', 'aimHeightM', 'frameX'], targets: [t('head', 'x', 0.535), t('head', 'y', 0.3), t('horizon', 'y', 0.6)], checks: [t('stemLow', 'x', 0.555), t('headSpanX', 'x', 0.19), t('headSpanY', 'y', 0.23)] },
   // The stand-in bud is slimmer than the approved one, so the fit sits between the approved width and the approved height of the head.
