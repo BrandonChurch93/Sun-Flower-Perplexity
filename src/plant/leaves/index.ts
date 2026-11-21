@@ -32,7 +32,12 @@ const BLOOM = 40
 // The share of the plain margin hairs that carry a spike of ice: most spikes sit on the teeth.
 const SPIKES = 0.1
 const CROWN_ANGLE = 0.72
-const SIDE_ANGLE = 1.15
+const SIDE_ANGLE = 0.6
+// The young blade's sides are curved, not drawn straight to the tip, and its fine teeth are cut in the skin.
+const YOUNG_STRAIGHT = 0.25
+// Before the bloom a blade keeps this much of its grown shape at most.
+const YOUNG_RIPE = 0.25
+const FALL = 0.8
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
 const TROUGH = 0.0045
@@ -151,7 +156,7 @@ export function create(options: PartOptions): PlantPart {
     const ahead = Math.min((main ? lerp(2.8, 4.5, smoothstep(0.03, 0.09, under)) : 0) * smoothstep(20, 24, time) * (1 - smoothstep(35.5, BLOOM, time)), 0.75 * Math.max(0, leafAge(i, time)))
     const length = leafLength(i, time + ahead)
     if (length <= 0) return length
-    return length * lerp(1, lerp(0.8, 1, smoothstep(1.5, 6, leafAge(i, time))) * lerp(0.45, 1, smoothstep(0.01, lerp(0.045, 0.075, smoothstep(16, 24, time)), under)) * (main ? lerp(1, 0.78, smoothstep(8, 11, i)) : 1), 1 - smoothstep(35.5, BLOOM, time))
+    return length * lerp(1, lerp(0.8, 1, smoothstep(1.5, 6, leafAge(i, time))) * lerp(main ? lerp(0.9, 0.75, smoothstep(17, 22, time)) : 0.45, 1, smoothstep(0.01, lerp(0.045, 0.075, smoothstep(16, 24, time)), under)) * (main ? lerp(1, 0.8, smoothstep(10, 16, i)) : 1), 1 - smoothstep(35.5, BLOOM, time))
   }
   for (let i = 0; i < leafCount; i += shape.step) {
     const r = (k: number) => hash01(seed, i, k)
@@ -246,11 +251,11 @@ export function create(options: PartOptions): PlantPart {
         // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
         for (let ripe = 0; ripe < 2; ripe++) {
           const cordNow = cord * (ripe ? 1 : 0.5)
-          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.98)
+          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2), ripe ? 0.65 : YOUNG_STRAIGHT) * share * (ripe ? 1 : 0.98)
           const rolled = roll * (ripe ? 1 : 0.3) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
           // A tooth on a rolled edge runs down the slope, so it reaches less far out.
           const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.25)) * smoothstep(0.6, 1, aw)) / steep : 0
+          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0)) * smoothstep(0.6, 1, aw)) / steep : 0
           const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
           x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
           y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
@@ -330,9 +335,11 @@ export function create(options: PartOptions): PlantPart {
   geometry.setIndex(index)
   const state = new Float32Array(LEAVES * 4)
   const ripeness = new Float32Array(LEAVES)
+  const serration = new Float32Array(LEAVES)
   const uniforms = {
     uLeafState: { value: state },
     uLeafRipe: { value: ripeness },
+    uLeafTeeth: { value: serration },
     uVeins: { value: null as THREE.Texture | null },
     uDetail: { value: null as THREE.Texture | null },
     uMarks: { value: null as THREE.Texture | null },
@@ -523,7 +530,7 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
     // A new blade sits on the stem: its stalk grows out under it in its first seconds.
-    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(9, 14, i) : 1) * (main && i >= 2 ? 1 + 0.3 * (1 - smoothstep(18, 23, time)) : 1)
+    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(7, 11, i) : 1) * (main && i >= 2 ? 1 - 0.1 * (1 - smoothstep(18, 23, time)) : 1)
     const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
     const firm = main ? early : 0.5 * early
@@ -566,7 +573,10 @@ export function create(options: PartOptions): PlantPart {
       const co = Math.cos(OPEN_SIDE)
       const side = Math.atan2(frame.mx * co - frame.mz * so, frame.mx * so + frame.mz * co)
       const back = Math.PI - Math.abs(side)
-      const turn = round * (side < 0 ? -1 : 1) * ((Math.abs(side) / (Math.abs(side) + 0.04)) * Math.max(0, SIDE_ANGLE - Math.abs(side)) - (back / (back + 0.04)) * Math.max(0, SIDE_ANGLE - back))
+      const half = 0.5 * Math.PI
+      const front = Math.abs(side)
+      // Every leaf keeps its own place round the stem: the ones nearest the lens axis are turned most, none onto another.
+      const turn = round * (side < 0 ? -1 : 1) * SIDE_ANGLE * ((front / (front + 0.04)) * Math.max(0, 1 - front / half) - (back / (back + 0.04)) * Math.max(0, 1 - back / half))
       const c = Math.cos(turn)
       const k = Math.sin(turn)
       const foot = stemRadius(time, leafStemFraction(i, time)) / Math.max(Math.hypot(frame.mx, frame.mz), 1e-4)
@@ -619,16 +629,17 @@ export function create(options: PartOptions): PlantPart {
     const stiff = 1 - 0.6 * firm
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
-    const creased = smoothstep(3, 16, age)
+    const creased = smoothstep(3, 16, age) * (main && early > 0 ? lerp(1, 0.3, early) : 1)
     const set = lerp(grown, smoothstep(0.5, 4, age), early)
     // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
-    const ripe = Math.max(smoothstep(5, 12, age) * (main ? lerp(1, 0.45, smoothstep(7, 11, i)) : 1), smoothstep(33, 40, time))
+    const tint = Math.max(smoothstep(5, 12, age) * (main ? lerp(1, 0.45, smoothstep(7, 11, i)) : 1), smoothstep(33, 40, time))
+    const ripe = main ? Math.max(smoothstep(5, 12, age) * YOUNG_RIPE, smoothstep(36.5, 40, time)) : tint
     // Its margins roll under only once the plant is in bloom: until then a blade is nearly a flat plate.
     const rolled = ripe * (1 - 0.65 * early)
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = lerp(clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1), 0.65, cold)
     // The hanging leaf under the head keeps its edge to the lens.
-    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
+    const faced = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = set * clamp(Math.min(leaf.rise, ceiling) - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
@@ -643,7 +654,11 @@ export function create(options: PartOptions): PlantPart {
 
     const tilt = upper * (1 - smoothstep(36, BLOOM, time)) * (0.45 + 0.25 * leaf.seed)
     // A leaf held up round the bud bends its tip down.
-    const nod = 0.8 * crown * smoothstep(2, 7, age)
+    const nod = 0.45 * crown * smoothstep(2, 7, age)
+    // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
+    const fall = round > 0 ? FALL * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
+    // A blade that hangs is seen from its side, not turned flat to the lens.
+    const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
     const lay = (hang: number): number => {
       let x = 0
       let z = 0
@@ -652,7 +667,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
+        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -674,9 +689,9 @@ export function create(options: PartOptions): PlantPart {
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     // The first pair opens narrow, and the leaves under the bud stay narrow and pointed till the bloom.
-    const broad = leafBroadening(i, time) * (i < 2 ? lerp(0.7, 1, smoothstep(6.5, 10, time)) : 1 - 0.36 * crown)
+    const broad = leafBroadening(i, time) * (i < 2 ? lerp(0.7, 1, smoothstep(6.5, 10, time)) : 1 - 0.3 * crown)
     // Before the bloom a blade is cupped along its midrib, not folded on a knife edge.
-    const soft = 0.05 * early
+    const soft = (main ? 0.16 : 0.05) * early
     const { nu, nv } = leaf
     for (let a = 0; a < nu; a++) {
       const s = Math.max(0, leaf.sig[a])
@@ -722,8 +737,10 @@ export function create(options: PartOptions): PlantPart {
       state[i * 4] = size
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
       state[i * 4 + 2] = smoothstep(0.35, 1.3, fold)
-      state[i * 4 + 3] = smoothstep(5, 24, age)
-      ripeness[i] = ripe
+      // Before the bloom the plant's blades are whole: the holes and bites come with the summer.
+      state[i * 4 + 3] = main && early > 0 ? lerp(smoothstep(5, 24, age), -2, early) : smoothstep(5, 24, age)
+      ripeness[i] = tint
+      serration[i] = (1 - ripe) * (i < 2 ? smoothstep(8, 11, time) : 1)
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
@@ -799,6 +816,8 @@ export function create(options: PartOptions): PlantPart {
     const count = born > 0 ? hairsUpTo[born - 1] : 0
     if (slot === 0) hairsShown = count
     const frosted = stateUniforms.uPlantFrost.value > 0
+    // The ice grows after the cut to the frost: at the cut the edge is the one the night left.
+    const rime = smoothstep(30, 33, pose.time)
     for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
@@ -909,8 +928,11 @@ export function create(options: PartOptions): PlantPart {
             cr[q + 1] = py - oy * inside + sy * along
             cr[q + 2] = pz - oz * inside + sz * along
             // The fringe is broken: most hairs carry one tuft or none.
-            const bare = !spike && (c === 0 ? r2 > 0.6 : r3 > 0.25)
-            cr[q + 3] = bare ? 0 : (point ? 0.004 : spike ? 0.003 : 0.005 + 0.002 * r1) * scale
+            // It gathers in runs along the edge with bare lengths between, and thickest where the edge faces the sky.
+            const run = 0.5 + 0.5 * Math.sin((hair.a / (leaf.nu - 1)) * (17 + 11 * ((leaf.i * 0.618) % 1)) + 3.9 * leaf.i + (hair.b === 1 ? 0 : 2.1))
+            const heavy = smoothstep(0.3, 0.75, run) * lerp(0.55, 1.25, smoothstep(-0.4, 0.5, oy))
+            const bare = !spike && ((c === 0 ? r2 > 0.6 : r3 > 0.25) || run < 0.3 * r1 + 0.18)
+            cr[q + 3] = bare ? 0 : (point ? 0.004 : spike ? 0.003 : (0.0025 + 0.002 * r1) * lerp(0.6, 2.4, heavy * heavy)) * scale * rime
             cl[q] = ox + ux * (stand + (r3 - 0.5) * 0.8) + sx * (r1 - 0.5) * 0.6
             cl[q + 1] = oy + uy * (stand + (r3 - 0.5) * 0.8) + sy * (r1 - 0.5) * 0.6
             cl[q + 2] = oz + uz * (stand + (r3 - 0.5) * 0.8) + sz * (r1 - 0.5) * 0.6
@@ -922,7 +944,7 @@ export function create(options: PartOptions): PlantPart {
           cr[q] = px
           cr[q + 1] = py
           cr[q + 2] = pz
-          cr[q + 3] = (Math.abs(hair.b - (leaf.nv - 1) / 2) < 0.6 ? 0.0012 + 0.0012 * hair.r1 : 0.0006 + 0.0008 * hair.r1) * scale
+          cr[q + 3] = (Math.abs(hair.b - (leaf.nv - 1) / 2) < 0.6 ? 0.0012 + 0.0012 * hair.r1 : 0.0006 + 0.0008 * hair.r1) * scale * rime
           cl[q] = ux * up
           cl[q + 1] = uy * up
           cl[q + 2] = uz * up
