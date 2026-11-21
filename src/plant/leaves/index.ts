@@ -12,9 +12,9 @@ import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
 import { SETS, sweepAt, toothAt, veinAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
 
-// The stalk is the first fifth of a leaf's whole reach, as the camera was fitted to.
+// The stalk is the first third of a leaf's whole reach: it rises from the stem and arches over, and the blade hangs from its end.
 const REACH = 1.25
-const STALK = 0.2
+const STALK = 0.36
 const PATH = 48
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
@@ -56,6 +56,10 @@ interface Leaf {
   twist: number
   kink: number
   tipCurl: number
+  reach: number
+  stalk: number
+  rise: number
+  crease: number
   yellows: number
 }
 
@@ -96,7 +100,8 @@ export function create(options: PartOptions): PlantPart {
   usePlant(before)
 
   const dryLeaf = 5 + Math.floor(hash01(seed, 900) * 6)
-  const tornLeaf = 12 + Math.floor(hash01(seed, 901) * 9)
+  const tornLeaf = 12 + Math.floor(hash01(seed, 901) * 7)
+  const witheredLeaf = 19 + Math.floor(hash01(seed, 902) * 3)
 
   const leaves: Leaf[] = []
   let vertices = 0
@@ -123,11 +128,12 @@ export function create(options: PartOptions): PlantPart {
     const depth = 0.07 + 0.06 * r(5)
     const waveAmp = 0.018 + 0.03 * r(6)
     const waveRate = 2.4 + 2.6 * r(7)
-    const roll = -0.02 + 0.1 * r(8) + (r(9) > 0.75 ? 0.1 : 0)
+    const withered = i === witheredLeaf
+    const roll = withered ? 0.42 : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
-    const dry = i === dryLeaf
+    const dry = i === dryLeaf || withered
     const torn = i === tornLeaf
     const old = 1 - rank
     const kind = r(12)
@@ -150,14 +156,18 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: 0.26 + 0.5 * r(19),
-      tipCurl: dry ? 1.1 : 0.12 + 0.6 * r(20) * r(20),
+      kink: withered ? 1 : 0.3 + 0.55 * r(19),
+      tipCurl: withered ? 1.5 : dry ? 1.1 : 0.2 + 0.7 * r(20) * r(20),
+      reach: STALK + (1 - STALK) * lerp(1, 0.76, upper),
+      stalk: STALK / (STALK + (1 - STALK) * lerp(1, 0.76, upper)),
+      rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
+      crease: withered ? 0.9 : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
       const onStalk = typeof rows !== 'number' && rows[a] < 0
-      leaf.sig[a] = onStalk ? 0 : STALK + (1 - STALK) * s
+      leaf.sig[a] = onStalk ? -1 : s
       const wide = widthAt(s, cord, tip) * share
       for (let b = 0; b < nv; b++) {
         const hem = hero && (b === 0 || b === nv - 1)
@@ -331,11 +341,15 @@ export function create(options: PartOptions): PlantPart {
     frame.wx = f.wx; frame.wy = f.wy; frame.wz = f.wz
     frame.nx = f.nx; frame.ny = f.ny; frame.nz = f.nz
     const out = slots[slot]
-    const total = size * REACH
+    const total = size * REACH * leaf.reach
+    const stalk = leaf.stalk
+    const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
     const droop = leafDroop(i, pose.inputs)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
+    // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
+    const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
@@ -346,9 +360,9 @@ export function create(options: PartOptions): PlantPart {
       let low = 0
       for (let k = 0; k <= PATH; k++) {
         const share = k / PATH
-        const bladeShare = Math.max(0, (share - STALK) / (1 - STALK))
+        const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(STALK * 0.8, STALK + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
+        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -366,15 +380,15 @@ export function create(options: PartOptions): PlantPart {
       lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
-    const cf = Math.cos(fold)
-    const sf = Math.sin(fold)
+    const cf = Math.cos(fold + leaf.crease * grown)
+    const sf = Math.sin(fold + leaf.crease * grown)
     const { nu, nv } = leaf
     for (let a = 0; a < nu; a++) {
-      const share = leaf.sig[a]
+      const s = Math.max(0, leaf.sig[a])
+      const share = leaf.sig[a] < 0 ? 0 : stalk + (1 - stalk) * s
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const s = Math.max(0, (share - STALK) / (1 - STALK))
       const turn = leaf.twist * s * grown + sway * (0.3 + 0.7 * s)
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
@@ -396,9 +410,9 @@ export function create(options: PartOptions): PlantPart {
       for (let b = 0; b < nv; b++) {
         const v = a * nv + b
         const px = leaf.px[v]
-        const across = px * cf * size
-        const up = (Math.abs(px) * sf + leaf.pz[v]) * size
-        const along = leaf.py[v] * size
+        const across = px * cf * blade
+        const up = (Math.abs(px) * sf + leaf.pz[v]) * blade
+        const along = leaf.py[v] * blade
         const o = (leaf.base + v) * 3
         out[o] = cx + tx * along + wx * across + nx * up
         out[o + 1] = cy + ty * along + wy * across + ny * up
@@ -417,12 +431,12 @@ export function create(options: PartOptions): PlantPart {
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
-    const thick = Math.min(0.5 * stem, 0.034 * total)
+    const thick = Math.min(0.42 * stem, 0.0165 * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
       const s = onBlade ? (RIB_END * (ring - RINGS_STALK + 1)) / RINGS_RIB : 0
-      const share = onBlade ? STALK + (1 - STALK) * s : STALK * k
+      const share = onBlade ? stalk + (1 - stalk) * s : stalk * k
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
@@ -444,9 +458,9 @@ export function create(options: PartOptions): PlantPart {
       const flare = ring === 0 ? 1 : 1 + 0.9 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
       const radius = onBlade ? thick * 0.66 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.2 * k) * flare
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
-      const drop = under * (TROUGH * (1 - 0.7 * s) * size + 0.55 * radius)
+      const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
-      const back = ring === 0 ? Math.min((0.7 * stem) / Math.max(0.4, Math.hypot(tx, tz)), 0.5 * STALK * total) : 0
+      const back = ring === 0 ? Math.min((0.7 * stem) / Math.max(0.4, Math.hypot(tx, tz)), 0.5 * stalk * total) : 0
       const cx = frame.ox + frame.mx * at.x + frame.nx * at.z - tx * back - nx * drop
       const cy = frame.oy + frame.my * at.x + frame.ny * at.z - ty * back - ny * drop
       const cz = frame.oz + frame.mz * at.x + frame.nz * at.z - tz * back - nz * drop

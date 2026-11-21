@@ -137,7 +137,7 @@ const elevationCurve = new Monotone([
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
-const EARLY_TURN = 4 * RAD
+const EARLY_TURN = 19 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
 export const RAY_FIRST = 2.4
 // How long a shut ray is, as a share of its open length.
@@ -201,7 +201,7 @@ export function rayLength(k: number, time: number): number {
 export function rayOpen(k: number, time: number): number {
   const around = (k / rayCount) * TAU
   const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.25 * rnd(41, k)
-  const start = bloom0 + delay * 2.3
+  const start = bloom0 + 0.45 + delay * 2.3
   return smootherstep(start, start + 2, time)
 }
 
@@ -210,9 +210,11 @@ export function rayAngle(k: number, time: number): number {
   return lerp(-48, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
 }
 
+// The seed leaves shrink as the true leaves take over, then wither and are shed before the bud swells.
 export function seedLeafLength(time: number): number {
   const grown = 0.013 + 0.031 * smoothstep(inStage(emerge0, emerge1, 0.8), seed1 + 1, time)
-  return grown * (1 - 0.6 * smoothstep(leaves0 + 8, leaves0 + 16, time)) * smoothstep(0, 0.006, heightAt(time))
+  const kept = (1 - 0.6 * smoothstep(leaves0 + 8, leaves0 + 16, time)) * (1 - smoothstep(leaves0 + 16, leaves0 + 21, time))
+  return grown * kept * smoothstep(0, 0.006, heightAt(time))
 }
 
 const seedLeafSpread = new Monotone([
@@ -242,6 +244,11 @@ export function huskDrop(time: number): number {
 }
 
 export const huskLengthM = 0.011
+
+// The husk lies in the crumbs until the rain has beaten the soil over it.
+export function huskSize(time: number): number {
+  return 1 - smoothstep(leaves0 + 3, leaves0 + 10, time)
+}
 export const huskRest: Vec3 = { x: -0.0165, y: 0.0028, z: 0.006 }
 
 export function leafBirth(i: number): number {

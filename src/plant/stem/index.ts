@@ -16,6 +16,8 @@ const NODES = leafCount + 2
 const RIB_HEIGHT = 0.05
 const BUMP_MAX = 0.5
 const JOINT_OVERLAP_M = 0.004
+// A stem bristle is a little thicker than the down of a leaf.
+const HAIR_WIDTH_M = 0.00005
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; full: boolean }
@@ -23,8 +25,8 @@ interface Shape { main: number; sides: number; below: number; cap: number; hairs
 function shapeOf(options: PartOptions): Shape {
   if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, full: false }
   if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 11000, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 44000, full: true }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 27500, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 110000, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -80,7 +82,7 @@ export function create(options: PartOptions): PlantPart {
     hairySkin += patch
     hairTable[c + 1] = hairTable[c] + patch * (0.7 + 0.5 * smoothstep(0.55, 0.9, x) + 1.1 * smoothstep(0.9, 0.985, x))
   }
-  const hairs: HairSet | null = shape.hairs ? createHairs(options, Math.round(shape.hairs * hairySkin), 'stem hairs') : null
+  const hairs: HairSet | null = shape.hairs ? createHairs(options, Math.round(shape.hairs * hairySkin), 'stem hairs', undefined, HAIR_WIDTH_M) : null
   const hairCount = hairs ? hairs.count : 0
   // A hair belongs to a stretch of tissue between two anchors and keeps its share of that stretch for the whole film.
   const hairSeg = new Uint8Array(hairCount)
@@ -261,7 +263,7 @@ export function create(options: PartOptions): PlantPart {
         actAmp[active] = (0.36 * nodeAmp[k] * along) / BUMP_MAX
         active++
         const wide = d / (2 * rn)
-        swell += 0.03 * nodeAmp[k] * Math.exp(-wide * wide)
+        swell += 0.06 * nodeAmp[k] * Math.exp(-wide * wide)
       }
       if (j >= below && j < below + main) {
         ringR[j - below] = whole
@@ -404,18 +406,18 @@ export function create(options: PartOptions): PlantPart {
       const q = hash01(seed, 83, i)
       const up = 0.16 - slope + 0.7 * (hash01(seed, 84, i) - 0.5)
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
-      const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
+      const tall = hash01(seed, 86, i) < 0.15 ? 1.35 : 1
       const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
       // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
       const patch = stretched * Math.min(1, r0 / hairThick[i])
-      const own = 0.88 * hash01(seed, 87, i)
-      const shown = smoothstep(own, own + 0.12, patch) * smoothstep(0.03, 0.2, stretched)
+      const own = 0.78 * hash01(seed, 87, i)
+      const shown = smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
       const reach = shown > 0 ? radius : 0
       root[o] = n.x + ox * reach
       root[o + 1] = n.y + oy * reach
       root[o + 2] = n.z + oz * reach
       if (shown > 0) hairsDrawn = Math.max(hairsDrawn, i + 1)
-      root[o + 3] = Math.min(0.0035, (0.0015 + 0.0018 * q) * (0.75 + 0.25 * hairTop[i]) * onRib) * mature * shown
+      root[o + 3] = Math.min(0.9 * r0, (q > 0.96 ? 0.005 + 0.025 * (q - 0.96) : 0.002 + 0.002 * q) * (0.8 + 0.2 * hairTop[i]) * tall) * mature * shown
       lean[o] = ox + n.tx * up + wx * round
       lean[o + 1] = oy + n.ty * up + wy * round
       lean[o + 2] = oz + n.tz * up + wz * round

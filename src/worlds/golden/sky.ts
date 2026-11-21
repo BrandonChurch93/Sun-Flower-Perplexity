@@ -34,7 +34,13 @@ void main() {
   vec2 uv = vec2(fract(0.5 + turn / (2.0 * PI) + uDrift), clamp(sqrt(max(el, 0.0) / (0.5 * PI)), 0.004, 0.996));
   // One lens sample stands for its share of the disc of confusion: the picture is read that wide, so the samples close into a smooth blur.
   float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
-  vec3 sky = textureLod(tSky, uv, max(0.0, log2(wide * uPixelAngle / uTexelAngle))).rgb;
+  float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
+  vec3 sky = textureLod(tSky, uv, lod).rgb;
+  // The cloud's own light and dark are drawn out against its smooth mean, so its breaks and undersides survive the lens.
+  vec3 mean = textureLod(tSky, uv, lod + 4.5).rgb;
+  vec3 detail = sky - mean;
+  detail = mix(vec3(dot(detail, vec3(0.3, 0.6, 0.1))), detail, 0.45);
+  sky = max(sky + detail * (0.9 * smoothstep(0.05, 0.1, el)), vec3(0.0));
   float low = exp(-max(el, 0.0) / 0.085);
   float lift = 1.0 + low * 0.8 * exp(-theta / 0.3) + 1.2 * exp(-theta / 0.05) + 0.9 * exp(-max(el, 0.0) / 0.05);
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
@@ -58,8 +64,8 @@ void main() {
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 1.1 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.2 * exp(-theta / 0.12)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.68 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
-  color += vec3(0.064, 0.083, 0.08) * exp(-theta / 0.5) * smoothstep(0.0, 0.08, el);
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.85 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
+  color += vec3(0.135, 0.16, 0.16) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el);
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 

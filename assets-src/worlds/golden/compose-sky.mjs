@@ -7,8 +7,13 @@ const WIDTH = 8192
 const HEIGHT = 2048
 const SUN = { x: 0.2862, row: 1486, elevationDeg: 2.18 }
 const SPAN_DEG = 100
-// The takes were shot level with a wide lens, so their height is far less sky than their width at the same scale: cloud near the horizon is seen edge on.
+// The takes were shot level with a wide lens. The clear band under the cloud is seen edge on and keeps the steep scale of RISE_DEG;
+// from KNEE_DEG up the cloud is laid at the scale of the take's width, so its shapes are as tall as they are wide.
 const RISE_DEG = 13
+const KNEE_DEG = 5
+const KNEE_SOFT_DEG = 2
+const TOP_FROM_DEG = 30
+const TOP_DEG = 37
 const BOTTOM_ROW = 1528
 const AWAY_BOTTOM_ROW = 1575
 const AWAY_SPAN_DEG = 134
@@ -59,6 +64,11 @@ const away = await read('out/work/sky/away-1.png')
 const awaySoft = await read('out/work/sky/away-1.png', 70)
 const perDeg = sunward.w / SPAN_DEG
 const rowsPerDeg = BOTTOM_ROW / RISE_DEG
+const climb = (el) => {
+  if (el <= KNEE_DEG) return el * rowsPerDeg
+  const up = el - KNEE_DEG
+  return KNEE_DEG * rowsPerDeg + perDeg * up + (rowsPerDeg - perDeg) * KNEE_SOFT_DEG * (1 - Math.exp(-up / KNEE_SOFT_DEG))
+}
 const leftDeg = -SUN.x * SPAN_DEG
 const rightDeg = leftDeg + SPAN_DEG
 const out = Buffer.alloc(WIDTH * HEIGHT * 3)
@@ -77,11 +87,11 @@ for (let Y = 0; Y < HEIGHT; Y++) {
   const v = 1 - (Y + 0.5) / HEIGHT
   const el = 90 * v * v
   // The take has the sun on its bottom edge and the film has it 2.18 degrees up: the sky under the sun is the sky over it, turned over.
-  const row = SUN.row - Math.abs(el - SUN.elevationDeg) * rowsPerDeg
-  const rowAway = AWAY_BOTTOM_ROW - el * rowsPerDeg
+  const row = SUN.row - Math.abs(climb(el) - climb(SUN.elevationDeg))
+  const rowAway = AWAY_BOTTOM_ROW - climb(el)
   const vUp = 1 - (Y - 0.5) / HEIGHT
-  const span = Math.abs(90 * vUp * vUp - el) * 2 * rowsPerDeg
-  const over = smooth(9.5, 13, el)
+  const span = Math.abs(climb(90 * vUp * vUp) - climb(el)) * 2
+  const over = smooth(TOP_FROM_DEG, TOP_DEG, el)
   const dim = 1 - 0.3 * smooth(30, 90, el)
   // The away take is pulled toward the tone of the sunward take where they meet, less with every degree from the seam.
   const gains = [leftDeg + 6, rightDeg - 6].map((seam) => {

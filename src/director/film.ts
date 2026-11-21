@@ -86,7 +86,7 @@ export class Film {
   load(): Promise<void> {
     if (!this.loaded) {
       this.loaded = (async () => {
-        this.ground.load(this.assets)
+        await this.ground.load(this.assets)
         await this.plant.load(this.assets)
         await this.companion.load(this.assets)
         await this.field.load(this.assets)

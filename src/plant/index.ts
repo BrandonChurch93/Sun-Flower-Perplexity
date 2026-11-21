@@ -4,7 +4,7 @@ import type { Assets } from '../core/assets.ts'
 import { allUnits, declareStandIn } from '../core/standins.ts'
 import type { Surface } from '../core/shading.ts'
 import type { Caster } from '../core/shadow.ts'
-import { bodyRadius, headOpen, leafCount, leafLength, paleness, rayCount, rayLength, usePlant, type Place, type PlantInputs } from './growth.ts'
+import { bodyRadius, headOpen, huskSize, leafCount, leafLength, paleness, rayCount, rayLength, seedLeafLength, usePlant, type Place, type PlantInputs } from './growth.ts'
 import { real as hairsReal } from './hairs/index.ts'
 import { create as createBud } from './head/bud/index.ts'
 import { create as createDisc } from './head/disc/index.ts'
@@ -149,7 +149,7 @@ const anyRay = (time: number) => {
 const SLOTS: { name: string; make: PartMaker; pieces: number; units: () => string[] }[] = [
   { name: 'stem', make: createStem, pieces: bit(PART.stem), units: allUnits },
   { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), units: () => unitsWith(anyLeaf) },
-  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), units: allUnits },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), units: () => unitsWith((time) => Math.max(seedLeafLength(time), huskSize(time))) },
   { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), units: () => unitsWith(bodyRadius) },
   { name: 'disc', make: createDisc, pieces: 0, units: () => unitsWith(headOpen) },
   { name: 'petals', make: createPetals, pieces: bit(PART.ray), units: () => unitsWith(anyRay) },

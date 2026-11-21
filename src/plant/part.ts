@@ -110,12 +110,11 @@ uniform float uCanopy;
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
 float plantSun(vec3 world, vec3 offsetDir) {
 #ifdef PLANT_FIELD
-  // The sun crosses the field on a slant: a point under the tops is lit through as many meters of leaves as its depth over the sun's height.
-  // The tops are uneven in long streaks that run the way the light does.
+  // The low sun only reaches the tops of the field, and less of it where a taller streak of rows stands toward the sun.
   vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
-  float under = max(uCanopy * (1.0 + 0.22 * streak) - world.y, 0.0);
-  return exp(-mix(0.4, 1.5, smoothstep(0.2, 0.85, uCanopy)) * under / max(uSunDir.y, 0.06));
+  float under = max(uCanopy * (1.1 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
+  return exp(-mix(1.0, 12.0, smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -124,9 +123,10 @@ float plantSun(vec3 world, vec3 offsetDir) {
 // How much of the sky a point sees, 0 to 1.
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
-  float under = max(uCanopy * 1.04 - world.y, 0.0);
+  // The sky comes from above whatever the sun does: a closed crop keeps a little under half of it at the floor.
+  float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(0.6, 0.05, closed), 1.0, exp(-mix(1.5, 4.5, closed) * under / max(uCanopy, 0.05)));
+  return mix(mix(0.6, 0.46, closed), 1.0, exp(-mix(1.5, 2.0, closed) * under));
 #else
   return 1.0;
 #endif

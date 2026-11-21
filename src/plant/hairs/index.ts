@@ -16,6 +16,9 @@ const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
+// Hairs that stand closer on the screen than this hide one another and would merge into a line: only that many of them show. In pixels of hair length to a square pixel.
+const CROWD_COVER = 0.3
+const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
@@ -32,9 +35,10 @@ out vec3 vBead;
 uniform vec3 uHairColor;
 uniform float uHairWidth;
 
-// How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures. It is more than the sun's disc alone would give a fiber: it also stands for the bright sky round the sun, which a fiber sends on with it.
-const float SUN_THROUGH = 10.0;
-// A hair bright enough to burn the film pales toward white there. The lit color is pushed this far past the sun's own, by its own hue, so the burnt hair still lands on the sun's color.
+// How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
+const float SUN_THROUGH = 3.2;
+// A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
+const float SUN_PALE = 0.35;
 const float SUN_DEEPEN = 0.6;
 const float TT_SPREAD = 0.34;
 const float TT_TURN = 3.5;
@@ -80,18 +84,20 @@ void readHair(int k) {
   float h2 = fract(hairOwn * 47.13 + 0.67);
   float h4 = fract(hairOwn * 233.31 + 0.09);
   float h5 = fract(hairOwn * 71.93 + 0.5);
+  float bristle = step(0.97, fract(hairOwn * 317.77 + 0.21));
   vec3 ref = abs(hairDir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 e1 = normalize(cross(hairDir, ref));
   vec3 e2 = cross(hairDir, e1);
   float turn = h1 * 6.2832;
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
   hairBend = aside * (0.06 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
-  hairWide = 1.0;
+  hairWide = 1.0 + 0.6 * bristle;
+  hairRoot.w *= (0.75 + 0.5 * h2) * (1.0 + 0.9 * bristle);
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
     hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
-    hairWide = 1.0 + uPlantFrost * (3.5 + 3.5 * h4);
+    hairWide *= 1.0 + uPlantFrost * (3.5 + 3.5 * h4);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
@@ -153,7 +159,8 @@ Strand strandAt(float t) {
   vec3 out3 = plantDirection(hairDir);
   float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
-  vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(SUN_DEEPEN * (1.0 - uPlantFrost)));
+  float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
+  vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
   vSun = lit * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
@@ -277,12 +284,15 @@ export class HairSet {
   private readonly eye = new THREE.Vector3()
   private readonly seen = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
+  private readonly at: Float32Array
+  private crowd = new Float32Array(0)
 
-  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00004) {
+  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00013) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.leans = [new Float32Array(count * 4), new Float32Array(count * 4)]
+    this.at = new Float32Array(count * 2)
     const rows = Math.max(1, Math.ceil(count / ROW))
     this.data = new Float32Array(ROW * 4 * rows * 4)
     this.texture = new THREE.DataTexture(this.data, ROW * 4, rows, THREE.RGBAFormat, THREE.FloatType)
@@ -337,6 +347,13 @@ export class HairSet {
     const cocScale = shared.uCocScale.value
     const focus = shared.uFocusM.value
     const height = shared.uSize.value.y
+    const cols = Math.ceil(shared.uSize.value.x / CROWD_CELL_PX) + 1
+    const rows = Math.ceil(height / CROWD_CELL_PX) + 1
+    if (this.crowd.length !== cols * rows) this.crowd = new Float32Array(cols * rows)
+    const crowd = this.crowd
+    crowd.fill(0)
+    const at = this.at
+    const perM = (camera.projectionMatrix.elements[5] * height) / 2
     let n = 0
     let nearest = Infinity
     let longest = 0
@@ -365,6 +382,12 @@ export class HairSet {
       const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
       const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
       const q = n * 16
+      const px = Math.min(cols - 1.001, Math.max(0, (((e[0] * x + e[4] * y + e[8] * z + e[12]) / w) * 0.5 + 0.5) * (shared.uSize.value.x / CROWD_CELL_PX)))
+      const py = Math.min(rows - 1.001, Math.max(0, (((e[1] * x + e[5] * y + e[9] * z + e[13]) / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
+      at[n * 2] = px
+      at[n * 2 + 1] = py
+      const scale = (size * perM) / w
+      crowd[Math.round(py) * cols + Math.round(px)] += (share * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
       out[q] = x
       out[q + 1] = y
       out[q + 2] = z
@@ -384,6 +407,22 @@ export class HairSet {
       n++
       if (w < nearest) nearest = w
       if (long > longest) longest = long
+    }
+    // Rime is matt and does not burn: a crust of it may stand as close as it grows.
+    const limit = CROWD_COVER * (1 + 15 * stateUniforms.uPlantFrost.value)
+    for (let k = 0; k < n; k++) {
+      const px = at[k * 2]
+      const py = at[k * 2 + 1]
+      const cx = Math.floor(px)
+      const cy = Math.floor(py)
+      const fx = px - cx
+      const fy = py - cy
+      const c = cy * cols + cx
+      const cover = (crowd[c] * (1 - fx) + crowd[c + 1] * fx) * (1 - fy) + (crowd[c + cols] * (1 - fx) + crowd[c + cols + 1] * fx) * fy
+      if (cover <= limit) continue
+      const keep = limit / cover
+      const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
+      out[k * 16 + 11] *= Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
     }
     this.kept = n
     this.nearest = nearest
