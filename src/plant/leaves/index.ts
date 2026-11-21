@@ -483,8 +483,10 @@ export function create(options: PartOptions): PlantPart {
     const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
-    const early = 1 - smoothstep(33, 40, time)
+    const early = 1 - smoothstep(35.5, 40, time)
     const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), early)
+    // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
+    const cold = smoothstep(22, 30, time) * early
     // A leaf born under the bud grows out past it, never up through it.
     let ceiling = 1.6
     const guard = 1 - smoothstep(37, 40, time)
@@ -519,8 +521,10 @@ export function create(options: PartOptions): PlantPart {
     const set = lerp(grown, smoothstep(0.5, 4, age), early)
     // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
     const ripe = Math.max(smoothstep(5, 12, age), smoothstep(33, 40, time))
+    // Its margins roll under only once the plant is in bloom: until then a blade is nearly a flat plate.
+    const rolled = ripe * (1 - 0.8 * early)
     // A blade that points away shows its underside instead, so it turns the other way.
-    const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
+    const toward = lerp(clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1), 0.65, cold)
     // The hanging leaf under the head keeps its edge to the lens.
     const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
@@ -543,7 +547,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
+        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -593,7 +597,7 @@ export function create(options: PartOptions): PlantPart {
       for (let b = 0; b < nv; b++) {
         const v = a * nv + b
         const px = ripe >= 1 ? leaf.px[v] : leaf.qx[v] + (leaf.px[v] - leaf.qx[v]) * ripe
-        const pz = ripe >= 1 ? leaf.pz[v] : leaf.qz[v] + (leaf.pz[v] - leaf.qz[v]) * ripe
+        const pz = rolled >= 1 ? leaf.pz[v] : leaf.qz[v] + (leaf.pz[v] - leaf.qz[v]) * rolled
         const across = px * cf * blade
         const up = (Math.abs(px) * sf + pz + leaf.pc[v] * creased) * blade
         const along = (ripe >= 1 ? leaf.py[v] : leaf.qy[v] + (leaf.py[v] - leaf.qy[v]) * ripe) * blade
@@ -617,7 +621,7 @@ export function create(options: PartOptions): PlantPart {
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
     // On the young plant a stalk is nearly as stout as the stem it leaves.
-    const thick = Math.min((0.5 + 0.16 * early) * stem, (0.036 + 0.024 * early) * size * REACH)
+    const thick = Math.min((0.5 + 0.16 * early + 0.14 * cold) * stem, (0.036 + 0.024 * early) * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
@@ -643,7 +647,7 @@ export function create(options: PartOptions): PlantPart {
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early) * k) + clasp
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early - 0.2 * cold) * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -786,7 +790,7 @@ export function create(options: PartOptions): PlantPart {
           cr[o] = px - ox * inside
           cr[o + 1] = py - oy * inside
           cr[o + 2] = pz - oz * inside
-          cr[o + 3] = (0.0015 + 0.0015 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
+          cr[o + 3] = (0.002 + 0.002 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
           cl[o] = dx + ux * stand
           cl[o + 1] = dy + uy * stand
           cl[o + 2] = dz + uz * stand
@@ -796,7 +800,7 @@ export function create(options: PartOptions): PlantPart {
           cr[o] = px
           cr[o + 1] = py
           cr[o + 2] = pz
-          cr[o + 3] = hair.kind === 1 && hair.r4 < 0.6 ? (0.0006 + 0.0008 * hair.r1) * scale : 0
+          cr[o + 3] = hair.kind === 1 && hair.r4 < 0.6 ? (Math.abs(hair.b - (leaf.nv - 1) / 2) < 0.6 ? 0.0012 + 0.0012 * hair.r1 : 0.0006 + 0.0008 * hair.r1) * scale : 0
           cl[o] = ux * up
           cl[o + 1] = uy * up
           cl[o + 2] = uz * up
