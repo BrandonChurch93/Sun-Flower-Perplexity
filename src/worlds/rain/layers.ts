@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -82,10 +82,12 @@ uniform float uScaleM;
 uniform float uFlash;
 void main() {
   if (uDiag > 1) discard;
-  float drift = valueNoise(vec2(vInfo.x * 0.9 / uScaleM + uTime * 0.11 + uLayer * 5.0, vWorld.y * 2.0 / uScaleM + uLayer * 13.0 - uTime * 0.07));
-  float gusts = valueNoise(vec2(vInfo.x * 0.12 / uScaleM - uTime * 0.05 + uLayer * 3.0, uLayer));
-  float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uMist * (1.0 + 0.6 * uFlash), saturate(uShare * thick * (0.55 + 0.6 * drift) * (0.6 + 0.8 * gusts)));
+  float gusts = valueNoise(vec2(vInfo.x * 0.35 / uScaleM - uTime * 0.05 + uLayer * 3.0, uLayer));
+  float billow = valueNoise(vec2(vInfo.x * 0.06 / uScaleM + uTime * 0.02 + uLayer * 7.0, uLayer + 4.0));
+  float h = max(vWorld.y, 0.0) / (uScaleM * (0.7 + 0.6 * billow));
+  // Thickest a little above the ground and thinning to nothing where the sheet meets it, so no sheet draws a line on the soil.
+  float thick = exp(-h) * smoothstep(0.0, 0.6, h) * 1.6;
+  outColor = vec4(uMist * (1.0 + 0.6 * uFlash), saturate(uShare * thick * (0.6 + 0.8 * gusts)));
 }
 `
 
@@ -162,7 +164,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
       name: `rain ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: i * 17.3 + 1.7 }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: skylineLayerSalt(i) }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
