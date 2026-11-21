@@ -44,6 +44,9 @@ const GAP_COMB = 0.5
 const GAP_REACH = 0.16
 // After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
 const LATE_FROM_S = 52
+// The late whorl: rays of the hero head that come out between the others after the bloom, each from its own foot, shorter than the first.
+const LATE_RAYS = 13
+const LATE_SCALE = [0.75, 0.95]
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
 const TEETH = [
@@ -99,6 +102,24 @@ interface Ray {
   lateDroop: number
   lateCurl: number
   lateTwist: number
+}
+
+// A late ray lies between the ranks: behind the faces of the front rays beside it, before the rear ones.
+function between(rays: Ray[], host: number): number {
+  let front = Infinity
+  let rear = -Infinity
+  for (let n = -1; n <= 2; n++) {
+    const ray = rays[(host + n + rayCount) % rayCount]
+    if (ray.rank) rear = Math.max(rear, ray.lay)
+    else front = Math.min(front, ray.lay + Math.min(0, ray.lateLay))
+  }
+  return front > rear ? 0.5 * (front + rear) : front - 0.05
+}
+
+function makeLate(seed: number, count: number): Ray[] {
+  return makeRays(combine(seed, 977))
+    .slice(0, count)
+    .map((ray) => ({ ...ray, rank: 0.5, deep: 0.5, cut: 0, short: 1, hard: 0, nickRow: -1, lateLong: 0, lateWide: 0, lateLay: 0, lateDroop: 0, lateCurl: 0, lateTwist: 0 }))
 }
 
 function outline(u: number): number {
@@ -166,8 +187,8 @@ function makeRays(seed: number): Ray[] {
       seed: r(12, k),
       lateLong: r(37, k) < 0.14 ? 0.03 : 0.06 + 0.16 * r(60, k),
       lateWide: 0.12 * r(61, k),
-      lateLay: rank ? -0.1 - 0.2 * r(62, k) : r(62, k) < 0.3 ? 0.1 + 0.12 * r(63, k) : -0.05 * r(63, k),
-      lateDroop: 0.08 + 0.2 * r(64, k),
+      lateLay: rank ? -0.04 - 0.1 * r(62, k) : r(62, k) < 0.3 ? 0.1 + 0.12 * r(63, k) : -0.05 * r(63, k),
+      lateDroop: 0.03 + 0.1 * r(64, k),
       lateCurl: rank ? (r(65, k) < 0.45 ? 0.5 + 0.9 * r(66, k) : 0.15 * r(66, k)) : r(65, k) < 0.25 ? 0.25 + 0.35 * r(66, k) : 0.1 * r(66, k),
       lateTwist: (r(4, k) < 0.5 ? -1 : 1) * (r(67, k) < 0.3 ? 0.25 + 0.3 * r(68, k) : 0.06 * r(68, k)),
     }
@@ -181,9 +202,15 @@ export function create(options: PartOptions): PlantPart | null {
   const nv = vs.length
   const rimmed = nv >= 5
   const per = nu * nv
-  const count = rayCount * per
+  const lateCount = options.detail === 'hero' ? LATE_RAYS : 0
+  const total = rayCount + lateCount
+  const count = total * per
   const seed = combine(streamSeed('petals'), options.variant)
-  const rays = makeRays(seed)
+  const rays = [...makeRays(seed), ...makeLate(seed, lateCount)]
+  const hosts = Array.from({ length: lateCount }, (_, m) => Math.floor(((m + 0.35 + 0.3 * hash01(seed, 81, m)) * rayCount) / lateCount) % rayCount)
+  hosts.forEach((host, m) => (rays[rayCount + m].lay = between(rays, host)))
+  const comes = Array.from({ length: lateCount }, (_, m) => LATE_FROM_S + 0.3 + 2.9 * hash01(seed, 82, m))
+  const sizes = Array.from({ length: lateCount }, (_, m) => mix(LATE_SCALE[0], LATE_SCALE[1], hash01(seed, 83, m)))
 
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
@@ -192,7 +219,7 @@ export function create(options: PartOptions): PlantPart | null {
   const uv = new Float32Array(count * 2)
   const info = new Float32Array(count * 4)
   const index: number[] = []
-  for (let k = 0; k < rayCount; k++) {
+  for (let k = 0; k < total; k++) {
     const base = k * per
     const ray = rays[k]
     const flip = hash01(seed, 30, k) < 0.5 ? -1 : 1
@@ -261,10 +288,15 @@ export function create(options: PartOptions): PlantPart | null {
     const ray = rays[k]
     const base = k * per
     const time = pose.time
-    const full = rayLength(k, 1e3)
-    const grown = full > 0 ? rayLength(k, time) / full : 0
+    const m = k - rayCount
+    const host = m < 0 ? k : hosts[m]
+    const emerge = m < 0 ? 1 : smooth(comes[m], comes[m] + 3, time)
+    const scale = m < 0 ? 1 : sizes[m] * emerge
+    const full = rayLength(host, 1e3)
+    const grown = full > 0 ? rayLength(host, time) / full : 0
     const h = pose.head
-    const open = rayOpen(k, time)
+    const open = m < 0 ? rayOpen(k, time) : mix(0.8, 1, smooth(comes[m] + 1, comes[m] + 3.3, time))
+    const angle = m < 0 ? rayAngle(k, time) : 0.5 * (rayAngle(host, time) + rayAngle((host + 1) % rayCount, time))
     const late = (slot: number, lead: number, spread: number, least: number, most: number): number => {
       const start = LATE_FROM_S + lead + spread * hash01(seed, slot, k)
       return smooth(start, start + mix(least, most, hash01(seed, slot + 1, k)), time)
@@ -276,10 +308,10 @@ export function create(options: PartOptions): PlantPart | null {
     // An open ray lies in over the outer florets, and it is that much longer so its tip stays where the growth puts it.
     const lifted = smooth(0.1, 0.9, open)
     // A ray that is up but still cupped stands on the rim; its foot slides in over the outer florets only as it lies back.
-    const seat = smooth(0.2, 0.65, Math.PI / 2 - rayAngle(k, time)) * smooth(0.8, 1, open)
+    const seat = smooth(0.2, 0.65, Math.PI / 2 - angle) * smooth(0.8, 1, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted) + 0.7 * (FOOT_SHUT - FOOT_OPEN) * seat
     // A shut ray lies over the face as far as the eye in the middle. Once the ray across from it has opened it draws back toward the rim.
-    const around = (k / rayCount) * Math.PI * 2
+    const around = ((m < 0 ? k : host + 0.5) / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
     const sa = Math.sin(around)
     const ox = h.px * ca + h.qx * sa
@@ -287,20 +319,37 @@ export function create(options: PartOptions): PlantPart | null {
     const oz = h.pz * ca + h.qz * sa
     // Every strap bends the same way round toward the middle, the ones on the upper side of the bud the most.
     const swirl = (0.5 + 0.5 * smooth(-0.3, 0.5, oy)) * (0.85 + 0.3 * hash01(seed, 33, k))
-    const across = rayOpen((k + (rayCount >> 1)) % rayCount, time)
+    const across = m < 0 ? rayOpen((k + (rayCount >> 1)) % rayCount, time) : 1
     const alone = smooth(0.75, 1, across)
     const reach = GAP_REACH * smooth(0.15, 0.7, across) * (1 - alone)
     const side = (n: number) => (rayOpen((k + n + rayCount) % rayCount, time) + rayOpen((k + 2 * n + rayCount) % rayCount, time)) * 0.5
-    const comb = GAP_COMB * (side(2) - side(-2))
+    const comb = m < 0 ? GAP_COMB * (side(2) - side(-2)) : 0
     const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0.02, 0.1, ray.cut)) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
-    const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short * (1 + ray.lateLong * longer)
-    Object.assign(frame, rayFrameAt(pose, k))
+    const length = scale * (rayLength(host, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(host, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short * (1 + ray.lateLong * longer)
+    Object.assign(frame, rayFrameAt(pose, host))
+    if (m >= 0) {
+      const beside = rayFrameAt(pose, (host + 1) % rayCount)
+      const c = Math.sin(angle)
+      const s = Math.cos(angle)
+      frame.ox = 0.5 * (frame.ox + beside.ox)
+      frame.oy = 0.5 * (frame.oy + beside.oy)
+      frame.oz = 0.5 * (frame.oz + beside.oz)
+      frame.mx = ox * c + h.ax * s
+      frame.my = oy * c + h.ay * s
+      frame.mz = oz * c + h.az * s
+      frame.nx = h.ax * c - ox * s
+      frame.ny = h.ay * c - oy * s
+      frame.nz = h.az * c - oz * s
+      frame.wx = h.ay * oz - h.az * oy
+      frame.wy = h.az * ox - h.ax * oz
+      frame.wz = h.ax * oy - h.ay * ox
+    }
     const outward = foot * h.radius
     const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted) + 0.05 * seat) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
-    const rise = Math.PI / 2 - rayAngle(k, time)
+    const rise = Math.PI / 2 - angle
     // A lifting ray stays rolled and narrow, cupped forward with a hooked tip, and spreads flat only at the end of its lift.
     const unfold = smooth(0.8, 1, open)
     const young = (0.1 + 0.15 * ray.arch) * (1 - unfold)
@@ -317,7 +366,7 @@ export function create(options: PartOptions): PlantPart | null {
     let ny = frame.ny
     let nz = frame.nz
     const wind = pose.inputs.wind * flutter(time, ray.seed)
-    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer)
+    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer) * Math.pow(scale, 0.75)
     const fresh = 1 - smooth(0.02, 0.45, open)
     const ripe = smooth(0.8, 1, open)
     let pitch0 = 0
@@ -418,7 +467,7 @@ export function create(options: PartOptions): PlantPart | null {
         let x = (cx[j] - midX) * (v < 0 ? left : right)
         let y = cy[j] - midY
         const edge = Math.abs(v) * v * v
-        y += ray.wave * full * grown * (0.35 + 0.65 * u) * edge * Math.sin(ray.waveFreq * u + ray.wavePhase + (v > 0 ? 1.9 : 0)) * (0.5 + 0.5 * flat)
+        y += scale * ray.wave * full * grown * (0.35 + 0.65 * u) * edge * Math.sin(ray.waveFreq * u + ray.wavePhase + (v > 0 ? 1.9 : 0)) * (0.5 + 0.5 * flat)
         y += rumple * (0.6 * Math.sin(v * 7.3 + u * 2.1 + ray.seed * 40) * Math.sin(u * 5.2 + ray.seed * 17) + 0.4 * Math.sin(v * 12.1 - u * 3.4 + ray.seed * 71)) * smooth(0, 0.15, u)
         if (i === ray.nickRow && v * ray.nickSide > 0.6) x -= ray.nickSide * 0.04 * full * grown * (Math.abs(v) > 0.95 ? 1 : Math.abs(v) > 0.9 ? 0.85 : 0.25)
         const reach = rimmed ? TEETH[ray.teeth][j] * length * tipShare * tipShare : 0
@@ -438,7 +487,7 @@ export function create(options: PartOptions): PlantPart | null {
   }
 
   const layNormals = (pos: Float32Array): void => {
-    for (let k = 0; k < rayCount; k++) {
+    for (let k = 0; k < total; k++) {
       const base = k * per
       for (let i = 0; i < nu; i++) {
         const i0 = Math.max(0, i - 1)
@@ -537,7 +586,7 @@ export function create(options: PartOptions): PlantPart | null {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       const out = slots[slot]
-      for (let k = 0; k < rayCount; k++) layRay(out, k, pose, slot)
+      for (let k = 0; k < total; k++) layRay(out, k, pose, slot)
       if (slot === 0) layNormals(out)
       if (hairs && where) layHairs(hairs, where, out, slot, pose.time)
     },
