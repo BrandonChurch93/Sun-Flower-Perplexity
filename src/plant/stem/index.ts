@@ -24,7 +24,7 @@ const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
 // The dew on a stem is finer than the shared bead sizes.
 const DEW_FINE = 0.5
-const RAIN_FINE = 0.45
+const RAIN_FINE = 1.0
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean; down: boolean }
