@@ -42,6 +42,9 @@ uniform float uPixelAngle;
 uniform float uGain;
 uniform float uCurve;
 uniform float uSaturation;
+uniform vec3 uTint;
+uniform vec3 uTone;
+uniform float uFall;
 uniform vec3 uMeteorHead;
 uniform vec3 uMeteorTail;
 uniform float uMeteor;
@@ -61,8 +64,13 @@ void main() {
   vec3 m = uToMap * d;
   vec2 uv = 0.5 + m.xy / max(m.z, 0.2) * uMapScale;
   vec3 paint = texture(tGlow, clamp(uv, 0.002, 0.998)).rgb;
-  float level = max(dot(paint, vec3(0.3, 0.6, 0.1)), 1e-5);
-  paint = max(mix(vec3(level), paint, uSaturation), 0.0) * (uGain * pow(level, uCurve - 1.0));
+  vec3 shown = uGain * pow(max(paint, 1e-5), vec3(uCurve));
+  shown = clamp(mix(vec3(dot(shown, vec3(0.2126, 0.7152, 0.0722))), shown, uSaturation), 0.0, 0.97 * uTone.y);
+  paint = pow(uTone.x * shown / (uTone.y - shown), vec3(uTone.z)) * uTint;
+  float aspect = uProj.x / uProj.y;
+  vec2 q = (vUv - 0.5) * vec2(aspect, 1.0);
+  float rise = 1.0 + uFall * dot(q, q) / (0.25 * (aspect * aspect + 1.0));
+  paint *= rise * rise;
   vec3 plain = mix(uHorizon, uZenith, smoothstep(0.0, 0.6, el));
   vec2 off = abs(uv - 0.5);
   float inside = (1.0 - smoothstep(0.44, 0.5, max(off.x, off.y))) * smoothstep(0.2, 0.5, m.z);
@@ -190,7 +198,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
 
 export const GLOW_FILE = 'glow.jpg'
 
-export interface NightSkyLook { gain: number; curve: number; saturation: number; stars: number; glow: [number, number, number]; glowPower: number; zenith: [number, number, number]; horizon: [number, number, number] }
+export interface NightSkyLook { gain: number; curve: number; saturation: number; tint: [number, number, number]; tone: [number, number, number]; fall: number; stars: number; glow: [number, number, number]; glowPower: number; zenith: [number, number, number]; horizon: [number, number, number] }
 
 export class NightSky {
   private readonly pass: FullscreenPass
@@ -227,6 +235,9 @@ export class NightSky {
       uGain: { value: look.gain },
       uCurve: { value: look.curve },
       uSaturation: { value: look.saturation },
+      uTint: { value: new THREE.Vector3().fromArray(look.tint) },
+      uTone: { value: new THREE.Vector3().fromArray(look.tone) },
+      uFall: { value: look.fall },
       uGlow: { value: new THREE.Vector3().fromArray(look.glow) },
       uGlowPower: { value: look.glowPower },
       uZenith: { value: new THREE.Vector3().fromArray(look.zenith) },
