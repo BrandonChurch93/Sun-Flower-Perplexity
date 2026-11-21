@@ -36,11 +36,11 @@ uniform vec3 uHairColor;
 uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
-const float SUN_THROUGH = 4.0;
+const float SUN_THROUGH = 3.4;
 // A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
 const float SUN_PALE = 0.35;
 // What comes through a hair is warm white going to pink, as the approved pictures have it, where the low sun alone would make it yellow.
-const vec3 THROUGH_TINT = vec3(1.0, 0.82, 1.08);
+const vec3 THROUGH_TINT = vec3(1.0, 0.8, 0.85);
 const float SUN_DEEPEN = 0.6;
 const float TT_SPREAD = 0.7;
 const float TT_TURN = 2.0;
@@ -162,7 +162,7 @@ Strand strandAt(float t) {
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairDir);
-  float shade = smoothstep(-0.9, -0.4, dot(out3, uSunDir));
+  float shade = smoothstep(-0.85, -0.5, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
