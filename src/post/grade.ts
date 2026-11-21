@@ -21,6 +21,7 @@ uniform float uGreens;
 uniform float uTop;
 uniform float uWhiten;
 uniform sampler2D tHot;
+uniform sampler2D tSun;
 uniform vec2 uSunAt;
 uniform float uStar;
 uniform float uStarLen;
@@ -108,8 +109,10 @@ float rays(float turn, float r, float down) {
   vec3 h = vec3(hash31(vec3(k, 11.0, 1.0)), hash31(vec3(k, 12.0, 1.0)), hash31(vec3(k, 13.0, 1.0)));
   float girth = 6.2831853 * r * uSize.x;
   float across = (t - k - 0.25 - 0.5 * h.x) / 13.0 * girth;
-  float wide = max(mix(0.004, 0.012, h.y) * girth, uSize.y / 1080.0);
-  float len = mix(0.16, 0.52, h.z * h.z) * mix(1.0, 0.6, down);
+  float wide = uSize.y / 1080.0 + mix(0.003, 0.008, h.y) * girth;
+  // The longest run down and to the right, where the field lies open under the sun.
+  float lean = (turn - 0.36) / 0.1;
+  float len = mix(0.2, 0.5, h.z * h.z) * mix(1.0, 0.4 + 0.6 * exp(-lean * lean), down);
   float along = saturate(1.0 - r / len);
   float x = across / wide;
   return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 14.0, 1.0)));
@@ -117,9 +120,11 @@ float rays(float turn, float r, float down) {
 // What a low sun in the frame does. In the glass: a small near white core and a short soft glow, which lie over everything. In the air of the field: thin rays and wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
-  vec2 d = (px - uSunAt * uSize) / uSize.x;
+  // Both sit where the showing part of the disc sits and follow its share: a sun half behind a leaf blooms from the leaf's edge.
+  vec4 seen = texelFetch(tSun, ivec2(0), 0);
+  vec2 d = (px - uSunAt * uSize) / uSize.x - seen.gb;
   float r = length(d);
-  float shown = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
+  float shown = seen.r * 1.37;
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
   float tight = 1.0 + r * r / 0.0004;
