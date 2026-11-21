@@ -5,8 +5,8 @@ import { SKYLINE, ringStrip, skylineAt, skylineCanopy, skylineLayerSalt } from '
 const RAD = Math.PI / 180
 
 // The camera lies on bare soil and the sun has just cleared the land. The skyline is the shared one, laid out round the same bearing as in every world, so each hill and each tree stands where it stands after the cut. Only where this world's sun rises the land is held under the sun's lower limb: the rows of trees open there and the hills lie low.
-const SUN_CLEAR_DEG = 14
-const SUN_FULL_DEG = 26
+const SUN_CLEAR_DEG = 8
+const SUN_FULL_DEG = 28
 const UNDER_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.4, 0.44, 0.3, 0.3]
 
 const smooth = (a: number, b: number, x: number): number => {
@@ -81,11 +81,11 @@ const TONES: { base: [number, number, number]; rim: number }[] = [
   { base: [0.08, 0.12, 0.13], rim: 0 },
   { base: [0.04, 0.06, 0.06], rim: 0.01 },
   { base: [0.03, 0.055, 0.05], rim: 0.02 },
-  { base: [0.014, 0.03, 0.03], rim: 0.04 },
-  { base: [0.012, 0.028, 0.03], rim: 0.03 },
-  { base: [0.009, 0.022, 0.025], rim: 0.03 },
-  { base: [0.009, 0.02, 0.023], rim: 0 },
-  { base: [0.009, 0.02, 0.023], rim: 0 },
+  { base: [0.01, 0.04, 0.048], rim: 0.04 },
+  { base: [0.008, 0.038, 0.048], rim: 0.03 },
+  { base: [0.006, 0.03, 0.04], rim: 0.03 },
+  { base: [0.006, 0.028, 0.036], rim: 0 },
+  { base: [0.006, 0.028, 0.036], rim: 0 },
 ]
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }

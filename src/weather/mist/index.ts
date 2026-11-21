@@ -67,12 +67,17 @@ void main() {
   float wisp = valueNoise(at * 3.1 + vec2(17.0, 5.0) + uSheet * 0.11);
   float height = uHeightM * (0.55 + 0.6 * bank + 0.3 * wisp);
   float amount = mix(1.0, smoothstep(0.25, 0.75, 0.7 * bank + 0.3 * wisp) * 1.8, uBroken);
-  // The slab is crossed at a slant when the eye looks up or down through it.
-  float path = uSlabM / max(length(v.xz), 0.2);
-  float depth = uThickness * amount * path * exp(-max(vWorld.y, 0.0) / height);
+  // The share of this sheet's slab that the ray crosses before it meets the ground, with the mist thinning upward along it.
+  float across = max(length(v.xz), 0.05);
+  float fall = -v.y / across;
+  float reach = fall > 0.0 ? min(uSlabM, max(vWorld.y, 0.0) / fall) : uSlabM;
+  float x = fall * reach / height;
+  float lift = max(vWorld.y, 0.0) / height;
+  float run = abs(x) > 1e-3 ? reach * (exp(x - lift) - exp(-lift)) / x : reach * exp(-lift);
+  float depth = uThickness * amount * run / across;
   float alpha = (1.0 - exp(-depth)) * smoothstep(0.15, 0.6, length(ray.xz) / uRadiusM);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
-  float glow = 0.03 + uForward * (2.5 * exp(-theta / 0.15) + 6.0 * exp(-theta / 0.05));
+  float glow = 0.02 + uForward * (exp(-pow(theta / 0.34, 3.0)) + exp(-theta / 0.06));
   vec3 color = uLit * uSunColor * glow + uShade * skyAmbient(vec3(0.0, 1.0, 0.0));
   outColor = vec4(color, alpha);
 }
