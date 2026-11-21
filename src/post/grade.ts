@@ -164,7 +164,12 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
   float fan = 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0);
   float beams = mix(0.8 + 0.2 * smoothstep(0.0, 1.0, fan) * (0.4 + 0.6 * fanNoise(r * 9.0 + 4.0 * fanNoise(turn * 13.0, 13.0, 5.0), 64.0, 9.0)), 0.5 + 0.5 * smoothstep(0.15, 0.9, fan), down);
-  beams = mix(beams, 0.3 + 1.5 * smoothstep(0.05, 0.95, fan), uSpokes);
+  // Over the whole field the spokes are many, thin and of no two widths.
+  if (uSpokes > 0.0) {
+    float fine = 0.45 * fanNoise(turn * 38.0, 38.0, 3.0) + 0.35 * fanNoise(turn * 94.0, 94.0, 7.0) + 0.2 * fanNoise(turn * 210.0, 210.0, 11.0);
+    float spoke = smoothstep(0.2, 0.85, fine);
+    beams = mix(beams, mix(0.4, 0.7, down) + mix(1.5, 0.9, down) * spoke * sqrt(spoke), uSpokes);
+  }
   float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
   // Nothing in focus and nothing nearer than the focus is behind the lit air. Far things blur up to the circle of infinity, near leaves beyond it.
   float depth = circle / max(uFarFill, 1e-4);
@@ -181,6 +186,8 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float near = r / (r + 0.02);
   float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
   // Seen from over the whole field the lit air lies as a wide warm veil on the land to both sides of the sun, thinner the farther from it, and leaves the sun's own size alone.
+  // Beside the sun a dark wood stays dark and the sky above keeps its own tone: the air there is thin.
+  air *= 1.0 - uSpokes * (1.0 - down) * mix(0.7, 0.45, smoothstep(-0.012, 0.0, d.y));
   air += uSpokes * 0.6 * down * (0.6 + 0.4 * beams) * exp(-r / 0.25) * smoothstep(0.04, 0.15, r) * hold;
   if (uLowRays > 0.0) air = 0.4 * exp(-r / 0.09) * hold + uRays * lowRays(turn, r) * near;
   return glass + uAirTint * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
