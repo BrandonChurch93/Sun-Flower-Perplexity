@@ -320,6 +320,7 @@ export function create(options: PartOptions): PlantPart | null {
     const open = headOpen(time)
     const ready = smoothstep(bloom0 - 0.7, bloom0 + 1.2, time)
     const shut = smoothstep(bloom0 - 13, bloom0 - 5, time)
+    const over = 1 - smoothstep(bloom0 - 0.7, bloom0 + 0.3, time)
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
     const wind = pose.inputs.wind
@@ -341,7 +342,7 @@ export function create(options: PartOptions): PlantPart | null {
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
       const folded = smoothstep(0, 1, opened)
-      const inBud = Math.min(time, bloom0 - 1)
+      const inBud = Math.min(time, bloom0 - 3)
       const stand = k.hang ? HANG : STAND[k.series] + k.lean
       const angle = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready), FOLD[k.series] + 0.5 * k.lean, folded)
       const hook = k.hook * folded
@@ -372,8 +373,12 @@ export function create(options: PartOptions): PlantPart | null {
         const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW + hook * smoothstep(0.3, 1, u) + sway * u * u
-        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * tipW * tipW * (1 - 0.7 * over * shut) + hook * smoothstep(0.3, 1, u) + sway * u * u
+        const fr = r / (R + lift)
+        const fh = Math.max(0, h - hr) / (Hf + lift)
+        const onFace = over * (1 - smoothstep(1, 1.1, fr * fr + fh * fh))
+        const along = h < hr ? -0.15 : Math.atan2(-(R + lift) * fh, (Hf + lift) * fr)
+        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)), lerp(-Math.PI, along, onFace))
         const Re = Rw + lift
         if (h < hw) {
           const e = (r * r) / (Re * Re) + ((h - hw) * (h - hw)) / ((Hb + lift) * (Hb + lift))
@@ -384,8 +389,13 @@ export function create(options: PartOptions): PlantPart | null {
           }
         } else if (h < hr) r = Math.max(r, sideR(h) + lift)
         else {
-          const f = (h - hr) / (Hf + lift)
-          if (f < 1) r = Math.max(r, (R + lift) * Math.sqrt(1 - f * f))
+          const e = (r * r) / ((R + lift) * (R + lift)) + ((h - hr) * (h - hr)) / ((Hf + lift) * (Hf + lift))
+          if (e < 1) {
+            const g = 1 / Math.sqrt(Math.max(e, 1e-9))
+            const out = (R + lift) * Math.sqrt(Math.max(0, 1 - ((h - hr) * (h - hr)) / ((Hf + lift) * (Hf + lift))))
+            r = lerp(out, r * g, over)
+            h = hr + (h - hr) * lerp(1, g, over)
+          }
         }
         if (gap > 0) {
           const vr = r - RAY_FOOT * R
