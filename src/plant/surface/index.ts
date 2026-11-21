@@ -52,7 +52,8 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
 
 // The share of the sun a thin tissue passes when 'through' is 1.
 const float TISSUE_THROUGH = 0.17;
-const float TISSUE_FORWARD = 0.5;
+const float TISSUE_FORWARD = 0.55;
+const float TISSUE_BEAM = 5.5;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
@@ -78,9 +79,13 @@ vec3 tissueSky(vec3 n) {
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
   float cool = dot(uSkyZenith, vec3(0.3, 0.6, 0.1));
-  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.2 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
-#endif
+  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.35 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
+  // The sky round a low sun takes the sun's own color: the bright side of a round body is warm, not pale.
+  vec3 near = uSunColor * (lum / max(dot(uSunColor, vec3(0.3, 0.6, 0.1)), 1e-4));
+  return sky * mix(1.0, 0.25, level) + mix(sky, near, 0.6) * (2.4 * side * side * side * level);
+#else
   return sky * mix(1.0, 0.25 + 2.4 * side * side * side, level);
+#endif
 }
 
 vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
@@ -165,7 +170,12 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   // A longer path inside the blade deepens the color.
   float slant = saturate(0.6 * (1.0 / max(ndv, 0.3) - 1.0));
   vec3 passed = through * mix(vec3(1.0), hue, 0.85 + 0.15 * slant) * (1.0 - 0.3 * slant);
-  float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * 2.5 * against * against * against;
+  float a4 = against * against;
+  a4 *= a4;
+  a4 *= a4;
+  float sheer = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
+  // Most of what a sheet passes is spread wide; a blade keeps a share close to the line of the sun, a petal's skin of small domes does not. The parts together stay under what arrives.
+  float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * (2.0 * against * against * against + TISSUE_BEAM * (1.0 - sheer) * a4 * a4);
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
@@ -215,6 +225,8 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float enter = 1.0 - wax * (TISSUE_F0 + (1.0 - TISSUE_F0) * l5);
   float under = (1.0 - mirror) * (1.0 - 0.5 * fuzz * rim);
   float skin = mix(1.0, inside, max(fuzz, 0.7) * smoothstep(0.2, 0.8, against));
+  // Sun that comes in low, or is seen low, crosses the down on a long path: that light belongs to the hairs, and the skin under them stays in shade.
+  skin *= exp(-0.35 * fuzz * (1.0 / max(fv, 0.05) + 1.0 / max(ndl, 0.05) - 2.0));
 
   float s = dot(L, view) - ndl * ndv;
   float q = s > 0.0 ? max(max(ndl, 0.0), ndv) : 1.0;
@@ -228,7 +240,6 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 direct = uSunColor * (sun * crease);
   float lit1 = max(glow.r, max(glow.g, glow.b));
   // The neighbors are taken to be as bright as the part itself: petals light each other far more than leaves do.
-  float sheer = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
   float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
