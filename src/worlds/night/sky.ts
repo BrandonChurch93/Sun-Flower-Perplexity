@@ -26,10 +26,10 @@ const METEOR_FROM_DEG: [number, number] = [-187.7, 16.7]
 const METEOR_TO_DEG: [number, number] = [-181.7, 11.4]
 const METEOR_LIGHT = 0.5
 
-const STARS = 60000
-const FAINTEST = 0.028
+const STARS = 100000
+const FAINTEST = 0.02
 const BRIGHTEST = 12
-const SLOPE = 1.35
+const SLOPE = 1.3
 
 const glowFragment = /* glsl */ `${glslCommon}
 uniform mat4 uCamWorld;
@@ -130,14 +130,14 @@ function direction(azDeg: number, elDeg: number): THREE.Vector3 {
 }
 
 const TINTS: [number, number, number][] = [
-  [0.5, 0.74, 1.0],
-  [0.72, 0.88, 1.0],
+  [0.4, 0.66, 1.0],
+  [0.62, 0.82, 1.0],
   [1.0, 1.0, 1.0],
   [1.0, 0.9, 0.68],
   [1.0, 0.72, 0.44],
   [1.0, 0.55, 0.32],
 ]
-const TINT_SHARE = [0.2, 0.3, 0.2, 0.15, 0.11, 0.04]
+const TINT_SHARE = [0.3, 0.32, 0.16, 0.1, 0.09, 0.03]
 
 function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vector3): THREE.BufferGeometry {
   const random = stream('night stars')

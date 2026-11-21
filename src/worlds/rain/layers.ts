@@ -98,10 +98,10 @@ const TONES: [number, number, number][] = [
   [0.1, 0.14, 0.14],
   [0.05, 0.08, 0.07],
   [0.03, 0.05, 0.045],
-  [0.02, 0.035, 0.03],
-  [0.018, 0.03, 0.027],
-  [0.02, 0.03, 0.025],
-  [0.025, 0.03, 0.022],
+  [0.012, 0.026, 0.026],
+  [0.01, 0.022, 0.022],
+  [0.014, 0.022, 0.02],
+  [0.018, 0.024, 0.02],
 ]
 
 const VEILS = [
@@ -120,7 +120,7 @@ export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void }
 export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, number, number], mist: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
-  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.0015 }, uFlash: flash }
+  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.0005 }, uFlash: flash }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false

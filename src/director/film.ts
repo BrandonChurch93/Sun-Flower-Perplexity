@@ -24,6 +24,7 @@ import { rigAt } from './camera.ts'
 import { plantInputsAt, plantInputsFor } from './inputs.ts'
 import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
 import { stageMakers, worldOf } from './registry.ts'
+import { Puddles } from '../ground/puddles/index.ts'
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
 
@@ -46,6 +47,7 @@ export class Film {
   readonly post: Post
   // Each world's own stage, for the worlds that have one.
   readonly stages = new Map<string, WorldStage>()
+  readonly puddles: Puddles
   format: Format
   diag: DiagName = 'beauty'
   lastTier: TierId = 'draft'
@@ -69,7 +71,8 @@ export class Film {
     this.assets = new Assets(this.stage.renderer, assetSet)
     this.post = new Post(format.width, format.height)
     this.companion.place(companionMatrix())
-    this.scene.add(this.ground.mesh, ...this.ground.casters.map((c) => c.mesh), ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
+    this.puddles = new Puddles(this.ground.shared)
+    this.scene.add(this.ground.mesh, ...this.ground.casters.map((c) => c.mesh), ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes, ...this.puddles.meshes)
     for (const w of config.worlds) {
       const make = stageMakers[w.id]
       if (!make) continue
@@ -192,6 +195,7 @@ export class Film {
     stateUniforms.uPlantWet.value = def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
+    this.puddles.prepare(def, time, time + shutterSeconds, !alone)
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
