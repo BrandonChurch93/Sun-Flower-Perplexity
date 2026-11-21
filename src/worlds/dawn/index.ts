@@ -33,7 +33,7 @@ export const mist: MistSettings = {
   drift: [0.05, 0.02],
   bankM: 0.4,
   broken: 0.9,
-  rise: 0.85,
+  rise: 0.7,
   lobeRad: 0.2,
 }
 
