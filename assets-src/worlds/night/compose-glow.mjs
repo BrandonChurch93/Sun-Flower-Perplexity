@@ -19,7 +19,44 @@ const srgb = (v) => Math.round(255 * Math.min(1, Math.max(0, v <= 0.0031308 ? v 
 
 const small = sharp(TAKE).resize(W, H, { kernel: 'lanczos3' })
 const points = await raw(small.clone())
-const calm = await raw(sharp(await small.clone().median(5).png().toBuffer()).median(5).blur(1.0))
+const OPEN = Number(process.argv[4] ?? 4)
+const BIG = Number(process.argv[5] ?? 10)
+const LEFT = Number(process.argv[6] ?? 0.6)
+const take = await raw(sharp(TAKE))
+const discOf = (r) => {
+  const d = []
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r + 1) d.push([dx, dy])
+  return d
+}
+const pass = (src, pick, disc) => {
+  const dst = Buffer.alloc(src.length)
+  for (let y = 0; y < take.h; y++) {
+    for (let x = 0; x < take.w; x++) {
+      for (let c = 0; c < 3; c++) {
+        let v = src[(y * take.w + x) * 3 + c]
+        for (const [dx, dy] of disc) v = pick(v, src[(Math.min(take.h - 1, Math.max(0, y + dy)) * take.w + Math.min(take.w - 1, Math.max(0, x + dx))) * 3 + c])
+        dst[(y * take.w + x) * 3 + c] = v
+      }
+    }
+  }
+  return dst
+}
+const open = (r) => pass(pass(take.data, Math.min, discOf(r)), Math.max, discOf(r))
+const fine = open(OPEN)
+const coarse = open(BIG)
+const core = Buffer.alloc(take.w * take.h)
+for (let i = 0; i < take.w * take.h; i++) {
+  const lf = 0.3 * lin(fine[i * 3]) + 0.6 * lin(fine[i * 3 + 1]) + 0.1 * lin(fine[i * 3 + 2])
+  const lc = 0.3 * lin(coarse[i * 3]) + 0.6 * lin(coarse[i * 3 + 1]) + 0.1 * lin(coarse[i * 3 + 2])
+  core[i] = (lf - lc) / (lc + 0.01) > LEFT ? 255 : 0
+}
+const cover = await raw(sharp(core, { raw: { width: take.w, height: take.h, channels: 1 } }).blur(BIG / 2).toColourspace('b-w'))
+const opened = Buffer.alloc(fine.length)
+for (let i = 0; i < take.w * take.h; i++) {
+  const s = Math.min(1, cover.data[i * cover.data.length / (take.w * take.h)] / 40)
+  for (let c = 0; c < 3; c++) opened[i * 3 + c] = Math.round(fine[i * 3 + c] * (1 - s) + coarse[i * 3 + c] * s)
+}
+const calm = await raw(sharp(opened, { raw: { width: take.w, height: take.h, channels: 3 } }).blur(1.0).resize(W, H, { kernel: 'lanczos3' }))
 const wide = await raw(small.clone().blur(14))
 
 const out = Buffer.alloc(W * H * 3)

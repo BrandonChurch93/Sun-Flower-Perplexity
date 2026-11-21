@@ -5,6 +5,14 @@ import { poseOf, project } from '../src/director/pose.ts'
 import { rigPathAt } from '../src/director/rig.ts'
 import { PLACE, companionPlace, fieldPlaces, right, toward } from '../src/field/layout.ts'
 import { heightAt } from '../src/plant/growth.ts'
+import { timeOf } from '../src/config.ts'
+import { rayLength } from '../src/plant/growth.ts'
+import { sunDirection } from '../src/core/world.ts'
+import { plantInputsAt, worldAtTime } from '../src/director/inputs.ts'
+import { worldOf } from '../src/director/registry.ts'
+import { poseAtTime } from '../src/director/state.ts'
+import { headAt } from '../src/plant/model.ts'
+import { sunDisc } from '../src/post/sun.ts'
 
 const places = fieldPlaces()
 const all = [places.near, places.far]
@@ -67,5 +75,68 @@ describe('the field', () => {
     const again = fieldPlaces()
     expect(Array.from(again.near)).toEqual(Array.from(places.near))
     expect(again.far.length).toBe(places.far.length)
+  })
+})
+
+describe('the neighbors before the rows, beside the companion', () => {
+  const judged = [1350, 1515, 1755]
+  const aspect = config.formats.master.width / config.formats.master.height
+  const margin = 0.02
+  const count = places.front.length / PLACE
+
+  it('are five', () => {
+    expect(count).toBe(5)
+  })
+
+  it('stand 1.3 m and more from the plant on the side of the companion, no nearer to the lens than the line the plant stands on', () => {
+    for (let i = 0; i < places.front.length; i += PLACE) {
+      const x = places.front[i]
+      const z = places.front[i + 1]
+      expect(x * right.x + z * right.z).toBeLessThanOrEqual(-1.3)
+      expect(-(x * toward.x + z * toward.z)).toBeGreaterThanOrEqual(0)
+      for (const frame of judged) {
+        const pose = poseAtTime(timeOf(frame))
+        const plant = project(pose, new THREE.Vector3(0, 0, 0), aspect).depthM
+        expect(project(pose, new THREE.Vector3(x, 0, z), aspect).depthM, `frame ${frame}`).toBeGreaterThanOrEqual(plant)
+      }
+    }
+  })
+
+  it('never stand over the head of the plant, its stem or the disc of the sun in the judged frames', () => {
+    for (const frame of judged) {
+      const time = timeOf(frame)
+      const pose = poseAtTime(time)
+      const scale = pose.focalMm / config.camera.gateWidthMm
+      const head = headAt(time, plantInputsAt(time))
+      const center = new THREE.Vector3(head.center.x, head.center.y, head.center.z)
+      const reachOfHead = head.radius + rayLength(0, time)
+      // What must stay clear, each a point in the frame with its radius as a share of the frame's width: the head, the stem under it and the sun.
+      const clear: { x: number; y: number; r: number }[] = []
+      const at = project(pose, center, aspect)
+      clear.push({ x: at.x, y: at.y, r: (reachOfHead / at.depthM) * scale })
+      for (let k = 0; k <= 20; k++) {
+        const s = project(pose, center.clone().multiplyScalar(k / 20), aspect)
+        if (s.depthM > 0.05) clear.push({ x: s.x, y: s.y, r: (0.03 / s.depthM) * scale })
+      }
+      const sun = sunDirection(worldOf(worldAtTime(time)))
+      if (sun.dot(pose.forward) > 0.05) {
+        const s = project(pose, pose.position.clone().addScaledVector(sun, 1000), aspect)
+        clear.push({ x: s.x, y: s.y, r: sunDisc })
+      }
+      for (let i = 0; i < places.front.length; i += PLACE) {
+        const size = places.front[i + 3]
+        const top = heightAt(time) * size
+        // A neighbor is taken as wide as its leaves reach, from the ground to the top of its head.
+        const reach = 0.45 * size + reachOfHead
+        for (let y = 0; y <= top + reachOfHead; y += 0.05) {
+          const p = project(pose, new THREE.Vector3(places.front[i], y, places.front[i + 1]), aspect)
+          if (p.depthM <= 0.05) continue
+          for (const c of clear) {
+            const apart = Math.hypot(p.x - c.x, (p.y - c.y) / aspect)
+            expect(apart, `frame ${frame}, neighbor ${i / PLACE}`).toBeGreaterThan((reach / p.depthM) * scale + c.r + margin)
+          }
+        }
+      }
+    }
   })
 })

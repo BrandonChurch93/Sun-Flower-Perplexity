@@ -23,6 +23,10 @@ export interface MistSettings {
   // The width of one bank in meters, and how broken the mist is: 0 an even layer, 1 banks with clear air between.
   bankM: number
   broken: number
+  // How much thinner the mist is at its near edge than at its far edge: 0 an even layer, 1 nothing at the near edge. Even when left out.
+  rise?: number
+  // The half width in radians of the wide glow round the sun. 0.24 when left out.
+  lobeRad?: number
 }
 
 export interface Mist {
@@ -57,6 +61,8 @@ uniform vec2 uDrift;
 uniform float uBankM;
 uniform float uBroken;
 uniform float uSheet;
+uniform float uShare;
+uniform float uLobe;
 void main() {
   if (uDiag > 1) discard;
   vec3 ray = vWorld - uCamPos;
@@ -74,10 +80,10 @@ void main() {
   float x = fall * reach / height;
   float lift = max(vWorld.y, 0.0) / height;
   float run = abs(x) > 1e-3 ? reach * (exp(x - lift) - exp(-lift)) / x : reach * exp(-lift);
-  float depth = uThickness * amount * run / across;
+  float depth = uThickness * uShare * amount * run / across;
   float alpha = (1.0 - exp(-depth)) * smoothstep(0.15, 0.6, length(ray.xz) / uRadiusM);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
-  float glow = 0.02 + uForward * (exp(-pow(theta / 0.34, 3.0)) + 2.0 * exp(-theta / 0.1));
+  float glow = 0.02 + uForward * (exp(-pow(theta / uLobe, 3.0)) + 2.0 * exp(-theta / 0.1));
   vec3 color = uLit * uSunColor * glow + uShade * skyAmbient(vec3(0.0, 1.0, 0.0));
   outColor = vec4(color, alpha);
 }
@@ -111,6 +117,8 @@ export function makeMist(name: string, settings: MistSettings, order = 60): Mist
         uBankM: { value: settings.bankM },
         uBroken: { value: settings.broken },
         uSheet: { value: i + 1 },
+        uShare: { value: 1 - (settings.rise ?? 0) * (1 - i / (count - 1)) },
+        uLobe: { value: settings.lobeRad ?? 0.24 },
       },
       side: THREE.DoubleSide,
       transparent: true,

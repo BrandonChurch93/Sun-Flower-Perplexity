@@ -8,7 +8,7 @@ import { makeFarLayers } from './layers.ts'
 import { RainSky } from './sky.ts'
 
 export const world: WorldSettings = {
-  standIn: true,
+  standIn: false,
   sun: { azimuthDeg: 180, elevationDeg: 62, color: [0.75, 0.82, 0.92], softnessDeg: 14, lean: 0.35, lift: 0.8 },
   sky: { zenith: [0.16, 0.19, 0.24], horizon: [0.7, 0.78, 0.86], bounce: [0.03, 0.035, 0.04], ambient: 1.25, glow: [0, 0, 0], glowPower: 8, disc: 0 },
   backdrop: { file: null, key: 'rain', sunAt: null, gain: 1.3, blur: 0.25 },
