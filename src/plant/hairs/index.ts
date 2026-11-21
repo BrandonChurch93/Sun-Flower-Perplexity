@@ -34,7 +34,10 @@ const EXTRA_FROM_M = 0.002
 const EXTRA_SHARE = 0.4
 // Dew beads sit on one hair in six of those long enough to hold one.
 const DEW_FROM_M = 0.00015
-const DEW_SHARE = 0.16
+const DEW_SHARE = 0.05
+// A damp hair is drawn at least this wide and this long on the screen, and that much fainter: the same light, spread, so it is a soft stroke and never a row of single lit pixels.
+const SOFT_HALF_PX = 0.75
+const SOFT_LONG_PX = 3
 // A wet hair long enough may carry a drop: six in a hundred do.
 const DROP_FROM_M = 0.0005
 const DROP_SHARE = 0.06
@@ -82,7 +85,12 @@ const float RIME_SHADE = 0.85;
 const float RIME_M = ${RIME_M.toFixed(6)};
 const float DEW_M = 0.00004;
 const float DEW_OF_HAIR = 0.3;
-const float DEW_FACE = 0.03;
+const float DEW_FACE = 0.0;
+const float SOFT_HALF_PX = ${SOFT_HALF_PX.toFixed(2)};
+const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
+const float WET_BACK = 0.3;
+const float WET_THROUGH = 6.0;
+const float DEW_GLOW = 0.2;
 const float DEW_SHARE = ${DEW_SHARE.toFixed(2)};
 
 struct Strand {
@@ -165,13 +173,25 @@ void readHair(int k) {
     // Rime grows on a hair, not on the felt a strand of down stands for.
     hairShare *= mix(1.0, hairSlim, uPlantFrost);
   }
-  // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
+  // Dew and rain weigh each hair differently, so damp hairs do not stand in an even row: some are pulled short and a few stay long, each leans its own way and some bend over.
+  float damp = max(uPlantDew, uPlantWet);
+  if (damp > 0.0) {
+    float d1 = fract(hairOwn * 197.41 + 0.37);
+    float d2 = fract(hairOwn * 271.93 + 0.11);
+    float d3 = fract(hairOwn * 331.71 + 0.59);
+    // Down under dew or rain shows at its full length, each strand outlined by the water on it; dry, only its felted foot does.
+    float downy = smoothstep(0.0003, 0.0004, a.w) * (1.0 - coat) * step(0.0001, uHairWidth);
+    float longer = mix(1.0, 1.4 + 2.4 * d1, downy * damp);
+    hairRoot.w *= mix(1.0, mix(0.5 + 0.9 * d1 * d1, 0.3 + 0.6 * d1 * d1, coat), (1.0 - downy) * damp) * longer;
+    hairShare /= sqrt(longer);
+    hairDir = normalize(hairDir + (e1 * cos(6.2832 * d2) + e2 * sin(6.2832 * d2)) * (0.7 * damp * d3));
+    hairBend *= 1.0 + 3.0 * damp * d3 * d3;
+  }
+  // These hairs are stiff and rain does not lay them flat. A wet one hangs a little, one in three carries a film of water that thickens its foot, and a few carry a drop.
   if (uPlantWet > 0.0) {
     float point = step(h4, 0.34);
-    hairShare *= mix(1.0 - uPlantWet, 1.0, point);
-    hairWide *= 1.0 + 2.0 * uPlantWet * point;
-    hairDir = normalize(hairDir + (aside * 0.35 + vec3(0.0, -0.6, 0.0)) * uPlantWet);
-    hairRoot.w *= 1.0 - 0.2 * uPlantWet;
+    hairWide *= 1.0 + 0.6 * uPlantWet * point;
+    hairDir = normalize(hairDir + (aside * 0.15 + vec3(0.0, -0.25, 0.0)) * uPlantWet);
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
   }
   mat4 toClip = projectionMatrix * viewMatrix;
@@ -236,14 +256,18 @@ Strand strandAt(float t) {
   // Rime is not clear: it hides what is behind it, so it fades by how much of it shows and the air between is laid over it in the fragment.
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
+  // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair.
+  vSun += lit * THROUGH_TINT * (DEW_GLOW * uPlantDew * (1.0 - uPlantWet) * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
-  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(1.0, RIME_SHADE, open)), uPlantFrost) * veil;
+  // A wet hair is a thread of water: it throws the bright low sky behind it on to the lens, far more than a dry hair does.
+  vec3 fiber = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), vec3(WET_BACK + WET_THROUGH * open), uPlantWet);
+  vSky = mix(fiber, RIME * (RIME_SKY * mix(1.0, RIME_SHADE, open)), uPlantFrost) * veil;
   // Of the needles on a face turned to the eye few show, each whole: seen end on a needle is a point, and a coat of points is a haze.
   float shows = smoothstep(0.0, 0.08, mix(RIME_FACE, 1.0, open) * behind - 0.92 * fract(hairOwn * 139.71 + 0.57));
   // Rimed down is a velvet: every strand of it shows, faintly, and more where the eye looks along the skin.
   s.share *= mix(1.0, mix(mix(RIME_VELVET, 1.0, open) * behind, shows, hairCoat), uPlantFrost);
-  vSkyY = mix(normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y, mix(0.25, -0.3, open), uPlantFrost);
+  vSkyY = mix(mix(normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y, 0.2, uPlantWet), mix(0.25, -0.3, open), uPlantFrost);
   return s;
 }
 `
@@ -286,10 +310,19 @@ void main() {
   Strand s = strandAt(0.25 * float(j >> 1));
   vec3 side = normalize(cross(s.along, s.toEye));
   float halfPx = 0.5 * s.width / s.pixel;
+  float share = s.share;
+  vec3 at = s.world;
+  if (max(uPlantDew, uPlantWet) > 0.0) {
+    float soft = max(halfPx, SOFT_HALF_PX);
+    float stretch = clamp(SOFT_LONG_PX / max(hairLong, 1e-3), 1.0, 6.0);
+    share *= halfPx / (soft * stretch);
+    halfPx = soft;
+    at += (plantWorld(hairPoint(1.0)) - plantWorld(hairPoint(0.0))) * ((0.25 * float(j >> 1) - 0.5) * (stretch - 1.0));
+  }
   vAcross = (float(j & 1) * 2.0 - 1.0) * (halfPx + 0.75);
   vHalf = halfPx;
-  vShare = s.share;
-  vec3 world = s.world + side * (vAcross * s.pixel);
+  vShare = share;
+  vec3 world = at + side * (vAcross * s.pixel);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }
 `
@@ -700,7 +733,8 @@ export class HairSet {
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
-    const close = (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
+    const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
+    const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
       sharp.setDrawRange(0, 0)
