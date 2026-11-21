@@ -21,8 +21,8 @@ export const world: WorldSettings = {
 const SKY_GAIN = 1.24
 const DROP_LIGHT: [number, number, number] = [0.95, 1.0, 1.05]
 const DROP_SHADE: [number, number, number] = [0.25, 0.3, 0.34]
-const AIR_TONE: [number, number, number] = [0.3, 0.37, 0.4]
-const MIST: [number, number, number] = [0.5, 0.57, 0.62]
+const AIR_TONE: [number, number, number] = [0.1, 0.16, 0.19]
+const MIST: [number, number, number] = [0.07, 0.115, 0.13]
 
 // One stroke of lightning inside the cloud, as two swells of glow that are gone within ten frames.
 const FLASH_AT_S = 17.2
@@ -51,6 +51,7 @@ export const stage: WorldStageMaker = () => {
       const tanX = config.camera.gateWidthMm / (2 * frame.pose.focalMm)
       sky.prepare(frame.time, SKY_GAIN, flash, frame.samples)
       far.flash(flash)
+      far.setTime(frame.time)
       streaks.prepare(frame.time, frame.timeClose, frame.pose, tanX, (tanX * frame.height) / frame.width, frame.samples, frame.width, flash)
     },
     sample(_camera, shutter) {
