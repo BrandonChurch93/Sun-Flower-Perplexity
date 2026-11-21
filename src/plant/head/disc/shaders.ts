@@ -257,7 +257,7 @@ void main() {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(mix(0.3, 0.18, ripe), mix(0.85, 0.75, ripe), along);
     vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.085, 0.1, 0.013), centre);
-    vec3 pale = mix(vec3(0.28, 0.125, 0.018), vec3(0.125, 0.18, 0.027), centre);
+    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.145, 0.205, 0.03), centre);
     float olive = 4.0 * centre * (1.0 - centre);
     dark += vec3(0.03, 0.01, 0.0) * olive;
     pale += vec3(0.06, 0.02, 0.0) * olive;
@@ -266,7 +266,7 @@ void main() {
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
     vec3 young = mix(vec3(0.06, 0.12, 0.028), vec3(0.17, 0.275, 0.062), ridge);
-    young = mix(young, vec3(0.32, 0.42, 0.105), smoothstep(0.75, 1.0, along) * (0.1 + 0.45 * vKind.w));
+    young = mix(young, vec3(0.24, 0.36, 0.09), smoothstep(0.75, 1.0, along) * (0.05 + 0.2 * vKind.w));
     closed = mix(young * mix(0.32, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.16, 0.052, 0.007), vec3(0.24, 0.085, 0.011), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
@@ -304,7 +304,7 @@ void main() {
     t.sheen = 0.25;
   } else {
     vec3 young = mix(vec3(0.09, 0.17, 0.045), vec3(0.3, 0.42, 0.1), along);
-    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.09, 0.09, 0.012), mix(vec3(0.26, 0.16, 0.02), vec3(0.11, 0.185, 0.03), centre), along), open);
+    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.105, 0.105, 0.014), mix(vec3(0.26, 0.16, 0.02), vec3(0.13, 0.215, 0.035), centre), along), open);
     vec3 dry = vec3(0.22, 0.075, 0.012);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
     t.albedo = mix(young * mix(0.6, 1.0, deep), grownUp, ripe) * (0.85 + 0.3 * around) * tone;
