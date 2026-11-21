@@ -135,22 +135,25 @@ interface Strip {
 }
 
 const STRIPS: Strip[] = [
-  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.9, highDeg: 3.1, cells: 9, segments: 720, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
-  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.8, highDeg: 2.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.7, highDeg: 2.5, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
-  { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.45, highDeg: 1.35, cells: 40, segments: 1800, trees: true, base: [0.08, 0.12, 0.06], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.1, highDeg: 2.7, cells: 56, segments: 2880, trees: true, base: [0.05, 0.075, 0.035], rim: 0.035 },
+  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.7, highDeg: 2.0, cells: 9, segments: 720, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
+  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.45, highDeg: 1.5, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 0.9, highDeg: 2.1, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
 ]
 
 const VEILS = [
-  { radiusM: 45, heightM: 40, scaleM: 9, share: 0.16 },
-  { radiusM: 150, heightM: 60, scaleM: 12, share: 0.24 },
-  { radiusM: 460, heightM: 80, scaleM: 16, share: 0.3 },
-  { radiusM: 1150, heightM: 110, scaleM: 22, share: 0.3 },
+  { radiusM: 14, heightM: 30, scaleM: 8, share: 0.28 },
+  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.32 },
+  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.38 },
+  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.45 },
+  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.55 },
+  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.7 },
+  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.8 },
 ]
 
 const SUN_GAP_DEG = 9
-const SUN_GAP_TOP_DEG = 1.55
+const SUN_GAP_TOP_DEG = 1.1
 const LAND_FROM_M = 540
 const LAND_TO_M = 5900
 
@@ -161,7 +164,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   let triangles = 0
   const airUniforms = {
     uAirCool: { value: new THREE.Vector3(0.045, 0.055, 0.075) },
-    uAirWarm: { value: new THREE.Vector3(1.0, 0.56, 0.2) },
+    uAirWarm: { value: new THREE.Vector3(0.5, 0.28, 0.1) },
     uAir: { value: 0.00017 },
   }
   const sunAz = sunAzimuthDeg * RAD
@@ -243,7 +246,8 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   STRIPS.forEach((layer, i) => {
     const geometry = strip(layer.segments, (az) => {
       const radius = layer.radiusM * (1 + layer.wander * (2 * wrapNoise(az, 7, 40 + i * 10) - 1))
-      let deg = layer.lowDeg + (layer.highDeg - layer.lowDeg) * ridged(az, layer.cells, 100 + i * 10)
+      const shape = layer.trees ? 0.6 * wrapNoise(az, layer.cells, 100 + i * 10) + 0.4 * wrapNoise(az, layer.cells * 3, 101 + i * 10) : ridged(az, layer.cells, 100 + i * 10)
+      let deg = layer.lowDeg + (layer.highDeg - layer.lowDeg) * shape
       let off = Math.abs(az - sunAz) % (2 * Math.PI)
       if (off > Math.PI) off = 2 * Math.PI - off
       const gap = Math.max(0, 1 - off / (SUN_GAP_DEG * RAD))
@@ -252,7 +256,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       if (layer.trees) {
         // The trees stand in stretches with open country between them, and the widest opening lies just right of the sun, where the far ridges show.
         const right = ((((sunAz - az) / RAD + 180) % 360) + 360) % 360 - 180
-        const stand = Math.min(smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(9, 17, Math.abs(right - 17)))
+        const stand = Math.min(i === STRIPS.length - 1 ? 1 : smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(9, 17, Math.abs(right - 17)))
         deg = 0.22 + (deg - 0.22) * stand
       }
       return { radius, top: radius * Math.tan(deg * RAD) + (layer.trees ? 4 : 0) }
@@ -280,7 +284,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       additive: true,
       depthWrite: false,
     })
-    add(geometry, surface.main, 44 + (VEILS.length - i))
+    add(geometry, surface.main, 43 + (VEILS.length - i))
   })
   return { meshes, triangles }
 }

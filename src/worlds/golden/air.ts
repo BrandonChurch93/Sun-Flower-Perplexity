@@ -33,12 +33,12 @@ void main() {
   float d = length(world - uCamPos);
   vec3 v = (world - uCamPos) / d;
   float toSun = saturate(dot(v, uSunDir));
-  float sizeM = mix(0.00006, 0.0006, aSeed.x * aSeed.x * aSeed.x);
+  float sizeM = mix(0.00012, 0.0011, aSeed.x * aSeed.x);
   float angle = sizeM / d;
   float px = clamp(angle / uPixelAngle, 1.0, 6.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(1.0, 1.7, world.y);
-  vColor = uSunColor * (0.12 + 0.5 * pow(toSun, 3.0) + 14.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z;
+  vColor = uSunColor * (0.3 + 1.5 * pow(toSun, 3.0) + 40.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z;
   vSize = px;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;
