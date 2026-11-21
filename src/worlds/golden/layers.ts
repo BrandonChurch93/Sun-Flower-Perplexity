@@ -46,11 +46,17 @@ uniform float uLayer;
 uniform float uRim;
 uniform float uFogShare;
 ${air}
+// One crown: a dome as wide as its cell, each of its own height.
+float crown(float run, float widthM, float salt) {
+  float c = run / widthM;
+  float f = 2.0 * fract(c) - 1.0;
+  return (0.35 + 0.65 * hash21(vec2(floor(c), salt))) * sqrt(max(0.0, 1.0 - f * f));
+}
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  float outline = 0.5 * valueNoise(vec2(vInfo.x * 0.021, uLayer)) + 0.32 * valueNoise(vec2(vInfo.x * 0.067, uLayer + 3.0)) + 0.18 * valueNoise(vec2(vInfo.x * 0.19, uLayer + 5.0));
-  top *= 0.4 + 0.9 * outline;
+  float stand = smoothstep(0.2, 0.8, 0.6 * valueNoise(vec2(vInfo.x * 0.026, uLayer)) + 0.4 * valueNoise(vec2(vInfo.x * 0.07, uLayer + 3.0)));
+  top *= 0.45 + 0.37 * stand + 0.18 * max(crown(vInfo.x, 15.0, uLayer), max(crown(vInfo.x + 5.0, 9.5, uLayer + 2.0), crown(vInfo.x + 2.0, 5.5, uLayer + 4.0)));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -146,7 +152,7 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.04, 0.045, 0.03], rim: 0.01, sunward: [1.1, 1.75] },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.0, highDeg: 2.1, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.016], rim: 0.56 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.6, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.012, 0.022, 0.02], rim: 0.4 },
 ]
 
 const VEILS = [
@@ -260,15 +266,16 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       if (off > Math.PI) off = 2 * Math.PI - off
       const gap = Math.max(0, 1 - off / (SUN_GAP_DEG * RAD))
       const open = gap * gap * (3 - 2 * gap)
+      if (!layer.trees) deg *= 1 - 0.55 * smooth(12, 30, off / RAD)
       if (layer.sunward) {
-        const near = smooth(48, 14, off / RAD)
+        const near = smooth(30, 12, off / RAD)
         deg = deg * (1 - near) + (layer.sunward[0] + (layer.sunward[1] - layer.sunward[0]) * shape) * near
       }
       deg = deg * (1 - open) + Math.min(deg, layer.sunward ? SUN_RIDGE_TOP_DEG : SUN_GAP_TOP_DEG * (0.55 + 0.45 * i / (STRIPS.length - 1))) * open
       if (layer.trees) {
-        // The trees stand in stretches with open country between them, and the widest opening lies just right of the sun, where the far ridges show.
+        // The trees stand in stretches with open country between them, and the one sure opening lies just right of the sun, where the ridge shows.
         const right = ((((sunAz - az) / RAD + 180) % 360) + 360) % 360 - 180
-        const stand = Math.min(i === STRIPS.length - 1 ? 1 : smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(9, 17, Math.abs(right - 17)))
+        const stand = Math.min(i === STRIPS.length - 1 ? 1 : smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(5, 11, Math.abs(right - 8)))
         deg = 0.22 + (deg - 0.22) * stand
       }
       return { radius, top: radius * Math.tan(deg * RAD) + (layer.trees ? 4 : 0) }
