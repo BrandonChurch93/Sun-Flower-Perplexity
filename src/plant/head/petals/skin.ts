@@ -106,6 +106,9 @@ void main() {
   Tissue t;
   t.face = n;
 #ifdef PLANT_FIELD
+  // Far heads are seen through haze that already pales them.
+  albedo *= vec3(0.92, 0.82, 0.5);
+  through *= vec3(0.92, 0.82, 0.5);
   t.normal = n;
   float texels = -1.0;
 #else
@@ -148,7 +151,7 @@ void main() {
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
   // A shut ray is a strap with a ridge down its middle: the ridge catches the light and the edges lie in the dark between two straps.
-  float seam = smoothstep(0.25, 0.95, abs(across)) * fresh * smoothstep(1.0, 0.6, u);
+  float seam = smoothstep(0.5, 1.0, abs(across)) * fresh * smoothstep(1.0, 0.6, u);
   t.albedo *= (1.0 - 0.75 * seam) * (1.0 + 0.35 * fresh * (1.0 - smoothstep(0.0, 0.3, abs(across))));
   t.through *= 1.0 - 0.85 * seam;
   t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);

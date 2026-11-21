@@ -22,12 +22,14 @@ const SHAPE: Record<PartDetail, Shape> = {
 const FOLD_SHUT = [-1, 1, -1, 1, -1, 1]
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
 // A shut ray is a strap folded once: a ridge down the middle, and two low wings that lie on the neighbors like shingles.
-const FOLD_BUD = [0.3, 0.3, -0.8, 0.8, 0.3, 0.3]
-const STRAP_BUD = 0.6
+const FOLD_BUD = [-0.6, -0.6, -0.6, 0.6, 0.6, 0.6]
+// A shut strap fills its own place round the rim and narrows toward the eye, and each is rolled the same way so its edge lies on the next one.
+const STRAP_FILL = 1.2
+const SHINGLE = 0.3
 // One ray in three on the side that opens first stays shut a while longer and spreads over the place its neighbors left, so the young florets stay covered.
 const LAG_EVERY = 3
-const LAG_S = 2.0
-const STRAP_COVER = 1.3
+const LAG_S = 3.0
+const STRAP_COVER = 2.0
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
 const SAG = 0.38
@@ -243,7 +245,7 @@ export function create(options: PartOptions): PlantPart | null {
     const h = pose.head
     const open = rayOpen(k, time - ray.lag)
     const near = 0.5 * (rayOpen((k + 1) % rayCount, time) + rayOpen((k + rayCount - 1) % rayCount, time))
-    const cover = ray.lag > 0 ? smooth(0.05, 0.6, near) : 0
+    const cover = ray.lag > 0 ? smooth(0.1, 0.7, near) : 0
     // An open ray lies in over the outer florets, and it is that much longer so its tip stays where the growth puts it.
     const lifted = smooth(0.1, 0.9, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
@@ -257,10 +259,10 @@ export function create(options: PartOptions): PlantPart | null {
     // The straps on the upper side of the bud curve sideways and lie across each other; the lower ones run straight in.
     const swirl = smooth(-0.3, 0.5, oy) * (0.85 + 0.3 * hash01(seed, 33, k))
     const alone = smooth(0.3, 1, rayOpen((k + (rayCount >> 1)) % rayCount, time))
-    const length = (rayLength(k, time) + mix(mix(0.9 + 0.1 * swirl, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(mix(0.96 + 0.08 * swirl, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
+    const back = (ray.rank * 0.025 * lifted - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -300,7 +302,7 @@ export function create(options: PartOptions): PlantPart | null {
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
       const yaw = mix((0.08 + 0.62 * e) * swirl + 0.25 * ray.clump * e, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
-      const twist = mix(0.3 * swirl + 0.1 * (ray.arch - 0.5), ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
+      const twist = mix(SHINGLE, ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
       let c = Math.cos(d)
@@ -348,7 +350,8 @@ export function create(options: PartOptions): PlantPart | null {
       u0 = u
 
       const strap = 1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9))
-      const halfWidth = wide * mix(strap * mix(mix(STRAP_BUD, STRAP_COVER, cover), 1, along), outline(u), across)
+      const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.76 * u) * (1 - 0.85 * smooth(0.82, 1, u)) * STRAP_FILL * Math.min(1, grown / 0.72)
+      const halfWidth = mix(mix(place * (1 + STRAP_COVER * cover), wide * strap, along), wide * outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
       const right = 1 + ragged * (Math.sin(u * 8.3 + ray.seed * 31) + 0.6 * Math.sin(u * 19.7 + ray.seed * 11))
