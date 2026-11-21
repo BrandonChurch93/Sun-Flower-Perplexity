@@ -4,7 +4,7 @@ import { cuts, segmentAt, segmentById } from '../src/director/timeline.ts'
 import { formatById, isTier } from '../src/core/tiers.ts'
 import { parseArgs, flag, num, str } from './lib/args.ts'
 import { computeHashes } from './lib/hashes.ts'
-import { canvas, composedRecord, ensureDir, longEdge, pad4, rel, sameFrames, scaled, strip, type Placed } from './lib/layout.ts'
+import { canvas, composedRecord, cropped, ensureDir, longEdge, pad4, rel, sameFrames, scaled, strip, type Placed } from './lib/layout.ts'
 import { addLook } from './lib/looks.ts'
 import { isMain } from './lib/main.ts'
 import { WORK } from './lib/paths.ts'
@@ -93,6 +93,43 @@ export function cutSheet(index: number, o: SheetOptions): Promise<Sheet> {
   const frames = Array.from({ length: per }, (_, i) => cut.frame - half + i)
   return makeSheet(path.join(dir, `cut-${index}-${o.format}-${o.tier}.jpg`), frames, `Cut ${index} (${cut.fromSegment} to ${cut.toSegment}): frames ${frames[0]} to ${frames[frames.length - 1]}, the cut falls on frame ${cut.frame}`, o)
 }
+
+export function runSheet(unit: string, first: number, o: SheetOptions): Promise<Sheet> {
+  const frames = Array.from({ length: per }, (_, i) => first + i)
+  return makeSheet(path.join(dir, `run-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`), frames, `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}`, o)
+}
+
+export async function detailSheet(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions): Promise<Sheet> {
+  const frames = Array.from({ length: per }, (_, i) => first + i)
+  const file = path.join(dir, `detail-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`)
+  const caption = `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}, native size crops`
+  const hashes = computeHashes()
+  const w = Math.floor((longEdge - (COLS + 1) * GAP) / COLS)
+  const h = Math.floor((longEdge - (ROWS + 1) * GAP) / ROWS) - STRIP
+  const size = formatById(o.format)
+  const left = Math.round(Math.min(size.width - w, Math.max(0, box.left)))
+  const top = Math.round(Math.min(size.height - h, Math.max(0, box.top)))
+  const existing = readRecord(file)
+  if (matches(existing, hashes, { kind: 'sheet', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units: [unit] }) && sameFrames(existing?.frames, frames) && existing?.left === left && existing?.top === top) {
+    console.log(`sheet · reused · ${rel(file)}`)
+    return { file, frames, caption, made: false }
+  }
+  const stills = await renderStills(frames.map((frame) => ({ frame, tier: o.tier, format: o.format, assets: o.assets, diag: 'beauty' })), { look: false })
+  const parts: Placed[] = []
+  for (let i = 0; i < frames.length; i++) {
+    const x = GAP + (i % COLS) * (w + GAP)
+    const y = GAP + Math.floor(i / COLS) * (h + STRIP + GAP)
+    parts.push({ input: await cropped(stills[i], left, top, w, h), left: x, top: y })
+    parts.push({ input: strip(w, STRIP, `${frameLabel(frames[i], 2)} · native size`), left: x, top: y + h })
+  }
+  ensureDir(file)
+  await canvas(COLS * w + (COLS + 1) * GAP, ROWS * (h + STRIP) + (ROWS + 1) * GAP, parts).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toFile(file)
+  writeRecord(file, composedRecord('sheet', hashes, stills, { format: o.format, tier: o.tier, assets: o.assets, frames, units: [unit], caption, left, top, width: w, height: h }))
+  console.log(`sheet · ${caption} · ${rel(file)}`)
+  return { file, frames, caption, made: true }
+}
+
+export const detailSize = { width: Math.floor((longEdge - (COLS + 1) * GAP) / COLS), height: Math.floor((longEdge - (ROWS + 1) * GAP) / ROWS) - STRIP }
 
 if (isMain(import.meta.url)) {
   const args = parseArgs()

@@ -255,8 +255,15 @@ export function leafBirth(i: number): number {
   return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
 }
 
+// Where a plant's leaf spiral starts is its own, from its seed. The director may turn one neighbor by hand, as a gardener turns a pot.
+const leafTurns = new Map<number, number>()
+export function setLeafTurn(v: number, turn: number | null): void {
+  if (turn === null) leafTurns.delete(v)
+  else leafTurns.set(v, turn)
+}
+
 export function leafAzimuth(i: number): number {
-  const turn = variant === 0 ? 0.6 : 0.6 + TAU * rnd(2)
+  const turn = variant === 0 ? 0.6 : (leafTurns.get(variant) ?? 0.6 + TAU * rnd(2))
   if (i < OPPOSITE_LEAVES) return turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI
   return turn + (i - OPPOSITE_LEAVES + 1) * goldenRad
 }
