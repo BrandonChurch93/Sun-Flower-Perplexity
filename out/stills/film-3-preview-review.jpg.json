@@ -1,0 +1,109 @@
+{
+  "kind": "sheet",
+  "engineHash": "883ccb0f6f431fcb",
+  "unitHashes": {
+    "dawn": "7a53aed8d27461eb",
+    "rain": "0106310b0f31255c",
+    "night": "f076338aed740aae",
+    "frost": "58236098c12c5476",
+    "bloom": "0caa5e69480e1fc8",
+    "field": "84bb14740ea79de1"
+  },
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
+    "cores": 2,
+    "ramMb": 7958
+  },
+  "standIns": [
+    {
+      "name": "field",
+      "units": [
+        "dawn",
+        "rain",
+        "night",
+        "frost",
+        "bloom",
+        "field"
+      ]
+    },
+    {
+      "name": "ground",
+      "units": [
+        "dawn",
+        "rain",
+        "night",
+        "frost",
+        "bloom",
+        "field"
+      ]
+    },
+    {
+      "name": "plant",
+      "units": [
+        "dawn",
+        "rain",
+        "night",
+        "frost",
+        "bloom",
+        "field"
+      ]
+    },
+    {
+      "name": "world dawn",
+      "units": [
+        "dawn"
+      ]
+    },
+    {
+      "name": "world frost",
+      "units": [
+        "frost"
+      ]
+    },
+    {
+      "name": "world golden",
+      "units": [
+        "bloom",
+        "field"
+      ]
+    },
+    {
+      "name": "world night",
+      "units": [
+        "night"
+      ]
+    },
+    {
+      "name": "world rain",
+      "units": [
+        "rain"
+      ]
+    }
+  ],
+  "at": "2026-11-21T06:39:02.493Z",
+  "format": "preview",
+  "tier": "review",
+  "assets": "full",
+  "frames": [
+    1234,
+    1285,
+    1336,
+    1388,
+    1439,
+    1491,
+    1542,
+    1593,
+    1645,
+    1696,
+    1748,
+    1799
+  ],
+  "units": [
+    "bloom",
+    "field"
+  ],
+  "caption": "Whole film sheet 3 of 3 (frames 1234 to 1799)"
+}
