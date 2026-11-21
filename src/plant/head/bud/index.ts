@@ -17,7 +17,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 45, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 14000, faceHairs: 16000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 45, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
@@ -44,9 +44,11 @@ const COLLAR = [1.25, 0.95, 0.65]
 const COLLAR_FROM = -1
 const COLLAR_TAKES = 2.5
 // Bracts on the side away from the first rays stay on the body this much longer, in seconds.
-const COLLAR_LATE = 2
+const COLLAR_LATE = 3
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
+// On the side away from the first rays the folded bracts stay spread behind the rays by this share and do not lie back on the stem.
+const FOLD_STAY = 0.8
 const FLARE = [0.25, 0.25, 0.5]
 // The shut rays stand up from the rim and arch over the face as a tall cone. A bract lies on a shell this much wider and higher than that cone, as shares of the radius, until the rays in front of it open.
 const CONE_WIDE = 0.1
@@ -213,7 +215,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -1 : 1
-        hairLong[n] = 0.002 + 0.001 * rnd(123 + b, i)
+        hairLong[n] = 0.001 + 0.001 * rnd(123 + b, i)
       }
       for (let i = 0; i < faceEach; i++, n++) {
         const keel = rnd(223 + b, i) < 0.3
@@ -395,12 +397,13 @@ export function create(options: PartOptions): PlantPart | null {
       const cone = Math.pow(smoothstep(0.1, 0.7, grown), 0.6) * held
       const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
-      const late = COLLAR_LATE * smoothstep(0, 0.6, ox) * (1 - smoothstep(0.45, 0.85, oy)) * (1 - under)
+      const near = smoothstep(-0.2, 0.4, ox)
+      const late = COLLAR_LATE * near * (1 - smoothstep(0.45, 0.85, oy))
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
       const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
-      const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone) + 0.5 * k.lean, folded)
+      const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
       const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.5 * collar)
