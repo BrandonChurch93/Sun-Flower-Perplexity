@@ -408,6 +408,8 @@ export class HairSet {
       if (w < nearest) nearest = w
       if (long > longest) longest = long
     }
+    // Rime is matt and does not burn: a crust of it may stand as close as it grows.
+    const limit = CROWD_COVER * (1 + 15 * stateUniforms.uPlantFrost.value)
     for (let k = 0; k < n; k++) {
       const px = at[k * 2]
       const py = at[k * 2 + 1]
@@ -417,8 +419,8 @@ export class HairSet {
       const fy = py - cy
       const c = cy * cols + cx
       const cover = (crowd[c] * (1 - fx) + crowd[c + 1] * fx) * (1 - fy) + (crowd[c + cols] * (1 - fx) + crowd[c + cols + 1] * fx) * fy
-      if (cover <= CROWD_COVER) continue
-      const keep = CROWD_COVER / cover
+      if (cover <= limit) continue
+      const keep = limit / cover
       const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
       out[k * 16 + 11] *= Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
     }
