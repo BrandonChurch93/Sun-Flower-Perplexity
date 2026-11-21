@@ -123,7 +123,7 @@ void main() {
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float thin = (0.12 + 2.3 * smoothstep(0.42, 0.85, mark.g)) * taper;
-  vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
+  vec3 through = vec3(0.105, 0.125, 0.01) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
   through *= 1.0 - 0.8 * vein.r;
   through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
@@ -202,7 +202,7 @@ void main() {
   float ribs = 0.5 + 0.5 * sin(vUv.x * 6.2832 * 9.0);
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
-  t.albedo = mix(vec3(0.07, 0.11, 0.035), vec3(0.14, 0.19, 0.075), 0.45 * ribs + 0.55 * streak);
+  t.albedo = mix(vec3(0.06, 0.09, 0.012), vec3(0.14, 0.185, 0.025), 0.45 * ribs + 0.55 * streak);
   t.through = vec3(0.04, 0.06, 0.006);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);
