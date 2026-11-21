@@ -105,7 +105,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
   float tight = 1.0 + r * r / 0.0012;
   float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0056);
-  vec3 glass = mix(vec3(1.0, 0.8, 0.55), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
+  vec3 glass = mix(vec3(1.0, 0.92, 0.82), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
   // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
