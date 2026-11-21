@@ -89,7 +89,7 @@ Steps:
 1. Build the shared engine: the director with the timeline and the cuts, the camera path through `camera.keys`, the lens with focus on the growing tip, the sampler, the lens and grade chain.
 2. Build the stand-in plant as a real function of time that follows `plant.heightM` and `plant.stages`: a stem, simple leaves that appear in the right order, a simple bud and a head that opens. The shapes are simple. The timing is real.
 3. Give every world a stand-in: a backdrop made from its approved image, a main light of the right color on the right side, and plain ground. No weather yet beyond a tint.
-4. Build the stand-in field: simple plants in rows.
+4. Build the stand-in field: simple plants in rows, the plant standing out in front of them, and the companion placed from `field.companion`.
 5. Animate the whole film. At each key's time, frame the plant as its approved image does.
 6. Build the `live`, `autopilot` and `export` modes and the menu.
 7. Build the diagnostic views in `kit/04-LOOK.md` and the remaining harness commands.
@@ -121,7 +121,7 @@ Steps:
 
 1. Finish the reference board and the motion studies, as `kit/06-ASSETS.md` describes. Supporting agents gather the parts in parallel. This is done once.
 2. Build the plant at final quality, with agents working in parallel on the subfolders of `src/plant/`: stem, leaves, hairs, bud and bracts, the head with every floret, the petals, and the surface with light passing through. Growth works from the first frame of the film to the last. Everything the `bloom` frames show is finished. The seedling stages may stay simple here. The `dawn` unit finishes them.
-3. Build the `golden` world: the sky, the far background in layers, the sun and its flare, haze, pollen, wind, and the near neighbors out of focus.
+3. Build the `golden` world: the sky, the far background in layers, the sun and its flare, haze, pollen, wind, and the near neighbors out of focus. That includes the companion, with its leaves at the left edge of the two `bloom` key frames.
 4. Fit the camera at the two `bloom` keys to their approved images and smooth the path.
 5. Set the lens, tone curve, grade, bloom and grain against the `bloom-hero` image. These become the film's defaults.
 6. Measure the render budget and the texture memory and update the table.

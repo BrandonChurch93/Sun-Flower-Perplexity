@@ -5,8 +5,10 @@ Two things are on screen: one plant, and whatever world it is standing in. This 
 ## The place
 
 - The near edge of a sunflower field, in open farmland.
-- The plant stands in the front row. Between it and the camera is a strip of grass and bare soil.
-- Rows of other sunflowers run away from the camera behind it. They are the same age as the plant at every moment of the film.
+- The plant stands on its own, `field.plantAheadOfRowM` meters out from the front row, where the tilled soil meets a strip of grass. The camera is on the grass side, looking at the field.
+- One more sunflower grows out there with it. This file calls it the companion. `field.companion` places it as seen from the camera at the `bloom-hero` key: to the left of the plant and a little nearer the camera. Its height is the plant's height times `heightRatio`. Its longest leaves are the dark soft shapes at the left edge of the `bloom-opening` and `bloom-hero` images, with the sun just past their tips.
+- Through `dawn`, `rain` and `night`, and at the `frost` key, no part of the companion is in the frame: its leaves are still short and it stands wide of the camera. Its leaves may start to enter at the left edge as `frost` ends. If keeping it out of those frames and having its leaves at the edge of the two bloom frames cannot both hold, keeping it out comes first.
+- Behind them the field runs away from the camera. Every sunflower in it, and the companion, is the same age as the plant at every moment of the film.
 - Low rolling hills and a line of trees close the horizon.
 - It is the same place in every world. Only the weather changes.
 
@@ -33,7 +35,7 @@ A common sunflower, the classic tall kind with one large head.
 | Stage | What is seen |
 | --- | --- |
 | `emerge` | The soil lifts and cracks. A pale green stem, bent over in a hook, pushes through. The grey and white striped seed husk is still clamped over the folded seed leaves. Crumbs of soil slide off as it rises. The hook straightens |
-| `seedLeaves` | The husk loosens and falls to the soil. Two thick oval seed leaves open flat, one each side. A tiny pair of true leaves shows between them |
+| `seedLeaves` | The husk loosens, splits and drops into the crumbs beside the stem. Two thick oval seed leaves open flat, one each side. A tiny pair of true leaves shows between them |
 | `leaves` | The stem lengthens and thickens. New leaves appear at the tip, small and folded, and open out as the stem carries them up. The first pairs sit opposite each other. Later leaves spiral round the stem. Lower leaves are the largest. The stem and the leaf stalks are covered in short stiff hairs |
 | `bud` | The tip tightens into a bud wrapped in pointed green bracts, a star when seen from above. It swells. It leans toward the light |
 | `bloom` | The bracts fold back. Yellow petals unfurl from the rim, a few first, creased and upright, then all of them, flattening out. The disc opens from the rim inward: ring after ring of florets lifts yellow pollen, while the center stays tight and green brown |
@@ -72,7 +74,8 @@ The weather, in real time:
 
 - Every other sunflower in the field is the same kind of plant at the same age, with its own small differences in height, lean, leaf angles and timing.
 - In the early worlds they are soft shapes in the background. They are never in focus before `field`.
-- In `field` they are the picture: at least `field.minPlantsInView` of them in view at the last key, in rows `field.rowSpacingM` apart with a plant every `field.plantSpacingM`, all turned the same way toward the low sun, none identical to its neighbor.
+- In `field` they are the picture: at least `field.minPlantsInView` of them in view at the `field` key, planted in rows `field.rowSpacingM` apart with a plant every `field.plantSpacingM`. By now the rows have closed up: from the height of the crane the field reads as one carpet of heads, as the `field` image shows, not as stripes. Nearly all the heads face the camera's side of the field, with the low sun behind them. None is identical to its neighbor.
+- The companion is a neighbor like any other. The `field` image shows the plant standing alone. The film shows the companion a short step from it. That difference is settled: it is listed under `settled` for the `field` key in the config.
 
 ## The worlds
 
@@ -121,7 +124,7 @@ Each world replaces the sky, the light, the air and the state of the ground. The
 
 Used by `bloom` and `field`.
 
-- Sky: clear, deep blue overhead fading to gold at the horizon. A few high thin clouds lit pink and gold.
+- Sky: one sky for both segments. A bright gold band along the horizon. Above it a layer of slate blue cloud, heavy overhead as in the two bloom images and thinning into lit streaks lower down as in the `field` image.
 - Light: the sun low on the left, partly behind the plant. Petals and leaves on the sun side glow with light passing through them. Hairs and edges carry a bright rim. A soft warm flare crosses the lens.
 - Air: gold haze. Pollen and fine dust drifting in the light.
 - Ground: warm, dry, long shadows between the rows.
@@ -133,12 +136,12 @@ Used by `bloom` and `field`.
 | Key | Time | What the frame shows |
 | --- | --- | --- |
 | `dawn-sprout` | In the hook | Extreme macro. The hooked stem with its husk has just broken the soil. Grass out of focus in front and behind. Low sun raking across the crumbs |
-| `dawn-seedling` | Late in `dawn` | Macro. The seedling upright with both seed leaves open and glowing. The husk lies beside it. Dew as soft bright discs |
-| `rain` | Mid `rain` | The whole young plant with four to six leaves, bent under a downpour. Splashes and puddles |
+| `dawn-seedling` | Late in `dawn` | Macro. The seedling upright with both seed leaves open and glowing. The split husk rests in the crumbs beside it. Dew as soft bright discs |
+| `rain` | Mid `rain` | The whole young plant with eight or nine leaves, under a downpour. Splashes and puddles |
 | `night` | Mid `night` | The plant against the Milky Way, rimmed in moonlight |
-| `frost` | Mid `frost` | The upper plant and its green bud, edged in hoarfrost, in fog |
+| `frost` | Mid `frost` | Close on the top of the plant and its green bud, edged in hoarfrost, in fog |
 | `bloom-opening` | Early `bloom` | The head half open: bracts folding back, petals unfurling unevenly |
 | `bloom-hero` | Late `bloom` | The fully open head, turned toward us, backlit at golden hour. The frame the whole film has been waiting for |
-| `field` | Near the end | High and wide. The plant in the foreground, thousands more to the horizon |
+| `field` | Near the end | High and wide. The plant standing out in front on the grass, the whole of it in frame, and thousands more behind it to the horizon |
 
 The exact times are in `keys` in the config.

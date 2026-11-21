@@ -28,9 +28,12 @@ When every shot has its takes or its limit, or the time limit in the brief is up
 
 ## Between the runs · Approval
 
-- You and the planning chat go through the eight images. Anything you do not like is made again with a short prompt.
-- When you approve, the planning chat copies the eight chosen images into `references/approved/` under the names in `keys` in the config, writes `MANIFEST.sha256` and `contact-sheet.jpg`, and pushes.
-- The build refuses to start until that is done.
+Done. You approved all eight on 2026-11-20, as the reference run chose them. They are in `references/approved/`, and the `README.md` in that folder lists the take each one came from. The build refuses to start without them.
+
+Two things were settled with the approval:
+
+- The pictures frame the plant closer than the plan did from the night onward. The pictures win, so the camera path in the config was measured again from them. In the frost the camera now drifts in toward the bud instead of only backing away.
+- The two bloom close-ups have the leaves of a second sunflower at their left edge, and the wide field picture shows your flower standing alone. The film keeps the second sunflower, so it also stands a short step from yours in the last shot. This is recorded as a settled difference, so the critics do not ask for the picture on that point.
 
 ## Run 2 · The build
 
@@ -65,6 +68,7 @@ Use supporting agents wherever the kit calls for them. Do not lower the bar to f
 
 - If a status shows something going the wrong way, say so in the Computer thread in plain words. The Builder applies it and carries on.
 - For anything bigger, bring it to the planning chat. It goes into the repo as a numbered addendum, and the build picks it up at its next phase or its next push.
+- If you want the film to differ from one of your approved pictures on purpose, bring that to the planning chat too. It is added as a settled difference, so the critics stop asking for the picture on that point.
 
 ## The limits you chose
 

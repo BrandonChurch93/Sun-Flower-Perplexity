@@ -119,7 +119,7 @@ None yet.
 
 ## Declined issues
 
-One entry per severe or major issue that was declined: the round, the critic and its words, and which approved image or which of Brandon's choices it went against.
+One entry per severe or major issue that was declined: the round, the critic and its words, and which approved image, which settled difference or which of Brandon's choices it went against.
 
 None yet.
 

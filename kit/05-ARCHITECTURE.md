@@ -51,6 +51,7 @@ One owner per folder. `src/plant/` is split into its subfolders so several agent
 - No other file contains a number, an id, a time or an approved image path that the config holds.
 - Startup fails loudly if a key is missing, if the segments do not start at 0, if they have gaps or overlaps, if any segment boundary or key time is not on a whole frame, if the last segment does not end at `film.durationSeconds`, if a key's time lies outside its unit's segment, if `budget.phaseHours` does not add up to `budget.runHours`, or if an approved image is missing.
 - A cut is every segment boundary where the `world` changes. The list of cuts is computed, never typed.
+- `settled` under a key in `keys` is optional. Most keys have none.
 
 ## Determinism
 

@@ -6,8 +6,10 @@ Four kinds of material go into this film: the approved images, the reference boa
 
 - `references/approved/` holds eight images, one per key. Their paths are in `keys` in the config. `MANIFEST.sha256` lists a hash for each. `contact-sheet.jpg` shows all eight.
 - `references/drafts/` holds every take from the reference run, with `NOTES.md` giving the model, the prompt and the inputs of each.
-- `references/BRIEF.md` is the brief the reference run worked from. It describes each key in words.
-- Brandon approved these eight. Each is the target for the film frame at its key's time.
+- `references/BRIEF.md` is the brief the reference run worked from. It describes each key in words. The run did not follow it exactly, most of all on how large the plant is in the frame. Where the brief and an approved image disagree, the image wins.
+- Brandon approved these eight. Each is the target for the film frame at its key's time. `references/approved/README.md` lists which take each one came from.
+- `camera.keys`, `plant.heightM` and `plant.stages` in the config were set from these eight images when they were approved.
+- Settled differences. Generated images of one place never agree with each other completely. Where two approved images disagree, or where the film departs from an image on purpose, the point is written under `settled` for that key in `keys` in the config. On that point the film follows the kit and not that image. Brandon and the planning chat write these lines. Never add, remove or reword one. A new one arrives only in an addendum.
 - They may be used in the build: as the style input for every generated asset, as the source for a sky or a far background, and in a fallback.
 - Never edit, replace or regenerate a file in `references/approved/`. Work on copies under `out/work/` or in an asset folder.
 - The other takes in `references/drafts/` may be used as extra style inputs. They are never a target.

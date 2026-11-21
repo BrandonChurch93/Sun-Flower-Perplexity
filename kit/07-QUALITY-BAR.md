@@ -121,9 +121,10 @@ Every critic uses this scale, so small things are not inflated.
 
 You are comparing pairs of images. In each pair, the file whose name ends in `-a` is the target. The file whose name ends in `-b` has to match it.
 
-- Pack: for each key frame of the unit, the approved image as `-a` and the frame as `-b`, at the same size, plus a grid of matching native-size crops of each.
+- Pack: for each key frame of the unit, the approved image as `-a` and the frame as `-b`, at the same size, plus a grid of matching native-size crops of each. If the key has lines under `settled` in the config, they are given with that pair, word for word, under the heading `Settled`.
 - Compare region by region: what is in frame and how large, where the light comes from and its color, color and grade, contrast and depth of blacks, amount of fine detail, how out of focus areas look, the air between near and far, the sky and background.
 - The plant in `-b` does not have to be leaf for leaf the plant in `-a`. A viewer shown both should call them the same plant in the same place, shot by the same camera a moment apart.
+- A pair may come with lines headed `Settled`. Each names one difference between `-a` and `-b` that is intended. Do not list that difference as an issue and do not lower the score for it. Judge everything else in the pair as usual.
 - List every region where `-b` falls short of `-a` as an issue. Say what is different and which way to move it.
 - Score 10 when the pair is the same shot and `-b` has lost nothing.
 
@@ -233,7 +234,7 @@ For the whole film, in Phase 5:
 
 - Fix causes, not symptoms. If a critic names an artifact, find what produces it.
 - Never tune the picture to please one critic at the cost of another.
-- The approved image and Brandon's stated choices outrank every critic. His choices are in `kit/01-FILM.md`: one smooth camera move, hard cuts, the plant never pausing, the order of the worlds, the field at the end. An issue that asks the film to move away from an approved image or from one of those is declined, with the reason, under "Declined issues" in `kit/PROGRESS.md`. No other severe or major issue may be declined.
+- The approved image and Brandon's stated choices outrank every critic. His choices are in `kit/01-FILM.md`: one smooth camera move, hard cuts, the plant never pausing, the order of the worlds, the field at the end. An issue that asks the film to move away from an approved image or from one of those is declined, with the reason, under "Declined issues" in `kit/PROGRESS.md`. So is an issue that only repeats a settled difference of that key: name the line. A settled line covers the one point it states and nothing near it. No other severe or major issue may be declined.
 - If a fix would undo a change made for an earlier round, the issue is contested. Log it as an open item and do not change that thing again.
 - Each phase judges only what that phase builds. If the blockout critic asks for detail, light or materials, log it as carried to the look lock and move on.
 

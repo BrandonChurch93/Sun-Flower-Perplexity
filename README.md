@@ -18,7 +18,7 @@ The reference images come first, then the build. `kit/PROGRESS.md` says where th
 | `kit/` | The build kit. Start at `kit/00-README.md` |
 | `config/showcase.json` | Every number, the worlds, the timeline and the keys |
 | `references/BRIEF.md` | The brief for the reference images |
-| `references/approved/` | The eight approved images, once Brandon has approved them |
+| `references/approved/` | The eight approved images, with their hashes and the list of takes they came from |
 | `references/drafts/` | Every image from the reference run, with notes |
 | `ASSETS.md` | The ledger of third-party files |
 

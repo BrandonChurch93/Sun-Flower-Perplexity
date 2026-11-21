@@ -27,6 +27,7 @@ Read `AGENTS.md` at the repo root before this file.
 | Any number, any time, any file path of an approved image | `config/showcase.json` |
 | Whether the camera move stays one smooth move, and whether the plant carries through a cut | `kit/01-FILM.md`. These two beat the exact framing of an approved image |
 | How a picture should look | The approved image for that key, then `kit/04-LOOK.md` |
+| A point listed under `settled` for a key in the config | The kit. On that one point it beats that key's approved image |
 | What the plant is at an age, and what a world holds | `kit/02-SUBJECT.md` |
 | How a picture is made | `kit/03-METHOD.md`, unless the ladder in `kit/04-LOOK.md` has moved you to another technique |
 | Whether something passes, and how many rounds it gets | `kit/07-QUALITY-BAR.md` |
@@ -57,6 +58,8 @@ Read `AGENTS.md` at the repo root before this file.
 | Key | One of the eight moments in `keys` in the config, each with a time and an approved image |
 | Approved image | One of the eight images in `references/approved/`. Each is the target for the frame at its key's time |
 | Key frame | The film frame at a key's time |
+| Settled difference | A point where the film differs from an approved image on purpose. Listed under `settled` for that key in the config. `kit/06-ASSETS.md` has the rule |
+| Companion | The one other sunflower that stands out in front of the field with the plant, placed by `field.companion` |
 | The plant | The hero sunflower |
 | Neighbor | Any other sunflower of the field |
 | Growth | The state of the plant as a function of film time |

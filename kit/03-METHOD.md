@@ -85,7 +85,8 @@ Every part has a fallback. Where this file names none, the fallback is the gener
 
 ## 3. The field
 
-- Neighbors are instances of the plant code with their own seeds.
+- Neighbors are instances of the plant code with their own seeds. The companion is one of them, placed by `field.companion` as `kit/02-SUBJECT.md` describes.
+- The front row of the field is `field.plantAheadOfRowM` meters behind the plant.
 - Near rows are full plants. Further rows are simpler versions. The furthest are flat pictures of plants that always face the camera. The change from one kind to the next is never visible.
 - Beyond the last real row the field continues in the far background picture.
 - In `field` the wind moves through the rows as a slow wave.
@@ -142,7 +143,7 @@ Every weather effect is a closed-form function of time, so any frame can be rend
 ## 7. The camera
 
 - One path, a smooth function of time through `camera.keys`.
-- Fit the path to the approved images: at each key's time, adjust the camera so the plant sits in the frame as it does in the image. Then smooth the whole path again and check every key.
+- Fit the path to the approved images: at each key's time, adjust the camera so the plant sits in the frame as it does in the image. Then smooth the whole path again and check every key. The values in the config were measured from the images, so the fit starts close. At `night` and `frost` they sit between the two images' framings on purpose, to keep the drift toward the bud gentle. Move them toward the images only as far as the move stays smooth.
 - Depth of field is real: it comes from the lens, the focus distance and the aperture. `kit/04-LOOK.md` has the rules.
 
 ## 8. The reveal

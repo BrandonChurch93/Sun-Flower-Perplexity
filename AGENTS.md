@@ -10,7 +10,7 @@ These rules are for build tasks: a task whose prompt starts with `BUILD MODE`. A
 - The film is the life of one sunflower in one continuous camera move. It starts as a macro at soil level as the seedling breaks the ground, and ends pulling back over a whole field in bloom.
 - The idea: the plant never stops growing, and the world cuts around it. Five kinds of weather arrive as hard cuts. The plant and the camera carry straight through every cut.
 - The bar: a viewer believes they are watching real footage from a top-budget film or a cinema nature documentary. `kit/04-LOOK.md` defines it.
-- Brandon has approved eight images, one for each key moment. They are in `references/approved/`. They are the target. `kit/06-ASSETS.md` says how they may be used.
+- Brandon has approved eight images, one for each key moment. They are in `references/approved/`. They are the target. `kit/06-ASSETS.md` says how they may be used, and what a settled difference is.
 - Credits are not a limit. Scope is never cut, and a technique that works is never swapped for a cheaper one, to finish sooner. The clock limits extra rounds, not ambition.
 
 ## Memory
