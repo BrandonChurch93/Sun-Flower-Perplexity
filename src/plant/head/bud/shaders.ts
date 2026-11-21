@@ -105,7 +105,7 @@ void main() {
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
-    albedo *= mix(vec3(1.0), mix(vec3(1.2, 1.8, 1.0), vec3(2.6), smoothstep(0.5, 0.95, ax)), uBudShut);
+    albedo *= mix(vec3(1.0), mix(vec3(1.2, 1.8, 1.0), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
@@ -131,7 +131,7 @@ void main() {
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
-    gather = max(max(smoothstep(0.5, 0.94, ax), smoothstep(0.75, 1.0, u)), 0.4 * keel);
+    gather = max(max(smoothstep(0.82, 1.0, ax), smoothstep(0.8, 1.0, u)), 0.4 * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
