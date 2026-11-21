@@ -67,7 +67,7 @@ void main() {
     float seed = vInfo.z;
     float rank = kind - 2.0;
     float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
-    float fine = hash21(floor(vec2(x * 40.0, u * 220.0) + seed * 50.0));
+    float fine = valueNoise(vec2(x * 11.0, u * 60.0) + seed * 50.0);
     float vein = abs(fract(x * 2.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
     float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
     float keel = smoothstep(0.09, 0.0, ax);
@@ -86,12 +86,17 @@ void main() {
     float thin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
-    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.5, thin) * (0.8 + 0.4 * grain);
+    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.36, thin) * (0.8 + 0.4 * grain);
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
     float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
     albedo = mix(albedo, pale, 0.45 * rib);
     t.albedo = albedo;
-    height = 0.0003 * grain + 0.0003 * line + 0.00045 * keel + 0.0002 * rib + 0.00006 * fine;
+    // Relief finer than about three pixels turns into two pixel blocks in the screen derivatives, so each term fades out as its own width nears a pixel.
+    float px = fwidth(x);
+    float pu = fwidth(u);
+    float coarse = 1.0 - smoothstep(0.33, 0.8, max(px * 6.0, pu * 30.0));
+    float thread = 1.0 - smoothstep(0.012, 0.035, px);
+    height = 0.0003 * grain * coarse + 0.0003 * line * thread + 0.00045 * keel * (1.0 - smoothstep(0.03, 0.09, px)) + 0.0002 * rib * (1.0 - smoothstep(0.004, 0.011, pu)) + 0.00006 * fine * (1.0 - smoothstep(0.33, 0.8, max(px * 11.0, pu * 60.0)));
     float buried = smoothstep(0.0, 0.16, u);
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
