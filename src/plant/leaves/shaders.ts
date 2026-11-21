@@ -141,8 +141,8 @@ void main() {
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.9;
-  t.wax = (top ? 0.3 : 0.12) * margin;
-  t.sheen = (top ? 0.6 : 0.85) * margin;
+  t.wax = 0.12 * margin;
+  t.sheen = (top ? 0.3 : 0.25) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
