@@ -60,6 +60,8 @@ const float TISSUE_FUZZ = 0.22;
 // The sun on the down of a part that turns away: a soft band, never a line.
 const float TISSUE_GLANCE = 0.09;
 const float TISSUE_DOWN = 0.14;
+// The short down that stands off the outline of a round body, lit from behind: one bright line on the sun's side.
+const float TISSUE_EDGE = 1.0;
 // A thin part shaded by something this close still gets the sun that came through or round it.
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.025;
@@ -257,6 +259,8 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover)) * pale * fuzz;
   // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
   color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
+  // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
+  color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
 
   return color;
 #endif
