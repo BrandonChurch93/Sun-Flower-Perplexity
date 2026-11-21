@@ -1,3 +1,5 @@
+import { config } from '../config.ts'
+import { world as dawn } from '../worlds/dawn/index.ts'
 import { grassCover } from './cover.ts'
 import { cropLight } from './light.ts'
 
@@ -13,7 +15,64 @@ export const litterTileM = 2.9
 export const ridgeHeightM = 0.07
 
 // The plant breaking the surface: the soil round the stem lifts over riseS seconds into plates of this height and reach, split by this many cracks.
+// The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
+const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
+export const laneDir = { x: Math.sin(LANE), z: Math.cos(LANE) }
+
+// The way to the sun of the dawn, which stands a few degrees over the soil: the ground lies low along it, so its light reaches the plant's foot.
+const SUNWAY = (dawn.sun.azimuthDeg * Math.PI) / 180
+export const sunWayDir = { x: Math.sin(SUNWAY), z: Math.cos(SUNWAY) }
+export const sunWayRise = Math.tan((dawn.sun.elevationDeg * Math.PI) / 180)
+
 export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
+// The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
+export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
+
+// The furrow the rain cuts beside the plant, where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: it runs from its end by the plant's foot to its end by the lens of the rain, winding a little, widening on the way.
+// It is a shallow dip until the rain, cuts down to its depth between these seconds and stays. Its banks stand up beside it, but not within clearM of the stem and not in the camera's way.
+export const furrow = { footM: [-0.045, 0.03], lensM: [-0.2, -0.75], halfM: [0.03, 0.1], depthM: 0.03, bankM: 0.03, windM: 0.02, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+
+function hashU(x: number): number {
+  x ^= x >>> 16
+  x = Math.imul(x, 0x7feb352d)
+  x ^= x >>> 15
+  x = Math.imul(x, 0x846ca68b)
+  x ^= x >>> 16
+  return x >>> 0
+}
+const bits = new Float32Array(1)
+const asInt = new Uint32Array(bits.buffer)
+function hash11(p: number): number {
+  bits[0] = p
+  return hashU(asInt[0]) / 4294967296
+}
+const step = (a: number, b: number, v: number): number => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
+// The height of the bare soil round the stem, in meters, with the plant at the origin: what the shader below draws within hole.flatM of the stem. Farther out the map adds its relief, which this does not know, and the loose crumbs lie on top of it everywhere.
+export function soilHeightAt(x: number, z: number, time: number): number {
+  const e = emergence
+  const r = Math.hypot(x, z)
+  if (r > e.radiusM * 1.7) return 0
+  const rise = step(-0.8, e.riseS, time) * (1 - 0.3 * step(e.riseS, e.riseS + 5, time))
+  const a = Math.atan2(z, x)
+  const s = (a * e.cracks) / 6.2832 + 0.07 * Math.sin(r * 420 + a * 2) + 0.05 * Math.sin(r * 1300)
+  const id = ((Math.floor(s) % e.cracks) + e.cracks) % e.cracks
+  const f = s - Math.floor(s)
+  const reach = 1 - step(e.radiusM * 0.25, e.radiusM * (1.1 + 0.5 * hash11(id + 11)), r)
+  const toCrack = ((Math.min(f, 1 - f) * 6.2832) / e.cracks) * r
+  const crack = (1 - step(0, 0.0003 + 0.0016 * rise * reach, toCrack)) * reach * rise
+  const open = step(hole.fromS, hole.toS, time)
+  const radius = hole.radiusM * (0.18 + 0.82 * open)
+  const gap = 1 - step(0.3 * radius, radius, r)
+  const along = x * laneDir.x + z * laneDir.z
+  const across = Math.abs(x * laneDir.z - z * laneDir.x)
+  const way = Math.max(step(0.002, 0.012, along) * (1 - step(0.012, 0.03, across)), step(0.004, 0.016, x * sunWayDir.x + z * sunWayDir.z))
+  const plate = (0.5 + 0.5 * hash11(id + 3)) * reach * (1 - 0.75 * gap) * (1 - hole.wayOpen * way)
+  return e.liftM * rise * (plate - 0.6 * crack * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r))
+}
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
 export const soilHeight = /* glsl */ `
@@ -35,10 +94,38 @@ float lane(vec2 p) {
   float across = abs(p.x * uLane.y - p.y * uLane.x);
   return (1.0 - smoothstep(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * smoothstep(0.0, 0.03, along);
 }
+uniform vec2 uSunWay;
+float sunWay(vec2 p) {
+  float along = dot(p, uSunWay);
+  float across = abs(p.x * uSunWay.y - p.y * uSunWay.x);
+  return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along);
+}
+uniform vec4 uFurrow;
+uniform vec4 uFurrowShape;
+uniform vec4 uFurrowTime;
+uniform float uFurrowClear;
+// The height the furrow adds: under the mean ground along its middle, over it on its banks.
+float furrow(vec2 p) {
+  vec2 run = uFurrow.zw - uFurrow.xy;
+  float len = length(run);
+  vec2 dir = run / len;
+  vec2 q = p - uFurrow.xy;
+  float along = dot(q, dir);
+  float t = saturate(along / len);
+  float side = dot(q, vec2(-dir.y, dir.x)) - uFurrowTime.w * sin(along * 9.0) * smoothstep(0.0, 0.3, t);
+  float x = length(vec2(side, along - t * len)) / mix(uFurrowShape.x, uFurrowShape.y, t);
+  if (x > 2.4) return 0.0;
+  float cut = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
+  float bed = 1.0 - smoothstep(0.3, 1.0, x);
+  float bank = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.4, x)) * smoothstep(uFurrowClear, uFurrowClear * 4.0, length(p)) * (1.0 - lane(p));
+  return cut * (bank * uFurrowShape.w - bed * uFurrowShape.z);
+}
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;
 }
 uniform vec4 uEmerge;
+uniform vec4 uHole;
+uniform vec3 uDome;
 // x is the height the breaking soil adds, y how deep inside a crack the point is, from 0 to 1.
 vec2 emerge(vec2 p) {
   float r = length(p);
@@ -51,16 +138,20 @@ vec2 emerge(vec2 p) {
   float reach = 1.0 - smoothstep(uEmerge.z * 0.25, uEmerge.z * (1.1 + 0.5 * hash11(id + 11.0)), r);
   float toCrack = min(f, 1.0 - f) * 6.2832 / uEmerge.w * r;
   float crack = (1.0 - smoothstep(0.0, 0.0003 + 0.0016 * rise * reach, toCrack)) * reach * rise;
-  float hole = 1.0 - smoothstep(0.002, 0.009, r);
-  float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * hole);
-  return vec2(uEmerge.y * rise * (plate - 0.6 * crack * plate) + 0.002 * (1.0 - smoothstep(0.003, 0.008, r)), max(crack, 0.5 * hole * hole * rise));
+  float open = smoothstep(uHole.x, uHole.y, uTime);
+  float radius = uHole.z * (0.18 + 0.82 * open);
+  float gap = 1.0 - smoothstep(0.3 * radius, radius, r);
+  float way = max(smoothstep(0.002, 0.012, dot(p, uLane)) * (1.0 - smoothstep(0.012, 0.03, abs(p.x * uLane.y - p.y * uLane.x))), smoothstep(0.004, 0.016, dot(p, uSunWay)));
+  float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * gap) * (1.0 - uDome.z * way);
+  float h = uEmerge.y * rise * (plate - 0.6 * crack * plate) + uDome.x * (1.0 - open) * (1.0 - smoothstep(0.003, 0.008, r)) - uHole.w * open * (1.0 - smoothstep(0.25 * uHole.z, uHole.z, r));
+  return vec2(h, max(crack, 0.5 * gap * gap * rise));
 }
 float soilHeight(vec2 p, float lod) {
   float fine = textureLod(tData, p * uTiles.x, lod).a - 0.55;
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
-  float foot = 1.0 - smoothstep(0.004, 0.022, length(p));
-  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * foot) + emerge(p).x;
+  float foot = 1.0 - smoothstep(uDome.y, uDome.y * 1.7, length(p));
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p);
 }
 `
 
@@ -270,20 +361,7 @@ void main() {
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
-  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
   color += wetGlints(vWorld, v, n, uWet) * open * fade * (1.0 - pool) * (1.0 - thatch);
-  if (uDew > 0.0) {
-    vec2 cell = p / 0.0021;
-    vec2 id = floor(cell);
-    float pick = hash21(id);
-    vec2 at = fract(cell) - 0.5 - (vec2(hash21(id + 17.0), hash21(id + 43.0)) - 0.5) * 0.5;
-    float size = 0.06 + 0.12 * hash21(id + 71.0);
-    float sharp = 1.0 - smoothstep(0.25, 0.9, length(fwidth(cell)));
-    float bead = step(0.9, pick) * step(0.5, h) * smoothstep(size, size * 0.7, length(at)) * uDew * sharp * fade;
-    float spark = smoothstep(size * 0.45, size * 0.1, length(at + normalize(uSunDir.xz + 1e-5) * size * 0.4));
-    color = mix(color, color * 0.55 + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.06, bead);
-    color += bead * spark * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);
-  }
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }
