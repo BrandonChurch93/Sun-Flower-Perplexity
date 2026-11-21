@@ -8,7 +8,7 @@ import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOption
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
-import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
+import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, youngGirth, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
 
 const TAU = Math.PI * 2
@@ -177,7 +177,7 @@ export function create(options: PartOptions): PlantPart {
     const flareTo = NECK_FLARE * headR
 
     const base = (u: number, s: number): number => {
-      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot)))
+      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
       if (!full) return r
       // The bud's own neck rings sit on the plain radius and a straight flare, so the last centimeter comes back to them.
       const near = smoothstep(length - 0.02, length - 0.007, s)
