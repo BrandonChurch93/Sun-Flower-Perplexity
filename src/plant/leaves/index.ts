@@ -121,10 +121,10 @@ export function create(options: PartOptions): PlantPart {
     const lean = (r(3) - 0.5) * 0.26
     const teeth = 17 + 12 * r(4)
     const depth = 0.07 + 0.06 * r(5)
-    const waveAmp = 0.014 + 0.026 * r(6)
+    const waveAmp = 0.018 + 0.03 * r(6)
     const waveRate = 2.4 + 2.6 * r(7)
     const roll = -0.02 + 0.1 * r(8) + (r(9) > 0.75 ? 0.1 : 0)
-    const lump = 0.008 + 0.014 * r(30)
+    const lump = 0.011 + 0.017 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf
@@ -180,7 +180,7 @@ export function create(options: PartOptions): PlantPart {
         z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
         z += waveAmp * Math.pow(ae, 2.5) * Math.sin(6.2832 * (waveRate * s + r(26 + side))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
         z -= rolled * ae * ae * ae
-        z += lump * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+        z += lump * (Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
         if (onStalk) {
           x = w * 0.012
