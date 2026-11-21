@@ -79,13 +79,13 @@ void main() {
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
   // The thin edges and the far end let the most light through, and it comes out pale.
-  float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u));
+  float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
   body = mix(body, vec3(0.96, 0.74, 0.27), 0.6 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.52, 0.27, 0.02), 0.7 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.62, 0.25, 0.02), vec3(1.0, 0.56, 0.06), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.62, 0.25, 0.02), vec3(1.18, 0.62, 0.065), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through * 0.85, vec3(1.5, 1.02, 0.38), 0.8 * pale);
+  through = mix(through, vec3(1.5, 1.02, 0.38), 0.8 * pale);
   through = mix(through, vec3(0.66, 0.66, 0.14), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.

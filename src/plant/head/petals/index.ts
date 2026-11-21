@@ -327,7 +327,7 @@ export function create(options: PartOptions): PlantPart | null {
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
       const right = 1 + ragged * (Math.sin(u * 8.3 + ray.seed * 31) + 0.6 * Math.sin(u * 19.7 + ray.seed * 11))
       const fold = mix(mix(SHUT_ANGLE, LIFT_ANGLE, along), ray.pleat, across)
-      const trough = mix(-0.45, ray.trough, across) + 1.3 * (1 - smooth(0, 0.22, u)) * across
+      const trough = mix(mix(-0.45, 0.85, along), ray.trough, across) + 1.3 * (1 - smooth(0, 0.22, u)) * across
       cx[0] = 0
       cy[0] = 0
       for (let j = 0; j < nv - 1; j++) {
