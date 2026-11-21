@@ -56,6 +56,7 @@ out vec4 vState;
 out vec4 vMore;
 out vec4 vKind;
 out float vUnder;
+out vec4 vRays;
 
 void main() {
   float rho = aFloret.x;
@@ -209,12 +210,20 @@ void main() {
   vKind = vec4(ripe, lump, 0.62 + 0.76 * h3, h1);
   // The thatch shades the buds it lies over.
   vUnder = max(piece < 2.5 ? max(under, 0.7 * over * over * over) : under, 0.85 * tuck);
+  // The rays beside the rim glow with the sun that comes through them, and light the florets next to them: most on the sun's side, and only once they have lifted.
+  vec3 outW = plantDirection(f.outward);
+  vec3 axW = plantDirection(f.axis);
+  vec3 inPlane = uSunDir - axW * dot(uSunDir, axW);
+  float sunSide = dot(outW, inPlane) / max(length(inPlane), 1e-4);
+  float beside = exp(-max(0.89 - rho, 0.0) / 0.12);
+  vRays = vec4(normalize(outW * 0.95 + axW * 0.3), beside * smoothstep(0.0, 1.0, sunSide) * (1.0 - uCover) * smoothstep(0.0, 0.35, -dot(axW, uSunDir)));
   vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
 `
 
 export const floretFragment = /* glsl */ `
+#define RAY_LIGHT 0.75
 in vec3 vWorld;
 in vec3 vNormal;
 in float vDepth;
@@ -223,6 +232,7 @@ in vec4 vState;
 in vec4 vMore;
 in vec4 vKind;
 in float vUnder;
+in vec4 vRays;
 
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
@@ -295,7 +305,7 @@ void main() {
     t.rough = mix(0.7, 1.0, dust);
     t.wax = mix(0.06, 0.0, dust);
     t.sheen = mix(0.05, 0.25, dust);
-    t.through = pollen * dust * mix(0.3, 0.8, smoothstep(0.72, 0.92, vKind.w));
+    t.through = pollen * dust * mix(0.12, 0.4, smoothstep(0.72, 0.92, vKind.w));
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.7, 0.36, 0.04), pollen, 0.5 * grain);
     t.through = vec3(0.5, 0.24, 0.025);
@@ -325,7 +335,9 @@ void main() {
   float seen = (0.35 + 0.65 * smoothstep(0.1, 0.7, vInfo.w)) * (1.0 - 0.8 * coarse);
   t.wax *= seen;
   t.sheen *= seen;
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+  float toRays = saturate(0.35 + 0.65 * dot(face, vRays.xyz));
+  vec3 fromRays = uSunColor * vec3(1.0, 0.62, 0.1) * (RAY_LIGHT * vRays.w * toRays * (0.5 + 0.5 * vInfo.w));
+  outColor = finish(shadeTissue(t, vWorld, view) + t.albedo * plantTone() * fromRays, vWorld, vDepth, -1.0);
 }
 `
 
