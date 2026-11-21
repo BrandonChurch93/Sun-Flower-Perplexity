@@ -28,6 +28,10 @@ export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
 
+// The furrow the rain cuts beside the plant, where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: it runs from its end by the plant's foot to its end by the lens of the rain, winding a little, widening on the way.
+// It is a shallow dip until the rain, cuts down to its depth between these seconds and stays. Its banks stand up beside it, but not within clearM of the stem and not in the camera's way.
+export const furrow = { footM: [-0.045, 0.03], lensM: [-0.2, -0.75], halfM: [0.03, 0.1], depthM: 0.03, bankM: 0.03, windM: 0.02, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+
 function hashU(x: number): number {
   x ^= x >>> 16
   x = Math.imul(x, 0x7feb352d)
@@ -96,6 +100,26 @@ float sunWay(vec2 p) {
   float across = abs(p.x * uSunWay.y - p.y * uSunWay.x);
   return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along);
 }
+uniform vec4 uFurrow;
+uniform vec4 uFurrowShape;
+uniform vec4 uFurrowTime;
+uniform float uFurrowClear;
+// The height the furrow adds: under the mean ground along its middle, over it on its banks.
+float furrow(vec2 p) {
+  vec2 run = uFurrow.zw - uFurrow.xy;
+  float len = length(run);
+  vec2 dir = run / len;
+  vec2 q = p - uFurrow.xy;
+  float along = dot(q, dir);
+  float t = saturate(along / len);
+  float side = dot(q, vec2(-dir.y, dir.x)) - uFurrowTime.w * sin(along * 9.0) * smoothstep(0.0, 0.3, t);
+  float x = length(vec2(side, along - t * len)) / mix(uFurrowShape.x, uFurrowShape.y, t);
+  if (x > 2.4) return 0.0;
+  float cut = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
+  float bed = 1.0 - smoothstep(0.3, 1.0, x);
+  float bank = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.4, x)) * smoothstep(uFurrowClear, uFurrowClear * 4.0, length(p)) * (1.0 - lane(p));
+  return cut * (bank * uFurrowShape.w - bed * uFurrowShape.z);
+}
 float clodShape(float c) {
   return smoothstep(0.3, 0.62, c) - 0.5;
 }
@@ -127,7 +151,7 @@ float soilHeight(vec2 p, float lod) {
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
   float foot = 1.0 - smoothstep(uDome.y, uDome.y * 1.7, length(p));
-  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x;
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p);
 }
 `
 
