@@ -16,7 +16,7 @@ export const world: WorldSettings = {
 }
 
 // Cold and low: it lies over the field under eye level and thickens toward the foot of the hills.
-const MIST: MistSettings = { fromM: 8, toM: 900, sheets: 14, heightM: 0.9, thickness: 0.025, lit: [0.3, 0.33, 0.36], shade: [0.6, 0.7, 0.8], forward: 0.5, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
+const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.03, lit: [0.34, 0.32, 0.27], shade: [0.6, 0.7, 0.8], forward: 0.5, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
 
 const SKY_GAIN = 0.9
 const STAR_GAIN = 4
