@@ -1,12 +1,12 @@
-# Status 41
+# Status 42
 
-2026-11-21 17:55 UTC
+2026-11-21 18:29 UTC
 
-- Status 41 · Phase 4 · unit frost · round 8. Rounds 8 to 11 (frost, dawn, rain, night) started together at 17:50 on one commit: all four have no stand-in left, so each goes to its first round now. One run of the machine checks covers the four; four agents build the four packs. Before the start the night's camera key was fitted lower so the far crop and mist sit where the approved image has them (the camera from 36 s on is unchanged to the bit), the rain world got a cream band low in the sky and dark slate far land, and dawn's first air starts thick and clears. Round 7's words for the field are with nine agents until 19:05.
-- Next: Machine checks, measures and packs for the four rounds; then three critics and the jury on each. Field's second round after its fix pass. Time used: 17.1 h of 30 h.
+- Status 42 · Phase 4 · unit frost · round 8. Rounds 8 to 11 judge main 0c3751f. Gate green 13 of 13. Frost and night measured at final: M1, M2, M3 pass (frost 1.101, night 0.954). All four packs are back, sums equal; frost's is checked against my own still (0 differences). Frost so far: match critic 3, surface critic 6, jury 0 of 5 on the film frame (four say web 3D demo, one generated art). Line: night stem slimmer, frost back to f/5.6, field's late sky and wood merged, under test.
+- Next: Frost's motion critic and last jurors; night's critics now, rain's about 18:40, dawn's after its pack check about 18:50. Then each round's words to the builders and a fix pass of 90 min at most. Field's second round after 19:05. Time used: 17.6 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Night, 26.0 s: approved (left), ours on the judged line (right), review tier
-- `status-2.jpg`: Approved (top) and ours (bottom) at 0, 1.5, 2, 6.5, 14 and 36 s, draft tier
-- `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right), rendered by the rain world's agent
-- `status-4.jpg`: Frost bud: approved (left), ours (right), rendered by the bud's agent, merged after the judged commit
+- `status-1.jpg`: Frost 1080 · approved
+- `status-2.jpg`: Frost 1080 · film, round 8
+- `status-3.jpg`: Night 780 · approved
+- `status-4.jpg`: Night 780 · film, round 11
