@@ -29,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 54000 },
+  hero: { step: 1, rows: 128, wide: 1, hairs: 54000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -63,6 +63,7 @@ interface Leaf {
   reach: number
   stalk: number
   rise: number
+  bow: number
   crease: number
   yellows: number
 }
@@ -126,7 +127,8 @@ export function create(options: PartOptions): PlantPart {
     const rank = i / (leafCount - 1)
     const upper = smoothstep(0.62, 1, rank)
     const full = fullLength[i]
-    const rowsHero = Math.round(clamp(36 + 60 * ((full - 0.1) / 0.15), 36, shape.rows) * (options.variant === 0 ? 1 : 0.6))
+    // The neighbor's upper leaves are the largest leaves in the frame.
+    const rowsHero = !main && i >= 14 ? shape.rows : Math.round(clamp(40 + 88 * ((full - 0.1) / 0.15), 40, shape.rows) * (main ? 1 : 0.6))
     const rows = hero ? rowsHero : options.detail === 'near' ? NEAR_ROWS : FAR_ROWS
     const nu = typeof rows === 'number' ? rows : rows.length
     const share = shares[i] * lerp(1, main ? 0.96 : 0.86, upper) * shape.wide
@@ -143,21 +145,22 @@ export function create(options: PartOptions): PlantPart {
     const blade = lerp(1, main ? 0.9 : 0.76, upper) * (1 - 0.42 * tuck)
     const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
-    const folds = main ? 2.2 : 1
+    const folds = main ? 2.2 : hero ? 1.6 : 1
+    const deep = main ? 1 : 0.6
     // A grown blade is creased along a few lines, mostly where a side vein runs, and each crease turns a facet of it out of the light.
     const creases: number[] = []
-    if (main && hero) {
+    if (hero) {
       for (let side = 0; side < 2; side++) {
         for (let k = 0; k < 2; k++) {
           const c = 44 + side * 12 + k * 5
-          creases.push(side, 0.12 + 0.3 * k + 0.25 * r(c), 0.2 + 0.6 * r(c + 1), 0.1 + 0.16 * r(c + 2), (r(c + 3) < 0.5 ? -1 : 1) * (0.35 + 0.4 * r(c + 4)))
+          creases.push(side, 0.12 + 0.3 * k + 0.25 * r(c), 0.2 + 0.6 * r(c + 1), 0.1 + 0.16 * r(c + 2), (r(c + 3) < 0.5 ? -1 : 1) * (0.35 + 0.4 * r(c + 4)) * deep)
         }
       }
     }
-    const pleat = main && hero ? [0.3 + 0.3 * r(68), (r(69) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(70)), 0.3 + 0.3 * r(71), (r(72) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(73))] : null
+    const pleat = hero ? [0.3 + 0.3 * r(68), (r(69) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(70)) * deep, 0.3 + 0.3 * r(71), (r(72) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(73)) * deep] : null
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
-    const dry = i === dryLeaf || withered
+    const dry = i === dryLeaf || (withered && !main)
     const torn = i === tornLeaf
     const old = 1 - rank
     const kind = r(12)
@@ -186,6 +189,7 @@ export function create(options: PartOptions): PlantPart {
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
+      bow: (r(74) < 0.5 ? -1 : 1) * (0.12 + 0.2 * r(75)),
       crease: withered ? (main ? 0.3 : 1.15) : main ? 0.2 + 0.4 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
@@ -241,7 +245,7 @@ export function create(options: PartOptions): PlantPart {
         leaf.pc[v] = onStalk ? 0 : bent
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
-        markList.push(threshold, bias, withered ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
+        markList.push(threshold, bias, withered && !main ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
         planeList.push(x * full, (s + y) * full)
       }
     }
@@ -385,7 +389,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
+        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -482,7 +486,7 @@ export function create(options: PartOptions): PlantPart {
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) + clasp
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.5 * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -589,7 +593,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0006 + 0.0012 * hair.r1 + (hair.r4 > 0.88 ? 0.0016 : 0)) * scale
+          long = (hair.r4 > 0.92 ? 0.0018 + 0.002 * hair.r1 : 0.0003 + 0.0006 * hair.r1) * scale
         }
       }
       root[o] = px
