@@ -134,7 +134,8 @@ void main() {
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float sheer = smoothstep(0.5, 0.92, mark.g);
-  float thin = (0.16 + 1.0 * smoothstep(0.35, 0.85, mark.g) + 4.6 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
+  // A young blade lets the light through evenly: the thin patches come with age.
+  float thin = (0.16 + mix(0.3, smoothstep(0.35, 0.85, mark.g), vRipe) + 4.6 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
   // A leaf holds back red: what comes through is a fresh green, yellower where the blade is thinnest and against the low sun.
   vec3 through = mix(vec3(0.2, 0.3, 0.07), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.

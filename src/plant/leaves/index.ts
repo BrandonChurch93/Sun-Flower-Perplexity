@@ -441,7 +441,7 @@ export function create(options: PartOptions): PlantPart {
       rest[o + 2] = normals[v00 + 2] * up
       rest[o + 3] = bead.hang
       seat[o + 1] -= bead.fallM
-      seat[o + 3] = seat[o + 1] > 0 ? bead.radiusM * clamp(size / 0.07, 0.3, 1) : 0
+      seat[o + 3] = seat[o + 1] > 0 ? bead.radiusM * 0.65 * clamp(size / 0.07, 0.3, 1) : 0
     }
   }
 
