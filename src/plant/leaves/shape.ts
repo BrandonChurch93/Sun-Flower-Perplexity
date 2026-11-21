@@ -60,6 +60,14 @@ export function toothAt(s: number, seed: number, count: number, depth: number): 
   return size * (saw - 0.35)
 }
 
+// How near a place on the edge is to the point of its tooth: 1 on the point, 0 in the bay. A tooth that is all but missing has no point.
+export function toothPoint(s: number, seed: number, count: number): number {
+  const x = count * Math.pow(s, 0.85) + 3 * hash01(seed, 1) + 0.4 * Math.sin(7.3 * s + 6.28 * hash01(seed, 2))
+  const id = Math.floor(x)
+  const f = x - id
+  return hash01(seed, 4, id) < 0.22 || s < 0.1 || s > 0.9 ? 0 : f < 0.62 ? f / 0.62 : (1 - f) / 0.38
+}
+
 export interface VeinField {
   near: number
   main: number

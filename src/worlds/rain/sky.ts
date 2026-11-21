@@ -7,7 +7,7 @@ const RAD = Math.PI / 180
 // The bearing the lens looks along at the key: the middle of the painted sky sits there.
 const CENTER_DEG = -170.5
 // Where the band is brightest: the sun stands there, behind the cloud.
-const SUN_BEHIND_CLOUD_DEG = -172.5
+const SUN_BEHIND_CLOUD_DEG = -173.5
 const FLASH_BEARING_DEG = -160
 const FLASH_ELEVATION_DEG = 9
 const FAR_RAIN: [number, number, number] = [0.3, 0.36, 0.4]
@@ -46,7 +46,7 @@ uniform vec3 uRainFlashAt;
 
 const float RAIN_SKY_SPAN = 2.0943951;
 const float RAIN_SKY_BAND_ROWS = 0.235;
-const float RAIN_SKY_BAND_TOP = 0.06;
+const float RAIN_SKY_BAND_TOP = 0.078;
 const float RAIN_SKY_CLOUD_TALL = 0.32;
 
 vec3 rainSky(vec3 d, float lod) {
@@ -65,9 +65,9 @@ vec3 rainSky(vec3 d, float lod) {
   float body = dot(mass, vec3(0.3, 0.6, 0.1));
   color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body)));
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
-  float toSun = (turn + uRainSkySunTurn) / 0.26;
+  float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
-  float open = (1.0 - cloud) * smoothstep(0.0, 0.03, up) * exp(-up / 0.09) * (0.2 + 0.8 * sunward);
+  float open = (1.0 - cloud) * smoothstep(0.0, 0.03, up) * exp(-up / 0.055) * (0.2 + 0.8 * sunward);
   color *= mix(vec3(1.0), vec3(3.4, 2.9, 2.3), open);
   // The cloud's foot hangs into the band in rags, lower the farther from the sun, so the band opens wide only where the sun stands.
   float rags = 0.6 * valueNoise(vec2(turn * 14.0 + 3.0, up * 40.0)) + 0.4 * valueNoise(vec2(turn * 43.0 + 1.0, up * 90.0 + 5.0));
@@ -107,7 +107,7 @@ void main() {
   if (uDiag == 4) { outColor = vec4(vec3(0.03), -1.0); return; }
   if (uDiag == 5) color = vec3(1.0e4);
   if (uDiag == 6) color = vec3(grey) * 0.5;
-  outColor = vec4(color, coc * mix(0.25, 1.0, 1.0 - smoothstep(0.05, 0.12, asin(clamp(d.y, -1.0, 1.0)))));
+  outColor = vec4(color, coc);
 }
 `
 
