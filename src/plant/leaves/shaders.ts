@@ -136,7 +136,7 @@ void main() {
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
-  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (1.0 - 0.5 * smoothstep(0.8, 0.92, mark.g));
+  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through;
