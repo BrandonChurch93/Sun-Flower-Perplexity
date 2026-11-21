@@ -56,13 +56,15 @@ void main() {
   float cloud = valueNoise(vec2(across * 2.6 + body * 7.3, along * 7.0));
   float grain = valueNoise(vec2(across * 34.0 + body * 3.1, along * 90.0));
   float mid = (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - 0.7 * along);
-  vec3 leaf = mix(vec3(0.016, 0.1, 0.05), vec3(0.03, 0.15, 0.07), 0.65 * cloud + 0.35 * grain);
+  vec3 leaf = mix(vec3(0.012, 0.085, 0.042), vec3(0.024, 0.128, 0.06), 0.65 * cloud + 0.35 * grain);
   leaf = mix(leaf * vec3(1.9, 1.5, 2.0), leaf, upper);
   leaf = mix(leaf, vec3(0.3, 0.47, 0.13), 0.45 * mid * upper);
   leaf = mix(leaf, vec3(0.2, 0.27, 0.08) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
   vec3 glow = mix(vec3(0.066, 0.108, 0.074), vec3(0.0105, 0.021, 0.0135), lens) * (1.0 - 0.5 * mid);
+  // The thin margin of the leaf passes the sun almost whole.
+  glow = mix(glow, vec3(0.4, 0.39, 0.28), 0.6 * smoothstep(0.965, 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
   float leafHeight = -0.00016 * mid * upper + (grain - 0.5) * 0.000012 + (cloud - 0.5) * 0.00006 * wither;
@@ -70,12 +72,14 @@ void main() {
   float lane = across * 2.6 + 0.07 * (valueNoise(vec2(along * 9.0, across * 3.0 + body)) - 0.5);
   float band = abs(fract(lane + 0.5) - 0.5) * 2.0;
   float wide = hash11(floor(lane + 0.5) + body * 17.0);
-  float white = smoothstep(0.1 + 0.2 * wide, 0.2 + 0.2 * wide, band);
+  // Out of the soil the shell is damp and dark; lying in the air it dries pale, and its dark bands narrow to lines.
+  float damp = smoothstep(0.14, 0.55, vState.w);
+  float white = smoothstep(mix(0.1, 0.16, damp) + mix(0.2, 0.26, damp) * wide, mix(0.2, 0.26, damp) + mix(0.2, 0.26, damp) * wide, band);
   float hairline = smoothstep(0.75, 0.95, abs(fract(across * 13.0 + body * 0.37) - 0.5) * 2.0);
   white = saturate(white - 0.3 * hairline * white + 0.08 * hairline * (1.0 - white));
   float scuff = valueNoise(vec2(across * 9.0 + body * 5.0, along * 26.0));
-  vec3 outer = mix(vec3(0.05, 0.048, 0.046), vec3(0.86, 0.85, 0.8), white * (0.8 + 0.2 * scuff));
-  vec3 inner = mix(vec3(0.5, 0.48, 0.42), vec3(0.86, 0.85, 0.8), 0.4 * grain + 0.6 * smoothstep(0.12, 0.4, abs(fract(across * 9.0) - 0.5) * 2.0));
+  vec3 outer = mix(vec3(0.05, 0.048, 0.046), mix(vec3(0.8, 0.8, 0.77), vec3(0.74, 0.7, 0.62), damp), white * (0.8 + 0.2 * scuff));
+  vec3 inner = mix(vec3(0.16, 0.16, 0.15), vec3(0.6, 0.61, 0.6), 0.25 * grain + 0.75 * smoothstep(0.1, 0.45, abs(fract(across * 11.0) - 0.5) * 2.0));
   vec3 shell = mix(inner, outer, upper);
   float dusty = vState.w * smoothstep(0.42, 0.75, scuff + 0.25 * grain);
   shell = mix(shell, vec3(0.2, 0.15, 0.1) * (0.7 + 0.6 * grain), 0.7 * dusty);

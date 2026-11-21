@@ -9,7 +9,7 @@ import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { collarAt } from '../stem/shape.ts'
+import { STURDY, collarAt } from '../stem/shape.ts'
 import { fragment, vertex } from './shaders.ts'
 
 const TAU = Math.PI * 2
@@ -31,7 +31,7 @@ const REST_SHIFT_Z = 0.016
 // The approved frames show a shorter, broader seed leaf and a longer husk than the growth curves give: drawn at these shares until the curves follow.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
-const DEW_FACE = 0.5
+const DEW_FACE = 0.4
 const DEW_EDGE = 0.32
 const HUSK_DRAWN = 1.3
 const CRUMBS_SINK_S = 9
@@ -103,7 +103,7 @@ function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
   if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0, beads: 0 }
   if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3, beads: 36 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 120 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 100 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
@@ -370,9 +370,10 @@ export function create(options: PartOptions): PlantPart | null {
     const first = slot === 0
     const time = pose.time
     const grown = smoothstep(0, 0.006, heightAt(time))
-    const length = seedLeafLength(time) * LEAF_DRAWN
     const pale = paleness(time)
     const wither = smoothstep(leaves0 + 8, leaves0 + 19, time)
+    // A withering seed leaf goes limp and hangs at its full length.
+    const length = seedLeafLength(time) * lerp(LEAF_DRAWN, 1, wither)
     const drop = huskDrop(time)
     const kept = huskSize(time)
 
@@ -458,16 +459,16 @@ export function create(options: PartOptions): PlantPart | null {
           const i = b.side < 0 ? 0 : 1
           const spread = smoothstep(0.07, 0.6, seedLeafAngle(i, time))
           const f = roll(seedLeafFrameAt(pose, i), (i === 0 ? -0.15 : LEAF_TURN) * spread)
-          const rs = stemRadius(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time)) * (1 + collarAt(time))
-          const half = length * lerp(0.186, 0.39, spread) * (1 - 0.3 * wither)
-          const thick = length * lerp(0.122, 0.085, spread) * (1 - 0.5 * wither)
+          const rs = stemRadius(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time)) * (1 + (1 + STURDY) * collarAt(time))
+          const half = length * lerp(lerp(0.186, 0.39, spread), lerp(0.16, 0.31, spread), wither) * (1 - 0.3 * wither)
+          const thick = length * lerp(lerp(0.122, 0.085, spread), lerp(0.105, 0.07, spread), wither) * (1 - 0.5 * wither)
           const sag = 0.08 * spread + 0.6 * wither
           const shut = lerp(0.35, 1, spread)
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = leafOutline(s)
             const joint = a === 0 ? 0 : 1 - smoothstep(0, 0.2, s)
-            const h = Math.max(half * o, lerp(0.7, 0.95, spread) * rs * joint)
+            const h = Math.max(half * o, lerp(0.7, 1.02, spread) * rs * joint)
             const t = Math.max(thick * Math.min(1, 0.08 + 1.1 * Math.sqrt(o)), lerp(0.5, 1.2, spread) * rs * joint)
             const top = 0.22 * t
             const bottom = 0.78 * t

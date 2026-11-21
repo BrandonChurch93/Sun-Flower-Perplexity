@@ -17,7 +17,9 @@ export const TOP_M = heightAt(END)
 export function collarAt(time: number): number {
   return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(12, 20, time))
 }
-export const COLLAR_M = 0.007
+export const COLLAR_M = 0.014
+// The seedling's stem stands a little sturdier than the sprout it was and the stalk it becomes, by this share of the collar's swell.
+export const STURDY = 0.33
 
 // How thick the tissue with this label is at the end of the film.
 export function finalRadius(label: number): number {

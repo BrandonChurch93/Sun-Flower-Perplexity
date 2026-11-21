@@ -8,7 +8,7 @@ import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOption
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
-import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, collarAt, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
+import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
 
 const TAU = Math.PI * 2
@@ -22,8 +22,6 @@ const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
-// The seedling's stem stands a little sturdier than the sprout it was and the stalk it becomes, by this share of the collar's swell.
-const STURDY = 0.33
 // The dew on a stem is finer than the shared bead sizes.
 const DEW_FINE = 0.5
 
@@ -118,7 +116,7 @@ export function create(options: PartOptions): PlantPart {
     const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low: 0.00016, high: 0.00042, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
+    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
     for (let i = 0; i < n; i++) {
       const x = (i + hash01(seed, salt, i)) / n
       c.seg[i] = x < 0.5 ? 0 : 1
@@ -139,7 +137,7 @@ export function create(options: PartOptions): PlantPart {
     const tint = dew.tint()
     for (let i = 0; i < dew.count; i++) {
       const a = hash01(seed, 211, i) * TAU
-      dewOwn.set([0.85 * hash01(seed, 212, i), (i + hash01(seed, 213, i)) / dew.count, a, Math.cos(a), Math.sin(a)], i * 5)
+      dewOwn.set([0.85 * hash01(seed, 212, i), hash01(seed, 213, i), a, Math.cos(a), Math.sin(a)], i * 5)
       tint.set([0.34, 0.34, 0.13], i * 3)
     }
   }
@@ -292,8 +290,10 @@ export function create(options: PartOptions): PlantPart {
       const ribbed = full ? smoothstep(0.0028, 0.0085, whole) * (1 - flared) * scale : 0
       const ribHeight = RIB_HEIGHT * Math.min(whole, 0.02) * ribbed
       if (full) ribsAt(ribs, label)
-      const collared = collar * smoothstep(seedS - COLLAR_M, seedS - 0.0008, s + off)
-      let swell = collared + STURDY * collar
+      const collared = collar * smoothstep(seedS - COLLAR_M, seedS - 0.0005, s + off) ** 1.5
+      // Above the seed leaves the shoot is still a thin tip: the swell ends in a shoulder under their bases.
+      const tip = smoothstep(seedS - 0.0006, seedS + 0.0016, s + off)
+      let swell = (collared + STURDY * collar) * (1 - tip) - collar * tip
       let active = 0
       for (let k = 0; k < nodes; k++) {
         const rn = nodeR[k]
@@ -362,7 +362,7 @@ export function create(options: PartOptions): PlantPart {
         skin2[at * 4] = open
         skin2[at * 4 + 1] = (1 - youth) * (0.3 + 0.7 * sun) * (0.45 + 0.55 * (1 - u))
         skin2[at * 4 + 2] = j >= below && j < below + main ? ringNeck[j - below] : hasHead
-        skin2[at * 4 + 3] = thin
+        skin2[at * 4 + 3] = thin * (1 - 1.1 * collared)
         skin3[at * 4] = joint
         skin3[at * 4 + 1] = ribbed
         skin3[at * 4 + 2] = bald * lerp(0.45 + 0.55 * sun, 0.85 + 0.15 * sun, pale)
@@ -503,7 +503,9 @@ export function create(options: PartOptions): PlantPart {
         const ox = lerp(ringAt[p + 3], ringAt[p + 15], fr) * ca + lerp(ringAt[p + 6], ringAt[p + 18], fr) * sa
         const oy = lerp(ringAt[p + 4], ringAt[p + 16], fr) * ca + lerp(ringAt[p + 7], ringAt[p + 19], fr) * sa
         const oz = lerp(ringAt[p + 5], ringAt[p + 17], fr) * ca + lerp(ringAt[p + 8], ringAt[p + 20], fr) * sa
-        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * (raining ? 1 - b.hang : DEW_FINE) * smoothstep(0.004, 0.012, sHigh - sLow)
+        // The dew gathers on the new skin bead by bead in its first seconds in the air.
+        const since = 0.6 + 4.2 * dewOwn[w + 1]
+        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * (raining ? 1 - b.hang : DEW_FINE) * smoothstep(0.004, 0.012, sHigh - sLow) * smoothstep(since, since + 1.5, time)
         seat[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         seat[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         seat[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
