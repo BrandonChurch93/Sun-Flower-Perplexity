@@ -12,6 +12,7 @@ import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex,
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
+import { rippleBox } from './puddles/basin.ts'
 import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowKept, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
@@ -54,6 +55,7 @@ export class Ground {
       tLitter: { value: null },
       uColorSize: { value: new THREE.Vector2(1, 1) },
       uRows: { value: new THREE.Vector3(config.field.rowSpacingM, config.field.plantAheadOfRowM, ridgeHeightM) },
+      uWaterBox: { value: new THREE.Vector3(rippleBox.acrossM, rippleBox.awayM, rippleBox.halfM) },
       uTiles: { value: new THREE.Vector3(1 / soilTileM, 1 / (soilTileM * WIDE), 1 / soilMeanLuma) },
       uLitter: { value: 1 / litterTileM },
       uNear: { value: new THREE.Vector4(0.55 * nearRadiusM, 0.95 * nearRadiusM, nearGrowth - 1, 1) },
