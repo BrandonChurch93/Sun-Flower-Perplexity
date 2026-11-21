@@ -13,6 +13,12 @@ export const ANCHORS = leafCount + 4
 export const SEED_ANCHOR = 2
 export const TOP_M = heightAt(END)
 
+// Under its seed leaves the young stem widens into the collar they stand on. It is there while the seedling is one, and nothing of it is left when the stem is a stalk.
+export function collarAt(time: number): number {
+  return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(12, 20, time))
+}
+export const COLLAR_M = 0.007
+
 // How thick the tissue with this label is at the end of the film.
 export function finalRadius(label: number): number {
   return stemRadius(END, clamp(label / TOP_M))

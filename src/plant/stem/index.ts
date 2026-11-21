@@ -4,10 +4,11 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { heightAt, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
+import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
-import { ANCHORS, Anchors, SEED_ANCHOR, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
+import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, collarAt, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
 
 const TAU = Math.PI * 2
@@ -20,17 +21,21 @@ const JOINT_OVERLAP_M = 0.004
 const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
-const SPROUT_WIDTH_M = 0.00004
+const SPROUT_WIDTH_M = 0.00005
+// The seedling's stem stands a little sturdier than the sprout it was and the stalk it becomes, by this share of the collar's swell.
+const STURDY = 0.33
+// The dew on a stem is finer than the shared bead sizes.
+const DEW_FINE = 0.5
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean }
-interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; full: boolean }
+interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; beads: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
-  if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
-  if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 1100, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 3600, full: true }
+  if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, sprout: 0, beads: 0, full: false }
+  if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, sprout: 0, beads: 0, full: false }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 1500, beads: 30, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 5200, beads: 90, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -124,6 +129,20 @@ export function create(options: PartOptions): PlantPart {
     return c
   }
   const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009), sproutCoat(shape.sprout, 100)].filter((c): c is Coat => c !== null)
+
+  // Dew and rain stand on the stem in beads, each at its own height and side; in the rain they run down to the soil and soak away.
+  const dew = shape.beads ? createBeads(options, shape.beads, 'stem dew') : null
+  const dewOwn = new Float32Array((dew ? dew.count : 0) * 5)
+  const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  let dewDrawn = 0
+  if (dew) {
+    const tint = dew.tint()
+    for (let i = 0; i < dew.count; i++) {
+      const a = hash01(seed, 211, i) * TAU
+      dewOwn.set([0.85 * hash01(seed, 212, i), (i + hash01(seed, 213, i)) / dew.count, a, Math.cos(a), Math.sin(a)], i * 5)
+      tint.set([0.34, 0.34, 0.13], i * 3)
+    }
+  }
 
   const anchors = new Anchors()
   const weight = new Float64Array(CELLS)
@@ -243,6 +262,8 @@ export function create(options: PartOptions): PlantPart {
     }
 
     const rEnd = base(1, length)
+    const collar = collarAt(time)
+    const seedS = anchors.s[SEED_ANCHOR]
     const slopeEnd = length > 0 ? (flareTo / (0.03 * length)) * smoothstep(1, 1.3, flareTo / Math.max(stemRadius(time, 1) * grown, 1e-6)) : 0
     for (let j = 0; j < rings; j++) {
       let s = 0
@@ -271,7 +292,8 @@ export function create(options: PartOptions): PlantPart {
       const ribbed = full ? smoothstep(0.0028, 0.0085, whole) * (1 - flared) * scale : 0
       const ribHeight = RIB_HEIGHT * Math.min(whole, 0.02) * ribbed
       if (full) ribsAt(ribs, label)
-      let swell = 0
+      const collared = collar * smoothstep(seedS - COLLAR_M, seedS - 0.0008, s + off)
+      let swell = collared + STURDY * collar
       let active = 0
       for (let k = 0; k < nodes; k++) {
         const rn = nodeR[k]
@@ -305,7 +327,7 @@ export function create(options: PartOptions): PlantPart {
         if (reach <= 0 || d < -nodeR[k]) continue
         sky *= 1 - (0.4 * smoothstep(-nodeR[k], 3 * nodeR[k], d) * reach * reach) / (reach * reach + d * d)
       }
-      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
+      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky) * (1 - 0.8 * collared)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
       const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.002, 0.012, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
@@ -451,11 +473,53 @@ export function create(options: PartOptions): PlantPart {
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
       }
     }
+    if (dew) {
+      const seat = dew.seat(slot)
+      const rest = dew.rest(slot)
+      if (first) dewDrawn = 0
+      const raining = stateUniforms.uPlantWet.value > 0.5
+      const sLow = 0.0015
+      const sHigh = Math.max(S[SEED_ANCHOR] - 0.0012, 0.9 * ringS[main - 1])
+      for (let i = 0; i < dew.count; i++) {
+        const w = i * 5
+        const o = i * 4
+        const b = beadAt(dewOwn[w], dewOwn[w + 1], 0, time, bead)
+        const s = sHigh - b.along * (sHigh - sLow)
+        let j = 0
+        let hi = main - 1
+        while (hi - j > 1) {
+          const mid = (j + hi) >> 1
+          if (ringS[mid] <= s) j = mid
+          else hi = mid
+        }
+        const fr = clamp((s - ringS[j]) / Math.max(1e-9, ringS[j + 1] - ringS[j]))
+        const col = (dewOwn[w + 2] / TAU) * sides
+        const c0 = Math.min(sides - 1, Math.floor(col))
+        const fc = col - c0
+        const radius = lerp(lerp(grid[j * row + c0], grid[j * row + c0 + 1], fc), lerp(grid[(j + 1) * row + c0], grid[(j + 1) * row + c0 + 1], fc), fr)
+        const p = j * 12
+        const ca = dewOwn[w + 3]
+        const sa = dewOwn[w + 4]
+        const ox = lerp(ringAt[p + 3], ringAt[p + 15], fr) * ca + lerp(ringAt[p + 6], ringAt[p + 18], fr) * sa
+        const oy = lerp(ringAt[p + 4], ringAt[p + 16], fr) * ca + lerp(ringAt[p + 7], ringAt[p + 19], fr) * sa
+        const oz = lerp(ringAt[p + 5], ringAt[p + 17], fr) * ca + lerp(ringAt[p + 8], ringAt[p + 20], fr) * sa
+        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * (raining ? 1 - b.hang : DEW_FINE) * smoothstep(0.004, 0.012, sHigh - sLow)
+        seat[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
+        seat[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
+        seat[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
+        seat[o + 3] = Math.min(size, 0.45 * radius)
+        rest[o] = ox
+        rest[o + 1] = oy
+        rest[o + 2] = oz
+        rest[o + 3] = 0
+        if (size > 0) dewDrawn = i + 1
+      }
+    }
   }
 
   return {
     name: 'stem',
-    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes)],
+    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes), ...(dew ? dew.meshes : [])],
     casters: [{ mesh, surface }],
     async load(assets: Assets) {
       if (options.places) return
@@ -468,6 +532,7 @@ export function create(options: PartOptions): PlantPart {
       if (positionB) positionB.needsUpdate = true
       for (const a of sent) a.needsUpdate = true
       for (const c of coats) c.set.finish(c.drawn)
+      if (dew) dew.finish(dewDrawn)
     },
   }
 }
