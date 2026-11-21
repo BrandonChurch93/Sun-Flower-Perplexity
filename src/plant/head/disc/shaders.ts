@@ -1,3 +1,5 @@
+import { SHOWN_FROM } from './opening.ts'
+
 // The head's frame at both ends of the shutter, and the floor of the head as `floorAt` in the skeleton gives it.
 const headGlsl = /* glsl */ `
 uniform vec3 uHC[2];
@@ -36,10 +38,12 @@ Floor floorAt(float rho, float theta) {
 `
 
 export const floretVertex = /* glsl */ `
+#define SHOWN_FROM ${SHOWN_FROM.toFixed(3)}
 in vec4 aShape;
 in vec4 aFloret;
 in vec4 aSeed;
 uniform float uCover;
+uniform float uYoung;
 ${headGlsl}
 out vec3 vWorld;
 out vec3 vNormal;
@@ -52,6 +56,7 @@ void main() {
   float rho = aFloret.x;
   Floor f = floorAt(rho, aFloret.y);
   float w = f.radius * uCell;
+  float grown = smoothstep(SHOWN_FROM, SHOWN_FROM + 3.0, f.time);
   float phase = (f.time - aFloret.z) / aFloret.w;
   float open = smoothstep(0.0, 1.0, phase);
   float lobes = smoothstep(0.1, 0.75, phase);
@@ -61,7 +66,7 @@ void main() {
   float rim = smoothstep(0.55, 0.93, rho);
 
   float tilt = aSeed.w * 6.2832;
-  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.08 + 0.34 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * 0.16 * open * (0.4 + aSeed.x));
+  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * 0.16 * open * (0.4 + aSeed.x));
   vec3 fx = normalize(f.outward - axis * dot(f.outward, axis));
   vec3 fy = cross(axis, fx);
   float ct = cos(aSeed.y);
@@ -70,11 +75,11 @@ void main() {
   vec3 ey = fy * ct - fx * st;
 
   float middle = smoothstep(0.0, 0.24, rho);
-  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (1.0 + 0.22 * swell);
+  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung);
   float tube = w * 2.6 * (0.92 + 0.16 * aSeed.x);
   float throat = mix(0.78 * tall, tube, open);
-  float rc = w * 0.6;
-  float top = throat - 0.1 * tall + rise * w * 1.5 * (0.85 + 0.3 * aSeed.w);
+  float rc = w * 0.66;
+  float top = throat - 0.12 * tall + rise * w * 1.3 * (0.85 + 0.3 * aSeed.w);
 
   float piece = aShape.x;
   float level = aShape.y;
@@ -90,18 +95,19 @@ void main() {
     float r;
     float z;
     if (level < 0.5) {
-      r = rc * 0.5;
-      z = -0.12 * w;
+      // The foot is the widest part: the feet of neighbors run into each other and no floor shows between them.
+      r = rc * 1.25;
+      z = -0.18 * w * grown;
       normal = radial;
-      occ = 0.03;
+      occ = 0.06;
     } else if (level < 1.5) {
-      r = rc * corner * mix(0.9, 1.0, open);
-      z = min(0.45 * tall, throat);
+      r = rc * mix(1.0, 0.4 * corner, open);
+      z = min(0.45 * tall + 0.4 * w * open, throat);
       normal = radial;
       along = 0.33;
       occ = mix(0.1, 0.14, open);
     } else if (level < 2.5) {
-      r = rc * corner * mix(1.0, 0.6, open);
+      r = rc * corner * mix(0.92, 0.56, open);
       z = throat;
       normal = normalize(radial + axis * 0.55 * (1.0 - open));
       along = 0.66;
@@ -109,7 +115,7 @@ void main() {
     } else {
       float spread = lobes * (1.5 + 0.7 * aSeed.x);
       float reach = w * 0.52;
-      r = lobes * (rc * 0.6 + reach * sin(spread));
+      r = lobes * (rc * 0.56 + reach * sin(spread));
       z = throat + mix(0.22 * tall, reach * cos(spread), lobes);
       normal = normalize(mix(axis, radial * cos(spread) - axis * sin(spread), lobes));
       along = 1.0;
@@ -118,11 +124,11 @@ void main() {
     local = f.at + radial * r + axis * z;
   } else if (piece < 1.5) {
     vec3 radial = ex * cos(aShape.z + 0.6) + ey * sin(aShape.z + 0.6);
-    float r = w * (level < 0.5 ? 0.16 : level < 1.5 ? 0.21 : 0.0);
-    float z = level < 0.5 ? max(top - 1.75 * w, 0.1 * tall) : level < 1.5 ? top : top + 0.24 * w;
-    normal = level < 1.5 ? radial : axis;
-    along = level * 0.5;
-    occ = mix(0.5, 1.0, min(level, 1.0));
+    float r = w * (level < 0.5 ? 0.19 : level < 1.5 ? 0.27 : level < 2.5 ? 0.25 : 0.0);
+    float z = level < 0.5 ? max(top - 1.7 * w, 0.1 * tall) : level < 1.5 ? max(top - 0.8 * w, 0.1 * tall) : level < 2.5 ? top : top + 0.3 * w;
+    normal = level < 2.5 ? radial : axis;
+    along = level / 3.0;
+    occ = mix(0.45, 1.0, min(level * 0.5, 1.0));
     local = f.at + radial * r + axis * z;
   } else if (piece < 2.5) {
     float side = aShape.z;
@@ -139,20 +145,22 @@ void main() {
     occ = 1.0;
   } else {
     float lateral = aShape.z;
-    float high = w * 1.36 * mix(1.12, 1.0, smoothstep(0.0, 0.3, rho)) * (0.9 + 0.2 * aSeed.w);
-    float turn = (aSeed.x - 0.5) * 1.2;
+    // In the young middle the scales arch in over the florets they stand behind.
+    float over = 1.0 - smoothstep(0.12, 0.5, rho);
+    float high = w * mix(1.4, 1.5, over) * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown;
+    float turn = (aSeed.x - 0.5) * mix(1.2, 0.5, over);
     vec3 away = fx * cos(turn) + fy * sin(turn);
     vec3 across = cross(axis, away);
-    float x = w * (level < 0.5 ? 0.5 : level < 1.5 ? (aShape.w > 0.5 ? 0.56 : 0.4) : 0.42);
-    float y = w * lateral * (level < 0.5 ? 0.32 : 0.27);
-    float z = high * (level < 0.5 ? -0.08 : level < 1.5 ? 0.62 : 1.0);
+    float x = w * (level < 0.5 ? 0.52 : level < 1.5 ? (aShape.w > 0.5 ? mix(0.58, 0.5, over) : mix(0.42, 0.3, over)) : mix(0.4, -0.5, over));
+    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.36, over));
+    float z = high * (level < 0.5 ? -0.08 : level < 1.5 ? mix(0.62, 0.5, over) : mix(1.0, 0.62, over));
     local = f.at + away * x + across * y + axis * z;
-    normal = normalize(away + across * lateral * 0.7 + axis * 0.35);
+    normal = normalize(away * mix(1.0, 0.45, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
     along = level * 0.5;
-    occ = level < 0.5 ? 0.03 : level < 1.5 ? 0.22 : mix(0.8, 0.3, open);
+    occ = level < 0.5 ? 0.03 : level < 1.5 ? mix(0.22, 0.5, over) : mix(mix(0.8, 0.3, open), 1.0, over);
   }
 
-  occ *= mix(1.0, 0.3 + 0.35 * (1.0 - rho), uCover);
+  occ *= mix(1.0, 0.5 + 0.4 * (1.0 - rho), uCover);
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -197,7 +205,7 @@ void main() {
   vec3 pollen = vec3(0.98, 0.74, 0.1);
 
   if (piece < 0.5) {
-    float centre = 1.0 - smoothstep(0.08, 0.58, rho);
+    float centre = 1.0 - smoothstep(0.1, 0.62, rho);
     float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
     vec3 dark = mix(vec3(0.085, 0.066, 0.022), vec3(0.1, 0.13, 0.035), centre);
     vec3 pale = mix(vec3(0.3, 0.25, 0.085), vec3(0.3, 0.36, 0.11), centre);
@@ -216,7 +224,7 @@ void main() {
     t.wax = mix(0.3, 0.1, bloom);
     t.rough = mix(0.6, 0.85, bloom);
   } else if (piece < 1.5) {
-    float dust = smoothstep(0.52, 0.92, along + 0.5 * (grain - 0.5));
+    float dust = smoothstep(0.5, 0.8, along + 0.4 * (grain - 0.5));
     dust = max(dust, 0.5 * smoothstep(0.62, 0.8, grain) * fine);
     dust *= 1.0 - 0.35 * vMore.x;
     t.albedo = mix(vec3(0.05, 0.02, 0.018) * (0.7 + 0.6 * grain), pollen, dust);

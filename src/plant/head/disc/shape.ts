@@ -51,14 +51,17 @@ export function floretShape(full: boolean): Shape {
 
   if (full) {
     // The anther tube: a column of five sides with a knob of pollen on it.
-    const low: number[] = []
-    const high: number[] = []
-    for (let k = 0; k < SIDES; k++) low.push(add(PIECE.anther, 0, turn(k, SIDES), 0))
-    for (let k = 0; k < SIDES; k++) high.push(add(PIECE.anther, 1, turn(k, SIDES), 0))
-    const apex = add(PIECE.anther, 2, 0, 0)
+    const rings: number[][] = []
+    for (let level = 0; level < 3; level++) {
+      const row: number[] = []
+      for (let k = 0; k < SIDES; k++) row.push(add(PIECE.anther, level, turn(k, SIDES), 0))
+      rings.push(row)
+    }
+    const apex = add(PIECE.anther, 3, 0, 0)
     for (let k = 0; k < SIDES; k++) {
       const n = (k + 1) % SIDES
-      index.push(low[k], low[n], high[k], low[n], high[n], high[k], high[k], high[n], apex)
+      for (let level = 0; level < 2; level++) index.push(rings[level][k], rings[level][n], rings[level + 1][k], rings[level][n], rings[level + 1][n], rings[level + 1][k])
+      index.push(rings[2][k], rings[2][n], apex)
     }
     // The two arms of the style: a ribbon each.
     for (const side of [-1, 1]) {
