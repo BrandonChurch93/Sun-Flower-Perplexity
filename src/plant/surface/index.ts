@@ -205,6 +205,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   through *= (1.0 - 0.8 * frost) * (1.0 - 0.65 * bloom);
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
+  // Hoar breaks the mirror of the wax: a frozen skin is matt.
+  wax *= 1.0 - FROST_MATT * frost;
 
   float peak = max(through.r, max(through.g, through.b));
   // A thin part is asked on the sun's side, a thick one on the side that is seen.
