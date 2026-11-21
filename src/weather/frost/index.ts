@@ -27,11 +27,11 @@ out float vFade;
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
 // Ice in its own shade is lit by the sky alone and goes a little blue.
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
-const float MATT = 0.5;
-const float THROUGH = 0.7;
+const float MATT = 0.3;
+const float THROUGH = 0.35;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
-const float SKY = 0.8;
+const float SKY = 0.75;
 // Frost grows toward the side the air came from.
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
 const float MELT_FROM_S = 38.0;
