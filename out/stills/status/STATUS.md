@@ -1,11 +1,12 @@
-# Status 05
+# Status 06
 
-2026-11-21 01:59 UTC
+2026-11-21 02:25 UTC
 
-- Status 05 · Phase 1. Phase 1 gate met. The rough cut exists: the whole minute made from the eight approved stills, each with a slow push in the direction the camera moves, hard cuts on frames 240, 600, 900 and 1200, and a small label naming the segment. It is there so the pacing can be judged before the scene is built, and it plays on the review page under Films. The build is not waiting: it continues with the engine and the blockout.
-- Next: Phase 2, the engine and the blockout: the plant growing through the whole film with stand-in worlds, the camera move through all eleven keys, the three modes and the rest of the harness. Time used: 1.1 h of 30 h.
+- Status 06 · Phase 2. Phase 2 has started. Six supporting agents are at work: three gather real photographs for the reference board, one studies real time-lapse footage, one builds the remaining harness commands and one builds the Export page. The page can now report where the growing tip lands and how sharp it is. A bug from the spike is fixed: the ground had never been drawn, because its triangles faced down. Backdrops with the plant painted out are being generated.
+- Next: the plant as a function of time with its hook, husk, seed leaves, bud and opening head, then the painted-out backdrops, the field and the camera fit at every key. Time used: 1.6 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still
-- `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still
-- `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
+- `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes
+- `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground
+- `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet
+- `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure

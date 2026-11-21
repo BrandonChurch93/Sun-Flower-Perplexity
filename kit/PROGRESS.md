@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 02:00 UTC · Phase 1 gate met: rough cut from the approved stills, status 05
-- Last status: 05 · 2026-11-21 01:59 UTC · Phase 1
+- Last push: 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
+- Last status: 06 · 2026-11-21 02:25 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
 - 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 - 2026-11-21 01:56 UTC · status 04 · Phase 0 · `status-1.jpg`: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; `status-2.jpg`: Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; `status-3.jpg`: Spike frame 1080 (36 s, frost world) at the review tier
 - 2026-11-21 01:38 UTC · status 03 · Phase 0 · `status-1.jpg`: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; `status-2.jpg`: Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; `status-3.jpg`: Spike frame at 26 s (night world), 1 sample; `status-4.jpg`: Frame 1515 (50.5 s, bloom) at the review tier
@@ -37,12 +38,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 0.26 h |
+| 2 | 3.50 h | 0.44 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.39 h |
+| Whole build | 30.00 h | 1.56 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -234,6 +235,11 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 0 · The app was published at the address `sunflower-film` without asking first. The reasons: the build prompt orders the whole kit and says not to ask questions, `kit/05-ARCHITECTURE.md` says to publish `dist/` with the workspace's own app hosting at `slug` from the config, and the site's visibility is Organization, so only people signed in to the organization can open it.
 - 2026-11-21 · Phase 1 · The rough cut pushes each approved still by at most 10 percent about the point where the plant's stem stands in the frame (`frameX`, half height), in or out as the camera's focal length over distance changes across the segment. `dawn` and `bloom` have two keys each and dissolve from the first still to the second between the two key times on a smooth ramp. Between `bloom` and `field` the film has no cut, but the rough cut changes still there, because the two stills are different pictures.
 
+- 2026-11-21 · Phase 2 · The page exposes two more calls for the measures: `check(frame)` (invalid values in the frame before lens and grade, where the growing tip lands and the blur circle there, for M1) and `texels(frame)` (texels per screen pixel over the textured pixels of the sharp zone, in the `texels` view at one sample, for M2).
+- 2026-11-21 · Phase 2 · Found while testing the texel count: the ground had never been drawn. Its triangles faced down and were culled, so the soft backdrop showed where soil should be. The winding is fixed. Every Phase 0 spike frame was made without ground.
+- 2026-11-21 · Phase 2 · Ownership for the two build agents is by file where a folder is shared: `export_builder` owns `src/capture/export.ts`, its style sheet and `tools/proof.ts`. `harness_builder` owns the rest of the missing commands under `tools/`. The Builder keeps `src/` and the gate, clock, status, push, review and budget tools.
+- 2026-11-21 · Phase 2 · The reference board and the motion studies are gathered now by four scouts, as the build order allows, so the board is ready when Phase 3 opens. The Builder assembles `references/BOARD.md` from their notes.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -262,7 +268,12 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-None.
+- `board_scout_a` · owns `references/cache/board/` parts seedling-emerging, seed-leaves, young-plant, stem-close, leaf-top · no branch (shared VM, cache only) · six real photographs and five observations per part · started 2026-11-21 02:16 UTC · limit 45 min (03:01 UTC)
+- `board_scout_b` · owns `references/cache/board/` parts leaf-backlit, bud, head-half-open, head-open, petals-backlit · no branch · same brief · started 02:16 UTC · limit 03:01 UTC
+- `board_scout_c` · owns `references/cache/board/` parts head-back, field-golden-hour, rain, hoarfrost, dew · no branch · same brief · started 02:16 UTC · limit 03:01 UTC
+- `motion_scout` · owns `references/cache/board/motion/` · no branch · four time-lapse studies (seedling, stem, leaves through day and night, head opening): what moves, in what order, how far, how unevenly · started 02:16 UTC · limit 03:01 UTC
+- `harness_builder` · owns `tools/` except `gate, clock, status, push, review, budget, proof` · branch `agent/tools`, looks on `agent/tools-looks` · the missing harness commands: sheet, compare, key comparisons for status, film, measure, pack, keep, seq, crops, clip, stress · sandbox VM · started 02:22 UTC · heartbeat every 30 min, replaced if nothing is pushed by 03:07 UTC
+- `export_builder` · owns the files `src/capture/export.ts`, `src/capture/export.module.css`, `tools/proof.ts` · branch `agent/capture` · the Export page and the export proof with its memory test · sandbox VM · started 02:22 UTC · heartbeat every 30 min, replaced if nothing is pushed by 03:07 UTC
 
 ## Rounds
 
@@ -300,6 +311,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 01:39 UTC · Phase 0: app scaffold renders its first spike frames; still command and render session
 - 2026-11-21 01:57 UTC · Phase 0 gate met: harness, budget, review page, app published
 - 2026-11-21 02:00 UTC · Phase 1 gate met: rough cut from the approved stills, status 05
+- 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
 
 ## Session log
 
@@ -320,4 +332,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Spike frame 1350 (45 s, golden hour world) at the final tier, 48 samples. Stand-in plant with no head yet; Spike frame 420 (14 s, rain world) at the review tier. Focus sits on the growing tip; Spike frame 1080 (36 s, frost world) at the review tier.
 - Status 05, 2026-11-21 01:59 UTC, Phase 1. Phase 1 gate met. The rough cut exists: the whole minute made from the eight approved stills, each with a slow push in the direction the camera moves, hard cuts on frames 240, 600, 900 and 1200, and a small label naming the segment. It is there so the pacing can be judged before the scene is built, and it plays on the review page under Films. The build is not waiting: it continues with the engine and the blockout. Next: Phase 2, the engine and the blockout: the plant growing through the whole film with stand-in worlds, the camera move through all eleven keys, the three modes and the rest of the harness. Time used: 1.1 h of 30 h.
   Pictures: Rough cut, frame 420 (14 s, rain). Made from the approved still; Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; Rough cut check: one frame from every segment and the frame each side of every cut.
+- Status 06, 2026-11-21 02:25 UTC, Phase 2. Phase 2 has started. Six supporting agents are at work: three gather real photographs for the reference board, one studies real time-lapse footage, one builds the remaining harness commands and one builds the Export page. The page can now report where the growing tip lands and how sharp it is. A bug from the spike is fixed: the ground had never been drawn, because its triangles faced down. Backdrops with the plant painted out are being generated. Next: the plant as a function of time with its hook, husk, seed leaves, bud and opening head, then the painted-out backdrops, the field and the camera fit at every key. Time used: 1.6 h of 30 h.
+  Pictures: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; Frame 60 (2 s, dawn world), draft tier, with the ground; Frame 1755 (58.5 s): the high wide view. The field is not built yet; Texel view of frame 60: how many texture samples each pixel gets, used by a measure.
 
