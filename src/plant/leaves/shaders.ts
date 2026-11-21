@@ -61,9 +61,9 @@ void main() {
   float rib = smoothstep(0.1, 0.0, abs(vUv.x));
   float shade = 0.8 + 0.4 * vLeaf.z;
   Tissue t;
-  t.albedo = (top ? vec3(0.06, 0.135, 0.03) : vec3(0.11, 0.17, 0.07)) * shade;
+  t.albedo = (top ? vec3(0.036, 0.07, 0.022) : vec3(0.06, 0.09, 0.04)) * shade;
   t.albedo = mix(t.albedo, vec3(0.42, 0.4, 0.1), vState.y * 0.7);
-  t.through = vec3(0.2, 0.3, 0.018) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.06, 0.09, 0.006) * (1.0 - 0.4 * rib) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -107,21 +107,22 @@ void main() {
   float lum = dot(var, vec3(0.3, 0.6, 0.1));
   float tone = 0.86 + 0.28 * mark.g;
 
-  vec3 upper = vec3(0.058, 0.135, 0.03) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.2, 0.27, 0.1), 0.8 * vein.r + 0.3 * vein.b);
-  vec3 under = vec3(0.11, 0.17, 0.075) * mix(vec3(1.0), var, 0.55) * tone;
-  under = mix(under, vec3(0.2, 0.26, 0.12), 0.7 * vein.r + 0.35 * vein.b);
+  vec3 upper = vec3(0.036, 0.07, 0.022) * mix(vec3(1.0), var, 0.85) * tone;
+  upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
+  vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
+  under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   vec3 albedo = top ? upper : under;
   albedo = mix(albedo, vec3(0.5, 0.43, 0.09) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
-  // The main veins are thick and hold the light back. The fine net between the cells is thin and lets more through than the cells do.
+  // The blade is thick and felted: it lets light through only in the patches where it is thin, and along its margin. The main veins hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  vec3 through = vec3(0.34, 0.5, 0.03) * (0.35 + 0.65 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
+  float thin = 0.06 + 0.26 * smoothstep(0.55, 0.92, mark.g) + 0.2 * smoothstep(0.88, 1.0, abs(vUv.x));
+  vec3 through = vec3(0.34, 0.5, 0.03) * thin * (0.35 + 0.65 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
   through = mix(through, vec3(0.2, 0.34, 0.02) * 0.4, vein.r);
   through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.95, 0.78, 0.1) * (0.5 + 0.5 * lum), yellow);
-  through = mix(through, vec3(0.32, 0.13, 0.025), brown);
+  through = mix(through, vec3(0.95, 0.78, 0.1) * thin * (0.5 + 0.5 * lum), yellow);
+  through = mix(through, vec3(0.1, 0.04, 0.008), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
@@ -191,8 +192,8 @@ void main() {
   float ribs = 0.5 + 0.5 * sin(vUv.x * 6.2832 * 9.0);
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
-  t.albedo = mix(vec3(0.1, 0.16, 0.045), vec3(0.2, 0.26, 0.1), 0.45 * ribs + 0.55 * streak);
-  t.through = vec3(0.1, 0.15, 0.015);
+  t.albedo = mix(vec3(0.07, 0.11, 0.035), vec3(0.14, 0.19, 0.075), 0.45 * ribs + 0.55 * streak);
+  t.through = vec3(0.04, 0.06, 0.006);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);
   t.rough = 0.78;
