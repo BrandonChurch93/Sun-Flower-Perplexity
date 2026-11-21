@@ -76,7 +76,7 @@ vec3 plantWorld(vec3 local) {
   vec3 q = local - uHeadAt.xyz;
   local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   vec3 p = local * aPlace.w;
-  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0);
+  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
   vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
@@ -116,6 +116,7 @@ uniform float uCanopy;
 uniform float uClosed;
 uniform float uDeep;
 uniform vec3 uEdge;
+uniform float uHang;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -130,6 +131,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float lane = uShadowOn * smoothstep(0.64, 0.78, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
   // One gap toward the sun lights three neighbors of the second row.
   lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.55, length(world.xz - vec2(0.1, -2.42)))));
+  // While the leaves of the young crop hang, they shut most of its lanes.
+  lane *= 1.0 - 1.3 * uHang;
   float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = uClosed;
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
