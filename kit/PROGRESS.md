@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 15:53 UTC · Round 6: R1 (5) and R4 (5) answers, word for word
-- Last status: 35 · 2026-11-21 15:29 UTC · Phase 3 · unit bloom · round 6
+- Last push: 2026-11-21 15:55 UTC · Status 36: round 6 pack checked, match 5 and motion 5 in, jury answering; the Phase 4 line at 5a144fa
+- Last status: 36 · 2026-11-21 15:54 UTC · Phase 3 · unit bloom · round 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 15:54 UTC · status 36 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Round 6, the cut at 40.00 s as the motion critic sees it; `status-2.jpg`: Round 6, twelve frames across the bloom; `status-3.jpg`: Round 6, 45 s: approved (a) and ours (b), native crops; `status-4.jpg`: Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress)
 - 2026-11-21 15:29 UTC · status 35 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: 45 s, judged frame 1350 at final quality: approved image left, round 6 right; `status-2.jpg`: 50.5 s, judged frame 1515 at final quality: approved image left, round 6 right; `status-3.jpg`: Phase 4 in progress, 58.5 s (field): approved image left, the field builder's branch right (his render, not yet checked by the Builder's own still, not on main)
 - 2026-11-21 15:10 UTC · status 34 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: The cut at 40 s at the judged commit, the Builder's own stills: frame 1199 (frost) above, frame 1200 (golden hour) below. The skyline now sits within 4 px on both sides; `status-2.jpg`: The head at 45 s before the round: approved image left, the film right (review quality)
 - 2026-11-21 14:52 UTC · status 33 · Phase 3 · unit bloom · `status-1.jpg`: 45 s: approved left, round 6 prepared right (review tier); `status-2.jpg`: 50.5 s: approved left, round 6 prepared right (review tier); `status-3.jpg`: The open head at 50.5 s at native size: approved left, prepared right; `status-4.jpg`: The cut at 40 s on the frost branch: frame 1199 on top, 1200 in the middle, both blended below
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 11:34 UTC · status 27 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s), approved left, build right, review tier; `status-2.jpg`: Frame 1515 (50.5 s), approved left, build right, review tier; `status-3.jpg`: Head at 45.0 s, approved left, build right; `status-4.jpg`: Head at 50.5 s, approved left, build right
 - 2026-11-21 11:07 UTC · status 26 · Phase 3 · unit bloom · `status-1.jpg`: 39.5 s to 51.5 s after the growth change (drafts): the frost bud, then the bloom about every second; `status-2.jpg`: 45.0 s: approved left, ours right (draft); `status-3.jpg`: 50.5 s: approved left, ours right (draft)
 - 2026-11-21 10:42 UTC · status 25 · Phase 3 · unit bloom · `status-1.jpg`: 45.0 s: approved (left), film now (right); `status-2.jpg`: 50.5 s: approved (left), film now (right); `status-3.jpg`: The head at 45 s: approved (left), film now (right); `status-4.jpg`: The head at 50.5 s: approved (left), film now (right)
-- 2026-11-21 10:18 UTC · status 24 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 as round 3 judges it, final tier (right), beside the approved image (left); `status-2.jpg`: Frame 1515 as round 3 judges it, final tier (right), beside the approved image (left); `status-3.jpg`: Next build, not yet judged: the rays open as a front from the sun side, 43 to 50.5 s (rendered by an agent from the growth branch); `status-4.jpg`: Next build, not yet judged: glow and shafts in place of the star spikes at 45 s (above), the approved image (below)
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 8.95 h |
+| 3 | 9.00 h | 9.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 15.00 h |
+| Whole build | 30.00 h | 15.05 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -738,6 +738,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 15:42 UTC · Phase 4: first reports from eight builders, the line's contents and the Builder's shared decisions (skyline through the film, sky.even, f-numbers, growth patches, shutter ruling)
 - 2026-11-21 15:50 UTC · Round 6: pack built and checked (24.7 min); Phase 4 line pushed at 5a144fa
 - 2026-11-21 15:53 UTC · Round 6: R1 (5) and R4 (5) answers, word for word
+- 2026-11-21 15:55 UTC · Status 36: round 6 pack checked, match 5 and motion 5 in, jury answering; the Phase 4 line at 5a144fa
 
 ## Session log
 
@@ -818,4 +819,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: The cut at 40 s at the judged commit, the Builder's own stills: frame 1199 (frost) above, frame 1200 (golden hour) below. The skyline now sits within 4 px on both sides; The head at 45 s before the round: approved image left, the film right (review quality).
 - Status 35, 2026-11-21 15:29 UTC, Phase 3 · unit bloom · round 6. Round 6's measures are in, taken on the two judged frames at final quality: M1 (focus on the held point), M2 (texture detail) and M3 (sharpness against the approved image) all pass. M3 is 0.860 at 45 s and 0.944 at 50.5 s, where round 5 had 0.672 and 0.786 (needs 0.8). The bloom clip of this build is joined from twelve parts (360 frames, 1920x1080). The pack for the critics is rendering now. Phase 4 work runs beside it on twelve branches, joined on one line that is not on main yet; the third picture is the field builder's first report from that line. Next: The pack ends about 15:45 UTC, then three fresh critics and ten jurors judge round 6. After their answers: the round's write-up, the bloom's best judged build, both comparisons, the look lock section and the Phase 3 gate. Phase 3 has used 8.6 h of its 9 h box; the whole build 14.6 h of 30 h. Time used: 14.6 h of 30 h.
   Pictures: 45 s, judged frame 1350 at final quality: approved image left, round 6 right; 50.5 s, judged frame 1515 at final quality: approved image left, round 6 right; Phase 4 in progress, 58.5 s (field): approved image left, the field builder's branch right (his render, not yet checked by the Builder's own still, not on main).
+- Status 36, 2026-11-21 15:54 UTC, Phase 3 · unit bloom · round 6. Round 6's pack is built and checked and its critics are answering: match 5 (4 severe, 12 major: the sun's white bloom is now too large, the near neighbor's blue green blades reach too far into the lower left), motion 5 (1 severe: the camera holds still between the two keys; 2 major: a ray pops in at 44.63 s, the folded rays boil). The cut at 40 s and the skyline's single frame jumps are no longer named. Jury so far 4 of 5 for (a) on the frame at 45 s. The Phase 4 line holds all twelve branches at 5a144fa with one skyline for the whole film; the last picture is the Builder's first own still of the dawn key from it. Next: The surface critic and five jurors, then the look lock closes at its count limit (round 6 is the fourth of four), the Phase 3 gate, and Phase 4's first rounds. Time used: 15.0 h of 30 h.
+  Pictures: Round 6, the cut at 40.00 s as the motion critic sees it; Round 6, twelve frames across the bloom; Round 6, 45 s: approved (a) and ours (b), native crops; Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress).
 
