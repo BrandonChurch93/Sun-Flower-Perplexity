@@ -1,162 +1,86 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
-import { hash32, streamSeed } from '../core/random.ts'
-import { declareStandIn } from '../core/standins.ts'
+import { declareStandIn, endStandIn } from '../core/standins.ts'
 import { makeSurface, type Surface } from '../core/shading.ts'
-import { toward } from '../field/layout.ts'
+import { right, toward } from '../field/layout.ts'
+import { nearGeometry, soilGeometry } from './geometry.ts'
+import { litterPixels } from './litter.ts'
+import { litterTileM, ridgeHeightM, soilFragment, soilMeanLuma, soilTileM } from './soil.ts'
+import { standInFragment, standInPixels, vertex } from './standin.ts'
 
-const vertex = /* glsl */ `
-in vec3 position;
-out vec3 vWorld;
-out float vDepth;
-void main() {
-  vec4 world = modelMatrix * vec4(position, 1.0);
-  vec4 view = viewMatrix * world;
-  vWorld = world.xyz;
-  vDepth = -view.z;
-  gl_Position = projectionMatrix * view;
-}
-`
+const WIDE = 8.3
 
-const fragment = /* glsl */ `
-in vec3 vWorld;
-in float vDepth;
-uniform sampler2D tSoil;
-uniform vec2 uSoilSize;
-uniform float uWet;
-uniform float uFrost;
-uniform float uCover;
-uniform vec2 uToward;
-void main() {
-  vec2 uv = vWorld.xz * 2.2;
-  vec2 wide = vWorld.xz * 0.31 + vec2(0.37, 0.11);
-  vec4 near = texture(tSoil, uv);
-  vec4 far = texture(tSoil, wide);
-  vec3 albedo = near.rgb * (0.6 + 0.8 * far.rgb);
-  vec2 e = vec2(1.0 / uSoilSize.x, 0.0);
-  float hx = texture(tSoil, uv + e.xy).a - texture(tSoil, uv - e.xy).a;
-  float hz = texture(tSoil, uv + e.yx).a - texture(tSoil, uv - e.yx).a;
-  float fade = 1.0 / (1.0 + vDepth * 0.4);
-  vec3 n = normalize(vec3(-hx * 9.0 * fade, 1.0, -hz * 9.0 * fade));
-  albedo = mix(albedo, albedo * 0.45, uWet);
-  float under = uCover * smoothstep(0.9, 1.7, -dot(vWorld.xz, uToward));
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.35, 0.8, near.a) * (1.0 - 0.7 * under));
-  float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 1.5);
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.85 * under) + skyAmbient(n) * (0.55 + 0.45 * near.a) * (1.0 - 0.8 * under));
-  vec3 v = normalize(uCamPos - vWorld);
-  vec3 h = normalize(v + uSunDir);
-  color += uSunColor * pow(max(dot(n, h), 0.0), 40.0) * uWet * 0.25 * lit;
-  outColor = finish(color, vWorld, vDepth, texelDensity(uv, uSoilSize));
-}
-`
-
-const SEED = streamSeed('ground')
-
-function soilPixels(size: number): Uint8Array {
-  const cell = 64
-  const grid = (n: number, layer: number) => {
-    const g = new Float32Array(n * n)
-    for (let i = 0; i < g.length; i++) g[i] = hash32(SEED + layer * 7919 + i) / 4294967296
-    return g
-  }
-  const layers = [4, 8, 16, 32, 64, 128].map((n, k) => ({ n, g: grid(n, k), gain: Math.pow(0.6, k) }))
-  const total = layers.reduce((s, l) => s + l.gain, 0)
-  const out = new Uint8Array(size * size * 4)
-  void cell
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      let h = 0
-      for (const l of layers) {
-        const fx = (x / size) * l.n
-        const fy = (y / size) * l.n
-        const x0 = Math.floor(fx)
-        const y0 = Math.floor(fy)
-        const tx = fx - x0
-        const ty = fy - y0
-        const sx = tx * tx * (3 - 2 * tx)
-        const sy = ty * ty * (3 - 2 * ty)
-        const x1 = (x0 + 1) % l.n
-        const y1 = (y0 + 1) % l.n
-        const a = l.g[y0 * l.n + x0]
-        const b = l.g[y0 * l.n + x1]
-        const c = l.g[y1 * l.n + x0]
-        const d = l.g[y1 * l.n + x1]
-        h += l.gain * (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy)
-      }
-      h /= total
-      const crumb = Math.min(1, Math.max(0, (h - 0.3) * 2.6))
-      const speck = hash32(SEED ^ (y * size + x)) / 4294967296
-      const tone = 0.55 + 0.75 * crumb + (speck - 0.5) * 0.18
-      const i = (y * size + x) * 4
-      out[i] = Math.min(255, Math.round(255 * Math.pow(0.105 * tone, 1 / 2.2)))
-      out[i + 1] = Math.min(255, Math.round(255 * Math.pow(0.068 * tone, 1 / 2.2)))
-      out[i + 2] = Math.min(255, Math.round(255 * Math.pow(0.042 * tone, 1 / 2.2)))
-      out[i + 3] = Math.round(255 * crumb)
-    }
-  }
-  return out
-}
-
-function disc(): THREE.BufferGeometry {
-  const rings: number[] = [0]
-  for (let r = 0.004; r < 9000; r *= 1.3) rings.push(r)
-  const sides = 64
-  const position = new Float32Array(rings.length * sides * 3)
-  const index: number[] = []
-  rings.forEach((r, j) => {
-    for (let s = 0; s < sides; s++) {
-      const a = (s / sides) * Math.PI * 2
-      const v = (j * sides + s) * 3
-      position[v] = Math.cos(a) * r
-      position[v + 1] = 0
-      position[v + 2] = Math.sin(a) * r
-      if (j > 0) {
-        const p = (j - 1) * sides
-        const q = j * sides
-        const t = (s + 1) % sides
-        index.push(p + s, q + t, q + s, p + s, p + t, q + t)
-      }
-    }
-  })
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
-  geometry.setIndex(index)
-  return geometry
-}
+const state = (): Record<string, THREE.IUniform> => ({ uWet: { value: 0 }, uFrost: { value: 0 }, uCover: { value: 0 }, uToward: { value: new THREE.Vector2(toward.x, toward.z) } })
 
 export class Ground {
+  // The soil under the crop and beyond the stand-in.
   readonly surface: Surface
-  readonly mesh: THREE.Mesh
+  // What is still the placeholder: the meter round the plant and the camera's side.
+  readonly nearSurface: Surface
+  readonly mesh = new THREE.Group()
 
   constructor() {
-    declareStandIn('ground')
+    endStandIn('ground')
+    declareStandIn('ground near', ['dawn', 'rain', 'night', 'frost', 'field'])
     this.surface = makeSurface({
+      name: 'soil',
+      vertex,
+      fragment: soilFragment,
+      castShadow: false,
+      uniforms: {
+        ...state(),
+        tColor: { value: null },
+        tData: { value: null },
+        tLitter: { value: null },
+        uColorSize: { value: new THREE.Vector2(1, 1) },
+        uRight: { value: new THREE.Vector2(right.x, right.z) },
+        uRows: { value: new THREE.Vector3(config.field.rowSpacingM, config.field.plantAheadOfRowM, ridgeHeightM) },
+        uTiles: { value: new THREE.Vector3(1 / soilTileM, 1 / (soilTileM * WIDE), 1 / soilMeanLuma) },
+        uLitter: { value: 1 / litterTileM },
+      },
+    })
+    this.nearSurface = makeSurface({
       name: 'ground stand-in',
       vertex,
-      fragment,
+      fragment: standInFragment,
       standIn: true,
       castShadow: false,
-      uniforms: { tSoil: { value: null }, uSoilSize: { value: new THREE.Vector2(1, 1) }, uWet: { value: 0 }, uFrost: { value: 0 }, uCover: { value: 0 }, uToward: { value: new THREE.Vector2(toward.x, toward.z) } },
+      uniforms: { ...state(), tSoil: { value: null }, uSoilSize: { value: new THREE.Vector2(1, 1) } },
     })
-    this.mesh = new THREE.Mesh(disc(), this.surface.main)
-    this.mesh.frustumCulled = false
+    const add = (geometry: THREE.BufferGeometry, material: THREE.Material): void => {
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.frustumCulled = false
+      this.mesh.add(mesh)
+    }
+    add(soilGeometry(), this.surface.main)
+    for (const g of nearGeometry()) add(g, this.nearSurface.main)
   }
 
-  load(assets: Assets): void {
-    const size = config.assetSets[assets.set].groundMapWidth / 4
-    const texture = assets.data('ground/soil-standin', 'ground', soilPixels(size), size, size, { repeat: true, anisotropy: 1 })
+  async load(assets: Assets): Promise<void> {
+    const width = config.assetSets[assets.set].groundMapWidth
+    const size = width / 4
+    const near = this.nearSurface.main.uniforms
+    near.tSoil.value = assets.data('ground/soil-standin', 'ground', standInPixels(size), size, size, { repeat: true, anisotropy: 1 })
+    near.uSoilSize.value.set(size, size)
     const u = this.surface.main.uniforms
-    u.tSoil.value = texture
-    u.uSoilSize.value.set(size, size)
+    u.tLitter.value = assets.data('ground/litter', 'ground', litterPixels(size), size, size, { repeat: true, anisotropy: 1 })
+    const [color, data] = await Promise.all([
+      assets.texture('ground', 'soil-color.jpg', { color: true, repeat: true, anisotropy: 1 }),
+      assets.texture('ground', 'soil-data.png', { color: false, repeat: true, anisotropy: 1 }),
+    ])
+    u.tColor.value = color
+    u.tData.value = data
+    u.uColorSize.value.set(width, width)
   }
 
   // `cover` is how much of the ground under the field its leaves shade, from 0 to 1.
   setState(state: { wet: number; frost: number }, cover: number): void {
-    const u = this.surface.main.uniforms
-    u.uWet.value = state.wet
-    u.uFrost.value = state.frost
-    u.uCover.value = cover
+    for (const s of [this.surface, this.nearSurface]) {
+      const u = s.main.uniforms
+      u.uWet.value = state.wet
+      u.uFrost.value = state.frost
+      u.uCover.value = cover
+    }
   }
 }
