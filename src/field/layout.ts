@@ -28,6 +28,9 @@ export const farVariants = [131, 149, 157, 173]
 const LEAD_S = [1.0, 2.8]
 const BEHIND_S = [-1.3, 0.2]
 const LATE_S = -3.5
+// One kind of each tier is early: at 45 s it is already open and faces the lens, a dark head with a ring of lit rays.
+const EARLY_S = 3.6
+export const opensEarly = (index: number, count: number): boolean => (index * 3) % count === count - 1
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
   return x * x * (3 - 2 * x)
@@ -36,7 +39,7 @@ export const kindTime = (time: number, index: number, count: number): number => 
   const order = (index * 3) % count
   const share = order / Math.max(1, count - 1)
   const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * share
-  const behind = BEHIND_S[0] + (BEHIND_S[1] - BEHIND_S[0]) * (((order * 2 + 1) % count) / Math.max(1, count - 1))
+  const behind = opensEarly(index, count) ? EARLY_S : BEHIND_S[0] + (BEHIND_S[1] - BEHIND_S[0]) * (((order * 2 + 1) % count) / Math.max(1, count - 1))
   const open = ramp(45, 50, time)
   return time + (behind + (lead - behind) * open) * ramp(40, 44, time) * (1 - ramp(53, 59, time))
 }
@@ -102,6 +105,11 @@ function edgeRows(across: number): number {
   return Math.max(bay * BAY.rows, wander)
 }
 
+const EDGE = [
+  { across: 0.52, size: 0.68, turn: 0.2, early: true },
+  { across: 0.86, size: 0.85, turn: 2.7, early: false },
+]
+
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
 
 let made: FieldPlaces | null = null
@@ -122,8 +130,10 @@ export function fieldPlaces(): FieldPlaces {
     const count = Math.floor(half / plantSpacingM)
     for (let n = -count; n <= count; n++) {
       id++
-      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * 0.12
-      const along = depth + (hash01(SEED, 3, id) - 0.5) * 0.1
+      // Past the near rows the plants stand off their lines, so no row can be followed to the horizon.
+      const out = Math.hypot(depth, n * plantSpacingM)
+      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
+      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       if (k < edgeRows(across) - 0.5) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -135,7 +145,7 @@ export function fieldPlaces(): FieldPlaces {
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
       const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const size = short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.3 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, (0.65 - 0.3 * away) * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + away * (0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5))))
@@ -151,8 +161,15 @@ export function fieldPlaces(): FieldPlaces {
       const keep = (1 - 0.6 * step(58, 110, reach)) * (1 - step(fieldPicturesM - carpetBandM, fieldPicturesM, reach))
       if (hash01(SEED, 13, id) >= keep) continue
       const kind = 0.45 * hash01(SEED, 14, id) + 0.55 * Math.min(1, Math.max(0, 0.5 + (noise(28, x * 0.06, z * 0.06) - 0.5) * 2.4))
-      pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)), size, leanX, leanZ, tone, id)
+      pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, leanX, leanZ, tone, id)
     }
+  }
+  // Two neighbors stand in the bay on the front row, to the right of the plant at sunset: one of the early kind that faces the lens, one that keeps its back to it.
+  const kindOf = (n: number): number => Math.floor(hash01(SEED, 15, n) * nearVariants.length)
+  for (const edge of EDGE) {
+    do id++
+    while (kindOf(id) === 0 || opensEarly(kindOf(id), nearVariants.length) !== edge.early || (!edge.early && hash01(SEED, 40, id) < AWAY_SHARE))
+    near.push(-toward.x * plantAheadOfRowM + right.x * edge.across, -toward.z * plantAheadOfRowM + right.z * edge.across, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
   return made
