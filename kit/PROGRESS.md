@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 19:14 UTC · Log: one joint cut at 20:30 for rounds 12 to 16, the field frozen at 8d8f509, round 9's merged surface answer and its jury on the edge, the line to 13c0de7, orders of 18:59 and 19:10
+- Last push: 2026-11-21 19:20 UTC · Rounds 8, 10 and 11: summaries, measures, manifests and keys in the scorecards; none is a pass, each is the first of at most three rounds
 - Last status: 43 · 2026-11-21 19:10 UTC · Phase 4 · unit dawn · round 9
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -876,7 +876,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R3 answer: `reviewer_79`, GPT family, sent 18:23 UTC, answered 18:24 UTC. Score 6, not a pass: 4 major. `scorecards/round-008/R3.json`, word for word. Major: the field ("The same flat triangular leaves and shallow spiked bud silhouettes recur across the rows. Even through the defocus, the field reads as copies of a small set of plant models."), the frost on the broad front leaf ("a broad soft white strip with combed, nearly parallel streaks reaching onto the blade. It reads more like a brushed fringe than separate ice crystals attached to the leaf."), the backlit leaf ("stays a dense dark green almost to its edge; the pale rim comes from frost, while the thin tissue between veins shows little visible transmission"), the bud's bracts ("Several adjacent bracts repeat the same pointed, hooked profile, and the similarly bright frost tracing each lip makes those copies easy to pick out.")
 - [x] R4 answer (`reviewer_80`, Gemini family, fresh, four files of `R4` only, asked 18:23:54, answered 18:48 UTC, inside the 45 minutes, so no replacement): **9, a pass at this critic**. 2 minor, saved word for word in `scorecards/round-008/R4.json`: the upper fog is a nearly uniform smooth depth gradient, its drift barely seen until the thinner ground mist near 37.2 s; the dense fog at 30.00 s hides the night's ridge, so the horizon match across the cut from 29.97 s to 30.00 s cannot be read by eye (the ridge stands at the same pixel height when contrast-stretched).
 - [ ] Fixes
-- [ ] Summary, status, push
+- [x] Summary, status, push: `scorecards/round-008/SUMMARY.md`, `MEASURES.json`, the four manifests and `KEY.json` written 19:20 UTC; Status 42 (18:29 UTC) carries the judged frame beside the approved image, Status 43 (19:11 UTC) the result
 
 ### Round 9 · Phase 4 · `dawn` · floor round
 
@@ -902,7 +902,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R3 answer (`reviewer_126`, Claude family, fresh, three files of `R3` only, asked 18:42:08, answered 18:43 UTC): **4, not a pass**. 1 severe, 8 major, 3 minor, saved word for word in `scorecards/round-010/R3.json`. Severe: the water drops on the stem are evenly spaced same-size white dots in a line, like decals. Major: polka-dot speckle on the small leaf at the stem base; upper leaves against the bright sky near-black, no light through them, knife edges; no leaf in crop 4 is backlit; no hairs visible on the stem, hard green to tan boundary; stem base planted on top of the soil with no contact shadow; a stray bright white object by the puddle; rain is one overlay layer with no depth; background seedlings the same model repeated.
 - [x] R4 answer (`reviewer_127`, GPT family, fresh, four files of `R4` only, asked 18:45:30, answered 18:47 UTC): **9, a pass at this critic**. 1 major, saved word for word in `scorecards/round-010/R4.json`: at 14.03 to 14.40 s the rain reads mostly as straight translucent streaks crossing the leaves, with beads on the margins but little visible impact, breakup or runoff.
 - [ ] Fixes
-- [ ] Summary, status, push
+- [x] Summary, status, push: `scorecards/round-010/SUMMARY.md`, `MEASURES.json`, the four manifests and `KEY.json` written 19:20 UTC; Status 43 (19:11 UTC) carries the judged frame beside the approved image and the result
 
 ### Round 11 · Phase 4 · `night` · floor round
 
@@ -915,7 +915,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R3 answer: `reviewer_139`, GPT family, sent 18:31 UTC, answered 18:31 UTC. Score 7, not a pass: 3 major. `scorecards/round-011/R3.json`, word for word. Major: the left skyline ("The star field stops at a ruler-straight line that abruptly joins the hills, and the smooth gray strip below makes the background look like a flat cutout."), the raised folds of the large leaf at lower left ("Broad silver highlights roll over the folds without fine surface texture, making the leaf read as molded plastic beside the more convincing translucent green areas."), the neighbors across the middle distance ("Several neighboring plants repeat the same upright stem and paired drooping leaf silhouette at similar heights, exposing the instancing.").
 - [x] R4 answer (`reviewer_140`, Gemini family, fresh, four files of `R4` only, asked 18:30:57, answered 18:50 UTC): **4, not a pass**. 3 severe, 3 major, saved word for word in `scorecards/round-011/R4.json`. Severe: across the cut from 19.97 s to 20.00 s only the plant aligns, the foreground grass and puddles vanish into bare dirt, the crop drops and changes layout and ridges appear on the horizon; at 25.20 to 25.30 s the stem ends in a bare rounded capsule and the bracts and loose hairs pop out through it over two frames, crossing the upper petiole; in the rain's last frames (19.80 to 19.97 s) the bright drops on the stem jump to new places every frame. Major: between 28.2 and 29.1 s a dark bract or leaf lobe swells across the bud and passes through the head; the rain does not land (puddles flat, no rings, no strikes on leaves); the mist lumps stand frozen against the ridge for the whole ten seconds.
 - [ ] Fixes
-- [ ] Summary, status, push
+- [x] Summary, status, push: `scorecards/round-011/SUMMARY.md`, `MEASURES.json`, the four manifests and `KEY.json` written 19:20 UTC; Status 42 (18:29 UTC) carries the judged frame beside the approved image, Status 43 (19:11 UTC) the result
 
 ## Final scores
 
@@ -1028,6 +1028,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 19:07 UTC · Rounds 8 to 11: round 9 pack, R1 (5), R3 (3 and 4, merged 3), R4 (5) and jury (6 of 20 against 5 of 10); round 10 measures, pack, R1 (3), R3 (4), R4 (9), jury (0 of 5 against 3 of 5); round 11 R4 (4), jury (0 of 5 against 4 of 5); round 8 R4 (9); all word for word
 - 2026-11-21 19:11 UTC · Status 43: the first rounds of dawn, rain, night and frost are judged, none passes; the field is frozen on the line 8d8f509 for its second round
 - 2026-11-21 19:14 UTC · Log: one joint cut at 20:30 for rounds 12 to 16, the field frozen at 8d8f509, round 9's merged surface answer and its jury on the edge, the line to 13c0de7, orders of 18:59 and 19:10
+- 2026-11-21 19:20 UTC · Rounds 8, 10 and 11: summaries, measures, manifests and keys in the scorecards; none is a pass, each is the first of at most three rounds
 
 ## Session log
 
