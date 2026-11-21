@@ -67,6 +67,11 @@ const TONES: { base: [number, number, number]; rim: number }[] = [
   { base: [0.006, 0.028, 0.036], rim: 0 },
 ]
 
+// The first light's air is thick and clears as the sun climbs: how many times thicker at the start, and the seconds over which it clears.
+const EARLY_AIR = 8
+const EARLY_AIR_FROM_S = 1.5
+const EARLY_AIR_TO_S = 6
+
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 export function makeFarLayers(skylineAzimuthDeg: number, airCool: [number, number, number], airWarm: [number, number, number], airPerM: number): FarLayers {
@@ -98,5 +103,10 @@ export function makeFarLayers(skylineAzimuthDeg: number, airCool: [number, numbe
     meshes.push(mesh)
     triangles += (geometry.index as THREE.BufferAttribute).count / 3
   }
-  return { meshes, triangles, setTime: (time) => rings.forEach((ring) => ring.setTime(time)) }
+  const setTime = (time: number): void => {
+    rings.forEach((ring) => ring.setTime(time))
+    const t = Math.min(1, Math.max(0, (time - EARLY_AIR_FROM_S) / (EARLY_AIR_TO_S - EARLY_AIR_FROM_S)))
+    airUniforms.uAir.value = airPerM * (1 + EARLY_AIR * (1 - t * t * (3 - 2 * t)))
+  }
+  return { meshes, triangles, setTime }
 }
