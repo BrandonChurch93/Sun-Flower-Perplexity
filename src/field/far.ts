@@ -28,14 +28,15 @@ out float vDepth;
 out float vTone;
 uniform vec3 uRight;
 uniform vec2 uTile;
-uniform float uCrop;
+uniform vec2 uCrop;
 uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
 ${swayGlsl}
 void main() {
   float across = aCorner.x;
-  float v = mix(1.0 - uCrop, 1.0, aCorner.y);
+  // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
+  float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   float h = v * uTile.y * aPlace.w;
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (across * uTile.x * aPlace.w);
   world.xz += aVary.xy * h;
@@ -184,7 +185,7 @@ export class FarField {
     uAtlas: { value: null as THREE.Texture | null },
     uRight: { value: new THREE.Vector3(1, 0, 0) },
     uTile: { value: new THREE.Vector2(1, 1) },
-    uCrop: { value: 1 },
+    uCrop: { value: new THREE.Vector2(1, 1) },
     uCount: { value: pictureCount },
     uPlantWind: fieldUniforms.uPlantWind,
     uPlantHeight: fieldUniforms.uPlantHeight,
@@ -280,7 +281,8 @@ export class FarField {
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55) * rise
     this.carpetHeight.value = canopy * 0.97
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
-    this.uniforms.uCrop.value = THREE.MathUtils.lerp(1, 0.46, THREE.MathUtils.smoothstep(over, 0.02, 0.5))
+    const grown = THREE.MathUtils.smoothstep(canopy, 0.3, 0.9)
+    this.uniforms.uCrop.value.set(THREE.MathUtils.lerp(1, 0.46, THREE.MathUtils.smoothstep(over, 0.02, 0.5)), THREE.MathUtils.lerp(1, 0.3, grown * THREE.MathUtils.smoothstep(over, 0.02, 0.15)))
     this.above = rise > 0
     this.stale = true
   }
