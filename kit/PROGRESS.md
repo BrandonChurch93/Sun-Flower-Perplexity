@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 10:18 UTC · Status 24: round 3 judged, measures in, the bud at 45 s read again and the growth change prepared on a branch
+- Last push: 2026-11-21 10:34 UTC · Round 3: packs built, R1 5, R3 4, R4 4 saved word for word; main holds the growth, lens, field, ground, golden and leaf merges
 - Last status: 24 · 2026-11-21 10:18 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -385,6 +385,9 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · Two neighbors may stand nearer the lens at the right edge of the bloom. In both approved bloom images a large soft head and a pale lit stalk at the right edge belong to a plant 1.5 to 2 m from the lens; our nearest row is 3 m away. The field agent places one or two there on three conditions: at the judged frames before the bloom each is outside the frame or far out of focus, at the field key none stands between the lens and the plant, and no leaf of theirs crosses the plant's head or stem from frame 1200 on. It reports their place in frame at every judged frame.
 - 2026-11-21 · Phase 3 · Reports taken while round 3 is judged, to be merged after the pack. Lens `8270a2e`: star spikes at 0.006 (was 0.07), a warm glow round the sun that eats the leaf's edge, broad soft shafts over hills and field only (never over near leaves or the plant), the frame wide veil back from 2.1 to 1.6; the other worlds' frames 45, 420, 780 and 1080 are pixel identical with and without it. Next for it: a floor under the tie between shafts and the visible sun, shafts toward warm grey, less lift on the darkest parts, grain that follows tone. Field `1056083`: only the stem and the head of a neighbor turn, the leaves stay (new `src/field/turn.ts`); the far field stands in patches; two lines of the `PLANT_FIELD` part of `src/plant/part.ts` changed (`plantSky` floor 0.45 to 0.3, `cropAmbient` weights by how far a face looks up), accepted. Ground `24326dd` (in place of `71e9e17` and `4e72577`): soil that lifts and cracks at emergence, a grass strip of 9637 tufts in 28 cells, the dry, dewy, soaked and frosted states behind one call, teal shade at dawn; with its casters in the shadow pass M3 at frame 45 reads 0.845 (0.8 needed). Golden `112042b` and `49dd792`: a ragged lower tree line, two far veils, a cooler top left at 45 s, no ghost outline on the tree line; its full report is due 10:40.
 
+- 2026-11-21 · Phase 3 · 10:21 to 10:24 UTC: `main` went from `3b38ab9` to `09ef64a` by fast forward to a branch prepared in a second working tree while the round's renders ran, so the main tree was never edited under a render. In order: the Builder's growth change for 45 s (`f01526d`), the lens pass 4 (`8270a2e`: the star spikes replaced by a soft glow that follows the visible sun), the field (`1056083`), the ground (`24326dd`) with `1b437f0` in `src/director/film.ts` (the ground's casters in the scene and shadow lists, the ground hidden when the plant is shown alone, the shadow map never narrower than the smaller of what is seen and half a meter), the golden world (`3658c00`), the leaves (`24691a8`: stalks about 7 mm thick, larger upper blades, hairs on the margins). Checked on `main`: type check and build clean, 86 of 86 tests, frames 1350 and 1515 at `review` beside the approved pair, frames 45, 420, 780, 1080 and 1755 at `draft`. Round 3 still judges `3e10245`; all of this is judged in round 4.
+- 2026-11-21 · Phase 3 · What the round 3 critics said about the cut at 40.00 s, checked against the film. R4 scores 4 with one severe issue (the plant swaps shape in one frame) and two majors about the same cut (the horizon steps, the camera's speed changes). Measured: frames 1199 and 1200 on `main` show the same head and the same leaves in the same places (`out/work/scratch/view/cut-1199-1200.jpg`); G12 finds every cut's worst step at 1.00 of 1.5 for the plant's shape and the camera; the camera path gives a horizon that climbs 0.64 px a frame and a far point that pans 2.09 px a frame at 1920 wide on both sides of the cut, with no step (`out/work/scratch/cutcam.ts`). So the geometry and the move are continuous and the film's rule holds. What differs is how each world shows them: fog light shows the pale underside of the head and every leaf in grey, the golden backlight shows a dark ball and loses the right leaf against the dark field; the fog hides everything far, so the move only becomes visible after the cut; the golden world has hills above the field's edge where the fog shows only the edge. The kit lets a severe or major issue be declined only against an approved image, a choice of Brandon's or a settled line, so none of the three is declined. They are open issues of the cut with two owners: `bloom` must show the plant's form in the shade in its first frames (the skin's raised shade, less lift taken away by the lens), and in Phase 4 the `frost` unit lights the bud so that it reads closed, draws the same ridge faintly through its fog at the same height and keeps something far in view that shows the move.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -410,9 +413,12 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-- Round 3 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom`, then `npm run pack -- --phase 3 --round 3 --unit bloom` · judged frames 1350 and 1515 and the sheets of 40 to 52 s at the `review` tier · logs `out/work/logs/r3-gate.log`, `r3-measure.log`, `r3-pack.log` · this VM · started 2026-11-21 09:54:55 UTC · 20 to 25 minutes expected. Nothing under `src/` changes on `main` and nothing is built there until it ends.
+None.
 
 Finished in this task:
+
+- Check of the merged `main` (`09ef64a`) · build, `npx vitest run`, review 16x9 stills of 1350 and 1515, draft preview stills of 45, 420, 780, 1080, 1755 · started 10:24 UTC, ended 10:26 UTC · logs `out/work/logs/r3b-build.log`, `r3b-test.log`, `r3b-stills.log`, `r3b-others.log` · build clean (engine `3b2b0328238032c4`), 86 of 86 tests, review stills 47.1 s and 41.3 s (the first includes the page load), nothing broken in another unit's frame.
+- Round 3 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom`, then `npm run pack -- --phase 3 --round 3 --unit bloom` · started 2026-11-21 09:54:55 UTC, ended 10:23 UTC (28 minutes, 20 to 25 expected; two judged stills at `final` took 223 s each) · logs `out/work/logs/r3-gate.log`, `r3-measure.log`, `r3-pack.log` · results in the Round 3 entry.
 
 - Autopilot check of the published app · 2026-11-21 06:48 to 06:53 UTC · `out/work/scratch/autopilot-check.ts`, results in `out/work/autopilot/`. From `https://sunflower-film.pplx.app/` the harness's browser is sent to the organization sign-in, so nothing played there (`published.json`). From the hosting's own copy of the same upload (a temporary address the publish step gives) the film played from frame 0 to frame 1799 in order in 61.8 s after 2.0 s of loading, 38 frames shown on this software renderer (8 in `dawn`, 11 in `rain`, 9 in `night`, 5 in `frost`, 3 in `bloom`, 2 in `field`), ended `done`, no error, no console message (`hosted.json`, seven screenshots looked at by the Builder).
 - `npm run gate -- --phase 2` · started 06:45 UTC, ended 06:46 UTC (results of this build were reused where the build had not changed) · log `out/work/logs/gate-p2.log` · all 14 green, the lines are in the "Phases" table.
@@ -481,11 +487,11 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - Started 2026-11-21 09:55 UTC. Judges commit `3e10245`. Unit `bloom`, the first round of its loop; judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Critics, each a fresh sandbox agent that gets attachments only: R1 match, R3 surface and detail, R4 motion, and the R2 jury (5 jurors for each of the 2 judged images and the 2 controls; the controls' votes are collected in this round and reused in the unit's later rounds). Families: R1 GPT, R3 Gemini, R4 Claude; each image's five jurors come from five families (GPT, Gemini, Claude, GLM, Grok).
 - [x] Machine checks (`npm run gate -- --phase 3 --machine`): 10:02 UTC, 12 of 13 green, G3 red. G3: frames 45 and 780 are pixel identical across two page loads in another order and frame 45 twice in a row, frame 1515 differs in 2 pixels by 1 step (16x9, `review`). The other twelve: G1 build clean, G2 86 of 86 tests, G4 sizes, G5 no interface in capture, G6 config and the judged frame list, G7 the master fits X, G8 20 generated files have recipes, G9 277 tracked files and 228 MB, G10 limits in the Phase 0 record, G11 textures 119 MB of 800 (web) and 355 MB of 2400 (full), G12 every cut's worst ratio 1.00 of 1.5, G13 no finished unit yet and 7 stand-ins outside `bloom`
 - [x] Measures (`npm run measure -- --unit bloom`): 10:09 UTC, on the judged stills at the `final` tier (222.7 s and 223.4 s a frame). M1 pass on both frames. M2 pass on both (0.00 % of the textured pixels in the sharp zone are under 1 texel a pixel, 2 % allowed). M3: frame 1350 fails with a sharpness ratio of 0.659 against the approved image (0.8 needed), frame 1515 passes with 0.881. Numbers in `out/work/measures/bloom.json`
-- [ ] Pack (`npm run pack -- --phase 3 --round 3 --unit bloom`)
-- [ ] R1 answer
-- [ ] R2 jury answers
-- [ ] R3 answer
-- [ ] R4 answer
+- [x] Pack (`npm run pack -- --phase 3 --round 3 --unit bloom`): 10:23 UTC, 13.6 minutes. `out/work/packs/round-003/R1` (8 files), `R2` (4), `R3` (6), `R4` (4), each with its manifest; the key stays outside at `out/work/packs/keys/round-003.json` until every answer is in. The Builder looked at every file before sending: all well formed
+- [x] R1 answer: `reviewer_03`, GPT family, sent 10:25 UTC, answered 10:26 UTC. Score 5, not a pass: 6 severe, 10 major. `scorecards/round-003/R1.json`, word for word
+- [ ] R2 jury answers (jurors `reviewer_06` to `reviewer_25`, sent in waves from 10:30 UTC because at most 12 agents run at once)
+- [x] R3 answer: `reviewer_04`, Gemini family, sent 10:25 UTC, answered 10:31 UTC. Score 4, not a pass: 1 severe, 6 major, 1 minor. `scorecards/round-003/R3.json`
+- [x] R4 answer: `reviewer_05`, Claude family, sent 10:25 UTC, answered 10:28 UTC. Score 4, not a pass: 1 severe, 3 major, 2 minor. `scorecards/round-003/R4.json`
 - [ ] Fixes
 - [ ] Summary, status, push
 
@@ -551,6 +557,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 09:54 UTC · Round 3 starts: the first round of bloom judges 3e10245
 - 2026-11-21 09:55 UTC · Status 23: round 3 starts on the bloom with every agent's pass merged
 - 2026-11-21 10:18 UTC · Status 24: round 3 judged, measures in, the bud at 45 s read again and the growth change prepared on a branch
+- 2026-11-21 10:34 UTC · Round 3: packs built, R1 5, R3 4, R4 4 saved word for word; main holds the growth, lens, field, ground, golden and leaf merges
 
 ## Session log
 
