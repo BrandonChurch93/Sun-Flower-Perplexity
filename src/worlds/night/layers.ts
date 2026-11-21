@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -102,9 +102,7 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
 
 // The land is the same land in every world: its line is laid out round the bearing of the golden hour's sun.
-const LAND_BEARING_DEG = -133.67
-
-export function makeFarLayers(): FarLayers {
+export function makeFarLayers(landBearingDeg: number): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
@@ -152,13 +150,13 @@ export function makeFarLayers(): FarLayers {
   add(land, makeSurface({ name: 'night far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
   SKYLINE.forEach((layer, i) => {
-    const geometry = skylineStrip(i, LAND_BEARING_DEG)
+    const geometry = skylineStrip(i, landBearingDeg)
     const tone = TONES[i]
     const surface = makeSurface({
       name: `night ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })

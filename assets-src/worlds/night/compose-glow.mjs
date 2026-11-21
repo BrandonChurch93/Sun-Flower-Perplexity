@@ -19,7 +19,7 @@ const srgb = (v) => Math.round(255 * Math.min(1, Math.max(0, v <= 0.0031308 ? v 
 
 const small = sharp(TAKE).resize(W, H, { kernel: 'lanczos3' })
 const points = await raw(small.clone())
-const calm = await raw(sharp(await small.clone().median(7).png().toBuffer()).median(5).blur(1.6))
+const calm = await raw(sharp(await small.clone().median(5).png().toBuffer()).median(5).blur(1.0))
 const wide = await raw(small.clone().blur(14))
 
 const out = Buffer.alloc(W * H * 3)

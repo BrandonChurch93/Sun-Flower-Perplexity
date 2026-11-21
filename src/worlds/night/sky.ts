@@ -26,7 +26,7 @@ const METEOR_FROM_DEG: [number, number] = [-187.7, 16.7]
 const METEOR_TO_DEG: [number, number] = [-181.7, 11.4]
 const METEOR_LIGHT = 0.5
 
-const STARS = 52000
+const STARS = 60000
 const FAINTEST = 0.028
 const BRIGHTEST = 12
 const SLOPE = 1.35
@@ -160,7 +160,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     const pick = random.next()
     const width = random.next()
     const glow = glowAt(u, v)
-    if (keep > 0.2 + 14 * glow) continue
+    if (keep > 0.07 + 6 * glow) continue
     d.copy(forward).addScaledVector(right, ((u - 0.5) * GLOW_COVER) / MAP_SCALE_X).addScaledVector(up, ((0.5 - v) * GLOW_COVER) / MAP_SCALE_Y).normalize()
     position[n * 3] = d.x
     position[n * 3 + 1] = d.y

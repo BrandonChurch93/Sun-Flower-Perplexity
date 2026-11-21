@@ -1,5 +1,6 @@
 import type { WorldSettings, WorldStageMaker } from '../../core/world.ts'
 import { makeMist, type MistSettings } from '../../weather/mist/index.ts'
+import { world as golden } from '../golden/index.ts'
 import { makeFarLayers } from './layers.ts'
 import { NightSky } from './sky.ts'
 
@@ -22,7 +23,7 @@ const STAR_GAIN = 4
 
 export const stage: WorldStageMaker = (def) => {
   const sky = new NightSky({ gain: SKY_GAIN, stars: STAR_GAIN, glow: def.sky.glow, glowPower: def.sky.glowPower, zenith: def.sky.zenith, horizon: def.sky.horizon })
-  const far = makeFarLayers()
+  const far = makeFarLayers(golden.sun.azimuthDeg)
   const mist = makeMist('night', MIST)
   let open = 0
   let close = 0
