@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -133,7 +133,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
         position[v] = Math.sin(az) * r
-        position[v + 1] = 1.3
+        position[v + 1] = SKYLINE_LAND_M
         position[v + 2] = Math.cos(az) * r
         info[v] = r
         if (j > 0) {
@@ -164,5 +164,14 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
     add(geometry, surface.main, 0)
   })
 
-  return { meshes, triangles, setTime: (time) => rings.forEach((ring) => ring.setTime(time)) }
+  const plain = meshes[0]
+  return {
+    meshes,
+    triangles,
+    setTime: (time) => {
+      rings.forEach((ring) => ring.setTime(time))
+      plain.position.y = skylineLandM(time) - SKYLINE_LAND_M
+      plain.updateMatrix()
+    },
+  }
 }
