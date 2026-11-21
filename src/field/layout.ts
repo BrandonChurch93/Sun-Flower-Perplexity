@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
-import { setLeafHold, setLeafTurn } from '../plant/growth.ts'
+import { heightAt, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
@@ -50,6 +50,26 @@ const ramp = (a: number, b: number, t: number): number => {
 export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
 export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time))
 
+// Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
+// while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
+const SETTLED_S = 45
+const KNEE = 12
+const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
+export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_S) / Math.max(heightAt(time), 0.001)))
+export const youngOf = (tone: number): number => 0.9 + 0.1 * tone
+export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
+// At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
+export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time)
+// In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
+export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time))
+export const sizeGlsl = /* glsl */ `
+float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
+float sizeAt(float size, float tone, float ahead) {
+  float a = (0.9 + 0.1 * tone) / size;
+  return size * (softMin(a, ahead) - softMin(a, 1.0) + 1.0);
+}
+`
+
 // A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
 const AWAY_SHARE = 0.85
 export const budTurn = (time: number, id: number): number => {
@@ -79,6 +99,8 @@ const SIDEWAYS = 0.2
 const BEHIND = 0.22
 const SHORT = 0.1
 const STRAGGLERS = 0.05
+const SKIRT_GAPS = 0.25
+const SKIRT_SIZE = [0.4, 0.46]
 const UNDER_FROM_M = 7
 const UNDER_TO_M = 18
 const UNDER_PER_GAP = 2
@@ -112,8 +134,9 @@ const bell = (id: number, channel: number): number => (hash01(SEED, channel, id)
 
 // The front edge of the field wanders by up to two rows. Right behind the plant it stands back by one, so no head crowds the plant's own.
 const BAY = { left: -0.45, right: 0.45, soft: 0.3, rows: 1 }
+const bayAt = (across: number): number => step(BAY.left - BAY.soft, BAY.left, across) * (1 - step(BAY.right, BAY.right + BAY.soft, across))
 function edgeRows(across: number): number {
-  const bay = step(BAY.left - BAY.soft, BAY.left, across) * (1 - step(BAY.right, BAY.right + BAY.soft, across))
+  const bay = bayAt(across)
   const wander = step(0.56, 0.8, noise(20, across * 0.3, 3.7)) * 2
   return Math.max(bay * BAY.rows, wander)
 }
@@ -150,12 +173,14 @@ export function fieldPlaces(): FieldPlaces {
       const out = Math.hypot(depth, n * plantSpacingM)
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
       const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
-      if (k < edgeRows(across) - 0.5) continue
+      // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
+      const skirt = k < edgeRows(across) - 0.5
+      if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
       const reach = Math.hypot(x, z)
       // A crop sown thick: in the first rows a shorter plant stands in every gap of the row, in the shade of the tall ones, so there are leaves at every height.
-      for (let u = 0; reach < UNDER_TO_M && u < UNDER_PER_GAP; u++) {
+      for (let u = 0; !skirt && reach < UNDER_TO_M && u < UNDER_PER_GAP; u++) {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
         const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
@@ -166,11 +191,11 @@ export function fieldPlaces(): FieldPlaces {
       const away = step(20, 60, reach)
       const wide = noise(25, x * 0.035, z * 0.035)
       const thin = 0.05 * step(0.62, 0.8, noise(21, across * 0.5, depth * 0.5)) + 0.3 * away * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))
-      if (hash01(SEED, 9, id) < 0.03 + thin) continue
+      if (!skirt && hash01(SEED, 9, id) < 0.03 + thin) continue
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const short = skirt || hash01(SEED, 15, id) < SHORT
+      const size = skirt ? SKIRT_SIZE[0] + (SKIRT_SIZE[1] - SKIRT_SIZE[0]) * hash01(SEED, 72, id) : short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, (0.65 - 0.3 * away) * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + away * (0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5))))
