@@ -110,10 +110,11 @@ function edgeRows(across: number): number {
   return Math.max(bay * BAY.rows, wander)
 }
 
-// Two neighbors of the third row are set by hand, to the right of the plant at sunset: both in a lane the sun comes down, one of the early kind facing the lens, one turned three quarters.
+// Three neighbors of the second row are set by hand, to the right of the plant at sunset: a group of tall heads, one of the early kind facing the lens, one turned part away, one seen from the side.
 const EDGE = [
-  { row: 2, across: 0.93, size: 0.82, turn: 0.2, kind: 2 },
-  { row: 2, across: 1.31, size: 0.8, turn: 1.0, kind: 1 },
+  { row: 1, across: 0.762, size: 0.859, turn: 0.2, kind: 2, more: false },
+  { row: 1, across: 0.896, size: 0.88, turn: -0.6, kind: 1, more: true },
+  { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 1, more: true },
 ]
 
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
@@ -180,7 +181,7 @@ export function fieldPlaces(): FieldPlaces {
     for (let i = 0; i < near.length; i += PLACE) if (Math.hypot(near[i] - x, near[i + 1] - z) < Math.hypot(near[at] - x, near[at + 1] - z)) at = i
     do id++
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
-    near.splice(at, PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
+    near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
   return made
