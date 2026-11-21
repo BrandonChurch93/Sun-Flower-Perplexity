@@ -157,7 +157,7 @@ vec3 heat(float t) {
 vec4 finish(vec3 color, vec3 worldPos, float viewDepth, float texelsPerPixel) {
   float coc = cocOf(viewDepth);
   if (uDiag == 7) return vec4(uStandIn > 0.5 ? vec3(1.0, 0.0, 0.6) : vec3(dot(color, vec3(0.3, 0.6, 0.1))), coc);
-  if (uDiag == 4) return vec4(texelsPerPixel < 0.0 ? vec3(0.03) : heat(texelsPerPixel * 0.5), texelsPerPixel < 0.0 ? -1.0 : texelsPerPixel);
+  if (uDiag == 4) return vec4(texelsPerPixel < 0.0 ? vec3(0.03) : heat(texelsPerPixel * 0.5), texelsPerPixel < 0.0 ? -1.0 : (coc < uFocusCoc ? texelsPerPixel : -2.0));
   if (uDiag == 5) return vec4(vec3(viewDepth), coc);
   if (uDiag == 6) return vec4(coc < uFocusCoc ? vec3(0.1, 1.0, 0.3) : vec3(dot(color, vec3(0.3, 0.6, 0.1))) * 0.5, coc);
   return vec4(applyFog(color, worldPos), coc);

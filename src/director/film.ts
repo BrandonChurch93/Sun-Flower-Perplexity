@@ -207,10 +207,34 @@ export class Film {
     return { frame, invalid, tip: { x, y, depthM: depth, cocPx: Number.isFinite(cocPx) ? cocPx : -1 } }
   }
 
+  // Counts texels per screen pixel over the textured pixels of the sharp zone. Needs the texels view at one sample.
+  texels(frameIndex: number): TexelCheck {
+    const frame = clampFrame(frameIndex)
+    if (frame !== this.lastFrame) throw new Error(`frame ${frame} is not the frame on the canvas`)
+    if (this.diag !== 'texels' || samplesOf(this.lastTier) !== 1) throw new Error('the texel count needs the texels view at the draft tier')
+    const { stage } = this
+    const { width, height } = stage
+    const pixels = new Float32Array(width * height * 4)
+    stage.renderer.readRenderTargetPixels(stage.accumulator.target, 0, 0, width, height, pixels)
+    let textured = 0
+    let soft = 0
+    let outside = 0
+    for (let i = 3; i < pixels.length; i += 4) {
+      const a = pixels[i]
+      if (a >= 0) {
+        textured++
+        if (a < config.detail.minTexelsPerPixel) soft++
+      } else if (a < -1.5) outside++
+    }
+    return { frame, pixels: width * height, textured, soft, texturedOutsideSharpZone: outside, softShare: textured ? soft / textured : 0 }
+  }
+
   textureMb(): number {
     return this.assets.megabytes()
   }
 }
+
+export interface TexelCheck { frame: number; pixels: number; textured: number; soft: number; texturedOutsideSharpZone: number; softShare: number }
 
 export interface FrameCheck { frame: number; invalid: number; tip: { x: number; y: number; depthM: number; cocPx: number } }
 

@@ -4,7 +4,7 @@ import { isDiag } from '../core/shading.ts'
 import { REQUIRED_EXTENSIONS } from '../core/stage.ts'
 import { standIns, type StandIn } from '../core/standins.ts'
 import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
-import type { Film, FrameCheck, FrameState } from '../director/film.ts'
+import type { Film, FrameCheck, FrameState, TexelCheck } from '../director/film.ts'
 
 declare const __ENGINE_HASH__: string
 declare const __UNIT_HASHES__: Record<string, string>
@@ -33,6 +33,7 @@ export interface Showcase {
   renderFrame(frameIndex: number, tier: string): Promise<void>
   requirements(): { extensions: string[]; limits: Record<string, number> }
   check(frameIndex: number): FrameCheck
+  texels(frameIndex: number): TexelCheck
 }
 
 declare global {
@@ -69,6 +70,7 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
       return film.renderFrame(frameIndex, tier as TierId)
     },
     check: (frameIndex) => film.check(frameIndex),
+    texels: (frameIndex) => film.texels(frameIndex),
     requirements: () => ({
       extensions: REQUIRED_EXTENSIONS.slice(),
       limits: {

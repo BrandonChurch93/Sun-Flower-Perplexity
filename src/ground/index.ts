@@ -112,7 +112,7 @@ function disc(): THREE.BufferGeometry {
         const p = (j - 1) * sides
         const q = j * sides
         const t = (s + 1) % sides
-        index.push(p + s, q + s, q + t, p + s, q + t, p + t)
+        index.push(p + s, q + t, q + s, p + s, p + t, q + t)
       }
     }
   })
