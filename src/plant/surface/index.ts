@@ -263,8 +263,8 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover)) * pale * fuzz;
   // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
   color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
-  // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
-  color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
+  // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone. Only on a part too thick to light up: a crease of a sheet is no outline.
+  color += direct * (TISSUE_EDGE * fuzz * catches * (peak > 0.0 ? 0.0 : 1.0) * (1.0 - smoothstep(0.05, 0.4, fv)));
 
   return color;
 #endif
