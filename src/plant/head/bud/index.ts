@@ -91,7 +91,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.1, 0.16, 0.06]
+const BULGE = [0.16, 0.2, 0.06]
 const BULGE_LATE = [0.16, 0.14, 0.1]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
@@ -102,7 +102,7 @@ const FEET_LOW = [0.52, 0.12, 0]
 const SHUT_LOW = 0.6
 const FEET_UP = [0.05, 0, 0.25]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.25, 1.1, 0.9]
+const SHUT_BROAD = [1.45, 1.2, 0.9]
 const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
