@@ -27,6 +27,10 @@ export interface MistSettings {
   rise?: number
   // The half width in radians of the wide glow round the sun. 0.24 when left out.
   lobeRad?: number
+  // How many times longer than wide a bank is along z: the banks lie in rolls that way. 1 when left out.
+  rollZ?: number
+  // How unevenly the mist stands: 0 one level top, 1 tall banks with low mist between them. Level when left out.
+  swell?: number
 }
 
 export interface Mist {
@@ -61,6 +65,8 @@ uniform vec3 uShade;
 uniform float uForward;
 uniform vec2 uDrift;
 uniform float uBankM;
+uniform vec2 uRoll;
+uniform float uSwell;
 uniform float uBroken;
 uniform float uSheet;
 uniform float uShare;
@@ -70,10 +76,10 @@ void main() {
   vec3 ray = vWorld - uCamPos;
   float d = length(ray);
   vec3 v = ray / d;
-  vec2 at = (vWorld.xz - uDrift * uMistTime) / uBankM;
+  vec2 at = (vWorld.xz - uDrift * uMistTime) / (uBankM * uRoll);
   float bank = valueNoise(at + uSheet * 0.37);
   float wisp = valueNoise(at * 3.1 + vec2(17.0, 5.0) + uSheet * 0.11);
-  float height = uHeightM * (0.75 + 0.35 * bank + 0.15 * wisp);
+  float height = uHeightM * (0.75 + 0.35 * bank + 0.15 * wisp) * mix(1.0, 0.35 + 2.3 * smoothstep(0.3, 0.75, valueNoise(at * 0.8 + vec2(3.0, 11.0))), uSwell);
   float amount = mix(1.0, smoothstep(0.25, 0.75, 0.7 * bank + 0.3 * wisp) * 1.8, uBroken);
   // The share of this sheet's slab that the ray crosses before it meets the ground, with the mist thinning upward along it.
   float across = max(length(v.xz), 0.05);
@@ -118,6 +124,8 @@ export function makeMist(name: string, settings: MistSettings, order = 60): Mist
         uForward: { value: settings.forward },
         uDrift: { value: new THREE.Vector2().fromArray(settings.drift) },
         uBankM: { value: settings.bankM },
+        uRoll: { value: new THREE.Vector2(1, settings.rollZ ?? 1) },
+        uSwell: { value: settings.swell ?? 0 },
         uBroken: { value: settings.broken },
         uSheet: { value: i + 1 },
         uShare: { value: 1 - (settings.rise ?? 0) * (1 - i / (count - 1)) },

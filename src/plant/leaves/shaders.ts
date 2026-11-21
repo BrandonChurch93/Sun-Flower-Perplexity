@@ -16,12 +16,14 @@ in vec2 uv;
 in vec4 aLeaf;
 uniform vec4 uLeafState[${LEAVES}];
 uniform float uLeafRipe[${LEAVES}];
+uniform float uLeafTeeth[${LEAVES}];
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vLeaf;
 out vec4 vState;
 out float vRipe;
+out float vTeeth;
 out float vDepth;
 void main() {
 #ifdef PLANT_FIELD
@@ -39,6 +41,7 @@ void main() {
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
   vRipe = uLeafRipe[int(aLeaf.x + 0.5)];
+  vTeeth = uLeafTeeth[int(aLeaf.x + 0.5)];
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
@@ -47,6 +50,17 @@ void main() {
 // The mean of the detail map in linear light, so that the map carries variation and the colors below carry the hue.
 const DETAIL_MEAN = 'vec3(0.163, 0.269, 0.111)'
 
+// The fine teeth of a young blade's edge, cut in the skin: how far in from the edge the bay between two teeth reaches, as a share of the half width.
+const serrationGlsl = /* glsl */ `
+float serration(vec2 uv, float seed, float amount) {
+  float x = 30.0 * pow(max(uv.y, 0.0), 0.85) + 17.0 * seed + 0.43 * step(0.0, uv.x);
+  float f = fract(x);
+  float point = f < 0.72 ? f / 0.72 : (1.0 - f) / 0.28;
+  float size = 0.55 + 0.9 * fract(sin(floor(x) * 12.9898 + seed * 78.233) * 43758.5453);
+  return amount * 0.05 * size * (1.0 - point * point * (3.0 - 2.0 * point)) * smoothstep(0.03, 0.14, uv.y) * smoothstep(1.0, 0.9, uv.y);
+}
+`
+
 export const bladeFragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vNormal;
@@ -54,8 +68,10 @@ in vec2 vUv;
 in vec4 vLeaf;
 in vec4 vState;
 in float vRipe;
+in float vTeeth;
 in float vDepth;
 ${tissueGlsl}
+${serrationGlsl}
 #ifdef PLANT_FIELD
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
@@ -171,6 +187,7 @@ void main() {
   vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;
+  if (vTeeth > 0.0 && abs(vUv.x) > 1.0 - serration(vUv, vLeaf.z, vTeeth)) discard;
   outColor = shaded;
 }
 #endif
@@ -182,10 +199,13 @@ in vec4 vLeaf;
 in vec4 vMark;
 in vec4 vState;
 in vec2 vPlane;
+in float vTeeth;
 uniform sampler2D uMarks;
+${serrationGlsl}
 void main() {
   float mark = texture(uMarks, vPlane * 8.0 + vec2(vLeaf.z * 31.0, vLeaf.z * 17.0)).r;
   if (mark + vMark.y * smoothstep(0.62, 1.0, abs(vUv.x)) - vMark.x - 0.3 * (1.0 - vState.w) > 0.0) discard;
+  if (vTeeth > 0.0 && abs(vUv.x) > 1.0 - serration(vUv, vLeaf.z, vTeeth)) discard;
   outColor = vec4(1.0);
 }
 `

@@ -9,7 +9,7 @@ import { segmentById } from '../director/timeline.ts'
 import { companionPlace, right, toward } from '../field/layout.ts'
 import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsKept } from './blades.ts'
 import { grassCover, grassTimes } from './cover.ts'
-import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
+import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, lumpScatterYoung, massScatter, massScatterYoung, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { fieldTufts, grassFragment, grassVertex, tufts } from './grass.ts'
 import { fieldLight } from './light.ts'
@@ -97,12 +97,12 @@ export class Ground {
     this.loose = makeSurface({ name: 'soil crumbs', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: this.uniforms })
     this.blades = makeSurface({ name: 'grass blades', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, castShadow: true, uniforms: this.uniforms })
     this.fine = makeSurface({ name: 'soil crumbs fine', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: { ...this.uniforms, uFine: this.shown } })
-    const close = (mesh: THREE.Mesh): THREE.Mesh => {
+    const close = (mesh: THREE.Mesh, kept?: boolean): THREE.Mesh => {
       const all = mesh.geometry.getIndex()!.count
       mesh.onBeforeRender = () => {
         const away = shared.uCamPos.value.length()
         this.shown.value = 1 - Math.min(1, Math.max(0, (away - fineReachM[0]) / (fineReachM[1] - fineReachM[0])))
-        mesh.geometry.setDrawRange(0, this.shown.value > 0 ? all : 0)
+        mesh.geometry.setDrawRange(0, this.shown.value > 0 && (kept === undefined || shared.uTime.value >= keptS === kept) ? all : 0)
       }
       return mesh
     }
@@ -126,9 +126,11 @@ export class Ground {
     add(scatter('ground crumbs', crumbScatter), this.loose, true)
     add(when(scatter('ground clods', clodScatter), false), this.loose, true)
     add(when(scatter('ground clods', clodScatterKept), true), this.loose, true)
-    add(close(scatter('ground lumps', lumpScatter)), this.fine, true)
+    add(close(scatter('ground lumps', lumpScatterYoung), false), this.fine, true)
+    add(close(scatter('ground lumps', lumpScatter), true), this.fine, true)
     add(close(scatter('ground grains', grainScatter)), this.fine, true)
-    add(scatter('ground masses', massScatter), this.loose, true)
+    add(when(scatter('ground masses', massScatterYoung), false), this.loose, true)
+    add(when(scatter('ground masses', massScatter), true), this.loose, true)
     add(when(blades(clumps, beadSizes), false), this.blades, true)
     add(when(blades(clumpsKept, beadSizesKept), true), this.blades, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)

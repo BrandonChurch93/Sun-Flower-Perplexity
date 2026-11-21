@@ -83,7 +83,7 @@ void main() {
   float lane = across * 2.6 + 0.07 * (valueNoise(vec2(along * 9.0, across * 3.0 + body)) - 0.5) + 0.1 * damp * (valueNoise(vec2(along * 3.3 + body * 2.0, across * 1.7)) - 0.5);
   float band = abs(fract(lane + 0.5) - 0.5) * 2.0;
   float wide = hash11(floor(lane + 0.5) + body * 17.0);
-  float white = smoothstep(mix(0.1, 0.16, damp) + mix(0.2, 0.26, damp) * wide, mix(0.2, 0.26, damp) + mix(0.2, 0.26, damp) * wide, band);
+  float white = smoothstep(mix(0.1, 0.34, damp) + mix(0.2, 0.26, damp) * wide, mix(0.2, 0.44, damp) + mix(0.2, 0.26, damp) * wide, band);
   float hairline = smoothstep(0.75, 0.95, abs(fract(across * 13.0 + body * 0.37) - 0.5) * 2.0);
   white = saturate(white - 0.3 * hairline * white + 0.08 * hairline * (1.0 - white));
   float scuff = valueNoise(vec2(across * 9.0 + body * 5.0, along * 26.0));
@@ -92,7 +92,7 @@ void main() {
   float thread = smoothstep(0.55, 0.85, fibre) * damp;
   white = saturate(white * (1.0 - 0.45 * thread * scuff) + 0.3 * thread * (1.0 - white));
   vec3 outer = mix(vec3(0.05, 0.05, 0.052), mix(vec3(0.8, 0.8, 0.77), vec3(0.86, 0.82, 0.72), damp), white * (0.8 + 0.2 * scuff));
-  vec3 inner = mix(vec3(0.16, 0.15, 0.13), vec3(0.62, 0.6, 0.55), 0.25 * grain + 0.75 * smoothstep(0.1, 0.45, abs(fract(across * 11.0) - 0.5) * 2.0));
+  vec3 inner = mix(vec3(0.2, 0.19, 0.17), vec3(0.76, 0.74, 0.69), 0.25 * grain + 0.75 * smoothstep(0.1, 0.45, abs(fract(across * 11.0) - 0.5) * 2.0));
   inner = mix(inner, vec3(0.07, 0.065, 0.06), 0.85 * smoothstep(0.72, 0.96, abs(across)));
   vec3 shell = mix(inner, outer, upper);
   float soak = smoothstep(0.3, 0.9, uPlantWet);
