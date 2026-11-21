@@ -4,7 +4,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { leafAge, leafCount, leafDroop, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
+import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafCount, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -485,6 +485,31 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(33, 40, time)
     const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.7 + 0.3 * smoothstep(3, 14, age), early)
+    // A leaf born under the bud grows out past it, never up through it.
+    let ceiling = 1.6
+    const guard = 1 - smoothstep(37, 40, time)
+    const bud = bodyRadius(time)
+    if (guard > 0 && bud > 0) {
+      const u = leafStemFraction(i, time)
+      const up = (1 - u) * heightAt(time) + bodyHalfDepth(time)
+      const off = stemRadius(time, u)
+      const steep = leafElevation(i, time, pose.inputs)
+      const reach = smoothstep(0.5, 1, total / Math.max(up - bud, 1e-4))
+      const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / Math.hypot(up, off))) - Math.atan2(off, up)
+      ceiling = lerp(1.6, 1.5708 - clear, guard * reach)
+      const lower = Math.max(0, steep - ceiling)
+      if (lower > 0) {
+        const c = Math.cos(lower)
+        const k = Math.sin(lower)
+        const mx = frame.mx * c - frame.nx * k
+        const my = frame.my * c - frame.ny * k
+        const mz = frame.mz * c - frame.nz * k
+        frame.nx = frame.nx * c + frame.mx * k
+        frame.ny = frame.ny * c + frame.my * k
+        frame.nz = frame.nz * c + frame.mz * k
+        frame.mx = mx; frame.my = my; frame.mz = mz
+      }
+    }
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
@@ -498,7 +523,7 @@ export function create(options: PartOptions): PlantPart {
     const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
-    const rise = set * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
+    const rise = set * clamp(Math.min(leaf.rise, ceiling) - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const raining = hero && size > 0.02 && stateUniforms.uPlantWet.value > 0
     const mid = 0.62 * total
     const dip = raining ? dipAt(time, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
