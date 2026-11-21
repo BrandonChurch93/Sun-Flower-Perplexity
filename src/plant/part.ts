@@ -114,7 +114,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
   vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
   float under = max(uCanopy * (1.1 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
-  return exp(-mix(1.0, 10.0, smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
+  return exp(-mix(1.0, 12.0, smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -126,7 +126,7 @@ float plantSky(vec3 world) {
   // The sky comes from above whatever the sun does: a closed crop keeps about a fifth of it at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(0.6, 0.38, closed), 1.0, exp(-mix(1.5, 2.0, closed) * under));
+  return mix(mix(0.6, 0.46, closed), 1.0, exp(-mix(1.5, 2.0, closed) * under));
 #else
   return 1.0;
 #endif
