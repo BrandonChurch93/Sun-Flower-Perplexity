@@ -46,8 +46,7 @@ void main() {
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.4, 0.0)) * (0.55 + 0.45 * f);
   // Hoar on the crowns: the tops are paler than the mass under them.
   color = mix(color, vec3(0.5, 0.53, 0.56) * skyAmbient(vec3(0.0, 1.0, 0.0)), 0.35 * smoothstep(0.55, 1.0, f) * smoothstep(0.3, 0.8, mass));
-  // The fog lies thickest on the ground, so the foot of a far shape goes first.
-  float see = uSee * (0.45 + 0.55 * smoothstep(0.0, 0.7, f)) * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
+  float see = uSee * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
   outColor = finish(mix(fogLight(v), color, see), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -64,15 +63,15 @@ void main() {
 
 // What each layer of the skyline is made of in the frost, and how much of it the fog lets through. The salt of a layer is the one the golden world draws its crowns with, so a crown stands where it stood.
 const TONES: { base: [number, number, number]; see: number }[] = [
-  { base: [0.2, 0.22, 0.24], see: 0.1 },
-  { base: [0.17, 0.19, 0.2], see: 0.12 },
-  { base: [0.12, 0.14, 0.14], see: 0.15 },
-  { base: [0.1, 0.12, 0.11], see: 0.2 },
-  { base: [0.07, 0.09, 0.08], see: 0.28 },
-  { base: [0.06, 0.075, 0.07], see: 0.34 },
-  { base: [0.05, 0.065, 0.06], see: 0.4 },
-  { base: [0.06, 0.07, 0.065], see: 0.4 },
-  { base: [0.07, 0.075, 0.07], see: 0.4 },
+  { base: [0.2, 0.22, 0.24], see: 0.15 },
+  { base: [0.17, 0.19, 0.2], see: 0.2 },
+  { base: [0.12, 0.14, 0.14], see: 0.25 },
+  { base: [0.1, 0.12, 0.11], see: 0.35 },
+  { base: [0.07, 0.09, 0.08], see: 0.45 },
+  { base: [0.06, 0.075, 0.07], see: 0.7 },
+  { base: [0.05, 0.065, 0.06], see: 0.7 },
+  { base: [0.06, 0.07, 0.065], see: 0.7 },
+  { base: [0.07, 0.075, 0.07], see: 0.7 },
 ]
 
 const layerSalt = (i: number): number => i * 17.3 + 1.7

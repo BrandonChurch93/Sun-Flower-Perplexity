@@ -15,7 +15,7 @@ in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${fogLight}
 
-const float DISC = 0.0125;
+const float DISC = 0.0135;
 
 void main() {
   vec2 ndc = vUv * 2.0 - 1.0;
@@ -28,8 +28,9 @@ void main() {
   vec2 deck = d.xz / (max(d.y, 0.0) + 0.35);
   float banks = 0.6 * valueNoise(deck * vec2(1.7, 1.1) + vec2(0.011 * uNow, 3.0)) + 0.4 * valueNoise(deck * vec2(3.9, 2.3) + vec2(-0.017 * uNow, 11.0));
   color *= 1.0 + 0.07 * (banks - 0.5) * smoothstep(0.02, 0.2, el);
-  float soft = DISC * (0.75 - 0.3 * uFogThin);
-  color += uDisc * (1.0 + 0.6 * uFogThin) * (1.0 - smoothstep(DISC - soft, DISC + soft, theta));
+  // The disc is white through the fog and has no hard edge of its own. As the fog thins round it, it stands out a little more.
+  float soft = DISC * (0.4 - 0.15 * uFogThin);
+  color = mix(color, uDisc * (1.0 + 0.3 * uFogThin), 1.0 - smoothstep(DISC - soft, DISC + soft, theta));
   float grey = dot(color, vec3(0.3, 0.6, 0.1));
   if (uDiag == 7) color = vec3(grey);
   if (uDiag == 4) { outColor = vec4(vec3(0.03), -1.0); return; }
@@ -50,7 +51,7 @@ export class FrostSky {
       uProj: { value: new THREE.Vector4() },
       uPixelAngle: { value: 0.001 },
       uNow: { value: 0 },
-      uDisc: { value: new THREE.Vector3().fromArray(def.sun.color).multiplyScalar(def.sky.disc) },
+      uDisc: { value: new THREE.Vector3().setScalar(def.sky.disc) },
     })
   }
 
