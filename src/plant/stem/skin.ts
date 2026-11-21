@@ -59,9 +59,10 @@ ${tissueGlsl}
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
-  float tender = floor(vSkin.y * 0.25);
-  float youth = saturate(vSkin.y - 4.0 * tender - 1.0);
-  tender *= 0.015625;
+  float age = floor(vSkin.y * 0.25);
+  float youth = saturate(vSkin.y - 4.0 * age - 1.0);
+  float fresh = saturate((age - 64.0) * 0.0625);
+  float tender = min(age, 64.0) * 0.015625;
   float pale = vSkin.z;
   float foot = vSkin.w;
   float thin = vSkin2.w;
@@ -102,16 +103,17 @@ void main() {
   grown *= 1.0 - 0.15 * ribbed * furrow;
   grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.06 + 0.2 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
-  young = mix(young, mix(vec3(0.06, 0.125, 0.03), vec3(0.1, 0.19, 0.05), tone), tender);
+  // The seedling's own warmth is gone before the field's youngest plants reach the bloom.
+  young = mix(young, mix(mix(vec3(0.06, 0.125, 0.03), vec3(0.1, 0.19, 0.05), tone), mix(vec3(0.068, 0.128, 0.034), vec3(0.11, 0.19, 0.054), tone), fresh), tender);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
-  albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
+  albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot * (1.0 - 0.85 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   // The sprout: pale yellow green where it has seen the light, clear pink red below, near white where it leaves the soil.
-  vec3 sprout = mix(vec3(0.36, 0.29, 0.24), vec3(0.105, 0.15, 0.115), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
-  albedo = mix(albedo, sprout, 0.92 * pale);
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.25, 0.1, 0.29), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.72 + 0.16 * streak + 0.12 * dust, pale));
+  vec3 sprout = mix(vec3(0.36, 0.34, 0.22), vec3(0.085, 0.15, 0.125), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
+  albedo = mix(albedo, sprout, 0.92 * saturate(1.5 * pale));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.26, 0.075, 0.11), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.72 + 0.16 * streak + 0.12 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(${GUIDE.rough}, 0.5, thin);
   float wax = mix(${GUIDE.wax}, 0.45, thin);
@@ -119,19 +121,22 @@ void main() {
   float limb = 1.0 - abs(dot(face, view));
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(mix(vec3(0.4, 0.7, 0.2), vec3(0.47, 0.64, 0.27), tender), mix(vec3(0.6, 0.72, 0.42), vec3(0.75, 0.45, 0.42), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
+  t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.07 - 0.45 * smoothstep(0.004, 0.032, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.34, 0.51, 0.33), vec3(0.37, 0.155, 0.115), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
   t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow);
-  vec3 color = shadeTissue(t, vWorld, view);
 #ifdef PLANT_FIELD
+  vec3 color = shadeTissue(t, vWorld, view);
   // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.
   float graze = 1.0 - abs(dot(face, view));
   float toSun = saturate(dot(-view, uSunDir));
   color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
+#else
+  // The young stem is clear, moist flesh: the sun enters at its outline and leaves toward the lens.
+  vec3 color = shadeTissueClear(t, vWorld, view, vec2(vCoord.x * 0.08, vCoord.z * ${TOP_M.toFixed(4)}), 0.0, 0.7 * max(pale, fresh));
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }
