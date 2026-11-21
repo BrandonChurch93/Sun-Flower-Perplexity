@@ -81,7 +81,7 @@ void main() {
   albedo *= 0.85 + 0.3 * tone;
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
-  vec3 color = albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * max(uSunDir.y, 0.0));
+  vec3 color = 0.3 * albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * max(uSunDir.y, 0.0));
   outColor = finish(aerial(color, vWorld), vWorld, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `

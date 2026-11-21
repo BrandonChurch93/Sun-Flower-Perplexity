@@ -18,10 +18,10 @@ const POLE_AZ_DEG = 180
 const POLE_EL_DEG = 42
 const TURN_DEG_PER_SECOND = 0.6
 
-const STARS = 15000
-const FAINTEST = 0.02
+const STARS = 52000
+const FAINTEST = 0.028
 const BRIGHTEST = 12
-const SLOPE = 1.15
+const SLOPE = 1.35
 
 const glowFragment = /* glsl */ `${glslCommon}
 uniform mat4 uCamWorld;
@@ -117,14 +117,14 @@ function direction(azDeg: number, elDeg: number): THREE.Vector3 {
 }
 
 const TINTS: [number, number, number][] = [
-  [0.72, 0.84, 1.0],
-  [0.86, 0.93, 1.0],
+  [0.5, 0.74, 1.0],
+  [0.72, 0.88, 1.0],
   [1.0, 1.0, 1.0],
-  [1.0, 0.93, 0.78],
-  [1.0, 0.8, 0.56],
-  [1.0, 0.66, 0.42],
+  [1.0, 0.9, 0.68],
+  [1.0, 0.72, 0.44],
+  [1.0, 0.55, 0.32],
 ]
-const TINT_SHARE = [0.16, 0.3, 0.26, 0.16, 0.09, 0.03]
+const TINT_SHARE = [0.2, 0.3, 0.2, 0.15, 0.11, 0.04]
 
 function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vector3): THREE.BufferGeometry {
   const random = stream('night stars')
@@ -156,11 +156,10 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     let acc = TINT_SHARE[0]
     while (pick > acc && k < TINTS.length - 1) acc += TINT_SHARE[++k]
     const tint = TINTS[k]
-    const depth = 0.55 + 0.45 * Math.min(1, flux / 0.05)
-    light[n * 4] = flux * (1 + (tint[0] - 1) * depth)
-    light[n * 4 + 1] = flux * (1 + (tint[1] - 1) * depth)
-    light[n * 4 + 2] = flux * (1 + (tint[2] - 1) * depth)
-    light[n * 4 + 3] = 0.52 + 0.1 * width + 0.5 * Math.min(1, Math.sqrt(flux / BRIGHTEST))
+    light[n * 4] = flux * tint[0]
+    light[n * 4 + 1] = flux * tint[1]
+    light[n * 4 + 2] = flux * tint[2]
+    light[n * 4 + 3] = 0.5 + 0.12 * width + 0.7 * Math.min(1, Math.sqrt(flux / BRIGHTEST))
     n++
   }
   const geometry = new THREE.BufferGeometry()
