@@ -26,7 +26,7 @@ const SPROUT_WIDTH_M = 0.00005
 const DEW_FINE = 0.5
 
 // `hairs` is how many stand on a square meter of grown skin.
-interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean }
+interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean; down: boolean }
 interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; beads: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
@@ -94,7 +94,7 @@ export function create(options: PartOptions): PlantPart {
     const set = perM2 ? createHairs(options, Math.round(perM2 * hairTable[CELLS]), name, undefined, widthM) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: false }
+    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: false, down: high < 0.002 }
     for (let i = 0; i < n; i++) {
       const want = ((i + hash01(seed, salt, i)) / n) * hairTable[CELLS]
       let cell = Math.min(CELLS - 1, Math.floor((i / n) * CELLS))
@@ -116,7 +116,7 @@ export function create(options: PartOptions): PlantPart {
     const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
+    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true, down: false }
     for (let i = 0; i < n; i++) {
       const x = (i + hash01(seed, salt, i)) / n
       c.seg[i] = x < 0.5 ? 0 : 1
@@ -467,7 +467,7 @@ export function create(options: PartOptions): PlantPart {
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
         if (shown > 0) c.drawn = Math.max(c.drawn, i + 1)
-        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown
+        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1)
         lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
         lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope

@@ -104,7 +104,7 @@ void main() {
   grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.06 + 0.2 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   // The seedling's own warmth is gone before the field's youngest plants reach the bloom.
-  young = mix(young, mix(mix(vec3(0.06, 0.125, 0.03), vec3(0.1, 0.19, 0.05), tone), mix(vec3(0.08, 0.15, 0.04), vec3(0.13, 0.225, 0.064), tone), fresh), tender);
+  young = mix(young, mix(mix(vec3(0.06, 0.125, 0.03), vec3(0.1, 0.19, 0.05), tone), mix(vec3(0.068, 0.128, 0.034), vec3(0.11, 0.19, 0.054), tone), fresh), tender);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
@@ -121,7 +121,7 @@ void main() {
   float limb = 1.0 - abs(dot(face, view));
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.46 - 0.4 * smoothstep(0.004, 0.03, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.5, 0.72, 0.47), vec3(0.64, 0.27, 0.2), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
+  t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.07 - 0.45 * smoothstep(0.004, 0.032, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.34, 0.51, 0.33), vec3(0.37, 0.155, 0.115), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;

@@ -56,13 +56,13 @@ void main() {
   float cloud = valueNoise(vec2(across * 2.6 + body * 7.3, along * 7.0));
   float grain = valueNoise(vec2(across * 34.0 + body * 3.1, along * 90.0));
   float mid = (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - 0.7 * along);
-  vec3 leaf = mix(vec3(0.012, 0.085, 0.042), vec3(0.024, 0.128, 0.06), 0.65 * cloud + 0.35 * grain);
+  vec3 leaf = mix(vec3(0.007, 0.055, 0.028), vec3(0.0145, 0.08, 0.038), 0.65 * cloud + 0.35 * grain);
   leaf = mix(leaf * vec3(1.9, 1.5, 2.0), leaf, upper);
   leaf = mix(leaf, vec3(0.3, 0.47, 0.13), 0.45 * mid * upper);
   leaf = mix(leaf, vec3(0.2, 0.27, 0.08) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
-  vec3 glow = mix(vec3(0.066, 0.108, 0.074), vec3(0.0105, 0.021, 0.0135), lens) * (1.0 - 0.5 * mid);
+  vec3 glow = mix(vec3(0.038, 0.063, 0.047), vec3(0.0062, 0.0123, 0.0085), lens) * (1.0 - 0.5 * mid);
   // The thin margin of the leaf passes the sun almost whole.
   glow = mix(glow, vec3(0.2, 0.25, 0.13), 0.3 * smoothstep(0.97, 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
