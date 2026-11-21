@@ -72,7 +72,7 @@ void main() {
   float foot = 1.0 - smoothstep(0.0, 0.3, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
-  vec3 body = mix(vec3(0.70, 0.36, 0.02), vec3(0.80, 0.50, 0.05), smoothstep(0.15, 0.9, u));
+  vec3 body = mix(vec3(0.72, 0.39, 0.02), vec3(0.81, 0.53, 0.05), smoothstep(0.15, 0.9, u));
   // A ray just out of the bud is still green yellow.
   body = mix(body, vec3(0.50, 0.47, 0.06), 0.85 * fresh);
   // Each ray has its own depth of yellow.
@@ -129,7 +129,11 @@ void main() {
   t.rough = front ? 0.62 : 0.8;
   t.wax = front ? 0.35 : 0.1;
   t.sheen = front ? 0.25 : 0.3 + 0.3 * foot;
-  t.occlusion = mix(0.45, 1.0, smoothstep(0.0, 0.25, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.3 * (fold + 0.6 * groove) * smoothstep(1.0, 0.75, u));
+  // The valley between the two folds and the hollow under each rolled edge see less sky than the ridges.
+  float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
+  float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
+  t.albedo *= mix(vec3(1.0), vec3(0.86, 0.72, 0.6), 0.6 * valley * creased);
+  t.occlusion = mix(0.45, 1.0, smoothstep(0.0, 0.25, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
