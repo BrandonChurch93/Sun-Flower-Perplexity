@@ -15,6 +15,7 @@ uniform vec3 uGlow;
 uniform vec3 uDisc;
 uniform float uGain;
 uniform float uDrift;
+uniform float uSamples;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
@@ -31,30 +32,32 @@ void main() {
   float el = asin(clamp(d.y, -1.0, 1.0));
   float turn = atan(uSunDir.x, uSunDir.z) - atan(d.x, d.z);
   vec2 uv = vec2(fract(0.5 + turn / (2.0 * PI) + uDrift), clamp(sqrt(max(el, 0.0) / (0.5 * PI)), 0.004, 0.996));
-  vec3 sky = textureLod(tSky, uv, max(0.0, log2(uPixelAngle / uTexelAngle))).rgb;
+  // One lens sample stands for its share of the disc of confusion: the picture is read that wide, so the samples close into a smooth blur.
+  float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
+  vec3 sky = textureLod(tSky, uv, max(0.0, log2(wide * uPixelAngle / uTexelAngle))).rgb;
   float low = exp(-max(el, 0.0) / 0.085);
-  float lift = 1.0 + low * 1.1 * exp(-theta / 0.3) + 1.8 * exp(-theta / 0.05) + 0.9 * exp(-max(el, 0.0) / 0.05);
+  float lift = 1.0 + low * 0.8 * exp(-theta / 0.3) + 1.2 * exp(-theta / 0.05) + 0.9 * exp(-max(el, 0.0) / 0.05);
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
   vec3 color = sky * uGain * lift;
   float lum = dot(color, vec3(0.3, 0.6, 0.1));
-  vec3 pale = mix(vec3(1.14, 1.0, 0.76), vec3(1.05, 1.0, 0.92), smoothstep(0.2, 0.9, theta));
-  color = mix(color, lum * pale, 0.62 * smoothstep(0.15, 1.2, lum));
+  vec3 pale = mix(vec3(1.24, 1.0, 0.62), vec3(1.07, 1.0, 0.88), smoothstep(0.15, 0.8, theta));
+  color = mix(color, lum * pale, 0.6 * smoothstep(0.15, 1.2, lum));
   color = mix(color, lum * vec3(0.9, 1.5, 1.62), 0.86 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta) * (1.0 - smoothstep(0.35, 1.2, lum)));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.7 * valueNoise(vec2(fan * 2.9, 3.7)) + 0.3 * valueNoise(vec2(fan * 6.7, 9.1));
+  float rays = 0.62 * valueNoise(vec2(fan * 3.7, 3.7)) + 0.38 * valueNoise(vec2(fan * 8.9, 9.1));
   rays = smoothstep(0.2, 0.9, rays);
-  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.34) * smoothstep(0.0, 0.07, el);
-  color *= 1.0 + 0.5 * (rays - 0.4) * reach;
+  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.42) * smoothstep(0.0, 0.07, el);
+  color *= 1.0 + 0.7 * (rays - 0.4) * reach;
   color += uGlow * (0.13 * rays * reach);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.009) + 1.6 * exp(-theta / 0.03) + 0.18 * exp(-theta / 0.12)) + mix(uGlow * vec3(1.0, 0.76, 0.5), vec3(0.5, 0.58, 0.56), smoothstep(0.1, 0.5, theta)) * (0.68 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 1.1 * exp(-theta / 0.028) + 0.2 * exp(-theta / 0.12)) + mix(uGlow * vec3(1.0, 0.76, 0.5), vec3(0.5, 0.58, 0.56), smoothstep(0.1, 0.5, theta)) * (0.68 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
   color += vec3(0.064, 0.083, 0.08) * exp(-theta / 0.5) * smoothstep(0.0, 0.08, el);
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
@@ -86,6 +89,7 @@ export class GoldenSky {
       uDisc: { value: new THREE.Vector3().fromArray(def.sun.color).multiplyScalar(def.sky.disc) },
       uGain: { value: 1 },
       uDrift: { value: 0 },
+      uSamples: { value: 1 },
     })
   }
 
@@ -96,8 +100,9 @@ export class GoldenSky {
     u.uTexelAngle.value = (2 * Math.PI) / (map.userData.size as { width: number }).width
   }
 
-  prepare(time: number, gain: number): void {
+  prepare(time: number, gain: number, samples: number): void {
     const u = this.pass.uniforms
+    u.uSamples.value = Math.max(1, samples)
     u.uDrift.value = time * DRIFT_TURNS_PER_SECOND
     u.uGain.value = gain
   }

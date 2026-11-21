@@ -16,6 +16,7 @@ uniform vec3 uBox;
 uniform vec3 uCenter;
 uniform float uPixelAngle;
 uniform float uSamples;
+uniform float uWidth;
 out vec3 vColor;
 out float vSize;
 void main() {
@@ -34,14 +35,15 @@ void main() {
   float d = length(world - uCamPos);
   vec3 v = (world - uCamPos) / d;
   float toSun = saturate(dot(v, uSunDir));
-  float sizeM = mix(0.00012, 0.0011, aSeed.x * aSeed.x);
+  float sizeM = mix(0.0001, 0.0008, aSeed.x * aSeed.x);
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
-  float need = max(angle / uPixelAngle, 2.0 * min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0) / sqrt(uSamples));
+  float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
+  float need = max(angle / uPixelAngle, 2.0 * coc / sqrt(uSamples));
   float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(1.0, 1.7, world.y);
-  vColor = uSunColor * (0.18 + 1.2 * pow(toSun, 3.0) + 22.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(24.0, 56.0, need));
+  vColor = uSunColor * (0.2 + 1.2 * pow(toSun, 3.0) + 14.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.006, 0.02, coc / uWidth));
   vSize = px;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;
@@ -62,11 +64,11 @@ void main() {
 interface Cloud { count: number; box: [number, number, number]; center: [number, number, number] }
 
 const CLOUDS: Cloud[] = [
-  { count: 520, box: [1.3, 0.7, 1.3], center: [0, 1.85, 0] },
+  { count: 1100, box: [1.3, 0.7, 1.3], center: [0, 1.85, 0] },
   { count: 760, box: [5.5, 1.3, 5.5], center: [0, 2.3, 0] },
 ]
 
-export interface Air { meshes: THREE.Points[]; sample(time: number, wind: number, pixelAngle: number, samples: number): void }
+export interface Air { meshes: THREE.Points[]; sample(time: number, wind: number, pixelAngle: number, samples: number, width: number): void }
 
 export function makeAir(): Air {
   const uniforms = {
@@ -74,6 +76,7 @@ export function makeAir(): Air {
     uWind: { value: 0 },
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
+    uWidth: { value: 1920 },
     uToward: { value: new THREE.Vector2(windToward.x, windToward.z) },
   }
   const meshes = CLOUDS.map((cloud, c) => {
@@ -103,11 +106,12 @@ export function makeAir(): Air {
   })
   return {
     meshes,
-    sample(time, wind, pixelAngle, samples) {
+    sample(time, wind, pixelAngle, samples, width) {
       uniforms.uNow.value = time
       uniforms.uWind.value = wind
       uniforms.uPixelAngle.value = pixelAngle
       uniforms.uSamples.value = Math.max(1, samples)
+      uniforms.uWidth.value = width
     },
   }
 }

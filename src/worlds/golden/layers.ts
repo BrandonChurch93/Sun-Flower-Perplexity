@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * (uShare * thick * bank * (1.3 * exp(-theta / 0.07) + 0.3 * exp(-theta / 0.16) + 0.015 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * (uShare * thick * bank * (1.3 * exp(-theta / 0.07) + 0.5 * exp(-theta / 0.2) + 0.015 * exp(-theta / 0.5))), 0.0);
 }
 `
 
@@ -172,7 +172,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
-    uAirCool: { value: new THREE.Vector3(0.045, 0.055, 0.075) },
+    uAirCool: { value: new THREE.Vector3(0.042, 0.045, 0.045) },
     uAirWarm: { value: new THREE.Vector3(0.5, 0.28, 0.1) },
     uAir: { value: 0.00017 },
   }
