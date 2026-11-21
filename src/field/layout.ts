@@ -20,15 +20,17 @@ export const companionVariant = 77
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// The field comes into bloom ahead of the plant: a kind runs 1.0 to 2.8 s early while the heads open and is the plant's age before and after.
+// The field comes into bloom a little ahead of the plant: a kind runs up to 2.8 s early once the heads are open and one near kind runs late and stays a bud.
 const LEAD_S = [1.0, 2.8]
+const LATE_S = -3.5
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
   return x * x * (3 - 2 * x)
 }
 export const kindTime = (time: number, index: number, count: number): number => {
-  const lead = LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (((index * 3) % count) / Math.max(1, count - 1))
-  return time + lead * ramp(36, 41, time) * (1 - ramp(53, 59, time))
+  const order = (index * 3) % count
+  const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (order / Math.max(1, count - 1))
+  return time + lead * ramp(41, 51, time) * (1 - ramp(53, 59, time))
 }
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
@@ -46,7 +48,9 @@ export const pictureCount = farVariants.length * pictureTurns
 
 // The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
 export const meanTurn = 0.25
-const TURN_SCATTER = 0.55
+const TURN_SCATTER = 0.8
+const SIDEWAYS = 0.14
+const SHORT = 0.1
 const STRAGGLERS = 0.05
 export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
 
@@ -110,13 +114,15 @@ export function fieldPlaces(): FieldPlaces {
       const reach = Math.hypot(x, z)
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const size = 0.7 + 0.15 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
-      const leanX = Math.max(-0.16, Math.min(0.16, bell(id, 30) * 0.055))
-      const leanZ = Math.max(-0.16, Math.min(0.16, bell(id, 33) * 0.055))
+      const short = hash01(SEED, 15, id) < SHORT
+      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.69 + 0.17 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
+      const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, 0.65 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5)))
       if (reach < fieldFarM + (pick - 0.5) * FAR_BAND_M) {
         const straggler = hash01(SEED, 11, id) < STRAGGLERS
-        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + bell(id, 36) * TURN_SCATTER
+        const side = hash01(SEED, 17, id) < SIDEWAYS ? (hash01(SEED, 18, id) < 0.5 ? -1 : 1) * (1.0 + 0.6 * hash01(SEED, 19, id)) : 0
+        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + side + bell(id, 36) * TURN_SCATTER
         const list = reach < fieldNearM + (pick - 0.5) * NEAR_BAND_M ? near : far
         list.push(x, z, turn, size, leanX, leanZ, tone, id)
         continue

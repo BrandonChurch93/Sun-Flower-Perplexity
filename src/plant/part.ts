@@ -110,11 +110,14 @@ uniform float uCanopy;
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
 float plantSun(vec3 world, vec3 offsetDir) {
 #ifdef PLANT_FIELD
-  // The low sun only reaches the tops of the field, and less of it where a taller streak of rows stands toward the sun.
+  // The low sun reaches the tops of the field, and comes far down in the lanes that happen to lie open toward it.
   vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
-  float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
+  float along = dot(world.xz, toSun);
+  float across = world.x * toSun.y - world.z * toSun.x;
+  float streak = valueNoise(vec2(along * 0.11, across * 0.8));
+  float lane = smoothstep(0.45, 0.72, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
   float under = max(uCanopy * (1.1 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
-  return exp(-mix(1.0, 12.0, smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
+  return exp(-mix(1.0, mix(12.0, 0.8, lane), smoothstep(0.2, 0.85, uCanopy)) * under / (0.6 + uSunDir.y));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -123,10 +126,10 @@ float plantSun(vec3 world, vec3 offsetDir) {
 // How much of the sky a point sees, 0 to 1.
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
-  // The sky comes from above whatever the sun does: a closed crop keeps a little under half of it at the floor.
+  // The sky comes from above whatever the sun does: a closed crop keeps two thirds of it at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(0.6, 0.46, closed), 1.0, exp(-mix(1.5, 2.0, closed) * under));
+  return mix(mix(0.8, 0.74, closed), 1.0, exp(-mix(1.2, 1.3, closed) * under));
 #else
   return 1.0;
 #endif
