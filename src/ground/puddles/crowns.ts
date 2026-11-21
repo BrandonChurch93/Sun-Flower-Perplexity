@@ -4,8 +4,8 @@ import { skyMirror } from './water.ts'
 
 // A splash is over this long after its drop lands: the cup rises and falls first, its beads and grit fly on.
 export const SPLASH_LIFE_S = 0.4
-const AROUND = 112
-const UP = [0, 0.4, 0.7, 0.88, 0.96, 1]
+const AROUND = 64
+const UP = [0, 0.45, 0.75, 0.92, 1]
 const BEADS = 16
 const GRIT = 6
 // On water a column stands up from the middle after the cup has fallen, until this many cup lives after the landing.
