@@ -5,12 +5,13 @@ import type { Caster } from '../core/shadow.ts'
 import { endStandIn } from '../core/standins.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { segmentById } from '../director/timeline.ts'
-import { right, toward } from '../field/layout.ts'
+import { companionPlace, right, toward } from '../field/layout.ts'
 import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsKept } from './blades.ts'
 import { grassCover, grassTimes } from './cover.ts'
 import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
-import { grassFragment, grassVertex, tufts } from './grass.ts'
+import { fieldTufts, grassFragment, grassVertex, tufts } from './grass.ts'
+import { fieldLight } from './light.ts'
 import { litterPixels } from './litter.ts'
 import { rippleBox } from './puddles/basin.ts'
 import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowKept, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
@@ -39,6 +40,8 @@ export class Ground {
     endStandIn('ground')
     const shore = furrowShare(waterLevelsM[1])
     const keptS = segmentById('bloom').start
+    const fieldS = segmentById('field').start
+    const companion = companionPlace()
     const shoreKept = furrowKept.flat + (1 - furrowKept.flat) * furrowShare(waterLevelsM[1], furrowKept.depthM)
     this.uniforms = {
       uWet: { value: 0 },
@@ -75,6 +78,8 @@ export class Ground {
       uFurrowWas: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / shoreKept)) },
       uFurrowKept: { value: new THREE.Vector3(keptS, furrowKept.depthM, furrowKept.bankM) },
       uKeptS: { value: keptS },
+      uField: { value: new THREE.Vector4(fieldS, fieldLight.rightM, fieldLight.aheadM, fieldLight.reachM) },
+      uStems: { value: new THREE.Vector4(0, 0, companion.x, companion.z) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
       uWater: { value: new THREE.Vector2(waterLevelsM[0], waterLevelsM[1]) },
@@ -100,6 +105,11 @@ export class Ground {
       mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= keptS === kept ? all : 0)
       return mesh
     }
+    const from = (mesh: THREE.Mesh): THREE.Mesh => {
+      const all = mesh.geometry.getIndex()!.count
+      mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= fieldS ? all : 0)
+      return mesh
+    }
     const add = (mesh: THREE.Mesh, surface: Surface, casts: boolean): void => {
       mesh.material = surface.main
       this.mesh.add(mesh)
@@ -116,6 +126,7 @@ export class Ground {
     add(when(blades(clumps, beadSizes), false), this.blades, true)
     add(when(blades(clumpsKept, beadSizesKept), true), this.blades, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)
+    for (const mesh of fieldTufts()) add(from(mesh), this.grass, true)
   }
 
   // What throws shadows. The film adds these to the scene itself and to its shadow pass, and from then on the soil stops estimating its own shadows.
