@@ -89,7 +89,7 @@ void main() {
   float fleck = saturate(vSkin2.y * (0.8 * smoothstep(0.76, 0.86, fine.b) + 0.4 * smoothstep(0.74, 0.86, wide.b)));
   float spot = smoothstep(0.84, 0.97, fine.a) * (1.0 - youth);
   float dust = fine.a;
-  float height = rib * vSkin3.w * 0.45 + (fine.r - 0.5) * mix(0.00016, 0.00003, thin) + (wide.r - 0.5) * 0.00012 * ribbed;
+  float height = rib * vSkin3.w * 1.4 + (fine.r - 0.5) * mix(0.00016, 0.00003, thin) + (wide.r - 0.5) * 0.00012 * ribbed;
   vec3 normal = reliefNormal(face, vWorld, height, 1.0);
   float density = texelDensity(vCoord.xy, vec2(${SKIN_W}.0, ${SKIN_H}.0));
 #endif
@@ -118,8 +118,8 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(0.3, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
-  t.occlusion = vSkin2.x * (1.0 - 0.12 * ribbed * furrow);
+  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow);
   vec3 color = shadeTissue(t, vWorld, view);
 #ifdef PLANT_FIELD
   // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.

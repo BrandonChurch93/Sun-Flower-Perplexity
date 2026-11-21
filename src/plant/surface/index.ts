@@ -88,6 +88,8 @@ const float TISSUE_SPREAD_M = 0.005;
 const float TISSUE_SPREAD_FAR_M = 0.012;
 // What hides the sun hides the bright sky round it: the share of that sky left to a part in shade.
 const float TISSUE_HID = 0.35;
+// The share of the high sky that the down of a sheet scatters to the eye.
+const float TISSUE_SLATE = 0.21;
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
 vec3 tissueSky(vec3 n, float shown) {
@@ -289,6 +291,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover)) * pale * fuzz;
   // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
   color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
+  // On the broad face of a sheet the down scatters the high sky: the cool sheen of a dark leaf, the short end most and not dyed by the pigment under it. Only what the tissue neither returns nor passes is there to scatter.
+  float up = saturate(0.5 + 0.5 * N.y);
+  float spare = 1.0 - keep * max(total.r, max(total.g, total.b));
+  color += uSkyZenith * vec3(0.6, 0.85, 1.0) * (TISSUE_SLATE * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);

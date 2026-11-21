@@ -110,15 +110,15 @@ float rays(float turn, float r, float down) {
   vec3 h = vec3(hash31(vec3(k, 11.0, 1.0)), hash31(vec3(k, 12.0, 1.0)), hash31(vec3(k, 13.0, 1.0)));
   float girth = 6.2831853 * r * uSize.x;
   float across = (t - k - 0.25 - 0.5 * h.x) / 13.0 * girth;
-  float wide = uSize.y / 1080.0 + mix(0.003, 0.008, h.y) * girth;
+  float wide = 1.5 * uSize.y / 1080.0 + mix(0.006, 0.014, h.y) * girth;
   // The longest run down and to the right, where the field lies open under the sun.
   float lean = (turn - 0.36) / 0.1;
-  float len = mix(0.2, 0.5, h.z * h.z) * mix(1.0, 0.4 + 0.6 * exp(-lean * lean), down);
+  float len = mix(0.12, 0.3, h.z * h.z) * mix(0.6, 0.4 + 0.6 * exp(-lean * lean), down);
   float along = saturate(1.0 - r / len);
   float x = across / wide;
   return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 14.0, 1.0)));
 }
-// What a low sun in the frame does. In the glass: a small near white core and a short soft glow, which lie over everything. In the air of the field: thin rays and wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
+// What a low sun in the frame does. In the glass: a warm core and a wide orange halo, which lie over everything. In the air of the field: short thin rays, wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   // Both sit where the showing part of the disc sits and follow its share: a sun half behind a leaf blooms from the leaf's edge.
@@ -128,15 +128,17 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float shown = seen.r * 3.2;
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.22) : shown;
-  float tight = 1.0 + r * r / 0.0004;
+  float tight = 1.0 + r * r / 0.0006;
   // The core's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
   float tail = r * r / 0.0289;
-  float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.12 * exp(-r * r / 0.002) + 0.05 * exp(-r / 0.05);
-  vec3 glass = mix(vec3(1.0, 0.92, 0.82), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
+  float wide = r * r / 0.06;
+  float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.42 * exp(-r * r / 0.008) + 0.07 * exp(-r / 0.07 - wide * wide);
+  vec3 glass = mix(vec3(1.0, 0.9, 0.76), vec3(1.0, 0.5, 0.2), smoothstep(0.0, 0.06, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
-  // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
-  float beams = mix(0.15, 0.5, down) + mix(0.85, 0.5, down) * smoothstep(0.15, 0.9, 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0));
+  // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
+  float fan = 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0);
+  float beams = mix(0.8 + 0.2 * smoothstep(0.0, 1.0, fan) * (0.4 + 0.6 * fanNoise(r * 9.0 + 4.0 * fanNoise(turn * 13.0, 13.0, 5.0), 64.0, 9.0)), 0.5 + 0.5 * smoothstep(0.15, 0.9, fan), down);
   float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
   // Nothing in focus and nothing nearer than the focus is behind the lit air. Far things blur up to the circle of infinity, near leaves beyond it.
   float depth = circle / max(uFarFill, 1e-4);
@@ -145,12 +147,12 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float open = uShafts > 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
-  float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
+  float hold = mix(1.0, mix(0.6, 1.0, smoothstep(0.004, 0.05, under)), down);
   // The lit air lies thickest along the horizon under the sun, in front of the far hills.
-  float haze = 1.7 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
+  float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
-  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.3 * exp(-r / 0.07) + haze) * hold + uRays * rays(turn, r, down) * near;
-  return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
+  float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
+  return glass + vec3(1.0, 0.4, 0.12) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
@@ -187,7 +189,7 @@ void main() {
   c = tone(c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = max(mix(vec3(l), c, uSaturation), 0.0);
-  c = max(c + uLift * (1.0 - c) - uLift * uBlack * exp(-l / 0.005), 0.0);
+  c = max(c + uLift * (1.0 - c) - uLift * uBlack * exp(-l / 0.014), 0.0);
   c = toSrgb(clamp(c, 0.0, 1.0));
   // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: strongest in the middle tones, under half of that in deep shadow, a third in the highlights.
   float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
