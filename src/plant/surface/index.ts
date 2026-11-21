@@ -61,11 +61,12 @@ const float TISSUE_FUZZ = 0.22;
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
 
-// The sky is not even. With the sun low, most of its light comes from the sun's side and that side is warm; away from it the sky is dim and takes the color of the zenith. Over all directions this keeps the mean of skyAmbient.
+// The sky is not even. With the sun low, most of its light comes from the sun's side and that side is warm; away from it the sky is dim and takes the color of the zenith. Thick air spreads the light and evens it out. Over all directions this keeps the mean of skyAmbient.
 vec3 tissueSky(vec3 n) {
   vec3 sky = skyAmbient(n);
   float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
   float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
+  level *= saturate(1.15 - 26.0 * uFogDensity);
   float side = saturate(0.5 + 0.5 * toward);
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
@@ -78,8 +79,9 @@ vec3 tissueSky(vec3 n) {
 vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   // A part that hands over normals on the far side is turned round instead of lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
-  vec3 N = t.normal * turn;
   vec3 F = t.face * turn;
+  // A film of water fills the fine relief.
+  vec3 N = normalize(mix(t.normal * turn, F, 0.6 * uPlantWet));
   vec3 L = uSunDir;
   float ndl = dot(N, L);
   float fdl = dot(F, L);
@@ -113,7 +115,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
 
   // Frost: the tissue under it turns a dull cold green, and a thin pale bloom lies on it, thicker on faces that look up, on edges and on hair.
   float frost = uPlantFrost;
-  float bloom = frost * (0.1 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  float bloom = frost * (0.16 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(0.92, 1.0, 1.04) * grey, 0.4) * 0.85, frost);
   albedo = mix(albedo, vec3(0.7, 0.76, 0.84), bloom);
