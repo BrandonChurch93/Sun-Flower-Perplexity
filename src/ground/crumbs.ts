@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
+import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
 import { groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
@@ -23,6 +24,8 @@ export const dewFill = [0.6, 0.62, 1.38]
 export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
 const LANE_CRUMB_M = 0.0022
+// Where the husk comes to rest it lies on the soil itself: no loose lump larger than a lane crumb within reach of it, and full size only from twice that reach.
+const HUSK_REACH = 0.6
 
 export function lane(x: number, z: number, padM = 0): number {
   const along = x * laneDir.x + z * laneDir.z
@@ -133,7 +136,8 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const sunward = x * sunWayDir.x + z * sunWayDir.z
     const aside = Math.abs(x * sunWayDir.z - z * sunWayDir.x)
     const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
-    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low, lit)
+    const husk = Math.min(1, Math.max(0, Math.hypot(x - huskRest.x, z - huskRest.z) / (HUSK_REACH * huskLengthM) - 1))
+    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low, lit, LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * husk)
     const e = spin()
     const sx = radius * (0.7 + 0.7 * random.next())
     const sy = radius * (0.45 + 0.4 * random.next()) * (s.flat ?? 1)
