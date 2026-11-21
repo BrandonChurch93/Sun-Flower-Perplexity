@@ -1,22 +1,21 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, ringStrip, skylineAt, skylineCanopy } from '../../weather/skyline.ts'
+import { SKYLINE, ringStrip, skylineAt, skylineCanopy, skylineLayerSalt } from '../../weather/skyline.ts'
 
 const RAD = Math.PI / 180
 
-// The camera lies on bare soil and the sun has just cleared the land: the skyline is the shared one, without the banks that belong to the grown crop's far edge, and held under the sun's lower limb where the sun stands.
+// The camera lies on bare soil and the sun has just cleared the land. The skyline is the shared one, laid out round the same bearing as in every world, so each hill and each tree stands where it stands after the cut. Only where this world's sun rises the land is held under the sun's lower limb: the rows of trees open there and the hills lie low.
 const SUN_CLEAR_DEG = 14
 const SUN_FULL_DEG = 26
-const UNDER_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.4, 0.44]
-const LAYERS = 7
+const UNDER_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.4, 0.44, 0.3, 0.3]
 
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
 }
 
-export function dawnSkylineAt(i: number, az: number, sunAzimuthDeg: number): { radius: number; top: number } {
-  const at = skylineAt(i, az, sunAzimuthDeg)
+export function dawnSkylineAt(i: number, az: number, skylineAzimuthDeg: number, sunAzimuthDeg: number): { radius: number; top: number } {
+  const at = skylineAt(i, az, skylineAzimuthDeg)
   let off = Math.abs(az - sunAzimuthDeg * RAD) % (2 * Math.PI)
   if (off > Math.PI) off = 2 * Math.PI - off
   const cap = at.radius * Math.tan(UNDER_SUN_DEG[i] * RAD)
@@ -85,11 +84,13 @@ const TONES: { base: [number, number, number]; rim: number }[] = [
   { base: [0.014, 0.03, 0.03], rim: 0.04 },
   { base: [0.012, 0.028, 0.03], rim: 0.03 },
   { base: [0.009, 0.022, 0.025], rim: 0.03 },
+  { base: [0.009, 0.02, 0.023], rim: 0 },
+  { base: [0.009, 0.02, 0.023], rim: 0 },
 ]
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
 
-export function makeFarLayers(sunAzimuthDeg: number, airCool: [number, number, number], airWarm: [number, number, number], airPerM: number): FarLayers {
+export function makeFarLayers(skylineAzimuthDeg: number, sunAzimuthDeg: number, airCool: [number, number, number], airWarm: [number, number, number], airPerM: number): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
@@ -97,15 +98,15 @@ export function makeFarLayers(sunAzimuthDeg: number, airCool: [number, number, n
     uAirWarm: { value: new THREE.Vector3().fromArray(airWarm) },
     uAir: { value: airPerM },
   }
-  for (let i = 0; i < LAYERS; i++) {
+  for (let i = 0; i < SKYLINE.length; i++) {
     const layer = SKYLINE[i]
     const tone = TONES[i]
-    const geometry = ringStrip(layer.segments, (az) => dawnSkylineAt(i, az, sunAzimuthDeg))
+    const geometry = ringStrip(layer.segments, (az) => dawnSkylineAt(i, az, skylineAzimuthDeg, sunAzimuthDeg))
     const surface = makeSurface({
       name: `dawn ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: tone.rim }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
