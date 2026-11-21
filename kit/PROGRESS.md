@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:21 UTC · Round 2: pack made, critic started
+- Last push: 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
 - Last status: 13 · 2026-11-21 05:06 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -318,7 +318,7 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-None.
+- `npm run budget -- --scene "Phase 2 blockout (stand-in plant and field, six stand-in worlds)"` · one probe frame per unit (45, 420, 780, 1080, 1350, 1755) in the three formats, one still at the `final` tier in 16x9, and the `web` set · log `out/work/logs/budget-p2b.log` · this VM · started 2026-11-21 05:22 UTC · from the per sample times seen on this scene (16x9 1.05 to 3.04 s a sample, uhd four times that) about 16 minutes; limit twice that, 32 minutes. It writes its table into this file itself when it ends.
 
 ## Running agents
 
@@ -401,6 +401,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:07 UTC · Round 2 starts: blockout, extra round, judges 9c0c8bb
 - 2026-11-21 05:09 UTC · Round 2: machine checks green
 - 2026-11-21 05:21 UTC · Round 2: pack made, critic started
+- 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
 
 ## Session log
 
