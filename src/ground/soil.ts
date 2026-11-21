@@ -75,6 +75,18 @@ float waterLevel(float wet) {
 float pooled(float heightM, float wet) {
   return wet * smoothstep(0.0, 0.003, waterLevel(wet) - heightM);
 }
+vec3 dampened(vec3 albedo, float damp) {
+  float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
+  return mix(albedo, mix(albedo, vec3(luma) * vec3(0.85, 1.1, 1.0), 0.9) * mix(0.3, 0.07, damp * damp * damp * damp), damp);
+}
+float sheen(float wet, float dew) {
+  return max(wet * wet, 0.5 * dew);
+}
+// The sky's light on a face. When the sun is low its glow fills only its own side of the horizon, so faces turned away from it get the cool sky overhead.
+vec3 groundAmbient(vec3 n) {
+  float away = saturate(0.6 - dot(n.xz, normalize(uSunDir.xz + vec2(1e-5, 0.0)))) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * 2.0, 0.6 * away);
+}
 float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
 }
@@ -194,8 +206,8 @@ void main() {
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
+  albedo = dampened(albedo, damp);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
   albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * frosted(h, under));
   albedo *= 1.0 - 0.45 * pool;
@@ -213,12 +225,12 @@ void main() {
   open *= 1.0 - 0.35 * thatch;
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + skyAmbient(n) * open * shade);
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade);
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = uWet * uWet * (1.3 - rough) * (1.0 - pool);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
+  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * 0.5 * lit;
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
   color += skyAmbient(reflect(-v, n)) * graze * gloss * 0.1 * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);

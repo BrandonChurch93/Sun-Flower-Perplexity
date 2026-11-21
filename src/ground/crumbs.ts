@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { config } from '../config.ts'
 import { stream } from '../core/random.ts'
 import { cropLight } from './light.ts'
-import { soilHeight } from './soil.ts'
+import { groundStates, soilHeight } from './soil.ts'
 
 // Loose soil on the near ground: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
 export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number }
@@ -108,6 +108,7 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
 uniform vec2 uToward;
+${groundStates}
 ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
 void main() {
@@ -125,17 +126,16 @@ void main() {
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
   float damp = saturate(uWet + 0.6 * uDew) * mix(1.0, 0.6, vSeed.z);
-  luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
+  albedo = dampened(albedo, damp);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   vec2 p = vWorld.xz;
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
   float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.6 + 0.4 * dD.a);
-  vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + skyAmbient(n) * open);
+  vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + groundAmbient(n) * open);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = mix(uWet * uWet, 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
+  float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * 0.5 * lit;
   color += skyAmbient(reflect(-v, n)) * pow(1.0 - max(dot(n, v), 0.0), 5.0) * gloss * 0.1 * open;
   vec3 cell = vWorld * 650.0;
   float bead = step(0.9, hash31(floor(cell))) * smoothstep(0.34, 0.22, length(fract(cell) - 0.5)) * uDew * smoothstep(-0.1, 0.5, n.y) * (1.0 - smoothstep(0.25, 0.9, length(fwidth(cell))));
