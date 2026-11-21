@@ -29,10 +29,10 @@ export interface LensLook {
   airTint: readonly [number, number, number]
   // Radius, in frame widths, of the flat burnt out disc a sun in mist shows. 0 draws none.
   disc: number
-  // Above 0 the thin rays are those of a sun just over the land: this many round the circle, drawn only below and beside it, `rayLen` frame widths long at most and `rayWide` times the usual width.
-  lowRays: number
-  rayLen: number
-  rayWide: number
+  // Above 0 the sun stands just over the land in mist: no rays, a gold bloom in the air that falls off over `bloomWide` frame widths, as strong as `rays`, and a warm flare in the glass of strength `lowFlare`.
+  lowSun: number
+  bloomWide: number
+  lowFlare: number
   // Extra slope through the upper half of the tones.
   punch: number
   // White a burning color takes on at the very top.
@@ -60,10 +60,10 @@ export interface LensLook {
   spokes: number
 }
 
-const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowRays: 0, rayLen: 0.1, rayWide: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
+const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowSun: 0, bloomWide: 0.1, lowFlare: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
-  dawn: { veil: 1.4, flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 3, lowRays: 36, rayLen: 0.11, rayWide: 1, airTint: [1, 0.62, 0.36] },
+  dawn: { veil: 1.4, flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
   rain: { flare: 0, halation: 0.2 },
   night: { veil: 0, flare: 0, halation: 0.2, skyHold: 1 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },

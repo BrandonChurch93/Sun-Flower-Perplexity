@@ -15,37 +15,53 @@ in vec4 aSeatB;
 in vec4 aRestA;
 in vec4 aRestB;
 in vec3 aTint;
+uniform float uPlantWet;
 out vec3 vWorld;
 out vec3 vMiddle;
 out vec3 vBase;
 out vec3 vUp;
+out vec3 vDown;
 out vec3 vTint;
-out float vRadius;
+out vec3 vShape;
 out float vHang;
 out float vDepth;
+out float vWide;
 void main() {
   vec4 seat = mix(aSeatA, aSeatB, uShutter);
   vec4 rest = mix(aRestA, aRestB, uShutter);
+  float own = hash11(float(gl_InstanceID) * 0.618 + 0.37);
   float r = seat.w * plantSize();
   vec3 base = plantWorld(seat.xyz);
   vec3 up = plantDirection(normalize(rest.xyz + vec3(0.0, 1e-6, 0.0)));
   float hang = saturate(rest.w);
-  // A bead that sits is the cap of a ball whose middle lies under the skin; one that hangs is whole and under its hold.
-  vec3 middle = base + mix(up * (-0.3 * r), vec3(0.0, -0.9 * r, 0.0), hang);
+  // Rain wets the side it comes from: on the side turned from the light the beads are few and fine.
+  r *= mix(1.0, 0.55 + 0.45 * smoothstep(-0.5, 0.3, dot(up, uSunDir)), uPlantWet * (1.0 - hang));
+  // Water sags down the slope it sits on, a large bead more than a small one, and one that runs draws out behind.
+  vec3 fall = vec3(0.0, -1.0, 0.0) + up * up.y;
+  float slope = length(fall);
+  vec3 down = slope > 1e-3 ? fall / slope : normalize(cross(up, vec3(1.0, 0.0, 0.0)));
+  float run = length(plantWorld(aSeatB.xyz) - plantWorld(aSeatA.xyz)) / max(r, 1e-6);
+  float longM = 1.0 + (1.0 - hang) * ((0.1 + 0.5 * own) * slope * smoothstep(0.0002, 0.0012, r) + min(0.5 * run, 1.2));
+  // A bead that sits is a low cap, each to its own height; one that hangs is whole and under its hold.
+  float high = mix(mix(0.5, 0.85, hash11(own + 3.1)), 1.0, hang);
+  vec3 middle = base + mix(up * (-0.25 * high * r) + down * (0.35 * (longM - 1.0) * r), vec3(0.0, -0.9 * r, 0.0), hang);
   vec3 toEye = normalize(uCamPos - middle);
   vec3 side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye) + vec3(1e-6, 0.0, 0.0));
   vec3 rise = cross(toEye, side);
-  vec3 world = middle + (side * aCorner.x + rise * aCorner.y) * (1.05 * r) + toEye * r;
+  vec3 world = middle + (side * aCorner.x + rise * aCorner.y) * (1.05 * r * longM) + toEye * r;
   vec4 view = viewMatrix * vec4(world, 1.0);
   vWorld = world;
   vMiddle = middle;
   vBase = base;
   vUp = up;
+  vDown = down;
   vTint = aTint;
-  vRadius = r;
+  vShape = vec3(r, high * r, longM * r);
   vHang = hang;
   vDepth = -view.z;
-  gl_Position = r > 0.0 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
+  // A bead narrower than three pixels of the finished frame is no bead to the eye: the damp sheen of the skin stands for it.
+  vWide = 2.0 * r * projectionMatrix[1][1] * 540.0 / max(-view.z, 1e-4);
+  gl_Position = vWide >= 3.0 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
 }
 `
 
@@ -54,12 +70,14 @@ in vec3 vWorld;
 in vec3 vMiddle;
 in vec3 vBase;
 in vec3 vUp;
+in vec3 vDown;
 in vec3 vTint;
-in float vRadius;
+in vec3 vShape;
 in float vHang;
 in float vDepth;
+in float vWide;
 
-// The sky as a bead mirrors it: the dome, and the bright band low over the horizon that gives a bead its window.
+// The world as a bead shows it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
   float band = exp(-(d.y - 0.12) * (d.y - 0.12) * 22.0);
   return skyAmbient(d) + uSkyHorizon * (1.2 * band);
@@ -67,29 +85,41 @@ vec3 beadSky(vec3 d) {
 
 void main() {
   vec3 ray = normalize(vWorld - uCamPos);
+  vec3 up = normalize(vUp);
+  vec3 down = normalize(vDown - up * dot(vDown, up));
+  vec3 side = cross(up, down);
+  // The bead is a ball pressed low and drawn out down the slope: the ray is met in the space where it is round.
+  vec3 scale = 1.0 / vShape;
   vec3 from = uCamPos - vMiddle;
-  float b = dot(from, ray);
-  float c = dot(from, from) - vRadius * vRadius;
-  float under = b * b - c;
+  vec3 o = vec3(dot(from, side), dot(from, up), dot(from, down)) * scale;
+  vec3 d = vec3(dot(ray, side), dot(ray, up), dot(ray, down)) * scale;
+  float a = dot(d, d);
+  float b = dot(o, d);
+  float under = b * b - a * (dot(o, o) - 1.0);
   if (under < 0.0) discard;
-  vec3 p = uCamPos + ray * (-b - sqrt(under));
-  if (dot(p - vBase, vUp) < -2.0 * vRadius * vHang) discard;
-  vec3 n = normalize(p - vMiddle);
+  float reach = (-b - sqrt(under)) / a;
+  vec3 p = uCamPos + ray * reach;
+  if (dot(p - vBase, up) < -2.0 * vShape.x * vHang) discard;
+  vec3 q = o + d * reach;
+  vec3 g = q * scale;
+  vec3 n = normalize(side * g.x + up * g.y + down * g.z);
   vec3 view = -ray;
   float ndv = saturate(dot(n, view));
   float f = 1.0 - ndv;
   float f2 = f * f;
   float fresnel = 0.02 + 0.98 * f2 * f2 * f;
   vec3 mirror = reflect(ray, n);
-  float sun = sunShadow(vMiddle + vUp * vRadius, vUp, uShadowTexelM * 2.5);
+  float sun = sunShadow(vMiddle + up * vShape.x, up, uShadowTexelM * 2.5);
+  // One highlight: the sun itself where it is clear, a soft window where it stands in cloud.
+  float clear = smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
   float aim = saturate(dot(mirror, uSunDir));
-  float glint = aim * aim;
-  glint *= glint;
-  glint *= glint;
-  glint *= glint;
-  glint *= glint;
-  glint *= glint;
-  glint *= glint * glint;
+  float a8 = aim * aim;
+  a8 *= a8;
+  a8 *= a8;
+  float a32 = a8 * a8;
+  a32 *= a32;
+  // A highlight smaller than a pixel is spread over the pixel, not left to flash.
+  float glint = mix(0.6 * a32 * a8 * a8, 40.0 * min(vWide * vWide / 256.0, 1.0) * a32 * a32 * a32, clear);
   vec3 sky = beadSky(mirror);
 
   // The light that enters a bead is gathered on its far side: bright where the ball turns away from the light, dark where it faces it.
@@ -98,12 +128,21 @@ void main() {
   float farSky = saturate(0.5 - 0.5 * dot(n, lightAbove) / max(ndv, 0.35));
   farSun *= farSun;
   farSky *= farSky;
-  vec3 lit = uSunColor * (sun * saturate(dot(vUp, uSunDir)) * (0.4 + 2.4 * farSun * farSun)) + skyAmbient(vUp) * (0.7 + 1.8 * farSky);
+  // Under a bead on a face turned from the sun the skin is lit through the blade.
+  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.4 + 2.4 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (1.0 + 1.8 * farSky);
   vec3 body = vTint * lit * (0.7 + 0.3 * ndv);
-  // The far edge of the ball shows the bright side of the sky through it.
-  body += beadSky(-mirror) * (0.25 * f2);
+  // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water.
+  vec3 qn = normalize(q);
+  vec3 dn = normalize(d);
+  vec3 inside = refract(dn, qn, 0.75);
+  vec3 leave = qn - 2.0 * dot(qn, inside) * inside;
+  vec3 out3 = refract(inside, -leave, 1.33);
+  if (dot(out3, out3) < 0.5) out3 = reflect(inside, -leave);
+  vec3 beyond = normalize(side * out3.x + up * out3.y + down * out3.z);
+  float clearOfSkin = smoothstep(0.0, 0.6, leave.y - mix(0.3, -2.0, vHang)) * smoothstep(-0.1, 0.25, dot(beyond, up) + vHang);
+  body = mix(body, beadSky(beyond) * 0.9, 0.5 * clearOfSkin);
 
-  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * 40.0 * glint);
+  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * glint);
   outColor = finish(color, p, vDepth, -1.0);
 }
 `
@@ -179,13 +218,22 @@ export interface Bead {
 }
 
 const G = 9.81
-const SIT = 0.6
-const RUN = 0.82
-const HANG = 0.9
+const SIT = 0.5
+const RUN = 0.88
+const HANG = 0.94
+// The share of the beads that stay where they formed in the rain: small ones, far more than those large enough to run.
+const STAY = 0.8
+// How far a bead slides in one go, as a share of the part's length.
+const REACH = 0.3
 
 function own2(own: number, k: number): number {
   const x = Math.sin(own * k + k * 0.37) * 43758.5453
   return x - Math.floor(x)
+}
+
+function ease(a: number, b: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
 }
 
 // What reacts to the weather reacts after the cut: the time a bead knows is the time since its world began.
@@ -206,24 +254,39 @@ export function beadAt(own: number, along: number, across: number, time: number,
   const dew = stateUniforms.uPlantDew.value
   // Beads run only where it rains: a skin that is merely damp, as at dawn and at night, keeps its dew.
   if (wet > 0.5) {
-    const period = 3 + 4 * own2(own, 127.1)
-    const t = sinceCut(time) - (0.3 + 2.5 * own2(own, 311.7))
+    const kind = own2(own, 53.3)
+    if (kind < STAY) {
+      // A small bead forms and stays: most are fine, few are not.
+      const t = sinceCut(time) - 3 * own2(own, 311.7)
+      const fine = own2(own, 127.1)
+      out.radiusM = (0.0003 + 0.0022 * fine * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
+      return out
+    }
+    // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
+    const period = 7 + 6 * own2(own, 127.1)
+    const t = sinceCut(time) - 5 * own2(own, 311.7) + 3
     if (t < 0) return out
     const turn = t / period
     const p = turn - Math.floor(turn)
-    const full = (0.001 + 0.0012 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet
+    const full = (0.0014 + 0.0012 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet * ease(0, 1.5, sinceCut(time))
     if (p < SIT) {
-      out.radiusM = full * Math.cbrt(0.08 + (0.92 * p) / SIT)
+      out.radiusM = full * Math.cbrt(p / SIT) * ease(0, 0.06, p)
     } else if (p < RUN) {
       const q = (p - SIT) / (RUN - SIT)
-      const e = q * q
-      out.along = along + (1 - along) * e
-      out.across = across * (1 - 0.85 * Math.sqrt(e))
+      const e = q * q * (1.5 - 0.5 * q) + 0.02 * Math.sin(6 * Math.PI * q)
+      out.along = along + Math.min(1 - along, REACH) * e
+      out.across = across * (1 - 0.85 * Math.sqrt(Math.max(e, 0)))
       out.radiusM = full * (1 + 0.3 * e)
     } else {
       const q = Math.min(1, (p - RUN) / (HANG - RUN))
-      out.along = 1
       out.across = across * 0.15
+      if (1 - along > REACH) {
+        // One that does not reach the tip spreads into the film where it stops.
+        out.along = along + REACH
+        out.radiusM = full * 1.3 * (1 - q) * (1 - q)
+        return out
+      }
+      out.along = 1
       out.hang = q * q * (3 - 2 * q)
       out.radiusM = full * (1.3 + 0.1 * q)
       if (p >= HANG) {
@@ -233,7 +296,10 @@ export function beadAt(own: number, along: number, across: number, time: number,
       }
     }
   } else if (dew > 0) {
-    out.radiusM = (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00015 + 0.0003 * own2(own, 127.1)) * Math.sqrt(dew)
+    // Dew stays where it formed: a few beads large enough to see as lenses, the rest a fine scatter of every size under them.
+    const fine = own2(own, 127.1)
+    const large = Math.max(0, (own - 0.85) / 0.15)
+    out.radiusM = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * Math.sqrt(dew) * (1 - 0.6 * across * across)
   }
   return out
 }

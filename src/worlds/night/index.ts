@@ -11,7 +11,7 @@ export const world: WorldSettings = {
   backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
   fog: { color: [0.02, 0.034, 0.05], sunTint: [0.02, 0.03, 0.04], density: 0.006, falloff: 1.2 },
   grade: { exposure: 1.35, contrast: 1.4, white: 5, saturation: 0.92, gain: [0.92, 1, 0.98], lift: [0.0012, 0.0028, 0.0028], bloom: 0.07, bloomKnee: 0.9, vignette: 0.36, grain: 0.016 },
-  ground: { wet: 0, frost: 0, dew: 1 },
+  ground: { wet: 0.7, frost: 0, dew: 1, plantWet: 0 },
   wind: 0.1,
 }
 

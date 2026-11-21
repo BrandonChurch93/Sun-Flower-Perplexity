@@ -139,7 +139,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // How deep the water stands here. A part that does not say where the pixel is wears an even damp film.
   float film = 0.25;
 #ifndef PLANT_FIELD
-  if (wet > 0.0 && margin >= 0.0) film = wetFilm(at, margin);
+  if (wet > 0.0 && margin >= 0.0) film = sheet > 0.0 ? wetFilm(at, margin) : wetRuns(at);
 #endif
   // A film of water fills the fine relief.
   // Rain lands on what faces up: under a leaf the skin is only damp.
@@ -156,6 +156,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float tone = plantTone();
   vec3 albedo = t.albedo * tone;
   vec3 through = t.through * (tone * TISSUE_THROUGH);
+  // A soaked blade is clearer: water takes the place of the air in it.
+  if (wet > 0.0) through *= 1.0 + WET_SHEER * wet;
   // What a tissue sends back and what it passes on never add up to more than arrives.
   vec3 total = albedo + through;
   float keep = 1.0 / max(1.0, max(total.r, max(total.g, total.b)));
@@ -253,6 +255,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float shown = mix(TISSUE_HID, 1.0, saturate(lit1));
   vec3 skyFront = tissueSky(N, shown);
   vec3 skyBack = tissueSky(-N, shown);
+  // What a soaked blade passes is most of all the sky that stands straight behind it.
+  if (wet > 0.0) skyBack = mix(skyBack, wetBehind(-view), WET_FORWARD * wet);
 
   float back = -(0.65 * fdl + 0.35 * ndl);
   float wrap = saturate((back + 0.35) / 1.35);
