@@ -52,7 +52,7 @@ export const bank: MistSettings = {
   rise: 0.5,
   lobeRad: 0.3,
 }
-// The mist over the field between the plant's ground and the far bank: knee high, in slow banks that roll across the view, and lit where one looks through it toward the sun.
+// The mist over the field between the plant's ground and the far bank: shin high, in slow banks that roll across the view, and lit where one looks through it toward the sun.
 export const rolling: MistSettings = {
   fromM: 2,
   toM: 40,
@@ -60,13 +60,13 @@ export const rolling: MistSettings = {
   heightM: 0.07,
   thickness: 0.22,
   lit: [0.12, 0.09, 0.06],
-  shade: [0.9, 0.92, 0.8],
+  shade: [0.8, 0.82, 0.72],
   forward: 1,
   drift: [0.3, 0.05],
   bankM: 1.6,
   broken: 1,
   rise: 0.6,
-  lobeRad: 0.3,
+  lobeRad: 0.2,
   rollZ: 8,
   swell: 1,
 }
