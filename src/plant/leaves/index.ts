@@ -29,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 30000 },
+  hero: { step: 1, rows: 96, wide: 1, hairs: 54000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -53,6 +53,7 @@ interface Leaf {
   px: Float32Array
   py: Float32Array
   pz: Float32Array
+  pc: Float32Array
   seed: number
   mirror: number
   set: number
@@ -73,6 +74,8 @@ const pathX = new Float64Array(PATH + 1)
 const pathZ = new Float64Array(PATH + 1)
 const pathA = new Float64Array(PATH + 1)
 const at = { x: 0, z: 0, a: 0 }
+
+const ramp = (d: number): number => 0.5 * (d + Math.sqrt(d * d + 0.00015))
 
 function sample(share: number): void {
   const f = clamp(share) * PATH
@@ -141,6 +144,17 @@ export function create(options: PartOptions): PlantPart {
     const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const folds = main ? 2.2 : 1
+    // A grown blade is creased along a few lines, mostly where a side vein runs, and each crease turns a facet of it out of the light.
+    const creases: number[] = []
+    if (main && hero) {
+      for (let side = 0; side < 2; side++) {
+        for (let k = 0; k < 2; k++) {
+          const c = 44 + side * 12 + k * 5
+          creases.push(side, 0.12 + 0.3 * k + 0.25 * r(c), 0.2 + 0.6 * r(c + 1), 0.1 + 0.16 * r(c + 2), (r(c + 3) < 0.5 ? -1 : 1) * (0.35 + 0.4 * r(c + 4)))
+        }
+      }
+    }
+    const pleat = main && hero ? [0.3 + 0.3 * r(68), (r(69) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(70)), 0.3 + 0.3 * r(71), (r(72) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(73))] : null
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf || withered
@@ -162,6 +176,7 @@ export function create(options: PartOptions): PlantPart {
       px: new Float32Array(nu * nv),
       py: new Float32Array(nu * nv),
       pz: new Float32Array(nu * nv),
+      pc: new Float32Array(nu * nv),
       seed: r(15),
       mirror,
       set,
@@ -171,7 +186,7 @@ export function create(options: PartOptions): PlantPart {
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
-      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
+      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.2 + 0.4 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
@@ -202,6 +217,14 @@ export function create(options: PartOptions): PlantPart {
         z -= rolled * ae * ae * ae
         z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
+        const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
+        let bent = 0
+        for (let c = 0; c < creases.length; c += 5) {
+          if (creases[c] !== side) continue
+          const d = s - creases[c + 1] - creases[c + 2] * ae * wide
+          bent += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
+        }
+        if (pleat) bent += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
         if (onStalk) {
           x = w * 0.012
           y = 0
@@ -215,6 +238,7 @@ export function create(options: PartOptions): PlantPart {
         leaf.px[v] = x
         leaf.py[v] = y
         leaf.pz[v] = z
+        leaf.pc[v] = onStalk ? 0 : bent
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
         markList.push(threshold, bias, withered ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
@@ -289,7 +313,7 @@ export function create(options: PartOptions): PlantPart {
   }
 
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
-  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs') : null
+  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', undefined, 0.00003) : null
   const plan: Hair[] = []
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
@@ -309,7 +333,7 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.3) {
+      if (pick < 0.6) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
@@ -341,6 +365,8 @@ export function create(options: PartOptions): PlantPart {
     const droop = leafDroop(i, pose.inputs, time)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
+    // A young blade is smooth: the creases set in as it ages.
+    const creased = smoothstep(3, 16, age)
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
     const facing = main ? -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE)) : 0
@@ -407,7 +433,7 @@ export function create(options: PartOptions): PlantPart {
         const v = a * nv + b
         const px = leaf.px[v]
         const across = px * cf * blade
-        const up = (Math.abs(px) * sf + leaf.pz[v]) * blade
+        const up = (Math.abs(px) * sf + leaf.pz[v] + leaf.pc[v] * creased) * blade
         const along = leaf.py[v] * blade
         const o = (leaf.base + v) * 3
         out[o] = cx + tx * along + wx * across + nx * up
@@ -559,7 +585,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.002 + 0.002 * hair.r1) * scale
+          long = (0.0006 + 0.0012 * hair.r1 + (hair.r4 > 0.88 ? 0.0016 : 0)) * scale
         }
       }
       root[o] = px
