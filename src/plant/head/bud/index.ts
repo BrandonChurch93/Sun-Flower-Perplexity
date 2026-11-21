@@ -94,17 +94,19 @@ const RAY_GAP = 0.003
 const BULGE = [0.25, 0.24, 0.2]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
-const BULGE_HIGH = 1.1
+const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
 const FEET_LOW = [0.34, 0.25, 0.1]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = 1.45
+const SHUT_BROAD = [1.45, 1.4, 0.9]
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.35, -0.25, -0.95]
-const SHUT_CURL = [0.25, 0, 0]
+const SHUT_ANGLE = [0.95, -0.2, -0.95]
+const SHUT_CURL = [0.75, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
-const SHUT_SPREAD = 0.5
-const SHUT_TIP = [1.3, 1.3, 1.4]
+const SHUT_SPREAD = 0.6
+// The outer series is the leafiest and reaches furthest while the bud is shut.
+const SHUT_LONG = [1.5, 1.15, 1.2]
+const SHUT_TIP = [0.35, 0.8, 1]
 
 interface Bract { spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
@@ -428,8 +430,8 @@ export function create(options: PartOptions): PlantPart | null {
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
-      const L = bractLength(i, time) * k.long
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD, tight)
+      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight)
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
