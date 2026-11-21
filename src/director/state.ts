@@ -1,17 +1,21 @@
 import { timeOf } from '../config.ts'
 import type { CameraPose } from '../core/lens.ts'
-import { plantNumbers, tipAt } from '../plant/model.ts'
-import { poseAt } from './camera.ts'
-import { cameraNumbers } from './pose.ts'
+import { focusAt, plantNumbers } from '../plant/model.ts'
+import { rigAt } from './camera.ts'
+import { cameraNumbers, eyeOf, poseOf } from './pose.ts'
 import { plantInputsAt } from './inputs.ts'
 import { clampFrame, worldAt } from './timeline.ts'
 import * as THREE from 'three'
 
 export interface FrameState { camera: number[]; plant: number[]; world: string }
 
-export function poseAtTime(time: number, tip = new THREE.Vector3()): CameraPose {
-  tipAt(time, plantInputsAt(time), tip)
-  return poseAt(time, tip)
+const eye = new THREE.Vector3()
+
+// The camera at one moment. `held` receives the point the lens holds.
+export function poseAtTime(time: number, held = new THREE.Vector3()): CameraPose {
+  const rig = rigAt(time)
+  focusAt(time, plantInputsAt(time), eyeOf(rig, eye), held)
+  return poseOf(rig, held)
 }
 
 export function stateAt(frameIndex: number): FrameState {

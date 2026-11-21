@@ -12,15 +12,17 @@ import { applyWorld, sunDirection, type WorldDef, type WorldStage } from '../cor
 import { breathe } from '../core/yield.ts'
 import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
+import { companionInView, companionMatrix } from './companion.ts'
 import { Ground } from '../ground/index.ts'
-import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/model.ts'
+import { focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
-import { stateUniforms } from '../plant/part.ts'
+import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
+import { sunInFrame } from '../post/sun.ts'
 import { Sky } from '../weather/sky.ts'
 import { rigAt } from './camera.ts'
 import { plantInputsAt, plantInputsFor } from './inputs.ts'
-import { farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
+import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
 import { stageMakers, worldOf } from './registry.ts'
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
@@ -36,7 +38,7 @@ export class Film {
   readonly scene = new THREE.Scene()
   readonly camera = new THREE.PerspectiveCamera()
   readonly plant = new Plant()
-  readonly companion = new Plant({ variant: companionVariant })
+  readonly companion = new Plant({ variant: companionVariant, at: companionPlace() })
   readonly field = new Field()
   readonly ground = new Ground()
   readonly sky = new Sky()
@@ -53,8 +55,10 @@ export class Film {
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
   private readonly tip = new THREE.Vector3()
+  private readonly eye = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
   private readonly center = new THREE.Vector3()
+  private readonly middle = new THREE.Vector3()
   private loaded: Promise<void> | null = null
   private busy: Promise<void> = Promise.resolve()
 
@@ -63,9 +67,7 @@ export class Film {
     this.stage = new Stage(canvas, format)
     this.assets = new Assets(this.stage.renderer, assetSet)
     this.post = new Post(format.width, format.height)
-    const place = companionPlace()
-    const ratio = config.field.companion.heightRatio
-    this.companion.place(new THREE.Matrix4().makeScale(ratio, ratio, ratio).setPosition(place.x, 0, place.z))
+    this.companion.place(companionMatrix())
     this.scene.add(this.ground.mesh, ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
     for (const w of config.worlds) {
       const make = stageMakers[w.id]
@@ -125,8 +127,9 @@ export class Film {
   }
 
   poseAt(time: number): CameraPose {
-    tipAt(time, this.inputsAt(time), this.tip)
-    return poseOf(this.rigOf(time), this.tip)
+    const rig = this.rigOf(time)
+    focusAt(time, this.inputsAt(time), eyeOf(rig, this.eye), this.tip)
+    return poseOf(rig, this.tip)
   }
 
   worldIdAt(frameIndex: number): string {
@@ -187,26 +190,42 @@ export class Film {
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
-    this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
     const eye = this.rigOf(time)
+    const first = this.poseAt(time)
+    const tanX = (0.5 * config.camera.gateWidthMm) / eye.focalMm
+    const tanY = (tanX * stage.height) / stage.width
+    // The companion is drawn when the lens could see a part of it, and once the camera is far enough back to see the ground it stands on.
+    const wide = alone ? 0 : smoothstep(1.0, 1.8, eye.distanceM)
+    const beside = !alone && (wide > 0 || companionInView(time, inputs, first, tanX, tanY, nearPlane(eye)))
+    this.companion.visible = beside
+    if (beside) this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
+    fieldUniforms.uPlantWind.value = inputs.wind
+    fieldUniforms.uPlantHeight.value = heightAt(time)
     stateUniforms.uPlantWet.value = def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
     this.field.prepare(time, time + shutterSeconds, inputs, inputsClose, eye.heightM)
-    this.field.look(this.poseAt(time), (0.5 * config.camera.gateWidthMm) / eye.focalMm, stage.width / stage.height)
+    this.field.look(first, tanX, stage.width / stage.height)
     this.field.show(!alone)
-    this.companion.visible = !alone
     const own = alone ? null : (this.stages.get(def.id) ?? null)
     for (const made of this.stages.values()) for (const o of made.objects) o.visible = made === own
-    own?.prepare({ frame, time, timeClose: time + shutterSeconds, pose: this.poseAt(time), width: stage.width, height: stage.height, samples: count })
+    own?.prepare({ frame, time, timeClose: time + shutterSeconds, pose: first, width: stage.width, height: stage.height, samples: count })
     const height = heightAt(time + shutterSeconds)
     const reach = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
-    // Once the camera is far enough back to see the ground round the plant, the shadow map takes in the companion too.
+    // Once the camera is far enough back to see the ground round the plant, the shadow map takes in both plants whole.
+    // In a close-up it takes in what the lens sees at the plant's depth and no more, so that the shadow of a bract or a petal is as fine as the frame.
     const place = companionPlace()
-    const wide = alone ? 0 : smoothstep(1.0, 1.8, eye.distanceM)
-    const radius = lerp(reach, Math.hypot(place.x, place.z) + reach * config.field.companion.heightRatio, wide)
-    const casters = wide > 0 ? this.bothCasters : this.casters
-    this.center.set(0, 0.5 * height, 0)
+    const both = Math.hypot(place.x, place.z) + reach * config.field.companion.heightRatio
+    const whole = lerp(reach, both, wide)
+    const depthM = this.tip.sub(first.position).dot(first.forward)
+    const seen = 1.25 * depthM * tanX * Math.hypot(1, stage.height / stage.width) + 0.02
+    const fit = Math.max(wide, smoothstep(0.75, 1, seen / whole))
+    const radius = lerp(seen, whole, fit)
+    const casters = beside ? this.bothCasters : this.casters
+    this.middle.set(0, 0.5 * height, 0)
+    this.center.copy(first.position).addScaledVector(first.forward, depthM).lerp(this.middle, fit)
+    // The depth the map spans does not depend on whether the companion is drawn, so that switching it changes no shadow.
+    const span = this.center.distanceTo(this.middle) + (alone ? reach : both)
     stage.accumulator.reset()
     const samples = frameSamples(frame, count)
     for (const s of samples) {
@@ -220,7 +239,7 @@ export class Film {
       shared.uCamPos.value.copy(camera.position)
       shared.uFocusM.value = pose.focusM
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
-      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius)
+      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span)
       else this.shadow.off()
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)
@@ -232,7 +251,8 @@ export class Film {
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
       if (pause) await breathe()
     }
-    this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag)
+    const sunAt = alone ? null : sunInFrame(this.poseAt(time + 0.5 * shutterSeconds), sunDirection(def, this.sun), config.camera.gateWidthMm, stage.width, stage.height)
+    this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
     stage.finish()
     if (stage.lost) throw new Error('the WebGL context was lost')
     this.lastFrame = frame
