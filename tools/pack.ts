@@ -1,9 +1,10 @@
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import sharp, { type Sharp } from 'sharp'
+import sharp from 'sharp'
 import { config } from '../src/config.ts'
 import { cuts, keys } from '../src/director/timeline.ts'
+import { isTier } from '../src/core/tiers.ts'
 import { num, parseArgs } from './lib/args.ts'
 import { machine } from './lib/browser.ts'
 import { comparePair } from './compare.ts'
@@ -11,35 +12,19 @@ import { computeHashes } from './lib/hashes.ts'
 import { canvas, longEdge, rel, strip, type Placed } from './lib/layout.ts'
 import { isMain } from './lib/main.ts'
 import { ROOT, WORK } from './lib/paths.ts'
+import { asPng, pixelsOnly } from './lib/packimage.ts'
+import { unitPacks } from './unitpacks.ts'
 import { cutSheet, filmSheets, type SheetOptions } from './sheet.ts'
 
-export interface PackContext { phase: number; round: number; unit: string | null }
-export interface PackFile { image: Buffer; meaning: Record<string, unknown> }
-export interface Pack { critic: string; files: PackFile[]; manifest: (names: string[]) => string[] }
+export interface PackContext { phase: number; round: number; unit: string | null; tier?: string; only?: string[] }
+export interface PackFile { image: Buffer; meaning: Record<string, unknown>; name?: string; suffix?: string }
+export interface Pack { critic: string; files: PackFile[]; manifest: (names: string[]) => string[]; manifestName?: string }
+
+export { pixelsOnly }
 
 const PACKS = path.join(WORK, 'packs')
 const roundName = (round: number): string => `round-${String(round).padStart(3, '0')}`
 const source = (file: string): string => path.relative(ROOT, file)
-
-const PIXEL_CHUNKS = new Set(['IHDR', 'PLTE', 'tRNS', 'IDAT', 'IEND'])
-
-export function pixelsOnly(png: Buffer): Buffer {
-  const parts: Buffer[] = [png.subarray(0, 8)]
-  let at = 8
-  while (at + 12 <= png.length) {
-    const size = png.readUInt32BE(at)
-    const end = at + 12 + size
-    if (PIXEL_CHUNKS.has(png.toString('latin1', at + 4, at + 8))) parts.push(png.subarray(at, end))
-    at = end
-  }
-  return Buffer.concat(parts)
-}
-
-async function asPng(input: Buffer | string | Sharp): Promise<Buffer> {
-  const image = typeof input === 'string' || Buffer.isBuffer(input) ? sharp(input) : input
-  const flat = await image.removeAlpha().png().toBuffer()
-  return pixelsOnly(await sharp(flat).resize(longEdge, longEdge, { fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer())
-}
 
 function list(numbers: number[]): string {
   if (numbers.length === 1) return String(numbers[0])
@@ -110,8 +95,10 @@ async function blockoutPack(): Promise<Pack> {
   return { critic: 'R4-blockout', files, manifest }
 }
 
-const PHASES: Record<number, ((context: PackContext) => Promise<Pack>)[]> = {
+const PHASES: Record<number, ((context: PackContext) => Promise<Pack | Pack[]>)[]> = {
   2: [blockoutPack],
+  3: [unitPacks],
+  4: [unitPacks],
 }
 
 export async function buildPacks(context: PackContext): Promise<string[]> {
@@ -123,25 +110,34 @@ export async function buildPacks(context: PackContext): Promise<string[]> {
   try {
     commit = execSync('git rev-parse HEAD', { cwd: ROOT, encoding: 'utf8' }).trim()
   } catch {}
-  const key: Record<string, unknown> = { round: context.round, phase: context.phase, unit: context.unit, commit, engineHash: hashes.engineHash, unitHashes: hashes.unitHashes, machine: machine(), critics: {} }
+  const perUnit = builders.includes(unitPacks)
+  const tier = context.tier ?? 'final'
+  const test = perUnit && tier !== 'final'
+  if (test) console.log(`pack · TEST PACK · judged stills at the ${tier} tier, not final · DO NOT SEND THIS PACK TO A CRITIC`)
+  const began = Date.now()
+  const key: Record<string, unknown> = { round: context.round, phase: context.phase, unit: context.unit, ...(perUnit ? { tier, test } : {}), commit, engineHash: hashes.engineHash, unitHashes: hashes.unitHashes, machine: machine(), critics: {} }
   const folders: string[] = []
   for (const build of builders) {
-    const pack = await build(context)
-    if (pack.files.length > config.critics.maxFilesPerMessage) throw new Error(`the pack for ${pack.critic} holds ${pack.files.length} files, over critics.maxFilesPerMessage; split it across two critics`)
-    const dir = path.join(PACKS, round, pack.critic)
-    fs.rmSync(dir, { recursive: true, force: true })
-    fs.mkdirSync(dir, { recursive: true })
-    const names = pack.files.map((_, i) => `set-A-${String(i + 1).padStart(2, '0')}.png`)
-    const meanings: Record<string, unknown> = {}
-    pack.files.forEach((f, i) => {
-      fs.writeFileSync(path.join(dir, names[i]), f.image)
-      meanings[names[i]] = f.meaning
-    })
-    fs.writeFileSync(path.join(dir, 'MANIFEST.md'), pack.manifest(names).join('\n') + '\n')
-    ;(key.critics as Record<string, unknown>)[pack.critic] = meanings
-    folders.push(dir)
-    console.log(`pack · ${pack.critic} · ${names.length} files (${names[0]} to ${names[names.length - 1]}) and MANIFEST.md · ${rel(dir)}`)
+    const built = await build(context)
+    for (const pack of Array.isArray(built) ? built : [built]) {
+      if (pack.files.length > config.critics.maxFilesPerMessage) throw new Error(`the pack for ${pack.critic} holds ${pack.files.length} files, over critics.maxFilesPerMessage; split it across two critics`)
+      const dir = path.join(PACKS, round, pack.critic)
+      fs.rmSync(dir, { recursive: true, force: true })
+      fs.mkdirSync(dir, { recursive: true })
+      const names = pack.files.map((f, i) => f.name ?? `set-A-${String(i + 1).padStart(2, '0')}.png`)
+      const meanings: Record<string, unknown> = {}
+      pack.files.forEach((f, i) => {
+        fs.writeFileSync(path.join(dir, names[i]), f.image)
+        meanings[names[i]] = f.meaning
+      })
+      const manifestName = pack.manifestName ?? 'MANIFEST.md'
+      fs.writeFileSync(path.join(dir, manifestName), pack.manifest(names).join('\n').replace(/\n+$/, '') + '\n')
+      ;(key.critics as Record<string, unknown>)[pack.critic] = meanings
+      folders.push(dir)
+      console.log(`pack · ${pack.critic} · ${names.length} files (${names[0]} to ${names[names.length - 1]}) and ${manifestName} · ${rel(dir)}`)
+    }
   }
+  if (perUnit) console.log(`pack · built in ${((Date.now() - began) / 60000).toFixed(1)} min${test ? ` · TEST PACK at the ${tier} tier` : ''}`)
   const keyFile = path.join(PACKS, 'keys', `${round}.json`)
   fs.mkdirSync(path.dirname(keyFile), { recursive: true })
   fs.writeFileSync(keyFile, JSON.stringify(key, null, 2) + '\n')
@@ -151,5 +147,7 @@ export async function buildPacks(context: PackContext): Promise<string[]> {
 
 if (isMain(import.meta.url)) {
   const args = parseArgs()
-  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null })
+  const tier = typeof args.tier === 'string' ? args.tier : undefined
+  if (tier !== undefined && !isTier(tier)) throw new Error(`unknown tier "${tier}"`)
+  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null, tier, only: typeof args.only === 'string' ? args.only.split(',').map((c) => c.trim().toUpperCase()) : undefined })
 }

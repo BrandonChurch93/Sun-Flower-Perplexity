@@ -7,10 +7,10 @@ import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInput
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
-import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
-const PICTURE_SIZE = 0.775
+const PICTURE_SIZE = 0.72
 const TILE_H = 128
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
@@ -198,6 +198,7 @@ export class FarField {
   private readonly eye = new THREE.Vector3()
   private readonly clear = new THREE.Color()
   private stale = false
+  private time = 0
   private above = false
 
   constructor(places: Float32Array) {
@@ -269,6 +270,7 @@ export class FarField {
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number): void {
+    this.time = timeOpen
     this.plants.forEach((plant, i) => {
       plant.prepare(kindTime(timeOpen, i, this.plants.length), kindTime(timeClose, i, this.plants.length), open, close)
     })
@@ -300,7 +302,7 @@ export class FarField {
       const a = spot.array as Float32Array
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
-        a.set([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, 1 + i * pictureTurns + j], j * PLACE)
+        a.set([rx * across, rz * across, pictureTurn(j) + budTurn(this.time, 1 + i * pictureTurns + j), 1, 0, 0, 0.5, 1 + i * pictureTurns + j], j * PLACE)
       }
       spot.needsUpdate = true
     })

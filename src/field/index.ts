@@ -5,10 +5,10 @@ import { heightAt, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
-import { PLACE, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
-const CANOPY = 0.775
+const CANOPY = 0.72
 
 interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; index: number; of: number; plant: Plant }
 
@@ -25,6 +25,7 @@ export class Field {
   readonly groups: Group[]
   readonly far: FarField
   readonly meshes: THREE.Mesh[]
+  private time = 0
 
   constructor() {
     const places = fieldPlaces()
@@ -46,6 +47,7 @@ export class Field {
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number): void {
+    this.time = timeOpen
     for (const g of this.groups) g.plant.prepare(kindTime(timeOpen, g.index, g.of), kindTime(timeClose, g.index, g.of), open, close)
     const canopy = heightAt(timeOpen) * CANOPY
     fieldUniforms.uCanopy.value = canopy
@@ -78,6 +80,7 @@ export class Field {
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         for (let j = 0; j < PLACE; j++) seen[n + j] = all[i + j]
+        seen[n + 2] += budTurn(this.time, all[i + 7])
         n += PLACE
       }
       g.seen.needsUpdate = true
