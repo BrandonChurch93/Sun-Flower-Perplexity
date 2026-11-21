@@ -7,7 +7,7 @@ const RAD = Math.PI / 180
 // The bearing the lens looks along at the key: the middle of the painted sky sits there.
 const CENTER_DEG = -170.5
 // Where the band is brightest: the sun stands there, behind the cloud.
-const SUN_BEHIND_CLOUD_DEG = -172.5
+const SUN_BEHIND_CLOUD_DEG = -173.5
 const FLASH_BEARING_DEG = -160
 const FLASH_ELEVATION_DEG = 9
 const FAR_RAIN: [number, number, number] = [0.3, 0.36, 0.4]
@@ -65,7 +65,7 @@ vec3 rainSky(vec3 d, float lod) {
   float body = dot(mass, vec3(0.3, 0.6, 0.1));
   color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body)));
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
-  float toSun = (turn + uRainSkySunTurn) / 0.26;
+  float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
   float open = (1.0 - cloud) * smoothstep(0.0, 0.03, up) * exp(-up / 0.09) * (0.2 + 0.8 * sunward);
   color *= mix(vec3(1.0), vec3(3.4, 2.9, 2.3), open);
