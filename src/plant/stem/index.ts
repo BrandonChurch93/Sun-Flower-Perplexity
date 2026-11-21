@@ -67,6 +67,8 @@ export function create(options: PartOptions): PlantPart {
   const surface = makePartSurface(options, { name: 'stem', vertex, fragment, uniforms: options.places ? {} : maps })
   const mesh = partMesh(geometry, surface)
 
+  // On the field tiers one ring spacing is far longer than the foot, so the foot's color would spread up the stem.
+  const footShown = shape.full ? 1 : shape.main > 3 ? 0.35 : 0.1
   const hairs: HairSet | null = createHairs(options, shape.hairs, 'stem hairs')
   const hairCount = hairs ? hairs.count : 0
   // A hair belongs to a stretch of tissue between two anchors and keeps its share of that stretch for the whole film.
@@ -245,7 +247,7 @@ export function create(options: PartOptions): PlantPart {
       }
       const youth = clamp(1 - smoothstep(0.0022, 0.0075, whole) + 0.3 * smoothstep(0.8, 1, u) * (1 - hasHead * 0.5))
       const thin = 1 - smoothstep(0.0015, 0.0055, whole)
-      const foot = Math.exp(-Math.max(0, s + off) / footLength)
+      const foot = footShown * Math.exp(-Math.max(0, s + off) / footLength)
       const open = 0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
@@ -378,7 +380,7 @@ export function create(options: PartOptions): PlantPart {
       const up = 0.16 - slope + 0.7 * (hash01(seed, 84, i) - 0.5)
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
-      const mature = 0.5 + 0.5 * smoothstep(0.0018, 0.006, r0)
+      const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
       root[o] = n.x + ox * radius
       root[o + 1] = n.y + oy * radius
       root[o + 2] = n.z + oz * radius

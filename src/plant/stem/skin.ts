@@ -87,8 +87,8 @@ void main() {
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
   vec3 grown = mix(vec3(0.05, 0.115, 0.026), vec3(0.19, 0.3, 0.078), tone);
-  grown *= 1.0 + ribbed * (0.24 * crest - 0.26 * furrow);
-  vec3 young = mix(vec3(0.25, 0.41, 0.07), vec3(0.47, 0.6, 0.15), tone);
+  grown *= 1.0 + ribbed * (0.19 * crest - 0.22 * furrow);
+  vec3 young = mix(vec3(0.25, 0.41, 0.09), vec3(0.46, 0.6, 0.19), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
@@ -108,7 +108,7 @@ void main() {
   rough = mix(rough, 0.95, rime);
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(vec3(0.012, 0.022, 0.004), mix(vec3(0.5, 0.74, 0.14), vec3(0.8, 0.78, 0.5), pale), thin);
+  t.through = mix(vec3(0.012, 0.022, 0.004), mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale), 0.65 * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
