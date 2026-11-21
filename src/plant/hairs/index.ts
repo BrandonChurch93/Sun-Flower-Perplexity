@@ -19,7 +19,7 @@ const REGATHER_M = 0.03
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
-const STRAND_PX = 0.1
+const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 
@@ -117,7 +117,13 @@ void readHair(int k) {
   hairDir = normalize(hairDir + aside * ((0.35 + 0.5 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
   hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
-  hairRoot.w *= 0.5 + h6;
+  // Most hairs are short and a few are long, and they do not stand evenly: there are stretches with few, and those few are short. Down is even.
+  float coat = smoothstep(0.0008, 0.002, hairRoot.w);
+  vec3 q = hairRoot.xyz * 260.0;
+  float stand = 0.5 + 0.25 * (sin(q.x + 2.3 * q.y + 1.7 * sin(1.3 * q.z)) + sin(3.1 * q.y - 1.7 * q.z + 1.3 * sin(2.1 * q.x)));
+  float few = mix(1.0, smoothstep(0.15, 0.6, stand), coat);
+  hairRoot.w *= mix(0.5 + h6, 0.35 + 1.75 * h6 * h6, coat) * (0.35 + 0.65 * few);
+  hairShare *= 0.3 + 0.7 * few;
   // A drop is the size a hair can hold, whatever the strand stands for, and down holds none.
   float one = min(uHairWidth, 0.00006) * smoothstep(0.001, 0.002, hairRoot.w);
   // A strand given a width past an eighth of its length stands for the down round it. It is drawn that slim and carries the rest as light, so close up it is still a hair and not a grain.
@@ -184,7 +190,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, 0.25 + 0.15 * uPlantFrost, pow(t, 2.0 + h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.1 + 0.3 * uPlantFrost, hairSlim), pow(t, 0.8 + h1));
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
