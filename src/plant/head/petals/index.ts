@@ -21,10 +21,10 @@ const SHAPE: Record<PartDetail, Shape> = {
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_SHUT = [-1, 1, -1, 1, -1, 1]
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
-const SHUT_ANGLE = 0.92
+const SHUT_ANGLE = 0.86
 const RIM_TURN = 1.1
 const SAG = 0.24
-const FOOT_OUT = 0.025
+const FOOT_OUT = 0.014
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
 const TEETH = [
@@ -75,7 +75,7 @@ function outline(u: number): number {
   const peak = 0.38
   const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.55)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.2 + 0.8 * rise) * (0.04 + 0.96 * Math.pow(1 - Math.pow(s, 1.25), 0.95))
+  return (0.27 + 0.73 * rise) * (0.04 + 0.96 * Math.pow(1 - Math.pow(s, 1.25), 0.95))
 }
 
 function makeRays(seed: number): Ray[] {
@@ -226,7 +226,7 @@ export function create(options: PartOptions): PlantPart | null {
     const oz = h.pz * ca + h.qz * sa
     // The feet stand just outside the last ring of florets, the rear rank a little behind the front one.
     const outward = FOOT_OUT * h.radius
-    const back = (ray.rank * 0.022 - 0.04) * full
+    const back = (ray.rank * 0.02 - 0.068 - 0.055 * (1 - open)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -234,7 +234,7 @@ export function create(options: PartOptions): PlantPart | null {
     const span = h.radius > 0 ? length / h.radius : 0
     // A ray that has just opened still stands forward of the face, and settles back over the next second.
     const young = 0.5 * (1 - rayOpen(k, time - 1.2))
-    const riseEnd = 0.28 + 0.04 * ray.rank + 0.04 * ray.arch
+    const riseEnd = 0.1 + 0.05 * ray.rank + 0.05 * ray.arch
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
@@ -261,13 +261,13 @@ export function create(options: PartOptions): PlantPart | null {
       // A shut ray climbs clear of the florets at its foot, then lies along the dome of the floor toward the middle.
       const rho = Math.max(0, 0.95 + FOOT_OUT - e * span)
       const dome = Math.PI - Math.atan((2 * h.depth * FLOOR_DOME * rho) / Math.max(h.radius, 1e-6))
-      const shut = mix(1.62, dome - 0.05, smooth(0, riseEnd, e)) + ray.hook * smooth(0.8, 1, e)
+      const shut = mix(2.5, dome - 0.02, smooth(0, riseEnd, e)) + ray.hook * smooth(0.8, 1, e)
       const openPitch = ray.lay + young * (1 - 0.5 * e) - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
-      const yaw = mix(0.26 + 0.12 * e + ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
+      const yaw = mix(0.3 + 0.1 * e + ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
       const twist = mix(0.42, ray.roll + ray.twist * Math.pow(e, 1.6), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
@@ -315,13 +315,13 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = 0.88 * Math.min(1, 0.45 + 4 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
+      const strap = 0.95 * Math.min(1, 0.6 + 5 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
       const right = 1 + ragged * (Math.sin(u * 8.3 + ray.seed * 31) + 0.6 * Math.sin(u * 19.7 + ray.seed * 11))
       const fold = mix(SHUT_ANGLE, ray.pleat, across)
-      const trough = mix(0.5, ray.trough, across) + 1.3 * (1 - smooth(0, 0.22, u)) * across
+      const trough = mix(-0.45, ray.trough, across) + 1.3 * (1 - smooth(0, 0.22, u)) * across
       cx[0] = 0
       cy[0] = 0
       for (let j = 0; j < nv - 1; j++) {
