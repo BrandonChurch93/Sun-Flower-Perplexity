@@ -10,6 +10,8 @@ Which file is a control is in `KEY.json`.
 
 - `reviewer_68` (GPT): e, 87/100. The near-identical sunflower meshes repeated across the field look like instanced assets in a real-time 3D scene.
 - `reviewer_69` (Gemini): e, 95 — The visibly faceted low-polygon geometry on the two foreground sunflower stalks alongside the abrupt LOD transition from uniform instanced meshes to billboarded background flowers.
+- `reviewer_70` (Claude): e — confidence 45. The biggest clue: it's clearly CG rather than a photo. The sunflowers are copies of a few identical models, with thin, sparse stems and leaves, simple grass, and a sun glare that looks like a stock lens effect. That looks like real-time rendering, more than top-budget film-quality work. My second choice would be (d), amateur generated art.
+- `reviewer_71` (GLM): e, 94/100. The same sunflower geometry appears visibly repeated across the field, like instanced 3D assets.
 
 ## set-B-02.png
 
