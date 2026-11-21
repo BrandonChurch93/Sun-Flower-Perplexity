@@ -28,8 +28,8 @@ export const farVariants = [131, 149, 157, 173]
 export type Tier = 'near' | 'far' | 'pictures'
 const AHEAD_S: Record<Tier, number[]> = {
   near: [-4.5, 1.5, 3.6, -1.5, -3.5, -0.5, -2.5],
-  far: [-5, 1.5, -3, -4],
-  pictures: [-5, -2.5, -4.5, -3.5],
+  far: [-4.5, 1.5, -3, -4],
+  pictures: [-4.6, -2.5, -4.2, -3.5],
 }
 const EARLY_S = 3
 const ramp = (a: number, b: number, t: number): number => {
@@ -37,7 +37,7 @@ const ramp = (a: number, b: number, t: number): number => {
   return x * x * (3 - 2 * x)
 }
 export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
-export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(53, 59, time))
+export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time))
 
 // A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
 const AWAY_SHARE = 0.85

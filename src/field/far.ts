@@ -15,10 +15,10 @@ const PICTURE_SIZE = 0.72
 const TILE_H = 128
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
-const UNDER_FROM_M = 5
-const UNDER_BAND_M = 9
+const UNDER_FROM_M = 3
+const UNDER_BAND_M = 6
 // The dark layers, as shares of the height of the tops.
-const UNDER_LEVELS = [0.5, 0.84]
+const UNDER_LEVELS = [0.55, 0.9]
 // From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
 const HEADS_FROM_M = 40
 const HEAD_AT = 0.9
