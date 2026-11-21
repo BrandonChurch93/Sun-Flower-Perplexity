@@ -723,7 +723,7 @@ export function create(options: PartOptions): PlantPart | null {
     },
     finish(time) {
       uniforms.uBudOpen.value = headOpen(time)
-      uniforms.uBudShut.value = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
+      uniforms.uBudShut.value = (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time)
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true
