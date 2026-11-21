@@ -17,9 +17,12 @@ in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${fogLight}
 
-const float DISC = 0.0145;
+const float DISC = 0.0165;
 const float DISC_SOFT = 0.65;
 const float WISPS = 0.33;
+const float WISPS_SUN = 0.2;
+const float SHAFTS = 0.3;
+const vec3 SLATE = vec3(0.05, 0.03, 0.01);
 
 void main() {
   vec2 ndc = vUv * 2.0 - 1.0;
@@ -28,14 +31,25 @@ void main() {
   float coc = min(uCocScale / uFocusM, 2048.0);
   float theta = acos(clamp(dot(d, uSunDir), -1.0, 1.0));
   float el = asin(clamp(d.y, -1.0, 1.0));
-  vec3 color = fogLight(d);
   vec2 deck = d.xz / (max(d.y, 0.0) + 0.35);
   // The fog overhead is a slow deck of thicker and thinner air that drifts with the wind, the finer wisps a little faster than the broad banks.
   vec2 broad = deck - uToward * (0.02 * uNow);
   vec2 fine = deck - uToward * (0.03 * uNow);
   vec2 wisp = deck - uToward * (0.035 * uNow);
-  float banks = 0.26 * valueNoise(broad * vec2(1.7, 1.1) + vec2(0.0, 3.0)) + 0.2 * valueNoise(fine * vec2(3.9, 2.3) + vec2(0.0, 11.0)) + 0.2 * valueNoise(fine * vec2(8.3, 4.9) + vec2(5.0, 0.0)) + 0.19 * valueNoise(wisp * vec2(17.0, 11.0) + vec2(2.0, 7.0)) + 0.15 * valueNoise(wisp * vec2(33.0, 23.0) + vec2(9.0, 4.0));
-  color *= 1.0 + WISPS * (banks - 0.5) * smoothstep(0.0, 0.1, el);
+  float wide = valueNoise(broad * vec2(1.7, 1.1) + vec2(0.0, 3.0));
+  float mid = valueNoise(fine * vec2(3.9, 2.3) + vec2(0.0, 11.0));
+  float small = valueNoise(fine * vec2(8.3, 4.9) + vec2(5.0, 0.0));
+  float banks = 0.26 * wide + 0.2 * mid + 0.2 * small + 0.19 * valueNoise(wisp * vec2(17.0, 11.0) + vec2(2.0, 7.0)) + 0.15 * valueNoise(wisp * vec2(33.0, 23.0) + vec2(9.0, 4.0));
+  // The same deck shapes the sun's halo: it reaches farther and is richer where the fog is thick, and the uneven fog between the sun and the eye leaves faint shafts round it.
+  vec3 off = d - uSunDir;
+  vec2 round = normalize(vec2(dot(off, vec3(-uSunDir.z, 0.0, uSunDir.x)), off.y * length(uSunDir.xz)) + 1.0e-6);
+  float shafts = (valueNoise(round * 2.3 + vec2(3.0, 0.01 * uNow)) - 0.5) * smoothstep(0.02, 0.08, theta) * (1.0 - smoothstep(0.15, 0.35, theta));
+  vec3 color = fogLightIn(d, 2.0 * (0.2 * wide + 0.35 * mid + 0.45 * small - 0.5) + SHAFTS * shafts);
+  float lift = smoothstep(0.0, 0.1, el);
+  float toSun = dot(d, uSunDir);
+  color *= 1.0 + WISPS * (1.0 + WISPS_SUN * smoothstep(0.9, 0.98, toSun)) * (banks - 0.5) * lift;
+  // Away from the sun the thinner patches of the deck are deeper and bluer, on their own pattern, so the grey is not one grey.
+  color *= 1.0 - SLATE * (saturate(0.5 + mid - wide) * lift * (1.0 - smoothstep(0.75, 0.95, toSun)));
   // The disc is white through the fog and has no hard edge of its own. As the fog thins round it, it stands out a little more.
   float soft = DISC * (DISC_SOFT - 0.15 * uFogThin);
   color = mix(color, uDisc * (1.0 + 0.3 * uFogThin), 1.0 - smoothstep(DISC - soft, DISC + soft, theta));

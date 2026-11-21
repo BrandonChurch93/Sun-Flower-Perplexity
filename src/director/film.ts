@@ -208,7 +208,7 @@ export class Film {
     const beside = !alone && (wide > 0 || companionInView(time, inputs, first, tanX, tanY, nearPlane(eye)))
     this.companion.visible = beside
     if (beside) this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
-    fieldUniforms.uPlantWind.value = inputs.wind
+    fieldUniforms.uPlantWind.value = Math.min(inputs.calm ?? inputs.wind, inputs.wind)
     fieldUniforms.uPlantHeight.value = heightAt(time)
     this.field.prepare(time, time + shutterSeconds, inputs, inputsClose, eye.heightM)
     this.field.look(first, tanX, stage.width / stage.height)
