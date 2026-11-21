@@ -83,7 +83,7 @@ export function create(options: PartOptions): PlantPart | null {
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: series === 2 ? 0 : HOOK * (0.35 + 0.65 * rnd(18, i)),
-      reflex: series === 2 ? 0.4 * rnd(19, i) : 0.4 + 1.0 * rnd(19, i) - 0.15 * series,
+      reflex: series === 2 ? 0.4 * rnd(19, i) : series === 1 ? 0.25 + 1.0 * rnd(19, i) : 0.4 + 1.6 * rnd(19, i),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: HUG[series] + 0.05 * rnd(11, i),
