@@ -13,7 +13,7 @@ uniform vec3 uFogGlow;
 uniform float uFogThin;
 const float FOG_LOW_SHARE = 0.45;
 const float FOG_RING = 0.07;
-const vec3 FOG_RING_TAKES = vec3(0.0, 0.09, 0.18);
+const vec3 FOG_RING_TAKES = vec3(0.0, 0.07, 0.15);
 vec3 fogCalm(vec3 dir) {
   return mix(uFogColor, uFogHigh, smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0))));
 }
