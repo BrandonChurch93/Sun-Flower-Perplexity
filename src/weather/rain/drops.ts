@@ -19,13 +19,17 @@ export interface Drop {
 }
 
 export const RAIN_CELL_M = 0.25
+// The first series of a cell carry the heavy drops, the ones that splash. The rest carry the fine rain between them.
 export const RAIN_SERIES = 8
+export const RAIN_FINE_SERIES = 420
 
 const SLANT_DEG = 5
 const PERIOD_MIN_S = 0.9
 const PERIOD_MAX_S = 1.6
 const RADIUS_MIN_M = 0.0005
 const RADIUS_MAX_M = 0.0022
+const FINE_MIN_M = 0.00015
+const FINE_MAX_M = 0.001
 const SEED = streamSeed('rain drops')
 const UNIT = 1 / 4294967296
 
@@ -60,14 +64,14 @@ export function fallSpeed(radius: number): number {
   return 9.65 - 10.3 * Math.exp(-1200 * radius)
 }
 
-// The n-th drop of series `s` in cell (i, j), or null where the rain is too thin for it to fall.
+// The n-th drop of series `s` in cell (i, j), or null where the rain is too thin for it to fall. Series from RAIN_SERIES up are the fine rain.
 export function dropOf(i: number, j: number, s: number, n: number): Drop | null {
   const seed = seriesSeed(i, j, s)
   const time = (n + phaseOf(seed)) * periodOf(seed)
   const id = combine(seed, n | 0)
   if (combine(id, 5) * UNIT > rainStrength(time)) return null
   const size = combine(id, 3) * UNIT
-  const radius = RADIUS_MIN_M + (RADIUS_MAX_M - RADIUS_MIN_M) * size * size
+  const radius = s < RAIN_SERIES ? RADIUS_MIN_M + (RADIUS_MAX_M - RADIUS_MIN_M) * size * size : FINE_MIN_M + (FINE_MAX_M - FINE_MIN_M) * size * size
   return { id, x: (i + combine(id, 1) * UNIT) * RAIN_CELL_M, z: (j + combine(id, 2) * UNIT) * RAIN_CELL_M, time, radius, speed: fallSpeed(radius) }
 }
 
@@ -75,6 +79,11 @@ export function dropOf(i: number, j: number, s: number, n: number): Drop | null 
 export function firstIndexFrom(i: number, j: number, s: number, time: number): number {
   const seed = seriesSeed(i, j, s)
   return Math.ceil(time / periodOf(seed) - phaseOf(seed))
+}
+
+// How often a series lands a drop, in seconds.
+export function seriesPeriod(i: number, j: number, s: number): number {
+  return periodOf(seriesSeed(i, j, s))
 }
 
 export function cellOf(x: number, z: number): [number, number] {
