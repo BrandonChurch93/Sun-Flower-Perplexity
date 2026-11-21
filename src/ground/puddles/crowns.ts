@@ -164,7 +164,7 @@ void main() {
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.75 * vTop, 1.0, vMud);
       vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.18 + 0.3 * lip), mix(vec3(0.022, 0.019, 0.016), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
-      alpha = mirror + (1.0 - mirror) * mix(0.55, 0.92, silt);
+      alpha = mirror + (1.0 - mirror) * mix(0.3, mix(0.7, 0.92, vMud), silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
