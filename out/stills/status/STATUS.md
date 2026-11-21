@@ -1,12 +1,12 @@
-# Status 28
+# Status 29
 
-2026-11-21 11:59 UTC
+2026-11-21 12:56 UTC
 
-- Status 28 · Phase 3 · unit bloom. Round 4 (an extra round) started at 11:54 judging e099145: the third set of merges after round 3 is in (bud's bracts spread as a star, disc on the exact spiral, lens pass 7, field pass 5, skin pass 6, finer hairs, petals' colour). Its machine gate, final tier measure and pack are running, about 28 min. At review tier before the round M1 and M2 pass and M3 reads 0.801 at 45 s and 0.888 at 50.5 s against a floor of 0.8; the gate reads M3 at final tier. Pictures are review tier at 02bbe22, one merge before the judged commit.
-- Next: When the chain ends (about 12:22) tick the round's checks, look at the pack, send it to three fresh critics and ten jurors, save their words in scorecards/round-004, then the fix pass on the agents' 12:45 reports. Largest differences still open: the cap of folded rays reads as a comb of strings, the bracts lack modelling, the neighbor's leaf stands edge on above a clear sun where the approved has it broadside in front of the sun, the field is browner with orange ring heads. Time used: 11.1 h of 30 h.
+- Status 29 · Phase 3 · unit bloom. Round 4 is judged and is not a pass: match 4, surface 5, motion 6, the jury 4 of 10 votes against 6 of 10 for the approved pair (passes at the edge), all 13 machine checks green, sharpness at 45 s 0.722 of the 0.8 needed. Since the judged frames, 15 merges are on main: the bud shows its lifted orange rays and a striped cap, the neighbor's upper leaf stands in front of the sun at both keys, the field's leaves break up, the disc floor is closed. Open against the approved: the dense dark field, the tree line, the head's cupped right side at 50.5 s, the leaf outlines.
+- Next: Twelve agents work the critics' notes until 13:20 UTC; the rays' opening has its own owner now. Round 5 renders at about 13:30 UTC, round 6 at about 15:10 if the clock allows. Time used: 12.1 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: 45 s · approved left, build right (review tier)
-- `status-2.jpg`: 50.5 s · approved left, build right (review tier)
-- `status-3.jpg`: 45 s · the bud at native size, approved left, build right
-- `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
+- `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier)
+- `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier)
+- `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left
+- `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
