@@ -29,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 40000 },
+  hero: { step: 1, rows: 96, wide: 1, hairs: 30000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -135,9 +135,12 @@ export function create(options: PartOptions): PlantPart {
     const waveAmp = 0.018 + 0.024 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
-    const blade = lerp(1, main ? 0.9 : 0.76, upper)
+    // The leaf that hangs right under the head is a small one on an arched stalk.
+    const tuck = main ? Math.exp(-(((rank - 0.913) / 0.03) ** 2)) : 0
+    const blade = lerp(1, main ? 0.9 : 0.76, upper) * (1 - 0.42 * tuck)
     const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
+    const folds = main ? 2.2 : 1
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf || withered
@@ -163,7 +166,7 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19),
+      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19) + 0.5 * tuck,
       tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
@@ -197,7 +200,7 @@ export function create(options: PartOptions): PlantPart {
         z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
         z += waveAmp * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
         z -= rolled * ae * ae * ae
-        z += lump * (Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+        z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
         if (onStalk) {
           x = w * 0.012
@@ -306,7 +309,7 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.5) {
+      if (pick < 0.3) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
@@ -519,7 +522,7 @@ export function create(options: PartOptions): PlantPart {
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.0012 + 0.0036 * hair.r1) * scale
+        long = (0.002 + 0.002 * hair.r1) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
@@ -556,7 +559,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0004 + 0.0028 * hair.r1 * hair.r1) * scale
+          long = (0.002 + 0.002 * hair.r1) * scale
         }
       }
       root[o] = px
