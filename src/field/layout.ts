@@ -71,7 +71,7 @@ const bell = (id: number, channel: number): number => (hash01(SEED, channel, id)
 const BAY = { left: -3.1, right: 2.1, soft: 0.9, rows: 2 }
 function edgeRows(across: number): number {
   const bay = step(BAY.left - BAY.soft, BAY.left, across) * (1 - step(BAY.right, BAY.right + BAY.soft, across))
-  const wander = step(0.5, 0.78, noise(20, across * 0.11, 3.7)) * 2
+  const wander = step(0.56, 0.8, noise(20, across * 0.3, 3.7)) * 2
   return Math.max(bay * BAY.rows, wander)
 }
 
