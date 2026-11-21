@@ -140,12 +140,12 @@ export function skylineStrip(i: number, sunAzimuthDeg: number): THREE.BufferGeom
   return ringStrip(SKYLINE[i].segments, (az) => skylineAt(i, az, sunAzimuthDeg))
 }
 
-// Through the film. Early on, where the dawn sun rises, the land lies under the sun's lower limb, and it stands at its full height from 28 degrees to either side. It eases to the golden hour's line through the second half of the rain, which hides the far land, so the night has its trees on the right. One curve of film time for every world, so no cut moves the line.
+// Through the film. Early on, where the dawn sun rises, the land lies under the sun's lower limb, and it stands at its full height from 6 degrees to either side, so the sun rises in a gap of the tree line. It eases to the golden hour's line through the second half of the rain, which hides the far land, so the night has its trees on the right. One curve of film time for every world, so no cut moves the line.
 export const SKYLINE_DAWN_SUN_DEG = 175.007
 const EARLY_ROW = 1
-const DAWN_FULL_DEG = 8
-const DAWN_CLEAR_DEG = 28
-const UNDER_DAWN_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.4, 0.44, 0.3, 0.3]
+const DAWN_FULL_DEG = 2
+const DAWN_CLEAR_DEG = 6
+const UNDER_DAWN_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.62, 0.62, 0.3, 0.3]
 
 // 1 until 12 s, 0 from 22 s: nine tenths of the way lie inside the rain, after its key at 14 s.
 export const skylineEarly = (time: number): number => 1 - smooth(12, 22, time)

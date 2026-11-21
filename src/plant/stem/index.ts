@@ -175,6 +175,7 @@ export function create(options: PartOptions): PlantPart {
     const pale = paleness(time)
     const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
+    const grounded = 1 - smoothstep(36.5, 40, time) + smoothstep(52, 55, time)
 
     const base = (u: number, s: number): number => {
       let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
@@ -328,10 +329,10 @@ export function create(options: PartOptions): PlantPart {
         if (reach <= 0 || d < -nodeR[k]) continue
         sky *= 1 - (0.4 * smoothstep(-nodeR[k], 3 * nodeR[k], d) * reach * reach) / (reach * reach + d * d)
       }
-      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky) * (1 - 0.8 * collared)
+      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky) * (1 - 0.8 * collared) * lerp(1, 0.3 + 0.7 * smoothstep(0, 0.004 + 1.6 * rFoot, s + off), grounded)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.002, 0.012, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.3, 0.55, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.001, 0.007, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
