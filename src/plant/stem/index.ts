@@ -378,7 +378,7 @@ export function create(options: PartOptions): PlantPart {
       const up = 0.16 - slope + 0.7 * (hash01(seed, 84, i) - 0.5)
       const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
-      const mature = 0.3 + 0.7 * smoothstep(0.0018, 0.007, r0)
+      const mature = 0.5 + 0.5 * smoothstep(0.0018, 0.006, r0)
       root[o] = n.x + ox * radius
       root[o + 1] = n.y + oy * radius
       root[o + 2] = n.z + oz * radius

@@ -74,7 +74,8 @@ void main() {
   vec4 fine = texture(uSkin, vCoord.xy);
   vec4 wide = texture(uSkin, vec2(vCoord.x + 0.37, vCoord.y * 0.173 + 0.61));
   float rib = mix(vSkin.x, (texture(uRibs, vec2(vCoord.x, vCoord.z)).r - 0.34) / 0.6, 0.7);
-  float tone = mix(0.58 * wide.g + 0.42 * fine.g, 0.5, 0.65 * thin);
+  float tone = 0.58 * wide.g + 0.42 * fine.g;
+  tone = mix(saturate(0.5 + (tone - 0.5) * 1.45), 0.5, 0.45 * thin);
   float streak = wide.g;
   float fleck = saturate(vSkin2.y * (0.8 * smoothstep(0.76, 0.86, fine.b) + 0.4 * smoothstep(0.74, 0.86, wide.b)));
   float spot = smoothstep(0.84, 0.97, fine.a) * (1.0 - youth);
@@ -86,11 +87,11 @@ void main() {
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
   vec3 grown = mix(vec3(0.05, 0.115, 0.026), vec3(0.19, 0.3, 0.078), tone);
-  grown *= 1.0 + ribbed * (0.3 * furrow - 0.2 * crest);
+  grown *= 1.0 + ribbed * (0.24 * crest - 0.26 * furrow);
   vec3 young = mix(vec3(0.25, 0.41, 0.07), vec3(0.47, 0.6, 0.15), tone);
   vec3 albedo = mix(grown, young, youth);
-  albedo = mix(albedo, vec3(0.34, 0.43, 0.2), 0.55 * spot);
-  albedo = mix(albedo, vec3(0.12, 0.05, 0.045) * (0.7 + 0.6 * tone), 0.62 * fleck);
+  albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
+  albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
   albedo = mix(albedo, vec3(0.23, 0.045, 0.075) * (0.55 + 0.9 * tone), vSkin3.z * (0.3 + 0.5 * streak));
   albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
@@ -102,8 +103,8 @@ void main() {
   albedo *= 1.0 - 0.3 * uPlantWet;
   rough = mix(rough, 0.22, uPlantWet);
   wax = mix(wax, 0.9, max(uPlantWet, 0.5 * uPlantDew));
-  float rime = uPlantFrost * smoothstep(0.3, 0.8, tone + 0.5 * crest + 0.4 * face.y);
-  albedo = mix(albedo, vec3(0.8, 0.86, 0.92), 0.55 * rime);
+  float rime = uPlantFrost * (0.2 + 0.8 * smoothstep(0.45, 0.85, 0.6 * dust + 0.25 * crest + 0.3 * tone + 0.3 * face.y));
+  albedo = mix(albedo, vec3(0.8, 0.86, 0.92), 0.42 * rime);
   rough = mix(rough, 0.95, rime);
   Tissue t;
   t.albedo = albedo;
