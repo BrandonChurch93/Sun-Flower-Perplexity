@@ -6,8 +6,8 @@ import { NightSky } from './sky.ts'
 
 export const world: WorldSettings = {
   standIn: true,
-  sun: { azimuthDeg: 250, elevationDeg: 10, color: [1.5, 1.75, 2.15], softnessDeg: 1.5, lean: 0, lift: 0 },
-  sky: { zenith: [0.012, 0.022, 0.06], horizon: [0.03, 0.05, 0.1], bounce: [0.004, 0.006, 0.012], ambient: 1.0, glow: [0, 0, 0], glowPower: 8, disc: 0 },
+  sun: { azimuthDeg: 250, elevationDeg: 10, color: [1.6, 1.87, 2.3], softnessDeg: 1.5, lean: 0, lift: 0 },
+  sky: { zenith: [0.012, 0.022, 0.06], horizon: [0.03, 0.05, 0.1], bounce: [0.004, 0.006, 0.012], ambient: 1.3, glow: [0, 0, 0], glowPower: 8, disc: 0, even: 0.6 },
   backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
   fog: { color: [0.02, 0.034, 0.05], sunTint: [0.02, 0.03, 0.04], density: 0.006, falloff: 1.2 },
   grade: { exposure: 1.35, contrast: 1.22, white: 5, saturation: 0.95, gain: [0.92, 1, 0.98], lift: [0.0012, 0.0028, 0.0028], bloom: 0.07, bloomKnee: 0.9, vignette: 0.36, grain: 0.016 },
@@ -16,8 +16,8 @@ export const world: WorldSettings = {
 }
 
 // Cold and low: a thin layer over the field under eye level, and a bank standing between the field's far edge and the foot of the hills.
-const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.015, lit: [0.4, 0.4, 0.36], shade: [4.6, 3.1, 1.4], forward: 1, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
-const BANK: MistSettings = { fromM: 56, toM: 76, sheets: 6, heightM: 0.2, thickness: 3, lit: [0.55, 0.55, 0.5], shade: [8.7, 5.7, 2.6], forward: 1, drift: [0.03, 0.01], bankM: 35, broken: 0.6 }
+const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.015, lit: [0.4, 0.4, 0.36], shade: [3.5, 2.4, 1.1], forward: 1, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
+const BANK: MistSettings = { fromM: 56, toM: 76, sheets: 6, heightM: 0.2, thickness: 3, lit: [0.55, 0.55, 0.5], shade: [6.7, 4.4, 2], forward: 1, drift: [0.03, 0.01], bankM: 35, broken: 0.6 }
 
 const SKY_GAIN = 0.9
 const STAR_GAIN = 4
