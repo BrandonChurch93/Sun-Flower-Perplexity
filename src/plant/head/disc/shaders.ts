@@ -118,7 +118,7 @@ void main() {
     float z;
     if (level < 0.5) {
       // The feet of neighbors meet, so no floor shows between them.
-      r = rc * 1.3;
+      r = rc * 1.9;
       z = -0.18 * w * grown;
       normal = radial;
       occ = 0.14;
