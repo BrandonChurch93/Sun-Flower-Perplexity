@@ -18,7 +18,7 @@ const STALK = 0.2
 const PATH = 48
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
-const TROUGH = 0.006
+const TROUGH = 0.0045
 
 const HERO_COLS = [-1, -0.86, -0.7, -0.52, -0.34, -0.17, -0.05, 0, 0.05, 0.17, 0.34, 0.52, 0.7, 0.86, 1]
 const FIELD_COLS = [-1, 0, 1]
@@ -165,18 +165,23 @@ export function create(options: PartOptions): PlantPart {
         const aw = Math.abs(w)
         const side = w < 0 ? 0 : 1
         const veins = veinSets[set][mirror > 0 ? side : 1 - side]
-        const tooth = hero ? toothAt(s, combine(seed, i * 2 + side), teeth, depth) * smoothstep(0.6, 1, aw) : 0
+        const rolled = roll * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
+        // A tooth on a rolled edge runs down the slope, so it reaches less far out.
+        const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
+        const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth) * smoothstep(0.6, 1, aw)) / steep : 0
         const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
         let x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
         let y = sweepAt(s, w, cord) * (1 + 0.3 * (r(24 + side) - 0.5))
         const across = Math.abs(x)
+        // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
+        const ae = aw * (1 + tooth) * wobble
         const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
         let z = 0.011 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
-        z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.011) ** 2))
-        z += waveAmp * Math.pow(aw, 2.5) * Math.sin(6.2832 * (waveRate * s + r(26 + side))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
-        z -= roll * (0.55 + 0.9 * r(28 + side)) * aw * aw * aw * Math.min(1, wide * 4)
+        z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
+        z += waveAmp * Math.pow(ae, 2.5) * Math.sin(6.2832 * (waveRate * s + r(26 + side))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
+        z -= rolled * ae * ae * ae
         z += lump * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
-        z -= 0.03 * Math.pow(aw, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
+        z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
         if (onStalk) {
           x = w * 0.012
           y = 0

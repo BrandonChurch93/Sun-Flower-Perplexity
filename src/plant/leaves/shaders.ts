@@ -105,25 +105,24 @@ void main() {
 
   vec3 var = detail / ${DETAIL_MEAN};
   float lum = dot(var, vec3(0.3, 0.6, 0.1));
-  float veins = saturate(vein.r + 0.45 * vein.b);
   float tone = 0.86 + 0.28 * mark.g;
 
   vec3 upper = vec3(0.07, 0.165, 0.035) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.3, 0.4, 0.15), 0.5 * vein.r + 0.18 * vein.b);
+  upper = mix(upper, vec3(0.34, 0.44, 0.18), 0.8 * vein.r + 0.3 * vein.b);
   vec3 under = vec3(0.17, 0.25, 0.115) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.44, 0.5, 0.27), 0.75 * vein.r + 0.4 * vein.b);
   vec3 albedo = top ? upper : under;
   albedo = mix(albedo, vec3(0.5, 0.43, 0.09) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
-  // Thick veins hold the light back. The small veins and the net between the cells let more of it through than the cells do.
+  // Veins hold no green, so the light that comes through them is pale; the blade beside a thick vein is denser and darker.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  vec3 through = vec3(0.34, 0.62, 0.04) * (0.3 + 0.7 * pow(lum, 1.7)) * tone;
-  through *= (1.0 - 0.7 * vein.r) * (1.0 - 0.2 * vein.b) * (1.0 - 0.22 * thick);
+  vec3 through = vec3(0.34, 0.62, 0.04) * (0.3 + 0.7 * pow(lum, 1.7)) * tone * (1.0 - 0.3 * thick);
+  through = mix(through, vec3(0.62, 0.66, 0.2), 0.75 * vein.r + 0.3 * vein.b);
   through = mix(through, vec3(0.95, 0.78, 0.1) * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.32, 0.13, 0.025), brown);
 
-  float high = ((vein.g - 0.55) * 0.0016 + (lum - 1.0) * 0.00018) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0011 + (lum - 1.0) * 0.00018) * vState.x * 4.0;
   if (!top) high = -high;
   float fold = vState.z;
 
@@ -135,7 +134,7 @@ void main() {
   t.rough = 0.92;
   t.wax = top ? 0.07 : 0.03;
   t.sheen = 0.9;
-  t.occlusion = (1.0 - (top ? 0.15 : 0.0) * veins) * (top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0);
+  t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texelDensity(dUv, uDetailSize));
 }
 #endif
