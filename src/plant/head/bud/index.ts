@@ -45,6 +45,8 @@ const COLLAR_FROM = -1
 const COLLAR_TAKES = 2.5
 // Bracts on the side away from the first rays stay on the body this much longer, in seconds.
 const COLLAR_LATE = 3
+// The outer series stands out round the whole bud as a crown, so it waits far less than the two that cover the body.
+const LATE_SHARE = [0.25, 1, 1]
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
 // On the side away from the first rays the folded bracts stay spread behind the rays by this share and do not lie back on the stem.
@@ -398,7 +400,7 @@ export function create(options: PartOptions): PlantPart | null {
       const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
       const near = smoothstep(-0.2, 0.4, ox)
-      const late = COLLAR_LATE * near * (1 - smoothstep(0.45, 0.85, oy))
+      const late = COLLAR_LATE * LATE_SHARE[k.series] * near * (1 - smoothstep(0.45, 0.85, oy))
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
