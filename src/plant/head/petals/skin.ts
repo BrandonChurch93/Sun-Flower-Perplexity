@@ -27,7 +27,7 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
 #ifdef DEPTH_PASS
   // The pleats of a folded ray are finer than the shadow map: the caster stands back so they do not stripe themselves.
-  world.xyz -= uSunDir * uShadowTexelM * mix(3.5, 1.0, aState.y);
+  world.xyz -= uSunDir * (uShadowTexelM * mix(3.5, 1.0, aState.y) - 0.008 * aState.x);
 #endif
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;

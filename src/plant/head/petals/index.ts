@@ -225,8 +225,9 @@ export function create(options: PartOptions): PlantPart | null {
     // An open ray lies in over the outer florets, and it is that much longer so its tip stays where the growth puts it.
     const lifted = smooth(0.1, 0.9, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
-    // A shut ray is long enough to reach over the face toward the middle.
-    const length = (rayLength(k, time) + mix(0.78 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
+    // A shut ray reaches over the face toward the middle and leans on the one across from it. Once that one has opened it draws back to a hook over the rim.
+    const alone = rayOpen((k + (rayCount >> 1)) % rayCount, time - 0.9)
+    const length = (rayLength(k, time) + mix(mix(0.78, 0.4, alone) * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const around = (k / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
@@ -267,7 +268,7 @@ export function create(options: PartOptions): PlantPart | null {
       const along = smooth(0, 1, open * 1.5 - 0.22 * Math.pow(e, 1.5))
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
-      const shut = mix(1.62 + 0.1 * ray.arch, 2.6 + 0.07 * ray.rank + 0.14 * (ray.arch - 0.5), smooth(0, 0.35, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
+      const shut = mix(1.62 + 0.1 * ray.arch, 2.6 - 0.5 * alone + 0.07 * ray.rank + 0.14 * (ray.arch - 0.5), smooth(0, 0.35, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
       const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
