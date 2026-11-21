@@ -106,12 +106,14 @@ const bodyCurve = new Monotone([
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
-// A neighbor carries a smaller head than the plant.
+// A neighbor carries a smaller head than the plant. Its bud swells like the plant's until it has the size its own head starts the bloom's unit with, and waits there.
 const NEIGHBOR_HEAD = 0.7
 const headScale = (): number => (variant === 0 ? 1 : NEIGHBOR_HEAD)
+const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(config.segments.find((s) => s.id === 'bloom')!.start)
 
 export function bodyRadius(time: number): number {
-  return bodyCurve.at(time) * headScale()
+  const body = bodyCurve.at(time)
+  return variant === 0 ? body : Math.max(NEIGHBOR_HEAD * body, Math.min(body, NEIGHBOR_HELD))
 }
 
 export function headOpen(time: number): number {
