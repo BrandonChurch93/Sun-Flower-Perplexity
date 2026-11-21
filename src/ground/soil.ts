@@ -69,6 +69,7 @@ float soilHeight(vec2 p, float lod) {
 export const waterLevelsM = [-0.03, -0.0075]
 export const groundStates = /* glsl */ `
 uniform vec2 uWater;
+uniform float uCast;
 float waterLevel(float wet) {
   return mix(uWater.x, uWater.y, wet);
 }
@@ -91,6 +92,10 @@ vec3 groundAmbient(vec3 n) {
 float glare(vec3 v, vec3 hv) {
   float skim = 1.0 - saturate(dot(v, hv));
   return 0.8 + 5.5 * skim * skim * skim * skim;
+}
+// Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
+float selfShade() {
+  return mix(1.0, 0.3, (1.0 - uCast) * (1.0 - smoothstep(0.05, 0.5, uSunDir.y)));
 }
 float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
@@ -126,7 +131,6 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
 uniform float uCover;
-uniform float uCast;
 uniform vec2 uToward;
 uniform vec2 uRight;
 uniform vec3 uRows;
@@ -235,9 +239,9 @@ void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
   float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit;
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade();
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * selfShade() * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
