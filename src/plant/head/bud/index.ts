@@ -146,7 +146,7 @@ const YOUNG_OUT = [0.4, 0.8, 0.5]
 const YOUNG_OUT_VARY = [0.25, 0.25, 0]
 const YOUNG_HUG = [0.1, 0.16, 0.23]
 const YOUNG_WIDE = [0.5, 0.9, 0.3]
-const YOUNG_LONG = [2.6, 2.0, 0]
+const YOUNG_LONG = [2.6, 0.9, 0]
 const YOUNG_SHORT = [0, 0, 0.2]
 // A young bract wears its hairs long for its size, as a young leaf does.
 const YOUNG_FRINGE = 1.8
