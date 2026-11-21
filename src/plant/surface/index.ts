@@ -4,12 +4,12 @@ export const real = true
 
 // What the skin expects from each kind of part. `through` is the brightness of the brightest channel of the color a part passes in.
 export const tissueGuide = {
-  leafTop: { rough: 0.82, wax: 0.3, sheen: 0.6, through: 0.85 },
-  leafUnderside: { rough: 0.9, wax: 0.12, sheen: 0.85, through: 0.85 },
-  seedLeaf: { rough: 0.38, wax: 0.8, sheen: 0, through: 1 },
-  stalk: { rough: 0.78, wax: 0.2, sheen: 0.9, through: 0.3 },
+  leafTop: { rough: 0.82, wax: 0.3, sheen: 0.6, through: 0.5 },
+  leafUnderside: { rough: 0.9, wax: 0.12, sheen: 0.85, through: 0.5 },
+  seedLeaf: { rough: 0.38, wax: 0.8, sheen: 0, through: 0.7 },
+  stalk: { rough: 0.78, wax: 0.2, sheen: 0.9, through: 0.15 },
   stem: { rough: 0.78, wax: 0.2, sheen: 0.8, through: 0 },
-  bract: { rough: 0.85, wax: 0.15, sheen: 1, through: 0.45 },
+  bract: { rough: 0.85, wax: 0.15, sheen: 1, through: 0.28 },
   receptacle: { rough: 0.9, wax: 0.1, sheen: 0.8, through: 0 },
   ray: { rough: 0.62, wax: 0.35, sheen: 0.25, through: 1 },
   floret: { rough: 0.7, wax: 0.3, sheen: 0.15, through: 0.5 },
@@ -51,7 +51,7 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
 }
 
 // The share of the sun a thin tissue passes when 'through' is 1. With it a part never returns more than arrives: albedo plus what comes through stays under 1.
-const float TISSUE_THROUGH = 0.25;
+const float TISSUE_THROUGH = 0.17;
 // How much of the light through goes on toward where it was heading, and how tight that lobe is. The lobe keeps its energy: (k + 2) / 2 at its peak.
 const float TISSUE_FORWARD = 0.4;
 // Wax over a cell wall: a dielectric of index 1.45.
