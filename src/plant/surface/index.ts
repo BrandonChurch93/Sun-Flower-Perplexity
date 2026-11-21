@@ -324,14 +324,16 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
+  // Which side of the outline the sun is on, as the eye sees it.
+  float vl = dot(view, L);
+  float side = smoothstep(0.0, 0.6, (fdl - fv * vl) / max(sqrt(max(1.0 - vl * vl, 0.0)), 0.05));
+  // The rime on the down of a round body lights up where the sun comes through it: the pale side of a frosted stem.
+  color += (direct + skyFront * open) * FROST_RIME * (FROST_SIDE * frost * (0.4 + 0.6 * t.sheen) * (1.0 - blade) * saturate((1.0 - fv) / 0.6) * side);
   // The sun enters a clear body at its outline and leaves toward the eye: a bright line down the sun's side, near the sun's own color.
   if (clear > 0.0) {
     float line = 1.0 - smoothstep(0.08, 0.45, fv);
     vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
-    // Which side of the outline the sun is on, as the eye sees it.
-    float vl = dot(view, L);
-    float side = (fdl - fv * vl) / max(sqrt(1.0 - vl * vl), 0.05);
-    color += direct * own * (TISSUE_CLEAR * clear * line * line * smoothstep(0.0, 0.6, side) * (0.2 + 0.8 * against * against));
+    color += direct * own * (TISSUE_CLEAR * clear * line * line * side * (0.2 + 0.8 * against * against));
   }
   // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
   color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);

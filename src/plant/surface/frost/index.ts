@@ -4,7 +4,9 @@ const float FROST_GRAIN_M = 0.0012;
 const float FROST_BEAD_M = 0.0034;
 const vec3 FROST_RIME = vec3(0.74, 0.79, 0.86);
 const float FROST_FLASH = 5.0;
-const vec3 FROST_COLD = vec3(0.42, 1.22, 0.7);
+const vec3 FROST_COLD = vec3(0.45, 1.2, 0.5);
+// The share of the sun that the rime on the down of a round body sends on, on the sun's side.
+const float FROST_SIDE = 1.0;
 
 // One grain to a cell, whole inside it. x: its share of the pixel, y: the flash of its face when it mirrors the sun to the eye.
 vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3 N, vec3 view) {
@@ -31,7 +33,7 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float up = saturate(F.y);
   float bank = valueNoise(at * (1.0 / 0.006));
   float fine = valueNoise(at * (1.0 / 0.0013) + 17.0);
-  float grown = saturate((0.06 + 0.5 * up * up) * (0.3 + 1.4 * bank * bank) * (0.6 + 0.4 * sheen) + gather * sqrt(gather));
+  float grown = saturate((0.06 + 0.5 * up * up) * (0.3 + 1.4 * bank * bank) * (0.2 + 0.8 * sheen) + gather * sqrt(gather));
   float veil = 0.02 + 0.2 * grown * fine + 0.65 * grown * grown;
 
   vec2 g = at * (1.0 / FROST_GRAIN_M);
@@ -44,7 +46,8 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float mean = chance * 3.1416 * (0.08 * 0.08 + 0.08 * most + most * most) / 3.0;
 
   float wide = FROST_GRAIN_M / FROST_BEAD_M;
-  float lone = 0.2 + 0.3 * up;
+  // Frozen beads stand where the dew stood: along edges, tips and veins, not on an open face.
+  float lone = (0.2 + 0.3 * up) * smoothstep(0.0, 0.5, gather);
   vec2 bead = frostGrain(g * wide + 53.0, reach * wide, lone, 0.05, 0.15, N, view);
   float still = 1.0 - smoothstep(0.35, 1.1, reach * wide);
   float ice = mix(mean, dust.x, sharp) + mix(lone * 0.034, bead.x, still);
