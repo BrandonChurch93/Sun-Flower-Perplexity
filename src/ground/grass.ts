@@ -110,8 +110,8 @@ export function tufts(): THREE.InstancedMesh[] {
     if (chance > grassMask(x, z) * (0.5 + 0.5 * clump) || r < 0.035) continue
     if (early && (inLane > 0.02 || r < 0.06)) continue
     const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : seed > 0.93 ? 1.8 : 1)
-    const born = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
-    if (born < SUN_CLEAR.untilS && underSun(x, z)) continue
+    const first = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
+    const born = first < SUN_CLEAR.untilS && underSun(x, z) ? SUN_CLEAR.untilS : first
     turn.setFromAxisAngle(up, spin)
     size.set(height * wide, height, height * wide)
     at.set(x, -0.002, z)

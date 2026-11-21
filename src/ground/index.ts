@@ -4,14 +4,15 @@ import type { Assets } from '../core/assets.ts'
 import type { Caster } from '../core/shadow.ts'
 import { endStandIn } from '../core/standins.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
+import { segmentById } from '../director/timeline.ts'
 import { right, toward } from '../field/layout.ts'
-import { bladeFragment, bladeVertex, blades } from './blades.ts'
+import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsKept } from './blades.ts'
 import { grassCover, grassTimes } from './cover.ts'
-import { clodScatter, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
+import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
-import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
+import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowKept, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
@@ -36,6 +37,8 @@ export class Ground {
   constructor() {
     endStandIn('ground')
     const shore = furrowShare(waterLevelsM[1])
+    const keptS = segmentById('bloom').start
+    const shoreKept = furrowKept.flat + (1 - furrowKept.flat) * furrowShare(waterLevelsM[1], furrowKept.depthM)
     this.uniforms = {
       uWet: { value: 0 },
       uFrost: { value: 0 },
@@ -67,6 +70,9 @@ export class Ground {
       uFurrowShore: { value: new THREE.Vector4((furrow.easeM * shore) / (1 - shore), furrow.easeM, furrow.wanderM, furrow.easeM * 3) },
       uFurrowShape: { value: new THREE.Vector4(furrow.depthM, furrow.bankM, furrow.windM, furrow.clearM) },
       uFurrowTime: { value: new THREE.Vector3(furrow.fromS, furrow.toS, furrow.before) },
+      uFurrowWas: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / shoreKept)) },
+      uFurrowKept: { value: new THREE.Vector3(keptS, furrowKept.depthM, furrowKept.bankM) },
+      uKeptS: { value: keptS },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
       uWater: { value: new THREE.Vector2(waterLevelsM[0], waterLevelsM[1]) },
@@ -87,6 +93,11 @@ export class Ground {
       }
       return mesh
     }
+    const when = (mesh: THREE.Mesh, kept: boolean): THREE.Mesh => {
+      const all = mesh.geometry.getIndex()!.count
+      mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= keptS === kept ? all : 0)
+      return mesh
+    }
     const add = (mesh: THREE.Mesh, surface: Surface, casts: boolean): void => {
       mesh.material = surface.main
       this.mesh.add(mesh)
@@ -95,11 +106,13 @@ export class Ground {
     add(new THREE.Mesh(soilGeometry()), this.surface, false)
     add(new THREE.Mesh(nearGeometry()), this.near, true)
     add(scatter('ground crumbs', crumbScatter), this.loose, true)
-    add(scatter('ground clods', clodScatter), this.loose, true)
+    add(when(scatter('ground clods', clodScatter), false), this.loose, true)
+    add(when(scatter('ground clods', clodScatterKept), true), this.loose, true)
     add(close(scatter('ground lumps', lumpScatter)), this.fine, true)
     add(close(scatter('ground grains', grainScatter)), this.fine, true)
     add(scatter('ground masses', massScatter), this.loose, true)
-    add(blades(), this.blades, true)
+    add(when(blades(clumps, beadSizes), false), this.blades, true)
+    add(when(blades(clumpsKept, beadSizesKept), true), this.blades, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)
   }
 

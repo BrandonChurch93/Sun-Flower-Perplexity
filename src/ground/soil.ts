@@ -32,8 +32,10 @@ export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, dom
 // halfM is half the width of the standing water at each of the places atM along it, and the shore wanders by wanderM. The floor lies depthM under the mean ground and rises over easeM beyond the water's edge; the banks stand bankM over the ground and stay off the plant within clearM. Until fromS the furrow has only the share before of its depth, and all of it by toS.
 export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.0155, bankM: 0.006, easeM: 0.05, wanderM: 0.012, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
 // How far along the floor's slope a level is met, from 0 at the floor to 1 at the mean ground.
-export const furrowShare = (levelM: number): number => {
-  const want = 1 - Math.min(1, Math.max(0, -levelM / furrow.depthM))
+// From the golden hour on the furrow is the deep cut it was when that unit was judged, with banks as high as it is deep and a floor that starts 0.3 of the way out.
+export const furrowKept = { depthM: 0.03, bankM: 0.03, flat: 0.3 }
+export const furrowShare = (levelM: number, depthM: number = furrow.depthM): number => {
+  const want = 1 - Math.min(1, Math.max(0, -levelM / depthM))
   let lo = 0
   let hi = 1
   for (let i = 0; i < 30; i++) {
@@ -119,6 +121,8 @@ uniform vec4 uFurrowHalf;
 uniform vec4 uFurrowShape;
 uniform vec4 uFurrowShore;
 uniform vec3 uFurrowTime;
+uniform vec4 uFurrowWas;
+uniform vec3 uFurrowKept;
 // The height the furrow adds: under the mean ground along its middle, a little over it on its banks.
 float furrow(vec2 p) {
   float a = dot(p, uFurrowAxes.xy);
@@ -126,6 +130,15 @@ float furrow(vec2 p) {
   float dc = clamp(d, uFurrow.z, uFurrow.w);
   float side = a + uFurrow.x - uFurrow.y * dc - uFurrowShape.z * sin(dc * 13.0 + 1.0);
   vec3 part = saturate((vec3(dc) - uFurrowAt.xyz) / (uFurrowAt.yzw - uFurrowAt.xyz));
+  if (uTime >= uFurrowKept.x) {
+    float was = uFurrowWas.x + dot(part, uFurrowWas.yzw - uFurrowWas.xyz);
+    float x = length(vec2(side, d - dc)) / was;
+    if (x > 2.0) return 0.0;
+    float full = mix(uFurrowTime.z, 1.0, smoothstep(uFurrowTime.x, uFurrowTime.y, uTime));
+    float floorWas = 1.0 - smoothstep(0.3, 1.0, x);
+    float bankWas = smoothstep(0.75, 1.2, x) * (1.0 - smoothstep(1.2, 2.0, x)) * smoothstep(uFurrowShape.w, uFurrowShape.w * 2.0, length(p)) * (1.0 - lane(p));
+    return full * (bankWas * uFurrowKept.z - floorWas * uFurrowKept.y);
+  }
   float wide = uFurrowHalf.x + dot(part, uFurrowHalf.yzw - uFurrowHalf.xyz);
   wide += uFurrowShore.z * (sin(d * 47.0 + side * 31.0) + 0.6 * sin(d * 83.0 - side * 59.0 + 2.1)) * smoothstep(0.0, 0.02, wide - 0.015);
   float s = length(vec2(side, d - dc));
@@ -196,8 +209,8 @@ vec3 groundAmbient(vec3 n) {
   return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.3, 0.95 * away);
 }
 // Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
-vec3 proud(float heightM) {
-  return mix(vec3(1.0), mix(vec3(0.85), vec3(1.6, 1.35, 1.5), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+vec3 proud(float heightM, float dew) {
+  return mix(vec3(1.0), mix(vec3(0.85), mix(vec3(2.1, 1.65, 1.8), vec3(1.6, 1.35, 1.5), dew), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
 float grains(vec3 world, float share) {
@@ -371,7 +384,7 @@ void main() {
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR
-  shade *= mix(vec3(1.0), proud(vWorld.y), fade);
+  shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew));
 

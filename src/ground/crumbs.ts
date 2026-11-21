@@ -12,6 +12,7 @@ export { laneDir }
 // `rugged` is how broken a lump's own outline is, from 0 for a ball; a large lump with no crumbs of its own is kept round, or it reads as a stone. `cover` is how much of a lump's upper side its own crumbs hide, and `childM` their sizes. `beads` is the share of lumps and crumbs that carry a bead of dew.
 export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number; rugged?: number }
 export const crumbScatter: Scatter = { count: 3500, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.1, outerM: 0.9, spread: 1.4, stones: 0.03, sink: 0.38 }
+export const clodScatterKept: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.01, skew: 1.8, innerM: 0.2, outerM: 0.9, spread: 1.3, stones: 0, sink: 0.45, rugged: 0.4 }
 export const grainScatter: Scatter = { count: 4200, detail: 2, minM: 0.0003, maxM: 0.0011, skew: 1.6, innerM: 0.004, outerM: 0.13, spread: 1.25, stones: 0.04, sink: 0.3, beside: 0.25, beads: 0.3 }
 export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM: 0.0036, skew: 1.5, innerM: 0.007, outerM: 0.13, spread: 1.3, stones: 0, sink: 0.45, beside: 0.3, frontM: 0.0026, cover: 0.5, childM: [0.0004, 0.001], beads: 0.25 }
@@ -391,10 +392,10 @@ void main() {
 
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
   float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
-  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + 0.2) / 1.2) * lit + groundAmbient(n) * open * proud(vWorld.y) * mix(vec3(1.0), DEW_FILL, uDew));
+  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + mix(0.25, 0.2, uDew)) / (1.0 + mix(0.25, 0.2, uDew))) * lit + groundAmbient(n) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.1, 1.0, uWet);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
   color += wetGlints(vWorld, v, n, uWet) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
