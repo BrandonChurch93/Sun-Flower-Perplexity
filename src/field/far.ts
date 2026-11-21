@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { PLACE, beyondPlaces, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -110,13 +110,14 @@ out vec3 vTop;
 out vec3 vMid;
 uniform sampler2D uAtlas;
 uniform float uHeight;
+uniform float uSink;
 vec3 band(float v) {
   vec4 sum = vec4(0.0);
   for (int i = 0; i < 4; i++) sum += textureLod(uAtlas, vec2((float(i) + 0.5) * 0.25, v), 5.0);
   return sum.rgb / max(4.0 - sum.a, 0.02);
 }
 void main() {
-  vec4 world = vec4(position.x, uHeight, position.z, 1.0);
+  vec4 world = vec4(position.x, uHeight - uSink, position.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -258,11 +259,36 @@ const maxLeaf = (time: number): number => {
   return reach
 }
 
+// Every picture is in one piece of geometry: a software rasterizer pays for each copy of a drawn shape, not for each triangle.
+function quads(places: Float32Array): THREE.BufferGeometry {
+  const count = places.length / PLACE
+  const CORNER = 10
+  const data = new Float32Array(count * 4 * CORNER)
+  const index = new Uint32Array(count * 6)
+  for (let i = 0; i < count; i++) {
+    for (let c = 0; c < 4; c++) {
+      const at = (i * 4 + c) * CORNER
+      data.set(places.subarray(i * PLACE, i * PLACE + PLACE), at)
+      data[at + 8] = (c % 2) - 0.5
+      data[at + 9] = c >> 1
+    }
+    index.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 3, i * 4 + 2], i * 6)
+  }
+  const corners = new THREE.InterleavedBuffer(data, CORNER)
+  const quad = new THREE.BufferGeometry()
+  quad.setAttribute('aPlace', new THREE.InterleavedBufferAttribute(corners, 4, 0))
+  quad.setAttribute('aVary', new THREE.InterleavedBufferAttribute(corners, 4, 4))
+  quad.setAttribute('aCorner', new THREE.InterleavedBufferAttribute(corners, 2, 8))
+  quad.setIndex(new THREE.BufferAttribute(index, 1))
+  return quad
+}
+
 // The far field. Pictures of the simpler plants, drawn once a frame from the plants themselves as the camera sees them, stand in rows
 // past the last real plant. Past the pictures one carpet carries their color on. Under both lies the dark of the leaves.
 export class FarField {
   readonly count: number
   readonly pictures: THREE.Mesh
+  readonly beyond: THREE.Mesh
   readonly carpet: THREE.Mesh
   readonly end: THREE.Mesh
   readonly under: THREE.Mesh[]
@@ -293,6 +319,7 @@ export class FarField {
     uLate: fieldUniforms.uLate,
   }
   private readonly carpetHeight = { value: 0 }
+  private readonly carpetSink = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
   private readonly eye = new THREE.Vector3()
   private readonly clear = new THREE.Color()
@@ -325,32 +352,17 @@ export class FarField {
     this.scene.matrixWorldAutoUpdate = false
     this.camera.matrixAutoUpdate = false
 
-    // Every picture is in one piece of geometry: a software rasterizer pays for each copy of a drawn shape, not for each triangle.
-    const count = places.length / PLACE
-    const CORNER = 10
-    const data = new Float32Array(count * 4 * CORNER)
-    const index = new Uint32Array(count * 6)
-    for (let i = 0; i < count; i++) {
-      for (let c = 0; c < 4; c++) {
-        const at = (i * 4 + c) * CORNER
-        data.set(places.subarray(i * PLACE, i * PLACE + PLACE), at)
-        data[at + 8] = (c % 2) - 0.5
-        data[at + 9] = c >> 1
-      }
-      index.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 1, i * 4 + 3, i * 4 + 2], i * 6)
-    }
-    const corners = new THREE.InterleavedBuffer(data, CORNER)
-    const quad = new THREE.BufferGeometry()
-    quad.setAttribute('aPlace', new THREE.InterleavedBufferAttribute(corners, 4, 0))
-    quad.setAttribute('aVary', new THREE.InterleavedBufferAttribute(corners, 4, 4))
-    quad.setAttribute('aCorner', new THREE.InterleavedBufferAttribute(corners, 2, 8))
-    quad.setIndex(new THREE.BufferAttribute(index, 1))
-    this.count = count
+    const quad = quads(places)
+    this.count = places.length / PLACE
     const picture = makeSurface({ name: 'field pictures', vertex: pictureVertex, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms })
     this.pictures = plain(quad, picture)
+    // From 52 s the pictures run on past the last row, each grown from nothing as the lens rises.
+    const late = pictureVertex.replace('uniform float uSquat;', 'uniform float uSquat;\nuniform float uLate;').replace('float size = sizeAt(aPlace.w, aVary.z, uAhead);', 'float size = sizeAt(aPlace.w, aVary.z, uAhead) * uLate;')
+    this.beyond = plain(quads(beyondPlaces()), makeSurface({ name: 'field pictures beyond', vertex: late, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms }))
+    this.beyond.renderOrder = 10.5
 
     const sheet = (level: number, height: { value: number }, startM: number, bandM: number, depths: number[]): THREE.Mesh => {
-      const uniforms = { ...this.uniforms, uHeight: height, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
+      const uniforms = { ...this.uniforms, uHeight: height, uSink: level > 0 ? { value: 0 } : this.carpetSink, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
       return plain(sheetGeometry(depths), makeSurface({ name: level > 0 ? 'field leaf layer' : 'field carpet', vertex: sheetVertex, fragment: sheetFragment, side: THREE.DoubleSide, castShadow: false, uniforms }))
     }
     this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldPicturesM])
@@ -364,7 +376,7 @@ export class FarField {
     this.pictures.renderOrder = 10
     this.under.forEach((m, i) => (m.renderOrder = 12 - i))
     this.carpet.renderOrder = 13
-    this.meshes = [this.pictures, ...this.under, this.carpet, this.end]
+    this.meshes = [this.pictures, this.beyond, ...this.under, this.carpet, this.end]
   }
 
   async load(assets: Assets): Promise<void> {
@@ -391,6 +403,7 @@ export class FarField {
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55) * rise
     this.uniforms.uAbove.value = THREE.MathUtils.smoothstep(over, 0.4, 1.0)
     this.carpetHeight.value = canopy * 0.97
+    this.carpetSink.value = 3 * fieldUniforms.uLate.value
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
     const grown = THREE.MathUtils.smoothstep(canopy, 0.3, 0.9)
     this.uniforms.uCrop.value.set(THREE.MathUtils.lerp(1, 0.46, THREE.MathUtils.smoothstep(over, 0.02, 0.5)), THREE.MathUtils.lerp(1, 0.3, grown * THREE.MathUtils.smoothstep(over, 0.02, 0.15)))
@@ -435,7 +448,8 @@ export class FarField {
   show(on: boolean): void {
     this.pictures.visible = on
     this.carpet.visible = on && this.above
-    this.end.visible = on && this.above && fieldUniforms.uLate.value > 0
+    this.beyond.visible = on && this.above && fieldUniforms.uLate.value > 0
+    this.end.visible = false
     for (const m of this.under) m.visible = on && this.above
   }
 

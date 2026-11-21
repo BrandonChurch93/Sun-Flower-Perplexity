@@ -318,6 +318,41 @@ export function fieldPlaces(): FieldPlaces {
   return made
 }
 
+// From 52 s the crop runs on past the last row of the earlier frames: fewer plants with distance, in patches, to an uneven edge short of the land's.
+export const fieldBeyondM = 280
+const BEYOND_ID = 3000000
+let beyond: Float32Array | null = null
+export function beyondPlaces(): Float32Array {
+  if (beyond) return beyond
+  const out: number[] = []
+  const { plantSpacingM, rowSpacingM, plantAheadOfRowM } = config.field
+  let id = BEYOND_ID
+  for (let k = Math.floor((fieldPicturesM - plantAheadOfRowM) / rowSpacingM) + 1; plantAheadOfRowM + k * rowSpacingM <= fieldBeyondM; k++) {
+    const depth = plantAheadOfRowM + k * rowSpacingM
+    const count = Math.floor(fieldHalfWidth(depth) / plantSpacingM)
+    const phase = hash01(SEED, 1, k)
+    for (let n = -count; n <= count; n++) {
+      id++
+      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * 0.42
+      const along = depth + (hash01(SEED, 3, id) - 0.5) * 0.75
+      const x = -toward.x * along + right.x * across
+      const z = -toward.z * along + right.z * across
+      const reach = Math.hypot(x, z)
+      const edge = 150 + 130 * noise(29, across * 0.012, 0.5) + 30 * (noise(31, across * 0.07, 2.5) - 0.5)
+      const wide = noise(25, x * 0.035, z * 0.035)
+      const keep = (0.92 - 0.7 * step(fieldPicturesM, 200, reach) - 0.3 * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))) * (1 - step(edge - 45, edge, along))
+      if (hash01(SEED, 9, id) >= keep) continue
+      const patch = noise(22, x * 0.16, z * 0.16)
+      const size = (hash01(SEED, 15, id) < SHORT ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 + (hash01(SEED, 5, id) - 0.5) * 0.8)))
+      const tone = Math.min(1, Math.max(0, 0.35 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + 0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5)))
+      const kind = 0.45 * hash01(SEED, 14, id) + 0.55 * Math.min(1, Math.max(0, 0.5 + (noise(28, x * 0.06, z * 0.06) - 0.5) * 2.4))
+      out.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075)), Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075)), tone, id)
+    }
+  }
+  beyond = new Float32Array(out)
+  return beyond
+}
+
 // The share of a list that one kind of neighbor draws: every neighbor belongs to one kind for good.
 export function shareOf(list: Float32Array, index: number, count: number): Float32Array {
   const out: number[] = []
