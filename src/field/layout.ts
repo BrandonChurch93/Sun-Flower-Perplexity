@@ -106,8 +106,8 @@ function edgeRows(across: number): number {
 }
 
 const EDGE = [
-  { x: 0.08, z: -1.19, size: 0.72, turn: 0.2, turns: true },
-  { x: 0.27, z: -1.06, size: 0.85, turn: 2.7, turns: false },
+  { across: 0.52, size: 0.68, turn: 0.2, turns: true },
+  { across: 0.86, size: 0.85, turn: 2.7, turns: false },
 ]
 
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
@@ -131,9 +131,9 @@ export function fieldPlaces(): FieldPlaces {
     for (let n = -count; n <= count; n++) {
       id++
       // Past the near rows the plants stand off their lines, so no row can be followed to the horizon.
-      const loose = step(8, 40, Math.hypot(depth, n * plantSpacingM))
-      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * loose)
-      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * loose)
+      const out = Math.hypot(depth, n * plantSpacingM)
+      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
+      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       if (k < edgeRows(across) - 0.5) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -164,14 +164,14 @@ export function fieldPlaces(): FieldPlaces {
       pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, leanX, leanZ, tone, id)
     }
   }
-  // Two neighbors stand in the bay, nearer the lens than the front row and to the right of the plant at sunset: one head that comes round as it opens, one that keeps its back to the lens.
+  // Two neighbors stand in the bay on the front row, to the right of the plant at sunset: one head that comes round as it opens, one that keeps its back to the lens.
   const kindOf = (n: number): number => Math.floor(hash01(SEED, 15, n) * nearVariants.length)
   let taken = -1
   for (const edge of EDGE) {
     do id++
     while (kindOf(id) === 0 || kindOf(id) === taken || hash01(SEED, 40, id) < AWAY_SHARE !== edge.turns)
     taken = kindOf(id)
-    near.push(edge.x, edge.z, edge.turn, edge.size, 0, 0, 0.6, id)
+    near.push(-toward.x * plantAheadOfRowM + right.x * edge.across, -toward.z * plantAheadOfRowM + right.z * edge.across, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
   return made
