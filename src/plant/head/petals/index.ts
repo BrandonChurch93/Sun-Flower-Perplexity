@@ -23,17 +23,15 @@ const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
 // A shut ray is a strap folded once: a ridge down the middle, and two low wings that lie on the neighbors like shingles.
 const FOLD_BUD = [-0.6, -0.6, -0.6, 0.6, 0.6, 0.6]
 // A shut strap fills its own place round the rim and narrows toward the eye, and each is rolled the same way so its edge lies on the next one.
-const STRAP_FILL = 1.6
-const SHINGLE = 0.15
+const STRAP_FILL = 1.2
+const SHINGLE = 0.3
 // One ray in three just behind the sector that opens first stays shut a while longer and spreads over the place its neighbors left, so the young florets stay covered.
 const LAG_EVERY = 3
 const LAG_S = 3.0
 const STRAP_COVER = 0.6
 // A lifting ray is creased down its midrib: a V that shows about half its open width.
 const LIFT_FOLD = 1.75
-// Shut straps lie in two layers, one rank over the other, so broad neighbors overlap instead of cutting through.
 const RANK_PITCH = 0.55
-const RANK_BACK = 0.12
 const RIM_TURN = 1.1
 const SAG = 0.38
 const FOOT_SHUT = 0.05
@@ -267,7 +265,7 @@ export function create(options: PartOptions): PlantPart | null {
     const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 * lifted - RANK_BACK * ray.rank * (1 - lifted) - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
+    const back = (ray.rank * 0.025 * lifted - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
