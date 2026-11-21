@@ -64,12 +64,18 @@ export function heightAt(time: number): number {
   return heightCurve.at(time)
 }
 
+// A sprout is 2.4 mm through and thickens fast once its leaves work. From 40.3 s, when the youngest neighbor in the bloom is that old, the girth is the old curve to the last bit.
 export function stemBaseRadius(time: number): number {
-  return 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, heightAt(time)), 0.8)
+  const h = heightAt(time)
+  const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
+  const settled = smoothstep(30, 40.3, time)
+  if (settled >= 1) return full
+  return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled)
 }
 
 export function stemRadius(time: number, u: number): number {
-  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time))
+  // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(14, 36, time) * (1 - smoothstep(36.5, 40.3, time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
 }
 
