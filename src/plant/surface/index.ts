@@ -1,3 +1,4 @@
+import { dewGlsl } from './dew/index.ts'
 import { frostGlsl } from './frost/index.ts'
 import { wetGlsl } from './wet/film.ts'
 
@@ -96,6 +97,7 @@ vec3 tissueSky(vec3 n, float shown) {
 }
 
 ${frostGlsl}
+${dewGlsl}
 ${wetGlsl}
 
 vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
@@ -138,6 +140,15 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
 
   float dew = uPlantDew * (1.0 - wet);
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
+  float mist = 0.0;
+#ifndef PLANT_FIELD
+  if (dew > 0.0) {
+    mist = dew * (margin >= 0.0 ? dewMist(at, margin) : 0.55);
+    // A moist skin is smoother and its wax shows.
+    rough = mix(rough, min(rough, DEW_ROUGH), mist);
+    wax = mix(wax, max(wax, DEW_WAX), mist);
+  }
+#endif
 
   float frost = uPlantFrost;
   float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
@@ -288,6 +299,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
+  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
+  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
 
   return color;
 #endif
