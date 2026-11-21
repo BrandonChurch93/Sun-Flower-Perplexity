@@ -37,6 +37,7 @@ export class Puddles {
       ...ground,
       uLevel: this.level,
       uBox: this.ripples.uniforms.uBox,
+      uSpan: this.span,
       tRipple: { value: this.ripples.target.texture },
       ...rainSkyUniforms,
     }
@@ -48,7 +49,7 @@ export class Puddles {
     this.water.renderOrder = -10
     this.water.visible = false
     this.water.onBeforeRender = (renderer) => this.ripples.render(renderer)
-    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: this.span, uStands: this.stands }, side: THREE.DoubleSide, transparent: true, castShadow: false })
+    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uStands: this.stands }, side: THREE.DoubleSide, transparent: true, castShadow: false })
     const made = crownGeometry(this.splashes, LANDING_FLOATS)
     this.splashDrop = made.drop
     this.crowns = new THREE.Mesh(made.geometry, crown.main)
