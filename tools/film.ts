@@ -41,7 +41,7 @@ export class Job {
   async open(): Promise<Session> {
     if (!this.session) {
       this.session = await openSession({ format: this.o.format, assets: this.o.assets, diag: 'beauty', what: this.what })
-      this.base = recordBase(this.session, await this.session.info(), 'chunk', 'beauty')
+      this.base = { ...recordBase(this.session, await this.session.info(), 'chunk', 'beauty'), tier: this.o.tier }
     }
     return this.session
   }
