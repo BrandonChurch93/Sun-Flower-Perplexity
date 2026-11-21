@@ -54,13 +54,14 @@ const BEHIND_S: Record<Tier, number[]> = {
   far: [-2.0, -3.8, -1.2, -3.0],
   pictures: [-3.2, -1.4, -2.4, -4.0],
 }
-// In the rain the rows are seedlings, well behind the plant in the open. By the night every kind has all but caught up: the first of them carry a bud.
+// In the rain the rows are seedlings, well behind the plant in the open. Sown thick, they bud before it does: under the moon every kind is a little ahead
+// of the plant, the one that was least behind the most, and carries its bud. By the frost they are in step with it.
 const RAIN_BEHIND_S = 1.1
 export const rainAt = (time: number): number => ramp(6.5, 13.5, time) * (1 - ramp(15, 21, time))
 // The age of the middle of the field, for the height its tops stand at.
 export const fieldAge = (time: number): number => time - (RAIN_BEHIND_S + 1) * rainAt(time)
 export const kindTime = (time: number, index: number, tier: Tier): number =>
-  time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time)) + BEHIND_S[tier][index] * ramp(1.5, 12, time) * (1 - 0.6 * rainAt(time)) * (1 - 0.72 * ramp(17, 24, time)) * (1 - ramp(35.5, 40, time)) - RAIN_BEHIND_S * rainAt(time)
+  time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time)) + BEHIND_S[tier][index] * ramp(1.5, 12, time) * (1 - 0.6 * rainAt(time)) * (1 - ramp(17, 23, time)) - RAIN_BEHIND_S * rainAt(time) + (0.15 + 1.25 * (4.2 + BEHIND_S[tier][index]) / 3.2) * ramp(19, 25, time) * (1 - ramp(28.5, 34, time))
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
@@ -82,21 +83,19 @@ export const wideAt = (time: number): number => 0.5 * ramp(8, 13, time) * (1 - r
 // From 52 s the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
 // A neighbor's own turn off the camera's side, its height, the size of its head and how far the head nods.
 export const lateAt = (time: number): number => ramp(52, 57, time)
-// While the rain's shot lasts the rows are open and sown thick: the plants in their gaps are seedlings like the rest, stalk and all, and come up
-// in its first seconds. From the night on the crop has closed over them and only their leaves are drawn.
-const RAIN = config.segments.find((s) => s.id === 'rain') ?? { start: 8, end: 20 }
-export const gapsAt = (time: number): number => (time >= RAIN.start && time < RAIN.end ? ramp(RAIN.start, RAIN.start + 3, time) : 0)
+// In the rain the rows are open and sown thick: the leaves in their gaps are those of seedlings like the rest, and come up as it starts.
+// Under the moon the crop closes over them and they fall behind into its shade.
+export const GAPS_END_S = 27
+export const gapsAt = (time: number): number => ramp(8, 11, time) * (1 - ramp(22, GAPS_END_S, time))
 export const gapTone = (id: number): number => 0.15 + 0.5 * hash01(SEED, 99, id)
-// Under the moon the young rows stand lower than the lens, and one in fourteen stands clear of them, as do most of the two rows nearest the plant
-// that are of the kinds first to bud, each with a large bud. 0 by the rain's key and from 35.5 s.
+// Under the moon the young rows stand lower than the lens, and one in fourteen stands clear of them, as do three of the second and third rows on the moon's side
+// of the plant, set by hand, each a little taller than its row with a large bud. 0 by the rain's key and from 35.5 s.
 export const nightAt = (time: number): number => ramp(17, 23, time) * (1 - ramp(29, 35.5, time))
 export const NIGHT_LOW = 0.02
-const CLEAR_REACH_M = 2.75
-const CLEAR_SHARE = 0.65
-export const budsFirst = (index: number, tier: Tier): boolean => BEHIND_S[tier][index] > -2.2
-export const standsClear = (id: number, x: number, z: number): boolean => Math.hypot(x, z) < CLEAR_REACH_M && hash01(SEED, 96, id) < CLEAR_SHARE
-export const clearLow = (id: number): number => -0.06 - 0.1 * hash01(SEED, 97, id)
-export const clearBud = (id: number): number => 2.0 + 0.6 * hash01(SEED, 98, id)
+const CLEAR = new Set([129, 76, 77])
+export const standsClear = (id: number): boolean => CLEAR.has(id)
+export const clearLow = (id: number): number => -0.1 - 0.08 * hash01(SEED, 97, id)
+export const clearBud = (id: number): number => 1.6 + 0.4 * hash01(SEED, 98, id)
 // Before the bloom every neighbor is its own: how far it has come, how long its stalk and its leaves are, how its leaves hang, which way it leans. Out by 40 s.
 // In the cold the leaves are held out stiff, none hangs far, and the crop has filled out: every leaf reaches a third farther.
 export const STIFF_LEAF = 0.3
