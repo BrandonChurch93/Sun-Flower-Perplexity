@@ -140,7 +140,7 @@ const elevationCurve = new Monotone([
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
 const EARLY_TURN = 6 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
-export const RAY_FIRST = 3.2
+export const RAY_FIRST = 2.8
 // How long a shut ray is, as a share of its open length.
 const RAY_SHUT = 0.85
 const BRACT_LONGEST = 0.085
