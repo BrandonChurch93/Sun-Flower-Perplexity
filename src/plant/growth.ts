@@ -272,6 +272,22 @@ export function setLeafTurn(v: number, turn: number | null): void {
   else leafTurns.set(v, turn)
 }
 
+// The director may also hold single leaves of one neighbor by hand, as a gardener ties a leaf back: how far it droops, how high
+// it is held (at a set angle, or lifted by an angle while it goes on settling as it would) and how long it is. A hold comes on over the seven seconds before the bloom begins, so nothing differs up to the frost.
+// The plant itself is never held.
+export interface LeafHold { droop?: number; elevationDeg?: number; liftDeg?: number; lengthScale?: number }
+const leafHolds = new Map<number, Map<number, LeafHold>>()
+export function setLeafHold(v: number, leaf: number, hold: LeafHold | null): void {
+  if (v === 0) throw new Error('The plant itself is never held.')
+  const held = leafHolds.get(v) ?? new Map<number, LeafHold>()
+  if (hold === null) held.delete(leaf)
+  else held.set(leaf, hold)
+  if (held.size > 0) leafHolds.set(v, held)
+  else leafHolds.delete(v)
+}
+const heldLeaf = (i: number): LeafHold | undefined => (variant === 0 ? undefined : leafHolds.get(variant)?.get(i))
+const holdAt = (time: number): number => smoothstep(bloom0 - 7, bloom0, time)
+
 export function leafAzimuth(i: number): number {
   const turn = variant === 0 ? 0.6 : (leafTurns.get(variant) ?? 0.6 + TAU * rnd(2))
   if (i < OPPOSITE_LEAVES) return turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI
@@ -297,7 +313,9 @@ export function leafLength(i: number, time: number): number {
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
   const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
-  return full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
+  const length = full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
+  const hold = heldLeaf(i)
+  return hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
 }
 
 // Leaves open upward, settle outward and hang when the light is gone.
@@ -306,7 +324,11 @@ export function leafElevation(i: number, time: number, inputs: PlantInputs): num
   const open = smoothstep(0, 5.5, age)
   const hang = (1 - inputs.lift) * (4 + 9 * smoothstep(2, 14, age))
   const settled = 24 - 26 * smoothstep(5, 30, age) + (rnd(11, i) - 0.5) * 16 - hang
-  return ((74 + (settled - 74) * open) * Math.PI) / 180
+  const angle = ((74 + (settled - 74) * open) * Math.PI) / 180
+  const hold = heldLeaf(i)
+  if (hold === undefined) return angle
+  const on = holdAt(time)
+  return (hold.elevationDeg === undefined ? angle : lerp(angle, hold.elevationDeg * RAD, on)) + (hold.liftDeg ?? 0) * RAD * on
 }
 
 export function leafFold(i: number, time: number): number {
@@ -314,8 +336,10 @@ export function leafFold(i: number, time: number): number {
   return ((80 - 70 * smoothstep(0, 4, age) + (rnd(12, i) - 0.5) * 8) * Math.PI) / 180
 }
 
-export function leafDroop(i: number, inputs: PlantInputs): number {
-  return 0.22 + 0.4 * rnd(22, i) + 0.22 * (1 - inputs.lift)
+export function leafDroop(i: number, inputs: PlantInputs, time: number): number {
+  const droop = 0.22 + 0.4 * rnd(22, i) + 0.22 * (1 - inputs.lift)
+  const hold = heldLeaf(i)
+  return hold?.droop === undefined ? droop : lerp(droop, hold.droop, holdAt(time))
 }
 
 export function leafSeed(i: number, j: number): number {

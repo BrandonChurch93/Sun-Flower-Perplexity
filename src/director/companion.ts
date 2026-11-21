@@ -10,7 +10,7 @@ const ratio = config.field.companion.heightRatio
 // How the companion leans from upright, as a slope: meters sideways for each meter of height, to the right and toward the camera
 // that stands at `field.companion.fromAzimuthDeg`. It leans 3 degrees toward the plant: its foot stays wide of every frame
 // before the bloom, its upper leaves reach the left edge of the two bloom frames, and its head stays out of both.
-const LEAN = { right: 0.053, toward: -0.027 }
+const LEAN = { right: 0.055, toward: -0.021 }
 export const COMPANION_LEAN = { x: right.x * LEAN.right + toward.x * LEAN.toward, z: right.z * LEAN.right + toward.z * LEAN.toward }
 
 // How the companion stands: its size, its lean and its place. Its top stays at the plant's height times `field.companion.heightRatio`.
@@ -62,7 +62,7 @@ export function companionInView(time: number, inputs: PlantInputs, pose: CameraP
     if (length <= 0) continue
     const f = leafFrameAt(p, i)
     const reach = length * 1.25
-    const sag = leafDroop(i, inputs) * reach
+    const sag = leafDroop(i, inputs, time) * reach
     for (const s of LEAF_STEPS) {
       if (inside(f.ox + f.mx * reach * s - f.nx * sag * s * s, f.oy + f.my * reach * s - f.ny * sag * s * s, f.oz + f.mz * reach * s - f.nz * sag * s * s, 0.55 * length)) {
         seen = true

@@ -514,7 +514,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const base = plan.leaf0 + m * d.leafU * d.leafV
     const size = leafLength(i, time)
     const f = leafFrame(i, time, inputs, length)
-    blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
+    blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs, time), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
   }
 
   const h = layHead(time, length)
