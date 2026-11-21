@@ -61,9 +61,9 @@ void main() {
   float rib = smoothstep(0.1, 0.0, abs(vUv.x));
   float shade = 0.8 + 0.4 * vLeaf.z;
   Tissue t;
-  t.albedo = (top ? vec3(0.038, 0.072, 0.021) : vec3(0.056, 0.086, 0.036)) * shade;
+  t.albedo = (top ? vec3(0.045, 0.1, 0.022) : vec3(0.06, 0.11, 0.034)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.06, 0.071, 0.006) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
+  t.through = vec3(0.11, 0.2, 0.01) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -122,8 +122,10 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.1 + 1.3 * smoothstep(0.4, 0.8, mark.g)) * taper;
-  vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
+  float thin = (0.12 + 2.3 * smoothstep(0.42, 0.85, mark.g)) * taper;
+  vec3 through = vec3(0.092, 0.112, 0.009) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
+  // From far off a blade glows as the field's blades do: its patches are too small to tell.
+  through = mix(through, vec3(0.06, 0.071, 0.006) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
   through *= 1.0 - 0.8 * vein.r;
   through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
@@ -202,7 +204,7 @@ void main() {
   float ribs = 0.5 + 0.5 * sin(vUv.x * 6.2832 * 9.0);
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
-  t.albedo = mix(vec3(0.07, 0.11, 0.035), vec3(0.14, 0.19, 0.075), 0.45 * ribs + 0.55 * streak);
+  t.albedo = mix(vec3(0.06, 0.09, 0.012), vec3(0.14, 0.185, 0.025), 0.45 * ribs + 0.55 * streak);
   t.through = vec3(0.04, 0.06, 0.006);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);

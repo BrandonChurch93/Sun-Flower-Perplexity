@@ -115,8 +115,8 @@ void main() {
   t.face = n;
 #ifdef PLANT_FIELD
   // Far heads are seen through haze that already pales them.
-  albedo *= vec3(0.92, 0.82, 0.5);
-  through *= vec3(0.92, 0.82, 0.5);
+  albedo *= vec3(0.95, 0.98, 0.45);
+  through *= vec3(1.0, 1.03, 0.45);
   t.normal = n;
   float texels = -1.0;
 #else

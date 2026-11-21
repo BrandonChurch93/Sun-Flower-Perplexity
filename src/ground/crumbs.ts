@@ -6,11 +6,11 @@ import { cropLight } from './light.ts'
 import { groundStates, soilHeight } from './soil.ts'
 
 // Loose soil on the near ground: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
-// `beside` is the share of a scatter laid in a band across the way to the camera at the plant's own distance, where the dawn lens is sharp.
-export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number }
+// `beside` is the share of a scatter laid in a band across the way to the camera at the plant's own distance, where the dawn lens is sharp. `frontM` is the largest size between that band and the lens, so the band is seen over it.
+export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number }
 export const crumbScatter: Scatter = { count: 5000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.38 }
-export const clodScatter: Scatter = { count: 220, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
-export const lumpScatter: Scatter = { count: 80, detail: 5, minM: 0.004, maxM: 0.015, skew: 1.5, innerM: 0.016, outerM: 0.14, spread: 1.9, stones: 0, sink: 0.42, beside: 0.45 }
+export const clodScatter: Scatter = { count: 220, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3, frontM: 0.005 }
+export const lumpScatter: Scatter = { count: 80, detail: 5, minM: 0.004, maxM: 0.015, skew: 1.5, innerM: 0.016, outerM: 0.14, spread: 1.9, stones: 0, sink: 0.42, beside: 0.6, frontM: 0.004 }
 
 // The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
 const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
@@ -24,51 +24,169 @@ export function lane(x: number, z: number, padM = 0): number {
   return (1 - step(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * step(0, 0.03, along)
 }
 
-export function scatter(name: string, s: Scatter): THREE.InstancedMesh {
-  const ball = new THREE.IcosahedronGeometry(1, s.detail)
+function hash3(x: number, y: number, z: number): number {
+  let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1) ^ Math.imul(z, 0x9e3779b1)
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b)
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35)
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+
+function grain3(x: number, y: number, z: number): number {
+  const ix = Math.floor(x)
+  const iy = Math.floor(y)
+  const iz = Math.floor(z)
+  let fx = x - ix
+  let fy = y - iy
+  let fz = z - iz
+  fx = fx * fx * (3 - 2 * fx)
+  fy = fy * fy * (3 - 2 * fy)
+  fz = fz * fz * (3 - 2 * fz)
+  const mix = (a: number, b: number, t: number): number => a + (b - a) * t
+  return mix(
+    mix(mix(hash3(ix, iy, iz), hash3(ix + 1, iy, iz), fx), mix(hash3(ix, iy + 1, iz), hash3(ix + 1, iy + 1, iz), fx), fy),
+    mix(mix(hash3(ix, iy, iz + 1), hash3(ix + 1, iy, iz + 1), fx), mix(hash3(ix, iy + 1, iz + 1), hash3(ix + 1, iy + 1, iz + 1), fx), fy),
+    fz,
+  )
+}
+
+// How far the surface of a lump stands from its center along the direction d, as a share of its radius: broad knobs with four sizes of grain on them. A stone is nearly a plain ball.
+function lumpAt(x: number, y: number, z: number, seed: number, stone: number): number {
+  const qx = x * 2.3 + seed
+  const qy = y * 2.3 + seed
+  const qz = z * 2.3 + seed
+  const knob = 0.5 + 0.2 * Math.sin(qx + 1.7 * Math.sin(qz)) + 0.17 * Math.sin(qy * 1.3 + 1.9 * Math.sin(qx)) + 0.13 * Math.sin(qz * 1.9 + qy)
+  const s2 = seed * 1.7
+  const s3 = seed * 2.3
+  const s4 = seed * 3.1
+  const rough =
+    0.4 * grain3(x * 2.9 + seed, y * 2.9 + seed, z * 2.9 + seed) +
+    0.34 * (1 - Math.abs(2 * grain3(x * 5.3 + s2, y * 5.3 + s2, z * 5.3 + s2) - 1)) +
+    0.2 * grain3(x * 14 + s3, y * 14 + s3, z * 14 + s3) +
+    0.13 * grain3(x * 31 + s4, y * 31 + s4, z * 31 + s4)
+  return 0.5 + (stone ? 0.14 : 0.5) * knob + (stone ? 0.06 : 0.55) * (rough - 0.5)
+}
+
+interface Ball { dirs: Float32Array; faces: ArrayLike<number>; per: number }
+
+function ballOf(detail: number): Ball {
+  const ball = new THREE.IcosahedronGeometry(1, detail)
   ball.deleteAttribute('normal')
   ball.deleteAttribute('uv')
-  const geometry = mergeVertices(ball, 1e-4)
+  const unit = mergeVertices(ball, 1e-4)
+  const dirs = unit.getAttribute('position').array as Float32Array
+  return { dirs, faces: unit.getIndex()!.array, per: dirs.length / 3 }
+}
+
+const turn = new THREE.Quaternion()
+const axis = new THREE.Vector3()
+const basis = new THREE.Matrix4()
+const v = new THREE.Vector3()
+const t1 = new THREE.Vector3()
+const t2 = new THREE.Vector3()
+const d1 = new THREE.Vector3()
+const d2 = new THREE.Vector3()
+const lean = new THREE.Vector3(0.31, 0.83, 0.46)
+
+// Every crumb is shaped here, once, so that drawing one costs no noise: each vertex carries its offset from the crumb's center, its normal and the direction it had on the plain ball.
+export function scatter(name: string, s: Scatter): THREE.Mesh {
+  const ball = ballOf(s.detail)
+  const per = ball.per
   const random = stream(name)
-  const mesh = new THREE.InstancedMesh(geometry, undefined, s.count)
-  const seed = new Float32Array(s.count * 4)
-  const matrix = new THREE.Matrix4()
-  const turn = new THREE.Quaternion()
-  const axis = new THREE.Vector3()
-  const size = new THREE.Vector3()
-  const at = new THREE.Vector3()
+  const total = s.count * per
+  const position = new Float32Array(total * 3)
+  const normal = new Float32Array(total * 3)
+  const round = new Float32Array(total * 3)
+  const center = new Float32Array(total * 3)
+  const seed = new Float32Array(total * 4)
+  const index = new Uint32Array(s.count * ball.faces.length)
   for (let i = 0; i < s.count; i++) {
     let r = s.innerM + (s.outerM - s.innerM) * Math.pow(random.next(), s.spread)
     let a = random.next() * Math.PI * 2
     if (s.beside !== undefined && random.next() < s.beside) {
       const across = (random.next() < 0.5 ? -1 : 1) * (0.012 + 0.09 * Math.pow(random.next(), 1.3))
-      const along = -0.004 + 0.03 * (random.next() - 0.5)
+      const along = -0.002 + 0.008 * (random.next() - 0.5)
       const x = along * laneDir.x + across * laneDir.z
       const z = along * laneDir.z - across * laneDir.x
       r = Math.hypot(x, z)
       a = Math.atan2(z, x)
     }
-    const open = 1 - lane(Math.cos(a) * r, Math.sin(a) * r, 0.8 * s.maxM)
-    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open)
+    const x = Math.cos(a) * r
+    const z = Math.sin(a) * r
+    const open = 1 - lane(x, z, 0.8 * s.maxM)
+    const ahead = x * laneDir.x + z * laneDir.z
+    const front = Math.min(1, Math.max(0, (ahead - 0.008) / 0.022)) * Math.min(1, Math.max(0, (0.3 - ahead) / 0.1))
+    const low = s.frontM === undefined ? s.maxM : s.maxM + (s.frontM - s.maxM) * front
+    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low)
     axis.set(random.next() - 0.5, random.next() - 0.5, random.next() - 0.5).normalize()
     turn.setFromAxisAngle(axis, random.next() * Math.PI * 2)
-    size.set(radius * (0.7 + 0.7 * random.next()), radius * (0.45 + 0.4 * random.next()), radius * (0.7 + 0.7 * random.next()))
-    at.set(Math.cos(a) * r, radius * (0.55 - s.sink), Math.sin(a) * r)
-    matrix.compose(at, turn, size)
-    mesh.setMatrixAt(i, matrix)
-    seed[i * 4] = random.next() * 97
-    seed[i * 4 + 1] = random.next()
-    seed[i * 4 + 2] = random.next() < s.stones ? 1 : 0
-    seed[i * 4 + 3] = radius
+    basis.makeRotationFromQuaternion(turn)
+    const sx = radius * (0.7 + 0.7 * random.next())
+    const sy = radius * (0.45 + 0.4 * random.next())
+    const sz = radius * (0.7 + 0.7 * random.next())
+    const y = radius * (0.55 - s.sink)
+    const shade = random.next() * 97
+    const tone = random.next()
+    const stone = random.next() < s.stones ? 1 : 0
+    const e = basis.elements
+    const base = i * per
+    for (let k = 0; k < per; k++) {
+      const px = ball.dirs[k * 3]
+      const py = ball.dirs[k * 3 + 1]
+      const pz = ball.dirs[k * 3 + 2]
+      const lump = lumpAt(px, py, pz, shade, stone)
+      v.set(px, py, pz)
+      t1.crossVectors(v, lean).normalize()
+      t2.crossVectors(v, t1)
+      d1.copy(v).addScaledVector(t1, 0.07).normalize()
+      d2.copy(v).addScaledVector(t2, 0.07).normalize()
+      d1.multiplyScalar(lumpAt(d1.x, d1.y, d1.z, shade, stone)).addScaledVector(v, -lump)
+      d2.multiplyScalar(lumpAt(d2.x, d2.y, d2.z, shade, stone)).addScaledVector(v, -lump)
+      t1.crossVectors(d1, d2).normalize()
+      const o = (base + k) * 3
+      const lx = px * lump * sx
+      const ly = py * lump * sy
+      const lz = pz * lump * sz
+      position[o] = e[0] * lx + e[4] * ly + e[8] * lz
+      position[o + 1] = e[1] * lx + e[5] * ly + e[9] * lz
+      position[o + 2] = e[2] * lx + e[6] * ly + e[10] * lz
+      const nx = t1.x / sx
+      const ny = t1.y / sy
+      const nz = t1.z / sz
+      v.set(e[0] * nx + e[4] * ny + e[8] * nz, e[1] * nx + e[5] * ny + e[9] * nz, e[2] * nx + e[6] * ny + e[10] * nz).normalize()
+      normal[o] = v.x
+      normal[o + 1] = v.y
+      normal[o + 2] = v.z
+      v.set(e[0] * px * sx + e[4] * py * sy + e[8] * pz * sz, e[1] * px * sx + e[5] * py * sy + e[9] * pz * sz, e[2] * px * sx + e[6] * py * sy + e[10] * pz * sz).normalize()
+      round[o] = v.x
+      round[o + 1] = v.y
+      round[o + 2] = v.z
+      center[o] = x
+      center[o + 1] = y
+      center[o + 2] = z
+      const q = (base + k) * 4
+      seed[q] = shade
+      seed[q + 1] = tone
+      seed[q + 2] = stone
+      seed[q + 3] = radius
+    }
+    for (let k = 0; k < ball.faces.length; k++) index[i * ball.faces.length + k] = base + ball.faces[k]
   }
-  geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seed, 4))
-  mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), s.outerM + 0.1)
-  return mesh
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
+  geometry.setAttribute('aNormal', new THREE.BufferAttribute(normal, 3))
+  geometry.setAttribute('aRound', new THREE.BufferAttribute(round, 3))
+  geometry.setAttribute('aCenter', new THREE.BufferAttribute(center, 3))
+  geometry.setAttribute('aSeed', new THREE.BufferAttribute(seed, 4))
+  geometry.setIndex(new THREE.BufferAttribute(index, 1))
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), s.outerM + 0.1)
+  return new THREE.Mesh(geometry)
 }
 
 export const crumbVertex = /* glsl */ `
 in vec3 position;
-in mat4 instanceMatrix;
+in vec3 aNormal;
+in vec3 aRound;
+in vec3 aCenter;
 in vec4 aSeed;
 out vec3 vWorld;
 out float vDepth;
@@ -76,56 +194,35 @@ out vec3 vBall;
 out vec3 vNormal;
 out vec4 vSeed;
 ${soilHeight}
-float grain3(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  vec2 e = vec2(0.0, 1.0);
-  return mix(
-    mix(mix(hash31(i), hash31(i + e.yxx), f.x), mix(hash31(i + e.xyx), hash31(i + e.yyx), f.x), f.y),
-    mix(mix(hash31(i + e.xxy), hash31(i + e.yxy), f.x), mix(hash31(i + e.xyy), hash31(i + e.yyy), f.x), f.y), f.z);
-}
-float lumpAt(vec3 d) {
-  vec3 q = d * 2.3 + aSeed.x;
-  float knob = 0.5 + 0.2 * sin(q.x + 1.7 * sin(q.z)) + 0.17 * sin(q.y * 1.3 + 1.9 * sin(q.x)) + 0.13 * sin(q.z * 1.9 + q.y);
-  float rough = 0.4 * grain3(d * 2.9 + aSeed.x) + 0.34 * (1.0 - abs(2.0 * grain3(d * 5.3 + aSeed.x * 1.7) - 1.0)) + 0.2 * grain3(d * 14.0 + aSeed.x * 2.3) + 0.13 * grain3(d * 31.0 + aSeed.x * 3.1);
-  return 0.5 + mix(0.5, 0.14, aSeed.z) * knob + mix(0.55, 0.06, aSeed.z) * (rough - 0.5);
-}
 void main() {
-  mat4 place = modelMatrix * instanceMatrix;
-  vec2 c = place[3].xz;
-  float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
+  vec4 place = modelMatrix * vec4(aCenter, 1.0);
+  vec2 c = place.xz;
+  float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place).w, 1e-4);
   float keep = smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04);
   vSeed = aSeed;
   if (keep <= 0.0) {
-    vWorld = place[3].xyz;
+    vWorld = place.xyz;
     vDepth = 1.0;
     vBall = vec3(0.0, 1.0, 0.0);
     vNormal = vBall;
     gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
     return;
   }
-  float lump = lumpAt(position);
-  vec3 t1 = normalize(cross(position, vec3(0.31, 0.83, 0.46)));
-  vec3 t2 = cross(position, t1);
-  vec3 d1 = normalize(position + t1 * 0.07);
-  vec3 d2 = normalize(position + t2 * 0.07);
-  vec3 smoothN = normalize(cross(d1 * lumpAt(d1) - position * lump, d2 * lumpAt(d2) - position * lump));
   float r = length(c);
   vec2 out2 = c / max(r, 1e-4);
   float start = 0.2 + 1.5 * hash11(aSeed.x);
   float go = smoothstep(start, start + 0.9, uTime) * (1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r));
   float angle = go * (1.0 + 2.6 * hash11(aSeed.x + 5.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
-  vec3 rel = mat3(place) * (position * lump * keep);
-  vec3 ball = mat3(place) * position;
-  mat3 m = mat3(place);
-  vec3 normal = m * (smoothN / vec3(dot(m[0], m[0]), dot(m[1], m[1]), dot(m[2], m[2])));
+  mat3 m = mat3(modelMatrix);
+  vec3 rel = m * position * keep;
+  vec3 ball = m * aRound;
+  vec3 normal = m * aNormal;
   rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));
   ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
   normal = normal * cos(angle) + cross(axis, normal) * sin(angle) + axis * dot(axis, normal) * (1.0 - cos(angle));
   c += out2 * go * (0.003 + 0.007 * hash11(aSeed.x + 9.0));
-  vec4 world = vec4(c.x + rel.x, place[3].y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
+  vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -181,6 +278,7 @@ void main() {
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.35, 0.1, uWet) * open;
   color += uSunColor * sparkle(vWorld, v, normalize(mix(n, vNormal, 0.5))) * lit * gloss * 26.0;
+  color += wetGlints(vWorld, v, n, uWet) * open;
   vec3 cell = vWorld * 650.0;
   float bead = step(0.9, hash31(floor(cell))) * smoothstep(0.34, 0.22, length(fract(cell) - 0.5)) * uDew * smoothstep(-0.1, 0.5, n.y) * (1.0 - smoothstep(0.25, 0.9, length(fwidth(cell))));
   color = mix(color, color * 0.6, bead) + bead * smoothstep(0.2, 0.05, length(fract(cell) - 0.5 + uSunDir * 0.12)) * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);

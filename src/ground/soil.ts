@@ -92,12 +92,23 @@ vec3 groundAmbient(vec3 n) {
 vec3 proud(float heightM) {
   return mix(vec3(1.0), mix(vec3(0.85), vec3(2.1, 1.65, 1.8), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
-// Moist grains along a rim throw the sun at the lens when it stands behind them.
+// Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
+float grains(vec3 world, float share) {
+  float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 3.0, 0.0005));
+  vec3 a = world * exp2(-floor(l));
+  vec3 b = a * 0.5;
+  float fine = step(1.0 - share, hash31(floor(a))) * smoothstep(0.42, 0.15, length(fract(a) - 0.5));
+  float coarse = step(1.0 - share, hash31(floor(b))) * smoothstep(0.42, 0.15, length(fract(b) - 0.5));
+  return mix(fine, coarse, fract(l));
+}
 float sparkle(vec3 world, vec3 v, vec3 n) {
-  vec3 cell = world * 1900.0;
-  float grain = step(0.62, hash31(floor(cell))) * smoothstep(0.42, 0.15, length(fract(cell) - 0.5)) * (1.0 - smoothstep(0.3, 1.0, length(fwidth(cell))));
   float skim = 1.0 - max(dot(n, v), 0.0);
-  return grain * skim * skim * smoothstep(0.3, -0.5, dot(v, uSunDir));
+  return grains(world, 0.38) * skim * skim * smoothstep(0.3, -0.5, dot(v, uSunDir)) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+}
+// Wet grains each mirror the bright sky low over the horizon.
+vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
+  float skim = 1.0 - max(dot(n, v), 0.0);
+  return uSkyHorizon * (grains(world + 0.37, 0.16) * wet * wet * (0.15 + 0.85 * skim) * 0.9);
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
@@ -260,6 +271,7 @@ void main() {
 
 #ifdef NEAR
   color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
+  color += wetGlints(vWorld, v, n, uWet) * open * fade * (1.0 - pool) * (1.0 - thatch);
   if (uDew > 0.0) {
     vec2 cell = p / 0.0021;
     vec2 id = floor(cell);
