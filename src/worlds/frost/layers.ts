@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
-import { fogFarAt, fogLight } from '../../weather/fog/index.ts'
+import { fogCloseAt, fogFarAt, fogLight } from '../../weather/fog/index.ts'
 import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
@@ -81,6 +81,7 @@ const TONES: { base: [number, number, number]; see: number }[] = [
 // The far shapes stand fainter behind the banks through the unit and come out this much as the fog thins, so the last second shows the ridge the cut needs.
 const SEE_GAIN = 2
 const SEE_FAINT = 0.5
+const SEE_CUT = 2
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
@@ -143,7 +144,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     triangles,
     setTime(time) {
       for (const ring of rings) ring.setTime(time)
-      gain.value = SEE_FAINT + (SEE_GAIN - SEE_FAINT) * fogFarAt(time)
+      gain.value = SEE_FAINT + (SEE_GAIN - SEE_FAINT) * fogFarAt(time) + (SEE_CUT - SEE_FAINT) * fogCloseAt(time)
       meshes[0].position.y = skylineLandM(time) - SKYLINE_LAND_M
       meshes[0].updateMatrix()
     },

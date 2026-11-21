@@ -192,7 +192,7 @@ export class Film {
     this.sky.setWorld(def)
     this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(time)))
     this.ground.show(!alone)
-    stateUniforms.uPlantWet.value = def.ground.wet
+    stateUniforms.uPlantWet.value = def.ground.plantWet ?? def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
     this.puddles.prepare(def, time, time + shutterSeconds, !alone, count)

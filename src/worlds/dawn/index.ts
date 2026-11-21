@@ -37,14 +37,38 @@ export const mist: MistSettings = {
   lobeRad: 0.2,
 }
 
+export const bank: MistSettings = {
+  fromM: 35,
+  toM: 300,
+  sheets: 8,
+  heightM: 1.1,
+  thickness: 0.05,
+  lit: [0.072, 0.08, 0.112],
+  shade: [1.2, 1.0, 0.78],
+  forward: 1,
+  drift: [0.22, 0.05],
+  bankM: 6,
+  broken: 0.85,
+  rise: 0.5,
+  lobeRad: 0.3,
+}
+const BANK_LOW_M = 0.18
+const BANK_SETTLES_FROM_S = 1
+const BANK_SETTLES_TO_S = 6
+const bankHeightAt = (time: number): number => {
+  const t = Math.min(1, Math.max(0, (time - BANK_SETTLES_FROM_S) / (BANK_SETTLES_TO_S - BANK_SETTLES_FROM_S)))
+  return bank.heightM + (BANK_LOW_M - bank.heightM) * t * t * (3 - 2 * t)
+}
+
 export const stage: WorldStageMaker = (def) => {
   const sky = new DawnSky(def, SKY_GAIN)
   const far = makeFarLayers(golden.sun.azimuthDeg, AIR_COOL, AIR_WARM, AIR_PER_M)
   const air = makeMist('dawn', mist)
+  const banks = makeMist('dawn bank', bank, 40)
   let open = 0
   let close = 0
   return {
-    objects: [...far.meshes, ...air.meshes],
+    objects: [...far.meshes, ...banks.meshes, ...air.meshes],
     load: (assets) => sky.load(assets),
     prepare(frame) {
       open = frame.time
@@ -53,7 +77,10 @@ export const stage: WorldStageMaker = (def) => {
       sky.prepare(frame.time, frame.samples)
     },
     sample(_camera, shutter) {
-      air.sample(open + (close - open) * shutter)
+      const time = open + (close - open) * shutter
+      air.sample(time)
+      banks.sample(time)
+      banks.settle(bankHeightAt(time))
     },
     sky(renderer, target, camera, _pixelX, _pixelY, across) {
       sky.render(renderer, target, camera, across)
