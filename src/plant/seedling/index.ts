@@ -25,15 +25,11 @@ const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
 const HUSK_ON_SOIL_M = 0.003
-// The husk comes to rest a little nearer the lens than growth's resting place, on the low crumbs of the camera's lane where no lump of soil stands before it.
-const REST_SHIFT_X = -0.0185 - huskRest.x
-const REST_SHIFT_Z = 0.022 - huskRest.z
-// The approved frames show a shorter, broader seed leaf and a longer husk than the growth curves give: drawn at these shares until the curves follow.
+// The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
 const DEW_FACE = 0.4
 const DEW_EDGE = 0.32
-const HUSK_DRAWN = 0.0143 / huskLengthM
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -152,7 +148,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   const state = new Float32Array(count * each * 4)
   const list: Crumb[] = []
   const p = new Float32Array(9)
-  const toHusk = Math.atan2(huskRest.z + REST_SHIFT_Z, huskRest.x + REST_SHIFT_X)
+  const toHusk = Math.atan2(huskRest.z, huskRest.x)
   for (let i = 0; i < count; i++) {
     const own = combine(seed, i)
     const onHusk = i >= shape.stemCrumbs
@@ -388,15 +384,15 @@ export function create(options: PartOptions): PlantPart | null {
     const ry = end.ry
     const rz = end.rz
 
-    const huskLength = huskLengthM * HUSK_DRAWN * grown
+    const huskLength = huskLengthM * grown
     const ride = HUSK_NECK_M * grown + huskLength
     // The seed leaves lie pressed into the husk a little shorter than they are, and stretch as it lets go.
     const squeeze = lerp(Math.min(1, (ride - HUSK_TIP_M * grown) / Math.max(length, 1e-6)), 1, smoothstep(0, 0.5, drop))
     const h0x = ex + tx * ride
     const h0y = ey + ty * ride
     const h0z = ez + tz * ride
-    const h1x = huskRest.x + REST_SHIFT_X
-    const h1z = huskRest.z + REST_SHIFT_Z
+    const h1x = huskRest.x
+    const h1z = huskRest.z
     const h1y = soilHeightAt(h1x, h1z, time) + HUSK_ON_SOIL_M
     const lift = 0.012 * grown
     const cx = h0x + tx * lift + 0.3 * (h1x - h0x)
