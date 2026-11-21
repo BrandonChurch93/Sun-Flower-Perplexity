@@ -1,9 +1,6 @@
 import * as THREE from 'three'
-import { hash01, streamSeed } from '../../core/random.ts'
 import { makeSurface } from '../../core/shading.ts'
-
-const SEED = streamSeed('golden far')
-const RAD = Math.PI / 180
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineStrip } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -27,7 +24,7 @@ uniform vec3 uAirWarm;
 uniform float uAir;
 vec3 airTone(vec3 dir) {
   float toSun = saturate(dot(dir, uSunDir));
-  return uAirCool + uAirWarm * (0.1 * toSun * toSun);
+  return uAirCool + uAirWarm * (0.1 * toSun * toSun + 0.3 * pow(toSun, 24.0));
 }
 vec3 aerial(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
@@ -45,20 +42,16 @@ uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
 uniform float uFogShare;
+uniform float uCrown;
+uniform float uFloor;
 ${air}
-// One crown: a dome as wide as its cell, each of its own height.
-float crown(float run, float widthM, float salt) {
-  float c = run / widthM;
-  float f = 2.0 * fract(c) - 1.0;
-  return (0.35 + 0.65 * hash21(vec2(floor(c), salt))) * sqrt(max(0.0, 1.0 - f * f));
-}
+${skylineCanopy}
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  float stand = smoothstep(0.2, 0.8, 0.6 * valueNoise(vec2(vInfo.x * 0.026, uLayer)) + 0.4 * valueNoise(vec2(vInfo.x * 0.07, uLayer + 3.0)));
-  top *= 0.45 + 0.37 * stand + 0.18 * max(crown(vInfo.x, 15.0, uLayer), max(crown(vInfo.x + 5.0, 9.5, uLayer + 2.0), crown(vInfo.x + 2.0, 5.5, uLayer + 4.0)));
+  top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor);
   if (vInfo.y > top) discard;
-  float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
+  float mass = valueNoise(vec2(vInfo.x * 3.3 / uCrown, vInfo.y * 4.5 / uCrown + uLayer));
 #else
   float mass = valueNoise(vec2(vInfo.x * 0.012, vInfo.y * 0.03 + uLayer));
 #endif
@@ -112,47 +105,17 @@ void main() {
 }
 `
 
-function wrapNoise(az: number, cells: number, salt: number): number {
-  const x = (az / (2 * Math.PI)) * cells
-  const i = Math.floor(x)
-  const f = x - i
-  const s = f * f * (3 - 2 * f)
-  const a = hash01(SEED + salt, ((i % cells) + cells) % cells)
-  const b = hash01(SEED + salt, (((i + 1) % cells) + cells) % cells)
-  return a + (b - a) * s
-}
-
-const smooth = (a: number, b: number, x: number): number => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
-  return t * t * (3 - 2 * t)
-}
-
-function ridged(az: number, cells: number, salt: number): number {
-  return 0.56 * wrapNoise(az, cells, salt) + 0.27 * wrapNoise(az, cells * 2, salt + 1) + 0.12 * wrapNoise(az, cells * 5, salt + 2) + 0.05 * wrapNoise(az, cells * 11, salt + 3)
-}
-
-interface Strip {
-  name: string
-  radiusM: number
-  wander: number
-  // The top of the layer as the angle it stands above the horizon, seen from the plant.
-  lowDeg: number
-  highDeg: number
-  cells: number
-  segments: number
-  trees: boolean
-  base: [number, number, number]
-  rim: number
-  // Toward the sun the layer stands this high instead, as one dark ridge under the sun.
-  sunward?: [number, number]
-}
-
-const STRIPS: Strip[] = [
-  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.5, highDeg: 1.9, cells: 22, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
-  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.04, 0.045, 0.03], rim: 0.01, sunward: [1.1, 1.75] },
-  { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.6, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.012, 0.022, 0.02], rim: 0.4 },
+// The colors of the skyline's layers in this world: what each is made of and how much of the low sun its tops catch.
+const TONES: { base: [number, number, number]; rim: number; fogShare: number }[] = [
+  { base: [0.2, 0.26, 0.24], rim: 0, fogShare: 0 },
+  { base: [0.15, 0.2, 0.15], rim: 0, fogShare: 0 },
+  { base: [0.04, 0.045, 0.03], rim: 0.01, fogShare: 0 },
+  { base: [0.07, 0.1, 0.05], rim: 0.02, fogShare: 0.01 },
+  { base: [0.012, 0.022, 0.02], rim: 0.4, fogShare: 0.01 },
+  { base: [0.013, 0.023, 0.028], rim: 0.12, fogShare: 0.3 },
+  { base: [0.009, 0.017, 0.022], rim: 0.1, fogShare: 0.3 },
+  { base: [0.009, 0.017, 0.022], rim: 0.06, fogShare: 0.3 },
+  { base: [0.035, 0.024, 0.012], rim: 0.04, fogShare: 0.3 },
 ]
 
 const VEILS = [
@@ -165,12 +128,6 @@ const VEILS = [
   { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.5 },
 ]
 
-const SUN_GAP_DEG = 9
-const SUN_GAP_TOP_DEG = 1.1
-const SUN_RIDGE_TOP_DEG = 1.5
-const LAND_FROM_M = 540
-const LAND_TO_M = 5900
-
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
 
 export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, number]): FarLayers {
@@ -181,7 +138,6 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     uAirWarm: { value: new THREE.Vector3(0.3, 0.17, 0.07) },
     uAir: { value: 0.0003 },
   }
-  const sunAz = sunAzimuthDeg * RAD
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -190,48 +146,12 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     meshes.push(mesh)
     triangles += (geometry.index as THREE.BufferAttribute).count / 3
   }
-  const strip = (segments: number, at: (az: number) => { radius: number; top: number }): THREE.BufferGeometry => {
-    const position = new Float32Array((segments + 1) * 2 * 3)
-    const info = new Float32Array((segments + 1) * 2 * 3)
-    const index: number[] = []
-    let run = 0
-    let px = 0
-    let pz = 0
-    for (let s = 0; s <= segments; s++) {
-      const az = (s / segments) * 2 * Math.PI
-      const { radius, top } = at(s === segments ? 0 : az)
-      const x = Math.sin(az) * radius
-      const z = Math.cos(az) * radius
-      if (s > 0) run += Math.hypot(x - px, z - pz)
-      px = x
-      pz = z
-      for (let k = 0; k < 2; k++) {
-        const v = (s * 2 + k) * 3
-        position[v] = x
-        position[v + 1] = k ? top : -4
-        position[v + 2] = z
-        info[v] = run
-        info[v + 1] = k ? top : -4
-        info[v + 2] = top
-      }
-      if (s < segments) {
-        const a = s * 2
-        index.push(a, a + 2, a + 1, a + 1, a + 2, a + 3)
-      }
-    }
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
-    geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 3))
-    geometry.setIndex(index)
-    return geometry
-  }
-
   const land = new THREE.BufferGeometry()
   {
     const sides = 180
     const rings: number[] = []
-    for (let r = LAND_FROM_M; r < LAND_TO_M; r *= 1.35) rings.push(r)
-    rings.push(LAND_TO_M)
+    for (let r = SKYLINE_LAND_FROM_M; r < SKYLINE_LAND_TO_M; r *= 1.35) rings.push(r)
+    rings.push(SKYLINE_LAND_TO_M)
     const position = new Float32Array(rings.length * sides * 3)
     const info = new Float32Array(rings.length * sides * 3)
     const index: number[] = []
@@ -257,34 +177,14 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   }
   add(land, makeSurface({ name: 'golden far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
-  STRIPS.forEach((layer, i) => {
-    const geometry = strip(layer.segments, (az) => {
-      const radius = layer.radiusM * (1 + layer.wander * (2 * wrapNoise(az, 7, 40 + i * 10) - 1))
-      const shape = layer.trees ? 0.6 * wrapNoise(az, layer.cells, 100 + i * 10) + 0.4 * wrapNoise(az, layer.cells * 3, 101 + i * 10) : ridged(az, layer.cells, 100 + i * 10)
-      let deg = layer.lowDeg + (layer.highDeg - layer.lowDeg) * shape
-      let off = Math.abs(az - sunAz) % (2 * Math.PI)
-      if (off > Math.PI) off = 2 * Math.PI - off
-      const gap = Math.max(0, 1 - off / (SUN_GAP_DEG * RAD))
-      const open = gap * gap * (3 - 2 * gap)
-      if (!layer.trees) deg *= 1 - 0.55 * smooth(12, 30, off / RAD)
-      if (layer.sunward) {
-        const near = smooth(30, 12, off / RAD)
-        deg = deg * (1 - near) + (layer.sunward[0] + (layer.sunward[1] - layer.sunward[0]) * shape) * near
-      }
-      deg = deg * (1 - open) + Math.min(deg, layer.sunward ? SUN_RIDGE_TOP_DEG : SUN_GAP_TOP_DEG * (0.55 + 0.45 * i / (STRIPS.length - 1))) * open
-      if (layer.trees) {
-        // The trees stand in stretches with open country between them, and the one sure opening lies just right of the sun, where the ridge shows.
-        const right = ((((sunAz - az) / RAD + 180) % 360) + 360) % 360 - 180
-        const stand = Math.min(i === STRIPS.length - 1 ? 1 : smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(5, 11, Math.abs(right - 8)))
-        deg = 0.22 + (deg - 0.22) * stand
-      }
-      return { radius, top: radius * Math.tan(deg * RAD) + (layer.trees ? 4 : 0) }
-    })
+  SKYLINE.forEach((layer, i) => {
+    const geometry = skylineStrip(i, sunAzimuthDeg)
+    const tone = TONES[i]
     const surface = makeSurface({
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.01 : 0 } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
@@ -292,7 +192,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   })
 
   VEILS.forEach((veil, i) => {
-    const geometry = strip(96, () => ({ radius: veil.radiusM, top: veil.heightM }))
+    const geometry = ringStrip(96, () => ({ radius: veil.radiusM, top: veil.heightM }))
     const surface = makeSurface({
       name: `golden veil ${i}`,
       vertex,
