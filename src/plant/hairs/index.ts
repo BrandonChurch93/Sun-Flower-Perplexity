@@ -19,7 +19,7 @@ const REGATHER_M = 0.03
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
-const STRAND_PX = 0.4
+const STRAND_PX = 0.2
 const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 

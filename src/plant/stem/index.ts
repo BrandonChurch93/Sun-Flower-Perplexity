@@ -25,8 +25,8 @@ interface Shape { main: number; sides: number; below: number; cap: number; hairs
 function shapeOf(options: PartOptions): Shape {
   if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, full: false }
   if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 10000, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 40000, full: true }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 20000, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 80000, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
