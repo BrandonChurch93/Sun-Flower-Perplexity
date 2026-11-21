@@ -91,7 +91,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.16, 0.2, 0.06]
+const BULGE = [0.21, 0.25, 0.06]
 const BULGE_LATE = [0.16, 0.14, 0.1]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
@@ -121,10 +121,12 @@ const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 1.0
 const CROWN_ANGLE_LATE = 0.6
-const CROWN_LONG = 0.1
+const CROWN_LONG = 0
 const CROWN_LONG_LATE = 0.12
 const CROWN_TIP = 0.15
 const CROWN_TIP_LATE = 0.7
+// Each crown point hooks at its tip, some in and some out.
+const CROWN_HOOK = 1.4
 // The inner bracts between the crown points are longer and broader and arch in over the top: the dome of the tuft.
 const TUFT_LONG = 0.1
 const TUFT_BROAD = 0.7
@@ -542,7 +544,7 @@ export function create(options: PartOptions): PlantPart | null {
         const bulge = lerp(BULGE_LATE[k.series], BULGE[k.series], early) * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * k.crown) * globe * smoothstep(0.4, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * k.crown) * globe * smoothstep(0.4, 1, u) + CROWN_HOOK * (2 * k.seed - 1) * k.crown * early * globe * smoothstep(0.65, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
         const Ea = R * (1 + CONE_WIDE * coneWide) + lift + BULGE_TOP * bulge
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift + BULGE_HIGH * bulge
         const fr = r / Ea
