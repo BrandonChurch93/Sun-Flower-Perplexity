@@ -77,7 +77,8 @@ export function stemBaseRadius(time: number): number {
 export function stemRadius(time: number, u: number): number {
   // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
   const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(14, 36, time) * (1 - smoothstep(36.5, 40.3, time))
-  return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
+  const slim = 0.18 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
+  return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u))
 }
 
 // The seedling comes up as an arch and straightens once it is in the light.
