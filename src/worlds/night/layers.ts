@@ -109,7 +109,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
   const airUniforms = {
     uAirCool: { value: new THREE.Vector3(0.012, 0.022, 0.034) },
     uAirWarm: { value: new THREE.Vector3(0.03, 0.06, 0.08) },
-    uAir: { value: 0.0003 },
+    uAir: { value: 0.00015 },
   }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
