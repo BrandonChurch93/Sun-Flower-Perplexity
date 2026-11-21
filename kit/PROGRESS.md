@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
-- Last status: 17 · 2026-11-21 06:54 UTC · Phase 2
+- Last push: 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
+- Last status: 18 · 2026-11-21 07:17 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 07:17 UTC · status 18 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin; `status-2.jpg`: Frame 1515 today, the stand-in open head; `status-3.jpg`: Approved image for 1350; `status-4.jpg`: Approved image for 1515
 - 2026-11-21 06:54 UTC · status 17 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
 - 2026-11-21 06:39 UTC · status 16 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face
 - 2026-11-21 06:04 UTC · status 15 · Phase 2 · round 2 · `status-1.jpg`: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; `status-2.jpg`: Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); `status-3.jpg`: Night, frost and field keys: approved image (left), blockout frame (right)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
-- 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 0.15 h |
+| 3 | 9.00 h | 0.38 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.20 h |
+| Whole build | 30.00 h | 6.43 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -381,7 +381,20 @@ Finished in this task:
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-None.
+Ten agents of the look lock, all started 2026-11-21 07:16 UTC as sandbox agents on the default model, each with the same common brief (the scaffold, the rules, the test commands, the report) and its own part brief, the two approved bloom images and photographs of its part from the reference board. Each reports once to the Builder within 100 minutes (by 08:56 UTC), pushes at least every 25 minutes, and is replaced once after 45 minutes of silence. The briefs are kept in `out/work/briefs/p3/` (not committed).
+
+| Agent | Owns | Branch | Brief in one line | Last push |
+| --- | --- | --- | --- | --- |
+| `stem_builder` | `src/plant/stem/`, `public/assets/plant/stem/`, `assets-src/plant/stem/` | `agent/stem` | The ribbed, flecked, hairy stem with node swellings, the neck and the foot; marks ride material coordinates | none yet |
+| `leaf_builder` | `src/plant/leaves/`, assets `plant/leaves` | `agent/leaves` | 24 real leaves with stalks, toothed outlines, vein relief, light through them, damage, hairs, their own wind | none yet |
+| `bud_builder` | `src/plant/head/bud/`, assets `plant/bud` | `agent/bud` | The receptacle (back, side, the floor of `floorAt`), 40 to 60 pointed bracts in series, the neck joint, their hairs | none yet |
+| `disc_builder` | `src/plant/head/disc/`, assets `plant/disc` | `agent/disc` | 1500 florets by the spiral rule on the floor, three states, opening from the rim inward | none yet |
+| `petal_builder` | `src/plant/head/petals/`, assets `plant/petals` | `agent/petals` | 34 rays in two ranks: pleated, veined, unfurling from folded to open, glowing with the light through them | none yet |
+| `hair_builder` | `src/plant/hairs/` | `agent/hairs` | The strands themselves behind a frozen interface: forward scatter, cover under a pixel, cost | none yet |
+| `skin_builder` | `src/plant/surface/` | `agent/surface` | The inside of `shadeTissue`: matte face under wax, light through, sky from both sides, sheen, wet and frost | none yet |
+| `golden_builder` | `src/worlds/golden/`, new files in `src/weather/`, assets `worlds/golden` | `agent/golden` | The stage of the golden world: sky dome, the sun's true brightness, far layers, haze, pollen, its settings | none yet |
+| `lens_builder` | `src/post/` | `agent/post` | Out of focus fill, glow and flare, the film tone curve, vignette, grain, dither | none yet |
+| `field_builder` | `src/field/`, assets `plant/field` | `agent/field` | Variants so no neighbor is a copy, the far field as pictures and carpet, the heads behind the hero | none yet |
 
 Finished in this task:
 
@@ -469,6 +482,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 06:05 UTC · Phase 2: the final preview film is rendering
 - 2026-11-21 06:52 UTC · Phase 2: whole preview film, proofs, M1 open item
 - 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
+- 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
 
 ## Session log
 
@@ -513,4 +527,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face.
 - Status 17, 2026-11-21 06:54 UTC, Phase 2. Phase 2 is closed. All fourteen gate checks are green on the final blockout build, the export and memory proofs pass, the preview film is committed and the app is published. Autopilot played the whole film from the hosted copy, frame 0 to 1799, with no error. The blockout critic loop ended at its limit of two rounds (scores 7 and 6), not as a pass; three framing issues and the focus failure on 115 frames are carried as open items. Next: Phase 3, the look lock on bloom: merge the plant scaffold, then send agents to build the real stem, leaves, bud, disc, petals, hairs, surface, golden world, lens and field in parallel while the focus fix goes in. Time used: 6.0 h of 30 h.
   Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Autopilot on the hosted app: seven screenshots taken while the film played.
+- Status 18, 2026-11-21 07:17 UTC, Phase 3 · unit bloom. The look lock is under way. The plant is now built from parts that each replace a piece of the gray stand-in, and ten agents started at 07:16, each owning one part: stem, leaves, bud, florets, petals, hairs, the skin shader, the golden sky, the lens and the field. Until their work lands, the pictures still show the stand-in, now lit by the shared skin. Next: My own list while they work: hold focus on the visible surface of the bud, sway in the stem and the field, a tighter shadow for close-ups, the leaves that cross the sun at the left edge. Their reports are due by 08:56, the first critic round by about 09:55. Time used: 6.4 h of 30 h.
+  Pictures: Frame 1350 today, the stand-in bud lit by the shared skin; Frame 1515 today, the stand-in open head; Approved image for 1350; Approved image for 1515.
 
