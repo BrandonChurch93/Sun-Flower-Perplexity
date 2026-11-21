@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-03.png",
+      "where": "crop 7 upper half, crop 8 left side, and crop 9 throughout (also across the field in set-C-01.png and set-C-02.png)",
+      "what": "all surrounding field sunflowers use simplified proxy geometry with single-tone flat-green heart-shaped card leaves, knife-sharp untoothed edges, no veins, and flat pitch-black disc centers, creating an abrupt detail jump directly behind the two hero plants",
+      "fix": "replace near and midground proxy plants with higher-detail varied leaf and flower-head assets that have serrated edges, thickness, venation, textured disc florets, and a gradual LOD transition"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "upper-left sky and treeline around the sun (also crop 11 in set-C-03.png)",
+      "what": "alternating bright and dark radial streaks fan evenly across the clear upper sky like a 2D starburst filter sitting on top of the frame rather than light scattering inside ground mist",
+      "fix": "remove the 2D radial sun-ray post-effect from the upper sky and restrict volumetric shafts to actual low mist and occluding foliage"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 10, center and right skyline",
+      "what": "middle sections of the distant horizon silhouette have crisp, jagged staircase-aliased edges right next to heavily blurred treeline segments on the far right, with a dark horizontal blur halo behind them",
+      "fix": "apply consistent depth-of-field blur and anti-aliasing across all distant skyline geometry and eliminate the horizon halo band"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 10, upper boundary of the sunflower field (also right half of set-C-01.png)",
+      "what": "the scattered sunflowers end along a straight horizontal line in the mid-distance, leaving a flat, featureless dark-brown strip before the skyline",
+      "fix": "extend flower scattering and varied terrain breakup to natural horizon or topography boundaries so no straight scatter cutoff is visible"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 11, misty field directly below the sun, and out-of-focus sky in crops 10 and 11",
+      "what": "two straight horizontal seam lines cut across the glowing haze just above the distant flowers, and the out-of-focus sky and horizon show noticeable color grain",
+      "fix": "use continuous 3D volumetric fog instead of intersecting mist cards or clipped ground planes, and denoise or increase sampling in the sky and out-of-focus regions"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 3, 4, and 5, leaves on both foreground hero plants",
+      "what": "hero leaves have overly regular corrugated ribs with a waxy sheen on front surfaces, stiff polygonal edge teeth, and opaque dark shadow blocks with weak subsurface light transmission when backlit",
+      "fix": "break up the regular rib displacement with organic secondary venation, reduce specular gloss, subdivide leaf margins, and increase translucent subsurface scattering on thin backlit blades"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 3, and 6, both foreground hero stems from flower head to ground",
+      "what": "both hero stems are ruler-straight vertical cylinders rimmed by a uniform bright white band of backlit hairs, and the stems enter the soil abruptly without basal flare or clear contact shadow",
+      "fix": "add natural curvature and diameter taper to the stems, vary hair length and clumping along the stalk, and add root-collar grounding with contact shadow where stems meet the dirt"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 2, 3, and 5, shadowed upper leaves of the left hero plant and dark flower center at lower left",
+      "what": "isolated bright yellow-white firefly specks pepper the dark shadowed hero leaves and form two symmetrical glowing eye-like dots inside the black disc of the lower-left neighbor sunflower",
+      "fix": "clamp glossy indirect fireflies or increase path-tracing samples and replace the neighbor flower's black disc shader so stray bright pixels do not appear"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7 foreground grass and set-C-02.png crop 6 sunlit dirt strip",
+      "what": "foreground grass is made of repetitive stiff V-shaped blade clumps, and the sunlit bare soil patch has a soft, blobby low-resolution displaced surface",
+      "fix": "vary grass blade bend, height, dead thatch, and clumping, and use high-frequency granular soil displacement with small clods and plant litter"
+    }
+  ]
+}

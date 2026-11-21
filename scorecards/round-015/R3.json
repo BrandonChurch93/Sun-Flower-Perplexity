@@ -1,0 +1,91 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "rain streaks across the entire frame (also set-C-03.png crop 9 and crop 10)",
+      "what": "the falling rain consists of uniform, ruler-straight white lines with crisp edges and hard endpoints that sit on top of both sharp foreground and blurred sky rather than inside the scene's depth",
+      "fix": "render 3D volumetric rain with depth-of-field blur, varied drop lengths and angles, soft motion-blurred tapered ends, and atmospheric fade with distance"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-02.png",
+      "where": "crop 3 and crop 4, true leaf blades and petioles (also set-C-01.png)",
+      "what": "the leaves have a waxy, molded-plastic sheen with painted-looking concentric green bands, and backlit leaves and petioles in crop 4 stay dark and opaque against the bright sky with almost no transmitted light",
+      "fix": "replace the procedural striped sheen with fine cellular epidermal roughness and raised venation, and add physically based subsurface scattering so backlit lamina and petioles transmit warm light"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, top of the central stem",
+      "what": "the main stem terminates in a blunt, smooth, hairless cylindrical green stub with small leaves intersecting its sides instead of an apical bud",
+      "fix": "model a tightly folded, densely hairy apical shoot bud at the meristem with continuous organic node transitions"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2 and crop 4, lower pair of cotyledons on the stem",
+      "what": "both cotyledons look like smooth dark-green plastic paddles, with a single painted centerline on the left oval card and a thick grey-rimmed slab on the right intersecting directly into the cylindrical stem",
+      "fix": "give the cotyledons organic curvature, swollen petiole collars at the node, subtle secondary venation, natural epidermal micro-texture, and translucency"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, base of the stem where it meets the soil",
+      "what": "the cylindrical stem ends in an abrupt bright-rimmed cut against the dark soil with no contact shadow, root collar taper, or displaced mud",
+      "fix": "add ambient occlusion and contact shadowing at the soil junction, taper and stain the lower hypocotyl into a root collar, and place wet soil crumbs around the entry point"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 2, and crop 4, hairs along the stem, petioles, and leaf edges",
+      "what": "the hairs are thick, stiff, opaque bright-white cones clumped like frost spines, missing altogether on the top stem stub and changing across an abrupt horizontal boundary at the cotyledons",
+      "fix": "replace spiky cones with fine, curved, semi-translucent trichomes of varied length that grade continuously along the stem, petioles, leaf margins, and bud"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 3, and crop 5, leaf margins and base of the middle-right leaf blade",
+      "what": "several leaf margins show paper-thin polygonal straight segments, and the base of the middle-right leaf blade twists into a dark, pinched self-intersecting mesh fold",
+      "fix": "subdivide and thicken leaf margins with natural serration curl, and clean up the pinched mesh geometry where the middle-right petiole meets the blade"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2, crop 4, and crop 6, water drops on the stem and leaves",
+      "what": "droplets on the vertical stem are cloudy, matte grey-green oval beads stuck symmetrically to the cylinder without clear refraction or runoff trails, while rain-pelted leaves remain mostly dry",
+      "fix": "use clear refractive water shaders with crisp sky reflections, gravity-pulled drop profiles, continuous wet surface sheen, and coalescing runoff along veins and stem hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "water furrow at bottom left-center (and set-C-02.png crop 6 left)",
+      "what": "multiple repeated, rigid crown-splash meshes sit lined up along the narrow puddle with stiff glassy shading",
+      "fix": "replace repeated static crown models with varied raindrop impact stages, asymmetric motion-blurred splashes, and overlapping muddy-water ripples"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7 and crop 8, foreground grass clump and dark spiky ground plants (also set-C-02.png crop 6)",
+      "what": "grass blades are flat, knife-sharp ribbons in a single flat green with no veins, wetness, or contact shadow in the mud, beside jagged low-poly dark spiky plant meshes",
+      "fix": "add blade thickness, longitudinal ribs, natural arch, wet highlights, basal sheaths with soil contact shadows, and higher-resolution organic geometry for ground weeds and debris"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7 and crop 8, wet soil surface and foreground defocus (also set-C-02.png crop 6)",
+      "what": "rain splash spray across the mud appears as noisy, pixelated clusters of stippled dots, and out-of-focus foreground areas at the bottom of crop 7 show grainy blotches",
+      "fix": "increase render samples and motion-blur substeps for fine splash mist and depth-of-field bokeh so spray and defocused soil render smoothly without stipple noise"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 9, midground crop field and horizon skyline band",
+      "what": "repeated star-shaped grass tufts line the midground row, and a uniform pale-blue horizontal band separates the field from the dark ridge like a flat backdrop strip",
+      "fix": "vary midground plant geometry, scale, and spacing, and replace the uniform horizon band with uneven volumetric mist integrated across terrain depth"
+    }
+  ]
+}
