@@ -124,7 +124,7 @@ export function create(options: PartOptions): PlantPart {
     const waveAmp = 0.014 + 0.026 * r(6)
     const waveRate = 2.4 + 2.6 * r(7)
     const roll = -0.02 + 0.1 * r(8) + (r(9) > 0.75 ? 0.1 : 0)
-    const lump = 0.006 + 0.012 * r(30)
+    const lump = 0.008 + 0.014 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf
@@ -150,8 +150,8 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: 0.1 + 0.3 * r(19),
-      tipCurl: dry ? 1.1 : 0.5 * r(20) * r(20),
+      kink: 0.14 + 0.4 * r(19),
+      tipCurl: dry ? 1.1 : 0.12 + 0.6 * r(20) * r(20),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
@@ -421,7 +421,7 @@ export function create(options: PartOptions): PlantPart {
       const nx = ux * ct - frame.wx * st
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
-      const flare = ring === 0 ? 1 : 1 + 0.7 * Math.pow(Math.max(0, 1 - k / 0.3), 2)
+      const flare = ring === 0 ? 1 : 1 + 0.9 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
       const radius = onBlade ? thick * 0.66 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.2 * k) * flare
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * size + 0.55 * radius)

@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.085, 0.17, 0.045) : vec3(0.17, 0.25, 0.11)) * shade;
   t.albedo = mix(t.albedo, vec3(0.42, 0.4, 0.1), vState.y * 0.7);
-  t.through = vec3(0.5, 0.74, 0.07) * (1.0 - 0.55 * rib) * shade;
+  t.through = vec3(0.27, 0.52, 0.03) * (1.0 - 0.3 * rib) * shade;
   t.face = face;
   t.normal = face;
   t.rough = 0.9;
@@ -117,8 +117,8 @@ void main() {
 
   // Veins hold no green, so the light that comes through them is pale; the blade beside a thick vein is denser and darker.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  vec3 through = vec3(0.34, 0.62, 0.04) * (0.3 + 0.7 * pow(lum, 1.7)) * tone * (1.0 - 0.3 * thick);
-  through = mix(through, vec3(0.62, 0.66, 0.2), 0.75 * vein.r + 0.3 * vein.b);
+  vec3 through = vec3(0.27, 0.52, 0.03) * (0.3 + 0.7 * pow(lum, 1.7)) * tone * (1.0 - 0.3 * thick);
+  through = mix(through, vec3(0.55, 0.6, 0.17), 0.75 * vein.r + 0.3 * vein.b);
   through = mix(through, vec3(0.95, 0.78, 0.1) * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.32, 0.13, 0.025), brown);
 
