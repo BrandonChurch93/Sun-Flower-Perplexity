@@ -43,7 +43,7 @@ void main() {
   float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(1.0, 1.7, world.y);
-  vColor = uSunColor * (0.2 + 1.2 * pow(toSun, 3.0) + 14.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.006, 0.02, coc / uWidth));
+  vColor = uSunColor * (0.15 + 0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(0.006, 0.02, coc / uWidth));
   vSize = px;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;
