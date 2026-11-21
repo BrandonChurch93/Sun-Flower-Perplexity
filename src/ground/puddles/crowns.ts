@@ -25,13 +25,14 @@ out vec3 vNormal;
 out float vKind;
 out float vTop;
 out float vMud;
+out float vFlute;
 ${basin}
 const float TAU = 6.2831853;
 const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 8.0 + floor(7.0 * seed);
-  float wide = 0.008 * min(1.0, size * 6.0) + 0.012 * size;
+  float wide = 0.007 * min(1.0, size * 6.0) + 0.009 * size;
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
@@ -39,7 +40,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
     vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
     return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.4, 0.6, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float tall = wide * mix(0.4, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 3.0);
@@ -49,7 +50,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float lean = 1.0 + 0.3 * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v * v;
   float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (v + 0.8 * finger);
-  float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.7 + 0.3 * v + 0.4 * v * v * mix(1.0, 0.55, onWater) + 0.22 * finger);
+  float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.8 + 0.2 * v + 0.4 * v * v * mix(1.0, 0.35, onWater) + 0.22 * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
 }
 
@@ -58,6 +59,7 @@ void main() {
   vKind = part.x;
   vTop = part.x < 0.5 ? part.z : 1.0;
   vMud = 0.0;
+  vFlute = 0.0;
   vNormal = vec3(0.0, 1.0, 0.0);
   vWorld = vec3(0.0);
   vDepth = 0.0;
@@ -78,6 +80,7 @@ void main() {
   if (part.x < 0.5) {
     if (x >= 1.0 && (onWater < 0.6 || size < 0.42 || x >= ${JET_ENDS.toFixed(2)})) return;
     float th = part.y * TAU;
+    vFlute = part.y * (8.0 + floor(7.0 * seed));
     at = cup(th, part.z, x, size, onWater, seed);
     vec3 round = cup(th + 0.02, part.z, x, size, onWater, seed) - at;
     vec3 up = cup(th, part.z + 0.02, x, size, onWater, seed) - at;
@@ -125,6 +128,7 @@ in vec3 vNormal;
 in float vKind;
 in float vTop;
 in float vMud;
+in float vFlute;
 ${skyMirror}
 vec3 seen(vec3 d) {
   return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.08, 0.03, d.y));
@@ -145,9 +149,14 @@ void main() {
       alpha = saturate(mirror + lens + 0.06);
       color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
     } else {
-      float mirror = (0.04 + 0.96 * pow(1.0 - facing, 4.0)) * (1.0 - 0.7 * vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)), vec3(0.007, 0.006, 0.005) * skyAmbient(n), vMud);
-      alpha = mirror + (1.0 - mirror) * mix(0.35, 0.95, max(smoothstep(0.9, 1.0, vTop) * (1.0 - vMud), 0.6 * vMud * (1.0 - vTop)));
+      vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
+      n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute));
+      float one = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
+      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.7 * vMud);
+      float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
+      float silt = mix(0.6 * (1.0 - vTop), 1.0, vMud);
+      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.35 + 0.65 * lip), vec3(0.007, 0.006, 0.005) * skyAmbient(n), silt);
+      alpha = mirror + (1.0 - mirror) * max(0.9 * lip, mix(0.3, 0.85, silt));
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
