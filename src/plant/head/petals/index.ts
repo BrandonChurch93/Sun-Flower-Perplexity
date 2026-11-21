@@ -48,6 +48,9 @@ interface Ray {
   twist: number
   yaw: number
   lean: number
+  clump: number
+  arch: number
+  hook: number
   pleat: number
   trough: number
   lay: number
@@ -66,7 +69,7 @@ function outline(u: number): number {
   const peak = 0.36
   const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.7)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.18 + 0.82 * rise) * (0.1 + 0.9 * Math.pow(1 - Math.pow(s, 1.8), 0.75))
+  return (0.18 + 0.82 * rise) * (0.15 + 0.85 * Math.pow(1 - Math.pow(s, 2.0), 0.75))
 }
 
 function makeRays(seed: number): Ray[] {
@@ -92,8 +95,11 @@ function makeRays(seed: number): Ray[] {
       twist: (r(4, k) - 0.5) * 0.9 * strong,
       yaw: (r(6, k) - 0.5) * 0.5,
       lean: 0.11 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.12,
-      pleat: half.includes(k) ? 0.8 : 0.16 + 0.2 * r(7, k),
-      trough: half.includes(k) ? 0.7 : 0.12 + 0.2 * r(8, k),
+      clump: 0.2 * Math.sin(k * 1.9 + 6.283 * r(26, 0)) + (r(27, k) - 0.5) * 0.16,
+      arch: (r(28, k) - 0.5) * 0.5,
+      hook: 0.9 * Math.pow(r(29, k), 2),
+      pleat: half.includes(k) ? 0.9 : 0.45 + 0.3 * r(7, k),
+      trough: half.includes(k) ? 0.7 : 0.18 + 0.26 * r(8, k),
       lay: (rank ? -0.11 : 0.05) + (r(9, k) - 0.5) * 0.09,
       roll: 0.07 + (r(10, k) - 0.5) * 0.2,
       wave: 0.008 + 0.014 * r(15, k),
@@ -226,14 +232,14 @@ export function create(options: PartOptions): PlantPart | null {
       // The curve is read at the middle of each step, so a coarse ray runs the same way as a fine one.
       const e = (u0 + u) * 0.5
       // The foot opens first and the tip uncurls last.
-      const along = smooth(0, 1, open * 3 - 0.45 * Math.pow(e, 1.5))
+      const along = smooth(0, 1, open * 2.1 - 0.45 * Math.pow(e, 1.5))
       const across = smooth(0, 1, open * 1.5 - 0.1 - 0.4 * u)
-      const shutPitch = mix(-0.25, -0.7, grown) + 1.25 * Math.pow(e, 0.9)
+      const shutPitch = mix(-0.25, -0.7, grown) + (1.25 + ray.arch) * Math.pow(e, 0.9) + ray.hook * smooth(0.78, 1, e)
       const openPitch = ray.lay - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.7, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const pitch = mix(shutPitch, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e
-      const yaw = mix(0.45 * e, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy
+      const yaw = mix(0.45 * e + ray.clump * (0.35 + 0.65 * e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy
       const twist = mix(0.5, ray.roll + ray.twist * Math.pow(e, 1.8), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0

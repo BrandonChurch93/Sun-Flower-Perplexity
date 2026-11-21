@@ -132,7 +132,7 @@ void main() {
   t.rough = (front ? 0.5 : 0.8) * (1.0 - 0.6 * uPlantWet);
   t.wax = (front ? 0.3 : 0.08) + 0.4 * uPlantWet + 0.3 * uPlantDew;
   t.sheen = front ? 0.2 : 0.3 + 0.3 * foot;
-  t.occlusion = mix(0.4, 1.0, smoothstep(0.0, 0.22, u)) * mix(0.7, 1.0, unfolded);
+  t.occlusion = mix(0.4, 1.0, smoothstep(0.0, 0.22, u)) * mix(0.7, 1.0, unfolded) * (1.0 - 0.3 * (fold + 0.6 * groove) * smoothstep(1.0, 0.75, u));
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
