@@ -130,6 +130,8 @@ const CROWN_HOOK = 1.4
 // The inner bracts between the crown points are longer and broader and arch in over the top: the dome of the tuft.
 const TUFT_LONG = 0.1
 const TUFT_BROAD = 0.7
+// The inner row of a shut bud is folded along its midribs like a roof, by this angle each side, so each bract shows two narrow flanks.
+const TUFT_FOLD = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
 const SPREAD_LONG_LATE = 1.6
@@ -633,7 +635,7 @@ export function create(options: PartOptions): PlantPart | null {
         const even = lerp(1.04, 0.15, smoothstep(lerp(0.34, 0.28, early * (1 - young)), awn, u)) * (1 - Math.pow(clamp((u - awn) / (1 - awn)), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
-        const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight)
+        const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight) + (k.series === 2 ? Math.tan(TUFT_FOLD * smoothstep(0.05, 0.4, u)) * globe * early : 0)
         const soft = 0.2 * half + 1e-6
         const keel = 0.0007 * size * (1 - 0.6 * u)
         const round = Math.max(rowR[a], 0.25 * R)
