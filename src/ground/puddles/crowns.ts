@@ -114,7 +114,7 @@ in float vKind;
 in float vTop;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 2.0), smoothstep(-0.08, 0.03, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 1.0), smoothstep(-0.08, 0.03, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);

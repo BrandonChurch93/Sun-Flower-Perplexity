@@ -1,3 +1,4 @@
+import { rainSkyGlsl } from '../../worlds/rain/sky.ts'
 import { basin } from './basin.ts'
 
 export const waterVertex = /* glsl */ `
@@ -14,17 +15,10 @@ void main() {
 }
 `
 
-// The sky a ray leaving the water meets, read from the world's own picture of it by direction.
-export const skyMirror = /* glsl */ `
-uniform sampler2D tMirror;
-uniform mat3 uMirrorBasis;
-uniform vec3 uMirrorScale;
+// The sky a ray leaving the water meets: the rain world's own sky by direction.
+export const skyMirror = /* glsl */ `${rainSkyGlsl}
 vec3 skyMirror(vec3 d, float blur) {
-  vec3 k = d * uMirrorBasis;
-  vec2 uv = vec2(0.5) + k.xy / max(k.z, 0.05) * uMirrorScale.xy;
-  vec2 over = max(max(-uv, uv - 1.0), vec2(0.0));
-  float lod = max(blur, 7.0 * smoothstep(0.0, 0.3, max(over.x, over.y)));
-  return textureLod(tMirror, clamp(uv, 0.0, 1.0), lod).rgb * uMirrorScale.z;
+  return rainSky(d, blur);
 }
 `
 
@@ -48,7 +42,7 @@ void main() {
   float facing = max(dot(n, v), 0.0);
   float mirror = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
   vec3 r = reflect(-v, n);
-  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 2.0), smoothstep(-0.06, 0.02, r.y));
+  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 3.0), smoothstep(-0.06, 0.02, r.y));
   float clear = exp(-depth / 0.008) * (1.0 - mirror);
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;
