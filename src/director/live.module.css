@@ -1,0 +1,23 @@
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(18, 20, 19, 0.82);
+  color: #e9e6dc;
+  font: 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+}
+
+.scrub {
+  flex: 1;
+  accent-color: #d9a520;
+}
+
+.readout {
+  min-width: 13ch;
+  font-variant-numeric: tabular-nums;
+}

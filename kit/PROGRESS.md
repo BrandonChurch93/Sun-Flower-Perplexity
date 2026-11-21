@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: not published yet
-- Last push: 2026-11-21 01:20 UTC · Phase 0: workspace record, tool record, caps tool, engine core modules, status 02
-- Last status: 02 · 2026-11-21 01:20 UTC · Phase 0
+- Last push: 2026-11-21 01:39 UTC · Phase 0: app scaffold renders its first spike frames; still command and render session
+- Last status: 03 · 2026-11-21 01:38 UTC · Phase 0
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 01:38 UTC · status 03 · Phase 0 · `status-1.jpg`: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; `status-2.jpg`: Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; `status-3.jpg`: Spike frame at 26 s (night world), 1 sample; `status-4.jpg`: Frame 1515 (50.5 s, bloom) at the review tier
 - 2026-11-21 01:20 UTC · status 02 · Phase 0 · `status-1.jpg`: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact)
 - 2026-11-21 01:00 UTC · status 01 · Phase 0 · `status-1.jpg`: The eight approved images, in film order
 
@@ -32,14 +33,14 @@ Copied from the output of `npm run clock` at every status. Working time only.
 
 | Phase | Planned box | Time used |
 | --- | --- | --- |
-| 0 | 1.50 h | 0.48 h |
+| 0 | 1.50 h | 0.78 h |
 | 1 | 0.50 h | 0.00 h |
 | 2 | 3.50 h | 0.00 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 0.48 h |
+| Whole build | 30.00 h | 0.78 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -239,6 +240,7 @@ None yet.
 One line per push: the date, the commit and what it carried. A failed push is logged here too.
 - 2026-11-21 01:00 UTC · Phase 0: package, clock, look log, status tool, inline display proof, status 01
 - 2026-11-21 01:20 UTC · Phase 0: workspace record, tool record, caps tool, engine core modules, status 02
+- 2026-11-21 01:39 UTC · Phase 0: app scaffold renders its first spike frames; still command and render session
 
 ## Session log
 
@@ -253,4 +255,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: The eight approved images, in film order.
 - Status 02, 2026-11-21 01:20 UTC, Phase 0. Workspace, tools, agents and the image limit are measured and logged: software WebGL2 works, six model families see images, a sandbox agent has its own 4 core VM and can return video. The engine core (sampler, accumulator, timeline, lens) is written. Next: finish the scaffold and the harness, then render the first spike frames. Time used: 0.5 h of 30 h.
   Pictures: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact).
+- Status 03, 2026-11-21 01:38 UTC, Phase 0. The app scaffold renders its first frames in the headless browser: a stand-in plant that grows with time, soft sun shadows, light through the leaves, depth of field from lens samples, bloom, a film tone curve and grain, all accumulated from samples. Everything in these pictures is a stand-in. Next: the harness commands (determinism, gate, budget, review), the unit tests, the render budget table, then publishing the spike Time used: 0.8 h of 30 h.
+  Pictures: First spike frame at 42 s (golden hour world), 8 samples, 1920 x 1080. Stand-in plant, ground and sky; Spike frame at 14 s (rain world). The lens is focused on the growing tip, the rest falls soft; Spike frame at 26 s (night world), 1 sample; Frame 1515 (50.5 s, bloom) at the review tier.
 

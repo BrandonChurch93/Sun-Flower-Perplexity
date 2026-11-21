@@ -1,0 +1,82 @@
+import { REVISION } from 'three'
+import { config, frameCount, type TierId } from '../config.ts'
+import { isDiag } from '../core/shading.ts'
+import { REQUIRED_EXTENSIONS } from '../core/stage.ts'
+import { standIns, type StandIn } from '../core/standins.ts'
+import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
+import type { Film, FrameState } from '../director/film.ts'
+
+declare const __ENGINE_HASH__: string
+declare const __UNIT_HASHES__: Record<string, string>
+declare const __VERSIONS__: Record<string, string>
+
+export interface ShowcaseInfo {
+  frameCount: number
+  fps: number
+  format: string
+  tier: string
+  assets: string
+  engineHash: string
+  unitHashes: Record<string, string>
+  standIns: StandIn[]
+  textureMb: number
+  versions: Record<string, string>
+}
+
+export interface Showcase {
+  ready: Promise<void>
+  info(): ShowcaseInfo
+  state(frameIndex: number): FrameState
+  setFormat(id: string): Promise<void>
+  setAssets(id: string): Promise<void>
+  setDiagnostic(view: string): void
+  renderFrame(frameIndex: number, tier: string): Promise<void>
+  requirements(): { extensions: string[]; limits: Record<string, number> }
+}
+
+declare global {
+  interface Window { showcase: Showcase }
+}
+
+export function installShowcase(film: Film, ready: Promise<void>): Showcase {
+  const showcase: Showcase = {
+    ready,
+    info: () => ({
+      frameCount,
+      fps: config.film.fps,
+      format: film.format.id,
+      tier: film.lastTier,
+      assets: film.assets.set,
+      engineHash: __ENGINE_HASH__,
+      unitHashes: __UNIT_HASHES__,
+      standIns: standIns(),
+      textureMb: film.textureMb(),
+      versions: { ...__VERSIONS__, three: REVISION },
+    }),
+    state: (frameIndex) => film.state(frameIndex),
+    setFormat: (id) => film.setFormat(formatById(id)),
+    setAssets: (id) => {
+      if (!isAssetSet(id)) throw new Error(`unknown asset set "${id}"`)
+      return film.setAssets(id)
+    },
+    setDiagnostic: (view) => {
+      if (!isDiag(view)) throw new Error(`unknown diagnostic view "${view}"`)
+      film.diag = view
+    },
+    renderFrame: (frameIndex, tier) => {
+      if (!isTier(tier)) throw new Error(`unknown tier "${tier}"`)
+      return film.renderFrame(frameIndex, tier as TierId)
+    },
+    requirements: () => ({
+      extensions: REQUIRED_EXTENSIONS.slice(),
+      limits: {
+        MAX_TEXTURE_SIZE: Math.max(film.format.width, film.format.height, 2048, film.assets.largestSide()),
+        MAX_RENDERBUFFER_SIZE: Math.max(film.format.width, film.format.height, 2048),
+        MAX_VERTEX_ATTRIBS: 8,
+        MAX_DRAW_BUFFERS: 1,
+      },
+    }),
+  }
+  window.showcase = showcase
+  return showcase
+}

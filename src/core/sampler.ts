@@ -7,6 +7,8 @@ export interface Sample {
   shutter: number
   lensX: number
   lensY: number
+  lightX: number
+  lightY: number
   weight: number
 }
 
@@ -48,10 +50,10 @@ export const lensEdgeGain = 0.35
 
 export function frameSamples(frame: number, count: number): Sample[] {
   if (!(count >= 1) || !Number.isInteger(count)) throw new Error(`sample count must be a whole number of at least 1, got ${count}`)
-  if (count === 1) return [{ index: 0, pixelX: 0, pixelY: 0, shutter: 0.5, lensX: 0, lensY: 0, weight: 1 }]
+  if (count === 1) return [{ index: 0, pixelX: 0, pixelY: 0, shutter: 0.5, lensX: 0, lensY: 0, lightX: 0, lightY: 0, weight: 1 }]
   const key = combine(SEED, frame)
   const r = (n: number) => hash32(key + n) / 4294967296
-  const rot = [r(1), r(2), r(3), r(4), r(5)]
+  const rot = [r(1), r(2), r(3), r(4), r(5), r(6), r(7)]
   const order = Array.from({ length: count }, (_, i) => i)
   for (let i = count - 1; i > 0; i--) {
     const j = Math.floor((hash32(combine(key, 100 + i)) / 4294967296) * (i + 1))
@@ -72,7 +74,8 @@ export function frameSamples(frame: number, count: number): Sample[] {
     const edge = radius <= 0.72 ? 0 : (radius - 0.72) / 0.28
     const weight = 1 + lensEdgeGain * edge * edge
     total += weight
-    out.push({ index: i, pixelX: px, pixelY: py, shutter, lensX: lx, lensY: ly, weight })
+    const [gx, gy] = concentricDisc(frac(radicalInverse(i + 1, 11) + rot[5]), frac(radicalInverse(i + 1, 13) + rot[6]))
+    out.push({ index: i, pixelX: px, pixelY: py, shutter, lensX: lx, lensY: ly, lightX: gx, lightY: gy, weight })
   }
   for (const s of out) s.weight /= total
   return out

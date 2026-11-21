@@ -23,21 +23,24 @@ export const shared = {
   uFogDensity: { value: 0 },
   uFogFalloff: { value: 0.5 },
   uCamPos: { value: new THREE.Vector3() },
-  uCamRot: { value: new THREE.Matrix3() },
-  uSkyInvProj: { value: new THREE.Matrix4() },
   uShadowMatrix: { value: new THREE.Matrix4() },
   uShadowMap: { value: null as THREE.Texture | null },
   uShadowOn: { value: 0 },
-  uShadowBias: { value: 0.0008 },
-  uShadowNormalBias: { value: 0.002 },
+  uShadowBias: { value: 0.0006 },
+  uShadowTexel: { value: 1 / 2048 },
+  uShadowTexelM: { value: 0.001 },
   uFocusM: { value: 1 },
   uCocScale: { value: 0 },
-  uSkyBlur: { value: 0 },
+  uFocusCoc: { value: 1.5 },
   uDiag: { value: 0 },
   uSize: { value: new THREE.Vector2(1, 1) },
 }
 
-export type SharedUniforms = typeof shared
+export const glslHead = /* glsl */ `precision highp float;
+precision highp int;
+precision highp sampler2D;
+precision highp sampler2DShadow;
+`
 
 export const glslCommon = /* glsl */ `
 uniform float uShutter;
@@ -56,9 +59,12 @@ uniform float uFogFalloff;
 uniform vec3 uCamPos;
 uniform float uFocusM;
 uniform float uCocScale;
+uniform float uFocusCoc;
 uniform int uDiag;
+uniform vec2 uSize;
 
 float saturate(float x) { return clamp(x, 0.0, 1.0); }
+vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
 
 uint hashU(uint x) {
   x ^= x >> 16; x *= 0x7feb352dU; x ^= x >> 15; x *= 0x846ca68bU; x ^= x >> 16;
@@ -91,25 +97,40 @@ float fbm(vec2 p) {
 }
 `
 
+export const glslVertex = /* glsl */ `
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+`
+
 export const glslLight = /* glsl */ `
 uniform mat4 uShadowMatrix;
-uniform highp sampler2DShadow uShadowMap;
+uniform sampler2DShadow uShadowMap;
 uniform float uShadowOn;
 uniform float uShadowBias;
-uniform float uShadowNormalBias;
+uniform float uShadowTexel;
+uniform float uShadowTexelM;
+uniform float uStandIn;
+layout(location = 0) out vec4 outColor;
 
-float sunShadow(vec3 worldPos, vec3 towardLightNormal) {
+float sunShadow(vec3 worldPos, vec3 offsetDir, float offsetM) {
   if (uShadowOn < 0.5) return 1.0;
-  vec4 sc = uShadowMatrix * vec4(worldPos + towardLightNormal * uShadowNormalBias, 1.0);
+  vec4 sc = uShadowMatrix * vec4(worldPos + offsetDir * offsetM, 1.0);
   vec3 p = sc.xyz / sc.w;
   if (p.x <= 0.0 || p.x >= 1.0 || p.y <= 0.0 || p.y >= 1.0 || p.z >= 1.0) return 1.0;
-  return texture(uShadowMap, vec3(p.xy, p.z - uShadowBias));
+  float z = p.z - uShadowBias;
+  float t = uShadowTexel;
+  float s = texture(uShadowMap, vec3(p.xy + vec2(-0.5, -0.5) * t, z));
+  s += texture(uShadowMap, vec3(p.xy + vec2(0.5, -0.5) * t, z));
+  s += texture(uShadowMap, vec3(p.xy + vec2(-0.5, 0.5) * t, z));
+  s += texture(uShadowMap, vec3(p.xy + vec2(0.5, 0.5) * t, z));
+  return s * 0.25;
 }
 
 vec3 skyAmbient(vec3 n) {
   float t = n.y * 0.5 + 0.5;
   vec3 upper = mix(uSkyHorizon, uSkyZenith, smoothstep(0.55, 1.0, t));
-  return mix(uGroundBounce, upper, smoothstep(0.1, 0.6, t));
+  return mix(uGroundBounce, upper, smoothstep(0.15, 0.6, t));
 }
 
 vec3 applyFog(vec3 color, vec3 worldPos) {
@@ -124,66 +145,84 @@ vec3 applyFog(vec3 color, vec3 worldPos) {
 }
 
 float cocOf(float viewDepth) {
-  return min(uCocScale * abs(1.0 / max(viewDepth, 1e-4) - 1.0 / uFocusM), 4096.0);
+  return min(uCocScale * abs(1.0 / max(viewDepth, 1e-4) - 1.0 / uFocusM), 2048.0);
 }
 
-vec4 finish(vec3 color, vec3 worldPos, float viewDepth) {
-  return vec4(applyFog(color, worldPos), cocOf(viewDepth));
+vec3 heat(float t) {
+  t = saturate(t);
+  return saturate(vec3(1.5 - abs(4.0 * t - 3.0), 1.5 - abs(4.0 * t - 2.0), 1.5 - abs(4.0 * t - 1.0)));
+}
+
+// texelsPerPixel below zero means the surface has no texture behind it
+vec4 finish(vec3 color, vec3 worldPos, float viewDepth, float texelsPerPixel) {
+  float coc = cocOf(viewDepth);
+  if (uDiag == 7) return vec4(uStandIn > 0.5 ? vec3(1.0, 0.0, 0.6) : vec3(dot(color, vec3(0.3, 0.6, 0.1))), coc);
+  if (uDiag == 4) return vec4(texelsPerPixel < 0.0 ? vec3(0.03) : heat(texelsPerPixel * 0.5), texelsPerPixel < 0.0 ? -1.0 : texelsPerPixel);
+  if (uDiag == 5) return vec4(vec3(viewDepth), coc);
+  if (uDiag == 6) return vec4(coc < uFocusCoc ? vec3(0.1, 1.0, 0.3) : vec3(dot(color, vec3(0.3, 0.6, 0.1))) * 0.5, coc);
+  return vec4(applyFog(color, worldPos), coc);
+}
+
+float texelDensity(vec2 uv, vec2 textureSize) {
+  vec2 dx = dFdx(uv) * textureSize;
+  vec2 dy = dFdy(uv) * textureSize;
+  return sqrt(max(dot(dx, dx), dot(dy, dy)));
 }
 `
 
 export interface SurfaceOptions {
+  name: string
   vertex: string
   fragment: string
   uniforms?: Record<string, THREE.IUniform>
   side?: THREE.Side
   transparent?: boolean
   depthWrite?: boolean
-  blending?: THREE.Blending
-  defines?: Record<string, string | number | boolean>
+  additive?: boolean
   standIn?: boolean
+  castShadow?: boolean
 }
 
-export interface Surface { main: THREE.ShaderMaterial; depth: THREE.ShaderMaterial | null }
+export interface Surface { main: THREE.RawShaderMaterial; depth: THREE.RawShaderMaterial | null }
 
-const depthFragment = /* glsl */ `
+const depthFragment = /* glsl */ `${glslHead}
+layout(location = 0) out vec4 outColor;
 void main() {
-  gl_FragColor = vec4(1.0);
+  outColor = vec4(1.0);
 }
 `
 
 export function makeSurface(o: SurfaceOptions): Surface {
   const uniforms = { ...shared, uStandIn: { value: o.standIn ? 1 : 0 }, ...(o.uniforms ?? {}) }
-  const main = new THREE.ShaderMaterial({
+  const main = new THREE.RawShaderMaterial({
+    name: o.name,
     glslVersion: THREE.GLSL3,
-    vertexShader: `${glslCommon}\n${o.vertex}`,
-    fragmentShader: `${glslCommon}\n${glslLight}\nuniform float uStandIn;\n${o.fragment}`,
+    vertexShader: `${glslHead}${glslVertex}${glslCommon}\n${o.vertex}`,
+    fragmentShader: `${glslHead}${glslCommon}${glslLight}\n${o.fragment}`,
     uniforms,
     side: o.side ?? THREE.FrontSide,
     transparent: o.transparent ?? false,
-    depthWrite: o.depthWrite ?? true,
-    blending: o.blending ?? THREE.NoBlending,
-    defines: o.defines ?? {},
+    depthWrite: o.depthWrite ?? !(o.transparent ?? false),
+    blending: THREE.NoBlending,
   })
   if (o.transparent) {
-    main.blending = o.blending ?? THREE.CustomBlending
-    if (main.blending === THREE.CustomBlending) {
-      main.blendSrc = THREE.SrcAlphaFactor
-      main.blendDst = THREE.OneMinusSrcAlphaFactor
-      main.blendSrcAlpha = THREE.ZeroFactor
-      main.blendDstAlpha = THREE.OneFactor
-    }
+    main.blending = THREE.CustomBlending
+    main.blendSrc = o.additive ? THREE.OneFactor : THREE.SrcAlphaFactor
+    main.blendDst = o.additive ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor
+    main.blendSrcAlpha = THREE.ZeroFactor
+    main.blendDstAlpha = THREE.OneFactor
   }
-  const depth = o.transparent
-    ? null
-    : new THREE.ShaderMaterial({
+  const cast = o.castShadow ?? !(o.transparent ?? false)
+  const depth = cast
+    ? new THREE.RawShaderMaterial({
+        name: `${o.name} depth`,
         glslVersion: THREE.GLSL3,
-        vertexShader: `#define DEPTH_PASS 1\n${glslCommon}\n${o.vertex}`,
+        vertexShader: `${glslHead}#define DEPTH_PASS 1\n${glslVertex}${glslCommon}\n${o.vertex}`,
         fragmentShader: depthFragment,
         uniforms,
         side: THREE.DoubleSide,
-        defines: o.defines ?? {},
         colorWrite: false,
       })
+    : null
   return { main, depth }
 }
