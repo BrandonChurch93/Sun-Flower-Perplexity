@@ -125,7 +125,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
   float under = max(uCanopy * 1.04 - world.y, 0.0);
-  return mix(0.1, 1.0, exp(-3.2 * under / max(uCanopy, 0.05)));
+  return mix(0.05, 1.0, exp(-4.5 * under / max(uCanopy, 0.05)));
 #else
   return 1.0;
 #endif
