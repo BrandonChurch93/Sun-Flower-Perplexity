@@ -96,7 +96,6 @@ void main() {
   float hole = mark.r + vMark.y * edge - vMark.x - 0.3 * (1.0 - vState.w);
   float tear = -1.0;
   if (vMark.z > 1.5 && vUv.x > 0.0) tear = (vUv.x - 0.42) * 0.085 - abs(vUv.y - 0.5 - 0.1 * (vUv.x - 1.0) + 0.02 * (mark.g - 0.5));
-  if (hole > 0.0 || tear > 0.0) discard;
   float scar = max(smoothstep(-0.05, -0.008, hole), smoothstep(-0.012, -0.002, tear));
   float dryFrom = 0.8 - (vMark.z - 1.0);
   float dry = vMark.z > 0.5 && vMark.z < 1.5 ? smoothstep(dryFrom, dryFrom + 0.13, vUv.y + 0.1 * (mark.g - 0.5) + 0.25 * (vMark.z - 1.0) * abs(vUv.x)) * vState.w : 0.0;
@@ -148,7 +147,10 @@ void main() {
   t.wax = (top ? 0.12 : 0.04) * margin;
   t.sheen = (top ? 0.3 : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
+  if (hole > 0.0 || tear > 0.0) discard;
+  outColor = shaded;
 }
 #endif
 `
