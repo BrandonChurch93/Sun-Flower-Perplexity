@@ -69,10 +69,10 @@ void main() {
 
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 12
-const FINE_REACH_M = 1.3
-// Nearer than this a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
-const FINE_NEAR_M = 0.55
-const SLOWEST_M_PER_S = 1
+// The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
+const FINE_NEAR = 0.68
+const FINE_REACH = 1.6
+const SLOWEST_M_PER_S = 0.5
 
 export interface Streaks {
   mesh: THREE.Mesh
@@ -119,6 +119,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
       const rise = pose.forward.y / Math.hypot(pose.forward.x, pose.forward.z)
       const eye = pose.position
       const reach = HEAVY_REACH_M
+      const fineFrom = FINE_NEAR * pose.focusM
+      const fineTo = FINE_REACH * pose.focusM
       const i0 = Math.floor((eye.x - reach) / RAIN_CELL_M)
       const i1 = Math.floor((eye.x + reach) / RAIN_CELL_M)
       const j0 = Math.floor((eye.z - reach) / RAIN_CELL_M)
@@ -136,7 +138,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
           if (off > room * tanX * 1.2 + 0.3) continue
           // The highest a drop over this cell can be and still show in the frame.
           const top = Math.max(0.3, eye.y + room * (rise + tanY * 1.2) + 0.2)
-          const series = depth > FINE_NEAR_M && depth < FINE_REACH_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
+          const series = depth > fineFrom - RAIN_CELL_M && depth < fineTo + RAIN_CELL_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
           for (let s = 0; s < series && n < MAX_STREAKS; s++) {
             const period = seriesPeriod(i, j, s)
             const last = close + top / (SLOWEST_M_PER_S * down)
@@ -144,6 +146,10 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
               const drop = dropOf(i, j, s, k)
               if (!drop) continue
               if (drop.time > last) break
+              if (s >= RAIN_SERIES) {
+                const away = (drop.x - eye.x) * flat.x + (drop.z - eye.z) * flat.z
+                if (away < fineFrom || away > fineTo) continue
+              }
               const fromOpen = drop.speed * (drop.time - open)
               const fromClose = Math.max(0, drop.speed * (drop.time - close))
               if (fromClose * down > top) continue
