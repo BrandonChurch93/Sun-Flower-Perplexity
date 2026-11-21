@@ -34,7 +34,7 @@ const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hair
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
 
-const RINGS_STALK = 9
+const RINGS_STALK = 21
 const RINGS_RIB = 16
 const RINGS = RINGS_STALK + RINGS_RIB
 const SIDES = 10
@@ -143,7 +143,7 @@ export function create(options: PartOptions): PlantPart {
     // The leaf that hangs right under the head is a small one on an arched stalk.
     const tuck = main ? Math.exp(-(((rank - 0.913) / 0.03) ** 2)) : 0
     const blade = lerp(1, main ? 0.9 : 0.76, upper) * (1 - 0.42 * tuck)
-    const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
+    const roll = withered ? (main ? 0.55 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const folds = main ? 2.2 : 1
     const deep = main ? 1 : 0.6
@@ -186,11 +186,11 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19) + 0.5 * tuck,
+      kink: withered ? (main ? 1.25 : 1.5) : 0.08 + 0.45 * r(19) + 0.5 * tuck,
       tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : hero ? 0.35 + 0.6 * r(20) : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
-      rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
+      rise: withered && main ? 1.15 : lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
       bow: (r(74) < 0.5 ? -1 : 1) * (0.12 + 0.2 * r(75)),
       crease: withered ? (main ? 0.3 : 1.15) : main ? 0.2 + 0.4 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
@@ -288,7 +288,8 @@ export function create(options: PartOptions): PlantPart {
     uDetailSize: { value: new THREE.Vector2(1, 1) },
     uVeinPad: { value: VEIN_PAD },
     // The neighbor's blades stand between the lens and the sun, where the approved frames keep them a deep green.
-    uGlow: { value: options.variant === 0 ? 1 : 0.3 },
+    uGlow: { value: options.variant === 0 ? 1 : 0.1 },
+    uWarm: { value: options.variant === 0 ? 0 : 0.7 },
   }
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
   const mesh = partMesh(geometry, surface)
@@ -341,10 +342,16 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.6) {
+      if (pick < 0.38) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
+      } else if (pick < 0.6) {
+        // Hairs of the face: half of them crowd the midrib, where the skin is coarsest.
+        hair.kind = 1
+        hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
+        const mid = (leaf.nv - 1) / 2
+        hair.b = r(7) < 0.5 ? mid + (r(6) - 0.5) * 1.2 : 1 + r(6) * (leaf.nv - 3.001)
       } else {
         hair.kind = 2
         hair.a = 1 + Math.pow(r(5), 1.2) * (RINGS_STALK + 2)
@@ -377,7 +384,8 @@ export function create(options: PartOptions): PlantPart {
     const creased = smoothstep(3, 16, age)
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
-    const facing = main ? -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE)) : 0
+    // The hanging leaf under the head keeps its edge to the lens.
+    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
@@ -580,7 +588,18 @@ export function create(options: PartOptions): PlantPart {
         const nx = normals[v00]
         const ny = normals[v00 + 1]
         const nz = normals[v00 + 2]
-        if (hair.kind === 0) {
+        if (hair.kind === 1) {
+          const side = hair.r2 < 0.5 ? -1 : 1
+          const lx = out[v10] - out[v00]
+          const ly = out[v10 + 1] - out[v00 + 1]
+          const lz = out[v10 + 2] - out[v00 + 2]
+          const ll = Math.hypot(lx, ly, lz) || 1
+          const ahead = 1.4 * (hair.r3 - 0.3)
+          dx = nx * side + (lx / ll) * ahead
+          dy = ny * side + (ly / ll) * ahead
+          dz = nz * side + (lz / ll) * ahead
+          long = (0.0005 + 0.0011 * hair.r1) * scale
+        } else {
           const inner = v00 + (b === 1 ? 3 : -3)
           let ex = out[v00] - out[inner]
           let ey = out[v00 + 1] - out[inner + 1]
@@ -592,12 +611,12 @@ export function create(options: PartOptions): PlantPart {
           let fz = out[v10 + 2] - out[v00 + 2]
           const fl = Math.hypot(fx, fy, fz) || 1
           fx /= fl; fy /= fl; fz /= fl
-          const tilt = (hair.r2 - 0.5) * 2.2
+          const tilt = (hair.r2 - 0.5) * 1.5
           const ahead = -0.3 + 1.3 * hair.r3
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (hair.r4 > 0.92 ? 0.0018 + 0.002 * hair.r1 : 0.0003 + 0.0006 * hair.r1) * scale
+          long = (0.0006 + 0.0028 * hair.r1 * hair.r1) * scale
         }
       }
       root[o] = px
