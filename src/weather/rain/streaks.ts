@@ -12,6 +12,9 @@ in vec4 aClose;
 uniform float uPixelAngle;
 uniform float uSamples;
 uniform float uGain;
+uniform float uKeep;
+uniform vec4 uBand;
+out vec2 vEnds;
 out float vAcross;
 out float vAlong;
 out float vShare;
@@ -36,9 +39,15 @@ void main() {
   float lengthM = distance(aOpen.xyz, aClose.xyz);
   mid.xy += across * (position.x * halfM) + along * ((2.0 * position.y - 1.0) * halfM);
   vAcross = position.x;
+  float whole = (lengthM + 2.0 * halfM) / halfM;
+  vEnds = vec2(position.y, 1.0 - position.y) * whole;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
-  vShare = min(1.0, uGain * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
+  // No two drops catch the band alike: most are dim and a few flare. Off the focus one fine drop in a few is drawn, the brighter for the rest.
+  float catchLight = mix(0.3, 2.6, pow(fract(aClose.w * 13.7 + 0.31), 3.0));
+  float nearFocus = smoothstep(uBand.x, uBand.y, depth / uFocusM) * (1.0 - smoothstep(uBand.z, uBand.w, depth / uFocusM));
+  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0;
+  vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
   float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
   vSeen = min(1.0, max(0.09, least * least));
@@ -50,6 +59,7 @@ void main() {
 
 const fragment = /* glsl */ `
 in float vAcross;
+in vec2 vEnds;
 in float vAlong;
 in float vShare;
 in float vSeed;
@@ -59,7 +69,8 @@ uniform vec3 uLight;
 uniform vec3 uShade;
 void main() {
   if (uDiag > 1) discard;
-  float u = vAcross * vAcross;
+  float cap = max(0.0, 1.0 - min(vEnds.x, vEnds.y));
+  float u = min(1.0, vAcross * vAcross + cap * cap);
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
   float core = exp(-u / vSeen) * swing;
@@ -80,7 +91,20 @@ const HEAVY_REACH_M = 6
 // The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
 const FINE_NEAR = 0.82
 const FINE_REACH = 1.28
+// A little way off the focus the same drops are soft and a few pixels thick, and a share of them is drawn there.
+const SOFT_NEAR = 0.74
+const SOFT_REACH = 1.5
+const SOFT_KEEP = 0.3
 const SLOWEST_M_PER_S = 0.5
+// The wind carries a light drop farther than a heavy one, and gusts carry each a little differently, so no two fall at one angle. Every path still ends at its own landing.
+const CARRY_SPREAD = 0.32
+const CARRY_BY_WEIGHT = 0.22
+const CROSS_SPREAD = 0.05
+
+function smooth(from: number, to: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - from) / (to - from)))
+  return t * t * (3 - 2 * t)
+}
 
 export interface Streaks {
   mesh: THREE.Mesh
@@ -106,6 +130,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
     uGain: { value: 16 },
+    uKeep: { value: SOFT_KEEP },
+    uBand: { value: new THREE.Vector4(SOFT_NEAR, FINE_NEAR, FINE_REACH, SOFT_REACH) },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
   }
@@ -127,13 +153,16 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
       const rise = pose.forward.y / Math.hypot(pose.forward.x, pose.forward.z)
       const eye = pose.position
       const reach = HEAVY_REACH_M
-      const fineFrom = FINE_NEAR * pose.focusM
-      const fineTo = FINE_REACH * pose.focusM
+      const fineFrom = SOFT_NEAR * pose.focusM
+      const fineTo = SOFT_REACH * pose.focusM
       const i0 = Math.floor((eye.x - reach) / RAIN_CELL_M)
       const i1 = Math.floor((eye.x + reach) / RAIN_CELL_M)
       const j0 = Math.floor((eye.z - reach) / RAIN_CELL_M)
       const j1 = Math.floor((eye.z + reach) / RAIN_CELL_M)
       const down = -fallDir[1]
+      const level = Math.hypot(fallDir[0], fallDir[2])
+      const crossX = -fallDir[2] / level
+      const crossZ = fallDir[0] / level
       let n = 0
       for (let j = j0; j <= j1 && n < MAX_STREAKS; j++) {
         for (let i = i0; i <= i1 && n < MAX_STREAKS; i++) {
@@ -157,18 +186,27 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
               if (s >= RAIN_SERIES) {
                 const away = (drop.x - eye.x) * flat.x + (drop.z - eye.z) * flat.z
                 if (away < fineFrom || away > fineTo) continue
+                const at = away / pose.focusM
+                const inFocus = smooth(SOFT_NEAR, FINE_NEAR, at) * (1 - smooth(FINE_REACH, SOFT_REACH, at))
+                if (((drop.id >>> 3) & 127) / 127 > SOFT_KEEP + (1 - SOFT_KEEP) * inFocus) continue
               }
               const fromOpen = drop.speed * (drop.time - open)
               const fromClose = Math.max(0, drop.speed * (drop.time - close))
               if (fromClose * down > top) continue
+              const gust = ((drop.id >>> 10) & 1023) / 511.5 - 1
+              const cross = (((drop.id >>> 20) & 1023) / 511.5 - 1) * CROSS_SPREAD * down
+              const weight = Math.min(1, Math.max(0, (drop.speed - 4) / 4.9))
+              const carry = 1 + CARRY_SPREAD * gust + (s < RAIN_SERIES ? CARRY_BY_WEIGHT * (1 - 2 * weight) : 0)
+              const dx = fallDir[0] * carry + crossX * cross
+              const dz = fallDir[2] * carry + crossZ * cross
               const o = n * 4
-              opens[o] = drop.x - fallDir[0] * fromOpen
+              opens[o] = drop.x - dx * fromOpen
               opens[o + 1] = down * fromOpen
-              opens[o + 2] = drop.z - fallDir[2] * fromOpen
+              opens[o + 2] = drop.z - dz * fromOpen
               opens[o + 3] = drop.radius
-              closes[o] = drop.x - fallDir[0] * fromClose
+              closes[o] = drop.x - dx * fromClose
               closes[o + 1] = down * fromClose
-              closes[o + 2] = drop.z - fallDir[2] * fromClose
+              closes[o + 2] = drop.z - dz * fromClose
               closes[o + 3] = (drop.id & 1023) / 1023
               n++
             }
