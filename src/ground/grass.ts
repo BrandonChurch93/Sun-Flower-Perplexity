@@ -177,7 +177,7 @@ void main() {
   n *= sign(dot(n, v) + 1e-6);
   float t = vAlong.x;
   float weed = step(2.0, vTuft.z);
-  vec3 albedo = mix(vec3(0.03, 0.05, 0.014), mix(vec3(0.075, 0.13, 0.028), vec3(0.11, 0.15, 0.035), vTuft.y), t);
+  vec3 albedo = mix(vec3(0.03, 0.046, 0.018), mix(vec3(0.075, 0.12, 0.036), vec3(0.11, 0.14, 0.045), vTuft.y), t);
   albedo = mix(albedo, albedo * vec3(0.85, 1.05, 1.25), weed);
   albedo = mix(albedo, vec3(0.2, 0.16, 0.06), smoothstep(0.55, 1.0, t) * step(0.72, vAlong.y) * (1.0 - weed));
   albedo *= 0.86 + 0.14 * cos(vAlong.z * 7.0);
