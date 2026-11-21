@@ -308,7 +308,7 @@ export function create(options: PartOptions): PlantPart {
       const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.8 * pale * (1 - smoothstep(0, 0.006, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.002, 0.012, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
