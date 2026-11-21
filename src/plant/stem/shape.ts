@@ -103,12 +103,13 @@ export interface Ribs {
   fast: Float32Array
   mean: number
   now: Float32Array
+  tall: Float32Array
 }
 
 // 9 to 14 uneven ribs round the stem. They wander a little along it, by the label of the tissue, so they never slide.
 export function makeRibs(seed: number): Ribs {
   const count = 9 + Math.floor(hash01(seed, 70) * 6)
-  const ribs: Ribs = { count, center: new Float32Array(count), half: new Float32Array(count), height: new Float32Array(count), slow: new Float32Array(count), fast: new Float32Array(count), mean: 0, now: new Float32Array(count) }
+  const ribs: Ribs = { count, center: new Float32Array(count), half: new Float32Array(count), height: new Float32Array(count), slow: new Float32Array(count), fast: new Float32Array(count), mean: 0, now: new Float32Array(count), tall: new Float32Array(count) }
   let mean = 0
   for (let k = 0; k < count; k++) {
     ribs.center[k] = ((k + 0.15 + 0.7 * hash01(seed, 71, k)) / count) * TAU
@@ -123,7 +124,12 @@ export function makeRibs(seed: number): Ribs {
 }
 
 export function ribsAt(ribs: Ribs, label: number): void {
-  for (let k = 0; k < ribs.count; k++) ribs.now[k] = ribs.center[k] + 0.11 * Math.sin(label * 6.3 + ribs.slow[k]) + 0.045 * Math.sin(label * 27 + ribs.fast[k])
+  for (let k = 0; k < ribs.count; k++) {
+    ribs.now[k] = ribs.center[k] + 0.11 * Math.sin(label * 6.3 + ribs.slow[k]) + 0.045 * Math.sin(label * 27 + ribs.fast[k])
+    // A rib rises and dies away along the stem, each at its own places.
+    const wave = 0.5 + 0.3 * Math.sin(label * 11 + 3 * ribs.fast[k]) + 0.2 * Math.sin(label * 29 + 5 * ribs.slow[k])
+    ribs.tall[k] = ribs.height[k] * (0.15 + 0.85 * wave * wave)
+  }
 }
 
 // The height of the ribs at an angle round the stem, about -0.5 in a furrow to 1 on a crest, after `ribsAt`.
@@ -135,10 +141,10 @@ export function ribProfile(ribs: Ribs, angle: number): number {
     const x = d / ribs.half[k]
     if (x > -1 && x < 1) {
       const q = 1 - x * x
-      sum += ribs.height[k] * q * q
+      sum += ribs.tall[k] * q * q
     }
   }
-  return sum - ribs.mean
+  return sum - 0.45 * ribs.mean
 }
 
 export function wrapAngle(d: number): number {

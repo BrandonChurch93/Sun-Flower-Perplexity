@@ -1,12 +1,11 @@
-# Status 25
+# Status 26
 
-2026-11-21 10:42 UTC
+2026-11-21 11:07 UTC
 
-- Status 25 · Phase 3 · unit bloom. Round 3 is judged: not a pass. R1 (match) 5, R3 (surface) 4, R4 (motion) 4, the jury passes (7 of 10 votes on our frames were film, 6 of 10 on the approved images), one machine check red (2 pixels of frame 1515 differ between two renders), sharpness short at 45 s. 8 severe and 19 major issues, the heaviest: the head at 45 s, the star spikes on the sun, the blurred neighbor at the left edge, the field of small sharp heads. Since the judged build, merged: the lens without star spikes, the bud's bracts wrapped over the shut rays, the shut rays as ridged straps, deeper orange rays, larger and more varied heads in the field, the skin without its bright outline, thick leaf stalks.
-- Next: Fix pass, at most 90 minutes: the head more upright and higher at 45 s, each ray opening over three seconds so the first are half lifted at 45 s and the last still fold over the disc at 50.5 s, more and smaller bracts with a taller crown, the neighbor moved to the hero's depth, the fringe of hairs on both outlines of the stem. Then round 4. Time used: 9.9 h of 30 h.
+- Status 26 · Phase 3 · unit bloom. After Round 3 (not a pass): two renders of a frame now agree again (the leaf holes were cut before shading); the head turns to the lens late, so at 45 s it sits where the approved one does; rays grow folded inside the bud and open as a front from the sun side within the bloom stage; upper leaves a quarter longer, the top leaf halved so it stays off the head. Stem pass 4 and the ground's lumps are merged; twelve agents are on the Round 3 issues.
+- Next: Share the focus between the face and the stem under it, merge the agents' passes by 11:50 UTC, then Round 4 at about 12:00 UTC. Time used: 10.3 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: 45.0 s: approved (left), film now (right)
-- `status-2.jpg`: 50.5 s: approved (left), film now (right)
-- `status-3.jpg`: The head at 45 s: approved (left), film now (right)
-- `status-4.jpg`: The head at 50.5 s: approved (left), film now (right)
+- `status-1.jpg`: 39.5 s to 51.5 s after the growth change (drafts): the frost bud, then the bloom about every second
+- `status-2.jpg`: 45.0 s: approved left, ours right (draft)
+- `status-3.jpg`: 50.5 s: approved left, ours right (draft)
