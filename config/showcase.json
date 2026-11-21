@@ -243,7 +243,7 @@
       {"time": 0, "distanceM": 0.1458, "heightM": 0.023, "aimHeightM": 0.0127, "frameX": 0.5905, "azimuthDeg": 3.53, "focalMm": 60},
       {"time": 1.5, "distanceM": 0.1584, "heightM": 0.024, "aimHeightM": 0.0148, "frameX": 0.6005, "azimuthDeg": 3.18, "focalMm": 59},
       {"time": 6.5, "distanceM": 0.2864, "heightM": 0.0463, "aimHeightM": 0.0287, "frameX": 0.6056, "azimuthDeg": 2, "focalMm": 56},
-      {"time": 14, "distanceM": 0.8198, "heightM": 0.0915, "aimHeightM": 0.1099, "frameX": 0.6196, "azimuthDeg": 4, "focalMm": 45},
+      {"time": 14, "distanceM": 0.684, "heightM": 0.085, "aimHeightM": 0.0934, "frameX": 0.6196, "azimuthDeg": 4, "focalMm": 45},
       {"time": 26, "distanceM": 1, "heightM": 0.4693, "aimHeightM": 0.6366, "frameX": 0.5936, "azimuthDeg": 8, "focalMm": 41},
       {"time": 36, "distanceM": 0.73, "heightM": 1.1799, "aimHeightM": 1.2198, "frameX": 0.5294, "azimuthDeg": 12, "focalMm": 37},
       {"time": 45, "distanceM": 0.7878, "heightM": 1.6016, "aimHeightM": 1.5881, "frameX": 0.6482, "azimuthDeg": 17.88, "focalMm": 35},
