@@ -10,7 +10,7 @@ import { isMain } from './lib/main.ts'
 import { WORK } from './lib/paths.ts'
 import { matches, readRecord, writeRecord, type Record_ } from './lib/record.ts'
 import { probeLine } from './lib/video.ts'
-import { chunkIsCurrent, chunkRange, Job, renderChunk, type FilmOptions } from './film.ts'
+import { chunkIsCurrent, chunkRange, Job, joinParts, renderChunk, type FilmOptions } from './film.ts'
 
 export async function clip(unit: string, tier: string, assets = 'full'): Promise<string> {
   const s = segmentById(unit)
@@ -22,7 +22,7 @@ export async function clip(unit: string, tier: string, assets = 'full'): Promise
     console.log(`clip · reused · ${probeLine(file)}`)
     return file
   }
-  let chunk = chunkIsCurrent(unit, o, range)
+  let chunk = chunkIsCurrent(unit, o, range) ?? joinParts(unit, o)
   if (!chunk) {
     const job = new Job(o, s.frames, 'clip')
     try {
