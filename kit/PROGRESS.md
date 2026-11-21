@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
-- Last status: 10 · 2026-11-21 03:55 UTC · Phase 2
+- Last push: 2026-11-21 04:23 UTC · Phase 2: status 11, round 1 machine checks green
+- Last status: 11 · 2026-11-21 04:22 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 04:22 UTC · status 11 · Phase 2 · round 1 · `status-1.jpg`: The film from 0 to 19 s, twelve frames in order; `status-2.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-3.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:55 UTC · status 10 · Phase 2 · `status-1.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-2.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
@@ -42,12 +43,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 1.94 h |
+| 2 | 3.50 h | 2.39 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 3.07 h |
+| Whole build | 30.00 h | 3.52 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -325,8 +326,8 @@ One entry per round, written and pushed when the round starts: number, phase, un
 
 ### Round 1 · Phase 2 · blockout · floor round
 
-- Started 2026-11-21 04:21 UTC. Judges commit `5b235aa`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent.
-- [ ] Machine checks (`npm run gate -- --phase 2 --machine`)
+- Started 2026-11-21 04:17 UTC. Judges commit `5b235aa`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent.
+- [x] Machine checks (`npm run gate -- --phase 2 --machine`): 04:20 UTC, all 12 green (G1 to G12; G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
 - [ ] Pack (`npm run pack -- --phase 2 --round 1`)
 - [ ] R4 blockout answer in `scorecards/round-001/`
 - [ ] Fixes
@@ -369,6 +370,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
 - 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
 - 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
+- 2026-11-21 04:23 UTC · Phase 2: status 11, round 1 machine checks green
 
 ## Session log
 
@@ -399,4 +401,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
 - Status 10, 2026-11-21 03:55 UTC, Phase 2. The camera is now fitted at all eight keys by solving against measurements of the approved images, so the plant, the horizon and the sun land where each image has them (left of each pair: the approved image, right: the film frame). The field is in: 12,687 sunflowers of the same age as the plant, 8,914 of them in view in the last shot. The companion stands beside the plant, out of frame until the bloom, where its leaf tips enter at the left edge. Everything drawn is still a stand-in: shapes, colors and light are not the look yet. Next: Reference board, shot list and render budget, then the first whole-film draft and blockout round 1 with a fresh critic. Time used: 3.1 h of 30 h.
   Pictures: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; Frost, bloom opening, bloom hero, field: approved image left, film frame right.
+- Status 11, 2026-11-21 04:22 UTC, Phase 2 · round 1. Blockout round 1 has started. The machine checks are all green and the pack for the critic is rendering now. Since the last status: the frost world no longer shows the far field as a pale wall, the night plant holds its leaves up, the reference board (15 parts, 90 photographs, 4 motion studies) and the shot list are written, and the ten judged frames are listed. The first sheet shows the film from 0 to 19 s: the sprout breaks the soil, straightens, opens its seed leaves, and the cut to rain lands with the plant in the same place. Everything drawn is still a stand-in. Next: A fresh critic judges the camera move, the framing at each key, the pace of growth and the cuts. Then the fix pass and the first whole-film draft. Time used: 3.5 h of 30 h.
+  Pictures: The film from 0 to 19 s, twelve frames in order; Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; Frost, bloom opening, bloom hero, field: approved image left, film frame right.
 
