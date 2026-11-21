@@ -35,14 +35,15 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float up = saturate(F.y);
   float bank = valueNoise(at * (1.0 / 0.006));
   float fine = valueNoise(at * (1.0 / 0.0013) + 17.0);
-  float grown = saturate((0.06 + 0.5 * up * up) * (0.3 + 1.4 * bank * bank) * (0.2 + 0.8 * sheen) + gather * sqrt(gather));
+  // Hoar grows on what is open to the sky: a face turned to the side holds it only at its very edge.
+  float grown = saturate((0.01 + 0.55 * up * up) * (0.3 + 1.4 * bank * bank) * (0.2 + 0.8 * sheen) + pow(gather, 4.0 - 2.5 * up));
   float veil = 0.02 + 0.2 * grown * fine + 0.65 * grown * grown;
 
   vec2 g = at * (1.0 / FROST_GRAIN_M);
   // A grain finer than the pixel is its share of the pixel: it never flickers.
   float reach = length(fwidth(g));
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
-  float chance = 0.04 + 0.9 * grown;
+  float chance = 0.94 * grown;
   float most = 0.17 + 0.18 * grown;
   vec2 dust = frostGrain(g, reach, chance, 0.08, most, N, view);
   float mean = chance * 3.1416 * (0.08 * 0.08 + 0.08 * most + most * most) / 3.0;
