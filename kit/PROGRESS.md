@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
-- Last status: 19 · 2026-11-21 07:38 UTC · Phase 3
+- Last push: 2026-11-21 08:06 UTC · Status 20: first merge of the real head (bud, rays, disc, skin, hairs, lens)
+- Last status: 20 · 2026-11-21 08:04 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 08:04 UTC · status 20 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45 s), first merge of the real head; `status-2.jpg`: Frame 1515 (50.5 s), first merge of the real head; `status-3.jpg`: Frame 1350, the head at full size; `status-4.jpg`: Frame 1515, the head at full size
 - 2026-11-21 07:38 UTC · status 19 · Phase 3 · `status-1.jpg`: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); `status-2.jpg`: Frame 1515, the same: the open head is sharp; `status-3.jpg`: Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second
 - 2026-11-21 07:17 UTC · status 18 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin; `status-2.jpg`: Frame 1515 today, the stand-in open head; `status-3.jpg`: Approved image for 1350; `status-4.jpg`: Approved image for 1515
 - 2026-11-21 06:54 UTC · status 17 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 04:22 UTC · status 11 · Phase 2 · round 1 · `status-1.jpg`: The film from 0 to 19 s, twelve frames in order; `status-2.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-3.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:55 UTC · status 10 · Phase 2 · `status-1.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-2.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
-- 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 0.73 h |
+| 3 | 9.00 h | 1.17 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.78 h |
+| Whole build | 30.00 h | 7.22 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -344,6 +344,9 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · Wind on whole plants. The stem of the plant and of the companion leans with the slowest swell of the wind alone (`sway` in `src/plant/wind.ts`, one wave about 4.4 s long at a fixed place), a steady 0.03 rad downwind and 0.05 rad of swing round it at full wind, in the same upper part of the stem that leans to the sun. The faster parts of the gust are left to the leaves and petals: a stem carrying a head is too heavy for them, and they would smear the head by 3 px in a close-up. At golden hour (wind 0.5) the head moves about 1.6 cm either way, under 1 px of motion blur in the master format. The stem is as long as it takes to stand its height in still air, so the wind bends it and never stretches it. The neighbors are one shape drawn many times, so their stems are not bent on the CPU: `plantWorld` in `src/plant/part.ts` carries every vertex of a neighbor sideways by the same bend, from the swell that reaches that neighbor's own place, so a wave crosses the field. The wind is 0 on every cut, as before. `tests/wind.test.ts` holds these rules.
 - 2026-11-21 · Phase 3 · The shadow map follows the lens in a close-up. Until now it always covered the whole plant (and the companion in the golden world), 3.3 m of ground on 2048 texels, 1.6 mm a texel, which is coarser than a bract's edge in the master format at 0.7 m. The square is now sized to what the lens sees at the depth it focuses on (`seen` in `Film.draw`: 1.25 times the half diagonal there, plus 2 cm) and centered on the lens axis at that depth; it goes back to the whole plant as soon as that square would be three quarters of the whole plant, and always once the lens is 1.8 m away, so `dawn`, `rain` and the pull-back keep the map they had. The near and far planes still span every caster (`reach` in `ShadowMap.render`), so a leaf outside the square still shades what is inside it. At frame 1350 the map is 1.03 m wide, 0.5 mm a texel, about three times finer. Checked by rendering frames 45, 420, 780, 1080, 1199, 1350, 1515 and 1755: no picture changed but the bloom close-ups, where the shadow edges on the bud are finer.
 - 2026-11-21 · Phase 3 · The companion is drawn only when the lens can see it. `companionInView` in `src/director/companion.ts` tests a set of balls round its stem, head and leaves against the frame, generously (each ball is larger than the part it holds, plus 1.2 cm), and the film skips the companion's build, its draw and its shadow in a frame where it says no and the lens is within 1.0 m; farther back it is always drawn. It is left out of frames 0 to 612, 695 to 712 and 1017 to 1100, and never in `bloom` or `field`. Two checks that this changes no pixel. `tests/companion.test.ts` projects every vertex of the companion on every third frame of the film and fails if a frame that shows any vertex is one where it would be left out. And frames 45, 195, 300, 420, 560, 605, 700, 1040 and 1080 were rendered in the master format with the companion left out and with it forced in: all nine pairs are the same to the last bit, so its shadow reaches nothing the lens sees in those frames. For that to hold, the depth the shadow map spans is the same whether the companion is drawn or not (a first try let it shrink, and 1 to 16 values out of 6.2 million moved on four of the nine frames, at single points on a shadow edge). The companion's matrix is now one function, `companionMatrix()`, with a lean (`COMPANION_LEAN`, a slope, zero for now) that keeps its top at the height the config gives.
+- 2026-11-21 · Phase 3 · First merges of the look lock, 07:53 to 08:01 UTC, each branch looked through before it went in (only its own folder touched, no clock or random calls, type check, build, 83 tests): the bud, the rays, the tissue shading, the lens and the grade, the hairs, the disc florets. Costs the agents measured on a master draft still of frame 1515: bud 3.5 to 4.6 s (its 40,000 hairs, before the new hairs), rays 3.3 to 3.6 s, disc 3.5 to 3.8 s, skin and lens no change, hairs 110,000 on each plant for the price of 6,000 before. The merged frames 1350 and 1515 render at the review tier in 31 s each in the master format.
+- 2026-11-21 · Phase 3 · The head keeps its facing and the camera its place at the bloom-opening key. The bud agent read the approved image as a side view and asked for the head to be turned 70° from the lens; the round 2 critic read it as 30 to 35°. Measured again on the approved image at full size: the head is seen three quarter from the front, we look into the face, the shut rays lie over it and a green center shows between their tips. That is what 39.9° left of the lens gives, so nothing moves.
+- 2026-11-21 · Phase 3 · Growth facts changed for the real head, from what the approved bloom-opening image shows and what the bud and ray agents asked for. A bract keeps its length for good and is up to 7 cm long (it shrank by 30% while the head opened and stopped at 4.6 cm, both set on the stand-in's outline in round 1; the approved bracts stand 5 to 6 cm past the rim). Nothing changes at the frost key, where the bud is small. A ray grows folded inside the bud to 0.72 of its length between 42 s and 43.7 s and stretches the rest of the way as it opens, so a shut ray ends about a third of the radius from the middle of the face and a half open ray is a long blade and not a short claw. Rays open in a tighter sector: a ray starts between 43.0 s and 47.5 s (was 43.35 to 47.3) and takes 2 s (was 2.8), with half the random spread, so at 45 s about eight rays on the sun side are open, six are part open and the rest are shut, which is what the approved image shows. All rays are open by 49.5 s. `RAY_FIRST` is exported for the disc, whose ring leads on the same side.
 
 ## Notes from Brandon
 
@@ -391,13 +394,13 @@ Ten agents of the look lock, all started 2026-11-21 07:16 UTC as sandbox agents 
 | --- | --- | --- | --- | --- |
 | `stem_builder` | `src/plant/stem/`, `public/assets/plant/stem/`, `assets-src/plant/stem/` | `agent/stem` | The ribbed, flecked, hairy stem with node swellings, the neck and the foot; marks ride material coordinates | none yet |
 | `leaf_builder` | `src/plant/leaves/`, assets `plant/leaves` | `agent/leaves` | 24 real leaves with stalks, toothed outlines, vein relief, light through them, damage, hairs, their own wind | none yet |
-| `bud_builder` | `src/plant/head/bud/`, assets `plant/bud` | `agent/bud` | The receptacle (back, side, the floor of `floorAt`), 40 to 60 pointed bracts in series, the neck joint, their hairs | none yet |
-| `disc_builder` | `src/plant/head/disc/`, assets `plant/disc` | `agent/disc` | 1500 florets by the spiral rule on the floor, three states, opening from the rim inward | none yet |
-| `petal_builder` | `src/plant/head/petals/`, assets `plant/petals` | `agent/petals` | 34 rays in two ranks: pleated, veined, unfurling from folded to open, glowing with the light through them | none yet |
-| `hair_builder` | `src/plant/hairs/` | `agent/hairs` | The strands themselves behind a frozen interface: forward scatter, cover under a pixel, cost | none yet |
-| `skin_builder` | `src/plant/surface/` | `agent/surface` | The inside of `shadeTissue`: matte face under wax, light through, sky from both sides, sheen, wet and frost | none yet |
+| `bud_builder` | `src/plant/head/bud/`, assets `plant/bud` | `agent/bud` | The receptacle (back, side, the floor of `floorAt`), 40 to 60 pointed bracts in series, the neck joint, their hairs | reported 07:50 UTC at `6051e72`, merged at `710f357`; second pass asked 08:03, due 08:56 |
+| `disc_builder` | `src/plant/head/disc/`, assets `plant/disc` | `agent/disc` | 1500 florets by the spiral rule on the floor, three states, opening from the rim inward | reported 07:59 UTC at `e09b40a`, merged; second pass asked 08:03, due 08:56 |
+| `petal_builder` | `src/plant/head/petals/`, assets `plant/petals` | `agent/petals` | 34 rays in two ranks: pleated, veined, unfurling from folded to open, glowing with the light through them | reported 07:53 UTC at `d8ae427`, merged at `5820b53`; second pass asked 08:03, due 08:56 |
+| `hair_builder` | `src/plant/hairs/` | `agent/hairs` | The strands themselves behind a frozen interface: forward scatter, cover under a pixel, cost | reported 07:58 UTC at `76a04a1`, merged at `80bb334`; second pass (wet, frost and dew states, color) asked 08:03, due 08:56 |
+| `skin_builder` | `src/plant/surface/` | `agent/surface` | The inside of `shadeTissue`: matte face under wax, light through, sky from both sides, sheen, wet and frost | reported 07:55 UTC at `8205d2e`, merged at `19b535d`; second pass (bounce between petals, lit outline of hairy parts) asked 08:03, due 08:56 |
 | `golden_builder` | `src/worlds/golden/`, new files in `src/weather/`, assets `worlds/golden` | `agent/golden` | The stage of the golden world: sky dome, the sun's true brightness, far layers, haze, pollen, its settings | none yet |
-| `lens_builder` | `src/post/` | `agent/post` | Out of focus fill, glow and flare, the film tone curve, vignette, grain, dither | none yet |
+| `lens_builder` | `src/post/` | `agent/post` | Out of focus fill, glow and flare, the film tone curve, vignette, grain, dither | reported 07:56 UTC at `cff387d`, merged at `2fb7c51` (with its one change to `src/director/film.ts`); waits for the golden world's sun before a second pass |
 | `field_builder` | `src/field/`, assets `plant/field` | `agent/field` | Variants so no neighbor is a copy, the far field as pictures and carpet, the heads behind the hero | none yet |
 
 Finished in this task:
@@ -488,6 +491,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
 - 2026-11-21 07:17 UTC · Phase 3: ten look lock agents started and logged, status 18
 - 2026-11-21 07:38 UTC · Phase 3: status 19, focus and wind
+- 2026-11-21 08:06 UTC · Status 20: first merge of the real head (bud, rays, disc, skin, hairs, lens)
 
 ## Session log
 
@@ -536,4 +540,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Frame 1350 today, the stand-in bud lit by the shared skin; Frame 1515 today, the stand-in open head; Approved image for 1350; Approved image for 1515.
 - Status 19, 2026-11-21 07:38 UTC, Phase 3. The lens now holds the surface of the bud that faces it, not a point inside it, so the face of the bud is sharp at both bloom key frames and the focus measure is green there. The wind now sways the plant, the companion and every one of the 12,687 neighbors, each with the swell that reaches its own place, so a wave crosses the field. Shapes and colors are still the stand-in: ten supporting agents are building the real stem, leaves, bud, disc, petals, hairs, skin, golden world, lens and field. Next: A finer shadow map for close-ups and the companion's leaves across the sun at the left edge, then the agents' work is merged as it arrives (due by 08:56 UTC) and the first critic round on bloom starts. Time used: 6.8 h of 30 h.
   Pictures: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); Frame 1515, the same: the open head is sharp; Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second.
+- Status 20, 2026-11-21 08:04 UTC, Phase 3 · unit bloom. Six of the ten agents have reported and their work is merged. The head now has a real receptacle with pointed bracts, 1,500 disc florets on the exact spiral, 34 veined rays that unfurl, real tissue shading, hairs, and a new lens and grade. Rays now grow folded in the bud and stretch as they open, in a tighter sector. Known in these frames: the bracts are too long (a correction applied twice, being fixed), the shut rays do not yet cover the face at 45 s, and the stem, leaves, field and sky are still stand-ins, so the picture is far brighter than the approved one. Next: Each of the six has a second pass against the approved images, due 08:56 UTC. The stem, leaves, golden world and field are due by then too. Then the grade and the camera are fitted and the first critic round on bloom starts. Time used: 7.2 h of 30 h.
+  Pictures: Frame 1350 (45 s), first merge of the real head; Frame 1515 (50.5 s), first merge of the real head; Frame 1350, the head at full size; Frame 1515, the head at full size.
 
