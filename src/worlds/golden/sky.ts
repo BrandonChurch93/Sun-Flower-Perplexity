@@ -11,6 +11,7 @@ uniform vec4 uProj;
 uniform sampler2D tSky;
 uniform sampler2D tLate;
 uniform float uLate;
+uniform float uSmall;
 uniform float uTexelAngle;
 uniform float uPixelAngle;
 uniform vec3 uGlow;
@@ -94,12 +95,12 @@ void main() {
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
   color = mix(color, mix(vec3(0.08, 0.125, 0.14), vec3(0.42, 0.33, 0.25), exp(-theta / 0.5)), uHigh * (1.0 - 0.7 * uLate) * (0.25 + 0.6 * exp(-theta / 0.5)) * exp(-max(el, 0.0) / 0.5));
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * ((0.5 - 0.37 * uHigh) * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * ((0.45 - 0.37 * uHigh) * exp(-theta / 0.2)) * mix(1.0, 0.66 + 0.78 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) * mix(1.0, 0.08, uSmall) + uGlow * vec3(1.0, 0.8, 0.6) * ((0.5 - 0.37 * uHigh) * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * ((0.45 - 0.37 * uHigh) * exp(-theta / 0.2)) * mix(1.0, 0.66 + 0.78 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
   color += uGlow * vec3(1.0, 0.74, 0.56) * ((0.39 - 0.37 * uPale) * (1.0 - 0.9 * uHigh) * exp(-theta * theta / 0.115) * smoothstep(0.06, 0.13, el));
   color += vec3(0.098, 0.17, 0.2) * (1.0 - 0.7 * uLate) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el) + vec3(0.0, 0.024, 0.036) * smoothstep(0.25, 0.6, theta) * smoothstep(0.06, 0.12, el);
   color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), max(0.7 * uPale, min(0.9, exp(-theta / 0.1) + uPale + 0.4 * smoothstep(0.4, 0.75, theta)) * exp(-max(el, 0.0) / 0.07)) * (1.0 - 0.6 * uLate) * smoothstep(0.015, 0.06, theta));
   float edge = 0.75 * uPixelAngle;
-  color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
+  color += uDisc * mix(1.0, 0.2, uSmall) * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 
   float grey = dot(color, vec3(0.3, 0.6, 0.1));
   if (uDiag == 7) color = vec3(grey);
@@ -128,6 +129,15 @@ export function lateEvening(time: number): number {
   return t * t * (3 - 2 * t)
 }
 
+// Out in the open evening the sun is a small hot point on the ridge: its close glow and the disc's spill ease down from 52 s.
+const SMALL_FROM_S = 52
+const SMALL_TO_S = 55
+
+export function smallSun(time: number): number {
+  const t = Math.min(1, Math.max(0, (time - SMALL_FROM_S) / (SMALL_TO_S - SMALL_FROM_S)))
+  return t * t * (3 - 2 * t)
+}
+
 export function eveningHaze(time: number): number {
   const t = Math.min(1, Math.max(0, (time - THICK_FROM_S) / (THICK_TO_S - THICK_FROM_S)))
   return t * t * (3 - 2 * t)
@@ -144,6 +154,7 @@ export class GoldenSky {
       tSky: { value: null },
       tLate: { value: null },
       uLate: { value: 0 },
+      uSmall: { value: 0 },
       uTexelAngle: { value: 0.001 },
       uPixelAngle: { value: 0.001 },
       uGlow: { value: new THREE.Vector3().fromArray(def.sky.glow) },
@@ -173,6 +184,7 @@ export class GoldenSky {
     u.uGain.value = gain
     u.uHigh.value = eveningHaze(time)
     u.uLate.value = lateEvening(time)
+    u.uSmall.value = smallSun(time)
   }
 
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, width: number): void {
