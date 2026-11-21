@@ -82,7 +82,7 @@ void main() {
   float rise = smoothstep(0.2, 1.05, phase) * (1.0 - under);
   float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 2.0) * (1.0 - under);
   // Buds of uneven girth while they are shut.
-  float girth = mix(0.74 + 0.5 * h2, 1.0, open);
+  float girth = mix(0.62 + 0.72 * h2, 1.0, open);
 
   float tilt = aSeed.w * 6.2832;
   vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.17 + 0.28 * open) * aSeed.x);
@@ -198,7 +198,7 @@ void main() {
     state = over;
   }
 
-  occ *= mix(1.0, 0.7 + 0.2 * (1.0 - rho), uCover) * (1.0 - 0.5 * under);
+  occ *= mix(1.0, 0.5 + 0.2 * (1.0 - rho), uCover) * (1.0 - 0.5 * under);
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -243,7 +243,7 @@ void main() {
   float tone = vKind.z * (1.0 + 0.25 * vMore.w);
   float centre = 1.0 - smoothstep(0.3, 0.8, rho);
   // While the disc is young its middle is the darkest part.
-  float deep = smoothstep(0.1, 0.9, rho);
+  float deep = smoothstep(0.3, 0.95, rho);
 
   Tissue t;
   t.through = vec3(0.0);
@@ -261,8 +261,8 @@ void main() {
     dark = mix(dark, ochre * 0.3, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
-    vec3 young = mix(vec3(0.19, 0.33, 0.065), vec3(0.52, 0.72, 0.18), ridge);
-    young = mix(young, vec3(0.78, 0.84, 0.22), smoothstep(0.75, 1.0, along) * (0.15 + 0.6 * vKind.w));
+    vec3 young = mix(vec3(0.12, 0.22, 0.045), vec3(0.36, 0.52, 0.12), ridge);
+    young = mix(young, vec3(0.6, 0.68, 0.18), smoothstep(0.75, 1.0, along) * (0.1 + 0.45 * vKind.w));
     closed = mix(young * mix(0.32, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.1, 0.032, 0.005), vec3(0.19, 0.062, 0.008), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
@@ -298,7 +298,7 @@ void main() {
     t.wax = 0.0;
     t.sheen = 0.25;
   } else {
-    vec3 young = mix(vec3(0.22, 0.37, 0.09), vec3(0.62, 0.74, 0.2), along);
+    vec3 young = mix(vec3(0.16, 0.28, 0.07), vec3(0.5, 0.62, 0.16), along);
     vec3 green = mix(vec3(0.11, 0.06, 0.012), mix(vec3(0.09, 0.09, 0.012), mix(vec3(0.26, 0.16, 0.02), vec3(0.115, 0.24, 0.04), centre), along), open);
     vec3 dry = vec3(0.14, 0.05, 0.01);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
