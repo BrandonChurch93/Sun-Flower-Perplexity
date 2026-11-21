@@ -183,6 +183,9 @@ float soilHeight(vec2 p, float lod) {
 }
 `
 
+// With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
+export const dampFill = [1, 1.12, 1.1]
+const MATT_EASE_S = 3.5
 export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
@@ -199,6 +202,16 @@ float pooled(float heightM, float wet) {
 vec3 dampened(vec3 albedo, float damp) {
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   return mix(albedo, mix(albedo, vec3(luma) * vec3(0.85, 1.1, 1.0), 0.9) * mix(0.3, 0.07, damp * damp * damp * damp), damp);
+}
+// Until the bloom the soil is damp and matt: 1 at first, eased to 0 over the last ${MATT_EASE_S} s before the bloom.
+uniform float uKeptS;
+float soilMatt() {
+  return 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
+}
+// The stem stands in its own shade: the soil round its foot is dark, in a ring that widens as the stem thickens.
+float footShade(vec2 p, float dull) {
+  float reach = mix(0.006, 0.014, smoothstep(2.0, 20.0, uTime));
+  return 1.0 - 0.7 * dull * exp(-dot(p, p) / (reach * reach));
 }
 float sheen(float wet, float dew) {
   return max(wet * wet, 0.35 * dew);
@@ -305,6 +318,7 @@ ${cropLight}
 ${grassCover}
 ${turfCover}
 
+const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
 const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
@@ -399,10 +413,15 @@ void main() {
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
+  lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
+  float dull = soilMatt();
+  float atFoot = footShade(p, dull);
+  open *= atFoot;
+  lit *= atFoot;
   open *= 1.0 - 0.35 * thatch;
   open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
@@ -417,19 +436,19 @@ void main() {
 #ifdef NEAR
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew));
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
   float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade();
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(1.0, 0.3, dull);
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under) * mix(1.0, 0.45, dull);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
   color += sunGlow(vWorld, v, n, uDew) * open * (1.0 - thatch) * (1.0 - 0.8 * under);
 #ifdef NEAR
-  color += (wetGlints(vWorld, v, n, uWet) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
+  color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }
