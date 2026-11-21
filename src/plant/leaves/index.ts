@@ -662,7 +662,7 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
     const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
-    const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
+    const facing = fall > 0 ? faced * (1 - (0.55 + 0.45 * smoothstep(19.5, 22.5, time)) * fall / FALL) : faced
     const lay = (hang: number): number => {
       let x = 0
       let z = 0
