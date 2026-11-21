@@ -243,7 +243,7 @@ void main() {
   float tone = vKind.z * (1.0 + 0.25 * vMore.w);
   float centre = 1.0 - smoothstep(0.3, 0.8, rho);
   // While the disc is young its middle is the darkest part.
-  float deep = smoothstep(0.08, 0.75, rho);
+  float deep = smoothstep(0.1, 0.9, rho);
 
   Tissue t;
   t.through = vec3(0.0);
@@ -262,7 +262,7 @@ void main() {
     vec3 closed = mix(dark, pale, ridge);
     vec3 young = mix(vec3(0.19, 0.33, 0.065), vec3(0.52, 0.72, 0.18), ridge);
     young = mix(young, vec3(0.78, 0.84, 0.22), smoothstep(0.75, 1.0, along) * (0.15 + 0.6 * vKind.w));
-    closed = mix(young * mix(0.42, 1.0, deep), closed, ripe) * tone;
+    closed = mix(young * mix(0.32, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.1, 0.032, 0.005), vec3(0.19, 0.062, 0.008), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
     flower = mix(flower, pollen, 0.25 * smoothstep(0.55, 0.75, grain) * smoothstep(0.5, 1.0, along));
@@ -301,7 +301,7 @@ void main() {
     vec3 green = mix(vec3(0.11, 0.06, 0.012), mix(vec3(0.09, 0.09, 0.012), mix(vec3(0.26, 0.16, 0.02), vec3(0.115, 0.24, 0.04), centre), along), open);
     vec3 dry = vec3(0.14, 0.05, 0.01);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
-    t.albedo = mix(young * mix(0.7, 1.0, deep), grownUp, ripe) * (0.85 + 0.3 * around) * tone;
+    t.albedo = mix(young * mix(0.6, 1.0, deep), grownUp, ripe) * (0.85 + 0.3 * around) * tone;
     t.through = mix(vec3(0.1, 0.16, 0.025), vec3(0.14, 0.09, 0.012), ripe);
     t.sheen = 0.4;
   }
