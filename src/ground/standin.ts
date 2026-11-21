@@ -1,3 +1,4 @@
+import { cropLight } from './light.ts'
 import { hash32, streamSeed } from '../core/random.ts'
 
 export const vertex = /* glsl */ `
@@ -22,6 +23,7 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uCover;
 uniform vec2 uToward;
+${cropLight}
 void main() {
   vec2 uv = vWorld.xz * 2.2;
   vec2 wide = vWorld.xz * 0.31 + vec2(0.37, 0.11);
@@ -37,7 +39,7 @@ void main() {
   float under = uCover * smoothstep(0.9, 1.7, -dot(vWorld.xz, uToward));
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.35, 0.8, near.a) * (1.0 - 0.7 * under));
   float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 1.5);
+  float lit = sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 1.5) * cropLight(vWorld.xz, -dot(vWorld.xz, uToward));
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.85 * under) + skyAmbient(n) * (0.55 + 0.45 * near.a) * (1.0 - 0.8 * under));
   vec3 v = normalize(uCamPos - vWorld);
   vec3 h = normalize(v + uSunDir);

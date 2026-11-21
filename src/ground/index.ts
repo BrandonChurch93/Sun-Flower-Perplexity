@@ -10,8 +10,9 @@ import { litterTileM, ridgeHeightM, soilFragment, soilMeanLuma, soilTileM } from
 import { standInFragment, standInPixels, vertex } from './standin.ts'
 
 const WIDE = 8.3
+const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
 
-const state = (): Record<string, THREE.IUniform> => ({ uWet: { value: 0 }, uFrost: { value: 0 }, uCover: { value: 0 }, uToward: { value: new THREE.Vector2(toward.x, toward.z) } })
+const state = (): Record<string, THREE.IUniform> => ({ uWet: { value: 0 }, uFrost: { value: 0 }, uCover: { value: 0 }, uToward: { value: new THREE.Vector2(toward.x, toward.z) }, uCrop: { value: new THREE.Vector3(config.field.plantAheadOfRowM, 0, 0) } })
 
 export class Ground {
   // The soil under the crop and beyond the stand-in.
@@ -81,6 +82,7 @@ export class Ground {
       u.uWet.value = state.wet
       u.uFrost.value = state.frost
       u.uCover.value = cover
+      u.uCrop.value.set(config.field.plantAheadOfRowM, cover * CROP_HEIGHT_M, cover)
     }
   }
 }
