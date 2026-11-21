@@ -73,7 +73,7 @@ const table: Record<string, Partial<LensLook>> = {
 // From 52.0 s the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to 52.0 s is drawn as before.
 const FIELD_FROM_S = 52
 const FIELD_FULL_S = 54
-const overField = { grain: 2.1, air: 3, spokes: 1 }
+const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
 
 export function lensLook(def: WorldDef, timeS = 0): LensLook {
   const look = { ...fallback, ...(table[def.id] ?? {}) }
