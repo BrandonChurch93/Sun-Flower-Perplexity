@@ -448,7 +448,7 @@ export function create(options: PartOptions): PlantPart {
       const nx = ux * ct - frame.wx * st
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
-      const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
+      const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
       const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
