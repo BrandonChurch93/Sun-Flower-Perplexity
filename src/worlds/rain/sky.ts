@@ -63,7 +63,10 @@ vec3 rainSky(vec3 d, float lod) {
   vec3 color = sky * mix(vec3(1.0), vec3(1.0, 1.08, 1.0), cloud) * uRainSkyGain;
   // The paint holds the lit bellies of those masses back: they stand pale and greyer than the depths, which go darker. Next to the band the mass already holds the band's light and is left as it is, or the cloud's foot would wear a pale rim.
   float body = dot(mass, vec3(0.3, 0.6, 0.1));
-  color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body) * (1.0 - smoothstep(0.09, 0.18, body))));
+  color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(0.55, 0.38, 0.25) * (cloud * smoothstep(0.03, 0.06, body) * (1.0 - smoothstep(0.09, 0.18, body))));
+  // The deck is thinnest a little off the sun's bearing and lets more light through there; away from it the cloud goes to its darkest.
+  float thin = (turn - 0.11) / 0.21;
+  color *= mix(1.0, mix(0.85, 2.0, exp(-thin * thin)), cloud);
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
   float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
