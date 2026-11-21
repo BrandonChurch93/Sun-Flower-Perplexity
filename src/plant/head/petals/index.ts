@@ -24,7 +24,7 @@ const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
 const SHUT_ANGLE = 0.7
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
-const SAG = 0.24
+const SAG = 0.38
 const FOOT_SHUT = 0.014
 const FOOT_OPEN = -0.06
 
@@ -44,6 +44,7 @@ const mix = (a: number, b: number, t: number): number => a + (b - a) * t
 interface Ray {
   rank: number
   short: number
+  nod: number
   width: number
   droop: number
   tipCurl: number
@@ -97,7 +98,8 @@ function makeRays(seed: number): Ray[] {
     return {
       rank,
       short: r(37, k) < 0.16 ? 0.8 + 0.08 * r(38, k) : 1,
-      width: 0.35 + 0.05 * r(1, k),
+      nod: r(39, k) < 0.22 ? 0.5 + 0.6 * r(46, k) : 0,
+      width: 0.36 + 0.07 * r(1, k),
       droop: rank ? 0.15 + 0.7 * r(2, k) : 0.7 * r(2, k) * r(2, k),
       tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.6 ? 1.8 : 0),
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
@@ -233,14 +235,14 @@ export function create(options: PartOptions): PlantPart | null {
     const oy = h.py * ca + h.qy * sa
     const oz = h.pz * ca + h.qz * sa
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 - 0.1 - 0.03 * (1 - open)) * full
+    const back = (ray.rank * 0.025 - 0.125 - 0.03 * (1 - open)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
     const rise = Math.PI / 2 - rayAngle(k, time)
     // A ray that has just opened still stands forward of the face, and settles back over the next second.
     const settled = rayOpen(k, time - 1.2)
-    const young = 0.5 * (1 - settled)
+    const young = 0.7 * (1 - settled)
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
@@ -266,7 +268,7 @@ export function create(options: PartOptions): PlantPart | null {
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
       const shut = mix(1.8 + 0.2 * ray.arch + 0.12 * ray.rank, 3.02, smooth(0, 0.8, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
-      const openPitch = ray.lay + young * (1 - 0.5 * e) - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
+      const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * Math.pow(e, 1.6) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)

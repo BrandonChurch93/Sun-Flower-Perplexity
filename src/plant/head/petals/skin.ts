@@ -69,24 +69,24 @@ void main() {
   float across = vUv.y * 2.0 - 1.0;
   float fresh = vState.x;
   float unfolded = vState.y;
-  float foot = 1.0 - smoothstep(0.0, 0.3, u);
+  float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
   vec3 body = mix(vec3(0.72, 0.39, 0.02), vec3(0.81, 0.53, 0.05), smoothstep(0.15, 0.9, u));
   // A ray just out of the bud is still green yellow.
-  body = mix(body, vec3(0.30, 0.40, 0.085), 0.95 * fresh);
+  body = mix(body, vec3(0.40, 0.42, 0.12), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
-  body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0);
+  body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
   // The thin edges and the far end let the most light through, and it comes out pale.
-  float pale = max(smoothstep(0.55, 1.0, abs(across)), 0.5 * smoothstep(0.5, 1.0, u));
-  body = mix(body, vec3(0.86, 0.62, 0.16), 0.35 * pale * (1.0 - fresh));
+  float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u));
+  body = mix(body, vec3(0.96, 0.78, 0.34), 0.6 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.52, 0.27, 0.02), 0.7 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.9, 0.40, 0.03), vec3(1.0, 0.56, 0.06), smoothstep(0.0, 0.8, u));
+  vec3 through = mix(vec3(0.62, 0.25, 0.02), vec3(1.0, 0.56, 0.06), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(1.0, 0.72, 0.28), 0.6 * pale);
-  through = mix(through, vec3(0.58, 0.64, 0.10), 0.9 * fresh);
+  through = mix(through * 0.85, vec3(1.5, 1.1, 0.52), 0.8 * pale);
+  through = mix(through, vec3(0.66, 0.66, 0.14), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
@@ -136,8 +136,8 @@ void main() {
   // The valley between the two folds and the hollow under each rolled edge see less sky than the ridges.
   float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
-  t.albedo *= mix(vec3(1.0), vec3(0.86, 0.72, 0.6), 0.6 * valley * creased);
-  t.occlusion = mix(0.45, 1.0, smoothstep(0.0, 0.25, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
+  t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
+  t.occlusion = mix(0.4, 1.0, smoothstep(0.0, 0.5, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
