@@ -74,6 +74,8 @@ const pathZ = new Float64Array(PATH + 1)
 const pathA = new Float64Array(PATH + 1)
 const at = { x: 0, z: 0, a: 0 }
 
+const ramp = (d: number): number => 0.5 * (d + Math.sqrt(d * d + 0.00015))
+
 function sample(share: number): void {
   const f = clamp(share) * PATH
   const k = Math.min(PATH - 1, Math.floor(f))
@@ -141,6 +143,17 @@ export function create(options: PartOptions): PlantPart {
     const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const folds = main ? 2.2 : 1
+    // A grown blade is creased along a few lines, mostly where a side vein runs, and each crease turns a facet of it out of the light.
+    const creases: number[] = []
+    if (main && hero) {
+      for (let side = 0; side < 2; side++) {
+        for (let k = 0; k < 2; k++) {
+          const c = 44 + side * 12 + k * 5
+          creases.push(side, 0.12 + 0.3 * k + 0.25 * r(c), 0.2 + 0.6 * r(c + 1), 0.1 + 0.16 * r(c + 2), (r(c + 3) < 0.5 ? -1 : 1) * (0.35 + 0.4 * r(c + 4)))
+        }
+      }
+    }
+    const pleat = main && hero ? [0.3 + 0.3 * r(68), (r(69) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(70)), 0.3 + 0.3 * r(71), (r(72) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(73))] : null
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf || withered
@@ -171,7 +184,7 @@ export function create(options: PartOptions): PlantPart {
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
-      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
+      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.2 + 0.4 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
@@ -202,6 +215,13 @@ export function create(options: PartOptions): PlantPart {
         z -= rolled * ae * ae * ae
         z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
+        const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
+        for (let c = 0; c < creases.length; c += 5) {
+          if (creases[c] !== side) continue
+          const d = s - creases[c + 1] - creases[c + 2] * ae * wide
+          z += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
+        }
+        if (pleat) z += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
         if (onStalk) {
           x = w * 0.012
           y = 0
