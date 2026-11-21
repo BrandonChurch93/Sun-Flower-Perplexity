@@ -6,7 +6,7 @@ import { skyMirror } from './water.ts'
 export const SPLASH_LIFE_S = 0.5
 const AROUND = 112
 const UP = [0, 0.4, 0.7, 0.88, 0.96, 1]
-const BEADS = 10
+const BEADS = 16
 const GRIT = 6
 // On water a column stands up from the middle after the cup has fallen, until this many cup lives after the landing.
 const JET_ENDS = 2.7
@@ -40,7 +40,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
     vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
     return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.4, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float tall = wide * mix(0.7, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.0);
@@ -145,14 +145,15 @@ void main() {
     float facing = max(dot(n, v), 0.0);
     if (vKind > 0.5) {
       float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
-      float lens = 0.6 * smoothstep(0.3, 0.9, facing);
-      alpha = saturate(mirror + lens + 0.06);
-      color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
+      vec3 inside = refract(-v, n, 0.75);
+      vec3 leaves = refract(inside, 2.0 * dot(n, inside) * inside - n, 1.333);
+      alpha = saturate(mirror + 0.92);
+      color = mix(seen(leaves), seen(reflect(-v, n)), mirror);
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute));
       float one = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
-      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.7 * vMud);
+      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.35 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.75 * vTop, 1.0, vMud);
       vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.35 + 0.65 * lip), mix(vec3(0.022, 0.019, 0.016), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
