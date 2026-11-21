@@ -63,11 +63,11 @@ vec3 star(vec2 px) {
   float a = atan(d.y, d.x) * (14.0 / 6.2831853) + 0.31;
   float k = floor(a + 0.5);
   float blade = mod(k + 14.0, 7.0);
-  float len = uStarLen * (0.4 + 0.6 * hash31(vec3(blade, 5.0, 2.0)));
+  float len = uStarLen * (0.45 + 0.55 * hash31(vec3(blade, 5.0, 2.0))) * (0.82 + 0.18 * hash31(vec3(k, 3.0, 7.0)));
   float across = abs(a - k) * (6.2831853 / 14.0) * r;
   float w = 0.75 * uSize.y / 1080.0 + 0.006 * r;
   float t = saturate(1.0 - r / len);
-  float along = t * t / (1.0 + r / (0.18 * uStarLen));
+  float along = t * sqrt(t) / (1.0 + r / (0.3 * uStarLen));
   return texture(tHot, uSunAt).rgb * (exp(-across * across / (w * w)) * along * uStar);
 }
 vec3 three(vec3 p) {

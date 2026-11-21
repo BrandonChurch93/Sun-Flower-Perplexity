@@ -29,7 +29,7 @@ const table: Record<string, Partial<LensLook>> = {
   rain: { flare: 0, halation: 0.2 },
   night: { flare: 0.35, halation: 0.2 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 1.3, flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.08, punch: 0.23, pale: 0.085, greens: 0.45 },
+  golden: { veil: 1.3, flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.2, punch: 0.23, pale: 0.05, greens: 0.45 },
 }
 
 export function lensLook(def: WorldDef): LensLook {
