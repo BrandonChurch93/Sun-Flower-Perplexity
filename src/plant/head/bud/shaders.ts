@@ -105,7 +105,7 @@ void main() {
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
-    albedo *= mix(1.0, 1.7 + 0.9 * smoothstep(0.5, 0.95, ax), uBudShut);
+    albedo *= mix(vec3(1.0), mix(vec3(1.2, 1.8, 1.0), vec3(2.6), smoothstep(0.5, 0.95, ax)), uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
@@ -125,6 +125,8 @@ void main() {
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
+    // Shut, the lower half of a bract lies under the points of the row below it.
+    t.occlusion *= mix(1.0, mix(0.4, 1.0, smoothstep(0.1, 0.62, u)), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;

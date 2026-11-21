@@ -288,10 +288,12 @@ export function create(options: PartOptions): PlantPart | null {
         const left = i % 2 === 0
         hairBase[n] = bodyCount + b * perBract
         hairWidth[n] = shape.nv
-        hairAt[n * 2] = (0.12 + 0.88 * Math.pow(rnd(2023 + b, i), 0.6)) * (shape.nu - 1)
+        // One in five sits on the point itself, the rest thicken toward it: the foot of a margin is tucked under the next bract.
+        const u = rnd(2223 + b, i) < 0.2 ? 0.9 + 0.1 * rnd(2023 + b, i) : 0.3 + 0.7 * Math.pow(rnd(2023 + b, i), 0.7)
+        hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = 0.0009 + 0.0009 * rnd(2123 + b, i)
+        hairLong[n] = lerp(0.001, 0.0022, u * u) * (0.75 + 0.5 * rnd(2123 + b, i))
       }
     }
   }
