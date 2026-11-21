@@ -44,12 +44,15 @@ uniform float uRim;
 uniform float uFogShare;
 uniform float uCrown;
 uniform float uFloor;
+uniform float uTwigs;
+uniform float uClumps;
 ${air}
 ${skylineCanopy}
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor);
+  top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor) * (1.0 - uTwigs * (1.0 - max(skylineCrown(vInfo.x, 0.29 * uCrown, uLayer + 7.0), skylineCrown(vInfo.x + 0.1 * uCrown, 0.17 * uCrown, uLayer + 9.0))));
+  top *= 1.0 - uClumps * (1.0 - max(skylineCrown(vInfo.x + 0.4 * uCrown, 2.7 * uCrown, uLayer + 11.0), skylineCrown(vInfo.x + 1.5 * uCrown, 2.1 * uCrown, uLayer + 13.0)));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 3.3 / uCrown, vInfo.y * 4.5 / uCrown + uLayer));
 #else
@@ -98,6 +101,17 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.03, 0.045, 0.04], rim: 0.06, fogShare: 0.3 },
   { base: [0.03, 0.04, 0.035], rim: 0.04, fogShare: 0.3 },
 ]
+
+// Under the night's low lens the two level banks at the field's edge are overgrown: their tops are a hedge's crowns, never higher than the bank the other worlds draw.
+const HEDGE_CROWN_M = 2.4
+const HEDGE_FLOOR = 0.66
+// The far ridges are wooded: their line is the tops of woods this wide, never higher than the bare ridge the other worlds draw.
+const WOOD_CROWN_M = 45
+const WOOD_FLOOR = 0.8
+// The near rows' crowns end in smaller crowns of their own, which take off at most this share of the height.
+const TWIGS = 0.14
+// And the row stands in clumps a few crowns wide, which take off at most this share between them.
+const CLUMPS = 0.3
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
@@ -153,11 +167,13 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
   SKYLINE.forEach((layer, i) => {
     const geometry = rings[i].geometry
     const tone = TONES[i]
+    const hedge = !layer.trees && layer.rowM !== undefined
+    const wooded = !layer.trees && layer.rowM === undefined
     const surface = makeSurface({
       name: `night ${layer.name}`,
       vertex,
-      fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      fragment: `#define TREES 1\n${stripFragment}`,
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: hedge ? HEDGE_CROWN_M : wooded ? WOOD_CROWN_M : layer.crownM }, uFloor: { value: hedge ? HEDGE_FLOOR : wooded ? WOOD_FLOOR : layer.floor }, uTwigs: { value: layer.rowM ? TWIGS : 0 }, uClumps: { value: layer.rowM ? CLUMPS : 0 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })

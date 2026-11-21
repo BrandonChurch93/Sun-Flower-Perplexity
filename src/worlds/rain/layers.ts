@@ -8,8 +8,15 @@ in vec3 aInfo;
 out vec3 vWorld;
 out vec3 vInfo;
 out float vDepth;
+uniform float uSunDeg;
+uniform float uLow;
 void main() {
-  vec4 world = modelMatrix * vec4(position, 1.0);
+  vec3 at = position;
+  // Seen through the rain from the soil the near rows stand low: under two thirds of their height across the middle of the view, taller than themselves where the wood climbs at its far left, and a little more where the dawn has them nearly flat. uLow is 0 at both cuts, so the land never jumps at one.
+  float off = mod(degrees(atan(position.x, position.z)) - uSunDeg + 540.0, 360.0) - 180.0;
+  float tall = mix(1.62, 0.62, smoothstep(-15.0, -21.5, off)) + 0.9 * smoothstep(-30.0, -40.0, off) * (1.0 - smoothstep(-66.0, -76.0, off));
+  if (uLow > 0.0 && at.y > 0.0) at.y *= mix(1.0, tall, uLow);
+  vec4 world = modelMatrix * vec4(at, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vInfo = aInfo;
@@ -22,10 +29,11 @@ void main() {
 const air = /* glsl */ `
 uniform vec3 uAirTone;
 uniform float uAir;
+uniform float uAirShare;
 uniform float uFlash;
 vec3 aerial(vec3 color, vec3 world) {
   float d = length(world - uCamPos);
-  return mix(color, uAirTone * (1.0 + 0.6 * uFlash), 1.0 - exp(-d * uAir));
+  return mix(color, uAirTone * (1.0 + 0.6 * uFlash), 1.0 - exp(-d * uAir * uAirShare));
 }
 `
 
@@ -37,20 +45,31 @@ uniform vec3 uBase;
 uniform float uLayer;
 uniform float uCrown;
 uniform float uFloor;
+uniform float uTwigs;
+uniform float uClumps;
+uniform float uWoods;
+uniform float uSunDeg;
+uniform float uHaze;
 ${air}
 ${skylineCanopy}
+const float WOODS_M = 45.0;
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor);
+  top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor) * (1.0 - uTwigs * (1.0 - max(skylineCrown(vInfo.x, 0.29 * uCrown, uLayer + 7.0), skylineCrown(vInfo.x + 0.1 * uCrown, 0.17 * uCrown, uLayer + 9.0)))) * (1.0 - uClumps * (1.0 - max(skylineCrown(vInfo.x + 0.4 * uCrown, 2.7 * uCrown, uLayer + 11.0), skylineCrown(vInfo.x + 1.5 * uCrown, 2.1 * uCrown, uLayer + 13.0))));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 3.3 / uCrown, vInfo.y * 4.5 / uCrown + uLayer));
 #else
+  top *= skylineCanopy(vInfo.x, WOODS_M, uLayer, uWoods);
+  if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.012, vInfo.y * 0.03 + uLayer));
 #endif
   float f = saturate(vInfo.y / max(top, 1.0));
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.6, 0.0)) * (0.5 + 0.5 * f);
-  outColor = finish(aerial(color, vWorld), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
+  // Toward the bright band the rain in front of the far land is lit, and the land goes grey in it.
+  float off = mod(degrees(atan(vWorld.x, vWorld.z)) - uSunDeg + 540.0, 360.0) - 180.0;
+  color = mix(aerial(color, vWorld), uAirTone * 1.45, uHaze * 0.85 * smoothstep(-18.0, -30.0, off));
+  outColor = finish(color, uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -107,21 +126,38 @@ const TONES: [number, number, number][] = [
 // Far sheets stand in front of dark land and under the bright band, so they read paler than the spray at the plant's foot.
 const VEILS = [
   { radiusM: 1.6, heightM: 0.5, scaleM: 0.035, share: 0.05, light: 1 },
-  { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.06, light: 1 },
-  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.09, light: 1 },
-  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.08, light: 1.3 },
-  { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.2, light: 2.2 },
-  { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.7, light: 3.6 },
+  { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.1, light: 1.4 },
+  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.3, light: 2.2 },
+  { radiusM: 12, heightM: 2, scaleM: 0.1, share: 0.45, light: 3.0 },
+  { radiusM: 24, heightM: 4, scaleM: 0.15, share: 0.45, light: 3.2 },
+  { radiusM: 48, heightM: 8, scaleM: 0.25, share: 0.6, light: 3.6 },
   { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.3, light: 3.6 },
   { radiusM: 600, heightM: 60, scaleM: 6, share: 0.15, light: 2.6 },
 ]
+
+// The wood behind the field stands on rising ground, over the rain that lies low: it keeps its dark.
+const ROW_AIR = 0.12
+// The night's own line, so the cut at 20.0 s changes no silhouette: crowns that end in small crowns and stand in clumps, a hedge on the two level banks, woods along the ridges. All grow in after the cut at 8.0 s, which the dawn's line meets.
+const HEDGE_CROWN_M = 2.4
+const HEDGE_FLOOR = 0.66
+const TWIGS = 0.14
+const CLUMPS = 0.3
+const WOODS_FLOOR = 0.8
+const RAIN_FROM_S = 8
+const RAIN_TO_S = 20
+const smooth = (a: number, b: number, x: number): number => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 
 export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; setTime(time: number): void }
 
 export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, number, number], mist: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
-  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.004 }, uFlash: flash }
+  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.004 }, uAirShare: { value: 1 }, uFlash: flash }
+  const low = { value: 0 }
+  const hedgeFloor = { value: 1 }
+  const twigs = { value: 0 }
+  const clumps = { value: 0 }
+  const woods = { value: 1 }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -162,11 +198,12 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
 
   const rings: SkylineRing[] = []
   SKYLINE.forEach((layer, i) => {
+    const hedge = !layer.trees && layer.rowM !== undefined
     const surface = makeSurface({
       name: `rain ${layer.name}`,
       vertex,
-      fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: skylineLayerSalt(i) }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      fragment: `${layer.trees || hedge ? '#define TREES 1\n' : ''}${stripFragment}`,
+      uniforms: { ...airUniforms, uAirShare: { value: layer.rowM ? ROW_AIR : 1 }, uHaze: low, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: skylineLayerSalt(i) }, uCrown: { value: hedge ? HEDGE_CROWN_M : layer.crownM }, uFloor: hedge ? hedgeFloor : { value: layer.floor }, uTwigs: layer.rowM ? twigs : { value: 0 }, uClumps: layer.rowM ? clumps : { value: 0 }, uWoods: woods, uSunDeg: { value: skylineAzimuthDeg }, uLow: layer.rowM ? low : { value: 0 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
@@ -193,6 +230,12 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
     flash: (amount) => { flash.value = amount },
     setTime: (time) => {
       for (const ring of rings) ring.setTime(time)
+      low.value = smooth(RAIN_FROM_S, RAIN_FROM_S + 3.5, time) * (1 - smooth(RAIN_TO_S - 5.5, RAIN_TO_S - 0.1, time))
+      const grown = smooth(RAIN_FROM_S, RAIN_FROM_S + 3.5, time)
+      hedgeFloor.value = 1 + (HEDGE_FLOOR - 1) * grown
+      twigs.value = TWIGS * grown
+      clumps.value = CLUMPS * grown
+      woods.value = 1 + (WOODS_FLOOR - 1) * grown
       landMesh.position.y = skylineLandM(time) - SKYLINE_LAND_M
       landMesh.updateMatrix()
     },

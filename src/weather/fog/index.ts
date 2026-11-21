@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { config } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import type { RGB, WorldDef } from '../../core/world.ts'
+import { heightAt } from '../../plant/growth.ts'
 import { windToward } from '../../plant/wind.ts'
 import { ringStrip } from '../skyline.ts'
 
@@ -12,7 +13,10 @@ uniform vec3 uFogGlow;
 uniform float uFogThin;
 const float FOG_LOW_SHARE = 0.45;
 const float FOG_RING = 0.07;
-const vec3 FOG_RING_TAKES = vec3(0.0, 0.05, 0.09);
+const vec3 FOG_RING_TAKES = vec3(0.0, 0.07, 0.15);
+vec3 fogCalm(vec3 dir) {
+  return mix(uFogColor, uFogHigh, smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0))));
+}
 vec3 fogLight(vec3 dir) {
   float toSun = saturate(dot(dir, uSunDir));
   float theta = acos(min(toSun, 1.0));
@@ -52,8 +56,15 @@ uniform float uScaleM;
 uniform float uSpeed;
 uniform float uLayer;
 uniform vec2 uToward;
+uniform float uCanopyM;
+uniform float uSunShare;
+uniform float uDeep;
 ${fogLight}
 const float BANK_SOLID = 0.5;
+const float BANK_UNDER = 0.12;
+const vec2 SUN_SIDE = vec2(0.15, 0.4);
+const vec3 BANK_AMONG = vec3(0.72, 1.0, 0.8);
+const vec3 SUN_AMONG = vec3(0.65, 1.12, 1.75);
 float bankBroad(vec2 q, float y) {
   return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
 }
@@ -78,26 +89,38 @@ void main() {
   // The sun's disc is drawn as the whole fog lets it through, so no bank covers it again. Late in the frost the banks thin round it.
   float thick = mix(smoothstep(0.3, 0.72, here), 1.0, BANK_SOLID) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.85, 1.0, vInfo.y / vInfo.z);
-  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d);
-  outColor = vec4(fogLight(v) * (1.0 + 0.6 * lit), alpha);
+  // Under the leaves the drifting fog is thin: it lies over the closed canopy. Toward the sun it glows all the way down.
+  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(0.3 * uCanopyM, 0.7 * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
+  // Down among the plants little of the sky and none of the sun's glow reaches the fog.
+  float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
+  vec3 calm = fogCalm(v);
+  vec3 sunny = max(fogLight(v) - calm, 0.0);
+  outColor = vec4((calm * (mix(uDeep, 1.0, open) * mix(BANK_AMONG, vec3(1.0), smoothstep(0.6 * uCanopyM, uCanopyM, vWorld.y))) + sunny * mix(uSunShare * SUN_AMONG, vec3(min(uSunShare, 1.0)), open)) * (1.0 + 0.6 * lit), alpha);
 }
 `
 
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 3.8, topM: 1.9, scaleM: 3, alpha: 0.2, speed: 0.07 },
-  { radiusM: 5, topM: 1.9, scaleM: 3.5, alpha: 0.32, speed: 0.06 },
-  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.48, speed: 0.09 },
-  { radiusM: 10, topM: 1.9, scaleM: 7, alpha: 0.55, speed: 0.08 },
-  { radiusM: 15, topM: 1.65, scaleM: 10, alpha: 0.68, speed: 0.11 },
-  { radiusM: 24, topM: 1.65, scaleM: 15, alpha: 0.68, speed: 0.1 },
-  { radiusM: 42, topM: 1.65, scaleM: 26, alpha: 0.68, speed: 0.13 },
+  { radiusM: 1.9, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.05 },
+  { radiusM: 2.5, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.08 },
+  { radiusM: 3, topM: 1.55, scaleM: 3, alpha: 0.14, speed: 0.07 },
+  { radiusM: 3.8, topM: 1.7, scaleM: 3.5, alpha: 0.26, speed: 0.06 },
+  { radiusM: 5, topM: 1.9, scaleM: 4, alpha: 0.4, speed: 0.09 },
+  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.55, speed: 0.08 },
+  { radiusM: 11, topM: 1.9, scaleM: 8, alpha: 0.65, speed: 0.11 },
+  { radiusM: 20, topM: 1.65, scaleM: 15, alpha: 0.7, speed: 0.1 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
+const CLOSE_OVER_S = 4
+const SUN_NEAR = 0.5
+const SUN_FAR = 2.4
+const DEEP_NEAR = 0.12
+const DEEP_FAR = 0.33
+const FAR_M = 4.5
 
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
@@ -118,6 +141,12 @@ export function fogFarAt(time: number): number {
   return unit ? smooth(unit.end - THIN_OVER_S, unit.end - FAR_HOLD_S, time) : 0
 }
 
+// How much of the night's far shapes still stands in the fog just after the cut into the frost, 1 to 0: the fog closes over them in the unit's first seconds.
+export function fogCloseAt(time: number): number {
+  const unit = config.segments.find((s) => s.world === 'frost')
+  return unit ? 1 - smooth(unit.start, unit.start + CLOSE_OVER_S, time) : 0
+}
+
 export interface Fog {
   meshes: THREE.Mesh[]
   uniforms: { uFogHigh: THREE.IUniform<THREE.Vector3>; uFogGlow: THREE.IUniform<THREE.Vector3>; uFogThin: THREE.IUniform<number> }
@@ -133,14 +162,16 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
     uFogThin: { value: 0 },
   }
   const now = { value: 0 }
+  const canopy = { value: 1 }
   const toward = { value: new THREE.Vector2(windToward.x, windToward.z) }
   const meshes = BANKS.map((bank, i) => {
+    const far = smooth(BANKS[0].radiusM, FAR_M, bank.radiusM)
     const geometry = ringStrip(96, () => ({ radius: bank.radiusM, top: bank.topM }))
     const surface = makeSurface({
       name: `fog bank ${i}`,
       vertex,
       fragment,
-      uniforms: { ...uniforms, uNow: now, uToward: toward, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 } },
+      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
@@ -156,6 +187,7 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
     uniforms,
     at(time) {
       now.value = time
+      canopy.value = heightAt(time)
       uniforms.uFogThin.value = fogThinAt(time)
     },
   }

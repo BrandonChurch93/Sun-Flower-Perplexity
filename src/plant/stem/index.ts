@@ -8,7 +8,7 @@ import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOption
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
-import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
+import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, youngGirth, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
 
 const TAU = Math.PI * 2
@@ -24,6 +24,7 @@ const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
 // The dew on a stem is finer than the shared bead sizes.
 const DEW_FINE = 0.5
+const RAIN_FINE = 1.0
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean; down: boolean }
@@ -172,11 +173,11 @@ export function create(options: PartOptions): PlantPart {
     const rFoot = stemRadius(time, 0) * grown
     const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
-    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(20, 30, time)))
+    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
 
     const base = (u: number, s: number): number => {
-      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot)))
+      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
       if (!full) return r
       // The bud's own neck rings sit on the plain radius and a straight flare, so the last centimeter comes back to them.
       const near = smoothstep(length - 0.02, length - 0.007, s)
@@ -467,7 +468,7 @@ export function create(options: PartOptions): PlantPart {
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
         if (shown > 0) c.drawn = Math.max(c.drawn, i + 1)
-        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1)
+        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1) * (1 - stateUniforms.uPlantFrost.value * hasHead * (1 - smoothstep(0.005, 0.02, length - s)))
         lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
         lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
@@ -477,7 +478,8 @@ export function create(options: PartOptions): PlantPart {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
       if (first) dewDrawn = 0
-      const raining = stateUniforms.uPlantWet.value > 0.5
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const tint = dew.tint()
       const sLow = 0.0015
       const sHigh = Math.max(S[SEED_ANCHOR] - 0.0012, 0.9 * ringS[main - 1])
       for (let i = 0; i < dew.count; i++) {
@@ -505,11 +507,14 @@ export function create(options: PartOptions): PlantPart {
         const oz = lerp(ringAt[p + 5], ringAt[p + 17], fr) * ca + lerp(ringAt[p + 8], ringAt[p + 20], fr) * sa
         // The dew gathers on the new skin bead by bead in its first seconds in the air.
         const since = 0.6 + 4.2 * dewOwn[w + 1]
-        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * (raining ? 1 - b.hang : DEW_FINE) * smoothstep(0.004, 0.012, sHigh - sLow) * smoothstep(since, since + 1.5, time)
+        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * lerp(DEW_FINE, RAIN_FINE * (1 - b.hang), rain) * smoothstep(0.004, 0.012, sHigh - sLow) * smoothstep(since, since + 1.5, time)
         seat[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         seat[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         seat[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
         seat[o + 3] = Math.min(size, 0.45 * radius)
+        tint[i * 3] = lerp(0.34, 0.04, rain)
+        tint[i * 3 + 1] = lerp(0.34, 0.075, rain)
+        tint[i * 3 + 2] = lerp(0.13, 0.04, rain)
         rest[o] = ox
         rest[o + 1] = oy
         rest[o + 2] = oz

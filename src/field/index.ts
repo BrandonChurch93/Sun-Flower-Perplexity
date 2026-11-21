@@ -7,14 +7,14 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, behindAt, budTurn, earlyAt, earlyCode, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
 
-interface Group { head: { value: THREE.Vector4 }; grow: { value: number }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
@@ -23,8 +23,9 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   const plant = new Plant({ detail, variant, places: seen })
   const head = { value: new THREE.Vector4(0, 0, 0, 1) }
   const grow = { value: 0 }
-  for (const m of plant.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: head, uHeadGrow: grow })
-  return { head, grow, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
+  const axis = { value: new THREE.Vector3(0, 0, 1) }
+  for (const m of plant.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: head, uHeadGrow: grow, uHeadAxis: axis })
+  return { head, axis, grow, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -70,6 +71,7 @@ export class Field {
       usePlant(g.plant.variant, null)
       const h = headAt(clock, open)
       g.head.value.set(h.center.x, h.center.y, h.center.z, h.radius + rayLength(0, clock) + 0.03)
+      g.axis.value.set(h.axis.x, h.axis.y, h.axis.z)
       // A head opens to nearly the size of the plant's own, however short its stalk.
       g.grow.value = headOpen(clock)
       usePlant(0)
@@ -78,10 +80,14 @@ export class Field {
     const squat = squatAt(timeOpen)
     this.lag = lagAt(timeOpen)
     const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
-    const canopy = spread * (1 - squat)
+    const night = nightAt(timeOpen)
+    const canopy = spread * (1 - squat) * (1 - night * NIGHT_LOW)
     fieldUniforms.uSquat.value = squat
     fieldUniforms.uHang.value = hangAt(timeOpen)
     fieldUniforms.uWide.value = wideAt(timeOpen)
+    fieldUniforms.uLate.value = lateAt(timeOpen)
+    fieldUniforms.uMoon.value = night
+    fieldUniforms.uEarly.value = earlyAt(timeOpen)
     fieldUniforms.uCanopy.value = canopy
     // How closed the crop is follows how far its leaves reach.
     fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
@@ -105,6 +111,10 @@ export class Field {
     const steep = Math.max(0.3, flat - (tanHalfWidth / aspect) * Math.abs(pose.forward.y))
     const spread = tanHalfWidth / steep
     const reach = 0.9
+    const late = lateAt(this.time)
+    const night = nightAt(this.time)
+    const before = earlyAt(this.time)
+    const behind = behindAt(this.time)
     let total = 0
     for (const g of this.groups) {
       const all = g.all
@@ -120,8 +130,16 @@ export class Field {
         if (depth < -reach) continue
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
-        placeTurned(all, i, seen, still, n, early ? 0 : budTurn(clock, all[i + 7]))
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1)
+        const own = ownOf(all[i + 7])
+        placeTurned(all, i, seen, still, n, (early ? 0 : budTurn(clock, all[i + 7])) + late * own.turn)
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 - night * own.low) * (1 + behind * (own.young - 1))
+        if (before > 0) {
+          seen[n + 4] += before * own.leanX
+          seen[n + 5] += before * own.leanZ
+          still[n + 4] += before * own.leanX
+          still[n + 5] += before * own.leanZ
+        }
+        seen[n + 7] = still[n + 7] = before > 0 ? earlyCode(own) : ownCode(own)
         n += PLACE
       }
       g.seen.needsUpdate = true

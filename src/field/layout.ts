@@ -48,7 +48,14 @@ const ramp = (a: number, b: number, t: number): number => {
   return x * x * (3 - 2 * x)
 }
 export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
-export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time))
+// Before the bloom no two kinds are at the same stage: each is its own days behind the plant.
+const BEHIND_S: Record<Tier, number[]> = {
+  near: [-3.4, -1.5, -4.2, -2.4, -1.0, -3.0, -2.0],
+  far: [-2.0, -3.8, -1.2, -3.0],
+  pictures: [-3.2, -1.4, -2.4, -4.0],
+}
+export const kindTime = (time: number, index: number, tier: Tier): number =>
+  time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time)) + BEHIND_S[tier][index] * ramp(1.5, 12, time) * (1 - 0.7 * ramp(8, 12.5, time) * (1 - ramp(15, 22, time))) * (1 - 0.75 * ramp(27, 35.5, time)) * (1 - ramp(35.5, 40, time))
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
@@ -61,11 +68,39 @@ export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - r
 export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
 // At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
-export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time)
+// In the rain the seedlings are low and broad: their tops stay under the lens, so the far land shows over them.
+export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time) + 0.5 * ramp(8, 12.5, time) * (1 - ramp(15, 19, time))
 // In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
-export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time))
+export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time)) + 0.45 * ramp(8, 12.5, time) * (1 - ramp(15, 19, time))
 // In the rain the young rows are broad: each plant spreads its leaves wide over the open ground before the rows close and the leaves hang.
-export const wideAt = (time: number): number => 0.6 * ramp(8, 13, time) * (1 - ramp(16, 24, time))
+export const wideAt = (time: number): number => 0.9 * ramp(8, 13, time) * (1 - ramp(16, 24, time))
+// From 52 s the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
+// A neighbor's own turn off the camera's side, its height, the size of its head and how far the head nods.
+export const lateAt = (time: number): number => ramp(52, 57, time)
+// Under the moon the young rows stand lower than the lens, and one in fourteen stands clear of them. 0 by the rain's key and from 35.5 s.
+export const nightAt = (time: number): number => ramp(17, 23, time) * (1 - ramp(29, 35.5, time))
+export const NIGHT_LOW = 0.02
+// Before the bloom every neighbor is its own: how far it has come, how long its stalk and its leaves are, how its leaves hang, which way it leans. Out by 40 s.
+export const earlyAt = (time: number): number => 1 - ramp(35.5, 40, time)
+// How far behind a neighbor is shows while the rows are open: by the frost the crop has closed and the laggards have caught up.
+export const behindAt = (time: number): number => 1 - ramp(27, 35.5, time)
+const handSet = new Set<number>()
+export interface Own { turn: number; tall: number; head: number; nod: number; low: number; young: number; stalk: number; leaf: number; droop: number; bud: number; leanX: number; leanZ: number }
+export function ownOf(id: number): Own {
+  // The neighbors set by hand keep their turn and their height: only their heads differ.
+  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id), low: NIGHT_LOW, young: 1, stalk: 0.9 + 0.25 * hash01(SEED, 101, id), leaf: 0.85 + 0.3 * hash01(SEED, 102, id), droop: 0.5 * hash01(SEED, 103, id), bud: 0.9 + 0.4 * hash01(SEED, 108, id), leanX: 0, leanZ: 0 }
+  // One in twelve is far behind, a gap in its row; one in twenty five is bent well over.
+  const young = hash01(SEED, 100, id) < 0.085 ? 0.35 + 0.25 * hash01(SEED, 104, id) : 0.84 + 0.26 * hash01(SEED, 104, id)
+  const way = hash01(SEED, 105, id) * 2 * Math.PI
+  const lean = hash01(SEED, 106, id) < 0.04 ? 0.25 + 0.2 * hash01(SEED, 107, id) : 0.12 * hash01(SEED, 107, id)
+  const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 0.8 + 0.65 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
+}
+// The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
+export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
+// Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
+const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
+export const earlyCode = (own: Own): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(own.leaf, 0.75, 1.25) + 1024 * steps(own.droop, -0.15, 0.6) + 32768 * steps(own.bud, 0.8, 1.45)
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
@@ -244,11 +279,13 @@ export function fieldPlaces(): FieldPlaces {
     do id++
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
+    handSet.add(id)
   }
   const front: number[] = []
   FRONT.forEach((f, n) => {
     do id++
     while (kindOf(id) !== f.kind)
+    handSet.add(id)
     const lean = (channel: number) => Math.max(-0.2, Math.min(0.2, bell(id, channel) * 0.075))
     front.push(-toward.x * f.along + right.x * f.across, -toward.z * f.along + right.z * f.across, meanTurn + f.turn, f.size, lean(30), lean(33), 0.35 + 0.5 * hash01(SEED, 8, id), id)
     for (let u = 0; u < UNDER_PER_GAP; u++) {

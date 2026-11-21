@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -42,12 +42,14 @@ uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
 uniform float uAhead;
+uniform float uLow;
 uniform float uSquat;
 ${swayGlsl}
 ${sizeGlsl}
 void main() {
   float across = aCorner.x;
   float size = sizeAt(aPlace.w, aVary.z, uAhead);
+  if (uLow > 0.0) size *= 1.0 - uLow;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
@@ -182,6 +184,50 @@ void main() {
 }
 `
 
+// Past the last row the tops run on as one color to the land's edge and thin away into the evening air.
+const END_M = 300
+const endVertex = /* glsl */ `
+in vec3 position;
+out vec3 vWorld;
+out float vDepth;
+out vec3 vTop;
+out vec3 vMid;
+uniform sampler2D uAtlas;
+uniform float uHeight;
+vec3 band(float v) {
+  vec4 sum = vec4(0.0);
+  for (int i = 0; i < 4; i++) sum += textureLod(uAtlas, vec2((float(i) + 0.5) * 0.25, v), 5.0);
+  return sum.rgb / max(4.0 - sum.a, 0.02);
+}
+void main() {
+  float reach = length(position.xz);
+  vec4 world = vec4(position.x, max(uHeight, 1.3) + 0.04 + 0.0006 * reach, position.z, 1.0);
+  vec4 view = viewMatrix * world;
+  vWorld = world.xyz;
+  vDepth = -view.z;
+  vTop = band(0.875);
+  vMid = band(0.625);
+  gl_Position = projectionMatrix * view;
+}
+`
+const endFragment = /* glsl */ `
+in vec3 vWorld;
+in float vDepth;
+in vec3 vTop;
+in vec3 vMid;
+uniform vec2 uToward;
+uniform float uLate;
+void main() {
+  if (uDiag > 1) discard;
+  float along = -dot(vWorld.xz, uToward);
+  float patchy = valueNoise(vWorld.xz * 0.028);
+  float swell = valueNoise(vec2(vWorld.x * uToward.y - vWorld.z * uToward.x, along * 3.0) * 0.05);
+  vec3 color = mix(vMid * 0.7, vTop, 0.4 + 0.35 * swell) * (0.78 + 0.44 * patchy);
+  float left = 1.0 - smoothstep(${fieldPicturesM.toFixed(1)}, ${END_M.toFixed(1)}, along);
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, uLate * left * left);
+}
+`
+
 function sheetGeometry(depths: number[]): THREE.BufferGeometry {
   const position: number[] = []
   const index: number[] = []
@@ -218,6 +264,7 @@ export class FarField {
   readonly count: number
   readonly pictures: THREE.Mesh
   readonly carpet: THREE.Mesh
+  readonly end: THREE.Mesh
   readonly under: THREE.Mesh[]
   readonly meshes: THREE.Mesh[]
   private readonly plants: Plant[] = []
@@ -240,8 +287,10 @@ export class FarField {
     uAbove: { value: 0 },
     uAhead: { value: 1 },
     uLag: { value: 0 },
+    uLow: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
+    uLate: fieldUniforms.uLate,
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -307,13 +356,15 @@ export class FarField {
     this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldPicturesM])
     this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, fieldPicturesM]))
 
+    this.end = plain(sheetGeometry([fieldPicturesM, 90, 130, 190, END_M]), makeSurface({ name: 'field far end', vertex: endVertex, fragment: endFragment, side: THREE.DoubleSide, castShadow: false, transparent: true, depthWrite: false, uniforms: { ...this.uniforms, uHeight: this.carpetHeight } }))
+    this.end.renderOrder = 14
     // The pictures are made just before the first surface that reads them is drawn.
     this.pictures.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
     // Solid surfaces all: the order only lets the nearer ones hide the sheets before the sheets are shaded.
     this.pictures.renderOrder = 10
     this.under.forEach((m, i) => (m.renderOrder = 12 - i))
     this.carpet.renderOrder = 13
-    this.meshes = [this.pictures, ...this.under, this.carpet]
+    this.meshes = [this.pictures, ...this.under, this.carpet, this.end]
   }
 
   async load(assets: Assets): Promise<void> {
@@ -327,6 +378,7 @@ export class FarField {
     })
     this.uniforms.uAhead.value = plantAhead(timeOpen)
     this.uniforms.uLag.value = lagAt(timeOpen)
+    this.uniforms.uLow.value = nightAt(timeOpen) * NIGHT_LOW
     // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
     this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, 30, 40)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
@@ -383,6 +435,7 @@ export class FarField {
   show(on: boolean): void {
     this.pictures.visible = on
     this.carpet.visible = on && this.above
+    this.end.visible = on && this.above && fieldUniforms.uLate.value > 0
     for (const m of this.under) m.visible = on && this.above
   }
 

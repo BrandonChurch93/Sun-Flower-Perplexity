@@ -108,12 +108,12 @@ void main() {
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
-  albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
+  albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot * (1.0 - 0.85 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   // The sprout: pale yellow green where it has seen the light, clear pink red below, near white where it leaves the soil.
   vec3 sprout = mix(vec3(0.36, 0.34, 0.22), vec3(0.085, 0.15, 0.125), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * saturate(1.5 * pale));
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.26, 0.075, 0.11), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.72 + 0.16 * streak + 0.12 * dust, pale));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.26, 0.075, 0.11), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.72 + 0.16 * streak + 0.12 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(${GUIDE.rough}, 0.5, thin);
   float wax = mix(${GUIDE.wax}, 0.45, thin);
@@ -126,14 +126,18 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z);
-  t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow);
+  // The bracts keep the sky off the stem's last centimeter, so little rime settles there.
+  float lee = uPlantFrost * vSkin3.x;
+  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z) * (1.0 - 0.95 * lee);
+  t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow) * (1.0 - 0.9 * lee);
 #ifdef PLANT_FIELD
   vec3 color = shadeTissue(t, vWorld, view);
   // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.
   float graze = 1.0 - abs(dot(face, view));
   float toSun = saturate(dot(-view, uSunDir));
-  color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
+  // Under a light bluer than it is red, the moon or an overcast, the halo is the light's own color.
+  vec3 halo = mix(vec3(0.8, 0.95, 0.6), vec3(1.0), smoothstep(0.0, 0.2, (uSunColor.b - uSunColor.r) / max(uSunColor.g, 1e-4)));
+  color += uSunColor * halo * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
 #else
   // The young stem is clear, moist flesh: the sun enters at its outline and leaves toward the lens.
   vec3 color = shadeTissueClear(t, vWorld, view, vec2(vCoord.x * 0.08, vCoord.z * ${TOP_M.toFixed(4)}), 0.0, 0.7 * max(pale, fresh));

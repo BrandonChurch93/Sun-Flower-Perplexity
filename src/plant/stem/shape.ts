@@ -15,7 +15,7 @@ export const TOP_M = heightAt(END)
 
 // Under its seed leaves the young stem widens into the collar they stand on. It is there while the seedling is one, and nothing of it is left when the stem is a stalk.
 export function collarAt(time: number): number {
-  return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(12, 20, time))
+  return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(8.5, 12.5, time))
 }
 export const COLLAR_M = 0.014
 // The seedling's stem stands a little sturdier than the sprout it was and the stalk it becomes, by this share of the collar's swell.
@@ -157,4 +157,11 @@ export function ribProfile(ribs: Ribs, angle: number): number {
 
 export function wrapAngle(d: number): number {
   return d - TAU * Math.round(d / TAU)
+}
+
+// The young stem is never an even tube: it tapers from the foot to the hook, is a little stouter where the hook was, and swells and narrows slightly along its length. It has filled out evenly by 6 s.
+export function youngGirth(time: number, u: number): number {
+  const young = 1 - smoothstep(3, 6, time)
+  const at = (u - 0.8) / 0.13
+  return 1 + young * (0.1 - 0.2 * u + 0.12 * Math.exp(-at * at) + 0.045 * Math.sin(31 * u + 1.3) * Math.sin(11.7 * u + 0.4))
 }

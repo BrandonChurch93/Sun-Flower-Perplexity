@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import { stream } from '../core/random.ts'
 import { right, toward } from '../field/layout.ts'
-import { grassMask, grassTimes, patchy } from './cover.ts'
+import { grassMask, grassTimes, patchy, patchyCover, stemFoot, turfCover } from './cover.ts'
 import { lane } from './crumbs.ts'
-import { cropLight } from './light.ts'
+import { cropLight, fieldGate } from './light.ts'
 import { groundStates, soilHeight, sunWayDir } from './soil.ts'
 
 const TUFTS = 14000
@@ -81,10 +81,63 @@ function underSun(x: number, z: number): boolean {
   return along > SUN_CLEAR.fromM && Math.abs(across - SUN_CLEAR.offM) < SUN_CLEAR.halfM + SUN_CLEAR.spread * along
 }
 
+type Cells = Map<string, { matrices: THREE.Matrix4[]; seeds: number[] }>
+function meshes(geometry: THREE.BufferGeometry, cells: Cells): THREE.InstancedMesh[] {
+  return Array.from(cells.values()).map((cell) => {
+    const shape = geometry.clone()
+    const mesh = new THREE.InstancedMesh(shape, undefined, cell.matrices.length)
+    cell.matrices.forEach((m, i) => mesh.setMatrixAt(i, m))
+    shape.setAttribute('aTuft', new THREE.InstancedBufferAttribute(new Float32Array(cell.seeds), 4))
+    mesh.computeBoundingSphere()
+    if (mesh.boundingSphere) mesh.boundingSphere.radius += 0.1
+    return mesh
+  })
+}
+
+// What the field shot adds: weeds under the crop's front, so that no bare strip lies between the turf and the crop, low broad tufts that mat the turf, and tall thin stalks that stand over it and take the low sun from behind.
+const FIELD_TUFTS = 14000
+const UNDER = { share: 0.4, fromM: 1.2, toM: 3.4 }
+const STALKS = { fromM: -1.5, toM: 1.6, chance: 0.3 }
+export function fieldTufts(): THREE.InstancedMesh[] {
+  const random = stream('ground grass field')
+  const cells: Cells = new Map()
+  const turn = new THREE.Quaternion()
+  const up = new THREE.Vector3(0, 1, 0)
+  const size = new THREE.Vector3()
+  const at = new THREE.Vector3()
+  for (let i = 0; i < FIELD_TUFTS; i++) {
+    const under = random.next() < UNDER.share
+    const u = random.range(-HALF_WIDTH_M, HALF_WIDTH_M)
+    const d = under ? random.range(UNDER.fromM, UNDER.toM) : random.range(STALKS.fromM, STALKS.toM)
+    const chance = random.next()
+    const tall = random.next()
+    const wide = random.next()
+    const spin = random.next() * Math.PI * 2
+    const tone = random.next()
+    const seed = random.next()
+    const x = -toward.x * d + right.x * u
+    const z = -toward.z * d + right.z * u
+    const clump = patchy(x * 4.3 + 3, z * 4.3 + 1)
+    const stand = patchy(x * 1.9 + 11, z * 1.9 + 5)
+    const stalk = !under && chance < STALKS.chance * stand * stand
+    const height = (under ? 0.05 + 0.12 * tall : stalk ? 0.16 + 0.18 * tall : 0.035 + 0.05 * tall) * (0.6 + 0.6 * clump)
+    const girth = under ? 0.8 + 0.5 * wide : stalk ? 0.2 + 0.16 * wide : 1.3 + 0.7 * wide
+    turn.setFromAxisAngle(up, spin)
+    size.set(height * girth, height, height * girth)
+    at.set(x, -0.002, z)
+    const key = `${Math.floor(u / CELL_M)} ${Math.floor(d / CELL_M)}`
+    const cell = cells.get(key) ?? { matrices: [], seeds: [] }
+    cells.set(key, cell)
+    cell.matrices.push(new THREE.Matrix4().compose(at, turn, size))
+    cell.seeds.push(-100, tone, under ? 1 : stalk ? 1.9 : 1.6, seed)
+  }
+  return meshes(tuft(), cells)
+}
+
 export function tufts(): THREE.InstancedMesh[] {
   const random = stream('ground grass')
   const geometry = tuft()
-  const cells = new Map<string, { matrices: THREE.Matrix4[]; seeds: number[] }>()
+  const cells: Cells = new Map()
   const turn = new THREE.Quaternion()
   const up = new THREE.Vector3(0, 1, 0)
   const size = new THREE.Vector3()
@@ -121,15 +174,7 @@ export function tufts(): THREE.InstancedMesh[] {
     cell.matrices.push(new THREE.Matrix4().compose(at, turn, size))
     cell.seeds.push(born, tone, weed ? 2.6 : early ? 1.5 : 1, seed)
   }
-  return Array.from(cells.values()).map((cell) => {
-    const shape = geometry.clone()
-    const mesh = new THREE.InstancedMesh(shape, undefined, cell.matrices.length)
-    cell.matrices.forEach((m, i) => mesh.setMatrixAt(i, m))
-    shape.setAttribute('aTuft', new THREE.InstancedBufferAttribute(new Float32Array(cell.seeds), 4))
-    mesh.computeBoundingSphere()
-    if (mesh.boundingSphere) mesh.boundingSphere.radius += 0.1
-    return mesh
-  })
+  return meshes(geometry, cells)
 }
 
 export const grassVertex = /* glsl */ `
@@ -144,8 +189,12 @@ out float vDepth;
 out vec3 vNormal;
 out vec3 vAlong;
 out vec4 vTuft;
+out vec3 vField;
 uniform vec4 uGrassTimes;
 ${soilHeight}
+${fieldGate}
+${turfCover}
+${patchyCover}
 void main() {
   float grown = smoothstep(aTuft.x, aTuft.x + uGrassTimes.z, uTime);
   mat4 place = modelMatrix * instanceMatrix;
@@ -154,6 +203,17 @@ void main() {
   float seen = tall * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
   float thin = max(1.0, 1.4 / max(seen * 0.03 * aTuft.z, 1e-3));
   vec3 local = (position * vec3(1.0, mix(0.25, 1.0, grown), 1.0) + aSide * aTuft.z * min(thin, 4.0)) * step(0.001, grown) * mix(0.4, 1.0, grown);
+  vField = vec3(0.0);
+  if (fieldOn()) {
+    vec2 tf = turf(c);
+    float near = stemNear(c);
+    float chosen = fract(aTuft.w * 7.31);
+    float rough = mix(0.4, 1.2, tf.x) * mix(0.75, 1.25, chosen) / (0.6 + 0.6 * patchy(c * 4.3 + vec2(3.0, 1.0)));
+    rough *= step(tf.y, 0.1 + 0.9 * chosen) * smoothstep(${stemFoot.bareM.toFixed(2)}, ${stemFoot.fullM.toFixed(2)}, near);
+    local *= rough;
+    tall *= rough;
+    vField = vec3(1.0, tf.x, near);
+  }
   vec4 world = place * vec4(local, 1.0);
   world.y += soilHeight(c, soilLod(c));
   float bend = aAlong.x * aAlong.x * tall;
@@ -174,6 +234,7 @@ in float vDepth;
 in vec3 vNormal;
 in vec3 vAlong;
 in vec4 vTuft;
+in vec3 vField;
 uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
@@ -190,16 +251,29 @@ void main() {
   albedo = mix(albedo, albedo * vec3(0.85, 1.05, 1.25), weed);
   albedo = mix(albedo, vec3(0.2, 0.16, 0.06), smoothstep(0.55, 1.0, t) * step(0.72, vAlong.y) * (1.0 - weed));
   albedo *= 0.86 + 0.14 * cos(vAlong.z * 7.0);
+  float shut = 1.0;
+  if (vField.x > 0.5) {
+    float chosen = fract(vTuft.w * 13.7);
+    float dry = step(0.6 + 0.32 * vField.y, chosen) * (1.0 - weed);
+    albedo *= vec3(1.5, 0.8, 2.4) * mix(0.65, 1.15, fract(vTuft.w * 29.3));
+    albedo = mix(albedo, mix(vec3(0.05, 0.043, 0.03), vec3(0.19, 0.155, 0.09), t), dry);
+    shut = 1.0 - 0.55 * exp(-vField.z * vField.z / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
+  }
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
+  float rained = smoothstep(0.3, 1.0, uWet);
+  albedo *= mix(vec3(1.0), vec3(1.3, 1.55, 1.2), rained);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.15, 0.8, t));
   vec2 p = vWorld.xz;
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward)) * deep;
+  if (vField.x > 0.5) lit = max(lit, fieldPatch(p, -dot(p, uToward)) * deep);
   float ndl = dot(n, uSunDir);
-  vec3 through = albedo * vec3(2.6, 1.25, 0.45) * 0.7 * max(-ndl, 0.0);
+  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45)) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
+  if (vField.x > 0.5) color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
+  color += skyAmbient(reflect(-v, n)) * (0.05 * rained * deep);
   float bead = step(0.9, hash31(floor(vWorld * 700.0))) * uDew * (1.0 - smoothstep(0.25, 0.9, vDepth));
   color += bead * (uSunColor * 1.2 * lit + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.4);
   outColor = finish(color, vWorld, vDepth, -1.0);

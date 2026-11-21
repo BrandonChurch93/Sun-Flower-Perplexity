@@ -4,12 +4,12 @@ import { skyMirror } from './water.ts'
 
 // A splash is over this long after its drop lands: the cup rises and falls first, its beads and grit fly on.
 export const SPLASH_LIFE_S = 0.5
-const AROUND = 112
-const UP = [0, 0.4, 0.7, 0.88, 0.96, 1]
-const BEADS = 10
+const AROUND = 64
+const UP = [0, 0.45, 0.75, 0.92, 1]
+const BEADS = 16
 const GRIT = 6
 // On water a column stands up from the middle after the cup has fallen, until this many cup lives after the landing.
-const JET_ENDS = 2.7
+const JET_ENDS = 2
 // No splash stands within the first of these distances of the plant's foot, in meters, and a full one only beyond the second.
 const PLANT_CLEAR_M = [0.02, 0.06]
 
@@ -32,25 +32,26 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 5.0 + floor(5.0 * seed);
-  float wide = 0.007 * min(1.0, size * 6.0) + 0.009 * size;
+  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 0.55, onWater);
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
-    float r = wide * (0.15 * (1.0 - 0.75 * v) + 0.09 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.85, 1.0, k) * 0.5);
-    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
-    return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
+    float r = wide * (0.06 + 0.8 * pow(1.0 - v, 2.5) + 0.19 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * sqrt(stands);
+    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.87 * wide * v * v * stands;
+    return vec3(cos(th) * r + lean.x, wide * (2.3 + 1.7 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.4, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
-  float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
+  float tall = wide * mix(0.7, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float rise = smoothstep(0.0, mix(0.22, 0.12, onWater), x) * (1.0 - smoothstep(mix(0.5, 0.72, onWater), 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.0);
   float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
-  float ragged = 0.2 + 2.0 * lot * lot * lot;
-  float lobe = 1.0 + 0.22 * sin(th * 2.0 + seed * 40.0) + 0.14 * sin(th * 3.0 + seed * 91.0);
-  float lean = 1.0 + 0.3 * cos(th - TAU * fract(seed * 29.0));
+  float ragged = 0.2 + 1.3 * lot * lot;
+  float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
+  float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v;
-  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (0.5 * v + 1.1 * finger);
-  float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.8 + 0.2 * v + 0.4 * v * v * mix(1.0, 0.35, onWater) + 0.22 * finger);
+  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.8, onWater) * v + mix(1.1, 0.9, onWater) * finger);
+  float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
+  float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (0.8 + foot + 0.2 * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
 }
 
@@ -65,20 +66,26 @@ void main() {
   vDepth = 0.0;
   gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   if (t <= 0.0 || t >= ${SPLASH_LIFE_S.toFixed(2)}) return;
+  vec4 seenAt = projectionMatrix * viewMatrix * vec4(drop.x, 0.0, drop.y, 1.0);
+  if (max(abs(seenAt.x), abs(seenAt.y)) > 1.1 * seenAt.w + 0.3) return;
   float clear = smoothstep(${PLANT_CLEAR_M[0].toFixed(3)}, ${PLANT_CLEAR_M[1].toFixed(3)}, length(drop.xy));
   if (clear <= 0.0) return;
   float size = drop.w / 0.0022 * clear;
   float seed = hash21(drop.xy * 53.3 + 0.37);
-  float depth = waterDepth(drop.xy);
-  float onWater = smoothstep(0.0, 0.006, depth);
-  vMud = 1.0 - onWater;
-  float base = depth > 0.0 ? uLevel.x : soilHeight(drop.xy, soilLod(drop.xy));
-  float lasts = 0.085 + 0.06 * size;
+  float lasts = 0.15 + 0.09 * size;
   float x = t / lasts;
+  if (part.x < 0.5 && x >= 1.0 && (size < 0.42 || x >= ${JET_ENDS.toFixed(2)})) return;
+  float ground = soilHeight(drop.xy, soilLod(drop.xy));
+  float depth = waterDepthOver(ground, drop.xy);
+  float onWater = smoothstep(0.0, 0.006, depth);
+  if (drop.w < 0.0005 && onWater < 0.6) return;
+  vMud = 1.0 - onWater;
+  if (part.x < 0.5 && x >= 1.0) vTop = 0.4 * part.z;
+  float base = depth > 0.0 ? uLevel.x : ground;
   vec3 at;
   vec3 n;
   if (part.x < 0.5) {
-    if (x >= 1.0 && (onWater < 0.6 || size < 0.42 || x >= ${JET_ENDS.toFixed(2)})) return;
+    if (x >= 1.0 && onWater < 0.6) return;
     float th = part.y * TAU;
     vFlute = part.y * (5.0 + floor(5.0 * seed));
     at = cup(th, part.z, x, size, onWater, seed);
@@ -96,7 +103,7 @@ void main() {
     float count = grit ? ${GRIT.toFixed(1)} : ${BEADS.toFixed(1)};
     float th = TAU * (floor((part.y + ha) / count * teeth) + 0.5 - seed * 7.0) / teeth;
     float leaves = grit ? 0.08 + 0.2 * hb : 0.18 + 0.35 * hb;
-    float radius = (grit ? 0.0004 + 0.0009 * hc : 0.0003 + 0.0008 * hc * hc) * (0.6 + 0.4 * size);
+    float radius = (grit ? 0.0004 + 0.0009 * hc : 0.0003 + 0.0008 * hc * hc + 0.0004 * onWater * hc) * (0.6 + 0.4 * size);
     float pitch = grit ? 0.45 + 0.5 * ha : 0.8 + 0.55 * ha;
     float speed = (grit ? 0.35 + 0.5 * hc : 0.45 + 0.75 * hb) * (0.55 + 0.45 * size);
     vec3 way = vec3(cos(th) * cos(pitch), sin(pitch), sin(th) * cos(pitch));
@@ -106,7 +113,8 @@ void main() {
     float flew = max(xs - leaves, 0.0) * lasts;
     vec3 center = cup(th, grit ? 0.3 : 1.0, min(xs, leaves), size, onWater, seed) + way * speed * flew - vec3(0.0, 0.5 * G * flew * flew, 0.0);
     vec2 over = drop.xy + center.xz;
-    float floorM = max(soilHeight(over, soilLod(over)), uLevel.x - 1.0 + step(0.0, waterDepth(over))) - base;
+    float under = soilHeight(over, soilLod(over));
+    float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under, over))) - base;
     if (flown > 0.0 && center.y < floorM - radius) return;
     vec3 shape = grit ? position * (0.7 + 0.6 * vec3(ha, hb, hc)) : position;
     at = center + shape * radius;
@@ -131,7 +139,7 @@ in float vMud;
 in float vFlute;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.08, 0.03, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.06, 0.04, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -145,18 +153,19 @@ void main() {
     float facing = max(dot(n, v), 0.0);
     if (vKind > 0.5) {
       float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
-      float lens = 0.6 * smoothstep(0.3, 0.9, facing);
-      alpha = saturate(mirror + lens + 0.06);
-      color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
+      vec3 inside = refract(-v, n, 0.75);
+      vec3 leaves = refract(inside, 2.0 * dot(n, inside) * inside - n, 1.333);
+      alpha = saturate(mirror + 0.92);
+      color = mix(seen(leaves), seen(reflect(-v, n)), mirror);
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
-      n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute));
-      float one = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
-      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.7 * vMud);
+      n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.9 * smoothstep(0.5, 1.0, vTop) + 0.9 * sin(17.0 * vTop + 2.3 * vFlute)));
+      float one = mix(0.07, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
+      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.85 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.75 * vTop, 1.0, vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.35 + 0.65 * lip), mix(vec3(0.022, 0.019, 0.016), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
-      alpha = mirror + (1.0 - mirror) * max(0.9 * lip, mix(0.3, 0.92, silt));
+      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.18 + 0.3 * lip), mix(vec3(0.05, 0.044, 0.038), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
+      alpha = mirror + (1.0 - mirror) * mix(0.6, 0.92, silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
@@ -164,14 +173,29 @@ void main() {
 }
 `
 
+interface Solid { at: [number, number, number][]; faces: number[] }
+
+// The corners of a small solid, each kept once, and its faces as indices into them.
+function corners(geometry: THREE.BufferGeometry): Solid {
+  const from = geometry.getAttribute('position')
+  const at: [number, number, number][] = []
+  const faces: number[] = []
+  for (let i = 0; i < from.count; i++) {
+    const p: [number, number, number] = [from.getX(i), from.getY(i), from.getZ(i)]
+    let k = at.findIndex((q) => Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) < 1e-6)
+    if (k < 0) k = at.push(p) - 1
+    faces.push(k)
+  }
+  geometry.dispose()
+  return { at, faces }
+}
+
 // The shape every splash is drawn from: a cup as a sheet round its drop, then beads and grit as small balls.
 export function crownGeometry(drops: Float32Array, floats: number): { geometry: THREE.InstancedBufferGeometry; drop: THREE.InstancedBufferAttribute } {
-  const ball = new THREE.IcosahedronGeometry(1, 0)
-  const ballAt = ball.getAttribute('position')
-  const lump = new THREE.OctahedronGeometry(1, 0)
-  const lumpAt = lump.getAttribute('position')
+  const ball = corners(new THREE.IcosahedronGeometry(1, 0))
+  const lump = corners(new THREE.OctahedronGeometry(1, 0))
   const cupVerts = (AROUND + 1) * UP.length
-  const total = cupVerts + BEADS * ballAt.count + GRIT * lumpAt.count
+  const total = cupVerts + BEADS * ball.at.length + GRIT * lump.at.length
   const position = new Float32Array(total * 3)
   const part = new Float32Array(total * 3)
   const index: number[] = []
@@ -183,18 +207,18 @@ export function crownGeometry(drops: Float32Array, floats: number): { geometry: 
       v++
     }
   }
-  const balls = (kind: number, count: number, at: THREE.BufferAttribute | THREE.InterleavedBufferAttribute): void => {
+  const balls = (kind: number, count: number, solid: Solid): void => {
     for (let b = 0; b < count; b++) {
-      for (let i = 0; i < at.count; i++) {
-        position.set([at.getX(i), at.getY(i), at.getZ(i)], v * 3)
+      for (const corner of solid.faces) index.push(v + corner)
+      for (const at of solid.at) {
+        position.set(at, v * 3)
         part.set([kind, b, 0], v * 3)
-        if (i % 3 === 0) index.push(v, v + 1, v + 2)
         v++
       }
     }
   }
-  balls(1, BEADS, ballAt)
-  balls(2, GRIT, lumpAt)
+  balls(1, BEADS, ball)
+  balls(2, GRIT, lump)
   const geometry = new THREE.InstancedBufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
   geometry.setAttribute('part', new THREE.BufferAttribute(part, 3))
@@ -203,7 +227,5 @@ export function crownGeometry(drops: Float32Array, floats: number): { geometry: 
   drop.setUsage(THREE.DynamicDrawUsage)
   geometry.setAttribute('drop', drop)
   geometry.instanceCount = 0
-  ball.dispose()
-  lump.dispose()
   return { geometry, drop }
 }
