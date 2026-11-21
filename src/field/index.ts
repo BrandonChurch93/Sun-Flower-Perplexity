@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, behindAt, budTurn, earlyAt, earlyCode, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, behindAt, budsFirst, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, hangAt, kindTime, lagAt, lateAt, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -38,6 +38,7 @@ export class Field {
   private rise = 0
   private ahead = 1
   private lag = 0
+  private gaps = 0
 
   constructor() {
     const places = fieldPlaces()
@@ -79,7 +80,8 @@ export class Field {
     this.ahead = plantAhead(timeOpen)
     const squat = squatAt(timeOpen)
     this.lag = lagAt(timeOpen)
-    const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
+    const tall = heightAt(fieldAge(timeOpen))
+    const spread = tall * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
     const night = nightAt(timeOpen)
     const canopy = spread * (1 - squat) * (1 - night * NIGHT_LOW)
     fieldUniforms.uSquat.value = squat
@@ -92,9 +94,10 @@ export class Field {
     // How closed the crop is follows how far its leaves reach.
     fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
     // How little sky the crop keeps follows the size it will settle at, so the young crop is open to the sky however tall it stands.
-    fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(heightAt(timeOpen) * CANOPY, 0.7, 1.25)
+    fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(tall * CANOPY, 0.7, 1.25)
     // The leaves in the gaps come up as the crop closes over them.
-    this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
+    this.gaps = gapsAt(timeOpen)
+    this.rise = Math.max(THREE.MathUtils.smoothstep(spread, 0.15, 0.6), this.gaps)
     this.far.prepare(timeOpen, timeClose, open, close, eyeHeightM, canopy)
   }
 
@@ -115,11 +118,13 @@ export class Field {
     const night = nightAt(this.time)
     const before = earlyAt(this.time)
     const behind = behindAt(this.time)
+    const stiff = stiffAt(this.time)
     let total = 0
     for (const g of this.groups) {
       const all = g.all
       const early = opensEarly(g.index, g.tier)
       const clock = kindTime(this.time, g.index, g.tier)
+      const first = night > 0 && !g.bare && budsFirst(g.index, g.tier)
       const seen = g.seen.array as Float32Array
       const still = g.still.array as Float32Array
       let n = 0
@@ -131,21 +136,23 @@ export class Field {
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         const own = ownOf(all[i + 7])
+        const clear = first && standsClear(all[i + 7], all[i], all[i + 1])
         placeTurned(all, i, seen, still, n, (early ? 0 : budTurn(clock, all[i + 7])) + late * own.turn)
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 - night * own.low) * (1 + behind * (own.young - 1))
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 - night * (clear ? clearLow(all[i + 7]) : own.low)) * (1 + behind * (own.young - 1))
         if (before > 0) {
           seen[n + 4] += before * own.leanX
           seen[n + 5] += before * own.leanZ
           still[n + 4] += before * own.leanX
           still[n + 5] += before * own.leanZ
         }
-        seen[n + 7] = still[n + 7] = before > 0 ? earlyCode(own) : ownCode(own)
+        if (g.bare && this.gaps > 0) seen[n + 6] = still[n + 6] = all[i + 6] + this.gaps * (gapTone(all[i + 7]) - all[i + 6])
+        seen[n + 7] = still[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.25 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own)
         n += PLACE
       }
       g.seen.needsUpdate = true
       g.still.needsUpdate = true
       g.plant.show(n / PLACE)
-      if (g.bare) for (const part of g.plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
+      if (g.bare && this.gaps <= 0) for (const part of g.plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
       total += n / PLACE
     }
     this.far.look(pose)
