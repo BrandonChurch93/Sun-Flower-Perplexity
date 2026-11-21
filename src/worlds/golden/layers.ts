@@ -126,7 +126,7 @@ const smooth = (a: number, b: number, x: number): number => {
 }
 
 function ridged(az: number, cells: number, salt: number): number {
-  return 0.5 * wrapNoise(az, cells, salt) + 0.33 * wrapNoise(az, cells * 3, salt + 1) + 0.17 * wrapNoise(az, cells * 9, salt + 2)
+  return 0.42 * wrapNoise(az, cells, salt) + 0.3 * wrapNoise(az, cells * 2, salt + 1) + 0.19 * wrapNoise(az, cells * 5, salt + 2) + 0.09 * wrapNoise(az, cells * 11, salt + 3)
 }
 
 interface Strip {

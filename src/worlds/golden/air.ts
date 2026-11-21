@@ -37,10 +37,11 @@ void main() {
   float sizeM = mix(0.00012, 0.0011, aSeed.x * aSeed.x);
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
-  float px = clamp(max(angle / uPixelAngle, 1.3 * min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0) / sqrt(uSamples)), 1.0, 64.0);
+  float need = max(angle / uPixelAngle, 2.0 * min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0) / sqrt(uSamples));
+  float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(1.0, 1.7, world.y);
-  vColor = uSunColor * (0.25 + 1.2 * pow(toSun, 3.0) + 22.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d);
+  vColor = uSunColor * (0.18 + 1.2 * pow(toSun, 3.0) + 22.0 * pow(toSun, 40.0)) * flux * lit * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(24.0, 56.0, need));
   vSize = px;
   gl_PointSize = px;
   gl_Position = projectionMatrix * view;

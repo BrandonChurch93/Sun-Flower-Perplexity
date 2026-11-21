@@ -37,6 +37,17 @@ function tap(img, x, y, out) {
   }
 }
 
+// A row of the dome can cover several rows of a take: the take is averaged over that span so nothing aliases.
+const spanTap = (img, x, y, span, limit, out) => {
+  const n = Math.min(6, Math.max(1, Math.round(span)))
+  const one = [0, 0, 0]
+  out[0] = out[1] = out[2] = 0
+  for (let i = 0; i < n; i++) {
+    tap(img, x, Math.min(y + ((i + 0.5) / n - 0.5) * span, limit), one)
+    for (let c = 0; c < 3; c++) out[c] += one[c] / n
+  }
+}
+
 const smooth = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -68,6 +79,8 @@ for (let Y = 0; Y < HEIGHT; Y++) {
   // The take has the sun on its bottom edge and the film has it 2.18 degrees up: the sky under the sun is the sky over it, turned over.
   const row = SUN.row - Math.abs(el - SUN.elevationDeg) * rowsPerDeg
   const rowAway = AWAY_BOTTOM_ROW - el * rowsPerDeg
+  const vUp = 1 - (Y - 0.5) / HEIGHT
+  const span = Math.abs(90 * vUp * vUp - el) * 2 * rowsPerDeg
   const over = smooth(9.5, 13, el)
   const dim = 1 - 0.3 * smooth(30, 90, el)
   // The away take is pulled toward the tone of the sunward take where they meet, less with every degree from the seam.
@@ -83,7 +96,7 @@ for (let Y = 0; Y < HEIGHT; Y++) {
     const wa = smooth(leftDeg, leftDeg + 12, r) * (1 - smooth(rightDeg - 12, rightDeg, r))
     if (wa > 0) {
       const x = (r - leftDeg) * perDeg
-      tap(sunward, x, Math.min(row, BOTTOM_ROW), a)
+      spanTap(sunward, x, row, span, BOTTOM_ROW, a)
       if (row > BOTTOM_ROW - 30) {
         tap(sunwardSoft, x, BOTTOM_ROW - 30, s)
         const k = smooth(BOTTOM_ROW - 30, BOTTOM_ROW, row)
@@ -96,7 +109,7 @@ for (let Y = 0; Y < HEIGHT; Y++) {
     }
     if (wa < 1) {
       const x = awayAt(r)
-      tap(away, x, Math.min(rowAway, AWAY_BOTTOM_ROW), b)
+      spanTap(away, x, rowAway, span, AWAY_BOTTOM_ROW, b)
       if (over > 0) {
         tap(awaySoft, x, 50, s)
         for (let c = 0; c < 3; c++) b[c] += (s[c] - b[c]) * over
