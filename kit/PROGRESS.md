@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 21:21 UTC · Rounds 12 to 16: critics' and jurors' answers (12, 13, 15, 16 complete; 14 without its motion critic)
-- Last status: 46 · 2026-11-21 20:39 UTC · Phase 4 · unit field · round 12
+- Last push: 2026-11-21 21:25 UTC · Status 47: second rounds judged
+- Last status: 47 · 2026-11-21 21:22 UTC · Phase 4 · unit dawn · round 14
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 21:22 UTC · status 47 · Phase 4 · unit dawn · round 14 · `status-1.jpg`: Dawn 1.5 s · approved left, the judged frame right (final tier) · jury 4 of 5; `status-2.jpg`: Rain 14.0 s · approved left, the judged frame right (final tier) · jury 1 of 5; `status-3.jpg`: Night 26.0 s · approved left, the judged frame right (final tier) · jury 3 of 5; `status-4.jpg`: Frost 36.0 s · approved left, the judged frame right (final tier) · jury 2 of 5
 - 2026-11-21 20:39 UTC · status 46 · Phase 4 · unit field · round 12 · `status-1.jpg`: Field 58.5 s · approved left, the judged commit right (review tier); `status-2.jpg`: Night 26.0 s · approved left, the working line right: the green glow is gone, leaves stand to the sides (review tier); `status-3.jpg`: Frost 36.0 s · approved left, the working line right (review tier); `status-4.jpg`: Dawn 1.5 s · approved left, the working line right (review tier)
 - 2026-11-21 20:14 UTC · status 45 · Phase 4 · unit rain · round 10 · `status-1.jpg`: Rain 14.0 s · approved left, the working line right with the camera nearer and lower (review tier); `status-2.jpg`: Dawn 6.5 s · approved left, the working line right: matt soil, a cooler sky up high (review tier); `status-3.jpg`: Night 26.0 s, the plant · approved left, a builder's still right: upper leaves small, pointed, turned to the sides (review tier, crop); `status-4.jpg`: Frost 36.0 s, the bud · approved left, a builder's still right (review tier, crop)
 - 2026-11-21 19:41 UTC · status 44 · Phase 4 · unit night · round 11 · `status-1.jpg`: Night 26.0 s, the crop · top the approved image, middle ours now, bottom ours with the low mist starting 9 m out (a tested request, not merged yet); `status-2.jpg`: Frost 36.0 s · approved left, ours right with the first fog fixes; `status-3.jpg`: Dawn 6.5 s · approved left, ours right with the far mist; `status-4.jpg`: Field 58.5 s, frozen for its second round · approved left, ours right (review tier)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 16:46 UTC · status 38 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
 - 2026-11-21 16:19 UTC · status 37 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right; `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right; `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
 - 2026-11-21 15:54 UTC · status 36 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Round 6, the cut at 40.00 s as the motion critic sees it; `status-2.jpg`: Round 6, twelve frames across the bloom; `status-3.jpg`: Round 6, 45 s: approved (a) and ours (b), native crops; `status-4.jpg`: Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress)
-- 2026-11-21 15:29 UTC · status 35 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: 45 s, judged frame 1350 at final quality: approved image left, round 6 right; `status-2.jpg`: 50.5 s, judged frame 1515 at final quality: approved image left, round 6 right; `status-3.jpg`: Phase 4 in progress, 58.5 s (field): approved image left, the field builder's branch right (his render, not yet checked by the Builder's own still, not on main)
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 4.33 h |
+| 4 | 8.50 h | 5.04 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 19.79 h |
+| Whole build | 30.00 h | 20.51 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1146,6 +1146,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 21:11 UTC · Rounds 12, 13, 15, 16: measures and packs (night M3 red at 0.797, a severe issue of round 16)
 - 2026-11-21 21:13 UTC · Round 14: measures green, pack checked
 - 2026-11-21 21:21 UTC · Rounds 12 to 16: critics' and jurors' answers (12, 13, 15, 16 complete; 14 without its motion critic)
+- 2026-11-21 21:25 UTC · Status 47: second rounds judged
 
 ## Session log
 
@@ -1248,4 +1249,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Rain 14.0 s · approved left, the working line right with the camera nearer and lower (review tier); Dawn 6.5 s · approved left, the working line right: matt soil, a cooler sky up high (review tier); Night 26.0 s, the plant · approved left, a builder's still right: upper leaves small, pointed, turned to the sides (review tier, crop); Frost 36.0 s, the bud · approved left, a builder's still right (review tier, crop).
 - Status 46, 2026-11-21 20:39 UTC, Phase 4 · unit field · round 12. The fix pass for dawn, rain, night and frost ended at 20:25 inside its 90 minutes. One joint cut (main 921385e) carries 68 tested deliveries from the twelve builders since the first rounds; tests 116 of 116. The second rounds of all five units, rounds 12 to 16, started on it at 20:35. A byte proof of the merged whole: the key frames of the finished bloom and of the field (1350, 1515, 1559, 1755) are unchanged to the byte. The bloom's first frames are not: until 44.6 s the blurred neighbors behind the plant differ by a level or two, because neighbors grow up to 4.6 s behind the plant and still carry the new pre-bloom leaf posture. That is logged as a correction to earlier entries; the kit's rule for finished units asks for unchanged key stills, which hold, so the cut went ahead. Tested and dropped: a farther night camera (a neighbor's leaves entered at the left edge) and f/11 for the rain (no visible gain, and it would move judged dawn frames). Next: Machine checks run until about 20:58 while five builders render the judges' packs at final tier. Then measures, three fresh critics and five jurors per judged frame for each unit; results about 21:45. One more fix pass of at most 90 minutes, third rounds about 23:15. Extra rounds stop at 23:51 UTC. Time used: 19.8 h of 30 h.
   Pictures: Field 58.5 s · approved left, the judged commit right (review tier); Night 26.0 s · approved left, the working line right: the green glow is gone, leaves stand to the sides (review tier); Frost 36.0 s · approved left, the working line right (review tier); Dawn 1.5 s · approved left, the working line right (review tier).
+- Status 47, 2026-11-21 21:22 UTC, Phase 4 · unit dawn · round 14. The second rounds are judged on main 921385e, all but the dawn's motion critic. Scores for match, surface and motion, 9 needed from each: field 5, 4, 4; frost 4, 6, 8; dawn 4, 7, motion open; rain 5, 4, 6; night 4, 6, 7 (first rounds: field 3, 4, 6; frost 3, 6, 9; dawn 5, 3, 5; rain 3, 4, 9; night 3, 7, 4). The film jury moved: dawn 13 of 20 against the approved images' 5 of 10, frost 2 of 5 against 2 of 5 and night 3 of 5 against 4 of 5 pass (the first rounds had 6 of 20, 0 and 0); field 1 of 5 against 4 of 5 and rain 1 of 5 against 3 of 5 fail. No round is a pass. The night's sharpness measure is red at 0.797 where 0.8 is needed and goes into its round as a severe issue. Next: The dawn's motion answer, the five summaries, the critics' and jurors' words to the twelve builders, one fix pass of at most 90 minutes, then the third and last rounds at about 23:15 UTC. Time used: 20.5 h of 30 h.
+  Pictures: Dawn 1.5 s · approved left, the judged frame right (final tier) · jury 4 of 5; Rain 14.0 s · approved left, the judged frame right (final tier) · jury 1 of 5; Night 26.0 s · approved left, the judged frame right (final tier) · jury 3 of 5; Frost 36.0 s · approved left, the judged frame right (final tier) · jury 2 of 5.
 
