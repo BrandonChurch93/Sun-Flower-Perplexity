@@ -1,12 +1,12 @@
-# Status 24
+# Status 25
 
-2026-11-21 10:18 UTC
+2026-11-21 10:42 UTC
 
-- Status 24 · Phase 3 · unit bloom. Round 3 is being judged on the build of 09:53. Machine checks: 12 of 13 green; the determinism check is red (2 pixels of frame 1515 differ by one step between page loads) and an agent is hunting it. Measures on the final tier stills: color and texel density pass; fine detail passes at 50.5 s (0.88 of the approved, 0.8 needed) and fails at 45 s (0.66). The bud at 45 s was read again on the approved image: rays now open as a front from the sun side, the body is smaller and faces the lens more. The lens agent replaced the star spikes with a glow and broad shafts. Both wait on a branch until the critics' pictures are rendered.
-- Next: Send round 3's pack to the three critics and the jury, merge the growth, lens, field, ground and sky changes, then the fix pass on what the critics list. Time used: 9.4 h of 30 h.
+- Status 25 · Phase 3 · unit bloom. Round 3 is judged: not a pass. R1 (match) 5, R3 (surface) 4, R4 (motion) 4, the jury passes (7 of 10 votes on our frames were film, 6 of 10 on the approved images), one machine check red (2 pixels of frame 1515 differ between two renders), sharpness short at 45 s. 8 severe and 19 major issues, the heaviest: the head at 45 s, the star spikes on the sun, the blurred neighbor at the left edge, the field of small sharp heads. Since the judged build, merged: the lens without star spikes, the bud's bracts wrapped over the shut rays, the shut rays as ridged straps, deeper orange rays, larger and more varied heads in the field, the skin without its bright outline, thick leaf stalks.
+- Next: Fix pass, at most 90 minutes: the head more upright and higher at 45 s, each ray opening over three seconds so the first are half lifted at 45 s and the last still fold over the disc at 50.5 s, more and smaller bracts with a taller crown, the neighbor moved to the hero's depth, the fringe of hairs on both outlines of the stem. Then round 4. Time used: 9.9 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frame 1350 as round 3 judges it, final tier (right), beside the approved image (left)
-- `status-2.jpg`: Frame 1515 as round 3 judges it, final tier (right), beside the approved image (left)
-- `status-3.jpg`: Next build, not yet judged: the rays open as a front from the sun side, 43 to 50.5 s (rendered by an agent from the growth branch)
-- `status-4.jpg`: Next build, not yet judged: glow and shafts in place of the star spikes at 45 s (above), the approved image (below)
+- `status-1.jpg`: 45.0 s: approved (left), film now (right)
+- `status-2.jpg`: 50.5 s: approved (left), film now (right)
+- `status-3.jpg`: The head at 45 s: approved (left), film now (right)
+- `status-4.jpg`: The head at 50.5 s: approved (left), film now (right)

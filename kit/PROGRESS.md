@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 10:34 UTC · Round 3: packs built, R1 5, R3 4, R4 4 saved word for word; main holds the growth, lens, field, ground, golden and leaf merges
-- Last status: 24 · 2026-11-21 10:18 UTC · Phase 3 · unit bloom
+- Last push: 2026-11-21 10:43 UTC · Round 3 judged: R1 5, R3 4, R4 4, jury passes; summary and Status 25; bud, petals, skin, golden, stem and field merged
+- Last status: 25 · 2026-11-21 10:42 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 10:42 UTC · status 25 · Phase 3 · unit bloom · `status-1.jpg`: 45.0 s: approved (left), film now (right); `status-2.jpg`: 50.5 s: approved (left), film now (right); `status-3.jpg`: The head at 45 s: approved (left), film now (right); `status-4.jpg`: The head at 50.5 s: approved (left), film now (right)
 - 2026-11-21 10:18 UTC · status 24 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 as round 3 judges it, final tier (right), beside the approved image (left); `status-2.jpg`: Frame 1515 as round 3 judges it, final tier (right), beside the approved image (left); `status-3.jpg`: Next build, not yet judged: the rays open as a front from the sun side, 43 to 50.5 s (rendered by an agent from the growth branch); `status-4.jpg`: Next build, not yet judged: glow and shafts in place of the star spikes at 45 s (above), the approved image (below)
 - 2026-11-21 09:55 UTC · status 23 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s): approved image left, build right; `status-2.jpg`: Frame 1515 (50.5 s): approved image left, build right
 - 2026-11-21 09:27 UTC · status 22 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 on main (top) and the approved bloom-opening (bottom); `status-2.jpg`: Frame 1515 on main (top) and the approved bloom-hero (bottom); `status-3.jpg`: Head at 1350, one to one: build (left), approved (right); `status-4.jpg`: Head at 1515, one to one: build (left), approved (right)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 06:39 UTC · status 16 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face
 - 2026-11-21 06:04 UTC · status 15 · Phase 2 · round 2 · `status-1.jpg`: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; `status-2.jpg`: Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); `status-3.jpg`: Night, frost and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:31 UTC · status 14 · Phase 2 · round 2 · `status-1.jpg`: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; `status-2.jpg`: Night, frost and bloom-opening keys: approved image (left), blockout frame (right); `status-3.jpg`: Bloom-hero and field keys: approved image (left), blockout frame (right)
-- 2026-11-21 05:06 UTC · status 13 · Phase 2 · round 1 · `status-1.jpg`: Whole film after the fix pass, 12 frames in order; `status-2.jpg`: The cuts into night, frost and bloom: last frame before (left), first frame after (right)
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 3.39 h |
+| 3 | 9.00 h | 3.80 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 9.44 h |
+| Whole build | 30.00 h | 9.85 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -489,11 +489,12 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Measures (`npm run measure -- --unit bloom`): 10:09 UTC, on the judged stills at the `final` tier (222.7 s and 223.4 s a frame). M1 pass on both frames. M2 pass on both (0.00 % of the textured pixels in the sharp zone are under 1 texel a pixel, 2 % allowed). M3: frame 1350 fails with a sharpness ratio of 0.659 against the approved image (0.8 needed), frame 1515 passes with 0.881. Numbers in `out/work/measures/bloom.json`
 - [x] Pack (`npm run pack -- --phase 3 --round 3 --unit bloom`): 10:23 UTC, 13.6 minutes. `out/work/packs/round-003/R1` (8 files), `R2` (4), `R3` (6), `R4` (4), each with its manifest; the key stays outside at `out/work/packs/keys/round-003.json` until every answer is in. The Builder looked at every file before sending: all well formed
 - [x] R1 answer: `reviewer_03`, GPT family, sent 10:25 UTC, answered 10:26 UTC. Score 5, not a pass: 6 severe, 10 major. `scorecards/round-003/R1.json`, word for word
-- [ ] R2 jury answers (jurors `reviewer_06` to `reviewer_25`, sent in waves from 10:30 UTC because at most 12 agents run at once)
-- [x] R3 answer: `reviewer_04`, Gemini family, sent 10:25 UTC, answered 10:31 UTC. Score 4, not a pass: 1 severe, 6 major, 1 minor. `scorecards/round-003/R3.json`
+- [x] R2 jury answers: jurors `reviewer_06` to `reviewer_25`, sent in four waves from 10:30 UTC because at most 12 agents run at once; the last answered at 10:35 UTC, none had to be replaced. Each image had one juror from each of five families (GPT, Gemini, Claude, GLM, Grok). Controls: 6 of 10 votes were (a). Judged frames: 7 of 10 (frame 1350 three of five, frame 1515 four of five). R2 passes (0.7 against 0.6 minus 0.2). `scorecards/round-003/R2-JURORS.md` word for word, tally in `R2.json`, key copied in as `KEY.json` after the last answer
+- [x] R3 answer: `reviewer_04`, Gemini family, sent 10:25 UTC, answered 10:33 UTC. Score 4, not a pass: 1 severe, 6 major, 1 minor. `scorecards/round-003/R3.json`
 - [x] R4 answer: `reviewer_05`, Claude family, sent 10:25 UTC, answered 10:28 UTC. Score 4, not a pass: 1 severe, 3 major, 2 minor. `scorecards/round-003/R4.json`
-- [ ] Fixes
-- [ ] Summary, status, push
+- [ ] Fixes (the fix pass ends by 12:10 UTC at the latest: 90 minutes after a floor round)
+- [x] Summary, status, push: `scorecards/round-003/SUMMARY.md`, Status 25
+- Result: not a pass. R1 5, R3 4, R4 4, R2 passes, G3 red, M3 fails at 1350. 8 severe and 19 major issues open
 
 ## Final scores
 
@@ -558,6 +559,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 09:55 UTC · Status 23: round 3 starts on the bloom with every agent's pass merged
 - 2026-11-21 10:18 UTC · Status 24: round 3 judged, measures in, the bud at 45 s read again and the growth change prepared on a branch
 - 2026-11-21 10:34 UTC · Round 3: packs built, R1 5, R3 4, R4 4 saved word for word; main holds the growth, lens, field, ground, golden and leaf merges
+- 2026-11-21 10:43 UTC · Round 3 judged: R1 5, R3 4, R4 4, jury passes; summary and Status 25; bud, petals, skin, golden, stem and field merged
 
 ## Session log
 
@@ -616,4 +618,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Frame 1350 (45.0 s): approved image left, build right; Frame 1515 (50.5 s): approved image left, build right.
 - Status 24, 2026-11-21 10:18 UTC, Phase 3 · unit bloom. Round 3 is being judged on the build of 09:53. Machine checks: 12 of 13 green; the determinism check is red (2 pixels of frame 1515 differ by one step between page loads) and an agent is hunting it. Measures on the final tier stills: color and texel density pass; fine detail passes at 50.5 s (0.88 of the approved, 0.8 needed) and fails at 45 s (0.66). The bud at 45 s was read again on the approved image: rays now open as a front from the sun side, the body is smaller and faces the lens more. The lens agent replaced the star spikes with a glow and broad shafts. Both wait on a branch until the critics' pictures are rendered. Next: Send round 3's pack to the three critics and the jury, merge the growth, lens, field, ground and sky changes, then the fix pass on what the critics list. Time used: 9.4 h of 30 h.
   Pictures: Frame 1350 as round 3 judges it, final tier (right), beside the approved image (left); Frame 1515 as round 3 judges it, final tier (right), beside the approved image (left); Next build, not yet judged: the rays open as a front from the sun side, 43 to 50.5 s (rendered by an agent from the growth branch); Next build, not yet judged: glow and shafts in place of the star spikes at 45 s (above), the approved image (below).
+- Status 25, 2026-11-21 10:42 UTC, Phase 3 · unit bloom. Round 3 is judged: not a pass. R1 (match) 5, R3 (surface) 4, R4 (motion) 4, the jury passes (7 of 10 votes on our frames were film, 6 of 10 on the approved images), one machine check red (2 pixels of frame 1515 differ between two renders), sharpness short at 45 s. 8 severe and 19 major issues, the heaviest: the head at 45 s, the star spikes on the sun, the blurred neighbor at the left edge, the field of small sharp heads. Since the judged build, merged: the lens without star spikes, the bud's bracts wrapped over the shut rays, the shut rays as ridged straps, deeper orange rays, larger and more varied heads in the field, the skin without its bright outline, thick leaf stalks. Next: Fix pass, at most 90 minutes: the head more upright and higher at 45 s, each ray opening over three seconds so the first are half lifted at 45 s and the last still fold over the disc at 50.5 s, more and smaller bracts with a taller crown, the neighbor moved to the hero's depth, the fringe of hairs on both outlines of the stem. Then round 4. Time used: 9.9 h of 30 h.
+  Pictures: 45.0 s: approved (left), film now (right); 50.5 s: approved (left), film now (right); The head at 45 s: approved (left), film now (right); The head at 50.5 s: approved (left), film now (right).
 
