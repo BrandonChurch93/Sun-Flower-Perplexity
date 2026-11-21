@@ -16,6 +16,7 @@ out float vAcross;
 out float vAlong;
 out float vShare;
 out float vSeed;
+out float vSeen;
 out vec3 vWorld;
 void main() {
   vec3 a = (viewMatrix * vec4(aOpen.xyz, 1.0)).xyz;
@@ -37,8 +38,10 @@ void main() {
   vAcross = position.x;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
-  vShare = min(1.0, uGain * mix(1.0, 0.3, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
+  vShare = min(1.0, uGain * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
+  float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
+  vSeen = min(1.0, max(0.09, least * least));
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
   if (-a.z < 0.02 || -b.z < 0.02) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -50,6 +53,7 @@ in float vAcross;
 in float vAlong;
 in float vShare;
 in float vSeed;
+in float vSeen;
 in vec3 vWorld;
 uniform vec3 uLight;
 uniform vec3 uShade;
@@ -58,21 +62,25 @@ void main() {
   float u = vAcross * vAcross;
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
-  float core = exp(-u / 0.09) * swing;
-  vec3 color = mix(uShade, uLight, 0.3 + 0.7 * core);
-  float body = 1.5 * (1.0 - u);
+  float core = exp(-u / vSeen) * swing;
+  float seen = 1.0 - vSeen;
+  // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
+  vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));
+  float body = (1.0 - u) * mix(1.5, 0.35, seen);
   // Seen from above, a drop shows the dark land behind it and little of the band.
-  float level = smoothstep(-0.12, 0.0, normalize(vWorld - uCamPos).y);
-  outColor = vec4(applyFog(color, vWorld), saturate(vShare * body * (0.6 + 0.9 * core)) * mix(0.3, 1.0, level));
+  float rise = normalize(vWorld - uCamPos).y;
+  float level = smoothstep(-0.12, 0.0, rise);
+  float cover = saturate(vShare * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
+  outColor = vec4(applyFog(color, vWorld), cover);
 }
 `
 
 const MAX_STREAKS = 60000
-const HEAVY_REACH_M = 12
-const FINE_REACH_M = 1.3
-// Nearer than this a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
-const FINE_NEAR_M = 0.55
-const SLOWEST_M_PER_S = 1
+const HEAVY_REACH_M = 6
+// The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
+const FINE_NEAR = 0.82
+const FINE_REACH = 1.28
+const SLOWEST_M_PER_S = 0.5
 
 export interface Streaks {
   mesh: THREE.Mesh
@@ -97,7 +105,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 24 },
+    uGain: { value: 16 },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
   }
@@ -119,6 +127,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
       const rise = pose.forward.y / Math.hypot(pose.forward.x, pose.forward.z)
       const eye = pose.position
       const reach = HEAVY_REACH_M
+      const fineFrom = FINE_NEAR * pose.focusM
+      const fineTo = FINE_REACH * pose.focusM
       const i0 = Math.floor((eye.x - reach) / RAIN_CELL_M)
       const i1 = Math.floor((eye.x + reach) / RAIN_CELL_M)
       const j0 = Math.floor((eye.z - reach) / RAIN_CELL_M)
@@ -136,7 +146,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
           if (off > room * tanX * 1.2 + 0.3) continue
           // The highest a drop over this cell can be and still show in the frame.
           const top = Math.max(0.3, eye.y + room * (rise + tanY * 1.2) + 0.2)
-          const series = depth > FINE_NEAR_M && depth < FINE_REACH_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
+          const series = depth > fineFrom - RAIN_CELL_M && depth < fineTo + RAIN_CELL_M ? RAIN_SERIES + RAIN_FINE_SERIES : RAIN_SERIES
           for (let s = 0; s < series && n < MAX_STREAKS; s++) {
             const period = seriesPeriod(i, j, s)
             const last = close + top / (SLOWEST_M_PER_S * down)
@@ -144,6 +154,10 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
               const drop = dropOf(i, j, s, k)
               if (!drop) continue
               if (drop.time > last) break
+              if (s >= RAIN_SERIES) {
+                const away = (drop.x - eye.x) * flat.x + (drop.z - eye.z) * flat.z
+                if (away < fineFrom || away > fineTo) continue
+              }
               const fromOpen = drop.speed * (drop.time - open)
               const fromClose = Math.max(0, drop.speed * (drop.time - close))
               if (fromClose * down > top) continue
