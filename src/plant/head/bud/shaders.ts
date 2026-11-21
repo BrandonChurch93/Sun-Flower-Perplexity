@@ -76,6 +76,7 @@ void main() {
   }
 #else
   float height = 0.0;
+  float gather = -1.0;
   vec2 at = vec2(0.0);
   vec2 slope = vec2(0.0);
   if (kind > 1.5) {
@@ -125,6 +126,7 @@ void main() {
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
+    gather = max(max(smoothstep(0.5, 1.0, ax), smoothstep(0.7, 1.0, u)), 0.5 * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
@@ -155,7 +157,13 @@ void main() {
   }
   t.normal = reliefNormal(face, vWorld, height, 1.0);
   if (kind > 1.5) t.normal = reliefSlope(face, vWorld, at, slope, 1.0);
+  vec3 shade;
+  if (gather >= 0.0) shade = shadeTissueAt(t, vWorld, view, at * vec2(0.012, 0.05) + vInfo.z * 3.0, gather);
+  else shade = shadeTissue(t, vWorld, view);
+  outColor = finish(shade, vWorld, vDepth, -1.0);
 #endif
+#ifdef PLANT_FIELD
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+#endif
 }
 `
