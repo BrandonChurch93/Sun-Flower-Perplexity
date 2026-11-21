@@ -43,7 +43,7 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   // A crust has a border: where the hoar is thick enough it closes, and the border is ragged at the scale of its grains.
   float seen = 1.0 - smoothstep(0.4, 1.2, reach * (FROST_GRAIN_M / 0.0013));
   float ragged = grown + 0.3 * (fine - 0.5) * seen + 0.2 * (bank - 0.5);
-  float veil = 0.02 + 0.1 * grown + smoothstep(0.42, 0.58, ragged) * mix(0.7, 0.4 + 0.6 * fine, seen);
+  float veil = 0.02 + 0.1 * grown + smoothstep(0.38, 0.66, ragged) * mix(0.6, 0.12 + 0.88 * fine * fine, seen);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
   float chance = 0.94 * grown;
   float most = 0.17 + 0.18 * grown;
