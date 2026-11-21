@@ -13,7 +13,7 @@ export const litterTileM = 2.9
 export const ridgeHeightM = 0.07
 
 // The plant breaking the surface: the soil round the stem lifts over riseS seconds into plates of this height and reach, split by this many cracks.
-export const emergence = { riseS: 2.3, liftM: 0.0045, radiusM: 0.018, cracks: 5 }
+export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
 export const soilHeight = /* glsl */ `
