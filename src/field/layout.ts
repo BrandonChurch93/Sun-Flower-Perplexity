@@ -66,6 +66,19 @@ export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time
 export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time))
 // In the rain the young rows are broad: each plant spreads its leaves wide over the open ground before the rows close and the leaves hang.
 export const wideAt = (time: number): number => 0.6 * ramp(8, 13, time) * (1 - ramp(16, 24, time))
+// From 52 s the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
+// A neighbor's own turn off the camera's side, its height, the size of its head and how far the head nods.
+export const lateAt = (time: number): number => ramp(52, 57, time)
+const handSet = new Set<number>()
+export interface Own { turn: number; tall: number; head: number; nod: number }
+export function ownOf(id: number): Own {
+  // The neighbors set by hand keep their turn and their height: only their heads differ.
+  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id) }
+  const off = hash01(SEED, 80, id) < 0.3 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.15 + 0.8 * Math.pow(hash01(SEED, 87, id), 1.3) }
+}
+// The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
+export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
@@ -244,11 +257,13 @@ export function fieldPlaces(): FieldPlaces {
     do id++
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
+    handSet.add(id)
   }
   const front: number[] = []
   FRONT.forEach((f, n) => {
     do id++
     while (kindOf(id) !== f.kind)
+    handSet.add(id)
     const lean = (channel: number) => Math.max(-0.2, Math.min(0.2, bell(id, channel) * 0.075))
     front.push(-toward.x * f.along + right.x * f.across, -toward.z * f.along + right.z * f.across, meanTurn + f.turn, f.size, lean(30), lean(33), 0.35 + 0.5 * hash01(SEED, 8, id), id)
     for (let u = 0; u < UNDER_PER_GAP; u++) {
