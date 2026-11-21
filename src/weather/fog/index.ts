@@ -61,9 +61,10 @@ uniform float uSunShare;
 uniform float uDeep;
 ${fogLight}
 const float BANK_SOLID = 0.5;
-const float BANK_UNDER = 0.3;
+const float BANK_UNDER = 0.12;
+const vec2 SUN_SIDE = vec2(0.15, 0.4);
 const vec3 BANK_AMONG = vec3(0.72, 1.0, 0.8);
-const vec3 SUN_AMONG = vec3(0.75, 1.0, 1.3);
+const vec3 SUN_AMONG = vec3(0.65, 1.12, 1.75);
 float bankBroad(vec2 q, float y) {
   return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
 }
@@ -88,8 +89,8 @@ void main() {
   // The sun's disc is drawn as the whole fog lets it through, so no bank covers it again. Late in the frost the banks thin round it.
   float thick = mix(smoothstep(0.3, 0.72, here), 1.0, BANK_SOLID) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.85, 1.0, vInfo.y / vInfo.z);
-  // Under the leaves the drifting fog is thin: it lies over the closed canopy.
-  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, smoothstep(0.3 * uCanopyM, 0.7 * uCanopyM, vWorld.y));
+  // Under the leaves the drifting fog is thin: it lies over the closed canopy. Toward the sun it glows all the way down.
+  float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d) * mix(BANK_UNDER, 1.0, max(smoothstep(0.3 * uCanopyM, 0.7 * uCanopyM, vWorld.y), 1.0 - smoothstep(SUN_SIDE.x, SUN_SIDE.y, theta)));
   // Down among the plants little of the sky and none of the sun's glow reaches the fog.
   float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
   vec3 calm = fogCalm(v);
@@ -115,11 +116,11 @@ const BANKS: Bank[] = [
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
 const CLOSE_OVER_S = 4
-const SUN_NEAR = 0.4
-const SUN_FAR = 2.2
+const SUN_NEAR = 0.5
+const SUN_FAR = 2.4
 const DEEP_NEAR = 0.12
-const DEEP_FAR = 0.45
-const FAR_M = 7
+const DEEP_FAR = 0.33
+const FAR_M = 4.5
 
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))

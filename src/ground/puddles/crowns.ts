@@ -32,24 +32,24 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 5.0 + floor(5.0 * seed);
-  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 1.4, onWater);
+  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 0.55, onWater);
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
-    float r = wide * (0.065 * (1.0 - 0.6 * v) + 0.07 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.85, 1.0, k) * 0.5);
-    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
-    return vec3(cos(th) * r + lean.x, wide * (0.6 + 0.5 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
+    float r = wide * (0.06 + 0.8 * pow(1.0 - v, 2.5) + 0.19 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * sqrt(stands);
+    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.87 * wide * v * v * stands;
+    return vec3(cos(th) * r + lean.x, wide * (2.3 + 1.7 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.7, 0.8, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float tall = wide * mix(0.7, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, mix(0.22, 0.12, onWater), x) * (1.0 - smoothstep(mix(0.5, 0.72, onWater), 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
-  float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.5);
+  float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.0);
   float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
   float ragged = 0.2 + 1.3 * lot * lot;
   float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
   float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v;
-  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (mix(0.5, 0.75, onWater) * v + 1.1 * finger);
+  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.8, onWater) * v + mix(1.1, 0.9, onWater) * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
   float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (0.8 + foot + 0.2 * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
@@ -80,6 +80,7 @@ void main() {
   float onWater = smoothstep(0.0, 0.006, depth);
   if (drop.w < 0.0005 && onWater < 0.6) return;
   vMud = 1.0 - onWater;
+  if (part.x < 0.5 && x >= 1.0) vTop = 0.4 * part.z;
   float base = depth > 0.0 ? uLevel.x : ground;
   vec3 at;
   vec3 n;
@@ -159,12 +160,12 @@ void main() {
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.9 * smoothstep(0.5, 1.0, vTop) + 0.9 * sin(17.0 * vTop + 2.3 * vFlute)));
-      float one = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
+      float one = mix(0.07, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
       float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.85 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.75 * vTop, 1.0, vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.18 + 0.3 * lip), mix(vec3(0.022, 0.019, 0.016), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
-      alpha = mirror + (1.0 - mirror) * mix(0.3, mix(0.7, 0.92, vMud), silt);
+      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.18 + 0.3 * lip), mix(vec3(0.05, 0.044, 0.038), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
+      alpha = mirror + (1.0 - mirror) * mix(0.6, 0.92, silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
