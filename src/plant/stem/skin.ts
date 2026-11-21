@@ -133,7 +133,9 @@ void main() {
   // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.
   float graze = 1.0 - abs(dot(face, view));
   float toSun = saturate(dot(-view, uSunDir));
-  color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
+  // Under a light bluer than it is red, the moon or an overcast, the halo is the light's own color.
+  vec3 halo = mix(vec3(0.8, 0.95, 0.6), vec3(1.0), smoothstep(0.0, 0.2, (uSunColor.b - uSunColor.r) / max(uSunColor.g, 1e-4)));
+  color += uSunColor * halo * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
 #else
   // The young stem is clear, moist flesh: the sun enters at its outline and leaves toward the lens.
   vec3 color = shadeTissueClear(t, vWorld, view, vec2(vCoord.x * 0.08, vCoord.z * ${TOP_M.toFixed(4)}), 0.0, 0.7 * max(pale, fresh));
