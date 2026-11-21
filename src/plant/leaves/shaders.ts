@@ -114,12 +114,12 @@ void main() {
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.96, 1.25, fine);
 
-  vec3 upper = vec3(0.03, 0.075, 0.05) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
+  vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), 0.85 * vein.r + 0.45 * vein.b);
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
-  vec3 albedo = (top ? upper * (1.0 + 0.5 * net + 0.7 * cells) : under * (1.0 + 0.8 * net + 0.8 * cells)) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
+  vec3 albedo = (top ? upper * (1.0 + 0.6 * net + 1.1 * cells) : under * (1.0 + 0.8 * net + 0.8 * cells)) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
@@ -127,10 +127,11 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.5 + 1.3 * smoothstep(0.35, 0.85, mark.g)) * taper * uGlow;
-  vec3 through = vec3(0.14, 0.15, 0.012) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.35 - 1.05 * thick);
+  float thin = (0.4 + 1.7 * smoothstep(0.35, 0.85, mark.g)) * taper * uGlow;
+  // A leaf holds back red: what comes through is a fresh green, not the sun's own color.
+  vec3 through = vec3(0.14, 0.21, 0.049) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
-  through = mix(through, vec3(0.06, 0.071, 0.006) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
+  through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
   through *= 1.0 - 0.88 * vein.r;
   through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
@@ -152,7 +153,7 @@ void main() {
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.95;
   t.wax = (top ? 0.45 : 0.04) * margin;
-  t.sheen = (top ? 0.3 : 0.12) * margin;
+  t.sheen = (top ? 0.5 : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
