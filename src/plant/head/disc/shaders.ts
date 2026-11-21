@@ -74,6 +74,8 @@ void main() {
   // Under the feet of the rays the florets stay shut and low. The line wanders, so the ring of open florets has no clean circle for an outline.
   float lip = rho + 0.018 * sin(aFloret.y * 5.0 + 1.0) + 0.012 * sin(aFloret.y * 11.0 + 2.3) + 0.024 * (h3 - 0.5);
   float under = smoothstep(RING_SHARE - 0.005, RING_SHARE + 0.03, lip);
+  // Until the rays lift off them the outer florets stay low and dark in the fold between the rays and the bracts.
+  float tuck = (1.0 - smoothstep(SHOWN_FROM + 6.5, SHOWN_FROM + 9.5, f.time)) * smoothstep(0.72, 0.86, rho) * (0.75 + 0.25 * h1);
   float phase = (f.time - aFloret.z) / aFloret.w;
   float open = smoothstep(0.0, 1.0, phase) * (1.0 - under);
   float lobes = smoothstep(0.1, 0.75, phase) * (1.0 - under);
@@ -94,7 +96,7 @@ void main() {
   vec3 ey = fy * ct - fx * st;
 
   float middle = smoothstep(0.0, 0.24, rho);
-  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (0.8 + 0.4 * h1) * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung) * (1.0 + 0.1 * blotch) * (1.0 - 0.8 * under);
+  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (0.8 + 0.4 * h1) * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung) * (1.0 + 0.1 * blotch) * (1.0 - 0.8 * under) * (1.0 - 0.6 * tuck);
   float tube = w * 2.6 * (0.72 + 0.5 * aSeed.x) * (1.0 + 0.1 * blotch);
   float throat = mix(0.78 * tall, tube, open);
   float rc = w * 0.5;
@@ -206,7 +208,7 @@ void main() {
   vState = vec4(state, rho, aSeed.x, swell);
   vKind = vec4(ripe, lump, 0.62 + 0.76 * h3, h1);
   // The thatch shades the buds it lies over.
-  vUnder = piece < 2.5 ? max(under, 0.7 * over) : under;
+  vUnder = max(piece < 2.5 ? max(under, 0.7 * over) : under, 0.85 * tuck);
   vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
@@ -260,8 +262,8 @@ void main() {
     dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
-    vec3 young = mix(vec3(0.065, 0.13, 0.03), vec3(0.21, 0.33, 0.075), ridge);
-    young = mix(young, vec3(0.4, 0.5, 0.13), smoothstep(0.75, 1.0, along) * (0.1 + 0.45 * vKind.w));
+    vec3 young = mix(vec3(0.06, 0.12, 0.028), vec3(0.17, 0.275, 0.062), ridge);
+    young = mix(young, vec3(0.32, 0.42, 0.105), smoothstep(0.75, 1.0, along) * (0.1 + 0.45 * vKind.w));
     closed = mix(young * mix(0.32, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.12, 0.04, 0.006), vec3(0.24, 0.085, 0.011), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
