@@ -114,7 +114,7 @@ void main() {
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.98, 1.4, fine);
 
-  vec3 upper = vec3(0.028, 0.06, 0.03) * mix(vec3(1.0), var, 0.85) * tone;
+  vec3 upper = vec3(0.03, 0.075, 0.05) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
@@ -151,7 +151,7 @@ void main() {
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.95;
-  t.wax = (top ? 0.3 : 0.04) * margin;
+  t.wax = (top ? 0.45 : 0.04) * margin;
   t.sheen = (top ? 0.3 : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
