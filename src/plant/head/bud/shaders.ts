@@ -135,14 +135,14 @@ void main() {
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     // Shut, the foot of a bract lies under the points of the row below it.
-    t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.2, 1.0, smoothstep(0.0, 0.5, u)), uBudEarly), uBudShut);
+    t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.42, 1.0, smoothstep(0.0, 0.4, u)), uBudEarly), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
     // Rime settles on the points and on a lip the air reaches: where a lip lies tucked under its neighbor there is none.
     float open = smoothstep(0.1, 0.35, u) * (0.75 + 0.25 * smoothstep(-0.25, 0.25, sin(u * 11.0 + seed * 40.0 + step(0.0, x) * 2.1) * sin(u * 5.3 + seed * 17.0 + 1.0) + 0.15));
-    gather = max(max(smoothstep(mix(0.82, 0.72, uBudEarly * uBudShut), 1.0, ax) * mix(1.0, open, uBudEarly * uBudShut), smoothstep(mix(0.8, 0.5, uBudEarly * uBudShut), 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
+    gather = max(max(smoothstep(mix(0.82, 0.64, uBudEarly * uBudShut), 1.0, ax) * mix(1.0, open, uBudEarly * uBudShut), smoothstep(mix(0.8, 0.5, uBudEarly * uBudShut), 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);

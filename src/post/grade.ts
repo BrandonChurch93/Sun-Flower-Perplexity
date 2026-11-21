@@ -80,21 +80,26 @@ vec3 tone(vec3 c) {
   vec3 over = max(y - uKnee, 0.0);
   return min(y, uKnee) + uTop * (1.0 - exp(-over / uTop));
 }
-// The star the edges of the aperture blades draw round a point of light: seven blades, fourteen soft rays, one pair far longer than the rest, widest at the light and fading to nothing, as bright as what shows of the light itself.
+float starRay(float a, float k, float r) {
+  float id = mod(k + 28.0, 14.0);
+  vec3 h = vec3(hash31(vec3(id, 5.0, 2.0)), hash31(vec3(id, 3.0, 7.0)), hash31(vec3(id, 9.0, 4.0)));
+  float t = saturate(1.0 - r / (uStarLen * 0.75 * (0.45 + 0.55 * h.x)));
+  float across = (a - k - 0.5 * (h.z - 0.5)) * (6.2831853 / 14.0) * r;
+  float w = 3.0 * uSize.y / 1080.0 + 0.07 * r;
+  // No two rays alike, and a few of the fourteen fail altogether.
+  return exp(-across * across / (w * w)) * t * sqrt(t) * smoothstep(0.15, 0.45, h.y) * mix(0.35, 1.0, h.y);
+}
+// Seven blades throw fourteen rays: broad soft wedges that open as they run and end in the haze.
 vec3 star(vec2 px) {
   vec2 d = px - uSunAt * uSize;
   float r = length(d);
   if (uStar <= 0.0 || r > uStarLen) return vec3(0.0);
   float a = atan(d.y, d.x) * (14.0 / 6.2831853) + 0.31;
-  float k = floor(a + 0.5);
-  float h = hash31(vec3(mod(k + 14.0, 7.0), 5.0, 2.0));
-  float len = uStarLen * (0.28 + 0.72 * h * h * sqrt(h)) * (0.8 + 0.2 * hash31(vec3(k, 3.0, 7.0)));
-  float across = abs(a - k) * (6.2831853 / 14.0) * r;
-  float t = saturate(1.0 - r / len);
-  float w = (0.7 + 1.5 * t) * uSize.y / 1080.0;
-  float x = across * across / (w * w);
-  float line = 0.7 * exp(-x) + 0.3 * exp(-x / 12.0);
-  return texture(tHot, uSunAt).rgb * vec3(1.0, 0.62, 0.3) * (line * t * t * uStar);
+  float k = floor(a);
+  // Like the glow, the star follows how much of the disc shows, not how bright the mist leaves it.
+  vec3 light = uSunClear > 0.0 ? vec3(uSunClear * pow(min(texelFetch(tSun, ivec2(0), 0).r * 3.2 / uSunClear, 1.5), 0.22)) : texture(tHot, uSunAt).rgb;
+  // Over the bright sky above the sun's line the rays all but sink.
+  return light * vec3(1.0, 0.62, 0.3) * ((starRay(a, k, r) + starRay(a, k + 1.0, r)) * uStar * mix(1.0, 0.3, smoothstep(-0.25, 0.25, d.y / max(r, 1.0))));
 }
 // How open the sky is round a pixel. A leaf whose own blur happens to match that of infinity carries the sky's mark along a thin line, and the mark ends hard where a blurred edge begins, so it is read over a small disc and only a clear majority counts.
 float openSky(ivec2 p) {
@@ -156,7 +161,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   if (uSpokes > 0.0) {
     float fine = 0.45 * fanNoise(turn * 38.0, 38.0, 3.0) + 0.35 * fanNoise(turn * 94.0, 94.0, 7.0) + 0.2 * fanNoise(turn * 210.0, 210.0, 11.0);
     float spoke = smoothstep(0.2, 0.85, fine);
-    beams = mix(beams, mix(0.4, 0.7, down) + mix(1.5, 0.9, down) * spoke * sqrt(spoke), uSpokes);
+    beams = mix(beams, 0.9 + 0.3 * down * spoke * sqrt(spoke), uSpokes);
   }
   float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
   // Nothing in focus and nothing nearer than the focus is behind the lit air. Far things blur up to the circle of infinity, near leaves beyond it.
@@ -172,7 +177,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // The lit air lies thickest along the horizon under the sun, in front of the far hills.
   float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
-  float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
+  float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * (1.0 - uSpokes * mix(1.0, 0.6, down)) * rays(turn, r, down) * near;
   // Seen from over the whole field the lit air lies as a wide warm veil on the land to both sides of the sun, thinner the farther from it, and leaves the sun's own size alone.
   // Beside the sun a dark wood stays dark and the sky above keeps its own tone: the air there is thin.
   air *= 1.0 - uSpokes * (1.0 - down) * mix(0.7, 0.45, smoothstep(-0.012, 0.0, d.y));

@@ -3,15 +3,15 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { beadLook } from './crumbs.ts'
 import { cropLight } from './light.ts'
-import { groundStates, soilHeight } from './soil.ts'
+import { MATT_EASE_S, groundStates, soilHeight } from './soil.ts'
 
 // The grass close to the plant, where the dawn lens sees single blades: each blade is a folded ribbon with a mid line, and carries beads of dew that are small balls of their own.
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame. Where beadsSeen is given, only that many of each blade's beads are made.
-// The first stands at the left edge of the dawn's opening frames, in front of the plant. The second stands between the plant and the sun, low at the frame's edge in the first frame, and grows through the dawn no faster than the seedling. The rest are sprouts on the left.
+// The first stands at the left edge of the dawn's opening frames, in front of the plant: two short blades, since the lens draws back and brings it toward the middle of the frame. The second stands between the plant and the sun, low at the frame's edge in the first frame, and grows through the dawn no faster than the seedling. The rest are sprouts on the left.
 export interface Clump { x: number; z: number; blades: number; heightM: [number, number]; widthM: [number, number]; spreadM: number; lean: [number, number]; bornS: [number, number]; growS: number; beads: number; headingRad?: [number, number]; beadsSeen?: number }
 // Where `drops` is given the dew is drops, not balls: only `share` of them are kept, most are small, each lies on the blade with a flat foot and sags down it, and a tip's drop hangs under the tip as a tear. The blades then bow sideways and their edges run unevenly.
 export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number; drops?: { share: number; tipShare: number; flat: number; sag: number; bowM: number; uneven: number } }
-export const beadSizes: BeadSizes = { tipM: [0.0005, 0.0008], leastM: 0.00012, moreM: 0.0008, drops: { share: 0.3, tipShare: 0.5, flat: 0.55, sag: 0.45, bowM: 0.1, uneven: 0.12 } }
+export const beadSizes: BeadSizes = { tipM: [0.0005, 0.0008], leastM: 0.0002, moreM: 0.0009, drops: { share: 0.4, tipShare: 0, flat: 0.55, sag: 0.45, bowM: 0.1, uneven: 0.12 } }
 export const beadSizesKept: BeadSizes = { tipM: [0.00045, 0.0007], leastM: 0.00016, moreM: 0.0004 }
 export const clumpsKept: Clump[] = [
   { x: -0.042, z: 0.034, blades: 3, heightM: [0.034, 0.048], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
@@ -20,14 +20,20 @@ export const clumpsKept: Clump[] = [
   { x: -0.088, z: -0.04, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
 export const clumps: Clump[] = [
-  { x: -0.032, z: 0.06, blades: 3, heightM: [0.036, 0.048], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1], beadsSeen: 5 },
-  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [-2.5, -0.5], growS: 9.5, beads: 20 },
+  { x: -0.032, z: 0.06, blades: 2, heightM: [0.02, 0.027], widthM: [0.0015, 0.002], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 2, headingRad: [-2.0, -1.1] },
+  { x: 0.046, z: -0.07, blades: 14, heightM: [0.04, 0.09], widthM: [0.0028, 0.0046], spreadM: 0.016, lean: [0.08, 0.45], bornS: [-2.5, -0.5], growS: 9.5, beads: 44 },
   { x: -0.15, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
   { x: -0.138, z: -0.036, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
+  { x: -0.105, z: -0.02, blades: 3, heightM: [0.012, 0.02], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [1.6, 2.8], growS: 3.5, beads: 5 },
+  { x: -0.12, z: -0.11, blades: 3, heightM: [0.012, 0.022], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3.5, beads: 5 },
+  { x: -0.075, z: -0.16, blades: 2, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2.4, 3.6], growS: 3.5, beads: 4 },
 ]
 
 const ROWS = 16
+// Until the bloom every blade also moves in the air on its own, eased out over the last seconds before it.
+const GUST = '1.3'
 const FOLD = 0.35
+const DROOP_BEADS = 12
 
 export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const random = stream('ground blades')
@@ -67,7 +73,7 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
       const seed = random.next()
       const born = random.range(clump.bornS[0], clump.bornS[1])
       const tipBead = random.next() < 0.45
-      const droop = (tipBead ? 0.16 : 0.05) + 0.012 * clump.beads
+      const droop = (tipBead ? 0.16 : 0.05) + 0.012 * Math.min(clump.beads, DROOP_BEADS)
       const bow = drops ? loose.range(-drops.bowM, drops.bowM) : 0
       const turn = drops ? loose.range(0.6, 1.5) : 0
       const edges = drops ? [loose.range(0, 6.28), loose.range(0, 6.28), loose.range(0, 6.28), loose.range(0, 6.28)] : [0, 0, 0, 0]
@@ -187,6 +193,7 @@ in vec3 aNormal;
 in vec4 aRoot;
 in vec4 aCenter;
 in vec4 aAlong;
+uniform float uKeptS;
 uniform float uDew;
 uniform float uWet;
 out vec3 vWorld;
@@ -213,7 +220,11 @@ void main() {
   vec2 c = (modelMatrix * vec4(aRoot.xyz, 1.0)).xz;
   world.y += soilHeight(c, soilLod(c)) - 0.001;
   float t = aAlong.x;
-  world.xz += vec2(sin(uTime * 1.7 + aRoot.x * 190.0), cos(uTime * 1.3 + aRoot.z * 170.0)) * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
+  float early = 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
+  float own = aAlong.z * 6.2832;
+  vec2 sway = vec2(sin(uTime * 1.7 + aRoot.x * 190.0), cos(uTime * 1.3 + aRoot.z * 170.0));
+  vec2 gust = vec2(sin(uTime * 3.3 + own * 3.0) + 0.6 * sin(uTime * 5.9 + own * 7.0), cos(uTime * 2.7 + own * 5.0) + 0.6 * cos(uTime * 4.9 + own * 11.0));
+  world.xz += (sway + early * ${GUST} * gust) * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;

@@ -11,7 +11,7 @@ export { laneDir }
 // Round the plant, where the dawn lens is a finger's width away: grains under a millimeter, aggregates of a few millimeters and masses over a centimeter, each aggregate and mass built of smaller crumbs stuck to it.
 // `beside` is the share of a scatter laid in a band across the way to the camera at the plant's own distance, where the dawn lens is sharp. `frontM` is the largest size between that band and the lens, so the band is seen over it.
 // `rugged` is how broken a lump's own outline is, from 0 for a ball; a large lump with no crumbs of its own is kept round, or it reads as a stone. `cover` is how much of a lump's upper side its own crumbs hide, and `childM` their sizes. `beads` is the share of lumps and crumbs that carry a bead of dew.
-export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number; rugged?: number }
+export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number; rugged?: number; finer?: boolean }
 export const crumbScatter: Scatter = { count: 3500, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.1, outerM: 0.9, spread: 1.4, stones: 0.03, sink: 0.38 }
 export const clodScatterKept: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.01, skew: 1.8, innerM: 0.2, outerM: 0.9, spread: 1.3, stones: 0, sink: 0.45, rugged: 0.4 }
@@ -22,6 +22,10 @@ export const fineReachM = [1.2, 1.5]
 // A film of dew on a crumb gives back more of the sky that lights it, and most of its blue.
 export const dewFill = [0.6, 0.62, 1.38]
 export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
+
+// Until the bloom the lumps round the stem and their crumbs are built of finer faces, so no flat face shows where the lens is sharp.
+export const lumpScatterYoung: Scatter = { ...lumpScatter, finer: true }
+export const massScatterYoung: Scatter = { ...massScatter, finer: true }
 
 const LANE_CRUMB_M = 0.0022
 // Where the husk comes to rest it lies on the soil itself: no loose lump larger than a lane crumb within reach of it, and full size only from twice that reach.
@@ -105,7 +109,7 @@ const lean = new THREE.Vector3(0.31, 0.83, 0.46)
 // One rounded shape of a lump: where it sits from the lump's foot, its size along its own three axes, how it is turned, and what it is. Kind 0 is soil, 1 a stone, 2 a bead of dew.
 interface Blob { x: number; y: number; z: number; ox: number; oy: number; oz: number; sx: number; sy: number; sz: number; e: number[]; radius: number; whole: number; shade: number; tone: number; kind: number; rugged: number; detail: number }
 
-const detailOf = (radius: number, most: number): number => Math.min(most, radius < 0.00045 ? 1 : radius < 0.0016 ? 2 : radius < 0.004 ? 3 : 5)
+const detailOf = (radius: number, most: number, finer = false): number => Math.min(most, radius < (finer ? 0.0003 : 0.00045) ? 1 : radius < (finer ? 0.0007 : 0.0016) ? 2 : radius < 0.004 ? 3 : 5)
 
 // Every crumb is shaped here, once, so that drawing one costs no noise: each vertex carries its offset from the foot of its lump, its normal and the direction it had on the plain ball.
 export function scatter(name: string, s: Scatter): THREE.Mesh {
@@ -146,7 +150,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const shade = random.next() * 97
     const tone = random.next()
     const stone = random.next() < s.stones ? 1 : 0
-    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.rugged ?? (s.cover ? 0.85 : 1), detail: detailOf(radius, s.detail) })
+    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.rugged ?? (s.cover ? 0.85 : 1), detail: detailOf(radius, s.detail, s.finer) })
     const on = (wx: number, wy: number, wz: number, sink: number): [number, number, number] => {
       const lx = e[0] * wx + e[1] * wy + e[2] * wz
       const ly = e[4] * wx + e[5] * wy + e[6] * wz
@@ -180,7 +184,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
         const [ox, oy, oz] = on(wx, wy, wz, 0.9)
         const size = s.childM[0] + (most - s.childM[0]) * Math.pow(random.next(), 2)
         const ce = spin()
-        blobs.push({ x, y, z, ox, oy, oz, sx: size * (0.75 + 0.6 * random.next()), sy: size * (0.6 + 0.5 * random.next()), sz: size * (0.75 + 0.6 * random.next()), e: ce, radius: size, whole: radius, shade: shade + 3.7 * (c + 1), tone: Math.min(1, Math.max(0, tone + 0.5 * (random.next() - 0.5))), kind: random.next() < 0.03 ? 1 : 0, rugged: 1, detail: detailOf(size, 2) })
+        blobs.push({ x, y, z, ox, oy, oz, sx: size * (0.75 + 0.6 * random.next()), sy: size * (0.6 + 0.5 * random.next()), sz: size * (0.75 + 0.6 * random.next()), e: ce, radius: size, whole: radius, shade: shade + 3.7 * (c + 1), tone: Math.min(1, Math.max(0, tone + 0.5 * (random.next() - 0.5))), kind: random.next() < 0.03 ? 1 : 0, rugged: 1, detail: detailOf(size, s.finer ? 3 : 2, s.finer) })
         if (s.beads && wy > 0.2 && random.next() < s.beads) bead(ox, oy, oz, size)
       }
     } else if (s.beads && stone === 0 && random.next() < s.beads) bead(0, 0, 0, Math.min(sx, sy, sz))
@@ -325,9 +329,10 @@ void main() {
   vec2 out2 = c / max(r, 1e-4);
   float own = dot(aCenter.xz, vec2(1731.0, 977.0));
   float mass = smoothstep(0.0036, 0.0046, aCenter.w);
-  float start = 0.2 + 1.5 * hash11(own);
+  float first = hash11(own);
+  float start = 0.02 + 1.3 * first * first;
   float near = 1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r);
-  float go = smoothstep(start, start + 0.9, uTime) * near * (1.0 - mass);
+  float go = smoothstep(start, start + 0.6, uTime) * near * (1.0 - mass);
   float heave = smoothstep(-0.8, uEmerge.x, uTime) * near * mass;
   float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (0.25 + 0.3 * hash11(own + 7.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
@@ -370,6 +375,8 @@ ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
 const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
 const vec3 DEW_FILL = vec3(${dewFill.join(', ')});
+// At dawn the sun skims over each lump's crest: its rough upper side toward the sun takes the light this far round, at this strength.
+const vec2 CREST = vec2(0.3, 0.8);
 ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -383,7 +390,7 @@ void main() {
   }
   vec3 face = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
   face *= sign(dot(face, v) + 1e-6);
-  vec3 side = abs(face);
+  vec3 side = abs(uTime < uKeptS ? normalize(vNormal) : face);
   vec2 lay = side.y > 0.62 ? vWorld.xz : (side.x > side.z ? vWorld.zy : vWorld.xy);
   vec2 uv = TURN_K * lay * (uTiles.x * uScales.x) + vec2(vSeed.x * 0.37, vSeed.x * 0.61);
   vec4 cD = texture(tColor, uv);
@@ -412,7 +419,11 @@ void main() {
   vec3 toSky = normalize(mix(n, smoothN, 0.6 * dull));
   float wrap = mix(0.25, 0.2, uDew) * (1.0 - 0.8 * dull * uDew);
   vec3 toSun = normalize(mix(n, smoothN, 0.85 * dull * uDew));
-  vec3 color = albedo * (uSunColor * saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap)) * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
+  float sunOn = saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap));
+  float crest = saturate((dot(normalize(vBall), uSunDir) + CREST.x) / (1.0 + CREST.x)) * smoothstep(0.4, 0.8, dD.a) * (0.45 + grit.a);
+  float dawn = dawnOnly() * uDew;
+  sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
+  vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
