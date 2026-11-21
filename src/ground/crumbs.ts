@@ -7,7 +7,7 @@ import { groundStates, soilHeight } from './soil.ts'
 
 // Loose soil on the near ground: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
 export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number }
-export const crumbScatter: Scatter = { count: 3000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.38 }
+export const crumbScatter: Scatter = { count: 5000, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.008, outerM: 0.9, spread: 1.7, stones: 0.03, sink: 0.38 }
 export const clodScatter: Scatter = { count: 220, detail: 2, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.03, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 
 // The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
