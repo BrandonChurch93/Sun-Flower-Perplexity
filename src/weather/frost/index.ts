@@ -42,6 +42,15 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 const float MELT_FROM_S = 38.0;
 const float MELT_SHARE = 0.12;
 const float DROP_SHARE = 0.007;
+const float NEEDLE_PX = 0.9;
+const float NEEDLE_LEAST = 0.2;
+const float TUFT_MOST_M = 0.0022;
+const float SPIKE_MOST_M = 0.0035;
+const float SPIKE_LEAST = 0.45;
+const float SPIKE_MOST = 1.0;
+const float PATCH_M = 0.035;
+const float PATCH_LEAST = 0.25;
+const float PATCH_MOST = 1.0;
 
 float hash(float own, float n) {
   return fract(sin(own * 917.13 + n * 37.71 + 0.31) * 4375.85);
@@ -66,8 +75,11 @@ void main() {
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
   bool spike = chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74);
   float h5 = hash(own, 5.0);
-  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.5 : 0.8));
-  float size = a.w * plantSize() * (spike ? 0.7 + 1.4 * h5 * h5 : 0.2 + 0.3 * h5) * uPlantFrost;
+  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.9 : 2.2));
+  // Frost does not lie evenly: it stands thick on one stretch of an edge and thin on the next, most of it short and a little of it long.
+  vec3 where = a.xyz * (6.2832 / PATCH_M);
+  float lush = saturate(0.5 + 0.9 * sin(where.x + 1.7 * sin(where.z * 0.61 + 0.4)) * sin(where.y * 0.83 + 1.3 * sin(where.x * 0.47 + 2.1)));
+  float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.15 + 0.5 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.5 + 0.8 * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize() * uPlantFrost;
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
   float high = uMelts * smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
   float turn6 = hash(own, 6.0) / MELT_SHARE;
@@ -86,7 +98,7 @@ void main() {
   vec3 foot = root;
   vec3 axis = grow;
   float reach = size;
-  float wide = 0.16 * size;
+  float wide = 0.09 * size;
   if (feather) {
     vec3 flat0 = e1 * cos(6.2832 * hash(own, 10.0)) + e2 * sin(6.2832 * hash(own, 10.0));
     if (needle > 0) {
@@ -94,14 +106,20 @@ void main() {
       foot = root + grow * (size * along);
       axis = normalize(grow * (0.5 + 0.5 * hash(own, 12.0 + n)) + flat0 * (mod(n, 2.0) * 2.0 - 1.0));
       reach = size * (0.5 - 0.4 * along) * (0.7 + 0.6 * hash(own, 13.0 + n));
-      wide = 0.1 * size;
+      wide = 0.06 * size;
     }
   } else {
     axis = normalize(grow + aside * (needle == 0 ? 0.0 : spike ? 0.35 + 0.5 * hash(own, 14.0 + n) : 0.3 + 0.6 * hash(own, 14.0 + n)));
     reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.6 + 0.4 * hash(own, 15.0 + n)) : 0.0;
-    wide = 0.09 * size;
+    wide = (spike ? 0.075 : 0.09) * size;
   }
   wide = max(wide, (needle == 0 ? 0.00014 : 0.0001) * plantSize());
+  // A needle thinner than a pixel cannot be seen as a needle, and a row of them is a white band. There one crystal in a few is drawn, as wide as those it stands for together.
+  float rootPx = -(viewMatrix * vec4(root, 1.0)).z * 2.0 / (projectionMatrix[1][1] * uSize.y);
+  float thin = clamp(max((spike && !feather ? 0.075 : 0.09) * size, 0.00014 * plantSize()) / (NEEDLE_PX * rootPx), NEEDLE_LEAST, 1.0);
+  float kept = thin * mix(spike ? SPIKE_LEAST : PATCH_LEAST, spike ? SPIKE_MOST : PATCH_MOST, lush);
+  float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept));
+  wide /= thin;
 
   vec3 here = foot + axis * (reach * end);
   vec3 toEye = normalize(uCamPos - here);
@@ -116,7 +134,7 @@ void main() {
   float halfPx = 0.5 * wide * (1.0 - 0.92 * end) / pixel;
   vAcross = side * (halfPx + 0.75);
   vHalf = halfPx;
-  vFade = (reach > 0.0 ? 1.0 : 0.0) / stretch * (1.0 - 0.5 * melt);
+  vFade = (reach > 0.0 ? stays : 0.0) / stretch * (1.0 - 0.5 * melt);
   vec3 world = here + across * (vAcross * pixel);
 
   float face = 6.2832 * hash(own, 16.0 + n);
