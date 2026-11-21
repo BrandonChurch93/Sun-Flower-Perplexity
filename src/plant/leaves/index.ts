@@ -4,7 +4,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafCount, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
+import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -445,6 +445,7 @@ export function create(options: PartOptions): PlantPart {
     }
   }
 
+  const dawnEnd = config.segments.find((seg) => seg.id === 'dawn')?.end ?? 0
   const hits: Drop[] = []
   // Each plant stands in its own patch of the rain.
   const rainX = 1.7 * options.variant
@@ -479,16 +480,44 @@ export function create(options: PartOptions): PlantPart {
     frame.nx = f.nx; frame.ny = f.ny; frame.nz = f.nz
     const out = slots[slot]
     const total = size * REACH * leaf.reach
-    const stalk = leaf.stalk
-    const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
+    // A new blade sits on the stem: its stalk grows out under it in its first seconds.
+    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early)
+    const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
     const firm = main ? early : 0.5 * early
     const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm)
     // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
     const cold = smoothstep(22, 30, time) * early
+    // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
+    if (i < 2 && time < 12) {
+      const az = leafAzimuth(i, time)
+      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time))
+      const steep = leafElevation(i, time, pose.inputs)
+      const stand = steep + (1.52 - steep) * (1 - smoothstep(8, 9.5, time))
+      const c = Math.cos(steep)
+      const k = Math.sin(steep)
+      const ox = frame.mx * c - frame.nx * k
+      const oy = frame.my * c - frame.ny * k
+      const oz = frame.mz * c - frame.nz * k
+      const tx = frame.mx * k + frame.nx * c
+      const ty = frame.my * k + frame.ny * c
+      const tz = frame.mz * k + frame.nz * c
+      const cs = Math.cos(swing)
+      const ss = Math.sin(swing)
+      const px = ox * cs + frame.wx * ss
+      const py = oy * cs + frame.wy * ss
+      const pz = oz * cs + frame.wz * ss
+      const foot = stemRadius(time, leafStemFraction(i, time)) * 0.7 * smoothstep(0, 0.006, heightAt(time))
+      frame.ox += (px - ox) * foot; frame.oy += (py - oy) * foot; frame.oz += (pz - oz) * foot
+      frame.wx = frame.wx * cs - ox * ss; frame.wy = frame.wy * cs - oy * ss; frame.wz = frame.wz * cs - oz * ss
+      const ce = Math.cos(stand)
+      const se = Math.sin(stand)
+      frame.mx = px * ce + tx * se; frame.my = py * ce + ty * se; frame.mz = pz * ce + tz * se
+      frame.nx = tx * ce - px * se; frame.ny = ty * ce - py * se; frame.nz = tz * ce - pz * se
+    }
     // A leaf born under the bud grows out past it, never up through it.
     let ceiling = 1.6
     const guard = 1 - smoothstep(37, 40, time)
@@ -514,7 +543,8 @@ export function create(options: PartOptions): PlantPart {
         frame.mx = mx; frame.my = my; frame.mz = mz
       }
     }
-    const fold = leafFold(i, time)
+    // The blades of the shut pair are cupped, not folded: they lie against each other.
+    const fold = leafFold(i, time) * (i < 2 ? lerp(0.3, 1, smoothstep(8.5, 10.5, time)) : 1)
     // Before the bloom a blade is stiff: it leaves its stalk nearly straight.
     const stiff = 1 - 0.6 * firm
     const grown = smoothstep(2, 12, age)
@@ -696,7 +726,7 @@ export function create(options: PartOptions): PlantPart {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
       const size = leafLength(leaf.i, pose.time)
-      const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.12, 1)
+      const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.35, 1)
       const o = h * 4
       let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, long = 0
       let ox = 0, oy = 0, oz = 0, ux = 0, uy = 1, uz = 0
@@ -836,8 +866,8 @@ export function create(options: PartOptions): PlantPart {
     },
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
-      // Before the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * lerp(0.2, 1, smoothstep(36, 40, pose.time))
+      // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
+      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? 1 : lerp(0.2, 1, smoothstep(36, 40, pose.time)))
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
       fillBeads(slot, pose)
