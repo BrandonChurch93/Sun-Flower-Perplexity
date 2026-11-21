@@ -514,7 +514,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const base = plan.leaf0 + m * d.leafU * d.leafV
     const size = leafLength(i, time)
     const f = leafFrame(i, time, inputs, length)
-    blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
+    blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs, time), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
   }
 
   const h = layHead(time, length)
@@ -643,6 +643,19 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
   out.x = eye.x + dx * hit
   out.y = eye.y + dy * hit
   out.z = eye.z + dz * hit
+  return out
+}
+
+// The stem two hands under the bud or the head: the part of it a close frame shows beside them. Before there is a bud it is the held point itself.
+const UNDER_HEAD_M = 0.2
+export function carrierAt<T extends Vec3>(time: number, inputs: PlantInputs, held: Vec3, out: T): T {
+  const length = stemLength(time, inputs)
+  layStem(time, inputs)
+  const share = smoothstep(0, 0.02, layHead(time, length).radius)
+  const n = stemNode(archShare(time) * (1 - Math.min(0.5, UNDER_HEAD_M / Math.max(length, 1e-6))), length)
+  out.x = lerp(held.x, n.x, share)
+  out.y = lerp(held.y, n.y, share)
+  out.z = lerp(held.z, n.z, share)
   return out
 }
 

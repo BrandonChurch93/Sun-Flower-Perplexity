@@ -14,7 +14,7 @@ import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
 import { companionInView, companionMatrix } from './companion.ts'
 import { Ground } from '../ground/index.ts'
-import { focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
+import { carrierAt, focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
@@ -55,6 +55,7 @@ export class Film {
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
   private readonly tip = new THREE.Vector3()
+  private readonly carrier = new THREE.Vector3()
   private readonly eye = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
   private readonly center = new THREE.Vector3()
@@ -128,8 +129,9 @@ export class Film {
 
   poseAt(time: number): CameraPose {
     const rig = this.rigOf(time)
-    focusAt(time, this.inputsAt(time), eyeOf(rig, this.eye), this.tip)
-    return poseOf(rig, this.tip)
+    const inputs = this.inputsAt(time)
+    focusAt(time, inputs, eyeOf(rig, this.eye), this.tip)
+    return poseOf(rig, this.tip, carrierAt(time, inputs, this.tip, this.carrier))
   }
 
   worldIdAt(frameIndex: number): string {
