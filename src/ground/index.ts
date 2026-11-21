@@ -142,7 +142,7 @@ export class Ground {
 
   load(assets: Assets): void {
     const size = config.assetSets[assets.set].groundMapWidth / 4
-    const texture = assets.data('ground/soil-standin', 'ground', soilPixels(size), size, size, { repeat: true, anisotropy: 16 })
+    const texture = assets.data('ground/soil-standin', 'ground', soilPixels(size), size, size, { repeat: true, anisotropy: 1 })
     const u = this.surface.main.uniforms
     u.tSoil.value = texture
     u.uSoilSize.value.set(size, size)

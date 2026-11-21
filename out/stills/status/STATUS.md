@@ -1,11 +1,10 @@
-# Status 07
+# Status 08
 
-2026-11-21 02:49 UTC
+2026-11-21 03:07 UTC
 
-- Status 07 · Phase 2. All four scouts have reported: the reference board holds 90 real photographs across 15 parts of the plant and its weather, each part with five written observations, and four motion studies read from real time-lapse footage. The Export page and its proof command are built on their own branch and wait to be checked and merged. Each world now has a backdrop made from its approved image with the plant painted out; one take in ten was kept per world after checking that nothing else had moved.
-- Next: lock each backdrop to the camera of its key, rebuild the plant as a function of time with hook, husk, seed leaves, bud and opening head, then the field. Time used: 2.0 h of 30 h.
+- Status 08 · Phase 2. Each world's backdrop now sits locked to the camera of its key, so the sky, the sun and the horizon land where the approved image has them (left of each pair: the approved image, right: the film frame). The plant and the ground are still stand-ins and the camera fit is not done. The ground was costing three times the rest of the frame in render time; fixed.
+- Next: Stand-in plant that grows through every stage by time (hook, seed leaves, bud, head turning), the stand-in field and companion, then the camera fit at every key. Time used: 2.3 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out
-- `status-2.jpg`: Dawn and rain with the plant painted out
-- `status-3.jpg`: Night and frost with the plant painted out
+- `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night
+- `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field

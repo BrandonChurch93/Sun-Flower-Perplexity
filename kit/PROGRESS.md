@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
-- Last status: 07 · 2026-11-21 02:49 UTC · Phase 2
+- Last push: 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
+- Last status: 08 · 2026-11-21 03:07 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 - 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
 - 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
@@ -39,12 +40,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 0.83 h |
+| 2 | 3.50 h | 1.13 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.96 h |
+| Whole build | 30.00 h | 2.25 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -241,6 +242,17 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · Ownership for the two build agents is by file where a folder is shared: `export_builder` owns `src/capture/export.ts`, its style sheet and `tools/proof.ts`. `harness_builder` owns the rest of the missing commands under `tools/`. The Builder keeps `src/` and the gate, clock, status, push, review and budget tools.
 - 2026-11-21 · Phase 2 · The reference board and the motion studies are gathered now by four scouts, as the build order allows, so the board is ready when Phase 3 opens. The Builder assembles `references/BOARD.md` from their notes.
 
+- 2026-11-21 · Phase 2 · Backdrops. Each world's backdrop is its approved image with the plant painted out by an image model that was given that image as its only input: dawn from `dawn-seedling`, rain from `rain`, night from `night`, frost from `frost`, golden from `bloom-hero` (the companion's leaves painted out too, in a second step). Ten takes were made and one kept per world, two takes each and four for golden, of six allowed. A take was thrown out when anything but the plant had changed: a horizon that moved, a picture that shifted by 2 px, a recolored sky, grass or a plant that was added. The prompts and the checks are in each world's recipe.
+- 2026-11-21 · Phase 2 · The backdrop is locked to the camera of its key: its center sits where that key's lens points and its width is that key's field of view, so at the key's time the backdrop lies exactly where the approved image has it. Past its edges the picture fades into its own edge color, so no second sun appears when the camera turns. The ground and the field cover everything below the horizon.
+- 2026-11-21 · Phase 2 · The pose math moved to `src/director/pose.ts`, which does not load the registry, so harness scripts can project points without a browser. `film.view` holds the only changes the live mode may make to the picture: the camera turned about its aim point, its distance, and a world held at any time. With all of them at rest the film is unchanged.
+- 2026-11-21 · Phase 2 · The modes went to a third build agent (`modes_builder`) so the plant, the field and the camera fit are not held up by the interface. It owns the mode files and builds against `film.view`.
+- 2026-11-21 · Phase 2 · Field rows run at a right angle to the direction `field.companion.fromAzimuthDeg`, fixed in the ground, so the rows read as rows from the hero camera and the field key alike.
+- 2026-11-21 · Phase 2 · Blockout pack: the key pairs are tiled three to an image with halves labeled `N-a` (the approved image) and `N-b` (the frame), so the pack is three film sheets, four cut sheets and three pair images: ten files, one message.
+- 2026-11-21 · Phase 2 · Where a backdrop holds the sun, the light comes from where the sun sits in the picture (`backdrop.sunAt`), so shadows and rim light agree with the sky. The elevation read from the picture is held at 2° or more, so a sun on the horizon line still lights the plant. The drawn sun disc is switched off in those worlds (dawn, frost, golden), because the picture already has its sun.
+- 2026-11-21 · Phase 2 · Stand-in backdrops are drawn with `blur: 0.25`: the approved images already carry the blur of their own lens, so the full blur of the film lens on top would double it. The real backdrops get their own value in their unit.
+- 2026-11-21 · Phase 2 · Kept takes that sat a few pixels off their approved image were moved back before they were cut to size: frost up 4 px, golden up 2 px. Nothing else in them was changed.
+- 2026-11-21 · Phase 2 · The stand-in ground no longer asks for 16 tap anisotropic filtering. Measured on this renderer it cost 0.4 s per sample at preview size, three times the rest of the frame together (draft frame 0.8 s to 0.4 s, review frame 4.9 s to 1.7 s). The real ground in Phase 3 gets a one tap filter that picks its detail level from the short side of the pixel footprint and lets the samples of the frame average the long side.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -269,12 +281,13 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-- `board_scout_a` · owns `references/cache/board/` parts seedling-emerging, seed-leaves, young-plant, stem-close, leaf-top · no branch (shared VM, cache only) · six real photographs and five observations per part · started 2026-11-21 02:16 UTC · limit 45 min (03:01 UTC)
-- `board_scout_b` · owns `references/cache/board/` parts leaf-backlit, bud, head-half-open, head-open, petals-backlit · no branch · same brief · started 02:16 UTC · limit 03:01 UTC
-- `board_scout_c` · owns `references/cache/board/` parts head-back, field-golden-hour, rain, hoarfrost, dew · no branch · same brief · started 02:16 UTC · limit 03:01 UTC
-- `motion_scout` · owns `references/cache/board/motion/` · no branch · four time-lapse studies (seedling, stem, leaves through day and night, head opening): what moves, in what order, how far, how unevenly · started 02:16 UTC · limit 03:01 UTC
-- `harness_builder` · owns `tools/` except `gate, clock, status, push, review, budget, proof` · branch `agent/tools`, looks on `agent/tools-looks` · the missing harness commands: sheet, compare, key comparisons for status, film, measure, pack, keep, seq, crops, clip, stress · sandbox VM · started 02:22 UTC · heartbeat every 30 min, replaced if nothing is pushed by 03:07 UTC
-- `export_builder` · owns the files `src/capture/export.ts`, `src/capture/export.module.css`, `tools/proof.ts` · branch `agent/capture` · the Export page and the export proof with its memory test · sandbox VM · started 02:22 UTC · heartbeat every 30 min, replaced if nothing is pushed by 03:07 UTC
+- `harness_builder` · owns `tools/` except `gate, clock, status, push, review, budget, proof` · branch `agent/tools`, looks on `agent/tools-looks` · the missing harness commands: sheet, compare, key comparisons for status, film, measure, pack, keep, seq, crops, clip, stress · sandbox VM · started 02:22 UTC · six commits pushed by 02:49 UTC, report due 03:37 UTC
+- `modes_builder` · owns `src/main.ts`, `src/main.css`, `src/director/modes.ts`, `live.ts`, `live.module.css`, `menu.ts`, `menu.module.css`, `autopilot.ts`, `tests/modes.test.ts` · branch `agent/director` · the `live` mode (drag to orbit, scrub, the menu on `M`) and the `autopilot` mode, built against `film.view` · sandbox VM · started 02:54 UTC · report due 03:44 UTC, replaced if nothing is pushed by 03:39 UTC
+
+Finished in this task:
+
+- `board_scout_a`, `board_scout_b`, `board_scout_c`, `motion_scout` · reported by 02:35 UTC · 90 photographs over 15 parts in `references/cache/board/<part>/` (six each, with `NOTES.md` and a contact sheet) and four motion studies in `references/cache/board/motion/`. Caveats they gave: many pictures are stock previews with a light watermark or under 900 px; no usable reference was found for a cracked hard soil crust, a macro of an adult stem at mid height, or dew on bare soil; in the stem study the weeks of leaf growth come from published descriptions, not from footage. The cache is never committed. The Builder writes `references/BOARD.md` from the notes.
+- `export_builder` · reported 02:47 UTC · branch `agent/capture` at `640f955`, merged into `main` at `5e90a2c` (three files: `src/capture/export.ts`, `export.module.css`, `tools/proof.ts`). Its own test: 30 frames of h264 High at 960 x 540, frames 1500, 1515 and 1529 match capture stills at 40.0, 41.6 and 41.8 dB; memory test 240 frames across the cut at frame 240, textures at most 20.3 MB. The Builder runs both again on the final build of the phase. Its one request outside its files (open the Export page when loading fails, so the offer of the web set can be shown) is applied in `src/main.ts`.
 
 ## Rounds
 
@@ -313,6 +326,8 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 01:57 UTC · Phase 0 gate met: harness, budget, review page, app published
 - 2026-11-21 02:00 UTC · Phase 1 gate met: rough cut from the approved stills, status 05
 - 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
+- 2026-11-21 02:53 UTC · Phase 2: status 07, `agent/capture` merged, pose math split from the registry, live view overrides
+- 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
 
 ## Session log
 
@@ -337,4 +352,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; Frame 60 (2 s, dawn world), draft tier, with the ground; Frame 1755 (58.5 s): the high wide view. The field is not built yet; Texel view of frame 60: how many texture samples each pixel gets, used by a measure.
 - Status 07, 2026-11-21 02:49 UTC, Phase 2. All four scouts have reported: the reference board holds 90 real photographs across 15 parts of the plant and its weather, each part with five written observations, and four motion studies read from real time-lapse footage. The Export page and its proof command are built on their own branch and wait to be checked and merged. Each world now has a backdrop made from its approved image with the plant painted out; one take in ten was kept per world after checking that nothing else had moved. Next: lock each backdrop to the camera of its key, rebuild the plant as a function of time with hook, husk, seed leaves, bud and opening head, then the field. Time used: 2.0 h of 30 h.
   Pictures: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; Dawn and rain with the plant painted out; Night and frost with the plant painted out.
+- Status 08, 2026-11-21 03:07 UTC, Phase 2. Each world's backdrop now sits locked to the camera of its key, so the sky, the sun and the horizon land where the approved image has them (left of each pair: the approved image, right: the film frame). The plant and the ground are still stand-ins and the camera fit is not done. The ground was costing three times the rest of the frame in render time; fixed. Next: Stand-in plant that grows through every stage by time (hook, seed leaves, bud, head turning), the stand-in field and companion, then the camera fit at every key. Time used: 2.3 h of 30 h.
+  Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
 

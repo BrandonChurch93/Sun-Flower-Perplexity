@@ -1,15 +1,45 @@
+import * as THREE from 'three'
 import { config } from '../config.ts'
-import type { WorldDef, WorldSettings } from '../core/world.ts'
+import type { BackdropLock, WorldDef, WorldSettings } from '../core/world.ts'
 import { declareStandIn } from '../core/standins.ts'
 import type { UnitFit } from './fit.ts'
+import { poseOf } from './pose.ts'
+import { rigPathAt } from './rig.ts'
 
 const worldModules = import.meta.glob<{ world: WorldSettings }>('../worlds/*/index.ts', { eager: true })
 const unitModules = import.meta.glob<{ fit: UnitFit }>('../units/*/index.ts', { eager: true })
 
 const folder = (path: string): string => path.split('/').slice(-2)[0]
 
+const ASPECT = config.formats.master.width / config.formats.master.height
+const MIN_SUN_ELEVATION_DEG = 2
+
+// Where the camera of a key looks, so a backdrop made from that key's approved image can be laid exactly where the image has it.
+export function lockOf(keyId: string): BackdropLock {
+  const key = config.keys.find((k) => k.id === keyId)
+  if (!key) throw new Error(`unknown key "${keyId}"`)
+  const pose = poseOf({ ...rigPathAt(key.time), fNumber: 4 }, new THREE.Vector3())
+  const scaleX = pose.focalMm / config.camera.gateWidthMm
+  return { right: pose.right, up: pose.up, forward: pose.forward, scaleX, scaleY: scaleX * ASPECT }
+}
+
+export function directionAt(lock: BackdropLock, x: number, y: number): THREE.Vector3 {
+  return lock.forward.clone().addScaledVector(lock.right, (x - 0.5) / lock.scaleX).addScaledVector(lock.up, (0.5 - y) / lock.scaleY).normalize()
+}
+
+export function resolveWorld(id: string, settings: WorldSettings): WorldDef {
+  const lock = settings.backdrop.file ? lockOf(settings.backdrop.key) : null
+  const def: WorldDef = { ...settings, sun: { ...settings.sun }, id, lock }
+  if (lock && settings.backdrop.sunAt) {
+    const d = directionAt(lock, settings.backdrop.sunAt[0], settings.backdrop.sunAt[1])
+    def.sun.azimuthDeg = (Math.atan2(d.x, d.z) * 180) / Math.PI
+    def.sun.elevationDeg = Math.max(MIN_SUN_ELEVATION_DEG, (Math.asin(d.y) * 180) / Math.PI)
+  }
+  return def
+}
+
 export const worlds: Record<string, WorldDef> = {}
-for (const [path, module] of Object.entries(worldModules)) worlds[folder(path)] = { ...module.world, id: folder(path) }
+for (const [path, module] of Object.entries(worldModules)) worlds[folder(path)] = resolveWorld(folder(path), module.world)
 
 export const fits: Record<string, UnitFit> = {}
 for (const [path, module] of Object.entries(unitModules)) fits[folder(path)] = module.fit

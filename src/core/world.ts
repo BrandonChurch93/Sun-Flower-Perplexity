@@ -7,13 +7,16 @@ export interface WorldSettings {
   standIn: boolean
   sun: { azimuthDeg: number; elevationDeg: number; color: RGB; softnessDeg: number; lean: number; lift: number }
   sky: { zenith: RGB; horizon: RGB; bounce: RGB; ambient: number; glow: RGB; glowPower: number; disc: number }
-  backdrop: { file: string | null; azimuthDeg: number; elevationDeg: number; spanDeg: number; aspect: number; gain: number }
+  // The backdrop is placed where the camera of `key` sees it. `sunAt` is where the sun sits in that picture (x from the left, y from the top) and sets the direction of the light.
+  backdrop: { file: string | null; key: string; sunAt: [number, number] | null; gain: number; blur: number }
   fog: { color: RGB; sunTint: RGB; density: number; falloff: number }
   grade: { exposure: number; contrast: number; white: number; saturation: number; gain: RGB; lift: RGB; bloom: number; bloomKnee: number; vignette: number; grain: number }
   ground: { wet: number; frost: number; dew: number }
 }
 
-export interface WorldDef extends WorldSettings { id: string }
+export interface BackdropLock { right: THREE.Vector3; up: THREE.Vector3; forward: THREE.Vector3; scaleX: number; scaleY: number }
+
+export interface WorldDef extends WorldSettings { id: string; lock: BackdropLock | null }
 
 const RAD = Math.PI / 180
 

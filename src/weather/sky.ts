@@ -14,7 +14,9 @@ uniform float uGlowPower;
 uniform float uDisc;
 uniform sampler2D tBackdrop;
 uniform float uBackdropOn;
-uniform vec4 uBackdrop;
+uniform mat3 uBackBasis;
+uniform vec2 uBackScale;
+uniform float uBackBlur;
 uniform float uBackdropGain;
 uniform float uBackdropWidth;
 uniform float uPixelAngle;
@@ -35,15 +37,14 @@ void main() {
   color += uGlow * pow(saturate(toSun), uGlowPower);
   float inside = 0.0;
   if (uBackdropOn > 0.5) {
-    float az = atan(d.x, d.z) - uBackdrop.x;
-    az -= 2.0 * PI * floor((az + PI) / (2.0 * PI));
-    float el = asin(clamp(d.y, -1.0, 1.0)) - uBackdrop.y;
-    vec2 uv = vec2(az / uBackdrop.z + 0.5, el / (uBackdrop.z / uBackdrop.w) + 0.5);
-    float turn = mod(uv.x, 2.0);
-    uv = vec2(turn > 1.0 ? 2.0 - turn : turn, clamp(uv.y, 0.0, 1.0));
+    vec3 k = d * uBackBasis;
+    vec2 uv = vec2(0.5) + k.xy / max(k.z, 0.02) * uBackScale;
+    vec2 over = max(max(-uv, uv - 1.0), vec2(0.0));
+    float beyond = max(over.x, over.y) + (k.z < 0.02 ? 1.0 : 0.0);
+    float lod = log2(max(1.0, coc * uBackBlur * uPixelAngle * uBackdropWidth * uBackScale.x));
+    lod = max(lod, 7.5 * smoothstep(0.0, 0.25, beyond));
     inside = 1.0;
-    float lod = log2(max(1.0, coc * uPixelAngle * uBackdropWidth / uBackdrop.z));
-    color = textureLod(tBackdrop, uv, lod).rgb * uBackdropGain;
+    color = textureLod(tBackdrop, clamp(uv, 0.0, 1.0), lod).rgb * uBackdropGain;
   }
   float blur = 0.5 * coc * uPixelAngle;
   float r = sqrt(SUN_RADIUS * SUN_RADIUS + blur * blur);
@@ -63,7 +64,6 @@ void main() {
 }
 `
 
-const RAD = Math.PI / 180
 
 export class Sky {
   private readonly pass: FullscreenPass
@@ -81,7 +81,9 @@ export class Sky {
       uDisc: { value: 0 },
       tBackdrop: { value: null },
       uBackdropOn: { value: 0 },
-      uBackdrop: { value: new THREE.Vector4() },
+      uBackBasis: { value: new THREE.Matrix3() },
+      uBackScale: { value: new THREE.Vector2(1, 1) },
+      uBackBlur: { value: 1 },
       uBackdropGain: { value: 1 },
       uBackdropWidth: { value: 1 },
       uPixelAngle: { value: 0.001 },
@@ -112,8 +114,13 @@ export class Sky {
     u.uStandIn.value = def.standIn ? 1 : 0
     const backdrop = this.backdrops.get(def.id) ?? null
     u.tBackdrop.value = backdrop
-    u.uBackdropOn.value = backdrop ? 1 : 0
-    u.uBackdrop.value.set(def.backdrop.azimuthDeg * RAD, def.backdrop.elevationDeg * RAD, def.backdrop.spanDeg * RAD, def.backdrop.aspect)
+    u.uBackdropOn.value = backdrop && def.lock ? 1 : 0
+    if (def.lock) {
+      const { right, up, forward, scaleX, scaleY } = def.lock
+      u.uBackBasis.value.set(right.x, up.x, forward.x, right.y, up.y, forward.y, right.z, up.z, forward.z)
+      u.uBackScale.value.set(scaleX, scaleY)
+    }
+    u.uBackBlur.value = def.backdrop.blur
     u.uBackdropGain.value = def.backdrop.gain
     u.uBackdropWidth.value = backdrop ? (backdrop.userData.size as { width: number }).width : 1
   }
