@@ -34,7 +34,7 @@ const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hair
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
 
-const RINGS_STALK = 9
+const RINGS_STALK = 21
 const RINGS_RIB = 16
 const RINGS = RINGS_STALK + RINGS_RIB
 const SIDES = 10
