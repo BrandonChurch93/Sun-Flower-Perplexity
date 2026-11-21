@@ -1,20 +1,23 @@
-// Lays the kept sky takes out as the dome map. Run from the repo root: node assets-src/worlds/golden/compose-sky.mjs
+// Lays the kept sky takes out as the dome map. Run from the repo root: node assets-src/worlds/golden/compose-sky.mjs for sky.jpg, and with the word late after it for sky-late.jpg.
 // u runs once round the horizon with the sun at u = 0.5 and u growing toward screen right. v = sqrt(elevation / 90 deg), so the rows crowd toward the horizon, where the film looks.
 import fs from 'node:fs'
 import sharp from 'sharp'
 
 const WIDTH = 8192
 const HEIGHT = 2048
-const SUN = { x: 0.2862, row: 1486, elevationDeg: 2.18 }
+const LATE = process.argv[2] === 'late'
+const TAKE = LATE ? 'out/work/sky/late-1.png' : 'out/work/sky/sunward-4.png'
+const NAME = LATE ? 'sky-late.jpg' : 'sky.jpg'
+const SUN = LATE ? { x: 0.2766, row: 1499, elevationDeg: 1 } : { x: 0.2862, row: 1486, elevationDeg: 2.18 }
 const SPAN_DEG = 100
 // The takes were shot level with a wide lens. The clear band under the cloud is seen edge on and keeps the steep scale of RISE_DEG;
 // from KNEE_DEG up the cloud is laid at the scale of the take's width, so its shapes are as tall as they are wide.
-const RISE_DEG = 13
+const RISE_DEG = LATE ? 9 : 13
 const KNEE_DEG = 5
 const KNEE_SOFT_DEG = 2
 const TOP_FROM_DEG = 30
 const TOP_DEG = 37
-const BOTTOM_ROW = 1528
+const BOTTOM_ROW = LATE ? 1535 : 1528
 const AWAY_BOTTOM_ROW = 1575
 const AWAY_SPAN_DEG = 134
 const AWAY_FROM_DEG = 63
@@ -58,8 +61,8 @@ const smooth = (a, b, x) => {
   return t * t * (3 - 2 * t)
 }
 
-const sunward = await read('out/work/sky/sunward-4.png')
-const sunwardSoft = await read('out/work/sky/sunward-4.png', 70)
+const sunward = await read(TAKE)
+const sunwardSoft = await read(TAKE, 70)
 const away = await read('out/work/sky/away-1.png')
 const awaySoft = await read('out/work/sky/away-1.png', 70)
 const perDeg = sunward.w / SPAN_DEG
@@ -92,6 +95,7 @@ for (let Y = 0; Y < HEIGHT; Y++) {
   const vUp = 1 - (Y - 0.5) / HEIGHT
   const span = Math.abs(climb(90 * vUp * vUp) - climb(el)) * 2
   const over = smooth(TOP_FROM_DEG, TOP_DEG, el)
+  const under = LATE ? smooth(0.2, 1.6, SUN.elevationDeg - el) : 0
   const dim = 1 - 0.3 * smooth(30, 90, el)
   // The away take is pulled toward the tone of the sunward take where they meet, less with every degree from the seam.
   const gains = [leftDeg + 6, rightDeg - 6].map((seam) => {
@@ -115,6 +119,11 @@ for (let Y = 0; Y < HEIGHT; Y++) {
       if (over > 0) {
         tap(sunwardSoft, x, 50, s)
         for (let c = 0; c < 3; c++) a[c] += (s[c] - a[c]) * over
+      }
+      // Under the late sun the turned over sky would stand its clouds on their heads: there the sky is the smooth mean of the take.
+      if (under > 0) {
+        tap(sunwardSoft, x, row, s)
+        for (let c = 0; c < 3; c++) a[c] += (s[c] - a[c]) * under
       }
     }
     if (wa < 1) {
@@ -140,5 +149,5 @@ for (let Y = 0; Y < HEIGHT; Y++) {
 fs.mkdirSync('public/assets/worlds/golden/full', { recursive: true })
 fs.mkdirSync('public/assets/worlds/golden/web', { recursive: true })
 const full = sharp(out, { raw: { width: WIDTH, height: HEIGHT, channels: 3 } })
-await full.clone().jpeg({ quality: 93, chromaSubsampling: '4:4:4' }).toFile('public/assets/worlds/golden/full/sky.jpg')
-await full.clone().resize(WIDTH / 2, HEIGHT / 2, { kernel: 'lanczos3' }).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile('public/assets/worlds/golden/web/sky.jpg')
+await full.clone().jpeg({ quality: 93, chromaSubsampling: '4:4:4' }).toFile(`public/assets/worlds/golden/full/${NAME}`)
+await full.clone().resize(WIDTH / 2, HEIGHT / 2, { kernel: 'lanczos3' }).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(`public/assets/worlds/golden/web/${NAME}`)
