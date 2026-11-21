@@ -120,7 +120,7 @@ void main() {
   float cells = smoothstep(0.96, 1.25, fine);
 
   vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.25 + 0.75 * vRipe));
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.6 + 0.4 * vRipe));
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
