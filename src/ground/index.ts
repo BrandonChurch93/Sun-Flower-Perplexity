@@ -35,6 +35,7 @@ export class Ground {
 
   constructor() {
     endStandIn('ground')
+    const shore = furrowShare(waterLevelsM[1])
     this.uniforms = {
       uWet: { value: 0 },
       uFrost: { value: 0 },
@@ -62,7 +63,8 @@ export class Ground {
       uFurrow: { value: new THREE.Vector4(furrow.leftM, furrow.slope, furrow.fromM, furrow.toM) },
       uFurrowAxes: { value: new THREE.Vector4(right.x, right.z, toward.x, toward.z) },
       uFurrowAt: { value: new THREE.Vector4(...furrow.atM) },
-      uFurrowHalf: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / furrowShare(waterLevelsM[1]))) },
+      uFurrowHalf: { value: new THREE.Vector4(...furrow.halfM) },
+      uFurrowShore: { value: new THREE.Vector4((furrow.easeM * shore) / (1 - shore), furrow.easeM, furrow.wanderM, furrow.easeM * 3) },
       uFurrowShape: { value: new THREE.Vector4(furrow.depthM, furrow.bankM, furrow.windM, furrow.clearM) },
       uFurrowTime: { value: new THREE.Vector3(furrow.fromS, furrow.toS, furrow.before) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
