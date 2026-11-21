@@ -97,11 +97,11 @@ function makeRays(seed: number): Ray[] {
     const strong = r(5, k) > 0.6 ? 3.6 : 1
     return {
       rank,
-      short: r(37, k) < 0.2 ? 0.74 + 0.12 * r(38, k) : 1,
+      short: r(37, k) < 0.14 ? 0.8 + 0.1 * r(38, k) : 1,
       nod: r(39, k) < 0.3 ? 0.6 + 0.9 * r(46, k) : 0,
-      width: 0.38 + 0.1 * r(1, k),
+      width: 0.42 + 0.1 * r(1, k),
       droop: rank ? 0.15 + 0.7 * r(2, k) : 0.7 * r(2, k) * r(2, k),
-      tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.6 ? 1.8 : 0),
+      tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.7 ? 1.6 : 0),
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) < 0.5 ? -1 : 1) * (0.12 + 0.3 * r(36, k)) * strong,
@@ -226,7 +226,7 @@ export function create(options: PartOptions): PlantPart | null {
     const lifted = smooth(0.1, 0.9, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
     // A shut ray is long enough to reach over the face toward the middle.
-    const length = (rayLength(k, time) + mix(0.78 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(0.78 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const around = (k / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
@@ -242,7 +242,7 @@ export function create(options: PartOptions): PlantPart | null {
     const rise = Math.PI / 2 - rayAngle(k, time)
     // A ray that has just opened still stands forward of the face, and settles back over the next second.
     const settled = rayOpen(k, time - 1.2)
-    const young = 0.7 * (1 - settled)
+    const young = (0.35 + 0.7 * ray.arch) * (1 - settled)
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
