@@ -2,9 +2,9 @@
 
 ## sky.jpg
 
-- Output files: `public/assets/worlds/dawn/full/sky.jpg` (4096 x 1024, JPEG quality 93, no chroma subsampling) and `public/assets/worlds/dawn/web/sky.jpg` (2048 x 512, JPEG quality 92, no chroma subsampling).
+- Output files: `public/assets/worlds/dawn/full/sky.jpg` (8192 x 2048, JPEG quality 93, no chroma subsampling) and `public/assets/worlds/dawn/web/sky.jpg` (4096 x 1024, JPEG quality 92, no chroma subsampling), the widths `assetSets.full.skyWidth` and `assetSets.web.skyWidth` of the config.
 - What it is: the whole dome of the sky a few minutes after sunrise. Across, it runs once round the horizon with the sun at the middle and screen right to the right. Down, the row is the square root of the elevation over 90 degrees, so most rows lie near the horizon where the film looks. It holds no sun disc, no land, no plant and no stars: the shader in `src/worlds/dawn/sky.ts` multiplies the picture by a gain that climbs toward the sun and adds the haze, the aureole and the disc at true brightness.
-- Why it is half the size of the golden dome: the dawn camera is a long lens focused a hand's width away, so the sky is never nearer to focus than a blur circle of about 120 px, and it shows only the lowest 7.5 degrees of the sky over 34.5 degrees of bearing.
+- The take is 2816 wide and is laid over 60 degrees, so the dome holds no more detail than 47 columns a degree; the dawn camera is a long lens focused a hand's width away and never sees the sky nearer to focus than a blur circle of about 120 px, over the lowest 7.5 degrees of the sky and 34.5 degrees of bearing.
 - Tool: the workspace's image generation tool, model `seedream_5`, aspect ratio 16:9. The take came back at 2816 x 1584. The tool wrote JPEG data into a file named `.png`.
 - Takes are kept under `out/work/dawnsky/` and are not committed.
 
@@ -25,7 +25,7 @@
 ### Checks passed
 
 - The kept take was looked at whole: no text, no watermark, no border, no bird, no aircraft, no sun disc, no rays. The strip of land on its bottom rows is left out as said above.
-- Sizes: 4096 x 1024 and 2048 x 512. Files: under 0.3 MB and under 0.1 MB.
+- Sizes: 8192 x 2048 and 4096 x 1024. Files: 0.9 MB and 0.2 MB, far under 20 MB. In memory with its smaller copies the full map takes 89 MB.
 
 ## Not maps
 

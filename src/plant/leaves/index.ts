@@ -222,10 +222,10 @@ export function create(options: PartOptions): PlantPart {
         for (let ripe = 0; ripe < 2; ripe++) {
           const cordNow = cord * (ripe ? 1 : 0.5)
           const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.98)
-          const rolled = roll * (ripe ? 1 : 0.5) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
+          const rolled = roll * (ripe ? 1 : 0.3) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
           // A tooth on a rolled edge runs down the slope, so it reaches less far out.
           const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.45)) * smoothstep(0.6, 1, aw)) / steep : 0
+          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.7)) * smoothstep(0.6, 1, aw)) / steep : 0
           const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
           x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
           y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
@@ -534,7 +534,7 @@ export function create(options: PartOptions): PlantPart {
       lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
-    const crease = main ? fold + leaf.crease * grown : (fold + leaf.crease * grown) * leafFoldScale(i, time)
+    const crease = main ? fold + leaf.crease * grown * (1 - 0.6 * early) : (fold + leaf.crease * grown) * leafFoldScale(i, time)
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     const { nu, nv } = leaf
