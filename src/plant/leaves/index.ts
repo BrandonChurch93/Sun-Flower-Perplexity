@@ -20,7 +20,7 @@ const HEM_DROP = 0.0022
 const HEM_IN = 0.004
 const TROUGH = 0.0045
 
-const HERO_COLS = [-1, -0.86, -0.7, -0.52, -0.34, -0.17, -0.05, 0, 0.05, 0.17, 0.34, 0.52, 0.7, 0.86, 1]
+const HERO_COLS = [-1, -0.86, -0.68, -0.46, -0.24, -0.06, 0, 0.06, 0.24, 0.46, 0.68, 0.86, 1]
 const FIELD_COLS = [-1, 0, 1]
 const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
@@ -528,7 +528,7 @@ export function create(options: PartOptions): PlantPart {
           dx = -nx + jx * 1.1
           dy = -ny + jy * 0.6 - 0.2
           dz = -nz + (hair.r4 - 0.5) * 1.1
-          const sink = 0.0012 * scale * (tb === 0 || hair.b - 8 === 0 ? 1 : 0.3)
+          const sink = 0.0012 * scale * (tb === 0 ? 1 : 0.3)
           px -= nx * sink
           py -= ny * sink
           pz -= nz * sink
