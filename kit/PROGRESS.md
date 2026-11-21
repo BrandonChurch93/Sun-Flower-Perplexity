@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 17:26 UTC · Round 7: jury answers 8 of 10, word for word; main takes the Phase 4 line 8f9cfef
-- Last status: 39 · 2026-11-21 17:10 UTC · Phase 4 · unit field · round 7
+- Last push: 2026-11-21 17:34 UTC · Status 40: round 7 (field) closed, not a pass; the line's frost, night, rain and dawn against the approved images
+- Last status: 40 · 2026-11-21 17:34 UTC · Phase 4 · unit frost · round 8
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 17:34 UTC · status 40 · Phase 4 · unit frost · round 8 · `status-1.jpg`: Frost, 36.0 s: approved (left), ours now (right); `status-2.jpg`: Night, 26.0 s: approved (left), ours on the night world's branch (right); `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right); `status-4.jpg`: Dawn, 1.5 s: approved (left), ours (right)
 - 2026-11-21 17:10 UTC · status 39 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame: 1755 at final, from the pack (commit 566eb48); `status-2.jpg`: Frost 1080 on the line, approved left (frost world 9923435, rendered on its builder's VM); `status-3.jpg`: Frost lens test, the neighbors at native size: approved, f/5.6, f/8, f/11 (chosen); `status-4.jpg`: Field 1755 after round 7's commit, approved left: the crop's front comes round the companion (field b18271e, its builder's VM)
 - 2026-11-21 16:46 UTC · status 38 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
 - 2026-11-21 16:19 UTC · status 37 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right; `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right; `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 13:49 UTC · status 31 · Phase 3 · unit bloom · `status-1.jpg`: Round 5 judged still, 45.0 s, approved left, ours right (48 samples); `status-2.jpg`: Round 5 judged still, 50.5 s, approved left, ours right (48 samples); `status-3.jpg`: The crown at 45 s at native size: approved left, ours right. The approved's bracts are slender and lit through; `status-4.jpg`: The opening every 0.25 s on the opening agent's branch: right side rays now start one by one from 45.02 s
 - 2026-11-21 13:24 UTC · status 30 · Phase 3 · unit bloom · `status-1.jpg`: 45.0 s · approved on the left, ours on the right (judged commit, review tier); `status-2.jpg`: 50.5 s · approved on the left, ours on the right (judged commit, review tier); `status-3.jpg`: The head at 50.5 s · approved, the tree round 4 judged, the tree round 5 judges; `status-4.jpg`: The opening every 0.25 s from 44.5 to 51.5 s on the new schedule (draft tier)
 - 2026-11-21 12:56 UTC · status 29 · Phase 3 · unit bloom · `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier); `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier); `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left; `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
-- 2026-11-21 11:59 UTC · status 28 · Phase 3 · unit bloom · `status-1.jpg`: 45 s · approved left, build right (review tier); `status-2.jpg`: 50.5 s · approved left, build right (review tier); `status-3.jpg`: 45 s · the bud at native size, approved left, build right; `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 1.20 h |
+| 4 | 8.50 h | 1.24 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 16.66 h |
+| Whole build | 30.00 h | 16.70 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -816,7 +816,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R3 answer: `reviewer_66`, Claude family, sent 17:18 UTC, answered 17:20 UTC. Score 4, not a pass: 6 major, 3 minor. `scorecards/round-007/R3.json`, word for word. Major: the far plain under the sun ("a thin dark, jagged, aliased line runs along the top of the far plain like the edge of a cut-out card"), the far end of the crop ("the field ends in a hard straight horizontal line against a featureless tan/brown band"), the hills ("a single flat near-black silhouette with a blobby, regular outline and no aerial-perspective layering"), the leaves of both plants ("a single desaturated grey-blue green with a waxy sheen, they look like flat cards with a bright painted rim, and no light passes through them even with the sun behind"), the stems ("smooth tubes with a single thin bright rim line; no hairs are seen against the backlight"), the crop ("near-identical copies, all the same size, all facing the lens at the same angle in an even scatter"). Minor: no contact shadow or soil where the stems enter the grass, petals uniform, grass an even carpet with dry tufts in regular diagonal bands
 - [x] R4 answer: `reviewer_67`, GPT family, sent 17:20 UTC, answered 17:22 UTC. Score 6, not a pass: 1 severe, 1 minor. `scorecards/round-007/R4.json`, word for word. Severe: "Even in the designated fastest-growth stretch, the bloom stays fully open and its petals retain nearly the same shapes and overlaps. There is slight flex, but it reads as an already-grown flower swaying during the camera pullback, not as time-lapse growth." Minor: the pullback "eases to a near-hold" over 59.2 to 60.0 s
 - [ ] Fixes
-- [ ] Summary, status, push
+- [x] Summary, status, push: `scorecards/round-007/SUMMARY.md`, `MEASURES.json` and the four manifests written 17:33 UTC and pushed (`72a8ce9`); Status 39 (17:10 UTC) carries the judged frame, Status 40 (17:34 UTC) the result
 
 ## Final scores
 
@@ -921,6 +921,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 17:24 UTC · Round 7: jury answers 6 of 10, word for word
 - 2026-11-21 17:24 UTC · Round 7: jury answers 7 of 10, word for word
 - 2026-11-21 17:26 UTC · Round 7: jury answers 8 of 10, word for word; main takes the Phase 4 line 8f9cfef
+- 2026-11-21 17:34 UTC · Status 40: round 7 (field) closed, not a pass; the line's frost, night, rain and dawn against the approved images
 
 ## Session log
 
@@ -1009,4 +1010,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right.
 - Status 39, 2026-11-21 17:10 UTC, Phase 4 · unit field · round 7. Round 7 (field): all 13 machine checks green on 566eb48 (the determinism check on its second run: the harness's 9 minute limit cut the first, the tool itself reported every tested frame identical). The pack is here and checked by hash and by eye; the measures at final are rendering; critics go out when the judged frame matches the Builder's own. The line took 12 reported heads since 16:50: the frost world's low fog, the bud's bowl and arms, hoar as a crust, uneven rows, the crop's front round the companion, the dawn mist and ground, the night's moon behind the plant, dew beads on hairs. Frost lens set to f/11 from three test renders. Next: Measure 1755 at final, check the pack's judged frame against it, send round 7 to its critics and jury. Then merge the line into main and start round 8 (frost) on it. Time used: 16.3 h of 30 h.
   Pictures: Round 7 judged frame: 1755 at final, from the pack (commit 566eb48); Frost 1080 on the line, approved left (frost world 9923435, rendered on its builder's VM); Frost lens test, the neighbors at native size: approved, f/5.6, f/8, f/11 (chosen); Field 1755 after round 7's commit, approved left: the crop's front comes round the companion (field b18271e, its builder's VM).
+- Status 40, 2026-11-21 17:34 UTC, Phase 4 · unit frost · round 8. Round 7 (field) is closed and not a pass: match 3, surface 4, motion 6, and all five jurors called the frame a real-time 3D demo (the approved image got 4 of 5 film votes). The critics' words are with the owning agents for a fix pass of at most 90 minutes. The line now has real frost, night, rain and dawn worlds, frost crystals on the leaf margins and buds over leafy plants in the crop; the finished bloom was measured again on the line and holds (0.864 and 0.951, 0.8 needed). Next: Round 8 judges the frost at 36.0 s as it stands now; then dawn, night and rain get their floor rounds, and field its second round if the clock allows. Time used: 16.7 h of 30 h.
+  Pictures: Frost, 36.0 s: approved (left), ours now (right); Night, 26.0 s: approved (left), ours on the night world's branch (right); Rain, 14.0 s: approved (left), ours (right); Dawn, 1.5 s: approved (left), ours (right).
 
