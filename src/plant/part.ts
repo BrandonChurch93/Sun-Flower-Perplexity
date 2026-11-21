@@ -137,7 +137,7 @@ float plantSky(vec3 world) {
   float closed = smoothstep(0.2, 0.85, uCanopy);
   // A crop in bloom stands taller and closer still, and keeps less of the sky.
   float deep = smoothstep(1.0, 1.25, uCanopy);
-  return mix(mix(1.0, 0.8 - 0.45 * deep, closed), mix(0.8, 0.3 - 0.18 * deep, closed), smoothstep(0.25, 1.0, under));
+  return mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
 #else
   return 1.0;
 #endif
