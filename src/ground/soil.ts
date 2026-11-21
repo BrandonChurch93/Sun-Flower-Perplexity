@@ -245,6 +245,15 @@ float lowSun(float mapped, float up, float heightM) {
   float low = 1.0 - smoothstep(0.02, 0.035, uSunDir.y);
   return mix(mapped, smoothstep(0.05, 0.7, up) * smoothstep(-0.003, 0.006, heightM), low);
 }
+// Damp soil seen low against a low sun mirrors the glow of the sky round it. From close the crumbs each face their own way and break the mirror; farther off they run together into one warm sheen.
+vec3 sunGlow(vec3 world, vec3 v, vec3 n, float dew) {
+  float low = 1.0 - smoothstep(0.02, 0.035, uSunDir.y);
+  vec3 r = reflect(-v, n);
+  float toSun = saturate(dot(normalize(r.xz + vec2(1e-5, 0.0)), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
+  float skim = 1.0 - max(v.y, 0.0);
+  float far = smoothstep(0.14, 0.5, length(uCamPos - world));
+  return uSunColor * (low * dew * pow(toSun, 48.0) * pow(skim, 16.0) * far * 0.17);
+}
 // Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
 float selfShade() {
   return mix(1.0, 0.3, (1.0 - uCast) * (1.0 - smoothstep(0.05, 0.5, uSunDir.y)));
@@ -403,6 +412,7 @@ void main() {
   color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
+  color += sunGlow(vWorld, v, n, uDew) * open * (1.0 - thatch) * (1.0 - 0.8 * under);
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
