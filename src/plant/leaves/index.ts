@@ -136,7 +136,7 @@ export function create(options: PartOptions): PlantPart {
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
     const blade = lerp(1, main ? 0.9 : 0.76, upper)
-    const roll = withered ? (main ? 0.2 : 0.42) : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
+    const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
@@ -164,7 +164,7 @@ export function create(options: PartOptions): PlantPart {
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
       kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19),
-      tipCurl: withered ? 1.5 : dry ? 1.1 : 0.15 + 0.5 * r(20) * r(20),
+      tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
