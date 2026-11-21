@@ -590,7 +590,11 @@ export function buildStandIn(time: number, inputs: PlantInputs, pos: Float32Arra
   return top
 }
 
-// The point the lens holds: the top of the arch, then the end of the stem, then the bud, then the middle of the open face.
+// How far in front of the head's middle its floor lies at the rim, and how much higher at the axis, both as shares of the half depth.
+export const FLOOR_RIM = 0.5
+export const FLOOR_DOME = 0.22
+
+// The growing tip: the top of the arch, then the end of the stem, then the bud, then the middle of the open face. From the bud on it lies inside the head.
 export function tipAt(time: number, inputs: PlantInputs, out: Vec3): Vec3 {
   const length = stemLength(time, inputs)
   layStem(time, inputs)
@@ -599,10 +603,43 @@ export function tipAt(time: number, inputs: PlantInputs, out: Vec3): Vec3 {
   const y = n.y
   const z = n.z
   const h = layHead(time, length)
-  const reach = h.depth * (1 + headOpen(time))
+  const reach = h.depth * (1 + (FLOOR_RIM + FLOOR_DOME + SEAT - 1) * headOpen(time))
   out.x = x + h.ax * reach
   out.y = y + h.ay * reach
   out.z = z + h.az * reach
+  return out
+}
+
+// The point the lens holds: where the line from the lens to the growing tip first meets the bud or the head, so the side turned to the lens is the sharp one.
+export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3): Vec3 {
+  tipAt(time, inputs, out)
+  const h = head
+  if (!(h.radius > 1e-5 && h.depth > 1e-5)) return out
+  let dx = out.x - eye.x
+  let dy = out.y - eye.y
+  let dz = out.z - eye.z
+  const far = Math.hypot(dx, dy, dz)
+  if (!(far > 1e-9)) return out
+  dx /= far
+  dy /= far
+  dz /= far
+  const ox = eye.x - h.cx
+  const oy = eye.y - h.cy
+  const oz = eye.z - h.cz
+  const along = ox * h.ax + oy * h.ay + oz * h.az
+  const turn = dx * h.ax + dy * h.ay + dz * h.az
+  const deep = 1 / (h.depth * h.depth)
+  const wide = 1 / (h.radius * h.radius)
+  const qa = turn * turn * deep + (1 - turn * turn) * wide
+  const qb = 2 * (along * turn * deep + (ox * dx + oy * dy + oz * dz - along * turn) * wide)
+  const qc = along * along * deep + (ox * ox + oy * oy + oz * oz - along * along) * wide - 1
+  const inside = qb * qb - 4 * qa * qc
+  if (!(inside >= 0) || !(qc > 0)) return out
+  const hit = (-qb - Math.sqrt(inside)) / (2 * qa)
+  if (!(hit > 0 && hit < far)) return out
+  out.x = eye.x + dx * hit
+  out.y = eye.y + dy * hit
+  out.z = eye.z + dz * hit
   return out
 }
 

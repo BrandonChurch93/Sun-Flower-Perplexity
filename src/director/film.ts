@@ -13,14 +13,14 @@ import { breathe } from '../core/yield.ts'
 import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
 import { Ground } from '../ground/index.ts'
-import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/model.ts'
+import { focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
 import { Sky } from '../weather/sky.ts'
 import { rigAt } from './camera.ts'
 import { plantInputsAt, plantInputsFor } from './inputs.ts'
-import { farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
+import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
 import { stageMakers, worldOf } from './registry.ts'
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
@@ -53,6 +53,7 @@ export class Film {
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
   private readonly tip = new THREE.Vector3()
+  private readonly eye = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
   private readonly center = new THREE.Vector3()
   private loaded: Promise<void> | null = null
@@ -125,8 +126,9 @@ export class Film {
   }
 
   poseAt(time: number): CameraPose {
-    tipAt(time, this.inputsAt(time), this.tip)
-    return poseOf(this.rigOf(time), this.tip)
+    const rig = this.rigOf(time)
+    focusAt(time, this.inputsAt(time), eyeOf(rig, this.eye), this.tip)
+    return poseOf(rig, this.tip)
   }
 
   worldIdAt(frameIndex: number): string {
