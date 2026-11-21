@@ -102,12 +102,12 @@ const FEET_LOW = [0.52, 0.12, 0]
 const SHUT_LOW = 0.6
 const FEET_UP = [0.05, 0, 0.25]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.45, 1.2, 0.9]
+const SHUT_BROAD = [1.45, 1.2, 0.6]
 const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.8, 0, -0.65]
+const SHUT_ANGLE = [0.8, 0, -0.6]
 const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
 const SHUT_CURL = [0.9, 0, 0]
 const SHUT_CURL_LATE = [0.8, 0, 0]
@@ -116,15 +116,18 @@ const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
 const SHUT_LONG = [0.5, 0.85, 0.9]
 const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
-const SHUT_TIP = [0.35, 0.7, 0.5]
+const SHUT_TIP = [0.35, 0.7, -0.4]
 const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
-const CROWN_ANGLE = 0.8
+const CROWN_ANGLE = 1.0
 const CROWN_ANGLE_LATE = 0.6
-const CROWN_LONG = 0
+const CROWN_LONG = 0.1
 const CROWN_LONG_LATE = 0.12
-const CROWN_TIP = -1.6
+const CROWN_TIP = 0.15
 const CROWN_TIP_LATE = 0.7
+// The inner bracts between the crown points are longer and broader and arch in over the top: the dome of the tuft.
+const TUFT_LONG = 0.1
+const TUFT_BROAD = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
 const SPREAD_LONG_LATE = 1.6
@@ -472,8 +475,9 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const spread = lerp(k.star, k.spread, early)
-      const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * k.crown + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early)
+      const tuft = k.series === 2 ? 1 - k.crown : 0
+      const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * k.crown + TUFT_LONG * tuft * early + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early) * (1 + TUFT_BROAD * tuft * globe * early)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
