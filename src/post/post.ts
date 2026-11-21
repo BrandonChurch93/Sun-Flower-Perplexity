@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
-import { fillFragment, nearFragment, reachFragment } from './fill.ts'
+import { fillFragment, maxFillPx, nearFragment, reachFragment } from './fill.ts'
 import { brightFragment, downFragment, flareFragment, levelGain, upFragment } from './glare.ts'
 import { gradeFragment } from './grade.ts'
 import { lensLook } from './looks.ts'
@@ -93,6 +93,9 @@ export class Post {
     uSunAt: { value: new THREE.Vector2(0.5, 0.5) },
     uStar: { value: 0 },
     uStarLen: { value: 1 },
+    uGlow: { value: 0 },
+    uShafts: { value: 0 },
+    uFarFill: { value: 1 },
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
     uGrain: { value: 0 },
@@ -252,6 +255,9 @@ export class Post {
       const seen = sun !== null && sun.x > 0 && sun.x < 1 && sun.y > 0 && sun.y < 1
       g.tHot.value = this.down[Math.min(this.down.length - 1, 3)].texture
       g.uStar.value = seen && sun ? look.star * sun.weight : 0
+      g.uGlow.value = seen && sun ? look.glow * sun.weight : 0
+      g.uShafts.value = seen && sun ? look.shafts * sun.weight : 0
+      g.uFarFill.value = sun ? Math.min(sun.farCircle * (samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)), maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
       g.uSaturation.value = def.grade.saturation

@@ -1,0 +1,254 @@
+{
+  "critic": "R2",
+  "round": 3,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 10,
+    "a": 6,
+    "share": 0.6
+  },
+  "judged": {
+    "votes": 10,
+    "a": 7,
+    "share": 0.7
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-01.png": {
+      "control": true,
+      "what": "control: the approved image of the key",
+      "frame": null,
+      "key": "bloom-hero",
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ]
+    },
+    "set-B-02.png": {
+      "control": true,
+      "what": "control: the approved image of the key",
+      "frame": null,
+      "key": "bloom-opening",
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ]
+    },
+    "set-B-03.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1350,
+      "key": "bloom-opening",
+      "letters": [
+        "a",
+        "e",
+        "d",
+        "a",
+        "a"
+      ]
+    },
+    "set-B-04.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1515,
+      "key": "bloom-hero",
+      "letters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "d"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_06",
+      "family": "GPT",
+      "image": "set-B-01.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78, the low sun’s dramatic backlighting through the translucent petals gives the shot a distinctly cinematic look."
+    },
+    {
+      "juror": "reviewer_07",
+      "family": "Gemini",
+      "image": "set-B-01.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 75,
+      "answer": "a, 75, the cinematic 16:9 color grade and lighting—Combining moody storm-lit chiaroscuro, fine film grain, and backlit subsurface translucency with airborne pollen motes rather than the clean, lifted commercial exposure typical of stock photography."
+    },
+    {
+      "juror": "reviewer_08",
+      "family": "Claude",
+      "image": "set-B-01.png",
+      "control": true,
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d — confidence 60. What most influenced me: the over-polished \"cinematic\" look (sun flare, teal-orange grade, perfect bokeh) together with anatomical oddities on the sunflower. Petals and leaves seem to sprout out of the back and side of the flower head inconsistently, and the leaf shapes and stems are slightly off. That reads as a generated image imitating a film still, not a real frame or stock photo."
+    },
+    {
+      "juror": "reviewer_09",
+      "family": "GLM",
+      "image": "set-B-01.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 88,
+      "answer": "a, 88/100. The dramatic golden backlight makes the sunflower’s petals glow against the dark field."
+    },
+    {
+      "juror": "reviewer_10",
+      "family": "Grok",
+      "image": "set-B-01.png",
+      "control": true,
+      "letter": "b",
+      "confidence": 74,
+      "answer": "b, 74. The idealized single-sunflower hero shot — rule-of-thirds, creamy field bokeh, golden-hour rim light, no labels or motion — is the commercial stock formula, not a documentary frame, catalog plate, or synthetic render."
+    },
+    {
+      "juror": "reviewer_11",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 87,
+      "answer": "a, 87/100. The most influential cue was the carefully composed sunset rim lighting that picks out the sunflower’s fine hairs against the dark field."
+    },
+    {
+      "juror": "reviewer_12",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 80,
+      "answer": "a, 80 — The moody 16:9 cinematography—combining organic 35mm-style film grain, teal-and-amber highlight roll-off, foreground-occluded sunrise flare, and dramatic rim light on an imperfectly chewed, asymmetrically unfurling bud—matches a cinema nature documentary or feature film frame far better than commercial stock photography, 3D demos, or amateur generated art."
+    },
+    {
+      "juror": "reviewer_13",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "d",
+      "confidence": 55,
+      "answer": "My answer is (d), with confidence 55. The image looks cinematic: 16:9 framing, film grain, a teal-orange grade and a backlit sun flare. What tipped it was that the look is too formulaic for a real film frame. It reads like a generated image prompted to look like a \"cinematic film still,\" and the sunflower bud has odd, waxy, over-sharpened bracts and petal anatomy. (a) is my runner-up."
+    },
+    {
+      "juror": "reviewer_14",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84, the dramatic low-angle backlighting that picks out individual hairs on the sunflower stem."
+    },
+    {
+      "juror": "reviewer_15",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "b",
+      "confidence": 74,
+      "answer": "(b) 74. The hero sunflower, golden-hour backlight, and smooth optical bokeh are composed as a generic commercial beauty shot rather than a narrative film or documentary frame."
+    },
+    {
+      "juror": "reviewer_16",
+      "family": "GPT",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82/100. The finely resolved sunset rim lighting on the sunflower’s tiny hairs is the strongest cue for a polished cinematic frame."
+    },
+    {
+      "juror": "reviewer_17",
+      "family": "Gemini",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e) — Confidence: 92\n\nMost influenced by: the hero sunflower's interpenetrating, low-poly ribbon-mesh petals (with visible z-buffer intersection seams and real-time shadow-map stepping) and faceted polygonal silhouettes on the bracts and foreground leaves beneath screen-space post-processing."
+    },
+    {
+      "juror": "reviewer_18",
+      "family": "Claude",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d — confidence 55. Biggest factor: it's clearly a polished CG render (rim-lit stem hairs, cinematic depth of field, floating dust specks), but the sunflower head is anatomically wrong, with petals sprouting from the back and a strange folded face. Add the clichéd starburst sun flare and the unexplained blocky dark shape on the left, and it reads more like a hobbyist Blender piece than a top-budget production."
+    },
+    {
+      "juror": "reviewer_19",
+      "family": "GLM",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 80,
+      "answer": "a, 80, the finely resolved rim lighting on the sunflower’s tiny stem hairs makes the shot look like a polished cinematic frame."
+    },
+    {
+      "juror": "reviewer_20",
+      "family": "Grok",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78, the polished golden-hour rim light, shallow depth of field, and stormy widescreen composition read as a high-end film or AAA cinematic frame rather than stock, catalog, amateur art, or a web 3D demo."
+    },
+    {
+      "juror": "reviewer_21",
+      "family": "GPT",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82/100: The carefully staged sunset backlighting, with a starburst and fine rim light on the sunflower, reads most like a cinematic frame."
+    },
+    {
+      "juror": "reviewer_22",
+      "family": "Gemini",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 85,
+      "answer": "(a), confidence: 85. What most influenced my answer is the combination of high-end cinematic 3D production rendering (subsurface-scattered petals, dense backlit stem-hair geometry, hexagonal aperture bokeh, and dramatic 16:9 film grading) with a telltale 3D mesh interpenetration on the right side of the flower head where a green bract slices cleanly through a yellow petal, pointing to a AAA game cinematic or VFX film shot rather than a real photograph, AI-generated image, or lightweight web 3D demo."
+    },
+    {
+      "juror": "reviewer_23",
+      "family": "Claude",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 60,
+      "answer": "(a), confidence 60. What decided it was the cinematic look of the render: a wide frame, shallow depth of field, a backlit rim on the fine hairs of the stem, a starburst lens flare, floating dust and film grain. Together these read like a frame from a high-end offline-rendered cinematic, not a stock photo, an amateur piece or a real-time web demo."
+    },
+    {
+      "juror": "reviewer_24",
+      "family": "GLM",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 79,
+      "answer": "a, 79, The fine rim lighting on individual stem hairs gives the backlit close-up a polished cinematic look."
+    },
+    {
+      "juror": "reviewer_25",
+      "family": "Grok",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "d",
+      "confidence": 80,
+      "answer": "(d) 80 — the seed head’s florets smear into a non-spiral texture and the dust motes are evenly sprinkled, which reads as diffusion-model art rather than a photographed or rendered cinematic frame."
+    }
+  ]
+}

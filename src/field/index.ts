@@ -5,18 +5,20 @@ import { heightAt, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
+import { leavesApart, placeTurned } from './turn.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, shareOf } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
 
-interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; index: number; of: number; plant: Plant }
+interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; of: number; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, of: number): Group {
   const seen = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
   seen.setUsage(THREE.DynamicDrawUsage)
-  return { plant: new Plant({ detail, variant, places: seen }), all: places, seen, count: places.length / PLACE, index, of }
+  const plant = new Plant({ detail, variant, places: seen })
+  return { plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, of }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -71,6 +73,7 @@ export class Field {
     for (const g of this.groups) {
       const all = g.all
       const seen = g.seen.array as Float32Array
+      const still = g.still.array as Float32Array
       let n = 0
       for (let i = 0; i < all.length; i += PLACE) {
         const dx = all[i] - pose.position.x
@@ -79,11 +82,11 @@ export class Field {
         if (depth < -reach) continue
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
-        for (let j = 0; j < PLACE; j++) seen[n + j] = all[i + j]
-        seen[n + 2] += budTurn(this.time, all[i + 7])
+        placeTurned(all, i, seen, still, n, opensEarly(g.index, g.of) ? 0 : budTurn(this.time, all[i + 7]))
         n += PLACE
       }
       g.seen.needsUpdate = true
+      g.still.needsUpdate = true
       g.plant.show(n / PLACE)
       total += n / PLACE
     }

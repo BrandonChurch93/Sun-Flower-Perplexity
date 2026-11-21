@@ -115,9 +115,14 @@ for (const [set, w] of Object.entries(widths)) {
 
 - No text, mark, border or stray object at native size.
 - No baked light: the scan is delit, and the slow variation that was left is divided out.
-- Largest file 15.3 MB. Texture memory of the ground in the full set: color 85.3 MB, data 21.3 MB, litter 5.3 MB, stand-in 5.3 MB with their mip chains, 117 MB in all.
+- Largest file 15.3 MB. Texture memory of the ground in the full set: color 85.3 MB, data 21.3 MB, litter 5.3 MB with their mip chains, 112 MB in all.
 
 ## Computed at load, not files
 
 - Litter tile (`src/ground/litter.ts`): 1024 x 1024 in the full set, 512 x 512 on the web, repeating every 2.9 m. Dry leaf bits and pale stubble straws on clear ground: color, with how much they cover in alpha. Seeded from the config seed through `streamSeed('ground litter')`.
-- Stand-in soil (`src/ground/standin.ts`): the blockout's noise tile, still used by the meter round the plant and the camera's side until they are built.
+
+## Made from the two maps and from formulas, no further file
+
+- The meter round the plant (`src/ground/geometry.ts`, `src/ground/soil.ts`): a disc of 181 rings whose height is read from the alpha of `soil-data.png` at three sizes (the scan at its own size, the same scan 3.2 times larger as clods, and a middle size), so the relief is the scan's own.
+- Crumbs, stones and clods (`src/ground/crumbs.ts`): lumpy icosahedra placed by `stream('ground crumbs')` and `stream('ground clods')`, colored by `soil-color.jpg` projected on their faces.
+- Grass and weeds (`src/ground/grass.ts`): blades built in code and placed by `stream('ground grass')`. No texture.

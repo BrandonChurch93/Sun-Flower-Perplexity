@@ -1,0 +1,63 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 2, front and upper-left of the bud (also visible in set-C-01.png)",
+      "what": "the folded yellow-green petals are stiff, flat-planed ribbons with painted-looking dark lengthwise lines and knife-sharp straight edges that clip straight through one another at acute angles, leaving a hard triangular hole of sky near the upper-left tip",
+      "fix": "give the folded petals thickness, organic curvature, sculpted ridges instead of flat dark lines, and collision-free layering so petals wrap around one another without interpenetrating"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 1, crop 2 and crop 4, right side of the flower head from 2 to 5 o'clock (also visible in set-C-04.png and set-C-06.png crop 9)",
+      "what": "the dark green bracts behind the head bleed straight through the front yellow petals as hard-edged dark olive triangles, especially across two overlapping petals at 4 o'clock, even though the sun is to the front-left",
+      "fix": "fix the petal translucency/backscatter shading so rear bracts do not cast or show sharp dark green silhouettes through the front of the yellow petals"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 2, right half of the bud",
+      "what": "the dark green bracts wrapping the back of the bud look like smooth, hairless, matte plastic shells with faceted polygon edges (apart from one isolated tuft on a single tip), and a neat row of uniform green spheres sits exposed along the seam between the bracts and petals",
+      "fix": "add fine surface hairs, venation, and natural edge irregularity across all bracts, and vary or tuck in the nascent outer florets so they do not read as a row of identical green balls"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 3, crop 4, crop 5 and crop 6, junction where the right leaf stalk meets the main stem (also in set-C-05.png crop 3 and crop 4)",
+      "what": "the right leaf stalk plugs into the stem cylinder without an organic node, the bright backlit rim highlight of the main stem continues unbroken straight across the base of the stalk, and the stalk underside has a dark notch and stair-stepped pixels",
+      "fix": "blend the petiole mesh into a swollen stem node with continuous shading and hairs so the rim highlight wraps naturally onto the stalk, and increase anti-aliasing along the backlit stalk edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 7, crop 10 and crop 11 (also in set-C-01.png, set-C-03.png crop 9 and crop 10, set-C-04.png, and set-C-05.png crop 2)",
+      "what": "needle-sharp, mathematically straight radial sun-star spikes sit flat on top of heavily blurred foreground leaves, and discrete circular and hexagonal dust-bokeh sprites sit on top of dark silhouettes and dark sky, including a bright dot directly over the dark hill in set-C-03.png crop 9 and a grey hexagon in the dark sky of set-C-06.png crop 11",
+      "fix": "replace the sharp 2D starburst overlay with natural optical bloom/diffraction around the foreground occluder, and light and defocus dust particles in 3D space so sprites do not float over unlit silhouettes and dark sky"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 3, crop 4 and crop 6, curled leaf hanging on the right and partial leaf at the bottom edge (also in set-C-02.png crop 6 and set-C-06.png crop 8)",
+      "what": "the thin backlit serrated left edge of the hanging right leaf breaks into single-pixel stair-steps and bright firefly dots, its upper folded lobe reads as a smooth dark rubbery shell with a single painted pale midrib line, and the lower leaf at the bottom shows rows of evenly spaced bright white dots along its veins",
+      "fix": "give leaf edges slight thickness with fine marginal hairs and higher supersampling/roughness clamping to remove pixel stair-stepping and fireflies, and add micro-venation relief and natural subsurface variation"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 9, top silhouette of the distant dark ridge against the sky (also in set-C-06.png crop 9)",
+      "what": "the far ridge line has a regular wavy, scalloped contour with a faint dark-and-light ringing halo where the blurred hill meets the bright horizon sky",
+      "fix": "use finer natural horizon detail and proper depth-of-field alpha/depth filtering so the out-of-focus skyline transitions cleanly into the sky without corrugated waves or halos"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-05.png",
+      "where": "crop 1 shaded right outer disc florets and crop 6 out-of-focus stalk at lower right",
+      "what": "when zoomed past delivery size, open florets along the shaded right rim of the disc show noisy single-pixel dark/bright outlines, and the blurred background stalk in crop 6 shows a faint repeating diagonal stepped pattern",
+      "fix": "increase shading and depth-of-field sample counts on fine floret geometry and out-of-focus hairy stalks"
+    }
+  ]
+}

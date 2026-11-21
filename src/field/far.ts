@@ -7,6 +7,7 @@ import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInput
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
+import { leavesApart, placeTurned } from './turn.ts'
 import { PLACE, budTurn, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
@@ -17,7 +18,12 @@ const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const UNDER_FROM_M = 5
 const UNDER_BAND_M = 9
 // The dark layers, as shares of the height of the tops.
-const UNDER_LEVELS = [0.5, 0.76]
+const UNDER_LEVELS = [0.5, 0.84]
+// From where the pictures differ in size and tilt, where the head sits in a picture, and how much green and blue a far ray keeps.
+const HEADS_FROM_M = 40
+const HEAD_AT = 0.9
+const RAY_DEEP = [0.66, 0.25]
+const LEAF_SKY = 1.0
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -38,8 +44,17 @@ void main() {
   float across = aCorner.x;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
-  float h = v * uTile.y * aPlace.w;
-  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (across * uTile.x * aPlace.w);
+  // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
+  float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 40).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
+  float draw = fract(aVary.w * 0.6180339);
+  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away);
+  float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
+  float flip = fract(draw * 13.0) < 0.5 ? -1.0 : 1.0;
+  float top = ${HEAD_AT.toFixed(2)} * uTile.y * aPlace.w;
+  vec2 off = vec2(across * uTile.x * aPlace.w, v * uTile.y * aPlace.w - top) * scale;
+  off = vec2(cos(tip) * off.x - sin(tip) * off.y, sin(tip) * off.x + cos(tip) * off.y);
+  float h = top + off.y;
+  vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * off.x;
   world.xz += aVary.xy * h;
   // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
   float tall = max(uPlantHeight * aPlace.w, 0.001);
@@ -48,7 +63,7 @@ void main() {
   world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
-  vUv = vec2((aPlace.z + clamp(across + 0.5, inset, 1.0 - inset)) / uCount, v);
+  vUv = vec2((floor(aPlace.z) + clamp(across * flip + 0.5, inset, 1.0 - inset)) / uCount, v);
   vWorld = world;
   vDepth = -view.z;
   vTone = 0.78 + 0.44 * aVary.z;
@@ -67,6 +82,9 @@ void main() {
   float cover = 1.0 - t.a;
   if (cover < 0.42) discard;
   vec3 color = t.rgb / cover;
+  // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
+  float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
+  color.gb *= mix(vec2(1.0), vec2(${RAY_DEEP[0].toFixed(2)}, ${RAY_DEEP[1].toFixed(2)}), ray);
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
     return;
@@ -108,27 +126,39 @@ uniform vec2 uToward;
 uniform vec2 uStart;
 uniform float uCover;
 uniform float uLevel;
+uniform float uHeight;
+uniform float uPlantWind;
+uniform float uPlantHeight;
+${swayGlsl}
 void main() {
   float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  // The wind carries a sheet as far as it carries a neighbor at the sheet's height, so the wave that crosses the rows crosses the sheets too.
+  float tall = max(uPlantHeight * ${PICTURE_SIZE.toFixed(3)}, 0.001);
+  float k = clamp((uHeight / tall - 0.3) / 0.7, 0.0, 1.0);
+  float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, vWorld.xz));
+  vec2 at = vWorld.xz - vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec3 color;
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
-    vec2 p = vWorld.xz + uLevel * 37.0;
+    vec2 p = at + uLevel * 37.0;
     float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
     float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
-    color = vMid * mix(0.3, 0.95, inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)});
+    float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
+    color = vMid * mix(0.3, 0.95, lift);
+    // Seen from over the tops the upper leaves show the faces they turn to the sky.
+    color += vec3(0.05, 0.09, 0.035) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
     // The low sun comes through the upper leaves of a clump, green.
     color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
-    float along = -dot(vWorld.xz, uToward);
-    float across = vWorld.x * uToward.y - vWorld.z * uToward.x;
+    float along = -dot(at, uToward);
+    float across = at.x * uToward.y - at.y * uToward.x;
     vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
     if (uCover * reach < hash21(cell)) discard;
     float grain = valueNoise(vec2(across * 2.2, along * 0.045));
-    float patchy = valueNoise(vWorld.xz * 0.028);
+    float patchy = valueNoise(at * 0.028);
     color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
   }
   if (uDiag == 7) {
@@ -179,6 +209,7 @@ export class FarField {
   readonly meshes: THREE.Mesh[]
   private readonly plants: Plant[] = []
   private readonly spots: THREE.InstancedInterleavedBuffer[] = []
+  private readonly stills: THREE.InstancedInterleavedBuffer[] = []
   private readonly atlas: THREE.WebGLRenderTarget
   private readonly scene = new THREE.Scene()
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, 0, 0.1, 200)
@@ -219,6 +250,7 @@ export class FarField {
       const plant = new Plant({ detail: 'far', variant, places: spot })
       plant.show(pictureTurns)
       this.spots.push(spot)
+      this.stills.push(leavesApart(plant, pictureTurns))
       this.plants.push(plant)
       this.scene.add(...plant.meshes)
     })
@@ -300,11 +332,14 @@ export class FarField {
     const tile = this.uniforms.uTile.value
     this.spots.forEach((spot, i) => {
       const a = spot.array as Float32Array
+      const still = this.stills[i]
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
-        a.set([rx * across, rz * across, pictureTurn(j) + budTurn(this.time, 1 + i * pictureTurns + j), 1, 0, 0, 0.5, 1 + i * pictureTurns + j], j * PLACE)
+        const id = 1 + i * pictureTurns + j
+        placeTurned([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(this.time, id))
       }
       spot.needsUpdate = true
+      still.needsUpdate = true
     })
     const cam = this.camera
     const half = (pictureCount * tile.x) / 2
