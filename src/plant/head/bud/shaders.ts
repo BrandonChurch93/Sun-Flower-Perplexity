@@ -125,8 +125,8 @@ void main() {
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
-    // Shut, the lower half of a bract lies under the points of the row below it.
-    t.occlusion *= mix(1.0, mix(0.4, 1.0, smoothstep(0.1, 0.62, u)), uBudShut);
+    // Shut, the foot of a bract lies under the points of the row below it.
+    t.occlusion *= mix(1.0, mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;

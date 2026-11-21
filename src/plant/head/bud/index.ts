@@ -114,7 +114,7 @@ const CROWN_ANGLE = 0.6
 const CROWN_LONG = 0.12
 const CROWN_TIP = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
-const SPREAD_LONG = 1.2
+const SPREAD_LONG = 1.6
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
