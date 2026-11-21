@@ -212,8 +212,8 @@ void main() {
   float ribs = 0.5 + 0.5 * sin(vUv.x * 6.2832 * 9.0);
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
-  t.albedo = mix(vec3(0.06, 0.09, 0.012), vec3(0.14, 0.185, 0.025), 0.45 * ribs + 0.55 * streak);
-  t.through = vec3(0.04, 0.06, 0.006);
+  t.albedo = mix(vec3(0.035, 0.055, 0.012), vec3(0.085, 0.115, 0.022), 0.45 * ribs + 0.55 * streak);
+  t.through = vec3(0.012, 0.018, 0.003);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);
   t.rough = 0.78;
