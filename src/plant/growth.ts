@@ -223,8 +223,8 @@ function raySpan(k: number): [number, number, number] {
   }
   const far = (away - RAY_NEAR) / (Math.PI - RAY_NEAR)
   const turn = (k * GOLDEN + rnd(46)) % 1
-  const start = RAY_HELD + 0.004 + 0.3 * far + turn + 0.1 * rnd(41, k)
-  const seconds = lerp(RAY_SECONDS, 3.8, far) * (0.85 + 0.3 * rnd(43, k))
+  const start = RAY_HELD + 0.004 + (0.3 * far + 0.1 * rnd(41, k)) * smoothstep(0, 0.3, turn) + turn
+  const seconds = lerp(1.8, lerp(RAY_SECONDS, 3.8, far), smoothstep(0, 0.5, turn)) * (0.9 + 0.2 * rnd(43, k))
   return [start, Math.min(start + seconds, bloom1), 1]
 }
 
