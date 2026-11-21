@@ -191,6 +191,8 @@ void main() {
   albedo = mix(albedo, vec3(0.2, 0.16, 0.06), smoothstep(0.55, 1.0, t) * step(0.72, vAlong.y) * (1.0 - weed));
   albedo *= 0.86 + 0.14 * cos(vAlong.z * 7.0);
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
+  float rained = smoothstep(0.3, 1.0, uWet);
+  albedo *= mix(vec3(1.0), vec3(1.7, 2.1, 1.5), rained);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.15, 0.8, t));
   vec2 p = vWorld.xz;
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
@@ -200,6 +202,7 @@ void main() {
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
+  color += skyAmbient(reflect(-v, n)) * (0.05 * rained * deep);
   float bead = step(0.9, hash31(floor(vWorld * 700.0))) * uDew * (1.0 - smoothstep(0.25, 0.9, vDepth));
   color += bead * (uSunColor * 1.2 * lit + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.4);
   outColor = finish(color, vWorld, vDepth, -1.0);
