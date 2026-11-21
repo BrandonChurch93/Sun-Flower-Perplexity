@@ -91,7 +91,12 @@ void main() {
     float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
     albedo = mix(albedo, pale, 0.45 * rib);
     t.albedo = albedo;
-    height = 0.0003 * grain + 0.0003 * line + 0.00045 * keel + 0.0002 * rib + 0.00006 * fine;
+    // Relief finer than about three pixels turns into two pixel blocks in the screen derivatives, so each term fades out as its own width nears a pixel.
+    float px = fwidth(x);
+    float pu = fwidth(u);
+    float coarse = 1.0 - smoothstep(0.33, 0.8, max(px * 6.0, pu * 30.0));
+    float thread = 1.0 - smoothstep(0.012, 0.035, px);
+    height = 0.0003 * grain * coarse + 0.0003 * line * thread + 0.00045 * keel * (1.0 - smoothstep(0.03, 0.09, px)) + 0.0002 * rib * (1.0 - smoothstep(0.004, 0.011, pu)) + 0.00006 * fine * (1.0 - smoothstep(0.33, 0.8, max(px * 11.0, pu * 60.0)));
     float buried = smoothstep(0.0, 0.16, u);
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
