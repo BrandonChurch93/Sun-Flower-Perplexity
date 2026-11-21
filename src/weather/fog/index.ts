@@ -62,6 +62,7 @@ ${fogLight}
 const float BANK_SOLID = 0.5;
 const float BANK_DEEP = 0.2;
 const vec3 BANK_AMONG = vec3(0.88, 1.0, 0.94);
+const vec3 SUN_AMONG = vec3(0.8, 1.0, 1.15);
 float bankBroad(vec2 q, float y) {
   return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
 }
@@ -91,7 +92,7 @@ void main() {
   float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
   vec3 calm = fogCalm(v);
   vec3 sunny = max(fogLight(v) - calm, 0.0);
-  outColor = vec4((calm * mix(BANK_DEEP * BANK_AMONG, vec3(1.0), open) + sunny * uSunShare) * (1.0 + 0.6 * lit), alpha);
+  outColor = vec4((calm * mix(BANK_DEEP * BANK_AMONG, vec3(1.0), open) + sunny * (uSunShare * mix(SUN_AMONG, vec3(1.0), open))) * (1.0 + 0.6 * lit), alpha);
 }
 `
 
@@ -111,8 +112,8 @@ const BANKS: Bank[] = [
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
-const SUN_NEAR = 0.3
-const SUN_FAR = 1.2
+const SUN_NEAR = 0.1
+const SUN_FAR = 1.7
 const SUN_FAR_M = 7
 
 const smooth = (a: number, b: number, x: number): number => {
