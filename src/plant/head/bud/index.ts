@@ -107,16 +107,16 @@ const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [1.05, 0, -0.6]
+const SHUT_ANGLE = [0.7, 0, -0.6]
 const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
-const SHUT_CURL = [1.25, 0, 0]
+const SHUT_CURL = [0.6, 0, 0]
 const SHUT_CURL_LATE = [0.8, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
 const SHUT_LONG = [0.5, 0.95, 0.98]
 const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
-const SHUT_TIP = [0.35, 0.7, 0.1]
+const SHUT_TIP = [0.5, 0.85, 0.1]
 const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // One bract in three of the inner series (every other one in the old build the bloom keeps) stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 1.0
@@ -137,7 +137,7 @@ const TUFT_FOLD = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
 const SPREAD_LONG_LATE = 1.6
-const SPREAD_OUT = 0.4
+const SPREAD_OUT = 0.3
 const SPREAD_OPEN = 0.1
 const SPREAD_UP = 0.5
 const SPREAD_SLIM = 0.2
@@ -154,7 +154,8 @@ const YOUNG_FRINGE = 1.8
 const FROST_FRINGE = 0.9
 // The bud comes out wrapped: its first bracts stand on the stem's own tip, lean in over it by this much and take this long to unfold, so nothing comes out through the stem's skin.
 // No two bracts of the shut bud are alike: each has its own length, width, lean and bend of the point.
-const VARY = { long: 0.14, wide: 0.22, lean: 0.24, tip: 0.55 }
+const VARY = { long: 0.2, wide: 0.22, lean: 0.24, tip: 0.75 }
+const AWN_WIDE = [0.15, 0.24]
 const YOUNG_IN = [0.5, 0.6, 0.7]
 const UNFOLD_S = [0, 0.3, 0.7]
 const UNFOLD_TAKES_S = 1.0
@@ -228,7 +229,7 @@ export function create(options: PartOptions): PlantPart | null {
     })
   }
 
-  const own = bracts.map((_, i) => ({ long: 2 * rnd(41, i) - 1, wide: 2 * rnd(42, i) - 1, lean: rnd(43, i) - 0.35, tip: 2 * rnd(44, i) - 1 }))
+  const own = bracts.map((_, i) => ({ long: 2 * rnd(41, i) - 1, wide: 2 * rnd(42, i) - 1, lean: rnd(43, i) - 0.35, tip: 2 * rnd(44, i) - 1, bent: i % 3 < 2 && rnd(45, i) < 0.14 ? 0.9 + 0.7 * rnd(46, i) : 0 }))
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
   const normalSlots = [new Float32Array(count * 3), options.places ? null : new Float32Array(count * 3)]
@@ -602,7 +603,7 @@ export function create(options: PartOptions): PlantPart | null {
         const bulge = lerp(BULGE_LATE[k.series], BULGE[k.series], early) * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(lerp(angle - 1.3 * curl * u * u, meet, closed), behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * (1 - 0.5 * closed) * tipW * tipW + WRAP_TIP[k.series] * closed * smoothstep(0.6, 1, u) + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * crown) * globe * smoothstep(0.4, 1, u) + (CROWN_HOOK * (2 * k.seed - 1) * crown + VARY.tip * mine.tip * (1 - crown)) * early * globe * smoothstep(0.65, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
+        const free = Math.max(lerp(angle - 1.3 * curl * u * u, meet, closed), behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * (1 - 0.5 * closed) * tipW * tipW + WRAP_TIP[k.series] * closed * smoothstep(0.6, 1, u) + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * crown) * globe * smoothstep(0.4, 1, u) + (CROWN_HOOK * (2 * k.seed - 1) * crown + VARY.tip * mine.tip * (1 - crown)) * early * globe * smoothstep(0.65, 1, u) + mine.bent * early * globe * smoothstep(0.74, 0.92, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
         const Ea = R * (1 + CONE_WIDE * coneWide) + lift + BULGE_TOP * bulge
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift + BULGE_HIGH * bulge
         const fr = r / Ea
@@ -692,7 +693,7 @@ export function create(options: PartOptions): PlantPart | null {
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
         const awn = lerp(0.74, 0.66, early * (1 - young))
-        const even = lerp(1.04, 0.15, smoothstep(lerp(0.34, 0.28, early * (1 - young)), awn, u)) * (1 - Math.pow(clamp((u - awn) / (1 - awn)), 1.4)) + 0.004
+        const even = lerp(1.04, lerp(AWN_WIDE[0], AWN_WIDE[1], early * (1 - young)), smoothstep(lerp(0.34, 0.28, early * (1 - young)), awn, u)) * (1 - Math.pow(clamp((u - awn) / (1 - awn)), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight) + (k.series === 2 ? Math.tan(TUFT_FOLD * smoothstep(0.05, 0.4, u)) * globe * early : 0)
