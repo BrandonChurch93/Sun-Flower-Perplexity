@@ -126,7 +126,7 @@ void main() {
     local = f.at + radial * r + axis * z;
   } else if (piece < 1.5) {
     vec3 radial = ex * cos(aShape.z + 0.6) + ey * sin(aShape.z + 0.6);
-    float r = w * (level < 0.5 ? 0.19 : level < 1.5 ? 0.27 : level < 2.5 ? 0.25 : 0.0);
+    float r = w * (level < 0.5 ? 0.19 : level < 1.5 ? 0.27 + 0.05 * rise : level < 2.5 ? 0.25 + 0.14 * rise * aSeed.x : 0.0);
     float z = level < 0.5 ? max(top - 1.7 * w, 0.1 * tall) : level < 1.5 ? max(top - 0.8 * w, 0.1 * tall) : level < 2.5 ? top : top + 0.3 * w;
     normal = level < 2.5 ? radial : axis;
     along = level / 3.0;
@@ -230,7 +230,7 @@ void main() {
     t.wax = mix(0.3, 0.1, bloom);
     t.rough = mix(0.6, 0.85, bloom);
   } else if (piece < 1.5) {
-    float dust = smoothstep(0.5, 0.8, along + 0.4 * (grain - 0.5));
+    float dust = smoothstep(0.42, 0.7, along + 0.4 * (grain - 0.5)) * mix(0.3, 1.0, fract(vMore.z * 7.0 + seed * 3.0));
     dust = max(dust, 0.5 * smoothstep(0.62, 0.8, grain) * fine);
     dust *= (1.0 - 0.35 * vMore.x) * smoothstep(0.02, 0.3, seed + 0.2 * vMore.w) * (1.0 - 0.6 * coarse);
     t.albedo = mix(vec3(0.05, 0.02, 0.018) * (0.7 + 0.6 * grain), pollen, dust);
