@@ -11,7 +11,7 @@ export const world: WorldSettings = {
   sky: { zenith: [0.2, 0.3, 0.42], horizon: [0.9, 0.85, 0.8], bounce: [0.07, 0.05, 0.035], ambient: 1, glow: [9, 4.7, 2.3], glowPower: 60, disc: 35 },
   backdrop: { file: null, key: 'dawn-seedling', sunAt: null, gain: 1, blur: 0.25 },
   fog: { color: [0.28, 0.32, 0.34], sunTint: [1.4, 0.75, 0.3], density: 0.003, falloff: 1.4 },
-  grade: { exposure: 0.78, contrast: 1.28, white: 9, saturation: 1.04, gain: [1.03, 1, 0.96], lift: [0, 0, 0.004], bloom: 0.11, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
+  grade: { exposure: 0.78, contrast: 1.28, white: 9, saturation: 1.04, gain: [1.03, 1, 0.96], lift: [0.0015, 0.003, 0.003], bloom: 0.11, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0.25, frost: 0, dew: 1 },
   wind: 0.1,
 }
