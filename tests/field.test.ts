@@ -140,3 +140,60 @@ describe('the neighbors before the rows, beside the companion', () => {
     }
   })
 })
+
+import { lateAt, nearVariants, ownOf } from '../src/field/layout.ts'
+import { hash01, streamSeed } from '../src/core/random.ts'
+
+describe('the neighbors from 52 s', () => {
+  it('are as they were up to frame 1559 and go their own ways from frame 1560', () => {
+    for (let frame = 0; frame <= 1559; frame += 3) expect(lateAt(timeOf(frame))).toBe(0)
+    expect(lateAt(timeOf(1559))).toBe(0)
+    expect(lateAt(52)).toBe(0)
+    expect(lateAt(timeOf(1561))).toBeGreaterThan(0)
+    expect(lateAt(timeOf(1755))).toBe(1)
+    for (let frame = 1560; frame < 1799; frame++) expect(lateAt(timeOf(frame + 1)) - lateAt(timeOf(frame))).toBeLessThan(0.012)
+  })
+
+  it('are no two alike among the nearest thirty', () => {
+    const seed = streamSeed('field')
+    const list: { tall: number; head: number; nod: number; turn: number; kind: number; reach: number }[] = []
+    for (const from of [places.near, places.front]) {
+      for (let i = 0; i < from.length; i += PLACE) {
+        const own = ownOf(from[i + 7])
+        list.push({ tall: from[i + 3] * own.tall, head: own.head, nod: own.nod, turn: from[i + 2] + own.turn, kind: Math.floor(hash01(seed, 15, from[i + 7]) * nearVariants.length), reach: Math.hypot(from[i], from[i + 1]) })
+      }
+    }
+    list.sort((a, b) => a.reach - b.reach)
+    const nearest = list.slice(0, 30)
+    for (const n of nearest) {
+      expect(n.head).toBeGreaterThanOrEqual(0.75)
+      expect(n.head).toBeLessThanOrEqual(1.15)
+    }
+    for (let a = 0; a < nearest.length; a++) {
+      for (let b = a + 1; b < nearest.length; b++) {
+        const p = nearest[a]
+        const q = nearest[b]
+        const apart = Number(Math.abs(p.tall - q.tall) > 0.02) + Number(Math.abs(p.head - q.head) > 0.03) + Number(Math.abs(p.nod - q.nod) > 0.05) + Number(Math.abs(p.turn - q.turn) > 0.09) + Number(p.kind !== q.kind)
+        expect(apart, `${a} and ${b}`).toBeGreaterThanOrEqual(2)
+      }
+    }
+  })
+
+  it('have heads from 0.75 to 1.15 of the size they had and stand from 0.85 to 1.1 as tall, over the whole field', () => {
+    let low = { head: 9, tall: 9 }
+    let high = { head: 0, tall: 0 }
+    for (const from of all) {
+      for (let i = 0; i < from.length; i += PLACE) {
+        const own = ownOf(from[i + 7])
+        low = { head: Math.min(low.head, own.head), tall: Math.min(low.tall, own.tall) }
+        high = { head: Math.max(high.head, own.head), tall: Math.max(high.tall, own.tall) }
+      }
+    }
+    expect(low.head).toBeGreaterThanOrEqual(0.75)
+    expect(low.head).toBeLessThan(0.78)
+    expect(high.head).toBeLessThanOrEqual(1.15)
+    expect(high.head).toBeGreaterThan(1.12)
+    expect(low.tall).toBeGreaterThanOrEqual(0.85)
+    expect(high.tall).toBeLessThanOrEqual(1.1)
+  })
+})
