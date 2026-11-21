@@ -8,8 +8,15 @@ in vec3 aInfo;
 out vec3 vWorld;
 out vec3 vInfo;
 out float vDepth;
+uniform float uSunDeg;
+uniform float uLow;
 void main() {
-  vec4 world = modelMatrix * vec4(position, 1.0);
+  vec3 at = position;
+  // Seen through the rain from the soil the near rows stand low: half their height across the middle of the view, their own height only at its far left, and a little more where the dawn has them nearly flat. uLow is 0 at both cuts, so the land never jumps at one.
+  float off = mod(degrees(atan(position.x, position.z)) - uSunDeg + 540.0, 360.0) - 180.0;
+  float tall = mix(1.0, 0.5, smoothstep(-15.0, -21.5, off)) + 0.9 * smoothstep(-35.0, -41.0, off) * (1.0 - smoothstep(-66.0, -76.0, off));
+  if (uLow > 0.0 && at.y > 0.0) at.y *= mix(1.0, tall, uLow);
+  vec4 world = modelMatrix * vec4(at, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vInfo = aInfo;
@@ -108,13 +115,17 @@ const TONES: [number, number, number][] = [
 const VEILS = [
   { radiusM: 1.6, heightM: 0.5, scaleM: 0.035, share: 0.05, light: 1 },
   { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.06, light: 1 },
-  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.09, light: 1 },
-  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.08, light: 1.3 },
+  { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.14, light: 1.5 },
+  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.16, light: 1.8 },
   { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.2, light: 2.2 },
   { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.7, light: 3.6 },
   { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.3, light: 3.6 },
   { radiusM: 600, heightM: 60, scaleM: 6, share: 0.15, light: 2.6 },
 ]
+
+const RAIN_FROM_S = 8
+const RAIN_TO_S = 20
+const smooth = (a: number, b: number, x: number): number => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 
 export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; setTime(time: number): void }
 
@@ -122,6 +133,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
   const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.004 }, uFlash: flash }
+  const low = { value: 0 }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -166,7 +178,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
       name: `rain ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: skylineLayerSalt(i) }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(TONES[i]) }, uLayer: { value: skylineLayerSalt(i) }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor }, uSunDeg: { value: skylineAzimuthDeg }, uLow: layer.rowM ? low : { value: 0 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
@@ -193,6 +205,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
     flash: (amount) => { flash.value = amount },
     setTime: (time) => {
       for (const ring of rings) ring.setTime(time)
+      low.value = smooth(RAIN_FROM_S, RAIN_FROM_S + 3.5, time) * (1 - smooth(RAIN_TO_S - 5.5, RAIN_TO_S - 0.1, time))
       landMesh.position.y = skylineLandM(time) - SKYLINE_LAND_M
       landMesh.updateMatrix()
     },
