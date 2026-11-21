@@ -81,7 +81,7 @@ void main() {
   vec3 body = mix(vec3(0.55, 0.53, 0.015), vec3(0.62, 0.64, 0.035), smoothstep(0.1, 0.8, u));
   // A ray that is lifting is amber, darker toward its foot.
   body = mix(body, vec3(0.8, 0.56, 0.07) * mix(0.4, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
-  body = mix(body, mix(vec3(0.5, 0.48, 0.07), vec3(0.26, 0.4, 0.1), smoothstep(0.35, 0.95, u)), 0.95 * fresh);
+  body = mix(body, mix(vec3(0.43, 0.47, 0.08), vec3(0.2, 0.36, 0.1), smoothstep(0.25, 0.9, u)), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.94 + 0.1 * own, 0.88 + 0.2 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
@@ -160,7 +160,7 @@ void main() {
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
   // A shut strap is folded to two ridges: dark along its edges and down the furrow between them, brightest on the ridges.
   float seam = max(smoothstep(0.6, 1.0, abs(across)), 0.8 * (1.0 - smoothstep(0.0, 0.14, abs(across)))) * fresh * smoothstep(1.0, 0.6, u);
-  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.35 * fresh * (1.0 - smoothstep(0.0, 0.2, abs(abs(across) - 0.36))));
+  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.6 * fresh * (1.0 - smoothstep(0.0, 0.2, abs(abs(across) - 0.36))));
   t.through *= 1.0 - 0.85 * seam;
   t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
