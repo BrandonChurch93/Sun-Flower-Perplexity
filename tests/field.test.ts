@@ -3,12 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
 import { poseOf, project } from '../src/director/pose.ts'
 import { rigPathAt } from '../src/director/rig.ts'
-import { rigAt } from '../src/director/camera.ts'
-import { plantInputsAt } from '../src/director/inputs.ts'
-import { nearPlane } from '../src/director/pose.ts'
-import { PLACE, companionPlace, companionVariant, fieldPlaces, right, toward } from '../src/field/layout.ts'
-import { heightAt, usePlant } from '../src/plant/growth.ts'
-import { buildStandIn, standInVertexCount } from '../src/plant/standin.ts'
+import { PLACE, companionPlace, fieldPlaces, right, toward } from '../src/field/layout.ts'
+import { heightAt } from '../src/plant/growth.ts'
 
 const places = fieldPlaces()
 const all = [places.near, places.far]
@@ -71,32 +67,5 @@ describe('the field', () => {
     const again = fieldPlaces()
     expect(Array.from(again.near)).toEqual(Array.from(places.near))
     expect(again.far.length).toBe(places.far.length)
-  })
-
-  it('keeps the companion out of the frame through dawn, rain and night and at the frost key', () => {
-    const fps = config.film.fps
-    const night = config.segments.find((s) => s.id === 'night')!
-    const frames: number[] = []
-    for (let f = 0; f < night.end * fps; f += 5) frames.push(f)
-    frames.push(night.end * fps - 1, Math.round(config.keys.find((k) => k.id === 'frost')!.time * fps))
-    const aspect = config.formats.master.width / config.formats.master.height
-    const at = companionPlace()
-    const ratio = config.field.companion.heightRatio
-    const pos = new Float32Array(standInVertexCount * 3)
-    const p = new THREE.Vector3()
-    for (const f of frames) {
-      const time = f / fps
-      const rig = rigAt(time)
-      const pose = poseOf(rig, new THREE.Vector3())
-      usePlant(companionVariant)
-      buildStandIn(time, plantInputsAt(time), pos, null)
-      usePlant(0)
-      let inFrame = 0
-      for (let i = 0; i < standInVertexCount; i++) {
-        const seen = project(pose, p.set(at.x + pos[i * 3] * ratio, pos[i * 3 + 1] * ratio, at.z + pos[i * 3 + 2] * ratio), aspect)
-        if (seen.depthM > nearPlane(rig) && seen.x >= 0 && seen.x <= 1 && seen.y >= 0 && seen.y <= 1) inFrame++
-      }
-      expect(inFrame, `frame ${f}`).toBe(0)
-    }
   })
 })

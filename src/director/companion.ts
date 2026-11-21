@@ -1,19 +1,20 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
 import type { CameraPose } from '../core/lens.ts'
-import { companionPlace, companionVariant } from '../field/layout.ts'
+import { companionPlace, companionVariant, right, toward } from '../field/layout.ts'
 import { bodyRadius, leafCount, leafDroop, leafLength, rayLength, stemRadius, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { leafFrameAt, poseAt, stemAt } from '../plant/skeleton.ts'
 
 const ratio = config.field.companion.heightRatio
 
-// How the companion leans from upright, as a slope: meters sideways for each meter of height, toward +x and toward +z.
-// A sunflower at the open edge of a field leans out of the row toward the light and the open ground.
-export const COMPANION_LEAN = { x: 0, z: 0 }
+// How the companion leans from upright, as a slope: meters sideways for each meter of height, to the right and toward the camera
+// that stands at `field.companion.fromAzimuthDeg`. It leans 14 degrees toward the plant and a little away from that camera:
+// its foot stays wide of every frame before the bloom, and its upper leaves reach the left edge of the two bloom frames.
+const LEAN = { right: 0.24, toward: -0.08 }
+export const COMPANION_LEAN = { x: right.x * LEAN.right + toward.x * LEAN.toward, z: right.z * LEAN.right + toward.z * LEAN.toward }
 
 // How the companion stands: its size, its lean and its place. Its top stays at the plant's height times `field.companion.heightRatio`.
-export function companionMatrix(out: THREE.Matrix4 = new THREE.Matrix4()): THREE.Matrix4 {
-  const place = companionPlace()
+export function companionMatrix(out: THREE.Matrix4 = new THREE.Matrix4(), place: { x: number; z: number } = companionPlace()): THREE.Matrix4 {
   const slope = Math.hypot(COMPANION_LEAN.x, COMPANION_LEAN.z)
   out.identity()
   if (slope > 0) {

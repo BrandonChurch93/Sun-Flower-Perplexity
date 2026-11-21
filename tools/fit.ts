@@ -7,6 +7,7 @@ import { config, type CameraKey } from '../src/config.ts'
 import type { WorldSettings } from '../src/core/world.ts'
 import { horizonY, nearPlane, poseOf, project } from '../src/director/pose.ts'
 import { rigPathAt, type RigPath } from '../src/director/rig.ts'
+import { companionMatrix } from '../src/director/companion.ts'
 import { companionVariant } from '../src/field/layout.ts'
 import { usePlant, type PlantInputs } from '../src/plant/growth.ts'
 import { PART, buildStandIn, headAt, standInTopology, standInVertexCount, tipAt } from '../src/plant/standin.ts'
@@ -286,17 +287,19 @@ function fitCamera(): void {
   }
 }
 
-// Where the companion's parts land in the frame along the camera path now in the config.
+// Where the companion's parts land in the frame along the camera path now in the config, leaning as the film leans it.
+// This measures the stand-in's shapes, to try places quickly. The rule itself is held on the real parts by tests/companion.test.ts.
+const leaning = new THREE.Matrix4()
 function companionSeen(leftM: number, towardCameraM: number, frame: number, variant = companionVariant): { inFrame: number; maxX: number; leafX0: number; leafX1: number } {
   const time = frame / config.film.fps
   const from = config.field.companion.fromAzimuthDeg * RAD
   const px = Math.sin(from) * towardCameraM - Math.cos(from) * leftM
   const pz = Math.cos(from) * towardCameraM + Math.sin(from) * leftM
-  const ratio = config.field.companion.heightRatio
+  companionMatrix(leaning, { x: px, z: pz })
   const seg = config.segments.find((s) => time < s.end) ?? config.segments[config.segments.length - 1]
   const rig = rigPathAt(time)
   const pose = poseOf({ ...rig, fNumber: 4 }, new THREE.Vector3())
-  usePlant(variant)
+  usePlant(variant, { x: px, z: pz })
   buildStandIn(time, inputsOf(seg.world), positions, null)
   usePlant(0)
   const near = nearPlane(rig)
@@ -305,7 +308,7 @@ function companionSeen(leftM: number, towardCameraM: number, frame: number, vari
   let leafX0 = Infinity
   let leafX1 = -Infinity
   for (let i = 0; i < standInVertexCount; i++) {
-    const p = project(pose, point.set(px + positions[i * 3] * ratio, positions[i * 3 + 1] * ratio, pz + positions[i * 3 + 2] * ratio), ASPECT)
+    const p = project(pose, point.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]).applyMatrix4(leaning), ASPECT)
     if (p.depthM <= near) continue
     if (p.y < 0 || p.y > 1) continue
     maxX = Math.max(maxX, p.x)
