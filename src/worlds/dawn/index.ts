@@ -1,21 +1,22 @@
 import type { WorldSettings, WorldStageMaker } from '../../core/world.ts'
 import { makeMist, type MistSettings } from '../../weather/mist/index.ts'
+import { SKYLINE_DAWN_SUN_DEG } from '../../weather/skyline.ts'
 import { world as golden } from '../golden/index.ts'
 import { makeFarLayers } from './layers.ts'
 import { DawnSky } from './sky.ts'
 
 export const world: WorldSettings = {
   standIn: true,
-  sun: { azimuthDeg: 175.007, elevationDeg: 1.005, color: [7.5, 4.6, 2.2], softnessDeg: 1.2, lean: 1, lift: 1 },
+  sun: { azimuthDeg: SKYLINE_DAWN_SUN_DEG, elevationDeg: 1.005, color: [7.5, 4.6, 2.2], softnessDeg: 1.2, lean: 1, lift: 1 },
   sky: { zenith: [0.2, 0.3, 0.42], horizon: [0.9, 0.85, 0.8], bounce: [0.07, 0.05, 0.035], ambient: 1, glow: [9, 4.7, 2.3], glowPower: 60, disc: 60 },
   backdrop: { file: null, key: 'dawn-seedling', sunAt: null, gain: 1, blur: 0.25 },
-  fog: { color: [0.28, 0.32, 0.34], sunTint: [1.6, 0.8, 0.3], density: 0.006, falloff: 1.4 },
+  fog: { color: [0.28, 0.32, 0.34], sunTint: [1.4, 0.75, 0.3], density: 0.003, falloff: 1.4 },
   grade: { exposure: 0.78, contrast: 1.28, white: 9, saturation: 1.04, gain: [1.03, 1, 0.96], lift: [0, 0, 0.004], bloom: 0.11, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0.25, frost: 0, dew: 1 },
   wind: 0.1,
 }
 
-const SKY_GAIN = 1.5
+const SKY_GAIN = 1.6
 const AIR_COOL: [number, number, number] = [0.3, 0.46, 0.54]
 const AIR_WARM: [number, number, number] = [2.2, 1.3, 0.6]
 const AIR_PER_M = 0.00025
@@ -36,7 +37,7 @@ export const mist: MistSettings = {
 
 export const stage: WorldStageMaker = (def) => {
   const sky = new DawnSky(def, SKY_GAIN)
-  const far = makeFarLayers(golden.sun.azimuthDeg, def.sun.azimuthDeg, AIR_COOL, AIR_WARM, AIR_PER_M)
+  const far = makeFarLayers(golden.sun.azimuthDeg, AIR_COOL, AIR_WARM, AIR_PER_M)
   const air = makeMist('dawn', mist)
   let open = 0
   let close = 0
@@ -46,6 +47,7 @@ export const stage: WorldStageMaker = (def) => {
     prepare(frame) {
       open = frame.time
       close = frame.timeClose
+      far.setTime(frame.time)
       sky.prepare(frame.time, frame.samples)
     },
     sample(_camera, shutter) {

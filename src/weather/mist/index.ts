@@ -65,7 +65,7 @@ void main() {
   vec2 at = (vWorld.xz - uDrift * uMistTime) / uBankM;
   float bank = valueNoise(at + uSheet * 0.37);
   float wisp = valueNoise(at * 3.1 + vec2(17.0, 5.0) + uSheet * 0.11);
-  float height = uHeightM * (0.55 + 0.6 * bank + 0.3 * wisp);
+  float height = uHeightM * (0.75 + 0.35 * bank + 0.15 * wisp);
   float amount = mix(1.0, smoothstep(0.25, 0.75, 0.7 * bank + 0.3 * wisp) * 1.8, uBroken);
   // The share of this sheet's slab that the ray crosses before it meets the ground, with the mist thinning upward along it.
   float across = max(length(v.xz), 0.05);
