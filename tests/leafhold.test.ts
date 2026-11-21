@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
 import { create as createLeaves } from '../src/plant/leaves/index.ts'
 import { poseAt } from '../src/plant/skeleton.ts'
-import { leafCount, leafDroop, leafElevation, leafFoldScale, leafLength, leafRoll, setLeafHold, usePlant, type LeafHold, type PlantInputs } from '../src/plant/growth.ts'
+import { leafAzimuth, leafCount, leafDroop, leafElevation, leafFoldScale, leafLength, leafRoll, setLeafHold, usePlant, type LeafHold, type PlantInputs } from '../src/plant/growth.ts'
 
 const NEIGHBOR = 77
 const OTHER = 41
@@ -15,7 +15,7 @@ const airs: PlantInputs[] = [
   { leanX: 0, leanZ: 0, lift: 1, wind: 0 },
   { leanX: 0.1, leanZ: -0.05, lift: 0.3, wind: 0.6 },
 ]
-const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6, rollDeg: -40, foldScale: 0.4, sinkDeg: 9 }
+const hold: Required<LeafHold> = { droop: 0.05, elevationDeg: 12, liftDeg: 7, lengthScale: 1.6, rollDeg: -40, foldScale: 0.4, sinkDeg: 9, swingDeg: 35 }
 
 // Every number the holds can touch, for one plant from one time to another.
 function numbers(variant: number, from: number, to: number): Float64Array {
@@ -23,7 +23,7 @@ function numbers(variant: number, from: number, to: number): Float64Array {
   usePlant(variant)
   for (let time = from; time <= to; time += STEP) {
     for (let i = 0; i < leafCount; i++) {
-      out.push(leafLength(i, time), leafRoll(i, time), leafFoldScale(i, time))
+      out.push(leafLength(i, time), leafRoll(i, time), leafFoldScale(i, time), leafAzimuth(i, time))
       for (const air of airs) out.push(leafElevation(i, time, air), leafDroop(i, air, time))
     }
   }
@@ -56,7 +56,7 @@ describe('a leaf held by hand', () => {
     const other = numbers(OTHER, 0, last)
     setLeafHold(NEIGHBOR, 20, hold)
     const after = numbers(NEIGHBOR, 0, last)
-    const per = 3 + airs.length * 2
+    const per = 4 + airs.length * 2
     let changed = 0
     for (let k = 0; k < before.length; k++) {
       const leaf = Math.floor(k / per) % leafCount
@@ -70,7 +70,7 @@ describe('a leaf held by hand', () => {
   it('is fully on when the bloom begins and comes on without a step', () => {
     usePlant(NEIGHBOR)
     const air = airs[0]
-    const free = { length: leafLength(20, bloom), up: leafElevation(20, bloom, air) }
+    const free = { length: leafLength(20, bloom), up: leafElevation(20, bloom, air), round: leafAzimuth(20, bloom) }
     expect(Object.is(leafRoll(20, bloom), 0)).toBe(true)
     expect(Object.is(leafFoldScale(20, bloom), 1)).toBe(true)
     setLeafHold(NEIGHBOR, 20, hold)
@@ -78,6 +78,8 @@ describe('a leaf held by hand', () => {
     expect(leafDroop(20, air, bloom)).toBeCloseTo(hold.droop, 12)
     expect(leafRoll(20, bloom)).toBeCloseTo(hold.rollDeg * RAD, 12)
     expect(leafFoldScale(20, bloom)).toBeCloseTo(hold.foldScale, 12)
+    expect(leafAzimuth(20, bloom)).toBeCloseTo(free.round + hold.swingDeg * RAD, 12)
+    expect(Object.is(leafAzimuth(20, frost), free.round)).toBe(true)
     expect(leafElevation(20, bloom, air)).toBeCloseTo((hold.elevationDeg + hold.liftDeg) * RAD, 12)
     const { sinkDeg, ...unsunk } = hold
     setLeafHold(NEIGHBOR, 20, unsunk)
