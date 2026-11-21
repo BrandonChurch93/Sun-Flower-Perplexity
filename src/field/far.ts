@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -42,12 +42,14 @@ uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
 uniform float uAhead;
+uniform float uLow;
 uniform float uSquat;
 ${swayGlsl}
 ${sizeGlsl}
 void main() {
   float across = aCorner.x;
   float size = sizeAt(aPlace.w, aVary.z, uAhead);
+  if (uLow > 0.0) size *= 1.0 - uLow;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
@@ -285,6 +287,7 @@ export class FarField {
     uAbove: { value: 0 },
     uAhead: { value: 1 },
     uLag: { value: 0 },
+    uLow: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
     uLate: fieldUniforms.uLate,
@@ -375,6 +378,7 @@ export class FarField {
     })
     this.uniforms.uAhead.value = plantAhead(timeOpen)
     this.uniforms.uLag.value = lagAt(timeOpen)
+    this.uniforms.uLow.value = nightAt(timeOpen) * NIGHT_LOW
     // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
     this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, 30, 40)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
