@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:07 UTC · Round 1: fix pass, summary, status 13
+- Last push: 2026-11-21 05:07 UTC · Round 2 starts: blockout, extra round, judges 9c0c8bb
 - Last status: 13 · 2026-11-21 05:06 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 3.12 h |
+| 2 | 3.50 h | 3.13 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.25 h |
+| Whole build | 30.00 h | 4.26 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -348,6 +348,15 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Summary, status, push: `scorecards/round-001/SUMMARY.md`, status 13
 - Round 1 in one line: R4 blockout 7 with one severe issue, so not passed; the severe issue and three major ones were worked in one fix pass; the left-edge foliage stays open for Phase 3; next is round 2, an extra round, on the fixed film.
 
+### Round 2 · Phase 2 · blockout · extra round
+
+- Started 2026-11-21 05:08 UTC. Judges commit `9c0c8bb`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent of another model family than round 1. Extra round: the clock printed `extra rounds: yes` at 05:07 UTC (whole build 4.26 h, extra rounds stop at 5.5 h). This is the last blockout round the limit allows (`rounds.blockout` is 2).
+- [ ] Machine checks (`npm run gate -- --phase 2 --machine`)
+- [ ] Pack (`npm run pack -- --phase 2 --round 2`)
+- [ ] R4 blockout answer in `scorecards/round-002/R4-blockout.json`
+- [ ] Fixes
+- [ ] Summary, status, push
+
 ## Final scores
 
 Written by the record round in Phase 6.
@@ -389,6 +398,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 04:33 UTC · Round 1: pack built, critic started; shot list says four cuts
 - 2026-11-21 04:35 UTC · Round 1: R4 blockout answer, score 7 with one severe issue
 - 2026-11-21 05:07 UTC · Round 1: fix pass, summary, status 13
+- 2026-11-21 05:07 UTC · Round 2 starts: blockout, extra round, judges 9c0c8bb
 
 ## Session log
 
