@@ -32,21 +32,30 @@ const HAIR_WIDTH_M = 0.00003
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
 // A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
-const FOLD_LAG = [0.45, 0.65, 0.85]
+const FOLD_LAG = [0.2, 0.3, 0.4]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.5, 0.78, 1]
 const HUG = [0.3, 0.24, 0.25]
-const STAND = [0.5, 0.42, 0.14]
+const STAND = [0.5, -0.5, -1.2]
+// Where a bract stands once it has let go of the cone, on its way back.
+const LOOSE = [0.5, 0.42, 0.14]
 const FLARE = [0.25, 0.25, 0.5]
+// The shut rays stand up from the rim and arch over the face as a tall cone. A bract lies on a shell this much wider and higher than that cone, as shares of the radius, until the rays in front of it open.
+const CONE_WIDE = 0.1
+const CONE_HIGH = 1.05
+const BEND_FROM = [0.36, 0.36, 0.6]
 // While the bud is shut each series leans in this much further than growth.ts says, so the inner points close over the face. In radians.
 const SHUT = [0.3, 0.9, 1.7]
 // A folded bract curls back on itself toward its point by up to this much, in radians.
 const HOOK = 1.3
-const FOLD_SLOW = 0.7
-const FOLD = [2.3, 2.22, 2.12]
+const FOLD_SLOW = 0.3
+const FOLD = [2.55, 2.62, 2.7]
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
-const LONG = [0.92, 0.9, 0.84]
+// On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
+const LONG = [0.92, 1.05, 1.2]
+const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
+const BROAD = [0.25, 0.25, 0.23]
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
@@ -75,15 +84,15 @@ export function create(options: PartOptions): PlantPart | null {
       rank: series / 2,
       az: turn + ((Math.floor(i / 3) + series / 3 + (rnd(2, i) - 0.5) * 0.3) / each) * TAU,
       foot: FEET[series] + (rnd(15, i) - 0.5) * 0.07,
-      long: LONG[series] * (0.95 + 0.1 * rnd(3, i)),
+      long: (options.variant === 0 ? LONG : LONG_NEIGHBOR)[series] * (0.95 + 0.1 * rnd(3, i)),
       wide: (series === 2 ? 1.12 : 0.92) + 0.16 * rnd(4, i),
       tail: 0.2 + 0.08 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
       side: (rnd(7, i) - 0.5) * 0.3,
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
-      hook: series === 2 ? 0 : HOOK * (0.35 + 0.65 * rnd(18, i)),
-      reflex: series === 2 ? 0.4 * rnd(19, i) : series === 1 ? 0.25 + 1.0 * rnd(19, i) : 0.4 + 1.6 * rnd(19, i),
+      hook: HOOK * (0.35 + 0.65 * rnd(18, i)),
+      reflex: series === 2 ? 0.2 + 0.6 * rnd(19, i) : series === 1 ? 0.25 + 1.0 * rnd(19, i) : 0.3 + 1.0 * rnd(19, i),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: HUG[series] + 0.05 * rnd(11, i),
@@ -330,23 +339,29 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(0.275 * L, 0.46 * R) * k.wide
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.46 * R, 0.0185) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
       let behind = -Math.PI
       let opened = 0
       let rayLong = 0
+      let low = 1
+      let grown = 0
       for (let m = -1; m <= 2; m++) {
         const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
         behind = Math.max(behind, lerp(-1.9, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0.002, 0.03, rayLength(ray, time))))
         opened += (rayOpen(ray, time - FOLD_LAG[k.series]) + rayOpen(ray, time - FOLD_LAG[k.series] - FOLD_SLOW)) / 8
         rayLong = Math.max(rayLong, rayLength(ray, time))
+        low = Math.min(low, rayOpen(ray, time))
+        grown = Math.max(grown, rayLength(ray, time) / rayLength(ray, 1e3))
       }
       const folded = smoothstep(0, 1, opened)
+      const cone = Math.sqrt(smoothstep(0, 0.25, grown)) * (1 - smoothstep(0.1, 0.5, low))
       const inBud = Math.min(time, bloom0 - 3)
       const stand = STAND[k.series] + k.lean
-      const angle = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready), lerp(FOLD_FIRST[k.series], FOLD[k.series], back) + 0.5 * k.lean, folded)
+      const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
+      const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], back) + 0.5 * k.lean, folded)
       const hook = k.hook * folded
       const reflex = k.reflex * ready * (1 - folded)
       const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series], ready), -0.22, folded)
@@ -377,11 +392,13 @@ export function create(options: PartOptions): PlantPart | null {
         const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75 - 3 * (1 - over)) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(0.36, 0.66, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
-        const fr = r / (R + lift)
-        const fh = Math.max(0, h - hr) / (Hf + lift)
-        const onFace = over * (1 - smoothstep(1, 1.1, fr * fr + fh * fh))
-        const along = h < hr ? -0.15 : Math.atan2(-(R + lift) * fh, (Hf + lift) * fr)
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
+        const Ea = R * (1 + CONE_WIDE * cone) + lift
+        const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift
+        const fr = r / Ea
+        const fh = Math.max(0, h - hr) / Eh
+        const onFace = 1 - smoothstep(1, 1.1, fr * fr + (1 - cone) * fh * fh + cone * fh * fh * fh * fh)
+        const along = h < hr ? -0.15 * (1 - cone) : Math.atan2(-((1 - cone) * fh + 2 * cone * fh * fh * fh) / Eh, fr / Ea)
         const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)), lerp(-Math.PI, along, onFace))
         const Re = Rw + lift
         if (h < hw) {
@@ -391,14 +408,14 @@ export function create(options: PartOptions): PlantPart | null {
             r *= g
             h = hw + (h - hw) * g
           }
-        } else if (h < hr) r = Math.max(r, sideR(h) + lift)
+        } else if (h < hr) r = Math.max(r, sideR(h) + lift + (Ea - R - lift) * smoothstep(hw, hr, h))
         else {
-          const e = (r * r) / ((R + lift) * (R + lift)) + ((h - hr) * (h - hr)) / ((Hf + lift) * (Hf + lift))
-          if (e < 1) {
-            const g = 1 / Math.sqrt(Math.max(e, 1e-9))
-            const out = (R + lift) * Math.sqrt(Math.max(0, 1 - ((h - hr) * (h - hr)) / ((Hf + lift) * (Hf + lift))))
-            r = lerp(out, r * g, over)
-            h = hr + (h - hr) * lerp(1, g, over)
+          const B = fr * fr + (1 - cone) * fh * fh
+          const G = 2 / (B + Math.sqrt(B * B + 4 * cone * fh * fh * fh * fh) + 1e-12)
+          if (G > 1) {
+            const g = Math.sqrt(G)
+            r *= g
+            h = hr + (h - hr) * g
           }
         }
         if (gap > 0) {
