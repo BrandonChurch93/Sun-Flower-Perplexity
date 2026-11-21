@@ -95,10 +95,10 @@ void main() {
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.07, 0.097, 0.02), vec3(0.245, 0.255, 0.056), tone);
-  grown = mix(grown, vec3(0.38, 0.38, 0.17), 0.8 * thread);
+  vec3 grown = mix(vec3(0.06, 0.082, 0.016), vec3(0.25, 0.255, 0.05), tone);
+  grown = mix(grown, vec3(0.46, 0.44, 0.18), 0.85 * thread);
   grown *= 1.0 - 0.34 * ribbed * furrow;
-  grown = mix(grown, vec3(0.36, 0.36, 0.15), ribbed * smoothstep(0.25, 0.9, crest) * (0.25 + 0.6 * streak));
+  grown = mix(grown, vec3(0.44, 0.42, 0.16), ribbed * smoothstep(0.25, 0.9, crest) * (0.25 + 0.6 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
