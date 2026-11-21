@@ -1,7 +1,9 @@
 import { glslCommon } from '../core/shading.ts'
+import { skyness } from './fill.ts'
 
 export const gradeFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
+uniform sampler2D tRaw;
 uniform sampler2D tBloom;
 uniform sampler2D tFlare;
 uniform float uBloom;
@@ -31,7 +33,7 @@ uniform float uSeed;
 uniform int uMode;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
-
+${skyness}
 vec3 toSrgb(vec3 c) {
   return mix(c * 12.92, 1.055 * pow(max(c, 1e-6), vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c));
 }
@@ -76,32 +78,49 @@ vec3 star(vec2 px) {
   float line = 0.7 * exp(-x) + 0.3 * exp(-x / 12.0);
   return texture(tHot, uSunAt).rgb * vec3(1.0, 0.62, 0.3) * (line * t * t * uStar);
 }
-float fanNoise(float a, float s) {
-  float i = floor(a);
-  float f = a - i;
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(hash31(vec3(i, s, 1.0)), hash31(vec3(i + 1.0, s, 1.0)), f);
+// How open the sky is round a pixel. A leaf whose own blur happens to match that of infinity carries the sky's mark along a thin line, and the mark ends hard where a blurred edge begins, so it is read over a small disc and only a clear majority counts.
+float openSky(ivec2 p) {
+  ivec2 top = ivec2(uSize) - 1;
+  float open = sky(texelFetch(tRaw, p, 0).a);
+  for (int i = 0; i < 16; i++) {
+    float a = (float(i) + 0.5 * float(i / 8)) * 0.7853982;
+    vec2 o = vec2(cos(a), sin(a)) * (i < 8 ? 6.0 : 12.0) * uSize.y / 1080.0;
+    open += sky(texelFetch(tRaw, clamp(p + ivec2(round(o)), ivec2(0), top), 0).a);
+  }
+  return smoothstep(0.6, 1.0, open / 17.0);
 }
-// What a low sun in the frame does beyond the glass's own scatter: a wide warm glow round it, and broad soft shafts fanning down and away from it through the haze. The glow follows how much of the sun shows. The shafts do too, but only down to a floor: a leaf across the disc shades the lens, not the air behind it.
+float fanNoise(float t, float n, float s) {
+  float i = floor(t);
+  float f = t - i;
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(hash31(vec3(mod(i, n), s, 1.0)), hash31(vec3(mod(i + 1.0, n), s, 1.0)), f);
+}
+// What a low sun in the frame does. In the glass: a broad soft bloom, peach white at the sun and amber further out, which lies over everything. In the air of the field: wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. Both follow how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   vec2 d = (px - uSunAt * uSize) / uSize.x;
   float r = length(d);
-  float tight = 1.0 + r * r / 0.0009;
-  float glow = 0.78 / (tight * sqrt(tight)) + 0.22 * exp(-r * r / 0.0025);
-  float ang = atan(d.y, d.x);
-  float fan = smoothstep(-3.1, -2.5, ang) * (1.0 - smoothstep(-0.35, 0.0, ang));
-  float beams = 0.6 + 0.4 * smoothstep(0.15, 0.9, 0.65 * fanNoise(ang * 4.0, 3.0) + 0.35 * fanNoise(ang * 10.0, 7.0));
-  float reach = saturate(1.0 - r / 0.26);
-  // The shafts hang in the air of the field: nothing in focus and nothing nearer than the focus is behind them. Far things blur up to the circle of infinity, near leaves beyond it.
+  float shown = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
+  // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
+  float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
+  float tight = 1.0 + r * r / 0.0012;
+  float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0056);
+  vec3 glass = mix(vec3(1.0, 0.92, 0.82), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
+  float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
+  float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
+  // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
+  float beams = mix(0.15, 0.5, down) + mix(0.85, 0.5, down) * smoothstep(0.15, 0.9, 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0));
+  float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
+  // Nothing in focus and nothing nearer than the focus is behind the lit air. Far things blur up to the circle of infinity, near leaves beyond it.
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
-  float shafts = fan * beams * reach * reach * r / (r + 0.02) * behind;
-  vec3 hot = texture(tHot, uSunAt).rgb;
-  float lit = max(dot(hot, vec3(0.2126, 0.7152, 0.0722)), 0.6 * uSunClear);
+  // Above the sun only the open sky is behind the lit air: what else stands there is a near leaf.
+  float open = uShafts > 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
+  behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
-  float hold = mix(0.3, 1.0, smoothstep(0.004, 0.05, under));
-  return hot * vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.43, 0.31) * (lit * uShafts * shafts * hold);
+  float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
+  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * r / (r + 0.02) + 0.35 * exp(-r / 0.07)) * behind * hold;
+  return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));

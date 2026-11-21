@@ -75,6 +75,8 @@ export class Post {
   private readonly grade = new FullscreenPass(gradeFragment, {
     ...shared,
     tFrame: { value: null },
+    tRaw: { value: null },
+    uFar: { value: 0 },
     tBloom: { value: null },
     tFlare: { value: null },
     uBloom: { value: 0 },
@@ -253,12 +255,16 @@ export class Post {
       g.uPunch.value = look.punch
       g.uPale.value = look.pale
       g.uGreens.value = look.greens
-      const seen = sun !== null && sun.x > 0 && sun.x < 1 && sun.y > 0 && sun.y < 1
+      // The floors under the bloom and the shafts would pop as the sun crosses the frame edge, so they fade over its last few percent.
+      const margin = sun ? Math.min(1, Math.max(0, Math.min(sun.x, 1 - sun.x, sun.y, 1 - sun.y) / 0.04)) : 0
+      const seen = margin * margin * (3 - 2 * margin)
       g.tHot.value = this.down[Math.min(this.down.length - 1, 3)].texture
-      g.uStar.value = seen && sun ? look.star * sun.weight : 0
-      g.uGlow.value = seen && sun ? look.glow * sun.weight : 0
-      g.uShafts.value = seen && sun ? look.shafts * sun.weight : 0
+      g.uStar.value = sun ? look.star * sun.weight * seen : 0
+      g.uGlow.value = sun ? look.glow * sun.weight * seen : 0
+      g.uShafts.value = sun ? look.shafts * sun.weight * seen : 0
       g.uSunClear.value = look.sunClear
+      g.tRaw.value = frame
+      g.uFar.value = sun ? sun.farCircle : 0
       g.uFarFill.value = sun ? Math.min(sun.farCircle * (samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)), maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
