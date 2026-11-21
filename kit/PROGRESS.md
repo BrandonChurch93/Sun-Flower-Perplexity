@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
+- Last push: 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
 - Last status: 14 · 2026-11-21 05:31 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 3.54 h |
+| 2 | 3.50 h | 3.74 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.66 h |
+| Whole build | 30.00 h | 4.87 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -350,7 +350,7 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-None.
+- `npm run film` · the whole film, frames 0 to 1799, `preview` format at the `draft` tier, one chunk per unit with M1 on every frame · log `out/work/logs/film-p2.log` · this VM · started 2026-11-21 05:44 UTC, while the round 2 critic is still out, on the build that critic is judging (`9c0c8bb`, engine hash `bb5ba3c9abd728d9`) · the render budget says 28 minutes, limit 56 minutes. If the fix pass of round 2 changes a frame, the job is stopped and run again after it; the chunks of units the fix does not touch are kept.
 
 Finished in this task:
 
@@ -440,6 +440,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
 - 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
 - 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
+- 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
 
 ## Session log
 
