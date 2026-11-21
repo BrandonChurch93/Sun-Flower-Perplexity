@@ -251,7 +251,7 @@ void main() {
   t.rough = 0.7;
   t.wax = 0.3;
   t.sheen = 0.15;
-  vec3 pollen = mix(vec3(0.62, 0.29, 0.033) * (0.7 + 0.6 * vKind.w), vec3(0.72, 0.5, 0.16), smoothstep(0.82, 0.97, vKind.w));
+  vec3 pollen = mix(vec3(0.62, 0.29, 0.033) * (0.7 + 0.6 * vKind.w), vec3(0.8, 0.56, 0.2), smoothstep(0.72, 0.92, vKind.w));
 
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
@@ -295,7 +295,7 @@ void main() {
     t.rough = mix(0.7, 1.0, dust);
     t.wax = mix(0.06, 0.0, dust);
     t.sheen = mix(0.05, 0.25, dust);
-    t.through = pollen * dust * 0.3;
+    t.through = pollen * dust * mix(0.3, 0.8, smoothstep(0.72, 0.92, vKind.w));
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.7, 0.36, 0.04), pollen, 0.5 * grain);
     t.through = vec3(0.5, 0.24, 0.025);
@@ -304,7 +304,7 @@ void main() {
     t.sheen = 0.25;
   } else {
     vec3 young = mix(vec3(0.09, 0.17, 0.045), vec3(0.3, 0.42, 0.1), along);
-    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.09, 0.09, 0.012), mix(vec3(0.26, 0.16, 0.02), vec3(0.075, 0.16, 0.027), centre), along), open);
+    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.09, 0.09, 0.012), mix(vec3(0.26, 0.16, 0.02), vec3(0.11, 0.185, 0.03), centre), along), open);
     vec3 dry = vec3(0.22, 0.075, 0.012);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
     t.albedo = mix(young * mix(0.6, 1.0, deep), grownUp, ripe) * (0.85 + 0.3 * around) * tone;
