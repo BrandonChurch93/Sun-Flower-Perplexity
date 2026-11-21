@@ -120,7 +120,7 @@ void main() {
   // With the sun behind it the blade glows yellow green, unevenly, and its veins stand dark in the glow: they are thick and hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
-  float taper = mix(0.22, 1.25, smoothstep(0.2, 0.8, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
+  float taper = mix(0.25, 1.9, smoothstep(0.15, 0.9, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float thin = (0.6 + 0.6 * smoothstep(0.3, 0.9, mark.g)) * taper;
   vec3 through = vec3(0.115, 0.135, 0.011) * thin * (0.45 + 0.55 * pow(lum, 1.7)) * (1.0 - 0.3 * thick);
   through *= 1.0 - 0.8 * vein.r;
