@@ -1,6 +1,8 @@
 [
-  {"file": "film-1-preview-draft.jpg", "caption": "Whole film sheet 1 of 3 (frames 0 to 565), draft tier"},
-  {"file": "film-2-preview-draft.jpg", "caption": "Whole film sheet 2 of 3 (frames 617 to 1182), draft tier"},
-  {"file": "film-3-preview-draft.jpg", "caption": "Whole film sheet 3 of 3 (frames 1234 to 1799), draft tier"},
-  {"file": "cut-2-preview-draft.jpg", "caption": "Cut 2 (rain to night): frames 594 to 605, the cut falls on frame 600"}
+  {"file": "film-1-preview-review.jpg", "caption": "Whole film sheet 1 of 3 (frames 0 to 565), review tier"},
+  {"file": "film-2-preview-review.jpg", "caption": "Whole film sheet 2 of 3 (frames 617 to 1182), review tier"},
+  {"file": "film-3-preview-review.jpg", "caption": "Whole film sheet 3 of 3 (frames 1234 to 1799), review tier"},
+  {"file": "pair-bloom-hero-review.jpg", "caption": "Key bloom-hero: the approved image (left) beside the film frame at 50.5 s (right)"},
+  {"file": "compare-rain.jpg", "caption": "Key rain: the approved image beside the film frame at 14 s, with three matching crops at native size"},
+  {"file": "night.jpg", "caption": "Compression stress, unit night: encoded at 20 Mbit/s (left) and again at 5 Mbit/s (right)"}
 ]
