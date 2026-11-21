@@ -5,6 +5,8 @@ import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
+import { makePartSurface } from '../plant/part.ts'
+import { tissueGlsl } from '../plant/surface/index.ts'
 import { windToward } from '../plant/wind.ts'
 import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, lagOf, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
@@ -13,8 +15,10 @@ const TILE_H = 128
 // The lean a full gust gives a neighbor, per meter of its height. The same wave bends the pictures.
 const SWAY = 0.035
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
-const UNDER_FROM_M = 26
-const UNDER_BAND_M = 14
+const UNDER_FROM_M = 11
+const UNDER_BAND_M = 16
+// The dark layers, as shares of the height of the tops.
+const UNDER_LEVELS = [0.5, 0.76]
 
 const pictureVertex = /* glsl */ `
 in vec3 position;
@@ -130,18 +134,46 @@ void main() {
 }
 `
 
-const underFragment = /* glsl */ `
-${sheetCommon}
+const underVertex = /* glsl */ `
+in vec3 position;
+out vec3 vWorld;
+out float vDepth;
+uniform float uHeight;
 void main() {
-  float along;
-  float across;
-  if (present(along, across) < 0.0) discard;
-  vec3 color = vMid * (0.26 + 0.2 * valueNoise(vec2(across * 1.3, along * 0.6)));
-  if (uDiag == 7) {
-    outColor = vec4(color, cocOf(vDepth));
-    return;
-  }
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  vec4 world = vec4(position.x, uHeight, position.z, 1.0);
+  vec4 view = viewMatrix * world;
+  vWorld = world.xyz;
+  vDepth = -view.z;
+  vPlantTone = 0.5;
+  gl_Position = projectionMatrix * view;
+}
+`
+
+const underFragment = /* glsl */ `
+in vec3 vWorld;
+in float vDepth;
+uniform vec2 uStart;
+uniform float uCover;
+uniform float uLevel;
+${tissueGlsl}
+// Clumps of leaves with holes between them, fewer toward the front of the field, lit as leaves deep under the tops.
+void main() {
+  vec2 p = vWorld.xz + uLevel * 37.0;
+  float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
+  float share = uCover * (0.72 - 0.25 * uLevel) * smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  if (clump > share) discard;
+  float inside = (share - clump) / max(share, 0.01);
+  Tissue t;
+  t.albedo = mix(vec3(0.06, 0.13, 0.03), vec3(0.13, 0.25, 0.07), inside);
+  t.through = vec3(0.3, 0.5, 0.06);
+  // A leaf in the mass tips toward the viewer, so the light behind it comes through.
+  t.normal = normalize(vec3(-uSunDir.x, 0.9, -uSunDir.z));
+  t.face = t.normal;
+  t.rough = 0.8;
+  t.wax = 0.1;
+  t.sheen = 0.0;
+  t.occlusion = 0.45 + 0.55 * inside;
+  outColor = finish(shadeTissue(t, vWorld, normalize(uCamPos - vWorld)), vWorld, vDepth, -1.0);
 }
 `
 
@@ -194,7 +226,7 @@ export class FarField {
   readonly places: THREE.InstancedInterleavedBuffer
   readonly pictures: THREE.Mesh
   readonly carpet: THREE.Mesh
-  readonly under: THREE.Mesh
+  readonly under: THREE.Mesh[]
   readonly meshes: THREE.Mesh[]
   private readonly plants: Plant[] = []
   private readonly spots: THREE.InstancedInterleavedBuffer[] = []
@@ -212,7 +244,7 @@ export class FarField {
     uCover: { value: 0 },
   }
   private readonly carpetHeight = { value: 0 }
-  private readonly underHeight = { value: 0 }
+  private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
   private readonly eye = new THREE.Vector3()
   private readonly clear = new THREE.Color()
   private readonly hook: THREE.Mesh
@@ -256,8 +288,11 @@ export class FarField {
 
     const carpet = makeSurface({ name: 'field carpet', vertex: sheetVertex, fragment: carpetFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uHeight: this.carpetHeight, uStart: { value: new THREE.Vector2(fieldPicturesM - carpetBandM, carpetBandM) } } })
     this.carpet = plain(sheetGeometry([fieldPicturesM - carpetBandM - 2, 220, 360, fieldEndM]), carpet)
-    const under = makeSurface({ name: 'field under layer', vertex: sheetVertex, fragment: underFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uHeight: this.underHeight, uStart: { value: new THREE.Vector2(UNDER_FROM_M, UNDER_BAND_M) } } })
-    this.under = plain(sheetGeometry([UNDER_FROM_M - 2, fieldFarM, 100, fieldPicturesM + 12]), under)
+    const depths = [UNDER_FROM_M - 2.5, fieldFarM, 100, fieldPicturesM + 12]
+    this.under = UNDER_LEVELS.map((level, i) => {
+      const surface = makePartSurface({ detail: 'far', variant: 0, places: this.places }, { name: `field under layer ${i}`, vertex: underVertex, fragment: underFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { uCover: this.uniforms.uCover, uHeight: this.underHeights[i], uLevel: { value: level }, uStart: { value: new THREE.Vector2(UNDER_FROM_M, UNDER_BAND_M) } } })
+      return plain(sheetGeometry(depths), surface)
+    })
 
     // Drawn before everything else in the frame, and it draws nothing: its place in the order is where the pictures are made.
     const nothing = new THREE.BufferGeometry()
@@ -265,7 +300,7 @@ export class FarField {
     this.hook = plain(nothing, makeSurface({ name: 'field pictures hook', vertex: hookVertex, fragment: hookFragment, castShadow: false }))
     this.hook.renderOrder = -1000
     this.hook.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
-    this.meshes = [this.hook, this.pictures, this.under, this.carpet]
+    this.meshes = [this.hook, this.pictures, ...this.under, this.carpet]
   }
 
   get count(): number {
@@ -286,7 +321,7 @@ export class FarField {
     this.uniforms.uWind.value = open.wind
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55)
     this.carpetHeight.value = canopy * 0.97
-    this.underHeight.value = canopy * 0.56
+    UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
     const above = eyeHeightM > canopy + 0.03 && canopy > 0.06
     // From above only the tops of the far plants show, over the dark layer.
     this.uniforms.uCrop.value = above ? 0.52 : 1
@@ -329,7 +364,7 @@ export class FarField {
     this.hook.visible = on
     this.pictures.visible = on
     this.carpet.visible = on && this.above
-    this.under.visible = on && this.above
+    for (const m of this.under) m.visible = on && this.above
   }
 
   // The pictures: each simpler kind as the frame's camera sees it, under the frame's sun and sky, without the air between.

@@ -94,8 +94,11 @@ uniform float uCanopy;
 float plantSun(vec3 world, vec3 offsetDir) {
 #ifdef PLANT_FIELD
   // The sun crosses the field on a slant: a point under the tops is lit through as many meters of leaves as its depth over the sun's height.
-  float under = max(uCanopy * (0.97 + 0.14 * valueNoise(world.xz * 0.7)) - world.y, 0.0);
-  return exp(-1.1 * under / max(uSunDir.y, 0.06));
+  // The tops are uneven in long streaks that run the way the light does.
+  vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
+  float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
+  float under = max(uCanopy * (0.93 + 0.2 * streak) - world.y, 0.0);
+  return exp(-1.5 * under / max(uSunDir.y, 0.06));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
