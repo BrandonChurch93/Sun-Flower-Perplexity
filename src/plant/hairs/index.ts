@@ -30,9 +30,9 @@ out float vSkyY;
 uniform vec3 uHairColor;
 uniform float uHairWidth;
 
-const float STRAND_GAIN = 3.14159;
-const float TT_SPREAD = 0.34;
-const float TT_TURN = 2.6;
+const float STRAND_GAIN = 6.2832;
+const float TT_SPREAD = 0.22;
+const float TT_TURN = 3.5;
 const float R_SPREAD = 0.16;
 const float EVEN = 0.035;
 
@@ -86,11 +86,13 @@ vec3 scatter(vec3 along, vec3 toEye, vec3 toSun) {
   float sinO = dot(toEye, along);
   float cosI = sqrt(max(1.0 - sinI * sinI, 0.0));
   float cosO = sqrt(max(1.0 - sinO * sinO, 0.0));
-  float round = dot(toSun - sinI * along, toEye - sinO * along) / max(cosI * cosO, 1e-4);
+  float round = clamp(dot(toSun - sinI * along, toEye - sinO * along) / max(cosI * cosO, 1e-4), -1.0, 1.0);
+  // Seen or lit end on, a fiber has no round: the turn about it is taken as the mean of all turns, so a hair that points at the lens does not flash.
+  round = mix(-0.57, round, smoothstep(0.05, 0.4, min(cosI, cosO)));
   float between = 0.5 * (1.0 + cosI * cosO + sinI * sinO);
   float glance = sqrt(saturate(0.5 + 0.5 * dot(toSun, toEye)));
   float mirror = 0.04 + 0.96 * pow(1.0 - glance, 5.0);
-  float through = lobe(sinI + sinO, TT_SPREAD) * 0.64 * exp(-TT_TURN * (1.0 + round)) * (1.0 - mirror) * (1.0 - mirror);
+  float through = lobe(sinI + sinO, TT_SPREAD) * 0.714 * exp(-TT_TURN * (1.0 + round)) * (1.0 - mirror) * (1.0 - mirror);
   float back = lobe(sinI + sinO, R_SPREAD) * 0.25 * sqrt(saturate(0.5 + 0.5 * round)) * mirror;
   return (uHairColor * through + vec3(back)) * (cosI / max(between, 0.2)) + uHairColor * (EVEN * cosI);
 }
@@ -111,8 +113,12 @@ Strand strandAt(float t) {
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach);
   vWorld = s.world;
   vDepth = s.depth;
-  vSun = uSunColor * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog);
-  vSky = uHairColor * (0.1 * fog);
+  // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
+  vec3 out3 = plantDirection(hairDir);
+  float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
+  float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
+  vSun = uSunColor * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
+  vSky = uHairColor * (0.1 * fog * behind);
   vSkyY = normalize(s.toEye + vec3(0.0, 0.6, 0.0)).y;
   return s;
 }
@@ -125,13 +131,23 @@ void main() {
   readHair(gl_VertexID / 3);
   int j = gl_VertexID % 3;
   Strand s = strandAt(0.5 * float(j));
-  vec4 here = projectionMatrix * viewMatrix * vec4(s.world, 1.0);
-  vec4 there = projectionMatrix * viewMatrix * vec4(plantWorld(hairPoint(j == 0 ? 1.0 : 0.0)), 1.0);
-  vec2 run = abs((there.xy / max(there.w, 1e-5) - here.xy / max(here.w, 1e-5)) * uSize);
+  mat4 toClip = projectionMatrix * viewMatrix;
+  vec4 here = toClip * vec4(s.world, 1.0);
+  vec4 foot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
+  vec4 tip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
+  vec2 a = foot.xy / max(foot.w, 1e-5);
+  vec2 b = tip.xy / max(tip.w, 1e-5);
+  vec2 run = (b - a) * 0.5 * uSize;
+  float major = max(abs(run.x), abs(run.y));
   // A one pixel line lights one pixel for each step along its longer side, so a slanted line needs more of each pixel to carry the same light.
-  float slant = length(run) / max(max(run.x, run.y), 1e-5);
-  vCover = s.width / s.pixel * slant * s.share;
-  gl_Position = here;
+  float slant = length(run) / max(major, 1e-4);
+  // A hair seen end on is shorter than a pixel and would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, so it does not sparkle.
+  float stretch = max(1.0, 2.0 / max(major, 1e-3));
+  vec2 mid = 0.5 * (a + b);
+  vec2 at = mid + (here.xy / max(here.w, 1e-5) - mid) * stretch;
+  vCover = s.width / s.pixel * slant * s.share / stretch;
+  float level = 0.5 * (foot.z / max(foot.w, 1e-5) + tip.z / max(tip.w, 1e-5));
+  gl_Position = stretch > 1.0 ? vec4(at * here.w, level * here.w, here.w) : here;
 }
 `
 
