@@ -120,6 +120,13 @@ void main() {
   t.wax = wax;
   t.sheen = mix(0.3, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.12 * ribbed * furrow);
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
+  vec3 color = shadeTissue(t, vWorld, view);
+#ifdef PLANT_FIELD
+  // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.
+  float graze = 1.0 - abs(dot(face, view));
+  float toSun = saturate(dot(-view, uSunDir));
+  color += uSunColor * vec3(0.8, 0.95, 0.6) * (0.2 * plantSun(vWorld, face) * graze * graze * (0.3 + 0.7 * toSun * toSun) * (1.0 - foot));
+#endif
+  outColor = finish(color, vWorld, vDepth, density);
 }
 `
