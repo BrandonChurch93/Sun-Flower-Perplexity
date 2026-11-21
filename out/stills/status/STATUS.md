@@ -1,12 +1,12 @@
-# Status 36
+# Status 37
 
-2026-11-21 15:54 UTC
+2026-11-21 16:19 UTC
 
-- Status 36 · Phase 3 · unit bloom · round 6. Round 6's pack is built and checked and its critics are answering: match 5 (4 severe, 12 major: the sun's white bloom is now too large, the near neighbor's blue green blades reach too far into the lower left), motion 5 (1 severe: the camera holds still between the two keys; 2 major: a ray pops in at 44.63 s, the folded rays boil). The cut at 40 s and the skyline's single frame jumps are no longer named. Jury so far 4 of 5 for (a) on the frame at 45 s. The Phase 4 line holds all twelve branches at 5a144fa with one skyline for the whole film; the last picture is the Builder's first own still of the dawn key from it.
-- Next: The surface critic and five jurors, then the look lock closes at its count limit (round 6 is the fourth of four), the Phase 3 gate, and Phase 4's first rounds. Time used: 15.0 h of 30 h.
+- Status 37 · Phase 3 · unit bloom · round 6. Round 6 of the bloom is fully judged: match critic 5, craft critic 4, motion critic 5 (9 needed from each), jury 7 of 10 against the controls' 6 of 10 (passes), machine checks and all three measures green. Not a pass: the look lock ended at its limit of four rounds. The kept build is round 6's, the only judged round with every check green. Its 7 severe and 18 major issues are logged as open items for Phases 4 and 6. The Phase 4 line holds the first passes at the rain and night worlds.
+- Next: The Phase 3 gate finishes in minutes and the phase closes. Then the Phase 4 line goes to main and round 7 judges the field unit at about 16:45 UTC; frost follows at about 17:15 and dawn at about 17:40. Time used: 15.5 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Round 6, the cut at 40.00 s as the motion critic sees it
-- `status-2.jpg`: Round 6, twelve frames across the bloom
-- `status-3.jpg`: Round 6, 45 s: approved (a) and ours (b), native crops
-- `status-4.jpg`: Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress)
+- `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right
+- `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right
+- `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right
+- `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
