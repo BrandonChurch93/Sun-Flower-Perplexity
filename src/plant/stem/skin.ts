@@ -74,9 +74,9 @@ void main() {
   vec4 fine = texture(uSkin, vCoord.xy);
   vec4 wide = texture(uSkin, vec2(vCoord.x + 0.37, vCoord.y * 0.173 + 0.61));
   float rib = mix(vSkin.x, (texture(uRibs, vec2(vCoord.x, vCoord.z)).r - 0.34) / 0.6, 0.7);
-  float tone = 0.58 * wide.g + 0.42 * fine.g;
+  float tone = mix(0.58 * wide.g + 0.42 * fine.g, 0.5, 0.65 * thin);
   float streak = wide.g;
-  float fleck = saturate(vSkin2.y * (0.85 * smoothstep(0.69, 0.8, fine.b) + 0.55 * smoothstep(0.7, 0.82, wide.b)));
+  float fleck = saturate(vSkin2.y * (0.8 * smoothstep(0.76, 0.86, fine.b) + 0.4 * smoothstep(0.74, 0.86, wide.b)));
   float spot = smoothstep(0.84, 0.97, fine.a) * (1.0 - youth);
   float dust = fine.a;
   float height = rib * vSkin3.w * 0.7 + (fine.r - 0.5) * mix(0.00016, 0.00003, thin) + (wide.r - 0.5) * 0.00012 * ribbed;
@@ -85,15 +85,15 @@ void main() {
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.062, 0.135, 0.03), vec3(0.235, 0.345, 0.095), tone);
+  vec3 grown = mix(vec3(0.05, 0.115, 0.026), vec3(0.19, 0.3, 0.078), tone);
   grown *= 1.0 + ribbed * (0.3 * furrow - 0.2 * crest);
   vec3 young = mix(vec3(0.25, 0.41, 0.07), vec3(0.47, 0.6, 0.15), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.34, 0.43, 0.2), 0.55 * spot);
-  albedo = mix(albedo, vec3(0.115, 0.045, 0.04) * (0.7 + 0.6 * tone), 0.8 * fleck);
+  albedo = mix(albedo, vec3(0.12, 0.05, 0.045) * (0.7 + 0.6 * tone), 0.62 * fleck);
   albedo = mix(albedo, vec3(0.23, 0.045, 0.075) * (0.55 + 0.9 * tone), vSkin3.z * (0.3 + 0.5 * streak));
-  albedo = mix(albedo, vec3(0.4, 0.27, 0.17) * (0.75 + 0.5 * tone), 0.55 * foot);
-  albedo = mix(albedo, vec3(0.16, 0.11, 0.07) * (0.6 + 0.8 * dust), saturate(foot * foot * 1.5 * smoothstep(0.25, 0.75, dust + 0.5 * foot)));
+  albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
+  albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   vec3 sprout = mix(vec3(0.84, 0.81, 0.6), vec3(0.72, 0.77, 0.36), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * pale);
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);

@@ -48,7 +48,7 @@ export function create(options: PartOptions): PlantPart {
     for (let s = 0; s < sides; s++) {
       const a = r * row + s
       const b = a + row
-      index.push(a, b, a + 1, a + 1, b, b + 1)
+      index.push(a, a + 1, b, a + 1, b + 1, b)
     }
   }
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
@@ -246,7 +246,7 @@ export function create(options: PartOptions): PlantPart {
       const youth = clamp(1 - smoothstep(0.0022, 0.0075, whole) + 0.3 * smoothstep(0.8, 1, u) * (1 - hasHead * 0.5))
       const thin = 1 - smoothstep(0.0015, 0.0055, whole)
       const foot = Math.exp(-Math.max(0, s + off) / footLength)
-      const open = 0.4 + 0.6 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)
+      const open = 0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
       const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale) * (1 - smoothstep(0.004, 0.009, rFoot))
@@ -375,14 +375,14 @@ export function create(options: PartOptions): PlantPart {
       const wy = n.by * ca - n.ry * sa
       const wz = n.bz * ca - n.rz * sa
       const q = hash01(seed, 83, i)
-      const up = 0.16 - slope + 0.5 * (hash01(seed, 84, i) - 0.5)
-      const round = 0.5 * (hash01(seed, 85, i) - 0.5)
+      const up = 0.16 - slope + 0.7 * (hash01(seed, 84, i) - 0.5)
+      const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const onRib = radius - r0 > 0.018 * r0 && hash01(seed, 86, i) < 0.35 ? 1.35 : 1
       const mature = 0.3 + 0.7 * smoothstep(0.0018, 0.007, r0)
       root[o] = n.x + ox * radius
       root[o + 1] = n.y + oy * radius
       root[o + 2] = n.z + oz * radius
-      root[o + 3] = Math.min(0.0035, (0.001 + 0.0025 * q * q) * (0.7 + 0.3 * hairTop[i]) * onRib) * mature * shown
+      root[o + 3] = Math.min(0.0035, (0.0011 + 0.0024 * q * Math.sqrt(q)) * (0.7 + 0.3 * hairTop[i]) * onRib) * mature * shown
       lean[o] = ox + n.tx * up + wx * round
       lean[o + 1] = oy + n.ty * up + wy * round
       lean[o + 2] = oz + n.tz * up + wz * round
