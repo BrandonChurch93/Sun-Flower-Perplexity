@@ -13,7 +13,7 @@ type Mode = 0 | 1 | 2 | 3
 const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backlight: 1, texels: 2, depth: 3, focus: 2, standins: 2 }
 
 // How far past the spacing of the lens samples each copy is spread. At 1 the copies of an out of focus edge still show, at 8 samples and at 48.
-const fillGain = 1.6
+const fillGain = 2.3
 // With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
 const soloGain = 0.9
 
@@ -183,7 +183,7 @@ export class Post {
   }
 
   // The light the glass scatters: a pyramid of ever wider blurs of what is bright, summed with a share for each width.
-  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, def: WorldDef, veil: number, halation: number, core: number): THREE.Texture {
+  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, def: WorldDef, veil: number, halation: number, core: number, tint: readonly number[]): THREE.Texture {
     const b = this.bright.uniforms
     b.tFrame.value = source
     b.uExposure.value = def.grade.exposure
@@ -202,9 +202,9 @@ export class Post {
       u.tSource.value = from.texture
       u.tBase.value = this.down[i].texture
       u.uTexel.value.set(1 / from.width, 1 / from.height)
-      if (i === this.up.length - 1) u.uSourceGain.value.fromArray(levelGain(levels - 1, levels, veil, halation, core))
+      if (i === this.up.length - 1) u.uSourceGain.value.fromArray(levelGain(levels - 1, levels, veil, halation, core, tint))
       else u.uSourceGain.value.set(1, 1, 1)
-      u.uBaseGain.value.fromArray(levelGain(i, levels, veil, halation, core))
+      u.uBaseGain.value.fromArray(levelGain(i, levels, veil, halation, core, tint))
       this.upPass.render(renderer, this.up[i])
       from = this.up[i]
     }
@@ -221,7 +221,7 @@ export class Post {
     if (mode === 0) {
       const look = lensLook(def)
       source = this.fillGaps(renderer, frame, frameIndex, samples, sun ? sun.farCircle : 0)
-      const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core)
+      const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core, look.veilTint)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget
       if (flare > 0 && sun) {
@@ -253,7 +253,7 @@ export class Post {
       g.tHot.value = this.down[Math.min(this.down.length - 1, 3)].texture
       g.uStar.value = seen && sun ? look.star * sun.weight : 0
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
-      g.uStarLen.value = 0.12 * this.fillA.width
+      g.uStarLen.value = 0.2 * this.fillA.width
       g.uSaturation.value = def.grade.saturation
       g.uVignette.value = def.grade.vignette
       g.uGrain.value = def.grade.grain

@@ -58,8 +58,8 @@ const smooth = (a, b, x) => {
   return t * t * (3 - 2 * t)
 }
 
-const sunward = await read('out/work/sky/sunward-1.png')
-const sunwardSoft = await read('out/work/sky/sunward-1.png', 70)
+const sunward = await read('out/work/sky/sunward-4.png')
+const sunwardSoft = await read('out/work/sky/sunward-4.png', 70)
 const away = await read('out/work/sky/away-1.png')
 const awaySoft = await read('out/work/sky/away-1.png', 70)
 const perDeg = sunward.w / SPAN_DEG

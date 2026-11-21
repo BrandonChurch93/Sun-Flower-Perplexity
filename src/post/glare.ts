@@ -98,9 +98,10 @@ const shares = [0.22, 0.2, 0.16, 0.14, 0.12, 0.1, 0.06, 0.04]
 const halationTint = [1, 0.32, 0.08]
 
 // The gain of pyramid level `index` out of `levels` (0 is the finest, half the frame), per channel.
-export function levelGain(index: number, levels: number, veil: number, halation: number, core = 1): [number, number, number] {
+export function levelGain(index: number, levels: number, veil: number, halation: number, core = 1, tint: readonly number[] = [1, 1, 1]): [number, number, number] {
   const wide = levels - 1 - index
   const base = (shares[wide] ?? 0.03) * (wide <= 2 ? veil : wide === 3 ? 1 : core)
   const glow = wide >= 5 ? 0.06 * halation : 0
-  return [base + glow * halationTint[0], base + glow * halationTint[1], base + glow * halationTint[2]]
+  const far = wide <= 2 ? tint : [1, 1, 1]
+  return [base * far[0] + glow * halationTint[0], base * far[1] + glow * halationTint[1], base * far[2] + glow * halationTint[2]]
 }

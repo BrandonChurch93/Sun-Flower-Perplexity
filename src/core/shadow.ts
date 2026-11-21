@@ -66,6 +66,10 @@ export class ShadowMap {
     cam.matrix.makeBasis(this.u, this.v, this.lightDir).setPosition(cam.position)
     cam.matrixWorld.copy(cam.matrix)
     cam.matrixWorldInverse.copy(cam.matrixWorld).invert()
+    // The casters read the size of a texel as they are drawn into the map, so it is set before the map is drawn.
+    shared.uShadowTexel.value = 1 / SIZE
+    shared.uShadowTexelM.value = (2 * radius) / SIZE
+    shared.uShadowBias.value = ((2 * radius) / SIZE) * 0.6 / far
     const hidden: THREE.Object3D[] = []
     const mine = new Set<THREE.Object3D>(casters.map((c) => c.mesh))
     for (const child of scene.children) {
@@ -83,8 +87,5 @@ export class ShadowMap {
     shared.uShadowMatrix.value.multiplyMatrices(bias, cam.projectionMatrix).multiply(cam.matrixWorldInverse)
     shared.uShadowMap.value = this.target.depthTexture
     shared.uShadowOn.value = 1
-    shared.uShadowTexel.value = 1 / SIZE
-    shared.uShadowTexelM.value = (2 * radius) / SIZE
-    shared.uShadowBias.value = ((2 * radius) / SIZE) * 0.6 / far
   }
 }
