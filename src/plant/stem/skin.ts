@@ -105,20 +105,23 @@ void main() {
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
   albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot);
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
-  vec3 sprout = mix(vec3(0.84, 0.81, 0.6), vec3(0.72, 0.77, 0.36), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
+  // The sprout: pale yellow green where it has seen the light, clear pink red below, near white where it leaves the soil.
+  vec3 sprout = mix(vec3(0.3, 0.24, 0.2), vec3(0.07, 0.105, 0.085), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * pale);
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.5, 0.13, 0.2), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.3 + 0.35 * streak + 0.3 * dust, pale));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.2, 0.085, 0.24), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.72 + 0.16 * streak + 0.12 * dust, pale));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(${GUIDE.rough}, 0.5, thin);
   float wax = mix(${GUIDE.wax}, 0.45, thin);
+  // A round stalk passes light where the way through it is short: at its outline.
+  float limb = 1.0 - abs(dot(face, view));
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(vec3(0.4, 0.7, 0.2), vec3(0.74, 0.78, 0.52), pale) * (0.25 * thin);
+  t.through = mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.6, 0.75, 0.3), vec3(0.85, 0.35, 0.3), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25, 0.012 + 0.5 * limb * limb * limb, pale) * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow);
   vec3 color = shadeTissue(t, vWorld, view);
 #ifdef PLANT_FIELD

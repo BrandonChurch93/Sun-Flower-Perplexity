@@ -231,7 +231,7 @@ export function create(options: PartOptions): PlantPart {
       let s = 0
       let off = 0
       let scale = 1
-      if (j < below) off = -(0.006 + 0.6 * rFoot) * grown
+      if (j < below) off = -(0.014 + 0.6 * rFoot) * grown
       else if (j < below + main) s = ringS[j - below]
       else {
         const k = j - below - main + 1
@@ -291,7 +291,7 @@ export function create(options: PartOptions): PlantPart {
       const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - 0.45 * pale) * (1 - pale * smoothstep(0.1, 0.55, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.28, 0.62, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
@@ -326,7 +326,7 @@ export function create(options: PartOptions): PlantPart {
         skin2[at * 4 + 3] = thin
         skin3[at * 4] = joint
         skin3[at * 4 + 1] = ribbed
-        skin3[at * 4 + 2] = bald * (0.45 + 0.55 * sun)
+        skin3[at * 4 + 2] = bald * lerp(0.45 + 0.55 * sun, 0.85 + 0.15 * sun, pale)
         skin3[at * 4 + 3] = ribHeight
       }
     }
