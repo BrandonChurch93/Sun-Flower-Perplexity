@@ -118,7 +118,7 @@ float rays(float turn, float r, float down) {
   float x = across / wide;
   return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 14.0, 1.0)));
 }
-// What a low sun in the frame does. In the glass: a small near white core and a short soft glow, which lie over everything. In the air of the field: thin rays and wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
+// What a low sun in the frame does. In the glass: a warm core and a wide orange halo, which lie over everything. In the air of the field: short thin rays, wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   // Both sit where the showing part of the disc sits and follow its share: a sun half behind a leaf blooms from the leaf's edge.
@@ -136,7 +136,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   vec3 glass = mix(vec3(1.0, 0.88, 0.7), vec3(1.0, 0.44, 0.12), smoothstep(0.0, 0.045, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
-  // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
+  // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
   float fan = 0.65 * fanNoise(turn * 26.0, 26.0, 3.0) + 0.35 * fanNoise(turn * 62.0, 62.0, 7.0);
   float beams = mix(0.8 + 0.2 * smoothstep(0.0, 1.0, fan) * (0.4 + 0.6 * fanNoise(r * 9.0 + 4.0 * fanNoise(turn * 13.0, 13.0, 5.0), 64.0, 9.0)), 0.5 + 0.5 * smoothstep(0.15, 0.9, fan), down);
   float reach = saturate(1.0 - r / mix(0.55, 0.3, down));
@@ -149,9 +149,9 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.6, 1.0, smoothstep(0.004, 0.05, under)), down);
   // The lit air lies thickest along the horizon under the sun, in front of the far hills.
-  float haze = 2.2 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
+  float haze = 2.6 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
-  float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.5 * exp(-r / 0.12) + haze) * hold + uRays * rays(turn, r, down) * near;
+  float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
   return glass + vec3(1.0, 0.4, 0.12) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
 vec3 three(vec3 p) {
