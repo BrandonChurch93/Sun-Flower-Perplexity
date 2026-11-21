@@ -133,7 +133,7 @@ float plantSky(vec3 world) {
   // The sky comes from above whatever the sun does: a closed crop keeps most of it down to mid height and under half at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(1.0, 0.8, closed), mix(0.8, 0.45, closed), smoothstep(0.25, 1.0, under));
+  return mix(mix(1.0, 0.8, closed), mix(0.8, 0.4, closed), smoothstep(0.25, 1.0, under));
 #else
   return 1.0;
 #endif
@@ -145,7 +145,7 @@ vec3 cropAmbient(vec3 n) {
   vec3 sky = skyAmbient(n);
   vec3 over = uSkyZenith * (dot(sky, vec3(0.3, 0.6, 0.1)) / max(dot(uSkyZenith, vec3(0.3, 0.6, 0.1)), 1e-4));
   float away = 0.5 - 0.5 * dot(n.xz, uSunDir.xz) * inversesqrt(max(dot(n.xz, n.xz) * dot(uSunDir.xz, uSunDir.xz), 1e-4));
-  return mix(sky, over, 0.85 * away * smoothstep(0.2, 0.85, uCanopy));
+  return mix(sky, over, mix(0.4, 0.9, away) * smoothstep(0.2, 0.85, uCanopy));
 }
 #define skyAmbient(n) cropAmbient(n)
 #endif
