@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -70,10 +70,15 @@ export class Field {
       usePlant(0)
     }
     this.ahead = plantAhead(timeOpen)
-    const canopy = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5), this.ahead)
+    const squat = squatAt(timeOpen)
+    const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5), this.ahead)
+    const canopy = spread * (1 - squat)
+    fieldUniforms.uSquat.value = squat
     fieldUniforms.uCanopy.value = canopy
+    // How closed the crop is follows how far its leaves reach.
+    fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
     // The leaves in the gaps come up as the crop closes over them.
-    this.rise = THREE.MathUtils.smoothstep(canopy, 0.3, 1.0)
+    this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
     this.far.prepare(timeOpen, timeClose, open, close, eyeHeightM, canopy)
   }
 

@@ -56,12 +56,14 @@ const SETTLED_S = 45
 const KNEE = 12
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
 export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_S) / Math.max(heightAt(time), 0.001)))
-export const youngOf = (tone: number): number => 0.82 + 0.13 * tone
+export const youngOf = (tone: number): number => 0.9 + 0.1 * tone
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
+// At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
+export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time)
 export const sizeGlsl = /* glsl */ `
 float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
-  float a = (0.82 + 0.13 * tone) / size;
+  float a = (0.9 + 0.1 * tone) / size;
   return size * (softMin(a, ahead) - softMin(a, 1.0) + 1.0);
 }
 `
@@ -169,9 +171,9 @@ export function fieldPlaces(): FieldPlaces {
       const out = Math.hypot(depth, n * plantSpacingM)
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
       const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
-      // Before the edge the crop is thin and stays short: a skirt of low plants, none of them right behind the plant.
+      // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
       const skirt = k < edgeRows(across) - 0.5
-      if (skirt && (bayAt(across) > 0 || hash01(SEED, 71, id) < SKIRT_GAPS)) continue
+      if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
       const reach = Math.hypot(x, z)
