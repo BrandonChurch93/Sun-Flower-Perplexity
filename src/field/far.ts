@@ -3,7 +3,7 @@ import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
-import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
+import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
@@ -24,6 +24,7 @@ const HEADS_FROM_M = 16
 const HEAD_AT = 0.9
 const RAY_DEEP = [0.82, 0.25]
 const LEAF_SKY = 1.2
+const HEAD_GROWS = 0.35
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -36,6 +37,7 @@ out float vTone;
 uniform vec3 uRight;
 uniform vec2 uTile;
 uniform vec2 uCrop;
+uniform float uOpen;
 uniform float uCount;
 uniform float uPlantWind;
 uniform float uPlantHeight;
@@ -47,7 +49,8 @@ void main() {
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
   float away = smoothstep(${HEADS_FROM_M.toFixed(1)}, ${(HEADS_FROM_M + 30).toFixed(1)}, length(aPlace.xy - uCamPos.xz));
   float draw = fract(aVary.w * 0.6180339);
-  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away);
+  // An open head is nearly as large as the plant's own: the picture of a short neighbor is drawn larger about its head.
+  float scale = mix(1.0, 0.55 + 0.7 * fract(aPlace.z), away) * (1.0 + ${HEAD_GROWS.toFixed(2)} * uOpen);
   float tip = (fract(draw * 7.0) - 0.5) * 0.9 * away;
   float flip = fract(draw * 13.0) < 0.5 ? -1.0 : 1.0;
   float top = ${HEAD_AT.toFixed(2)} * uTile.y * aPlace.w;
@@ -125,6 +128,7 @@ in vec3 vMid;
 uniform vec2 uToward;
 uniform vec2 uStart;
 uniform float uCover;
+uniform float uAbove;
 uniform float uLevel;
 uniform float uHeight;
 uniform float uPlantWind;
@@ -142,17 +146,19 @@ void main() {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
     float clump = 0.25 * valueNoise(p * 3.1) + 0.35 * valueNoise(p * 7.7) + 0.4 * valueNoise(p * 17.0);
-    float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
+    float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach) * (1.0 - smoothstep(0.5, 1.0, uAbove));
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
-    color = vMid * mix(0.3, 0.95, lift);
+    // From high over the tops the layers are the dark between the plants and nothing else, and then they are gone under the real leaves.
+    float low = 1.0 - smoothstep(0.0, 0.5, uAbove);
+    color = vMid * mix(0.3, mix(0.45, 0.95, low), lift);
     // Seen from over the tops the upper leaves show the faces they turn to the sky.
-    color += vec3(0.045, 0.09, 0.022) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
+    color += vec3(0.045, 0.09, 0.022) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift * low);
     // The low sun comes through the upper leaves of a clump, green, and here and there a leaf catches it whole. Looking into the sun the eye meets the shaded side of every clump.
     float lit = smoothstep(0.6, 0.78, valueNoise(p * 9.0 + 5.0));
     float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz))));
-    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
+    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * low * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);
@@ -225,6 +231,8 @@ export class FarField {
     uPlantHeight: fieldUniforms.uPlantHeight,
     uToward: { value: new THREE.Vector2(toward.x, toward.z) },
     uCover: { value: 0 },
+    uOpen: { value: 0 },
+    uAbove: { value: 0 },
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -308,6 +316,7 @@ export class FarField {
     this.plants.forEach((plant, i) => {
       plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
     })
+    this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
     // How far the eye stands over the tops, in heights of the tops. As it rises the leaf layers and the carpet come in and
@@ -315,6 +324,7 @@ export class FarField {
     const over = canopy > 0.06 ? (eyeHeightM - canopy) / canopy : 0
     const rise = THREE.MathUtils.smoothstep(over, 0.02, 0.27)
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55) * rise
+    this.uniforms.uAbove.value = THREE.MathUtils.smoothstep(over, 0.4, 1.0)
     this.carpetHeight.value = canopy * 0.97
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
     const grown = THREE.MathUtils.smoothstep(canopy, 0.3, 0.9)
