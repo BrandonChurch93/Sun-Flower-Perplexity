@@ -4,7 +4,7 @@ import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, type Pose } from '../../skeleton.ts'
 import { tissueGlsl } from '../../surface/index.ts'
-import { FIRST_OPEN, FIRST_SIDE, PACKING, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
+import { FIRST_OPEN, FIRST_SIDE, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
 import { fieldFragment, fieldVertex, floretFragment, floretVertex } from './shaders.ts'
 import { domeShape, floretShape } from './shape.ts'
 
@@ -95,7 +95,7 @@ export function create(options: PartOptions): PlantPart | null {
   const each = new Float32Array(COUNT * 8)
   const wave = hash01(seed, 9) * Math.PI * 2
   for (let n = 0; n < COUNT; n++) {
-    const rho = RIM_SHARE * Math.pow((n + 0.5) / COUNT, PACKING / 2)
+    const rho = RIM_SHARE * Math.sqrt((n + 0.5) / COUNT)
     const theta = n * GOLDEN
     const ragged = (hash01(seed, 1, n) - 0.5) * 0.085 + 0.022 * Math.sin(3 * theta + wave) + 0.014 * Math.sin(7 * theta + wave * 2.3) + 0.02 * Math.cos(theta - FIRST_SIDE)
     const when = schedule(rho + ragged)

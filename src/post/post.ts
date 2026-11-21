@@ -91,6 +91,8 @@ export class Post {
     uPunch: { value: 0 },
     uPale: { value: 0 },
     uGreens: { value: 1 },
+    uTop: { value: 0.12 },
+    uWhiten: { value: 0 },
     tHot: { value: null },
     uSunAt: { value: new THREE.Vector2(0.5, 0.5) },
     uStar: { value: 0 },
@@ -255,6 +257,8 @@ export class Post {
       g.uPunch.value = look.punch
       g.uPale.value = look.pale
       g.uGreens.value = look.greens
+      g.uTop.value = look.top
+      g.uWhiten.value = look.whiten
       // The floors under the bloom and the shafts would pop as the sun crosses the frame edge, so they fade over its last few percent.
       const margin = sun ? Math.min(1, Math.max(0, Math.min(sun.x, 1 - sun.x, sun.y, 1 - sun.y) / 0.04)) : 0
       const seen = margin * margin * (3 - 2 * margin)
