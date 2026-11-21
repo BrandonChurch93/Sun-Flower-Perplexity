@@ -8,7 +8,7 @@ const RAD = Math.PI / 180
 const CENTER_DEG = -170.5
 // Where the band is brightest: the sun stands there, behind the cloud.
 const SUN_BEHIND_CLOUD_DEG = -163
-const FLASH_BEARING_DEG = -176
+const FLASH_BEARING_DEG = -160
 const FLASH_ELEVATION_DEG = 9
 const FAR_RAIN: [number, number, number] = [0.3, 0.36, 0.4]
 const DRIFT_TURNS_PER_SECOND = 0.0002
@@ -70,8 +70,8 @@ vec3 rainSky(vec3 d, float lod) {
   color = mix(color, uRainSkyTone, 0.3 * smoothstep(0.3, 0.8, curtain) * cloud * exp(-up / 0.22));
   color = mix(color, uRainSkyTone, 0.55 * exp(-up / 0.06) * (1.0 - 0.6 * exp(-toSun * toSun)));
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
-  float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.035);
-  color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.25 + 1.6 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
+  float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.012);
+  color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.05 + 0.8 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
   return color;
 }
 `
