@@ -101,7 +101,8 @@ export function create(options: PartOptions): PlantPart {
 
   const dryLeaf = 5 + Math.floor(hash01(seed, 900) * 6)
   const tornLeaf = 12 + Math.floor(hash01(seed, 901) * 7)
-  const witheredLeaf = 19 + Math.floor(hash01(seed, 902) * 3)
+  // The half withered leaf is the one the bloom frames see right of the stem, just under the head.
+  const witheredLeaf = 21
 
   const leaves: Leaf[] = []
   let vertices = 0
@@ -126,8 +127,8 @@ export function create(options: PartOptions): PlantPart {
     const lean = (r(3) - 0.5) * 0.26
     const teeth = 17 + 12 * r(4)
     const depth = 0.07 + 0.06 * r(5)
-    const waveAmp = 0.018 + 0.03 * r(6)
-    const waveRate = 2.4 + 2.6 * r(7)
+    const waveAmp = 0.018 + 0.024 * r(6)
+    const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
     const roll = withered ? 0.42 : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
@@ -156,12 +157,12 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? 1 : 0.3 + 0.55 * r(19),
+      kink: withered ? 1.5 : 0.3 + 0.55 * r(19),
       tipCurl: withered ? 1.5 : dry ? 1.1 : 0.2 + 0.7 * r(20) * r(20),
       reach: STALK + (1 - STALK) * lerp(1, 0.76, upper),
       stalk: STALK / (STALK + (1 - STALK) * lerp(1, 0.76, upper)),
       rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
-      crease: withered ? 0.9 : 0.12 + 0.5 * r(36),
+      crease: withered ? 1.15 : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
@@ -186,11 +187,11 @@ export function create(options: PartOptions): PlantPart {
         // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
         const ae = aw * (1 + tooth) * wobble
         const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
-        let z = 0.011 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
+        let z = 0.019 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
         z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
-        z += waveAmp * Math.pow(ae, 2.5) * Math.sin(6.2832 * (waveRate * s + r(26 + side))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
+        z += waveAmp * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
         z -= rolled * ae * ae * ae
-        z += lump * (Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+        z += lump * (Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
         if (onStalk) {
           x = w * 0.012
@@ -207,7 +208,7 @@ export function create(options: PartOptions): PlantPart {
         leaf.pz[v] = z
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
-        markList.push(threshold, bias, dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
+        markList.push(threshold, bias, withered ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
         planeList.push(x * full, (s + y) * full)
       }
     }
@@ -299,11 +300,11 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.2) {
+      if (pick < 0.06) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
-      } else if (pick < 0.68) {
+      } else if (pick < 0.48) {
         hair.kind = 1
         const side = r(6) < 0.5 ? 0 : 1
         const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
@@ -481,7 +482,8 @@ export function create(options: PartOptions): PlantPart {
           tubeNormals[o + 2] = (wz * c + nz * lift) / l
           const t = (leaf.tube + ring * (SIDES + 1) + j) * 2
           tubeUv[t] = j / SIDES
-          tubeUv[t + 1] = share * total
+          // Below zero on the midrib under the blade, which carries less down than the stalk.
+          tubeUv[t + 1] = onBlade ? -share * total : share * total
         }
       }
     }
@@ -522,7 +524,7 @@ export function create(options: PartOptions): PlantPart {
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.0009 + 0.0011 * hair.r1) * scale
+        long = (0.0012 + 0.0022 * hair.r1) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a

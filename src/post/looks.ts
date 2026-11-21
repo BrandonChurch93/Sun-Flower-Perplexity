@@ -4,6 +4,8 @@ import type { WorldDef } from '../core/world.ts'
 export interface LensLook {
   // How much more of the scattered light goes into the frame-wide levels than into the tight ones.
   veil: number
+  // Color of those frame-wide levels: the air between the lens and a low sun is not white.
+  veilTint: readonly [number, number, number]
   // Strength of the streak and the ghosts.
   flare: number
   // Warm glow of the film base round the hottest edges.
@@ -22,14 +24,14 @@ export interface LensLook {
   greens: number
 }
 
-const fallback: LensLook = { veil: 1, flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, punch: 0, pale: 0, greens: 1 }
+const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, punch: 0, pale: 0, greens: 1 }
 
 const table: Record<string, Partial<LensLook>> = {
   dawn: { veil: 1.4, flare: 0.7 },
   rain: { flare: 0, halation: 0.2 },
   night: { flare: 0.35, halation: 0.2 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 1.3, flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.2, punch: 0.23, pale: 0.05, greens: 0.45 },
+  golden: { veil: 2.1, veilTint: [1.15, 0.7, 0.36], flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.07, punch: 0.23, pale: 0.075, greens: 0.45 },
 }
 
 export function lensLook(def: WorldDef): LensLook {

@@ -51,24 +51,26 @@ vec3 tone(vec3 c) {
   // More slope through the upper half, and a burning color takes on white as it nears the top.
   y *= 1.0 + uPunch * (smoothstep(0.3, 0.75, v) - 0.65 * smoothstep(0.02, 0.2, v) * (1.0 - smoothstep(0.25, 0.45, v)));
   float burn = smoothstep(0.75, 1.05, max(y.r, max(y.g, y.b)));
-  y += uPale * burn * burn;
+  float hi = max(y.r, max(y.g, y.b));
+  y += vec3(1.0, 1.0, 0.8) * (uPale * burn * burn * smoothstep(0.3, 0.6, (hi - min(y.r, min(y.g, y.b))) / max(hi, 1e-5)));
   vec3 over = max(y - 0.88, 0.0);
-  return min(y, 0.88) + 0.11 * (1.0 - exp(-over / 0.11));
+  return min(y, 0.88) + 0.12 * (1.0 - exp(-over / 0.12));
 }
-// The star the edges of the aperture blades draw round a point of light: seven blades, fourteen fine rays of uneven length, as bright and as colored as what shows of the light itself.
+// The star the edges of the aperture blades draw round a point of light: seven blades, fourteen soft rays, one pair far longer than the rest, widest at the light and fading to nothing, as bright as what shows of the light itself.
 vec3 star(vec2 px) {
   vec2 d = px - uSunAt * uSize;
   float r = length(d);
-  if (uStar <= 0.0 || r > uStarLen || r < 0.5) return vec3(0.0);
+  if (uStar <= 0.0 || r > uStarLen) return vec3(0.0);
   float a = atan(d.y, d.x) * (14.0 / 6.2831853) + 0.31;
   float k = floor(a + 0.5);
-  float blade = mod(k + 14.0, 7.0);
-  float len = uStarLen * (0.45 + 0.55 * hash31(vec3(blade, 5.0, 2.0))) * (0.82 + 0.18 * hash31(vec3(k, 3.0, 7.0)));
+  float h = hash31(vec3(mod(k + 14.0, 7.0), 5.0, 2.0));
+  float len = uStarLen * (0.28 + 0.72 * h * h * sqrt(h)) * (0.8 + 0.2 * hash31(vec3(k, 3.0, 7.0)));
   float across = abs(a - k) * (6.2831853 / 14.0) * r;
-  float w = 0.75 * uSize.y / 1080.0 + 0.006 * r;
   float t = saturate(1.0 - r / len);
-  float along = t * sqrt(t) / (1.0 + r / (0.3 * uStarLen));
-  return texture(tHot, uSunAt).rgb * (exp(-across * across / (w * w)) * along * uStar);
+  float w = (0.7 + 1.5 * t) * uSize.y / 1080.0;
+  float x = across * across / (w * w);
+  float line = 0.7 * exp(-x) + 0.3 * exp(-x / 12.0);
+  return texture(tHot, uSunAt).rgb * vec3(1.0, 0.62, 0.3) * (line * t * t * uStar);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));

@@ -53,7 +53,7 @@ void main() {
   float top = vInfo.z;
 #ifdef TREES
   float crowns = max(max(crown(vInfo.x, 17.0, uLayer), crown(vInfo.x + 6.1, 26.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 11.0, uLayer + 5.0));
-  top *= 0.8 + 0.14 * crowns * (0.4 + 1.2 * valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.06 * valueNoise(vec2(vInfo.x * 0.6, uLayer + 7.0));
+  top *= 0.74 + 0.2 * crowns * (0.5 + valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.03 * valueNoise(vec2(vInfo.x * 0.12, uLayer + 7.0));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.2 * exp(-theta / 0.2) + 0.004 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
 }
 `
 

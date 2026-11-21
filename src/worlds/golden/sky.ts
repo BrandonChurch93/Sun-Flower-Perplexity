@@ -15,6 +15,7 @@ uniform vec3 uGlow;
 uniform vec3 uDisc;
 uniform float uGain;
 uniform float uDrift;
+uniform float uPale;
 uniform float uSamples;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
@@ -42,30 +43,38 @@ void main() {
   detail = mix(vec3(dot(detail, vec3(0.3, 0.6, 0.1))), detail, 0.45);
   sky = max(sky + detail * (0.9 * smoothstep(0.05, 0.1, el)), vec3(0.0));
   float low = exp(-max(el, 0.0) / 0.085);
-  float lift = 1.0 + low * 0.8 * exp(-theta / 0.3) + 1.2 * exp(-theta / 0.05) + 0.9 * exp(-max(el, 0.0) / 0.05);
+  float lift = 1.0 + low * 0.3 * exp(-theta / 0.3) + 1.2 * exp(-theta / 0.05) + 0.3 * exp(-max(el, 0.0) / 0.05);
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
   vec3 color = sky * uGain * lift;
+  // The clear band holds its tone: only the sun and the glow close round it go to white.
+  color *= mix(0.5, 1.3, smoothstep(0.1, 0.6, theta));
+  color /= 1.0 + 0.45 * dot(color, vec3(0.3, 0.6, 0.1));
   float lum = dot(color, vec3(0.3, 0.6, 0.1));
-  vec3 pale = mix(vec3(1.6, 0.9, 0.4), vec3(1.3, 0.97, 0.6), smoothstep(0.15, 0.8, theta));
+  vec3 pale = mix(vec3(1.42, 0.94, 0.58), vec3(1.26, 0.98, 0.66), smoothstep(0.15, 0.8, theta));
   color = mix(color, lum * pale, 0.75 * smoothstep(0.15, 1.2, lum));
   color = mix(color, lum * vec3(0.9, 1.5, 1.62), 0.86 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta) * (1.0 - smoothstep(0.35, 1.2, lum)));
-  color *= mix(vec3(1.0), vec3(1.2, 0.93, 0.68), exp(-max(el, 0.0) / 0.12) * smoothstep(0.1, 0.6, lum));
+  color *= mix(vec3(1.0), vec3(1.22, 0.93, 0.68), exp(-max(el, 0.0) / 0.12) * smoothstep(0.1, 0.6, lum));
+  float shelf = smoothstep(0.065, 0.11, el) * smoothstep(0.2, 0.5, theta);
+  float lit = dot(color, vec3(0.3, 0.6, 0.1));
+  color = mix(color, lit * vec3(1.14, 0.97, 0.8), shelf * smoothstep(0.12, 0.5, lit)) / (1.0 + 1.3 * shelf * lit);
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.62 * valueNoise(vec2(fan * 3.7, 3.7)) + 0.38 * valueNoise(vec2(fan * 8.9, 9.1));
-  rays = smoothstep(0.2, 0.9, rays);
-  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.42) * smoothstep(0.0, 0.07, el);
-  color *= 1.0 + 0.7 * (rays - 0.4) * reach;
+  float rays = 0.76 * valueNoise(vec2(fan * 2.3, 3.7)) + 0.24 * valueNoise(vec2(fan * 5.1, 9.1));
+  rays = smoothstep(0.25, 0.85, rays);
+  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.3) * smoothstep(0.0, 0.07, el);
+  color *= 1.0 + 0.55 * (rays - 0.4) * reach;
   color += uGlow * (0.13 * rays * reach);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.85 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
-  color += vec3(0.135, 0.16, 0.16) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el);
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
+  color += uGlow * vec3(1.0, 0.74, 0.56) * (0.42 * exp(-theta * theta / 0.09) * smoothstep(0.06, 0.13, el));
+  color += vec3(0.098, 0.17, 0.2) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el) + vec3(0.0, 0.024, 0.036) * smoothstep(0.25, 0.6, theta) * smoothstep(0.06, 0.12, el);
+  color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), min(0.9, 0.75 * exp(-theta / 0.18) + uPale) * exp(-max(el, 0.0) / 0.07) * smoothstep(0.04, 0.12, theta));
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 
@@ -81,6 +90,8 @@ void main() {
 
 export const SKY_FILE = 'sky.jpg'
 const DRIFT_TURNS_PER_SECOND = 0.000012
+const HAZE_FROM_S = 44
+const HAZE_TO_S = 51
 
 export class GoldenSky {
   private readonly pass: FullscreenPass
@@ -97,6 +108,7 @@ export class GoldenSky {
       uDisc: { value: new THREE.Vector3().fromArray(def.sun.color).multiplyScalar(def.sky.disc) },
       uGain: { value: 1 },
       uDrift: { value: 0 },
+      uPale: { value: 0 },
       uSamples: { value: 1 },
     })
   }
@@ -112,6 +124,8 @@ export class GoldenSky {
     const u = this.pass.uniforms
     u.uSamples.value = Math.max(1, samples)
     u.uDrift.value = time * DRIFT_TURNS_PER_SECOND
+    const thin = Math.min(1, Math.max(0, (time - HAZE_FROM_S) / (HAZE_TO_S - HAZE_FROM_S)))
+    u.uPale.value = 0.45 * (1 - thin * thin * (3 - 2 * thin))
     u.uGain.value = gain
   }
 

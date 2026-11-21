@@ -1,5 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
+import { setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
@@ -15,20 +16,38 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 
 // Which neighbor the companion is: its own seed, so its own leaf angles and timing.
 export const companionVariant = 77
+// Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
+setLeafTurn(companionVariant, 118 * RAD)
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// The field comes into bloom ahead of the plant: a kind runs 1.0 to 2.8 s early while the heads open and is the plant's age before and after.
+// The field opens with the plant and then runs ahead of it: at 45 s a kind is up to 1.3 s behind the plant and still a bud, by 50 s it is 1.0 to 2.8 s ahead.
+// One near kind stays behind throughout and is a bud when the others are open.
 const LEAD_S = [1.0, 2.8]
+const BEHIND_S = [-1.3, 0.2]
+const LATE_S = -3.5
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
   return x * x * (3 - 2 * x)
 }
 export const kindTime = (time: number, index: number, count: number): number => {
-  const lead = LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (((index * 3) % count) / Math.max(1, count - 1))
-  return time + lead * ramp(36, 41, time) * (1 - ramp(53, 59, time))
+  const order = (index * 3) % count
+  const share = order / Math.max(1, count - 1)
+  const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * share
+  const behind = BEHIND_S[0] + (BEHIND_S[1] - BEHIND_S[0]) * (((order * 2 + 1) % count) / Math.max(1, count - 1))
+  const open = ramp(45, 50, time)
+  return time + (behind + (lead - behind) * open) * ramp(40, 44, time) * (1 - ramp(53, 59, time))
+}
+
+// A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
+const AWAY_SHARE = 0.85
+export const budTurn = (time: number, id: number): number => {
+  if (hash01(SEED, 40, id) >= AWAY_SHARE) return 0
+  const start = 45.2 + 0.9 * hash01(SEED, 41, id)
+  const away = (hash01(SEED, 42, id) < 0.5 ? -1 : 1) * (2.0 + 0.9 * hash01(SEED, 43, id))
+  return away * (1 - ramp(start, start + 3.4, time))
 }
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
@@ -46,7 +65,9 @@ export const pictureCount = farVariants.length * pictureTurns
 
 // The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
 export const meanTurn = 0.25
-const TURN_SCATTER = 0.55
+const TURN_SCATTER = 0.8
+const SIDEWAYS = 0.14
+const SHORT = 0.1
 const STRAGGLERS = 0.05
 export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
 
@@ -110,13 +131,15 @@ export function fieldPlaces(): FieldPlaces {
       const reach = Math.hypot(x, z)
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const size = 0.7 + 0.15 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
-      const leanX = Math.max(-0.16, Math.min(0.16, bell(id, 30) * 0.055))
-      const leanZ = Math.max(-0.16, Math.min(0.16, bell(id, 33) * 0.055))
+      const short = hash01(SEED, 15, id) < SHORT
+      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
+      const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, 0.65 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5)))
       if (reach < fieldFarM + (pick - 0.5) * FAR_BAND_M) {
         const straggler = hash01(SEED, 11, id) < STRAGGLERS
-        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + bell(id, 36) * TURN_SCATTER
+        const side = hash01(SEED, 17, id) < SIDEWAYS ? (hash01(SEED, 18, id) < 0.5 ? -1 : 1) * (1.0 + 0.6 * hash01(SEED, 19, id)) : 0
+        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + side + bell(id, 36) * TURN_SCATTER
         const list = reach < fieldNearM + (pick - 0.5) * NEAR_BAND_M ? near : far
         list.push(x, z, turn, size, leanX, leanZ, tone, id)
         continue
