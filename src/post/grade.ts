@@ -131,7 +131,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float tight = 1.0 + r * r / 0.0006;
   // The core's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
   float tail = r * r / 0.0289;
-  float wide = r * r / 0.1;
+  float wide = r * r / 0.06;
   float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.42 * exp(-r * r / 0.008) + 0.07 * exp(-r / 0.07 - wide * wide);
   vec3 glass = mix(vec3(1.0, 0.88, 0.7), vec3(1.0, 0.44, 0.12), smoothstep(0.0, 0.045, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
