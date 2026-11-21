@@ -66,7 +66,7 @@ void main() {
 
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 12
-const FINE_REACH_M = 2.6
+const FINE_REACH_M = 1.7
 const SLOWEST_M_PER_S = 1
 
 export interface Streaks {
@@ -92,7 +92,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 6 },
+    uGain: { value: 24 },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
   }

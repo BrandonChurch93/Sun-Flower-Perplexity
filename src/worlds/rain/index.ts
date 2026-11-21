@@ -1,4 +1,6 @@
+import * as THREE from 'three'
 import { config } from '../../config.ts'
+import { shared } from '../../core/shading.ts'
 import type { WorldSettings, WorldStageMaker } from '../../core/world.ts'
 import { makeStreaks } from '../../weather/rain/streaks.ts'
 import { world as golden } from '../golden/index.ts'
@@ -25,6 +27,8 @@ const MIST: [number, number, number] = [0.5, 0.57, 0.62]
 // One stroke of lightning inside the cloud, as two swells of glow that are gone within ten frames.
 const FLASH_AT_S = 17.2
 
+const FLASH_LIGHT = new THREE.Vector3(1.0, 1.15, 1.45)
+
 export function flashAt(time: number): number {
   const t = time - FLASH_AT_S
   const swell = (from: number, rise: number, fall: number): number => (t < from ? 0 : (1 - Math.exp(-(t - from) / rise)) * Math.exp(-(t - from) / fall))
@@ -35,15 +39,27 @@ export const stage: WorldStageMaker = () => {
   const sky = new RainSky()
   const far = makeFarLayers(golden.sun.azimuthDeg, AIR_TONE, MIST)
   const streaks = makeStreaks(DROP_LIGHT, DROP_SHADE)
+  let open = 0
+  let close = 0
   return {
     objects: [...far.meshes, streaks.mesh],
     load: (assets) => sky.load(assets),
     prepare(frame) {
+      open = frame.time
+      close = frame.timeClose
       const flash = flashAt(0.5 * (frame.time + frame.timeClose))
       const tanX = config.camera.gateWidthMm / (2 * frame.pose.focalMm)
       sky.prepare(frame.time, SKY_GAIN, flash, frame.samples)
       far.flash(flash)
       streaks.prepare(frame.time, frame.timeClose, frame.pose, tanX, (tanX * frame.height) / frame.width, frame.samples, frame.width, flash)
+    },
+    sample(_camera, shutter) {
+      // The stroke lights the plant and the ground through the light of the sky they already read.
+      const flash = flashAt(open + (close - open) * shutter)
+      if (flash <= 0) return
+      shared.uSkyZenith.value.multiply(FLASH_LIGHT.clone().multiplyScalar(flash).addScalar(1))
+      shared.uSkyHorizon.value.multiply(FLASH_LIGHT.clone().multiplyScalar(flash).addScalar(1))
+      shared.uGroundBounce.value.multiply(FLASH_LIGHT.clone().multiplyScalar(flash).addScalar(1))
     },
     sky(renderer, target, camera, _pixelX, _pixelY, across) {
       sky.render(renderer, target, camera, across)
