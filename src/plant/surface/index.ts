@@ -173,8 +173,9 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float a4 = against * against;
   a4 *= a4;
   a4 *= a4;
-  // Most of what a sheet passes is spread wide; a share keeps close to the line of the sun, and the three parts together stay under what arrives.
-  float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * (2.0 * against * against * against + TISSUE_BEAM * a4 * a4);
+  float sheer = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
+  // Most of what a sheet passes is spread wide; a blade keeps a share close to the line of the sun, a petal's skin of small domes does not. The parts together stay under what arrives.
+  float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * (2.0 * against * against * against + TISSUE_BEAM * (1.0 - sheer) * a4 * a4);
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
@@ -239,7 +240,6 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 direct = uSunColor * (sun * crease);
   float lit1 = max(glow.r, max(glow.g, glow.b));
   // The neighbors are taken to be as bright as the part itself: petals light each other far more than leaves do.
-  float sheer = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
   float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
