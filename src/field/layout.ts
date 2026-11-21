@@ -23,8 +23,10 @@ setLeafTurn(companionVariant, 118 * RAD)
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// The field comes into bloom a little ahead of the plant: a kind runs up to 2.8 s early once the heads are open and one near kind runs late and stays a bud.
+// The field opens with the plant and then runs ahead of it: at 45 s a kind is up to 1.3 s behind the plant and still a bud, by 50 s it is 1.0 to 2.8 s ahead.
+// One near kind stays behind throughout and is a bud when the others are open.
 const LEAD_S = [1.0, 2.8]
+const BEHIND_S = [-1.3, 0.2]
 const LATE_S = -3.5
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
@@ -32,8 +34,20 @@ const ramp = (a: number, b: number, t: number): number => {
 }
 export const kindTime = (time: number, index: number, count: number): number => {
   const order = (index * 3) % count
-  const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (order / Math.max(1, count - 1))
-  return time + lead * ramp(43, 51, time) * (1 - ramp(53, 59, time))
+  const share = order / Math.max(1, count - 1)
+  const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * share
+  const behind = BEHIND_S[0] + (BEHIND_S[1] - BEHIND_S[0]) * (((order * 2 + 1) % count) / Math.max(1, count - 1))
+  const open = ramp(45, 50, time)
+  return time + (behind + (lead - behind) * open) * ramp(40, 44, time) * (1 - ramp(53, 59, time))
+}
+
+// A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
+const AWAY_SHARE = 0.85
+export const budTurn = (time: number, id: number): number => {
+  if (hash01(SEED, 40, id) >= AWAY_SHARE) return 0
+  const start = 45.2 + 0.9 * hash01(SEED, 41, id)
+  const away = (hash01(SEED, 42, id) < 0.5 ? -1 : 1) * (2.0 + 0.9 * hash01(SEED, 43, id))
+  return away * (1 - ramp(start, start + 3.4, time))
 }
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
@@ -118,7 +132,7 @@ export function fieldPlaces(): FieldPlaces {
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
       const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.69 + 0.17 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, 0.65 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5)))
