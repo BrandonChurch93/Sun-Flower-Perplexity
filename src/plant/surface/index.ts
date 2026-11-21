@@ -1,3 +1,7 @@
+import { dewGlsl } from './dew/index.ts'
+import { frostGlsl } from './frost/index.ts'
+import { wetGlsl } from './wet/film.ts'
+
 // The skin of the plant: one way of lighting every part of it.
 // `real` turns true once this folder holds the plant's skin at its real quality.
 export const real = true
@@ -108,12 +112,22 @@ vec3 tissueSky(vec3 n, float shown) {
 #endif
 }
 
-vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
+${frostGlsl}
+${dewGlsl}
+${wetGlsl}
+
+vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
+  float wet = uPlantWet;
+  // How deep the water stands here. A part that does not say where the pixel is wears an even damp film.
+  float film = 0.25;
+#ifndef PLANT_FIELD
+  if (wet > 0.0 && margin >= 0.0) film = wetFilm(at, margin);
+#endif
   // A film of water fills the fine relief.
-  vec3 N = normalize(mix(t.normal * turn, F, 0.6 * uPlantWet));
+  vec3 N = normalize(mix(t.normal * turn, F, wet * (0.5 + 0.45 * film)));
   vec3 L = uSunDir;
   float ndl = dot(N, L);
   float fdl = dot(F, L);
@@ -134,21 +148,40 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float wax = t.wax;
   float fuzz = t.sheen;
 
-  float wet = uPlantWet;
-  albedo = mix(albedo, albedo * (0.38 + 0.62 * albedo), wet);
-  rough = mix(rough, min(rough, 0.3), wet);
+  if (wet > 0.0) albedo = mix(albedo, wetAlbedo(albedo), wet);
+  rough = mix(rough, min(rough, mix(WET_ROUGH_THIN, WET_ROUGH_DEEP, film)), wet);
   wax = mix(wax, 1.0, wet);
-  fuzz *= 1.0 - 0.6 * wet;
+  // Wet down lies flat under the water.
+  fuzz *= 1.0 - 0.8 * wet;
 
   float dew = uPlantDew * (1.0 - wet);
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
+  float mist = 0.0;
+#ifndef PLANT_FIELD
+  if (dew > 0.0) {
+    mist = dew * (margin >= 0.0 ? dewMist(at, margin) : 0.55);
+    // A moist skin is smoother and its wax shows.
+    rough = mix(rough, min(rough, DEW_ROUGH), mist);
+    wax = mix(wax, max(wax, DEW_WAX), mist);
+  }
+#endif
 
   float frost = uPlantFrost;
-  float bloom = frost * (0.16 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  float flash = 0.0;
+#ifndef PLANT_FIELD
+  if (frost > 0.0 && margin >= 0.0) {
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, rim);
+    bloom = frost * crust.x;
+    flash = frost * crust.y;
+  }
+#endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(0.92, 1.0, 1.04) * grey, 0.4) * 0.85, frost);
-  albedo = mix(albedo, vec3(0.7, 0.76, 0.84), bloom);
-  through *= 1.0 - 0.65 * bloom;
+  // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
+  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, frost);
+  albedo = mix(albedo, FROST_RIME, bloom);
+  // Rime on the sun's side sends most of the sun back before it reaches the blade.
+  through *= (1.0 - 0.8 * frost) * (1.0 - 0.65 * bloom);
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
 
@@ -285,8 +318,20 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   color += uSkyZenith * vec3(0.6, 0.85, 1.0) * (TISSUE_SLATE * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
+  color += direct * (FROST_FLASH * flash);
+  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
+  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
 
   return color;
 #endif
+}
+
+vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
+  return tissueShade(t, world, view, vec2(0.0), -1.0);
+}
+
+// As shadeTissue, for a part that knows where on its skin the pixel is: 'at' in meters on the skin, 'margin' from 0 in the middle of a face to 1 at its edge or tip. The states of the skin then have a grain: frost stands in grains and gathers at the margin.
+vec3 shadeTissueAt(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
+  return tissueShade(t, world, view, at, saturate(margin));
 }
 `
