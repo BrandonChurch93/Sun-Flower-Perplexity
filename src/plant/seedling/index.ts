@@ -26,14 +26,14 @@ const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
 const HUSK_ON_SOIL_M = 0.003
 // The husk comes to rest a little nearer the lens than growth's resting place, on the low crumbs of the camera's lane where no lump of soil stands before it.
-const REST_SHIFT_X = -0.002
-const REST_SHIFT_Z = 0.016
+const REST_SHIFT_X = -0.0185 - huskRest.x
+const REST_SHIFT_Z = 0.022 - huskRest.z
 // The approved frames show a shorter, broader seed leaf and a longer husk than the growth curves give: drawn at these shares until the curves follow.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
 const DEW_FACE = 0.4
 const DEW_EDGE = 0.32
-const HUSK_DRAWN = 1.3
+const HUSK_DRAWN = 0.0143 / huskLengthM
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -152,7 +152,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   const state = new Float32Array(count * each * 4)
   const list: Crumb[] = []
   const p = new Float32Array(9)
-  const toHusk = Math.atan2(huskRest.z, huskRest.x)
+  const toHusk = Math.atan2(huskRest.z + REST_SHIFT_Z, huskRest.x + REST_SHIFT_X)
   for (let i = 0; i < count; i++) {
     const own = combine(seed, i)
     const onHusk = i >= shape.stemCrumbs
