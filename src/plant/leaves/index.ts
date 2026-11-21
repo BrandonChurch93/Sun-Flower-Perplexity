@@ -24,7 +24,8 @@ const PATH = 48
 const OPEN_SIDE = 0.35
 const FACING = 1.2
 const FRINGE = 4
-const NIGHT_GLOW = 0.5
+const RAIN_GLOW = 0.5
+const NIGHT_GLOW = 0.65
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
 const BLOOM = 40
 const HEM_DROP = 0.0022
@@ -541,16 +542,21 @@ export function create(options: PartOptions): PlantPart {
     }
     // A leaf born under the bud grows out past it, never up through it.
     let ceiling = 1.6
+    // Before the bloom a leaf is laid out soon after it leaves the tip, and sooner if it grows toward the lens, which would see only its underside while it stands steep.
+    if (main && early > 0 && i >= 2) {
+      const near = smoothstep(0.1, 0.7, (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)) / Math.max(Math.hypot(frame.mx, frame.mz), 1e-4))
+      ceiling = lerp(1.6, lerp(0.6, 0.3, near), early * smoothstep(0.6, 2.4, age))
+    }
     const guard = 1 - smoothstep(37, 40, time)
     const bud = bodyRadius(time)
-    if (guard > 0 && bud > 0) {
+    if (ceiling < 1.6 || (guard > 0 && bud > 0)) {
       const u = leafStemFraction(i, time)
       const up = (1 - u) * heightAt(time) + bodyHalfDepth(time)
       const off = stemRadius(time, u)
       const steep = leafElevation(i, time, pose.inputs)
       const reach = smoothstep(0.5, 1, total / Math.max(up - bud, 1e-4))
       const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / Math.hypot(up, off))) - Math.atan2(off, up)
-      ceiling = lerp(1.6, 1.5708 - clear, guard * reach)
+      if (guard > 0 && bud > 0) ceiling = Math.min(ceiling, lerp(1.6, 1.5708 - clear, guard * reach))
       const lower = Math.max(0, steep - ceiling)
       if (lower > 0) {
         const c = Math.cos(lower)
@@ -900,7 +906,7 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? 1 : pose.time >= nightStart && pose.time < nightEnd ? NIGHT_GLOW : lerp(0.2, 1, smoothstep(36, 40, pose.time)))
+      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? 1 : pose.time < nightStart ? RAIN_GLOW : pose.time < nightEnd ? NIGHT_GLOW : lerp(0.2, 1, smoothstep(36, 40, pose.time)))
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
       fillBeads(slot, pose)
