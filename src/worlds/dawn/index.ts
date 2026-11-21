@@ -18,21 +18,23 @@ export const world: WorldSettings = {
 
 const SKY_GAIN = 1.6
 const AIR_COOL: [number, number, number] = [0.3, 0.46, 0.54]
-const AIR_WARM: [number, number, number] = [2.2, 1.3, 0.6]
+const AIR_WARM: [number, number, number] = [1.7, 0.9, 0.36]
 const AIR_PER_M = 0.00025
 
 export const mist: MistSettings = {
-  fromM: 0.55,
-  toM: 1,
-  sheets: 5,
-  heightM: 0.012,
-  thickness: 0.993,
-  lit: [0.08, 0.058, 0.05],
-  shade: [0.45, 0.5, 0.36],
+  fromM: 0.35,
+  toM: 2,
+  sheets: 7,
+  heightM: 0.013,
+  thickness: 0.955,
+  lit: [0.07, 0.038, 0.024],
+  shade: [0.33, 0.44, 0.38],
   forward: 1,
   drift: [0.05, 0.02],
-  bankM: 0.15,
-  broken: 0.5,
+  bankM: 0.4,
+  broken: 0.9,
+  rise: 0.7,
+  lobeRad: 0.2,
 }
 
 export const stage: WorldStageMaker = (def) => {

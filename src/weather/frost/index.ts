@@ -184,7 +184,7 @@ void main() {
 #else
   if (cover < 0.004) discard;
   float sun = plantSun(vLitAt, uSunDir);
-  vec3 color = vBall.z > 0.5 ? ballLight(vec2(vAcross, vBall.x) / r, vRight, vUp, vWorld, sun, 0.0) : vSun * sun + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
+  vec3 color = vBall.z > 0.5 ? ballLight(vec2(vAcross, vBall.x) / r, vRight, vUp, vWorld, sun, 0.0, r) : vSun * sun + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, cover);
 #endif
 }

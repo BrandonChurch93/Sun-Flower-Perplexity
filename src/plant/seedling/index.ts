@@ -4,10 +4,12 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
-import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
+import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
+import { STURDY, collarAt } from '../stem/shape.ts'
 import { fragment, vertex } from './shaders.ts'
 
 const TAU = Math.PI * 2
@@ -23,6 +25,15 @@ const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
 const HUSK_ON_SOIL_M = 0.003
+// The husk comes to rest a little nearer the lens than growth's resting place, on the low crumbs of the camera's lane where no lump of soil stands before it.
+const REST_SHIFT_X = -0.002
+const REST_SHIFT_Z = 0.016
+// The approved frames show a shorter, broader seed leaf and a longer husk than the growth curves give: drawn at these shares until the curves follow.
+const LEAF_DRAWN = 0.86
+// The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
+const DEW_FACE = 0.4
+const DEW_EDGE = 0.32
+const HUSK_DRAWN = 1.3
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -54,6 +65,7 @@ interface Shape {
   huskLoop: number
   stemCrumbs: number
   huskCrumbs: number
+  beads: number
 }
 // A crumb of soil that came up on the sprout: where it clings (a share of the stem's length and an angle round it, or a half of the husk and a place on it), when it lets go and where it comes to lie.
 interface Crumb {
@@ -89,9 +101,9 @@ function unit(x: number, y: number, z: number): [number, number, number] {
 
 function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
-  if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0 }
-  if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8 }
+  if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0, beads: 0 }
+  if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3, beads: 36 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 100 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
@@ -328,13 +340,40 @@ export function create(options: PartOptions): PlantPart | null {
 
   const crumbs = makeCrumbs(options, shape)
 
+  // Dew on the seed leaves: small beads over the faces and a few large ones along the edges, each on its own spot of the skin.
+  const leaves = groups.length > 0 && !groups[0].bodies[0].husk ? groups[0] : null
+  const beads = leaves && shape.beads > 0 ? createBeads(options, shape.beads * leaves.bodies.length, 'seed leaf dew') : null
+  const beadSeed = combine(streamSeed('seed leaf dew'), options.variant)
+  const beadSpot = new Float32Array((beads ? beads.count : 0) * 4)
+  const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  if (beads && leaves) {
+    const tint = beads.tint()
+    for (let i = 0; i < beads.count; i++) {
+      const own = hash01(beadSeed, i, 0)
+      const b = leaves.bodies[i % leaves.bodies.length]
+      const edge = own > 0.85
+      // Round the loop: 0 and a half are the two margins, the quarter between them is the middle of the upper face.
+      const round = edge ? (hash01(beadSeed, i, 1) < 0.5 ? 0 : 0.5) + lerp(-0.02, 0.02, hash01(beadSeed, i, 2)) : hash01(beadSeed, i, 1) < 0.72 ? lerp(0.04, 0.46, hash01(beadSeed, i, 2)) : lerp(0.54, 0.96, hash01(beadSeed, i, 2))
+      beadSpot[i * 4] = lerp(edge ? 0.3 : 0.22, 0.93, hash01(beadSeed, i, 3)) * (b.rings - 1)
+      beadSpot[i * 4 + 1] = (((round % 1) + 1) % 1) * b.loop
+      beadSpot[i * 4 + 2] = own
+      beadSpot[i * 4 + 3] = hash01(beadSeed, i, 4)
+      // A bead shows the leaf under it: the near leaf's dark face, the far leaf with the sun in it.
+      const lit = b.side < 0 ? 0 : 1
+      tint[i * 3] = lerp(0.07, 0.2, lit)
+      tint[i * 3 + 1] = lerp(0.17, 0.26, lit)
+      tint[i * 3 + 2] = lerp(0.1, 0.12, lit)
+    }
+  }
+
   function fill(slot: 0 | 1, pose: Pose): void {
     const first = slot === 0
     const time = pose.time
     const grown = smoothstep(0, 0.006, heightAt(time))
-    const length = seedLeafLength(time)
     const pale = paleness(time)
     const wither = smoothstep(leaves0 + 8, leaves0 + 19, time)
+    // A withering seed leaf goes limp and hangs at its full length.
+    const length = seedLeafLength(time) * lerp(LEAF_DRAWN, 1, wither)
     const drop = huskDrop(time)
     const kept = huskSize(time)
 
@@ -349,16 +388,16 @@ export function create(options: PartOptions): PlantPart | null {
     const ry = end.ry
     const rz = end.rz
 
-    const huskLength = huskLengthM * grown
+    const huskLength = huskLengthM * HUSK_DRAWN * grown
     const ride = HUSK_NECK_M * grown + huskLength
     // The seed leaves lie pressed into the husk a little shorter than they are, and stretch as it lets go.
     const squeeze = lerp(Math.min(1, (ride - HUSK_TIP_M * grown) / Math.max(length, 1e-6)), 1, smoothstep(0, 0.5, drop))
     const h0x = ex + tx * ride
     const h0y = ey + ty * ride
     const h0z = ez + tz * ride
-    const h1x = huskRest.x
-    const h1y = soilHeightAt(huskRest.x, huskRest.z, time) + HUSK_ON_SOIL_M
-    const h1z = huskRest.z
+    const h1x = huskRest.x + REST_SHIFT_X
+    const h1z = huskRest.z + REST_SHIFT_Z
+    const h1y = soilHeightAt(h1x, h1z, time) + HUSK_ON_SOIL_M
     const lift = 0.012 * grown
     const cx = h0x + tx * lift + 0.3 * (h1x - h0x)
     const cy = h0y + ty * lift
@@ -420,16 +459,16 @@ export function create(options: PartOptions): PlantPart | null {
           const i = b.side < 0 ? 0 : 1
           const spread = smoothstep(0.07, 0.6, seedLeafAngle(i, time))
           const f = roll(seedLeafFrameAt(pose, i), (i === 0 ? -0.15 : LEAF_TURN) * spread)
-          const rs = stemRadius(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time))
-          const half = length * lerp(0.16, 0.31, spread) * (1 - 0.3 * wither)
-          const thick = length * lerp(0.105, 0.07, spread) * (1 - 0.5 * wither)
+          const rs = stemRadius(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time)) * (1 + (1 + STURDY) * collarAt(time))
+          const half = length * lerp(lerp(0.186, 0.39, spread), lerp(0.16, 0.31, spread), wither) * (1 - 0.3 * wither)
+          const thick = length * lerp(lerp(0.122, 0.085, spread), lerp(0.105, 0.07, spread), wither) * (1 - 0.5 * wither)
           const sag = 0.08 * spread + 0.6 * wither
           const shut = lerp(0.35, 1, spread)
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = leafOutline(s)
             const joint = a === 0 ? 0 : 1 - smoothstep(0, 0.2, s)
-            const h = Math.max(half * o, lerp(0.7, 0.95, spread) * rs * joint)
+            const h = Math.max(half * o, lerp(0.7, 1.02, spread) * rs * joint)
             const t = Math.max(thick * Math.min(1, 0.08 + 1.1 * Math.sqrt(o)), lerp(0.5, 1.2, spread) * rs * joint)
             const top = 0.22 * t
             const bottom = 0.78 * t
@@ -466,7 +505,7 @@ export function create(options: PartOptions): PlantPart | null {
           const oz = pz * b.side * cg - B[2] * sg
           const arc = b.loop / 2
           const shown = kept > 0 ? 1 : 0
-          const inside = lerp(0.3, 0.85, smoothstep(0.15, 0.5, gape))
+          const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = huskOutline(s) * shown
@@ -492,7 +531,7 @@ export function create(options: PartOptions): PlantPart | null {
               state[at * 4] = 0
               state[at * 4 + 1] = 0
               state[at * 4 + 2] = outer ? 1 : inside
-              state[at * 4 + 3] = lerp(0.55, 0.3, drop)
+              state[at * 4 + 3] = lerp(0.55, 0.14, drop)
             }
           }
         }
@@ -530,6 +569,47 @@ export function create(options: PartOptions): PlantPart | null {
             normals[at + 2] = nz
           }
         }
+      }
+    }
+
+    if (beads && leaves) {
+      const out = leaves.slots[slot]
+      const normals = leaves.normals
+      const seat = beads.seat(slot)
+      const rest = beads.rest(slot)
+      const raining = stateUniforms.uPlantWet.value > 0.5
+      for (let i = 0; i < beads.count; i++) {
+        const k = i % leaves.bodies.length
+        const b = leaves.bodies[k]
+        const row = b.loop + 1
+        const fa = beadSpot[i * 4]
+        const fk = beadSpot[i * 4 + 1]
+        const a0 = Math.min(b.rings - 2, Math.floor(fa))
+        const k0 = Math.min(b.loop - 1, Math.floor(fk))
+        const ta = fa - a0
+        const tk = fk - k0
+        const p00 = (b.base + a0 * row + k0) * 3
+        const p01 = p00 + 3
+        const p10 = p00 + row * 3
+        const p11 = p10 + 3
+        const o = i * 4
+        let nl = 0
+        for (let c = 0; c < 3; c++) {
+          seat[o + c] = lerp(lerp(out[p00 + c], out[p01 + c], tk), lerp(out[p10 + c], out[p11 + c], tk), ta)
+          rest[o + c] = lerp(lerp(normals[p00 + c], normals[p01 + c], tk), lerp(normals[p10 + c], normals[p11 + c], tk), ta)
+          nl += rest[o + c] * rest[o + c]
+        }
+        nl = Math.sqrt(nl) || 1
+        rest[o] /= nl
+        rest[o + 1] /= nl
+        rest[o + 2] /= nl
+        rest[o + 3] = 0
+        // The dew gathers as the leaf opens to the air, one bead after another, and dries off as the leaf withers. In the rain the same beads sit still.
+        const own = beadSpot[i * 4 + 2]
+        const open = smoothstep(0.07, 0.6, seedLeafAngle(b.side < 0 ? 0 : 1, time))
+        const out0 = beadSpot[i * 4 + 3] * 0.6
+        const size = raining ? (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00018 + 0.0003 * beadSpot[i * 4 + 3]) : beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        seat[o + 3] = size * smoothstep(out0, out0 + 0.4, open) * (1 - wither)
       }
     }
 
@@ -615,12 +695,13 @@ export function create(options: PartOptions): PlantPart | null {
 
   return {
     name: 'seedling',
-    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : [])],
+    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : [])],
     casters: [...groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })), ...(crumbs ? [{ mesh: crumbs.mesh, surface: crumbs.surface }] : [])],
     fill,
     finish() {
       for (const g of groups) for (const a of g.live) if (a) a.needsUpdate = true
       if (crumbs) for (const a of crumbs.live) if (a) a.needsUpdate = true
+      if (beads) beads.finish()
     },
   }
 }

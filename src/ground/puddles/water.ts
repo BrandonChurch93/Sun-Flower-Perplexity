@@ -23,7 +23,7 @@ vec3 skyMirror(vec3 d, float blur) {
 `
 
 // The share of the surface that the fine rain keeps too rough to mirror sharply.
-const ROUGH = 0.15
+const ROUGH = 0.3
 
 export const waterFragment = /* glsl */ `
 in vec3 vWorld;
@@ -31,6 +31,11 @@ in float vDepth;
 uniform sampler2D tRipple;
 ${basin}
 ${skyMirror}
+// How much of a ray leaving the water at p is stopped by the furrow's bank after s meters.
+float bankOver(vec2 p, vec3 r, float s) {
+  vec2 q = p + r.xz * s;
+  return smoothstep(-0.003, 0.006, furrow(q) * nearFade(q) - uLevel.x - r.y * s);
+}
 void main() {
   vec2 p = vWorld.xz;
   float depth = waterDepth(p);
@@ -47,6 +52,8 @@ void main() {
   vec3 up = vec3(r.x, abs(r.y), r.z);
   vec3 glitter = skyMirror(normalize(vec3(up.x, up.y * 0.35, up.z)), 6.0);
   vec3 sky = mix(mix(uGroundBounce * 0.25, skyMirror(normalize(up), 1.0), smoothstep(-0.06, 0.02, r.y)), glitter, ${ROUGH.toFixed(2)});
+  float banked = max(max(bankOver(p, up, 0.035), bankOver(p, up, 0.09)), bankOver(p, up, 0.2));
+  sky = mix(sky, uGroundBounce * 0.25, banked);
   float clear = exp(-depth / 0.008) * (1.0 - mirror);
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;

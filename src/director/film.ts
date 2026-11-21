@@ -195,7 +195,7 @@ export class Film {
     stateUniforms.uPlantWet.value = def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
-    this.puddles.prepare(def, time, time + shutterSeconds, !alone)
+    this.puddles.prepare(def, time, time + shutterSeconds, !alone, count)
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
