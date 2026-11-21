@@ -30,14 +30,14 @@ ${basin}
 const float TAU = 6.2831853;
 const float G = 9.81;
 
-// On water a crown is a few thick tongues, on mud a ring of many small teeth.
+// On water a crown is a few thick tongues, on mud a low ring of many small teeth.
 float teethOf(float seed, float onWater) {
   return onWater > 0.5 ? 3.0 + floor(4.0 * fract(seed * 3.7)) : 5.0 + floor(5.0 * seed);
 }
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = teethOf(seed, onWater);
-  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(1.0, 0.55, onWater);
+  float wide = (0.007 * min(1.0, size * 6.0) + 0.009 * size) * mix(0.4, 0.55, onWater);
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
@@ -45,7 +45,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
     vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.87 * wide * v * v * stands;
     return vec3(cos(th) * r + lean.x, wide * (2.3 + 1.7 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.7, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float tall = wide * mix(0.5, 1.0, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, mix(0.22, 0.12, onWater), x) * (1.0 - smoothstep(mix(0.5, 0.72, onWater), 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.0);
@@ -54,7 +54,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
   float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v;
-  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.35, onWater) * v + mix(1.1, 1.5, onWater) * finger);
+  float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.35, onWater) * v + mix(0.6, 1.5, onWater) * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
   float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (mix(0.8, 0.6, onWater) + foot + mix(0.2, 0.5, onWater) * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
   vec2 over = vec2(cos(TAU * fract(seed * 29.0)), sin(TAU * fract(seed * 29.0))) * 0.5 * y * onWater;
@@ -171,10 +171,10 @@ void main() {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.35 * smoothstep(0.5, 1.0, vTop) + 0.5 * sin(17.0 * vTop + 2.3 * vFlute)));
       float one = mix(0.07, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), mix(3.0, 4.0, vMud));
-      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.85 * vMud);
+      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.6 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.2 * vTop, 1.0, vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.1 + 0.15 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
+      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.1 + 0.15 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.014, 0.012, 0.01), vMud) * skyAmbient(n), silt);
       alpha = mirror + (1.0 - mirror) * mix(0.75, 0.95, silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
