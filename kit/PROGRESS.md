@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 09:54 UTC · Round 3 starts: the first round of bloom judges 3e10245
-- Last status: 22 · 2026-11-21 09:27 UTC · Phase 3 · unit bloom
+- Last push: 2026-11-21 09:55 UTC · Status 23: round 3 starts on the bloom with every agent's pass merged
+- Last status: 23 · 2026-11-21 09:55 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 09:55 UTC · status 23 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s): approved image left, build right; `status-2.jpg`: Frame 1515 (50.5 s): approved image left, build right
 - 2026-11-21 09:27 UTC · status 22 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 on main (top) and the approved bloom-opening (bottom); `status-2.jpg`: Frame 1515 on main (top) and the approved bloom-hero (bottom); `status-3.jpg`: Head at 1350, one to one: build (left), approved (right); `status-4.jpg`: Head at 1515, one to one: build (left), approved (right)
 - 2026-11-21 08:37 UTC · status 21 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350, all parts real (top) and the approved bloom-opening (bottom); `status-2.jpg`: Frame 1515, all parts real (top) and the approved bloom-hero (bottom); `status-3.jpg`: Head at 1350: build (left), approved (right); `status-4.jpg`: Head at 1515: build (left), approved (right)
 - 2026-11-21 08:04 UTC · status 20 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45 s), first merge of the real head; `status-2.jpg`: Frame 1515 (50.5 s), first merge of the real head; `status-3.jpg`: Frame 1350, the head at full size; `status-4.jpg`: Frame 1515, the head at full size
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 05:31 UTC · status 14 · Phase 2 · round 2 · `status-1.jpg`: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; `status-2.jpg`: Night, frost and bloom-opening keys: approved image (left), blockout frame (right); `status-3.jpg`: Bloom-hero and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:06 UTC · status 13 · Phase 2 · round 1 · `status-1.jpg`: Whole film after the fix pass, 12 frames in order; `status-2.jpg`: The cuts into night, frost and bloom: last frame before (left), first frame after (right)
 - 2026-11-21 04:57 UTC · status 12 · Phase 2 · round 1 · `status-1.jpg`: Night key: approved (left), film (right); `status-2.jpg`: Frost key: approved (left), film (right); `status-3.jpg`: Bloom-opening key: approved (left), film (right); `status-4.jpg`: Bloom-hero key: approved (left), film (right)
-- 2026-11-21 04:22 UTC · status 11 · Phase 2 · round 1 · `status-1.jpg`: The film from 0 to 19 s, twelve frames in order; `status-2.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-3.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 2.54 h |
+| 3 | 9.00 h | 3.01 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 8.59 h |
+| Whole build | 30.00 h | 9.06 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -538,6 +538,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 09:22 UTC · Phase 3: every part of the look lock at its latest pass, real soil under the crop, the lens closed to f/4 and f/5.6, the bud turned at 45 s
 - 2026-11-21 09:28 UTC · Status 22: every part at its latest pass, real soil, no stand-in left in a bloom frame
 - 2026-11-21 09:54 UTC · Round 3 starts: the first round of bloom judges 3e10245
+- 2026-11-21 09:55 UTC · Status 23: round 3 starts on the bloom with every agent's pass merged
 
 ## Session log
 
@@ -592,4 +593,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Frame 1350, all parts real (top) and the approved bloom-opening (bottom); Frame 1515, all parts real (top) and the approved bloom-hero (bottom); Head at 1350: build (left), approved (right); Head at 1515: build (left), approved (right).
 - Status 22, 2026-11-21 09:27 UTC, Phase 3 · unit bloom. Every part has had another pass and all are merged: the sky has its cloud, hills and tree line, the field is dark green and leads the bloom, leaves are thick and dark on long stalks, the stem is thick and hairy, the bud stands as a cup, and the lens has the golden grade and a sun star. The lens is closed to f/4 and f/5.6 so the field keeps its shape. Real scanned soil lies under the crop, so nothing in a bloom frame is a stand-in any more. At 45 s the head is turned further from the lens and opens a little later, so the frame shows a bud with a few rays out. Next: The first critic round on bloom, at about 10:05 UTC, once its packs can be built. Until then six agents work on what shows most: the blown band beside the sun, the field reading as bare poles, the leaf glowing lime at the left edge, the flat shut rays at 45 s, the drawn star. One bug is being hunted: the first frame after a page load is not identical to the same frame drawn again. Time used: 8.6 h of 30 h.
   Pictures: Frame 1350 on main (top) and the approved bloom-opening (bottom); Frame 1515 on main (top) and the approved bloom-hero (bottom); Head at 1350, one to one: build (left), approved (right); Head at 1515, one to one: build (left), approved (right).
+- Status 23, 2026-11-21 09:55 UTC, Phase 3 · unit bloom. All nine supporting agents reported and are merged: the shadow fault that made frame 1515 differ between two renders is fixed (the same picture twice again), the cloud base is ragged, the band beside the sun is a stop darker, the field shows leaves at every height and its buds stand with their backs to the lens at 45 s, the shut rays are narrow yellow green blades under a crown of bract points, the lens holds f/4 through the bloom, and a companion leaf now reaches in from the left edge to the sun. Round 3, the first judged round of the bloom, started at 09:55 UTC on commit 3e10245. Next: Machine checks, measures and the packs for round 3 are being made (about 25 minutes), then four critics and a jury of 20 judge frames 1350 and 1515; the agents keep polishing meanwhile. Time used: 9.1 h of 30 h.
+  Pictures: Frame 1350 (45.0 s): approved image left, build right; Frame 1515 (50.5 s): approved image left, build right.
 
