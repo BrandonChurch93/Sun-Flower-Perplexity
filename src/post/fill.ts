@@ -2,7 +2,7 @@ import { glslCommon } from '../core/shading.ts'
 
 export const maxFillPx = 96
 
-const skyness = /* glsl */ `
+export const skyness = /* glsl */ `
 uniform float uFar;
 // The sky arrives already blurred, with exactly the circle of infinity in alpha: it has no copies to join.
 float sky(float a) {
@@ -32,7 +32,17 @@ void main() {
   a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
   a = min(a, circle(min(p + ivec2(0, 1), top), near));
   a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
-  outColor = vec4(max(c.rgb, 0.0), min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
+  // A lone pixel far brighter than everything round it is a sampling accident, not a light: no lens draws a point one pixel wide. It is held to twice its brightest neighbor, so it neither sits as a hard dot nor blooms.
+  vec3 rgb = max(c.rgb, 0.0);
+  float most = 0.0;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    if (i == 0 && j == 0) continue;
+    vec3 n = texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).rgb;
+    most = max(most, max(n.r, max(n.g, n.b)));
+  }
+  float own = max(rgb.r, max(rgb.g, rgb.b));
+  rgb *= min(1.0, (2.0 * most + 0.02) / max(own, 1e-6));
+  outColor = vec4(rgb, min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
 }
 `
 

@@ -18,6 +18,9 @@ const THIN_EASE = 0.15
 const REGATHER_M = 0.03
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
+// A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
+const STRAND_PX = 0.4
+const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
@@ -27,6 +30,7 @@ uniform float uPlantWet;
 uniform float uPlantFrost;
 uniform float uPlantDew;
 out vec3 vWorld;
+out vec3 vLitAt;
 out float vDepth;
 out vec3 vSun;
 out vec3 vSky;
@@ -36,12 +40,15 @@ uniform vec3 uHairColor;
 uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
-const float SUN_THROUGH = 3.4;
+const float SUN_THROUGH = 1.8;
 // A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
-const float SUN_PALE = 0.35;
+const float SUN_PALE = 0.2;
 // What comes through a hair is warm white going to pink, as the approved pictures have it, where the low sun alone would make it yellow.
-const vec3 THROUGH_TINT = vec3(1.0, 0.8, 0.85);
+const vec3 THROUGH_TINT = vec3(1.0, 0.8, 0.72);
 const float SUN_DEEPEN = 0.6;
+// A hair that stands toward the eye with the sun behind it is on the dark face of its body.
+const float FACE_SHADE = 1.2;
+const float SHADE_OUT_M = 0.005;
 const float TT_SPREAD = 0.7;
 const float TT_TURN = 2.0;
 const float R_SPREAD = 0.16;
@@ -65,11 +72,19 @@ struct Strand {
 
 vec4 hairRoot;
 vec3 hairDir;
+vec3 hairStand;
+vec4 hairFoot;
+vec4 hairTip;
+float hairLong;
 vec3 hairBend;
 float hairOwn;
 float hairShare;
 float hairWide;
 float hairBead;
+
+vec3 hairPoint(float t) {
+  return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
+}
 
 // Four texels a hair: its root and length, its root at the close of the shutter and its own number, its direction and how many hairs it stands for, its direction at the close.
 void readHair(int k) {
@@ -80,6 +95,7 @@ void readHair(int k) {
   vec4 d = texelFetch(uHairs, at + ivec2(3, 0), 0);
   hairRoot = vec4(mix(a.xyz, b.xyz, uShutter), a.w);
   hairDir = normalize(mix(c.xyz, d.xyz, uShutter));
+  hairStand = hairDir;
   hairOwn = b.w;
   hairShare = c.w;
   float h1 = fract(hairOwn * 13.37 + 0.21);
@@ -115,11 +131,15 @@ void readHair(int k) {
   }
   // Dew sits as a bead near the tip of one hair in three.
   if (uPlantDew > 0.0) hairBead += uHairWidth * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
+  mat4 toClip = projectionMatrix * viewMatrix;
+  hairFoot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
+  hairTip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
+  vec2 run = (hairTip.xy / max(hairTip.w, 1e-5) - hairFoot.xy / max(hairFoot.w, 1e-5)) * 0.5 * uSize;
+  hairLong = max(abs(run.x), abs(run.y));
+  // A strand stands for its neighbors only where it shows as a strand. Seen end on it is a point, and a point that carries the light of ten is a speck.
+  hairShare = min(hairShare, 1.0 + (hairShare - 1.0) * smoothstep(1.5, 4.0, hairLong));
 }
 
-vec3 hairPoint(float t) {
-  return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
-}
 
 float lobe(float s, float spread) {
   return exp(-0.5 * s * s / (spread * spread)) / (2.5066 * spread);
@@ -159,10 +179,12 @@ Strand strandAt(float t) {
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
   vWorld = s.world;
+  // The shadow map cannot tell a hair from the body it grows on, a millimeter away, and would darken the foot of every hair on an outline. It is asked farther out, where it can tell what else is in the way; the body's own shade is the term below.
+  vLitAt = s.world + plantDirection(hairStand) * (SHADE_OUT_M * plantSize());
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
-  vec3 out3 = plantDirection(hairDir);
-  float shade = smoothstep(-0.85, -0.5, dot(out3, uSunDir));
+  vec3 out3 = plantDirection(hairStand);
+  float shade = smoothstep(-0.95, -0.6, dot(out3, uSunDir) - FACE_SHADE * max(dot(out3, s.toEye), 0.0));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
@@ -183,10 +205,9 @@ void main() {
   readHair(gl_VertexID / 3);
   int j = gl_VertexID % 3;
   Strand s = strandAt(0.5 * float(j));
-  mat4 toClip = projectionMatrix * viewMatrix;
-  vec4 here = toClip * vec4(s.world, 1.0);
-  vec4 foot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
-  vec4 tip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
+  vec4 here = projectionMatrix * viewMatrix * vec4(s.world, 1.0);
+  vec4 foot = hairFoot;
+  vec4 tip = hairTip;
   vec2 a = foot.xy / max(foot.w, 1e-5);
   vec2 b = tip.xy / max(tip.w, 1e-5);
   vec2 run = (b - a) * 0.5 * uSize;
@@ -227,6 +248,7 @@ void main() {
 
 const fragment = /* glsl */ `
 in vec3 vWorld;
+in vec3 vLitAt;
 in float vDepth;
 in vec3 vSun;
 in vec3 vSky;
@@ -248,7 +270,7 @@ void main() {
 #else
   float cover = vCover;
 #endif
-  float sun = plantSun(vWorld, uSunDir);
+  float sun = plantSun(vLitAt, uSunDir);
   vec3 color = (vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld)) * cover;
   // A bead of water is a lens: it throws the sun on toward an eye that looks against it, and shows the bright low sky from anywhere.
   if (vBead.y > 0.0) {
@@ -359,6 +381,7 @@ export class HairSet {
     crowd.fill(0)
     const at = this.at
     const perM = (camera.projectionMatrix.elements[5] * height) / 2
+    const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     let n = 0
     let nearest = Infinity
     let longest = 0
@@ -377,12 +400,18 @@ export class HairSet {
       if (Math.abs(e[0] * x + e[4] * y + e[8] * z + e[12]) > reach || Math.abs(e[1] * x + e[5] * y + e[9] * z + e[13]) > reach) continue
       const own = la[o + 3]
       let share = 1
-      if (coc > THIN_FROM_PX) {
-        const keep = Math.max(THIN_FROM_PX / coc, THIN_LEAST) * (1 + THIN_EASE)
+      const scale = (size * perM) / w
+      // A hair too short on the screen to show as a strand stands for itself, so a part with short hairs loses none of their light.
+      const brief = Math.min(1, Math.max(0, (length * scale - STRAND_FROM_PX) / STRAND_FROM_PX))
+      const fine = Math.min(1, (this.widthM * thick * scale) / STRAND_PX)
+      const part = (1 - brief * (1 - fine)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
+      if (part < 1) {
+        const keep = part * (1 + THIN_EASE)
         const h = (own * 151.37 + 0.11) % 1
-        const s = Math.min(1, (keep - h) / THIN_EASE)
+        const s = Math.min(1, (keep - h) / (THIN_EASE * keep))
         if (s <= 0) continue
-        share = s / (keep <= 1 ? keep - 0.5 * THIN_EASE : 1 - ((1 + THIN_EASE - keep) * (1 + THIN_EASE - keep)) / (2 * THIN_EASE))
+        const whole = keep * (1 - THIN_EASE)
+        share = s / (keep <= 1 ? keep * (1 - 0.5 * THIN_EASE) : whole + 0.5 * (1 - whole) * (1 + (keep - 1) / (THIN_EASE * keep)))
       }
       const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
       const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
@@ -391,7 +420,6 @@ export class HairSet {
       const py = Math.min(rows - 1.001, Math.max(0, (((e[1] * x + e[5] * y + e[9] * z + e[13]) / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
       at[n * 2] = px
       at[n * 2 + 1] = py
-      const scale = (size * perM) / w
       crowd[Math.round(py) * cols + Math.round(px)] += (share * this.widthM * scale * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
       out[q] = x
       out[q + 1] = y
