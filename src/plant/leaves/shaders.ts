@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.05, 0.095, 0.028) : vec3(0.075, 0.115, 0.048)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.036, 0.04, 0.007) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.03, 0.032, 0.006) * (1.0 - 0.4 * rib) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -119,11 +119,11 @@ void main() {
 
   // The blade is thick and felted: against the sun it passes a dull warm olive, and more only in small thin spots. The main veins hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  float thin = 1.0 + 2.2 * smoothstep(0.8, 0.95, mark.g);
-  vec3 through = vec3(0.036, 0.04, 0.007) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
+  float thin = 1.0 + 1.6 * smoothstep(0.84, 0.96, mark.g);
+  vec3 through = vec3(0.03, 0.032, 0.006) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
   through *= 1.0 - 0.6 * vein.r;
   through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.05, 0.04, 0.006) * thin * (0.5 + 0.5 * lum), yellow);
+  through = mix(through, vec3(0.036, 0.03, 0.005) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
@@ -134,9 +134,9 @@ void main() {
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
-  float margin = 1.0 - 0.85 * smoothstep(0.9, 1.0, abs(vUv.x)) * smoothstep(0.8, 0.4, mark.r);
+  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (1.0 - 0.5 * smoothstep(0.8, 0.92, mark.g));
   Tissue t;
-  t.albedo = albedo * margin;
+  t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through;
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
@@ -202,7 +202,7 @@ void main() {
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);
   t.rough = 0.78;
   t.wax = 0.2;
-  t.sheen = 0.9;
+  t.sheen = mix(0.9, 0.2, smoothstep(0.01, -0.01, vUv.y));
   t.occlusion = 1.0;
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
 }

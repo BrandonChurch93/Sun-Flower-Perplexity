@@ -482,7 +482,8 @@ export function create(options: PartOptions): PlantPart {
           tubeNormals[o + 2] = (wz * c + nz * lift) / l
           const t = (leaf.tube + ring * (SIDES + 1) + j) * 2
           tubeUv[t] = j / SIDES
-          tubeUv[t + 1] = share * total
+          // Below zero on the midrib under the blade, which carries less down than the stalk.
+          tubeUv[t + 1] = onBlade ? -share * total : share * total
         }
       }
     }
