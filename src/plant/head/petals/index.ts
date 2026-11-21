@@ -21,9 +21,9 @@ const SHAPE: Record<PartDetail, Shape> = {
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
 // A shut ray is folded like a hat: a middle strap lying on two narrower ones, with a steep wall down to each.
-const FOLD_BUD = [-0.15, -1.2, -0.2, 0.2, 1.2, 0.15]
+const FOLD_BUD = [-0.15, -0.85, -0.2, 0.2, 0.85, 0.15]
 // A lifting ray is cupped like a boat about its midrib, with a pleat down each side that the low sun picks out.
-const FOLD_LIFT = [-0.45, -0.95, -0.15, 0.15, 0.95, 0.45]
+const FOLD_LIFT = [-0.95, 0.25, -0.75, 0.75, -0.25, 0.95]
 // A shut strap fills its own place round the rim and narrows toward the eye, and each is rolled the same way so its edge lies on the next one.
 const STRAP_FILL = 1.95
 const SHINGLE = 0.15
@@ -272,7 +272,7 @@ export function create(options: PartOptions): PlantPart | null {
     const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
+    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -362,7 +362,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = mix(1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9)), 0.85 * lance(u), smooth(0.3, 0.65, open))
+      const strap = mix(1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9)), 0.74 * lance(u), smooth(0.3, 0.65, open))
       const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * (0.85 + 2.5 * (ray.width - 0.5)) * Math.min(1, grown / 0.72)
       const halfWidth = mix(mix(place, wide * strap, along * smooth(0.2, 0.5, open)), wide * mix(outline(u), lance(u), 0.75 * cupped), flat)
       const ragged = 0.075 * smooth(0.05, 0.3, u)

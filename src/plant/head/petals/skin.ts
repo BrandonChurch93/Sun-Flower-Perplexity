@@ -86,7 +86,7 @@ void main() {
   vec3 body = mix(vec3(0.55, 0.53, 0.015), vec3(0.62, 0.64, 0.035), smoothstep(0.1, 0.8, u));
   // A ray that is lifting is amber, darker toward its foot.
   body = mix(body, vec3(0.8, 0.56, 0.07) * mix(0.4, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
-  body = mix(body, mix(vec3(0.4, 0.5, 0.09), vec3(0.17, 0.35, 0.1), smoothstep(0.3, 0.9, u)), 0.95 * fresh);
+  body = mix(body, mix(vec3(0.33, 0.5, 0.1), vec3(0.17, 0.35, 0.1), smoothstep(0.3, 0.9, u)), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.94 + 0.1 * own, 0.88 + 0.2 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
@@ -103,7 +103,7 @@ void main() {
   // A lifting ray is still creased double, yet the low sun comes through it amber.
   float far = smoothstep(0.05, 0.9, u);
   through *= mix(vec3(1.4, 1.5, 3.0) * vec3(mix(0.42, 1.6, far), mix(0.34, 2.0, far * sqrt(far)), mix(0.4, 4.0, far * far * far)), vec3(1.0), vState.z);
-  through = mix(through, vec3(0.8, 0.9, 0.2), 0.9 * fresh);
+  through = mix(through, vec3(0.66, 0.9, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
@@ -144,6 +144,8 @@ void main() {
   float foldSlope = -6.0 * fx * (1.0 - fx) / 0.07 * sign(abs(across) - 0.34) * sign(across);
   float grooveSlope = -6.0 * gx * (1.0 - gx) / 0.05 * sign(across);
   acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00034;
+  // The veins stand out as ribs on the back of a ray, most on one still folded.
+  acrossSlope += cos(across * 12.0 + own * 6.0) * 0.004 * (1.0 - 0.7 * vState.z) * smoothstep(0.02, 0.2, u) * smoothstep(1.0, 0.8, u);
   float side = front ? 1.0 : -1.4;
   vec3 wx = dFdx(vWorld);
   vec3 wy = dFdy(vWorld);
