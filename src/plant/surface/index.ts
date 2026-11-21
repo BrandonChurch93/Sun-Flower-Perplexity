@@ -56,7 +56,7 @@ const float TISSUE_FORWARD = 0.5;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
-const float TISSUE_DOWN = 0.35;
+const float TISSUE_DOWN = 0.22;
 // A thin part shaded by a thin part this close still gets the sun that came through it.
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
