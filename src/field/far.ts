@@ -108,12 +108,21 @@ uniform vec2 uToward;
 uniform vec2 uStart;
 uniform float uCover;
 uniform float uLevel;
+uniform float uHeight;
+uniform float uPlantWind;
+uniform float uPlantHeight;
+${swayGlsl}
 void main() {
   float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  // The wind carries a sheet as far as it carries a neighbor at the sheet's height, so the wave that crosses the rows crosses the sheets too.
+  float tall = max(uPlantHeight * ${PICTURE_SIZE.toFixed(3)}, 0.001);
+  float k = clamp((uHeight / tall - 0.3) / 0.7, 0.0, 1.0);
+  float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, vWorld.xz));
+  vec2 at = vWorld.xz - vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec3 color;
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
-    vec2 p = vWorld.xz + uLevel * 37.0;
+    vec2 p = at + uLevel * 37.0;
     float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
     float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
@@ -123,12 +132,12 @@ void main() {
     color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
-    float along = -dot(vWorld.xz, uToward);
-    float across = vWorld.x * uToward.y - vWorld.z * uToward.x;
+    float along = -dot(at, uToward);
+    float across = at.x * uToward.y - at.y * uToward.x;
     vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
     if (uCover * reach < hash21(cell)) discard;
     float grain = valueNoise(vec2(across * 2.2, along * 0.045));
-    float patchy = valueNoise(vWorld.xz * 0.028);
+    float patchy = valueNoise(at * 0.028);
     color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
   }
   if (uDiag == 7) {
