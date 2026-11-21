@@ -18,7 +18,7 @@ export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM:
 // The grains and lumps round the stem are drawn while the lens is within the first of these distances of the plant's foot, and shrink to nothing by the second.
 export const fineReachM = [1.2, 1.5]
 // A film of dew on a crumb gives back more of the sky that lights it, and most of its blue.
-export const dewFill = [1.05, 0.88, 1.2]
+export const dewFill = [0.95, 0.95, 1.3]
 export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
 const LANE_CRUMB_M = 0.0022

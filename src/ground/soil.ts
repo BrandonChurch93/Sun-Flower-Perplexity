@@ -170,6 +170,7 @@ float soilHeight(vec2 p, float lod) {
 }
 `
 
+export const dewShade = [1.05, 0.8, 1.08]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
 export const waterLevelsM = [-0.03, -0.0075]
@@ -275,6 +276,7 @@ ${groundStates}
 ${cropLight}
 ${grassCover}
 
+const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
 
@@ -356,7 +358,7 @@ void main() {
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y + 0.0005) * cropLight(p, d);
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, d);
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
@@ -371,7 +373,7 @@ void main() {
 #ifdef NEAR
   shade *= mix(vec3(1.0), proud(vWorld.y), fade);
 #endif
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade);
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
