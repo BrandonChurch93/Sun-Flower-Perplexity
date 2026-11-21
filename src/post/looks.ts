@@ -10,16 +10,26 @@ export interface LensLook {
   halation: number
   // How much of its own color a blown highlight keeps on its way to white.
   keep: number
+  // How much more of the scattered light stays close round its source.
+  core: number
+  // Strength of the star the aperture blades draw round the sun.
+  star: number
+  // Extra slope through the upper half of the tones.
+  punch: number
+  // White a burning color takes on at the very top.
+  pale: number
+  // Slope left to bright greens above their shade: 1 leaves them alone.
+  greens: number
 }
 
-const fallback: LensLook = { veil: 1, flare: 0.5, halation: 0.3, keep: 0.25 }
+const fallback: LensLook = { veil: 1, flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, punch: 0, pale: 0, greens: 1 }
 
 const table: Record<string, Partial<LensLook>> = {
   dawn: { veil: 1.4, flare: 0.7 },
   rain: { flare: 0, halation: 0.2 },
   night: { flare: 0.35, halation: 0.2 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 2.4, flare: 1, halation: 0.5, keep: 0.3 },
+  golden: { veil: 1.3, flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.2, punch: 0.23, pale: 0.05, greens: 0.45 },
 }
 
 export function lensLook(def: WorldDef): LensLook {
