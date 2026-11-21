@@ -45,8 +45,9 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
   vec3 r1 = cross(dy, n);
   vec3 r2 = cross(n, dx);
   float det = dot(dx, r1);
-  vec3 grad = sign(det) * (hx * r1 + hy * r2);
-  return normalize(abs(det) * n - strength * grad);
+  vec3 grad = sign(det) * (hx * r1 + hy * r2) * (strength / max(abs(det), 1e-12));
+  // A slope past about 50 degrees is a relief finer than the pixel, or a mistake: it is eased off so it cannot sparkle.
+  return normalize(n - grad * inversesqrt(1.0 + 0.7 * dot(grad, grad)));
 }
 
 // The share of the sun a thin tissue passes when 'through' is 1. With it a part never returns more than arrives: albedo plus what comes through stays under 1.
@@ -159,7 +160,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 nx = dFdx(N);
   vec3 ny = dFdy(N);
   float a = max(rough * rough, 0.03);
-  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2), 1.0);
+  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))), 1.0);
   a = sqrt(a2);
 
   // The wax layer: GGX with the Fresnel of a dielectric. Low sun at a grazing angle gives the broad pale sheen.
