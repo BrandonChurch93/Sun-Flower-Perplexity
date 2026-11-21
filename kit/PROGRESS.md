@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 19:07 UTC · Rounds 8 to 11: round 9 pack, R1 (5), R3 (3 and 4, merged 3), R4 (5) and jury (6 of 20 against 5 of 10); round 10 measures, pack, R1 (3), R3 (4), R4 (9), jury (0 of 5 against 3 of 5); round 11 R4 (4), jury (0 of 5 against 4 of 5); round 8 R4 (9); all word for word
-- Last status: 42 · 2026-11-21 18:29 UTC · Phase 4 · unit frost · round 8
+- Last push: 2026-11-21 19:11 UTC · Status 43: the first rounds of dawn, rain, night and frost are judged, none passes; the field is frozen on the line 8d8f509 for its second round
+- Last status: 43 · 2026-11-21 19:10 UTC · Phase 4 · unit dawn · round 9
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 19:10 UTC · status 43 · Phase 4 · unit dawn · round 9 · `status-1.jpg`: Dawn 1.5 s · approved left, round 9 judged frame right; `status-2.jpg`: Dawn 6.5 s · approved left, round 9 judged frame right; `status-3.jpg`: Rain 14.0 s · approved left, round 10 judged frame right; `status-4.jpg`: Field 58.5 s after its fix pass · approved left, ours right (review tier, the sky's builder's VM, before the last three merges)
 - 2026-11-21 18:29 UTC · status 42 · Phase 4 · unit frost · round 8 · `status-1.jpg`: Frost 1080 · approved; `status-2.jpg`: Frost 1080 · film, round 8; `status-3.jpg`: Night 780 · approved; `status-4.jpg`: Night 780 · film, round 11
 - 2026-11-21 17:55 UTC · status 41 · Phase 4 · unit frost · round 8 · `status-1.jpg`: Night, 26.0 s: approved (left), ours on the judged line (right), review tier; `status-2.jpg`: Approved (top) and ours (bottom) at 0, 1.5, 2, 6.5, 14 and 36 s, draft tier; `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right), rendered by the rain world's agent; `status-4.jpg`: Frost bud: approved (left), ours (right), rendered by the bud's agent, merged after the judged commit
 - 2026-11-21 17:34 UTC · status 40 · Phase 4 · unit frost · round 8 · `status-1.jpg`: Frost, 36.0 s: approved (left), ours now (right); `status-2.jpg`: Night, 26.0 s: approved (left), ours on the night world's branch (right); `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right); `status-4.jpg`: Dawn, 1.5 s: approved (left), ours (right)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 15:10 UTC · status 34 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: The cut at 40 s at the judged commit, the Builder's own stills: frame 1199 (frost) above, frame 1200 (golden hour) below. The skyline now sits within 4 px on both sides; `status-2.jpg`: The head at 45 s before the round: approved image left, the film right (review quality)
 - 2026-11-21 14:52 UTC · status 33 · Phase 3 · unit bloom · `status-1.jpg`: 45 s: approved left, round 6 prepared right (review tier); `status-2.jpg`: 50.5 s: approved left, round 6 prepared right (review tier); `status-3.jpg`: The open head at 50.5 s at native size: approved left, prepared right; `status-4.jpg`: The cut at 40 s on the frost branch: frame 1199 on top, 1200 in the middle, both blended below
 - 2026-11-21 14:14 UTC · status 32 · Phase 3 · unit bloom · `status-1.jpg`: The field right of the plant at 45 s: main, the field agent's round 6 branch, approved; `status-2.jpg`: Round 5 pack at 45 s, native size: approved (a) left, ours (b) right. Head, stem, a leaf, the neighbor; `status-3.jpg`: The neighbor's leaf and the sun: main, with the field agent's patch, approved (45 s above, 50.5 s below); `status-4.jpg`: Round 5 motion sheet: twelve frames across the bloom, 40 to 52 s
-- 2026-11-21 13:49 UTC · status 31 · Phase 3 · unit bloom · `status-1.jpg`: Round 5 judged still, 45.0 s, approved left, ours right (48 samples); `status-2.jpg`: Round 5 judged still, 50.5 s, approved left, ours right (48 samples); `status-3.jpg`: The crown at 45 s at native size: approved left, ours right. The approved's bracts are slender and lit through; `status-4.jpg`: The opening every 0.25 s on the opening agent's branch: right side rays now start one by one from 45.02 s
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 2.17 h |
+| 4 | 8.50 h | 2.85 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 17.63 h |
+| Whole build | 30.00 h | 18.32 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1015,6 +1015,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 18:24 UTC · Round 8: measures green, pack checked and sent; the log of 17:55 to 18:22
 - 2026-11-21 18:37 UTC · Phase 4: status 42; round 8 jury in (0 of 5, control 2 of 5), its R1 and R3; round 11 measures, pack, R1 3 and R3 7; round 9 pack arrived
 - 2026-11-21 19:07 UTC · Rounds 8 to 11: round 9 pack, R1 (5), R3 (3 and 4, merged 3), R4 (5) and jury (6 of 20 against 5 of 10); round 10 measures, pack, R1 (3), R3 (4), R4 (9), jury (0 of 5 against 3 of 5); round 11 R4 (4), jury (0 of 5 against 4 of 5); round 8 R4 (9); all word for word
+- 2026-11-21 19:11 UTC · Status 43: the first rounds of dawn, rain, night and frost are judged, none passes; the field is frozen on the line 8d8f509 for its second round
 
 ## Session log
 
@@ -1109,4 +1110,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Night, 26.0 s: approved (left), ours on the judged line (right), review tier; Approved (top) and ours (bottom) at 0, 1.5, 2, 6.5, 14 and 36 s, draft tier; Rain, 14.0 s: approved (left), ours (right), rendered by the rain world's agent; Frost bud: approved (left), ours (right), rendered by the bud's agent, merged after the judged commit.
 - Status 42, 2026-11-21 18:29 UTC, Phase 4 · unit frost · round 8. Rounds 8 to 11 judge main 0c3751f. Gate green 13 of 13. Frost and night measured at final: M1, M2, M3 pass (frost 1.101, night 0.954). All four packs are back, sums equal; frost's is checked against my own still (0 differences). Frost so far: match critic 3, surface critic 6, jury 0 of 5 on the film frame (four say web 3D demo, one generated art). Line: night stem slimmer, frost back to f/5.6, field's late sky and wood merged, under test. Next: Frost's motion critic and last jurors; night's critics now, rain's about 18:40, dawn's after its pack check about 18:50. Then each round's words to the builders and a fix pass of 90 min at most. Field's second round after 19:05. Time used: 17.6 h of 30 h.
   Pictures: Frost 1080 · approved; Frost 1080 · film, round 8; Night 780 · approved; Night 780 · film, round 11.
+- Status 43, 2026-11-21 19:10 UTC, Phase 4 · unit dawn · round 9. First rounds of all four early units are judged on one commit; none passes. Dawn: match 5, surface 3, motion 5, jury 6 of 20 for film against 5 of 10 on the approved images. Rain: match 3, surface 4, motion 9, jury 0 of 5. Night: match 3, surface 7, motion 4, jury 0 of 5. Frost: match 3, surface 6, motion 9, jury 0 of 5. The field's fix pass ended 19:05 and is frozen on the line 8d8f509 for its second round. Next: Twelve builders fix dawn, rain, night and frost from the critics' words until 20:25 UTC; one joint cut at 20:30 starts the second rounds of all five open units. Time used: 18.3 h of 30 h.
+  Pictures: Dawn 1.5 s · approved left, round 9 judged frame right; Dawn 6.5 s · approved left, round 9 judged frame right; Rain 14.0 s · approved left, round 10 judged frame right; Field 58.5 s after its fix pass · approved left, ours right (review tier, the sky's builder's VM, before the last three merges).
 
