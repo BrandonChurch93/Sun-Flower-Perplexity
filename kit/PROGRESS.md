@@ -6,15 +6,15 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 - Build: in progress
 - Current phase: 4 · The other units
-- Current unit: dawn, rain, night, frost and field, all five in the fix pass after their second rounds (12 to 16), until 23:25 UTC (extended by 15 minutes at 23:00 UTC for named pieces only); `bloom` is finished
-- Current round: none running. Rounds 12 to 16 (the second round of each unit, judged on `921385e`) are answered, none a pass. The third and last rounds, 17 to 21, are cut together at 23:35 UTC if the clock then prints `extra rounds: yes`
+- Current unit: dawn, rain, night, frost and field, all five in their third and last rounds (17 to 21) on `47d93fd`; `bloom` is finished
+- Current round: 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`), started together 23:23 UTC on `47d93fd`, the third and last round of each unit. Rounds 12 to 16 are answered, none a pass
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 23:19 UTC · Status 52: the last fix pass ends on 43a42f6, three late pieces left out, summaries of rounds 12 to 16
+- Last push: 2026-11-21 23:23 UTC · Rounds 17 to 21 start: the third and last rounds of field, frost, dawn, rain and night judge 47d93fd (main with the line at 43a42f6)
 - Last status: 52 · 2026-11-21 23:19 UTC · Phase 4 · unit night · round 16
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 6.99 h |
+| 4 | 8.50 h | 7.01 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 22.46 h |
+| Whole build | 30.00 h | 22.48 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -697,6 +697,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 4 · 23:17 UTC. `hair_builder`'s damp hairs (`0ac1f4e`) with the brighter moon side (`f90e3d8`, `agent/frost-crystals`, only `src/plant/hairs/index.ts`) stay out of the line. His numbers at `review` on his machine: night M3 0.941 with them against 0.935 on `43a42f6`, so the reading is no lower; 1350 and 1515 as required, 1755 and 1080 byte identical to the line, 121 of 121 tests. Why they stay out: (1) by his own plain statement and his crop of 780 at four times size, looked at by the Builder, the fringe did not reach the approved's: white clumps on a black stem on the moon's side where the approved has an even fine silver fringe (brightness over the sky on the moon side 62.5, 99.4, 137.3 at the 10th, 50th and 90th percentile against the approved's 124.4, 138.0, 204.1; 4 px a row lighter than the sky by 12 at the median against 7); (2) the rain's M3 read 0.857 at `review` with `0ac1f4e` against 0.924 on the line and was not read again on this head, so the rain's measure could turn red at `final`, with no time left to prove it either way. His dawn crops (45 and 195 at native size beside the approved): fine irregular hairs lit from behind with no gap to the skin, a little shorter and sparser than the approved's at 45, and at 195 the stem carries more bright beads than the approved's. Open, with his numbers as the start: the stem's fringe at night; next: longer or wider strands on the moon's side, proven across the cut at 20.0 s, with the rain's and the dawn's M3 at `final`.
 - 2026-11-21 · Phase 4 · 23:19 UTC. The far edge of the field: `field_builder`'s trial is a record, not a merge. `agent/field-far-edge` at `c85f03a` (one commit on `43a42f6`, `src/field/far.ts` and `src/field/layout.ts` only; a new side branch so the work survives the task): from 52.0 s, eased over 52 to 55 s, pictures of plants stand on in rows from 66 m to 280 m, the carpet sheet sinks 3 m (at tops height it lay over the rows beyond as a flat pale band), the far end sheet is not drawn. His trial stills (1755 and 1799 at `review`, looked at by the Builder beside the approved and the line) also needed a change outside his folders that is not in the commit and is named in its message: in `src/worlds/golden/layers.ts`, the four near strips (75, 77, 79 and 84 m) sunk 6 m and the far land mesh sunk 3 m over 52 to 55 s. With both, the tree row, the dark flat strip and the thin bright line are gone and heads run on past the last row into haze. Still wrong in the trial: a level pale haze band with a bright top edge at the foot of the hills across the whole width, no trees at the far edge at all (the approved has a dark uneven tree row in front of the hills), heads past about 120 m read only as tone. Nothing is proved (frames before 1560, the steps from 1560 to 1700, the field's measures). So the line keeps its far edge, and this is an open item with a known cure: the near strips and the land of the golden world driven from 52.0 s (moved back and broken up, not removed), then `c85f03a`, then the proofs.
 - 2026-11-21 · Phase 4 · 23:19 UTC. The last fix pass ends here, six minutes before its close: every builder has reported, nothing more is waiting to go in, and the line stays at `43a42f6`. Not merged, each with its reason above: `ea51851` (leaves), `0ac1f4e` and `f90e3d8` (hairs), `c85f03a` (far edge), and as before `agent/surface`, `68c72b9` and `agent/probe`. Known open on the line by the builders' own stills beside the approved images, for the third rounds to judge: field 1755 (the far edge; the open head about 200 px across where the approved shows about 300, and `plant.headDiameterM` is a fixed fact of the kit that only Brandon settles; the sun with 602 clipped pixels against 5 and 35 px too high, which is the bloom's sun and Phase 5's to move), rain 420 (leaves larger, grey green, speckled and hanging against the approved's lifted clean ones; soil without clods), the cut at 8.0 s (the seed leaf turns grey with dark veins in one frame), dawn (soft even soil at 45, a stiff grass tuft and a pale tree line at 195, a faint star, the turn of the azimuth at frame 196), night 780 (leaves lit green across their faces, a stem fringe of dots where the approved has fine silver hairs, a crown of two blades against four, the crop's median 1.6 times the approved's, the hills as a painted backdrop), frost 1080 (thin leaves with little rime, near rows 12 to 15 levels light), the cut at 30.0 s (a small pop of the fringe on the bud's top bracts), and `skin_builder`'s request that the director hand the previous world's states to the next one (Phase 5).
+- 2026-11-21 · Phase 4 · 23:23 UTC. The joint cut for the third rounds: `main` merges the line at `43a42f6` as `47d93fd` at 23:20 UTC (type check clean, build clean, engine `b9de284219d214c9`; units dawn `609ff98b65fa38e3`, rain `cdb9bfbbb4e44942`, night `dd84d117aab66acc`, frost `8162048fd525a7c9`, bloom `d9662b45d5344491`, field `c229e6a6f41a2960`). Rounds 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`) judge it, each the third and last round of its unit (`maxRoundsPerUnit` 3); the clock at 23:20:31 UTC prints `extra rounds: yes` (22.48 h of 30 h). They are cut twelve minutes before the 23:35 UTC planned at 23:00 UTC because the fix pass ended early (decision of 23:19 UTC) and every minute not used here is a minute for Phase 5. After these rounds no further round is run for any unit, pass or not: a unit that has not passed is `finished` at its `round limit`, its open severe and major issues go under "Open items", and later fixes are kept only while the checks and measures stay green. The bloom's unit hash moves again (shared plant files changed), its rounds are not run again (`kit/07-QUALITY-BAR.md`, Freshness): its kept stills 1350, 1515 and 1559 are byte identical on `43a42f6` by the builders' proofs, and the Builder renders 1350 and 1515 once more on its own VM after the machine checks to see it with its own eyes. Families, rotated against both earlier rounds of each unit: 17 `field` R1 Claude, R3 GPT, R4 Gemini; 18 `frost` R1 GPT, R3 Gemini, R4 Claude; 19 `dawn` R1 Gemini, R3 Claude (two critics), R4 GPT; 20 `rain` R1 Claude, R3 GPT, R4 Gemini; 21 `night` R1 GPT, R3 Gemini, R4 Claude. The packs are built at `final` on builders' VMs from detached checkouts of `47d93fd`, by the same hands as in rounds 12 to 16: `field` by `stem_builder`, `frost` by `harness_builder`, `dawn` by `golden_builder`, `rain` by `lens_builder`, `night` by `disc_builder`. Critics and jurors are fresh agents from `reviewer_207` on; at most 12 agents run at once, the builders in a turn counted.
 
 ## Notes from Brandon
 
@@ -734,7 +735,10 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running (23:06 UTC): none in this task; the builders render on their own machines.
+Running (23:23 UTC):
+
+- The machine checks of rounds 17 to 21 · `npm run gate -- --phase 4 --machine` on `47d93fd` on the Builder's VM, nothing else rendering beside it · starts 23:24 UTC · about 24 minutes (the run for rounds 12 to 16 took about that) · log `out/work/logs/gate-r17.log`
+- The packs of rounds 17 to 21 · `npm run pack -- --phase 4 --round N --unit id` at `47d93fd` in detached checkouts on five builders' VMs (4 cores each): `stem_builder` (17, `field`), `harness_builder` (18, `frost`), `golden_builder` (19, `dawn`, four judged frames), `lens_builder` (20, `rain`), `disc_builder` (21, `night`) · asked 23:24 UTC · 16 to 35 minutes each · the tars, keys and records come back as attachments
 
 Finished in this task:
 
@@ -1090,6 +1094,71 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Fixes: the last fix pass of 21:34 to 23:19 UTC (the last merge at 23:03 UTC) with twelve agents on the line `phase4/integrate`, each sent the critics' and jurors' words on its part word for word (`out/work/briefs/round-012-016-notes/`). A piece went on the line only after its diff was read, its trailers checked, a type check and the line's tests (121 of 121 on the head), and only when its author's own `review` still showed it right beside the approved image with 1350, 1515 and 1559 of the finished bloom byte identical. The line ends at `43a42f6`; what went in and what stayed out is under "Decisions" from 21:34 to 23:19 UTC, and `scorecards/round-016/SUMMARY.md` says what was measured for each issue. For the night: the lens at f/11 (`ee05b3e`), the hills (`f354e70`, `6e1fbbc`), the bud (`2d0362b`, `83f7e0e`), the dark crop (`1c5400b`), the skin (`aeaccc7`). The red measure of this round is green on the head: M3 0.828 at `final` (0.8 needed). Left open: leaves lit green across their faces, the stem's fringe, the crop still lighter than the approved's.
 - [x] Summary, status, push: `scorecards/round-016/SUMMARY.md` written 23:10 UTC, with `MEASURES.json`, the four manifests and `KEY.json` beside it; Status 48 (21:45 UTC) carries the result, Status 52 (23:19 UTC) the end of the fix pass
 
+### Round 17 · Phase 4 · `field` · extra round
+
+- Started 2026-11-21 23:23 UTC. Judges commit `47d93fd` (engine `b9de284219d214c9`, unit `field` `c229e6a6f41a2960`): `main` with the Phase 4 line `43a42f6` merged in. Rounds 17 to 21 start together at 23:23 UTC on this one commit, the joint cut after the last fix pass of 21:34 to 23:19 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `field` (52 to 60 s, frames 1560 to 1799), the third and last of at most three rounds of its loop (`maxRoundsPerUnit` 3): whatever the answers are, no round follows it; judged frame 1755 (`field`, 58.5 s). An extra round: `npm run clock -- --phase 4` at 23:20:31 UTC says extra rounds yes (7.01 h used of the phase's 8.50 h, 22.48 h of the build's 30 h). Families rotate against the unit's rounds 7 and 12: R1 Claude, R3 GPT, R4 Gemini; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 7. Before the round: type check clean and build clean on `main`, 121 of 121 tests on the line's head (`out/work/logs/p4-line-test-2303.log`), and the builders' byte proofs of the bloom's kept stills on `43a42f6` at `review` (1350, 1515 and 1559 unchanged). What the Builder sees before any critic does, on `field_builder`'s `review` still of 1755 on the line's head `43a42f6` beside the approved image (his picture of 23:01 UTC, looked at by the Builder): the sun is a small disc with a soft glow now, near the approved's, but without the approved's veil of dust over the crop; two plants stand in front where the approved has the one; the open head is about 200 px across where the approved's is about 300; the crop ends in a straight edge under a bare dark band where the approved's runs on into the haze under the far trees; the heads are small and even where the approved's are larger near the lens; the near ground is dark with one pale patch at lower right.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 18 · Phase 4 · `frost` · extra round
+
+- Started 2026-11-21 23:23 UTC. Judges commit `47d93fd` (engine `b9de284219d214c9`, unit `frost` `8162048fd525a7c9`): `main` with the Phase 4 line `43a42f6` merged in. Rounds 17 to 21 start together at 23:23 UTC on this one commit, the joint cut after the last fix pass of 21:34 to 23:19 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `frost` (30 to 40 s, frames 900 to 1199), the third and last of at most three rounds of its loop (`maxRoundsPerUnit` 3): whatever the answers are, no round follows it; judged frame 1080 (`frost`, 36.0 s). An extra round: `npm run clock -- --phase 4` at 23:20:31 UTC says extra rounds yes (7.01 h used of the phase's 8.50 h, 22.48 h of the build's 30 h). Families rotate against the unit's rounds 8 and 13: R1 GPT, R3 Gemini, R4 Claude; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 8. Before the round: type check clean and build clean on `main`, 121 of 121 tests on the line's head (`out/work/logs/p4-line-test-2303.log`), and the builders' byte proofs of the bloom's kept stills on `43a42f6` at `review` (1350, 1515 and 1559 unchanged). What the Builder sees before any critic does, on `harness_builder`'s `review` still of 1080 on `43a42f6` beside the approved image (his picture of 23:08 UTC, looked at by the Builder): the framing, the bud and the pale sun are the approved's; the leaves are fewer, narrower and darker and hang, with a white margin, where the approved's are broader with a pale frosted face; the stem is plainer than the approved's; the neighbors are a soft dark mass with few buds standing clear where the approved shows single plants with buds on thin stems in the haze.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 19 · Phase 4 · `dawn` · extra round
+
+- Started 2026-11-21 23:23 UTC. Judges commit `47d93fd` (engine `b9de284219d214c9`, unit `dawn` `609ff98b65fa38e3`): `main` with the Phase 4 line `43a42f6` merged in. Rounds 17 to 21 start together at 23:23 UTC on this one commit, the joint cut after the last fix pass of 21:34 to 23:19 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `dawn` (0 to 8 s, frames 0 to 239), the third and last of at most three rounds of its loop (`maxRoundsPerUnit` 3): whatever the answers are, no round follows it; judged frames 0, 45 (`dawn-sprout`, 1.5 s), 60 and 195 (`dawn-seedling`, 6.5 s). An extra round: `npm run clock -- --phase 4` at 23:20:31 UTC says extra rounds yes (7.01 h used of the phase's 8.50 h, 22.48 h of the build's 30 h). Families rotate against the unit's rounds 9 and 14: R1 Gemini, R3 Claude (two critics, the files split at ten), R4 GPT; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 9. Before the round: type check clean and build clean on `main`, 121 of 121 tests on the line's head (`out/work/logs/p4-line-test-2303.log`), and the builders' byte proofs of the bloom's kept stills on `43a42f6` at `review` (1350, 1515 and 1559 unchanged). What the Builder sees before any critic does, on `ground_builder`'s `review` stills of 45 and 195 on `43a42f6` beside the approved images (his pictures of 23:11 UTC, looked at by the Builder): at 45 the hook, the hull and the sun sit as the approved's do; the soil is darker and smoother with fewer clods and glints, and the fog behind is one flat band; at 195 the seed leaves and the husk are near the approved's; the grass at right is a stiff dark fan where the approved has thin bright blades in scattered tufts; the soil is flatter and darker, and the far ground lies under an even bank of fog; the faint star cannot be seen at this size.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 20 · Phase 4 · `rain` · extra round
+
+- Started 2026-11-21 23:23 UTC. Judges commit `47d93fd` (engine `b9de284219d214c9`, unit `rain` `cdb9bfbbb4e44942`): `main` with the Phase 4 line `43a42f6` merged in. Rounds 17 to 21 start together at 23:23 UTC on this one commit, the joint cut after the last fix pass of 21:34 to 23:19 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `rain` (8 to 20 s, frames 240 to 599), the third and last of at most three rounds of its loop (`maxRoundsPerUnit` 3): whatever the answers are, no round follows it; judged frame 420 (`rain`, 14.0 s). An extra round: `npm run clock -- --phase 4` at 23:20:31 UTC says extra rounds yes (7.01 h used of the phase's 8.50 h, 22.48 h of the build's 30 h). Families rotate against the unit's rounds 10 and 15: R1 Claude, R3 GPT, R4 Gemini; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 10. Before the round: type check clean and build clean on `main`, 121 of 121 tests on the line's head (`out/work/logs/p4-line-test-2303.log`), and the builders' byte proofs of the bloom's kept stills on `43a42f6` at `review` (1350, 1515 and 1559 unchanged). What the Builder sees before any critic does, on `petal_builder`'s `review` still of 420 on the line at `b3dccae` beside the approved image (his picture of 22:47 UTC, looked at by the Builder; of the four changes on the line since, only the beads of `6547d93` are in the rain, and its builder proved frame 420 byte identical with them): the leaves are the first thing wrong, larger than the approved's, grey green, speckled and hanging, with one thin spike at the top; the runnel is narrow where the approved has broken puddles among clods; the crop behind is thin tufts where the approved has rows of leafy seedlings.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 21 · Phase 4 · `night` · extra round
+
+- Started 2026-11-21 23:23 UTC. Judges commit `47d93fd` (engine `b9de284219d214c9`, unit `night` `dd84d117aab66acc`): `main` with the Phase 4 line `43a42f6` merged in. Rounds 17 to 21 start together at 23:23 UTC on this one commit, the joint cut after the last fix pass of 21:34 to 23:19 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `night` (20 to 30 s, frames 600 to 899), the third and last of at most three rounds of its loop (`maxRoundsPerUnit` 3): whatever the answers are, no round follows it; judged frame 780 (`night`, 26.0 s). An extra round: `npm run clock -- --phase 4` at 23:20:31 UTC says extra rounds yes (7.01 h used of the phase's 8.50 h, 22.48 h of the build's 30 h). Families rotate against the unit's rounds 11 and 16: R1 GPT, R3 Gemini, R4 Claude; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 11. Before the round: type check clean and build clean on `main`, 121 of 121 tests on the line's head (`out/work/logs/p4-line-test-2303.log`), and the builders' byte proofs of the bloom's kept stills on `43a42f6` at `review` (1350, 1515 and 1559 unchanged). What the Builder sees before any critic does, on `disc_builder`'s `review` still of 780 on `43a42f6` beside the approved image (his picture of 23:02 UTC, looked at by the Builder): the rows are dark shapes with a thin rim now and the hills stand at full height; the plant is still another plant than the approved's, a few large leaves spread wide on a bare stem where the approved has a denser stack of pointed leaves up to the bud; the Milky Way is paler and its dark lanes softer than the approved's; the fog bank is thinner; the sharpness measure was green by a thin margin at `final` on the line (0.828 where 0.8 is needed).
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
 ## Final scores
 
 Written by the record round in Phase 6.
@@ -1221,6 +1290,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 23:01 UTC · Status 51: the line with twelve builders' fixes rendered at the keys; the night's measure decides a longer fix pass
 - 2026-11-21 23:04 UTC · Phase 4: the line at 43a42f6 (bead ease, small sun, hills at full height, dark night crop); the pass runs to 23:25, a correction to Status 51
 - 2026-11-21 23:19 UTC · Status 52: the last fix pass ends on 43a42f6, three late pieces left out, summaries of rounds 12 to 16
+- 2026-11-21 23:23 UTC · Rounds 17 to 21 start: the third and last rounds of field, frost, dawn, rain and night judge 47d93fd (main with the line at 43a42f6)
 
 ## Session log
 
