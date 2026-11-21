@@ -270,7 +270,7 @@ void main() {
   float ndl = dot(n, uSunDir);
   vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45)) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
-  if (vField.x > 0.5) color *= shut;
+  if (vField.x > 0.5) color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
   color += skyAmbient(reflect(-v, n)) * (0.05 * rained * deep);

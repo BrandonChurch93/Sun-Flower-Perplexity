@@ -32,6 +32,20 @@ vec3 aerial(vec3 color, vec3 world) {
   float d = length(v);
   return mix(color, airTone(v / d), 1.0 - exp(-d * uAir));
 }
+float sunBearing(vec3 world) {
+  vec2 bearing = normalize(world.xz);
+  vec2 sunward = normalize(uSunDir.xz);
+  return atan(sunward.x * bearing.y - sunward.y * bearing.x, dot(sunward, bearing));
+}
+vec3 evening(vec3 v, float az, float haze, float thin, vec3 dark) {
+  float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
+  vec3 tone = mix(vec3(0.07, 0.085, 0.09), vec3(0.21, 0.165, 0.125), exp(-theta / 0.6)) + vec3(1.2, 0.75, 0.4) * exp(-theta / 0.07);
+  float share = haze + (1.0 - haze) * (0.8 * exp(-theta / 0.06) + 0.12 * exp(-theta / 0.3));
+  share += (1.0 - share) * 0.42 * smoothstep(0.0, 0.1, az) * exp(-max(az, 0.0) / 0.6);
+  share *= 1.0 - 0.6 * smoothstep(0.1, 0.25, -az) - 0.5 * smoothstep(0.78, 0.98, az);
+  share += (1.0 - share) * thin;
+  return mix(dark, tone, share);
+}
 `
 
 // A standing strip: vInfo is the run along it in meters, the height above the ground and the height of its top there.
@@ -51,10 +65,12 @@ uniform float uWoodM;
 uniform float uRag;
 uniform float uReach;
 uniform vec3 uDark;
+uniform vec3 uStand;
 ${air}
 ${skylineCanopy}
 void main() {
   float top = vInfo.z;
+  float az = sunBearing(vWorld);
 #ifdef TREES
   top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor);
   top *= 1.0 - uLate * uRag * (0.16 * valueNoise(vec2(vInfo.x * 5.3 / uCrown, uLayer + 21.0)) + 0.09 * valueNoise(vec2(vInfo.x * 17.0 / uCrown, uLayer + 27.0)));
@@ -62,9 +78,8 @@ void main() {
   float mass = valueNoise(vec2(vInfo.x * 3.3 / uCrown, vInfo.y * 4.5 / uCrown + uLayer));
 #else
 #ifdef WOOD
-  vec2 bearing = normalize(vWorld.xz);
-  vec2 sunward = normalize(uSunDir.xz);
-  float stand = 1.0 - smoothstep(0.07, 0.4, atan(sunward.x * bearing.y - sunward.y * bearing.x, dot(sunward, bearing)));
+  float stand = uStand.x > 0.0 ? 1.0 - smoothstep(uStand.y, uStand.z, az) : smoothstep(uStand.y, uStand.z, az);
+  if (uStand.x < 0.0 && stand < 0.002) discard;
   top += uWoodM * (uLate * stand * skylineCanopy(vInfo.x, uCrown, uLayer, uFloor) * (0.62 + 0.26 * valueNoise(vec2(vInfo.x * 4.1 / uCrown, uLayer + 21.0)) + 0.12 * valueNoise(vec2(vInfo.x * 13.0 / uCrown, uLayer + 27.0))) - 1.0);
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * uReach * 0.012, vInfo.y * uReach * 0.03 + uLayer));
@@ -86,16 +101,11 @@ void main() {
   vec3 seen = vWorld;
 #endif
   color = mix(aerial(color, seen), 1.3 * airTone(v), 0.1 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
-  float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
-  vec3 tone = mix(vec3(0.07, 0.085, 0.09), vec3(0.2, 0.15, 0.1), exp(-theta / 0.6)) + vec3(1.2, 0.75, 0.4) * exp(-theta / 0.07);
   float haze = uHaze;
 #ifdef WOOD
-  haze = mix(0.36, uHaze, stand);
+  haze = uStand.x > 0.0 ? mix(0.36, uHaze, stand) : uHaze;
 #endif
-  float share = haze + (1.0 - haze) * (0.8 * exp(-theta / 0.06) + 0.12 * exp(-theta / 0.3));
-  // The crowns thin out toward their tops and let the sky through.
-  share += (1.0 - share) * 0.45 * uRag * smoothstep(0.8, 1.0, vInfo.y / max(top, 1.0));
-  color = mix(color, mix(uDark * (0.6 + 0.8 * leaf), tone, share), uLate);
+  color = mix(color, evening(v, az, haze, 0.45 * uRag * smoothstep(0.8, 1.0, vInfo.y / max(top, 1.0)), uDark * (0.6 + 0.8 * leaf)), uLate);
   outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -104,6 +114,8 @@ const landFragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vInfo;
 in float vDepth;
+uniform float uLate;
+uniform vec3 uBank;
 ${air}
 void main() {
   vec2 p = vWorld.xz;
@@ -118,7 +130,9 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
   vec3 color = albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * (0.05 + 0.12 * toSun * toSun));
-  outColor = finish(aerial(color, vWorld), vWorld, min(vDepth, 100.0 * uFocusM), -1.0);
+  float foot = uLate * (1.0 - smoothstep(78.0, 96.0, vInfo.x));
+  color = mix(aerial(color, vWorld), evening(v, sunBearing(vWorld), uBank.x, 0.0, vec3(uBank.y, uBank.y * 0.89, uBank.y * 0.67)), foot);
+  outColor = finish(color, mix(vWorld, uCamPos, uBank.z * foot), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -177,7 +191,9 @@ const TONES: { base: Rgb; rim: number; fogShare: number; dark: Rgb; haze: number
 ]
 
 // From 52 s a wood stands on the near ridge, the tree tops are ragged and every layer takes its share of the evening haze.
-const WOOD = { layer: 2, heightM: 26, crownM: 15, floor: 0.3, near: 0.5, dark: [0.009, 0.008, 0.006] as Rgb, haze: 0.07 }
+const WOODS: { name: string; layer: number; heightM: number; crownM: number; floor: number; near: number; dark: Rgb; haze: number; rag: number; stand: [number, number, number] }[] = [
+  { name: 'wood on the ridge', layer: 2, heightM: 26, crownM: 15, floor: 0.3, near: 0.5, dark: [0.009, 0.008, 0.006], haze: 0.07, rag: 1, stand: [1, 0.07, 0.4] },
+]
 
 const VEILS: { radiusM: number; heightM: number; scaleM: number; share: number; late?: boolean }[] = [
   { radiusM: 9, heightM: 6, scaleM: 3, share: 0.25, late: true },
@@ -249,7 +265,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     land.setAttribute('aInfo', new THREE.BufferAttribute(info, 3))
     land.setIndex(index)
   }
-  add(land, makeSurface({ name: 'golden far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
+  add(land, makeSurface({ name: 'golden far land', vertex, fragment: landFragment, uniforms: { ...airUniforms, uLate: late, uBank: { value: new THREE.Vector3(TONES[8].haze, TONES[8].dark[0], 1 - TONES[8].fogShare) } }, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
   SKYLINE.forEach((layer, i) => {
     const geometry = skylineStrip(i, sunAzimuthDeg)
@@ -264,23 +280,26 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     })
     add(geometry, surface.main, 0)
   })
-  const woodTone = TONES[WOOD.layer]
-  const wood = add(
-    ringStrip(SKYLINE[WOOD.layer].segments, (az) => {
-      const at = skylineAt(WOOD.layer, az, sunAzimuthDeg)
-      return { radius: at.radius * WOOD.near, top: at.top * WOOD.near + WOOD.heightM }
-    }),
-    makeSurface({
-      name: 'golden wood on the ridge',
-      vertex,
-      fragment: `#define WOOD 1\n${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(woodTone.base) }, uLayer: { value: skylineLayerSalt(WOOD.layer) }, uRim: { value: woodTone.rim }, uFogShare: { value: woodTone.fogShare }, uCrown: { value: WOOD.crownM }, uFloor: { value: WOOD.floor }, uLate: late, uHaze: { value: WOOD.haze }, uWoodM: { value: WOOD.heightM }, uRag: { value: 1 }, uReach: { value: 1 / WOOD.near }, uDark: { value: new THREE.Vector3().fromArray(WOOD.dark) } },
-      side: THREE.DoubleSide,
-      castShadow: false,
-    }).main,
-    0,
-  )
-  wood.visible = false
+  const woods = WOODS.map((wood) => {
+    const tone = TONES[wood.layer]
+    const mesh = add(
+      ringStrip(SKYLINE[wood.layer].segments, (az) => {
+        const at = skylineAt(wood.layer, az, sunAzimuthDeg)
+        return { radius: at.radius * wood.near, top: at.top * wood.near + wood.heightM }
+      }),
+      makeSurface({
+        name: `golden ${wood.name}`,
+        vertex,
+        fragment: `#define WOOD 1\n${stripFragment}`,
+        uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(wood.layer) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: wood.crownM }, uFloor: { value: wood.floor }, uLate: late, uHaze: { value: wood.haze }, uWoodM: { value: wood.heightM }, uRag: { value: wood.rag }, uReach: { value: 1 / wood.near }, uDark: { value: new THREE.Vector3().fromArray(wood.dark) }, uStand: { value: new THREE.Vector3().fromArray(wood.stand) } },
+        side: THREE.DoubleSide,
+        castShadow: false,
+      }).main,
+      0,
+    )
+    mesh.visible = false
+    return mesh
+  })
 
   const wide = { value: 0 }
   const lateShare: { value: number }[] = []
@@ -317,7 +336,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   const setTime = (time: number): void => {
     const h = eveningHaze(time)
     late.value = lateEvening(time)
-    wood.visible = late.value > 0
+    for (const wood of woods) wood.visible = late.value > 0
     wide.value = h
     lateShare.forEach((share, i) => { share.value = lateVeils[i].share * h })
     // From the crane the banks would each end in a line on the tops of the crop: they thin away as the lens rises, from 52 s.
