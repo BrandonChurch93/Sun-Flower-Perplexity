@@ -43,7 +43,7 @@ float bractRelief(float x, float u, float seed) {
   float ax = abs(x);
   float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
   float fine = valueNoise(vec2(x * 11.0, u * 60.0) + seed * 50.0);
-  float vein = abs(fract(x * 2.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
+  float vein = abs(fract(x * 3.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
   float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
   float keel = smoothstep(0.09, 0.0, ax);
   float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
@@ -86,7 +86,7 @@ void main() {
     float rank = kind - 2.0;
     float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
     float fine = valueNoise(vec2(x * 11.0, u * 60.0) + seed * 50.0);
-    float vein = abs(fract(x * 2.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
+    float vein = abs(fract(x * 3.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
     float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
     float keel = smoothstep(0.09, 0.0, ax);
     float blotch = valueNoise(vec2(x * 2.3 + seed * 37.0, u * 7.0 + seed * 53.0));
@@ -101,16 +101,16 @@ void main() {
     albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
-    // A bract that stands up into the sun passes it through its whole blade. One under the head or folded back behind the open rays lies in their shade and passes it at its thin margins and point only.
+    // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
     float margin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
-    float thin = mix(margin, blade, lit);
-    thin *= 1.0 - 0.65 * max(keel, line);
-    t.albedo = albedo;
-    t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.7, 0.76, 0.08), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain);
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
     float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
+    float thin = mix(margin, blade, lit);
+    thin *= 1.0 - 0.65 * max(max(keel, line), 0.6 * rib);
+    t.albedo = albedo;
+    t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.66, 0.78, 0.1), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain);
     albedo = mix(albedo, pale, 0.45 * rib);
     t.albedo = albedo;
     at = vec2(x, u);
