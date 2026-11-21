@@ -1,10 +1,30 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount, timeOf } from '../src/config.ts'
 import { plantInputsAt } from '../src/director/inputs.ts'
-import { bodyRadius, headElevation, heightAt, leafBirth, leafCount, leafLength, rayCount, rayLength, rayOpen, seedLeafLength, stemBaseRadius } from '../src/plant/growth.ts'
+import { bodyRadius, headElevation, heightAt, huskSize, leafBirth, leafCount, leafLength, rayCount, rayLength, rayOpen, seedLeafLength, stemBaseRadius } from '../src/plant/growth.ts'
 import { buildStandIn, plantNumbers, standInVertexCount, stemLength, tipAt } from '../src/plant/standin.ts'
 
 describe('the plant', () => {
+  it('has shed its seed leaves and lost its husk to the soil before the frost, so neither is in a later unit', () => {
+    const step = 1 / config.film.fps
+    const frost = config.segments.find((s) => s.id === 'frost')!
+    let leaf = seedLeafLength(0)
+    let husk = huskSize(0)
+    for (let f = 1; f < frameCount; f++) {
+      const time = timeOf(f)
+      expect(Math.abs(seedLeafLength(time) - leaf)).toBeLessThan(0.02 * step * 30)
+      expect(Math.abs(huskSize(time) - husk)).toBeLessThan(0.02)
+      leaf = seedLeafLength(time)
+      husk = huskSize(time)
+      if (time >= frost.start) {
+        expect(leaf).toBe(0)
+        expect(husk).toBe(0)
+      }
+    }
+    expect(huskSize(config.plant.stages.seedLeaves[1])).toBe(1)
+    expect(seedLeafLength(config.plant.stages.seedLeaves[1])).toBeGreaterThan(0.03)
+  })
+
   it('never loses height across the film', () => {
     let last = heightAt(0)
     for (let f = 1; f < frameCount; f++) {

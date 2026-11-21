@@ -12,6 +12,7 @@ import {
   heightAt,
   huskDrop,
   huskLengthM,
+  huskSize,
   huskRest,
   leafAzimuth,
   leafCount,
@@ -504,7 +505,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     px /= pl
     py /= pl
     pz /= pl
-    ellipsoid(pos, nor, plan.husk0, d.huskRings, d.huskSides, hx, hy, hz, ax, ay, az, px, py, pz, huskLengthM * 0.3 * grown, huskLengthM * 0.5 * grown)
+    ellipsoid(pos, nor, plan.husk0, d.huskRings, d.huskSides, hx, hy, hz, ax, ay, az, px, py, pz, huskLengthM * 0.3 * grown * huskSize(time), huskLengthM * 0.5 * grown * huskSize(time))
   }
 
   const wide = (step: number) => Math.pow(step, 0.8)
