@@ -150,7 +150,7 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: 0.14 + 0.4 * r(19),
+      kink: 0.26 + 0.5 * r(19),
       tipCurl: dry ? 1.1 : 0.12 + 0.6 * r(20) * r(20),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
