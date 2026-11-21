@@ -62,7 +62,7 @@ void main() {
   float shade = 0.8 + 0.4 * vLeaf.z;
   Tissue t;
   t.albedo = (top ? vec3(0.05, 0.095, 0.028) : vec3(0.075, 0.115, 0.048)) * shade;
-  t.albedo = mix(t.albedo, vec3(0.42, 0.4, 0.1), vState.y * 0.7);
+  t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
   t.through = vec3(0.06, 0.09, 0.006) * (1.0 - 0.4 * rib) * shade;
   t.face = face;
   t.normal = face;
@@ -113,7 +113,7 @@ void main() {
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
   vec3 albedo = (top ? upper : under) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
-  albedo = mix(albedo, vec3(0.5, 0.43, 0.09) * (0.7 + 0.3 * lum), yellow * 0.85);
+  albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
   // The blade is thick and felted: it lets light through only in the patches where it is thin, and along its margin. The main veins hold the light back.
@@ -122,7 +122,7 @@ void main() {
   vec3 through = vec3(0.34, 0.5, 0.03) * thin * (0.35 + 0.65 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
   through *= 1.0 - 0.6 * vein.r;
   through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.6, 0.48, 0.06) * thin * (0.5 + 0.5 * lum), yellow);
+  through = mix(through, vec3(0.5, 0.4, 0.05) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.1, 0.04, 0.008), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
