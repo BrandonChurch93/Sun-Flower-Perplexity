@@ -99,9 +99,6 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.03, 0.04, 0.035], rim: 0.04, fogShare: 0.3 },
 ]
 
-// The ridges stand this much taller under the night's key than the shared line draws them; the rain and the frost on either side of the night hide them.
-const RIDGE_TALL = 2.1
-
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // The land is the same land in every world: its line is laid out round the bearing of the golden hour's sun.
@@ -165,11 +162,6 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
       castShadow: false,
     })
     add(geometry, surface.main, 0)
-    if (!layer.trees && !layer.rowM) {
-      const mesh = meshes[meshes.length - 1]
-      mesh.scale.y = RIDGE_TALL
-      mesh.updateMatrix()
-    }
   })
 
   const plain = meshes[0]
