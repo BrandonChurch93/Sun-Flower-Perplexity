@@ -17,6 +17,7 @@ import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/model.ts
 import { Plant } from '../plant/index.ts'
 import { stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
+import { sunInFrame } from '../post/sun.ts'
 import { Sky } from '../weather/sky.ts'
 import { rigAt } from './camera.ts'
 import { plantInputsAt, plantInputsFor } from './inputs.ts'
@@ -232,7 +233,8 @@ export class Film {
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
       if (pause) await breathe()
     }
-    this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag)
+    const sunAt = alone ? null : sunInFrame(this.poseAt(time + 0.5 * shutterSeconds), sunDirection(def, this.sun), config.camera.gateWidthMm, stage.width / stage.height)
+    this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
     stage.finish()
     if (stage.lost) throw new Error('the WebGL context was lost')
     this.lastFrame = frame
