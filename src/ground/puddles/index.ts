@@ -1,20 +1,22 @@
 import * as THREE from 'three'
-import type { Assets } from '../../core/assets.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { declareStandIn } from '../../core/standins.ts'
 import type { WorldDef } from '../../core/world.ts'
-import { toward } from '../../field/layout.ts'
+import { right, toward } from '../../field/layout.ts'
 import { nearGeometry, nearRadiusM } from '../geometry.ts'
 import { waterLevelsM } from '../soil.ts'
-import { rippleBox } from './basin.ts'
+import { rainSkyUniforms } from '../../worlds/rain/sky.ts'
+import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
-import { LANDING_FLOATS, landings } from './landings.ts'
-import { RING_LIFE_S, Ripples } from './ripples.ts'
+import { LANDING_FLOATS, fineLandings, landings } from './landings.ts'
+import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
 import { rivuletFragment, rivuletVertex } from './rivulets.ts'
 import { standInLevelM } from './scratch.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
+const MAX_RINGS = 6144
+const FINE_REACH_M = 0.11
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
 const CUT_STARTS_S = 8.5
@@ -31,8 +33,7 @@ export class Puddles {
   private readonly splashDrop: THREE.InstancedBufferAttribute
   private readonly ripples: Ripples
   private readonly level = { value: new THREE.Vector2() }
-  private readonly drops = new Float32Array(MAX_DROPS * LANDING_FLOATS)
-  private readonly mirrors = new Map<string, THREE.Texture>()
+  private readonly drops = new Float32Array(MAX_RINGS * LANDING_FLOATS)
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor(ground: Record<string, THREE.IUniform>) {
@@ -43,9 +44,7 @@ export class Puddles {
       uLevel: this.level,
       uBox: this.ripples.uniforms.uBox,
       tRipple: { value: this.ripples.target.texture },
-      tMirror: { value: null },
-      uMirrorBasis: { value: new THREE.Matrix3() },
-      uMirrorScale: { value: new THREE.Vector3(1, 1, 1) },
+      ...rainSkyUniforms,
     }
     const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false, standIn: true })
     const plane = new THREE.PlaneGeometry(2 * nearRadiusM, 2 * nearRadiusM)
@@ -73,29 +72,22 @@ export class Puddles {
     this.meshes = [this.water, this.crowns]
   }
 
-  async load(assets: Assets, worlds: WorldDef[]): Promise<void> {
-    for (const def of worlds) if (def.backdrop.file && def.lock) this.mirrors.set(def.id, await assets.texture(`worlds/${def.id}`, def.backdrop.file))
-  }
-
   // Once a frame, with the film second at the open shutter and at its close.
   prepare(def: WorldDef, time: number, timeClose: number, shown = true): void {
-    const mirror = this.mirrors.get(def.id)
     const wet = def.ground.wet
-    this.water.visible = shown && wet > 0.5 && !!mirror && !!def.lock
+    this.water.visible = shown && wet > 0.5 && !!rainSkyUniforms.tRainSky.value
     this.crowns.visible = this.water.visible
     this.rivulets.visible = this.water.visible
-    if (!this.water.visible || !mirror || !def.lock) return
+    if (!this.water.visible) return
     const cut = Math.min(1, Math.max(0, (time - CUT_STARTS_S) / (CUT_ENDS_S - CUT_STARTS_S)))
     const eased = 0.25 + 0.75 * cut * cut * (3 - 2 * cut)
     const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet - waterLevelsM[1] + standInLevelM
     this.level.value.set(y, eased)
-    const { right, up, forward, scaleX, scaleY } = def.lock
-    this.uniforms.tMirror.value = mirror
-    this.uniforms.uMirrorBasis.value.set(right.x, up.x, forward.x, right.y, up.y, forward.y, right.z, up.z, forward.z)
-    this.uniforms.uMirrorScale.value.set(scaleX, scaleY, def.backdrop.gain)
-    const cx = toward.x * rippleBox.aheadM
-    const cz = toward.z * rippleBox.aheadM
-    const count = landings(cx, cz, rippleBox.halfM + 0.3, y, time - RING_LIFE_S, timeClose, this.drops)
+    const cx = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
+    const cz = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
+    const reach = rippleBox.halfM * Math.SQRT2
+    const heavy = landings(cx, cz, reach + 0.2, y, time - RING_LIFE_S, timeClose, this.drops)
+    const count = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M), y, time - FINE_RING_LIFE_S, timeClose, this.drops, heavy)
     this.ripples.set(count, time, timeClose, cx, cz, rippleBox.halfM)
     const geometry = this.crowns.geometry as THREE.InstancedBufferGeometry
     geometry.instanceCount = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
