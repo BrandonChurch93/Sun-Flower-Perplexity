@@ -22,13 +22,13 @@ setLeafTurn(companionVariant, 228.3 * RAD)
 // on a stalk that rises from the lower left, a small dark one above it, three under it and two in the bottom corner. The one that grew toward the sun
 // is swung out of the frame. They sink through the bloom as the stem carries them up, so that they stay where they are in the frame.
 setLeafHold(companionVariant, 20, { droop: 0.2, lengthScale: 0.7, swingDeg: 180 })
-setLeafHold(companionVariant, 19, { droop: 0.007, liftDeg: 31.2, sinkDeg: 5.8, lengthScale: 1.064, rollDeg: -61.4, foldScale: 0.947, swingDeg: 131.3 })
-setLeafHold(companionVariant, 18, { droop: 0.085, liftDeg: 13.3, sinkDeg: 10, lengthScale: 1.1, rollDeg: -0.3, foldScale: 0.295, swingDeg: -31.7 })
-setLeafHold(companionVariant, 16, { droop: 0.316, liftDeg: 21.4, lengthScale: 2.4, rollDeg: 11.2, foldScale: 1.2, swingDeg: -104.8 })
-setLeafHold(companionVariant, 14, { droop: 0, liftDeg: 62.4, sinkDeg: -4.2, lengthScale: 1.915, rollDeg: 39.6, foldScale: 0.535, swingDeg: 143.7 })
-setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
-setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 36, lengthScale: 1.75 })
-setLeafHold(companionVariant, 23, { droop: 0.064, liftDeg: -14.7, sinkDeg: 47.3, lengthScale: 1.374, rollDeg: -1.4, foldScale: 0.032, swingDeg: 0.7 })
+setLeafHold(companionVariant, 19, { droop: 0.059, liftDeg: 39.433, sinkDeg: -4.919, lengthScale: 1.2, rollDeg: -81.181, foldScale: 0.826, swingDeg: 179.321 })
+setLeafHold(companionVariant, 18, { droop: 0.107, liftDeg: 22.9, sinkDeg: 12.3, lengthScale: 1.079, rollDeg: 1.9, foldScale: 0.093, swingDeg: -23.7 })
+setLeafHold(companionVariant, 16, { droop: 0.194, liftDeg: 5.7, sinkDeg: -8.3, lengthScale: 2.391, rollDeg: 8.1, foldScale: 0.741, swingDeg: -95 })
+setLeafHold(companionVariant, 14, { droop: 0.005, liftDeg: 67.6, sinkDeg: -4.2, lengthScale: 1.853, rollDeg: 65.8, foldScale: 0.037, swingDeg: 146.3 })
+setLeafHold(companionVariant, 17, { droop: 0.047, liftDeg: 34, sinkDeg: 6, lengthScale: 1.404, rollDeg: -1.9, foldScale: 0.413, swingDeg: 108.5 })
+setLeafHold(companionVariant, 15, { droop: 0.191, liftDeg: 40.5, sinkDeg: -1.7, lengthScale: 1.841, rollDeg: 4.2, foldScale: 0.86, swingDeg: 13.3 })
+setLeafHold(companionVariant, 23, { droop: 0, liftDeg: -16, sinkDeg: 53.6, lengthScale: 1.212, rollDeg: -3.4, foldScale: 0.022, swingDeg: 17 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]

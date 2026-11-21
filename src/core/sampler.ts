@@ -61,6 +61,8 @@ function shuffled(count: number, key: number): number[] {
 
 // The pixel uses a rotated Halton set. The shutter is one sample per slot. The lens and the light each use a rotated
 // Hammersley set in their own shuffled order, so even a handful of samples covers every side of the lens opening.
+// The lens set is then moved so its weighted middle is the middle of the opening: a set that leans to one side shifts
+// everything out of focus that way, by a different amount each frame.
 export function frameSamples(frame: number, count: number): Sample[] {
   if (!(count >= 1) || !Number.isInteger(count)) throw new Error(`sample count must be a whole number of at least 1, got ${count}`)
   if (count === 1) return [{ index: 0, pixelX: 0, pixelY: 0, shutter: 0.5, lensX: 0, lensY: 0, lightX: 0, lightY: 0, weight: 1 }]
@@ -87,5 +89,22 @@ export function frameSamples(frame: number, count: number): Sample[] {
     out.push({ index: i, pixelX: px, pixelY: py, shutter, lensX: lx, lensY: ly, lightX: gx, lightY: gy, weight })
   }
   for (const s of out) s.weight /= total
+  for (let pass = 0; pass < 2; pass++) {
+    let cx = 0
+    let cy = 0
+    for (const s of out) {
+      cx += s.weight * s.lensX
+      cy += s.weight * s.lensY
+    }
+    for (const s of out) {
+      s.lensX -= cx
+      s.lensY -= cy
+      const r = Math.hypot(s.lensX, s.lensY)
+      if (r > 1) {
+        s.lensX /= r
+        s.lensY /= r
+      }
+    }
+  }
   return out
 }
