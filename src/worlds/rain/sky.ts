@@ -61,6 +61,9 @@ vec3 rainSky(vec3 d, float lod) {
   float toSun = (turn + uRainSkySunTurn) / 0.45;
   float open = (1.0 - cloud) * smoothstep(0.0, 0.05, up) * exp(-up / 0.09) * (0.3 + 0.7 * exp(-toSun * toSun));
   color *= mix(vec3(1.0), vec3(2.1, 1.85, 1.5), open);
+  // Thin grey cloud trails down across the upper band, thicker away from the sun, so the cloud's foot is soft and the band is brightest low.
+  float wisp = smoothstep(0.035, 0.1, up) * (0.45 + 0.55 * valueNoise(vec2(turn * 9.0 + 3.0, up * 30.0)));
+  color = mix(color, uRainSkyTone * 0.9, (1.0 - cloud) * 0.75 * wisp * (1.0 - 0.5 * exp(-toSun * toSun)));
   // Far rain hangs between the lens and the sky, lit grey by the band: an even haze that thickens toward the land, and leaning curtains under the cloud that drift.
   float lean = turn - 0.21 * up;
   float curtain = valueNoise(vec2(lean * 7.0 + uTime * 0.012, 2.0)) * 0.6 + valueNoise(vec2(lean * 31.0 + uTime * 0.03, up * 5.0 + 9.0)) * 0.4;
