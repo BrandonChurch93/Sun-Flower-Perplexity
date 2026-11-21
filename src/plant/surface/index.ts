@@ -95,14 +95,17 @@ const float TISSUE_SLATE = 0.21;
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
 
+// A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun.
+float tissueClearSun() {
+  return smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
+}
+
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
 vec3 tissueSky(vec3 n, float shown) {
   vec3 sky = skyAmbient(n);
   float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
   float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
-  level *= 1.0 - uSkyEven;
-  // A sun no brighter than the sky over it stands in mist or cloud: that sky is even all round.
-  level *= smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
+  level *= (1.0 - uSkyEven) * tissueClearSun();
   float side = saturate(0.5 + 0.5 * toward);
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
@@ -131,7 +134,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   if (wet > 0.0 && margin >= 0.0) film = wetFilm(at, margin);
 #endif
   // A film of water fills the fine relief.
-  vec3 N = normalize(mix(t.normal * turn, F, wet * (0.5 + 0.45 * film)));
+  // Rain lands on what faces up: under a leaf the skin is only damp.
+  float rained = wet * mix(0.3, 1.0, smoothstep(-0.2, 0.3, F.y));
+  vec3 N = normalize(mix(t.normal * turn, F, rained * (0.25 + 0.45 * film)));
   vec3 L = uSunDir;
   float ndl = dot(N, L);
   float fdl = dot(F, L);
@@ -153,10 +158,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float fuzz = t.sheen;
 
   if (wet > 0.0) albedo = mix(albedo, wetAlbedo(albedo), wet);
-  rough = mix(rough, min(rough, mix(WET_ROUGH_THIN, WET_ROUGH_DEEP, film)), wet);
-  wax = mix(wax, 1.0, wet);
+  rough = mix(rough, min(rough, mix(WET_ROUGH_THIN, WET_ROUGH_DEEP, film)), rained);
+  wax = mix(wax, max(wax, WET_WAX), rained);
   // Wet down lies flat under the water.
-  fuzz *= 1.0 - 0.8 * wet;
+  fuzz *= 1.0 - 0.8 * rained;
 
   float dew = uPlantDew * (1.0 - wet);
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
@@ -262,7 +267,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 nx = dFdx(N);
   vec3 ny = dFdy(N);
   float a = max(rough * rough, 0.03);
-  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))) + 0.03 * uSkyEven, 1.0);
+  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))) + 0.03 * uSkyEven + 0.2 * (1.0 - tissueClearSun()), 1.0);
   a = sqrt(a2);
 
   float f5 = 1.0 - vdh;
@@ -278,7 +283,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // A mist of beads breaks the mirror: each bead shows the whole sky, so the rise at grazing goes and the high sky takes the place of the horizon.
   float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
   vec3 R = reflect(-view, N);
-  vec3 skyGloss = tissueSky(normalize(mix(R, N, max(a2, DEW_BREAK * mist))), shown);
+  vec3 toSky = normalize(mix(R, N, max(a2, DEW_BREAK * mist)));
+  vec3 skyGloss = tissueSky(toSky, shown);
+  if (rained > 0.0) skyGloss = mix(skyGloss, wetSky(toSky), rained);
 
   // What gets under the wax is what the wax did not send back.
   float l5 = 1.0 - max(ndl, 0.0);
