@@ -20,6 +20,9 @@ uniform sampler2D tHot;
 uniform vec2 uSunAt;
 uniform float uStar;
 uniform float uStarLen;
+uniform float uGlow;
+uniform float uShafts;
+uniform float uFarFill;
 uniform float uSaturation;
 uniform float uVignette;
 uniform float uGrain;
@@ -72,6 +75,29 @@ vec3 star(vec2 px) {
   float line = 0.7 * exp(-x) + 0.3 * exp(-x / 12.0);
   return texture(tHot, uSunAt).rgb * vec3(1.0, 0.62, 0.3) * (line * t * t * uStar);
 }
+float fanNoise(float a, float s) {
+  float i = floor(a);
+  float f = a - i;
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(hash31(vec3(i, s, 1.0)), hash31(vec3(i + 1.0, s, 1.0)), f);
+}
+// What a low sun in the frame does beyond the glass's own scatter: a wide warm glow round it, and broad soft shafts fanning down and away from it through the haze. Both follow how much of the sun shows.
+vec3 sunAir(vec2 px, float circle) {
+  if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
+  vec2 d = (px - uSunAt * uSize) / uSize.x;
+  float r = length(d);
+  float tight = 1.0 + r * r / 0.0009;
+  float glow = 0.88 / (tight * sqrt(tight)) + 0.12 * exp(-r / 0.05);
+  float ang = atan(d.y, d.x);
+  float fan = smoothstep(-3.1, -2.5, ang) * (1.0 - smoothstep(-0.35, 0.0, ang));
+  float beams = 0.45 + 0.55 * smoothstep(0.15, 0.9, 0.65 * fanNoise(ang * 4.0, 3.0) + 0.35 * fanNoise(ang * 10.0, 7.0));
+  float reach = saturate(1.0 - r / 0.26);
+  // The shafts hang in the air of the field: nothing in focus and nothing nearer than the focus is behind them. Far things blur up to the circle of infinity, near leaves beyond it.
+  float depth = circle / max(uFarFill, 1e-4);
+  float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
+  float shafts = fan * beams * reach * reach * r / (r + 0.02) * behind;
+  return texture(tHot, uSunAt).rgb * (vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.7, 0.45) * (uShafts * shafts));
+}
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
   return vec3(float(h & 1023u), float((h >> 10) & 1023u), float((h >> 20) & 1023u)) * (1.0 / 1024.0);
@@ -95,7 +121,7 @@ void main() {
   if (uMode == 2) { outColor = vec4(clamp(c, 0.0, 1.0), 1.0); return; }
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
-  c = max(c, 0.0) * uExposure + texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy);
+  c = max(c, 0.0) * uExposure + texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a);
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;

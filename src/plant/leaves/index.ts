@@ -101,7 +101,7 @@ export function create(options: PartOptions): PlantPart {
 
   const dryLeaf = 5 + Math.floor(hash01(seed, 900) * 6)
   const tornLeaf = 12 + Math.floor(hash01(seed, 901) * 7)
-  // The half withered leaf is the one the bloom frames see right of the stem, just under the head.
+  // The leaf the bloom frames see right of the stem, just under the head, has a dry tip that curls under.
   const witheredLeaf = 21
 
   const leaves: Leaf[] = []
@@ -113,6 +113,8 @@ export function create(options: PartOptions): PlantPart {
   const planeList: number[] = []
   const index: number[] = []
 
+  // The companion keeps the narrower folded blades: its leaf at the sun was placed with them and must not cover the sun.
+  const main = options.variant === 0
   for (let i = 0; i < leafCount; i += shape.step) {
     const r = (k: number) => hash01(seed, i, k)
     const rank = i / (leafCount - 1)
@@ -121,16 +123,17 @@ export function create(options: PartOptions): PlantPart {
     const rowsHero = Math.round(clamp(36 + 60 * ((full - 0.1) / 0.15), 36, shape.rows) * (options.variant === 0 ? 1 : 0.6))
     const rows = hero ? rowsHero : options.detail === 'near' ? NEAR_ROWS : FAR_ROWS
     const nu = typeof rows === 'number' ? rows : rows.length
-    const share = shares[i] * lerp(1, 0.86, upper) * shape.wide
+    const share = shares[i] * lerp(1, main ? 0.96 : 0.86, upper) * shape.wide
     const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
-    const teeth = 17 + 12 * r(4)
-    const depth = 0.07 + 0.06 * r(5)
+    const teeth = 10 + 7 * r(4)
+    const depth = 0.1 + 0.08 * r(5)
     const waveAmp = 0.018 + 0.024 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
-    const roll = withered ? 0.42 : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
+    const blade = lerp(1, main ? 0.9 : 0.76, upper)
+    const roll = withered ? (main ? 0.2 : 0.42) : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
@@ -157,12 +160,12 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? 1.5 : 0.3 + 0.55 * r(19),
-      tipCurl: withered ? 1.5 : dry ? 1.1 : 0.2 + 0.7 * r(20) * r(20),
-      reach: STALK + (1 - STALK) * lerp(1, 0.76, upper),
-      stalk: STALK / (STALK + (1 - STALK) * lerp(1, 0.76, upper)),
+      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19),
+      tipCurl: withered ? 1.5 : dry ? 1.1 : 0.15 + 0.5 * r(20) * r(20),
+      reach: STALK + (1 - STALK) * blade,
+      stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
-      crease: withered ? 1.15 : 0.12 + 0.5 * r(36),
+      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
@@ -300,11 +303,11 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.06) {
+      if (pick < 0.22) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
-      } else if (pick < 0.48) {
+      } else if (pick < 0.52 && leaf.i !== witheredLeaf) {
         hair.kind = 1
         const side = r(6) < 0.5 ? 0 : 1
         const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
@@ -324,7 +327,7 @@ export function create(options: PartOptions): PlantPart {
       } else {
         hair.kind = 2
         hair.a = 1 + Math.pow(r(5), 1.2) * (RINGS_STALK + 2)
-        hair.b = Math.floor(r(6) * SIDES)
+        hair.b = r(6) * SIDES * 0.9999
       }
       plan.push(hair)
     }
@@ -432,7 +435,7 @@ export function create(options: PartOptions): PlantPart {
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
-    const thick = Math.min(0.42 * stem, 0.0165 * size * REACH)
+    const thick = Math.min(0.5 * stem, 0.036 * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
@@ -456,8 +459,8 @@ export function create(options: PartOptions): PlantPart {
       const nx = ux * ct - frame.wx * st
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
-      const flare = ring === 0 ? 1 : 1 + 0.9 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.66 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.2 * k) * flare
+      const flare = ring === 0 ? 1 : 1 + 0.5 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) * flare
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -509,22 +512,25 @@ export function create(options: PartOptions): PlantPart {
       if (hair.kind === 2) {
         const ring = Math.min(RINGS - 2, Math.floor(hair.a))
         const t = hair.a - ring
-        const v0 = (leaf.tube + ring * (SIDES + 1) + hair.b) * 3
+        const side = Math.floor(hair.b)
+        const round = hair.b - side
+        const v0 = (leaf.tube + ring * (SIDES + 1) + side) * 3
         const v1 = v0 + (SIDES + 1) * 3
-        const far = (leaf.tube + ring * (SIDES + 1) + ((hair.b + SIDES / 2) % SIDES)) * 3
-        px = tube[v0] + (tube[v1] - tube[v0]) * t
-        py = tube[v0 + 1] + (tube[v1 + 1] - tube[v0 + 1]) * t
-        pz = tube[v0 + 2] + (tube[v1 + 2] - tube[v0 + 2]) * t
-        dx = tube[v0] - tube[far]
-        dy = tube[v0 + 1] - tube[far + 1]
-        dz = tube[v0 + 2] - tube[far + 2]
+        const far = (leaf.tube + ring * (SIDES + 1) + ((side + SIDES / 2) % SIDES)) * 3
+        const at = (v: number, c: number) => tube[v + c] + (tube[v + 3 + c] - tube[v + c]) * round
+        px = at(v0, 0) + (at(v1, 0) - at(v0, 0)) * t
+        py = at(v0, 1) + (at(v1, 1) - at(v0, 1)) * t
+        pz = at(v0, 2) + (at(v1, 2) - at(v0, 2)) * t
+        dx = at(v0, 0) - at(far, 0)
+        dy = at(v0, 1) - at(far, 1)
+        dz = at(v0, 2) - at(far, 2)
         const l = Math.hypot(dx, dy, dz) || 1
         const tl = Math.hypot(tube[v1] - tube[v0], tube[v1 + 1] - tube[v0 + 1], tube[v1 + 2] - tube[v0 + 2]) || 1
-        const along = (hair.r2 - 0.3) * 0.8
+        const along = (hair.r2 - 0.3) * 1.3
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.0012 + 0.0022 * hair.r1) * scale
+        long = (0.0008 + 0.0036 * hair.r1 * hair.r3) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
@@ -556,12 +562,12 @@ export function create(options: PartOptions): PlantPart {
           let fz = out[v10 + 2] - out[v00 + 2]
           const fl = Math.hypot(fx, fy, fz) || 1
           fx /= fl; fy /= fl; fz /= fl
-          const tilt = (hair.r2 - 0.5) * 1.5
-          const ahead = 0.1 + 0.6 * hair.r3
+          const tilt = (hair.r2 - 0.5) * 2.2
+          const ahead = -0.3 + 1.3 * hair.r3
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0006 + 0.0012 * hair.r1) * scale
+          long = (0.0004 + 0.0013 * hair.r1 * hair.r4) * scale
         } else {
           const jx = hair.r2 - 0.5
           const jy = hair.r3 - 0.5

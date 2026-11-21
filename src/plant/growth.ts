@@ -93,9 +93,10 @@ const bodyCurve = new Monotone([
   [inStage(bud0, bud1, 0.263), 0.02],
   [inStage(bud0, bud1, 0.579), 0.037],
   [inStage(bud0, bud1, 0.79), 0.054],
-  [inStage(bud0, bud1, 0.947), 0.068],
-  [inStage(bloom0, bloom1, 0.25), discRadius * 0.96],
-  [inStage(bloom0, bloom1, 0.5), discRadius * 0.985],
+  [inStage(bud0, bud1, 0.947), 0.061],
+  [inStage(bloom0, bloom1, 0.25), discRadius * 0.825],
+  [inStage(bloom0, bloom1, 0.5), discRadius * 0.9],
+  [inStage(bloom0, bloom1, 0.75), discRadius * 0.965],
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
@@ -137,12 +138,12 @@ const elevationCurve = new Monotone([
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
-const EARLY_TURN = 19 * RAD
+const EARLY_TURN = 6 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
 export const RAY_FIRST = 2.4
 // How long a shut ray is, as a share of its open length.
-const RAY_SHUT = 0.72
-const BRACT_LONGEST = 0.07
+const RAY_SHUT = 0.85
+const BRACT_LONGEST = 0.085
 
 // The head stands upright as a bud, then leans over to the side it will face for good. It never turns back.
 export function headElevation(time: number): number {
@@ -197,17 +198,21 @@ export function rayLength(k: number, time: number): number {
   return rayFull * headScale() * grown * lerp(RAY_SHUT, 1, rayOpen(k, time)) * (0.92 + 0.16 * rnd(40, k))
 }
 
-// Rays open by sector: one side of the head is seconds ahead of the other.
+// Rays open as a front: the sector round `RAY_FIRST` lifts together, then the front travels round the head both ways.
+const FRONT_SECTOR = 45 * RAD
+const FRONT_FIRST = bloom0 + 0.2
+const FRONT_LAST = bloom0 + 5.1
+const RAY_SECONDS = 1.5
+
 export function rayOpen(k: number, time: number): number {
-  const around = (k / rayCount) * TAU
-  const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.25 * rnd(41, k)
-  const start = bloom0 + 0.45 + delay * 2.3
-  return smootherstep(start, start + 2, time)
+  const away = Math.acos(Math.cos((k / rayCount) * TAU - RAY_FIRST))
+  const start = lerp(FRONT_FIRST, FRONT_LAST, Math.max(0, away - FRONT_SECTOR) / (Math.PI - FRONT_SECTOR)) + 0.3 * rnd(41, k)
+  return smootherstep(start, start + RAY_SECONDS, time)
 }
 
 // A ray lies folded in over the face until it opens.
 export function rayAngle(k: number, time: number): number {
-  return lerp(-48, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
+  return lerp(-68, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
 }
 
 // The seed leaves shrink as the true leaves take over, then wither and are shed before the bud swells.

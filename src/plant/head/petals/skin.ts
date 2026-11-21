@@ -8,12 +8,12 @@ in vec3 positionB;
 in vec3 normal;
 in vec2 uv;
 in vec4 aRay;
-in vec2 aState;
+in vec3 aState;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vRay;
-out vec2 vState;
+out vec3 vState;
 out float vDepth;
 #ifdef DEPTH_PASS
 uniform float uShadowTexelM;
@@ -27,7 +27,7 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
 #ifdef DEPTH_PASS
   // The pleats of a folded ray are finer than the shadow map: the caster stands back so they do not stripe themselves.
-  world.xyz -= uSunDir * uShadowTexelM * mix(3.5, 1.0, aState.y);
+  world.xyz -= uSunDir * (uShadowTexelM * mix(3.5, 1.0, aState.y) - 0.008 * aState.x);
 #endif
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -48,7 +48,7 @@ in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vUv;
 in vec4 vRay;
-in vec2 vState;
+in vec3 vState;
 in float vDepth;
 #ifndef PLANT_FIELD
 uniform sampler2D uRayColor;
@@ -74,18 +74,23 @@ void main() {
 
   vec3 body = mix(vec3(0.82, 0.56, 0.03), vec3(0.93, 0.76, 0.09), smoothstep(0.1, 0.8, u));
   // A ray just out of the bud is still green yellow.
+  body = mix(body, vec3(0.82, 0.5, 0.03), 0.7 * (1.0 - vState.z * vState.z));
   body = mix(body, vec3(0.44, 0.56, 0.17), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
   // The thin edges and the far end let the most light through, and it comes out pale.
   float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
-  body = mix(body, vec3(1.0, 0.78, 0.32), 0.65 * pale * (1.0 - fresh));
+  body = mix(body, vec3(1.0, 0.78, 0.32), 0.12 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.6, 0.36, 0.02), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.72, 0.37, 0.02), vec3(1.3, 0.88, 0.09), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(2.1, 1.12, 0.1), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(1.7, 1.14, 0.5), 0.8 * pale);
+  through = mix(through, vec3(2.3, 1.15, 0.24), 0.5 * pale);
+  // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
+  through *= mix(vec3(0.62, 0.48, 0.3), vec3(1.0), unfolded);
+  // A ray just opened is still thick with sap: the light through it is deep orange, and it thins to yellow over the next second.
+  through *= mix(vec3(0.5, 0.36, 0.22), vec3(1.0), vState.z);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
@@ -146,7 +151,7 @@ void main() {
   float seam = (1.0 - smoothstep(0.0, 0.13, pleatAt)) * fresh * (0.75 + 0.25 * sin(u * 23.0 + own * 40.0));
   t.albedo *= 1.0 - 0.72 * seam;
   t.through *= 1.0 - 0.85 * seam;
-  t.occlusion = (1.0 - 0.7 * seam) * mix(0.4, 1.0, smoothstep(0.0, 0.5, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
+  t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `

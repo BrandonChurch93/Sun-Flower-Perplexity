@@ -1,25 +1,23 @@
 import * as THREE from 'three'
 import { right, toward } from '../field/layout.ts'
 
-// The stand-in keeps the disc of this radius round the plant's foot and everything further than `keepTowardM` on the camera's side.
-export const keepRadiusM = 1.0
-export const keepTowardM = 0.3
+// The near ground is the disc of this radius round the plant's foot.
+export const nearRadiusM = 1.0
 
-const GROWTH = 1.3
-const INNER_RINGS = 21
-const OUTER_RINGS = 35
-const SOIL_SIDES = 40
-const NEAR_SIDES = 28
+// Each ring of the near ground is this much wider than the one inside it, so its cells are near square and finest at the stem.
+export const nearGrowth = 1.035
+const NEAR_RINGS = 181
+const SIDES = 180
+const FAR_GROWTH = 1.3
+const FAR_RINGS = 35
 
-const edge = (r: number): number => Math.acos(Math.max(-1, -keepTowardM / r))
-
-function sector(rings: number[], sides: number, angle: (r: number, s: number) => number): THREE.BufferGeometry {
+function disc(rings: number[], sides: number): THREE.BufferGeometry {
   const row = sides + 1
   const position = new Float32Array(rings.length * row * 3)
   const index: number[] = []
   rings.forEach((r, j) => {
     for (let s = 0; s < row; s++) {
-      const a = angle(r, s)
+      const a = Math.PI * ((2 * s) / sides - 1)
       const c = -Math.cos(a) * r
       const k = Math.sin(a) * r
       const v = (j * row + s) * 3
@@ -36,21 +34,17 @@ function sector(rings: number[], sides: number, angle: (r: number, s: number) =>
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(position, 3))
   geometry.setIndex(index)
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), rings[rings.length - 1] + 0.1)
   return geometry
 }
 
-const outer = (): number[] => Array.from({ length: OUTER_RINGS + 1 }, (_, k) => keepRadiusM * Math.pow(GROWTH, k))
+const far = (): number[] => Array.from({ length: FAR_RINGS + 1 }, (_, k) => nearRadiusM * Math.pow(FAR_GROWTH, k))
 
-const soilAngle = (r: number, s: number): number => edge(r) * (2 * s / SOIL_SIDES - 1)
-const nearAngle = (r: number, s: number): number => edge(r) + (2 * Math.PI - 2 * edge(r)) * (s / NEAR_SIDES)
-
-export function soilGeometry(): THREE.BufferGeometry {
-  return sector(outer(), SOIL_SIDES, soilAngle)
+export function nearGeometry(): THREE.BufferGeometry {
+  const rings = [0, ...Array.from({ length: NEAR_RINGS + 1 }, (_, k) => nearRadiusM * Math.pow(nearGrowth, k - NEAR_RINGS))]
+  return disc(rings, SIDES)
 }
 
-export function nearGeometry(): THREE.BufferGeometry[] {
-  const inner = [0, ...Array.from({ length: INNER_RINGS + 1 }, (_, k) => keepRadiusM * Math.pow(GROWTH, k - INNER_RINGS))]
-  const all = SOIL_SIDES + NEAR_SIDES
-  const disc = sector(inner, all, (_, s) => (s <= SOIL_SIDES ? soilAngle(keepRadiusM, s) : nearAngle(keepRadiusM, s - SOIL_SIDES)))
-  return [disc, sector(outer(), NEAR_SIDES, nearAngle)]
+export function soilGeometry(): THREE.BufferGeometry {
+  return disc(far(), SIDES)
 }
