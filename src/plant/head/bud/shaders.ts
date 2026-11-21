@@ -70,12 +70,13 @@ void main() {
     float fine = hash21(floor(vec2(x * 40.0, u * 220.0) + seed * 50.0));
     float vein = abs(fract(x * 2.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
     float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
-    float keel = smoothstep(0.1, 0.0, ax);
+    float keel = smoothstep(0.09, 0.0, ax);
+    float blotch = valueNoise(vec2(x * 2.3 + seed * 37.0, u * 7.0 + seed * 53.0));
     float toTip = smoothstep(0.3, 1.0, u);
     vec3 dark = mix(vec3(0.03, 0.078, 0.04), vec3(0.068, 0.14, 0.058), grain);
     vec3 pale = mix(vec3(0.11, 0.2, 0.066), vec3(0.17, 0.27, 0.078), grain);
-    vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.3 * keel + 0.4 * line + 0.12 * rank * (1.0 - toTip)));
-    albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
+    vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.45 * keel + 0.6 * line + 0.12 * rank * (1.0 - toTip) + 0.3 * (blotch - 0.5)));
+    albedo = mix(albedo, pale * 1.15, smoothstep(0.8, 1.0, ax) * 0.75);
     albedo *= 0.93 + 0.14 * fine;
     if (inner) albedo = mix(albedo, vec3(0.12, 0.19, 0.08), 0.7);
     else albedo *= vec3(1.1, 1.22, 1.05);
@@ -85,7 +86,7 @@ void main() {
     t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.16, thin) * (0.8 + 0.4 * grain);
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
     float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
-    albedo = mix(albedo, pale, 0.25 * rib);
+    albedo = mix(albedo, pale, 0.45 * rib);
     t.albedo = albedo;
     height = 0.0003 * grain + 0.0003 * line + 0.00045 * keel + 0.0002 * rib + 0.00006 * fine;
     float buried = smoothstep(0.0, 0.16, u);

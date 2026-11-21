@@ -204,7 +204,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = across * (shape.nv - 1)
         hairKind[n] = 2
-        hairLong[n] = keel ? 0.0012 + 0.0018 * rnd(523 + b, i) : 0.0006 + 0.0012 * rnd(523 + b, i)
+        hairLong[n] = keel ? 0.0016 + 0.002 * rnd(523 + b, i) : 0.001 + 0.0016 * rnd(523 + b, i)
       }
     }
   }
@@ -376,7 +376,7 @@ export function create(options: PartOptions): PlantPart | null {
       const stand = lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], 0.2) + 0.3 * k.lean, under)
       const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], Math.max(back, under)) + 0.5 * k.lean, folded)
-      const hook = (k.hook + LOW_HOOK * under) * smoothstep(0, 0.5, folded)
+      const hook = (k.hook * (1 - 0.75 * back) + LOW_HOOK * under) * smoothstep(0, 0.5, folded)
       const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under)
       const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series], ready), -0.22, folded)
       const hugEnd = k.hug
