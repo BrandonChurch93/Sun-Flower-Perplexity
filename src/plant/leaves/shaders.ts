@@ -140,7 +140,7 @@ void main() {
   vec3 through = mix(vec3(0.2, 0.3, 0.07), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
   through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
-  through *= 1.0 - 0.88 * vein.r;
+  through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe);
   through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
