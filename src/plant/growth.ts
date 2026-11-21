@@ -70,7 +70,8 @@ export function stemBaseRadius(time: number): number {
   const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
   const settled = smoothstep(30, 40.3, time)
   if (settled >= 1) return full
-  return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled)
+  const lean = 1 - 0.14 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
+  return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled) * lean
 }
 
 export function stemRadius(time: number, u: number): number {
@@ -288,13 +289,13 @@ export function huskDrop(time: number): number {
   return k * k
 }
 
-export const huskLengthM = 0.011
+export const huskLengthM = 0.0143
 
 // The husk lies in the crumbs until the rain has beaten the soil over it.
 export function huskSize(time: number): number {
   return 1 - smoothstep(leaves0 + 3, leaves0 + 10, time)
 }
-export const huskRest: Vec3 = { x: -0.0165, y: 0.0028, z: 0.006 }
+export const huskRest: Vec3 = { x: -0.0185, y: 0.0028, z: 0.022 }
 
 // When a leaf leaves the tip for good and grows at its own pace.
 function leafStart(i: number): number {
