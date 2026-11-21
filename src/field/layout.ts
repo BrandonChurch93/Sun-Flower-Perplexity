@@ -63,8 +63,8 @@ export const pictureCount = farVariants.length * pictureTurns
 
 // The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
 export const meanTurn = 0.25
-const TURN_SCATTER = 1.0
-const SIDEWAYS = 0.28
+const TURN_SCATTER = 0.8
+const SIDEWAYS = 0.2
 const SHORT = 0.1
 const STRAGGLERS = 0.05
 export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
