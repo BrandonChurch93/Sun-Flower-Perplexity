@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 15:50 UTC · Round 6: pack built and checked (24.7 min); Phase 4 line pushed at 5a144fa
+- Last push: 2026-11-21 15:53 UTC · Round 6: R1 (5) and R4 (5) answers, word for word
 - Last status: 35 · 2026-11-21 15:29 UTC · Phase 3 · unit bloom · round 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 8.79 h |
+| 3 | 9.00 h | 8.95 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 14.84 h |
+| Whole build | 30.00 h | 15.00 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -644,10 +644,10 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Machine checks (`npm run gate -- --phase 3 --machine`, started 14:56:45 UTC): 15:10:19 UTC, all 13 green. G2 98 of 98 tests; G3 determinism passes (3 frames, 16x9, `review`); G11 texture memory web 106 MB of 800, full 327 MB of 2400; G12 worst ratio 1.00 at each of the four cuts (the limit is 1.5); G13 no finished unit yet, 6 stand-ins remain and none is in a finished unit
 - [x] Measures (`npm run measure -- --unit bloom`, the judged stills at `final`, 404.4 s and 429.0 s, slower than round 5's 278 s and 284 s because the Builder ran the tests of the Phase 4 line twice on the same two cores meanwhile): 15:24 UTC. M1, M2 and M3 all pass at both frames, the first round in which M3 does. M1: blur circle at the tip 1.44 px at frame 1350 and 0.55 px at 1515 (limit 1.5). M2: 0.00 % of 121033 and of 147750 textured pixels in the sharp zone under 1 texel per pixel. M3: 0.860 at frame 1350 (our energy 13.266 against the approved's 15.434, 204733 sharp pixels) and 0.944 at frame 1515 (14.084 against 14.921, 244740 pixels); 0.8 is needed. Round 5 at `final` read 0.672 and 0.786. Numbers in `out/work/measures/bloom.json`
 - [x] Pack (`npm run pack -- --phase 3 --round 6 --unit bloom`): ended 15:49:32 UTC, built in 24.7 min, exit 0 (round 5: 17.4 min; the Builder ran the Phase 4 line's type check and tests on the same two cores for two of those minutes, and the frames before the cut now carry the frost world's nine skyline layers); `out/work/packs/round-006/` (R1 eight images, R2 four, R3 six, R4 four, each with its manifest), key outside the packs in `out/work/packs/keys/round-006.json` (engine `5ac2814e4342d561`, `bloom` `a3c4425208d2ca9c`, tier `final`). The Builder looked at every file before sending: pairs and crops are the right frames at the right places, labels match the manifests, the motion sheets hold frames 1200 to 1559, the run 1331 to 1342 and the cut's frames 1194 to 1205, the jury's two judged files are byte for byte the R1 and R3 frames and its two controls the approved pair, and nothing in a name or a label says which image is ours
-- [ ] R1 answer
+- [x] R1 answer: `reviewer_52`, GPT family, sent 15:51 UTC, answered 15:52 UTC. Score 5, not a pass: 4 severe, 12 major. `scorecards/round-006/R1.json`, word for word. Severe at both frames: the sun ("a large round white bloom and broad yellow wash swallow the leaf edge and nearby horizon. The target has a much smaller hot spot just under the leaf, with directional rays and visible sky and ridge around it") and the near neighbor at the left edge ("large blue-green blades project much farther into the lower left, and the broad upper leaf sits higher and intersects the sun differently"). Major at both frames: the head, the stem and its hairs, the hero leaves, the field and the air in front of it, the far skyline, the upper sky
 - [ ] R2 jury answers
 - [ ] R3 answer
-- [ ] R4
+- [x] R4: `reviewer_54` (Claude), sent 15:51 UTC, answered 15:52 UTC: **5**, not a pass, 1 severe, 2 major, 2 minor. `scorecards/round-006/R4.json`, word for word. Severe: "the camera stops. The horizon falls 117→113→109→107 px across the first four tiles, then holds at 106 px for about 7.5 s with the sun fixed at the same spot, and only moves again at 52.0 s" (the hold between the two fitted keys that round 5's fix for the reversal put in: the two approved images share one view of the far background). Major: "a pale yellow-green petal appears between two consecutive frames left of the disc" at frames 1339 to 1340; "the inner petal pattern rearranges from frame to frame ... Petals boil and re-form instead of each one following a steady unfolding path". Minor: a crawl in the lit rims of bracts and hairs; the crop's brightness falls from 59 to 54 levels in 0.4 s. The cut at 40.00 s and the single frame jumps of the skyline, named in rounds 3 to 5, are not named
 - [ ] Fixes
 - [ ] Summary, status, push
 - Result: pending
@@ -737,6 +737,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 15:30 UTC · Status 35: round 6 measures pass at final (M3 0.860 and 0.944); bloom clip joined; first Phase 4 reports in
 - 2026-11-21 15:42 UTC · Phase 4: first reports from eight builders, the line's contents and the Builder's shared decisions (skyline through the film, sky.even, f-numbers, growth patches, shutter ruling)
 - 2026-11-21 15:50 UTC · Round 6: pack built and checked (24.7 min); Phase 4 line pushed at 5a144fa
+- 2026-11-21 15:53 UTC · Round 6: R1 (5) and R4 (5) answers, word for word
 
 ## Session log
 
