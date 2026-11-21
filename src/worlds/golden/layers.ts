@@ -55,6 +55,9 @@ ${air}
 ${skylineCanopy}
 void main() {
   float top = vInfo.z;
+  vec2 bearing = normalize(vWorld.xz);
+  vec2 sunward = normalize(uSunDir.xz);
+  float az = atan(sunward.x * bearing.y - sunward.y * bearing.x, dot(sunward, bearing));
 #ifdef TREES
   top *= skylineCanopy(vInfo.x, uCrown, uLayer, uFloor);
   top *= 1.0 - uLate * uRag * (0.16 * valueNoise(vec2(vInfo.x * 5.3 / uCrown, uLayer + 21.0)) + 0.09 * valueNoise(vec2(vInfo.x * 17.0 / uCrown, uLayer + 27.0)));
@@ -62,9 +65,7 @@ void main() {
   float mass = valueNoise(vec2(vInfo.x * 3.3 / uCrown, vInfo.y * 4.5 / uCrown + uLayer));
 #else
 #ifdef WOOD
-  vec2 bearing = normalize(vWorld.xz);
-  vec2 sunward = normalize(uSunDir.xz);
-  float stand = 1.0 - smoothstep(0.07, 0.4, atan(sunward.x * bearing.y - sunward.y * bearing.x, dot(sunward, bearing)));
+  float stand = 1.0 - smoothstep(0.07, 0.4, az);
   top += uWoodM * (uLate * stand * skylineCanopy(vInfo.x, uCrown, uLayer, uFloor) * (0.62 + 0.26 * valueNoise(vec2(vInfo.x * 4.1 / uCrown, uLayer + 21.0)) + 0.12 * valueNoise(vec2(vInfo.x * 13.0 / uCrown, uLayer + 27.0))) - 1.0);
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * uReach * 0.012, vInfo.y * uReach * 0.03 + uLayer));
@@ -87,12 +88,14 @@ void main() {
 #endif
   color = mix(aerial(color, seen), 1.3 * airTone(v), 0.1 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
-  vec3 tone = mix(vec3(0.07, 0.085, 0.09), vec3(0.2, 0.15, 0.1), exp(-theta / 0.6)) + vec3(1.2, 0.75, 0.4) * exp(-theta / 0.07);
+  vec3 tone = mix(vec3(0.07, 0.085, 0.09), vec3(0.21, 0.165, 0.125), exp(-theta / 0.6)) + vec3(1.2, 0.75, 0.4) * exp(-theta / 0.07);
   float haze = uHaze;
 #ifdef WOOD
   haze = mix(0.36, uHaze, stand);
 #endif
   float share = haze + (1.0 - haze) * (0.8 * exp(-theta / 0.06) + 0.12 * exp(-theta / 0.3));
+  share += (1.0 - share) * 0.3 * smoothstep(0.0, 0.1, az) * exp(-max(az, 0.0) / 0.4);
+  share *= 1.0 - 0.6 * smoothstep(0.1, 0.25, -az) - 0.5 * smoothstep(0.6, 0.9, az);
   // The crowns thin out toward their tops and let the sky through.
   share += (1.0 - share) * 0.45 * uRag * smoothstep(0.8, 1.0, vInfo.y / max(top, 1.0));
   color = mix(color, mix(uDark * (0.6 + 0.8 * leaf), tone, share), uLate);
