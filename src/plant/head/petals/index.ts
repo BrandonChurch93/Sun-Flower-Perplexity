@@ -44,6 +44,8 @@ const GAP_COMB = 0.5
 const GAP_REACH = 0.16
 // After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
 const LATE_FROM_S = 52
+// A neighbor's clock runs up to 1.5 s ahead of the plant's. From this second of its own clock a ray also draws out long and narrow.
+const DRAWN_FROM_S = 53.55
 // The late whorl: rays of the hero head that come out between the others after the bloom, each from its own foot, shorter than the first.
 const LATE_RAYS = 13
 const LATE_SCALE = [0.75, 0.95]
@@ -97,6 +99,8 @@ interface Ray {
   nickSide: number
   seed: number
   lateLong: number
+  lateDrawn: number
+  lateSlim: number
   lateWide: number
   lateLay: number
   lateDroop: number
@@ -119,7 +123,7 @@ function between(rays: Ray[], host: number): number {
 function makeLate(seed: number, count: number): Ray[] {
   return makeRays(combine(seed, 977))
     .slice(0, count)
-    .map((ray) => ({ ...ray, rank: 0.5, deep: 0.5, cut: 0, short: 1, hard: 0, nickRow: -1, lateLong: 0, lateWide: 0, lateLay: 0, lateDroop: 0, lateCurl: 0, lateTwist: 0 }))
+    .map((ray) => ({ ...ray, rank: 0.5, deep: 0.5, cut: 0, short: 1, hard: 0, nickRow: -1, lateLong: 0, lateDrawn: 0, lateSlim: 0, lateWide: 0, lateLay: 0, lateDroop: 0, lateCurl: 0, lateTwist: 0 }))
 }
 
 function outline(u: number): number {
@@ -187,6 +191,8 @@ function makeRays(seed: number): Ray[] {
       seed: r(12, k),
       lateLong: r(37, k) < 0.14 ? 0.03 : 0.06 + 0.16 * r(60, k),
       lateWide: 0.12 * r(61, k),
+      lateDrawn: r(37, k) < 0.14 ? 0.05 : 0.14 + 0.09 * r(60, k),
+      lateSlim: 0.1 + 0.32 * r(61, k),
       lateLay: rank ? -0.04 - 0.1 * r(62, k) : r(62, k) < 0.3 ? 0.1 + 0.12 * r(63, k) : -0.05 * r(63, k),
       lateDroop: 0.03 + 0.1 * r(64, k),
       lateCurl: rank ? (r(65, k) < 0.45 ? 0.5 + 0.9 * r(66, k) : 0.15 * r(66, k)) : r(65, k) < 0.25 ? 0.25 + 0.35 * r(66, k) : 0.1 * r(66, k),
@@ -302,6 +308,8 @@ export function create(options: PartOptions): PlantPart | null {
       return smooth(start, start + mix(least, most, hash01(seed, slot + 1, k)), time)
     }
     const longer = late(70, 0, 3.5, 3, 5)
+    const drawnFrom = DRAWN_FROM_S + 1.2 * hash01(seed, 84, k)
+    const drawn = smooth(drawnFrom, drawnFrom + mix(2.2, 3.5, hash01(seed, 85, k)), time)
     const sunk = late(72, 0, 2.5, 3, 4.5)
     const curled = late(74, 0.5, 4, 2.5, 4)
     const twisted = late(76, 0.3, 4.5, 2.5, 4)
@@ -325,7 +333,7 @@ export function create(options: PartOptions): PlantPart | null {
     const side = (n: number) => (rayOpen((k + n + rayCount) % rayCount, time) + rayOpen((k + 2 * n + rayCount) % rayCount, time)) * 0.5
     const comb = m < 0 ? GAP_COMB * (side(2) - side(-2)) : 0
     const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0.02, 0.1, ray.cut)) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
-    const length = scale * (rayLength(host, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(host, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short * (1 + ray.lateLong * longer)
+    const length = scale * (rayLength(host, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(host, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short * (1 + ray.lateLong * longer + ray.lateDrawn * drawn)
     Object.assign(frame, rayFrameAt(pose, host))
     if (m >= 0) {
       const beside = rayFrameAt(pose, (host + 1) % rayCount)
@@ -366,7 +374,7 @@ export function create(options: PartOptions): PlantPart | null {
     let ny = frame.ny
     let nz = frame.nz
     const wind = pose.inputs.wind * flutter(time, ray.seed)
-    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer) * Math.pow(scale, 0.75)
+    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer - ray.lateSlim * drawn) * Math.pow(scale, 0.75)
     const fresh = 1 - smooth(0.02, 0.45, open)
     const ripe = smooth(0.8, 1, open)
     let pitch0 = 0
