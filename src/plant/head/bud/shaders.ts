@@ -83,7 +83,11 @@ void main() {
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
     t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.16, thin) * (0.8 + 0.4 * grain);
-    height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
+    float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
+    float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
+    albedo = mix(albedo, pale, 0.25 * rib);
+    t.albedo = albedo;
+    height = 0.0003 * grain + 0.0003 * line + 0.00045 * keel + 0.0002 * rib + 0.00006 * fine;
     float buried = smoothstep(0.0, 0.16, u);
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0);
