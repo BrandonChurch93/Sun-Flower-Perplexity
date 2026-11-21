@@ -77,7 +77,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   // The sun's disc is drawn as the whole fog lets it through, so no bank covers it again. Late in the frost the banks thin round it.
   float thick = mix(smoothstep(0.3, 0.72, here), 1.0, BANK_SOLID) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
-  float edge = 1.0 - smoothstep(0.7, 1.0, vInfo.y / vInfo.z);
+  float edge = 1.0 - smoothstep(0.85, 1.0, vInfo.y / vInfo.z);
   float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d);
   outColor = vec4(fogLight(v) * (1.0 + 0.6 * lit), alpha);
 }
@@ -89,10 +89,10 @@ const BANKS: Bank[] = [
   { radiusM: 3.8, topM: 1.9, scaleM: 3, alpha: 0.2, speed: 0.07 },
   { radiusM: 5, topM: 1.9, scaleM: 3.5, alpha: 0.32, speed: 0.06 },
   { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.48, speed: 0.09 },
-  { radiusM: 10, topM: 1.95, scaleM: 7, alpha: 0.55, speed: 0.08 },
-  { radiusM: 15, topM: 2, scaleM: 10, alpha: 0.68, speed: 0.11 },
-  { radiusM: 24, topM: 2.1, scaleM: 15, alpha: 0.68, speed: 0.1 },
-  { radiusM: 42, topM: 2.3, scaleM: 26, alpha: 0.68, speed: 0.13 },
+  { radiusM: 10, topM: 1.9, scaleM: 7, alpha: 0.55, speed: 0.08 },
+  { radiusM: 15, topM: 1.65, scaleM: 10, alpha: 0.68, speed: 0.11 },
+  { radiusM: 24, topM: 1.65, scaleM: 15, alpha: 0.68, speed: 0.1 },
+  { radiusM: 42, topM: 1.65, scaleM: 26, alpha: 0.68, speed: 0.13 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
