@@ -164,7 +164,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   vec3 hue = through / max(peak, 1e-4);
   // A longer path inside the blade deepens the color.
   float slant = saturate(0.6 * (1.0 / max(ndv, 0.3) - 1.0));
-  vec3 passed = through * mix(vec3(1.0), hue, 0.6 + 0.4 * slant) * (1.0 - 0.3 * slant);
+  vec3 passed = through * mix(vec3(1.0), hue, 0.85 + 0.15 * slant) * (1.0 - 0.3 * slant);
   float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * 2.5 * against * against * against;
 
 #ifdef PLANT_FIELD
