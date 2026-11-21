@@ -43,10 +43,11 @@ void main() {
   vEnds = vec2(position.y, 1.0 - position.y) * whole;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
-  // No two drops catch the band alike: most are dim and a few flare. Off the focus one fine drop in a few is drawn, the brighter for the rest.
-  float catchLight = mix(0.3, 2.6, pow(fract(aClose.w * 13.7 + 0.31), 3.0));
+  // No two drops catch the band alike: most are dim and a few of the fine ones flare. Off the focus one fine drop in a few is drawn, the brighter for the rest.
+  float catchLight = mix(0.3, mix(2.6, 1.0, smoothstep(0.0003, 0.0007, r)), pow(fract(aClose.w * 13.7 + 0.31), 3.0));
   float nearFocus = smoothstep(uBand.x, uBand.y, depth / uFocusM) * (1.0 - smoothstep(uBand.z, uBand.w, depth / uFocusM));
-  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0;
+  // The heavy drops far past the focus are wide soft bars under this lens: they dim with distance and go into the haze.
+  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0 - 0.75 * smoothstep(1.5, 4.0, depth / uFocusM);
   vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
   float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
@@ -77,7 +78,7 @@ void main() {
   float seen = 1.0 - vSeen;
   // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
   vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));
-  float body = (1.0 - u) * mix(1.5, 0.35, seen);
+  float body = (1.0 - u) * mix(1.5, 0.12, seen);
   // Seen from above, a drop shows the dark land behind it and little of the band.
   float rise = normalize(vWorld - uCamPos).y;
   float level = smoothstep(-0.12, 0.0, rise);

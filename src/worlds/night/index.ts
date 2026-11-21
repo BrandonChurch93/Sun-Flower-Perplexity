@@ -11,14 +11,13 @@ export const world: WorldSettings = {
   backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
   fog: { color: [0.02, 0.034, 0.05], sunTint: [0.02, 0.03, 0.04], density: 0.006, falloff: 1.2 },
   grade: { exposure: 1.35, contrast: 1.4, white: 5, saturation: 0.92, gain: [0.92, 1, 0.98], lift: [0.0012, 0.0028, 0.0028], bloom: 0.07, bloomKnee: 0.9, vignette: 0.36, grain: 0.016 },
-  ground: { wet: 0, frost: 0, dew: 1 },
+  ground: { wet: 0.7, frost: 0, dew: 1, plantWet: 0 },
   wind: 0.1,
 }
 
-// Cold and low: a thin layer in the crop under eye level, and a broken bank over the far field to the foot of the hills. The moon's wide glow in the mist is 0.34 rad across.
-const MOON_GLOW = { lobeRad: 0.34 }
-const MIST: MistSettings = { ...MOON_GLOW, fromM: 3.7, toM: 40, sheets: 10, heightM: 0.11, thickness: 0.97, lit: [0.4, 0.4, 0.36], shade: [8.2, 5.4, 3.3], forward: 1, drift: [0.04, 0.015], bankM: 6, broken: 0.6 }
-const BANK: MistSettings = { ...MOON_GLOW, fromM: 30, toM: 75, sheets: 3, heightM: 0.38, thickness: 0.35, lit: [0.55, 0.55, 0.5], shade: [6.8, 4.5, 2.8], forward: 1, drift: [0.03, 0.01], bankM: 3, broken: 1 }
+// Cold and low: a thin layer in the crop under eye level, and a broken bank over the far field to the foot of the hills.
+const MIST: MistSettings = { fromM: 6.5, toM: 60, sheets: 10, heightM: 0.14, thickness: 0.92, lit: [0.4, 0.4, 0.36], shade: [8.2, 5.4, 3.3], forward: 1, drift: [0.55, 0.2], bankM: 6, broken: 0.6, lobeRad: 0.34, rise: 0.6 }
+const BANK: MistSettings = { fromM: 50, toM: 75, sheets: 3, heightM: 0.34, thickness: 0.999, lit: [0.55, 0.55, 0.5], shade: [6.8, 4.5, 2.8], forward: 1, drift: [0.9, 0.35], bankM: 8, broken: 0.85, lobeRad: 0.34 }
 
 // The sky is painted for the grade below: its curve undoes the grade's contrast and its saturation the grade's, so the sky keeps the approved's tones while the plant gets the harder light.
 const SKY_GAIN = 0.69
