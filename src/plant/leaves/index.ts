@@ -534,7 +534,7 @@ export function create(options: PartOptions): PlantPart {
       lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
-    const crease = main ? fold + leaf.crease * grown : (fold + leaf.crease * grown) * leafFoldScale(i, time)
+    const crease = main ? fold + leaf.crease * grown * (1 - 0.6 * early) : (fold + leaf.crease * grown) * leafFoldScale(i, time)
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     const { nu, nv } = leaf
