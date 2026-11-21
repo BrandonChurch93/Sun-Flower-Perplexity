@@ -84,9 +84,9 @@ void main() {
   float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 2.0) * (1.0 - under);
   // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
   float late = smoothstep(RIPE_FROM, RIPE_FROM + 4.0, f.time);
-  float over = smoothstep(mix(1.0, 6.5, late), mix(9.5, 14.0, late), aFloret.z - f.time) * (1.0 - edge);
+  float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge) * (1.0 - smoothstep(SHOWN_FROM, SHOWN_FROM + 4.0, f.time));
   // No floret is wider than its share of the floor.
-  float girth = mix((0.88 + 0.2 * h2) * mix(mix(0.8, 0.68, late), 1.0, smoothstep(0.3, 0.75, rho)), 1.0, open);
+  float girth = mix((0.88 + 0.2 * h2) * mix(mix(0.8, 0.68, late), 1.0, smoothstep(0.3, 0.75, rho)) * mix(0.72, 1.0, smoothstep(0.0, 0.3, rho)), 1.0, open);
 
   float tilt = aSeed.w * 6.2832;
   vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.1 + 0.2 * open) * aSeed.x);
@@ -180,9 +180,9 @@ void main() {
     turn = mix(turn, (twin - 0.5) * 1.1, edge);
     vec3 away = fx * cos(turn) + fy * sin(turn);
     vec3 across = cross(axis, away);
-    float far = (1.5 + 1.3 * hs) * (1.0 - 0.25 * twin);
+    float far = (1.5 + 1.3 * hs) * (1.0 - 0.25 * twin) * (1.0 + 0.3 * late);
     float x = w * (level < 0.5 ? 0.52 : level < 1.5 ? mix(aShape.w > 0.5 ? 0.58 : 0.42, -0.1, over) : mix(0.4, -far, over));
-    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.2, over));
+    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, mix(0.2, 0.15, late), over));
     float z = level < 0.5 ? -0.08 * high : level < 1.5 ? mix(0.62 * high, lid + 0.06 * w * aShape.w, over) : mix(high, lid + 0.05 * w, over);
     local = f.at + away * x + across * y + axis * z;
     normal = normalize(away * mix(1.0, 0.25, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
@@ -268,18 +268,18 @@ void main() {
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(mix(0.3, 0.18, ripe), mix(0.85, 0.75, ripe), along);
-    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.14, 0.15, 0.019), centre);
-    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.25, 0.31, 0.045), centre);
+    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.16, 0.165, 0.02), centre);
+    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.22, 0.27, 0.04), centre);
     float olive = 4.0 * centre * (1.0 - centre);
     dark += vec3(0.03, 0.01, 0.0) * olive;
     pale += vec3(0.06, 0.02, 0.0) * olive;
     vec3 ochre = vec3(0.31, 0.12, 0.015);
     dark = mix(dark, ochre * 0.6, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
-    vec3 closed = mix(dark, pale, ridge);
+    vec3 closed = mix(dark, pale, ridge) * (1.0 + 0.35 * smoothstep(0.8, 1.0, along));
     vec3 young = mix(vec3(0.06, 0.12, 0.028), vec3(0.17, 0.275, 0.062), ridge);
-    young = mix(young, vec3(0.24, 0.36, 0.09), smoothstep(0.75, 1.0, along) * (0.05 + 0.2 * vKind.w));
-    closed = mix(young * mix(0.32, 1.0, deep), closed, ripe) * tone;
+    young = mix(young, vec3(0.24, 0.36, 0.09), smoothstep(0.7, 1.0, along) * (0.45 + 0.3 * vKind.w));
+    closed = mix(young * mix(0.6, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.16, 0.052, 0.007), vec3(0.24, 0.085, 0.011), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
     flower = mix(flower, pollen, 0.25 * smoothstep(0.55, 0.75, grain) * smoothstep(0.5, 1.0, along));
@@ -318,7 +318,7 @@ void main() {
     t.sheen = 0.25;
   } else {
     vec3 young = mix(vec3(0.09, 0.17, 0.045), vec3(0.3, 0.42, 0.1), along);
-    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.105, 0.105, 0.014), mix(vec3(0.26, 0.16, 0.02), vec3(0.13, 0.215, 0.035), centre), along), open);
+    vec3 green = mix(vec3(0.2, 0.085, 0.014), mix(vec3(0.105, 0.105, 0.014), mix(vec3(0.26, 0.16, 0.02), vec3(0.15, 0.245, 0.04), centre), along), open);
     vec3 dry = vec3(0.22, 0.075, 0.012);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
     t.albedo = mix(young * mix(0.6, 1.0, deep), grownUp, ripe) * (0.85 + 0.3 * around) * tone;
