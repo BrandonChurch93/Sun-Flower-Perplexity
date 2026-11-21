@@ -1,4 +1,5 @@
 import { frostGlsl } from './frost/index.ts'
+import { wetGlsl } from './wet/film.ts'
 
 // The skin of the plant: one way of lighting every part of it.
 // `real` turns true once this folder holds the plant's skin at its real quality.
@@ -95,13 +96,20 @@ vec3 tissueSky(vec3 n, float shown) {
 }
 
 ${frostGlsl}
+${wetGlsl}
 
 vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
+  float wet = uPlantWet;
+  // How deep the water stands here. A part that does not say where the pixel is wears an even damp film.
+  float film = 0.25;
+#ifndef PLANT_FIELD
+  if (wet > 0.0 && margin >= 0.0) film = wetFilm(at, margin);
+#endif
   // A film of water fills the fine relief.
-  vec3 N = normalize(mix(t.normal * turn, F, 0.6 * uPlantWet));
+  vec3 N = normalize(mix(t.normal * turn, F, wet * (0.5 + 0.45 * film)));
   vec3 L = uSunDir;
   float ndl = dot(N, L);
   float fdl = dot(F, L);
@@ -122,11 +130,11 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   float wax = t.wax;
   float fuzz = t.sheen;
 
-  float wet = uPlantWet;
-  albedo = mix(albedo, albedo * (0.38 + 0.62 * albedo), wet);
-  rough = mix(rough, min(rough, 0.3), wet);
+  if (wet > 0.0) albedo = mix(albedo, wetAlbedo(albedo), wet);
+  rough = mix(rough, min(rough, mix(WET_ROUGH_THIN, WET_ROUGH_DEEP, film)), wet);
   wax = mix(wax, 1.0, wet);
-  fuzz *= 1.0 - 0.6 * wet;
+  // Wet down lies flat under the water.
+  fuzz *= 1.0 - 0.8 * wet;
 
   float dew = uPlantDew * (1.0 - wet);
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
