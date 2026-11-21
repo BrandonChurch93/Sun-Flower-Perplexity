@@ -70,7 +70,7 @@ const LOW_SWING = 0.5
 // Once it stands free in the collar a bract is folded along its midrib like a boat, by up to this angle each side, so it shows a lit flank and a dark one from any side. Flat again against the cone and behind the rays, where a deep fold would cut into them.
 const KEEL = 0.55
 // In the collar a bract under the head lies back toward the stem, from this angle off the axis, and curls under by up to this much, each by its own amount, so the lower ones are uneven and half hidden. The head looks up, so anything less would hang straight down.
-const LOW_AWAY = 2.3
+const LOW_AWAY = 1.85
 const LOW_CURL = 0.8
 // With more bracts than this each one is narrower, so they still overlap by the same share.
 const BRACTS_BROAD = 56
@@ -124,7 +124,7 @@ export function create(options: PartOptions): PlantPart | null {
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: HOOK * (0.5 + 0.5 * rnd(18, i)),
       low: series === 2 ? LOW_CURL * (0.9 + 0.45 * rnd(17, i)) : LOW_CURL * (0.35 + 0.75 * rnd(17, i)),
-      away: LOW_AWAY + 0.45 * rnd(901, i),
+      away: LOW_AWAY + 0.75 * rnd(901, i),
       reflex: series === 2 ? 1.0 + 0.9 * rnd(19, i) : series === 1 ? 0.7 + 0.9 * rnd(19, i) : 0.3 + 0.8 * rnd(19, i),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
