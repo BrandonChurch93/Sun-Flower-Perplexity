@@ -80,17 +80,17 @@ vec3 dampened(vec3 albedo, float damp) {
   return mix(albedo, mix(albedo, vec3(luma) * vec3(0.85, 1.1, 1.0), 0.9) * mix(0.3, 0.07, damp * damp * damp * damp), damp);
 }
 float sheen(float wet, float dew) {
-  return max(wet * wet, 0.5 * dew);
+  return max(wet * wet, 0.65 * dew);
 }
 // The sky's light on a face. When the sun is low its glow fills only its own side of the horizon, so faces turned away from it get the cool sky overhead.
 vec3 groundAmbient(vec3 n) {
   float away = saturate(0.6 - dot(n.xz, normalize(uSunDir.xz + vec2(1e-5, 0.0)))) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
-  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * 2.6, 0.6 * away);
+  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.5, 0.95 * away);
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
   float skim = 1.0 - saturate(dot(v, hv));
-  return 0.5 + 3.0 * skim * skim * skim * skim;
+  return 0.8 + 5.5 * skim * skim * skim * skim;
 }
 float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
