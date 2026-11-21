@@ -95,6 +95,7 @@ export class Post {
     uStarLen: { value: 1 },
     uGlow: { value: 0 },
     uShafts: { value: 0 },
+    uSunClear: { value: 0 },
     uFarFill: { value: 1 },
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
@@ -257,6 +258,7 @@ export class Post {
       g.uStar.value = seen && sun ? look.star * sun.weight : 0
       g.uGlow.value = seen && sun ? look.glow * sun.weight : 0
       g.uShafts.value = seen && sun ? look.shafts * sun.weight : 0
+      g.uSunClear.value = look.sunClear
       g.uFarFill.value = sun ? Math.min(sun.farCircle * (samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)), maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
