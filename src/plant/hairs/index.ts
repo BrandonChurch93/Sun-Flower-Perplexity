@@ -20,6 +20,7 @@ const REGATHER_M = 0.03
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
 const STRAND_PX = 0.4
+const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
@@ -400,7 +401,10 @@ export class HairSet {
       const own = la[o + 3]
       let share = 1
       const scale = (size * perM) / w
-      const part = Math.min(1, (this.widthM * thick * scale) / STRAND_PX) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
+      // A hair too short on the screen to show as a strand stands for itself, so a part with short hairs loses none of their light.
+      const brief = Math.min(1, Math.max(0, (length * scale - STRAND_FROM_PX) / STRAND_FROM_PX))
+      const fine = Math.min(1, (this.widthM * thick * scale) / STRAND_PX)
+      const part = (1 - brief * (1 - fine)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
       if (part < 1) {
         const keep = part * (1 + THIN_EASE)
         const h = (own * 151.37 + 0.11) % 1
