@@ -17,7 +17,7 @@ const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
 // Hairs that stand closer on the screen than this share of a pixel covered hide one another: only that many of them show.
-const CROWD_COVER = 0.05
+const CROWD_COVER = 0.06
 const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
@@ -36,7 +36,7 @@ uniform vec3 uHairColor;
 uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
-const float SUN_THROUGH = 2.5;
+const float SUN_THROUGH = 3.2;
 // A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
 const float SUN_PALE = 0.35;
 const float SUN_DEEPEN = 0.6;
@@ -287,7 +287,7 @@ export class HairSet {
   private readonly at: Float32Array
   private crowd = new Float32Array(0)
 
-  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00007) {
+  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00009) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
