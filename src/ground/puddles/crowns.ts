@@ -12,6 +12,8 @@ const GRIT = 6
 const JET_ENDS = 2
 // No splash stands within the first of these distances of the plant's foot, in meters, and a full one only beyond the second.
 const PLANT_CLEAR_M = [0.02, 0.06]
+// Nor within the first of these distances of the lens, where a bead is only a smear across the glass.
+const LENS_CLEAR_M = [0.15, 0.3]
 
 export const crownVertex = /* glsl */ `
 in vec3 position;
@@ -75,6 +77,8 @@ void main() {
   vec4 seenAt = projectionMatrix * viewMatrix * vec4(drop.x, 0.0, drop.y, 1.0);
   if (max(abs(seenAt.x), abs(seenAt.y)) > 1.1 * seenAt.w + 0.3) return;
   float clear = smoothstep(${PLANT_CLEAR_M[0].toFixed(3)}, ${PLANT_CLEAR_M[1].toFixed(3)}, length(drop.xy));
+  float lensClear = smoothstep(${LENS_CLEAR_M[0].toFixed(2)}, ${LENS_CLEAR_M[1].toFixed(2)}, distance(uCamPos, vec3(drop.x, 0.0, drop.y)));
+  clear *= lensClear;
   if (clear <= 0.0) return;
   float size = drop.w / 0.0022 * clear;
   float seed = hash21(drop.xy * 53.3 + 0.37);
@@ -111,7 +115,7 @@ void main() {
     float count = grit ? ${GRIT.toFixed(1)} : ${BEADS.toFixed(1)};
     float th = TAU * (floor((part.y + ha) / count * teeth) + 0.5 - seed * 7.0) / teeth;
     float leaves = grit ? 0.08 + 0.2 * hb : 0.18 + 0.35 * hb;
-    float radius = (grit ? 0.0004 + 0.0009 * hc : 0.0003 + 0.0008 * hc * hc + 0.0004 * onWater * hc) * (0.6 + 0.4 * size);
+    float radius = (grit ? 0.0004 + 0.0009 * hc : 0.0003 + 0.0008 * hc * hc + 0.0004 * onWater * hc) * (0.6 + 0.4 * size) * lensClear;
     float pitch = grit ? 0.45 + 0.5 * ha : 0.8 + 0.55 * ha;
     float speed = (grit ? 0.35 + 0.5 * hc : 0.45 + 0.75 * hb) * (0.55 + 0.45 * size);
     vec3 way = vec3(cos(th) * cos(pitch), sin(pitch), sin(th) * cos(pitch));
