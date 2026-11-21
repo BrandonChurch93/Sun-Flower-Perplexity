@@ -1,5 +1,5 @@
 import { config } from '../config.ts'
-import { Monotone, smoothstep } from '../core/curves.ts'
+import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { hash01, streamSeed } from '../core/random.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
@@ -13,62 +13,206 @@ export interface Vec3 { x: number; y: number; z: number }
 
 const SEED = streamSeed('plant')
 const TAU = Math.PI * 2
+const RAD = Math.PI / 180
 const heightCurve = new Monotone(config.plant.heightM)
 
+const [emerge0, emerge1] = config.plant.stages.emerge
+const [seed0, seed1] = config.plant.stages.seedLeaves
+const [leaves0, leaves1] = config.plant.stages.leaves
+const [bud0, bud1] = config.plant.stages.bud
+const [bloom0, bloom1] = config.plant.stages.bloom
+const inStage = (a: number, b: number, f: number) => a + (b - a) * f
+
 export const leafCount = config.plant.leafCount
-const [leavesStart, leavesEnd] = config.plant.stages.leaves
-const goldenRad = (config.plant.goldenAngleDeg * Math.PI) / 180
+export const rayCount = config.plant.rayFlorets
+export const bractCount = 21
+const goldenRad = config.plant.goldenAngleDeg * RAD
 const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
+const HOOK_MAX = 172 * RAD
+const discRadius = config.plant.discDiameterM / 2
+const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
 
+// The top of the whole plant: the arch of the hook, then the leaf tips, then the bracts, then the petals.
 export function heightAt(time: number): number {
   return heightCurve.at(time)
 }
 
 export function stemBaseRadius(time: number): number {
-  return 0.0011 + 0.0155 * Math.pow(smoothstep(0.02, 1.7, heightAt(time)), 0.8)
+  return 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, heightAt(time)), 0.8)
 }
 
 export function stemRadius(time: number, u: number): number {
-  return stemBaseRadius(time) * (1 - 0.55 * Math.pow(u, 1.5))
+  const taper = 0.12 + 0.43 * smoothstep(0.05, 0.6, heightAt(time))
+  return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
 }
 
-export function stemAxis(time: number, inputs: PlantInputs, u: number, out: Vec3): Vec3 {
+// The seedling comes up as an arch and straightens once it is in the light.
+export function hookAngle(time: number): number {
+  return HOOK_MAX * (1 - smootherstep(inStage(emerge0, emerge1, 0.55), emerge1, time))
+}
+
+export function hookShare(time: number): number {
+  return lerp(0.92, 0.34, smoothstep(emerge0, inStage(emerge0, emerge1, 0.5), time))
+}
+
+export function paleness(time: number): number {
+  return 1 - smoothstep(inStage(emerge0, emerge1, 0.35), inStage(seed0, seed1, 0.4), time)
+}
+
+// The bud body grows into the disc.
+const bodyCurve = new Monotone([
+  [bud0, 0],
+  [inStage(bud0, bud1, 0.053), 0.008],
+  [inStage(bud0, bud1, 0.263), 0.022],
+  [inStage(bud0, bud1, 0.579), 0.045],
+  [inStage(bud0, bud1, 0.947), 0.062],
+  [inStage(bloom0, bloom1, 0.5), discRadius * 0.94],
+  [inStage(bloom0, bloom1, 0.9375), discRadius],
+])
+
+export function bodyRadius(time: number): number {
+  return bodyCurve.at(time)
+}
+
+export function headOpen(time: number): number {
+  return smootherstep(inStage(bloom0, bloom1, 0.06), inStage(bloom0, bloom1, 0.82), time)
+}
+
+const tiltStart = bloom0 - 3
+const turnStart = inStage(bloom0, bloom1, 0.25)
+const turnEnd = inStage(bloom0, bloom1, 0.9375)
+const depthShare = new Monotone([
+  [bud0, 0.85],
+  [bloom0, 0.8],
+  [turnStart, 0.6],
+  [turnEnd, 0.375],
+])
+const neckLength = new Monotone([
+  [tiltStart, 0.07],
+  [turnStart, 0.07],
+  [turnEnd, 0.17],
+])
+
+// The bud is a ball. It flattens into the disc as it opens.
+export function bodyHalfDepth(time: number): number {
+  return bodyRadius(time) * depthShare.at(time)
+}
+const elevationCurve = new Monotone([
+  [tiltStart, 90],
+  [turnStart, 20],
+  [turnEnd, 9],
+  [config.film.durationSeconds, 5],
+])
+const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 25) * RAD
+const SUN_TURN = 42 * RAD
+const RAY_FIRST = 2.4
+
+// The head stands upright as a bud, leans over toward the light, then turns to the side it will face for good.
+export function headElevation(time: number): number {
+  return elevationCurve.at(time) * RAD
+}
+
+export function headAzimuth(time: number, inputs: PlantInputs): number {
+  const lean = Math.hypot(inputs.leanX, inputs.leanZ)
+  const toSun = Math.atan2(inputs.leanX, inputs.leanZ) - FACE_AZIMUTH
+  const turn = SUN_TURN * Math.sin(toSun) * smoothstep(0, 0.3, lean)
+  return FACE_AZIMUTH + turn * (1 - smootherstep(turnStart, turnEnd, time))
+}
+
+const outerBracts = new Monotone([
+  [bud0, 34],
+  [inStage(bud0, bud1, 0.579), 66],
+  [bloom0, 80],
+  [turnStart, 96],
+  [turnEnd, 126],
+])
+const innerBracts = new Monotone([
+  [bud0, 14],
+  [inStage(bud0, bud1, 0.579), 20],
+  [bloom0, 30],
+  [turnStart, 62],
+  [turnEnd, 104],
+])
+
+// Bracts stand in three rings: the inner ring closes over the bud, the outer ring stands away from it.
+export function bractRing(j: number): number {
+  return (j % 3) / 2
+}
+
+export function bractAngle(j: number, time: number): number {
+  return (lerp(innerBracts.at(time), outerBracts.at(time), bractRing(j)) + (hash01(SEED, 30, j) - 0.5) * 12) * RAD
+}
+
+// How far a bract curls in over the bud. It lets go as the head opens.
+export function bractCurl(j: number, time: number): number {
+  const closed = lerp(0.95, 0.1, bractRing(j))
+  return lerp(closed, -0.12, smootherstep(bloom0 - 1, turnEnd, time))
+}
+
+export function bractLength(j: number, time: number): number {
+  const r = bodyRadius(time)
+  return r <= 0 ? 0 : Math.min(0.012 * smoothstep(0, 0.01, r) + 1.25 * r, 0.078) * (0.85 + 0.3 * hash01(SEED, 31, j))
+}
+
+export function rayLength(k: number, time: number): number {
+  return rayFull * smootherstep(bloom0, bloom0 + 3, time) * (0.92 + 0.16 * hash01(SEED, 40, k))
+}
+
+// Rays open by sector: one side of the head is seconds ahead of the other.
+export function rayOpen(k: number, time: number): number {
+  const around = (k / rayCount) * TAU
+  const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.5 * hash01(SEED, 41, k)
+  const start = bloom0 + 0.3 + delay * 1.5
+  return smootherstep(start, start + 2.2, time)
+}
+
+// A ray lies folded in over the face until it opens.
+export function rayAngle(k: number, time: number): number {
+  return lerp(-60, 84 + 12 * (hash01(SEED, 42, k) - 0.5), rayOpen(k, time)) * RAD
+}
+
+export function seedLeafLength(time: number): number {
+  const grown = 0.013 + 0.024 * smoothstep(inStage(emerge0, emerge1, 0.8), seed1 + 1, time)
+  return grown * (1 - 0.6 * smoothstep(leaves0 + 8, leaves0 + 16, time)) * smoothstep(0, 0.006, heightAt(time))
+}
+
+const seedLeafSpread = new Monotone([
+  [seed0, 0.05],
+  [inStage(seed0, seed1, 0.7), 0.87],
+  [seed1, 1.08],
+  [seed1 + 6, 1.4],
+])
+
+export function seedLeafAngle(side: number, time: number): number {
+  return seedLeafSpread.at(time) * (1 + (side === 0 ? 0.13 : -0.13) * smoothstep(seed0, seed1, time))
+}
+
+// Where the seed leaves sit on the stem, as a share of its length: at its end until the true leaves push up past them.
+export function seedLeafFraction(time: number): number {
   const h = heightAt(time)
-  const young = 1 - smoothstep(0.25, 1.3, h)
-  const lean = h * (0.03 + 0.09 * young)
-  const circle = h * (0.006 + 0.03 * young)
-  const phase = TAU * (time / NUTATION_SECONDS + hash01(SEED, 1))
-  const u2 = u * u
-  out.x = (inputs.leanX * lean + Math.cos(phase) * circle) * u2
-  out.y = h * u
-  out.z = (inputs.leanZ * lean + Math.sin(phase) * circle) * u2
-  return out
+  if (time <= seed1 || h <= 0) return 1
+  const age = time - seed1
+  const node = heightAt(seed1) * 0.76 + 0.2 * (heightAt(seed1 + 2 * (1 - Math.exp(-age / 2))) - heightAt(seed1))
+  return clamp(lerp(1, node / h, smoothstep(0, 1.5, age)))
 }
 
-export function stemTangent(time: number, inputs: PlantInputs, u: number, out: Vec3): Vec3 {
-  const a = stemAxis(time, inputs, 1, out)
-  const dx = 2 * u * a.x
-  const dz = 2 * u * a.z
-  const dy = heightAt(time)
-  const l = Math.hypot(dx, dy, dz) || 1
-  out.x = dx / l
-  out.y = dy / l
-  out.z = dz / l
-  return out
+// The husk rides the tip of the seed leaves, then falls beside the stem.
+export function huskDrop(time: number): number {
+  const k = clamp((time - (seed0 + 0.2)) / 0.5)
+  return k * k
 }
 
-export function tipAt(time: number, inputs: PlantInputs, out: Vec3): Vec3 {
-  return stemAxis(time, inputs, 1, out)
-}
+export const huskLengthM = 0.011
+export const huskRest: Vec3 = { x: -0.0165, y: 0.0028, z: 0.006 }
 
 export function leafBirth(i: number): number {
-  return leavesStart + (leavesEnd - leavesStart) * Math.pow(i / (leafCount - 1), 1.6)
+  return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
 }
 
 export function leafAzimuth(i: number): number {
-  const turn = hash01(SEED, 2) * TAU
+  const turn = 0.6
   if (i < OPPOSITE_LEAVES) return turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI
   return turn + (i - OPPOSITE_LEAVES + 1) * goldenRad
 }
@@ -80,24 +224,28 @@ export function leafAge(i: number, time: number): number {
 export function leafStemFraction(i: number, time: number): number {
   const age = leafAge(i, time)
   const h = heightAt(time)
-  if (age <= 0 || h <= 0) return 1
-  const settled = heightAt(leafBirth(i) + INTERNODE_SECONDS * (1 - Math.exp(-age / INTERNODE_SECONDS)))
-  return Math.min(1, (0.93 * settled) / h)
+  if (age <= 0 || h <= 0) return 0.97
+  const rank = i / (leafCount - 1)
+  const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
+  const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
+  return Math.min(0.97, ((0.9 + 0.07 * rank * rank) * settled) / h)
 }
 
 export function leafLength(i: number, time: number): number {
   const age = leafAge(i, time)
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
-  const full = (i < 2 ? 0.14 : 0.3 * (1 - 0.55 * Math.pow(rank, 1.2))) * (0.88 + 0.24 * hash01(SEED, 10, i))
-  return full * (1 - Math.exp(-age / 4.5))
+  const full = (0.1 + 0.13 * Math.sin(Math.PI * Math.pow(rank, 0.85))) * (0.88 + 0.24 * hash01(SEED, 10, i))
+  return full * (1 - Math.exp(-Math.pow(age / 5, 1.6)))
 }
 
+// Leaves open upward, settle outward and hang when the light is gone.
 export function leafElevation(i: number, time: number, inputs: PlantInputs): number {
   const age = Math.max(0, leafAge(i, time))
-  const open = smoothstep(0, 7, age)
-  const settled = 28 - 30 * smoothstep(5, 30, age) + (hash01(SEED, 11, i) - 0.5) * 16 - (1 - inputs.lift) * 14
-  return ((78 + (settled - 78) * open) * Math.PI) / 180
+  const open = smoothstep(0, 5.5, age)
+  const hang = (1 - inputs.lift) * (12 + 18 * smoothstep(2, 14, age))
+  const settled = 24 - 26 * smoothstep(5, 30, age) + (hash01(SEED, 11, i) - 0.5) * 16 - hang
+  return ((74 + (settled - 74) * open) * Math.PI) / 180
 }
 
 export function leafFold(i: number, time: number): number {
@@ -105,19 +253,75 @@ export function leafFold(i: number, time: number): number {
   return ((80 - 70 * smoothstep(0, 6, age) + (hash01(SEED, 12, i) - 0.5) * 8) * Math.PI) / 180
 }
 
-export function plantReach(time: number): number {
-  let reach = stemBaseRadius(time) + heightAt(time) * 0.16
-  for (let i = 0; i < leafCount; i++) reach = Math.max(reach, leafLength(i, time) * 1.25 + stemBaseRadius(time))
-  return reach
+export function leafDroop(i: number, inputs: PlantInputs): number {
+  return 0.25 + 0.5 * hash01(SEED, 22, i) + 0.5 * (1 - inputs.lift)
 }
 
 export function leafSeed(i: number, j: number): number {
   return hash01(SEED, 20 + j, i)
 }
 
-export function plantNumbers(time: number, inputs: PlantInputs): number[] {
-  const tip = tipAt(time, inputs, { x: 0, y: 0, z: 0 })
-  let leafSum = 0
-  for (let i = 0; i < leafCount; i++) leafSum += leafLength(i, time)
-  return [heightAt(time), tip.x, tip.y, tip.z, stemBaseRadius(time), leafSum, inputs.leanX, inputs.leanZ, inputs.lift]
+export interface StemBend { leanX: number; leanZ: number; hook: number; hookShare: number; tiltX: number; tiltZ: number; neckShare: number }
+
+// The share of the head's tilt that the neck of the stem takes up. The rest is the head's own.
+const NECK_TILT = 0.78
+
+// How the stem leans, as angles from upright at its top. The tip circles while it grows and only the upper part bends.
+export function stemBend(time: number, inputs: PlantInputs): StemBend {
+  const h = heightAt(time)
+  const young = 1 - smoothstep(0.25, 1.3, h)
+  const lean = 0.07 + 0.16 * young
+  const circle = 0.016 + 0.085 * young * smoothstep(seed0, seed1, time)
+  const phase = TAU * (time / NUTATION_SECONDS + hash01(SEED, 1))
+  const tilt = Math.PI / 2 - headElevation(time)
+  const az = headAzimuth(time, inputs)
+  return {
+    leanX: inputs.leanX * lean + Math.sin(phase) * circle,
+    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle,
+    hook: hookAngle(time),
+    hookShare: hookShare(time),
+    tiltX: Math.sin(az) * tilt,
+    tiltZ: Math.cos(az) * tilt,
+    neckShare: h > 0 ? clamp(neckLength.at(time) / h, 0, 0.5) : 0.5,
+  }
+}
+
+function fromTilt(ax: number, az: number, out: Vec3): Vec3 {
+  const a = Math.hypot(ax, az)
+  if (a < 1e-9) {
+    out.x = 0
+    out.y = 1
+    out.z = 0
+    return out
+  }
+  const s = Math.sin(a) / a
+  out.x = ax * s
+  out.y = Math.cos(a)
+  out.z = az * s
+  return out
+}
+
+// The direction of the stem at a share u of its length.
+export function stemDirection(bend: StemBend, u: number, out: Vec3): Vec3 {
+  const upper = smoothstep(0.3, 1, u)
+  const hook = bend.hook * smoothstep(1 - bend.hookShare, 1, u)
+  const neck = NECK_TILT * smoothstep(1 - bend.neckShare, 1, u)
+  return fromTilt(bend.leanX * upper - hook + bend.tiltX * neck, bend.leanZ * upper + bend.tiltZ * neck, out)
+}
+
+// The direction the bud and the head point in.
+export function headDirection(bend: StemBend, out: Vec3): Vec3 {
+  return fromTilt(bend.leanX + bend.tiltX, bend.leanZ + bend.tiltZ, out)
+}
+
+// How far along the stem the top of the arch is, as a share of its length. It is the end of the stem once the arch has gone.
+export function archShare(time: number): number {
+  return 1 - 0.48 * hookShare(time) * (hookAngle(time) / HOOK_MAX)
+}
+
+export function plantReach(time: number): number {
+  let reach = 0
+  for (let i = 0; i < leafCount; i++) reach = Math.max(reach, leafLength(i, time) * 1.3)
+  const head = bodyRadius(time) + Math.max(rayLength(0, time) * 1.1, 0.085 * smoothstep(0, 0.02, bodyRadius(time)))
+  return stemBaseRadius(time) + heightAt(time) * 0.2 + Math.max(reach, head + 0.12 * smoothstep(tiltStart, turnStart, time), seedLeafLength(time) * 1.2, 0.024 * smoothstep(0, 0.01, heightAt(time)))
 }

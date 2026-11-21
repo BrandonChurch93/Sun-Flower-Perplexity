@@ -1,6 +1,6 @@
 import { timeOf } from '../config.ts'
 import type { CameraPose } from '../core/lens.ts'
-import { plantNumbers, tipAt } from '../plant/growth.ts'
+import { plantNumbers, tipAt } from '../plant/model.ts'
 import { poseAt } from './camera.ts'
 import { cameraNumbers } from './pose.ts'
 import { plantInputsAt } from './inputs.ts'

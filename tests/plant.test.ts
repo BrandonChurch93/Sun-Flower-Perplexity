@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount, timeOf } from '../src/config.ts'
 import { plantInputsAt } from '../src/director/inputs.ts'
-import { heightAt, leafBirth, leafCount, leafLength, plantNumbers, stemBaseRadius } from '../src/plant/growth.ts'
-import { buildStandIn, standInVertexCount } from '../src/plant/standin.ts'
+import { bodyRadius, headElevation, heightAt, leafBirth, leafCount, leafLength, rayCount, rayLength, rayOpen, seedLeafLength, stemBaseRadius } from '../src/plant/growth.ts'
+import { buildStandIn, plantNumbers, standInVertexCount, stemLength, tipAt } from '../src/plant/standin.ts'
 
 describe('the plant', () => {
   it('never loses height across the film', () => {
@@ -18,6 +18,30 @@ describe('the plant', () => {
 
   it('passes through every height the config names', () => {
     for (const [time, height] of config.plant.heightM) expect(heightAt(time)).toBeCloseTo(height, 9)
+  })
+
+  it('stands exactly as tall as the film says, whatever shape it is in', () => {
+    const pos = new Float32Array(standInVertexCount * 3)
+    for (let f = 0; f < frameCount; f += 7) {
+      const time = timeOf(f)
+      const top = buildStandIn(time, plantInputsAt(time), pos, null)
+      expect(Math.abs(top - heightAt(time))).toBeLessThan(2e-5)
+    }
+  })
+
+  it('grows its stem and moves its tip without a jump', () => {
+    const step = 1 / config.film.fps
+    let lastLength = stemLength(0, plantInputsAt(0))
+    let last = tipAt(0, plantInputsAt(0), { x: 0, y: 0, z: 0 })
+    for (let f = 1; f < frameCount; f++) {
+      const time = timeOf(f)
+      const length = stemLength(time, plantInputsAt(time))
+      const tip = tipAt(time, plantInputsAt(time), { x: 0, y: 0, z: 0 })
+      expect(Math.abs(length - lastLength)).toBeLessThan(0.3 * step)
+      expect(Math.hypot(tip.x - last.x, tip.y - last.y, tip.z - last.z)).toBeLessThan(0.3 * step)
+      lastLength = length
+      last = { ...tip }
+    }
   })
 
   it('starts every leaf at zero and grows it without a jump', () => {
@@ -36,6 +60,19 @@ describe('the plant', () => {
       }
       expect(largest).toBeLessThan(0.004)
     }
+  })
+
+  it('starts the seed leaves, the bud and the rays at zero', () => {
+    expect(seedLeafLength(0)).toBe(0)
+    expect(bodyRadius(config.plant.stages.bud[0])).toBe(0)
+    expect(bodyRadius(config.plant.stages.bud[0] - 1)).toBe(0)
+    expect(bodyRadius(config.film.durationSeconds)).toBeCloseTo(config.plant.discDiameterM / 2, 9)
+    for (let k = 0; k < rayCount; k++) {
+      expect(rayLength(k, config.plant.stages.bloom[0] - 1)).toBe(0)
+      expect(rayOpen(k, config.plant.stages.bloom[0])).toBe(0)
+      expect(rayOpen(k, config.plant.stages.bloom[1])).toBe(1)
+    }
+    expect(headElevation(config.plant.stages.bud[0])).toBeCloseTo(Math.PI / 2, 9)
   })
 
   it('thickens the stem without a jump', () => {

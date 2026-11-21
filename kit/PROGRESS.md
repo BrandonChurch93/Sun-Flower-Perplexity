@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
-- Last status: 08 · 2026-11-21 03:07 UTC · Phase 2
+- Last push: 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
+- Last status: 09 · 2026-11-21 03:29 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 - 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
@@ -40,12 +41,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 1.13 h |
+| 2 | 3.50 h | 1.50 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 2.25 h |
+| Whole build | 30.00 h | 2.63 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -252,6 +253,11 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · Stand-in backdrops are drawn with `blur: 0.25`: the approved images already carry the blur of their own lens, so the full blur of the film lens on top would double it. The real backdrops get their own value in their unit.
 - 2026-11-21 · Phase 2 · Kept takes that sat a few pixels off their approved image were moved back before they were cut to size: frost up 4 px, golden up 2 px. Nothing else in them was changed.
 - 2026-11-21 · Phase 2 · The stand-in ground no longer asks for 16 tap anisotropic filtering. Measured on this renderer it cost 0.4 s per sample at preview size, three times the rest of the frame together (draft frame 0.8 s to 0.4 s, review frame 4.9 s to 1.7 s). The real ground in Phase 3 gets a one tap filter that picks its detail level from the short side of the pixel footprint and lets the samples of the frame average the long side.
+- 2026-11-21 · Phase 2 · `plant.heightM` is read as the height of the top of the whole plant: the arch of the hook, then the tips of the leaves, then the bracts, then the petals. The stem's own length is solved every frame so the highest point of the built plant stands at exactly that height (checked by a unit test on every seventh frame, to 0.02 mm).
+- 2026-11-21 · Phase 2 · The plant is split in two files: `growth.ts` holds every stage as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, the turn of the head) and `standin.ts` holds the stand-in shapes built from them. Phase 3 replaces the shapes and keeps the growth.
+- 2026-11-21 · Phase 2 · The head faces 25° to the left of the direction the companion is seen from (`field.companion.fromAzimuthDeg`) once it is open, which is what the approved hero image shows. While it opens it is turned up to 42° further toward the evening sun and comes round as the rays unfold, as the approved bloom-opening image shows.
+- 2026-11-21 · Phase 2 · Leaves keep their place near the head: a leaf's node rises with the plant for longer the later the leaf was born, so the last leaves stay just under the bud as the stem stretches. The stand-in has 21 bracts in three rings. Rays lie folded over the face and open by sector over about five seconds.
+- 2026-11-21 · Phase 2 · `performance.now` is used in the `live` and `autopilot` modes only to choose which frame to draw next. No pixel depends on it: a frame is always drawn from its frame number alone.
 
 ## Notes from Brandon
 
@@ -281,12 +287,13 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-- `harness_builder` · owns `tools/` except `gate, clock, status, push, review, budget, proof` · branch `agent/tools`, looks on `agent/tools-looks` · the missing harness commands: sheet, compare, key comparisons for status, film, measure, pack, keep, seq, crops, clip, stress · sandbox VM · started 02:22 UTC · six commits pushed by 02:49 UTC, report due 03:37 UTC
-- `modes_builder` · owns `src/main.ts`, `src/main.css`, `src/director/modes.ts`, `live.ts`, `live.module.css`, `menu.ts`, `menu.module.css`, `autopilot.ts`, `tests/modes.test.ts` · branch `agent/director` · the `live` mode (drag to orbit, scrub, the menu on `M`) and the `autopilot` mode, built against `film.view` · sandbox VM · started 02:54 UTC · report due 03:44 UTC, replaced if nothing is pushed by 03:39 UTC
+None.
 
 Finished in this task:
 
 - `board_scout_a`, `board_scout_b`, `board_scout_c`, `motion_scout` · reported by 02:35 UTC · 90 photographs over 15 parts in `references/cache/board/<part>/` (six each, with `NOTES.md` and a contact sheet) and four motion studies in `references/cache/board/motion/`. Caveats they gave: many pictures are stock previews with a light watermark or under 900 px; no usable reference was found for a cracked hard soil crust, a macro of an adult stem at mid height, or dew on bare soil; in the stem study the weeks of leaf growth come from published descriptions, not from footage. The cache is never committed. The Builder writes `references/BOARD.md` from the notes.
+- `harness_builder` · reported 03:10 UTC · branch `agent/tools` at `47395be`, merged into `main` at `9ae6135`. Commands: `sheet` (`--film`, `--cut N`, `--unit id`), `compare --key id`, `film` (chunks, resumable, `--first`, `--last`, `--unit`, `--format`, `--from-master`, `--join`, M1 on every frame), `measure --unit id` (M1 to M3), `pack --phase N --round R`, `keep` (`--clips`, `--unit`), `seq`, `crops --frame`, `clip --unit`, `stress --unit`. Its own test: a whole preview film at the draft tier, 1800 frames, 28.6 MB. The looks it made went to `agent/tools-looks`, which is never merged.
+- `modes_builder` · reported 03:14 UTC · branch `agent/director` at `bf4642d`, merged into `main` at `7943dca` (checked by the Builder: build clean, 59 tests, G5 green). The `live` mode (drag to orbit, wheel or pinch to move in and out, `0` resets, a timeline bar, Space plays, arrows step), the menu on `M`, and `autopilot` (`hold=1`, `loop=1`, `unit=`, with `window.autopilot` reporting frame, playing, done and error). Not tested by it: the path where the asset set fails to load, a real GPU, Firefox, Safari. These go to the QA gauntlet.
 - `export_builder` · reported 02:47 UTC · branch `agent/capture` at `640f955`, merged into `main` at `5e90a2c` (three files: `src/capture/export.ts`, `export.module.css`, `tools/proof.ts`). Its own test: 30 frames of h264 High at 960 x 540, frames 1500, 1515 and 1529 match capture stills at 40.0, 41.6 and 41.8 dB; memory test 240 frames across the cut at frame 240, textures at most 20.3 MB. The Builder runs both again on the final build of the phase. Its one request outside its files (open the Export page when loading fails, so the offer of the web set can be shown) is applied in `src/main.ts`.
 
 ## Rounds
@@ -328,6 +335,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 02:27 UTC · Phase 2: status 06, six agents logged, backdrop paint-out prompts
 - 2026-11-21 02:53 UTC · Phase 2: status 07, `agent/capture` merged, pose math split from the registry, live view overrides
 - 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
+- 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
 
 ## Session log
 
@@ -353,5 +361,7 @@ One entry per task: when it started, the prompt it was started with, what it did
 - Status 07, 2026-11-21 02:49 UTC, Phase 2. All four scouts have reported: the reference board holds 90 real photographs across 15 parts of the plant and its weather, each part with five written observations, and four motion studies read from real time-lapse footage. The Export page and its proof command are built on their own branch and wait to be checked and merged. Each world now has a backdrop made from its approved image with the plant painted out; one take in ten was kept per world after checking that nothing else had moved. Next: lock each backdrop to the camera of its key, rebuild the plant as a function of time with hook, husk, seed leaves, bud and opening head, then the field. Time used: 2.0 h of 30 h.
   Pictures: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; Dawn and rain with the plant painted out; Night and frost with the plant painted out.
 - Status 08, 2026-11-21 03:07 UTC, Phase 2. Each world's backdrop now sits locked to the camera of its key, so the sky, the sun and the horizon land where the approved image has them (left of each pair: the approved image, right: the film frame). The plant and the ground are still stand-ins and the camera fit is not done. The ground was costing three times the rest of the frame in render time; fixed. Next: Stand-in plant that grows through every stage by time (hook, seed leaves, bud, head turning), the stand-in field and companion, then the camera fit at every key. Time used: 2.3 h of 30 h.
+  Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
+- Status 09, 2026-11-21 03:29 UTC, Phase 2. The plant now grows through every stage by time alone: it comes up as a hooked arch carrying its seed husk, drops the husk, opens two seed leaves, puts out 24 leaves, forms a bud with spiky bracts, leans toward the evening sun and unfolds its rays one side first. Its top stands at exactly the height the film sets for each moment. The Live mode, the menu and Autopilot are merged, and so are the remaining harness commands. Shapes are stand-ins and the camera fit is not done. Next: The stand-in field and the companion plant, then the camera fit at every key against the approved images, then the first blockout round with an outside critic. Time used: 2.6 h of 30 h.
   Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
 
