@@ -91,27 +91,29 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.25, 0.24, 0.2]
+const BULGE = [0.3, 0.28, 0.22]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
 const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
 const FEET_LOW = [0.52, 0.25, 0.1]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.45, 1.4, 0.9]
+const SHUT_BROAD = [1.75, 1.6, 0.9]
+// One bract in three of the two outer series stays half grown under its neighbors until the bud loosens, so the shut bud shows fewer, larger bracts.
+const SHUT_RUNT = 0.5
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
 const SHUT_ANGLE = [0.95, -0.2, -0.95]
 const SHUT_CURL = [0.75, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.6
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [1.5, 1.15, 1.2]
+const SHUT_LONG = [1.6, 1.15, 1.2]
 const SHUT_TIP = [0.35, 0.8, 1]
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
 
-interface Bract { spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { runt: number; spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -156,6 +158,7 @@ export function create(options: PartOptions): PlantPart | null {
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
       spread: series === 0 ? SHUT_SPREAD * rnd(904, i) ** 2 : 0,
+      runt: series < 2 && Math.floor(i / 3) % 3 === 2 ? 1 : 0,
     })
   }
 
@@ -436,7 +439,7 @@ export function create(options: PartOptions): PlantPart | null {
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
-      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young)
+      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young) * lerp(1, SHUT_RUNT, k.runt * tight)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
