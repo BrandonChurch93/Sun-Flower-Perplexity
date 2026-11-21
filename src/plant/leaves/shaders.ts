@@ -122,7 +122,7 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.1 + 1.3 * smoothstep(0.4, 0.8, mark.g)) * taper;
+  float thin = (0.12 + 2.3 * smoothstep(0.42, 0.85, mark.g)) * taper;
   vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
   through *= 1.0 - 0.8 * vein.r;
   through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
