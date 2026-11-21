@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5, the sun and the ridge beneath it",
+      "what": "the sun is a smooth, featureless white-yellow ball floating high above a flat, dark-outlined ramp with no cloud breakup or rays, whereas in -a it sits low on a wooded ridge behind broken warm clouds and casts diagonal golden sun rays and veiling flare across the left side",
+      "fix": "lower the sun onto a tree-lined ridge, break its glare with thin warm clouds, remove the hard ridge outline, and add directional golden rays and warm lens veil across the left treeline and field"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 7, upper sky and clouds",
+      "what": "the sky is covered by a heavy, blurry dark grey overcast cloud sheet instead of -a's clear deep slate-blue sky with small, crisp, warm-rimmed scattered clouds near the horizon",
+      "fix": "replace the overcast grey cloud layer with a clear slate-blue sky gradient and small scattered low clouds lit warm gold from below"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 7, the far background at the skyline",
+      "what": "the distant wooded hills and treeline are sharp-edged, smooth, scalloped dark blob silhouettes with no foliage texture or optical softness, unlike -a's soft, layered tree-covered hills",
+      "fix": "replace the smooth bumpy hill cutouts with irregular forested ridge silhouettes layered with warm atmospheric haze and optical defocus"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6 and set-A-02.png region 1, the field behind the plant",
+      "what": "the nearer field sunflowers all face flatly toward the camera with dark unlit centers, dull petals, and dark murky stems missing golden backlight and warm haze, and they end at an abrupt horizontal seam mid-field against a flat brown texture of tiny rings",
+      "fix": "vary the tilt and orientation of the field flowers, add strong golden rim-lighting and warm atmospheric scatter across petals, flower backs, and stems, and blend the mid-to-far field smoothly without a row cutoff"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "regions 2 and 3, leaves of the foreground plant",
+      "what": "the leaves are smaller, sparser, and curled with bare stem gaps, and their front faces have a cold, opaque bluish-grey sheen instead of -a's broad, lush overlapping warm-green leaves with golden subsurface translucency and bright rim highlights",
+      "fix": "fill out the plant with broader overlapping heart-shaped leaves, shift leaf color to warm natural green, remove the cool blue-grey specular sheen, and add strong golden translucent backlighting and rim light"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, the foreground flower head",
+      "what": "the flower head is smaller and flatter with sparser, stiffer petals that lack the tousled multi-layer fullness, bright golden translucency, and warm disc rim highlight of -a",
+      "fix": "enlarge the foreground flower head to match -a, add denser overlapping petal layers with organic variation, and increase warm golden petal translucency and rim glow"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs",
+      "what": "the stem is thinner than in -a and its surface hairs are faint and dull rather than forming a bright golden-white backlit halo along the stem and leaf stalks",
+      "fix": "thicken the main stem slightly and add prominent, brightly rim-lit fine bristly hairs catching the low sun along the stem edges and petioles"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 3 and 4, foreground ground and field edge",
+      "what": "the foreground ground is uniform, evenly spaced cool-green grass separated from the field by a bare flat brown dirt strip, lacking -a's rough varied weeds and bright golden raking sunlight patches around and to the right of the foreground plant's base",
+      "fix": "replace the uniform grass with rough varied turf and backlit weed stalks, extend vegetation across the bare dirt gap into the field edge, and add warm golden raking sunlight patches on the ground at the base of the foreground plant"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "whole frame, depth of field and film grain",
+      "what": "the frame is a clean, grainless render with pin-sharp horizon edges and crisp background flowers, lacking -a's smooth optical depth-of-field falloff and fine organic film grain",
+      "fix": "apply progressive optical depth-of-field blur from the midground field to the distant skyline and add matching fine film grain across the image"
+    }
+  ]
+}
