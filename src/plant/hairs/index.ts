@@ -34,6 +34,8 @@ uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures. It is more than the sun's disc alone would give a fiber: it also stands for the bright sky round the sun, which a fiber sends on with it.
 const float SUN_THROUGH = 10.0;
+// A hair bright enough to burn the film pales toward white there. The lit color is pushed this far past the sun's own, by its own hue, so the burnt hair still lands on the sun's color.
+const float SUN_DEEPEN = 0.6;
 const float TT_SPREAD = 0.34;
 const float TT_TURN = 3.5;
 const float R_SPREAD = 0.16;
@@ -89,7 +91,7 @@ void readHair(int k) {
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
     hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
-    hairWide = 1.0 + uPlantFrost * (2.5 + 3.0 * h4);
+    hairWide = 1.0 + uPlantFrost * (3.5 + 3.5 * h4);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
@@ -98,10 +100,10 @@ void readHair(int k) {
     hairWide *= 1.0 + 2.0 * uPlantWet * point;
     hairDir = normalize(hairDir + (aside * 0.35 + vec3(0.0, -0.6, 0.0)) * uPlantWet);
     hairRoot.w *= 1.0 - 0.2 * uPlantWet;
-    hairBead = uHairWidth * 1.5 * uPlantWet * step(h5, 0.06);
+    hairBead = uHairWidth * 3.0 * uPlantWet * step(h5, 0.06);
   }
   // Dew sits as a bead near the tip of one hair in three.
-  if (uPlantDew > 0.0) hairBead += uHairWidth * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.65, h5);
+  if (uPlantDew > 0.0) hairBead += uHairWidth * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
 }
 
 vec3 hairPoint(float t) {
@@ -125,7 +127,7 @@ vec3 scatter(vec3 along, vec3 toEye, vec3 toSun) {
   float mirror = 0.04 + 0.96 * pow(1.0 - glance, 5.0);
   float through = lobe(sinI + sinO, TT_SPREAD) * 0.714 * exp(-TT_TURN * (1.0 + round)) * (1.0 - mirror) * (1.0 - mirror);
   float back = lobe(sinI + sinO, R_SPREAD) * 0.25 * sqrt(saturate(0.5 + 0.5 * round)) * mirror;
-  vec3 clear = (uHairColor * through + vec3(back)) * (cosI / max(between, 0.2)) + uHairColor * (EVEN * cosI);
+  vec3 clear = vec3((through + back) * cosI / max(between, 0.2)) + uHairColor * (EVEN * cosI);
   // Rime is matt: it sends the sun on evenly, a little more against the light, where the ice lets it through.
   if (uPlantFrost > 0.0) clear = mix(clear, RIME * (RIME_SUN * cosI * (0.7 - 0.3 * round) / STRAND_GAIN), uPlantFrost);
   return clear;
@@ -151,7 +153,8 @@ Strand strandAt(float t) {
   vec3 out3 = plantDirection(hairDir);
   float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
-  vSun = uSunColor * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
+  vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(SUN_DEEPEN * (1.0 - uPlantFrost)));
+  vSun = lit * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
   vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * RIME_SKY, uPlantFrost) * (fog * behind);
@@ -224,7 +227,7 @@ in float vShare;
 #else
 in float vCover;
 #endif
-const float BEAD_THROUGH = 5.0;
+const float BEAD_THROUGH = 3.0;
 const float BEAD_SKY = 2.0;
 void main() {
 #ifdef RIBBON
@@ -397,7 +400,7 @@ export class HairSet {
     const m = object.matrixWorld.elements
     const size = Math.hypot(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
-    const thick = (1 + 4 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     const close = (this.widthM * thick * 1.5 * size) / pixel > RIBBON_FROM_PX
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
