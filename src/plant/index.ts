@@ -4,7 +4,7 @@ import type { Assets } from '../core/assets.ts'
 import { allUnits, declareStandIn } from '../core/standins.ts'
 import type { Surface } from '../core/shading.ts'
 import type { Caster } from '../core/shadow.ts'
-import { bodyRadius, headOpen, leafCount, leafLength, paleness, rayCount, rayLength, usePlant, type PlantInputs } from './growth.ts'
+import { bodyRadius, headOpen, leafCount, leafLength, paleness, rayCount, rayLength, usePlant, type Place, type PlantInputs } from './growth.ts'
 import { real as hairsReal } from './hairs/index.ts'
 import { create as createBud } from './head/bud/index.ts'
 import { create as createDisc } from './head/disc/index.ts'
@@ -161,6 +161,8 @@ export interface PlantOptions {
   detail?: PartDetail
   // The places of the neighbors, when one shape is drawn once per neighbor.
   places?: THREE.InstancedInterleavedBuffer | null
+  // Where this plant stands, for the wind that reaches it. The plant stands at the middle.
+  at?: Place
 }
 
 export class Plant {
@@ -177,11 +179,14 @@ export class Plant {
   private readonly b: THREE.BufferAttribute | null
   private readonly n: THREE.BufferAttribute
   private readonly hide: number
+  // Null when the shape is drawn once per neighbor: the field sways each of those where it stands.
+  private readonly at: Place | null
 
   constructor(o: PlantOptions = {}) {
     this.variant = o.variant ?? 0
     this.detail = o.detail ?? 'hero'
     const places = o.places ?? null
+    this.at = places ? null : (o.at ?? { x: 0, z: 0 })
     const options: PartOptions = { detail: this.detail, variant: this.variant, places }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
@@ -240,7 +245,7 @@ export class Plant {
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs): void {
-    usePlant(this.variant)
+    usePlant(this.variant, this.at)
     if (this.hide !== ALL) {
       buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
       if (this.b) buildStandIn(timeClose, close, this.b.array as Float32Array, null, this.shape, this.hide)

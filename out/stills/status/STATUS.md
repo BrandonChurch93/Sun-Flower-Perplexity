@@ -1,12 +1,12 @@
-# Status 17
+# Status 18
 
-2026-11-21 06:54 UTC
+2026-11-21 07:17 UTC
 
-- Status 17 · Phase 2. Phase 2 is closed. All fourteen gate checks are green on the final blockout build, the export and memory proofs pass, the preview film is committed and the app is published. Autopilot played the whole film from the hosted copy, frame 0 to 1799, with no error. The blockout critic loop ended at its limit of two rounds (scores 7 and 6), not as a pass; three framing issues and the focus failure on 115 frames are carried as open items.
-- Next: Phase 3, the look lock on bloom: merge the plant scaffold, then send agents to build the real stem, leaves, bud, disc, petals, hairs, surface, golden world, lens and field in parallel while the focus fix goes in. Time used: 6.0 h of 30 h.
+- Status 18 · Phase 3 · unit bloom. The look lock is under way. The plant is now built from parts that each replace a piece of the gray stand-in, and ten agents started at 07:16, each owning one part: stem, leaves, bud, florets, petals, hairs, the skin shader, the golden sky, the lens and the field. Until their work lands, the pictures still show the stand-in, now lit by the shared skin.
+- Next: My own list while they work: hold focus on the visible surface of the bud, sway in the stem and the field, a tighter shadow for close-ups, the leaves that cross the sun at the left edge. Their reports are due by 08:56, the first critic round by about 09:55. Time used: 6.4 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain)
-- `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost)
-- `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field)
-- `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
+- `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin
+- `status-2.jpg`: Frame 1515 today, the stand-in open head
+- `status-3.jpg`: Approved image for 1350
+- `status-4.jpg`: Approved image for 1515

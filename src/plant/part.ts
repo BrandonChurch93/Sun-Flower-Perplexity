@@ -4,6 +4,10 @@ import { makeSurface, type Surface, type SurfaceOptions } from '../core/shading.
 import type { Caster } from '../core/shadow.ts'
 import type { PlantInputs } from './growth.ts'
 import type { Pose } from './skeleton.ts'
+import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from './wind.ts'
+import { config } from '../config.ts'
+
+const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 
 // 'hero' is the plant the lens holds, and the companion beside it. 'near' and 'far' are the neighbors in the field: one shape drawn once per neighbor.
 export type PartDetail = 'hero' | 'near' | 'far'
@@ -35,7 +39,8 @@ export type PartMaker = (options: PartOptions) => PlantPart | null
 export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
-export const fieldUniforms = { uCanopy: { value: 0 } }
+// The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
+export const fieldUniforms = { uCanopy: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -45,6 +50,17 @@ export const plantVertexGlsl = /* glsl */ `
 #ifdef PLANT_FIELD
 in vec4 aPlace;
 in vec4 aVary;
+uniform float uPlantWind;
+uniform float uPlantHeight;
+${swayGlsl}
+// How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
+vec2 plantBlow(vec2 at, float y, float size) {
+  if (uPlantWind <= 0.0) return vec2(0.0);
+  float tall = max(uPlantHeight * size, 0.001);
+  float k = clamp((y / tall - 0.3) / 0.7, 0.0, 1.0);
+  float lean = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, at));
+  return vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
+}
 #endif
 out float vPlantTone;
 
@@ -55,7 +71,8 @@ vec3 plantWorld(vec3 local) {
   vec3 p = local * aPlace.w;
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
-  return vec3(c * p.x + s * p.z + aPlace.x, p.y, c * p.z - s * p.x + aPlace.y);
+  vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
+  return vec3(c * p.x + s * p.z + aPlace.x + blow.x, p.y, c * p.z - s * p.x + aPlace.y + blow.y);
 #else
   vPlantTone = 0.5;
   return (modelMatrix * vec4(local, 1.0)).xyz;

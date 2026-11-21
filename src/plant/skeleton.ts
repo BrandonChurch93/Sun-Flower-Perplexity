@@ -1,9 +1,9 @@
 // The pose of the plant, as every part reads it. All of it follows the timing in `growth.ts`, so a part that starts from these frames stands where the film expects it.
 // The stem, the head and the frames are kept in one place each and written over by the next call. Read what you need before you ask again.
 import type { PlantInputs } from './growth.ts'
-import { bractFrame, layHead, layStem, leafFrame, rayFrame, seedLeafFrame, stemLength, stemNode, type Frame, type Head, type Node } from './standin.ts'
+import { FLOOR_DOME, FLOOR_RIM, bractFrame, layHead, layStem, leafFrame, rayFrame, seedLeafFrame, stemLength, stemNode, type Frame, type Head, type Node } from './standin.ts'
 
-export { blade, ellipsoid, gridNormals, roll, setFrame, NECK_FLARE, SEAT, type Frame, type Head, type Node, type Outline } from './standin.ts'
+export { blade, ellipsoid, gridNormals, roll, setFrame, FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, type Frame, type Head, type Node, type Outline } from './standin.ts'
 
 export interface Pose {
   time: number
@@ -51,9 +51,6 @@ export function rayFrameAt(p: Pose, k: number): Frame {
 // The floor of the head: the gently domed front of the receptacle, where the florets stand and the petals leave the rim.
 // The bud draws it, the disc stands on it and the petals start from its rim, so all three read it from here.
 export interface FloorPoint { x: number; y: number; z: number; nx: number; ny: number; nz: number; ox: number; oy: number; oz: number }
-// How far in front of the head's middle the floor lies at its rim, and how much higher at the axis, both as shares of the half depth.
-export const FLOOR_RIM = 0.5
-export const FLOOR_DOME = 0.22
 const floor: FloorPoint = { x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0, ox: 1, oy: 0, oz: 0 }
 
 // A point of the floor at a share rho of the head's radius (0 on the axis, 1 at the rim) and an angle theta round the axis, from p toward q:
