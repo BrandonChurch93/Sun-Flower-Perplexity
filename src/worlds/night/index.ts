@@ -15,8 +15,9 @@ export const world: WorldSettings = {
   wind: 0.1,
 }
 
-// Cold and low: it lies over the field under eye level and thickens toward the foot of the hills.
-const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.03, lit: [0.34, 0.32, 0.27], shade: [0.6, 0.7, 0.8], forward: 0.5, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
+// Cold and low: a thin layer over the field under eye level, and a bank standing between the field's far edge and the foot of the hills.
+const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.015, lit: [0.4, 0.4, 0.36], shade: [3.3, 2.2, 1], forward: 1, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
+const BANK: MistSettings = { fromM: 56, toM: 76, sheets: 6, heightM: 0.36, thickness: 0.6, lit: [0.55, 0.55, 0.5], shade: [6.2, 4.1, 1.85], forward: 1, drift: [0.03, 0.01], bankM: 35, broken: 0.6 }
 
 const SKY_GAIN = 0.9
 const STAR_GAIN = 4
@@ -25,10 +26,11 @@ export const stage: WorldStageMaker = (def) => {
   const sky = new NightSky({ gain: SKY_GAIN, stars: STAR_GAIN, glow: def.sky.glow, glowPower: def.sky.glowPower, zenith: def.sky.zenith, horizon: def.sky.horizon })
   const far = makeFarLayers(golden.sun.azimuthDeg)
   const mist = makeMist('night', MIST)
+  const bank = makeMist('night bank', BANK, 40)
   let open = 0
   let close = 0
   return {
-    objects: [...far.meshes, ...mist.meshes],
+    objects: [...far.meshes, ...bank.meshes, ...mist.meshes],
     load: (assets) => sky.load(assets),
     prepare(frame) {
       open = frame.time
@@ -38,6 +40,7 @@ export const stage: WorldStageMaker = (def) => {
       const time = open + (close - open) * shutter
       sky.sample(time)
       mist.sample(time)
+      bank.sample(time)
     },
     sky(renderer, target, camera, pixelX, pixelY, width, height) {
       sky.render(renderer, target, camera, pixelX, pixelY, width, height)
