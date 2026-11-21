@@ -18,10 +18,12 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
 setLeafTurn(companionVariant, 228.3 * RAD)
-// Three of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it and a long low one in the corner.
-setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 13.8 })
+// Four of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it, a long low one in the corner
+// and the top one, which keeps the length it had before the top leaves were shortened.
+setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 14.8 })
 setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
-setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 45.7, lengthScale: 1.9 })
+setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 36, lengthScale: 1.75 })
+setLeafHold(companionVariant, 23, { lengthScale: 1.56 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
