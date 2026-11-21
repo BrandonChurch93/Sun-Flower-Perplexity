@@ -1,0 +1,238 @@
+{
+  "round": 2,
+  "phase": 2,
+  "unit": null,
+  "commit": "075b000bfef86668f80aa316ec3f7309b37a3597",
+  "engineHash": "bb5ba3c9abd728d9",
+  "unitHashes": {
+    "dawn": "7a53aed8d27461eb",
+    "rain": "0106310b0f31255c",
+    "night": "f076338aed740aae",
+    "frost": "58236098c12c5476",
+    "bloom": "0caa5e69480e1fc8",
+    "field": "84bb14740ea79de1"
+  },
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
+    "cores": 2,
+    "ramMb": 7958
+  },
+  "critics": {
+    "R4-blockout": {
+      "set-A-01.png": {
+        "what": "whole film contact sheet 1 of 3",
+        "frames": [
+          0,
+          51,
+          103,
+          154,
+          206,
+          257,
+          308,
+          360,
+          411,
+          463,
+          514,
+          565
+        ],
+        "source": "out/work/sheets/film-1-preview-review.jpg"
+      },
+      "set-A-02.png": {
+        "what": "whole film contact sheet 2 of 3",
+        "frames": [
+          617,
+          668,
+          720,
+          771,
+          822,
+          874,
+          925,
+          977,
+          1028,
+          1079,
+          1131,
+          1182
+        ],
+        "source": "out/work/sheets/film-2-preview-review.jpg"
+      },
+      "set-A-03.png": {
+        "what": "whole film contact sheet 3 of 3",
+        "frames": [
+          1234,
+          1285,
+          1336,
+          1388,
+          1439,
+          1491,
+          1542,
+          1593,
+          1645,
+          1696,
+          1748,
+          1799
+        ],
+        "source": "out/work/sheets/film-3-preview-review.jpg"
+      },
+      "set-A-04.png": {
+        "what": "consecutive frames across cut 1 (dawn to rain, the cut falls on frame 240)",
+        "frames": [
+          234,
+          235,
+          236,
+          237,
+          238,
+          239,
+          240,
+          241,
+          242,
+          243,
+          244,
+          245
+        ],
+        "source": "out/work/sheets/cut-1-preview-review.jpg"
+      },
+      "set-A-05.png": {
+        "what": "consecutive frames across cut 2 (rain to night, the cut falls on frame 600)",
+        "frames": [
+          594,
+          595,
+          596,
+          597,
+          598,
+          599,
+          600,
+          601,
+          602,
+          603,
+          604,
+          605
+        ],
+        "source": "out/work/sheets/cut-2-preview-review.jpg"
+      },
+      "set-A-06.png": {
+        "what": "consecutive frames across cut 3 (night to frost, the cut falls on frame 900)",
+        "frames": [
+          894,
+          895,
+          896,
+          897,
+          898,
+          899,
+          900,
+          901,
+          902,
+          903,
+          904,
+          905
+        ],
+        "source": "out/work/sheets/cut-3-preview-review.jpg"
+      },
+      "set-A-07.png": {
+        "what": "consecutive frames across cut 4 (frost to bloom, the cut falls on frame 1200)",
+        "frames": [
+          1194,
+          1195,
+          1196,
+          1197,
+          1198,
+          1199,
+          1200,
+          1201,
+          1202,
+          1203,
+          1204,
+          1205
+        ],
+        "source": "out/work/sheets/cut-4-preview-review.jpg"
+      },
+      "set-A-08.png": {
+        "what": "key pairs 1, 2 and 3",
+        "pairs": [
+          {
+            "pair": 1,
+            "key": "dawn-sprout",
+            "frame": 45,
+            "time": 1.5,
+            "a": "references/approved/dawn-sprout.png",
+            "b": "film frame 45 at the review tier",
+            "source": "out/work/compare/pair-dawn-sprout-review.jpg"
+          },
+          {
+            "pair": 2,
+            "key": "dawn-seedling",
+            "frame": 195,
+            "time": 6.5,
+            "a": "references/approved/dawn-seedling.png",
+            "b": "film frame 195 at the review tier",
+            "source": "out/work/compare/pair-dawn-seedling-review.jpg"
+          },
+          {
+            "pair": 3,
+            "key": "rain",
+            "frame": 420,
+            "time": 14,
+            "a": "references/approved/rain.png",
+            "b": "film frame 420 at the review tier",
+            "source": "out/work/compare/pair-rain-review.jpg"
+          }
+        ]
+      },
+      "set-A-09.png": {
+        "what": "key pairs 4, 5 and 6",
+        "pairs": [
+          {
+            "pair": 4,
+            "key": "night",
+            "frame": 780,
+            "time": 26,
+            "a": "references/approved/night.png",
+            "b": "film frame 780 at the review tier",
+            "source": "out/work/compare/pair-night-review.jpg"
+          },
+          {
+            "pair": 5,
+            "key": "frost",
+            "frame": 1080,
+            "time": 36,
+            "a": "references/approved/frost.png",
+            "b": "film frame 1080 at the review tier",
+            "source": "out/work/compare/pair-frost-review.jpg"
+          },
+          {
+            "pair": 6,
+            "key": "bloom-opening",
+            "frame": 1350,
+            "time": 45,
+            "a": "references/approved/bloom-opening.png",
+            "b": "film frame 1350 at the review tier",
+            "source": "out/work/compare/pair-bloom-opening-review.jpg"
+          }
+        ]
+      },
+      "set-A-10.png": {
+        "what": "key pairs 7 and 8",
+        "pairs": [
+          {
+            "pair": 7,
+            "key": "bloom-hero",
+            "frame": 1515,
+            "time": 50.5,
+            "a": "references/approved/bloom-hero.png",
+            "b": "film frame 1515 at the review tier",
+            "source": "out/work/compare/pair-bloom-hero-review.jpg"
+          },
+          {
+            "pair": 8,
+            "key": "field",
+            "frame": 1755,
+            "time": 58.5,
+            "a": "references/approved/field.png",
+            "b": "film frame 1755 at the review tier",
+            "source": "out/work/compare/pair-field-review.jpg"
+          }
+        ]
+      }
+    }
+  }
+}

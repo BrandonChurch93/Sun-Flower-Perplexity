@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
+- Last push: 2026-11-21 05:49 UTC · Round 2: the R4 blockout answer, word for word, with its manifest and key
 - Last status: 14 · 2026-11-21 05:31 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -350,20 +350,22 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-- `npm run film` · the whole film, frames 0 to 1799, `preview` format at the `draft` tier, one chunk per unit with M1 on every frame · log `out/work/logs/film-p2.log` · this VM · started 2026-11-21 05:44 UTC, while the round 2 critic is still out, on the build that critic is judging (`9c0c8bb`, engine hash `bb5ba3c9abd728d9`) · the render budget says 28 minutes, limit 56 minutes. If the fix pass of round 2 changes a frame, the job is stopped and run again after it; the chunks of units the fix does not touch are kept.
+None.
 
 Finished in this task:
 
+- `npm run film` · the whole preview film at the `draft` tier, started 05:44 UTC on the build round 2 judged · stopped by the Builder at 05:49 UTC at frame 408 of 1800 (0.64 s a frame, the `dawn` chunk was complete), because the round 2 answer asks for a change to the plant's head, which changes every frame's hash. It runs again after the fix pass.
 - `npm run budget -- --scene "Phase 2 blockout (stand-in plant and field, six stand-in worlds)"` · started 2026-11-21 05:22 UTC, ended 05:37 UTC (15 minutes, about 16 expected) · log `out/work/logs/budget-p2b.log` · its table is under "Render budget".
 
 ## Running agents
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-- `reviewer_02` · critic, R4 blockout, round 2, Gemini family (round 1 was the GPT family) · no folder, no branch · it gets only the 10 pack images, its section of `kit/07-QUALITY-BAR.md`, the severity scale, the return format and the pack's manifest; the message is kept as `out/work/briefs/round-002-r4-blockout-message.txt` · started 2026-11-21 05:22 UTC · limit 45 minutes, so 06:07 UTC.
+None.
 
 Finished in this task:
 
+- `reviewer_02` · critic, R4 blockout, round 2, Gemini family · started 05:22 UTC, answered 05:47 UTC · one JSON object, saved word for word as `scorecards/round-002/R4-blockout.json`. It saw only the 10 pack images, its section of `kit/07-QUALITY-BAR.md`, the severity scale, the return format and the pack's manifest.
 - `reviewer_01` · critic, R4 blockout, round 1, GPT family · started 04:33 UTC, answered 04:35 UTC · one JSON object, saved word for word as `scorecards/round-001/R4-blockout.json`. It saw only the 10 pack images, its section of `kit/07-QUALITY-BAR.md`, the severity scale, the return format and the pack's manifest.
 - `board_scout_a`, `board_scout_b`, `board_scout_c`, `motion_scout` · reported by 02:35 UTC · 90 photographs over 15 parts in `references/cache/board/<part>/` (six each, with `NOTES.md` and a contact sheet) and four motion studies in `references/cache/board/motion/`. Caveats they gave: many pictures are stock previews with a light watermark or under 900 px; no usable reference was found for a cracked hard soil crust, a macro of an adult stem at mid height, or dew on bare soil; in the stem study the weeks of leaf growth come from published descriptions, not from footage. The cache is never committed. The Builder writes `references/BOARD.md` from the notes.
 - `harness_builder` · reported 03:10 UTC · branch `agent/tools` at `47395be`, merged into `main` at `9ae6135`. Commands: `sheet` (`--film`, `--cut N`, `--unit id`), `compare --key id`, `film` (chunks, resumable, `--first`, `--last`, `--unit`, `--format`, `--from-master`, `--join`, M1 on every frame), `measure --unit id` (M1 to M3), `pack --phase N --round R`, `keep` (`--clips`, `--unit`), `seq`, `crops --frame`, `clip --unit`, `stress --unit`. Its own test: a whole preview film at the draft tier, 1800 frames, 28.6 MB. The looks it made went to `agent/tools-looks`, which is never merged.
@@ -389,7 +391,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - Started 2026-11-21 05:08 UTC. Judges commit `9c0c8bb`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent of another model family than round 1. Extra round: the clock printed `extra rounds: yes` at 05:07 UTC (whole build 4.26 h, extra rounds stop at 5.5 h). This is the last blockout round the limit allows (`rounds.blockout` is 2).
 - [x] Machine checks (`npm run gate -- --phase 2 --machine`): 05:09 UTC, all 12 green (G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
 - [x] Pack (`npm run pack -- --phase 2 --round 2`): 05:20 UTC, 10 files in 10.4 minutes (budget said about 12), the same make-up as round 1: three whole film sheets, four cut sheets, the eight key pairs on three images, all at the `review` tier, each at most 1400 px, no metadata, the settled line of the `field` key with pair 8 word for word. The Builder looked at every file before sending it
-- [ ] R4 blockout answer in `scorecards/round-002/R4-blockout.json`
+- [x] R4 blockout answer in `scorecards/round-002/R4-blockout.json`: arrived 05:47 UTC, 25 minutes after the critic started. Score 6, one severe issue and five major ones, so the pass bar (7 with no severe issue open) does not hold. The pack's manifest and the key are in the round folder beside it
 - [ ] Fixes
 - [ ] Summary, status, push
 
@@ -441,6 +443,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
 - 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
 - 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
+- 2026-11-21 05:49 UTC · Round 2: the R4 blockout answer, word for word, with its manifest and key
 
 ## Session log
 

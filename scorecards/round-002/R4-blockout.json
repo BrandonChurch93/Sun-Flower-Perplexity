@@ -1,0 +1,49 @@
+{
+  "critic": "R4 blockout",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "frames f1234 to f1542 (41.1 s to 51.4 s), hero flower head",
+      "what": "the bud bends roughly 80 degrees sideways to the left toward the sun by f1336-f1388, then reverses roughly 75 degrees away from the sun between f1388 and f1491 to face flat into the camera",
+      "fix": "turn the bud smoothly from upright at f1200 into the roughly 35-degree three-quarter left-facing angle toward the sun and hold that orientation through the bloom and pullback"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-09.png",
+      "where": "pair 6 (6-b), left edge of frame",
+      "what": "in 6-a a close foreground plant fills the entire left margin (y = 55 to 394) with an upper leaf crossing the sun, whereas in 6-b only a single small leaf tip enters at the bottom-left (y = 300 to 355), leaving the upper three-quarters of the left edge empty",
+      "fix": "make the nearer left-hand plant taller or position it so its upper leaves span the full left edge and cross in front of the sun at Key 6 while keeping its settled placement in Key 8"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-09.png",
+      "where": "pair 6 (6-b), hero flower head and stem",
+      "what": "the stem sits too far right (~65.5% of frame width vs ~61% in 6-a) and the opening head is pitched nearly into side profile (~80 degrees left) and ~20% shorter vertically (~165 px vs ~205 px in 6-a)",
+      "fix": "frame the stem near 61% from the left edge and keep the opening head angled ~30-35 degrees left toward the sun at ~205 px vertical height"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-10.png",
+      "where": "pair 7 (7-b), left edge of frame",
+      "what": "in 7-a the close left foreground plant frames the entire left edge (y = 55 to 394) across the sun, whereas in 7-b only one small leaf tip enters near the bottom-left (y = 280 to 348)",
+      "fix": "keep the taller/repositioned nearer left-hand plant filling the full left margin and crossing the sun at Key 7 before exiting during the pullback"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-10.png",
+      "where": "pair 7 (7-b), hero flower head, stem, and background field blooms",
+      "what": "the open flower head faces flat at the camera (disc ~115 px wide vs foreshortened ~80 px three-quarter left-facing disc in 7-a) atop a stem shifted slightly right (~64.5% vs ~61%), and the background blooms behind it are nearly twice as large as in 7-a (~55-68 px tall vs ~30-40 px)",
+      "fix": "hold the hero head at the ~35-degree left-facing angle with the stem near 61%, and reduce background bloom apparent size in close-up (via field setback, focal length, or background head scale) to match 7-a"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-10.png",
+      "where": "pair 8 (8-b), foreground hero flower head and background field vertical band",
+      "what": "the foreground hero plant head (at x ~ 344) is ~35% too small vertically (~31 px tall vs ~48 px in 8-a for the same ~180 px plant height) and faces flat front-on instead of three-quarters left, while the background field blooms sit entirely in a high band (y = 92 to 195) above the hero head center rather than extending down around y = 175 to 240 as in 8-a",
+      "fix": "increase the hero flower head scale relative to its stem with a three-quarter left turn, and lower the front/midground field bloom height so field blooms surround the hero head vertically as in 8-a"
+    }
+  ]
+}
