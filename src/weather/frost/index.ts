@@ -42,14 +42,14 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 const float MELT_FROM_S = 38.0;
 const float MELT_SHARE = 0.12;
 const float DROP_SHARE = 0.007;
-const float NEEDLE_PX = 0.9;
+const float NEEDLE_PX = 0.7;
 const float NEEDLE_LEAST = 0.2;
 const float TUFT_MOST_M = 0.0022;
-const float SPIKE_MOST_M = 0.0035;
-const float SPIKE_LEAST = 0.45;
-const float SPIKE_MOST = 1.0;
+const float SPIKE_MOST_M = 0.0022;
+const float SPIKE_LEAST = 0.3;
+const float SPIKE_MOST = 0.8;
 const float PATCH_M = 0.035;
-const float PATCH_LEAST = 0.25;
+const float PATCH_LEAST = 0.12;
 const float PATCH_MOST = 1.0;
 
 float hash(float own, float n) {
@@ -75,11 +75,11 @@ void main() {
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
   bool spike = chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74);
   float h5 = hash(own, 5.0);
-  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.9 : 2.2));
+  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 1.8 : 2.2));
   // Frost does not lie evenly: it stands thick on one stretch of an edge and thin on the next, most of it short and a little of it long.
   vec3 where = a.xyz * (6.2832 / PATCH_M);
   float lush = saturate(0.5 + 0.9 * sin(where.x + 1.7 * sin(where.z * 0.61 + 0.4)) * sin(where.y * 0.83 + 1.3 * sin(where.x * 0.47 + 2.1)));
-  float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.15 + 0.5 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.5 + 0.8 * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize() * uPlantFrost;
+  float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.15 + 0.5 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.3 + hash(own, 23.0) * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize() * uPlantFrost;
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
   float high = uMelts * smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
   float turn6 = hash(own, 6.0) / MELT_SHARE;

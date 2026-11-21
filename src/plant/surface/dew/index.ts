@@ -4,7 +4,9 @@ const float DEW_PATCH_M = 0.004;
 const float DEW_SUN = 0.09;
 const float DEW_SKY = 0.07;
 // The share of the light that the beads on a sheet's face send back to an eye on the lit side.
-const float DEW_FACE = 0.06;
+const float DEW_FACE = 0.02;
+// The share of the light that the mist on both faces of a sheet turns back before it can cross it.
+const float DEW_SHADE = 0.8;
 const float DEW_ROUGH = 0.42;
 const float DEW_WAX = 0.7;
 const float DEW_BREAK = 0.8;
