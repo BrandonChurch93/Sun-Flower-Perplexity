@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 15:42 UTC · Phase 4: first reports from eight builders, the line's contents and the Builder's shared decisions (skyline through the film, sky.even, f-numbers, growth patches, shutter ruling)
+- Last push: 2026-11-21 15:50 UTC · Round 6: pack built and checked (24.7 min); Phase 4 line pushed at 5a144fa
 - Last status: 35 · 2026-11-21 15:29 UTC · Phase 3 · unit bloom · round 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 8.58 h |
+| 3 | 9.00 h | 8.79 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 14.63 h |
+| Whole build | 30.00 h | 14.84 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -466,6 +466,8 @@ One line each: the date, the phase, the decision and why.
   - f-numbers and one grade number, set on the line to be judged on the Builder's own stills beside the approved images before the line goes to `main` (each is taken back if the still says so): dawn 9 to 22 (`ground_builder` and `golden_builder`: the approved's soil and tree line are far sharper; M3 at frame 45 0.651 against 0.825), rain 5.6 to 9 (`lens_builder` asked 8 for the far edge, `petal_builder` 11 for the near ground; at 9 infinity's blur is about 15.6 px against the approved's 14.9 to 18.1), night 2.8 to 16 (`disc_builder`: the approved is sharp from the near plants to the hills), frost 4 to 5.6 (`harness_builder`: the near buds' edge 17 px against the approved's 13). Night `grade.lift` [0.002, 0.004, 0.012] to [0.0012, 0.0028, 0.0028] (the blue lift turned the plant's shade and the top of the sky blue).
 - 2026-11-21 · Phase 4 · 15:40 UTC · rulings sent to the eight working builders (texts in `out/work/briefs/p4-answers/`). The shutter stays 180 degrees in the rain: `film.shutterDegrees` is one number for the film and the kit takes a streak's length from the fall speed and the shutter time, with drops spread through the depth of the scene. The approved's 27 to 75 px streaks are drops 5 to 13 m out (a 15 cm streak is about 440 px at the plant's 0.81 m), so `lens_builder` draws fine rain through that depth instead of shortening the shutter. Lightning may light the plant and ground from the rain stage's `sample` hook, which runs after `applyWorld`. The plant's own head at 1755 is 72 px wide against the approved's 96 px: the approved field image draws a plant about 0.86 of ours in height with a head 1.33 times ours, which is not the plant of the two approved bloom images; the film keeps one plant.
 
+- 2026-11-21 · Phase 4 · 15:44 UTC. The Phase 4 line `phase4/integrate` is pushed at `5a144fa`: 49 commits over `9d284e6`, the trailer checked on every one, type check clean, 98 of 98 tests (`out/work/logs/p4-line-test-1543.log`). The eight working builders were told the commit at 15:44 UTC and merge it now; the four paused ones find it when they go on. It is the builders' line, not `main`: the Builder renders its own stills of all eight keys and the three cuts' frames from it once round 6's pack is done, and it reaches `main` only after the Phase 3 gate.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -491,10 +493,11 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running since 14:57 UTC on this VM, in the main checkout: round 6's chain as one detached command, `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 6 --unit bloom` (the critics' sheets, motion frames of unit frames 1200 to 1559 and the frames before the cut). Log `out/work/logs/r6-chain.log`. By the render budget about 40 min (round 5: 12 min, 10 min, 17.4 min), so it ends at about 15:40 UTC. The clip's frames are rendered by the twelve builders on their own machines from the judged commit.
+Running since 15:50 UTC on this VM, in the worktree `sf-prep` at the Phase 4 line `5a144fa`: `npm run build`, then `npm run still` of the ten judged frames and of the two frames at each of the four cuts (239, 240, 599, 600, 899, 900, 1199, 1200), all 16x9 at `review`. Log `out/work/logs/p4-line-stills-1550.log`. By the render budget about 16 min (18 stills at 50 s), so it ends at about 16:06 UTC.
 
 Finished in this task:
 
+- Round 6's chain · `npm run gate -- --phase 3 --machine`, `npm run measure -- --unit bloom`, `npm run pack -- --phase 3 --round 6 --unit bloom` as one detached command on this VM in the main checkout · 14:57 to 15:49:32 UTC, 52.5 min where the render budget said about 40 (factor 1.3, under `budget.jobOverrunFactor` 2) · every part exit 0 · log `out/work/logs/r6-chain.log`
 - Bloom clip of round 6's build in twelve parts · `npm run film -- --unit bloom --first A --last B --tier review --format 16x9` on the twelve builders' VMs, each in a second worktree at `c673742` (engine `5ac2814e4342d561`, bloom hash `a3c4425208d2ca9c`, both read by the Builder from every part's record) · sent 14:58 UTC, all twelve parts back by 15:18 UTC (28.8 to 33.2 s a frame, about 16 minutes a part; 60 s a frame was expected) · parts: `bud_builder` 1200 to 1229, `petal_builder` 1230 to 1259, `skin_builder` 1260 to 1289, `lens_builder` 1290 to 1319, `golden_builder` 1320 to 1349, `field_builder` 1350 to 1379, `disc_builder` 1380 to 1409, `harness_builder` 1410 to 1439, `leaf_builder` 1440 to 1469, `hair_builder` 1470 to 1499, `stem_builder` 1500 to 1529, `ground_builder` 1530 to 1559 · joined 15:21 UTC with `npm run clip -- --unit bloom --tier review`: `out/work/clips/bloom.mp4`, 360 frames, 30 fps, 1920 x 1080, 20.2 Mbit/s, 28.9 MB. Checked by the Builder, not taken on trust: frame 1350 out of `field_builder`'s part against the Builder's own review still of the same build 40.5 dB, frame 1515 out of `stem_builder`'s part 38.8 dB (video compression is the difference; a wrong frame reads 17.5 dB); the step from frame to frame at each of the eleven seams (mean difference 1.5 to 2.5 grey levels at 480 x 270) is the same as the steps on either side of it, the largest steps of the clip (2.9, frames 1244 to 1251, the bud opening) lie inside a part. M1 over the clip: 123 of 360 frames fail, frames 1256 to 1341, 1362 to 1383 and 1408 to 1422, each for one reason, the blur circle at the tip is 1.50 to 2.19 px where 1.5 is the limit; the judged frames 1350 and 1515 pass. See \"Open items\", film M1.
 - Review stills of the other units for the Phase 4 briefs · `npm run still -- --frames 0,45,60,195,420,780,1080,1755 --tier review --format 16x9` on `11207fd` · 14:05 to 14:12 UTC · log `out/work/logs/p4-stills.log` · 59, 53, 52, 43, 27, 30, 32 and 52 s; files `out/work/stills/f<frame>-16x9-review-full-beauty.png`.
 - Round 5 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 5 --unit bloom` · started 2026-11-21 13:24:40 UTC, ended 14:03:51 UTC (39 minutes, 36 expected: the gate 12 min, the two `final` stills 278 s and 284 s, the pack 17.4 min) · logs `out/work/logs/r5-gate.log`, `r5-measure.log`, `r5-pack.log`, `r5-chain.log` · gate 13 of 13 green, M3 fails at both frames (0.672 and 0.786), packs in `out/work/packs/round-005/`.
@@ -640,7 +643,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - Started 2026-11-21 14:57 UTC. Judges commit `cd262c1` (engine `5ac2814e4342d561`). Unit `bloom`, the fourth and last round of its loop (the look lock allows 4: rounds 3 to 6); judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Extra round: the clock printed `extra rounds: yes` at 14:56:13 UTC (Phase 3 at 8.02 h of its 9 h box, the whole build at 14.07 h of 30 h). Families rotate again: R1 GPT, R3 Gemini, R4 Claude; the jury is ten jurors over five families on the two judged frames, the controls' 6 of 10 from round 3 stand. Before the round: 98 of 98 tests, the build clean, G12 green on the prepared tree, M1 and M2 pass and M3 reads 0.962 and 1.016 at `review`
 - [x] Machine checks (`npm run gate -- --phase 3 --machine`, started 14:56:45 UTC): 15:10:19 UTC, all 13 green. G2 98 of 98 tests; G3 determinism passes (3 frames, 16x9, `review`); G11 texture memory web 106 MB of 800, full 327 MB of 2400; G12 worst ratio 1.00 at each of the four cuts (the limit is 1.5); G13 no finished unit yet, 6 stand-ins remain and none is in a finished unit
 - [x] Measures (`npm run measure -- --unit bloom`, the judged stills at `final`, 404.4 s and 429.0 s, slower than round 5's 278 s and 284 s because the Builder ran the tests of the Phase 4 line twice on the same two cores meanwhile): 15:24 UTC. M1, M2 and M3 all pass at both frames, the first round in which M3 does. M1: blur circle at the tip 1.44 px at frame 1350 and 0.55 px at 1515 (limit 1.5). M2: 0.00 % of 121033 and of 147750 textured pixels in the sharp zone under 1 texel per pixel. M3: 0.860 at frame 1350 (our energy 13.266 against the approved's 15.434, 204733 sharp pixels) and 0.944 at frame 1515 (14.084 against 14.921, 244740 pixels); 0.8 is needed. Round 5 at `final` read 0.672 and 0.786. Numbers in `out/work/measures/bloom.json`
-- [ ] Pack
+- [x] Pack (`npm run pack -- --phase 3 --round 6 --unit bloom`): ended 15:49:32 UTC, built in 24.7 min, exit 0 (round 5: 17.4 min; the Builder ran the Phase 4 line's type check and tests on the same two cores for two of those minutes, and the frames before the cut now carry the frost world's nine skyline layers); `out/work/packs/round-006/` (R1 eight images, R2 four, R3 six, R4 four, each with its manifest), key outside the packs in `out/work/packs/keys/round-006.json` (engine `5ac2814e4342d561`, `bloom` `a3c4425208d2ca9c`, tier `final`). The Builder looked at every file before sending: pairs and crops are the right frames at the right places, labels match the manifests, the motion sheets hold frames 1200 to 1559, the run 1331 to 1342 and the cut's frames 1194 to 1205, the jury's two judged files are byte for byte the R1 and R3 frames and its two controls the approved pair, and nothing in a name or a label says which image is ours
 - [ ] R1 answer
 - [ ] R2 jury answers
 - [ ] R3 answer
@@ -733,6 +736,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 15:25 UTC · Round 6: measures at final all pass (M3 0.860 and 0.944); bloom clip joined from twelve parts; film tool records the right tier; Phase 4 line at 9d284e6
 - 2026-11-21 15:30 UTC · Status 35: round 6 measures pass at final (M3 0.860 and 0.944); bloom clip joined; first Phase 4 reports in
 - 2026-11-21 15:42 UTC · Phase 4: first reports from eight builders, the line's contents and the Builder's shared decisions (skyline through the film, sky.even, f-numbers, growth patches, shutter ruling)
+- 2026-11-21 15:50 UTC · Round 6: pack built and checked (24.7 min); Phase 4 line pushed at 5a144fa
 
 ## Session log
 
