@@ -150,15 +150,18 @@ const EDGE = [
   { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 3, more: true },
 ]
 
-// The crop's front comes forward round the companion, so that only the plant stands free: the first row is at full height at its side,
-// and five neighbors stand before the rows, each set by hand: how far behind the plant's line, how far to its right, its size, its turn and its kind.
-const FRONT_ROW = { left: -2.6, right: -0.85 }
+// The crop's front comes forward round the companion, so that only the plant stands free: the first row is at full height beside the bay
+// the plant stands in, a third of it short, and five neighbors stand before the rows at the companion's side,
+// each set by hand: how far behind the plant's line, how far to its right, its size, its turn and its kind.
+const FRONT_SHORT = 0.35
+const FRONT_CHANNEL = 75
+const frontRow = (across: number): boolean => (across > -2.6 && across < -0.85) || (across > 1.5 && across < 6)
 const FRONT = [
   { along: 0.78, across: -1.32, size: 0.7, turn: 0.35, kind: 1 },
   { along: 0.7, across: -1.8, size: 0.78, turn: -0.15, kind: 5 },
   { along: 0.83, across: -2.22, size: 0.62, turn: 0.7, kind: 3 },
   { along: 0.04, across: -1.52, size: 0.67, turn: 0.25, kind: 6 },
-  { along: -0.03, across: -1.98, size: 0.6, turn: -0.4, kind: 0 },
+  { along: 0.02, across: -1.98, size: 0.6, turn: -0.4, kind: 0 },
 ]
 export const frontM = config.field.plantAheadOfRowM
 
@@ -188,7 +191,7 @@ export function fieldPlaces(): FieldPlaces {
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
       const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
-      const skirt = k < edgeRows(across) - 0.5 && !(across > FRONT_ROW.left && across < FRONT_ROW.right)
+      const skirt = k < edgeRows(across) - 0.5 && !(k === 0 && frontRow(across))
       if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -198,7 +201,7 @@ export function fieldPlaces(): FieldPlaces {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
         const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
-        if (k < edgeRows(off) - 0.5 && !(off > FRONT_ROW.left && off < FRONT_ROW.right)) continue
+        if (k < edgeRows(off) - 0.5 && !(k === 0 && frontRow(off))) continue
         const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
         under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
       }
@@ -208,7 +211,7 @@ export function fieldPlaces(): FieldPlaces {
       if (!skirt && hash01(SEED, 9, id) < 0.03 + thin) continue
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const short = skirt || hash01(SEED, 15, id) < SHORT
+      const short = skirt || hash01(SEED, 15, id) < SHORT || (k === 0 && frontRow(across) && hash01(SEED, FRONT_CHANNEL, id) < FRONT_SHORT)
       const size = skirt ? SKIRT_SIZE[0] + (SKIRT_SIZE[1] - SKIRT_SIZE[0]) * hash01(SEED, 72, id) : short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))

@@ -183,7 +183,7 @@ float soilHeight(vec2 p, float lod) {
 }
 `
 
-export const dewShade = [1.05, 0.8, 1.08]
+export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
 export const waterLevelsM = [-0.03, -0.0075]
@@ -380,7 +380,7 @@ void main() {
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
   open *= 1.0 - 0.35 * thatch;
-  open = mix(open, 0.22 + 0.78 * open, uDew);
+  open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR

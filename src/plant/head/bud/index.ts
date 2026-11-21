@@ -18,7 +18,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 20000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 9000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
 }
@@ -107,21 +107,24 @@ const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.8, 0, -0.8]
+const SHUT_ANGLE = [0.8, 0, -0.65]
 const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
 const SHUT_CURL = [0.9, 0, 0]
 const SHUT_CURL_LATE = [0.8, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [0.5, 1.02, 0.95]
+const SHUT_LONG = [0.5, 0.85, 0.9]
 const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
 const SHUT_TIP = [0.35, 0.7, 0.5]
 const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
-const CROWN_ANGLE = 0.6
-const CROWN_LONG = 0.12
-const CROWN_TIP = 0.7
+const CROWN_ANGLE = 0.55
+const CROWN_ANGLE_LATE = 0.6
+const CROWN_LONG = 0
+const CROWN_LONG_LATE = 0.12
+const CROWN_TIP = -1.0
+const CROWN_TIP_LATE = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
 const SPREAD_LONG = 2.6
 const SPREAD_LONG_LATE = 1.6
@@ -318,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = (u < 0.9 ? 0.0035 : 0.0018) * (0.75 + 0.5 * rnd(2123 + b, i)) * (bracts[b].series === 2 ? 0.4 : 1)
+        hairLong[n] = (u < 0.9 ? 0.005 : 0.0018) * (0.75 + 0.5 * rnd(2123 + b, i)) * (bracts[b].series === 2 ? 0.4 : 1)
       }
     }
   }
@@ -465,7 +468,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const spread = lerp(k.star, k.spread, early)
-      const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + YOUNG_LONG[k.series] * young * (k.series === 0 ? k.spread / SHUT_SPREAD : 1)) * (1 + (CROWN_LONG * k.crown + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
+      const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + YOUNG_LONG[k.series] * young * (k.series === 0 ? k.spread / SHUT_SPREAD : 1)) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * k.crown + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
@@ -501,7 +504,7 @@ export function create(options: PartOptions): PlantPart | null {
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
-      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + 0.3 * k.spread) * young, lerp(SHUT_ANGLE_LATE[k.series], SHUT_ANGLE[k.series], early) + CROWN_ANGLE * k.crown + k.lean + lerp(1, SPREAD_OUT, early) * spread, globe), stand, ready)
+      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + 0.3 * k.spread) * young, lerp(SHUT_ANGLE_LATE[k.series], SHUT_ANGLE[k.series], early) + lerp(CROWN_ANGLE_LATE, CROWN_ANGLE, early) * k.crown + k.lean + lerp(1, SPREAD_OUT, early) * spread, globe), stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
@@ -531,7 +534,7 @@ export function create(options: PartOptions): PlantPart | null {
         const bulge = lerp(BULGE_LATE[k.series], BULGE[k.series], early) * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + CROWN_TIP * k.crown) * globe * smoothstep(0.4, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * k.crown) * globe * smoothstep(0.4, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
         const Ea = R * (1 + CONE_WIDE * coneWide) + lift + BULGE_TOP * bulge
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift + BULGE_HIGH * bulge
         const fr = r / Ea
@@ -616,7 +619,8 @@ export function create(options: PartOptions): PlantPart | null {
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
-        const even = lerp(1.04, 0.15, smoothstep(0.34, 0.74, u)) * (1 - Math.pow(clamp((u - 0.74) / 0.26), 1.4)) + 0.004
+        const awn = lerp(0.74, 0.66, early)
+        const even = lerp(1.04, 0.15, smoothstep(lerp(0.34, 0.28, early), awn, u)) * (1 - Math.pow(clamp((u - awn) / (1 - awn)), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight)
