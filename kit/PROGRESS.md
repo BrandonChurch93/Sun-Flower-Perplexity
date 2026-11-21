@@ -7,14 +7,14 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 2 · Engine and blockout
 - Current unit: none
-- Current round: 1 · blockout · floor round
+- Current round: 2 · blockout · extra round
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
+- Last push: 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
 - Last status: 14 · 2026-11-21 05:31 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -171,6 +171,35 @@ Checked against the npm registry and each project's own release notes on 2026-11
 
 Seconds per sample and per frame at each format and tier, the time for one judged still at the `final` tier, the time for the whole film at each tier, and the texture memory. Measured in Phases 0, 2, 3 and 5.
 
+### Phase 2 blockout (stand-in plant and field, six stand-in worlds)
+
+Measured 2026-11-21 05:36 UTC on the Builder's VM (2 cores, software WebGL2). One sample is one full render of the scene. A frame costs a fixed part (building the plant, the lens and grade stage) plus its samples.
+
+| Format | Size | Seconds per sample | Fixed seconds per frame | Frame at `draft` (1) | Frame at `review` (8) | Frame at `final` (48) | Start-up | First frame extra |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 16x9 | 1920 x 1080 | 1.935 (0.875 to 2.952) | 0.87 | 2.8 s | 16.5 s | 94.4 s | 2.0 s | 1.5 s |
+| preview | 960 x 540 | 0.726 (0.345 to 1.139) | 0.20 | 0.9 s | 6.0 s | 35.0 s | 2.1 s | 1.3 s |
+| uhd | 3840 x 2160 | 5.999 (3.018 to 9.320) | 4.04 | 10.1 s | 52.3 s | 293.5 s | 1.8 s | 1.7 s |
+
+| Whole film (1800 frames) | `draft` | `review` | `final` |
+| --- | --- | --- | --- |
+| 16x9, one VM | 1.4 h | 8.2 h | 47.2 h |
+| preview, one VM | 28 min | 3.0 h | 17.5 h |
+| uhd, one VM | 5.0 h | 26.2 h | 146.7 h |
+
+| Per unit in 16x9 | Frames | `draft` | `review` | `final` |
+| --- | --- | --- | --- | --- |
+| dawn | 240 | 8 min | 32 min | 2.9 h |
+| rain | 360 | 11 min | 59 min | 5.5 h |
+| night | 300 | 12 min | 1.1 h | 6.4 h |
+| frost | 300 | 17 min | 1.6 h | 9.1 h |
+| bloom | 360 | 23 min | 2.5 h | 14.3 h |
+| field | 240 | 13 min | 1.5 h | 9.1 h |
+
+- One judged still at the `final` tier in 16x9: 143 s from the per sample numbers, 141 s measured, plus 3 s to start. It fits in `sandbox.chunkBudgetMinutes` (7 min).
+- The whole film at `final` in 16x9 with the units split across sandbox agents ends when the longest unit ends: about 14.3 h on a VM of this speed.
+- Texture memory, as the loader counts it with mipmaps: `full` 118.8 MB of 2400 MB, `web` 61.3 MB of 800 MB. Render targets on top of that: 16x9 about 141 MB, preview about 35 MB, uhd about 563 MB.
+
 ### Phase 0 spike scene (stand-in plant, ground and sky)
 
 Measured 2026-11-21 01:51 UTC on the Builder's VM (2 cores, software WebGL2). One sample is one full render of the scene. A frame costs a fixed part (building the plant, the lens and grade stage) plus its samples.
@@ -296,6 +325,9 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · To check at the final build of this phase: when `harness_builder` tested `npm run film` on the scene as it stood at 03:10 UTC, the film record held M1 with 333 of 1800 frames failed. The scene has changed since (the hero's tip, the lens, the field), so the number is read again from the record of the film rendered for the gate, and if frames still fail the cause is found before the gate is closed.
 - 2026-11-21 · Phase 2 · `npm run still` skips a frame that is already on disk from the same engine hash, format and tier, and prints no line for it. A run that prints only its header rendered nothing new.
 
+- 2026-11-21 · Phase 2 · What the Phase 2 render budget means for the phases after it (measured 05:36 UTC on stand-ins): a frame of the bloom costs 2.95 s a sample in 1920 x 1080, so a judged still at `final` costs about 2.4 minutes and a pack of ten review stills about 10 minutes, and the whole film at `final` in 1920 x 1080 would take 47 h on one VM of this speed. `deliver.sandboxMaster` is false, so the sandbox never renders that master; it stays an export for a machine with a GPU. The real plant must not make a sample dearer than it has to: every agent that writes a shader in Phase 3 is told that the film is drawn by software WebGL, that the noise in the stand-in's shaders is the dearest thing in them, and to read maps instead. The budget is measured again in Phase 3.
+- 2026-11-21 · Phase 2 · While the round 2 critic and the budget job ran, the Builder began the Phase 3 scaffold in a second working tree (`sf-p3`, local branch `p3-scaffold`, never rendered from while the main tree renders). It changes nothing a frame shows: the stand-in still draws every piece. It is merged into `main` only after the Phase 2 gate, as the first step of Phase 3.
+
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -318,7 +350,11 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-- `npm run budget -- --scene "Phase 2 blockout (stand-in plant and field, six stand-in worlds)"` · one probe frame per unit (45, 420, 780, 1080, 1350, 1755) in the three formats, one still at the `final` tier in 16x9, and the `web` set · log `out/work/logs/budget-p2b.log` · this VM · started 2026-11-21 05:22 UTC · from the per sample times seen on this scene (16x9 1.05 to 3.04 s a sample, uhd four times that) about 16 minutes; limit twice that, 32 minutes. It writes its table into this file itself when it ends.
+None.
+
+Finished in this task:
+
+- `npm run budget -- --scene "Phase 2 blockout (stand-in plant and field, six stand-in worlds)"` · started 2026-11-21 05:22 UTC, ended 05:37 UTC (15 minutes, about 16 expected) · log `out/work/logs/budget-p2b.log` · its table is under "Render budget".
 
 ## Running agents
 
@@ -403,6 +439,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:21 UTC · Round 2: pack made, critic started
 - 2026-11-21 05:22 UTC · Phase 2: render budget measuring on the blockout scene
 - 2026-11-21 05:32 UTC · Status 14: blockout round 2 with its critic, budget measuring
+- 2026-11-21 05:39 UTC · Phase 2: render budget measured on the blockout scene
 
 ## Session log
 
