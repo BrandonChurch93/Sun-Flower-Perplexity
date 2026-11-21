@@ -30,8 +30,8 @@ void main() {
   vec3 base = plantWorld(seat.xyz);
   vec3 up = plantDirection(normalize(rest.xyz + vec3(0.0, 1e-6, 0.0)));
   float hang = saturate(rest.w);
-  // A bead that sits is a ball sunk half its radius into the down; one that hangs is whole and under its hold.
-  vec3 middle = base + mix(up * (0.5 * r), vec3(0.0, -0.9 * r, 0.0), hang);
+  // A bead that sits is the cap of a ball whose middle lies under the skin; one that hangs is whole and under its hold.
+  vec3 middle = base + mix(up * (-0.3 * r), vec3(0.0, -0.9 * r, 0.0), hang);
   vec3 toEye = normalize(uCamPos - middle);
   vec3 side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye) + vec3(1e-6, 0.0, 0.0));
   vec3 rise = cross(toEye, side);
@@ -62,7 +62,7 @@ in float vDepth;
 // The sky as a bead mirrors it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
   float band = exp(-(d.y - 0.12) * (d.y - 0.12) * 22.0);
-  return skyAmbient(d) + uSkyHorizon * (2.0 * band);
+  return skyAmbient(d) + uSkyHorizon * (1.2 * band);
 }
 
 void main() {
@@ -73,7 +73,7 @@ void main() {
   float under = b * b - c;
   if (under < 0.0) discard;
   vec3 p = uCamPos + ray * (-b - sqrt(under));
-  if (vHang < 0.5 && dot(p - vBase, vUp) < 0.0) discard;
+  if (dot(p - vBase, vUp) < -2.0 * vRadius * vHang) discard;
   vec3 n = normalize(p - vMiddle);
   vec3 view = -ray;
   float ndv = saturate(dot(n, view));
@@ -98,8 +98,8 @@ void main() {
   float farSky = saturate(0.5 - 0.5 * dot(n, lightAbove) / max(ndv, 0.35));
   farSun *= farSun;
   farSky *= farSky;
-  vec3 lit = uSunColor * (sun * (0.15 + 3.2 * farSun * farSun)) + skyAmbient(lightAbove) * (0.3 + 2.4 * farSky);
-  vec3 body = vTint * lit * (0.55 + 0.45 * ndv);
+  vec3 lit = uSunColor * (sun * saturate(dot(vUp, uSunDir)) * (0.4 + 2.4 * farSun * farSun)) + skyAmbient(vUp) * (0.7 + 1.8 * farSky);
+  vec3 body = vTint * lit * (0.7 + 0.3 * ndv);
   // The far edge of the ball shows the bright side of the sky through it.
   body += beadSky(-mirror) * (0.25 * f2);
 
