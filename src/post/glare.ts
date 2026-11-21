@@ -10,8 +10,8 @@ vec4 bright(vec3 c) {
   float l = max(c.r, max(c.g, c.b));
   float soft = clamp(l - uKnee * 0.5, 0.0, uKnee);
   float over = max(l - uKnee, soft * soft / (2.0 * uKnee + 1e-4));
-  float kept = over / (1.0 + over / 64.0);
-  float hot = 1.0 - exp(-max(l - 4.0 * uKnee, 0.0) / (4.0 * uKnee));
+  float kept = over / (1.0 + over / 800.0);
+  float hot = 1.0 - exp(-max(l - 6.0 * uKnee, 0.0) / (30.0 * uKnee));
   return vec4(c * (kept / max(l, 1e-4)), hot);
 }
 void main() {
@@ -82,9 +82,10 @@ void main() {
   vec2 axis = (c - uSun) * vec2(uAspect, 1.0);
   vec2 d = axis / max(length(axis), 1e-4) / vec2(uAspect, 1.0);
   vec3 streak = vec3(0.0);
-  for (int i = -9; i <= 9; i++) {
+  for (int i = -10; i <= 10; i++) {
     float t = float(i) * 0.05;
-    streak += hot(tFar, vUv - d * t) / (1.0 + 60.0 * t * t);
+    float fade = 1.0 - 4.0 * t * t;
+    streak += hot(tFar, vUv - d * t) * (fade * fade / (1.0 + 40.0 * t * t));
   }
   vec3 ghosts = hot(tFar, c + (c - vUv) / 0.92) * vec3(0.5, 0.9, 0.75) * 0.7;
   ghosts += hot(tNear, c + (vUv - c) / 0.42) * vec3(1.0, 0.72, 0.4) * 0.4;

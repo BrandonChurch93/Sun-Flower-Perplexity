@@ -12,8 +12,10 @@ type Mode = 0 | 1 | 2 | 3
 
 const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backlight: 1, texels: 2, depth: 3, focus: 2, standins: 2 }
 
-// How far past the spacing of the lens samples each copy is spread. At 1 the copies of an out of focus edge still show at 8 samples.
-const fillGain = 1.25
+// How far past the spacing of the lens samples each copy is spread. At 1 the copies of an out of focus edge still show, at 8 samples and at 48.
+const fillGain = 1.8
+// With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
+const soloGain = 0.9
 
 function halfTarget(width: number, height: number): THREE.WebGLRenderTarget {
   const t = new THREE.WebGLRenderTarget(width, height, {
@@ -132,7 +134,7 @@ export class Post {
   private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, samples: number): THREE.Texture {
     const r = this.reach.uniforms
     r.tFrame.value = frame
-    r.uRadiusScale.value = (0.5 * fillGain) / Math.sqrt(samples)
+    r.uRadiusScale.value = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
     this.reach.render(renderer, this.fillA)
     let from = this.fillA
     let to = this.fillB
@@ -140,8 +142,8 @@ export class Post {
     const rounds: { pass: FullscreenPass; spread: number; edge: number }[] = [
       { pass: this.fillWide, spread: 1, edge: samples === 1 ? 0.35 : 0 },
       { pass: this.fillTight, spread: 0.45, edge: 0 },
+      { pass: this.fillTight, spread: 0.18, edge: 0 },
     ]
-    if (samples < 4) rounds.push({ pass: this.fillTight, spread: 0.18, edge: 0 })
     for (let i = 0; i < rounds.length; i++) {
       const u = rounds[i].pass.uniforms
       u.tFrame.value = from.texture
@@ -204,8 +206,8 @@ export class Post {
         f.tFar.value = this.down[Math.min(this.down.length - 1, this.flareLevel + 2)].texture
         f.uSun.value.set(sun.x, sun.y)
         f.uAspect.value = target.width / target.height
-        f.uStreak.value = 0.16
-        f.uGhost.value = 0.05
+        f.uStreak.value = 0.3
+        f.uGhost.value = 0.09
         this.flare.render(renderer, target)
       }
       const tone = toneConstants(def.grade.contrast, def.grade.white)
