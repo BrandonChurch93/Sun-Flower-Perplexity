@@ -16,8 +16,8 @@ const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
-// Hairs that stand closer on the screen than this share of a pixel covered hide one another: only that many of them show.
-const CROWD_COVER = 0.06
+// Hairs that stand closer on the screen than this hide one another and would merge into a line: only that many of them show. In pixels of hair length to a square pixel.
+const CROWD_COVER = 0.3
 const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
@@ -287,7 +287,7 @@ export class HairSet {
   private readonly at: Float32Array
   private crowd = new Float32Array(0)
 
-  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00009) {
+  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00013) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -387,7 +387,7 @@ export class HairSet {
       at[n * 2] = px
       at[n * 2 + 1] = py
       const scale = (size * perM) / w
-      crowd[Math.round(py) * cols + Math.round(px)] += (share * this.widthM * scale * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
+      crowd[Math.round(py) * cols + Math.round(px)] += (share * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
       out[q] = x
       out[q + 1] = y
       out[q + 2] = z
