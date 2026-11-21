@@ -164,7 +164,7 @@ void main() {
     float over = smoothstep(2.0, 15.0, aFloret.z - f.time) * (1.0 - edge);
     float high = w * 1.4 * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown * (1.0 - 0.3 * twin);
     float lid = tall * (0.98 + 0.14 * aSeed.x) + (0.12 + 0.1 * twin) * w * grown;
-    float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, (hs - 0.5) * 1.3 + (twin - 0.5) * 0.5, over);
+    float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, (hs - 0.5) * 0.8 + (twin - 0.5) * 0.4, over);
     turn = mix(turn, (twin - 0.5) * 1.1, edge);
     vec3 away = fx * cos(turn) + fy * sin(turn);
     vec3 across = cross(axis, away);
@@ -175,7 +175,7 @@ void main() {
     local = f.at + away * x + across * y + axis * z;
     normal = normalize(away * mix(1.0, 0.25, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
     // At the rim the scales lie outward on the floor, out to the feet of the rays.
-    float out0 = level < 0.5 ? rho + 0.2 * uCell : level < 1.5 ? max(rho + 0.9 * uCell, 0.966 + 0.02 * hs) : 0.988 + 0.011 * hs;
+    float out0 = level < 0.5 ? rho + 0.2 * uCell : level < 1.5 ? max(rho + 0.9 * uCell, 0.972 + 0.018 * hs) : 0.992 + 0.008 * hs;
     float shift = (twin - 0.5) * 1.1 + (hs - 0.5) * 0.7;
     float aside = w * (shift * (level < 0.5 ? 0.0 : level < 1.5 ? 0.6 : 1.0) + lateral * (level < 0.5 ? 0.5 : 0.8));
     Floor g = floorAt(out0, aFloret.y + aside / max(out0 * f.radius, 1e-6));
@@ -241,7 +241,7 @@ void main() {
   if (piece < 0.5) {
     float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
     vec3 dark = mix(vec3(0.085, 0.06, 0.012), vec3(0.07, 0.1, 0.015), centre);
-    vec3 pale = mix(vec3(0.27, 0.205, 0.035), vec3(0.2, 0.25, 0.045), centre);
+    vec3 pale = mix(vec3(0.31, 0.24, 0.035), vec3(0.2, 0.29, 0.045), centre);
     vec3 ochre = vec3(0.17, 0.095, 0.026);
     dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
@@ -276,7 +276,7 @@ void main() {
     t.sheen = 0.6;
   } else {
     vec3 young = mix(vec3(0.22, 0.37, 0.09), vec3(0.62, 0.74, 0.2), along);
-    vec3 green = mix(vec3(0.075, 0.09, 0.03), mix(vec3(0.06, 0.1, 0.022), vec3(0.2, 0.26, 0.06), along), open);
+    vec3 green = mix(vec3(0.075, 0.09, 0.03), mix(vec3(0.05, 0.105, 0.02), vec3(0.17, 0.27, 0.055), along), open);
     vec3 dry = vec3(0.1, 0.062, 0.024);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
     t.albedo = mix(young, grownUp, ripe) * (0.85 + 0.3 * around) * tone;
