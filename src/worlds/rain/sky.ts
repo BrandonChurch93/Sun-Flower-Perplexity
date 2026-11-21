@@ -59,11 +59,11 @@ vec3 rainSky(vec3 d, float lod) {
   float cloud = 1.0 - smoothstep(0.12, 0.35, lum);
   // Seen through kilometres of rain the cloud keeps its great masses and loses its wisps.
   vec3 mass = textureLod(tRainSky, at, max(lod, 6.0)).rgb;
-  sky = mix(sky, mass, 0.65 * cloud);
+  sky = mix(sky, mass, 0.85 * cloud);
   vec3 color = sky * mix(vec3(1.0), vec3(1.0, 1.08, 1.0), cloud) * uRainSkyGain;
-  // The paint holds the lit bellies of those masses back: they stand pale and greyer than the depths, which go darker.
+  // The paint holds the lit bellies of those masses back: they stand pale and greyer than the depths, which go darker. Next to the band the mass already holds the band's light and is left as it is, or the cloud's foot would wear a pale rim.
   float body = dot(mass, vec3(0.3, 0.6, 0.1));
-  color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body)));
+  color *= mix(1.0, mix(0.8, 1.0, smoothstep(0.015, 0.04, body)), cloud) * (1.0 + vec3(1.1, 0.75, 0.5) * (cloud * smoothstep(0.03, 0.06, body) * (1.0 - smoothstep(0.09, 0.18, body))));
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
   float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
@@ -72,7 +72,7 @@ vec3 rainSky(vec3 d, float lod) {
   // The cloud's foot hangs into the band in rags, lower the farther from the sun, so the band opens wide only where the sun stands.
   float rags = 0.6 * valueNoise(vec2(turn * 14.0 + 3.0, up * 40.0)) + 0.4 * valueNoise(vec2(turn * 43.0 + 1.0, up * 90.0 + 5.0));
   float foot = smoothstep(0.25, 0.95, up / RAIN_SKY_BAND_TOP + 0.9 * (rags - 0.5) + 0.55 - 0.78 * sunward);
-  color = mix(color, uRainSkyTone * 0.9, (1.0 - cloud) * 0.9 * foot);
+  color = mix(color, uRainSkyTone * 0.9, (1.0 - smoothstep(0.6, 1.0, cloud)) * 0.9 * foot);
   // Far rain hangs between the lens and the sky, lit grey by the band: an even haze that thickens toward the land, and leaning curtains under the cloud that drift.
   float lean = turn - 0.21 * up;
   float curtain = valueNoise(vec2(lean * 7.0 + uTime * 0.012, 2.0)) * 0.6 + valueNoise(vec2(lean * 31.0 + uTime * 0.03, up * 5.0 + 9.0)) * 0.4;
