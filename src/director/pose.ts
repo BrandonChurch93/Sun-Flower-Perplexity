@@ -25,6 +25,11 @@ export function orbited<T extends RigPath>(rig: T, orbit: Orbit): T {
   return { ...rig, distanceM: Math.max(0.01, reach * Math.cos(angle)), heightM, azimuthRad: rig.azimuthRad + orbit.azimuthDeg * RAD }
 }
 
+// Where the lens is. It depends on the rig alone, so the point the lens holds can be worked out from it.
+export function eyeOf(r: RigPath, out: THREE.Vector3): THREE.Vector3 {
+  return out.set(r.distanceM * Math.sin(r.azimuthRad), r.heightM, r.distanceM * Math.cos(r.azimuthRad))
+}
+
 export function poseOf(r: Rig, focusPoint: THREE.Vector3): CameraPose {
   const sa = Math.sin(r.azimuthRad)
   const ca = Math.cos(r.azimuthRad)

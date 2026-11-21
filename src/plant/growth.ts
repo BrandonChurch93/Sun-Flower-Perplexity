@@ -1,6 +1,7 @@
 import { config } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { combine, hash01, streamSeed } from '../core/random.ts'
+import { STEM_LEAN, STEM_SWING, sway, windToward } from './wind.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
 export interface PlantInputs {
@@ -19,9 +20,15 @@ const SEED = streamSeed('plant')
 let variant = 0
 let seedNow = SEED
 
-export function usePlant(v: number): void {
+// Where that plant stands, for the wind that reaches it. Null for a shape drawn once per neighbor: the field sways those itself.
+let standsAt: Place | null = { x: 0, z: 0 }
+export interface Place { x: number; z: number }
+const ORIGIN: Place = { x: 0, z: 0 }
+
+export function usePlant(v: number, at: Place | null = ORIGIN): void {
   variant = v
   seedNow = v === 0 ? SEED : combine(SEED, v)
+  standsAt = at
 }
 
 export function plantVariant(): number {
@@ -299,9 +306,10 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const phase = TAU * (time / NUTATION_SECONDS + rnd(1))
   const tilt = Math.PI / 2 - headElevation(time)
   const az = headAzimuth(time)
+  const blow = standsAt && inputs.wind > 0 ? inputs.wind * (STEM_LEAN + STEM_SWING * sway(time, standsAt.x, standsAt.z)) : 0
   return {
-    leanX: inputs.leanX * lean + Math.sin(phase) * circle,
-    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle,
+    leanX: inputs.leanX * lean + Math.sin(phase) * circle + windToward.x * blow,
+    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle + windToward.z * blow,
     hook: hookAngle(time),
     hookShare: hookShare(time),
     back: HOOK_BACK * (hookAngle(time) / HOOK_MAX),
