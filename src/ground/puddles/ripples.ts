@@ -9,8 +9,8 @@ const RING_FADES = 3
 // The longest a ring lives from the landing of its drop: of a heavy drop, and of the fine rain.
 export const RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1])
 export const FINE_RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1] * 0.37)
-// A ring's strength goes with its drop's radius to this power: a drizzle drop a tenth as wide rings a tenth as strongly.
-const RING_BY_RADIUS = 1
+// A ring's strength goes with its drop's radius to this power: a drizzle drop a tenth as wide rings about a sixth as strongly.
+const RING_BY_RADIUS = 0.75
 const SEGMENTS = 48
 const SIZE = 2048
 
@@ -38,7 +38,7 @@ void main() {
   float w = 0.003 + 0.008 * size + (0.02 + 0.05 * size) * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 4.0 * w, 0.0), (rc + 2.2 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 2.6 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
+  vWave = vec4(rc, w, 4.0 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4(boxPlace(drop.xy + vOff), 0.0, 1.0);
 }
