@@ -78,18 +78,19 @@ void main() {
   float thick = smoothstep(0.3, 0.72, here) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.55, 1.0, vInfo.y / vInfo.z);
   float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d);
-  outColor = vec4(fogLight(v) * (1.0 + 0.33 * lit), alpha);
+  outColor = vec4(fogLight(v) * (1.0 + 0.6 * lit), alpha);
 }
 `
 
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 11, topM: 3.6, scaleM: 7, alpha: 0.16, speed: 0.08 },
+  { radiusM: 4, topM: 2.2, scaleM: 3.5, alpha: 0.1, speed: 0.06 },
+  { radiusM: 7, topM: 2.8, scaleM: 5, alpha: 0.14, speed: 0.09 },
+  { radiusM: 11, topM: 3.6, scaleM: 7, alpha: 0.18, speed: 0.08 },
   { radiusM: 16, topM: 4.6, scaleM: 10, alpha: 0.25, speed: 0.11 },
   { radiusM: 24, topM: 5.8, scaleM: 15, alpha: 0.35, speed: 0.1 },
-  { radiusM: 36, topM: 7.4, scaleM: 22, alpha: 0.4, speed: 0.13 },
-  { radiusM: 54, topM: 9.5, scaleM: 32, alpha: 0.45, speed: 0.12 },
+  { radiusM: 42, topM: 8.2, scaleM: 26, alpha: 0.5, speed: 0.13 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
