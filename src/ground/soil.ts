@@ -228,7 +228,12 @@ float sparkle(vec3 world, vec3 v, vec3 n) {
 // Wet grains each mirror the bright sky low over the horizon.
 vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
   float skim = 1.0 - max(dot(n, v), 0.0);
-  return uSkyHorizon * (grains(world + 0.37, 0.16) * wet * wet * (0.15 + 0.85 * skim) * 0.9);
+  return uSkyHorizon * (grains(world + 0.37, 0.16) * wet * wet * (0.15 + 0.85 * skim) * mix(0.9, 0.5, smoothstep(0.3, 1.0, wet)));
+}
+// A wet shoulder mirrors the sky it faces as one soft sheen, strongest where the lens skims it.
+vec3 wetSheen(vec3 v, vec3 n, float wet) {
+  float skim = 1.0 - max(dot(n, v), 0.0);
+  return skyAmbient(reflect(-v, n)) * (smoothstep(0.3, 1.0, wet) * (0.03 + 0.97 * skim * skim * skim) * 0.09);
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
@@ -281,6 +286,7 @@ uniform float uCover;
 uniform vec2 uToward;
 uniform vec2 uRight;
 uniform vec3 uRows;
+uniform vec3 uWaterBox;
 uniform float uLitter;
 uniform vec2 uScales;
 uniform vec3 uMeanInv;
@@ -332,7 +338,8 @@ void main() {
   vec2 broken = emerge(p);
   vec2 tilt = g - vec2(emerge(p + vec2(0.0003, 0.0)).x - broken.x, emerge(p + vec2(0.0, 0.0003)).x - broken.x) / 0.0003;
   albedo *= 1.0 - 0.35 * broken.y;
-  float pool = pooled(vWorld.y, uWet) * fade;
+  vec2 boxed = abs(vec2(dot(p, uRight), -dot(p, uToward)) - uWaterBox.xy);
+  float pool = pooled(vWorld.y, uWet) * fade * smoothstep(0.92, 1.0, max(boxed.x, boxed.y) / uWaterBox.z);
 #else
   vec2 uvB = TURN_B * p * (uTiles.x * 0.73) + vec2(0.37, 0.61);
   vec4 cB = texture(tColor, uvB);
@@ -357,7 +364,7 @@ void main() {
   vec2 tilt = g * 1.6 * clod - uToward * slope;
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
   albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
-  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.54) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
+  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.34) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
 #endif
 
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
@@ -397,7 +404,7 @@ void main() {
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
-  color += wetGlints(vWorld, v, n, uWet) * open * fade * (1.0 - pool) * (1.0 - thatch);
+  color += (wetGlints(vWorld, v, n, uWet) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }

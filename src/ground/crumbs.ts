@@ -397,7 +397,7 @@ void main() {
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
-  color += wetGlints(vWorld, v, n, uWet) * open;
+  color += (wetGlints(vWorld, v, n, uWet) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
