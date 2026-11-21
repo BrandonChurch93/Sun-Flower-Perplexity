@@ -1,0 +1,35 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "Crop 1, right edge of the flower disk at about 3 o’clock",
+      "what": "The rows of disk florets stop around an angular notch filled by a flat orange patch; it looks as if the ray-petal bases cut through the disk surface.",
+      "fix": "Seat the ray florets behind the disk rim and carry irregular disk florets and small occlusion shadows across the join."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "Crops 1 and 2, exposed ray petals on the left of the bud; also visible in set-C-05.png, crop 2",
+      "what": "The bright petals have similarly spaced, high-contrast lengthwise grooves that run almost to their tips and make the surfaces look like molded ribbons.",
+      "fix": "Soften and break up the grooves, vary their spacing and strength from petal to petal, and keep the thin backlit edges translucent."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "Upper-left sky and field around the low sun",
+      "what": "Long radial spokes fan out across the dark cloud and continue below the horizon with little change in structure, making the flare look laid over the scene.",
+      "fix": "Shorten and soften the optical starburst, and let any atmospheric shafts vary with cloud occlusion and haze depth."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "Crops 8 and 9, right midground rows and dark skyline behind them; also visible in set-C-03.png",
+      "what": "Several straight stalks and dark-centered orange rings look nearly interchangeable, then the field ends at a single nearly solid dark band. The depth reads as stacked layers rather than a field receding into the distance.",
+      "fix": "Vary head angle, stalk lean and spacing, and stagger the distant silhouettes with gradual atmospheric contrast falloff while preserving defocus."
+    }
+  ]
+}
