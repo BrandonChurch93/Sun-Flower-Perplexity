@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLayerSalt, skylineRing, type SkylineRing } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing, type SkylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -120,7 +120,7 @@ export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; 
 export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, number, number], mist: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
-  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.00028 }, uFlash: flash }
+  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.0095 }, uFlash: flash }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -142,7 +142,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
         position[v] = Math.sin(az) * r
-        position[v + 1] = 1.3
+        position[v + 1] = SKYLINE_LAND_M
         position[v + 2] = Math.cos(az) * r
         info[v] = r
         if (j > 0) {
@@ -186,5 +186,14 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
     })
     add(ringStrip(96, () => ({ radius: veil.radiusM, top: veil.heightM })), surface.main, 43 + (VEILS.length - i) * 0.01)
   })
-  return { meshes, flash: (amount) => { flash.value = amount }, setTime: (time) => { for (const ring of rings) ring.setTime(time) } }
+  const landMesh = meshes[0]
+  return {
+    meshes,
+    flash: (amount) => { flash.value = amount },
+    setTime: (time) => {
+      for (const ring of rings) ring.setTime(time)
+      landMesh.position.y = skylineLandM(time) - SKYLINE_LAND_M
+      landMesh.updateMatrix()
+    },
+  }
 }

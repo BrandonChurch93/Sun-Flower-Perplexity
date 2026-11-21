@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -56,6 +56,7 @@ uniform vec4 uHeadAt;
 uniform float uHeadGrow;
 uniform float uSquat;
 uniform float uHang;
+uniform float uWide;
 ${swayGlsl}
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
@@ -76,7 +77,8 @@ vec3 plantWorld(vec3 local) {
   vec3 q = local - uHeadAt.xyz;
   local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   vec3 p = local * aPlace.w;
-  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0);
+  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
+  p.xz *= 1.0 + uWide * smoothstep(0.02, 0.06, length(p.xz));
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
   vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
@@ -115,6 +117,8 @@ uniform float uPlantDew;
 uniform float uCanopy;
 uniform float uClosed;
 uniform float uDeep;
+uniform vec3 uEdge;
+uniform float uHang;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -129,6 +133,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float lane = uShadowOn * smoothstep(0.64, 0.78, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
   // One gap toward the sun lights three neighbors of the second row.
   lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.55, length(world.xz - vec2(0.1, -2.42)))));
+  // While the leaves of the young crop hang, they shut most of its lanes.
+  lane *= 1.0 - 1.3 * uHang;
   float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = uClosed;
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
@@ -151,7 +157,9 @@ float plantSky(vec3 world) {
   float closed = uClosed;
   // A crop in bloom stands taller and closer still, and keeps less of the sky.
   float deep = uDeep;
-  return mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
+  float sky = mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
+  // The front of the crop stands open to the sky on its own side, from the ground up.
+  return max(sky, 0.5 * deep * (1.0 - smoothstep(0.3, 2.2, -dot(world.xz, uEdge.xy) - uEdge.z)));
 #else
   return 1.0;
 #endif
