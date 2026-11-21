@@ -152,8 +152,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, samples: number, farCircle: number): THREE.Texture {
-    const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0) {
       const n = this.near.uniforms
@@ -229,7 +228,9 @@ export class Post {
     let source = frame
     if (mode === 0) {
       const look = lensLook(def)
-      source = this.fillGaps(renderer, frame, frameIndex, samples, sun ? sun.farCircle : 0)
+      // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
+      const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
+      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0)
       const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core, look.veilTint)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget
@@ -271,7 +272,7 @@ export class Post {
       g.uSunClear.value = look.sunClear
       g.tRaw.value = frame
       g.uFar.value = sun ? sun.farCircle : 0
-      g.uFarFill.value = sun ? Math.min(sun.farCircle * (samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)), maxFillPx) : 1
+      g.uFarFill.value = sun ? Math.min(sun.farCircle * scale, maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
       g.uSaturation.value = def.grade.saturation
