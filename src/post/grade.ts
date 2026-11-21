@@ -96,14 +96,16 @@ float fanNoise(float t, float n, float s) {
   return mix(hash31(vec3(mod(i, n), s, 1.0)), hash31(vec3(mod(i + 1.0, n), s, 1.0)), f);
 }
 // What a low sun in the frame does. In the glass: a broad soft bloom, peach white at the sun and amber further out, which lies over everything. In the air of the field: wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. Both follow how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
-vec3 sunAir(vec2 px, float circle, float under, float open) {
+vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   vec2 d = (px - uSunAt * uSize) / uSize.x;
   float r = length(d);
   float shown = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
+  // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
+  float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
   float tight = 1.0 + r * r / 0.0012;
   float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0036);
-  vec3 glass = mix(vec3(1.0, 0.86, 0.68), vec3(1.0, 0.5, 0.17), smoothstep(0.0, 0.07, r)) * (max(shown, 0.45 * uSunClear) * uGlow * glow);
+  vec3 glass = mix(vec3(1.0, 0.86, 0.68), vec3(1.0, 0.5, 0.17), smoothstep(0.0, 0.07, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
   // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
@@ -113,6 +115,7 @@ vec3 sunAir(vec2 px, float circle, float under, float open) {
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
   // Above the sun only the open sky is behind the lit air: what else stands there is a near leaf.
+  float open = uShafts > 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
@@ -143,7 +146,7 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a, dot(c, vec3(0.2126, 0.7152, 0.0722)), openSky(ivec2(gl_FragCoord.xy)));
+  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a, dot(c, vec3(0.2126, 0.7152, 0.0722)));
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;

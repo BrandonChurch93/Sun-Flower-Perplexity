@@ -19,7 +19,7 @@ export interface LensLook {
   // Bloom of the glass round a sun in the frame, and the lit air round it: soft shafts and a warm spill.
   glow: number
   shafts: number
-  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of, nor the bloom below under a half. 0 leaves them tied to what shows.
+  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what shows.
   sunClear: number
   // Extra slope through the upper half of the tones.
   punch: number
