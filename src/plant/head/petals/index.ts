@@ -22,8 +22,8 @@ const SHAPE: Record<PartDetail, Shape> = {
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
 // A shut ray is a strap folded to two ridges with a furrow between, so each reads as two slender straps lying side by side.
 const FOLD_BUD = [-0.7, -0.7, 0.7, -0.7, 0.7, 0.7]
-// A lifting ray is creased once down its midrib: a V that shows about two thirds of its open width.
-const FOLD_LIFT = [-0.85, -0.85, -0.85, 0.85, 0.85, 0.85]
+// A lifting ray is cupped like a boat about its midrib and shows most of its open width.
+const FOLD_LIFT = [-0.75, -0.6, -0.45, 0.45, 0.6, 0.75]
 // A shut strap fills its own place round the rim and narrows toward the eye, and each is rolled the same way so its edge lies on the next one.
 const STRAP_FILL = 1.8
 const SHINGLE = 0.15
@@ -98,6 +98,14 @@ function outline(u: number): number {
   const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.55)
   const s = Math.max(0, (u - peak) / (1 - peak))
   return (0.34 + 0.66 * rise) * (0.04 + 0.96 * Math.pow(1 - Math.pow(s, 1.7), 0.75))
+}
+
+// A lifting ray is a lance: narrow at the foot, broadest two fifths along, drawn out to a point.
+function lance(u: number): number {
+  const peak = 0.4
+  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.6)
+  const s = Math.max(0, (u - peak) / (1 - peak))
+  return (0.3 + 0.7 * rise) * (0.03 + 0.97 * (1 - Math.pow(s, 1.25)))
 }
 
 function makeRays(seed: number): Ray[] {
@@ -304,7 +312,7 @@ export function create(options: PartOptions): PlantPart | null {
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
-      const yaw = mix((0.08 + 0.62 * e) * swirl + 0.25 * ray.clump * e + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
+      const yaw = mix((0.08 + 0.62 * e) * swirl + 0.8 * ray.clump * e + 0.1 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
       const twist = mix(SHINGLE, ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
@@ -352,8 +360,8 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = 1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9))
-      const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * Math.min(1, grown / 0.72)
+      const strap = mix(1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9)), lance(u), smooth(0.3, 0.65, open))
+      const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * (0.85 + 2.5 * (ray.width - 0.5)) * Math.min(1, grown / 0.72)
       const halfWidth = mix(mix(place, wide * strap, along * smooth(0.2, 0.5, open)), wide * outline(u), flat)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
