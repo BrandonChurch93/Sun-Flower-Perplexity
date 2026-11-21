@@ -9,6 +9,7 @@ import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
 import { beadAt, createBeads, type Bead, type BeadSet } from '../surface/wet/index.ts'
+import { createCrystals } from '../../weather/frost/index.ts'
 import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/rain/drops.ts'
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
@@ -349,6 +350,8 @@ export function create(options: PartOptions): PlantPart {
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
   const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', undefined, 0.00003) : null
   const plan: Hair[] = []
+  // One crystal of hoarfrost for each hair of the margin and of the upper face.
+  const crystals = hero ? createCrystals(options, hairCount, 'leaf crystals') : null
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
   let hairsShown = 0
@@ -655,6 +658,7 @@ export function create(options: PartOptions): PlantPart {
     while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
     const count = born > 0 ? hairsUpTo[born - 1] : 0
     if (slot === 0) hairsShown = count
+    const frosted = stateUniforms.uPlantFrost.value > 0
     for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
@@ -662,6 +666,7 @@ export function create(options: PartOptions): PlantPart {
       const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.12, 1)
       const o = h * 4
       let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, long = 0
+      let ox = 0, oy = 0, oz = 0, ux = 0, uy = 1, uz = 0
       if (hair.kind === 2) {
         const ring = Math.min(RINGS - 2, Math.floor(hair.a))
         const t = hair.a - ring
@@ -713,6 +718,7 @@ export function create(options: PartOptions): PlantPart {
           dx = nx * side + (lx / ll) * ahead
           dy = ny * side + (ly / ll) * ahead
           dz = nz * side + (lz / ll) * ahead
+          ux = nx; uy = ny; uz = nz
           long = (0.0005 + 0.0011 * hair.r1) * scale
         } else {
           const inner = v00 + (b === 1 ? 3 : -3)
@@ -731,6 +737,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
+          ox = ex; oy = ey; oz = ez; ux = nx; uy = ny; uz = nz
           long = (0.0006 + 0.0028 * hair.r1 * hair.r1) * scale
         }
       }
@@ -742,6 +749,33 @@ export function create(options: PartOptions): PlantPart {
       lean[o + 1] = dy
       lean[o + 2] = dz
       lean[o + 3] = hair.r4
+      if (crystals && frosted) {
+        const cr = crystals.root(slot)
+        const cl = crystals.lean(slot)
+        if (hair.kind === 0) {
+          // Nearly half stand a little inside the margin on either face, so the fringe has the leaf behind it and reads against the fog.
+          const inside = hair.r2 < 0.45 ? hair.r3 * 0.0016 * scale : 0
+          const stand = inside > 0 ? (hair.r1 < 0.5 ? 1 : -1) : 0
+          cr[o] = px - ox * inside
+          cr[o + 1] = py - oy * inside
+          cr[o + 2] = pz - oz * inside
+          cr[o + 3] = (0.0015 + 0.0015 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
+          cl[o] = dx + ux * stand
+          cl[o + 1] = dy + uy * stand
+          cl[o + 2] = dz + uz * stand
+        } else {
+          // Grains on the upper face, and none on the stalk.
+          const up = uy < 0 ? -1 : 1
+          cr[o] = px
+          cr[o + 1] = py
+          cr[o + 2] = pz
+          cr[o + 3] = hair.kind === 1 && hair.r4 < 0.6 ? (0.0006 + 0.0008 * hair.r1) * scale : 0
+          cl[o] = ux * up
+          cl[o + 1] = uy * up
+          cl[o + 2] = uz * up
+        }
+        cl[o + 3] = hair.r3
+      }
     }
   }
 
@@ -753,6 +787,7 @@ export function create(options: PartOptions): PlantPart {
   }
   if (hairs) meshes.push(...hairs.meshes)
   if (beads) meshes.push(...beads.meshes)
+  if (crystals) meshes.push(...crystals.meshes)
 
   return {
     name: 'leaves',
@@ -779,6 +814,7 @@ export function create(options: PartOptions): PlantPart {
       for (const a of tubeAttributes) a.needsUpdate = true
       hairs?.finish(hairsShown)
       beads?.finish()
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? hairsShown : 0)
     },
   }
 }
