@@ -74,7 +74,7 @@ export class Job {
   print(): void {
     const per = this.rendered ? this.renderSeconds / this.rendered : 0
     const minutes = (Math.max(0, this.total - this.done) * per) / 60
-    console.log(`unit ${this.unit} · frame ${this.done} of ${this.total} · ${per.toFixed(2)} s per frame · about ${minutes < 1 ? 'under 1' : Math.round(minutes)} min left`)
+    console.log(`unit ${this.unit} · frame ${this.done} of ${this.total} · ${per.toFixed(2)} s per frame · ${minutes < 1 ? 'under 1 min' : `about ${Math.round(minutes)} min`} left`)
   }
 
   async close(): Promise<void> {
