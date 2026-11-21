@@ -65,6 +65,12 @@ void main() {
   bool front = gl_FrontFacing;
 #endif
   if (!front) n = -n;
+#ifndef PLANT_FIELD
+  // The smoothed normal irons the pleats flat: the true slope of each fold wall is put back, so one wall is lit and the next in shade.
+  vec3 flatN = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+  if (dot(flatN, n) < 0.0) flatN = -flatN;
+  n = normalize(mix(n, flatN, 0.6));
+#endif
   float u = vUv.x;
   float across = vUv.y * 2.0 - 1.0;
   float fresh = vState.x;
@@ -72,7 +78,7 @@ void main() {
   float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
-  vec3 body = mix(vec3(0.8, 0.49, 0.015), vec3(0.88, 0.6, 0.03), smoothstep(0.1, 0.8, u));
+  vec3 body = mix(vec3(0.8, 0.53, 0.015), vec3(0.88, 0.64, 0.03), smoothstep(0.1, 0.8, u));
   // A ray that is lifting is yellow before it deepens.
   body = mix(body, vec3(0.85, 0.68, 0.1), 0.9 * (1.0 - vState.z));
   body = mix(body, vec3(0.36, 0.46, 0.1), 0.95 * fresh);
@@ -84,13 +90,13 @@ void main() {
   body = mix(body, vec3(1.0, 0.62, 0.1), 0.12 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.6, 0.28, 0.012), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.8, 0.43, 0.015), vec3(1.35, 0.78, 0.045), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.8, 0.47, 0.015), vec3(1.35, 0.8, 0.045), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(1.45, 0.76, 0.3), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.66, 0.5), vec3(1.0), unfolded);
   // The light through a lifting ray is yellow; it deepens to amber as the ray spreads.
-  through *= mix(vec3(0.92, 1.3, 2.4), vec3(1.0), vState.z);
+  through *= mix(vec3(1.15, 1.6, 3.0), vec3(1.0), vState.z);
   through = mix(through, vec3(0.5, 0.72, 0.16), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
