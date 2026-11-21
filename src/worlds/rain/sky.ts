@@ -81,6 +81,9 @@ vec3 rainSky(vec3 d, float lod) {
   float curtain = valueNoise(vec2(lean * 7.0 + uTime * 0.012, 2.0)) * 0.6 + valueNoise(vec2(lean * 31.0 + uTime * 0.03, up * 5.0 + 9.0)) * 0.4;
   color = mix(color, uRainSkyTone, 0.3 * smoothstep(0.3, 0.8, curtain) * cloud * exp(-up / 0.22));
   color = mix(color, uRainSkyTone, 0.55 * exp(-up / 0.06) * (1.0 - 0.85 * sunward));
+  // The rain falls heaviest away to the left of the sun: the low sky there stands darker and bluer behind it.
+  float heavy = (turn + 0.45) / 0.25;
+  color *= 1.0 - vec3(0.9, 0.6, 0.52) * (exp(-heavy * heavy) * exp(-up / 0.16));
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
   float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.012);
   color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.05 + 0.8 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
