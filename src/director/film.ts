@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { config, timeOf, type AssetSetId, type Format, type TierId } from '../config.ts'
 import { Assets } from '../core/assets.ts'
+import { lerp, smoothstep } from '../core/curves.ts'
 import { applyLens, cocScalePx, type CameraPose } from '../core/lens.ts'
 import { frameSamples } from '../core/sampler.ts'
 import { DIAG, shared, type DiagName } from '../core/shading.ts'
@@ -9,6 +10,8 @@ import { Stage } from '../core/stage.ts'
 import { samplesOf } from '../core/tiers.ts'
 import { applyWorld, sunDirection, type WorldDef } from '../core/world.ts'
 import { breathe } from '../core/yield.ts'
+import { Field } from '../field/index.ts'
+import { companionPlace, companionVariant } from '../field/layout.ts'
 import { Ground } from '../ground/index.ts'
 import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
@@ -32,6 +35,8 @@ export class Film {
   readonly scene = new THREE.Scene()
   readonly camera = new THREE.PerspectiveCamera()
   readonly plant = new Plant()
+  readonly companion = new Plant(companionVariant)
+  readonly field = new Field()
   readonly ground = new Ground()
   readonly sky = new Sky()
   readonly shadow = new ShadowMap()
@@ -43,6 +48,7 @@ export class Film {
   // What the live mode may change: the camera turned about the plant, and a world held whatever the time is.
   readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, world: null }
   private readonly casters: Caster[]
+  private readonly bothCasters: Caster[]
   private readonly tip = new THREE.Vector3()
   private readonly sun = new THREE.Vector3()
   private readonly center = new THREE.Vector3()
@@ -54,9 +60,15 @@ export class Film {
     this.stage = new Stage(canvas, format)
     this.assets = new Assets(this.stage.renderer, assetSet)
     this.post = new Post(format.width, format.height)
-    this.scene.add(this.ground.mesh, this.plant.mesh)
+    const place = companionPlace()
+    const ratio = config.field.companion.heightRatio
+    this.companion.mesh.matrixAutoUpdate = false
+    this.companion.mesh.matrix.makeScale(ratio, ratio, ratio).setPosition(place.x, 0, place.z)
+    this.companion.mesh.matrixWorld.copy(this.companion.mesh.matrix)
+    this.scene.add(this.ground.mesh, ...this.field.meshes, this.companion.mesh, this.plant.mesh)
     this.scene.matrixWorldAutoUpdate = false
     this.casters = [{ mesh: this.plant.mesh, surface: this.plant.surface }]
+    this.bothCasters = [...this.casters, { mesh: this.companion.mesh, surface: this.companion.surface }]
     shared.uFocusCoc.value = config.detail.focusCocPx
   }
 
@@ -159,9 +171,21 @@ export class Film {
     this.sky.setWorld(def)
     this.ground.setState(def.ground)
     this.ground.mesh.visible = !alone
-    this.plant.prepare(time, time + shutterSeconds, this.inputsAt(time), this.inputsAt(time + shutterSeconds))
+    const inputs = this.inputsAt(time)
+    const inputsClose = this.inputsAt(time + shutterSeconds)
+    this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
+    this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
+    const eye = this.rigOf(time)
+    this.field.prepare(time, inputs, eye.heightM)
+    for (const m of this.field.meshes) m.visible = !alone && (m !== this.field.carpet || m.visible)
+    this.companion.mesh.visible = !alone
     const height = heightAt(time + shutterSeconds)
-    const radius = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
+    const own = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
+    // Once the camera is far enough back to see the ground round the plant, the shadow map takes in the companion too.
+    const place = companionPlace()
+    const wide = alone ? 0 : smoothstep(1.0, 1.8, eye.distanceM)
+    const radius = lerp(own, Math.hypot(place.x, place.z) + own * config.field.companion.heightRatio, wide)
+    const casters = wide > 0 ? this.bothCasters : this.casters
     this.center.set(0, 0.5 * height, 0)
     stage.accumulator.reset()
     const samples = frameSamples(frame, count)
@@ -176,7 +200,7 @@ export class Film {
       shared.uCamPos.value.copy(camera.position)
       shared.uFocusM.value = pose.focusM
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
-      if (lit) this.shadow.render(renderer, this.scene, this.casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius)
+      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius)
       else this.shadow.off()
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)

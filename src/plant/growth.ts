@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
-import { hash01, streamSeed } from '../core/random.ts'
+import { combine, hash01, streamSeed } from '../core/random.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
 export interface PlantInputs {
@@ -12,6 +12,21 @@ export interface PlantInputs {
 export interface Vec3 { x: number; y: number; z: number }
 
 const SEED = streamSeed('plant')
+
+// Which plant is being asked about. 0 is the plant. Any other number is a neighbor with its own small differences.
+let variant = 0
+let seedNow = SEED
+
+export function usePlant(v: number): void {
+  variant = v
+  seedNow = v === 0 ? SEED : combine(SEED, v)
+}
+
+export function plantVariant(): number {
+  return variant
+}
+
+const rnd = (i: number, j = 0): number => hash01(seedNow, i, j)
 const TAU = Math.PI * 2
 const RAD = Math.PI / 180
 const heightCurve = new Monotone(config.plant.heightM)
@@ -31,6 +46,7 @@ const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
 const HOOK_MAX = 172 * RAD
+const HOOK_BACK = 0.3
 const discRadius = config.plant.discDiameterM / 2
 const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
 
@@ -65,10 +81,12 @@ export function paleness(time: number): number {
 const bodyCurve = new Monotone([
   [bud0, 0],
   [inStage(bud0, bud1, 0.053), 0.008],
-  [inStage(bud0, bud1, 0.263), 0.022],
-  [inStage(bud0, bud1, 0.579), 0.045],
-  [inStage(bud0, bud1, 0.947), 0.062],
-  [inStage(bloom0, bloom1, 0.5), discRadius * 0.94],
+  [inStage(bud0, bud1, 0.263), 0.018],
+  [inStage(bud0, bud1, 0.579), 0.034],
+  [inStage(bud0, bud1, 0.79), 0.052],
+  [inStage(bud0, bud1, 0.947), 0.066],
+  [inStage(bloom0, bloom1, 0.25), discRadius * 0.925],
+  [inStage(bloom0, bloom1, 0.5), discRadius * 0.975],
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
@@ -106,7 +124,7 @@ const elevationCurve = new Monotone([
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 25) * RAD
-const SUN_TURN = 42 * RAD
+const SUN_TURN = 30 * RAD
 const RAY_FIRST = 2.4
 
 // The head stands upright as a bud, leans over toward the light, then turns to the side it will face for good.
@@ -124,15 +142,17 @@ export function headAzimuth(time: number, inputs: PlantInputs): number {
 const outerBracts = new Monotone([
   [bud0, 34],
   [inStage(bud0, bud1, 0.579), 66],
-  [bloom0, 80],
-  [turnStart, 96],
+  [bloom0, 62],
+  [turnStart, 70],
+  [inStage(bloom0, bloom1, 0.6), 104],
   [turnEnd, 126],
 ])
 const innerBracts = new Monotone([
   [bud0, 14],
   [inStage(bud0, bud1, 0.579), 20],
-  [bloom0, 30],
-  [turnStart, 62],
+  [bloom0, 28],
+  [turnStart, 40],
+  [inStage(bloom0, bloom1, 0.6), 80],
   [turnEnd, 104],
 ])
 
@@ -142,7 +162,7 @@ export function bractRing(j: number): number {
 }
 
 export function bractAngle(j: number, time: number): number {
-  return (lerp(innerBracts.at(time), outerBracts.at(time), bractRing(j)) + (hash01(SEED, 30, j) - 0.5) * 12) * RAD
+  return (lerp(innerBracts.at(time), outerBracts.at(time), bractRing(j)) + (rnd(30, j) - 0.5) * 12) * RAD
 }
 
 // How far a bract curls in over the bud. It lets go as the head opens.
@@ -153,35 +173,35 @@ export function bractCurl(j: number, time: number): number {
 
 export function bractLength(j: number, time: number): number {
   const r = bodyRadius(time)
-  return r <= 0 ? 0 : Math.min(0.012 * smoothstep(0, 0.01, r) + 1.25 * r, 0.078) * (0.85 + 0.3 * hash01(SEED, 31, j))
+  return r <= 0 ? 0 : Math.min(0.01 * smoothstep(0, 0.01, r) + r, 0.078) * (0.85 + 0.3 * rnd(31, j))
 }
 
 export function rayLength(k: number, time: number): number {
-  return rayFull * smootherstep(bloom0, bloom0 + 3, time) * (0.92 + 0.16 * hash01(SEED, 40, k))
+  return rayFull * smootherstep(bloom0, bloom0 + 3, time) * (0.92 + 0.16 * rnd(40, k))
 }
 
 // Rays open by sector: one side of the head is seconds ahead of the other.
 export function rayOpen(k: number, time: number): number {
   const around = (k / rayCount) * TAU
-  const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.5 * hash01(SEED, 41, k)
-  const start = bloom0 + 0.3 + delay * 1.5
-  return smootherstep(start, start + 2.2, time)
+  const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.5 * rnd(41, k)
+  const start = bloom0 + 0.2 + delay * 2
+  return smootherstep(start, start + 2.6, time)
 }
 
 // A ray lies folded in over the face until it opens.
 export function rayAngle(k: number, time: number): number {
-  return lerp(-60, 84 + 12 * (hash01(SEED, 42, k) - 0.5), rayOpen(k, time)) * RAD
+  return lerp(-60, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
 }
 
 export function seedLeafLength(time: number): number {
-  const grown = 0.013 + 0.024 * smoothstep(inStage(emerge0, emerge1, 0.8), seed1 + 1, time)
+  const grown = 0.013 + 0.031 * smoothstep(inStage(emerge0, emerge1, 0.8), seed1 + 1, time)
   return grown * (1 - 0.6 * smoothstep(leaves0 + 8, leaves0 + 16, time)) * smoothstep(0, 0.006, heightAt(time))
 }
 
 const seedLeafSpread = new Monotone([
   [seed0, 0.05],
-  [inStage(seed0, seed1, 0.7), 0.87],
-  [seed1, 1.08],
+  [inStage(seed0, seed1, 0.7), 0.72],
+  [seed1, 1.0],
   [seed1 + 6, 1.4],
 ])
 
@@ -212,7 +232,7 @@ export function leafBirth(i: number): number {
 }
 
 export function leafAzimuth(i: number): number {
-  const turn = 0.6
+  const turn = variant === 0 ? 0.6 : 0.6 + TAU * rnd(2)
   if (i < OPPOSITE_LEAVES) return turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI
   return turn + (i - OPPOSITE_LEAVES + 1) * goldenRad
 }
@@ -235,33 +255,33 @@ export function leafLength(i: number, time: number): number {
   const age = leafAge(i, time)
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
-  const full = (0.1 + 0.13 * Math.sin(Math.PI * Math.pow(rank, 0.85))) * (0.88 + 0.24 * hash01(SEED, 10, i))
-  return full * (1 - Math.exp(-Math.pow(age / 5, 1.6)))
+  const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85))) * (0.88 + 0.24 * rnd(10, i))
+  return full * (1 - Math.exp(-Math.pow(age / 7, 1.1)))
 }
 
 // Leaves open upward, settle outward and hang when the light is gone.
 export function leafElevation(i: number, time: number, inputs: PlantInputs): number {
   const age = Math.max(0, leafAge(i, time))
   const open = smoothstep(0, 5.5, age)
-  const hang = (1 - inputs.lift) * (12 + 18 * smoothstep(2, 14, age))
-  const settled = 24 - 26 * smoothstep(5, 30, age) + (hash01(SEED, 11, i) - 0.5) * 16 - hang
+  const hang = (1 - inputs.lift) * (6 + 12 * smoothstep(2, 14, age))
+  const settled = 24 - 26 * smoothstep(5, 30, age) + (rnd(11, i) - 0.5) * 16 - hang
   return ((74 + (settled - 74) * open) * Math.PI) / 180
 }
 
 export function leafFold(i: number, time: number): number {
   const age = Math.max(0, leafAge(i, time))
-  return ((80 - 70 * smoothstep(0, 6, age) + (hash01(SEED, 12, i) - 0.5) * 8) * Math.PI) / 180
+  return ((80 - 70 * smoothstep(0, 6, age) + (rnd(12, i) - 0.5) * 8) * Math.PI) / 180
 }
 
 export function leafDroop(i: number, inputs: PlantInputs): number {
-  return 0.25 + 0.5 * hash01(SEED, 22, i) + 0.5 * (1 - inputs.lift)
+  return 0.25 + 0.5 * rnd(22, i) + 0.5 * (1 - inputs.lift)
 }
 
 export function leafSeed(i: number, j: number): number {
-  return hash01(SEED, 20 + j, i)
+  return rnd(20 + j, i)
 }
 
-export interface StemBend { leanX: number; leanZ: number; hook: number; hookShare: number; tiltX: number; tiltZ: number; neckShare: number }
+export interface StemBend { leanX: number; leanZ: number; hook: number; hookShare: number; back: number; tiltX: number; tiltZ: number; neckShare: number }
 
 // The share of the head's tilt that the neck of the stem takes up. The rest is the head's own.
 const NECK_TILT = 0.78
@@ -272,7 +292,7 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const young = 1 - smoothstep(0.25, 1.3, h)
   const lean = 0.07 + 0.16 * young
   const circle = 0.016 + 0.085 * young * smoothstep(seed0, seed1, time)
-  const phase = TAU * (time / NUTATION_SECONDS + hash01(SEED, 1))
+  const phase = TAU * (time / NUTATION_SECONDS + rnd(1))
   const tilt = Math.PI / 2 - headElevation(time)
   const az = headAzimuth(time, inputs)
   return {
@@ -280,6 +300,7 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
     leanZ: inputs.leanZ * lean + Math.cos(phase) * circle,
     hook: hookAngle(time),
     hookShare: hookShare(time),
+    back: HOOK_BACK * (hookAngle(time) / HOOK_MAX),
     tiltX: Math.sin(az) * tilt,
     tiltZ: Math.cos(az) * tilt,
     neckShare: h > 0 ? clamp(neckLength.at(time) / h, 0, 0.5) : 0.5,
@@ -306,7 +327,8 @@ export function stemDirection(bend: StemBend, u: number, out: Vec3): Vec3 {
   const upper = smoothstep(0.3, 1, u)
   const hook = bend.hook * smoothstep(1 - bend.hookShare, 1, u)
   const neck = NECK_TILT * smoothstep(1 - bend.neckShare, 1, u)
-  return fromTilt(bend.leanX * upper - hook + bend.tiltX * neck, bend.leanZ * upper + bend.tiltZ * neck, out)
+  const back = bend.back * smoothstep(0, 0.3, u)
+  return fromTilt(bend.leanX * upper + back - hook + bend.tiltX * neck, bend.leanZ * upper + bend.tiltZ * neck, out)
 }
 
 // The direction the bud and the head point in.

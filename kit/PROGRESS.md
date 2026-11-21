@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
-- Last status: 09 · 2026-11-21 03:29 UTC · Phase 2
+- Last push: 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
+- Last status: 10 · 2026-11-21 03:55 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 03:55 UTC · status 10 · Phase 2 · `status-1.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; `status-2.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
 - 2026-11-21 03:29 UTC · status 09 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
@@ -41,12 +42,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 1.50 h |
+| 2 | 3.50 h | 1.94 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 2.63 h |
+| Whole build | 30.00 h | 3.07 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -258,6 +259,12 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · The head faces 25° to the left of the direction the companion is seen from (`field.companion.fromAzimuthDeg`) once it is open, which is what the approved hero image shows. While it opens it is turned up to 42° further toward the evening sun and comes round as the rays unfold, as the approved bloom-opening image shows.
 - 2026-11-21 · Phase 2 · Leaves keep their place near the head: a leaf's node rises with the plant for longer the later the leaf was born, so the last leaves stay just under the bud as the stem stretches. The stand-in has 21 bracts in three rings. Rays lie folded over the face and open by sector over about five seconds.
 - 2026-11-21 · Phase 2 · `performance.now` is used in the `live` and `autopilot` modes only to choose which frame to draw next. No pixel depends on it: a frame is always drawn from its frame number alone.
+- 2026-11-21 · Phase 2 · Camera fit. `tools/fit.ts` solves the camera at every key against measurements taken from that key's approved image: where the foot of the stem, the top of the plant or the middle of the head, the horizon and the sun land in the frame. It solves by least squares on the film's own projection and plant, a few times over because the keys that hold a backdrop also set the light, and the light leans the plant. Focal lengths and times were not touched. `camera.keys` changed from (time: distance, height, aim, frameX, azimuth) 0: 0.15, 0.022, 0.012, 0.6, 0; 1.5: 0.163, 0.023, 0.014, 0.61, 0.5; 6.5: 0.285, 0.049, 0.028, 0.6, 2; 14: 0.79, 0.095, 0.109, 0.62, 4; 26: 1.0, 0.5, 0.65, 0.58, 8; 36: 0.73, 1.21, 1.23, 0.55, 12; 45: 0.81, 1.57, 1.58, 0.61, 16; 50.5: 0.81, 1.625, 1.633, 0.62, 20; 52: 0.9, 1.66, 1.65, 0.61, 21; 58.5: 4.86, 2.63, 1.65, 0.49, 24; 60: 5.5, 2.85, 1.66, 0.49, 24.5 to 0 s: distance 0.1457, height 0.023, aim 0.0127, frameX 0.5905, azimuth 3.53; 1.5 s: distance 0.1583, height 0.024, aim 0.0148, frameX 0.6005, azimuth 3.18; 6.5 s: distance 0.2864, height 0.0463, aim 0.0287, frameX 0.6056, azimuth 2; 14 s: distance 0.8152, height 0.1095, aim 0.1095, frameX 0.62, azimuth 4; 26 s: distance 1, height 0.5187, aim 0.6466, frameX 0.6027, azimuth 8; 36 s: distance 0.73, height 1.1819, aim 1.2218, frameX 0.5293, azimuth 12; 45 s: distance 0.81, height 1.5625, aim 1.5487, frameX 0.6554, azimuth 17.36; 50.5 s: distance 0.8726, height 1.6586, aim 1.6436, frameX 0.6098, azimuth 20; 52 s: distance 0.9696, height 1.6943, aim 1.6607, frameX 0.5998, azimuth 21; 58.5 s: distance 4.6365, height 2.7804, aim 1.7101, frameX 0.5054, azimuth 23.14; 60 s: distance 5.2471, height 3.013, aim 1.7205, frameX 0.5054, azimuth 23.64. The keys at 0, 52 and 60 s are not on an approved image and keep their place relative to the key next to them. After the fit every fitted point lands within 0.001 of the frame of its measurement.
+- 2026-11-21 · Phase 2 · The camera drifts about 1.5° one way through dawn and the other way from then on. The approved sprout image has the sun further right than the seedling image, and only a turn of the camera puts it there. The turn changes direction at the seedling key, at rest, not at a cut.
+- 2026-11-21 · Phase 2 · Stand-in shapes were tuned to the approved images through the checks `tools/fit.ts` prints: the sprout leans away from its hook, the seed leaves stand steeper and longer, the bud is smaller at the frost key (0.034 m radius at 36 s) and larger as it opens, the bracts stay close to the head until the rays have started, the rays open over about seven seconds from one side, and the head is turned up to 30° toward the sun while it opens (was 42°).
+- 2026-11-21 · Phase 2 · The field. 12,687 neighbors stand in rows `field.rowSpacingM` apart with a plant every `field.plantSpacingM`, out to 60 m, wider with distance, and past them one sheet of canopy runs to the horizon. Each is the plant's own code at the plant's own age, drawn at one of two levels of detail, with its own place, turn, size (0.80 to 0.93 of the plant, as the approved frost and bloom images show the neighbors standing lower than the plant), lean and tone. 8,914 of them are in view at the field key, counted by a unit test against `field.minPlantsInView`. Their own seeds and timing come in Phase 3.
+- 2026-11-21 · Phase 2 · The companion. `field.companion.leftM` 0.65 to 0.7 and `towardCameraM` 0.3 to 0.05, and the companion is neighbor number 53. `tools/fit.ts --companion --scan` tried 90 neighbors at 52 places each against the rule in `kit/02-SUBJECT.md`: no part of it in the frame through dawn, rain and night and at the frost key (held by a unit test on every fifth frame), and its leaves inside the left edge of both bloom keys. With the first values it stayed out of both bloom frames. Now its leaves reach 0.08 of the width into both. The approved images show them reaching 0.2: that is Phase 3 work on the leaves of the golden world, with the first half of the rule always first.
+- 2026-11-21 · Phase 2 · The lens is at f/2 in `bloom` (was f/4), which gives the field behind the head about the softness the approved bloom images have.
 
 ## Notes from Brandon
 
@@ -336,6 +343,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 02:53 UTC · Phase 2: status 07, `agent/capture` merged, pose math split from the registry, live view overrides
 - 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
 - 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
+- 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
 
 ## Session log
 
@@ -364,4 +372,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
 - Status 09, 2026-11-21 03:29 UTC, Phase 2. The plant now grows through every stage by time alone: it comes up as a hooked arch carrying its seed husk, drops the husk, opens two seed leaves, puts out 24 leaves, forms a bud with spiky bracts, leans toward the evening sun and unfolds its rays one side first. Its top stands at exactly the height the film sets for each moment. The Live mode, the menu and Autopilot are merged, and so are the remaining harness commands. Shapes are stand-ins and the camera fit is not done. Next: The stand-in field and the companion plant, then the camera fit at every key against the approved images, then the first blockout round with an outside critic. Time used: 2.6 h of 30 h.
   Pictures: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field.
+- Status 10, 2026-11-21 03:55 UTC, Phase 2. The camera is now fitted at all eight keys by solving against measurements of the approved images, so the plant, the horizon and the sun land where each image has them (left of each pair: the approved image, right: the film frame). The field is in: 12,687 sunflowers of the same age as the plant, 8,914 of them in view in the last shot. The companion stands beside the plant, out of frame until the bloom, where its leaf tips enter at the left edge. Everything drawn is still a stand-in: shapes, colors and light are not the look yet. Next: Reference board, shot list and render budget, then the first whole-film draft and blockout round 1 with a fresh critic. Time used: 3.1 h of 30 h.
+  Pictures: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right; Frost, bloom opening, bloom hero, field: approved image left, film frame right.
 

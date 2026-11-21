@@ -2,7 +2,7 @@ import type { WorldSettings } from '../../core/world.ts'
 
 export const world: WorldSettings = {
   standIn: true,
-  sun: { azimuthDeg: 242, elevationDeg: 28, color: [0.55, 0.72, 1.1], softnessDeg: 1.5, lean: 0.25, lift: 0 },
+  sun: { azimuthDeg: 242, elevationDeg: 28, color: [0.2, 0.28, 0.46], softnessDeg: 1.5, lean: 0.25, lift: 0 },
   sky: { zenith: [0.012, 0.022, 0.06], horizon: [0.03, 0.05, 0.1], bounce: [0.004, 0.006, 0.012], ambient: 1.6, glow: [0, 0, 0], glowPower: 8, disc: 0 },
   backdrop: { file: 'backdrop.jpg', key: 'night', sunAt: null, gain: 0.5, blur: 0.25 },
   fog: { color: [0.03, 0.05, 0.1], sunTint: [0.02, 0.03, 0.05], density: 0.02, falloff: 1.2 },

@@ -21,6 +21,7 @@ import {
   leafLength,
   leafSeed,
   leafStemFraction,
+  plantVariant,
   rayAngle,
   rayCount,
   rayLength,
@@ -37,40 +38,66 @@ import {
   type Vec3,
 } from './growth.ts'
 
-const STEM_RINGS = 40
-const STEM_SIDES = 9
-const STEM_STEPS = 4
-const SEED_U = 9
-const SEED_V = 5
-const HUSK_RINGS = 7
-const HUSK_SIDES = 8
-const LEAF_U = 11
-const LEAF_V = 7
-const BODY_RINGS = 10
-const BODY_SIDES = 14
-const BRACT_U = 6
-const BRACT_V = 3
-const RAY_U = 5
-const RAY_V = 3
+// How finely a plant is built. The plant uses the finest. Its neighbors in the field use coarser ones.
+export interface Detail {
+  stemRings: number
+  stemSides: number
+  seedU: number
+  seedV: number
+  huskRings: number
+  huskSides: number
+  leafStep: number
+  leafU: number
+  leafV: number
+  bodyRings: number
+  bodySides: number
+  bractStep: number
+  bractU: number
+  bractV: number
+  rayStep: number
+  rayU: number
+  rayV: number
+}
 
-const STEM0 = 0
-const SEED0 = STEM0 + STEM_RINGS * STEM_SIDES
-const HUSK0 = SEED0 + 2 * SEED_U * SEED_V
-const LEAF0 = HUSK0 + HUSK_RINGS * HUSK_SIDES
-const BODY0 = LEAF0 + leafCount * LEAF_U * LEAF_V
-const BRACT0 = BODY0 + BODY_RINGS * BODY_SIDES
-const RAY0 = BRACT0 + bractCount * BRACT_U * BRACT_V
+export const HERO: Detail = { stemRings: 40, stemSides: 9, seedU: 9, seedV: 5, huskRings: 7, huskSides: 8, leafStep: 1, leafU: 11, leafV: 7, bodyRings: 10, bodySides: 14, bractStep: 1, bractU: 6, bractV: 3, rayStep: 1, rayU: 5, rayV: 3 }
 
-export const standInVertexCount = RAY0 + rayCount * RAY_U * RAY_V
+interface Plan { d: Detail; seed0: number; husk0: number; leaf0: number; leaves: number; body0: number; bract0: number; bracts: number; ray0: number; rays: number; count: number }
+
+const plans = new Map<Detail, Plan>()
+
+function planOf(d: Detail): Plan {
+  let plan = plans.get(d)
+  if (!plan) {
+    const leaves = d.leafStep > 0 ? Math.ceil(leafCount / d.leafStep) : 0
+    const bracts = d.bractStep > 0 ? Math.ceil(bractCount / d.bractStep) : 0
+    const rays = d.rayStep > 0 ? Math.ceil(rayCount / d.rayStep) : 0
+    const seed0 = d.stemRings * d.stemSides
+    const husk0 = seed0 + 2 * d.seedU * d.seedV
+    const leaf0 = husk0 + d.huskRings * d.huskSides
+    const body0 = leaf0 + leaves * d.leafU * d.leafV
+    const bract0 = body0 + d.bodyRings * d.bodySides
+    const ray0 = bract0 + bracts * d.bractU * d.bractV
+    plan = { d, seed0, husk0, leaf0, leaves, body0, bract0, bracts, ray0, rays, count: ray0 + rays * d.rayU * d.rayV }
+    plans.set(d, plan)
+  }
+  return plan
+}
+
+export function vertexCountOf(d: Detail): number {
+  return planOf(d).count
+}
+
+export const standInVertexCount = vertexCountOf(HERO)
 
 export const PART = { stem: 0, leaf: 1, seedLeaf: 2, husk: 3, body: 4, bract: 5, ray: 6 } as const
 
-export interface Topology { index: Uint16Array; uv: Float32Array; info: Float32Array }
+export interface Topology { index: Uint32Array; uv: Float32Array; info: Float32Array }
 
-export function standInTopology(): Topology {
+export function standInTopology(d: Detail = HERO): Topology {
+  const plan = planOf(d)
   const index: number[] = []
-  const uv = new Float32Array(standInVertexCount * 2)
-  const info = new Float32Array(standInVertexCount * 3)
+  const uv = new Float32Array(plan.count * 2)
+  const info = new Float32Array(plan.count * 3)
   const grid = (base: number, nu: number, nv: number, part: number, id: number, seed: number) => {
     for (let a = 0; a < nu; a++) {
       for (let b = 0; b < nv; b++) {
@@ -84,15 +111,18 @@ export function standInTopology(): Topology {
       }
     }
   }
-  grid(STEM0, STEM_RINGS, STEM_SIDES, PART.stem, 0, 0)
-  for (let i = 0; i < 2; i++) grid(SEED0 + i * SEED_U * SEED_V, SEED_U, SEED_V, PART.seedLeaf, i, 0.3 + 0.4 * i)
-  grid(HUSK0, HUSK_RINGS, HUSK_SIDES, PART.husk, 0, 0)
-  for (let i = 0; i < leafCount; i++) grid(LEAF0 + i * LEAF_U * LEAF_V, LEAF_U, LEAF_V, PART.leaf, i, leafSeed(i, 0))
-  grid(BODY0, BODY_RINGS, BODY_SIDES, PART.body, 0, 0)
-  for (let j = 0; j < bractCount; j++) grid(BRACT0 + j * BRACT_U * BRACT_V, BRACT_U, BRACT_V, PART.bract, j, leafSeed(j, 4))
-  for (let k = 0; k < rayCount; k++) grid(RAY0 + k * RAY_U * RAY_V, RAY_U, RAY_V, PART.ray, k, leafSeed(k, 5))
-  return { index: new Uint16Array(index), uv, info }
+  grid(0, d.stemRings, d.stemSides, PART.stem, 0, 0)
+  for (let i = 0; i < 2; i++) grid(plan.seed0 + i * d.seedU * d.seedV, d.seedU, d.seedV, PART.seedLeaf, i, 0.3 + 0.4 * i)
+  grid(plan.husk0, d.huskRings, d.huskSides, PART.husk, 0, 0)
+  for (let n = 0; n < plan.leaves; n++) grid(plan.leaf0 + n * d.leafU * d.leafV, d.leafU, d.leafV, PART.leaf, n * d.leafStep, leafSeed(n * d.leafStep, 0))
+  grid(plan.body0, d.bodyRings, d.bodySides, PART.body, 0, 0)
+  for (let n = 0; n < plan.bracts; n++) grid(plan.bract0 + n * d.bractU * d.bractV, d.bractU, d.bractV, PART.bract, n * d.bractStep, leafSeed(n * d.bractStep, 4))
+  for (let n = 0; n < plan.rays; n++) grid(plan.ray0 + n * d.rayU * d.rayV, d.rayU, d.rayV, PART.ray, n * d.rayStep, leafSeed(n * d.rayStep, 5))
+  return { index: new Uint32Array(index), uv, info }
 }
+
+const STEM_RINGS = 40
+const STEM_STEPS = 4
 
 // The stem as a line of unit length: where each ring sits, which way it runs, and a side direction carried along it without twist.
 const sx = new Float64Array(STEM_RINGS)
@@ -362,26 +392,25 @@ function layHead(time: number, length: number): Head {
 }
 
 // Builds the whole plant on a stem of the given length and returns the height of its highest point.
-function place(time: number, inputs: PlantInputs, length: number, pos: Float32Array, nor: Float32Array | null): number {
+function place(time: number, inputs: PlantInputs, length: number, pos: Float32Array, nor: Float32Array | null, d: Detail = HERO): number {
+  const plan = planOf(d)
   layStem(time, inputs)
   const grown = smoothstep(0, 0.006, heightAt(time))
-  for (let r = 0; r < STEM_RINGS; r++) {
-    const u = r / (STEM_RINGS - 1)
-    const radius = r === STEM_RINGS - 1 ? 0 : stemRadius(time, u) * grown
-    const bx = ty[r] * rz[r] - tz[r] * ry[r]
-    const by = tz[r] * rx[r] - tx[r] * rz[r]
-    const bz = tx[r] * ry[r] - ty[r] * rx[r]
-    for (let s = 0; s < STEM_SIDES; s++) {
-      const a = (s / (STEM_SIDES - 1)) * Math.PI * 2
+  for (let r = 0; r < d.stemRings; r++) {
+    const u = r / (d.stemRings - 1)
+    const radius = r === d.stemRings - 1 ? 0 : stemRadius(time, u) * grown
+    const n = stemNode(u, length)
+    for (let s = 0; s < d.stemSides; s++) {
+      const a = (s / (d.stemSides - 1)) * Math.PI * 2
       const c = Math.cos(a)
-      const d = Math.sin(a)
-      const nx = rx[r] * c + bx * d
-      const ny = ry[r] * c + by * d
-      const nz = rz[r] * c + bz * d
-      const v = (STEM0 + r * STEM_SIDES + s) * 3
-      pos[v] = sx[r] * length + nx * radius
-      pos[v + 1] = sy[r] * length + ny * radius
-      pos[v + 2] = sz[r] * length + nz * radius
+      const e = Math.sin(a)
+      const nx = n.rx * c + n.bx * e
+      const ny = n.ry * c + n.by * e
+      const nz = n.rz * c + n.bz * e
+      const v = (r * d.stemSides + s) * 3
+      pos[v] = n.x + nx * radius
+      pos[v + 1] = n.y + ny * radius
+      pos[v + 2] = n.z + nz * radius
       if (nor) {
         nor[v] = nx
         nor[v + 1] = ny
@@ -392,16 +421,18 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
 
   const seedLength = seedLeafLength(time)
   const seedAt = seedLeafFraction(time)
-  for (let i = 0; i < 2; i++) {
-    const n = stemNode(seedAt, length)
-    const side = i === 0 ? -1 : 1
-    const radius = stemRadius(time, seedAt) * 0.6 * grown
-    const f = setFrame(n.x + n.rx * side * radius, n.y + n.ry * side * radius, n.z + n.rz * side * radius, n.tx, n.ty, n.tz, n.rx * side, n.ry * side, n.rz * side, Math.PI / 2 - seedLeafAngle(i, time))
-    roll(f, side * 0.7 * smoothstep(0.2, 0.9, seedLeafAngle(i, time)))
-    blade(pos, SEED0 + i * SEED_U * SEED_V, SEED_U, SEED_V, f, seedLength, seedLength * 0.3, ovalOutline, 0.12, 0.12, 0)
+  if (d.seedU > 0) {
+    for (let i = 0; i < 2; i++) {
+      const n = stemNode(seedAt, length)
+      const side = i === 0 ? -1 : 1
+      const radius = stemRadius(time, seedAt) * 0.6 * grown
+      const f = setFrame(n.x + n.rx * side * radius, n.y + n.ry * side * radius, n.z + n.rz * side * radius, n.tx, n.ty, n.tz, n.rx * side, n.ry * side, n.rz * side, Math.PI / 2 - seedLeafAngle(i, time))
+      roll(f, side * 0.7 * smoothstep(0.2, 0.9, seedLeafAngle(i, time)))
+      blade(pos, plan.seed0 + i * d.seedU * d.seedV, d.seedU, d.seedV, f, seedLength, seedLength * 0.3, ovalOutline, 0.12, 0.12, 0)
+    }
   }
 
-  {
+  if (d.huskRings > 0) {
     const end = stemNode(1, length)
     const k = huskDrop(time)
     const ride = seedLength * 0.62
@@ -422,11 +453,13 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     px /= pl
     py /= pl
     pz /= pl
-    ellipsoid(pos, nor, HUSK0, HUSK_RINGS, HUSK_SIDES, hx, hy, hz, ax, ay, az, px, py, pz, huskLengthM * 0.3 * grown, huskLengthM * 0.5 * grown)
+    ellipsoid(pos, nor, plan.husk0, d.huskRings, d.huskSides, hx, hy, hz, ax, ay, az, px, py, pz, huskLengthM * 0.3 * grown, huskLengthM * 0.5 * grown)
   }
 
-  for (let i = 0; i < leafCount; i++) {
-    const base = LEAF0 + i * LEAF_U * LEAF_V
+  const wide = (step: number) => Math.pow(step, 0.8)
+  for (let m = 0; m < plan.leaves; m++) {
+    const i = m * d.leafStep
+    const base = plan.leaf0 + m * d.leafU * d.leafV
     const size = leafLength(i, time)
     const u = leafStemFraction(i, time)
     const n = stemNode(u, length)
@@ -438,12 +471,13 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const oz = n.rz * s - n.bz * c
     const radius = stemRadius(time, u) * 0.7 * grown
     const f = setFrame(n.x + ox * radius, n.y + oy * radius, n.z + oz * radius, n.tx, n.ty, n.tz, ox, oy, oz, leafElevation(i, time, inputs))
-    blade(pos, base, LEAF_U, LEAF_V, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
+    blade(pos, base, d.leafU, d.leafV, f, size * 1.25, size * (0.36 + 0.1 * leafSeed(i, 1)), leafOutline, leafDroop(i, inputs), leafFold(i, time), (leafSeed(i, 3) - 0.5) * 0.5)
   }
 
   const h = layHead(time, length)
-  ellipsoid(pos, nor, BODY0, BODY_RINGS, BODY_SIDES, h.cx, h.cy, h.cz, h.ax, h.ay, h.az, h.px, h.py, h.pz, h.radius, h.depth)
-  for (let j = 0; j < bractCount; j++) {
+  ellipsoid(pos, nor, plan.body0, d.bodyRings, d.bodySides, h.cx, h.cy, h.cz, h.ax, h.ay, h.az, h.px, h.py, h.pz, h.radius, h.depth)
+  for (let m = 0; m < plan.bracts; m++) {
+    const j = m * d.bractStep
     const around = (j / bractCount) * Math.PI * 2 + 0.1
     const c = Math.cos(around)
     const s = Math.sin(around)
@@ -454,9 +488,10 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const back = -0.35 * h.depth
     const size = bractLength(j, time)
     const f = setFrame(h.cx + h.ax * back + ox * at, h.cy + h.ay * back + oy * at, h.cz + h.az * back + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - bractAngle(j, time))
-    blade(pos, BRACT0 + j * BRACT_U * BRACT_V, BRACT_U, BRACT_V, f, size, size * 0.24, pointOutline, -bractCurl(j, time), 0.3, 0)
+    blade(pos, plan.bract0 + m * d.bractU * d.bractV, d.bractU, d.bractV, f, size, size * 0.24 * wide(d.bractStep), pointOutline, -bractCurl(j, time), 0.3, 0)
   }
-  for (let k = 0; k < rayCount; k++) {
+  for (let m = 0; m < plan.rays; m++) {
+    const k = m * d.rayStep
     const around = (k / rayCount) * Math.PI * 2
     const c = Math.cos(around)
     const s = Math.sin(around)
@@ -467,29 +502,30 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const front = 0.5 * h.depth
     const size = rayLength(k, time)
     const f = setFrame(h.cx + h.ax * front + ox * at, h.cy + h.ay * front + oy * at, h.cz + h.az * front + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - rayAngle(k, time))
-    blade(pos, RAY0 + k * RAY_U * RAY_V, RAY_U, RAY_V, f, size, size * 0.2, rayOutline, 0.12 * rayOpen(k, time), 1.0 * (1 - rayOpen(k, time)), 0)
+    blade(pos, plan.ray0 + m * d.rayU * d.rayV, d.rayU, d.rayV, f, size, size * 0.2 * wide(d.rayStep), rayOutline, 0.12 * rayOpen(k, time), 1.0 * (1 - rayOpen(k, time)), 0)
   }
 
   if (nor) {
-    for (let i = 0; i < 2; i++) gridNormals(pos, nor, SEED0 + i * SEED_U * SEED_V, SEED_U, SEED_V)
-    for (let i = 0; i < leafCount; i++) gridNormals(pos, nor, LEAF0 + i * LEAF_U * LEAF_V, LEAF_U, LEAF_V)
-    for (let j = 0; j < bractCount; j++) gridNormals(pos, nor, BRACT0 + j * BRACT_U * BRACT_V, BRACT_U, BRACT_V)
-    for (let k = 0; k < rayCount; k++) gridNormals(pos, nor, RAY0 + k * RAY_U * RAY_V, RAY_U, RAY_V)
+    if (d.seedU > 0) for (let i = 0; i < 2; i++) gridNormals(pos, nor, plan.seed0 + i * d.seedU * d.seedV, d.seedU, d.seedV)
+    for (let m = 0; m < plan.leaves; m++) gridNormals(pos, nor, plan.leaf0 + m * d.leafU * d.leafV, d.leafU, d.leafV)
+    for (let m = 0; m < plan.bracts; m++) gridNormals(pos, nor, plan.bract0 + m * d.bractU * d.bractV, d.bractU, d.bractV)
+    for (let m = 0; m < plan.rays; m++) gridNormals(pos, nor, plan.ray0 + m * d.rayU * d.rayV, d.rayU, d.rayV)
   }
 
   let top = 0
-  for (let v = 1; v < pos.length; v += 3) if (pos[v] > top) top = pos[v]
+  for (let v = 1; v < plan.count * 3; v += 3) if (pos[v] > top) top = pos[v]
   return top
 }
 
-interface Solved { time: number; leanX: number; leanZ: number; lift: number; length: number }
+interface Solved { variant: number; time: number; leanX: number; leanZ: number; lift: number; length: number }
 const solved: Solved[] = []
-const KEEP = 16
+const KEEP = 32
 const scratch = new Float32Array(standInVertexCount * 3)
 
 // The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment.
 export function stemLength(time: number, inputs: PlantInputs): number {
-  for (const s of solved) if (s.time === time && s.leanX === inputs.leanX && s.leanZ === inputs.leanZ && s.lift === inputs.lift) return s.length
+  const variant = plantVariant()
+  for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === inputs.leanX && s.leanZ === inputs.leanZ && s.lift === inputs.lift) return s.length
   const target = heightAt(time)
   let length = 0
   if (target > 0) {
@@ -508,13 +544,13 @@ export function stemLength(time: number, inputs: PlantInputs): number {
     }
     length = l1
   }
-  solved.push({ time, leanX: inputs.leanX, leanZ: inputs.leanZ, lift: inputs.lift, length })
+  solved.push({ variant, time, leanX: inputs.leanX, leanZ: inputs.leanZ, lift: inputs.lift, length })
   if (solved.length > KEEP) solved.shift()
   return length
 }
 
-export function buildStandIn(time: number, inputs: PlantInputs, pos: Float32Array, nor: Float32Array | null): number {
-  return place(time, inputs, stemLength(time, inputs), pos, nor)
+export function buildStandIn(time: number, inputs: PlantInputs, pos: Float32Array, nor: Float32Array | null, d: Detail = HERO): number {
+  return place(time, inputs, stemLength(time, inputs), pos, nor, d)
 }
 
 // The point the lens holds: the top of the arch, then the end of the stem, then the bud, then the middle of the open face.
