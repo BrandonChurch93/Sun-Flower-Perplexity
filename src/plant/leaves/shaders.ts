@@ -88,7 +88,7 @@ void main() {
 
   vec2 a = vec2(vUv.x * vLeaf.w * 0.5 + 0.5, vUv.y);
   vec4 vein = texture(uVeins, vec2((vLeaf.y + uVeinPad + (1.0 - 2.0 * uVeinPad) * a.x) / 3.0, a.y));
-  vec2 dUv = vPlane * 10.0 + vec2(vLeaf.z * 7.0, vLeaf.z * 13.0);
+  vec2 dUv = vPlane * 7.0 + vec2(vLeaf.z * 7.0, vLeaf.z * 13.0);
   vec3 detail = texture(uDetail, dUv).rgb;
   vec4 mark = texture(uMarks, vPlane * 8.0 + vec2(vLeaf.z * 31.0, vLeaf.z * 17.0));
 
@@ -108,14 +108,14 @@ void main() {
   float lum = dot(var, vec3(0.3, 0.6, 0.1));
   float tone = 0.86 + 0.28 * mark.g;
   // The small net of veins between the side veins: pale lines on the face, dark lines in the glow.
-  float net = smoothstep(1.15, 1.7, lum);
+  float net = smoothstep(1.02, 1.45, lum);
 
   vec3 upper = vec3(0.045, 0.086, 0.028) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
-  vec3 albedo = (top ? upper : under) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
+  vec3 albedo = (top ? upper * (1.0 + 0.5 * net) : under * (1.0 + 0.8 * net)) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
@@ -124,7 +124,7 @@ void main() {
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float thin = (0.6 + 0.6 * smoothstep(0.3, 0.9, mark.g)) * taper;
-  vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.45 * net) * (1.0 - 0.3 * thick);
+  vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
   through *= 1.0 - 0.8 * vein.r;
   through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
