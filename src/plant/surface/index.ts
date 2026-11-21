@@ -101,6 +101,8 @@ vec3 tissueSky(vec3 n, float shown) {
   float level = (1.0 - n.y * n.y) * (1.0 - uSunDir.y * uSunDir.y);
   float toward = dot(n.xz, uSunDir.xz) * inversesqrt(max(level, 1e-4));
   level *= saturate(1.15 - 26.0 * uFogDensity);
+  // A sun no brighter than the sky over it stands in mist or cloud: that sky is even all round.
+  level *= smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
   float side = saturate(0.5 + 0.5 * toward);
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
