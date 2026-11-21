@@ -75,7 +75,7 @@ void main() {
   float x = t / lasts;
   if (part.x < 0.5 && x >= 1.0 && (size < 0.42 || x >= ${JET_ENDS.toFixed(2)})) return;
   float ground = soilHeight(drop.xy, soilLod(drop.xy));
-  float depth = waterDepthOver(ground);
+  float depth = waterDepthOver(ground, drop.xy);
   float onWater = smoothstep(0.0, 0.006, depth);
   vMud = 1.0 - onWater;
   float base = depth > 0.0 ? uLevel.x : ground;
@@ -111,7 +111,7 @@ void main() {
     vec3 center = cup(th, grit ? 0.3 : 1.0, min(xs, leaves), size, onWater, seed) + way * speed * flew - vec3(0.0, 0.5 * G * flew * flew, 0.0);
     vec2 over = drop.xy + center.xz;
     float under = soilHeight(over, soilLod(over));
-    float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under))) - base;
+    float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under, over))) - base;
     if (flown > 0.0 && center.y < floorM - radius) return;
     vec3 shape = grit ? position * (0.7 + 0.6 * vec3(ha, hb, hc)) : position;
     at = center + shape * radius;
@@ -158,7 +158,7 @@ void main() {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute));
       float one = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 4.0);
-      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.35 * vMud);
+      float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.85 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       float silt = mix(1.0 - 0.75 * vTop, 1.0, vMud);
       vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.35 + 0.65 * lip), mix(vec3(0.022, 0.019, 0.016), vec3(0.007, 0.006, 0.005), vMud) * skyAmbient(n), silt);
