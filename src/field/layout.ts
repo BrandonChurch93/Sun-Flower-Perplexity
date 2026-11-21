@@ -106,8 +106,8 @@ function edgeRows(across: number): number {
 }
 
 const EDGE = [
-  { across: 0.52, size: 0.68, turn: 0.2, turns: true },
-  { across: 0.86, size: 0.85, turn: 2.7, turns: false },
+  { across: 0.52, size: 0.68, turn: 0.2, early: true },
+  { across: 0.86, size: 0.85, turn: 2.7, early: false },
 ]
 
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
@@ -164,13 +164,11 @@ export function fieldPlaces(): FieldPlaces {
       pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, leanX, leanZ, tone, id)
     }
   }
-  // Two neighbors stand in the bay on the front row, to the right of the plant at sunset: one head that comes round as it opens, one that keeps its back to the lens.
+  // Two neighbors stand in the bay on the front row, to the right of the plant at sunset: one of the early kind that faces the lens, one that keeps its back to it.
   const kindOf = (n: number): number => Math.floor(hash01(SEED, 15, n) * nearVariants.length)
-  let taken = -1
   for (const edge of EDGE) {
     do id++
-    while (kindOf(id) === 0 || kindOf(id) === taken || hash01(SEED, 40, id) < AWAY_SHARE !== edge.turns)
-    taken = kindOf(id)
+    while (kindOf(id) === 0 || opensEarly(kindOf(id), nearVariants.length) !== edge.early || (!edge.early && hash01(SEED, 40, id) < AWAY_SHARE))
     near.push(-toward.x * plantAheadOfRowM + right.x * edge.across, -toward.z * plantAheadOfRowM + right.z * edge.across, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
