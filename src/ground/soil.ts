@@ -270,20 +270,7 @@ void main() {
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
-  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
   color += wetGlints(vWorld, v, n, uWet) * open * fade * (1.0 - pool) * (1.0 - thatch);
-  if (uDew > 0.0) {
-    vec2 cell = p / 0.0021;
-    vec2 id = floor(cell);
-    float pick = hash21(id);
-    vec2 at = fract(cell) - 0.5 - (vec2(hash21(id + 17.0), hash21(id + 43.0)) - 0.5) * 0.5;
-    float size = 0.06 + 0.12 * hash21(id + 71.0);
-    float sharp = 1.0 - smoothstep(0.25, 0.9, length(fwidth(cell)));
-    float bead = step(0.9, pick) * step(0.5, h) * smoothstep(size, size * 0.7, length(at)) * uDew * sharp * fade;
-    float spark = smoothstep(size * 0.45, size * 0.1, length(at + normalize(uSunDir.xz + 1e-5) * size * 0.4));
-    color = mix(color, color * 0.55 + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.06, bead);
-    color += bead * spark * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);
-  }
 #endif
   outColor = finish(color, vWorld, vDepth, density);
 }

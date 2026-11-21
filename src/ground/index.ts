@@ -6,7 +6,7 @@ import { endStandIn } from '../core/standins.ts'
 import { makeSurface, type Surface } from '../core/shading.ts'
 import { right, toward } from '../field/layout.ts'
 import { grassCover, grassTimes } from './cover.ts'
-import { clodScatter, crumbFragment, crumbScatter, crumbVertex, laneDir, lumpScatter, scatter } from './crumbs.ts'
+import { clodScatter, crumbFragment, crumbScatter, crumbVertex, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
@@ -70,6 +70,8 @@ export class Ground {
     add(scatter('ground crumbs', crumbScatter), this.loose, true)
     add(scatter('ground clods', clodScatter), this.loose, true)
     add(scatter('ground lumps', lumpScatter), this.loose, true)
+    add(scatter('ground grains', grainScatter), this.loose, true)
+    add(scatter('ground masses', massScatter), this.loose, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)
   }
 
