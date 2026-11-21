@@ -114,7 +114,7 @@ void readHair(int k) {
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
   // No two hairs stand alike: each leans its own way off the line it was given, has its own length and its own slight curve. A long hair wanders and curves more than short down, which stands straight.
   float reach = smoothstep(0.001, 0.005, hairRoot.w);
-  hairDir = normalize(hairDir + aside * ((0.35 + 0.5 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
+  hairDir = normalize(hairDir + aside * ((0.35 + 0.95 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
   hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
   // Most hairs are short and a few are long, and they do not stand evenly: there are stretches with few, and those few are short. Down is even.
@@ -190,7 +190,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.1 + 0.3 * uPlantFrost, hairSlim), pow(t, 0.8 + h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 + 0.2 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
