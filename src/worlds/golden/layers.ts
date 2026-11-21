@@ -152,7 +152,9 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
-  float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z)) * mix(1.0 - smoothstep(-0.008, 0.001, v.y), max(1.0 - smoothstep(-0.028, -0.018, v.y), 0.1 * (1.0 - smoothstep(0.0, 0.05, v.y))), uLate);
+  float turn = atan(v.x * uSunDir.z - v.z * uSunDir.x, v.x * uSunDir.x + v.z * uSunDir.z);
+  float low = v.y + 0.024 * (valueNoise(vec2(turn * 7.0 + uLayer * 3.1, uLayer * 1.7)) - 0.5);
+  float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z)) * mix(1.0 - smoothstep(-0.008, 0.001, v.y), max(1.0 - smoothstep(-0.055, -0.004, low), 0.1 * (1.0 - smoothstep(0.0, 0.05, v.y))), uLate);
   outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08) + 0.2 * uWide * exp(-theta / 0.8))), 0.0);
 }
 `

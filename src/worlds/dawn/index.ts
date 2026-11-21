@@ -26,9 +26,9 @@ export const mist: MistSettings = {
   toM: 2,
   sheets: 7,
   heightM: 0.013,
-  thickness: 0.955,
+  thickness: 0.4,
   lit: [0.04, 0.026, 0.02],
-  shade: [0.33, 0.44, 0.38],
+  shade: [0.56, 0.58, 0.46],
   forward: 1,
   drift: [0.05, 0.02],
   bankM: 0.4,
@@ -52,6 +52,24 @@ export const bank: MistSettings = {
   rise: 0.5,
   lobeRad: 0.3,
 }
+// The mist over the field between the plant's ground and the far bank: shin high, in slow banks that roll across the view, and lit where one looks through it toward the sun.
+export const rolling: MistSettings = {
+  fromM: 2,
+  toM: 40,
+  sheets: 7,
+  heightM: 0.07,
+  thickness: 0.22,
+  lit: [0.12, 0.09, 0.06],
+  shade: [0.8, 0.82, 0.72],
+  forward: 1,
+  drift: [0.3, 0.05],
+  bankM: 1.6,
+  broken: 1,
+  rise: 0.6,
+  lobeRad: 0.2,
+  rollZ: 8,
+  swell: 1,
+}
 const BANK_LOW_M = 0.18
 const BANK_SETTLES_FROM_S = 1
 const BANK_SETTLES_TO_S = 6
@@ -65,10 +83,11 @@ export const stage: WorldStageMaker = (def) => {
   const far = makeFarLayers(golden.sun.azimuthDeg, AIR_COOL, AIR_WARM, AIR_PER_M)
   const air = makeMist('dawn', mist)
   const banks = makeMist('dawn bank', bank, 40)
+  const over = makeMist('dawn field', rolling, 50)
   let open = 0
   let close = 0
   return {
-    objects: [...far.meshes, ...banks.meshes, ...air.meshes],
+    objects: [...far.meshes, ...banks.meshes, ...over.meshes, ...air.meshes],
     load: (assets) => sky.load(assets),
     prepare(frame) {
       open = frame.time
@@ -80,6 +99,7 @@ export const stage: WorldStageMaker = (def) => {
       const time = open + (close - open) * shutter
       air.sample(time)
       banks.sample(time)
+      over.sample(time)
       banks.settle(bankHeightAt(time))
     },
     sky(renderer, target, camera, _pixelX, _pixelY, across) {
