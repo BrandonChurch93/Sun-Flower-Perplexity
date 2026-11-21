@@ -1,6 +1,550 @@
-import type { PartOptions, PlantPart } from '../../part.ts'
+import * as THREE from 'three'
+import { config } from '../../../config.ts'
+import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
+import { combine, hash01, streamSeed } from '../../../core/random.ts'
+import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, stemRadius } from '../../growth.ts'
+import { createHairs, type HairSet } from '../../hairs/index.ts'
+import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
+import { FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, floorAt, stemAt, type FloorPoint, type Pose } from '../../skeleton.ts'
+import { flutter } from '../../wind.ts'
+import { fragment, vertex } from './shaders.ts'
 
-// Null until this folder holds the real part. Until then the stand-in draws it.
-export function create(_options: PartOptions): PlantPart | null {
-  return null
+const TAU = Math.PI * 2
+const GOLDEN = (config.plant.goldenAngleDeg * Math.PI) / 180
+const [bloom0, bloom1] = config.plant.stages.bloom
+
+interface Shape { sides: number; neck: number[]; dome: number[]; side: number[]; floor: number[]; bracts: number; nu: number; nv: number; backHairs: number; edgeHairs: number; faceHairs: number }
+
+const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
+
+const SHAPE: Record<PartDetail, Shape> = {
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 55, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
+  near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 14, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
+  far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
+}
+
+// How far in front of the head's middle the body is widest, as a share of its half depth. Behind it the back is one shallow dome.
+const WIDEST = 0.2
+// How much wider than the floor the body is at its widest. From there it rounds in to the rim of the floor.
+const SHOULDER = 0.07
+// The stand-in shortens its bracts by this share while the head opens. A real bract does not shrink, so it is taken out again.
+const WRAP = 0.3
+const RAY_CLEAR = 0.21
+const HUG_FROM = 0.08
+const HAIR_WIDTH_M = 0.00006
+// A bract folds back just ahead of the rays behind it: until they open it runs this many seconds behind the timing of growth.ts, which has no sectors.
+const SECTOR_LAG = 2.2
+const SECTOR_LEAD = 0.3
+// Past this angle from the head's axis a bract swings back less than growth.ts says, so its point still shows between the rays from the front.
+const REFLEX_FROM = 1.62
+const REFLEX_EASE = 0.55
+const SIDE_FEET = 0.9
+// Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
+const RAY_FOOT = 0.95
+const RAY_GAP = 0.003
+
+interface Bract { rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+
+export function create(options: PartOptions): PlantPart | null {
+  const shape = SHAPE[options.detail]
+  const seed = combine(streamSeed('bud'), options.variant)
+  const rnd = (i: number, j: number): number => hash01(seed, i, j)
+  const cols = shape.sides + 1
+  const rings = shape.neck.length + shape.dome.length + shape.side.length + shape.floor.length
+  const floorRow = rings - shape.floor.length
+  const bodyCount = rings * cols
+  const perBract = shape.nu * shape.nv
+  const count = bodyCount + shape.bracts * perBract
+
+  const bracts: Bract[] = []
+  const turn = TAU * rnd(1, 0)
+  for (let i = 0; i < shape.bracts; i++) {
+    const rank = shape.bracts > 1 ? i / (shape.bracts - 1) : 0
+    bracts.push({
+      rank,
+      az: turn + i * GOLDEN,
+      foot: lerp(0.2, 1.5, Math.pow(rank, 0.8)) + (rnd(2, i) - 0.5) * 0.05,
+      long: lerp(1.32, 1, rank) * (0.92 + 0.16 * rnd(3, i)),
+      wide: lerp(1.18, 0.96, rank) * (0.88 + 0.24 * rnd(4, i)),
+      tail: 0.22 + 0.1 * rnd(5, i),
+      twist: (rnd(6, i) - 0.5) * 1.9,
+      side: (rnd(7, i) - 0.5) * 0.5,
+      tip: -0.25 + 1.6 * Math.pow(rnd(8, i), 2),
+      phase: TAU * rnd(9, i),
+      waves: 2 + 2.5 * rnd(10, i),
+      hug: 0.3 + 0.14 * rnd(11, i),
+      rmin: 0.0008 + 0.0045 * rnd(12, i),
+      fold: 0.14 + 0.26 * rnd(13, i),
+      seed: rnd(14, i),
+    })
+  }
+
+  const geometry = partGeometry(options)
+  const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
+  const normalSlots = [new Float32Array(count * 3), options.places ? null : new Float32Array(count * 3)]
+  const info = new Float32Array(count * 4)
+  const index: number[] = []
+  const grid = (base: number, nu: number, nv: number) => {
+    for (let a = 0; a < nu - 1; a++) {
+      for (let b = 0; b < nv - 1; b++) {
+        const v = base + a * nv + b
+        index.push(v, v + nv, v + 1, v + 1, v + nv, v + nv + 1)
+      }
+    }
+  }
+  grid(0, rings, cols)
+  for (let i = 0; i < shape.bracts; i++) grid(bodyCount + i * perBract, shape.nu, shape.nv)
+
+  const spans = shape.neck.length + shape.dome.length + shape.side.length - 1
+  for (let a = 0; a < rings; a++) {
+    for (let b = 0; b < cols; b++) {
+      const v = (a * cols + b) * 4
+      const onFloor = a >= floorRow
+      info[v] = onFloor ? shape.floor[a - floorRow] : spans > 0 ? a / spans : 0
+      info[v + 1] = (b / shape.sides) * TAU
+      info[v + 3] = onFloor ? 1 : 0
+    }
+  }
+  for (let i = 0; i < shape.bracts; i++) {
+    for (let a = 0; a < shape.nu; a++) {
+      for (let b = 0; b < shape.nv; b++) {
+        const v = (bodyCount + i * perBract + a * shape.nv + b) * 4
+        info[v] = a / (shape.nu - 1)
+        info[v + 1] = (b / (shape.nv - 1)) * 2 - 1
+        info[v + 2] = bracts[i].seed
+        info[v + 3] = 2 + bracts[i].rank
+      }
+    }
+  }
+
+  const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
+  const position = dynamic(slots[0], 3)
+  const positionB = options.places ? null : dynamic(slots[1], 3)
+  const normal = dynamic(normalSlots[0] as Float32Array, 3)
+  geometry.setAttribute('position', position)
+  if (positionB) geometry.setAttribute('positionB', positionB)
+  geometry.setAttribute('normal', normal)
+  geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 4))
+  geometry.setIndex(index)
+  const uniforms = { uBudOpen: { value: 0 } }
+  const surface = makePartSurface(options, { name: 'bud', vertex, fragment, side: THREE.DoubleSide, uniforms })
+  const mesh = partMesh(geometry, surface)
+
+  const share = options.variant === 0 ? 1 : 0.25
+  const backHairs = Math.floor(shape.backHairs * share)
+  const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
+  const faceEach = shape.bracts > 0 ? Math.floor((shape.faceHairs * share) / shape.bracts) : 0
+  const hairCount = backHairs + shape.bracts * (edgeEach * 2 + faceEach)
+  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', undefined, HAIR_WIDTH_M) : null
+  const hairBase = new Int32Array(hairCount)
+  const hairWidth = new Int32Array(hairCount)
+  const hairAt = new Float32Array(hairCount * 2)
+  // kind: 0 the back of the receptacle, 1 and -1 the two margins of a bract, 2 its outer face.
+  const hairKind = new Int8Array(hairCount)
+  const hairLong = new Float32Array(hairCount)
+  if (hairs) {
+    let n = 0
+    const lastBack = shape.neck.length + (shape.dome.length - 1) * 0.5
+    for (let i = 0; i < backHairs; i++, n++) {
+      const along = Math.pow(rnd(20, i), 1.4)
+      hairBase[n] = 0
+      hairWidth[n] = cols
+      hairAt[n * 2] = along * lastBack
+      hairAt[n * 2 + 1] = rnd(21, i) * shape.sides
+      hairKind[n] = 0
+      hairLong[n] = (0.0011 + 0.0022 * rnd(22, i)) * lerp(1.25, 0.55, along)
+    }
+    for (let b = 0; b < shape.bracts; b++) {
+      const base = bodyCount + b * perBract
+      for (let i = 0; i < edgeEach * 2; i++, n++) {
+        const u = 0.03 + 0.97 * rnd(23 + b, i)
+        const left = i % 2 === 0
+        hairBase[n] = base
+        hairWidth[n] = shape.nv
+        hairAt[n * 2] = u * (shape.nu - 1)
+        hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
+        hairKind[n] = left ? -1 : 1
+        hairLong[n] = (0.0005 + 0.001 * rnd(123 + b, i)) * (1 - 0.45 * u)
+      }
+      for (let i = 0; i < faceEach; i++, n++) {
+        const keel = rnd(223 + b, i) < 0.3
+        const u = keel ? 0.08 + 0.9 * rnd(323 + b, i) : 0.15 + 0.8 * rnd(323 + b, i)
+        const across = keel ? 0.5 + (rnd(423 + b, i) - 0.5) * 0.08 : 0.06 + 0.88 * rnd(423 + b, i)
+        hairBase[n] = base
+        hairWidth[n] = shape.nv
+        hairAt[n * 2] = u * (shape.nu - 1)
+        hairAt[n * 2 + 1] = across * (shape.nv - 1)
+        hairKind[n] = 2
+        hairLong[n] = keel ? 0.0012 + 0.0018 * rnd(523 + b, i) : 0.0006 + 0.0012 * rnd(523 + b, i)
+      }
+    }
+  }
+  const jitter = hairs ? Float32Array.from({ length: hairCount * 4 }, (_, i) => hash01(seed, 700 + (i % 4), i >> 2)) : null
+
+  const floor: FloorPoint = { x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0, ox: 1, oy: 0, oz: 0 }
+  const sub = shape.nu > 1 ? Math.max(2, Math.ceil(48 / (shape.nu - 1))) : 1
+  const rowR = new Float32Array(Math.max(shape.nu, 1))
+  const rowH = new Float32Array(Math.max(shape.nu, 1))
+  const rowT = new Float32Array(Math.max(shape.nu, 1))
+  const hugs = new Float32Array(shape.bracts)
+
+  const gridNormals = (pos: Float32Array, nor: Float32Array, base: number, nu: number, nv: number, wrap: boolean, fx: number, fy: number, fz: number) => {
+    for (let a = 0; a < nu; a++) {
+      const a0 = Math.max(0, a - 1)
+      const a1 = Math.min(nu - 1, a + 1)
+      for (let b = 0; b < nv; b++) {
+        const b0 = b > 0 ? b - 1 : wrap ? nv - 2 : 0
+        const b1 = b < nv - 1 ? b + 1 : wrap ? 1 : nv - 1
+        const pa0 = (base + a0 * nv + b) * 3
+        const pa1 = (base + a1 * nv + b) * 3
+        const pb0 = (base + a * nv + b0) * 3
+        const pb1 = (base + a * nv + b1) * 3
+        const ux = pos[pa1] - pos[pa0]
+        const uy = pos[pa1 + 1] - pos[pa0 + 1]
+        const uz = pos[pa1 + 2] - pos[pa0 + 2]
+        const vx = pos[pb1] - pos[pb0]
+        const vy = pos[pb1 + 1] - pos[pb0 + 1]
+        const vz = pos[pb1 + 2] - pos[pb0 + 2]
+        let x = vy * uz - vz * uy
+        let y = vz * ux - vx * uz
+        let z = vx * uy - vy * ux
+        const l = Math.hypot(x, y, z)
+        if (l > 1e-14) {
+          x /= l
+          y /= l
+          z /= l
+        } else {
+          x = fx
+          y = fy
+          z = fz
+        }
+        const v = (base + a * nv + b) * 3
+        nor[v] = x
+        nor[v + 1] = y
+        nor[v + 2] = z
+      }
+    }
+  }
+
+  const fillShape = (out: Float32Array, nor: Float32Array | null, pose: Pose) => {
+    const time = pose.time
+    const head = pose.head
+    const R = head.radius
+    const D = head.depth
+    const { cx, cy, cz, ax, ay, az, px, py, pz, qx, qy, qz } = head
+    if (R < 1e-6) {
+      const end = stemAt(pose, 1)
+      for (let v = 0; v < count; v++) {
+        out[v * 3] = end.x
+        out[v * 3 + 1] = end.y
+        out[v * 3 + 2] = end.z
+      }
+      if (nor) for (let v = 0; v < count; v++) nor.set([0, 1, 0], v * 3)
+      return
+    }
+    const hw = WIDEST * D
+    const hr = FLOOR_RIM * D
+    const Hb = hw + D
+    const grown = Math.min(1, heightAt(time) / 0.006)
+    const stemR = (u: number): number => Math.max(stemRadius(time, u) * grown, NECK_FLARE * R * Math.max(0, (u - 0.97) / 0.03))
+    // The dome starts where it is as wide as the stem's end, a hair behind the joint.
+    const Rw = R * (1 + SHOULDER)
+    const sideR = (h: number): number => R + (Rw - R) * Math.sqrt(Math.max(0, 1 - ((h - hw) / (hr - hw)) ** 2))
+    const sin0 = clamp(stemR(1) / Rw, 0.1, 0.92)
+    const psi0 = Math.min(Math.asin(sin0), Math.acos(clamp((hw + SEAT * D) / Hb, 0, 1)) + 0.02)
+
+    let row = 0
+    const endNode = stemAt(pose, 1)
+    const flip = qx * endNode.bx + qy * endNode.by + qz * endNode.bz < 0 ? -1 : 1
+    for (const back of shape.neck) {
+      const u = Math.max(0, 1 - back / Math.max(pose.length, 1e-6))
+      const n = stemAt(pose, u)
+      const radius = stemR(u) + 0.0003
+      for (let b = 0; b < cols; b++) {
+        const t = (b / shape.sides) * TAU
+        const c = Math.cos(t)
+        const s = Math.sin(t) * flip
+        const v = (row * cols + b) * 3
+        out[v] = n.x + (n.rx * c + n.bx * s) * radius
+        out[v + 1] = n.y + (n.ry * c + n.by * s) * radius
+        out[v + 2] = n.z + (n.rz * c + n.bz * s) * radius
+      }
+      row++
+    }
+    const ring = (r: number, h: number) => {
+      for (let b = 0; b < cols; b++) {
+        const t = (b / shape.sides) * TAU
+        const c = Math.cos(t)
+        const s = Math.sin(t)
+        const v = (row * cols + b) * 3
+        out[v] = cx + ax * h + (px * c + qx * s) * r
+        out[v + 1] = cy + ay * h + (py * c + qy * s) * r
+        out[v + 2] = cz + az * h + (pz * c + qz * s) * r
+      }
+      row++
+    }
+    for (const f of shape.dome) {
+      const psi = psi0 + (Math.PI / 2 - psi0) * f
+      ring(Rw * Math.sin(psi), hw - Hb * Math.cos(psi))
+    }
+    for (const f of shape.side) ring(sideR(hw + (hr - hw) * f), hw + (hr - hw) * f)
+    for (const rho of shape.floor) {
+      for (let b = 0; b < cols; b++) {
+        floorAt(pose, rho, (b / shape.sides) * TAU, floor)
+        const v = (row * cols + b) * 3
+        out[v] = floor.x
+        out[v + 1] = floor.y
+        out[v + 2] = floor.z
+      }
+      row++
+    }
+    if (nor) {
+      gridNormals(out, nor, 0, floorRow, cols, true, -ax, -ay, -az)
+      gridNormals(out, nor, floorRow * cols, shape.floor.length, cols, true, ax, ay, az)
+    }
+    if (shape.bracts === 0) return
+
+    const open = headOpen(time)
+    const turnStart = lerp(bloom0, bloom1, 0.25)
+    const unwrap = 1 / (1 - WRAP * smoothstep(bloom0 - 2, turnStart, time))
+    const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
+    const small = clamp(R / 0.03, 0.3, 1)
+    const wind = pose.inputs.wind
+    for (let i = 0; i < shape.bracts; i++) {
+      const k = bracts[i]
+      const j = i * 3
+      const outer = 1 - k.rank
+      const L = bractLength(j, time) * unwrap * k.long
+      const W = Math.min(0.3 * L, 0.33 * R) * k.wide
+      // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
+      const turns = k.az / TAU
+      const at = (turns - Math.floor(turns)) * rayCount
+      let behind = -Math.PI
+      let opened = 0
+      let rayLong = 0
+      for (let m = -1; m <= 2; m++) {
+        const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
+        behind = Math.max(behind, lerp(-Math.PI, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0, 0.008, rayLength(ray, time))))
+        opened += rayOpen(ray, time + SECTOR_LEAD) / 4
+        rayLong = Math.max(rayLong, rayLength(ray, time))
+      }
+      const own = time - SECTOR_LAG * smoothstep(bloom0 - 4, bloom0, time) * (1 - opened)
+      const swing = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
+      const angle = swing - REFLEX_EASE * Math.max(0, swing - REFLEX_FROM)
+      const pushed = smoothstep(0.15, 0.75, rayLong / Math.max(L, 1e-6))
+      const closed = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
+      const curl = lerp(closed, Math.min(closed, 0.12), pushed)
+      const hugEnd = lerp(k.hug, HUG_FROM + 0.08, clamp((k.foot - 0.75) / 0.4))
+      hugs[i] = hugEnd
+      const rayS = Math.sin(behind - RAY_CLEAR)
+      const rayC = Math.cos(behind - RAY_CLEAR)
+      const gap = RAY_GAP * smoothstep(0, 0.008, rayLong)
+      const sway = wind * 0.05 * flutter(time, k.seed)
+      const co = Math.cos(k.az)
+      const so = Math.sin(k.az)
+      const ox = px * co + qx * so
+      const oy = py * co + qy * so
+      const oz = pz * co + qz * so
+      const tx = qx * co - px * so
+      const ty = qy * co - py * so
+      const tz = qz * co - pz * so
+
+      let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(k.foot, 1)
+      let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((k.foot - 1) / 0.5)
+      let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
+      const total = (shape.nu - 1) * sub
+      const ds = L / total
+      for (let step = 0; step <= total; step++) {
+        const u = step / total
+        const s = u * L
+        const lift = (0.0003 + 0.1 * s) * small
+        const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
+        const tipW = smoothstep(0.55, 1, u)
+        const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW * (1 - 0.6 * Math.max(curl, 0)) + sway * u * u
+        const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
+        const Re = Rw + lift
+        if (h < hw) {
+          const e = (r * r) / (Re * Re) + ((h - hw) * (h - hw)) / ((Hb + lift) * (Hb + lift))
+          if (e < 1) {
+            const g = 1 / Math.sqrt(Math.max(e, 1e-9))
+            r *= g
+            h = hw + (h - hw) * g
+          }
+        } else if (h < hr) r = Math.max(r, sideR(h) + lift)
+        else {
+          const f = (h - hr) / (Hf + lift)
+          if (f < 1) r = Math.max(r, (R + lift) * Math.sqrt(1 - f * f))
+        }
+        if (gap > 0) {
+          const vr = r - RAY_FOOT * R
+          const vh = h - hr
+          const along = vr * rayS + vh * rayC
+          const clear = vr * rayC - vh * rayS
+          const need = (gap - clear) * smoothstep(-0.004, 0, along) * (1 - smoothstep(rayLong, rayLong + 0.004, along)) * smoothstep(-0.012, -0.006, clear)
+          if (need > 0) {
+            r += rayC * need
+            h -= rayS * need
+          }
+        }
+        r = Math.max(r, k.rmin * small)
+        if (step % sub === 0) {
+          const a = step / sub
+          rowR[a] = r
+          rowH[a] = h
+          rowT[a] = theta
+        }
+        r += Math.sin(theta) * ds
+        h += Math.cos(theta) * ds
+        if (psi < Math.PI / 2) psi = Math.min(Math.PI / 2, psi + ds / Math.hypot(Rw * Math.cos(psi), Hb * Math.sin(psi)))
+      }
+
+      const base = bodyCount + i * perBract
+      const size = L / 0.046
+      for (let a = 0; a < shape.nu; a++) {
+        const u = a / (shape.nu - 1)
+        const theta = rowT[a]
+        const st = Math.sin(theta)
+        const ct = Math.cos(theta)
+        const bend = k.side * L * u * u * u
+        const mx = cx + ax * rowH[a] + ox * rowR[a] + tx * bend
+        const my = cy + ay * rowH[a] + oy * rowR[a] + ty * bend
+        const mz = cz + az * rowH[a] + oz * rowR[a] + tz * bend
+        const nx = ox * ct - ax * st
+        const ny = oy * ct - ay * st
+        const nz = oz * ct - az * st
+        const tw = k.twist * smoothstep(0.35, 1, u)
+        const cw = Math.cos(tw)
+        const sw = Math.sin(tw)
+        const wx = tx * cw + nx * sw
+        const wy = ty * cw + ny * sw
+        const wz = tz * cw + nz * sw
+        const ux = nx * cw - tx * sw
+        const uy = ny * cw - ty * sw
+        const uz = nz * cw - tz * sw
+        const body = 0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.46))
+        const tail = 0.34 * Math.pow(1 - u, 0.9) + 0.012
+        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.45, u))
+        const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
+        const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
+        const soft = 0.2 * half + 1e-6
+        const keel = 0.0007 * size * (1 - 0.6 * u)
+        const round = Math.max(rowR[a], 0.25 * R)
+        for (let b = 0; b < shape.nv; b++) {
+          const x = (b / (shape.nv - 1)) * 2 - 1
+          const xi = x * half
+          const wave = 0.07 * half * smoothstep(0.1, 0.4, u) * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
+          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave
+          const v = (base + a * shape.nv + b) * 3
+          out[v] = mx + wx * xi + ux * dn
+          out[v + 1] = my + wy * xi + uy * dn
+          out[v + 2] = mz + wz * xi + uz * dn
+        }
+      }
+      if (nor) {
+        const tipAngle = rowT[shape.nu - 1]
+        gridNormals(out, nor, base, shape.nu, shape.nv, false, ox * Math.cos(tipAngle) - ax * Math.sin(tipAngle), oy * Math.cos(tipAngle) - ay * Math.sin(tipAngle), oz * Math.cos(tipAngle) - az * Math.sin(tipAngle))
+      }
+    }
+  }
+
+  const fillHairs = (slot: 0 | 1, pos: Float32Array, nor: Float32Array, pose: Pose) => {
+    if (!hairs || !jitter) return
+    const root = hairs.root(slot)
+    const lean = hairs.lean(slot)
+    const R = pose.head.radius
+    const scale = clamp(R / 0.012) * lerp(0.7, 1, smoothstep(0.015, 0.05, R))
+    const h = pose.head
+    for (let i = 0; i < hairCount; i++) {
+      const nv = hairWidth[i]
+      const fa = hairAt[i * 2]
+      const fb = hairAt[i * 2 + 1]
+      const kind = hairKind[i]
+      const rows = kind === 0 ? floorRow : shape.nu
+      const a = Math.min(Math.floor(fa), rows - 2)
+      const b = Math.min(Math.floor(fb), nv - 2)
+      const ga = fa - a
+      const gb = fb - b
+      const v00 = (hairBase[i] + a * nv + b) * 3
+      const v01 = v00 + 3
+      const v10 = v00 + nv * 3
+      const v11 = v10 + 3
+      const w00 = (1 - ga) * (1 - gb)
+      const w01 = (1 - ga) * gb
+      const w10 = ga * (1 - gb)
+      const w11 = ga * gb
+      const x = pos[v00] * w00 + pos[v01] * w01 + pos[v10] * w10 + pos[v11] * w11
+      const y = pos[v00 + 1] * w00 + pos[v01 + 1] * w01 + pos[v10 + 1] * w10 + pos[v11 + 1] * w11
+      const z = pos[v00 + 2] * w00 + pos[v01 + 2] * w01 + pos[v10 + 2] * w10 + pos[v11 + 2] * w11
+      let nx = nor[v00] * w00 + nor[v01] * w01 + nor[v10] * w10 + nor[v11] * w11
+      let ny = nor[v00 + 1] * w00 + nor[v01 + 1] * w01 + nor[v10 + 1] * w10 + nor[v11 + 1] * w11
+      let nz = nor[v00 + 2] * w00 + nor[v01 + 2] * w01 + nor[v10 + 2] * w10 + nor[v11 + 2] * w11
+      const j0 = jitter[i * 4] - 0.5
+      const j1 = jitter[i * 4 + 1] - 0.5
+      const j2 = jitter[i * 4 + 2] - 0.5
+      let dx: number
+      let dy: number
+      let dz: number
+      if (kind === 0) {
+        dx = nx + j0 * 0.5 - h.ax * 0.15
+        dy = ny + j1 * 0.5 - h.ay * 0.15
+        dz = nz + j2 * 0.5 - h.az * 0.15
+      } else {
+        let ux = pos[v10] - pos[v00]
+        let uy = pos[v10 + 1] - pos[v00 + 1]
+        let uz = pos[v10 + 2] - pos[v00 + 2]
+        const ul = Math.hypot(ux, uy, uz) || 1
+        ux /= ul
+        uy /= ul
+        uz /= ul
+        if (kind === 2) {
+          const nl = Math.hypot(nx, ny, nz) || 1
+          nx /= nl
+          ny /= nl
+          nz /= nl
+          dx = nx + ux * 0.5 + j0 * 0.5
+          dy = ny + uy * 0.5 + j1 * 0.5
+          dz = nz + uz * 0.5 + j2 * 0.5
+        } else {
+          let ex = (pos[v01] - pos[v00]) * kind
+          let ey = (pos[v01 + 1] - pos[v00 + 1]) * kind
+          let ez = (pos[v01 + 2] - pos[v00 + 2]) * kind
+          const el = Math.hypot(ex, ey, ez) || 1
+          ex /= el
+          ey /= el
+          ez /= el
+          const up = 0.15 + j2 * 0.9
+          dx = ex + ux * (0.35 + j0 * 0.5) + nx * up
+          dy = ey + uy * (0.35 + j0 * 0.5) + ny * up
+          dz = ez + uz * (0.35 + j0 * 0.5) + nz * up
+        }
+      }
+      root[i * 4] = x
+      root[i * 4 + 1] = y
+      root[i * 4 + 2] = z
+      root[i * 4 + 3] = hairLong[i] * scale
+      lean[i * 4] = dx
+      lean[i * 4 + 1] = dy
+      lean[i * 4 + 2] = dz
+      lean[i * 4 + 3] = jitter[i * 4 + 3]
+    }
+  }
+
+  return {
+    name: 'bud',
+    meshes: hairs ? [mesh, ...hairs.meshes] : [mesh],
+    casters: [{ mesh, surface }],
+    fill(slot, pose) {
+      if (slot === 1 && !positionB) return
+      const nor = normalSlots[slot]
+      fillShape(slots[slot], nor, pose)
+      if (nor) fillHairs(slot, slots[slot], nor, pose)
+    },
+    finish(time) {
+      uniforms.uBudOpen.value = headOpen(time)
+      position.needsUpdate = true
+      if (positionB) positionB.needsUpdate = true
+      normal.needsUpdate = true
+      hairs?.finish()
+    },
+  }
 }
