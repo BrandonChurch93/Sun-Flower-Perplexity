@@ -4,6 +4,7 @@ const float WET_SHEET_M = 0.006;
 const float WET_ROUGH_THIN = 0.3;
 const float WET_ROUGH_DEEP = 0.08;
 const float WET_WAX = 0.4;
+const float WET_DARK = 0.3;
 
 // Water in a tissue keeps the light inside it for longer: each color is taken again, so the dark deepens and the hue grows.
 vec3 wetAlbedo(vec3 albedo) {
@@ -17,9 +18,9 @@ float wetFilm(vec2 at, float gather) {
   return saturate(smoothstep(0.38, 0.62, sheet + 0.25 * (rill - 0.5)) * 0.8 + 0.2 + 0.5 * gather * gather);
 }
 
-// What a film of water mirrors: the bright band low in the sky where it faces it, the dark sky over that, the ground under it.
+// What a film of water mirrors: the bright band low in the sky where it faces it. The dark cloud over that and the ground under it are broken up by the rain on the film and all but gone.
 vec3 wetSky(vec3 d) {
   float band = smoothstep(-0.08, 0.04, d.y) * (1.0 - smoothstep(0.12, 0.4, d.y));
-  return mix(mix(uGroundBounce, uSkyZenith, smoothstep(-0.05, 0.05, d.y)), uSkyHorizon, band);
+  return mix(WET_DARK * mix(uGroundBounce, uSkyZenith, smoothstep(-0.05, 0.05, d.y)), uSkyHorizon, band);
 }
 `
