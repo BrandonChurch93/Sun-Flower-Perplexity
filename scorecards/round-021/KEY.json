@@ -1,0 +1,321 @@
+{
+  "round": 21,
+  "phase": 4,
+  "unit": "night",
+  "tier": "final",
+  "test": false,
+  "commit": "47d93fdcc5156c98e9d91d504b975e47df8004f9",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "critics": {
+    "R1": {
+      "set-A-01-a.png": {
+        "what": "the approved image of the key",
+        "key": "night",
+        "source": "references/approved/night.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-01-b.png": {
+        "what": "the film frame of the key",
+        "key": "night",
+        "frame": 780,
+        "time": 26,
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-02.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "night",
+        "frame": 780,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 1,
+            "id": "head",
+            "label": "the head or bud",
+            "left": 760,
+            "top": 167,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 2,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 794,
+            "top": 715,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 3,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 780,
+            "top": 234,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 4,
+            "id": "neighbors",
+            "label": "the near neighbor at the edge of the frame",
+            "left": 0,
+            "top": 748,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      },
+      "set-A-03.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "night",
+        "frame": 780,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 5,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 1232,
+            "top": 716,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 6,
+            "id": "sky",
+            "label": "the sky",
+            "left": 616,
+            "top": 0,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      }
+    },
+    "R2": {
+      "set-B-01.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 780,
+        "key": "night",
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-02.png": {
+        "controls": true,
+        "what": "control: the approved image of the key",
+        "key": "night",
+        "source": "references/approved/night.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      }
+    },
+    "R3": {
+      "set-C-01.png": {
+        "what": "the judged frame, whole",
+        "frame": 780,
+        "why": "the key night",
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-C-02.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 780,
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 1,
+            "id": "head",
+            "label": "the head or bud",
+            "left": 760,
+            "top": 132,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 2,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 778,
+            "top": 382,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 3,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 780,
+            "top": 221,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 4,
+            "id": "leaf-lit",
+            "label": "a leaf with the light behind it",
+            "left": 691,
+            "top": 513,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 5,
+            "id": "neighbors",
+            "label": "the near neighbor at the edge of the frame",
+            "left": 0,
+            "top": 693,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 6,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 1232,
+            "top": 675,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      },
+      "set-C-03.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 780,
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 7,
+            "id": "sky",
+            "label": "the sky",
+            "left": 616,
+            "top": 0,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      }
+    },
+    "R4": {
+      "set-D-01.png": {
+        "what": "contact sheet across the unit night",
+        "frames": [
+          600,
+          627,
+          654,
+          682,
+          709,
+          736,
+          763,
+          790,
+          817,
+          845,
+          872,
+          899
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/unit-night-preview-review.jpg"
+      },
+      "set-D-02.png": {
+        "what": "consecutive frames from the stretch where the plant changes fastest",
+        "frames": [
+          746,
+          747,
+          748,
+          749,
+          750,
+          751,
+          752,
+          753,
+          754,
+          755,
+          756,
+          757
+        ],
+        "change": 0.008786428374099556,
+        "tier": "review",
+        "source": "out/work/sheets/run-night-f0746-16x9-review.jpg"
+      },
+      "set-D-03.png": {
+        "what": "the same consecutive frames, native size crops round the head or bud",
+        "frames": [
+          746,
+          747,
+          748,
+          749,
+          750,
+          751,
+          752,
+          753,
+          754,
+          755,
+          756,
+          757
+        ],
+        "box": {
+          "id": "head",
+          "label": "the head or bud",
+          "left": 909,
+          "top": 183,
+          "width": 456,
+          "height": 318
+        },
+        "tier": "review",
+        "source": "out/work/sheets/detail-night-f0746-16x9-review.jpg"
+      },
+      "set-D-04.png": {
+        "what": "consecutive frames across cut 2 (rain to night, the cut falls on frame 600)",
+        "frames": [
+          594,
+          595,
+          596,
+          597,
+          598,
+          599,
+          600,
+          601,
+          602,
+          603,
+          604,
+          605
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-2-preview-review.jpg"
+      }
+    }
+  }
+}

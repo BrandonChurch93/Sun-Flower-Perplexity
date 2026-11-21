@@ -1,0 +1,56 @@
+{
+  "critic": "R1",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "main plant silhouette from the crown to the bottom edge",
+      "what": "The crown sits higher, the whole canopy spreads wider, and the branch tiers read as a different plant. A big upright slab of leaf dominates the lower center-left while the target has a small pair close to the stem and lower leaves framing either side.",
+      "fix": "Lower and tighten the crown, restore the spacing, angles and reach of the main leaf tiers, and reopen the view around the lower stem."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 3, front-facing leaf and neighboring canopy",
+      "what": "The distinctive broad, rounded leaf across the front of the stem is missing from its target position. The replacement reads as a lower rightward pile of drooping, heavily scalloped blades with deep folds and bright patches instead of a single subdued leaf with fine veins.",
+      "fix": "Put a broad, slightly cupped leaf across the stem at the target height, simplify the overlap, and reduce the scalloping, folds and broad surface highlights."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 4, left-edge neighbors and field foreground",
+      "what": "Large soft dark leaves and one tall spindly top replace the target's group of smaller distinct buds. The field is darker and more crowded, with fewer fine rim and dew highlights and less separation from the mist behind it.",
+      "fix": "Reduce the scale and coverage of the near leaves, restore several recognizable bud silhouettes at different depths, and bring back restrained cool highlights and the air between the rows."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, bud and top leaf junctions",
+      "what": "Open, sharply lit spikes rise from a flatter cup, where the target has a denser overlapping bud with a darker core and shorter, finer tip accents. The surrounding leaves are bulkier and more ruffled.",
+      "fix": "Compact the bud, overlap its bracts, narrow and flatten the adjacent leaves, and make the backlight on the tips thinner and less white."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, stem, hairs and leaf surfaces",
+      "what": "The stem center is flatter and darker while the hairs form a broken, stark white fringe on long stretches of the outline. Leaf lighting favors broad cool-green ridges rather than the target's fine veins, restrained stem-side light and little wet glints.",
+      "fix": "Soften and shorten the hair highlights, bias the light toward the target's lit side, and restore subtle rounded stem shading and crisp, localized leaf texture."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5, forest skyline and valley air",
+      "what": "The background ridge is a hard, near-black cutout with smooth, angular bumps and little internal depth. The target has a more irregular, softly resolved treeline and a continuous cool veil lifting the base above the midground.",
+      "fix": "Break the contour into soft treetop silhouettes, soften the edge and blacks slightly, and carry the cool low mist farther across the valley."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6, stars and Milky Way structure",
+      "what": "The sky broadly matches in placement and palette, but the stars read as a more even layer of pinpricks and the galactic clouds as smoother patches. The target has clumpier density, greater variation in star size and glow, and more fine mottling in the clouds and dust lanes.",
+      "fix": "Restore more varied star scale, soft bloom and clustering, reduce the uniform faint star fill, and recover the fine warm-cool texture and contrast in the galactic band."
+    }
+  ]
+}
