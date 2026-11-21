@@ -5,7 +5,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 ## Status
 
 - Build: in progress
-- Current phase: 0 · Ground truth (step 1)
+- Current phase: 0 · Ground truth (steps 1 to 9 done, step 11 in hand)
 - Current unit: none
 - Current round: none
 - Blocked: no
@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: not published yet
-- Last push: 2026-11-21 01:00 UTC · Phase 0: package, clock, look log, status tool, inline display proof, status 01
-- Last status: 01 · 2026-11-21 01:00 UTC · Phase 0
+- Last push: 2026-11-21 01:20 UTC · Phase 0: workspace record, tool record, caps tool, engine core modules, status 02
+- Last status: 02 · 2026-11-21 01:20 UTC · Phase 0
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 01:20 UTC · status 02 · Phase 0 · `status-1.jpg`: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact)
 - 2026-11-21 01:00 UTC · status 01 · Phase 0 · `status-1.jpg`: The eight approved images, in film order
 
 ## Clock
@@ -31,14 +32,14 @@ Copied from the output of `npm run clock` at every status. Working time only.
 
 | Phase | Planned box | Time used |
 | --- | --- | --- |
-| 0 | 1.50 h | 0.14 h |
+| 0 | 1.50 h | 0.48 h |
 | 1 | 0.50 h | 0.00 h |
 | 2 | 3.50 h | 0.00 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 0.14 h |
+| Whole build | 30.00 h | 0.48 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -73,7 +74,28 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 
 Measured in Phase 0. These replace the numbers in `AGENTS.md`.
 
-Not measured yet.
+Measured 2026-11-21 01:06 to 01:14 UTC on the Builder's VM (boot `6211bae4`).
+
+| What | Measured |
+| --- | --- |
+| OS | Ubuntu 26.04.1 LTS, kernel 6.1.155 |
+| CPU cores | 2 |
+| Memory | 7957 MB |
+| Disk | 20 GB, 13 GB free at the start |
+| Node, npm | v20.20.2, 10.8.2 |
+| Browser | Chrome for Testing 147.0.7727.15 at `~/.cache/ms-playwright/chromium-1217/chrome-linux64/chrome`, driven by `playwright-core` |
+| Launch flags | `--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist` |
+| WebGL2 renderer | ANGLE, Vulkan 1.3, SwiftShader (software) |
+| WebGL2 limits | MAX_TEXTURE_SIZE 8192, MAX_RENDERBUFFER_SIZE 8192, MAX_VIEWPORT_DIMS 8192 x 8192, MAX_SAMPLES 4, MAX_DRAW_BUFFERS 6, MAX_VERTEX_ATTRIBS 16, anisotropy 16. The full list is in `config/webgl-caps.json` |
+| Extensions | 30, including EXT_color_buffer_float, EXT_color_buffer_half_float, EXT_float_blend, OES_texture_float_linear, EXT_texture_filter_anisotropic. Full list in `config/webgl-caps.json` |
+| Float render targets | RGBA16F, RGBA32F and R11F_G11F_B10F all complete |
+| `VideoEncoder` | Present. `localhost` is a secure context |
+| Encode strings for `export.videoCodec` (h264) | At the master and preview sizes: `avc1.64` (High), `avc1.4D40` (Main) and `avc1.4200` (Baseline), each at levels 34, 33, 32, 2A, 29, 28. At the uhd size only levels 34 and 33 of each profile. Export asks High first |
+| ffmpeg, ffprobe | 8.0.1 with libx264, both run |
+| Detached process | Works. A process started with `(set -m; cmd >log 2>&1 &)` kept writing after the step that started it ended |
+| Sandbox agent | Own VM (its own boot id), 4 cores, 7957 MB, 25 GB disk with 18 GB free, same OS, Node, Chrome and ffmpeg. Shallow clone worked, `npm install` took 3.6 s, WebGL2 works under the same flags, a branch push worked (`agent/probe`), and it returned an mp4 as an attachment |
+| Attachments | Files sent to an agent arrive under `/home/user/.perplexity/attachments/<id>/<file>`, not in its working directory. Files an agent returns arrive the same way on the Builder's VM |
+| Image limit | 1400 px on the long edge arrives intact: all six viewer families and the Builder read the 1 px marks. 2000 px is downscaled (to about 1430 px). `critics.maxImageLongEdgePx` stays 1400 |
 
 ## Tool record
 
@@ -87,6 +109,31 @@ What this workspace can call, measured in Phase 0. It includes the exact method 
 - What does not work in the widget: external URLs and workspace paths as `img.src` (blocked by its content policy). A file attachment alone does not display inline.
 - The widget is about 720 px wide and its visible height is capped near 640 px, so four 16:9 pictures in a 2 by 2 grid fit.
 - Fallback if the tool ever fails: attach the pictures as files at the same rhythm and publish with every status.
+
+### What this workspace can call (recorded 2026-11-21 01:14 UTC)
+
+- Image generation. Models: `seedream_5` (up to 10 reference images, about 2K, the one the reference run found best for this look), `nano_banana_pro` (14 references, 2K), `nano_banana_2_1` (14 references), `gpt_image_2_6_flare` and `gpt_image_2_6_sunburst` (5 references, transparent backgrounds, they ignore the aspect ratio setting). Aspect ratios 1:1, 3:4, 4:3, 9:16, 16:9. The largest result seen in the reference run was about 2816 x 1584.
+- Still to video generation exists. Not used so far.
+- Image search and image fetch exist.
+- App hosting: deploy a static folder, then publish it at a slug. An earlier build measured about 500 MB per site. Organization-only sites ask for a sign-in, so the harness cannot read them back.
+- Inline visualization: the method above.
+- A text-only model tool that cannot see images, so every critic is a spawned agent.
+- Supporting agents, in this VM or in their own sandbox VM. At most `sandbox.maxAgents` at once.
+
+### Model families for supporting agents (measured 2026-11-21 01:01 to 01:06 UTC)
+
+Each family was sent the same three numbered test charts (1400 px and 2000 px) and asked to read the marks. All six read every row they could resolve correctly, with no wrong numbers.
+
+| Family id | Sees images | Note |
+| --- | --- | --- |
+| `gpt_6_2_sol` | yes | read every row |
+| `gemini_4_carbon` | yes | read every row |
+| `claude_opus_5_5` | yes | read every row |
+| `pplx_computer_glm_5_3_1009` | yes | read every row |
+| `grok_4_7` | yes | read every row |
+| `kimi_k3` | yes | could not read the smallest (7 px) row at any size. The weakest for fine detail |
+
+Other ids that exist and were not tested: `gpt_6_2_astra`, `gemini_neon`, `claude_fable_5_2`, `claude_opus_5_5_fast`, `claude_sonnet_5_5`. `deepseek_v4_pro_0813` is not available.
 
 ## Pinned versions
 
@@ -121,6 +168,13 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 0 · `.npmrc` sets `legacy-peer-deps=true`: `npm install` crashed inside its peer dependency resolver (`Cannot read properties of null (reading 'edgesOut')`) on the current test runner's peer list. With the flag the same pinned versions install cleanly.
 - 2026-11-21 · Phase 0 · Added two helper commands that the kit does not list: `npm run push` (fetch, merge, commit with the trailer, push, log the push) and `npm run inline` (pack any picture for the inline display).
 - 2026-11-21 · Phase 0 · MP4 muxing for Export uses `mp4-muxer` pinned at its last release. Its author now points to a larger successor library. The small one does exactly what Export needs and its interface is known, so it is the lower risk.
+- 2026-11-21 · Phase 0 · Render path: three.js `WebGLRenderer` on WebGL2 with `antialias: false`, pixel ratio 1 and custom GLSL3 materials that share one set of uniforms. Each sample is rendered to an RGBA16F target with depth and added into an RGBA32F ping-pong accumulator. Lens and grade run once after accumulation. One pixel is read back before any timer stops.
+- 2026-11-21 · Phase 0 · Motion inside the shutter: the plant is built on the CPU at shutter open and shutter close and the vertex shader mixes the two by the sample's shutter position. The camera is evaluated exactly at each sample's own time. The shutter opens at the frame's time and lasts `film.shutterDegrees / 360` of a frame.
+- 2026-11-21 · Phase 0 · The alpha channel of a sample carries the blur circle in pixels, so the accumulated frame knows how soft each pixel is. A blur guided by it fills the gaps between lens samples (radius = blur circle / sqrt(samples)), and the far backdrop is blurred analytically. Both are allowed by `kit/04-LOOK.md` section 7.
+- 2026-11-21 · Phase 0 · Camera convention: plant foot at the origin, y up, camera at `(d sin az, h, d cos az)`. `frameX` is reached by turning the lens only. The pan is solved so the point of the plant axis at `aimHeightM` lands exactly at `frameX` and at half height. No roll. Focus distance is the depth of the growing tip. The f-number is not in the config, so it lives in the units' camera fit.
+- 2026-11-21 · Phase 0 · G10: the page exposes one extra call, `requirements()`, that lists the WebGL2 extensions and limits the app needs. The gate compares it with `config/webgl-caps.json`.
+- 2026-11-21 · Phase 0 · The harness serves the built `dist/` from a local server on `localhost` and rebuilds when the hashes of the source differ from the build. Engine and unit hashes come from one shared library and are injected at build time.
+- 2026-11-21 · Phase 0 · Stand-in systems live in the real folders and register themselves with `declareStandIn`, so `info().standIns` is always the truth.
 
 ## Notes from Brandon
 
@@ -184,6 +238,7 @@ None yet.
 
 One line per push: the date, the commit and what it carried. A failed push is logged here too.
 - 2026-11-21 01:00 UTC · Phase 0: package, clock, look log, status tool, inline display proof, status 01
+- 2026-11-21 01:20 UTC · Phase 0: workspace record, tool record, caps tool, engine core modules, status 02
 
 ## Session log
 
@@ -196,4 +251,6 @@ One entry per task: when it started, the prompt it was started with, what it did
 - Fetched and merged `main` at `593fb73`. No addenda. Read `AGENTS.md` and the kit in its reading order. "Build" was `not started`, so the build starts at Phase 0, step 1.
 - Status 01, 2026-11-21 01:00 UTC, Phase 0. The build has started: kit read, clock running, first push done. The inline display is proven with the approved contact sheet. Next: measure the workspace, scaffold the app, render a spike scene. Time used: 0.1 h of 30 h.
   Pictures: The eight approved images, in film order.
+- Status 02, 2026-11-21 01:20 UTC, Phase 0. Workspace, tools, agents and the image limit are measured and logged: software WebGL2 works, six model families see images, a sandbox agent has its own 4 core VM and can return video. The engine core (sampler, accumulator, timeline, lens) is written. Next: finish the scaffold and the harness, then render the first spike frames. Time used: 0.5 h of 30 h.
+  Pictures: The numbered test chart every model family read, used to measure the image limit (1400 px arrives intact).
 
