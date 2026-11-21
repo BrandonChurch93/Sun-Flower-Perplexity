@@ -7,9 +7,10 @@ import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInput
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
-import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, lagOf, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
+import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
+const PICTURE_SIZE = 0.775
 const TILE_H = 128
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
@@ -269,8 +270,7 @@ export class FarField {
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number): void {
     this.plants.forEach((plant, i) => {
-      const lag = lagOf(i, this.plants.length)
-      plant.prepare(Math.max(0, timeOpen + lag), Math.max(0, timeClose + lag), open, close)
+      plant.prepare(kindTime(timeOpen, i, this.plants.length), kindTime(timeClose, i, this.plants.length), open, close)
     })
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
@@ -331,12 +331,14 @@ export class FarField {
     const target = renderer.getRenderTarget()
     const alpha = renderer.getClearAlpha()
     renderer.getClearColor(this.clear)
-    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value, wind: fieldUniforms.uPlantWind.value }
+    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value, wind: fieldUniforms.uPlantWind.value, canopy: fieldUniforms.uCanopy.value }
     shared.uCamPos.value.copy(this.eye)
     shared.uFogDensity.value = 0
     shared.uCocScale.value = 0
     shared.uShadowOn.value = 0
     fieldUniforms.uPlantWind.value = 0
+    // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as a neighbor of middle height is.
+    fieldUniforms.uCanopy.value = keep.canopy / PICTURE_SIZE
     renderer.setRenderTarget(this.atlas)
     renderer.setClearColor(0x000000, 1)
     renderer.clear(true, true, false)
@@ -346,6 +348,7 @@ export class FarField {
     shared.uCocScale.value = keep.coc
     shared.uShadowOn.value = keep.shadow
     fieldUniforms.uPlantWind.value = keep.wind
+    fieldUniforms.uCanopy.value = keep.canopy
     renderer.setRenderTarget(target)
     renderer.setClearColor(this.clear, alpha)
   }
