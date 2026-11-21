@@ -64,13 +64,13 @@ function field(options: PartOptions): PlantPart {
       if (slot === 1) return
       setHead(uniforms, 0, pose)
       setHead(uniforms, 1, pose)
-    },
-    finish(time) {
-      const f = fronts(time)
+      // Each kind of neighbor runs on its own time, which its pose carries.
+      const f = fronts(pose.time)
       uniforms.uFront.value.set(f.start, f.open)
-      uniforms.uYoung.value = youth(time)
-      uniforms.uCover.value = cover(time)
+      uniforms.uYoung.value = youth(pose.time)
+      uniforms.uCover.value = cover(pose.time)
     },
+    finish() {},
   }
 }
 
@@ -129,12 +129,12 @@ export function create(options: PartOptions): PlantPart | null {
     casters: [],
     fill(slot, pose) {
       setHead(uniforms, slot, pose)
-    },
-    finish(time) {
-      const shown = time >= SHOWN_FROM && uniforms.uHS.value[0].x > 0
+      if (slot === 1) return
+      const shown = pose.time >= SHOWN_FROM && uniforms.uHS.value[0].x > 0
       for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
-      uniforms.uYoung.value = youth(time)
-      uniforms.uCover.value = cover(time)
+      uniforms.uYoung.value = youth(pose.time)
+      uniforms.uCover.value = cover(pose.time)
     },
+    finish() {},
   }
 }
