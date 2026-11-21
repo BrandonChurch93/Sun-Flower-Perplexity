@@ -91,7 +91,8 @@ describe('the plant', () => {
     expect(bodyRadius(config.plant.stages.bud[0] - 1)).toBe(0)
     expect(bodyRadius(config.film.durationSeconds)).toBeCloseTo(config.plant.discDiameterM / 2, 9)
     for (let k = 0; k < rayCount; k++) {
-      expect(rayLength(k, config.plant.stages.bloom[0] - 1)).toBe(0)
+      expect(rayLength(k, config.plant.stages.bud[0])).toBe(0)
+      expect(rayLength(k, (config.plant.stages.bud[0] + config.plant.stages.bud[1]) / 2)).toBe(0)
       expect(rayOpen(k, config.plant.stages.bloom[0])).toBe(0)
       expect(rayOpen(k, config.plant.stages.bloom[1])).toBe(1)
     }
