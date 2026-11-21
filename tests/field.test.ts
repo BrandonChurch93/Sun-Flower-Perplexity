@@ -197,3 +197,36 @@ describe('the neighbors from 52 s', () => {
     expect(high.tall).toBeLessThanOrEqual(1.1)
   })
 })
+
+import { behindAt, earlyAt, earlyCode, kindTime, nightAt } from '../src/field/layout.ts'
+
+describe('before the bloom every neighbor is its own', () => {
+  it('each kind is at its own stage in the rain and under the moon, and no clock runs backward', () => {
+    for (const time of [14, 26]) {
+      const clocks = [0, 1, 2, 3, 4, 5, 6].map((k) => kindTime(time, k, 'near'))
+      for (let a = 0; a < clocks.length; a++) {
+        expect(clocks[a]).toBeLessThan(time)
+        for (let b = a + 1; b < clocks.length; b++) expect(Math.abs(clocks[a] - clocks[b]), `${time} s, ${a} and ${b}`).toBeGreaterThan(0.1)
+      }
+    }
+    for (let k = 0; k < 7; k++) for (let f = 0; f < 1800; f++) expect(kindTime((f + 1) / 30, k, 'near')).toBeGreaterThan(kindTime(f / 30, k, 'near'))
+  })
+
+  it('no two of the nearest twenty have the same stalk, leaves and droop', () => {
+    const near: { d: number; code: number }[] = []
+    for (let i = 0; i < places.near.length; i += PLACE) near.push({ d: Math.hypot(places.near[i], places.near[i + 1]), code: earlyCode(ownOf(places.near[i + 7])) })
+    near.sort((a, b) => a.d - b.d)
+    const codes = near.slice(0, 20).map((n) => n.code)
+    expect(new Set(codes).size).toBe(codes.length)
+  })
+
+  it('all of it is gone by 40.0 s, and the night by 35.5 s', () => {
+    for (const time of [40, 45, 52, 58.5, 60]) {
+      expect(earlyAt(time)).toBe(0)
+      expect(behindAt(time)).toBe(0)
+      expect(nightAt(time)).toBe(0)
+    }
+    expect(nightAt(35.5)).toBe(0)
+    expect(earlyAt(26)).toBe(1)
+  })
+})

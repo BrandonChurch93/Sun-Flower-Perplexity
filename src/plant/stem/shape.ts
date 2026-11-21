@@ -158,3 +158,10 @@ export function ribProfile(ribs: Ribs, angle: number): number {
 export function wrapAngle(d: number): number {
   return d - TAU * Math.round(d / TAU)
 }
+
+// The young stem is never an even tube: it tapers from the foot to the hook, is a little stouter where the hook was, and swells and narrows slightly along its length. It has filled out evenly by 6 s.
+export function youngGirth(time: number, u: number): number {
+  const young = 1 - smoothstep(3, 6, time)
+  const at = (u - 0.8) / 0.13
+  return 1 + young * (0.1 - 0.2 * u + 0.12 * Math.exp(-at * at) + 0.045 * Math.sin(31 * u + 1.3) * Math.sin(11.7 * u + 0.4))
+}
