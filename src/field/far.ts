@@ -304,7 +304,7 @@ export class FarField {
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number): void {
     this.time = timeOpen
     this.plants.forEach((plant, i) => {
-      plant.prepare(kindTime(timeOpen, i, this.plants.length), kindTime(timeClose, i, this.plants.length), open, close)
+      plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
     })
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
@@ -336,7 +336,7 @@ export class FarField {
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
         const id = 1 + i * pictureTurns + j
-        placeTurned([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(this.time, id))
+        placeTurned([rx * across, rz * across, pictureTurn(j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(kindTime(this.time, i, 'pictures'), id))
       }
       spot.needsUpdate = true
       still.needsUpdate = true
