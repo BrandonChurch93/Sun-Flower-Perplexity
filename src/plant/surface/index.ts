@@ -63,8 +63,8 @@ const float TISSUE_LAYER_M = 0.006;
 const float TISSUE_BOUNCE = 0.03;
 const float TISSUE_BOUNCE_M = 0.15;
 // Hairs too short to draw: a line of light along the outline of a hairy part.
-const float TISSUE_FELT = 0.9;
-const vec3 TISSUE_HAIR = vec3(1.0, 0.92, 0.62);
+const float TISSUE_FELT = 1.5;
+const vec3 TISSUE_HAIR = vec3(0.92, 0.95, 0.62);
 const float TISSUE_FELT_M = 0.03;
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
@@ -225,7 +225,7 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   float px = length(fwidth(world));
   float lumps = 1.0 + 0.35 * saturate(2.0 - 420.0 * px) * sin(world.y * 420.0 + 2.0 * sin(world.x * 190.0 + world.z * 230.0))
     + 0.25 * saturate(2.0 - 2100.0 * px) * sin(world.y * 2100.0 + world.x * 900.0 - world.z * 700.0);
-  float toSun = (0.2 + 0.8 * against * against) * (0.35 + 0.65 * saturate(0.5 + 0.5 * fdl));
+  float toSun = (0.2 + 0.8 * against * against) * (0.5 + 0.5 * saturate(0.5 + 0.5 * fdl));
   // Where a part is thin its hairs are drawn by the hair part; the felt is kept low there so the two do not make a wire.
   color += direct * TISSUE_HAIR * (TISSUE_FELT * fuzz * (1.0 - 0.6 * saturate(peak * 20.0)) * line * lumps * toSun);
   return color;
