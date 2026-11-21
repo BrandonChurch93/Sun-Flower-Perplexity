@@ -15,6 +15,9 @@ out vec2 vUv;
 out vec4 vRay;
 out vec2 vState;
 out float vDepth;
+#ifdef DEPTH_PASS
+uniform float uShadowTexelM;
+#endif
 void main() {
 #ifdef PLANT_FIELD
   vec3 local = position;
@@ -22,6 +25,10 @@ void main() {
   vec3 local = mix(position, positionB, uShutter);
 #endif
   vec4 world = vec4(plantWorld(local), 1.0);
+#ifdef DEPTH_PASS
+  // The pleats of a folded ray are finer than the shadow map: the caster stands back so they do not stripe themselves.
+  world.xyz -= uSunDir * uShadowTexelM * mix(3.5, 1.0, aState.y);
+#endif
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vNormal = plantDirection(normal);
@@ -80,7 +87,6 @@ void main() {
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
   float groove = 1.0 - smoothstep(0.0, 0.05, abs(across));
-  float lines = (fold - 0.7 * groove) * smoothstep(1.0, 0.75, u);
   through *= 1.0 - 0.22 * (fold + groove) * smoothstep(1.0, 0.75, u);
 
   Tissue t;
@@ -98,9 +104,24 @@ void main() {
   float vein = data.b;
   through *= (0.45 + 0.75 * data.g) * (1.0 - 0.3 * vein);
   through.g *= 1.0 - 0.25 * vein;
-  float height = ((data.r - 0.5) * 0.00028 + lines * 0.00022) * (front ? 1.0 : -1.4);
-  t.normal = reliefNormal(n, vWorld, height, 1.0);
   float texels = texelDensity(m, uRaySize);
+  // The slopes are taken in the map and by formula: screen differences of a fine height break into blocks on a steep fold.
+  vec2 step = max(texels, 1.5) / uRaySize;
+  float alongSlope = (texture(uRayData, m + vec2(step.x, 0.0)).r - data.r) / step.x * 0.84 * 0.00028;
+  float acrossSlope = (texture(uRayData, m + vec2(0.0, step.y)).r - data.r) / step.y * 0.3 * vRay.z * 0.00028;
+  float fx = clamp(abs(abs(across) - 0.34) / 0.07, 0.0, 1.0);
+  float gx = clamp(abs(across) / 0.05, 0.0, 1.0);
+  float foldSlope = -6.0 * fx * (1.0 - fx) / 0.07 * sign(abs(across) - 0.34) * sign(across);
+  float grooveSlope = -6.0 * gx * (1.0 - gx) / 0.05 * sign(across);
+  acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00022;
+  float side = front ? 1.0 : -1.4;
+  vec3 wx = dFdx(vWorld);
+  vec3 wy = dFdy(vWorld);
+  vec3 r1 = cross(wy, n);
+  vec3 r2 = cross(n, wx);
+  float det = dot(wx, r1);
+  vec3 grad = (r1 * dFdx(u) + r2 * dFdy(u)) * alongSlope + (r1 * dFdx(across) + r2 * dFdy(across)) * acrossSlope;
+  t.normal = normalize(abs(det) * n - sign(det) * side * grad);
 #endif
   if (!front) albedo = mix(albedo, vec3(0.80, 0.60, 0.13), 0.3) * 0.92;
   albedo *= 1.0 - 0.25 * uPlantWet;
