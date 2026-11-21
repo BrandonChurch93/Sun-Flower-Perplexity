@@ -270,7 +270,7 @@ export function create(options: PartOptions): PlantPart {
   }
 
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
-  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs') : null
+  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', [0.92, 0.95, 0.8], 0.00007) : null
   const plan: Hair[] = []
   if (hairs) {
     let sum = 0
@@ -434,7 +434,7 @@ export function create(options: PartOptions): PlantPart {
         const theta = (j / SIDES) * Math.PI * 2
         const c = Math.cos(theta)
         const e = Math.sin(theta)
-        const top = e > 0 ? lerp(0.55 * e - 0.28 * e * e * e * e, 0.2 * e, under) : e
+        const top = e > 0 ? lerp(0.85 * e - 0.32 * e * e * e * e, 0.2 * e, under) : e
         const o = (leaf.tube + ring * (SIDES + 1) + j) * 3
         tube[o] = cx + (wx * c + nx * top) * radius
         tube[o + 1] = cy + (wy * c + ny * top) * radius
@@ -484,7 +484,7 @@ export function create(options: PartOptions): PlantPart {
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.001 + 0.0015 * hair.r1) * scale
+        long = (0.0009 + 0.0011 * hair.r1) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
@@ -521,7 +521,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0005 + 0.001 * hair.r1) * scale
+          long = (0.0006 + 0.0012 * hair.r1) * scale
         } else {
           const jx = hair.r2 - 0.5
           const jy = hair.r3 - 0.5
