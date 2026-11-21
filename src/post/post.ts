@@ -6,7 +6,7 @@ import { fillFragment, maxFillPx, nearFragment, reachFragment } from './fill.ts'
 import { brightFragment, downFragment, flareFragment, levelGain, upFragment } from './glare.ts'
 import { gradeFragment } from './grade.ts'
 import { lensLook } from './looks.ts'
-import type { SunInFrame } from './sun.ts'
+import { sunReadFragment, type SunInFrame } from './sun.ts'
 
 type Mode = 0 | 1 | 2 | 3
 
@@ -64,6 +64,8 @@ export class Post {
   private flareTarget: THREE.WebGLRenderTarget | null = null
   private flareLevel = 0
   private nearTarget: THREE.WebGLRenderTarget | null = null
+  private readonly sunTarget = halfTarget(2, 2)
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tHot: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
   private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 } })
   private readonly fillWide = fillPass(3)
@@ -99,6 +101,8 @@ export class Post {
     uStarLen: { value: 1 },
     uGlow: { value: 0 },
     uShafts: { value: 0 },
+    tSun: { value: null },
+    uRays: { value: 0 },
     uSunClear: { value: 0 },
     uFarFill: { value: 1 },
     uSaturation: { value: 1 },
@@ -147,12 +151,11 @@ export class Post {
     for (const t of [...this.down, ...this.up]) sum += t.width * t.height * 8
     if (this.flareTarget) sum += this.flareTarget.width * this.flareTarget.height * 8
     if (this.nearTarget) sum += this.nearTarget.width * this.nearTarget.height * 8
-    return sum
+    return sum + this.sunTarget.width * this.sunTarget.height * 8
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, samples: number, farCircle: number): THREE.Texture {
-    const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0) {
       const n = this.near.uniforms
@@ -228,7 +231,9 @@ export class Post {
     let source = frame
     if (mode === 0) {
       const look = lensLook(def)
-      source = this.fillGaps(renderer, frame, frameIndex, samples, sun ? sun.farCircle : 0)
+      // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
+      const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
+      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0)
       const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core, look.veilTint)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget
@@ -262,14 +267,24 @@ export class Post {
       // The floors under the bloom and the shafts would pop as the sun crosses the frame edge, so they fade over its last few percent.
       const margin = sun ? Math.min(1, Math.max(0, Math.min(sun.x, 1 - sun.x, sun.y, 1 - sun.y) / 0.04)) : 0
       const seen = margin * margin * (3 - 2 * margin)
-      g.tHot.value = this.down[Math.min(this.down.length - 1, 3)].texture
+      const hot = this.down[Math.min(this.down.length - 1, 3)].texture
+      if (sun) {
+        const r = this.sunRead.uniforms
+        r.tHot.value = hot
+        r.uSunAt.value.set(sun.x, sun.y)
+        r.uAspect.value = this.fillA.width / this.fillA.height
+        this.sunRead.render(renderer, this.sunTarget)
+      }
+      g.tHot.value = hot
+      g.tSun.value = this.sunTarget.texture
       g.uStar.value = sun ? look.star * sun.weight * seen : 0
       g.uGlow.value = sun ? look.glow * sun.weight * seen : 0
       g.uShafts.value = sun ? look.shafts * sun.weight * seen : 0
+      g.uRays.value = look.rays
       g.uSunClear.value = look.sunClear
       g.tRaw.value = frame
       g.uFar.value = sun ? sun.farCircle : 0
-      g.uFarFill.value = sun ? Math.min(sun.farCircle * (samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)), maxFillPx) : 1
+      g.uFarFill.value = sun ? Math.min(sun.farCircle * scale, maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
       g.uSaturation.value = def.grade.saturation
