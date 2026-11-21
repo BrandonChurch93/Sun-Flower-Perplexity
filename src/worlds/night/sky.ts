@@ -28,8 +28,8 @@ const METEOR_TO_DEG: [number, number] = [-182.1, 13.6]
 const METEOR_LIGHT = 0.5
 
 // The wooded hills of the night stand where the approved night has them: their line, their tone and the tone of the mist at their foot are read from it by bearing. They come out of the haze after the cut into the night and go back into it before the cut out, so both cuts show the land every world shares.
-const HILLS_IN_S: [number, number] = [20, 23]
-const HILLS_OUT_S: [number, number] = [27.5, 30]
+const HILLS_IN_S: [number, number] = [20, 22]
+const HILLS_OUT_S: [number, number] = [28, 30]
 const HORIZON_V = 0.5 - (Math.tan(MAP_EL_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
 const MIST_TOP_DEG = 1.9
 const MIST_TOP_V = HORIZON_V + (Math.tan(MIST_TOP_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
