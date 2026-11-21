@@ -80,7 +80,7 @@ void main() {
 
   vec3 body = mix(vec3(0.55, 0.53, 0.015), vec3(0.62, 0.64, 0.035), smoothstep(0.1, 0.8, u));
   // A ray that is lifting is amber, darker toward its foot.
-  body = mix(body, vec3(0.8, 0.5, 0.06) * mix(0.35, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
+  body = mix(body, vec3(0.8, 0.56, 0.07) * mix(0.4, 1.15, smoothstep(0.0, 0.8, u)), 0.9 * (1.0 - vState.z));
   body = mix(body, mix(vec3(0.5, 0.48, 0.07), vec3(0.26, 0.4, 0.1), smoothstep(0.35, 0.95, u)), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
@@ -97,7 +97,7 @@ void main() {
   through *= mix(vec3(0.62, 0.66, 0.5), vec3(1.0), unfolded);
   // A lifting ray is still creased double, yet the low sun comes through it amber.
   float far = smoothstep(0.05, 0.9, u);
-  through *= mix(vec3(1.4, 1.5, 3.0) * vec3(mix(0.42, 1.4, far), mix(0.34, 1.7, far * sqrt(far)), mix(0.4, 3.0, far * far * far)), vec3(1.0), vState.z);
+  through *= mix(vec3(1.4, 1.5, 3.0) * vec3(mix(0.42, 1.6, far), mix(0.34, 2.0, far * sqrt(far)), mix(0.4, 4.0, far * far * far)), vec3(1.0), vState.z);
   through = mix(through, vec3(0.5, 0.72, 0.16), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
@@ -105,10 +105,10 @@ void main() {
   float groove = 1.0 - smoothstep(0.0, 0.05, abs(across));
   through *= 1.0 - 0.4 * (fold + groove) * smoothstep(1.0, 0.75, u);
   // The one crease of a lifting ray is a dark line down its middle.
-  through *= 1.0 - 0.55 * (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - vState.z) * (1.0 - fresh);
+  through *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.07, abs(across))) * (1.0 - vState.z) * (1.0 - fresh);
   // The veins run the length of a ray and pass less light than the tissue between them.
   float streak = smoothstep(0.72, 1.0, abs(sin(across * 21.0 + own * 6.0))) * smoothstep(1.0, 0.8, u) * smoothstep(0.02, 0.2, u);
-  through *= 1.0 - 0.3 * streak * mix(0.5, 1.0, vState.z);
+  through *= 1.0 - 0.3 * streak * mix(1.3, 1.0, vState.z);
   albedo *= 1.0 - 0.15 * streak;
 
   Tissue t;
