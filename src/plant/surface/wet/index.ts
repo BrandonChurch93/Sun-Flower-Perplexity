@@ -204,7 +204,8 @@ export function beadAt(own: number, along: number, across: number, time: number,
   out.fallM = 0
   const wet = stateUniforms.uPlantWet.value
   const dew = stateUniforms.uPlantDew.value
-  if (wet > 0) {
+  // Beads run only where it rains: a skin that is merely damp, as at dawn and at night, keeps its dew.
+  if (wet > 0.5) {
     const period = 3 + 4 * own2(own, 127.1)
     const t = sinceCut(time) - (0.3 + 2.5 * own2(own, 311.7))
     if (t < 0) return out
@@ -232,7 +233,7 @@ export function beadAt(own: number, along: number, across: number, time: number,
       }
     }
   } else if (dew > 0) {
-    out.radiusM = (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00015 + 0.0003 * own2(own, 127.1)) * dew
+    out.radiusM = (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00015 + 0.0003 * own2(own, 127.1)) * Math.sqrt(dew)
   }
   return out
 }
