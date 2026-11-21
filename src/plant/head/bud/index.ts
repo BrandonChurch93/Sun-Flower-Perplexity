@@ -34,7 +34,7 @@ const ROLL = 0.16
 // A bract folds back with the rays in front of it, this many seconds ahead of them. growth.ts has no sectors for bracts.
 const SECTOR_LEAD = 0.35
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
-const FEET = [0.8, 1.02, 1.38]
+const FEET = [0.72, 1, 1.38]
 const STAND = [1.47, 1.36, 0.87]
 const FOLD = [2.3, 2.22, 2.12]
 const LONG = [0.92, 0.9, 0.84]
