@@ -278,8 +278,8 @@ void main() {
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge) * (1.0 + 0.35 * smoothstep(0.8, 1.0, along));
     vec3 young = mix(vec3(0.06, 0.12, 0.028), vec3(0.17, 0.275, 0.062), ridge);
-    young = mix(young, vec3(0.24, 0.36, 0.09), smoothstep(0.7, 1.0, along) * (0.45 + 0.3 * vKind.w));
-    closed = mix(young * mix(0.6, 1.0, deep), closed, ripe) * tone;
+    young = mix(young, vec3(0.3, 0.43, 0.11), smoothstep(0.7, 1.0, along) * (0.5 + 0.3 * vKind.w));
+    closed = mix(young * mix(0.8, 1.0, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.16, 0.052, 0.007), vec3(0.24, 0.085, 0.011), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
     flower = mix(flower, pollen, 0.25 * smoothstep(0.55, 0.75, grain) * smoothstep(0.5, 1.0, along));
