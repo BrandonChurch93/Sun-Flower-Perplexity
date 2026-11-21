@@ -1,12 +1,12 @@
-# Status 32
+# Status 33
 
-2026-11-21 14:14 UTC
+2026-11-21 14:52 UTC
 
-- Status 32 · Phase 3 · unit bloom. Round 5 is being judged on 11207fd. The match critic gave 4: our leaves glow yellow green where the approved's are dark blue green with a bright rim, the sun is a hard point with spokes where the approved has a wide warm glow, and the field reads too sharp. The surface critic gave 7 with no severe issue, up from 5. The jury so far: 7 of 9 votes for a frame from a top-budget film, against 4 of 10 last round; four jurors named the lit hairs on the stem as their reason. Every builder has the critics' words on its part with measured tones. The field agent's round 6 branch is in and prepared: at 45 s the near heads are buds and backs, the bare stalks are behind leaves, the floor reads at the approved's tones.
-- Next: The motion critic and the last juror answer. Builders report by 14:45 UTC; merges, checks, then round 6, the last round the look lock allows, starts by 15:15 UTC. Builders whose bloom part is in start on the dawn and frost units now, on their own branches. Time used: 13.4 h of 30 h.
+- Status 33 · Phase 3 · unit bloom. Round 5 is judged and written up: match 4, surface 7, motion 5, jury 7 of 10 (passes), sharpness 0.672 and 0.786 at final, not a pass. Round 6, the last the look lock allows, is prepared: all twelve part branches are merged, and the pictures here are the prepared tree at review, not yet judged. Its sharpness measure reads 0.962 at 45 s and 1.016 at 50.5 s (0.8 needed; round 5 read 0.755 and 0.825 at review). The motion critic's three issues were traced: the horizon's one frame jumps came from the lens samples leaning to one side (now centered; the skyline at frames 1332 to 1334 reads 464.2, 463.9, 463.8 px where it read 464.9, 462.4, 465.0), the camera's reversal from the two bloom keys sharing one view while each channel ran its own curve (seven keys now hold the view), and the cut at 40 s from the frost stand-in ending at a bare horizon (the frost world now draws the shared skyline; ridge tops within 2 px by its owner's reading, being checked here now).
+- Next: Check the cut on the prepared tree, start round 6 before 15:21 UTC (machine checks, final stills, pack, three critics and ten jurors), then close the look lock at its limit or as a pass. All twelve builders already work on the five other worlds for Phase 4. Time used: 14.0 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: The field right of the plant at 45 s: main, the field agent's round 6 branch, approved
-- `status-2.jpg`: Round 5 pack at 45 s, native size: approved (a) left, ours (b) right. Head, stem, a leaf, the neighbor
-- `status-3.jpg`: The neighbor's leaf and the sun: main, with the field agent's patch, approved (45 s above, 50.5 s below)
-- `status-4.jpg`: Round 5 motion sheet: twelve frames across the bloom, 40 to 52 s
+- `status-1.jpg`: 45 s: approved left, round 6 prepared right (review tier)
+- `status-2.jpg`: 50.5 s: approved left, round 6 prepared right (review tier)
+- `status-3.jpg`: The open head at 50.5 s at native size: approved left, prepared right
+- `status-4.jpg`: The cut at 40 s on the frost branch: frame 1199 on top, 1200 in the middle, both blended below
