@@ -1,3 +1,4 @@
+import { grassCover } from './cover.ts'
 import { cropLight } from './light.ts'
 
 // The soil's tile is the scan's own size on the ground. Its mean color and the depth of its relief come from the recipe.
@@ -81,6 +82,7 @@ uniform vec2 uScales;
 uniform vec3 uMeanInv;
 ${soilHeight}
 ${cropLight}
+${grassCover}
 
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
@@ -149,9 +151,11 @@ void main() {
 #endif
 
   vec3 n = normalize(vec3(tilt.x, 1.0, tilt.y));
+  float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.25, 0.6, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.3, damp);
+  albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.85 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under));
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
@@ -162,6 +166,8 @@ void main() {
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade);
 #endif
+  open *= 1.0 - 0.35 * thatch;
+  lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + skyAmbient(n) * open * shade);
 
