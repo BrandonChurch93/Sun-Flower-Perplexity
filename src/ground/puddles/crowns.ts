@@ -10,6 +10,8 @@ const BEADS = 10
 const GRIT = 6
 // On water a column stands up from the middle after the cup has fallen, until this many cup lives after the landing.
 const JET_ENDS = 2.7
+// No splash stands within the first of these distances of the plant's foot, in meters, and a full one only beyond the second.
+const PLANT_CLEAR_M = [0.02, 0.06]
 
 export const crownVertex = /* glsl */ `
 in vec3 position;
@@ -28,7 +30,7 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 8.0 + floor(7.0 * seed);
-  float wide = 0.008 + 0.012 * size;
+  float wide = 0.008 * min(1.0, size * 6.0) + 0.012 * size;
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
@@ -36,7 +38,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
     vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
     return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
-  float tall = wide * mix(0.95, 0.6, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
+  float tall = wide * mix(0.4, 0.6, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 3.0);
@@ -60,7 +62,9 @@ void main() {
   vDepth = 0.0;
   gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   if (t <= 0.0 || t >= ${SPLASH_LIFE_S.toFixed(2)}) return;
-  float size = drop.w / 0.0022;
+  float clear = smoothstep(${PLANT_CLEAR_M[0].toFixed(3)}, ${PLANT_CLEAR_M[1].toFixed(3)}, length(drop.xy));
+  if (clear <= 0.0) return;
+  float size = drop.w / 0.0022 * clear;
   float seed = hash21(drop.xy * 53.3 + 0.37);
   float depth = waterDepth(drop.xy);
   float onWater = smoothstep(0.0, 0.006, depth);
@@ -138,9 +142,9 @@ void main() {
       alpha = saturate(mirror + lens + 0.06);
       color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
     } else {
-      float mirror = 0.04 + 0.96 * pow(1.0 - facing, 4.0);
+      float mirror = (0.04 + 0.96 * pow(1.0 - facing, 4.0)) * (1.0 - 0.7 * vMud);
       vec3 through = mix(seen(refract(-v, n, 0.75)), vec3(0.007, 0.006, 0.005) * skyAmbient(n), vMud);
-      alpha = mirror + (1.0 - mirror) * mix(0.35, 0.95, max(smoothstep(0.9, 1.0, vTop) * (1.0 - vMud), vMud * (1.0 - 0.7 * vTop)));
+      alpha = mirror + (1.0 - mirror) * mix(0.35, 0.95, max(smoothstep(0.9, 1.0, vTop) * (1.0 - vMud), 0.6 * vMud * (1.0 - vTop)));
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
