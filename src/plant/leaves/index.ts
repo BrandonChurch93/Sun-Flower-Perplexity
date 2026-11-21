@@ -25,7 +25,7 @@ const OPEN_SIDE = 0.35
 const FACING = 1.2
 const FRINGE = 4
 const RAIN_GLOW = 0.5
-const NIGHT_GLOW = 0.85
+const NIGHT_GLOW = 0.65
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
 const BLOOM = 40
 const HEM_DROP = 0.0022
