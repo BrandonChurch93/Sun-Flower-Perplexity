@@ -23,14 +23,14 @@ export const FIRST_OPEN = bloom0 + 5
 const startAt = new Monotone([
   [0, end + 20],
   [0.36, end],
-  [0.66, bloom1 - 0.5],
+  [0.61, bloom1 - 0.5],
   [RING_SHARE, FIRST_OPEN],
 ])
 const openAt = new Monotone([
   [0, end + 26],
   [0.25, end + 12],
   [0.5, end],
-  [0.77, bloom1 - 0.5],
+  [0.715, bloom1 - 0.5],
   [RING_SHARE, bloom0 + 6.6],
 ])
 
