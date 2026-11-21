@@ -105,6 +105,25 @@ void main() {
 }
 `
 
+// A bank of shaded evening air standing in the far field: away from the sun it dims what lies behind it, up to the feet of the trees' crowns.
+const shadeFragment = /* glsl */ `
+in vec3 vWorld;
+in vec3 vInfo;
+in float vDepth;
+uniform vec3 uTone;
+uniform float uShare;
+uniform float uLayer;
+uniform vec2 uFade;
+void main() {
+  if (uDiag > 1) discard;
+  vec3 v = normalize(vWorld - uCamPos);
+  float away = 1.0 - smoothstep(0.9, 0.985, dot(v, uSunDir));
+  float bank = 0.8 + 0.4 * valueNoise(vec2(vInfo.x * 0.05 + uTime * 0.01 + uLayer * 5.0, vWorld.y * 0.4 + uLayer * 13.0));
+  float thick = 1.0 - smoothstep(uFade.x, uFade.y, vWorld.y);
+  outColor = vec4(uTone, saturate(uShare * thick * away * bank));
+}
+`
+
 // The colors of the skyline's layers in this world: what each is made of and how much of the low sun its tops catch.
 const TONES: { base: [number, number, number]; rim: number; fogShare: number }[] = [
   { base: [0.2, 0.26, 0.24], rim: 0, fogShare: 0 },
@@ -127,6 +146,9 @@ const VEILS = [
   { radiusM: 3200, heightM: 260, scaleM: 60, share: 0.5 },
   { radiusM: 4600, heightM: 330, scaleM: 80, share: 0.5 },
 ]
+
+const SHADES = [9, 14, 20, 26, 34, 42, 50, 58, 64]
+const SHADE_TONE: [number, number, number] = [0.016, 0.0165, 0.016]
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
 
@@ -204,6 +226,19 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       depthWrite: false,
     })
     add(geometry, surface.main, 43 + (VEILS.length - i))
+  })
+  SHADES.forEach((radiusM, i) => {
+    const geometry = ringStrip(96, () => ({ radius: radiusM, top: 4 }))
+    const surface = makeSurface({
+      name: `golden shade ${i}`,
+      vertex,
+      fragment: shadeFragment,
+      uniforms: { uTone: { value: new THREE.Vector3().fromArray(SHADE_TONE) }, uShare: { value: radiusM < 24 ? 0.3 : 0.32 }, uLayer: { value: i + 1 }, uFade: { value: new THREE.Vector2(1.6 + radiusM * 0.004, 1.6 + radiusM * 0.016) } },
+      side: THREE.DoubleSide,
+      transparent: true,
+      depthWrite: false,
+    })
+    add(geometry, surface.main, 30 + (SHADES.length - i))
   })
   return { meshes, triangles }
 }

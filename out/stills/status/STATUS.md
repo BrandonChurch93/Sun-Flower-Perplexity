@@ -1,12 +1,12 @@
-# Status 30
+# Status 33
 
-2026-11-21 13:24 UTC
+2026-11-21 14:52 UTC
 
-- Status 30 · Phase 3 · unit bloom. Round 5 of the bloom unit started 13:26 UTC on commit 11207fd, after a third set of merges from eleven agents: the sun's glare now sits at the lower edge of the neighbor's leaf; true black is taken down by a toe in the lens; the rays past the first quarter open one by one and arrive cupped, so the head at 50.5 s no longer reads flat on; bracts stay up over the ray feet at 45 s; the far field ends in two rows of tree crowns. Measured at the review tier: 92 of 92 tests, M1 and M2 pass, M3 0.825 at 50.5 s (passes) and 0.755 at 45 s (fails, needs 0.8).
-- Next: The round 5 chain runs until about 14:02 UTC (machine checks, the two judged stills at the final tier, the packs); then three critics and ten jurors answer. Meanwhile each agent gets its answers and its round 6 job: leaf interiors, lower bracts and the stem's hairs inside the sharp zone for M3 at 45 s; a denser, darker field; the right side of the head opening sooner. Time used: 12.6 h of 30 h.
+- Status 33 · Phase 3 · unit bloom. Round 5 is judged and written up: match 4, surface 7, motion 5, jury 7 of 10 (passes), sharpness 0.672 and 0.786 at final, not a pass. Round 6, the last the look lock allows, is prepared: all twelve part branches are merged, and the pictures here are the prepared tree at review, not yet judged. Its sharpness measure reads 0.962 at 45 s and 1.016 at 50.5 s (0.8 needed; round 5 read 0.755 and 0.825 at review). The motion critic's three issues were traced: the horizon's one frame jumps came from the lens samples leaning to one side (now centered; the skyline at frames 1332 to 1334 reads 464.2, 463.9, 463.8 px where it read 464.9, 462.4, 465.0), the camera's reversal from the two bloom keys sharing one view while each channel ran its own curve (seven keys now hold the view), and the cut at 40 s from the frost stand-in ending at a bare horizon (the frost world now draws the shared skyline; ridge tops within 2 px by its owner's reading, being checked here now).
+- Next: Check the cut on the prepared tree, start round 6 before 15:21 UTC (machine checks, final stills, pack, three critics and ten jurors), then close the look lock at its limit or as a pass. All twelve builders already work on the five other worlds for Phase 4. Time used: 14.0 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: 45.0 s · approved on the left, ours on the right (judged commit, review tier)
-- `status-2.jpg`: 50.5 s · approved on the left, ours on the right (judged commit, review tier)
-- `status-3.jpg`: The head at 50.5 s · approved, the tree round 4 judged, the tree round 5 judges
-- `status-4.jpg`: The opening every 0.25 s from 44.5 to 51.5 s on the new schedule (draft tier)
+- `status-1.jpg`: 45 s: approved left, round 6 prepared right (review tier)
+- `status-2.jpg`: 50.5 s: approved left, round 6 prepared right (review tier)
+- `status-3.jpg`: The open head at 50.5 s at native size: approved left, prepared right
+- `status-4.jpg`: The cut at 40 s on the frost branch: frame 1199 on top, 1200 in the middle, both blended below

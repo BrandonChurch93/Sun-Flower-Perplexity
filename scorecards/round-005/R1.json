@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "all foreground leaves (main plant and left-edge neighbor), both pairs; see set-A-02/05 rows 2-4",
+      "what": "in -a the leaves are backlit near-silhouettes: dark blue-green faces with only a thin bright rim and a few translucent patches. In -b the leaves glow a flat yellow-green across the whole face, as if lit from the front or lit through, so they come out much brighter and more saturated than the target",
+      "fix": "darken the leaf faces to deep shadowed green, keep the light to rim highlights and small translucent spots, and drop the yellow fill"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "sun and sky round it, upper-left (set-A-03 / set-A-06 row 5)",
+      "what": "in -a the sun is a large soft warm bloom with a golden haze around it, and only faint diffuse rays. In -b it is a small hard white point with a crisp starburst, and sharp spoke-like rays fan across the whole upper-left sky",
+      "fix": "widen and soften the sun into a warm golden bloom, take out the starburst spikes, and turn the radial rays down to faint, diffuse shafts"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "field behind the plant and the background flowers, both pairs (set-A-03 / set-A-06 row 6, set-A-02 / set-A-05 row 4)",
+      "what": "-a has a shallow, creamy defocus: the flower heads are soft blobs, there are glowing bokeh highlights and backlit dust motes in the air, and there is warm haze over the field. In -b the background is much sharper: flower heads facing the camera are crisply readable, the stems show as straight vertical rows, and the specular bokeh and floating particles are gone. Depth looks deeper and the scene reads as CG",
+      "fix": "blur the background more strongly, add warm bokeh highlights and backlit dust particles, and let the flower heads and stems dissolve into the defocus"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "overall grade and blacks, both pairs",
+      "what": "-a is warm amber with deep, crushed blacks in the lower field and fine film grain. In -b the shadows are lifted and greener, contrast is flatter, the image is clean with no grain, and the lower field shows detail that -a lets go to black",
+      "fix": "crush the shadows back toward black, warm up the midtones to amber, and add the fine film grain"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "far background at the skyline, region 7, both pairs",
+      "what": "in -a the low hills sit inside a glowing warm haze band, with a soft gradient into the field. In -b there is a hard, flat dark treeline with almost no atmospheric glow, so the air between near and far is missing",
+      "fix": "add warm, light-scattering haze along the horizon, strongest toward the sun, and soften the treeline into it"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "main plant structure: stem and side leaves, both pairs",
+      "what": "the -a stem is slim and branches into curving petioles, with a drooping, curled leaf at upper right and a leaf spreading at lower left. The -b stem is thicker and straighter, with different leaf placement: a large flat leaf out to the far right, a leaf close under the head, and a cupped leaf at the bottom. It reads as a different plant",
+      "fix": "match the -a silhouette: a thinner stem, the curled drooping leaf just right of the stem below the head, and the spread leaf at lower left on a curved petiole"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, the bud at 45.0 s",
+      "what": "the -a bud faces mostly left-up, with a ring of long spiky green bracts all round it and the yellow ray petals unfurling to the left. The -b bud is turned more toward camera with a visible yellow disc, and fewer, shorter bracts on top, so the spiky crown silhouette against the sky is weaker",
+      "fix": "rotate the bud to the -a angle and restore the full crown of long pointed bracts along the top and right edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 1, the flower head at 50.5 s",
+      "what": "-a petals are pale lemon-yellow, soft and backlit. -b petals are saturated orange with sharp specular sheen, and the head sits slightly lower and larger, with green bracts flaring out to the right",
+      "fix": "desaturate the petals toward warm pale yellow with soft translucency, and cut back the specular highlights and the flared bracts"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "region 8, the sky",
+      "what": "the -b sky is slightly cooler and smoother, with a little less cloud texture than -a",
+      "fix": "warm it slightly and add a little soft cloud texture and grain"
+    }
+  ]
+}
