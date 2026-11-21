@@ -113,7 +113,7 @@ export function regionsOf(frame: number, width: number, height: number): Found {
   // The box of this size that holds the most of the given points, in steps of a quarter box.
   const densest = (points: Seen[], weight: (p: Seen) => number = () => 1): Seen | null => {
     if (points.length === 0) return null
-    let best: Seen | null = null
+    let best = null as Seen | null
     let most = 0
     for (let cy = fh / 2; cy <= 1 - fh / 2 + 1e-9; cy += fh / 4) {
       for (let cx = fw / 2; cx <= 1 - fw / 2 + 1e-9; cx += fw / 4) {
@@ -125,7 +125,10 @@ export function regionsOf(frame: number, width: number, height: number): Found {
         }
       }
     }
-    return best
+    if (!best) return null
+    const held = points.filter((p) => Math.abs(p.x - best.x) <= fw / 2 && Math.abs(p.y - best.y) <= fh / 2)
+    const total = held.reduce((sum, p) => sum + weight(p), 0)
+    return total > 0 ? { x: held.reduce((sum, p) => sum + p.x * weight(p), 0) / total, y: held.reduce((sum, p) => sum + p.y * weight(p), 0) / total } : best
   }
   const regions: Region[] = []
   const absent: Absent[] = []
