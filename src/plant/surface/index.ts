@@ -260,7 +260,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   color += passed * (uSunColor * (wrap * lobe * sun) + skyBack * (open * (0.6 + 0.4 * sun)));
   color += (uSunColor * (sun * (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against)) + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
   // The wax of a shaded leaf mirrors the high sky: the slate in the shade of a field. Broad, and gone at the very edge.
-  color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim));
+  color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim) * uClosed);
   return color;
 #else
   vec3 H = normalize(L + view);
