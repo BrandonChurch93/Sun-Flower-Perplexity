@@ -16,8 +16,8 @@ const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
-// Hairs that stand closer on the screen than this hide one another and would merge into a line: only that many of them show. In pixels of hair length to a square pixel.
-const CROWD_COVER = 0.3
+// Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
+const CROWD_COVER = 0.35
 const CROWD_CELL_PX = 8
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
@@ -36,12 +36,14 @@ uniform vec3 uHairColor;
 uniform float uHairWidth;
 
 // How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures, for a hair in focus: more than this and a fringe burns into a wire.
-const float SUN_THROUGH = 3.2;
+const float SUN_THROUGH = 4.0;
 // A lit hair is paler than the sun, for it also sends on the sky round the sun. Only with the sun right behind it does it take a color deeper than the sun's.
 const float SUN_PALE = 0.35;
+// What comes through a hair is warm white going to pink, as the approved pictures have it, where the low sun alone would make it yellow.
+const vec3 THROUGH_TINT = vec3(1.0, 0.82, 1.08);
 const float SUN_DEEPEN = 0.6;
-const float TT_SPREAD = 0.34;
-const float TT_TURN = 3.5;
+const float TT_SPREAD = 0.7;
+const float TT_TURN = 2.0;
 const float R_SPREAD = 0.16;
 const float EVEN = 0.035;
 const float SKY_BACK = 0.12;
@@ -84,15 +86,18 @@ void readHair(int k) {
   float h2 = fract(hairOwn * 47.13 + 0.67);
   float h4 = fract(hairOwn * 233.31 + 0.09);
   float h5 = fract(hairOwn * 71.93 + 0.5);
-  float bristle = step(0.97, fract(hairOwn * 317.77 + 0.21));
+  float h6 = fract(hairOwn * 317.77 + 0.21);
+  float h7 = fract(hairOwn * 173.19 + 0.83);
   vec3 ref = abs(hairDir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 e1 = normalize(cross(hairDir, ref));
   vec3 e2 = cross(hairDir, e1);
   float turn = h1 * 6.2832;
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
-  hairBend = aside * (0.06 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
-  hairWide = 1.0 + 0.6 * bristle;
-  hairRoot.w *= (0.75 + 0.5 * h2) * (1.0 + 0.9 * bristle);
+  // No two hairs stand alike: each leans its own way off the line it was given, up to 35 degrees and mostly upward, has its own length and its own slight curve.
+  hairDir = normalize(hairDir + aside * (0.7 * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
+  hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * (0.08 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
+  hairWide = 1.0;
+  hairRoot.w *= 0.5 + h6;
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
@@ -149,7 +154,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairWide * mix(1.0, 0.1 + 0.3 * uPlantFrost, pow(t, 0.7 + 0.9 * h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairWide * mix(1.0, 0.25 + 0.15 * uPlantFrost, pow(t, 2.0 + h1));
   s.share = hairShare;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
@@ -157,11 +162,11 @@ Strand strandAt(float t) {
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairDir);
-  float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
+  float shade = smoothstep(-0.9, -0.4, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
-  vSun = lit * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
+  vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
   vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * RIME_SKY, uPlantFrost) * (fog * behind);
@@ -261,7 +266,7 @@ void main() {
   }
   // Light is added to what is behind, as a clear fiber does. The blur circle is the smaller of the hair's own and the one behind it, and only where the hair shows, so the lens does not smear a sharp bright hair into a soft background.
   float shows = dot(color, vec3(0.3, 0.6, 0.1));
-  outColor = vec4(color, shows > 0.012 ? cocOf(vDepth) : 4096.0);
+  outColor = vec4(color, shows > 0.002 ? cocOf(vDepth) : 4096.0);
 }
 `
 
@@ -287,7 +292,7 @@ export class HairSet {
   private readonly at: Float32Array
   private crowd = new Float32Array(0)
 
-  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00013) {
+  constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00004) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -387,7 +392,7 @@ export class HairSet {
       at[n * 2] = px
       at[n * 2 + 1] = py
       const scale = (size * perM) / w
-      crowd[Math.round(py) * cols + Math.round(px)] += (share * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
+      crowd[Math.round(py) * cols + Math.round(px)] += (share * this.widthM * scale * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
       out[q] = x
       out[q + 1] = y
       out[q + 2] = z
