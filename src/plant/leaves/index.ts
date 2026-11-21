@@ -484,7 +484,7 @@ export function create(options: PartOptions): PlantPart {
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(33, 40, time)
-    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.7 + 0.3 * smoothstep(3, 14, age), early)
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), early)
     // A leaf born under the bud grows out past it, never up through it.
     let ceiling = 1.6
     const guard = 1 - smoothstep(37, 40, time)
@@ -511,6 +511,8 @@ export function create(options: PartOptions): PlantPart {
       }
     }
     const fold = leafFold(i, time)
+    // Before the bloom a blade is stiff: it leaves its stalk nearly straight.
+    const stiff = 1 - 0.6 * early
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
     const creased = smoothstep(3, 16, age)
@@ -541,7 +543,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
+        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -615,7 +617,7 @@ export function create(options: PartOptions): PlantPart {
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
     // On the young plant a stalk is nearly as stout as the stem it leaves.
-    const thick = Math.min((0.5 + 0.16 * early) * stem, 0.036 * size * REACH)
+    const thick = Math.min((0.5 + 0.16 * early) * stem, (0.036 + 0.024 * early) * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
