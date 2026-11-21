@@ -71,8 +71,10 @@ void main() {
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.6 * valueNoise(vec2(fan * 2.4, 3.7)) + 0.4 * valueNoise(vec2(fan * 8.0, 9.1));
-  rays = smoothstep(0.35, 0.75, rays);
+  float rays = 0.65 * valueNoise(vec2(fan * 1.7, 3.7)) + 0.35 * valueNoise(vec2(fan * 4.6, 9.1));
+  rays = smoothstep(0.3, 0.8, rays);
+  // The cloud breaks each shaft along its length.
+  rays = mix(0.45, rays, smoothstep(0.25, 0.7, 0.6 * valueNoise(vec2(fan * 2.3 + 5.0, theta * 7.0)) + 0.4 * valueNoise(deck * 2.1 + 17.0)));
   float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.3) * smoothstep(0.0, 0.07, el) * (0.55 + uPale);
   color *= 1.0 + 0.7 * (rays - 0.45) * reach;
   color += uGlow * (0.2 * (rays - 0.3) * reach);
