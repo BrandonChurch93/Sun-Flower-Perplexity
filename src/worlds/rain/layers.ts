@@ -14,7 +14,7 @@ void main() {
   vec3 at = position;
   // Seen through the rain from the soil the near rows stand low: half their height across the middle of the view, their own height only at its far left, and a little more where the dawn has them nearly flat. uLow is 0 at both cuts, so the land never jumps at one.
   float off = mod(degrees(atan(position.x, position.z)) - uSunDeg + 540.0, 360.0) - 180.0;
-  float tall = mix(1.0, 0.5, smoothstep(-15.0, -21.5, off)) + 0.9 * smoothstep(-35.0, -41.0, off) * (1.0 - smoothstep(-66.0, -76.0, off));
+  float tall = mix(1.0, 0.5, smoothstep(-15.0, -21.5, off)) + 0.9 * smoothstep(-30.0, -40.0, off) * (1.0 - smoothstep(-66.0, -76.0, off));
   if (uLow > 0.0 && at.y > 0.0) at.y *= mix(1.0, tall, uLow);
   vec4 world = modelMatrix * vec4(at, 1.0);
   vec4 view = viewMatrix * world;
