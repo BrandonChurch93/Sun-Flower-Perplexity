@@ -8,7 +8,7 @@ float cropLight(vec2 p, float d) {
   float shade = uCrop.z * smoothstep(0.0, 0.5 * uCrop.y + 1e-3, clear) * smoothstep(0.0, 0.05, toField);
   vec2 s = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   vec2 q = vec2(dot(p, vec2(-s.y, s.x)) + (valueNoise(p * 0.9 + 5.0) - 0.5) * 0.5, dot(p, s));
-  float gap = smoothstep(0.66, 0.9, valueNoise(vec2(q.x * 3.7, q.y * 0.11) + 11.0)) * smoothstep(0.3, 0.75, valueNoise(q * vec2(6.0, 0.8) + 3.0));
-  return 1.0 - shade * (1.0 - 0.3 * gap);
+  float gap = smoothstep(0.6, 0.85, valueNoise(vec2(q.x * 3.7, q.y * 0.11) + 11.0)) * smoothstep(0.4, 0.8, valueNoise(q * vec2(6.0, 1.9) + 3.0));
+  return 1.0 - shade * (1.0 - 0.4 * gap);
 }
 `

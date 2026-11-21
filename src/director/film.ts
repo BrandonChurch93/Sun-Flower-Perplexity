@@ -68,7 +68,7 @@ export class Film {
     this.assets = new Assets(this.stage.renderer, assetSet)
     this.post = new Post(format.width, format.height)
     this.companion.place(companionMatrix())
-    this.scene.add(this.ground.mesh, ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
+    this.scene.add(this.ground.mesh, ...this.ground.casters.map((c) => c.mesh), ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
     for (const w of config.worlds) {
       const make = stageMakers[w.id]
       if (!make) continue
@@ -78,8 +78,8 @@ export class Film {
       this.stages.set(w.id, made)
     }
     this.scene.matrixWorldAutoUpdate = false
-    this.casters = this.plant.casters
-    this.bothCasters = [...this.plant.casters, ...this.companion.casters]
+    this.casters = [...this.plant.casters, ...this.ground.casters]
+    this.bothCasters = [...this.plant.casters, ...this.companion.casters, ...this.ground.casters]
     shared.uFocusCoc.value = config.detail.focusCocPx
   }
 
@@ -186,7 +186,7 @@ export class Film {
     shared.uDiag.value = DIAG[this.diag]
     this.sky.setWorld(def)
     this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(time)))
-    this.ground.mesh.visible = !alone
+    this.ground.show(!alone)
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
@@ -220,7 +220,7 @@ export class Film {
     const depthM = this.tip.sub(first.position).dot(first.forward)
     const seen = 1.25 * depthM * tanX * Math.hypot(1, stage.height / stage.width) + 0.02
     const fit = Math.max(wide, smoothstep(0.75, 1, seen / whole))
-    const radius = lerp(seen, whole, fit)
+    const radius = Math.max(lerp(seen, whole, fit), Math.min(seen, 0.5))
     const casters = beside ? this.bothCasters : this.casters
     this.middle.set(0, 0.5 * height, 0)
     this.center.copy(first.position).addScaledVector(first.forward, depthM).lerp(this.middle, fit)
