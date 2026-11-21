@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -80,11 +80,13 @@ export class Field {
     const squat = squatAt(timeOpen)
     this.lag = lagAt(timeOpen)
     const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
-    const canopy = spread * (1 - squat)
+    const night = nightAt(timeOpen)
+    const canopy = spread * (1 - squat) * (1 - night * NIGHT_LOW)
     fieldUniforms.uSquat.value = squat
     fieldUniforms.uHang.value = hangAt(timeOpen)
     fieldUniforms.uWide.value = wideAt(timeOpen)
     fieldUniforms.uLate.value = lateAt(timeOpen)
+    fieldUniforms.uMoon.value = night
     fieldUniforms.uCanopy.value = canopy
     // How closed the crop is follows how far its leaves reach.
     fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
@@ -109,6 +111,7 @@ export class Field {
     const spread = tanHalfWidth / steep
     const reach = 0.9
     const late = lateAt(this.time)
+    const night = nightAt(this.time)
     let total = 0
     for (const g of this.groups) {
       const all = g.all
@@ -126,7 +129,7 @@ export class Field {
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         const own = ownOf(all[i + 7])
         placeTurned(all, i, seen, still, n, (early ? 0 : budTurn(clock, all[i + 7])) + late * own.turn)
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1))
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 - night * own.low)
         seen[n + 7] = still[n + 7] = ownCode(own)
         n += PLACE
       }

@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uMoon: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -131,6 +131,7 @@ uniform float uDeep;
 uniform vec3 uEdge;
 uniform float uHang;
 uniform float uLate;
+uniform float uMoon;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -188,7 +189,10 @@ vec3 cropAmbient(vec3 n) {
   vec3 sky = skyAmbient(n);
   vec3 over = uSkyZenith * (dot(sky, vec3(0.3, 0.6, 0.1)) / max(dot(uSkyZenith, vec3(0.3, 0.6, 0.1)), 1e-4));
   float away = 0.5 - 0.5 * dot(n.xz, uSunDir.xz) * inversesqrt(max(dot(n.xz, n.xz) * dot(uSunDir.xz, uSunDir.xz), 1e-4));
-  return mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * uClosed);
+  vec3 fill = mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * uClosed);
+  // Under the moon a neighbor's leaves get the sky the plant's own get, no more.
+  if (uMoon > 0.0) fill = mix(fill, sky, uMoon);
+  return fill;
 }
 #define skyAmbient(n) cropAmbient(n)
 #endif

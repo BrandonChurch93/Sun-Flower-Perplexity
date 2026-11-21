@@ -69,13 +69,16 @@ export const wideAt = (time: number): number => 0.6 * ramp(8, 13, time) * (1 - r
 // From 52 s the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
 // A neighbor's own turn off the camera's side, its height, the size of its head and how far the head nods.
 export const lateAt = (time: number): number => ramp(52, 57, time)
+// Under the moon the young rows stand lower than the lens, and one in twenty stands clear of them. 0 by the rain's key and from 35.5 s.
+export const nightAt = (time: number): number => ramp(17, 23, time) * (1 - ramp(29, 35.5, time))
+export const NIGHT_LOW = 0.16
 const handSet = new Set<number>()
-export interface Own { turn: number; tall: number; head: number; nod: number }
+export interface Own { turn: number; tall: number; head: number; nod: number; low: number }
 export function ownOf(id: number): Own {
   // The neighbors set by hand keep their turn and their height: only their heads differ.
-  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id) }
+  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id), low: NIGHT_LOW }
   const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
-  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2) }
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.05 ? -0.1 * hash01(SEED, 95, id) : NIGHT_LOW - 0.07 + 0.14 * hash01(SEED, 95, id) }
 }
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
 export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
