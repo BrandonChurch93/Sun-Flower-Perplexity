@@ -13,7 +13,7 @@ export const litterTileM = 2.9
 export const ridgeHeightM = 0.07
 
 // The plant breaking the surface: the soil round the stem lifts over riseS seconds into plates of this height and reach, split by this many cracks.
-export const emergence = { riseS: 2.3, liftM: 0.0045, radiusM: 0.018, cracks: 5 }
+export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
 export const soilHeight = /* glsl */ `
@@ -69,6 +69,7 @@ float soilHeight(vec2 p, float lod) {
 export const waterLevelsM = [-0.03, -0.0075]
 export const groundStates = /* glsl */ `
 uniform vec2 uWater;
+uniform float uCast;
 float waterLevel(float wet) {
   return mix(uWater.x, uWater.y, wet);
 }
@@ -85,12 +86,27 @@ float sheen(float wet, float dew) {
 // The sky's light on a face. When the sun is low its glow fills only its own side of the horizon, so faces turned away from it get the cool sky overhead.
 vec3 groundAmbient(vec3 n) {
   float away = saturate(0.6 - dot(n.xz, normalize(uSunDir.xz + vec2(1e-5, 0.0)))) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
-  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.5, 0.95 * away);
+  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.3, 0.95 * away);
+}
+// Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
+vec3 proud(float heightM) {
+  return mix(vec3(1.0), mix(vec3(0.85), vec3(2.1, 1.65, 1.8), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+}
+// Moist grains along a rim throw the sun at the lens when it stands behind them.
+float sparkle(vec3 world, vec3 v, vec3 n) {
+  vec3 cell = world * 1900.0;
+  float grain = step(0.62, hash31(floor(cell))) * smoothstep(0.42, 0.15, length(fract(cell) - 0.5)) * (1.0 - smoothstep(0.3, 1.0, length(fwidth(cell))));
+  float skim = 1.0 - max(dot(n, v), 0.0);
+  return grain * skim * skim * smoothstep(0.3, -0.5, dot(v, uSunDir));
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
   float skim = 1.0 - saturate(dot(v, hv));
   return 0.8 + 5.5 * skim * skim * skim * skim;
+}
+// Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
+float selfShade() {
+  return mix(1.0, 0.3, (1.0 - uCast) * (1.0 - smoothstep(0.05, 0.5, uSunDir.y)));
 }
 float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
@@ -126,7 +142,6 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
 uniform float uCover;
-uniform float uCast;
 uniform vec2 uToward;
 uniform vec2 uRight;
 uniform vec3 uRows;
@@ -205,7 +220,7 @@ void main() {
   vec2 tilt = g * 1.6 * clod - uToward * slope;
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
   albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
-  float pool = pooled((h - 0.55) * uRelief.x - 0.006 * (1.0 - ridge) * rowAmt, uWet);
+  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.54) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
 #endif
 
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
@@ -230,17 +245,21 @@ void main() {
   open *= 1.0 - 0.35 * thatch;
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
+#ifdef NEAR
+  shade *= mix(vec3(1.0), proud(vWorld.y), fade);
+#endif
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade);
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit;
+  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade();
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += skyAmbient(reflect(-v, n)) * (0.03 + graze) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * selfShade() * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
+  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
   if (uDew > 0.0) {
     vec2 cell = p / 0.0021;
     vec2 id = floor(cell);
