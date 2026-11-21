@@ -288,7 +288,8 @@ export function create(options: PartOptions): PlantPart {
     uDetailSize: { value: new THREE.Vector2(1, 1) },
     uVeinPad: { value: VEIN_PAD },
     // The neighbor's blades stand between the lens and the sun, where the approved frames keep them a deep green.
-    uGlow: { value: options.variant === 0 ? 1 : 0.2 },
+    uGlow: { value: options.variant === 0 ? 1 : 0.1 },
+    uWarm: { value: options.variant === 0 ? 0 : 0.7 },
   }
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
   const mesh = partMesh(geometry, surface)
