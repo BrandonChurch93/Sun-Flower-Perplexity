@@ -32,7 +32,7 @@ const HAIR_WIDTH_M = 0.00006
 // A bract folds back with the rays in front of it, this many seconds ahead of them. growth.ts has no sectors for bracts.
 const SECTOR_LEAD = 0.35
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
-const FEET = [0.78, 0.95, 1.36]
+const FEET = [0.8, 1.02, 1.38]
 const STAND = [1.47, 1.36, 0.87]
 const FOLD = [2.3, 2.22, 2.12]
 const LONG = [0.92, 0.9, 0.84]
@@ -314,7 +314,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(0.215 * L, 0.4 * R) * k.wide
+      const W = Math.min(0.235 * L, 0.42 * R) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -327,7 +327,7 @@ export function create(options: PartOptions): PlantPart | null {
         opened += rayOpen(ray, time + SECTOR_LEAD) / 4
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
-      const folded = smoothstep(0.1, 0.95, opened)
+      const folded = smoothstep(0.14 * k.series, 0.72 + 0.14 * k.series, opened)
       const inBud = Math.min(time, bloom0 - 1)
       const angle = lerp(lerp(bractAngle(j, inBud), STAND[k.series] + k.lean, ready), FOLD[k.series] + 0.5 * k.lean, folded)
       const curl = lerp(lerp(bractCurl(j, inBud), k.series === 2 ? 0.3 : 0.16, ready), -0.22, folded)
@@ -418,9 +418,9 @@ export function create(options: PartOptions): PlantPart | null {
         const ux = nx * cw - tx * sw
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
-        const body = (0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.42))) * lerp(0.5, 1, smoothstep(0, 0.1, u))
-        const tail = 0.4 * Math.pow(1 - u, 1.15) + 0.01
-        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.45, u))
+        const body = (0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.42))) * lerp(0.82, 1, smoothstep(0, 0.1, u))
+        const tail = 0.5 * (1 - u) + 0.008
+        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.55, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
         const soft = 0.2 * half + 1e-6

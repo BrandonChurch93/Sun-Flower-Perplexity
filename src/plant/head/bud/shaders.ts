@@ -77,11 +77,11 @@ void main() {
     vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.3 * keel + 0.4 * line + 0.12 * rank * (1.0 - toTip)));
     albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
-    if (inner) albedo = mix(albedo, vec3(0.16, 0.27, 0.08), 0.5);
+    if (inner) albedo = mix(albedo, vec3(0.12, 0.21, 0.07), 0.5);
     float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.5 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
-    t.through = vec3(0.56, 0.8, 0.08) * mix(0.08, 0.6, thin) * (0.8 + 0.4 * grain);
+    t.through = vec3(0.56, 0.8, 0.08) * mix(0.04, 0.34, thin) * (0.8 + 0.4 * grain);
     height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
     float buried = smoothstep(0.0, 0.32, u);
     t.occlusion = mix(0.28, 1.0, buried) * (inner ? mix(0.35, 1.0, max(uBudOpen, toTip * 0.7)) : 1.0);
@@ -103,7 +103,7 @@ void main() {
     float grain = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 26.0);
     float rib = abs(fract(vInfo.y * 3.3422538 + 0.2 * grain) - 0.5) * 2.0;
     vec3 neck = vec3(0.2, 0.3, 0.09);
-    vec3 body = mix(vec3(0.085, 0.15, 0.04), vec3(0.17, 0.26, 0.07), grain);
+    vec3 body = mix(vec3(0.035, 0.075, 0.032), vec3(0.075, 0.14, 0.05), grain);
     t.albedo = mix(neck, body, smoothstep(0.08, 0.4, v)) * (0.92 + 0.16 * rib);
     float pits = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 90.0);
     t.albedo *= 0.8 + 0.3 * pits;
