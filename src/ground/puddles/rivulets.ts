@@ -38,7 +38,7 @@ void main() {
   float height = soilHeight(p, soilLod(p));
   float valley = 1.0 - smoothstep(-0.006, 0.004, vLie);
   float film = vLie + mix(${FILM_M[0].toFixed(4)}, ${FILM_M[1].toFixed(4)}, valley) + ${FILM_STARTS_M.toFixed(4)} * (1.0 - uLevel.y) - height;
-  float open = 1.0 - smoothstep(0.0, 0.001, waterDepthOver(p, height));
+  float open = 1.0 - smoothstep(0.0, 0.001, waterDepthOver(height));
   float cover = smoothstep(0.0, 0.0006, film) * open;
   float damp = 0.25 * smoothstep(-0.0025, 0.0, film) * (1.0 - cover) * open;
   if (cover + damp <= 0.002) discard;

@@ -36,7 +36,7 @@ void main() {
   float w = 0.003 + 0.008 * size + (0.02 + 0.05 * size) * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 4.0 * w, 0.0), (rc + 2.2 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 1.7 * amp, 0.004 + 0.016 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
+  vWave = vec4(rc, w, 2.6 * amp, 0.004 + 0.016 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4(boxPlace(drop.xy + vOff), 0.0, 1.0);
 }
