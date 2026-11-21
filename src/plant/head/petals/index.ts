@@ -147,7 +147,7 @@ export function create(options: PartOptions): PlantPart | null {
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
   const normals = new Float32Array(count * 3)
-  const state = new Float32Array(count * 2)
+  const state = new Float32Array(count * 3)
   const uv = new Float32Array(count * 2)
   const info = new Float32Array(count * 4)
   const index: number[] = []
@@ -182,7 +182,7 @@ export function create(options: PartOptions): PlantPart | null {
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
   const normal = dynamic(normals, 3)
-  const states = dynamic(state, 2)
+  const states = dynamic(state, 3)
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
   geometry.setAttribute('normal', normal)
@@ -237,7 +237,7 @@ export function create(options: PartOptions): PlantPart | null {
     // The straps on the upper side of the bud curve sideways and lie across each other; the lower ones run straight in.
     const swirl = smooth(-0.3, 0.5, oy) * (0.55 + 0.9 * hash01(seed, 33, k))
     const alone = rayOpen((k + (rayCount >> 1)) % rayCount, time - 0.9)
-    const length = (rayLength(k, time) + mix(mix(0.9 + 0.1 * swirl, 0.62, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(mix(0.9 + 0.1 * swirl, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
     const back = (ray.rank * 0.025 - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
@@ -246,7 +246,7 @@ export function create(options: PartOptions): PlantPart | null {
     let pz = frame.oz + oz * outward - h.az * back
     const rise = Math.PI / 2 - rayAngle(k, time)
     // A ray that has just opened still stands forward of the face, and settles back over the next second.
-    const settled = rayOpen(k, time - 1.2)
+    const settled = rayOpen(k, time - 0.7)
     const young = (0.35 + 0.7 * ray.arch) * (1 - settled)
     let tx = frame.mx
     let ty = frame.my
@@ -260,6 +260,7 @@ export function create(options: PartOptions): PlantPart | null {
     const wind = pose.inputs.wind * flutter(time, ray.seed)
     const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1)
     const fresh = 1 - smooth(0.02, 0.45, open)
+    const ripe = rayOpen(k, time - 1.3)
     let pitch0 = 0
     let yaw0 = 0
     let twist0 = 0
@@ -366,9 +367,10 @@ export function create(options: PartOptions): PlantPart | null {
         out[at + 1] = py + wy * x + ny * y + ty * reach
         out[at + 2] = pz + wz * x + nz * y + tz * reach
         if (slot === 0) {
-          const st = (base + i * nv + j) * 2
+          const st = (base + i * nv + j) * 3
           state[st] = fresh
           state[st + 1] = across
+          state[st + 2] = ripe
         }
       }
     }

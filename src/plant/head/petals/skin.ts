@@ -8,12 +8,12 @@ in vec3 positionB;
 in vec3 normal;
 in vec2 uv;
 in vec4 aRay;
-in vec2 aState;
+in vec3 aState;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vRay;
-out vec2 vState;
+out vec3 vState;
 out float vDepth;
 #ifdef DEPTH_PASS
 uniform float uShadowTexelM;
@@ -48,7 +48,7 @@ in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vUv;
 in vec4 vRay;
-in vec2 vState;
+in vec3 vState;
 in float vDepth;
 #ifndef PLANT_FIELD
 uniform sampler2D uRayColor;
@@ -74,6 +74,7 @@ void main() {
 
   vec3 body = mix(vec3(0.82, 0.56, 0.03), vec3(0.93, 0.76, 0.09), smoothstep(0.1, 0.8, u));
   // A ray just out of the bud is still green yellow.
+  body = mix(body, vec3(0.8, 0.46, 0.03), 0.85 * (1.0 - vState.z * vState.z));
   body = mix(body, vec3(0.44, 0.56, 0.17), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
@@ -83,11 +84,13 @@ void main() {
   body = mix(body, vec3(1.0, 0.78, 0.32), 0.12 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.6, 0.36, 0.02), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(1.9, 1.12, 0.11), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(2.1, 1.12, 0.1), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(2.2, 1.25, 0.26), 0.5 * pale);
+  through = mix(through, vec3(2.3, 1.15, 0.24), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.48, 0.3), vec3(1.0), unfolded);
+  // A ray just opened is still thick with sap: the light through it is deep orange, and it thins to yellow over the next second.
+  through *= mix(vec3(0.42, 0.26, 0.15), vec3(1.0), vState.z);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
