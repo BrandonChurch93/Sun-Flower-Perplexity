@@ -44,6 +44,7 @@ in float vDepth;
 uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
+uniform float uFogShare;
 ${air}
 float crown(float x, float w, float salt) {
   float f = fract(x / w) * 2.0 - 1.0;
@@ -63,9 +64,8 @@ void main() {
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.07 + 0.07 * f);
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
-  // Mist lies at the foot of every layer.
   color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.2 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
-  outColor = finish(color, vWorld, min(vDepth, 100.0 * uFocusM), -1.0);
+  outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -148,7 +148,7 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.35, highDeg: 1.7, cells: 27, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.3, highDeg: 1.5, cells: 33, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.4, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.03, 0.045, 0.02], rim: 0.34 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.4, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.017, 0.026, 0.013], rim: 0.56 },
 ]
 
 const VEILS = [
@@ -276,7 +276,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.03 : 0.02 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
