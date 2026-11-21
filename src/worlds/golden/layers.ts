@@ -52,8 +52,8 @@ float crown(float x, float w, float salt) {
 void main() {
   float top = vInfo.z;
 #ifdef TREES
-  float crowns = max(max(crown(vInfo.x, 13.0, uLayer), crown(vInfo.x + 6.1, 19.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 8.0, uLayer + 5.0));
-  top *= 0.52 + 0.4 * crowns + 0.08 * valueNoise(vec2(vInfo.x * 0.6, uLayer + 7.0));
+  float crowns = max(max(crown(vInfo.x, 17.0, uLayer), crown(vInfo.x + 6.1, 26.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 11.0, uLayer + 5.0));
+  top *= 0.8 + 0.14 * crowns * (0.4 + 1.2 * valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.06 * valueNoise(vec2(vInfo.x * 0.6, uLayer + 7.0));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
@@ -78,12 +78,12 @@ void main() {
   vec2 p = vWorld.xz;
   float kind = valueNoise(p * vec2(0.0021, 0.0034) + 3.1);
   float tone = valueNoise(p * 0.011 + 9.0);
-  vec3 crop = vec3(0.085, 0.082, 0.022);
-  vec3 stubble = vec3(0.3, 0.24, 0.12);
-  vec3 pasture = vec3(0.06, 0.1, 0.035);
+  vec3 crop = vec3(0.075, 0.07, 0.02);
+  vec3 stubble = vec3(0.15, 0.125, 0.06);
+  vec3 pasture = vec3(0.05, 0.075, 0.028);
   vec3 albedo = mix(pasture, stubble, smoothstep(0.52, 0.56, kind));
   albedo = mix(albedo, crop, max(1.0 - smoothstep(0.38, 0.42, kind), 1.0 - smoothstep(800.0, 1000.0, vInfo.x)));
-  albedo *= 0.75 + 0.5 * tone;
+  albedo *= 0.85 + 0.3 * tone;
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
   vec3 color = albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * (0.05 + 0.12 * toSun * toSun));
@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * (uShare * thick * bank * (1.1 * exp(-theta / 0.06) + 0.12 * exp(-theta / 0.16) + 0.015 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * (uShare * thick * bank * (1.3 * exp(-theta / 0.07) + 0.3 * exp(-theta / 0.16) + 0.015 * exp(-theta / 0.5))), 0.0);
 }
 `
 
@@ -126,7 +126,7 @@ const smooth = (a: number, b: number, x: number): number => {
 }
 
 function ridged(az: number, cells: number, salt: number): number {
-  return 0.42 * wrapNoise(az, cells, salt) + 0.33 * wrapNoise(az, cells * 3, salt + 1) + 0.17 * wrapNoise(az, cells * 9, salt + 2) + 0.08 * wrapNoise(az, cells * 27, salt + 3)
+  return 0.5 * wrapNoise(az, cells, salt) + 0.33 * wrapNoise(az, cells * 3, salt + 1) + 0.17 * wrapNoise(az, cells * 9, salt + 2)
 }
 
 interface Strip {
@@ -144,21 +144,21 @@ interface Strip {
 }
 
 const STRIPS: Strip[] = [
-  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.7, highDeg: 2.0, cells: 9, segments: 720, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
-  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
-  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.6, highDeg: 1.9, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
+  { name: 'far ridge', radiusM: 5400, wander: 0.04, lowDeg: 0.7, highDeg: 2.0, cells: 9, segments: 1440, trees: false, base: [0.2, 0.26, 0.24], rim: 0 },
+  { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 1440, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
+  { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.6, highDeg: 1.9, cells: 13, segments: 1440, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
   { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.3, highDeg: 2.8, cells: 40, segments: 2880, trees: true, base: [0.03, 0.045, 0.02], rim: 0.035 },
 ]
 
 const VEILS = [
-  { radiusM: 14, heightM: 30, scaleM: 8, share: 0.28 },
-  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.3 },
-  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.3 },
-  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.3 },
-  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.25 },
-  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.2 },
-  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.2 },
+  { radiusM: 14, heightM: 30, scaleM: 8, share: 0.24 },
+  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.28 },
+  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.32 },
+  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.36 },
+  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.36 },
+  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.3 },
+  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.3 },
 ]
 
 const SUN_GAP_DEG = 9
