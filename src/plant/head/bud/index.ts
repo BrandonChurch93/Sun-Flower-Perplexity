@@ -445,7 +445,7 @@ export function create(options: PartOptions): PlantPart | null {
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
-      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young) * (1 + (CROWN_LONG * k.crown + SPREAD_LONG * k.spread) * tight)
+      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young) * (1 + (CROWN_LONG * k.crown + SPREAD_LONG * k.spread) * globe)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
