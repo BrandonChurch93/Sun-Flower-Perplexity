@@ -104,8 +104,8 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
   float tight = 1.0 + r * r / 0.0012;
-  float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0036);
-  vec3 glass = mix(vec3(1.0, 0.86, 0.68), vec3(1.0, 0.5, 0.17), smoothstep(0.0, 0.07, r)) * (lit * uGlow * glow);
+  float glow = 0.64 / (tight * sqrt(tight)) + 0.36 * exp(-r * r / 0.0056);
+  vec3 glass = mix(vec3(1.0, 0.8, 0.55), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
   // Over the field the shafts are short and even; up against the dark cloud they run long and stand apart.
@@ -119,7 +119,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
-  float air = (mix(2.4 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * r / (r + 0.02) + 0.35 * exp(-r / 0.07)) * behind * hold;
+  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * r / (r + 0.02) + 0.35 * exp(-r / 0.07)) * behind * hold;
   return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air);
 }
 vec3 three(vec3 p) {
