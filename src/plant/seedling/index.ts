@@ -26,14 +26,14 @@ const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
 const HUSK_ON_SOIL_M = 0.003
 // The husk comes to rest a little nearer the lens than growth's resting place, on the low crumbs of the camera's lane where no lump of soil stands before it.
-const REST_SHIFT_X = -0.002
-const REST_SHIFT_Z = 0.016
+const REST_SHIFT_X = -0.0185 - huskRest.x
+const REST_SHIFT_Z = 0.022 - huskRest.z
 // The approved frames show a shorter, broader seed leaf and a longer husk than the growth curves give: drawn at these shares until the curves follow.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
 const DEW_FACE = 0.4
 const DEW_EDGE = 0.32
-const HUSK_DRAWN = 1.3
+const HUSK_DRAWN = 0.0143 / huskLengthM
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -152,7 +152,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   const state = new Float32Array(count * each * 4)
   const list: Crumb[] = []
   const p = new Float32Array(9)
-  const toHusk = Math.atan2(huskRest.z, huskRest.x)
+  const toHusk = Math.atan2(huskRest.z + REST_SHIFT_Z, huskRest.x + REST_SHIFT_X)
   for (let i = 0; i < count; i++) {
     const own = combine(seed, i)
     const onHusk = i >= shape.stemCrumbs
@@ -577,7 +577,8 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const raining = stateUniforms.uPlantWet.value > 0.5
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length
         const b = leaves.bodies[k]
@@ -608,7 +609,13 @@ export function create(options: PartOptions): PlantPart | null {
         const own = beadSpot[i * 4 + 2]
         const open = smoothstep(0.07, 0.6, seedLeafAngle(b.side < 0 ? 0 : 1, time))
         const out0 = beadSpot[i * 4 + 3] * 0.6
-        const size = raining ? (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00018 + 0.0003 * beadSpot[i * 4 + 3]) : beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        const wetSize = own > 0.85 ? 0.0003 + 0.002 * (own - 0.85) : 0.00012 + 0.0002 * beadSpot[i * 4 + 3]
+        const dewSize = beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        const size = lerp(dewSize, wetSize, rain)
+        const lit = b.side < 0 ? 0 : 1
+        tint[i * 3] = lerp(lerp(0.07, 0.2, lit), 0.02, rain)
+        tint[i * 3 + 1] = lerp(lerp(0.17, 0.26, lit), 0.06, rain)
+        tint[i * 3 + 2] = lerp(lerp(0.1, 0.12, lit), 0.035, rain)
         seat[o + 3] = size * smoothstep(out0, out0 + 0.4, open) * (1 - wither)
       }
     }
