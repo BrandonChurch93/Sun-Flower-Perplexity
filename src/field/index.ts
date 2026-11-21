@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, youngOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -81,6 +81,7 @@ export class Field {
     const canopy = spread * (1 - squat)
     fieldUniforms.uSquat.value = squat
     fieldUniforms.uHang.value = hangAt(timeOpen)
+    fieldUniforms.uWide.value = wideAt(timeOpen)
     fieldUniforms.uCanopy.value = canopy
     // How closed the crop is follows how far its leaves reach.
     fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
