@@ -21,11 +21,11 @@ const SHAPE: Record<PartDetail, Shape> = {
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_SHUT = [-1, 1, -1, 1, -1, 1]
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
-const SHUT_ANGLE = 0.7
+const SHUT_ANGLE = 0.88
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
 const SAG = 0.38
-const FOOT_SHUT = 0.014
+const FOOT_SHUT = 0.034
 const FOOT_OPEN = -0.06
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
@@ -106,7 +106,7 @@ function makeRays(seed: number): Ray[] {
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) < 0.5 ? -1 : 1) * (0.12 + 0.3 * r(36, k)) * strong,
       yaw: (r(6, k) - 0.5) * 0.5,
-      lean: 0.07 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.1,
+      lean: 0.07 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.2,
       clump: 0.11 * Math.sin(k * 1.9 + 6.283 * r(26, 0)) + (r(27, k) - 0.5) * 0.16,
       arch: r(28, k),
       hook: (r(29, k) - 0.4) * 0.9,
@@ -226,7 +226,7 @@ export function create(options: PartOptions): PlantPart | null {
     const lifted = smooth(0.1, 0.9, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
     // A shut ray is long enough to reach over the face toward the middle.
-    const length = (rayLength(k, time) + mix(0.2 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(0.46 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const around = (k / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
@@ -235,7 +235,7 @@ export function create(options: PartOptions): PlantPart | null {
     const oy = h.py * ca + h.qy * sa
     const oz = h.pz * ca + h.qz * sa
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 - 0.125 - 0.03 * (1 - open)) * full
+    const back = (ray.rank * 0.025 - mix(0.105, 0.125, lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -267,13 +267,13 @@ export function create(options: PartOptions): PlantPart | null {
       const along = smooth(0, 1, open * 1.5 - 0.22 * Math.pow(e, 1.5))
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
-      const shut = mix(1.8 + 0.2 * ray.arch + 0.12 * ray.rank, 3.02, smooth(0, 0.8, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
+      const shut = mix(1.56 + 0.16 * ray.arch + 0.1 * ray.rank, 2.72 + 0.12 * ray.rank, smooth(0, 0.55, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
       const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * Math.pow(e, 1.6) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
-      const yaw = mix(0.2 + 0.55 * e + ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
+      const yaw = mix(0.25 + 0.75 * e + ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
       const twist = mix(0.42, ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
@@ -321,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = 0.95 * Math.min(1, 0.9 + 5 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
+      const strap = 0.94 * Math.min(1, 0.9 + 5 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
