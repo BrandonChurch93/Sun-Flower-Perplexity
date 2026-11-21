@@ -60,7 +60,7 @@ const float TISSUE_FUZZ = 0.22;
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
 // The share of the sun a shaded thin tissue gets off its lit neighbors, and how far toward the sun the head is asked whether it is lit.
-const float TISSUE_BOUNCE = 0.032;
+const float TISSUE_BOUNCE = 0.028;
 const float TISSUE_BOUNCE_M = 0.15;
 // Hairs too short to draw: a line of light along the outline of a hairy part.
 const float TISSUE_FELT = 0.8;
@@ -205,7 +205,7 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   float thin = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6) * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
-  vec3 color = albedo * (direct * (matte * enter * under) + skyFront * buried * (under * (1.0 - 0.3 * thin * shade)));
+  vec3 color = albedo * (direct * (matte * enter * under) + skyFront * buried * (under * (1.0 - 0.4 * thin * shade)));
   color += direct * gloss + skyGloss * (mirror * open);
   // What hides the sun hides the brightest of the sky behind as well: a shaded blade does not glow by itself.
   float behind = 0.6 + 0.4 * lit1;
