@@ -107,7 +107,7 @@ const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.8, 0, -0.6]
+const SHUT_ANGLE = [1.05, 0, -0.6]
 const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
 const SHUT_CURL = [0.9, 0, 0]
 const SHUT_CURL_LATE = [0.8, 0, 0]
