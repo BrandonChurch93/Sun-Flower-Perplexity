@@ -55,13 +55,13 @@ void main() {
   float cloud = valueNoise(vec2(across * 2.6 + body * 7.3, along * 7.0));
   float grain = valueNoise(vec2(across * 34.0 + body * 3.1, along * 90.0));
   float mid = (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - 0.7 * along);
-  vec3 leaf = mix(vec3(0.04, 0.11, 0.045), vec3(0.065, 0.165, 0.065), 0.65 * cloud + 0.35 * grain);
-  leaf = mix(leaf * vec3(1.25, 1.2, 1.5), leaf, upper);
+  vec3 leaf = mix(vec3(0.03, 0.105, 0.055), vec3(0.05, 0.155, 0.075), 0.65 * cloud + 0.35 * grain);
+  leaf = mix(leaf * vec3(1.9, 1.5, 2.0), leaf, upper);
   leaf = mix(leaf, vec3(0.3, 0.47, 0.13), 0.45 * mid * upper);
   leaf = mix(leaf, vec3(0.2, 0.27, 0.08) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
-  vec3 glow = mix(vec3(0.07, 0.12, 0.022), vec3(0.028, 0.055, 0.009), lens) * (1.0 - 0.5 * mid);
+  vec3 glow = mix(vec3(0.07, 0.12, 0.022), vec3(0.012, 0.024, 0.006), lens) * (1.0 - 0.5 * mid);
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
   float leafHeight = -0.00016 * mid * upper + (grain - 0.5) * 0.000012 + (cloud - 0.5) * 0.00006 * wither;
@@ -88,7 +88,7 @@ void main() {
   t.normal = reliefNormal(face, vWorld, mix(leafHeight, huskHeight, husk), 1.0);
   t.rough = mix(mix(${LEAF.rough}, 0.8, wither), mix(0.85, mix(0.3, 0.8, dusty), upper), husk);
   t.wax = mix(${LEAF.wax} * (1.0 - 0.7 * wither), mix(0.05, 0.7 * (1.0 - dusty), upper), husk);
-  t.sheen = 0.35 * (1.0 - husk);
+  t.sheen = 0.0;
   t.occlusion = vState.z;
   vec3 color = shadeTissue(t, vWorld, view);
   outColor = finish(color, vWorld, vDepth, -1.0);

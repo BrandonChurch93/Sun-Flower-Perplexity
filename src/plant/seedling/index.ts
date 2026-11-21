@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../config.ts'
 import { lerp, smoothstep } from '../../core/curves.ts'
-import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafLength } from '../growth.ts'
+import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
@@ -16,7 +16,8 @@ const HUSK_WALL = 0.023
 const REST_AXIS = unit(-0.26, 0.96, 0.1)
 const REST_SIDE = unit(0.87, 0, 0.5)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
-const HUSK_NECK_M = 0.0012
+const LEAF_TURN = -0.85
+const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
 
 interface Body {
@@ -55,11 +56,10 @@ function shapeOf(options: PartOptions): Shape | null {
   return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36 }
 }
 
-// A blunt paddle: a narrow foot, parallel sides and a round tip.
+// A plump oval on a short broad foot, widest a little past the middle, with a round tip.
 function leafOutline(s: number): number {
-  const foot = lerp(0.3, 1, smoothstep(0, 0.4, s)) * Math.sqrt(smoothstep(0, 0.04, s))
-  const x = Math.max(0, (s - 0.55) / 0.45)
-  return Math.max(0.004, foot * Math.sqrt(Math.max(0, 1 - x ** 2.2)))
+  const foot = lerp(0.34, 1, smoothstep(0, 0.36, s)) * Math.sqrt(smoothstep(0, 0.03, s))
+  return Math.max(0.004, foot * Math.sin(Math.PI * s ** 0.82) ** 0.55)
 }
 
 // The shell of the seed from its blunt end, where the halves hang together, to the torn mouth the root came out of.
@@ -243,19 +243,21 @@ export function create(options: PartOptions): PlantPart | null {
         if (!b.husk) {
           const i = b.side < 0 ? 0 : 1
           const spread = smoothstep(0.07, 0.6, seedLeafAngle(i, time))
-          const f = roll(seedLeafFrameAt(pose, i), b.side * 0.15 * spread)
+          const f = roll(seedLeafFrameAt(pose, i), (i === 0 ? -0.15 : LEAF_TURN) * spread)
+          const rs = stemRadius(time, seedLeafFraction(time)) * smoothstep(0, 0.006, heightAt(time))
           const half = length * lerp(0.16, 0.31, spread) * (1 - 0.3 * wither)
-          const thick = length * lerp(0.05, 0.07, spread) * (1 - 0.5 * wither)
+          const thick = length * lerp(0.105, 0.07, spread) * (1 - 0.5 * wither)
           const sag = 0.08 * spread + 0.6 * wither
           const shut = lerp(0.35, 1, spread)
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = leafOutline(s)
-            const h = half * o
-            const t = thick * Math.min(1, 0.08 + 1.1 * Math.sqrt(o))
+            const joint = a === 0 ? 0 : 1 - smoothstep(0, 0.2, s)
+            const h = Math.max(half * o, lerp(0.7, 0.95, spread) * rs * joint)
+            const t = Math.max(thick * Math.min(1, 0.08 + 1.1 * Math.sqrt(o)), lerp(0.5, 1.2, spread) * rs * joint)
             const top = 0.22 * t
             const bottom = 0.78 * t
-            const reach = length * s * squeeze
+            const reach = length * s * squeeze - 0.9 * rs * (1 - s) * (1 - s)
             const down = -sag * length * s * s - 1.15 * top
             const mx = f.ox + f.mx * reach + f.nx * down
             const my = f.oy + f.my * reach + f.ny * down

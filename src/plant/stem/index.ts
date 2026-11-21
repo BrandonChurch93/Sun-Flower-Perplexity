@@ -139,6 +139,7 @@ export function create(options: PartOptions): PlantPart {
     const rFoot = stemRadius(time, 0) * grown
     const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
+    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time)))
     const flareTo = NECK_FLARE * headR
 
     const base = (u: number, s: number): number => {
@@ -291,7 +292,7 @@ export function create(options: PartOptions): PlantPart {
       const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.28, 0.62, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
@@ -317,7 +318,7 @@ export function create(options: PartOptions): PlantPart {
         coords[at * 3 + 1] = label / SKIN_TILE_M
         coords[at * 3 + 2] = label / TOP_M
         skin[at * 4] = rib
-        skin[at * 4 + 1] = youth
+        skin[at * 4 + 1] = youth + 1 + 4 * tender
         skin[at * 4 + 2] = sprout
         skin[at * 4 + 3] = foot
         skin2[at * 4] = open
