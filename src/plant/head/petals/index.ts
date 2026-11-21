@@ -112,7 +112,7 @@ function makeRays(seed: number): Ray[] {
       hook: (r(29, k) - 0.4) * 0.9,
       pleat: half.includes(k) ? 1.0 : 0.42 + 0.5 * r(7, k),
       trough: half.includes(k) ? 0.8 : 0.1 + 0.5 * r(8, k),
-      lay: (rank ? -0.14 : 0.26) + (r(9, k) - 0.5) * 0.4,
+      lay: (rank ? -0.34 : 0.06) + (r(9, k) - 0.5) * 0.4,
       roll: 0.07 + (r(10, k) - 0.5) * 0.5,
       buckle: 0.08 + 0.26 * r(30, k),
       buckleFreq: 6 + 5 * r(31, k),

@@ -83,9 +83,9 @@ void main() {
   body = mix(body, vec3(1.0, 0.78, 0.32), 0.65 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.6, 0.36, 0.02), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.72, 0.37, 0.02), vec3(1.3, 0.88, 0.09), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(1.9, 1.12, 0.11), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(1.7, 1.14, 0.5), 0.8 * pale);
+  through = mix(through, vec3(2.4, 1.45, 0.62), 0.8 * pale);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
@@ -146,7 +146,7 @@ void main() {
   float seam = (1.0 - smoothstep(0.0, 0.13, pleatAt)) * fresh * (0.75 + 0.25 * sin(u * 23.0 + own * 40.0));
   t.albedo *= 1.0 - 0.72 * seam;
   t.through *= 1.0 - 0.85 * seam;
-  t.occlusion = (1.0 - 0.7 * seam) * mix(0.4, 1.0, smoothstep(0.0, 0.5, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
+  t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
