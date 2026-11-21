@@ -1,12 +1,12 @@
-# Status 44
+# Status 45
 
-2026-11-21 19:41 UTC
+2026-11-21 20:14 UTC
 
-- Status 44 · Phase 4 · unit night · round 11. The fix pass for dawn, rain, night and frost is under way. Five builders' commits are merged on the working line since 19:27 (night world, bud, petals, frost fog, the dawn's far mist), each read file by file and tested, 113 of 113 tests. The night's lens is set to f/8 from a four step strip: the neighbors soften yet still read as plants and the hero keeps a sharpness ratio of 0.985. The film's last second now keeps the camera travelling to the final frame, a critic's note on the field. None of the four early units has passed; their second rounds start from one joint cut.
-- Next: Fixes run until 20:25 UTC: the night's low mist starts farther out so the first rows of the crop stay dark, the dawn's land under the sun gets a dark line, the soil stays wet across the cut from rain to night. At 20:30 one joint cut starts the second rounds of field, frost, dawn, rain and night. Time used: 18.8 h of 30 h.
+- Status 45 · Phase 4 · unit rain · round 10. The fix pass for dawn, rain, night and frost ends at 20:25. Since 19:41 the working line took 21 tested commits from the twelve builders, each read file by file and tested here (113 of 113). The rain's camera now stands nearer and lower at 14 s, so the plant fills the approved's share of the frame (0.69 of the height; it was 0.54); the bloom's frames are untouched, proven by hashing the camera's values for frames 1080 to 1559. The night runs at f/8; its upper leaves are small, pointed and turned off the lens axis; the dawn soil is matt and its sky cooler up high; the frost bud has every bract its own length and lean. A request for a taller skyline under the dawn sun was tested and dropped: it gave no dark band and put a ridge on the rain's horizon.
+- Next: At 20:30 one cut of the line starts the second rounds of all five open units (rounds 12 to 16): machine checks here, packs and final stills by builders, fresh critics and jurors. Still wrong and named for the next pass: the night's field is a flat dark band and its plant has too few leaves under the bud, the dawn's far ground toward the sun is too bright, the rain's soil is too smooth. Time used: 19.4 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Night 26.0 s, the crop · top the approved image, middle ours now, bottom ours with the low mist starting 9 m out (a tested request, not merged yet)
-- `status-2.jpg`: Frost 36.0 s · approved left, ours right with the first fog fixes
-- `status-3.jpg`: Dawn 6.5 s · approved left, ours right with the far mist
-- `status-4.jpg`: Field 58.5 s, frozen for its second round · approved left, ours right (review tier)
+- `status-1.jpg`: Rain 14.0 s · approved left, the working line right with the camera nearer and lower (review tier)
+- `status-2.jpg`: Dawn 6.5 s · approved left, the working line right: matt soil, a cooler sky up high (review tier)
+- `status-3.jpg`: Night 26.0 s, the plant · approved left, a builder's still right: upper leaves small, pointed, turned to the sides (review tier, crop)
+- `status-4.jpg`: Frost 36.0 s, the bud · approved left, a builder's still right (review tier, crop)
