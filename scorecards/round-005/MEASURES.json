@@ -1,0 +1,98 @@
+{
+  "unit": "bloom",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": false
+  },
+  "frames": [
+    {
+      "frame": 1350,
+      "key": "bloom-opening",
+      "why": "the key bloom-opening",
+      "m1": {
+        "frame": 1350,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.5692679451466603,
+          "y": 0.3929243434403554,
+          "depthM": 0.701552602528146,
+          "cocPx": 1.269959568977356
+        }
+      },
+      "m2": {
+        "frame": 1350,
+        "pixels": 2073600,
+        "textured": 150614,
+        "soft": 0,
+        "texturedOutsideSharpZone": 380785,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": false,
+        "ratio": 0.6719159207070748,
+        "frameEnergy": 9.567798280408537,
+        "approvedEnergy": 14.239576687422574,
+        "sharpPixels": 217474,
+        "region": {
+          "left": 837,
+          "top": 585,
+          "width": 612,
+          "height": 355
+        }
+      }
+    },
+    {
+      "frame": 1515,
+      "key": "bloom-hero",
+      "why": "the key bloom-hero",
+      "m1": {
+        "frame": 1515,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.5427535182222063,
+          "y": 0.4094782117972239,
+          "depthM": 0.7753489166560811,
+          "cocPx": 0.6167917847633362
+        }
+      },
+      "m2": {
+        "frame": 1515,
+        "pixels": 2073600,
+        "textured": 182306,
+        "soft": 0,
+        "texturedOutsideSharpZone": 439054,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": false,
+        "ratio": 0.7855319132267291,
+        "frameEnergy": 10.716329475312207,
+        "approvedEnergy": 13.642131267834486,
+        "sharpPixels": 270157,
+        "region": {
+          "left": 789,
+          "top": 573,
+          "width": 657,
+          "height": 411
+        }
+      }
+    }
+  ]
+}
