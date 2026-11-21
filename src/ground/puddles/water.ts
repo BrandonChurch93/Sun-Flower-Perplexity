@@ -84,6 +84,6 @@ void main() {
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;
   vec4 done = finish((sky * mirror + murk) / max(alpha, 1e-3), vWorld, vDepth, -1.0);
-  outColor = vec4(done.rgb, alpha * cover);
+  outColor = vec4(done.rgb, alpha * cover * uLevel.y);
 }
 `

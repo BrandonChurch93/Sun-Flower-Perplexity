@@ -18,6 +18,8 @@ const FINE_REACH_M = 0.11
 const FINE_CROWN_M = 0.00025
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
+// The rain's water gathers: none of it mirrors when the rain starts, and it comes to its full face between these film seconds, slowly at first, a film on the wet soil before it is a mirror.
+const GATHERS_S = [8, 13.7]
 
 // The water standing on the ground: level surfaces in its low places that mirror the sky, and the rings of every drop that lands in them.
 export class Puddles {
@@ -68,7 +70,8 @@ export class Puddles {
     this.crowns.visible = this.water.visible
     if (!this.water.visible) return
     const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet
-    this.level.value.set(y, 0)
+    const gathered = Math.min(1, Math.max(0, (0.5 * (time + timeClose) - GATHERS_S[0]) / (GATHERS_S[1] - GATHERS_S[0])))
+    this.level.value.set(y, gathered * gathered)
     const cx = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
     const cz = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
     const reach = rippleBox.halfM * Math.SQRT2
