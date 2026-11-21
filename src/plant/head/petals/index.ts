@@ -21,11 +21,11 @@ const SHAPE: Record<PartDetail, Shape> = {
 // The slope of each strip across a ray, as shares of the fold angle: shut like a fan in the bud, two lasting pleats when open.
 const FOLD_SHUT = [-1, 1, -1, 1, -1, 1]
 const FOLD_OPEN = [0.5, 1, -0.6, 0.6, -1, -0.5]
-const SHUT_ANGLE = 0.8
+const SHUT_ANGLE = 0.72
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
 const SAG = 0.38
-const FOOT_SHUT = 0.034
+const FOOT_SHUT = 0.05
 const FOOT_OPEN = -0.06
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
@@ -97,11 +97,11 @@ function makeRays(seed: number): Ray[] {
     const strong = r(5, k) > 0.6 ? 3.6 : 1
     return {
       rank,
-      short: r(37, k) < 0.2 ? 0.74 + 0.12 * r(38, k) : 1,
+      short: r(37, k) < 0.14 ? 0.8 + 0.1 * r(38, k) : 1,
       nod: r(39, k) < 0.3 ? 0.6 + 0.9 * r(46, k) : 0,
-      width: 0.38 + 0.1 * r(1, k),
+      width: 0.42 + 0.1 * r(1, k),
       droop: rank ? 0.15 + 0.7 * r(2, k) : 0.7 * r(2, k) * r(2, k),
-      tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.6 ? 1.8 : 0),
+      tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.7 ? 1.6 : 0),
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) < 0.5 ? -1 : 1) * (0.12 + 0.3 * r(36, k)) * strong,
@@ -226,7 +226,7 @@ export function create(options: PartOptions): PlantPart | null {
     const lifted = smooth(0.1, 0.9, open)
     const foot = mix(FOOT_SHUT, FOOT_OPEN, lifted)
     // A shut ray is long enough to reach over the face toward the middle.
-    const length = (rayLength(k, time) + mix(0.46 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(0.78 * full * Math.min(1, grown / 0.72), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const around = (k / rayCount) * Math.PI * 2
     const ca = Math.cos(around)
@@ -235,14 +235,14 @@ export function create(options: PartOptions): PlantPart | null {
     const oy = h.py * ca + h.qy * sa
     const oz = h.pz * ca + h.qz * sa
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 - mix(0.12, 0.125, lifted)) * full
+    const back = (ray.rank * 0.025 - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
     const rise = Math.PI / 2 - rayAngle(k, time)
     // A ray that has just opened still stands forward of the face, and settles back over the next second.
     const settled = rayOpen(k, time - 1.2)
-    const young = 0.7 * (1 - settled)
+    const young = (0.35 + 0.7 * ray.arch) * (1 - settled)
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
@@ -267,14 +267,14 @@ export function create(options: PartOptions): PlantPart | null {
       const along = smooth(0, 1, open * 1.5 - 0.22 * Math.pow(e, 1.5))
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
-      const shut = mix(1.56 + 0.16 * ray.arch + 0.1 * ray.rank, 2.7 + 0.12 * ray.rank + 0.4 * (ray.arch - 0.5), smooth(0, 0.55, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
+      const shut = mix(1.62 + 0.1 * ray.arch, 2.6 + 0.07 * ray.rank + 0.14 * (ray.arch - 0.5), smooth(0, 0.35, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
       const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
-      const yaw = mix(0.25 + 0.75 * e + ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
-      const twist = mix(0.42, ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
+      const yaw = mix(0.4 + 0.45 * e + 0.6 * ray.clump, ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
+      const twist = mix(0.26 + 0.2 * (ray.arch - 0.5), ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
       let c = Math.cos(d)
@@ -321,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = mix(1.0, 0.72, smooth(0.3, 0.75, u)) * (0.06 + 0.94 * Math.pow(1 - Math.pow(u, 2.4), 0.8))
+      const strap = mix(1.1, 0.85, smooth(0.3, 0.85, u)) * (0.06 + 0.94 * Math.pow(1 - Math.pow(u, 2.4), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
