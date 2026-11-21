@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
-import { groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+import { dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
 export { laneDir }
 
@@ -282,7 +282,7 @@ vec3 beadColor(vec3 nb, vec3 v, float shadow) {
   vec3 below = skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.04;
   vec3 drop = mix(below, beadSky(through, shadow), smoothstep(-0.05, 0.12, through.y)) * (1.0 - skim) * 0.9;
   drop += mix(below, beadSky(back, shadow), smoothstep(-0.05, 0.12, back.y)) * skim;
-  drop += uSunColor * shadow * (pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 500.0) * 40.0 + pow(max(dot(through, uSunDir), 0.0), 300.0) * 12.0 + pow(max(dot(through, uSunDir), 0.0), 24.0) * 0.5);
+  drop += uSunColor * shadow * (pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 140.0) * 9.0 + pow(max(dot(through, uSunDir), 0.0), 90.0) * 3.0 + pow(max(dot(through, uSunDir), 0.0), 24.0) * 0.5);
   return drop;
 }
 `
@@ -307,7 +307,7 @@ void main() {
   vec2 c = place.xz;
   float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place).w, 1e-4);
   float bead = step(1.5, aSeed.z);
-  float keep = uFine * smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04) * mix(1.0, smoothstep(0.0, 0.4, uDew) * (1.0 - smoothstep(0.4, 0.8, uWet)), bead);
+  float keep = uFine * smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04) * (1.0 - bead);
   vSeed = aSeed;
   if (keep <= 0.0) {
     vWorld = place.xyz;
@@ -363,6 +363,7 @@ uniform vec2 uToward;
 ${groundStates}
 ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
+const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
 const vec3 DEW_FILL = vec3(${dewFill.join(', ')});
 ${beadLook}
 void main() {
@@ -386,8 +387,12 @@ void main() {
   vec2 g = dD.rg * 2.0 - 1.0 + (grit.rg * 2.0 - 1.0) * TURN_K * 0.9;
   vec3 smoothN = normalize(vNormal);
   smoothN *= sign(dot(smoothN, v) + 0.35);
-  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(mix(0.9, 0.45, uDew), 0.25, vSeed.z));
-  vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y);
+  float dull = soilMatt();
+  vec4 pores = texture(tData, TURN_K * uv * 8.7 + vec2(0.43, 0.11));
+  float pore = dull * (1.0 - vSeed.z) * smoothstep(0.5, 0.25, pores.a);
+  g += (pores.rg * 2.0 - 1.0) * 0.5 * dull;
+  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(mix(0.9, mix(0.45, 0.5, dull), uDew), 0.25, vSeed.z));
+  vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y) * (1.0 - 0.45 * pore);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
   float damp = saturate(uWet + 0.3 * uDew) * mix(1.0, 0.6, vSeed.z);
@@ -395,13 +400,19 @@ void main() {
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
-  float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
-  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + mix(0.25, 0.2, uDew)) / (1.0 + mix(0.25, 0.2, uDew))) * lit + groundAmbient(n) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew));
+  float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a) * (1.0 - 0.5 * pore);
+  float foot = footShade(p, dull);
+  open *= foot;
+  lit *= foot * mix(1.0, smoothstep(-0.5, 0.2, dot(vBall, uSunDir)), dull * (1.0 - smoothstep(0.02, 0.035, uSunDir.y)));
+  vec3 toSky = normalize(mix(n, smoothN, 0.6 * dull));
+  float wrap = mix(0.25, 0.2, uDew) * (1.0 - 0.8 * dull * uDew);
+  vec3 toSun = normalize(mix(n, smoothN, 0.85 * dull * uDew));
+  vec3 color = albedo * (uSunColor * saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap)) * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew);
-  color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
-  color += (wetGlints(vWorld, v, n, uWet) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
+  color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
+  color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `

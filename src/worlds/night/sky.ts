@@ -108,7 +108,7 @@ void main() {
   float sigma = aLight.a * uWidth / 1920.0;
   float size = ceil(6.0 * sigma) + 2.0;
   float air = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) / (uFogFalloff * max(w.y, 1e-4));
-  float dim = exp(-air) * exp(-0.06 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
+  float dim = exp(-air) * exp(-0.12 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
   vLight = aLight.rgb * (uGain * dim / (6.2832 * sigma * sigma));
   vSigma = sigma;
   bool hidden = v.z > -0.05 || uDiag > 1;
