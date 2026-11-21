@@ -8,7 +8,7 @@ import { FarField } from './far.ts'
 import { PLACE, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
-const CANOPY = 0.775
+const CANOPY = 0.72
 
 interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; index: number; of: number; plant: Plant }
 

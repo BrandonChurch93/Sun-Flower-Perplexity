@@ -115,7 +115,7 @@ export function fieldPlaces(): FieldPlaces {
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
       const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.69 + 0.17 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, 0.65 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5)))

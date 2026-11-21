@@ -10,7 +10,7 @@ import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
-const PICTURE_SIZE = 0.775
+const PICTURE_SIZE = 0.72
 const TILE_H = 128
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.

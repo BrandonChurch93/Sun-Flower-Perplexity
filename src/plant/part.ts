@@ -116,12 +116,12 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float across = world.x * toSun.y - world.z * toSun.x;
   float streak = valueNoise(vec2(along * 0.11, across * 0.8));
   // A picture of a plant is drawn without shadows, and so as a plant outside a lane.
-  float lane = uShadowOn * smoothstep(0.42, 0.68, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
+  float lane = uShadowOn * smoothstep(0.5, 0.66, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
   float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
-  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.7, lane), closed) * under / (0.6 + uSunDir.y));
+  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.35, lane), closed) * under / (0.6 + uSunDir.y));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
