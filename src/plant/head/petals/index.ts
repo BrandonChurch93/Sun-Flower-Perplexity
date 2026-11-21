@@ -255,7 +255,7 @@ export function create(options: PartOptions): PlantPart | null {
     let nz = frame.nz
     const wind = pose.inputs.wind * flutter(time, ray.seed)
     const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1)
-    const fresh = 1 - smooth(0.1, 0.9, open)
+    const fresh = 1 - smooth(0.02, 0.45, open)
     let pitch0 = 0
     let yaw0 = 0
     let twist0 = 0

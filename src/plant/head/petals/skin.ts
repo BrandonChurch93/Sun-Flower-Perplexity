@@ -86,6 +86,8 @@ void main() {
   vec3 through = mix(vec3(0.8, 0.4, 0.02), vec3(1.9, 1.12, 0.11), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(2.4, 1.45, 0.62), 0.8 * pale);
+  // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
+  through *= mix(vec3(0.62, 0.48, 0.3), vec3(1.0), unfolded);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
