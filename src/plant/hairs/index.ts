@@ -62,8 +62,8 @@ const vec3 RIME = vec3(0.92, 0.96, 1.0);
 const float RIME_SUN = 0.12;
 const float RIME_SKY = 1.5;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
-const float RIME_FACE = 0.07;
-const float RIME_VELVET = 0.35;
+const float RIME_FACE = 0.02;
+const float RIME_VELVET = 0.1;
 // A needle on the outline is seen from its shaded side, against the bright air.
 const float RIME_SHADE = 0.4;
 const float RIME_M = ${RIME_M.toFixed(6)};
@@ -139,7 +139,7 @@ void readHair(int k) {
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
-    hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
+    hairRoot.w *= 1.0 + uPlantFrost * (0.3 + 0.4 * h2);
     hairWide += uPlantFrost * RIME_M * (0.6 + 0.8 * h4) / uHairWidth * hairSlim;
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
