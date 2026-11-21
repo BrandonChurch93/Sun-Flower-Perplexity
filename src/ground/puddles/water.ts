@@ -26,14 +26,14 @@ vec3 skyMirror(vec3 d, float blur) {
 const ROUGH = 0.3
 // The chop that rings long faded leave standing between the banks: wave number per meter, radians per second, heading, slope. Each runs in short crests.
 const CHOP = [
-  [97, 29, 1.83, 0.03],
-  [148, 39, 0.59, 0.04],
-  [211, 52, 4.22, 0.05],
-  [293, 68, 2.8, 0.055],
-  [383, 31, 5.35, 0.075],
-  [521, 44, 1.12, 0.07],
-  [694, 62, 3.47, 0.06],
-  [907, 86, 0.21, 0.05],
+  [97, 29, 1.83, 0.02],
+  [148, 39, 0.59, 0.028],
+  [211, 52, 4.22, 0.035],
+  [293, 68, 2.8, 0.04],
+  [383, 31, 5.35, 0.052],
+  [521, 44, 1.12, 0.05],
+  [694, 62, 3.47, 0.042],
+  [907, 86, 0.21, 0.035],
 ]
 const chop = CHOP.map(([k, w, a, s], i) => {
   const x = Math.cos(a)
