@@ -73,17 +73,20 @@ void main() {
     float keel = smoothstep(0.09, 0.0, ax);
     float blotch = valueNoise(vec2(x * 2.3 + seed * 37.0, u * 7.0 + seed * 53.0));
     float toTip = smoothstep(0.3, 1.0, u);
+    float rim = smoothstep(0.55, 1.0, ax);
+    float middle = 1.0 - smoothstep(0.0, 0.55, ax);
     vec3 dark = mix(vec3(0.03, 0.078, 0.04), vec3(0.068, 0.14, 0.058), grain);
     vec3 pale = mix(vec3(0.11, 0.2, 0.066), vec3(0.17, 0.27, 0.078), grain);
-    vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.45 * keel + 0.6 * line + 0.12 * rank * (1.0 - toTip) + 0.3 * (blotch - 0.5)));
+    vec3 albedo = mix(dark, pale, saturate(0.35 * toTip + 0.15 * keel + 0.6 * line + 0.12 * rank * (1.0 - toTip) + 0.3 * (blotch - 0.5) + 0.4 * rim - 0.25 * middle));
     albedo = mix(albedo, pale * 1.15, smoothstep(0.8, 1.0, ax) * 0.75);
     albedo *= 0.93 + 0.14 * fine;
-    if (inner) albedo = mix(albedo, vec3(0.12, 0.19, 0.08), 0.7);
-    else albedo *= vec3(1.1, 1.22, 1.05);
-    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.12 * ax * ax * ax * smoothstep(0.1, 0.4, u));
+    albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
+    if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
+    else albedo *= vec3(0.6, 0.67, 0.58);
+    float thin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
-    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.16, thin) * (0.8 + 0.4 * grain);
+    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.5, thin) * (0.8 + 0.4 * grain);
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
     float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
     albedo = mix(albedo, pale, 0.45 * rib);
@@ -91,7 +94,7 @@ void main() {
     height = 0.0003 * grain + 0.0003 * line + 0.00045 * keel + 0.0002 * rib + 0.00006 * fine;
     float buried = smoothstep(0.0, 0.16, u);
     t.sheen = 0.45;
-    t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0);
+    t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     t.wax = 0.15 + 0.3 * uPlantWet;
   } else if (kind > 0.5) {

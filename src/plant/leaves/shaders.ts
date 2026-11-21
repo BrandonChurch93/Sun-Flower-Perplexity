@@ -61,9 +61,9 @@ void main() {
   float rib = smoothstep(0.1, 0.0, abs(vUv.x));
   float shade = 0.8 + 0.4 * vLeaf.z;
   Tissue t;
-  t.albedo = (top ? vec3(0.038, 0.072, 0.021) : vec3(0.056, 0.086, 0.036)) * shade;
+  t.albedo = (top ? vec3(0.045, 0.1, 0.022) : vec3(0.06, 0.11, 0.034)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.06, 0.071, 0.006) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
+  t.through = vec3(0.11, 0.2, 0.01) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
