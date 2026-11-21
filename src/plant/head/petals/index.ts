@@ -375,7 +375,7 @@ export function create(options: PartOptions): PlantPart | null {
         let angle = 0
         if (rimmed) {
           const strip = Math.min(nv - 4, Math.max(0, j - 1))
-          angle = mix(mix(FOLD_BUD[strip], FOLD_LIFT[strip], along), mix(FOLD_OPEN[strip] * ray.pleat, FOLD_LIFT[strip] * 1.2, 0.85 * cupped), flat) + trough * (vs[strip + 1] + vs[strip + 2]) * 0.5
+          angle = mix(mix(FOLD_BUD[strip], FOLD_LIFT[strip], along), mix(FOLD_OPEN[strip] * ray.pleat * (1.7 - 0.7 * smooth(0.15, 0.7, u)), FOLD_LIFT[strip] * 1.2, 0.85 * cupped), flat) + trough * (vs[strip + 1] + vs[strip + 2]) * 0.5
           const mid = (vs[strip + 1] + vs[strip + 2]) * 0.5
           if (mid * ray.edgeSide > 0.4) angle += ray.edgeSide * ray.edgeCurl * flat * smooth(0.15, 0.6, u) * (Math.abs(mid) > 0.7 ? 1 : 0.45)
           if (j === 0) angle += RIM_TURN

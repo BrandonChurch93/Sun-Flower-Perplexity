@@ -103,7 +103,7 @@ void main() {
   // A lifting ray is still creased double, yet the low sun comes through it amber.
   float far = smoothstep(0.05, 0.9, u);
   through *= mix(vec3(1.4, 1.5, 3.0) * vec3(mix(0.42, 1.6, far), mix(0.34, 2.0, far * sqrt(far)), mix(0.4, 4.0, far * far * far)), vec3(1.0), vState.z);
-  through = mix(through, vec3(0.5, 0.72, 0.16), 0.9 * fresh);
+  through = mix(through, vec3(0.8, 0.9, 0.2), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
@@ -143,7 +143,7 @@ void main() {
   float gx = clamp(abs(across) / 0.05, 0.0, 1.0);
   float foldSlope = -6.0 * fx * (1.0 - fx) / 0.07 * sign(abs(across) - 0.34) * sign(across);
   float grooveSlope = -6.0 * gx * (1.0 - gx) / 0.05 * sign(across);
-  acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00022;
+  acrossSlope += (foldSlope - 0.7 * grooveSlope) * smoothstep(1.0, 0.75, u) * 0.00034;
   float side = front ? 1.0 : -1.4;
   vec3 wx = dFdx(vWorld);
   vec3 wy = dFdy(vWorld);
