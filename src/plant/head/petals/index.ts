@@ -51,6 +51,11 @@ interface Ray {
   clump: number
   arch: number
   hook: number
+  buckle: number
+  buckleFreq: number
+  sway: number
+  edgeCurl: number
+  edgeSide: number
   pleat: number
   trough: number
   lay: number
@@ -69,7 +74,7 @@ function outline(u: number): number {
   const peak = 0.36
   const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.7)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.18 + 0.82 * rise) * (0.15 + 0.85 * Math.pow(1 - Math.pow(s, 2.0), 0.75))
+  return (0.18 + 0.82 * rise) * (0.2 + 0.8 * Math.pow(1 - Math.pow(s, 2.0), 0.75))
 }
 
 function makeRays(seed: number): Ray[] {
@@ -84,12 +89,12 @@ function makeRays(seed: number): Ray[] {
   const nick = order(22, (k) => !hard.includes(k) && !half.includes(k))[0]
   return Array.from({ length: rayCount }, (_, k) => {
     const rank = k % 2
-    const strong = r(5, k) > 0.8 ? 3 : 1
+    const strong = r(5, k) > 0.72 ? 3 : 1
     return {
       rank,
-      width: 0.34 + 0.045 * r(1, k),
-      droop: rank ? 0.27 + 0.4 * r(2, k) : 0.08 + 0.32 * r(2, k),
-      tipCurl: (r(3, k) - 0.35) * 1.2,
+      width: 0.305 + 0.08 * r(1, k),
+      droop: rank ? 0.27 + 0.5 * r(2, k) : 0.04 + 0.42 * r(2, k),
+      tipCurl: (r(3, k) - 0.35) * 1.9,
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) - 0.5) * 0.9 * strong,
@@ -100,12 +105,17 @@ function makeRays(seed: number): Ray[] {
       hook: 0.9 * Math.pow(r(29, k), 2),
       pleat: half.includes(k) ? 0.9 : 0.45 + 0.3 * r(7, k),
       trough: half.includes(k) ? 0.7 : 0.18 + 0.26 * r(8, k),
-      lay: (rank ? -0.11 : 0.05) + (r(9, k) - 0.5) * 0.09,
+      lay: (rank ? -0.13 : 0.06) + (r(9, k) - 0.5) * 0.12,
       roll: 0.07 + (r(10, k) - 0.5) * 0.2,
-      wave: 0.008 + 0.014 * r(15, k),
+      buckle: 0.05 + 0.14 * r(30, k),
+      buckleFreq: 6 + 5 * r(31, k),
+      sway: (r(32, k) - 0.5) * 0.16,
+      edgeCurl: r(33, k) < 0.45 ? 0.3 + 0.7 * r(34, k) : 0,
+      edgeSide: r(35, k) < 0.5 ? -1 : 1,
+      wave: 0.014 + 0.022 * r(15, k),
       waveFreq: 8 + 8 * r(16, k),
       wavePhase: 6.283 * r(17, k),
-      crumple: 0.004 + 0.005 * r(18, k),
+      crumple: 0.008 + 0.012 * r(18, k),
       teeth: r(11, k) < 0.5 ? 0 : r(11, k) < 0.82 ? 1 : 2,
       nickRow: k === nick ? 7 + Math.floor(5 * r(19, k)) : -1,
       nickSide: r(23, k) < 0.5 ? -1 : 1,
@@ -238,8 +248,9 @@ export function create(options: PartOptions): PlantPart | null {
       const openPitch = ray.lay - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.7, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
-      const pitch = mix(shutPitch, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e
-      const yaw = mix(0.45 * e + ray.clump * (0.35 + 0.65 * e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy
+      const ripple = along * smooth(0.1, 0.4, e)
+      const pitch = mix(shutPitch, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
+      const yaw = mix(0.45 * e + ray.clump * (0.35 + 0.65 * e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
       const twist = mix(0.5, ray.roll + ray.twist * Math.pow(e, 1.8), along) + 0.02 * wind * e * e
 
       let d = pitch - pitch0
@@ -300,6 +311,8 @@ export function create(options: PartOptions): PlantPart | null {
         if (rimmed) {
           const strip = Math.min(nv - 4, Math.max(0, j - 1))
           angle = mix(FOLD_SHUT[strip], FOLD_OPEN[strip], across) * fold + trough * (vs[strip + 1] + vs[strip + 2]) * 0.5
+          const mid = (vs[strip + 1] + vs[strip + 2]) * 0.5
+          if (mid * ray.edgeSide > 0.4) angle += ray.edgeSide * ray.edgeCurl * across * smooth(0.15, 0.6, u) * (Math.abs(mid) > 0.7 ? 1 : 0.45)
           if (j === 0) angle += RIM_TURN
           if (j === nv - 2) angle -= RIM_TURN
         }
@@ -319,7 +332,7 @@ export function create(options: PartOptions): PlantPart | null {
         y += ray.wave * full * grown * (0.35 + 0.65 * u) * edge * Math.sin(ray.waveFreq * u + ray.wavePhase + (v > 0 ? 1.9 : 0)) * (0.5 + 0.5 * across)
         y += rumple * (0.6 * Math.sin(v * 7.3 + u * 2.1 + ray.seed * 40) * Math.sin(u * 5.2 + ray.seed * 17) + 0.4 * Math.sin(v * 12.1 - u * 3.4 + ray.seed * 71)) * smooth(0, 0.15, u)
         if (i === ray.nickRow && v * ray.nickSide > 0.6) x -= ray.nickSide * 0.04 * full * grown * (Math.abs(v) > 0.95 ? 1 : Math.abs(v) > 0.9 ? 0.85 : 0.25)
-        const reach = rimmed ? TEETH[ray.teeth][j] * length * tipShare * tipShare : 0
+        const reach = rimmed ? TEETH[ray.teeth][j] * 1.4 * length * tipShare * tipShare : 0
         const at = (base + i * nv + j) * 3
         out[at] = px + wx * x + nx * y + tx * reach
         out[at + 1] = py + wy * x + ny * y + ty * reach
