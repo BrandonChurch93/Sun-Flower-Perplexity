@@ -135,7 +135,7 @@ const rx = new Float64Array(STEM_RINGS)
 const ry = new Float64Array(STEM_RINGS)
 const rz = new Float64Array(STEM_RINGS)
 const dir: Vec3 = { x: 0, y: 1, z: 0 }
-let bend: StemBend = stemBend(0, { leanX: 0, leanZ: 0, lift: 1 })
+let bend: StemBend = stemBend(0, { leanX: 0, leanZ: 0, lift: 1, wind: 0 })
 
 export function layStem(time: number, inputs: PlantInputs): void {
   bend = stemBend(time, inputs)

@@ -14,7 +14,7 @@ export interface Pose {
   head: Head
 }
 
-const pose: Pose = { time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1 }, length: 0, head: layHead(0, 0) }
+const pose: Pose = { time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, length: 0, head: layHead(0, 0) }
 
 // Lays the stem and the head for one moment, for the plant chosen by `usePlant`.
 export function poseAt(time: number, inputs: PlantInputs): Pose {

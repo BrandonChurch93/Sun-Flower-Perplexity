@@ -179,6 +179,8 @@ export interface SurfaceOptions {
   transparent?: boolean
   depthWrite?: boolean
   additive?: boolean
+  // Writes nothing but the blur circle, and only where it is smaller than the one already there. For a thin thing drawn see-through that must stay as sharp as it is.
+  cocOnly?: boolean
   standIn?: boolean
   castShadow?: boolean
   // The body of the shadow pass, for a surface with holes cut in it: it may only discard. It gets the same varyings as the fragment shader.
@@ -212,6 +214,13 @@ export function makeSurface(o: SurfaceOptions): Surface {
     main.blendSrc = o.additive ? THREE.OneFactor : THREE.SrcAlphaFactor
     main.blendDst = o.additive ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor
     main.blendSrcAlpha = THREE.ZeroFactor
+    main.blendDstAlpha = THREE.OneFactor
+  }
+  if (o.cocOnly) {
+    main.blendSrc = THREE.ZeroFactor
+    main.blendDst = THREE.OneFactor
+    main.blendEquationAlpha = THREE.MinEquation
+    main.blendSrcAlpha = THREE.OneFactor
     main.blendDstAlpha = THREE.OneFactor
   }
   const cast = o.castShadow ?? !(o.transparent ?? false)

@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
-import type { BackdropLock, WorldDef, WorldSettings } from '../core/world.ts'
+import type { BackdropLock, WorldDef, WorldSettings, WorldStageMaker } from '../core/world.ts'
 import { declareStandIn } from '../core/standins.ts'
 import type { UnitFit } from './fit.ts'
 import { poseOf } from './pose.ts'
 import { rigPathAt } from './rig.ts'
 
-const worldModules = import.meta.glob<{ world: WorldSettings }>('../worlds/*/index.ts', { eager: true })
+const worldModules = import.meta.glob<{ world: WorldSettings; stage?: WorldStageMaker }>('../worlds/*/index.ts', { eager: true })
 const unitModules = import.meta.glob<{ fit: UnitFit }>('../units/*/index.ts', { eager: true })
 
 const folder = (path: string): string => path.split('/').slice(-2)[0]
@@ -39,7 +39,12 @@ export function resolveWorld(id: string, settings: WorldSettings): WorldDef {
 }
 
 export const worlds: Record<string, WorldDef> = {}
-for (const [path, module] of Object.entries(worldModules)) worlds[folder(path)] = resolveWorld(folder(path), module.world)
+// A world's own stage, where its folder exports one as `stage`.
+export const stageMakers: Record<string, WorldStageMaker> = {}
+for (const [path, module] of Object.entries(worldModules)) {
+  worlds[folder(path)] = resolveWorld(folder(path), module.world)
+  if (module.stage) stageMakers[folder(path)] = module.stage
+}
 
 export const fits: Record<string, UnitFit> = {}
 for (const [path, module] of Object.entries(unitModules)) fits[folder(path)] = module.fit

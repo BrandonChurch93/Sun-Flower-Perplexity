@@ -6,6 +6,8 @@ import type { Surface } from '../../core/shading.ts'
 export const real = false
 
 const STEPS = 3
+// See-through things are drawn in the order of these numbers: the hairs of the plant after the far things of a world (under 20) and before its air (40 and over).
+export const HAIR_ORDER = 20
 
 const vertex = /* glsl */ `
 in vec2 position;
@@ -58,15 +60,29 @@ void main() {
   float against = pow(saturate(dot(-v, uSunDir) * 0.5 + 0.5), 3.0);
   vec3 color = uHairColor * (uSunColor * (0.08 + 0.9 * against) * sun + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5 * plantSky(vWorld));
   float cover = saturate(vCover) * (1.0 - 0.6 * vAlong);
-  if (uDiag >= 4) cover = 0.0;
+  if (uDiag >= 4) discard;
   outColor = vec4(applyFog(color, vWorld), cover);
+}
+`
+
+// The second pass of a hair: it leaves the color alone and writes the hair's own blur circle, so that the lens does not smear a sharp hair with the soft background behind it.
+const cocFragment = /* glsl */ `
+in vec3 vWorld;
+in float vDepth;
+in float vAlong;
+in float vCover;
+in float vSeed;
+void main() {
+  if (uDiag >= 4 || saturate(vCover) * (1.0 - 0.6 * vAlong) < 0.04) discard;
+  outColor = vec4(0.0, 0.0, 0.0, cocOf(vDepth));
 }
 `
 
 // Fine hairs, one thin ribbon each, turned to the camera. The part that wears them gives each hair its root and its direction at both ends of the shutter.
 export class HairSet {
   readonly surface: Surface
-  readonly mesh: THREE.Mesh
+  // Both passes of the hairs, in the order they are drawn. A part that wears hairs adds all of them to its own meshes.
+  readonly meshes: THREE.Mesh[]
   private readonly roots: [THREE.InstancedBufferAttribute, THREE.InstancedBufferAttribute]
   private readonly leans: [THREE.InstancedBufferAttribute, THREE.InstancedBufferAttribute]
   private readonly geometry: THREE.InstancedBufferGeometry
@@ -91,6 +107,7 @@ export class HairSet {
     geometry.setAttribute('aLeanB', this.leans[1])
     geometry.instanceCount = count
     this.geometry = geometry
+    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM } }
     this.surface = makePartSurface(options, {
       name,
       vertex,
@@ -98,9 +115,14 @@ export class HairSet {
       side: THREE.DoubleSide,
       transparent: true,
       castShadow: false,
-      uniforms: { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM } },
+      uniforms: own,
     })
-    this.mesh = partMesh(geometry, this.surface)
+    const focus = makePartSurface(options, { name: `${name} focus`, vertex, fragment: cocFragment, side: THREE.DoubleSide, transparent: true, cocOnly: true, castShadow: false, uniforms: own })
+    const drawn = partMesh(geometry, this.surface)
+    const sharp = partMesh(geometry, focus)
+    drawn.renderOrder = HAIR_ORDER
+    sharp.renderOrder = HAIR_ORDER + 1
+    this.meshes = [drawn, sharp]
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.
