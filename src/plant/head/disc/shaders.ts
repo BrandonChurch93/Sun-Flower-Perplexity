@@ -359,8 +359,8 @@ void main() {
   if (dot(face, view) < 0.0) face = -face;
   float rho = vDome.x * 0.93;
   float arms = sin(vDome.y * 21.0 + rho * 38.0) * sin(vDome.y * 13.0 - rho * 46.0);
-  float centre = 1.0 - smoothstep(0.08, 0.58, rho);
-  vec3 closed = mix(vec3(0.115, 0.045, 0.006), vec3(0.085, 0.075, 0.009), centre);
+  float centre = 1.0 - smoothstep(0.15, 0.65, rho);
+  vec3 closed = mix(vec3(0.115, 0.045, 0.006), vec3(0.065, 0.08, 0.011), centre);
   closed = mix(closed, vec3(0.17, 0.24, 0.065), uYoung);
   vec3 opening = vec3(0.17, 0.06, 0.007);
   vec3 flower = vec3(0.26, 0.1, 0.011);
