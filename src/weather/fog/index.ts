@@ -11,6 +11,8 @@ uniform vec3 uFogHigh;
 uniform vec3 uFogGlow;
 uniform float uFogThin;
 const float FOG_LOW_SHARE = 0.45;
+const float FOG_RING = 0.07;
+const vec3 FOG_RING_TAKES = vec3(0.0, 0.05, 0.09);
 vec3 fogLight(vec3 dir) {
   float toSun = saturate(dot(dir, uSunDir));
   float theta = acos(min(toSun, 1.0));
@@ -20,7 +22,10 @@ vec3 fogLight(vec3 dir) {
   vec3 color = mix(uFogColor, uFogHigh, up) + uFogSunTint * mix(vec3(1.0), vec3(1.0, 1.16, 1.35), up) * (through * pow(toSun, 6.0));
   // Close round the sun the glow is strong and less red, farther out it is the faint peach of the world's glow.
   vec3 near = vec3(4.2, 4.9, 8.9) * ((1.0 + 0.5 * uFogThin) * exp(-theta / (0.03 + 0.008 * uFogThin)));
-  return color + uFogGlow * (FOG_LOW_SHARE * through) * (near + exp(-theta / 0.12));
+  color += uFogGlow * (FOG_LOW_SHARE * through) * (near + exp(-theta / 0.12));
+  // Between the disc and the wide glow the fog takes the blue out of the sun's light: the ring of peach round it.
+  float ring = theta / FOG_RING;
+  return color * (1.0 - FOG_RING_TAKES * (ring * ring * exp(2.0 - 2.0 * ring)));
 }
 `
 
@@ -70,7 +75,7 @@ void main() {
   v /= d;
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   // The sun's disc is drawn as the whole fog lets it through, so no bank covers it again. Late in the frost the banks thin round it.
-  float thick = smoothstep(0.3, 0.72, here) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.012, 0.045, theta);
+  float thick = smoothstep(0.3, 0.72, here) * (1.0 - 0.5 * uFogThin * exp(-theta / 0.2)) * smoothstep(0.022, 0.06, theta);
   float edge = 1.0 - smoothstep(0.55, 1.0, vInfo.y / vInfo.z);
   float alpha = uAlpha * thick * edge * smoothstep(0.4, 1.4, d);
   outColor = vec4(fogLight(v) * (1.0 + 0.33 * lit), alpha);
