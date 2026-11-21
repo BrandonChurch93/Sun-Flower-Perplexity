@@ -92,6 +92,8 @@ const float TISSUE_SPREAD_FAR_M = 0.012;
 const float TISSUE_HID = 0.35;
 // The share of the high sky that the down of a sheet scatters to the eye.
 const float TISSUE_SLATE = 0.21;
+// The share of the sun a clear, moist body sends on from its outline on the sun's side.
+const float TISSUE_CLEAR = 0.6;
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
 vec3 tissueSky(vec3 n, float shown) {
@@ -116,7 +118,7 @@ ${frostGlsl}
 ${dewGlsl}
 ${wetGlsl}
 
-vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
+vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -271,9 +273,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   float g5 = grazing * grazing;
   g5 = g5 * g5 * grazing;
   // The rise of the mirror at grazing is a line thinner than a pixel on a small round part: it fades with the outline.
-  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside);
+  // A mist of beads breaks the mirror: each bead shows the whole sky, so the rise at grazing goes and the high sky takes the place of the horizon.
+  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
   vec3 R = reflect(-view, N);
-  vec3 skyGloss = tissueSky(normalize(mix(R, N, a2)), shown);
+  vec3 skyGloss = tissueSky(normalize(mix(R, N, max(a2, DEW_BREAK * mist))), shown);
 
   // What gets under the wax is what the wax did not send back.
   float l5 = 1.0 - max(ndl, 0.0);
@@ -319,6 +322,15 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
+  // The sun enters a clear body at its outline and leaves toward the eye: a bright line down the sun's side, near the sun's own color.
+  if (clear > 0.0) {
+    float line = 1.0 - smoothstep(0.08, 0.45, fv);
+    vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
+    // Which side of the outline the sun is on, as the eye sees it.
+    float vl = dot(view, L);
+    float side = (fdl - fv * vl) / max(sqrt(1.0 - vl * vl), 0.05);
+    color += direct * own * (TISSUE_CLEAR * clear * line * line * smoothstep(0.0, 0.6, side) * (0.2 + 0.8 * against * against));
+  }
   // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
   color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
 
@@ -327,11 +339,16 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
 }
 
 vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
-  return tissueShade(t, world, view, vec2(0.0), -1.0);
+  return tissueShade(t, world, view, vec2(0.0), -1.0, 0.0);
 }
 
 // As shadeTissue, for a part that knows where on its skin the pixel is: 'at' in meters on the skin, 'margin' from 0 in the middle of a face to 1 at its edge or tip. The states of the skin then have a grain: frost stands in grains and gathers at the margin.
 vec3 shadeTissueAt(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
-  return tissueShade(t, world, view, at, saturate(margin));
+  return tissueShade(t, world, view, at, saturate(margin), 0.0);
+}
+
+// As shadeTissueAt, for a round body of clear, moist flesh, such as a young stem: 'clear' from 0 to 1 is how much of the sun its outline passes on toward the eye.
+vec3 shadeTissueClear(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear) {
+  return tissueShade(t, world, view, at, saturate(margin), saturate(clear));
 }
 `
