@@ -484,7 +484,9 @@ export function create(options: PartOptions): PlantPart {
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
-    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), early)
+    // A neighbor is held less firmly than the plant: its leaves reach less far out.
+    const firm = main ? early : 0.5 * early
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm)
     // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
     const cold = smoothstep(22, 30, time) * early
     // A leaf born under the bud grows out past it, never up through it.
@@ -514,7 +516,7 @@ export function create(options: PartOptions): PlantPart {
     }
     const fold = leafFold(i, time)
     // Before the bloom a blade is stiff: it leaves its stalk nearly straight.
-    const stiff = 1 - 0.6 * early
+    const stiff = 1 - 0.6 * firm
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
     const creased = smoothstep(3, 16, age)
