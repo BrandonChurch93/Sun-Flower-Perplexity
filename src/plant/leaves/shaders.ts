@@ -110,7 +110,7 @@ void main() {
   // The small net of veins between the side veins: pale lines on the face, dark lines in the glow.
   float net = smoothstep(1.02, 1.45, lum);
 
-  vec3 upper = vec3(0.045, 0.086, 0.028) * mix(vec3(1.0), var, 0.85) * tone;
+  vec3 upper = vec3(0.038, 0.074, 0.024) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
@@ -123,7 +123,7 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.6 + 0.6 * smoothstep(0.3, 0.9, mark.g)) * taper;
+  float thin = (0.3 + 1.2 * smoothstep(0.35, 0.8, mark.g)) * taper;
   vec3 through = vec3(0.07, 0.092, 0.008) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
   through *= 1.0 - 0.8 * vein.r;
   through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
