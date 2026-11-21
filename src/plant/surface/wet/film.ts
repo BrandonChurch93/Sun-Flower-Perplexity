@@ -5,6 +5,8 @@ const float WET_ROUGH_THIN = 0.3;
 const float WET_ROUGH_DEEP = 0.08;
 const float WET_WAX = 0.4;
 const float WET_DARK = 0.3;
+const float WET_SHEER = 1.0;
+const float WET_FORWARD = 0.6;
 
 // Water in a tissue keeps the light inside it for longer: each color is taken again, so the dark deepens and the hue grows.
 vec3 wetAlbedo(vec3 albedo) {
@@ -16,6 +18,21 @@ float wetFilm(vec2 at, float gather) {
   float sheet = valueNoise(at * (1.0 / WET_SHEET_M) + 9.0);
   float rill = valueNoise(at * (1.0 / (0.35 * WET_SHEET_M)) + 41.0);
   return saturate(smoothstep(0.38, 0.62, sheet + 0.25 * (rill - 0.5)) * 0.8 + 0.2 + 0.5 * gather * gather);
+}
+
+// On a round body the water does not stand in sheets: it comes down in narrow runs, each broken along its length, with fine moisture between them. 'at' has the body's axis as y.
+float wetRuns(vec2 at) {
+  float track = valueNoise(vec2(at.x * (1.0 / 0.007), at.y * (1.0 / 0.06)) + 23.0);
+  float wander = valueNoise(vec2(at.x * (1.0 / 0.02), at.y * (1.0 / 0.012)) + 61.0);
+  float run = smoothstep(0.66, 0.72, track + 0.12 * (wander - 0.5));
+  float fine = valueNoise(at * (1.0 / 0.0022) + 5.0);
+  return saturate(0.12 + 0.3 * smoothstep(0.55, 0.8, fine) + 0.85 * run);
+}
+
+// The sky a blade is seen against: the dome, and the break in the cloud low over the land.
+vec3 wetBehind(vec3 d) {
+  float band = smoothstep(-0.1, 0.03, d.y) * (1.0 - smoothstep(0.1, 0.45, d.y));
+  return mix(skyAmbient(d), uSkyHorizon * 1.5, band);
 }
 
 // What a film of water mirrors: the bright band low in the sky where it faces it. The dark cloud over that and the ground under it are broken up by the rain on the film and all but gone.

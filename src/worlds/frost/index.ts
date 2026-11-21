@@ -15,7 +15,7 @@ export const world: WorldSettings = {
   wind: 0,
 }
 
-const FOG_HIGH: RGB = [0.54, 0.69, 0.91]
+const FOG_HIGH: RGB = [0.55, 0.69, 0.885]
 
 export const stage: WorldStageMaker = (def) => {
   const fog = makeFog(def, FOG_HIGH)
