@@ -125,7 +125,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float open = uShafts > 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
-  float hold = mix(1.0, mix(0.12, 1.0, smoothstep(0.006, 0.06, under)), down);
+  float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
   float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * r / (r + 0.02) + 0.35 * exp(-r / 0.07)) * behind * hold;
   return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air);
 }
