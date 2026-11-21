@@ -39,7 +39,7 @@ void main() {
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
   float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
-  float need = max(angle / uPixelAngle, 2.0 * coc / sqrt(uSamples));
+  float need = max(angle / uPixelAngle, 2.4 * coc / sqrt(uSamples));
   float px = clamp(need, 1.0, 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(1.0, 1.7, world.y);
@@ -56,7 +56,8 @@ in vec3 vColor;
 in float vSize;
 void main() {
   float r = 2.0 * length(gl_PointCoord - 0.5);
-  float disc = vSize > 2.0 ? 1.7 * (1.0 - smoothstep(0.55, 1.0, r)) : 1.0;
+  float fall = max(1.0 - r * r, 0.0);
+  float disc = vSize > 2.0 ? 3.0 * fall * fall : 1.0;
   outColor = vec4(vColor * disc, 0.0);
 }
 `

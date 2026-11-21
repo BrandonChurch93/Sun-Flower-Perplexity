@@ -67,7 +67,8 @@ void main() {
   if (uDiag == 4) { outColor = vec4(vec3(0.03), -1.0); return; }
   if (uDiag == 5) color = vec3(1.0e4);
   if (uDiag == 6) color = vec3(grey) * 0.5;
-  outColor = vec4(color, coc);
+  // High sky is already as smooth as one lens sample is wide, so it asks little of the fill. Low sky asks in full, since the land and the field end against it.
+  outColor = vec4(color, coc * mix(0.25, 1.0, max(1.0 - smoothstep(0.06, 0.13, el), 1.0 - smoothstep(0.03, 0.12, theta))));
 }
 `
 
