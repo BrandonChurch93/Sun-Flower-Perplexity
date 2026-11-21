@@ -137,7 +137,7 @@ const elevationCurve = new Monotone([
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
-const EARLY_TURN = 4 * RAD
+const EARLY_TURN = 19 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
 export const RAY_FIRST = 2.4
 // How long a shut ray is, as a share of its open length.
@@ -201,7 +201,7 @@ export function rayLength(k: number, time: number): number {
 export function rayOpen(k: number, time: number): number {
   const around = (k / rayCount) * TAU
   const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.25 * rnd(41, k)
-  const start = bloom0 + delay * 2.3
+  const start = bloom0 + 0.45 + delay * 2.3
   return smootherstep(start, start + 2, time)
 }
 
