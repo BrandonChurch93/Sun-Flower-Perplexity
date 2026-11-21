@@ -230,3 +230,41 @@ describe('before the bloom every neighbor is its own', () => {
     expect(earlyAt(26)).toBe(1)
   })
 })
+
+import { fieldAge, gapsAt, rainAt, standsClear, stiffAt } from '../src/field/layout.ts'
+
+describe('the rain and the moon leave nothing behind', () => {
+  it('the seedlings in the gaps stand only while the rain shot lasts', () => {
+    const rain = config.segments.find((s) => s.id === 'rain') ?? { start: 8, end: 20 }
+    expect(gapsAt(rain.start)).toBe(0)
+    expect(gapsAt(rain.end - 1 / 30)).toBe(1)
+    for (const time of [0, 4, rain.end, 26, 36, 40, 52, 60]) expect(gapsAt(time)).toBe(0)
+  })
+
+  it('from 21 s the field is its own age, and under the moon no kind is far behind', () => {
+    for (const time of [21, 26, 36, 40, 45, 52, 58.5, 60]) {
+      expect(rainAt(time)).toBe(0)
+      expect(fieldAge(time)).toBe(time)
+    }
+    for (let k = 0; k < 7; k++) expect(26 - kindTime(26, k, 'near')).toBeLessThan(1.3)
+    expect(stiffAt(26)).toBe(0)
+    expect(stiffAt(36)).toBe(1)
+  })
+
+  it('some of the nearest stand clear under the moon and the code of a neighbor that does not is unchanged', () => {
+    let clear = 0
+    let seen = 0
+    for (let i = 0; i < places.near.length; i += PLACE) {
+      if (Math.hypot(places.near[i], places.near[i + 1]) >= 2.75) {
+        expect(standsClear(places.near[i + 7], places.near[i], places.near[i + 1])).toBe(false)
+        continue
+      }
+      seen++
+      if (standsClear(places.near[i + 7], places.near[i], places.near[i + 1])) clear++
+      const own = ownOf(places.near[i + 7])
+      expect(earlyCode(own)).toBe(earlyCode(own, own.bud, own.leaf, own.droop))
+    }
+    expect(clear).toBeGreaterThanOrEqual(3)
+    expect(clear).toBeLessThan(seen)
+  })
+})
