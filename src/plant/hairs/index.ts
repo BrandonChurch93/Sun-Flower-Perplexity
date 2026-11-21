@@ -60,7 +60,7 @@ const vec3 RIME = vec3(0.92, 0.96, 1.0);
 const float RIME_SUN = 0.4;
 const float RIME_SKY = 0.85;
 // Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
-const float RIME_FACE = 0.4;
+const float RIME_FACE = 0.2;
 
 struct Strand {
   vec3 world;
