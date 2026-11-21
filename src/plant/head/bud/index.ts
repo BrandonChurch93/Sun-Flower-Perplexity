@@ -18,7 +18,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 20000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 63, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 20000, faceHairs: 12000, downHairs: 56000, crystals: 9000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0, crystals: 0 },
 }
@@ -91,35 +91,59 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 // Until four seconds before the bloom the bud is shut: its bracts stand off the receptacle as a globe wider than it by these shares of the radius, outermost first,
-const BULGE = [0.16, 0.14, 0.1]
+const BULGE = [0.16, 0.2, 0.06]
+const BULGE_LATE = [0.16, 0.14, 0.1]
 // The globe is widest below the rim: over the face only this share of the bulge is left, so the bracts close in to a point.
 const BULGE_TOP = 0.3
 const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
 const FEET_LOW = [0.52, 0.12, 0]
+// The shut bud is a flattened globe: its widest ring lies this share of its depth lower, and the feet of its bracts stand this much higher on it.
+const SHUT_LOW = 0.6
+const FEET_UP = [0.05, 0, 0.25]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.35, 1.1, 0.7]
+const SHUT_BROAD = [1.45, 1.2, 0.6]
+const SHUT_BROAD_LATE = [1.35, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [0.95, 0, -0.8]
-const SHUT_CURL = [0.8, 0, 0]
+const SHUT_ANGLE = [0.8, 0, -0.6]
+const SHUT_ANGLE_LATE = [0.95, 0, -0.8]
+const SHUT_CURL = [0.9, 0, 0]
+const SHUT_CURL_LATE = [0.8, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [0.9, 1.12, 0.95]
-const SHUT_TIP = [0.35, 0.7, 0.7]
+const SHUT_LONG = [0.5, 0.85, 0.9]
+const SHUT_LONG_LATE = [0.9, 1.12, 0.95]
+const SHUT_TIP = [0.35, 0.7, -0.4]
+const SHUT_TIP_LATE = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
-const CROWN_ANGLE = 0.6
-const CROWN_LONG = 0.12
-const CROWN_TIP = 0.7
+const CROWN_ANGLE = 1.0
+const CROWN_ANGLE_LATE = 0.6
+const CROWN_LONG = 0.1
+const CROWN_LONG_LATE = 0.12
+const CROWN_TIP = 0.15
+const CROWN_TIP_LATE = 0.7
+// The inner bracts between the crown points are longer and broader and arch in over the top: the dome of the tuft.
+const TUFT_LONG = 0.1
+const TUFT_BROAD = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
-const SPREAD_LONG = 1.6
+const SPREAD_LONG = 2.6
+const SPREAD_LONG_LATE = 1.6
+const SPREAD_OUT = 0.55
+const SPREAD_OPEN = 0.1
+const SPREAD_UP = 0.5
+const SPREAD_SLIM = 0.2
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
-const YOUNG_OUT = [0.4, 0.2, 0]
-const YOUNG_LONG = [0.8, 0.35, 0]
+const YOUNG_OUT = [0.4, 0.3, 0.2]
+const YOUNG_WIDE = [1.3, 1.1, 0.3]
+const YOUNG_LONG = [2.6, 2.0, 0]
+const YOUNG_SHORT = [0, 0, 0.2]
+// A young bract wears its hairs long for its size, as a young leaf does.
+const YOUNG_FRINGE = 1.8
 
-interface Bract { crown: number; spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { leafy: number; crown: number; spread: number; star: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -163,8 +187,10 @@ export function create(options: PartOptions): PlantPart | null {
       fold: 0.14 + 0.26 * rnd(13, i),
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
-      spread: series === 0 ? SHUT_SPREAD * rnd(904, i) : 0,
+      spread: series === 0 ? SHUT_SPREAD * (Math.floor(i / 3) % 2 === 0 ? 0.75 + 0.25 * rnd(904, i) : 0.25 * rnd(904, i)) : 0,
+      star: series === 0 ? SHUT_SPREAD * rnd(904, i) : 0,
       crown: series === 2 && Math.floor(i / 3) % 2 === 0 ? 1 : 0,
+      leafy: series === 0 ? (Math.floor(i / 3) % 2 === 0 ? 0.75 + 0.25 * rnd(904, i) : 0.25 * rnd(904, i)) : series === 1 ? smoothstep(0.6, 0.8, rnd(905, i)) : 0,
     })
   }
 
@@ -215,7 +241,7 @@ export function create(options: PartOptions): PlantPart | null {
   geometry.setAttribute('normal', normal)
   geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 4))
   geometry.setIndex(index)
-  const uniforms = { uBudOpen: { value: 0 }, uBudShut: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
+  const uniforms = { uBudOpen: { value: 0 }, uBudShut: { value: 0 }, uBudEarly: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
   const surface = makePartSurface(options, { name: 'bud', vertex, fragment, side: THREE.DoubleSide, uniforms })
   const mesh = partMesh(geometry, surface)
 
@@ -227,7 +253,7 @@ export function create(options: PartOptions): PlantPart | null {
   const downEach = shape.bracts > 0 ? Math.floor((shape.downHairs * share) / shape.bracts / 2) : 0
   const downCount = shape.bracts * downEach * 2
   const iceEach = shape.bracts > 0 ? Math.floor((shape.crystals * share) / shape.bracts / 2) : 0
-  const ice: CrystalSet | null = createCrystals(options, shape.bracts * iceEach * 2, 'bud crystals')
+  const ice: CrystalSet | null = createCrystals(options, shape.bracts * iceEach * 2, 'bud crystals', false)
   const iceCount = ice ? ice.count : 0
   const furCount = hairCount + downCount
   const allCount = furCount + iceCount
@@ -302,7 +328,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -4 : 4
-        hairLong[n] = lerp(0.0015, 0.0025, u * u) * (0.75 + 0.5 * rnd(2123 + b, i))
+        hairLong[n] = (u < 0.9 ? 0.005 : 0.0018) * (0.75 + 0.5 * rnd(2123 + b, i)) * (bracts[b].series === 2 ? 0.4 : 1)
       }
     }
   }
@@ -369,7 +395,12 @@ export function create(options: PartOptions): PlantPart | null {
       if (nor) for (let v = 0; v < count; v++) nor.set([0, 1, 0], v * 3)
       return
     }
-    const hw = WIDEST * D
+    const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
+    const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
+    // The bloom is a kept unit: from 37.5 s the low starred build eases into the build the bloom opens from, and is that exactly from 40 s.
+    // A neighbor's clock runs up to 4.6 s behind in the bloom, so it keeps the bloom's build throughout.
+    const early = options.variant === 0 ? 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, time) : 0
+    const hw = (WIDEST - SHUT_LOW * globe * early) * D
     const hr = FLOOR_RIM * D
     const Hb = hw + D
     const grown = Math.min(1, heightAt(time) / 0.006)
@@ -438,15 +469,15 @@ export function create(options: PartOptions): PlantPart | null {
     const over = 1 - smoothstep(bloom0 - 0.7, bloom0 + 0.3, time)
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
-    const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
-    const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
     const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, time)
     const wind = pose.inputs.wind
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
-      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young) * (1 + (CROWN_LONG * k.crown + SPREAD_LONG * k.spread) * globe)
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
+      const spread = lerp(k.star, k.spread, early)
+      const tuft = k.series === 2 ? 1 - k.crown : 0
+      const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * k.crown + TUFT_LONG * tuft * early + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early) * (1 + TUFT_BROAD * tuft * globe * early)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -481,12 +512,12 @@ export function create(options: PartOptions): PlantPart | null {
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
-      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + k.spread) * young, SHUT_ANGLE[k.series] + CROWN_ANGLE * k.crown + k.lean + k.spread, globe), stand, ready)
+      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + 0.3 * k.spread + (k.series === 1 ? 0.5 * (k.leafy - 0.5) : 0)) * young, lerp(SHUT_ANGLE_LATE[k.series], SHUT_ANGLE[k.series], early) + lerp(CROWN_ANGLE_LATE, CROWN_ANGLE, early) * k.crown + k.lean + lerp(1, SPREAD_OUT, early) * spread, globe), stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
       const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.9 * collar)
-      const curl = lerp(lerp(lerp(bractCurl(j, inBud), SHUT_CURL[k.series] + k.spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
+      const curl = lerp(lerp(lerp(bractCurl(j, inBud), lerp(SHUT_CURL_LATE[k.series], SHUT_CURL[k.series], early) + lerp(1, -SPREAD_OPEN, early) * spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
@@ -498,7 +529,7 @@ export function create(options: PartOptions): PlantPart | null {
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
 
-      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight)
+      const foot = Math.max(0, k.foot - FEET_LOW[k.series] * tight + (FEET_UP[k.series] + SPREAD_UP * spread) * globe * early)
       let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(foot, 1)
       let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((foot - 1) / 0.5)
       let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
@@ -508,10 +539,10 @@ export function create(options: PartOptions): PlantPart | null {
         const u = step / total
         const s = u * L
         const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
-        const bulge = BULGE[k.series] * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
+        const bulge = lerp(BULGE_LATE[k.series], BULGE[k.series], early) * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (SHUT_TIP[k.series] + CROWN_TIP * k.crown) * globe * smoothstep(0.4, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * k.crown) * globe * smoothstep(0.4, 1, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
         const Ea = R * (1 + CONE_WIDE * coneWide) + lift + BULGE_TOP * bulge
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift + BULGE_HIGH * bulge
         const fr = r / Ea
@@ -596,7 +627,8 @@ export function create(options: PartOptions): PlantPart | null {
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
         const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 0.8) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
-        const even = lerp(1.04, 0.15, smoothstep(0.34, 0.74, u)) * (1 - Math.pow(clamp((u - 0.74) / 0.26), 1.4)) + 0.004
+        const awn = lerp(0.74, 0.66, early * (1 - young))
+        const even = lerp(1.04, 0.15, smoothstep(lerp(0.34, 0.28, early * (1 - young)), awn, u)) * (1 - Math.pow(clamp((u - awn) / (1 - awn)), 1.4)) + 0.004
         const half = W * lerp(body, lerp(tail, even, tight), smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = lerp(1 - smoothstep(HUG_FROM, hugs[i], u), 1 - smoothstep(0.55, 1, u), tight)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u))) * lerp(1, 0.4, tight)
@@ -633,7 +665,8 @@ export function create(options: PartOptions): PlantPart | null {
     const scale = clamp(R / 0.012) * lerp(0.7, 1, smoothstep(0.015, 0.05, R))
     const h = pose.head
     const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, pose.time)
-    const fringe = lerp(1, 0.45, tight)
+    const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, pose.time)
+    const fringe = lerp(lerp(1, 0.45, tight), YOUNG_FRINGE, young)
     const iceRoot = ice ? ice.root(slot) : hairRoot
     const iceLean = ice ? ice.lean(slot) : hairLean
     const upTo = stateUniforms.uPlantFrost.value > 0 ? allCount : furCount
@@ -708,7 +741,7 @@ export function create(options: PartOptions): PlantPart | null {
       const lean = i < hairCount ? hairLean : i < furCount ? downLean : iceLean
       const o = (i < hairCount ? i : i < furCount ? i - hairCount : i - furCount) * 4
       // Shut, the bud wears a short fringe and only part of its down: the rest grows as the bracts loosen.
-      const worn = kind === 2 ? 1 - tight : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
+      const worn = kind === 2 ? Math.max(1 - tight, 0.8 * young) : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
       root[o] = x
       root[o + 1] = y
       root[o + 2] = z
@@ -716,7 +749,8 @@ export function create(options: PartOptions): PlantPart | null {
       lean[o] = dx
       lean[o + 1] = dy
       lean[o + 2] = dz
-      lean[o + 3] = jitter[i * 4 + 3]
+      // A crystal on a margin is a low tuft, one on a point a spike.
+      lean[o + 3] = i < furCount ? jitter[i * 4 + 3] : (hairAt[i * 2] < 0.9 * (shape.nu - 1) ? 1 : 2) + Math.min(jitter[i * 4 + 3], 0.999)
     }
   }
 
@@ -734,6 +768,7 @@ export function create(options: PartOptions): PlantPart | null {
     finish(time) {
       uniforms.uBudOpen.value = headOpen(time)
       uniforms.uBudShut.value = (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time)
+      uniforms.uBudEarly.value = 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, time)
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true

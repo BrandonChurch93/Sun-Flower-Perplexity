@@ -39,6 +39,7 @@ in float vDepth;
 in float vLow;
 uniform float uBudOpen;
 uniform float uBudShut;
+uniform float uBudEarly;
 ${tissueGlsl}
 float bractRelief(float x, float u, float seed) {
   float ax = abs(x);
@@ -90,6 +91,8 @@ void main() {
     float fine = valueNoise(vec2(x * 11.0, u * 60.0) + seed * 50.0);
     float vein = abs(fract(x * 3.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
     float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
+    // Shut and young, the veins have not yet raised their pale lines.
+    line *= 1.0 - 0.7 * uBudShut * uBudEarly;
     float keel = smoothstep(0.09, 0.0, ax);
     float blotch = valueNoise(vec2(x * 2.3 + seed * 37.0, u * 7.0 + seed * 53.0));
     float toTip = smoothstep(0.3, 1.0, u);
@@ -105,14 +108,16 @@ void main() {
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
-    albedo *= mix(vec3(1.0), mix(vec3(1.15, 2.0, 0.85), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
+    albedo *= mix(vec3(1.0), mix(mix(vec3(1.15, 2.0, 0.85), mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), uBudEarly), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
     float margin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
     float side = abs(fract(u * 9.0 - ax * 2.2 + seed * 3.0) - 0.5) * 2.0;
-    float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u));
+    float rib = smoothstep(0.8, 1.0, side) * smoothstep(0.08, 0.3, ax) * (1.0 - smoothstep(0.7, 0.95, u)) * (1.0 - 0.7 * uBudShut * uBudEarly);
     float thin = mix(margin, blade, lit);
+    // The inner bracts of a shut bud are young and thin through their whole blade.
+    thin = mix(thin, 0.9, uBudShut * uBudEarly * smoothstep(0.5, 1.0, rank) * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.65 * max(max(keel, line), 0.6 * rib);
     t.albedo = albedo;
     t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.66, 0.78, 0.1), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain);
@@ -126,12 +131,12 @@ void main() {
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     // Shut, the foot of a bract lies under the points of the row below it.
-    t.occlusion *= mix(1.0, mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), uBudShut);
+    t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.2, 1.0, smoothstep(0.0, 0.5, u)), uBudEarly), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
-    gather = max(max(smoothstep(0.82, 1.0, ax), smoothstep(0.8, 1.0, u)), 0.4 * keel);
+    gather = max(max(smoothstep(0.82, 1.0, ax), smoothstep(0.8, 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
