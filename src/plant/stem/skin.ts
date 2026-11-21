@@ -118,7 +118,7 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(1.0, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.sheen = ${GUIDE.sheen} * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.32 * ribbed * furrow);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
 }
