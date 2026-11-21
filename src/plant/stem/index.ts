@@ -19,7 +19,7 @@ const JOINT_OVERLAP_M = 0.004
 // The stem wears two coats: a dense short down that adds up to the pale line on its outline, and sparse long fine hairs that stand clear of it.
 const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00006
-const DOWN_PER_HAIR = 17
+const DOWN_PER_HAIR = 12
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number }
@@ -28,8 +28,8 @@ interface Shape { main: number; sides: number; below: number; cap: number; hairs
 function shapeOf(options: PartOptions): Shape {
   if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, full: false }
   if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 6000, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 24000, full: true }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -121,6 +121,7 @@ export function create(options: PartOptions): PlantPart {
   const nodeS = new Float64Array(NODES)
   const nodeA = new Float64Array(NODES)
   const nodeAmp = new Float64Array(NODES)
+  const nodeReach = new Float32Array(NODES)
   const nodeR = new Float64Array(NODES)
   const actA = new Float64Array(NODES)
   const actAmp = new Float64Array(NODES)
@@ -160,6 +161,7 @@ export function create(options: PartOptions): PlantPart {
         nodeS[nodes] = anchors.s[3 + i]
         nodeA[nodes] = leafAzimuth(i) - Math.PI / 2
         nodeAmp[nodes] = amp
+        nodeReach[nodes] = 0.5 * leafLength(i, time)
         nodeR[nodes] = Math.max(1e-5, base(length > 0 ? anchors.s[3 + i] / length : 0, anchors.s[3 + i]))
         nodes++
       }
@@ -169,6 +171,7 @@ export function create(options: PartOptions): PlantPart {
           nodeS[nodes] = anchors.s[SEED_ANCHOR]
           nodeA[nodes] = side === 0 ? Math.PI : 0
           nodeAmp[nodes] = seedAmp
+          nodeReach[nodes] = 0
           nodeR[nodes] = Math.max(1e-5, stemRadius(time, length > 0 ? anchors.s[SEED_ANCHOR] / length : 0) * grown)
           nodes++
         }
@@ -275,7 +278,17 @@ export function create(options: PartOptions): PlantPart {
       const youth = clamp(1 - smoothstep(0.0022, 0.0075, whole) + 0.3 * smoothstep(0.8, 1, u) * (1 - hasHead * 0.5))
       const thin = 1 - smoothstep(0.0015, 0.0055, whole)
       const foot = footShown * Math.exp(-Math.max(0, s + off) / footLength)
-      const open = 0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)
+      // The stem stands under its own head and leaves: each hides a share of the sky from the skin below it.
+      const under = length - s - off
+      const wide = 1.5 * headR
+      let sky = 1 - (0.55 * hasHead * wide * wide) / (wide * wide + under * under + 1e-9)
+      for (let k = 0; k < nodes; k++) {
+        const d = nodeS[k] - s - off
+        const reach = nodeReach[k]
+        if (reach <= 0 || d < -nodeR[k]) continue
+        sky *= 1 - (0.4 * smoothstep(-nodeR[k], 3 * nodeR[k], d) * reach * reach) / (reach * reach + d * d)
+      }
+      const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
       const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - 0.45 * pale) * (1 - pale * smoothstep(0.1, 0.55, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
