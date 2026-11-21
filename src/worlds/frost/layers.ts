@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
-import { heightAt } from '../../plant/growth.ts'
 import { fogLight } from '../../weather/fog/index.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -78,11 +77,6 @@ const TONES: { base: [number, number, number]; see: number }[] = [
   { base: [0.07, 0.075, 0.07], see: 0.5 },
 ]
 
-const LAND_M = 1.3
-const LAND_FULL_S = 40
-// The formula of skylineLandM, kept here until the shared skyline exports it.
-const landM = (time: number): number => LAND_M * Math.min(1, heightAt(time) / heightAt(LAND_FULL_S))
-
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // skylineAzimuthDeg is the bearing the skyline is laid out round: the same one in every world, so the hills and the trees stand in the same places across a cut.
@@ -109,7 +103,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
         position[v] = Math.sin(az) * r
-        position[v + 1] = LAND_M
+        position[v + 1] = SKYLINE_LAND_M
         position[v + 2] = Math.cos(az) * r
         info[v] = r
         if (j > 0) {
@@ -143,7 +137,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     triangles,
     setTime(time) {
       for (const ring of rings) ring.setTime(time)
-      meshes[0].position.y = landM(time) - LAND_M
+      meshes[0].position.y = skylineLandM(time) - SKYLINE_LAND_M
       meshes[0].updateMatrix()
     },
   }
