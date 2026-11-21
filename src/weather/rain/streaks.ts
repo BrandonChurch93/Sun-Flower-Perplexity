@@ -46,8 +46,8 @@ void main() {
   // No two drops catch the band alike: most are dim and a few of the fine ones flare. Off the focus one fine drop in a few is drawn, the brighter for the rest.
   float catchLight = mix(0.3, mix(2.6, 1.0, smoothstep(0.0003, 0.0007, r)), pow(fract(aClose.w * 13.7 + 0.31), 3.0));
   float nearFocus = smoothstep(uBand.x, uBand.y, depth / uFocusM) * (1.0 - smoothstep(uBand.z, uBand.w, depth / uFocusM));
-  // The heavy drops far past the focus are wide soft bars under this lens: they dim with distance and go into the haze.
-  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0 - 0.75 * smoothstep(1.5, 4.0, depth / uFocusM);
+  // A heavy drop past twice the focus is a soft bar wider than 5 px under this lens: it dims to nearly nothing there and goes into the haze.
+  float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : 1.0 - 0.93 * smoothstep(1.3, 2.4, depth / uFocusM);
   vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
   float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
