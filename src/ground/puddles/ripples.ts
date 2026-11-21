@@ -32,7 +32,7 @@ void main() {
   float w = 0.004 + 0.03 * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 6.0 * w, 0.0), (rc + 2.3 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 0.8 * amp, 0.008 + 0.009 * t + 0.007 * seed);
+  vWave = vec4(rc, w, 1.15 * amp, 0.010 + 0.014 * t + 0.012 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4((drop.xy + vOff - uBox.xy) * uBox.z, 0.0, 1.0);
 }
@@ -47,7 +47,7 @@ void main() {
   float r = length(vOff);
   float x = (r - vWave.x) / vWave.y;
   x *= x < 0.0 ? 0.55 : 1.0;
-  float s = vWave.z * exp(-x * x) * sin(6.2831853 * (r - vWave.x) / vWave.w + vPhase) / sqrt(1.0 + r / 0.03);
+  float s = vWave.z * exp(-x * x) * sin(6.2831853 * (r - vWave.x) / vWave.w + vPhase) / sqrt(1.0 + r / 0.04);
   outColor = vec4(vOff / max(r, 1e-5) * s, 0.0, 1.0);
 }
 `
