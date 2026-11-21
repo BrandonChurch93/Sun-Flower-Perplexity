@@ -32,7 +32,7 @@ void main() {
   float w = 0.004 + 0.03 * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 6.0 * w, 0.0), (rc + 2.3 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 0.45 * amp, 0.009 + 0.012 * t + 0.004 * seed);
+  vWave = vec4(rc, w, 0.8 * amp, 0.009 + 0.012 * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4((drop.xy + vOff - uBox.xy) * uBox.z, 0.0, 1.0);
 }

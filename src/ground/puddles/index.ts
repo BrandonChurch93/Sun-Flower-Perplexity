@@ -6,12 +6,15 @@ import { toward } from '../../field/layout.ts'
 import { nearRadiusM } from '../geometry.ts'
 import { waterLevelsM } from '../soil.ts'
 import { rippleBox } from './basin.ts'
+import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { LANDING_FLOATS, landings } from './landings.ts'
 import { RING_LIFE_S, Ripples } from './ripples.ts'
 import { standInLevelM, standInRiseM } from './scratch.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
+const SPLASH_AHEAD_M = -0.6
+const SPLASH_HALF_M = 1.5
 const RAIN_STARTS_S = 8
 const RAIN_LASTS_S = 12
 
@@ -19,6 +22,9 @@ const RAIN_LASTS_S = 12
 export class Puddles {
   readonly meshes: THREE.Object3D[]
   private readonly water: THREE.Mesh
+  private readonly crowns: THREE.Mesh
+  private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
+  private readonly splashDrop: THREE.InstancedBufferAttribute
   private readonly ripples: Ripples
   private readonly level = { value: new THREE.Vector2() }
   private readonly drops = new Float32Array(MAX_DROPS * LANDING_FLOATS)
@@ -44,7 +50,14 @@ export class Puddles {
     this.water.renderOrder = -10
     this.water.visible = false
     this.water.onBeforeRender = (renderer) => this.ripples.render(renderer)
-    this.meshes = [this.water]
+    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: { value: new THREE.Vector2() } }, side: THREE.DoubleSide, transparent: true, castShadow: false })
+    const made = crownGeometry(this.splashes, LANDING_FLOATS)
+    this.splashDrop = made.drop
+    this.crowns = new THREE.Mesh(made.geometry, crown.main)
+    this.crowns.frustumCulled = false
+    this.crowns.visible = false
+    this.crowns.renderOrder = -9
+    this.meshes = [this.water, this.crowns]
   }
 
   async load(assets: Assets, worlds: WorldDef[]): Promise<void> {
@@ -56,6 +69,7 @@ export class Puddles {
     const mirror = this.mirrors.get(def.id)
     const wet = def.ground.wet
     this.water.visible = shown && wet > 0.5 && !!mirror && !!def.lock
+    this.crowns.visible = this.water.visible
     if (!this.water.visible || !mirror || !def.lock) return
     const spread = Math.min(1, Math.max(0, (time - RAIN_STARTS_S) / RAIN_LASTS_S))
     const eased = spread * spread * (3 - 2 * spread)
@@ -70,5 +84,9 @@ export class Puddles {
     const cz = toward.z * rippleBox.aheadM
     const count = landings(cx, cz, rippleBox.halfM + 0.3, y, time - RING_LIFE_S, timeClose, this.drops)
     this.ripples.set(count, time, timeClose, cx, cz, rippleBox.halfM)
+    const geometry = this.crowns.geometry as THREE.InstancedBufferGeometry
+    geometry.instanceCount = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
+    this.splashDrop.needsUpdate = true
+    ;(this.crowns.material as THREE.RawShaderMaterial).uniforms.uSpan.value.set(time, timeClose)
   }
 }
