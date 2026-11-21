@@ -56,16 +56,18 @@ const SETTLED_S = 45
 const KNEE = 12
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
 export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_S) / Math.max(heightAt(time), 0.001)))
-export const youngOf = (tone: number): number => 0.9 + 0.1 * tone
+// Before the bloom the rows are uneven: the plants in poorer ground are well behind, and catch up as the buds fill.
+export const lagAt = (time: number): number => 0.3 * (1 - ramp(35, 40, time))
+export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
 // At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
 export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time)
 // In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
 export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time))
 export const sizeGlsl = /* glsl */ `
-float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
+uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
-  float a = (0.9 + 0.1 * tone) / size;
+  float a = (0.9 + 0.1 * tone - uLag * (1.0 - smoothstep(0.25, 0.55, tone))) / size;
   return size * (softMin(a, ahead) - softMin(a, 1.0) + 1.0);
 }
 `
@@ -148,7 +150,19 @@ const EDGE = [
   { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 3, more: true },
 ]
 
-export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array; under: Float32Array }
+// The crop's front comes forward round the companion, so that only the plant stands free: the first row is at full height at its side,
+// and five neighbors stand before the rows, each set by hand: how far behind the plant's line, how far to its right, its size, its turn and its kind.
+const FRONT_ROW = { left: -2.6, right: -0.85 }
+const FRONT = [
+  { along: 0.78, across: -1.32, size: 0.7, turn: 0.35, kind: 1 },
+  { along: 0.7, across: -1.8, size: 0.78, turn: -0.15, kind: 5 },
+  { along: 0.83, across: -2.22, size: 0.62, turn: 0.7, kind: 3 },
+  { along: 0.04, across: -1.52, size: 0.67, turn: 0.25, kind: 6 },
+  { along: -0.03, across: -1.98, size: 0.6, turn: -0.4, kind: 0 },
+]
+export const frontM = config.field.plantAheadOfRowM
+
+export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array; under: Float32Array; front: Float32Array }
 
 let made: FieldPlaces | null = null
 
@@ -174,7 +188,7 @@ export function fieldPlaces(): FieldPlaces {
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
       const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
-      const skirt = k < edgeRows(across) - 0.5
+      const skirt = k < edgeRows(across) - 0.5 && !(across > FRONT_ROW.left && across < FRONT_ROW.right)
       if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -184,7 +198,7 @@ export function fieldPlaces(): FieldPlaces {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
         const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
-        if (k < edgeRows(off) - 0.5) continue
+        if (k < edgeRows(off) - 0.5 && !(off > FRONT_ROW.left && off < FRONT_ROW.right)) continue
         const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
         under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
       }
@@ -226,7 +240,20 @@ export function fieldPlaces(): FieldPlaces {
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
-  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under) }
+  const front: number[] = []
+  FRONT.forEach((f, n) => {
+    do id++
+    while (kindOf(id) !== f.kind)
+    const lean = (channel: number) => Math.max(-0.2, Math.min(0.2, bell(id, channel) * 0.075))
+    front.push(-toward.x * f.along + right.x * f.across, -toward.z * f.along + right.z * f.across, meanTurn + f.turn, f.size, lean(30), lean(33), 0.35 + 0.5 * hash01(SEED, 8, id), id)
+    for (let u = 0; u < UNDER_PER_GAP; u++) {
+      const uid = UNDER_ID * 2 + n * UNDER_PER_GAP + u
+      const off = f.across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
+      const back = f.along + (hash01(SEED, 52, uid) - 0.5) * 0.1
+      under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.3 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
+    }
+  })
+  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under), front: new Float32Array(front) }
   return made
 }
 

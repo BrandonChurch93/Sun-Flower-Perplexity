@@ -4,7 +4,7 @@ import { right, toward } from '../field/layout.ts'
 import { grassMask, grassTimes, patchy } from './cover.ts'
 import { lane } from './crumbs.ts'
 import { cropLight } from './light.ts'
-import { groundStates, soilHeight } from './soil.ts'
+import { groundStates, soilHeight, sunWayDir } from './soil.ts'
 
 const TUFTS = 14000
 const BLADES = 7
@@ -73,6 +73,14 @@ function tuft(): THREE.BufferGeometry {
 // The tufts in cells of this size, each drawn only when the lens or the shadow map can see it.
 const CELL_M = 1.6
 
+// No tuft that stands during the dawn may stand between the lens and the dawn's sun: out of focus it is a dark post under the sun's ball. The lens looks past the plant offM to its right, and the way is kept clear from fromM behind the plant, halfM wide and wider by spread for each meter.
+const SUN_CLEAR = { untilS: 8, offM: 0.02, fromM: 0.05, halfM: 0.03, spread: 0.07 }
+function underSun(x: number, z: number): boolean {
+  const along = x * sunWayDir.x + z * sunWayDir.z
+  const across = z * sunWayDir.x - x * sunWayDir.z
+  return along > SUN_CLEAR.fromM && Math.abs(across - SUN_CLEAR.offM) < SUN_CLEAR.halfM + SUN_CLEAR.spread * along
+}
+
 export function tufts(): THREE.InstancedMesh[] {
   const random = stream('ground grass')
   const geometry = tuft()
@@ -102,7 +110,8 @@ export function tufts(): THREE.InstancedMesh[] {
     if (chance > grassMask(x, z) * (0.5 + 0.5 * clump) || r < 0.035) continue
     if (early && (inLane > 0.02 || r < 0.06)) continue
     const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : seed > 0.93 ? 1.8 : 1)
-    const born = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
+    const first = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
+    const born = first < SUN_CLEAR.untilS && underSun(x, z) ? SUN_CLEAR.untilS : first
     turn.setFromAxisAngle(up, spin)
     size.set(height * wide, height, height * wide)
     at.set(x, -0.002, z)
@@ -185,7 +194,7 @@ void main() {
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.15, 0.8, t));
   vec2 p = vWorld.xz;
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
-  float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward)) * deep;
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward)) * deep;
   float ndl = dot(n, uSunDir);
   vec3 through = albedo * vec3(2.6, 1.25, 0.45) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
