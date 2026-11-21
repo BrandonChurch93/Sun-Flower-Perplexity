@@ -6,15 +6,15 @@ import { GoldenSky } from './sky.ts'
 export const world: WorldSettings = {
   standIn: false,
   sun: { azimuthDeg: -133.67, elevationDeg: 2.18, color: [8.5, 5.0, 2.0], softnessDeg: 1.2, lean: 0.8, lift: 1 },
-  sky: { zenith: [0.1, 0.13, 0.19], horizon: [0.62, 0.46, 0.27], bounce: [0.07, 0.05, 0.025], ambient: 0.8, glow: [1, 0.62, 0.27], glowPower: 40, disc: 90 },
+  sky: { zenith: [0.055, 0.075, 0.115], horizon: [0.26, 0.2, 0.135], bounce: [0.04, 0.028, 0.014], ambient: 0.8, glow: [1, 0.62, 0.27], glowPower: 40, disc: 90 },
   backdrop: { file: null, key: 'bloom-hero', sunAt: null, gain: 1, blur: 0.25 },
-  fog: { color: [0.5, 0.43, 0.33], sunTint: [1.9, 1.05, 0.38], density: 0.0012, falloff: 0.05 },
-  grade: { exposure: 0.74, contrast: 1.3, white: 9, saturation: 1.06, gain: [1.04, 1, 0.94], lift: [0.002, 0.001, 0.004], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
+  fog: { color: [0.1, 0.105, 0.11], sunTint: [0.8, 0.46, 0.18], density: 0.0004, falloff: 0.05 },
+  grade: { exposure: 0.74, contrast: 1.3, white: 9, saturation: 1.06, gain: [1.03, 1, 0.96], lift: [0.003, 0.004, 0.008], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0, frost: 0, dew: 0 },
   wind: 0.5,
 }
 
-const SKY_GAIN = 2.4
+const SKY_GAIN = 2.0
 
 export const stage: WorldStageMaker = (def) => {
   const sky = new GoldenSky(def)

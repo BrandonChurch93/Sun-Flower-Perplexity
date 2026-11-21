@@ -33,25 +33,28 @@ void main() {
   vec2 uv = vec2(fract(0.5 + turn / (2.0 * PI) + uDrift), clamp(sqrt(max(el, 0.0) / (0.5 * PI)), 0.004, 0.996));
   vec3 sky = textureLod(tSky, uv, max(0.0, log2(uPixelAngle / uTexelAngle))).rgb;
   float low = exp(-max(el, 0.0) / 0.085);
-  float lift = 1.0 + low * (1.1 + 4.5 * exp(-theta / 0.6)) + 5.0 * exp(-theta / 0.16);
+  float lift = 1.0 + low * 0.6 * exp(-theta / 0.3) + 1.5 * exp(-theta / 0.05);
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
   vec3 color = sky * uGain * lift;
-  color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))) * vec3(1.12, 1.0, 0.8), 0.45 * smoothstep(0.6, 4.0, dot(color, vec3(0.3, 0.6, 0.1))));
+  float lum = dot(color, vec3(0.3, 0.6, 0.1));
+  vec3 pale = mix(vec3(1.1, 1.0, 0.82), vec3(0.96, 1.0, 1.02), smoothstep(0.25, 1.1, theta));
+  color = mix(color, lum * pale, 0.8 * smoothstep(0.15, 1.2, lum));
+  color = mix(color, lum * vec3(0.8, 0.96, 1.22), 0.5 * smoothstep(0.03, 0.1, el) * smoothstep(0.15, 0.7, theta) * (1.0 - smoothstep(0.3, 1.2, lum)));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.6 * valueNoise(vec2(fan * 11.0, 3.7)) + 0.4 * valueNoise(vec2(fan * 29.0, 9.1));
-  rays = smoothstep(0.38, 0.78, rays);
+  float rays = 0.6 * valueNoise(vec2(fan * 6.0, 3.7)) + 0.4 * valueNoise(vec2(fan * 15.0, 9.1));
+  rays = smoothstep(0.3, 0.8, rays);
   float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.42) * smoothstep(0.0, 0.07, el);
-  color *= 1.0 + 0.55 * (rays - 0.4) * reach;
-  color += uGlow * (0.16 * rays * reach);
+  color *= 1.0 + 0.3 * (rays - 0.4) * reach;
+  color += uGlow * (0.07 * rays * reach);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (70.0 * exp(-theta / 0.011) + 5.5 * exp(-theta / 0.04) + 0.55 * exp(-theta / 0.15));
+  color += uGlow * (60.0 * exp(-theta / 0.009) + 1.6 * exp(-theta / 0.03) + 0.18 * exp(-theta / 0.12));
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));
 

@@ -29,7 +29,7 @@ vec3 aerial(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
   float toSun = saturate(dot(v / d, uSunDir));
-  vec3 tone = uAirCool + uAirWarm * (0.25 * toSun * toSun + pow(toSun, 24.0));
+  vec3 tone = uAirCool + uAirWarm * (0.1 * toSun * toSun + pow(toSun, 24.0));
   return mix(color, tone, 1.0 - exp(-d * uAir));
 }
 `
@@ -97,7 +97,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * (uShare * thick * bank * (1.3 * exp(-theta / 0.055) + 0.5 * exp(-theta / 0.17) + 0.06 * exp(-theta / 0.6))), 0.0);
+  outColor = vec4(uGlow * (uShare * thick * bank * (1.1 * exp(-theta / 0.06) + 0.3 * exp(-theta / 0.16) + 0.02 * exp(-theta / 0.5))), 0.0);
 }
 `
 
@@ -111,8 +111,13 @@ function wrapNoise(az: number, cells: number, salt: number): number {
   return a + (b - a) * s
 }
 
+const smooth = (a: number, b: number, x: number): number => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
 function ridged(az: number, cells: number, salt: number): number {
-  return 0.5 * wrapNoise(az, cells, salt) + 0.3 * wrapNoise(az, cells * 3, salt + 1) + 0.14 * wrapNoise(az, cells * 9, salt + 2) + 0.06 * wrapNoise(az, cells * 27, salt + 3)
+  return 0.42 * wrapNoise(az, cells, salt) + 0.33 * wrapNoise(az, cells * 3, salt + 1) + 0.17 * wrapNoise(az, cells * 9, salt + 2) + 0.08 * wrapNoise(az, cells * 27, salt + 3)
 }
 
 interface Strip {
@@ -134,7 +139,7 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.8, highDeg: 2.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.7, highDeg: 2.5, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.45, highDeg: 1.35, cells: 40, segments: 1800, trees: true, base: [0.08, 0.12, 0.06], rim: 0.02 },
-  { name: 'tree line', radiusM: 760, wander: 0.16, lowDeg: 0.7, highDeg: 2.1, cells: 56, segments: 2880, trees: true, base: [0.07, 0.1, 0.045], rim: 0.035 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.1, highDeg: 2.7, cells: 56, segments: 2880, trees: true, base: [0.05, 0.075, 0.035], rim: 0.035 },
 ]
 
 const VEILS = [
@@ -155,9 +160,9 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
-    uAirCool: { value: new THREE.Vector3(0.105, 0.12, 0.15) },
-    uAirWarm: { value: new THREE.Vector3(1.3, 0.72, 0.27) },
-    uAir: { value: 0.00019 },
+    uAirCool: { value: new THREE.Vector3(0.045, 0.055, 0.075) },
+    uAirWarm: { value: new THREE.Vector3(1.0, 0.56, 0.2) },
+    uAir: { value: 0.00017 },
   }
   const sunAz = sunAzimuthDeg * RAD
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
@@ -244,6 +249,12 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       const gap = Math.max(0, 1 - off / (SUN_GAP_DEG * RAD))
       const open = gap * gap * (3 - 2 * gap)
       deg = deg * (1 - open) + Math.min(deg, SUN_GAP_TOP_DEG * (0.55 + 0.45 * i / (STRIPS.length - 1))) * open
+      if (layer.trees) {
+        // The trees stand in stretches with open country between them, and the widest opening lies just right of the sun, where the far ridges show.
+        const right = ((((sunAz - az) / RAD + 180) % 360) + 360) % 360 - 180
+        const stand = Math.min(smooth(0.34, 0.56, wrapNoise(az, 10, 300 + i * 10)), smooth(9, 17, Math.abs(right - 17)))
+        deg = 0.22 + (deg - 0.22) * stand
+      }
       return { radius, top: radius * Math.tan(deg * RAD) + (layer.trees ? 4 : 0) }
     })
     const surface = makeSurface({
