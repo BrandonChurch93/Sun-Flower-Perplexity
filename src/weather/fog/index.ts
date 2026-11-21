@@ -23,6 +23,11 @@ const float FOG_SHAPE = 0.5;
 const float FOG_MIST = 0.5;
 const float FOG_RING_MIST = 0.9;
 const float FOG_HALO_LOW = 0.3;
+const float FOG_SKIRT_AT = 0.135;
+const float FOG_SKIRT_WIDE = 0.045;
+const float FOG_SKIRT_FAR = 0.25;
+const vec3 FOG_SKIRT_TAKES = vec3(0.0, 0.055, 0.085);
+const vec3 FOG_SKIRT_ADDS = vec3(0.14, 0.02, 0.0);
 vec3 fogCalm(vec3 dir) {
   return mix(uFogColor, uFogHigh, smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0))));
 }
@@ -36,7 +41,7 @@ vec3 fogLightIn(vec3 dir, float mist) {
   float wide = toSun * toSun;
   wide *= wide;
   wide *= wide;
-  vec3 color = mix(uFogColor, uFogHigh, up) + uFogSunTint * mix(vec3(1.0), vec3(1.0, 1.16, 1.35), up) * (through * FOG_WIDE * wide);
+  vec3 color = mix(uFogColor, uFogHigh, up) + uFogSunTint * mix(vec3(1.0), vec3(1.0, 1.1, 1.22), up) * (through * FOG_WIDE * wide);
   // Close round the sun the glow is strong and less red, farther out it is the faint peach of the world's glow.
   vec3 near = vec3(4.2, 4.9, 8.9) * ((1.0 + 0.5 * uFogThin) * exp(-theta / (0.03 + 0.008 * uFogThin)));
   float halo = theta * (1.0 - FOG_SHAPE * mist);
@@ -47,7 +52,11 @@ vec3 fogLightIn(vec3 dir, float mist) {
   color += uFogGlow * (FOG_LOW_SHARE * through) * (near + FOG_HALO_GAIN * (1.0 + FOG_MIST * mist) * (reach * (1.0 - FOG_HALO_OVER * over * over)) * exp(-halo / FOG_HALO));
   // Between the disc and the wide glow the fog takes the blue out of the sun's light: the ring of amber round it, deeper under the sun where the fog is thicker than over it.
   float ring = halo / FOG_RING;
-  return color * (1.0 - FOG_RING_TAKES * (reach * (1.0 - FOG_RING_UP * above) * max(1.0 + FOG_RING_MIST * mist, 0.0) * ring * ring * exp(2.0 - 2.0 * ring)));
+  color *= 1.0 - FOG_RING_TAKES * (reach * (1.0 - FOG_RING_UP * above) * max(1.0 + FOG_RING_MIST * mist, 0.0) * ring * ring * exp(2.0 - 2.0 * ring));
+  // Farther out, level with the sun and over it, the fog keeps a faint peach skirt: a little green and blue gone about 0.135 rad out, a little red more beyond that.
+  float skirt = (halo - FOG_SKIRT_AT) / FOG_SKIRT_WIDE;
+  float beyond = smoothstep(0.08, 0.2, halo) * exp(-halo / FOG_SKIRT_FAR);
+  return color * (1.0 + (over * reach) * (FOG_SKIRT_ADDS * beyond - FOG_SKIRT_TAKES * exp(-skirt * skirt)));
 }
 vec3 fogLight(vec3 dir) {
   return fogLightIn(dir, 0.0);
