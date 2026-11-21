@@ -153,12 +153,14 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float closed = uClosed;
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
-  if (uLate > 0.0) top += 0.2 * uLate * (1.0 - top);
   // Below the tops the sun in a lane comes through the leaves in flecks: a piece of a stalk, the edge of a leaf.
   float fleck = smoothstep(0.5, 0.68, valueNoise(vec2(world.y * 6.0 + across * 2.3, along * 1.7 + world.y * 2.0)));
   // Out in the body of the field the grazing sun gets into the upper crop in thin shafts that lie along its rays: a head, an edge, a stretch of stalk is lit.
   float shaft = smoothstep(0.6, 0.78, valueNoise(vec2(across * 5.0 + 3.0, world.y * 7.0 + along * 0.5))) * (1.0 - smoothstep(0.2, 0.45, under)) * smoothstep(9.0, 18.0, length(world.xz));
-  return max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
+  float lit = max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
+  // Late in the bloom the lens is over the crop and the sun lower still: it lies along the tops and reaches twice as far down among the leaves.
+  if (uLate > 0.0) lit = max(lit, mix(1.0, top + 0.6 * uLate * (1.0 - top), closed) * exp(-mix(1.0, mix(12.0 - 6.0 * uLate, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)));
+  return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif

@@ -71,11 +71,11 @@ export const wideAt = (time: number): number => 0.6 * ramp(8, 13, time) * (1 - r
 export const lateAt = (time: number): number => ramp(52, 57, time)
 const handSet = new Set<number>()
 export interface Own { turn: number; tall: number; head: number; nod: number }
-const PLAIN: Own = { turn: 0, tall: 1, head: 1, nod: 0.15 }
 export function ownOf(id: number): Own {
-  if (handSet.has(id)) return PLAIN
+  // The neighbors set by hand keep their turn and their height: only their heads differ.
+  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id) }
   const off = hash01(SEED, 80, id) < 0.3 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
-  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 84, id), nod: 0.15 + 0.8 * Math.pow(hash01(SEED, 85, id), 1.3) }
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.15 + 0.8 * Math.pow(hash01(SEED, 87, id), 1.3) }
 }
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
 export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
