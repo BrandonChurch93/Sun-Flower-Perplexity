@@ -26,14 +26,14 @@ vec3 skyMirror(vec3 d, float blur) {
 const ROUGH = 0.3
 // The chop that rings long faded leave standing between the banks: wave number per meter, radians per second, heading, slope. Each runs in short crests.
 const CHOP = [
-  [97, 29, 1.83, 0.02],
-  [148, 39, 0.59, 0.028],
-  [211, 52, 4.22, 0.035],
-  [293, 68, 2.8, 0.04],
-  [383, 31, 5.35, 0.052],
-  [521, 44, 1.12, 0.05],
-  [694, 62, 3.47, 0.042],
-  [907, 86, 0.21, 0.035],
+  [97, 29, 1.83, 0.01],
+  [148, 39, 0.59, 0.014],
+  [211, 52, 4.22, 0.028],
+  [293, 68, 2.8, 0.045],
+  [383, 31, 5.35, 0.065],
+  [521, 44, 1.12, 0.065],
+  [694, 62, 3.47, 0.058],
+  [907, 86, 0.21, 0.048],
 ]
 const chop = CHOP.map(([k, w, a, s], i) => {
   const x = Math.cos(a)
@@ -84,6 +84,6 @@ void main() {
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;
   vec4 done = finish((sky * mirror + murk) / max(alpha, 1e-3), vWorld, vDepth, -1.0);
-  outColor = vec4(done.rgb, alpha * cover);
+  outColor = vec4(done.rgb, alpha * cover * uLevel.y);
 }
 `
