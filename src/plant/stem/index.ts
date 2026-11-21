@@ -300,10 +300,10 @@ export function create(options: PartOptions): PlantPart {
       for (let k = 0; k < nodes; k++) {
         const rn = nodeR[k]
         const d = s + off - nodeS[k]
-        if (d < -18 * rn || d > 3.6 * rn) continue
+        if (d < -18 * rn || d > (3.6 + 3.4 * late) * rn) continue
         // The stalk leaves upward, so it comes out of the skin a little above its node and the cushion under it runs on down the stem.
         const e = d - 0.6 * rn
-        const above = e / (1.1 * rn)
+        const above = e / ((1.1 + 1.1 * late) * rn)
         const under = e / (1.8 * rn)
         const along = e >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(e / (5 * rn))
         actA[active] = nodeA[k]
