@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, youngOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, frontM, hangAt, kindTime, lagAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, toward, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -36,6 +36,7 @@ export class Field {
   private time = 0
   private rise = 0
   private ahead = 1
+  private lag = 0
 
   constructor() {
     const places = fieldPlaces()
@@ -75,7 +76,8 @@ export class Field {
     }
     this.ahead = plantAhead(timeOpen)
     const squat = squatAt(timeOpen)
-    const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5), this.ahead)
+    this.lag = lagAt(timeOpen)
+    const spread = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
     const canopy = spread * (1 - squat)
     fieldUniforms.uSquat.value = squat
     fieldUniforms.uHang.value = hangAt(timeOpen)
@@ -118,7 +120,7 @@ export class Field {
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         placeTurned(all, i, seen, still, n, early ? 0 : budTurn(clock, all[i + 7]))
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6]), this.ahead) * (g.bare ? this.rise : 1)
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1)
         n += PLACE
       }
       g.seen.needsUpdate = true

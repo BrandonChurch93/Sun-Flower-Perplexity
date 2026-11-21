@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { PLACE, budTurn, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -239,6 +239,7 @@ export class FarField {
     uOpen: { value: 0 },
     uAbove: { value: 0 },
     uAhead: { value: 1 },
+    uLag: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
   }
@@ -325,6 +326,7 @@ export class FarField {
       plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
     })
     this.uniforms.uAhead.value = plantAhead(timeOpen)
+    this.uniforms.uLag.value = lagAt(timeOpen)
     // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
     this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, 30, 40)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
