@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
 import { fogLight } from '../../weather/fog/index.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -74,12 +74,13 @@ const TONES: { base: [number, number, number]; see: number }[] = [
   { base: [0.07, 0.075, 0.07], see: 0.5 },
 ]
 
-export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
+export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // skylineAzimuthDeg is the bearing the skyline is laid out round: the same one in every world, so the hills and the trees stand in the same places across a cut.
 export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
+  const rings = SKYLINE.map((_, i) => skylineRing(i, skylineAzimuthDeg))
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -90,11 +91,11 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
   const land = new THREE.BufferGeometry()
   {
     const sides = 90
-    const rings = [SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M]
-    const position = new Float32Array(rings.length * sides * 3)
-    const info = new Float32Array(rings.length * sides * 3)
+    const radii = [SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M]
+    const position = new Float32Array(radii.length * sides * 3)
+    const info = new Float32Array(radii.length * sides * 3)
     const index: number[] = []
-    rings.forEach((r, j) => {
+    radii.forEach((r, j) => {
       for (let s = 0; s < sides; s++) {
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
@@ -126,7 +127,13 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
       side: THREE.DoubleSide,
       castShadow: false,
     })
-    add(skylineStrip(i, skylineAzimuthDeg), surface.main)
+    add(rings[i].geometry, surface.main)
   })
-  return { meshes, triangles }
+  return {
+    meshes,
+    triangles,
+    setTime(time) {
+      for (const ring of rings) ring.setTime(time)
+    },
+  }
 }
