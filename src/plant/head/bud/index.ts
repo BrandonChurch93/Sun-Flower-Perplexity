@@ -43,7 +43,7 @@ const FLARE = [0.25, 0.25, 0.5]
 // The shut rays stand up from the rim and arch over the face as a tall cone. A bract lies on a shell this much wider and higher than that cone, as shares of the radius, until the rays in front of it open.
 const CONE_WIDE = 0.1
 const CONE_HIGH = 1.05
-const BEND_FROM = [0.36, 0.36, 0.6]
+const BEND_FROM = [0.36, 0.4, 0.5]
 // While the bud is shut each series leans in this much further than growth.ts says, so the inner points close over the face. In radians.
 const SHUT = [0.3, 0.9, 1.7]
 // A folded bract curls back on itself toward its point by up to this much, in radians.
@@ -53,7 +53,7 @@ const FOLD = [2.55, 2.62, 2.7]
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
-const LONG = [0.92, 1.05, 1.2]
+const LONG = [0.92, 1.0, 1.15]
 const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
 const BROAD = [0.25, 0.25, 0.23]
 const SIDE_FEET = 0.9
@@ -85,14 +85,14 @@ export function create(options: PartOptions): PlantPart | null {
       az: turn + ((Math.floor(i / 3) + series / 3 + (rnd(2, i) - 0.5) * 0.3) / each) * TAU,
       foot: FEET[series] + (rnd(15, i) - 0.5) * 0.07,
       long: (options.variant === 0 ? LONG : LONG_NEIGHBOR)[series] * (0.95 + 0.1 * rnd(3, i)),
-      wide: (series === 2 ? 1.12 : 0.92) + 0.16 * rnd(4, i),
+      wide: (series === 2 ? 0.98 : 0.9) + 0.16 * rnd(4, i),
       tail: 0.2 + 0.08 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
       side: (rnd(7, i) - 0.5) * 0.3,
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: HOOK * (0.35 + 0.65 * rnd(18, i)),
-      reflex: series === 2 ? 0.2 + 0.6 * rnd(19, i) : series === 1 ? 0.25 + 1.0 * rnd(19, i) : 0.3 + 1.0 * rnd(19, i),
+      reflex: series === 2 ? 0.5 + 0.9 * rnd(19, i) : series === 1 ? 0.25 + 1.0 * rnd(19, i) : 0.3 + 0.8 * rnd(19, i),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: HUG[series] + 0.05 * rnd(11, i),
@@ -339,7 +339,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.46 * R, 0.0185) * k.wide
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.46 * R, 0.017) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -357,7 +357,9 @@ export function create(options: PartOptions): PlantPart | null {
         grown = Math.max(grown, rayLength(ray, time) / rayLength(ray, 1e3))
       }
       const folded = smoothstep(0, 1, opened)
-      const cone = Math.sqrt(smoothstep(0, 0.25, grown)) * (1 - smoothstep(0.1, 0.5, low))
+      const held = 1 - smoothstep(0.1, 0.5, low)
+      const cone = Math.pow(smoothstep(0.1, 0.7, grown), 0.6) * held
+      const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
       const stand = STAND[k.series] + k.lean
       const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
@@ -393,7 +395,7 @@ export function create(options: PartOptions): PlantPart | null {
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
         const free = Math.max(angle - 1.3 * curl * u * u, behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * tipW * tipW + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.3, 1, u) + sway * u * u
-        const Ea = R * (1 + CONE_WIDE * cone) + lift
+        const Ea = R * (1 + CONE_WIDE * coneWide) + lift
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift
         const fr = r / Ea
         const fh = Math.max(0, h - hr) / Eh
