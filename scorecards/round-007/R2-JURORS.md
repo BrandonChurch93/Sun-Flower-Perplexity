@@ -17,3 +17,4 @@ Which file is a control is in `KEY.json`.
 ## set-B-02.png
 
 - `reviewer_73` (GPT): a, 86/100: the carefully staged sunset backlight isolates the central sunflower like a cinematic hero shot.
+- `reviewer_75` (Claude): a, confidence 65. The biggest factor was the cinematic look: a widescreen ~16:9 frame with teal-and-orange film grading, a lifted, film-like black level and haze, and a single sunflower placed as the center hero subject in front of a backlit sunset. That reads like a film still more than stock photography. Runner-up is (b) stock photo.
