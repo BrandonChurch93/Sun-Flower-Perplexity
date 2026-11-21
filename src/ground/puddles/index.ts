@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { declareStandIn } from '../../core/standins.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { right, toward } from '../../field/layout.ts'
 import { nearGeometry, nearRadiusM } from '../geometry.ts'
@@ -11,7 +10,6 @@ import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crow
 import { LANDING_FLOATS, fineLandings, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
 import { rivuletFragment, rivuletVertex } from './rivulets.ts'
-import { standInLevelM } from './scratch.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
@@ -37,7 +35,6 @@ export class Puddles {
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor(ground: Record<string, THREE.IUniform>) {
-    declareStandIn('puddle furrow', ['rain'])
     this.ripples = new Ripples(ground, this.level, this.drops)
     this.uniforms = {
       ...ground,
@@ -46,7 +43,7 @@ export class Puddles {
       tRipple: { value: this.ripples.target.texture },
       ...rainSkyUniforms,
     }
-    const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false, standIn: true })
+    const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false })
     const plane = new THREE.PlaneGeometry(2 * nearRadiusM, 2 * nearRadiusM)
     plane.rotateX(-Math.PI / 2)
     this.water = new THREE.Mesh(plane, surface.main)
@@ -81,7 +78,7 @@ export class Puddles {
     if (!this.water.visible) return
     const cut = Math.min(1, Math.max(0, (time - CUT_STARTS_S) / (CUT_ENDS_S - CUT_STARTS_S)))
     const eased = 0.25 + 0.75 * cut * cut * (3 - 2 * cut)
-    const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet - waterLevelsM[1] + standInLevelM
+    const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet
     this.level.value.set(y, eased)
     const cx = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
     const cz = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
