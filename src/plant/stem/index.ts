@@ -175,9 +175,10 @@ export function create(options: PartOptions): PlantPart {
     const pale = paleness(time)
     const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
+    const late = smoothstep(53.6, 58, time)
 
     const base = (u: number, s: number): number => {
-      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot)))
+      let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * (1 + 0.25 * late * (1 - smoothstep(0.88, 0.97, u)))
       if (!full) return r
       // The bud's own neck rings sit on the plain radius and a straight flare, so the last centimeter comes back to them.
       const near = smoothstep(length - 0.02, length - 0.007, s)
@@ -468,7 +469,7 @@ export function create(options: PartOptions): PlantPart {
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
         if (shown > 0) c.drawn = Math.max(c.drawn, i + 1)
-        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1)
+        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value + 2.5 * late : 1 + 1.4 * late)
         lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
         lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
