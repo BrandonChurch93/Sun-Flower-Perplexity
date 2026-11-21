@@ -6,8 +6,8 @@ A 60 second film: the life of one sunflower in one continuous camera move, from 
 
 The reference images come first, then the build. `kit/PROGRESS.md` says where the build is.
 
-- App URL: not published yet
-- Review page: not published yet
+- App URL: https://sunflower-film.pplx.app
+- Review page: https://sunflower-film.pplx.app/review.html
 - Progress: `kit/PROGRESS.md`
 
 ## What is here

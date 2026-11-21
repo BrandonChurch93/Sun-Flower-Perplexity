@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { config, frameCount, timeOf, type AssetSetId, type Format, type TierId } from '../config.ts'
+import { config, timeOf, type AssetSetId, type Format, type TierId } from '../config.ts'
 import { Assets } from '../core/assets.ts'
 import { applyLens, cocScalePx, type CameraPose } from '../core/lens.ts'
 import { frameSamples } from '../core/sampler.ts'
@@ -10,16 +10,16 @@ import { samplesOf } from '../core/tiers.ts'
 import { applyWorld, sunDirection, type WorldDef } from '../core/world.ts'
 import { breathe } from '../core/yield.ts'
 import { Ground } from '../ground/index.ts'
-import { heightAt, tipAt, plantNumbers, plantReach } from '../plant/growth.ts'
+import { heightAt, plantReach } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { Post } from '../post/post.ts'
 import { Sky } from '../weather/sky.ts'
-import { cameraNumbers, farPlane, nearPlane, poseAt, rigAt } from './camera.ts'
+import { farPlane, nearPlane, rigAt } from './camera.ts'
 import { plantInputsAt } from './inputs.ts'
 import { worldOf } from './registry.ts'
+import { poseAtTime, stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
 
-export interface FrameState { camera: number[]; plant: number[]; world: string }
 
 const GREY = new THREE.Color().setRGB(0.18, 0.18, 0.18)
 const BLACK = new THREE.Color().setRGB(0, 0, 0)
@@ -86,14 +86,11 @@ export class Film {
   }
 
   poseAt(time: number): CameraPose {
-    tipAt(time, plantInputsAt(time), this.tip)
-    return poseAt(time, this.tip)
+    return poseAtTime(time, this.tip)
   }
 
   state(frameIndex: number): FrameState {
-    const frame = clampFrame(frameIndex)
-    const time = timeOf(frame)
-    return { camera: cameraNumbers(this.poseAt(time)), plant: plantNumbers(time, plantInputsAt(time)), world: worldAt(frame) }
+    return stateAt(frameIndex)
   }
 
   renderFrame(frameIndex: number, tier: TierId, pause = false): Promise<void> {
@@ -180,4 +177,4 @@ export class Film {
   }
 }
 
-export { frameCount }
+export type { FrameState }

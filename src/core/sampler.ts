@@ -48,33 +48,42 @@ const SEED = streamSeed('sampler')
 
 export const lensEdgeGain = 0.35
 
+function shuffled(count: number, key: number): number[] {
+  const order = Array.from({ length: count }, (_, i) => i)
+  for (let i = count - 1; i > 0; i--) {
+    const j = Math.floor((hash32(combine(key, i)) / 4294967296) * (i + 1))
+    const t = order[i]
+    order[i] = order[j]
+    order[j] = t
+  }
+  return order
+}
+
+// The pixel uses a rotated Halton set. The shutter is one sample per slot. The lens and the light each use a rotated
+// Hammersley set in their own shuffled order, so even a handful of samples covers every side of the lens opening.
 export function frameSamples(frame: number, count: number): Sample[] {
   if (!(count >= 1) || !Number.isInteger(count)) throw new Error(`sample count must be a whole number of at least 1, got ${count}`)
   if (count === 1) return [{ index: 0, pixelX: 0, pixelY: 0, shutter: 0.5, lensX: 0, lensY: 0, lightX: 0, lightY: 0, weight: 1 }]
   const key = combine(SEED, frame)
   const r = (n: number) => hash32(key + n) / 4294967296
   const rot = [r(1), r(2), r(3), r(4), r(5), r(6), r(7)]
-  const order = Array.from({ length: count }, (_, i) => i)
-  for (let i = count - 1; i > 0; i--) {
-    const j = Math.floor((hash32(combine(key, 100 + i)) / 4294967296) * (i + 1))
-    const t = order[i]
-    order[i] = order[j]
-    order[j] = t
-  }
+  const shutterOrder = shuffled(count, combine(key, 101))
+  const lensOrder = shuffled(count, combine(key, 102))
+  const lightOrder = shuffled(count, combine(key, 103))
   const out: Sample[] = []
   let total = 0
   for (let i = 0; i < count; i++) {
     const px = frac(radicalInverse(i + 1, 2) + rot[0]) - 0.5
     const py = frac(radicalInverse(i + 1, 3) + rot[1]) - 0.5
-    const shutter = (order[i] + frac(radicalInverse(i + 1, 5) + rot[2])) / count
-    const lu = frac((i + 0.5) / count + rot[3])
-    const lv = frac(radicalInverse(i + 1, 7) + rot[4])
-    const [lx, ly] = concentricDisc(lu, lv)
+    const shutter = (shutterOrder[i] + frac(radicalInverse(i + 1, 5) + rot[2])) / count
+    const l = lensOrder[i]
+    const [lx, ly] = concentricDisc(frac((l + 0.5) / count + rot[3]), frac(radicalInverse(l, 2) + rot[4]))
     const radius = Math.hypot(lx, ly)
     const edge = radius <= 0.72 ? 0 : (radius - 0.72) / 0.28
     const weight = 1 + lensEdgeGain * edge * edge
     total += weight
-    const [gx, gy] = concentricDisc(frac(radicalInverse(i + 1, 11) + rot[5]), frac(radicalInverse(i + 1, 13) + rot[6]))
+    const g = lightOrder[i]
+    const [gx, gy] = concentricDisc(frac((g + 0.5) / count + rot[5]), frac(radicalInverse(g, 2) + rot[6]))
     out.push({ index: i, pixelX: px, pixelY: py, shutter, lensX: lx, lensY: ly, lightX: gx, lightY: gy, weight })
   }
   for (const s of out) s.weight /= total

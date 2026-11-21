@@ -18,14 +18,15 @@ const extension = args.extension !== undefined ? Number(args.extension) : null
 const phase = extension === null ? Number(str(args, 'phase')) : -1
 const unit = typeof args.unit === 'string' ? args.unit : null
 const round = typeof args.round === 'string' ? args.round : null
-const changed = str(args, 'changed', '')
-const next = str(args, 'next', '')
+const sentence = (t: string) => (t && !/[.?]$/.test(t.trim()) ? `${t.trim()}.` : t.trim())
+const changed = sentence(str(args, 'changed', ''))
+const next = sentence(str(args, 'next', ''))
 const max = config.status.maxPictures
 
 const explicit: Pic[] = process.argv
   .slice(2)
-  .filter((a) => !a.startsWith('--') && a.includes('='))
-  .map((a) => ({ caption: a.slice(0, a.indexOf('=')), file: path.resolve(a.slice(a.indexOf('=') + 1)) }))
+  .filter((a) => !a.startsWith('--') && a.includes('=') && fs.existsSync(path.resolve(a.slice(a.lastIndexOf('=') + 1))))
+  .map((a) => ({ caption: a.slice(0, a.lastIndexOf('=')), file: path.resolve(a.slice(a.lastIndexOf('=') + 1)) }))
 
 const now = Date.now()
 const state = loadClock()

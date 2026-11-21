@@ -39,12 +39,11 @@ void main() {
     az -= 2.0 * PI * floor((az + PI) / (2.0 * PI));
     float el = asin(clamp(d.y, -1.0, 1.0)) - uBackdrop.y;
     vec2 uv = vec2(az / uBackdrop.z + 0.5, el / (uBackdrop.z / uBackdrop.w) + 0.5);
-    vec2 edge = smoothstep(vec2(0.0), vec2(0.1), uv) * smoothstep(vec2(0.0), vec2(0.1), 1.0 - uv);
-    inside = edge.x * edge.y;
-    if (inside > 0.0) {
-      float lod = log2(max(1.0, coc * uPixelAngle * uBackdropWidth / uBackdrop.z));
-      color = mix(color, textureLod(tBackdrop, clamp(uv, 0.0, 1.0), lod).rgb * uBackdropGain, inside);
-    }
+    float turn = mod(uv.x, 2.0);
+    uv = vec2(turn > 1.0 ? 2.0 - turn : turn, clamp(uv.y, 0.0, 1.0));
+    inside = 1.0;
+    float lod = log2(max(1.0, coc * uPixelAngle * uBackdropWidth / uBackdrop.z));
+    color = textureLod(tBackdrop, uv, lod).rgb * uBackdropGain;
   }
   float blur = 0.5 * coc * uPixelAngle;
   float r = sqrt(SUN_RADIUS * SUN_RADIUS + blur * blur);
