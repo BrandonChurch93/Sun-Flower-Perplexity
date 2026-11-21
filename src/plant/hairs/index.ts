@@ -101,6 +101,7 @@ const float WET_THROUGH = 1.7;
 const float DEW_GLOW = 0.2;
 const float DEW_GLOW_SIDE = 0.7;
 const float DEW_FAR_SIDE = 0.1;
+const float DEW_MOON_MORE = 1.1;
 const float DEW_SHARE = ${DEW_SHARE.toFixed(2)};
 const float DEW_FROM_M = ${DEW_FROM_M.toFixed(5)};
 const float TUFT_LIGHT = ${TUFT_LIGHT.toFixed(2)};
@@ -290,7 +291,8 @@ Strand strandAt(float t) {
   float veil = mix(fog * behind, 1.0, uPlantFrost);
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * shade * veil);
   // Dew on a hair is a row of beads too small to see, and they send the light every way, not only on past the hair. Straight against the sun the light that goes on past is nearly all there is. From the side, the hairs on the body's far side stand in its shade and have only what the air sends round.
-  float facing = mix(DEW_FAR_SIDE, 1.0, smoothstep(-0.2, 0.35, dot(out3, uSunDir)));
+  float moonlit = 1.0 + DEW_MOON_MORE * clamp(1.0 - 4.0 * uPlantWet, 0.0, 1.0);
+  float facing = mix(DEW_FAR_SIDE, moonlit, smoothstep(-0.2, 0.35, dot(out3, uSunDir)));
   vSun += lit * THROUGH_TINT * (mix(DEW_GLOW_SIDE * facing, DEW_GLOW, against) * uPlantDew * (1.0 - uPlantWet) * shade * veil);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, mix(0.6, 0.25, uPlantFrost), dot(out3, s.toEye));
