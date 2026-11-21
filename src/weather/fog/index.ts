@@ -13,7 +13,7 @@ uniform vec3 uFogGlow;
 uniform float uFogThin;
 const float FOG_LOW_SHARE = 0.45;
 const float FOG_RING = 0.07;
-const vec3 FOG_RING_TAKES = vec3(0.0, 0.05, 0.09);
+const vec3 FOG_RING_TAKES = vec3(0.0, 0.05, 0.12);
 vec3 fogCalm(vec3 dir) {
   return mix(uFogColor, uFogHigh, smoothstep(0.0, 0.3, asin(clamp(dir.y, 0.0, 1.0))));
 }
@@ -112,6 +112,7 @@ const BANKS: Bank[] = [
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
+const CLOSE_OVER_S = 4
 const SUN_NEAR = 0.2
 const SUN_FAR = 2.2
 const DEEP_NEAR = 0.12
@@ -135,6 +136,12 @@ const FAR_HOLD_S = 1
 export function fogFarAt(time: number): number {
   const unit = config.segments.find((s) => s.world === 'frost')
   return unit ? smooth(unit.end - THIN_OVER_S, unit.end - FAR_HOLD_S, time) : 0
+}
+
+// How much of the night's far shapes still stands in the fog just after the cut into the frost, 1 to 0: the fog closes over them in the unit's first seconds.
+export function fogCloseAt(time: number): number {
+  const unit = config.segments.find((s) => s.world === 'frost')
+  return unit ? 1 - smooth(unit.start, unit.start + CLOSE_OVER_S, time) : 0
 }
 
 export interface Fog {
