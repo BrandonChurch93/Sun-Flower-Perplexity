@@ -45,6 +45,7 @@ uniform vec3 uBase;
 uniform float uLayer;
 uniform float uRim;
 uniform float uFogShare;
+uniform vec3 uGlow;
 ${air}
 float crown(float x, float w, float salt) {
   float f = fract(x / w) * 2.0 - 1.0;
@@ -65,6 +66,8 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * vec3(1.0, 0.8, 0.9) * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
   color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.2 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
+  float sunward = pow(saturate(dot(v, uSunDir)), 20.0);
+  color = mix(color, uGlow * vec3(1.0, 1.05, 1.35), sunward * (0.2 + 0.5 * smoothstep(0.3, 1.0, f)));
   outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -276,7 +279,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.03 : 0.02 } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(layer.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: layer.rim }, uFogShare: { value: layer.trees ? 0.03 : 0.02 }, uGlow: { value: new THREE.Vector3().fromArray(glow) } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
