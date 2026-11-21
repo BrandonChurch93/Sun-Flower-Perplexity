@@ -125,17 +125,20 @@ export function fieldPlaces(): FieldPlaces {
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * 0.12
       const along = depth + (hash01(SEED, 3, id) - 0.5) * 0.1
       if (k < edgeRows(across) - 0.5) continue
-      if (hash01(SEED, 9, id) < 0.03 + 0.05 * step(0.62, 0.8, noise(21, across * 0.5, depth * 0.5))) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
       const reach = Math.hypot(x, z)
+      const away = step(20, 60, reach)
+      const wide = noise(25, x * 0.035, z * 0.035)
+      const thin = 0.05 * step(0.62, 0.8, noise(21, across * 0.5, depth * 0.5)) + 0.3 * away * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))
+      if (hash01(SEED, 9, id) < 0.03 + thin) continue
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
       const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const size = short ? 0.55 + 0.15 * hash01(SEED, 16, id) : 0.62 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
-      const tone = Math.min(1, Math.max(0, 0.65 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5)))
+      const tone = Math.min(1, Math.max(0, (0.65 - 0.3 * away) * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + away * (0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5))))
       if (reach < fieldFarM + (pick - 0.5) * FAR_BAND_M) {
         const straggler = hash01(SEED, 11, id) < STRAGGLERS
         const side = hash01(SEED, 17, id) < SIDEWAYS ? (hash01(SEED, 18, id) < 0.5 ? -1 : 1) * (1.0 + 0.6 * hash01(SEED, 19, id)) : 0
@@ -147,7 +150,8 @@ export function fieldPlaces(): FieldPlaces {
       // The pictures thin out with distance and hand over to the carpet plant by plant.
       const keep = (1 - 0.6 * step(58, 110, reach)) * (1 - step(fieldPicturesM - carpetBandM, fieldPicturesM, reach))
       if (hash01(SEED, 13, id) >= keep) continue
-      pictures.push(x, z, Math.floor(hash01(SEED, 14, id) * pictureCount), size, leanX, leanZ, tone, id)
+      const kind = 0.45 * hash01(SEED, 14, id) + 0.55 * Math.min(1, Math.max(0, 0.5 + (noise(28, x * 0.06, z * 0.06) - 0.5) * 2.4))
+      pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)), size, leanX, leanZ, tone, id)
     }
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
