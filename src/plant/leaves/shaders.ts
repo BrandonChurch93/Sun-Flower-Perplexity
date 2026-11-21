@@ -125,7 +125,7 @@ void main() {
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
   float grain = 0.5 + 0.5 * vRipe;
-  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(top ? vec3(0.95, 1.3, 0.7) : vec3(0.8, 1.0, 0.8), vec3(1.0), vRipe);
+  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(top ? vec3(1.0, 1.3, 0.52) : vec3(0.8, 1.0, 0.8), vec3(1.0), vRipe);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 

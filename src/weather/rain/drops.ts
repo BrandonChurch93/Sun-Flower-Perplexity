@@ -19,7 +19,7 @@ export interface Drop {
 
 export const RAIN_CELL_M = 0.25
 // The first series of a cell carry the heavy drops, the ones that splash. The rest carry the fine rain between them.
-export const RAIN_SERIES = 8
+export const RAIN_SERIES = 24
 export const RAIN_FINE_SERIES = 620
 
 const SLANT_DEG = 15
