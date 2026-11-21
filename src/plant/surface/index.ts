@@ -204,7 +204,8 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
 
   float g5 = grazing * grazing;
   g5 = g5 * g5 * grazing;
-  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz));
+  // The rise of the mirror at grazing is a line thinner than a pixel on a small round part: it fades with the outline.
+  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside);
   vec3 R = reflect(-view, N);
   vec3 skyGloss = tissueSky(normalize(mix(R, N, a2)));
 
