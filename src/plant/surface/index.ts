@@ -150,11 +150,11 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float vdh = saturate(dot(view, H));
   float lit = max(ndl, 0.0) * smoothstep(-0.08, 0.12, fdl);
 
-  // The highlight is widened where the normal turns fast or the relief is steep, so it cannot shimmer.
+  // The highlight is widened where the normal turns fast or the relief is steep, so it cannot shimmer, and in thick air, where the sun is a wide glow.
   vec3 nx = dFdx(N);
   vec3 ny = dFdy(N);
   float a = max(rough * rough, 0.03);
-  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))), 1.0);
+  float a2 = min(a * a + min(0.5 * (dot(nx, nx) + dot(ny, ny)), 0.2) + 0.6 * (1.0 - saturate(dot(N, F))) + 0.03 * (1.0 - saturate(1.15 - 26.0 * uFogDensity)), 1.0);
   a = sqrt(a2);
 
   float f5 = 1.0 - vdh;
