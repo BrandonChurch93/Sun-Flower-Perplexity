@@ -118,11 +118,109 @@ for (const [set, size, quality] of [['full', FULL, 93], ['web', WEB, 92]]) {
   mkdirSync(`public/assets/worlds/night/${set}`, { recursive: true })
   await sharp(dome).resize(size[0], size[1], { kernel: 'lanczos3' }).jpeg({ quality, chromaSubsampling: '4:4:4' }).toFile(`public/assets/worlds/night/${set}/glow.jpg`)
 }
+const RIDGE = 2048
+const ridgeTop = new Float64Array(W)
+for (let x = 0; x < W; x++) {
+  const y0 = found[x] + 4 * S
+  const sky = lum(calm, x, y0 - 10 * S)
+  const hill = lum(calm, x, y0 + 10 * S)
+  const mid = (sky + hill) / 2
+  ridgeTop[x] = y0
+  for (let y = y0 - 10 * S; y < y0 + 10 * S; y++) {
+    const a = lum(calm, x, y)
+    const b = lum(calm, x, y + 1)
+    if (a >= mid && b < mid) {
+      ridgeTop[x] = y + (a - mid) / Math.max(a - b, 1e-6)
+      break
+    }
+  }
+}
+const ridgeRaw = Float64Array.from(ridgeTop)
+for (let x = 0; x < W; x++) {
+  const near = []
+  for (let k = -16 * S; k <= 16 * S; k++) near.push(ridgeRaw[Math.min(W - 1, Math.max(0, x + k))])
+  const usual = near.sort((p, q) => p - q)[16 * S]
+  if (Math.abs(ridgeRaw[x] - usual) > 14 * S) ridgeTop[x] = usual
+}
+const ridgeKept = Float64Array.from(ridgeTop)
+for (let x = 0; x < W; x++) {
+  const near = []
+  for (let k = -3 * S; k <= 3 * S; k++) near.push(ridgeKept[Math.min(W - 1, Math.max(0, x + k))])
+  const usual = near.sort((p, q) => p - q)[3 * S]
+  if (Math.abs(ridgeKept[x] - usual) > 2.5 * S) ridgeTop[x] = usual
+}
+const ridgeBody = new Float64Array(W * 3)
+const ridgeFoot = new Float64Array(W * 3)
+const FOG_ROWS = [Math.round(0.815 * H), Math.round(0.838 * H)]
+const middle = (list, share) => list.sort((p, q) => p - q)[Math.floor(share * (list.length - 1))]
+for (let x = 0; x < W; x++) {
+  for (let c = 0; c < 3; c++) {
+    const under = []
+    for (let k = -8 * S; k <= 8 * S; k += 2) {
+      const xx = Math.min(W - 1, Math.max(0, x + k))
+      const t = Math.round(ridgeTop[xx])
+      for (let y = t + 8 * S; y < t + 24 * S; y += 2) under.push(lin(calm.data[(Math.min(H - 1, y) * W + xx) * 3 + c]))
+    }
+    ridgeBody[x * 3 + c] = middle(under, 0.5)
+    const fog = []
+    for (let k = -30 * S; k <= 30 * S; k += 4) {
+      const xx = Math.min(W - 1, Math.max(0, x + k))
+      for (let y = FOG_ROWS[0]; y < FOG_ROWS[1]; y += 3) fog.push(lin(calm.data[(y * W + xx) * 3 + c]))
+    }
+    ridgeFoot[x * 3 + c] = middle(fog, 0.8)
+  }
+}
+const eased = (list, reach) => {
+  const out = new Float64Array(list.length)
+  for (let c = 0; c < 3; c++) {
+    for (let x = 0; x < W; x++) {
+      let s = 0
+      let n = 0
+      for (let k = -reach; k <= reach; k += 2) {
+        const w = 1 - Math.abs(k) / (reach + 1)
+        s += w * list[Math.min(W - 1, Math.max(0, x + k)) * 3 + c]
+        n += w
+      }
+      out[x * 3 + c] = s / n
+    }
+  }
+  return out
+}
+const underE = eased(ridgeBody, 12 * S)
+const fogE = eased(ridgeFoot, 48 * S)
+const hex = (v, digits) => Math.min(16 ** digits - 1, Math.max(0, Math.round(v))).toString(16).padStart(digits, '0')
+let topHex = ''
+let bodyHex = ''
+let footHex = ''
+for (let i = 0; i < RIDGE; i++) {
+  let x = ((i + 0.5) / RIDGE) * DW - padX - 0.5
+  if (x < 0) x = -x - 1
+  if (x > W - 1) x = 2 * W - 1 - x
+  x = Math.min(W - 1.001, Math.max(0, x))
+  const j = Math.floor(x)
+  const f = x - j
+  topHex += hex(65535 * (1 - (padY + ridgeTop[j] * (1 - f) + ridgeTop[j + 1] * f + 0.5) / DH), 4)
+  for (let c = 0; c < 3; c++) {
+    bodyHex += hex(srgb(underE[j * 3 + c]), 2)
+    footHex += hex(srgb(fogE[j * 3 + c]), 2)
+  }
+}
+writeFileSync('src/worlds/night/ridge.ts', `export const RIDGE_SIZE = ${RIDGE}\nexport const RIDGE_TOP = '${topHex}'\nexport const RIDGE_BODY = '${bodyHex}'\nexport const RIDGE_FOOT = '${footHex}'\n`)
+const look = Buffer.from(points.data)
+for (let x = 0; x < W; x++) {
+  const y = Math.round(ridgeTop[x])
+  for (let k = 0; k < 2; k++) {
+    look[((y + k) * W + x) * 3] = 255
+    look[((y + k) * W + x) * 3 + 1] = 0
+    look[((y + k) * W + x) * 3 + 2] = 0
+  }
+}
+await sharp(look, { raw: { width: W, height: H, channels: 3 } }).extract({ left: 0, top: Math.round(0.6 * H), width: W, height: Math.round(0.28 * H) }).jpeg({ quality: 90 }).toFile('out/work/sky-night/ridge-look.jpg')
 const table = await raw(sharp(dome).resize(TABLE[0], TABLE[1], { kernel: 'lanczos3' }))
-let hex = ''
+let tableHex = ''
 for (let i = 0; i < TABLE[0] * TABLE[1]; i++) {
   const l = 0.3 * lin(table.data[i * 3]) + 0.6 * lin(table.data[i * 3 + 1]) + 0.1 * lin(table.data[i * 3 + 2])
-  hex += Math.min(255, Math.round(255 * Math.sqrt(l))).toString(16).padStart(2, '0')
+  tableHex += Math.min(255, Math.round(255 * Math.sqrt(l))).toString(16).padStart(2, '0')
 }
-writeFileSync('src/worlds/night/density.ts', `export const GLOW_COVER = ${COVER}\nexport const DENSITY_SIZE = [${TABLE[0]}, ${TABLE[1]}] as const\nexport const DENSITY = '${hex}'\n`)
+writeFileSync('src/worlds/night/density.ts', `export const GLOW_COVER = ${COVER}\nexport const DENSITY_SIZE = [${TABLE[0]}, ${TABLE[1]}] as const\nexport const DENSITY = '${tableHex}'\n`)
 await sharp(dome).jpeg({ quality: 90 }).toFile('out/work/sky-night/dome-look.jpg')

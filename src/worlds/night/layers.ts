@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
+import { nightLand } from './sky.ts'
 import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
@@ -8,8 +9,9 @@ in vec3 aInfo;
 out vec3 vWorld;
 out vec3 vInfo;
 out float vDepth;
+uniform float uSquash;
 void main() {
-  vec4 world = modelMatrix * vec4(position, 1.0);
+  vec4 world = modelMatrix * vec4(position.x, position.y * uSquash, position.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vInfo = aInfo;
@@ -22,9 +24,21 @@ const air = /* glsl */ `
 uniform vec3 uAirCool;
 uniform vec3 uAirWarm;
 uniform float uAir;
+uniform vec2 uValley;
+uniform float uValleyFog;
+uniform float uValleyOn;
+float valley(vec3 dir) {
+  return smoothstep(0.8, 0.956, dot(normalize(dir.xz), uValley));
+}
+float sunk(vec3 dir) {
+  return uValleyOn * valley(dir);
+}
+float clearAir(vec3 dir) {
+  return uValleyOn * (1.0 - valley(dir));
+}
 vec3 airTone(vec3 dir) {
   float toSun = saturate(dot(dir, uSunDir));
-  return uAirCool + uAirWarm * (0.1 * toSun * toSun + 0.3 * pow(toSun, 24.0));
+  return (uAirCool + uAirWarm * (0.1 * toSun * toSun + 0.3 * pow(toSun, 24.0))) * mix(1.0, 0.12, clearAir(dir));
 }
 vec3 aerial(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
@@ -62,8 +76,8 @@ void main() {
   vec3 color = uBase * (0.55 + 0.9 * mass) * skyAmbient(vec3(0.0, 0.3, 0.0)) * (0.25 + 0.35 * f);
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * uRim * smoothstep(0.1, 0.7, f) * (0.5 + 1.3 * smoothstep(0.2, 0.9, mass)) * (0.03 + pow(saturate(dot(v, uSunDir)), 8.0));
-  color = mix(aerial(color, vWorld), 1.3 * airTone(v), 0.1 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
-  outColor = finish(color, mix(uCamPos, vWorld, uFogShare), min(vDepth, 100.0 * uFocusM), -1.0);
+  color = mix(aerial(color, vWorld), 1.3 * airTone(v), mix(0.1 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))), uValleyFog, sunk(v)));
+  outColor = finish(color, mix(uCamPos, vWorld, uFogShare * mix(1.0, 0.1, clearAir(v))), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -85,7 +99,7 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(v, uSunDir));
   vec3 color = 0.3 * albedo * (skyAmbient(vec3(0.0, 1.0, 0.0)) + uSunColor * max(uSunDir.y, 0.0));
-  outColor = finish(aerial(color, vWorld), vWorld, min(vDepth, 100.0 * uFocusM), -1.0);
+  outColor = finish(aerial(color, vWorld), mix(uCamPos, vWorld, mix(1.0, 0.02, clearAir(v))), min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -101,6 +115,14 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.03, 0.045, 0.04], rim: 0.06, fogShare: 0.3 },
   { base: [0.03, 0.04, 0.035], rim: 0.04, fogShare: 0.3 },
 ]
+
+// The night's haze lies in the valley on the left of its view, round this bearing: the air to the right of it is clear and the land there stays dark. It gathers and clears with the hills of the sky pass, so both cuts show the shared land as the other worlds leave it.
+const VALLEY_DEG = 215
+const RAD = Math.PI / 180
+// While the tall hills of the sky pass stand, the shared rows are the low growth at their foot: they keep this share of their height, so the line against the sky is the hills' alone and as sharp as the stars.
+const HILLS_LOW = 0.45
+// In the valley the far rows stand in the mist: the lit haze takes this share of them.
+const VALLEY_FOG = 0.75
 
 // Under the night's low lens the two level banks at the field's edge are overgrown: their tops are a hedge's crowns, never higher than the bank the other worlds draw.
 const HEDGE_CROWN_M = 2.4
@@ -119,11 +141,15 @@ export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(ti
 export function makeFarLayers(landBearingDeg: number): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
+  const squash = { value: 1 }
   const rings = SKYLINE.map((_, i) => skylineRing(i, landBearingDeg))
   const airUniforms = {
     uAirCool: { value: new THREE.Vector3(0.012, 0.022, 0.034) },
     uAirWarm: { value: new THREE.Vector3(0.03, 0.06, 0.08) },
     uAir: { value: 0.00015 },
+    uValleyOn: { value: 0 },
+    uValleyFog: { value: VALLEY_FOG },
+    uValley: { value: new THREE.Vector2(Math.sin(VALLEY_DEG * RAD), Math.cos(VALLEY_DEG * RAD)) },
   }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
@@ -162,7 +188,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
     land.setAttribute('aInfo', new THREE.BufferAttribute(info, 3))
     land.setIndex(index)
   }
-  add(land, makeSurface({ name: 'night far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
+  add(land, makeSurface({ name: 'night far land', vertex, fragment: landFragment, uniforms: { ...airUniforms, uSquash: { value: 1 } }, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
   SKYLINE.forEach((layer, i) => {
     const geometry = rings[i].geometry
@@ -173,7 +199,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
       name: `night ${layer.name}`,
       vertex,
       fragment: `#define TREES 1\n${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: hedge ? HEDGE_CROWN_M : wooded ? WOOD_CROWN_M : layer.crownM }, uFloor: { value: hedge ? HEDGE_FLOOR : wooded ? WOOD_FLOOR : layer.floor }, uTwigs: { value: layer.rowM ? TWIGS : 0 }, uClumps: { value: layer.rowM ? CLUMPS : 0 } },
+      uniforms: { ...airUniforms, uSquash: squash, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: hedge ? HEDGE_CROWN_M : wooded ? WOOD_CROWN_M : layer.crownM }, uFloor: { value: hedge ? HEDGE_FLOOR : wooded ? WOOD_FLOOR : layer.floor }, uTwigs: { value: layer.rowM ? TWIGS : 0 }, uClumps: { value: layer.rowM ? CLUMPS : 0 } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
@@ -186,6 +212,8 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
     triangles,
     setTime: (time) => {
       rings.forEach((ring) => ring.setTime(time))
+      airUniforms.uValleyOn.value = nightLand(time)
+      squash.value = 1 - (1 - HILLS_LOW) * nightLand(time)
       plain.position.y = skylineLandM(time) - SKYLINE_LAND_M
       plain.updateMatrix()
     },
