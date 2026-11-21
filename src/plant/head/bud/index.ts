@@ -39,10 +39,10 @@ const HUG = [0.3, 0.24, 0.25]
 const STAND = [0.5, -0.5, -1.2]
 // Where a bract stands once it has let go of the cone, on its way back.
 const LOOSE = [0.5, 0.42, 0.14]
-// From half a second before the bloom stage the whole involucre lets go of the cone and stands round it as a collar, at these angles.
+// From a second before the bloom stage the whole involucre lets go of the cone and stands round it as a collar, at these angles.
 const COLLAR = [1.25, 0.95, 0.65]
-const COLLAR_FROM = -0.5
-const COLLAR_TAKES = 2
+const COLLAR_FROM = -1
+const COLLAR_TAKES = 2.5
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
 const FLARE = [0.25, 0.25, 0.5]
@@ -60,15 +60,17 @@ const FOLD = [2.7, 2.78, 2.86]
 const LOW_HOOK = 0.6
 // and swings sideways round the head by up to this much as it folds, so it passes beside the head, not under it.
 const LOW_SWING = 0.5
-// In the collar a bract under the head leans further back toward the stem and curls under, each by its own amount up to these, so the lower ones are uneven and some half hidden.
-const LOW_AWAY = 1.5
+// In the collar a bract under the head lies back toward the stem, from this angle off the axis, and curls under by up to this much, each by its own amount, so the lower ones are uneven and half hidden. The head looks up, so anything less would hang straight down.
+const LOW_AWAY = 2.5
 const LOW_CURL = 2.2
 // With more bracts than this each one is narrower, so they still overlap by the same share.
 const BRACTS_BROAD = 43
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
-const LONG = [0.74, 0.78, 0.94]
+const LONG = [0.78, 0.86, 1.06]
+// How much shorter the shortest bract of a series is. The inner series stays even so the shut bud is covered; the outer ones differ more.
+const LONG_VARY = [0.3, 0.26, 0.12]
 const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
 const BROAD = [0.25, 0.25, 0.23]
 const SIDE_FEET = 0.9
@@ -101,7 +103,7 @@ export function create(options: PartOptions): PlantPart | null {
       rank: series / 2,
       az: turn + ((Math.floor(i / 3) + series / 3 + (rnd(2, i) - 0.5) * 0.3) / each) * TAU,
       foot: FEET[series] + (rnd(15, i) - 0.5) * 0.07,
-      long: options.variant === 0 ? LONG[series] * (0.78 + 0.36 * rnd(3, i)) : LONG_NEIGHBOR[series] * (0.95 + 0.1 * rnd(3, i)),
+      long: options.variant === 0 ? LONG[series] * (1 - LONG_VARY[series] * rnd(3, i)) : LONG_NEIGHBOR[series] * (0.95 + 0.1 * rnd(3, i)),
       wide: ((series === 2 ? 0.98 : 0.9) + 0.16 * rnd(4, i)) * narrow,
       tail: 0.2 + 0.08 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
@@ -109,8 +111,8 @@ export function create(options: PartOptions): PlantPart | null {
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: HOOK * (0.5 + 0.5 * rnd(18, i)),
-      low: LOW_CURL * (0.3 + 0.7 * rnd(17, i)),
-      away: LOW_AWAY * (0.5 + 0.5 * rnd(901, i)),
+      low: series === 2 ? LOW_CURL * (0.9 + 0.45 * rnd(17, i)) : LOW_CURL * (0.35 + 0.75 * rnd(17, i)),
+      away: LOW_AWAY + 0.45 * rnd(901, i),
       reflex: series === 2 ? 1.0 + 0.9 * rnd(19, i) : series === 1 ? 0.7 + 0.9 * rnd(19, i) : 0.3 + 0.8 * rnd(19, i),
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
@@ -389,13 +391,13 @@ export function create(options: PartOptions): PlantPart | null {
       const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
       const collar = smoothstep(bloom0 + COLLAR_FROM, bloom0 + COLLAR_FROM + COLLAR_TAKES, time)
-      const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), COLLAR[k.series] + k.lean + k.away * under, collar)
+      const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
       const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
-      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.55 * collar)
+      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.5 * collar)
       const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
