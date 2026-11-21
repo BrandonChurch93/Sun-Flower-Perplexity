@@ -17,7 +17,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 39, nu: 32, nv: 13, backHairs: 8000, edgeHairs: 22000, faceHairs: 10000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 39, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 14000, faceHairs: 16000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
@@ -35,8 +35,8 @@ const ROLL = 0.16
 const FOLD_LAG = [0.45, 0.65, 0.85]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.72, 1, 1.38]
-const STAND = [0.92, 0.5, 0.28]
-const FLARE = [0.5, 0.7, 0.76]
+const STAND = [1.2, 0.85, 0.45]
+const FLARE = [0.32, 0.45, 0.5]
 const FOLD_SLOW = 0.7
 const HANG = 2.35
 const FOLD = [2.3, 2.22, 2.12]
@@ -171,7 +171,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -1 : 1
-        hairLong[n] = (0.0012 + 0.001 * rnd(123 + b, i)) * (1 - 0.25 * u)
+        hairLong[n] = (0.0013 + 0.0012 * rnd(123 + b, i)) * (1 - 0.25 * u)
       }
       for (let i = 0; i < faceEach; i++, n++) {
         const keel = rnd(223 + b, i) < 0.3

@@ -77,15 +77,16 @@ void main() {
     vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.3 * keel + 0.4 * line + 0.12 * rank * (1.0 - toTip)));
     albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
-    if (inner) albedo = mix(albedo, vec3(0.13, 0.2, 0.075), 0.6);
-    else albedo *= vec3(1.5, 1.95, 2.0);
-    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.25 * ax * ax * ax * smoothstep(0.1, 0.4, u));
+    if (inner) albedo = mix(albedo, vec3(0.17, 0.27, 0.1), 0.7);
+    else albedo *= vec3(1.8, 2.3, 2.3);
+    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.12 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
     t.through = vec3(0.56, 0.8, 0.08) * mix(0.04, 0.28, thin) * (0.8 + 0.4 * grain);
     height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
     float buried = smoothstep(0.0, 0.16, u);
-    t.occlusion = mix(0.5, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0);
+    t.sheen = 0.45;
+    t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0);
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     t.wax = 0.15 + 0.3 * uPlantWet;
   } else if (kind > 0.5) {
