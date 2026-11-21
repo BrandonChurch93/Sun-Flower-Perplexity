@@ -5,18 +5,18 @@ import { heightAt, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
-import { PLACE, farVariants, fieldPlaces, lagOf, nearVariants, shareOf } from './layout.ts'
+import { PLACE, farVariants, fieldPlaces, kindTime, nearVariants, shareOf } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.775
 
-interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; lag: number; plant: Plant }
+interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number; index: number; of: number; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
-function group(detail: 'near' | 'far', variant: number, places: Float32Array, lag: number): Group {
+function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, of: number): Group {
   const seen = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
   seen.setUsage(THREE.DynamicDrawUsage)
-  return { plant: new Plant({ detail, variant, places: seen }), all: places, seen, count: places.length / PLACE, lag }
+  return { plant: new Plant({ detail, variant, places: seen }), all: places, seen, count: places.length / PLACE, index, of }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -29,8 +29,8 @@ export class Field {
   constructor() {
     const places = fieldPlaces()
     this.groups = [
-      ...nearVariants.map((v, i) => group('near', v, shareOf(places.near, i, nearVariants.length), lagOf(i, nearVariants.length))),
-      ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), lagOf(i, farVariants.length))),
+      ...nearVariants.map((v, i) => group('near', v, shareOf(places.near, i, nearVariants.length), i, nearVariants.length)),
+      ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i, farVariants.length)),
     ]
     this.far = new FarField(places.pictures)
     this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
@@ -46,7 +46,7 @@ export class Field {
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number): void {
-    for (const g of this.groups) g.plant.prepare(Math.max(0, timeOpen + g.lag), Math.max(0, timeClose + g.lag), open, close)
+    for (const g of this.groups) g.plant.prepare(kindTime(timeOpen, g.index, g.of), kindTime(timeClose, g.index, g.of), open, close)
     const canopy = heightAt(timeOpen) * CANOPY
     fieldUniforms.uCanopy.value = canopy
     this.far.prepare(timeOpen, timeClose, open, close, eyeHeightM, canopy)

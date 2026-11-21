@@ -20,9 +20,16 @@ export const companionVariant = 77
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// How many seconds of film a kind is behind the plant. None is ahead, so none blooms before the plant.
-const MAX_LAG_S = 1.5
-export const lagOf = (index: number, count: number): number => -MAX_LAG_S * (((index * 3) % count) / Math.max(1, count - 1))
+// The field comes into bloom ahead of the plant: a kind runs 1.0 to 2.8 s early while the heads open and is the plant's age before and after.
+const LEAD_S = [1.0, 2.8]
+const ramp = (a: number, b: number, t: number): number => {
+  const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
+  return x * x * (3 - 2 * x)
+}
+export const kindTime = (time: number, index: number, count: number): number => {
+  const lead = LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * (((index * 3) % count) / Math.max(1, count - 1))
+  return time + lead * ramp(36, 41, time) * (1 - ramp(53, 59, time))
+}
 
 // Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
 export const fieldNearM = 12
@@ -39,7 +46,7 @@ export const pictureCount = farVariants.length * pictureTurns
 
 // The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
 export const meanTurn = 0.25
-const TURN_SCATTER = 0.42
+const TURN_SCATTER = 0.55
 const STRAGGLERS = 0.05
 export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
 
@@ -66,9 +73,8 @@ function noise(channel: number, x: number, z: number): number {
 
 const bell = (id: number, channel: number): number => (hash01(SEED, channel, id) + hash01(SEED, channel + 1, id) + hash01(SEED, channel + 2, id) - 1.5) / 0.5
 
-// The front edge of the field wanders by up to two rows. Behind the plant it stands back by two, as far as the lens of the bloom sees,
-// so the nearest heads in those frames are the size the approved image gives them.
-const BAY = { left: -3.1, right: 2.1, soft: 0.9, rows: 2 }
+// The front edge of the field wanders by up to two rows. Right behind the plant it stands back by one, so no head crowds the plant's own.
+const BAY = { left: -0.45, right: 0.45, soft: 0.3, rows: 1 }
 function edgeRows(across: number): number {
   const bay = step(BAY.left - BAY.soft, BAY.left, across) * (1 - step(BAY.right, BAY.right + BAY.soft, across))
   const wander = step(0.56, 0.8, noise(20, across * 0.3, 3.7)) * 2
