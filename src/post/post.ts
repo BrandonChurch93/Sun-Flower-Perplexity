@@ -13,7 +13,7 @@ type Mode = 0 | 1 | 2 | 3
 const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backlight: 1, texels: 2, depth: 3, focus: 2, standins: 2 }
 
 // How far past the spacing of the lens samples each copy is spread. At 1 the copies of an out of focus edge still show, at 8 samples and at 48.
-const fillGain = 1.8
+const fillGain = 1.6
 // With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
 const soloGain = 0.9
 
