@@ -150,7 +150,7 @@ void main() {
     // Seen from over the tops the upper leaves show the faces they turn to the sky.
     color += vec3(0.05, 0.09, 0.035) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
     // The low sun comes through the upper leaves of a clump, green.
-    color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
+    color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.14 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);

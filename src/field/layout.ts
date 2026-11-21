@@ -153,7 +153,7 @@ export function fieldPlaces(): FieldPlaces {
         // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
         const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0
         const list = close ? near : far
-        list.push(x, z, turn, tall ? 0.76 + 0.1 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
+        list.push(x, z, turn, tall ? 0.72 + 0.09 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
       }
       // The pictures thin out with distance and hand over to the carpet plant by plant.
