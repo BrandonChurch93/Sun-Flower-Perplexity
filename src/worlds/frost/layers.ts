@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
+import { heightAt } from '../../plant/growth.ts'
 import { fogLight } from '../../weather/fog/index.ts'
 import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
@@ -32,7 +33,6 @@ uniform float uCrown;
 uniform float uFloor;
 ${fogLight}
 ${skylineCanopy}
-const float FOOT = 0.7;
 void main() {
   float top = vInfo.z;
 #ifdef TREES
@@ -47,8 +47,7 @@ void main() {
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.4, 0.0)) * (0.55 + 0.45 * f);
   // Hoar on the crowns: the tops are paler than the mass under them.
   color = mix(color, vec3(0.5, 0.53, 0.56) * skyAmbient(vec3(0.0, 1.0, 0.0)), 0.35 * smoothstep(0.55, 1.0, f) * smoothstep(0.3, 0.8, mass));
-  // The fog lies low: the foot of every far shape is gone in it and only its upper part stands out.
-  float see = uSee * smoothstep(0.0, FOOT, f) * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
+  float see = uSee * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
   outColor = finish(mix(fogLight(v), color, see), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -58,8 +57,11 @@ in vec3 vWorld;
 in vec3 vInfo;
 in float vDepth;
 ${fogLight}
+const vec3 LAND = vec3(0.1, 0.12, 0.115);
+const float LAND_SEE = 0.4;
 void main() {
-  outColor = finish(fogLight(normalize(vWorld - uCamPos)), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
+  vec3 v = normalize(vWorld - uCamPos);
+  outColor = finish(mix(fogLight(v), LAND * skyAmbient(vec3(0.0, 1.0, 0.0)), LAND_SEE), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -75,6 +77,11 @@ const TONES: { base: [number, number, number]; see: number }[] = [
   { base: [0.06, 0.07, 0.065], see: 0.5 },
   { base: [0.07, 0.075, 0.07], see: 0.5 },
 ]
+
+const LAND_M = 1.3
+const LAND_FULL_S = 40
+// The formula of skylineLandM, kept here until the shared skyline exports it.
+const landM = (time: number): number => LAND_M * Math.min(1, heightAt(time) / heightAt(LAND_FULL_S))
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
@@ -102,7 +109,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
         position[v] = Math.sin(az) * r
-        position[v + 1] = 1.3
+        position[v + 1] = LAND_M
         position[v + 2] = Math.cos(az) * r
         info[v] = r
         if (j > 0) {
@@ -136,6 +143,8 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     triangles,
     setTime(time) {
       for (const ring of rings) ring.setTime(time)
+      meshes[0].position.y = landM(time) - LAND_M
+      meshes[0].updateMatrix()
     },
   }
 }
