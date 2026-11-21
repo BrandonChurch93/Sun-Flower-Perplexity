@@ -50,7 +50,7 @@ out vec3 vNormal;
 out float vDepth;
 out vec4 vInfo;
 out vec4 vState;
-out vec3 vMore;
+out vec4 vMore;
 
 void main() {
   float rho = aFloret.x;
@@ -64,9 +64,10 @@ void main() {
   float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.3) / 2.6);
   float swell = smoothstep(-6.0, 0.0, f.time - aFloret.z);
   float rim = smoothstep(0.55, 0.93, rho);
+  float blotch = sin(aFloret.y * 2.0 + rho * 9.0) * sin(aFloret.y * 3.0 - rho * 5.0 + 1.3);
 
   float tilt = aSeed.w * 6.2832;
-  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * 0.16 * open * (0.4 + aSeed.x));
+  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * 0.3 * open * aSeed.x);
   vec3 fx = normalize(f.outward - axis * dot(f.outward, axis));
   vec3 fy = cross(axis, fx);
   float ct = cos(aSeed.y);
@@ -75,11 +76,11 @@ void main() {
   vec3 ey = fy * ct - fx * st;
 
   float middle = smoothstep(0.0, 0.24, rho);
-  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung);
-  float tube = w * 2.6 * (0.92 + 0.16 * aSeed.x);
+  float tall = w * 1.2 * mix(0.45, 1.0, middle) * aSeed.z * (1.0 + 0.22 * swell) * grown * (1.0 - 0.25 * uYoung) * (1.0 + 0.07 * blotch);
+  float tube = w * 2.6 * (0.86 + 0.28 * aSeed.x) * (1.0 + 0.08 * blotch);
   float throat = mix(0.78 * tall, tube, open);
   float rc = w * 0.66;
-  float top = throat - 0.12 * tall + rise * w * 1.3 * (0.85 + 0.3 * aSeed.w);
+  float top = throat - 0.12 * tall + rise * w * 1.3 * (0.7 + 0.6 * aSeed.w);
 
   float piece = aShape.x;
   float level = aShape.y;
@@ -168,7 +169,7 @@ void main() {
   vDepth = -view.z;
   vInfo = vec4(piece, along, around, occ);
   vState = vec4(open, rho, aSeed.x, swell);
-  vMore = vec3(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w);
+  vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
 `
@@ -179,7 +180,7 @@ in vec3 vNormal;
 in float vDepth;
 in vec4 vInfo;
 in vec4 vState;
-in vec3 vMore;
+in vec4 vMore;
 uniform float uYoung;
 
 void main() {
@@ -205,14 +206,14 @@ void main() {
   vec3 pollen = vec3(0.98, 0.74, 0.1);
 
   if (piece < 0.5) {
-    float centre = 1.0 - smoothstep(0.1, 0.62, rho);
+    float centre = 1.0 - smoothstep(0.14, 0.7, rho);
     float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
-    vec3 dark = mix(vec3(0.085, 0.066, 0.022), vec3(0.1, 0.13, 0.035), centre);
-    vec3 pale = mix(vec3(0.3, 0.25, 0.085), vec3(0.3, 0.36, 0.11), centre);
-    vec3 mustard = vec3(0.5, 0.36, 0.055);
-    dark = mix(dark, mustard * 0.42, swell * (1.0 - centre));
-    pale = mix(pale, mustard, swell * (1.0 - centre));
-    vec3 closed = mix(dark, pale, ridge) * (0.82 + 0.36 * seed);
+    vec3 dark = mix(vec3(0.07, 0.046, 0.02), vec3(0.075, 0.115, 0.03), centre);
+    vec3 pale = mix(vec3(0.27, 0.18, 0.07), vec3(0.25, 0.34, 0.1), centre);
+    vec3 ochre = vec3(0.42, 0.27, 0.055);
+    dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
+    pale = mix(pale, ochre, swell * (1.0 - centre));
+    vec3 closed = mix(dark, pale, ridge) * (0.8 + 0.4 * seed) * (1.0 + 0.18 * vMore.w);
     vec3 young = mix(vec3(0.2, 0.29, 0.08), vec3(0.46, 0.55, 0.22), ridge) * (0.85 + 0.3 * seed);
     closed = mix(closed, young, uYoung);
     vec3 flower = mix(vec3(0.6, 0.27, 0.025), vec3(0.86, 0.5, 0.05), smoothstep(0.3, 0.7, along));
@@ -226,11 +227,12 @@ void main() {
   } else if (piece < 1.5) {
     float dust = smoothstep(0.5, 0.8, along + 0.4 * (grain - 0.5));
     dust = max(dust, 0.5 * smoothstep(0.62, 0.8, grain) * fine);
-    dust *= 1.0 - 0.35 * vMore.x;
+    dust *= (1.0 - 0.35 * vMore.x) * smoothstep(0.02, 0.3, seed + 0.2 * vMore.w);
     t.albedo = mix(vec3(0.05, 0.02, 0.018) * (0.7 + 0.6 * grain), pollen, dust);
     t.rough = mix(0.5, 1.0, dust);
     t.wax = mix(0.35, 0.0, dust);
     t.sheen = mix(0.3, 1.0, dust);
+    t.through = pollen * dust * 0.8;
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.82, 0.55, 0.06), pollen, 0.5 * grain);
     t.through = vec3(0.9, 0.5, 0.05);
