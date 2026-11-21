@@ -26,10 +26,11 @@ const METEOR_FROM_DEG: [number, number] = [-187.7, 16.7]
 const METEOR_TO_DEG: [number, number] = [-181.7, 11.4]
 const METEOR_LIGHT = 0.5
 
-const STARS = 100000
-const FAINTEST = 0.02
+const STARS = 150000
+const FAINTEST = 0.0147
 const BRIGHTEST = 12
 const SLOPE = 1.3
+const IN_RIVER = 6
 
 const glowFragment = /* glsl */ `${glslCommon}
 uniform mat4 uCamWorld;
@@ -130,12 +131,12 @@ function direction(azDeg: number, elDeg: number): THREE.Vector3 {
 }
 
 const TINTS: [number, number, number][] = [
-  [0.4, 0.66, 1.0],
-  [0.62, 0.82, 1.0],
-  [1.0, 1.0, 1.0],
-  [1.0, 0.9, 0.68],
-  [1.0, 0.72, 0.44],
-  [1.0, 0.55, 0.32],
+  [0.3, 0.55, 1.0],
+  [0.5, 0.75, 1.0],
+  [0.85, 0.92, 1.0],
+  [1.0, 0.82, 0.55],
+  [1.0, 0.6, 0.3],
+  [1.0, 0.45, 0.25],
 ]
 const TINT_SHARE = [0.3, 0.32, 0.16, 0.1, 0.09, 0.03]
 
@@ -156,11 +157,13 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     const u = random.next()
     const v = random.next()
     const keep = random.next()
-    const flux = Math.min(BRIGHTEST, FAINTEST * Math.pow(Math.max(random.next(), 1e-6), -1 / SLOPE))
+    const drawn = Math.min(BRIGHTEST, FAINTEST * Math.pow(Math.max(random.next(), 1e-6), -1 / SLOPE))
     const pick = random.next()
     const width = random.next()
     const glow = glowAt(u, v)
     if (keep > 0.07 + 6 * glow) continue
+    // In the river only the stars that outshine it are seen.
+    const flux = drawn * (1 + IN_RIVER * glow)
     d.copy(forward).addScaledVector(right, ((u - 0.5) * GLOW_COVER) / MAP_SCALE_X).addScaledVector(up, ((0.5 - v) * GLOW_COVER) / MAP_SCALE_Y).normalize()
     position[n * 3] = d.x
     position[n * 3 + 1] = d.y
@@ -172,7 +175,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     light[n * 4] = flux * tint[0]
     light[n * 4 + 1] = flux * tint[1]
     light[n * 4 + 2] = flux * tint[2]
-    light[n * 4 + 3] = 0.5 + 0.12 * width + 0.7 * Math.min(1, Math.sqrt(flux / BRIGHTEST))
+    light[n * 4 + 3] = 0.5 + 0.12 * width + 0.8 * Math.min(1, Math.sqrt(drawn / BRIGHTEST))
     n++
   }
   const geometry = new THREE.BufferGeometry()

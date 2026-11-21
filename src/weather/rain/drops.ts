@@ -22,15 +22,15 @@ export const RAIN_CELL_M = 0.25
 export const RAIN_SERIES = 8
 export const RAIN_FINE_SERIES = 620
 
-const SLANT_DEG = 12
+const SLANT_DEG = 15
 // The level bearing the rain leans toward: to the left of the frame at the rain's key, as in the approved image.
 const LEAN_TOWARD_DEG = -80.5
 const PERIOD_MIN_S = 0.9
 const PERIOD_MAX_S = 1.6
 const RADIUS_MIN_M = 0.0005
 const RADIUS_MAX_M = 0.0022
-const FINE_MIN_M = 0.00015
-const FINE_MAX_M = 0.0008
+const FINE_MIN_M = 0.0001
+const FINE_MAX_M = 0.0003
 const SEED = streamSeed('rain drops')
 const UNIT = 1 / 4294967296
 
