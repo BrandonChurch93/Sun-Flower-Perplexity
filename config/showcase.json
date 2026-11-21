@@ -258,7 +258,7 @@
     "rowSpacingM": 0.75,
     "minPlantsInView": 3000,
     "plantAheadOfRowM": 1.5,
-    "companion": {"fromAzimuthDeg": 20, "leftM": 0.85, "towardCameraM": 0.1, "heightRatio": 1}
+    "companion": {"fromAzimuthDeg": 20, "leftM": 0.8, "towardCameraM": 0.5, "heightRatio": 1.04}
   },
   "continuity": {
     "maxStepRatio": 1.5

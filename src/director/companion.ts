@@ -8,9 +8,9 @@ import { leafFrameAt, poseAt, stemAt } from '../plant/skeleton.ts'
 const ratio = config.field.companion.heightRatio
 
 // How the companion leans from upright, as a slope: meters sideways for each meter of height, to the right and toward the camera
-// that stands at `field.companion.fromAzimuthDeg`. It leans 14 degrees toward the plant and a little away from that camera:
-// its foot stays wide of every frame before the bloom, and its upper leaves reach the left edge of the two bloom frames.
-const LEAN = { right: 0.24, toward: -0.08 }
+// that stands at `field.companion.fromAzimuthDeg`. It leans 16 degrees toward the plant: its foot stays wide of every frame
+// before the bloom, its upper leaves reach the left edge of the two bloom frames, and its head stays out of both.
+const LEAN = { right: 0.28, toward: -0.05 }
 export const COMPANION_LEAN = { x: right.x * LEAN.right + toward.x * LEAN.toward, z: right.z * LEAN.right + toward.z * LEAN.toward }
 
 // How the companion stands: its size, its lean and its place. Its top stays at the plant's height times `field.companion.heightRatio`.

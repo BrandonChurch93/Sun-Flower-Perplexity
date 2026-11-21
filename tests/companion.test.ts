@@ -38,17 +38,19 @@ function inFrame(frame: number): number {
 
 // The companion's real stem, leaves, bud and rays, as the film builds them.
 const options = { detail: 'hero' as const, variant: companionVariant, places: null }
-const parts = [createStem(options), createLeaves(options), createBud(options), createPetals(options)].filter((part): part is PlantPart => !!part)
+const head = [createBud(options), createPetals(options)].filter((part): part is PlantPart => !!part)
+const body = [createStem(options), createLeaves(options)].filter((part): part is PlantPart => !!part)
+const whole = [...body, ...head]
 
 // How many points of the companion's real parts land inside the frame, and how far right the farthest one lands within the frame's height.
-function realInFrame(frame: number): { count: number; maxX: number } {
+function realInFrame(frame: number, parts: PlantPart[] = whole): { count: number; maxX: number } {
   const time = timeOf(frame)
   const rig = rigAt(time)
   const pose = poseOf(rig, new THREE.Vector3())
   const near = nearPlane(rig)
   usePlant(companionVariant, companionPlace())
   const posed = poseAt(time, plantInputsAt(time))
-  for (const part of parts) part.fill(0, posed)
+  for (const part of whole) part.fill(0, posed)
   usePlant(0)
   let count = 0
   let maxX = -Infinity
@@ -133,7 +135,16 @@ describe('the companion', () => {
     for (let f = 0; f < frameCount; f += 6) if (realInFrame(f).count > 0) expect(couldBeSeen(f), `frame ${f}`).toBe(true)
     for (const id of ['bloom-opening', 'bloom-hero']) {
       const frame = Math.round(config.keys.find((k) => k.id === id)!.time * config.film.fps)
-      expect(realInFrame(frame).count).toBeGreaterThan(500)
+      expect(realInFrame(frame, body).count).toBeGreaterThan(500)
     }
   }, 120_000)
+
+  it('keeps its head out of both bloom key frames, as the approved images show only its leaves', () => {
+    for (const id of ['bloom-opening', 'bloom-hero']) {
+      const frame = Math.round(config.keys.find((k) => k.id === id)!.time * config.film.fps)
+      const seen = realInFrame(frame, head)
+      expect(seen.count, id).toBe(0)
+      expect(seen.maxX, id).toBeLessThan(-0.02)
+    }
+  })
 })

@@ -14,7 +14,7 @@ export const toward = { x: Math.sin(from), z: Math.cos(from) }
 export const right = { x: Math.cos(from), z: -Math.sin(from) }
 
 // Which neighbor the companion is: its own seed, so its own leaf angles and timing.
-export const companionVariant = 68
+export const companionVariant = 77
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
