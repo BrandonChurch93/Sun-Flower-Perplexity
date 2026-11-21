@@ -72,17 +72,17 @@ void main() {
   float foot = 1.0 - smoothstep(0.0, 0.3, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
-  vec3 body = mix(vec3(0.84, 0.45, 0.018), vec3(0.93, 0.56, 0.03), smoothstep(0.25, 1.0, u));
-  body = mix(body, vec3(0.86, 0.74, 0.05), 0.8 * fresh);
+  vec3 body = mix(vec3(0.72, 0.39, 0.02), vec3(0.81, 0.53, 0.05), smoothstep(0.15, 0.9, u));
+  // A ray just out of the bud is still green yellow.
+  body = mix(body, vec3(0.235, 0.30, 0.045), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
-  body *= vec3(0.9 + 0.16 * own, 0.86 + 0.2 * own, 1.0);
-  vec3 albedo = mix(body, vec3(0.50, 0.33, 0.03), 0.75 * foot);
-  albedo = mix(albedo, vec3(0.30, 0.34, 0.05), claw);
-  vec3 through = mix(vec3(1.0, 0.62, 0.035), vec3(1.0, 0.74, 0.06), smoothstep(0.3, 1.0, u));
+  body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0);
+  vec3 albedo = mix(body, vec3(0.52, 0.27, 0.02), 0.7 * foot);
+  albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
+  vec3 through = mix(vec3(0.9, 0.40, 0.03), vec3(1.0, 0.56, 0.06), smoothstep(0.0, 0.8, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(0.80, 0.86, 0.10), 0.7 * fresh);
-  through = mix(through, vec3(0.62, 0.24, 0.01), 0.85 * foot);
+  through = mix(through, vec3(0.27, 0.40, 0.05), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
@@ -123,16 +123,17 @@ void main() {
   vec3 grad = (r1 * dFdx(u) + r2 * dFdy(u)) * alongSlope + (r1 * dFdx(across) + r2 * dFdy(across)) * acrossSlope;
   t.normal = normalize(abs(det) * n - sign(det) * side * grad);
 #endif
-  if (!front) albedo = mix(albedo, vec3(0.80, 0.60, 0.13), 0.3) * 0.92;
-  albedo *= 1.0 - 0.25 * uPlantWet;
-  albedo = mix(albedo, vec3(0.82, 0.86, 0.9), 0.55 * uPlantFrost);
-  through *= 1.0 - 0.6 * uPlantFrost;
+  if (!front) albedo = mix(albedo, vec3(0.80, 0.60, 0.13), 0.3 * (1.0 - fresh)) * 0.92;
   t.albedo = albedo;
   t.through = through;
-  t.rough = (front ? 0.5 : 0.8) * (1.0 - 0.6 * uPlantWet);
-  t.wax = (front ? 0.3 : 0.08) + 0.4 * uPlantWet + 0.3 * uPlantDew;
-  t.sheen = front ? 0.2 : 0.3 + 0.3 * foot;
-  t.occlusion = mix(0.4, 1.0, smoothstep(0.0, 0.22, u)) * mix(0.7, 1.0, unfolded) * (1.0 - 0.3 * (fold + 0.6 * groove) * smoothstep(1.0, 0.75, u));
+  t.rough = front ? 0.62 : 0.8;
+  t.wax = front ? 0.35 : 0.1;
+  t.sheen = front ? 0.25 : 0.3 + 0.3 * foot;
+  // The valley between the two folds and the hollow under each rolled edge see less sky than the ridges.
+  float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
+  float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
+  t.albedo *= mix(vec3(1.0), vec3(0.86, 0.72, 0.6), 0.6 * valley * creased);
+  t.occlusion = mix(0.45, 1.0, smoothstep(0.0, 0.25, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
