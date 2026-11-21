@@ -15,7 +15,7 @@ import { create as createSeedling } from './seedling/index.ts'
 import { poseAt } from './skeleton.ts'
 import { HERO, PART, buildStandIn, plantNumbers, standInTopology, tipAt, vertexCountOf, type Detail } from './standin.ts'
 import { create as createStem } from './stem/index.ts'
-import { real as surfaceReal } from './surface/index.ts'
+import { real as surfaceReal, tissueGlsl } from './surface/index.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -95,37 +95,26 @@ in vec2 vUv;
 in vec3 vInfo;
 in float vDepth;
 ${plantColorGlsl}
+${tissueGlsl}
 void main() {
   vec3 n = normalize(vNormal);
   vec3 v = normalize(uCamPos - vWorld);
 #ifdef PLANT_FIELD
+  bool front = true;
   if (dot(n, v) < 0.0) n = -n;
-  float ndl = dot(n, uSunDir);
-  vec3 albedo;
-  vec3 through;
-  plantColor(int(vInfo.x + 0.5), vUv, vInfo.z, true, albedo, through);
-  albedo *= 0.78 + 0.44 * vPlantTone;
-  float high = saturate(vWorld.y / max(uCanopy, 0.001));
-  float open = mix(0.22, 1.0, smoothstep(0.25, 0.95, high));
-  float reach = mix(smoothstep(0.5, 0.95, high), 1.0, saturate(uSunDir.y * 1.5));
-  vec3 color = albedo * (uSunColor * max(ndl, 0.0) * reach + skyAmbient(n) * open);
-  color += through * uSunColor * max(-ndl, 0.0) * reach * 0.25;
-  color += through * skyAmbient(-n) * 0.25 * open;
 #else
-  if (!gl_FrontFacing) n = -n;
-  float ndl = dot(n, uSunDir);
-  vec3 toLight = ndl >= 0.0 ? n : -n;
-  float lit = sunShadow(vWorld, toLight, uShadowTexelM * 2.5);
-  vec3 albedo;
-  vec3 through;
-  plantColor(int(vInfo.x + 0.5), vUv, vInfo.z, gl_FrontFacing, albedo, through);
-  vec3 color = albedo * (uSunColor * max(ndl, 0.0) * lit + skyAmbient(n));
-  color += through * uSunColor * max(-ndl, 0.0) * lit * 0.25;
-  color += through * skyAmbient(-n) * 0.25;
-  float rim = pow(1.0 - saturate(dot(n, v)), 4.0);
-  color += uSunColor * rim * 0.06 * lit * saturate(0.4 + dot(-v, uSunDir));
+  bool front = gl_FrontFacing;
+  if (!front) n = -n;
 #endif
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  Tissue t;
+  plantColor(int(vInfo.x + 0.5), vUv, vInfo.z, front, t.albedo, t.through);
+  t.normal = n;
+  t.face = n;
+  t.rough = 0.8;
+  t.wax = 0.1;
+  t.sheen = 1.0;
+  t.occlusion = 1.0;
+  outColor = finish(shadeTissue(t, vWorld, v), vWorld, vDepth, -1.0);
 }
 `
 
