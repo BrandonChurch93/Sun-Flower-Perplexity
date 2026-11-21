@@ -1,12 +1,15 @@
 // The leaves: 24 blades on their stalks, each with its own outline, veins, curl and marks, grown by the timing in growth.ts.
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
+import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { leafAge, leafCount, leafDroop, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
+import { beadAt, createBeads, type Bead, type BeadSet } from '../surface/wet/index.ts'
+import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/rain/drops.ts'
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
@@ -384,6 +387,83 @@ export function create(options: PartOptions): PlantPart {
     for (let k = leafAt; k < leaves.length; k++) hairsUpTo[k] = hairs.count
   }
 
+  const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 280 : 90, 'leaf beads') : null
+  const beadPlan: { leaf: number; own: number; along: number; across: number }[] = []
+  const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  if (beads) {
+    const tint = beads.tint()
+    for (let k = 0; k < beads.count; k++) {
+      const r = (c: number) => hash01(seed, 9000 + k, c)
+      // Water gathers along the pressed midrib and in the troughs between the side veins; the first leaves carry most of it in the rain.
+      const side = r(3) < 0.5 ? -1 : 1
+      const across = r(4) < 0.4 ? side * 0.1 * r(5) : side * (0.12 + 0.76 * r(5))
+      beadPlan.push({ leaf: Math.floor(Math.pow(r(0), 1.6) * leaves.length), own: r(1), along: 0.1 + 0.84 * r(2), across })
+      tint.set([0.05, 0.1, 0.026], k * 3)
+    }
+  }
+
+  const fillBeads = (slot: 0 | 1, pose: Pose): void => {
+    if (!beads) return
+    const seat = beads.seat(slot)
+    const rest = beads.rest(slot)
+    const out = slots[slot]
+    for (let k = 0; k < beads.count; k++) {
+      const spot = beadPlan[k]
+      const leaf = leaves[spot.leaf]
+      const o = k * 4
+      seat[o + 3] = 0
+      const size = leafLength(leaf.i, pose.time)
+      // A blade still folded holds no water on its face.
+      if (size <= 0 || leafFold(leaf.i, pose.time) > 0.25) continue
+      beadAt(spot.own, spot.along, spot.across, pose.time, bead)
+      if (bead.radiusM <= 0) continue
+      const b0 = leaf.hem ? 1 : 0
+      const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
+      const fa = clamp(bead.along, 0, 1) * (leaf.nu - 1.001)
+      const fb = b0 + (0.5 + 0.5 * clamp(bead.across, -1, 1)) * (b1 - b0 - 0.001)
+      const a = Math.floor(fa)
+      const b = Math.floor(fb)
+      const ta = fa - a
+      const tb = fb - b
+      const v00 = (leaf.base + a * leaf.nv + b) * 3
+      const v10 = v00 + leaf.nv * 3
+      for (let c = 0; c < 3; c++) {
+        const low = out[v00 + c] + (out[v00 + 3 + c] - out[v00 + c]) * tb
+        const high = out[v10 + c] + (out[v10 + 3 + c] - out[v10 + c]) * tb
+        seat[o + c] = low + (high - low) * ta
+      }
+      const up = normals[v00 + 1] < 0 ? -1 : 1
+      rest[o] = normals[v00] * up
+      rest[o + 1] = normals[v00 + 1] * up
+      rest[o + 2] = normals[v00 + 2] * up
+      rest[o + 3] = bead.hang
+      seat[o + 1] -= bead.fallM
+      seat[o + 3] = seat[o + 1] > 0 ? bead.radiusM * clamp(size / 0.07, 0.3, 1) : 0
+    }
+  }
+
+  const hits: Drop[] = []
+  // Each plant stands in its own patch of the rain.
+  const rainX = 1.7 * options.variant
+  const rainZ = 2.3 * options.variant
+
+  // How far a blade is knocked down by the drops that landed on it, in radians: each one dips it and it springs back.
+  const dipAt = (time: number, x: number, y: number, z: number, reach: number): number => {
+    let since = time
+    for (const s of config.segments) if (s.start <= time) since = time - s.start
+    const run = Math.max(0, y) / fallDir[1]
+    hits.length = 0
+    landingsNear(x + rainX - fallDir[0] * run, z + rainZ - fallDir[2] * run, reach, time - 0.9, time + 0.6, hits)
+    let dip = 0
+    for (const drop of hits) {
+      const ago = time - (drop.time + run / drop.speed)
+      // What reacts to the weather reacts after the cut.
+      if (ago <= 0 || ago > 0.9 || ago > since) continue
+      dip += 0.2 * Math.pow(drop.radius / 0.0022, 1.5) * Math.exp(-ago / 0.16) * Math.sin(26 * ago)
+    }
+    return dip
+  }
+
   const fillLeaf = (leaf: Leaf, slot: 0 | 1, pose: Pose): void => {
     const i = leaf.i
     const time = pose.time
@@ -416,6 +496,11 @@ export function create(options: PartOptions): PlantPart {
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = set * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
+    const raining = hero && size > 0.02 && stateUniforms.uPlantWet.value > 0
+    const mid = 0.62 * total
+    const dip = raining ? dipAt(time, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
+    // Under the heaviest bursts every leaf is pressed down a little.
+    const press = raining ? 0.07 * smoothstep(0.82, 1, rainStrength(time - 0.12)) * smoothstep(0, 1.5, time - config.segments.reduce((start, s) => (s.start <= time ? s.start : start), 0)) : 0
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
@@ -428,7 +513,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
+        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -667,6 +752,7 @@ export function create(options: PartOptions): PlantPart {
     casters.push({ mesh: tubeMesh, surface: tubeSurface })
   }
   if (hairs) meshes.push(...hairs.meshes)
+  if (beads) meshes.push(...beads.meshes)
 
   return {
     name: 'leaves',
@@ -684,6 +770,7 @@ export function create(options: PartOptions): PlantPart {
       if (slot === 1 && !positionB) return
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
+      fillBeads(slot, pose)
     },
     finish() {
       position.needsUpdate = true
@@ -691,6 +778,7 @@ export function create(options: PartOptions): PlantPart {
       normal.needsUpdate = true
       for (const a of tubeAttributes) a.needsUpdate = true
       hairs?.finish(hairsShown)
+      beads?.finish()
     },
   }
 }

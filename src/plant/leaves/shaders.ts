@@ -164,7 +164,9 @@ void main() {
   t.wax = (top ? 0.45 : 0.04) * margin;
   t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
-  vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  // The skin's states stand thickest at the margin, the tip and along the veins.
+  float brim = max(max(smoothstep(0.55, 1.0, abs(vUv.x)), smoothstep(0.85, 1.0, vUv.y)), 0.7 * vein.r);
+  vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;
   outColor = shaded;
