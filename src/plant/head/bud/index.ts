@@ -133,10 +133,12 @@ const SPREAD_OPEN = 0.1
 const SPREAD_UP = 0.5
 const SPREAD_SLIM = 0.2
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
-const YOUNG_OUT = [0.9, 0.6, 0.3]
+const YOUNG_OUT = [0.75, 0.5, 0.3]
 const YOUNG_WIDE = [0.7, 0.7, 0.3]
-const YOUNG_LONG = [2.2, 1.7, 0]
-const YOUNG_SHORT = [0, 0.3, 0.35]
+const YOUNG_LONG = [2.6, 2.0, 0]
+const YOUNG_SHORT = [0, 0, 0.2]
+// A young bract wears its hairs long for its size, as a young leaf does.
+const YOUNG_FRINGE = 1.8
 
 interface Bract { leafy: number; crown: number; spread: number; star: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
@@ -659,7 +661,8 @@ export function create(options: PartOptions): PlantPart | null {
     const scale = clamp(R / 0.012) * lerp(0.7, 1, smoothstep(0.015, 0.05, R))
     const h = pose.head
     const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, pose.time)
-    const fringe = lerp(1, 0.45, tight)
+    const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, pose.time)
+    const fringe = lerp(lerp(1, 0.45, tight), YOUNG_FRINGE, young)
     const iceRoot = ice ? ice.root(slot) : hairRoot
     const iceLean = ice ? ice.lean(slot) : hairLean
     const upTo = stateUniforms.uPlantFrost.value > 0 ? allCount : furCount
@@ -734,7 +737,7 @@ export function create(options: PartOptions): PlantPart | null {
       const lean = i < hairCount ? hairLean : i < furCount ? downLean : iceLean
       const o = (i < hairCount ? i : i < furCount ? i - hairCount : i - furCount) * 4
       // Shut, the bud wears a short fringe and only part of its down: the rest grows as the bracts loosen.
-      const worn = kind === 2 ? 1 - tight : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
+      const worn = kind === 2 ? Math.max(1 - tight, 0.8 * young) : kind === 1 || kind === -1 || kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : 1
       root[o] = x
       root[o + 1] = y
       root[o + 2] = z
