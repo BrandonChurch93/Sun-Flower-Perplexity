@@ -299,6 +299,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
   const lateShare: { value: number }[] = []
   const lateVeils = VEILS.filter((veil) => veil.late)
   const shadeTone = { value: new THREE.Vector3().fromArray(SHADE_TONE) }
+  const shadeShare: { value: number; full: number }[] = []
   VEILS.forEach((veil, i) => {
     const geometry = ringStrip(96, () => ({ radius: veil.radiusM, top: veil.heightM }))
     const surface = makeSurface({
@@ -319,7 +320,7 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden shade ${i}`,
       vertex,
       fragment: shadeFragment,
-      uniforms: { uTone: shadeTone, uShare: { value: radiusM < 24 ? 0.3 : 0.32 }, uLayer: { value: i + 1 }, uFade: { value: new THREE.Vector2(1.6 + radiusM * 0.004, 1.6 + radiusM * 0.016) } },
+      uniforms: { uTone: shadeTone, uShare: shadeShare[shadeShare.push({ value: radiusM < 24 ? 0.3 : 0.32, full: radiusM < 24 ? 0.3 : 0.32 }) - 1], uLayer: { value: i + 1 }, uFade: { value: new THREE.Vector2(1.6 + radiusM * 0.004, 1.6 + radiusM * 0.016) } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
@@ -332,6 +333,9 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     for (const wood of woods) wood.visible = late.value > 0
     wide.value = h
     lateShare.forEach((share, i) => { share.value = lateVeils[i].share * h })
+    // From the crane the banks would each end in a line on the tops of the crop: they thin away as the lens rises, from 52 s.
+    const up = Math.min(1, Math.max(0, (time - 52) / 5))
+    shadeShare.forEach((share) => { share.value = share.full * (1 - up * up * (3 - 2 * up)) })
     shadeTone.value.set(SHADE_TONE[0] + (HAZE_TONE[0] - SHADE_TONE[0]) * h, SHADE_TONE[1] + (HAZE_TONE[1] - SHADE_TONE[1]) * h, SHADE_TONE[2] + (HAZE_TONE[2] - SHADE_TONE[2]) * h)
     airUniforms.uAirCool.value.set(AIR_COOL[0] + (AIR_HAZE[0] - AIR_COOL[0]) * h, AIR_COOL[1] + (AIR_HAZE[1] - AIR_COOL[1]) * h, AIR_COOL[2] + (AIR_HAZE[2] - AIR_COOL[2]) * h)
     airUniforms.uAir.value = AIR_PER_M * (1 + 4 * h)
