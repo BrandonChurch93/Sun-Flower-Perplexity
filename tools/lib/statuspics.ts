@@ -1,5 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { keys } from '../../src/director/timeline.ts'
+import { comparePair, pairIsCurrent, pairPath } from '../compare.ts'
 import { WORK } from './paths.ts'
 
 export function renderSlotBusy(): boolean {
@@ -14,6 +16,15 @@ export function renderSlotBusy(): boolean {
   }
 }
 
-export async function keyComparisons(_unit: string, _options: { render: boolean }): Promise<{ file: string; caption: string }[]> {
-  return []
+export async function keyComparisons(unit: string, options: { render: boolean }): Promise<{ file: string; caption: string }[]> {
+  const out: { file: string; caption: string }[] = []
+  for (const key of keys.filter((k) => k.unit === unit)) {
+    let file = pairPath(key.id, 'review')
+    if (!pairIsCurrent(key.id, 'review')) {
+      if (!options.render) continue
+      file = await comparePair(key.id, 'review')
+    }
+    out.push({ file, caption: `Key ${key.id}: the approved image (left) beside the film frame at ${key.time} s (right)` })
+  }
+  return out
 }
