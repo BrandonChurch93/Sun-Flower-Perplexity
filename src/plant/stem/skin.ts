@@ -119,7 +119,7 @@ void main() {
   float limb = 1.0 - abs(dot(face, view));
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(mix(vec3(0.4, 0.7, 0.2), vec3(0.47, 0.64, 0.27), tender), mix(vec3(0.6, 0.75, 0.3), vec3(0.85, 0.35, 0.3), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.012 + 0.5 * limb * limb * limb, pale) * thin);
+  t.through = mix(mix(vec3(0.4, 0.7, 0.2), vec3(0.47, 0.64, 0.27), tender), mix(vec3(0.6, 0.72, 0.42), vec3(0.85, 0.32, 0.4), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.09 + 0.36 * limb * limb * limb, pale) * thin);
   t.face = face;
   t.normal = normal;
   t.rough = rough;
