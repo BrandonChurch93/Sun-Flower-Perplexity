@@ -98,21 +98,23 @@ const BULGE_HIGH = 0.7
 // their feet sit this much nearer the neck, since the receptacle has not yet spread under them,
 const FEET_LOW = [0.52, 0.12, 0]
 // and each blade is this much broader and tapers evenly to its point.
-const SHUT_BROAD = [1.9, 1.5, 0.75]
+const SHUT_BROAD = [1.35, 1.1, 0.7]
+// and its face swells between the margins by this share of its half width.
+const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
 const SHUT_ANGLE = [0.95, 0, -0.8]
 const SHUT_CURL = [0.8, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
-const SHUT_SPREAD = 0.85
+const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [1.2, 1.12, 0.95]
+const SHUT_LONG = [0.9, 1.12, 0.95]
 const SHUT_TIP = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 0.6
 const CROWN_LONG = 0.12
 const CROWN_TIP = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
-const SPREAD_LONG = 0.9
+const SPREAD_LONG = 1.2
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
@@ -161,7 +163,7 @@ export function create(options: PartOptions): PlantPart | null {
       fold: 0.14 + 0.26 * rnd(13, i),
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
-      spread: series === 0 ? SHUT_SPREAD * rnd(904, i) ** 2 : 0,
+      spread: series === 0 ? SHUT_SPREAD * rnd(904, i) : 0,
       crown: series === 2 && Math.floor(i / 3) % 2 === 0 ? 1 : 0,
     })
   }
@@ -601,12 +603,13 @@ export function create(options: PartOptions): PlantPart | null {
         const soft = 0.2 * half + 1e-6
         const keel = 0.0007 * size * (1 - 0.6 * u)
         const round = Math.max(rowR[a], 0.25 * R)
+        const belly = SHUT_BELLY * half * tight * Math.sin(Math.PI * clamp(u / 0.75))
         const roll = ROLL * (1 - smoothstep(lerp(0.15, 0.45, tight), lerp(0.6, 0.8, tight), u))
         for (let b = 0; b < shape.nv; b++) {
           const x = (b / (shape.nv - 1)) * 2 - 1
           const xi = x * half * (b === 0 ? edge[(i * shape.nu + a) * 2] : b === shape.nv - 1 ? edge[(i * shape.nu + a) * 2 + 1] : 1)
           const wave = 0.07 * half * smoothstep(0.1, 0.4, u) * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
-          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave + (xi + half) * roll
+          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave + (xi + half) * roll + belly * (1 - x * x)
           const v = (base + a * shape.nv + b) * 3
           out[v] = mx + wx * xi + ux * dn
           out[v + 1] = my + wy * xi + uy * dn
