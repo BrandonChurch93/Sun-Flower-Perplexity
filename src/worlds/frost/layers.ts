@@ -32,6 +32,7 @@ uniform float uCrown;
 uniform float uFloor;
 ${fogLight}
 ${skylineCanopy}
+const float FOOT = 0.7;
 void main() {
   float top = vInfo.z;
 #ifdef TREES
@@ -46,7 +47,8 @@ void main() {
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.4, 0.0)) * (0.55 + 0.45 * f);
   // Hoar on the crowns: the tops are paler than the mass under them.
   color = mix(color, vec3(0.5, 0.53, 0.56) * skyAmbient(vec3(0.0, 1.0, 0.0)), 0.35 * smoothstep(0.55, 1.0, f) * smoothstep(0.3, 0.8, mass));
-  float see = uSee * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
+  // The fog lies low: the foot of every far shape is gone in it and only its upper part stands out.
+  float see = uSee * smoothstep(0.0, FOOT, f) * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
   outColor = finish(mix(fogLight(v), color, see), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
