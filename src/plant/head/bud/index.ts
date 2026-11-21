@@ -41,7 +41,7 @@ const STAND = [0.5, -0.5, -1.2]
 // Where a bract stands once it has let go of the cone, on its way back.
 const LOOSE = [0.5, 0.42, 0.14]
 // From a second before the bloom stage the whole involucre lets go of the cone and stands round it as a collar, at these angles.
-const COLLAR = [1.3, 1.1, 0.9]
+const COLLAR = [1.25, 0.95, 0.7]
 const COLLAR_FROM = -1
 const COLLAR_TAKES = 2.5
 // Bracts on the side away from the first rays stay on the body this much longer, in seconds.
@@ -71,19 +71,19 @@ const LOW_SWING = 0.5
 const KEEL = 0.55
 // In the collar a bract under the head lies back toward the stem, from this angle off the axis, and curls under by up to this much, each by its own amount, so the lower ones are uneven and half hidden. The head looks up, so anything less would hang straight down.
 const LOW_AWAY = 2.3
-const LOW_CURL = 1.4
+const LOW_CURL = 0.8
 // With more bracts than this each one is narrower, so they still overlap by the same share.
 const BRACTS_BROAD = 56
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
-const LONG = [0.98, 1.02, 1.2]
+const LONG = [0.95, 1, 1.1]
 // How much shorter the shortest bract of a series is. The inner series stays even so the shut bud is covered; the outer ones differ more.
 const LONG_VARY = [0.3, 0.26, 0.12]
 const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
-const BROAD = [0.25, 0.25, 0.23]
+const BROAD = [0.27, 0.27, 0.25]
 // The blade narrows to a slender point over its last third or more: half width of that point at its foot, as a share of the blade's.
-const POINT_WIDE = 0.22
+const POINT_WIDE = 0.26
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
@@ -118,7 +118,7 @@ export function create(options: PartOptions): PlantPart | null {
       wide: ((series === 2 ? 0.98 : 0.9) + 0.16 * rnd(4, i)) * narrow,
       tail: 0.2 + 0.08 * rnd(5, i),
       point: 0.7 + 0.1 * rnd(903, i),
-      twist: (rnd(6, i) - 0.5) * 1.1,
+      twist: (rnd(6, i) - 0.5) * 0.6,
       side: (rnd(7, i) - 0.5) * 0.4,
       tip: (rnd(8, i) - 0.35) * 0.9,
       lean: (rnd(16, i) - 0.5) * 0.3,
@@ -183,7 +183,7 @@ export function create(options: PartOptions): PlantPart | null {
   geometry.setAttribute('normal', normal)
   geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 4))
   geometry.setIndex(index)
-  const uniforms = { uBudOpen: { value: 0 } }
+  const uniforms = { uBudOpen: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
   const surface = makePartSurface(options, { name: 'bud', vertex, fragment, side: THREE.DoubleSide, uniforms })
   const mesh = partMesh(geometry, surface)
 
@@ -391,7 +391,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.46 * R, 0.017) * k.wide
+      const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -430,7 +430,7 @@ export function create(options: PartOptions): PlantPart | null {
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
-      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.75 * collar)
+      const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.9 * collar)
       const curl = lerp(lerp(bractCurl(j, inBud), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
@@ -661,6 +661,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 1 && !positionB) return
       const nor = normalSlots[slot]
       fillShape(slots[slot], nor, pose)
+      if (slot === 0) uniforms.uBudHead.value.set(pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius)
       if (nor) fillHairs(slot, slots[slot], nor, pose)
     },
     finish(time) {
