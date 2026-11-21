@@ -34,11 +34,8 @@ uniform float uPlantWind;
 uniform float uPlantHeight;
 ${swayGlsl}
 void main() {
-  // Seen from above and far off, only the head and the leaves beside it clear the rows in front: the picture is cut to them.
-  float above = step(uCrop, 0.99);
-  float off = above * smoothstep(45.0, 90.0, length(aPlace.xy - uCamPos.xz));
-  float across = aCorner.x * mix(1.0, mix(0.8, 0.56, off), above);
-  float v = mix(1.0 - uCrop * mix(1.0, 0.6, off), 1.0, aCorner.y);
+  float across = aCorner.x;
+  float v = mix(1.0 - uCrop, 1.0, aCorner.y);
   float h = v * uTile.y * aPlace.w;
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (across * uTile.x * aPlace.w);
   world.xz += aVary.xy * h;
@@ -120,6 +117,8 @@ void main() {
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     color = vMid * mix(0.3, 0.95, inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)});
+    // The low sun comes through the upper leaves of a clump, green.
+    color += vec3(0.14, 0.5, 0.05) * uSunColor * (0.06 * inside * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(vWorld.xz, uToward);
@@ -274,13 +273,15 @@ export class FarField {
     })
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
-    this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55)
+    // How far the eye stands over the tops, in heights of the tops. As it rises the leaf layers and the carpet come in and
+    // the pictures are cut to the part that clears the rows in front, all by degrees, so no frame differs from the one before by a jump.
+    const over = canopy > 0.06 ? (eyeHeightM - canopy) / canopy : 0
+    const rise = THREE.MathUtils.smoothstep(over, 0.02, 0.27)
+    this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55) * rise
     this.carpetHeight.value = canopy * 0.97
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
-    const above = eyeHeightM > canopy + 0.03 && canopy > 0.06
-    // From above only the tops of the far plants show, over the dark layer.
-    this.uniforms.uCrop.value = above ? 0.46 : 1
-    this.above = above
+    this.uniforms.uCrop.value = THREE.MathUtils.lerp(1, 0.46, THREE.MathUtils.smoothstep(over, 0.02, 0.5))
+    this.above = rise > 0
     this.stale = true
   }
 
