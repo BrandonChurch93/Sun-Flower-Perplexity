@@ -80,6 +80,7 @@ uniform sampler2D uDetail;
 uniform sampler2D uMarks;
 uniform vec2 uDetailSize;
 uniform float uVeinPad;
+uniform float uGlow;
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
@@ -122,12 +123,12 @@ void main() {
   float thick = saturate((0.97 - vein.g) * 3.0);
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
-  float thin = (0.12 + 2.3 * smoothstep(0.42, 0.85, mark.g)) * taper;
-  vec3 through = vec3(0.12, 0.14, 0.011) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.6 * net) * (1.0 - 0.3 * thick);
+  float thin = (0.5 + 1.3 * smoothstep(0.35, 0.85, mark.g)) * taper * uGlow;
+  vec3 through = vec3(0.14, 0.15, 0.012) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.3 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
   through = mix(through, vec3(0.06, 0.071, 0.006) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
-  through *= 1.0 - 0.8 * vein.r;
-  through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
+  through *= 1.0 - 0.88 * vein.r;
+  through *= 1.0 - 0.55 * vein.b * (1.0 - vein.r);
   through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
 

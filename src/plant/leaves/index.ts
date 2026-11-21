@@ -135,9 +135,9 @@ export function create(options: PartOptions): PlantPart {
     const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
-    const teeth = 10 + 7 * r(4)
-    const depth = 0.1 + 0.08 * r(5)
-    const waveAmp = 0.018 + 0.024 * r(6)
+    const teeth = 15 + 8 * r(4)
+    const depth = 0.055 + 0.05 * r(5)
+    const waveAmp = 0.026 + 0.03 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
     // The leaf that hangs right under the head is a small one on an arched stalk.
@@ -145,7 +145,7 @@ export function create(options: PartOptions): PlantPart {
     const blade = lerp(1, main ? 0.9 : 0.76, upper) * (1 - 0.42 * tuck)
     const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
-    const folds = main ? 2.2 : hero ? 1.6 : 1
+    const folds = main ? 2.2 : 1
     const deep = main ? 1 : 0.6
     // A grown blade is creased along a few lines, mostly where a side vein runs, and each crease turns a facet of it out of the light.
     const creases: number[] = []
@@ -160,12 +160,14 @@ export function create(options: PartOptions): PlantPart {
     const pleat = hero ? [0.3 + 0.3 * r(68), (r(69) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(70)) * deep, 0.3 + 0.3 * r(71), (r(72) < 0.6 ? -1 : 1) * (0.6 + 0.7 * r(73)) * deep] : null
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
-    const dry = i === dryLeaf || (withered && !main)
-    const torn = i === tornLeaf
+    // A hole or a scar the size of a hand in the lens reads as an error, so the neighbor's upper blades are whole.
+    const whole = !main && i >= 14
+    const dry = !whole && (i === dryLeaf || (withered && !main))
+    const torn = !whole && i === tornLeaf
     const old = 1 - rank
     const kind = r(12)
-    const holes = kind < 0.1 + 0.14 * old
-    const bitten = !holes && kind < 0.3 + 0.2 * old
+    const holes = !whole && kind < 0.1 + 0.14 * old
+    const bitten = !whole && !holes && kind < 0.3 + 0.2 * old
     const threshold = holes ? 0.73 + 0.05 * r(13) : bitten ? 0.87 : 2
     const bias = holes ? 0.06 : bitten ? 0.17 + 0.07 * r(14) : 0
     const leaf: Leaf = {
@@ -185,7 +187,7 @@ export function create(options: PartOptions): PlantPart {
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
       kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19) + 0.5 * tuck,
-      tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : 0.15 + 0.5 * r(20) * r(20),
+      tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : hero ? 0.35 + 0.6 * r(20) : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
@@ -245,7 +247,7 @@ export function create(options: PartOptions): PlantPart {
         leaf.pc[v] = onStalk ? 0 : bent
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
-        markList.push(threshold, bias, withered && !main ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
+        markList.push(threshold, bias, withered && dry ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
         planeList.push(x * full, (s + y) * full)
       }
     }
@@ -285,6 +287,8 @@ export function create(options: PartOptions): PlantPart {
     uMarks: { value: null as THREE.Texture | null },
     uDetailSize: { value: new THREE.Vector2(1, 1) },
     uVeinPad: { value: VEIN_PAD },
+    // The neighbor's blades stand between the lens and the sun, where the approved frames keep them a deep green.
+    uGlow: { value: options.variant === 0 ? 1 : 0.45 },
   }
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
   const mesh = partMesh(geometry, surface)
