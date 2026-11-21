@@ -97,7 +97,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * (uShare * thick * bank * (1.1 * exp(-theta / 0.06) + 0.3 * exp(-theta / 0.16) + 0.02 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * (uShare * thick * bank * (1.1 * exp(-theta / 0.06) + 0.12 * exp(-theta / 0.16) + 0.015 * exp(-theta / 0.5))), 0.0);
 }
 `
 
@@ -139,17 +139,17 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.45, highDeg: 1.5, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 0.9, highDeg: 2.1, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.2, highDeg: 2.5, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
 ]
 
 const VEILS = [
   { radiusM: 14, heightM: 30, scaleM: 8, share: 0.28 },
-  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.32 },
-  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.38 },
-  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.45 },
-  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.55 },
-  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.7 },
-  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.8 },
+  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.3 },
+  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.3 },
+  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.3 },
+  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.25 },
+  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.2 },
+  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.2 },
 ]
 
 const SUN_GAP_DEG = 9

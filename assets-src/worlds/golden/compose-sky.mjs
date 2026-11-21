@@ -65,7 +65,8 @@ const s = [0, 0, 0]
 for (let Y = 0; Y < HEIGHT; Y++) {
   const v = 1 - (Y + 0.5) / HEIGHT
   const el = 90 * v * v
-  const row = SUN.row - (el - SUN.elevationDeg) * rowsPerDeg
+  // The take has the sun on its bottom edge and the film has it 2.18 degrees up: the sky under the sun is the sky over it, turned over.
+  const row = SUN.row - Math.abs(el - SUN.elevationDeg) * rowsPerDeg
   const rowAway = AWAY_BOTTOM_ROW - el * rowsPerDeg
   const over = smooth(11, 15, el)
   const dim = 1 - 0.3 * smooth(30, 90, el)

@@ -23,6 +23,7 @@ export const stage: WorldStageMaker = (def) => {
   let open = 0
   let close = 0
   let width = 1
+  let samples = 1
   return {
     objects: [...far.meshes, ...air.meshes],
     load: (assets) => sky.load(assets),
@@ -30,11 +31,12 @@ export const stage: WorldStageMaker = (def) => {
       open = frame.time
       close = frame.timeClose
       width = frame.width
+      samples = frame.samples
       sky.prepare(frame.time, SKY_GAIN)
     },
     sample(camera, shutter) {
       const e = camera.projectionMatrix.elements
-      air.sample(open + (close - open) * shutter, def.wind, 2 / (e[0] * width))
+      air.sample(open + (close - open) * shutter, def.wind, 2 / (e[0] * width), samples)
     },
     sky(renderer, target, camera, _pixelX, _pixelY, across) {
       sky.render(renderer, target, camera, across)
