@@ -85,7 +85,7 @@ float sheen(float wet, float dew) {
 // The sky's light on a face. When the sun is low its glow fills only its own side of the horizon, so faces turned away from it get the cool sky overhead.
 vec3 groundAmbient(vec3 n) {
   float away = saturate(0.6 - dot(n.xz, normalize(uSunDir.xz + vec2(1e-5, 0.0)))) * (1.0 - smoothstep(0.1, 0.45, uSunDir.y));
-  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.5, 0.95 * away);
+  return mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(0.9, 1.45, 0.9) * 1.3, 0.95 * away);
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
@@ -234,10 +234,10 @@ void main() {
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool);
+  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit;
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += skyAmbient(reflect(-v, n)) * (0.03 + graze) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
