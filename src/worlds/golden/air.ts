@@ -4,7 +4,7 @@ import { makeSurface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
 
 const SEED = streamSeed('golden air')
-const PEAK = 0.5
+const PEAK = 0.35
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
