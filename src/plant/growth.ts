@@ -80,18 +80,22 @@ export function paleness(time: number): number {
 // The bud body grows into the disc.
 const bodyCurve = new Monotone([
   [bud0, 0],
-  [inStage(bud0, bud1, 0.053), 0.008],
-  [inStage(bud0, bud1, 0.263), 0.018],
-  [inStage(bud0, bud1, 0.579), 0.034],
-  [inStage(bud0, bud1, 0.79), 0.052],
-  [inStage(bud0, bud1, 0.947), 0.066],
-  [inStage(bloom0, bloom1, 0.25), discRadius * 0.925],
-  [inStage(bloom0, bloom1, 0.5), discRadius * 0.975],
+  [inStage(bud0, bud1, 0.053), 0.015],
+  [inStage(bud0, bud1, 0.263), 0.02],
+  [inStage(bud0, bud1, 0.579), 0.037],
+  [inStage(bud0, bud1, 0.79), 0.054],
+  [inStage(bud0, bud1, 0.947), 0.068],
+  [inStage(bloom0, bloom1, 0.25), discRadius * 0.96],
+  [inStage(bloom0, bloom1, 0.5), discRadius * 0.985],
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
+// A neighbor carries a smaller head than the plant.
+const NEIGHBOR_HEAD = 0.7
+const headScale = (): number => (variant === 0 ? 1 : NEIGHBOR_HEAD)
+
 export function bodyRadius(time: number): number {
-  return bodyCurve.at(time)
+  return bodyCurve.at(time) * headScale()
 }
 
 export function headOpen(time: number): number {
@@ -103,8 +107,8 @@ const turnStart = inStage(bloom0, bloom1, 0.25)
 const turnEnd = inStage(bloom0, bloom1, 0.9375)
 const depthShare = new Monotone([
   [bud0, 0.85],
-  [bloom0, 0.8],
-  [turnStart, 0.6],
+  [bloom0, 0.82],
+  [turnStart, 0.8],
   [turnEnd, 0.375],
 ])
 const neckLength = new Monotone([
@@ -119,12 +123,12 @@ export function bodyHalfDepth(time: number): number {
 }
 const elevationCurve = new Monotone([
   [tiltStart, 90],
-  [turnStart, 20],
+  [turnStart, 13],
   [turnEnd, 9],
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 25) * RAD
-const SUN_TURN = 30 * RAD
+const SUN_TURN = 34 * RAD
 const RAY_FIRST = 2.4
 
 // The head stands upright as a bud, leans over toward the light, then turns to the side it will face for good.
@@ -142,18 +146,18 @@ export function headAzimuth(time: number, inputs: PlantInputs): number {
 const outerBracts = new Monotone([
   [bud0, 34],
   [inStage(bud0, bud1, 0.579), 66],
-  [bloom0, 62],
-  [turnStart, 70],
-  [inStage(bloom0, bloom1, 0.6), 104],
-  [turnEnd, 126],
+  [bloom0, 76],
+  [turnStart, 132],
+  [inStage(bloom0, bloom1, 0.6), 136],
+  [turnEnd, 138],
 ])
 const innerBracts = new Monotone([
   [bud0, 14],
   [inStage(bud0, bud1, 0.579), 20],
-  [bloom0, 28],
-  [turnStart, 40],
-  [inStage(bloom0, bloom1, 0.6), 80],
-  [turnEnd, 104],
+  [bloom0, 34],
+  [turnStart, 58],
+  [inStage(bloom0, bloom1, 0.6), 92],
+  [turnEnd, 106],
 ])
 
 // Bracts stand in three rings: the inner ring closes over the bud, the outer ring stands away from it.
@@ -173,24 +177,25 @@ export function bractCurl(j: number, time: number): number {
 
 export function bractLength(j: number, time: number): number {
   const r = bodyRadius(time)
-  return r <= 0 ? 0 : Math.min(0.01 * smoothstep(0, 0.01, r) + r, 0.078) * (0.85 + 0.3 * rnd(31, j))
+  const wrapped = 1 - 0.3 * smoothstep(bloom0 - 2, turnStart, time)
+  return r <= 0 ? 0 : Math.min(0.01 * smoothstep(0, 0.01, r) + r, 0.046) * wrapped * (0.85 + 0.3 * rnd(31, j))
 }
 
 export function rayLength(k: number, time: number): number {
-  return rayFull * smootherstep(bloom0, bloom0 + 3, time) * (0.92 + 0.16 * rnd(40, k))
+  return rayFull * headScale() * smootherstep(bloom0 - 0.5, bloom0 + 2.5, time) * (0.92 + 0.16 * rnd(40, k))
 }
 
 // Rays open by sector: one side of the head is seconds ahead of the other.
 export function rayOpen(k: number, time: number): number {
   const around = (k / rayCount) * TAU
   const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.5 * rnd(41, k)
-  const start = bloom0 + 0.2 + delay * 2
-  return smootherstep(start, start + 2.6, time)
+  const start = bloom0 + 0.35 + delay * 1.8
+  return smootherstep(start, start + 2.8, time)
 }
 
 // A ray lies folded in over the face until it opens.
 export function rayAngle(k: number, time: number): number {
-  return lerp(-60, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
+  return lerp(-48, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
 }
 
 export function seedLeafLength(time: number): number {
@@ -248,15 +253,15 @@ export function leafStemFraction(i: number, time: number): number {
   const rank = i / (leafCount - 1)
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
   const settled = heightAt(leafBirth(i) + seconds * (1 - Math.exp(-age / seconds)))
-  return Math.min(0.97, ((0.9 + 0.07 * rank * rank) * settled) / h)
+  return lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank) * settled) / h), smoothstep(1.5, 7, age))
 }
 
 export function leafLength(i: number, time: number): number {
   const age = leafAge(i, time)
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
-  const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85))) * (0.88 + 0.24 * rnd(10, i))
-  return full * (1 - Math.exp(-Math.pow(age / 7, 1.1)))
+  const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
+  return full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
 }
 
 // Leaves open upward, settle outward and hang when the light is gone.
@@ -270,7 +275,7 @@ export function leafElevation(i: number, time: number, inputs: PlantInputs): num
 
 export function leafFold(i: number, time: number): number {
   const age = Math.max(0, leafAge(i, time))
-  return ((80 - 70 * smoothstep(0, 6, age) + (rnd(12, i) - 0.5) * 8) * Math.PI) / 180
+  return ((80 - 70 * smoothstep(0, 4, age) + (rnd(12, i) - 0.5) * 8) * Math.PI) / 180
 }
 
 export function leafDroop(i: number, inputs: PlantInputs): number {

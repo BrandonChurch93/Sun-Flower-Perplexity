@@ -36,7 +36,8 @@ const specs: Spec[] = [
   { key: 'rain', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX'], targets: [t('base', 'x', 0.62), t('base', 'y', 0.8), t('top', 'y', 0.12), t('horizon', 'y', 0.5)], checks: [t('tip', 'x', 0.61), t('tip', 'y', 0.17)] },
   { key: 'night', free: ['heightM', 'aimHeightM', 'frameX'], targets: [t('tip', 'x', 0.575), t('tip', 'y', 0.3), t('horizon', 'y', 0.76)], checks: [t('top', 'y', 0.265), t('stemLow', 'x', 0.585)] },
   { key: 'frost', free: ['heightM', 'aimHeightM', 'frameX'], targets: [t('head', 'x', 0.535), t('head', 'y', 0.3), t('horizon', 'y', 0.6)], checks: [t('stemLow', 'x', 0.555), t('headSpanX', 'x', 0.19), t('headSpanY', 'y', 0.23)] },
-  { key: 'bloom-opening', free: ['heightM', 'aimHeightM', 'frameX', 'azimuthDeg'], targets: [t('head', 'x', 0.565), t('head', 'y', 0.33), t('horizon', 'y', 0.47), t('sun', 'x', 0.15)], checks: [t('stemLow', 'x', 0.625), t('headSpanX', 'x', 0.32), t('headSpanY', 'y', 0.43), t('sun', 'y', 0.4)] },
+  // The stand-in bud is slimmer than the approved one, so the fit sits between the approved width and the approved height of the head.
+  { key: 'bloom-opening', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX', 'azimuthDeg'], targets: [t('head', 'x', 0.565), t('head', 'y', 0.345), t('horizon', 'y', 0.47), t('sun', 'x', 0.15), t('headSpanY', 'y', 0.465)], checks: [t('stemLow', 'x', 0.625), t('headSpanX', 'x', 0.32), t('sun', 'y', 0.4)] },
   { key: 'bloom-hero', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX'], targets: [t('head', 'x', 0.545), t('head', 'y', 0.42), t('horizon', 'y', 0.47), t('headSpanY', 'y', 0.63)], checks: [t('headSpanX', 'x', 0.31), t('stemLow', 'x', 0.615)] },
   { key: 'field', free: ['distanceM', 'heightM', 'aimHeightM', 'frameX', 'azimuthDeg'], targets: [t('base', 'x', 0.505), t('base', 'y', 0.9), t('head', 'y', 0.505), t('horizon', 'y', 0.215), t('sun', 'x', 0.2)], checks: [t('head', 'x', 0.487), t('sun', 'y', 0.17)] },
 ]
@@ -258,6 +259,14 @@ function fitCamera(): void {
     for (const p of PARAMS) if (k[p] !== was[p]) console.log(`  ${p}: ${was[p]} -> ${k[p]}`)
     for (const target of spec.targets) console.log(`  fit   ${target.what} ${target.axis}: ${measure(spec, target.what)[target.axis].toFixed(3)} (approved ${target.value})`)
     for (const target of spec.checks) console.log(`  check ${target.what} ${target.axis}: ${measure(spec, target.what)[target.axis].toFixed(3)} (approved ${target.value})`)
+    if (spec.targets.some((target) => target.what === 'head')) {
+      const h = headAt(fk.time, inputsOf(worldIdOf(fk.unit)))
+      const pose = poseOf({ ...rigOf(k), fNumber: 4 }, new THREE.Vector3())
+      const toCamera = pose.position.clone().sub(point.set(h.center.x, h.center.y, h.center.z)).normalize()
+      const off = Math.acos(Math.max(-1, Math.min(1, toCamera.x * h.axis.x + toCamera.y * h.axis.y + toCamera.z * h.axis.z))) / RAD
+      const side = pose.right.x * h.axis.x + pose.right.y * h.axis.y + pose.right.z * h.axis.z
+      console.log(`  face  ${off.toFixed(1)} deg off the camera, turned to the ${side < 0 ? 'left' : 'right'} of the frame`)
+    }
   }
   for (const time of [0, 52, 60]) {
     const k = keyAt(time)

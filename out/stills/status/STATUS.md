@@ -1,11 +1,10 @@
-# Status 11
+# Status 13
 
-2026-11-21 04:22 UTC
+2026-11-21 05:06 UTC
 
-- Status 11 · Phase 2 · round 1. Blockout round 1 has started. The machine checks are all green and the pack for the critic is rendering now. Since the last status: the frost world no longer shows the far field as a pale wall, the night plant holds its leaves up, the reference board (15 parts, 90 photographs, 4 motion studies) and the shot list are written, and the ten judged frames are listed. The first sheet shows the film from 0 to 19 s: the sprout breaks the soil, straightens, opens its seed leaves, and the cut to rain lands with the plant in the same place. Everything drawn is still a stand-in.
-- Next: A fresh critic judges the camera move, the framing at each key, the pace of growth and the cuts. Then the fix pass and the first whole-film draft. Time used: 3.5 h of 30 h.
+- Status 13 · Phase 2 · round 1. Round 1 of the blockout is closed: score 7, not passed because of one severe issue. The fix pass took 37 minutes: the bud is seated in the stem, the crowns at night and frost are fuller, the bloom-opening head is lower and closed over its disc, field heads are smaller. One issue stays open for the look lock: the large foliage at the left edge of the two bloom frames. Tests 68 of 68 and all 12 machine checks are green.
+- Next: Round 2, an extra round the clock still allows: new pack of the fixed film, a fresh critic from another model family. Time used: 4.2 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: The film from 0 to 19 s, twelve frames in order
-- `status-2.jpg`: Dawn sprout, dawn seedling, rain, night: approved image left, film frame right
-- `status-3.jpg`: Frost, bloom opening, bloom hero, field: approved image left, film frame right
+- `status-1.jpg`: Whole film after the fix pass, 12 frames in order
+- `status-2.jpg`: The cuts into night, frost and bloom: last frame before (left), first frame after (right)

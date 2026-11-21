@@ -359,6 +359,10 @@ function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: number, ri
   }
 }
 
+// How deep the bud sits on the end of the stem: under 1 its base is inside the stem's end.
+const SEAT = 0.86
+const NECK_FLARE = 0.44
+
 interface Head { cx: number; cy: number; cz: number; ax: number; ay: number; az: number; px: number; py: number; pz: number; qx: number; qy: number; qz: number; radius: number; depth: number }
 const head: Head = { cx: 0, cy: 0, cz: 0, ax: 0, ay: 1, az: 0, px: 1, py: 0, pz: 0, qx: 0, qy: 0, qz: 1, radius: 0, depth: 0 }
 
@@ -385,9 +389,9 @@ function layHead(time: number, length: number): Head {
   head.qz = head.ax * py - head.ay * px
   head.radius = bodyRadius(time)
   head.depth = bodyHalfDepth(time)
-  head.cx = end.x + head.ax * head.depth
-  head.cy = end.y + head.ay * head.depth
-  head.cz = end.z + head.az * head.depth
+  head.cx = end.x + head.ax * head.depth * SEAT
+  head.cy = end.y + head.ay * head.depth * SEAT
+  head.cz = end.z + head.az * head.depth * SEAT
   return head
 }
 
@@ -396,9 +400,12 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
   const plan = planOf(d)
   layStem(time, inputs)
   const grown = smoothstep(0, 0.006, heightAt(time))
+  const capped = d.stemRings >= 4
+  const flared = d.stemRings >= 30
   for (let r = 0; r < d.stemRings; r++) {
-    const u = r / (d.stemRings - 1)
-    const radius = r === d.stemRings - 1 ? 0 : stemRadius(time, u) * grown
+    const u = capped ? Math.min(1, r / (d.stemRings - 2)) : r / (d.stemRings - 1)
+    let radius = r === d.stemRings - 1 ? 0 : stemRadius(time, u) * grown
+    if (flared && r === d.stemRings - 2) radius = Math.max(radius, NECK_FLARE * bodyRadius(time))
     const n = stemNode(u, length)
     for (let s = 0; s < d.stemSides; s++) {
       const a = (s / (d.stemSides - 1)) * Math.PI * 2
@@ -488,7 +495,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const back = -0.35 * h.depth
     const size = bractLength(j, time)
     const f = setFrame(h.cx + h.ax * back + ox * at, h.cy + h.ay * back + oy * at, h.cz + h.az * back + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - bractAngle(j, time))
-    blade(pos, plan.bract0 + m * d.bractU * d.bractV, d.bractU, d.bractV, f, size, size * 0.24 * wide(d.bractStep), pointOutline, -bractCurl(j, time), 0.3, 0)
+    blade(pos, plan.bract0 + m * d.bractU * d.bractV, d.bractU, d.bractV, f, size, size * 0.4 * wide(d.bractStep), pointOutline, -bractCurl(j, time), 0.3, 0)
   }
   for (let m = 0; m < plan.rays; m++) {
     const k = m * d.rayStep
@@ -502,7 +509,7 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     const front = 0.5 * h.depth
     const size = rayLength(k, time)
     const f = setFrame(h.cx + h.ax * front + ox * at, h.cy + h.ay * front + oy * at, h.cz + h.az * front + oz * at, h.ax, h.ay, h.az, ox, oy, oz, Math.PI / 2 - rayAngle(k, time))
-    blade(pos, plan.ray0 + m * d.rayU * d.rayV, d.rayU, d.rayV, f, size, size * 0.2 * wide(d.rayStep), rayOutline, 0.12 * rayOpen(k, time), 1.0 * (1 - rayOpen(k, time)), 0)
+    blade(pos, plan.ray0 + m * d.rayU * d.rayV, d.rayU, d.rayV, f, size, size * 0.2 * wide(d.rayStep), rayOutline, 0.12 * rayOpen(k, time), 0.4 * (1 - rayOpen(k, time)), 0)
   }
 
   if (nor) {
