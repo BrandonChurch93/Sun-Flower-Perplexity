@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 13:24 UTC · Round 5 of bloom starts on 11207fd: third merges after round 4 (stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens)
-- Last status: 29 · 2026-11-21 12:56 UTC · Phase 3 · unit bloom
+- Last push: 2026-11-21 13:25 UTC · Status 30: round 5 of bloom starts
+- Last status: 30 · 2026-11-21 13:24 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 13:24 UTC · status 30 · Phase 3 · unit bloom · `status-1.jpg`: 45.0 s · approved on the left, ours on the right (judged commit, review tier); `status-2.jpg`: 50.5 s · approved on the left, ours on the right (judged commit, review tier); `status-3.jpg`: The head at 50.5 s · approved, the tree round 4 judged, the tree round 5 judges; `status-4.jpg`: The opening every 0.25 s from 44.5 to 51.5 s on the new schedule (draft tier)
 - 2026-11-21 12:56 UTC · status 29 · Phase 3 · unit bloom · `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier); `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier); `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left; `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
 - 2026-11-21 11:59 UTC · status 28 · Phase 3 · unit bloom · `status-1.jpg`: 45 s · approved left, build right (review tier); `status-2.jpg`: 50.5 s · approved left, build right (review tier); `status-3.jpg`: 45 s · the bud at native size, approved left, build right; `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
 - 2026-11-21 11:34 UTC · status 27 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s), approved left, build right, review tier; `status-2.jpg`: Frame 1515 (50.5 s), approved left, build right, review tier; `status-3.jpg`: Head at 45.0 s, approved left, build right; `status-4.jpg`: Head at 50.5 s, approved left, build right
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 08:37 UTC · status 21 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350, all parts real (top) and the approved bloom-opening (bottom); `status-2.jpg`: Frame 1515, all parts real (top) and the approved bloom-hero (bottom); `status-3.jpg`: Head at 1350: build (left), approved (right); `status-4.jpg`: Head at 1515: build (left), approved (right)
 - 2026-11-21 08:04 UTC · status 20 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45 s), first merge of the real head; `status-2.jpg`: Frame 1515 (50.5 s), first merge of the real head; `status-3.jpg`: Frame 1350, the head at full size; `status-4.jpg`: Frame 1515, the head at full size
 - 2026-11-21 07:38 UTC · status 19 · Phase 3 · `status-1.jpg`: Frame 1350, what the lens holds: green is inside the sharp zone (left), the frame (right); `status-2.jpg`: Frame 1515, the same: the open head is sharp; `status-3.jpg`: Frames 1500 and 1530 laid over each other (red and cyan): how far the wind moves the plant and the field in one second
-- 2026-11-21 07:17 UTC · status 18 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 today, the stand-in bud lit by the shared skin; `status-2.jpg`: Frame 1515 today, the stand-in open head; `status-3.jpg`: Approved image for 1350; `status-4.jpg`: Approved image for 1515
 
 ## Clock
 
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 6.42 h |
+| 3 | 9.00 h | 6.50 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 12.47 h |
+| Whole build | 30.00 h | 12.55 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -659,6 +659,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 12:40 UTC · Round 4 judged (R1 4, R3 5, R4 6); prep merges for round 5 on main: leaves, disc, ground, skin, lens, golden, companion, hairs with stem, petals, bud, field
 - 2026-11-21 12:57 UTC · Round 4 scorecards and summary (not a pass); Status 29; second merges after round 4: field, disc, petals, the neighbors' stalk halo
 - 2026-11-21 13:24 UTC · Round 5 of bloom starts on 11207fd: third merges after round 4 (stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens)
+- 2026-11-21 13:25 UTC · Status 30: round 5 of bloom starts
 
 ## Session log
 
@@ -727,4 +728,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: 45 s · approved left, build right (review tier); 50.5 s · approved left, build right (review tier); 45 s · the bud at native size, approved left, build right; Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below.
 - Status 29, 2026-11-21 12:56 UTC, Phase 3 · unit bloom. Round 4 is judged and is not a pass: match 4, surface 5, motion 6, the jury 4 of 10 votes against 6 of 10 for the approved pair (passes at the edge), all 13 machine checks green, sharpness at 45 s 0.722 of the 0.8 needed. Since the judged frames, 15 merges are on main: the bud shows its lifted orange rays and a striped cap, the neighbor's upper leaf stands in front of the sun at both keys, the field's leaves break up, the disc floor is closed. Open against the approved: the dense dark field, the tree line, the head's cupped right side at 50.5 s, the leaf outlines. Next: Twelve agents work the critics' notes until 13:20 UTC; the rays' opening has its own owner now. Round 5 renders at about 13:30 UTC, round 6 at about 15:10 if the clock allows. Time used: 12.1 h of 30 h.
   Pictures: Round 4 judged frame, 45.0 s (final tier); Round 4 judged frame, 50.5 s (final tier); Main now at 45.0 s, right, beside the approved image, left; Main now at 50.5 s, right, beside the approved image, left.
+- Status 30, 2026-11-21 13:24 UTC, Phase 3 · unit bloom. Round 5 of the bloom unit started 13:26 UTC on commit 11207fd, after a third set of merges from eleven agents: the sun's glare now sits at the lower edge of the neighbor's leaf; true black is taken down by a toe in the lens; the rays past the first quarter open one by one and arrive cupped, so the head at 50.5 s no longer reads flat on; bracts stay up over the ray feet at 45 s; the far field ends in two rows of tree crowns. Measured at the review tier: 92 of 92 tests, M1 and M2 pass, M3 0.825 at 50.5 s (passes) and 0.755 at 45 s (fails, needs 0.8). Next: The round 5 chain runs until about 14:02 UTC (machine checks, the two judged stills at the final tier, the packs); then three critics and ten jurors answer. Meanwhile each agent gets its answers and its round 6 job: leaf interiors, lower bracts and the stem's hairs inside the sharp zone for M3 at 45 s; a denser, darker field; the right side of the head opening sooner. Time used: 12.6 h of 30 h.
+  Pictures: 45.0 s · approved on the left, ours on the right (judged commit, review tier); 50.5 s · approved on the left, ours on the right (judged commit, review tier); The head at 50.5 s · approved, the tree round 4 judged, the tree round 5 judges; The opening every 0.25 s from 44.5 to 51.5 s on the new schedule (draft tier).
 
