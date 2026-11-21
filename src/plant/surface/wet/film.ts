@@ -7,8 +7,8 @@ const float WET_WAX = 0.4;
 const float WET_DARK = 0.3;
 const float WET_SHEER = 1.0;
 // How far the water levels the relief under it: little where the skin is damp, more under a standing sheet.
-const float WET_LEVEL_THIN = 0.1;
-const float WET_LEVEL_DEEP = 0.3;
+const float WET_LEVEL_THIN = 0.25;
+const float WET_LEVEL_DEEP = 0.45;
 // The share of the sky behind it that a soaked blade passes between its veins, and how little a vein passes.
 const float WET_PASS = 0.05;
 const float WET_VEIN = 0.03;
