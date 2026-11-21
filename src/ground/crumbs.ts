@@ -162,7 +162,8 @@ void main() {
   vec2 uv = TURN_K * lay * (uTiles.x * uScales.x) + vec2(vSeed.x * 0.37, vSeed.x * 0.61);
   vec4 cD = texture(tColor, uv);
   vec4 dD = texture(tData, uv);
-  vec2 g = dD.rg * 2.0 - 1.0;
+  vec4 grit = texture(tData, TURN_K * uv * 3.3 + vec2(0.17, 0.59));
+  vec2 g = dD.rg * 2.0 - 1.0 + (grit.rg * 2.0 - 1.0) * TURN_K * 0.9;
   vec3 n = normalize(mix(face, normalize(vNormal), 0.85) + vec3(g.x, 0.0, g.y) * mix(1.1, 0.25, vSeed.z));
   vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
@@ -173,13 +174,13 @@ void main() {
 
   vec2 p = vWorld.xz;
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
-  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a));
+  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
   vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + groundAmbient(n) * open * proud(vWorld.y));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.35, 0.1, uWet) * open;
-  color += uSunColor * sparkle(vWorld, v, normalize(mix(n, vNormal, 0.5))) * lit * gloss * 20.0;
+  color += uSunColor * sparkle(vWorld, v, normalize(mix(n, vNormal, 0.5))) * lit * gloss * 26.0;
   vec3 cell = vWorld * 650.0;
   float bead = step(0.9, hash31(floor(cell))) * smoothstep(0.34, 0.22, length(fract(cell) - 0.5)) * uDew * smoothstep(-0.1, 0.5, n.y) * (1.0 - smoothstep(0.25, 0.9, length(fwidth(cell))));
   color = mix(color, color * 0.6, bead) + bead * smoothstep(0.2, 0.05, length(fract(cell) - 0.5 + uSunDir * 0.12)) * (uSunColor * 2.0 * mix(0.2, 1.0, lit) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.5);

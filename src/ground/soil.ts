@@ -90,7 +90,7 @@ vec3 groundAmbient(vec3 n) {
 }
 // Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
 vec3 proud(float heightM) {
-  return mix(vec3(1.0), mix(vec3(0.6), vec3(2.0, 1.55, 1.7), smoothstep(-0.002, 0.014, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+  return mix(vec3(1.0), mix(vec3(0.85), vec3(2.1, 1.65, 1.8), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them.
 float sparkle(vec3 world, vec3 v, vec3 n) {
@@ -259,7 +259,7 @@ void main() {
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
-  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 20.0;
+  color += uSunColor * sparkle(vWorld, v, n) * lit * gloss * fade * 26.0;
   if (uDew > 0.0) {
     vec2 cell = p / 0.0021;
     vec2 id = floor(cell);
