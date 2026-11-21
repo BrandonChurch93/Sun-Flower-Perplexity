@@ -55,9 +55,11 @@ void main() {
   float own = b.w;
   float n = float(needle);
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
-  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * 0.7);
-  // Most crystals are small and a few are large.
-  float size = a.w * plantSize() * (0.35 + 1.65 * hash(own, 4.0) * hash(own, 5.0)) * uPlantFrost;
+  // Most crystals are the low crust of an edge, tufts that point every way. One in four is a spike that stands straight off it.
+  bool spike = hash(own, 4.0) > 0.74;
+  float h5 = hash(own, 5.0);
+  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.5 : 1.8));
+  float size = a.w * plantSize() * (spike ? 0.7 + 1.4 * h5 * h5 : 0.2 + 0.3 * h5) * uPlantFrost;
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
   float high = smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
   float from = MELT_FROM_S + 6.0 * hash(own, 6.0);
@@ -69,7 +71,7 @@ void main() {
   vec3 e2 = cross(grow, e1);
   float turn = 6.2832 * hash(own, 7.0 + n);
   vec3 aside = e1 * cos(turn) + e2 * sin(turn);
-  bool feather = hash(own, 8.0) < 0.4;
+  bool feather = spike && hash(own, 8.0) < 0.5;
   float many = 2.0 + floor(3.99 * hash(own, 9.0));
   vec3 foot = root;
   vec3 axis = grow;
@@ -87,8 +89,8 @@ void main() {
     }
   } else {
     // A cluster: two to five needles from one foot.
-    axis = normalize(grow + aside * (needle == 0 ? 0.0 : 0.5 + 0.9 * hash(own, 14.0 + n)));
-    reach = n < many ? size * (needle == 0 ? 1.0 : 0.35 + 0.6 * hash(own, 15.0 + n)) : 0.0;
+    axis = normalize(grow + aside * (needle == 0 ? 0.0 : spike ? 0.35 + 0.5 * hash(own, 14.0 + n) : 0.6 + 1.2 * hash(own, 14.0 + n)));
+    reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.5 + 0.5 * hash(own, 15.0 + n)) : 0.0;
     wide = 0.09 * size;
   }
   wide = max(wide, (needle == 0 ? 0.00014 : 0.0001) * plantSize());
