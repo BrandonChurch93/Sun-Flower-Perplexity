@@ -78,7 +78,7 @@ void main() {
   // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, strongest in the middle tones.
   float mid = 1.0 - abs(2.0 * dot(c, vec3(0.2126, 0.7152, 0.0722)) - 1.0);
   vec3 fine = tri3(gl_FragCoord.xy, uSeed);
-  float body = 0.8 * (fine.r + fine.g + fine.b) * 0.5774 + 0.6 * clump(gl_FragCoord.xy * 0.53 + 11.0, uSeed + 0.19);
+  float body = (fine.r + fine.g + fine.b) * 0.5774 + 0.5 * clump(gl_FragCoord.xy * 0.53 + 11.0, uSeed + 0.19);
   c += (vec3(body) + 0.22 * (fine - (fine.r + fine.g + fine.b) / 3.0) * 1.5) * (uGrain * (0.35 + 0.65 * mid));
   c += tri3(gl_FragCoord.xy + 113.0, uSeed + 0.71) / 255.0;
   outColor = vec4(c, 1.0);
