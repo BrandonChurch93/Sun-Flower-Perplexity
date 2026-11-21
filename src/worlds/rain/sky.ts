@@ -8,7 +8,7 @@ const RAD = Math.PI / 180
 const CENTER_DEG = -170.5
 // Where the band is brightest: the sun stands there, behind the cloud.
 const SUN_BEHIND_CLOUD_DEG = -163
-const FLASH_BEARING_DEG = -176
+const FLASH_BEARING_DEG = -160
 const FLASH_ELEVATION_DEG = 9
 const FAR_RAIN: [number, number, number] = [0.3, 0.36, 0.4]
 const DRIFT_TURNS_PER_SECOND = 0.0002
@@ -61,14 +61,17 @@ vec3 rainSky(vec3 d, float lod) {
   float toSun = (turn + uRainSkySunTurn) / 0.45;
   float open = (1.0 - cloud) * smoothstep(0.0, 0.05, up) * exp(-up / 0.09) * (0.3 + 0.7 * exp(-toSun * toSun));
   color *= mix(vec3(1.0), vec3(2.1, 1.85, 1.5), open);
+  // Thin grey cloud trails down across the upper band, thicker away from the sun, so the cloud's foot is soft and the band is brightest low.
+  float wisp = smoothstep(0.035, 0.1, up) * (0.45 + 0.55 * valueNoise(vec2(turn * 9.0 + 3.0, up * 30.0)));
+  color = mix(color, uRainSkyTone * 0.9, (1.0 - cloud) * 0.75 * wisp * (1.0 - 0.5 * exp(-toSun * toSun)));
   // Far rain hangs between the lens and the sky, lit grey by the band: an even haze that thickens toward the land, and leaning curtains under the cloud that drift.
   float lean = turn - 0.21 * up;
   float curtain = valueNoise(vec2(lean * 7.0 + uTime * 0.012, 2.0)) * 0.6 + valueNoise(vec2(lean * 31.0 + uTime * 0.03, up * 5.0 + 9.0)) * 0.4;
   color = mix(color, uRainSkyTone, 0.3 * smoothstep(0.3, 0.8, curtain) * cloud * exp(-up / 0.22));
   color = mix(color, uRainSkyTone, 0.55 * exp(-up / 0.06) * (1.0 - 0.6 * exp(-toSun * toSun)));
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
-  float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.035);
-  color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.25 + 1.6 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
+  float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.012);
+  color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.05 + 0.8 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
   return color;
 }
 `
