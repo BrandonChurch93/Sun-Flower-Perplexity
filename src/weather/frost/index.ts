@@ -27,11 +27,11 @@ out float vFade;
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
 // Ice in its own shade is lit by the sky alone and goes a little blue.
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
-const float MATT = 0.3;
-const float THROUGH = 0.35;
+const float MATT = 0.15;
+const float THROUGH = 0.2;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
-const float SKY = 0.75;
+const float SKY = 1.6;
 // Frost grows toward the side the air came from.
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
 const float MELT_FROM_S = 38.0;
@@ -91,7 +91,7 @@ void main() {
     reach = n < many ? size * (needle == 0 ? 1.0 : 0.35 + 0.6 * hash(own, 15.0 + n)) : 0.0;
     wide = 0.09 * size;
   }
-  wide = max(wide, 0.00004 * plantSize());
+  wide = max(wide, (needle == 0 ? 0.00014 : 0.0001) * plantSize());
 
   vec3 here = foot + axis * (reach * end);
   vec3 toEye = normalize(uCamPos - here);
@@ -117,8 +117,8 @@ void main() {
   float glint = pow(abs(dot(facet, mirror)), GLINT_SHARP);
   float behind = pow(saturate(-dot(toEye, uSunDir)), 3.0);
   float clear = 1.0 - 0.6 * melt;
-  vSun = uSunColor * (ICE * (MATT * (0.55 + 0.45 * abs(dot(facet, uSunDir))) + THROUGH * behind) * clear + GLINT * glint);
-  vSky = ICE * ICE_SHADE * (SKY * clear);
+  vSun = uSunColor * (ICE * (MATT * (0.1 + 0.9 * abs(dot(facet, uSunDir))) + THROUGH * behind) * clear + GLINT * glint);
+  vSky = ICE * ICE_SHADE * (SKY * clear * (0.75 + 0.5 * hash(own, 17.0 + n)));
   vWorld = world;
   vLitAt = root + grow * (0.004 * plantSize());
   vDepth = depth;
