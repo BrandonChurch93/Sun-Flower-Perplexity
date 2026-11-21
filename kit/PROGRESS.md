@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 17:17 UTC · Round 7: measures green at final (M3 0.802), pack's judged frame pixel identical to the Builder's own
+- Last push: 2026-11-21 17:20 UTC · Round 7: R3 answer (4), word for word
 - Last status: 39 · 2026-11-21 17:10 UTC · Phase 4 · unit field · round 7
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -813,7 +813,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Pack (`npm run pack -- --phase 4 --round 7 --unit field`): built 16:46:29 to 17:01:44 UTC on `leaf_builder`'s VM (4 cores) in a second worktree at `566eb48`, exit 0, log `out/work/logs/r7-pack-leaf.log`; six files came back as attachments at 17:03 UTC and stand in `out/work/packs/round-007/R1` to `R4` with the key `out/work/packs/keys/round-007.json`. Checked by the Builder before any critic got a file: the key names commit `566eb48`, engine `8624708e4ca1ecb4`, unit `field` `6af746595ab9c64b`, tier `final`; all 12 sha256 sums equal the list `leaf_builder` sent; every image looked at (`out/work/scratch/r7-pack-look-1.jpg`, `-2.jpg`); and the judged frame `R1/set-A-01-b.png` is pixel identical (largest difference 0 over 1400 x 788) to the Builder's own `final` still of 1755 from the measure, put through the pack's own scaling (`out/work/scratch/pack-check.cjs`). So a frame rendered on a builder's 4 core VM and on the Builder's 2 core VM is the same frame
 - [ ] R1 answer
 - [ ] R2 jury answers
-- [ ] R3 answer
+- [x] R3 answer: `reviewer_66`, Claude family, sent 17:18 UTC, answered 17:20 UTC. Score 4, not a pass: 6 major, 3 minor. `scorecards/round-007/R3.json`, word for word. Major: the far plain under the sun ("a thin dark, jagged, aliased line runs along the top of the far plain like the edge of a cut-out card"), the far end of the crop ("the field ends in a hard straight horizontal line against a featureless tan/brown band"), the hills ("a single flat near-black silhouette with a blobby, regular outline and no aerial-perspective layering"), the leaves of both plants ("a single desaturated grey-blue green with a waxy sheen, they look like flat cards with a bright painted rim, and no light passes through them even with the sun behind"), the stems ("smooth tubes with a single thin bright rim line; no hairs are seen against the backlight"), the crop ("near-identical copies, all the same size, all facing the lens at the same angle in an even scatter"). Minor: no contact shadow or soil where the stems enter the grass, petals uniform, grass an even carpet with dry tufts in regular diagonal bands
 - [ ] R4 answer
 - [ ] Fixes
 - [ ] Summary, status, push
@@ -913,6 +913,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 17:09 UTC · Round 7: machine checks (13 green, G3 on its second run after a harness time limit), pack arrived; line news; frost lens f/11
 - 2026-11-21 17:10 UTC · Status 39: round 7 checked (13 green, pack here), frost on the line with its lens at f/11; 12 heads merged on the line
 - 2026-11-21 17:17 UTC · Round 7: measures green at final (M3 0.802), pack's judged frame pixel identical to the Builder's own
+- 2026-11-21 17:20 UTC · Round 7: R3 answer (4), word for word
 
 ## Session log
 
