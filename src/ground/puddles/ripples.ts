@@ -3,16 +3,19 @@ import { glslCommon, glslHead, shared } from '../../core/shading.ts'
 import { basin } from './basin.ts'
 import { LANDING_FLOATS } from './landings.ts'
 
-// A ring lives this long from the landing of its drop.
-export const RING_LIFE_S = 2.6
+// A ring fades in this many seconds, the smallest drop's and what the largest adds, and is gone after this many fades.
+const RING_FADE_S = [0.12, 0.5]
+const RING_FADES = 3
+// The longest a ring lives from the landing of its drop: of a heavy drop, and of the fine rain.
+export const RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1])
+export const FINE_RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1] * 0.37)
 const SEGMENTS = 48
-const SIZE = 1024
+const SIZE = 2048
 
 const vertex = /* glsl */ `${glslHead}${glslCommon}
 ${basin}
 in vec2 ring;
 in vec4 drop;
-uniform vec3 uBox;
 uniform vec2 uSpan;
 out vec2 vOff;
 flat out vec4 vWave;
@@ -21,20 +24,21 @@ void main() {
   float t = mix(uSpan.x, uSpan.y, uShutter) - drop.z;
   float size = drop.w / 0.0022;
   float seed = hash21(drop.xy * 91.7);
-  float life = ${RING_LIFE_S.toFixed(2)} * (0.7 + 0.3 * size);
-  float amp = smoothstep(0.0, 0.02, t) * exp(-t / (0.6 + 0.5 * size)) * (1.0 - smoothstep(0.7 * life, life, t)) * (0.2 + 0.8 * size);
+  float fade = ${RING_FADE_S[0].toFixed(2)} + ${RING_FADE_S[1].toFixed(2)} * size;
+  float life = ${RING_FADES.toFixed(1)} * fade;
+  float rc = 0.002 + (0.18 + 0.1 * size + 0.03 * seed) * t;
+  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.05 + 0.09 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size;
   amp *= smoothstep(0.0003, 0.003, waterDepth(drop.xy));
-  if (amp <= 0.0) {
+  if (amp < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  float rc = 0.003 + (0.19 + 0.05 * seed) * t;
-  float w = 0.004 + 0.03 * t;
+  float w = 0.003 + 0.008 * size + (0.02 + 0.05 * size) * t;
   float a = ring.x * 6.2831853;
-  vOff = vec2(cos(a), sin(a)) * mix(max(rc - 6.0 * w, 0.0), (rc + 2.3 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 0.8 * amp, 0.008 + 0.009 * t + 0.007 * seed);
+  vOff = vec2(cos(a), sin(a)) * mix(max(rc - 4.0 * w, 0.0), (rc + 2.2 * w) * 1.01, ring.y);
+  vWave = vec4(rc, w, 2.6 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
-  gl_Position = vec4((drop.xy + vOff - uBox.xy) * uBox.z, 0.0, 1.0);
+  gl_Position = vec4(boxPlace(drop.xy + vOff), 0.0, 1.0);
 }
 `
 
@@ -47,7 +51,7 @@ void main() {
   float r = length(vOff);
   float x = (r - vWave.x) / vWave.y;
   x *= x < 0.0 ? 0.55 : 1.0;
-  float s = vWave.z * exp(-x * x) * sin(6.2831853 * (r - vWave.x) / vWave.w + vPhase) / sqrt(1.0 + r / 0.03);
+  float s = vWave.z * exp(-x * x) * sin(6.2831853 * (r - vWave.x) / vWave.w + vPhase) / sqrt(1.0 + r / 0.02);
   outColor = vec4(vOff / max(r, 1e-5) * s, 0.0, 1.0);
 }
 `

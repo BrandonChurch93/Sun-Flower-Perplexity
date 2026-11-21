@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLayerSalt, skylineRing, type SkylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -65,7 +65,7 @@ void main() {
   float tone = valueNoise(p * 0.011 + 9.0);
   vec3 albedo = mix(vec3(0.03, 0.045, 0.022), vec3(0.035, 0.032, 0.028), smoothstep(0.45, 0.55, kind)) * (0.8 + 0.4 * tone);
   // Soaked land throws the bright band back toward the lens at this flat an angle.
-  vec3 color = albedo * skyAmbient(vec3(0.0, 1.0, 0.0)) + 0.1 * uSkyHorizon * smoothstep(0.35, 0.8, valueNoise(p * 0.05 + 2.0));
+  vec3 color = albedo * skyAmbient(vec3(0.0, 1.0, 0.0)) + 0.03 * uSkyHorizon * smoothstep(0.35, 0.8, valueNoise(p * 0.05 + 2.0));
   outColor = finish(aerial(color, vWorld), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -96,31 +96,31 @@ const TONES: [number, number, number][] = [
   [0.2, 0.25, 0.27],
   [0.16, 0.21, 0.22],
   [0.1, 0.14, 0.14],
-  [0.05, 0.08, 0.07],
-  [0.03, 0.05, 0.045],
-  [0.02, 0.035, 0.03],
-  [0.018, 0.03, 0.027],
-  [0.02, 0.03, 0.025],
-  [0.025, 0.03, 0.022],
+  [0.03, 0.055, 0.055],
+  [0.016, 0.034, 0.036],
+  [0.012, 0.026, 0.026],
+  [0.01, 0.022, 0.022],
+  [0.014, 0.022, 0.02],
+  [0.018, 0.024, 0.02],
 ]
 
 const VEILS = [
   { radiusM: 1.6, heightM: 0.5, scaleM: 0.035, share: 0.05 },
   { radiusM: 3, heightM: 0.8, scaleM: 0.05, share: 0.06 },
   { radiusM: 6, heightM: 1.2, scaleM: 0.08, share: 0.09 },
-  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.12 },
-  { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.15 },
-  { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.2 },
-  { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.4 },
-  { radiusM: 600, heightM: 60, scaleM: 6, share: 0.4 },
+  { radiusM: 12, heightM: 2, scaleM: 0.14, share: 0.08 },
+  { radiusM: 24, heightM: 4, scaleM: 0.25, share: 0.08 },
+  { radiusM: 48, heightM: 8, scaleM: 0.5, share: 0.1 },
+  { radiusM: 150, heightM: 20, scaleM: 1.6, share: 0.12 },
+  { radiusM: 600, heightM: 60, scaleM: 6, share: 0.15 },
 ]
 
-export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void }
+export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; setTime(time: number): void }
 
 export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, number, number], mist: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   const flash = { value: 0 }
-  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.0015 }, uFlash: flash }
+  const airUniforms = { uAirTone: { value: new THREE.Vector3().fromArray(airTone) }, uAir: { value: 0.00028 }, uFlash: flash }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -159,6 +159,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
   }
   add(land, makeSurface({ name: 'rain far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
+  const rings: SkylineRing[] = []
   SKYLINE.forEach((layer, i) => {
     const surface = makeSurface({
       name: `rain ${layer.name}`,
@@ -168,7 +169,9 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
       side: THREE.DoubleSide,
       castShadow: false,
     })
-    add(skylineStrip(i, skylineAzimuthDeg), surface.main, 0)
+    const ring = skylineRing(i, skylineAzimuthDeg)
+    rings.push(ring)
+    add(ring.geometry, surface.main, 0)
   })
 
   VEILS.forEach((veil, i) => {
@@ -183,5 +186,5 @@ export function makeFarLayers(skylineAzimuthDeg: number, airTone: [number, numbe
     })
     add(ringStrip(96, () => ({ radius: veil.radiusM, top: veil.heightM })), surface.main, 43 + (VEILS.length - i) * 0.01)
   })
-  return { meshes, flash: (amount) => { flash.value = amount } }
+  return { meshes, flash: (amount) => { flash.value = amount }, setTime: (time) => { for (const ring of rings) ring.setTime(time) } }
 }
