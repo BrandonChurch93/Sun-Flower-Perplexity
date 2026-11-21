@@ -97,9 +97,9 @@ function makeRays(seed: number): Ray[] {
     const strong = r(5, k) > 0.6 ? 3.6 : 1
     return {
       rank,
-      short: r(37, k) < 0.16 ? 0.8 + 0.08 * r(38, k) : 1,
-      nod: r(39, k) < 0.22 ? 0.5 + 0.6 * r(46, k) : 0,
-      width: 0.36 + 0.07 * r(1, k),
+      short: r(37, k) < 0.2 ? 0.74 + 0.12 * r(38, k) : 1,
+      nod: r(39, k) < 0.3 ? 0.6 + 0.9 * r(46, k) : 0,
+      width: 0.38 + 0.1 * r(1, k),
       droop: rank ? 0.15 + 0.7 * r(2, k) : 0.7 * r(2, k) * r(2, k),
       tipCurl: (r(3, k) - 0.45) * 1.0 + (r(3, k) > 0.6 ? 1.8 : 0),
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
@@ -112,8 +112,8 @@ function makeRays(seed: number): Ray[] {
       hook: (r(29, k) - 0.4) * 0.9,
       pleat: half.includes(k) ? 1.0 : 0.42 + 0.5 * r(7, k),
       trough: half.includes(k) ? 0.8 : 0.1 + 0.5 * r(8, k),
-      lay: (rank ? -0.1 : 0.22) + (r(9, k) - 0.5) * 0.34,
-      roll: 0.07 + (r(10, k) - 0.5) * 0.36,
+      lay: (rank ? -0.14 : 0.26) + (r(9, k) - 0.5) * 0.4,
+      roll: 0.07 + (r(10, k) - 0.5) * 0.5,
       buckle: 0.08 + 0.26 * r(30, k),
       buckleFreq: 6 + 5 * r(31, k),
       sway: (r(32, k) - 0.5) * 0.36,
@@ -268,7 +268,7 @@ export function create(options: PartOptions): PlantPart | null {
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
       const shut = mix(1.56 + 0.16 * ray.arch + 0.1 * ray.rank, 2.72 + 0.12 * ray.rank, smooth(0, 0.55, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
-      const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * Math.pow(e, 1.6) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
+      const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
