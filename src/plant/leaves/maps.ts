@@ -21,7 +21,7 @@ function veinPixels(width: number, height: number): Uint8Array {
         const w = Math.max(-1, Math.min(1, u * 2 - 1))
         const f = veinField(sides[w < 0 ? 0 : 1], w, s)
         const pillow = Math.min(1, f.near / 0.022)
-        const high = pillow * (2 - pillow) * 0.42 - 0.5 * f.main - 0.16 * f.rung
+        const high = pillow * (2 - pillow) * 0.42 - 0.22 * f.main - 0.08 * f.rung
         const o = (y * SETS * width + set * width + x) * 4
         out[o] = Math.round(255 * f.main)
         out[o + 1] = Math.round(255 * Math.max(0, Math.min(1, 0.55 + high)))

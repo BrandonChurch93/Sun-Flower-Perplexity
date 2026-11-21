@@ -93,15 +93,15 @@ void main() {
   vec4 mark = texture(uMarks, vPlane * 8.0 + vec2(vLeaf.z * 31.0, vLeaf.z * 17.0));
 
   float edge = smoothstep(0.62, 1.0, abs(vUv.x));
-  float hole = mark.r + vMark.y * edge - vMark.x;
+  float hole = mark.r + vMark.y * edge - vMark.x - 0.3 * (1.0 - vState.w);
   float tear = -1.0;
   if (vMark.z > 1.5 && vUv.x > 0.0) tear = (vUv.x - 0.42) * 0.085 - abs(vUv.y - 0.5 - 0.1 * (vUv.x - 1.0) + 0.02 * (mark.g - 0.5));
   if (hole > 0.0 || tear > 0.0) discard;
   float scar = max(smoothstep(-0.05, -0.008, hole), smoothstep(-0.012, -0.002, tear));
   float dry = vMark.z > 0.5 && vMark.z < 1.5 ? smoothstep(0.8, 0.93, vUv.y + 0.1 * (mark.g - 0.5)) : 0.0;
-  float speck = smoothstep(0.74, 0.82, mark.b) * smoothstep(0.5, 0.7, mark.g) * vMark.w;
+  float speck = smoothstep(0.74, 0.82, mark.b) * smoothstep(0.5, 0.7, mark.g) * vMark.w * vState.w;
   float brown = max(max(scar, dry), speck);
-  float yellow = saturate(vState.y * (0.35 + 1.3 * mark.g) + 0.6 * smoothstep(-0.12, -0.03, hole) * (1.0 - scar) + 0.7 * smoothstep(0.7, 0.86, vUv.y + 0.1 * (mark.g - 0.5)) * step(0.5, vMark.z) * step(vMark.z, 1.5));
+  float yellow = saturate(vState.y * (0.35 + 1.3 * mark.g) + 0.4 * smoothstep(-0.07, -0.02, hole) * (1.0 - scar) + 0.7 * smoothstep(0.7, 0.86, vUv.y + 0.1 * (mark.g - 0.5)) * step(0.5, vMark.z) * step(vMark.z, 1.5));
 
   vec3 var = detail / ${DETAIL_MEAN};
   float lum = dot(var, vec3(0.3, 0.6, 0.1));
@@ -117,8 +117,9 @@ void main() {
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
   // Thick veins hold the light back. The small veins and the net between the cells let more of it through than the cells do.
-  vec3 through = vec3(0.56, 0.84, 0.06) * (0.35 + 0.65 * pow(lum, 1.6)) * tone;
-  through *= 1.0 - 0.78 * vein.r - 0.3 * vein.b * (1.0 - vein.r);
+  float thick = saturate((0.97 - vein.g) * 3.0);
+  vec3 through = vec3(0.34, 0.62, 0.04) * (0.3 + 0.7 * pow(lum, 1.7)) * tone;
+  through *= (1.0 - 0.7 * vein.r) * (1.0 - 0.2 * vein.b) * (1.0 - 0.22 * thick);
   through = mix(through, vec3(0.95, 0.78, 0.1) * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.32, 0.13, 0.025), brown);
 
@@ -134,7 +135,7 @@ void main() {
   t.rough = 0.92;
   t.wax = top ? 0.07 : 0.03;
   t.sheen = 0.9;
-  t.occlusion = (1.0 - (top ? 0.3 : 0.0) * veins) * (top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0);
+  t.occlusion = (1.0 - (top ? 0.15 : 0.0) * veins) * (top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texelDensity(dUv, uDetailSize));
 }
 #endif
@@ -144,11 +145,12 @@ export const bladeDepth = /* glsl */ `
 in vec2 vUv;
 in vec4 vLeaf;
 in vec4 vMark;
+in vec4 vState;
 in vec2 vPlane;
 uniform sampler2D uMarks;
 void main() {
   float mark = texture(uMarks, vPlane * 8.0 + vec2(vLeaf.z * 31.0, vLeaf.z * 17.0)).r;
-  if (mark + vMark.y * smoothstep(0.62, 1.0, abs(vUv.x)) - vMark.x > 0.0) discard;
+  if (mark + vMark.y * smoothstep(0.62, 1.0, abs(vUv.x)) - vMark.x - 0.3 * (1.0 - vState.w) > 0.0) discard;
   outColor = vec4(1.0);
 }
 `

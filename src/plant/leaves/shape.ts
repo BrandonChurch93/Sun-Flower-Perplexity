@@ -20,9 +20,9 @@ export function veinsOf(seed: number, set: number, side: number): Vein[] {
     { s0: 0.008 + 0.004 * r(2), c: 0.2 + 0.05 * r(3), p: p + 0.15, width: 0.75 },
     { s0: 0.014 + 0.012 * r(4), c: 0.47 + 0.04 * r(5), p, width: 1 },
   ]
-  const pairs = 7
+  const pairs = 5
   for (let k = 0; k < pairs; k++) {
-    const at = (k + 0.5 + 0.5 * (r(10 + k) - 0.5)) / pairs
+    const at = (k + 0.5 + 0.72 * (r(10 + k) - 0.5)) / pairs
     const s0 = 0.17 + 0.71 * at
     const end = 0.585 + 0.36 * at + 0.012 * (r(20 + k) - 0.5)
     veins.push({ s0, c: end - s0, p, width: 0.78 - 0.4 * at })
@@ -68,8 +68,8 @@ export interface VeinField {
 }
 
 const field: VeinField = { near: 1, main: 0, rung: 0 }
-const MIDRIB = 0.0075
-const SIDE = 0.0032
+const MIDRIB = 0.0095
+const SIDE = 0.0044
 
 // The veins at a place on the blade.
 export function veinField(veins: Vein[], w: number, s: number): VeinField {

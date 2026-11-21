@@ -115,23 +115,23 @@ export function create(options: PartOptions): PlantPart {
     const rowsHero = Math.round(clamp(36 + 60 * ((full - 0.1) / 0.15), 36, shape.rows) * (options.variant === 0 ? 1 : 0.6))
     const rows = hero ? rowsHero : options.detail === 'near' ? NEAR_ROWS : FAR_ROWS
     const nu = typeof rows === 'number' ? rows : rows.length
-    const share = shares[i] * lerp(1, 0.74, upper) * shape.wide
-    const cord = lerp(0.95, 0.12, upper) * (0.65 + 0.35 * r(1))
+    const share = shares[i] * lerp(1, 0.86, upper) * shape.wide
+    const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
     const teeth = 17 + 12 * r(4)
-    const depth = 0.05 + 0.05 * r(5)
-    const waveAmp = 0.009 + 0.016 * r(6)
+    const depth = 0.07 + 0.06 * r(5)
+    const waveAmp = 0.014 + 0.026 * r(6)
     const waveRate = 2.4 + 2.6 * r(7)
-    const roll = -0.012 + 0.05 * r(8) * r(8) + (r(9) > 0.85 ? 0.06 : 0)
+    const roll = -0.02 + 0.08 * r(8) * r(8) + (r(9) > 0.8 ? 0.09 : 0)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf
     const torn = i === tornLeaf
     const old = 1 - rank
     const kind = r(12)
-    const holes = kind < 0.16 + 0.2 * old
-    const bitten = !holes && kind < 0.42 + 0.25 * old
+    const holes = kind < 0.1 + 0.14 * old
+    const bitten = !holes && kind < 0.3 + 0.2 * old
     const threshold = holes ? 0.73 + 0.05 * r(13) : bitten ? 0.87 : 2
     const bias = holes ? 0.06 : bitten ? 0.17 + 0.07 * r(14) : 0
     const leaf: Leaf = {
@@ -170,7 +170,7 @@ export function create(options: PartOptions): PlantPart {
         let y = sweepAt(s, w, cord) * (1 + 0.3 * (r(24 + side) - 0.5))
         const across = Math.abs(x)
         const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
-        let z = 0.0075 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
+        let z = 0.011 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
         z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.011) ** 2))
         z += waveAmp * Math.pow(aw, 2.5) * Math.sin(6.2832 * (waveRate * s + r(26 + side))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
         z -= roll * aw * aw * aw * Math.min(1, wide * 4)
@@ -384,11 +384,12 @@ export function create(options: PartOptions): PlantPart {
       state[i * 4] = size
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
       state[i * 4 + 2] = smoothstep(0.35, 1.3, fold)
+      state[i * 4 + 3] = smoothstep(5, 24, age)
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
-    const thick = Math.min(0.42 * stemRadius(time, leafStemFraction(i, time)), 0.034 * total)
+    const thick = Math.min(0.5 * stemRadius(time, leafStemFraction(i, time)), 0.034 * total)
     const inset = 0.002 * Math.min(1, size / 0.03)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
