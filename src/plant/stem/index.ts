@@ -18,7 +18,7 @@ const BUMP_MAX = 0.7
 const JOINT_OVERLAP_M = 0.004
 // The stem wears two coats: a dense short down that adds up to the pale line on its outline, and sparse long fine hairs that stand clear of it.
 const DOWN_WIDTH_M = 0.00016
-const HAIR_WIDTH_M = 0.00006
+const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 
 // `hairs` is how many stand on a square meter of grown skin.
