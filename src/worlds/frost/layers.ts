@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
 import { fogLight } from '../../weather/fog/index.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -32,6 +32,7 @@ uniform float uCrown;
 uniform float uFloor;
 ${fogLight}
 ${skylineCanopy}
+const float FOOT = 0.7;
 void main() {
   float top = vInfo.z;
 #ifdef TREES
@@ -46,7 +47,8 @@ void main() {
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.4, 0.0)) * (0.55 + 0.45 * f);
   // Hoar on the crowns: the tops are paler than the mass under them.
   color = mix(color, vec3(0.5, 0.53, 0.56) * skyAmbient(vec3(0.0, 1.0, 0.0)), 0.35 * smoothstep(0.55, 1.0, f) * smoothstep(0.3, 0.8, mass));
-  float see = uSee * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
+  // The fog lies low: the foot of every far shape is gone in it and only its upper part stands out.
+  float see = uSee * smoothstep(0.0, FOOT, f) * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
   outColor = finish(mix(fogLight(v), color, see), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -61,27 +63,26 @@ void main() {
 }
 `
 
-// What each layer of the skyline is made of in the frost, and how much of it the fog lets through. The salt of a layer is the one the golden world draws its crowns with, so a crown stands where it stood.
+// What each layer of the skyline is made of in the frost, and how much of it the fog lets through. The salt of a layer is the skyline's own, so a crown stands where it stands in every world.
 const TONES: { base: [number, number, number]; see: number }[] = [
-  { base: [0.2, 0.22, 0.24], see: 0.5 },
-  { base: [0.17, 0.19, 0.2], see: 0.55 },
-  { base: [0.12, 0.14, 0.14], see: 0.6 },
-  { base: [0.1, 0.12, 0.11], see: 0.62 },
-  { base: [0.07, 0.09, 0.08], see: 0.66 },
-  { base: [0.06, 0.075, 0.07], see: 0.7 },
-  { base: [0.05, 0.065, 0.06], see: 0.7 },
-  { base: [0.06, 0.07, 0.065], see: 0.7 },
-  { base: [0.07, 0.075, 0.07], see: 0.7 },
+  { base: [0.2, 0.22, 0.24], see: 0.35 },
+  { base: [0.17, 0.19, 0.2], see: 0.38 },
+  { base: [0.12, 0.14, 0.14], see: 0.42 },
+  { base: [0.1, 0.12, 0.11], see: 0.45 },
+  { base: [0.07, 0.09, 0.08], see: 0.48 },
+  { base: [0.06, 0.075, 0.07], see: 0.5 },
+  { base: [0.05, 0.065, 0.06], see: 0.5 },
+  { base: [0.06, 0.07, 0.065], see: 0.5 },
+  { base: [0.07, 0.075, 0.07], see: 0.5 },
 ]
 
-const layerSalt = (i: number): number => i * 17.3 + 1.7
-
-export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
+export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // skylineAzimuthDeg is the bearing the skyline is laid out round: the same one in every world, so the hills and the trees stand in the same places across a cut.
 export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
+  const rings = SKYLINE.map((_, i) => skylineRing(i, skylineAzimuthDeg))
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material): void => {
     const mesh = new THREE.Mesh(geometry, material)
     mesh.frustumCulled = false
@@ -92,11 +93,11 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
   const land = new THREE.BufferGeometry()
   {
     const sides = 90
-    const rings = [SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M]
-    const position = new Float32Array(rings.length * sides * 3)
-    const info = new Float32Array(rings.length * sides * 3)
+    const radii = [SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M]
+    const position = new Float32Array(radii.length * sides * 3)
+    const info = new Float32Array(radii.length * sides * 3)
     const index: number[] = []
-    rings.forEach((r, j) => {
+    radii.forEach((r, j) => {
       for (let s = 0; s < sides; s++) {
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
@@ -124,11 +125,17 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
       name: `frost ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...fog, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: layerSalt(i) }, uSee: { value: tone.see }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...fog, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uSee: { value: tone.see }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
-    add(skylineStrip(i, skylineAzimuthDeg), surface.main)
+    add(rings[i].geometry, surface.main)
   })
-  return { meshes, triangles }
+  return {
+    meshes,
+    triangles,
+    setTime(time) {
+      for (const ring of rings) ring.setTime(time)
+    },
+  }
 }

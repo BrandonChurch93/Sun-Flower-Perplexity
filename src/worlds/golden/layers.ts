@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineStrip } from '../../weather/skyline.ts'
+import { eveningHaze } from './sky.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -95,13 +96,14 @@ uniform vec3 uGlow;
 uniform float uShare;
 uniform float uLayer;
 uniform float uScaleM;
+uniform float uWide;
 void main() {
   if (uDiag > 1) discard;
   vec3 v = normalize(vWorld - uCamPos);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z)) * (1.0 - smoothstep(-0.008, 0.001, v.y));
-  outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08) + 0.2 * uWide * exp(-theta / 0.8))), 0.0);
 }
 `
 
@@ -137,7 +139,10 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.035, 0.024, 0.012], rim: 0.04, fogShare: 0.3 },
 ]
 
-const VEILS = [
+const VEILS: { radiusM: number; heightM: number; scaleM: number; share: number; late?: boolean }[] = [
+  { radiusM: 9, heightM: 6, scaleM: 3, share: 0.25, late: true },
+  { radiusM: 16, heightM: 6, scaleM: 3, share: 0.25, late: true },
+  { radiusM: 30, heightM: 8, scaleM: 4, share: 0.25, late: true },
   { radiusM: 70, heightM: 50, scaleM: 6, share: 0.11 },
   { radiusM: 130, heightM: 60, scaleM: 7, share: 0.16 },
   { radiusM: 240, heightM: 70, scaleM: 7, share: 0.19 },
@@ -150,15 +155,20 @@ const VEILS = [
 const SHADES = [9, 14, 20, 26, 34, 42, 50, 58, 64]
 const SHADE_TONE: [number, number, number] = [0.016, 0.0165, 0.016]
 
-export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
+const HAZE_TONE = [0.14, 0.105, 0.05]
+const AIR_COOL = [0.03, 0.046, 0.046]
+const AIR_HAZE = [0.2, 0.17, 0.13]
+const AIR_PER_M = 0.0003
+
+export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, number]): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
   const airUniforms = {
-    uAirCool: { value: new THREE.Vector3(0.03, 0.046, 0.046) },
+    uAirCool: { value: new THREE.Vector3().fromArray(AIR_COOL) },
     uAirWarm: { value: new THREE.Vector3(0.3, 0.17, 0.07) },
-    uAir: { value: 0.0003 },
+    uAir: { value: AIR_PER_M },
   }
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, order: number): void => {
     const mesh = new THREE.Mesh(geometry, material)
@@ -206,20 +216,24 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: i * 17.3 + 1.7 }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...airUniforms, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uRim: { value: tone.rim }, uFogShare: { value: tone.fogShare }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
     add(geometry, surface.main, 0)
   })
 
+  const wide = { value: 0 }
+  const lateShare: { value: number }[] = []
+  const lateVeils = VEILS.filter((veil) => veil.late)
+  const shadeTone = { value: new THREE.Vector3().fromArray(SHADE_TONE) }
   VEILS.forEach((veil, i) => {
     const geometry = ringStrip(96, () => ({ radius: veil.radiusM, top: veil.heightM }))
     const surface = makeSurface({
       name: `golden veil ${i}`,
       vertex,
       fragment: veilFragment,
-      uniforms: { uGlow: { value: new THREE.Vector3().fromArray(glow) }, uShare: { value: veil.share }, uLayer: { value: i + 1 }, uScaleM: { value: veil.scaleM } },
+      uniforms: { uGlow: { value: new THREE.Vector3().fromArray(glow) }, uShare: veil.late ? lateShare[lateShare.push({ value: 0 }) - 1] : { value: veil.share }, uLayer: { value: i + 1 }, uScaleM: { value: veil.scaleM }, uWide: wide },
       side: THREE.DoubleSide,
       transparent: true,
       additive: true,
@@ -233,12 +247,20 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
       name: `golden shade ${i}`,
       vertex,
       fragment: shadeFragment,
-      uniforms: { uTone: { value: new THREE.Vector3().fromArray(SHADE_TONE) }, uShare: { value: radiusM < 24 ? 0.3 : 0.32 }, uLayer: { value: i + 1 }, uFade: { value: new THREE.Vector2(1.6 + radiusM * 0.004, 1.6 + radiusM * 0.016) } },
+      uniforms: { uTone: shadeTone, uShare: { value: radiusM < 24 ? 0.3 : 0.32 }, uLayer: { value: i + 1 }, uFade: { value: new THREE.Vector2(1.6 + radiusM * 0.004, 1.6 + radiusM * 0.016) } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
     })
     add(geometry, surface.main, 30 + (SHADES.length - i))
   })
-  return { meshes, triangles }
+  const setTime = (time: number): void => {
+    const h = eveningHaze(time)
+    wide.value = h
+    lateShare.forEach((share, i) => { share.value = lateVeils[i].share * h })
+    shadeTone.value.set(SHADE_TONE[0] + (HAZE_TONE[0] - SHADE_TONE[0]) * h, SHADE_TONE[1] + (HAZE_TONE[1] - SHADE_TONE[1]) * h, SHADE_TONE[2] + (HAZE_TONE[2] - SHADE_TONE[2]) * h)
+    airUniforms.uAirCool.value.set(AIR_COOL[0] + (AIR_HAZE[0] - AIR_COOL[0]) * h, AIR_COOL[1] + (AIR_HAZE[1] - AIR_COOL[1]) * h, AIR_COOL[2] + (AIR_HAZE[2] - AIR_COOL[2]) * h)
+    airUniforms.uAir.value = AIR_PER_M * (1 + 4 * h)
+  }
+  return { meshes, triangles, setTime }
 }

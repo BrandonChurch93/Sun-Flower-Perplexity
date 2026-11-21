@@ -38,6 +38,7 @@ in vec4 vInfo;
 in float vDepth;
 in float vLow;
 uniform float uBudOpen;
+uniform float uBudShut;
 ${tissueGlsl}
 float bractRelief(float x, float u, float seed) {
   float ax = abs(x);
@@ -76,6 +77,7 @@ void main() {
   }
 #else
   float height = 0.0;
+  float gather = -1.0;
   vec2 at = vec2(0.0);
   vec2 slope = vec2(0.0);
   if (kind > 1.5) {
@@ -102,6 +104,8 @@ void main() {
     albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
+    // The bracts of the shut bud are young: a fresher green, paler toward the margin.
+    albedo *= mix(vec3(1.0), mix(vec3(1.15, 2.0, 0.85), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
@@ -121,10 +125,13 @@ void main() {
     t.sheen = 0.45;
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
+    // Shut, the foot of a bract lies under the points of the row below it.
+    t.occlusion *= mix(1.0, mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
+    gather = max(max(smoothstep(0.82, 1.0, ax), smoothstep(0.8, 1.0, u)), 0.4 * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
@@ -155,7 +162,13 @@ void main() {
   }
   t.normal = reliefNormal(face, vWorld, height, 1.0);
   if (kind > 1.5) t.normal = reliefSlope(face, vWorld, at, slope, 1.0);
+  vec3 shade;
+  if (gather >= 0.0) shade = shadeTissueAt(t, vWorld, view, at * vec2(0.012, 0.05) + vInfo.z * 3.0, gather);
+  else shade = shadeTissue(t, vWorld, view);
+  outColor = finish(shade, vWorld, vDepth, -1.0);
 #endif
+#ifdef PLANT_FIELD
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+#endif
 }
 `

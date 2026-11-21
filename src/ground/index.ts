@@ -3,14 +3,15 @@ import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { Caster } from '../core/shadow.ts'
 import { endStandIn } from '../core/standins.ts'
-import { makeSurface, type Surface } from '../core/shading.ts'
+import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { right, toward } from '../field/layout.ts'
+import { bladeFragment, bladeVertex, blades } from './blades.ts'
 import { grassCover, grassTimes } from './cover.ts'
-import { clodScatter, crumbFragment, crumbScatter, crumbVertex, laneDir, lumpScatter, scatter } from './crumbs.ts'
+import { clodScatter, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
-import { clodReliefM, clodScale, detailScale, emergence, groundStates, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, waterLevelsM } from './soil.ts'
+import { clodReliefM, clodScale, detailScale, emergence, furrow, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
@@ -18,11 +19,14 @@ const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
 export interface GroundState { wet: number; frost: number; dew?: number }
 
 export class Ground {
-  // The soil beyond the near ground, the near ground itself, the loose soil on it, and the grass.
+  // The soil beyond the near ground, the near ground itself, the loose soil on it, the grass, and the single blades close to the plant.
   readonly surface: Surface
   readonly near: Surface
   readonly grass: Surface
   readonly loose: Surface
+  readonly blades: Surface
+  readonly fine: Surface
+  private readonly shown = { value: 1 }
   readonly mesh = new THREE.Group()
   // For what lies on the ground, puddles and frost: the height of the near ground in meters (soilHeight(p, soilLod(p)), flat beyond it), where water stands (pooled) and frost settles (frosted), and where grass grows (grassMask). Their uniforms are in `shared`.
   static readonly glsl = { height: soilHeight, states: groundStates, cover: grassCover }
@@ -37,6 +41,7 @@ export class Ground {
       uDew: { value: 0 },
       uCover: { value: 0 },
       uCast: { value: 0 },
+      uFine: { value: 1 },
       uToward: { value: new THREE.Vector2(toward.x, toward.z) },
       uRight: { value: new THREE.Vector2(right.x, right.z) },
       uCrop: { value: new THREE.Vector3(config.field.plantAheadOfRowM, 0, 0) },
@@ -51,6 +56,15 @@ export class Ground {
       uRelief: { value: new THREE.Vector4(soilReliefM, clodReliefM, 1 / (soilTileM * clodScale), 1 / soilReliefM) },
       uGrassTimes: { value: new THREE.Vector4(grassTimes.firstS, grassTimes.lastS, grassTimes.growS, grassTimes.laneS) },
       uEmerge: { value: new THREE.Vector4(emergence.riseS, emergence.liftM, emergence.radiusM, emergence.cracks) },
+      uHole: { value: new THREE.Vector4(hole.fromS, hole.toS, hole.radiusM, hole.depthM) },
+      uDome: { value: new THREE.Vector3(hole.domeM, hole.flatM, hole.wayOpen) },
+      uSunWay: { value: new THREE.Vector2(sunWayDir.x, sunWayDir.z) },
+      uFurrow: { value: new THREE.Vector4(furrow.leftM, furrow.slope, furrow.fromM, furrow.toM) },
+      uFurrowAxes: { value: new THREE.Vector4(right.x, right.z, toward.x, toward.z) },
+      uFurrowAt: { value: new THREE.Vector4(...furrow.atM) },
+      uFurrowHalf: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / furrowShare(waterLevelsM[1]))) },
+      uFurrowShape: { value: new THREE.Vector4(furrow.depthM, furrow.bankM, furrow.windM, furrow.clearM) },
+      uFurrowTime: { value: new THREE.Vector3(furrow.fromS, furrow.toS, furrow.before) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
       uWater: { value: new THREE.Vector2(waterLevelsM[0], waterLevelsM[1]) },
@@ -60,6 +74,17 @@ export class Ground {
     this.near = makeSurface({ name: 'soil near', vertex: `#define NEAR\n${soilVertex}`, fragment: `#define NEAR\n${soilFragment}`, castShadow: true, uniforms: this.uniforms })
     this.grass = makeSurface({ name: 'grass', vertex: grassVertex, fragment: grassFragment, side: THREE.DoubleSide, castShadow: true, uniforms: this.uniforms })
     this.loose = makeSurface({ name: 'soil crumbs', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: this.uniforms })
+    this.blades = makeSurface({ name: 'grass blades', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, castShadow: true, uniforms: this.uniforms })
+    this.fine = makeSurface({ name: 'soil crumbs fine', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: { ...this.uniforms, uFine: this.shown } })
+    const close = (mesh: THREE.Mesh): THREE.Mesh => {
+      const all = mesh.geometry.getIndex()!.count
+      mesh.onBeforeRender = () => {
+        const away = shared.uCamPos.value.length()
+        this.shown.value = 1 - Math.min(1, Math.max(0, (away - fineReachM[0]) / (fineReachM[1] - fineReachM[0])))
+        mesh.geometry.setDrawRange(0, this.shown.value > 0 ? all : 0)
+      }
+      return mesh
+    }
     const add = (mesh: THREE.Mesh, surface: Surface, casts: boolean): void => {
       mesh.material = surface.main
       this.mesh.add(mesh)
@@ -69,7 +94,10 @@ export class Ground {
     add(new THREE.Mesh(nearGeometry()), this.near, true)
     add(scatter('ground crumbs', crumbScatter), this.loose, true)
     add(scatter('ground clods', clodScatter), this.loose, true)
-    add(scatter('ground lumps', lumpScatter), this.loose, true)
+    add(close(scatter('ground lumps', lumpScatter)), this.fine, true)
+    add(close(scatter('ground grains', grainScatter)), this.fine, true)
+    add(scatter('ground masses', massScatter), this.loose, true)
+    add(blades(), this.blades, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)
   }
 

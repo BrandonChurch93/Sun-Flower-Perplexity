@@ -4,25 +4,13 @@ import { at } from './lib/paths.ts'
 
 // Stand-in backdrops: each world's approved image with the plant painted out by an image model.
 // The takes live under out/work/backdrops/ and are not committed. The recipes say how each was made.
-// A world leaves this list when its real sky is built: the golden hour world has.
+// A world leaves this list when its real sky is built: the golden hour, dawn and night worlds have.
 interface Source { key: string; take: string; model: string; steps: string[]; why: string; thrown: string; up: number; fit: string }
 
 const TAIL =
   'Keep everything else exactly as it is and exactly where it is: the framing, the horizon line, the sun and its position, the sky, the colors, the light, the depth of field blur and the film grain. Do not add anything: no plant in the foreground, no sprout, no flower, no leaves, no people, no animals, no insects, no objects, no text, no watermark, no border.'
 
 const SOURCES: Record<string, Source> = {
-  dawn: {
-    key: 'dawn-seedling',
-    take: 'dawn-s1.png',
-    model: 'seedream_5',
-    steps: [
-      `Edit this photograph. Remove the small sunflower seedling in the foreground completely: its stem, its two green seed leaves and the tiny leaves between them, and also the striped seed husk lying on the soil beside it. Fill the places where they were with what would be seen behind them: the same dark crumbly soil with dew, the misty field and the soft dawn sky. ${TAIL}`,
-    ],
-    why: 'take 1 of 2. The seedling and the husk are gone, the sun, the mist and the horizon sit where they were.',
-    thrown: 'the other take (model nano_banana_pro) grew new grass sprouts where the seedling had been.',
-    up: 0,
-    fit: 'best shift 0 px in the left and right strips',
-  },
   rain: {
     key: 'rain',
     take: 'rain-s1.png',
@@ -32,18 +20,6 @@ const SOURCES: Record<string, Source> = {
     ],
     why: 'take 1 of 2. The plant is gone and the bright band at the horizon, the tree line and the puddles are unchanged. The painted rain streaks stay in this stand-in; the finished world draws its own rain.',
     thrown: 'the other take (model nano_banana_pro) also removed the plant, but at the left and right edges it sat a few pixels off the approved image where this one sits exactly on it.',
-    up: 0,
-    fit: 'best shift 0 px in the left, right and top strips',
-  },
-  night: {
-    key: 'night',
-    take: 'night-s1.png',
-    model: 'seedream_5',
-    steps: [
-      `Edit this photograph. Remove the tall sunflower plant in the foreground completely: its stem, all of its leaves and its closed bud. Fill the place where it stood with what would be seen behind it: the night sky full of stars with the Milky Way, the dark hills and the dark field below them. ${TAIL}`,
-    ],
-    why: 'take 1 of 2. The plant is gone, the Milky Way, the hills and the mist are unchanged.',
-    thrown: 'the other take (model nano_banana_pro) also removed the plant, but at the left edge and the top it sat a few pixels off the approved image where this one sits exactly on it.',
     up: 0,
     fit: 'best shift 0 px in the left, right and top strips',
   },

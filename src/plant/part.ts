@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -52,6 +52,10 @@ in vec4 aPlace;
 in vec4 aVary;
 uniform float uPlantWind;
 uniform float uPlantHeight;
+uniform vec4 uHeadAt;
+uniform float uHeadGrow;
+uniform float uSquat;
+uniform float uHang;
 ${swayGlsl}
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
@@ -68,7 +72,11 @@ vec3 plantWorld(vec3 local) {
 #ifdef PLANT_FIELD
   float c = cos(aPlace.z);
   float s = sin(aPlace.z);
+  // A short neighbor's head is nearly as large as the plant's own: the head and what touches it are drawn larger about the head's middle.
+  vec3 q = local - uHeadAt.xyz;
+  local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   vec3 p = local * aPlace.w;
+  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0);
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
   vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
@@ -105,6 +113,8 @@ uniform float uPlantFrost;
 uniform float uPlantDew;
 #ifdef PLANT_FIELD
 uniform float uCanopy;
+uniform float uClosed;
+uniform float uDeep;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -120,12 +130,14 @@ float plantSun(vec3 world, vec3 offsetDir) {
   // One gap toward the sun lights three neighbors of the second row.
   lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.55, length(world.xz - vec2(0.1, -2.42)))));
   float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
-  float closed = smoothstep(0.2, 0.85, uCanopy);
+  float closed = uClosed;
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
   // Below the tops the sun in a lane comes through the leaves in flecks: a piece of a stalk, the edge of a leaf.
   float fleck = smoothstep(0.5, 0.68, valueNoise(vec2(world.y * 6.0 + across * 2.3, along * 1.7 + world.y * 2.0)));
-  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under));
+  // Out in the body of the field the grazing sun gets into the upper crop in thin shafts that lie along its rays: a head, an edge, a stretch of stalk is lit.
+  float shaft = smoothstep(0.6, 0.78, valueNoise(vec2(across * 5.0 + 3.0, world.y * 7.0 + along * 0.5))) * (1.0 - smoothstep(0.2, 0.45, under)) * smoothstep(9.0, 18.0, length(world.xz));
+  return max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -136,9 +148,9 @@ float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
   // The sky comes from above whatever the sun does: a closed crop keeps most of it down to mid height and under half at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
-  float closed = smoothstep(0.2, 0.85, uCanopy);
+  float closed = uClosed;
   // A crop in bloom stands taller and closer still, and keeps less of the sky.
-  float deep = smoothstep(1.0, 1.25, uCanopy);
+  float deep = uDeep;
   return mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
 #else
   return 1.0;
@@ -151,7 +163,7 @@ vec3 cropAmbient(vec3 n) {
   vec3 sky = skyAmbient(n);
   vec3 over = uSkyZenith * (dot(sky, vec3(0.3, 0.6, 0.1)) / max(dot(uSkyZenith, vec3(0.3, 0.6, 0.1)), 1e-4));
   float away = 0.5 - 0.5 * dot(n.xz, uSunDir.xz) * inversesqrt(max(dot(n.xz, n.xz) * dot(uSunDir.xz, uSunDir.xz), 1e-4));
-  return mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * smoothstep(0.2, 0.85, uCanopy));
+  return mix(sky, over * mix(0.55, 2.2, smoothstep(-0.1, 0.9, n.y)), mix(0.6, 1.0, away) * uClosed);
 }
 #define skyAmbient(n) cropAmbient(n)
 #endif

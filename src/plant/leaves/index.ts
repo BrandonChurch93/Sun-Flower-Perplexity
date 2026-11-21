@@ -1,12 +1,16 @@
 // The leaves: 24 blades on their stalks, each with its own outline, veins, curl and marks, grown by the timing in growth.ts.
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
+import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { leafAge, leafCount, leafDroop, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
+import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
+import { beadAt, createBeads, type Bead, type BeadSet } from '../surface/wet/index.ts'
+import { createCrystals } from '../../weather/frost/index.ts'
+import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/rain/drops.ts'
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
@@ -54,6 +58,9 @@ interface Leaf {
   py: Float32Array
   pz: Float32Array
   pc: Float32Array
+  qx: Float32Array
+  qy: Float32Array
+  qz: Float32Array
   seed: number
   mirror: number
   set: number
@@ -182,6 +189,9 @@ export function create(options: PartOptions): PlantPart {
       py: new Float32Array(nu * nv),
       pz: new Float32Array(nu * nv),
       pc: new Float32Array(nu * nv),
+      qx: new Float32Array(nu * nv),
+      qy: new Float32Array(nu * nv),
+      qz: new Float32Array(nu * nv),
       seed: r(15),
       mirror,
       set,
@@ -199,52 +209,66 @@ export function create(options: PartOptions): PlantPart {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
       const onStalk = typeof rows !== 'number' && rows[a] < 0
       leaf.sig[a] = onStalk ? -1 : s
-      const wide = widthAt(s, cord, tip) * share
       for (let b = 0; b < nv; b++) {
         const hem = hero && (b === 0 || b === nv - 1)
         const w = cols[hero ? clamp(b - 1, 0, cols.length - 1) : b]
         const aw = Math.abs(w)
         const side = w < 0 ? 0 : 1
         const veins = veinSets[set][mirror > 0 ? side : 1 - side]
-        const rolled = roll * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
-        // A tooth on a rolled edge runs down the slope, so it reaches less far out.
-        const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-        const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth) * smoothstep(0.6, 1, aw)) / steep : 0
-        const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
-        let x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
-        let y = sweepAt(s, w, cord) * (1 + 0.3 * (r(24 + side) - 0.5))
-        const across = Math.abs(x)
-        // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
-        const ae = aw * (1 + tooth) * wobble
-        const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
-        let z = 0.019 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
-        z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
-        z += waveAmp * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
-        z -= rolled * ae * ae * ae
-        z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
-        z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
-        const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
-        let bent = 0
-        for (let c = 0; c < creases.length; c += 5) {
-          if (creases[c] !== side) continue
-          const d = s - creases[c + 1] - creases[c + 2] * ae * wide
-          bent += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
-        }
-        if (pleat) bent += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
-        if (onStalk) {
-          x = w * 0.012
-          y = 0
-          z = 0
-        }
-        if (hem) {
-          x -= Math.sign(w) * Math.min(HEM_IN, across * 0.5)
-          z -= HEM_DROP * Math.min(1, wide * 12)
-        }
         const v = a * nv + b
-        leaf.px[v] = x
-        leaf.py[v] = y
-        leaf.pz[v] = z
-        leaf.pc[v] = onStalk ? 0 : bent
+        let x = 0
+        let y = 0
+        // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
+        for (let ripe = 0; ripe < 2; ripe++) {
+          const cordNow = cord * (ripe ? 1 : 0.5)
+          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.98)
+          const rolled = roll * (ripe ? 1 : 0.3) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
+          // A tooth on a rolled edge runs down the slope, so it reaches less far out.
+          const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
+          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.7)) * smoothstep(0.6, 1, aw)) / steep : 0
+          const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
+          x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
+          y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
+          const across = Math.abs(x)
+          // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
+          const ae = aw * (1 + tooth) * wobble
+          const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
+          let z = (ripe ? 0.019 : 0.011) * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
+          z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
+          z += waveAmp * (ripe ? 1 : 0.35) * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
+          z -= rolled * ae * ae * ae
+          z += lump * (ripe ? 1 : 0.15) * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+          z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cordNow
+          let bent = 0
+          if (ripe) {
+            const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
+            for (let c = 0; c < creases.length; c += 5) {
+              if (creases[c] !== side) continue
+              const d = s - creases[c + 1] - creases[c + 2] * ae * wide
+              bent += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
+            }
+            if (pleat) bent += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
+          }
+          if (onStalk) {
+            x = w * 0.012
+            y = 0
+            z = 0
+          }
+          if (hem) {
+            x -= Math.sign(w) * Math.min(HEM_IN, across * 0.5)
+            z -= HEM_DROP * Math.min(1, wide * 12)
+          }
+          if (ripe) {
+            leaf.px[v] = x
+            leaf.py[v] = y
+            leaf.pz[v] = z
+            leaf.pc[v] = onStalk ? 0 : bent
+          } else {
+            leaf.qx[v] = x
+            leaf.qy[v] = y
+            leaf.qz[v] = z
+          }
+        }
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
         markList.push(threshold, bias, withered && dry ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
@@ -280,8 +304,10 @@ export function create(options: PartOptions): PlantPart {
   }
   geometry.setIndex(index)
   const state = new Float32Array(LEAVES * 4)
+  const ripeness = new Float32Array(LEAVES)
   const uniforms = {
     uLeafState: { value: state },
+    uLeafRipe: { value: ripeness },
     uVeins: { value: null as THREE.Texture | null },
     uDetail: { value: null as THREE.Texture | null },
     uMarks: { value: null as THREE.Texture | null },
@@ -324,6 +350,8 @@ export function create(options: PartOptions): PlantPart {
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
   const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', undefined, 0.00003) : null
   const plan: Hair[] = []
+  // One crystal of hoarfrost for each hair of the margin and of the upper face.
+  const crystals = hero ? createCrystals(options, hairCount, 'leaf crystals') : null
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
   let hairsShown = 0
@@ -362,6 +390,84 @@ export function create(options: PartOptions): PlantPart {
     for (let k = leafAt; k < leaves.length; k++) hairsUpTo[k] = hairs.count
   }
 
+  const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 280 : 90, 'leaf beads') : null
+  const beadPlan: { leaf: number; own: number; along: number; across: number }[] = []
+  const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  if (beads) {
+    const tint = beads.tint()
+    for (let k = 0; k < beads.count; k++) {
+      const r = (c: number) => hash01(seed, 9000 + k, c)
+      // Water gathers along the pressed midrib and in the troughs between the side veins; the first leaves carry most of it in the rain.
+      const side = r(3) < 0.5 ? -1 : 1
+      const across = r(4) < 0.4 ? side * 0.1 * r(5) : side * (0.12 + 0.76 * r(5))
+      beadPlan.push({ leaf: Math.floor(Math.pow(r(0), 1.6) * leaves.length), own: r(1), along: 0.1 + 0.84 * r(2), across })
+      tint.set([0.05, 0.1, 0.026], k * 3)
+    }
+  }
+
+  const fillBeads = (slot: 0 | 1, pose: Pose): void => {
+    if (!beads) return
+    const seat = beads.seat(slot)
+    const rest = beads.rest(slot)
+    const out = slots[slot]
+    for (let k = 0; k < beads.count; k++) {
+      const spot = beadPlan[k]
+      const leaf = leaves[spot.leaf]
+      const o = k * 4
+      seat[o + 3] = 0
+      const size = leafLength(leaf.i, pose.time)
+      // A blade still folded holds no water on its face.
+      if (size <= 0 || leafFold(leaf.i, pose.time) > 0.25) continue
+      beadAt(spot.own, spot.along, spot.across, pose.time, bead)
+      if (bead.radiusM <= 0) continue
+      const b0 = leaf.hem ? 1 : 0
+      const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
+      const fa = clamp(bead.along, 0, 1) * (leaf.nu - 1.001)
+      const fb = b0 + (0.5 + 0.5 * clamp(bead.across, -1, 1)) * (b1 - b0 - 0.001)
+      const a = Math.floor(fa)
+      const b = Math.floor(fb)
+      const ta = fa - a
+      const tb = fb - b
+      const v00 = (leaf.base + a * leaf.nv + b) * 3
+      const v10 = v00 + leaf.nv * 3
+      for (let c = 0; c < 3; c++) {
+        const low = out[v00 + c] + (out[v00 + 3 + c] - out[v00 + c]) * tb
+        const high = out[v10 + c] + (out[v10 + 3 + c] - out[v10 + c]) * tb
+        seat[o + c] = low + (high - low) * ta
+      }
+      const up = normals[v00 + 1] < 0 ? -1 : 1
+      rest[o] = normals[v00] * up
+      rest[o + 1] = normals[v00 + 1] * up
+      rest[o + 2] = normals[v00 + 2] * up
+      rest[o + 3] = bead.hang
+      seat[o + 1] -= bead.fallM
+      seat[o + 3] = seat[o + 1] > 0 ? bead.radiusM * 0.65 * clamp(size / 0.07, 0.3, 1) : 0
+    }
+  }
+
+  const dawnEnd = config.segments.find((seg) => seg.id === 'dawn')?.end ?? 0
+  const hits: Drop[] = []
+  // Each plant stands in its own patch of the rain.
+  const rainX = 1.7 * options.variant
+  const rainZ = 2.3 * options.variant
+
+  // How far a blade is knocked down by the drops that landed on it, in radians: each one dips it and it springs back.
+  const dipAt = (time: number, x: number, y: number, z: number, reach: number): number => {
+    let since = time
+    for (const s of config.segments) if (s.start <= time) since = time - s.start
+    const run = Math.max(0, y) / fallDir[1]
+    hits.length = 0
+    landingsNear(x + rainX - fallDir[0] * run, z + rainZ - fallDir[2] * run, reach, time - 0.9, time + 0.6, hits)
+    let dip = 0
+    for (const drop of hits) {
+      const ago = time - (drop.time + run / drop.speed)
+      // What reacts to the weather reacts after the cut.
+      if (ago <= 0 || ago > 0.9 || ago > since) continue
+      dip += 0.2 * Math.pow(drop.radius / 0.0022, 1.5) * Math.exp(-ago / 0.16) * Math.sin(26 * ago)
+    }
+    return dip
+  }
+
   const fillLeaf = (leaf: Leaf, slot: 0 | 1, pose: Pose): void => {
     const i = leaf.i
     const time = pose.time
@@ -374,21 +480,93 @@ export function create(options: PartOptions): PlantPart {
     frame.nx = f.nx; frame.ny = f.ny; frame.nz = f.nz
     const out = slots[slot]
     const total = size * REACH * leaf.reach
-    const stalk = leaf.stalk
-    const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
-    const droop = leafDroop(i, pose.inputs, time)
-    const fold = leafFold(i, time)
+    // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
+    const early = 1 - smoothstep(35.5, 40, time)
+    // A new blade sits on the stem: its stalk grows out under it in its first seconds.
+    const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early)
+    const blade = total * (1 - stalk)
+    // A neighbor is held less firmly than the plant: its leaves reach less far out.
+    const firm = main ? early : 0.5 * early
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm)
+    // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
+    const cold = smoothstep(22, 30, time) * early
+    // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
+    if (i < 2 && time < 12) {
+      const az = leafAzimuth(i, time)
+      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time))
+      const steep = leafElevation(i, time, pose.inputs)
+      const stand = steep + (1.52 - steep) * (1 - smoothstep(8, 9.5, time))
+      const c = Math.cos(steep)
+      const k = Math.sin(steep)
+      const ox = frame.mx * c - frame.nx * k
+      const oy = frame.my * c - frame.ny * k
+      const oz = frame.mz * c - frame.nz * k
+      const tx = frame.mx * k + frame.nx * c
+      const ty = frame.my * k + frame.ny * c
+      const tz = frame.mz * k + frame.nz * c
+      const cs = Math.cos(swing)
+      const ss = Math.sin(swing)
+      const px = ox * cs + frame.wx * ss
+      const py = oy * cs + frame.wy * ss
+      const pz = oz * cs + frame.wz * ss
+      const foot = stemRadius(time, leafStemFraction(i, time)) * 0.7 * smoothstep(0, 0.006, heightAt(time))
+      frame.ox += (px - ox) * foot; frame.oy += (py - oy) * foot; frame.oz += (pz - oz) * foot
+      frame.wx = frame.wx * cs - ox * ss; frame.wy = frame.wy * cs - oy * ss; frame.wz = frame.wz * cs - oz * ss
+      const ce = Math.cos(stand)
+      const se = Math.sin(stand)
+      frame.mx = px * ce + tx * se; frame.my = py * ce + ty * se; frame.mz = pz * ce + tz * se
+      frame.nx = tx * ce - px * se; frame.ny = ty * ce - py * se; frame.nz = tz * ce - pz * se
+    }
+    // A leaf born under the bud grows out past it, never up through it.
+    let ceiling = 1.6
+    const guard = 1 - smoothstep(37, 40, time)
+    const bud = bodyRadius(time)
+    if (guard > 0 && bud > 0) {
+      const u = leafStemFraction(i, time)
+      const up = (1 - u) * heightAt(time) + bodyHalfDepth(time)
+      const off = stemRadius(time, u)
+      const steep = leafElevation(i, time, pose.inputs)
+      const reach = smoothstep(0.5, 1, total / Math.max(up - bud, 1e-4))
+      const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / Math.hypot(up, off))) - Math.atan2(off, up)
+      ceiling = lerp(1.6, 1.5708 - clear, guard * reach)
+      const lower = Math.max(0, steep - ceiling)
+      if (lower > 0) {
+        const c = Math.cos(lower)
+        const k = Math.sin(lower)
+        const mx = frame.mx * c - frame.nx * k
+        const my = frame.my * c - frame.ny * k
+        const mz = frame.mz * c - frame.nz * k
+        frame.nx = frame.nx * c + frame.mx * k
+        frame.ny = frame.ny * c + frame.my * k
+        frame.nz = frame.nz * c + frame.mz * k
+        frame.mx = mx; frame.my = my; frame.mz = mz
+      }
+    }
+    // The blades of the shut pair are cupped, not folded: they lie against each other.
+    const fold = leafFold(i, time) * (i < 2 ? lerp(0.3, 1, smoothstep(8.5, 10.5, time)) : 1)
+    // Before the bloom a blade is stiff: it leaves its stalk nearly straight.
+    const stiff = 1 - 0.6 * firm
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
     const creased = smoothstep(3, 16, age)
+    const set = lerp(grown, smoothstep(0.5, 4, age), early)
+    // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
+    const ripe = Math.max(smoothstep(5, 12, age), smoothstep(33, 40, time))
+    // Its margins roll under only once the plant is in bloom: until then a blade is nearly a flat plate.
+    const rolled = ripe * (1 - 0.65 * early)
     // A blade that points away shows its underside instead, so it turns the other way.
-    const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
+    const toward = lerp(clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1), 0.65, cold)
     // The hanging leaf under the head keeps its edge to the lens.
-    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
+    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
-    const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
+    const rise = set * clamp(Math.min(leaf.rise, ceiling) - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
+    const raining = hero && size > 0.02 && stateUniforms.uPlantWet.value > 0
+    const mid = 0.62 * total
+    const dip = raining ? dipAt(time, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
+    // Under the heaviest bursts every leaf is pressed down a little.
+    const press = raining ? 0.07 * smoothstep(0.82, 1, rainStrength(time - 0.12)) * smoothstep(0, 1.5, time - config.segments.reduce((start, s) => (s.start <= time ? s.start : start), 0)) : 0
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
@@ -401,7 +579,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep(0.2 * stalk, 1.15 * stalk, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare
+        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
@@ -419,7 +597,7 @@ export function create(options: PartOptions): PlantPart {
       lay(clamp((room - least) / Math.max(most - least, 1e-6), -2, 1))
     }
 
-    const crease = main ? fold + leaf.crease * grown : (fold + leaf.crease * grown) * leafFoldScale(i, time)
+    const crease = main ? fold + leaf.crease * grown * (1 - 0.6 * early) : (fold + leaf.crease * grown) * leafFoldScale(i, time)
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     const { nu, nv } = leaf
@@ -450,10 +628,11 @@ export function create(options: PartOptions): PlantPart {
       const nz = uz * ct - frame.wz * st
       for (let b = 0; b < nv; b++) {
         const v = a * nv + b
-        const px = leaf.px[v]
+        const px = ripe >= 1 ? leaf.px[v] : leaf.qx[v] + (leaf.px[v] - leaf.qx[v]) * ripe
+        const pz = rolled >= 1 ? leaf.pz[v] : leaf.qz[v] + (leaf.pz[v] - leaf.qz[v]) * rolled
         const across = px * cf * blade
-        const up = (Math.abs(px) * sf + leaf.pz[v] + leaf.pc[v] * creased) * blade
-        const along = leaf.py[v] * blade
+        const up = (Math.abs(px) * sf + pz + leaf.pc[v] * creased) * blade
+        const along = (ripe >= 1 ? leaf.py[v] : leaf.qy[v] + (leaf.py[v] - leaf.qy[v]) * ripe) * blade
         const o = (leaf.base + v) * 3
         out[o] = cx + tx * along + wx * across + nx * up
         out[o + 1] = cy + ty * along + wy * across + ny * up
@@ -467,12 +646,14 @@ export function create(options: PartOptions): PlantPart {
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
       state[i * 4 + 2] = smoothstep(0.35, 1.3, fold)
       state[i * 4 + 3] = smoothstep(5, 24, age)
+      ripeness[i] = ripe
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
-    const thick = Math.min(0.5 * stem, 0.036 * size * REACH)
+    // On the young plant a stalk is nearly as stout as the stem it leaves.
+    const thick = Math.min((0.5 + 0.16 * early - 0.08 * cold) * stem, (0.036 + 0.024 * early) * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
@@ -498,7 +679,7 @@ export function create(options: PartOptions): PlantPart {
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.5 * k) + clasp
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early - 0.15 * cold) * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -540,13 +721,15 @@ export function create(options: PartOptions): PlantPart {
     while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
     const count = born > 0 ? hairsUpTo[born - 1] : 0
     if (slot === 0) hairsShown = count
+    const frosted = stateUniforms.uPlantFrost.value > 0
     for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
       const size = leafLength(leaf.i, pose.time)
-      const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.12, 1)
+      const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.35, 1)
       const o = h * 4
       let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, long = 0
+      let ox = 0, oy = 0, oz = 0, ux = 0, uy = 1, uz = 0
       if (hair.kind === 2) {
         const ring = Math.min(RINGS - 2, Math.floor(hair.a))
         const t = hair.a - ring
@@ -598,6 +781,7 @@ export function create(options: PartOptions): PlantPart {
           dx = nx * side + (lx / ll) * ahead
           dy = ny * side + (ly / ll) * ahead
           dz = nz * side + (lz / ll) * ahead
+          ux = nx; uy = ny; uz = nz
           long = (0.0005 + 0.0011 * hair.r1) * scale
         } else {
           const inner = v00 + (b === 1 ? 3 : -3)
@@ -616,6 +800,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
+          ox = ex; oy = ey; oz = ez; ux = nx; uy = ny; uz = nz
           long = (0.0006 + 0.0028 * hair.r1 * hair.r1) * scale
         }
       }
@@ -627,6 +812,33 @@ export function create(options: PartOptions): PlantPart {
       lean[o + 1] = dy
       lean[o + 2] = dz
       lean[o + 3] = hair.r4
+      if (crystals && frosted) {
+        const cr = crystals.root(slot)
+        const cl = crystals.lean(slot)
+        if (hair.kind === 0) {
+          // Nearly half stand a little inside the margin on either face, so the fringe has the leaf behind it and reads against the fog.
+          const inside = hair.r2 < 0.45 ? hair.r3 * 0.0016 * scale : 0
+          const stand = inside > 0 ? (hair.r1 < 0.5 ? 1 : -1) : 0
+          cr[o] = px - ox * inside
+          cr[o + 1] = py - oy * inside
+          cr[o + 2] = pz - oz * inside
+          cr[o + 3] = (0.003 + 0.003 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
+          cl[o] = dx + ux * stand
+          cl[o + 1] = dy + uy * stand
+          cl[o + 2] = dz + uz * stand
+        } else {
+          // Grains on the upper face, and none on the stalk.
+          const up = uy < 0 ? -1 : 1
+          cr[o] = px
+          cr[o + 1] = py
+          cr[o + 2] = pz
+          cr[o + 3] = hair.kind === 1 && hair.r4 < 0.6 ? (Math.abs(hair.b - (leaf.nv - 1) / 2) < 0.6 ? 0.0012 + 0.0012 * hair.r1 : 0.0006 + 0.0008 * hair.r1) * scale : 0
+          cl[o] = ux * up
+          cl[o + 1] = uy * up
+          cl[o + 2] = uz * up
+        }
+        cl[o + 3] = hair.r3
+      }
     }
   }
 
@@ -637,6 +849,8 @@ export function create(options: PartOptions): PlantPart {
     casters.push({ mesh: tubeMesh, surface: tubeSurface })
   }
   if (hairs) meshes.push(...hairs.meshes)
+  if (beads) meshes.push(...beads.meshes)
+  if (crystals) meshes.push(...crystals.meshes)
 
   return {
     name: 'leaves',
@@ -652,8 +866,11 @@ export function create(options: PartOptions): PlantPart {
     },
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
+      // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
+      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? 1 : lerp(0.2, 1, smoothstep(36, 40, pose.time)))
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
+      fillBeads(slot, pose)
     },
     finish() {
       position.needsUpdate = true
@@ -661,6 +878,8 @@ export function create(options: PartOptions): PlantPart {
       normal.needsUpdate = true
       for (const a of tubeAttributes) a.needsUpdate = true
       hairs?.finish(hairsShown)
+      beads?.finish()
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? hairsShown : 0)
     },
   }
 }
