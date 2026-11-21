@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
+- Last push: 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
 - Last status: 10 · 2026-11-21 03:55 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -200,10 +200,20 @@ Measured 2026-11-21 01:51 UTC on the Builder's VM (2 cores, software WebGL2). On
 
 ## Judged frames
 
-Computed in Phase 2 by the rule in `kit/07-QUALITY-BAR.md`. Frames are added, never removed.
+Computed in Phase 2 by the rule in `kit/07-QUALITY-BAR.md`, from `judgedFrames()` in `src/director/timeline.ts`. Frames are added, never removed.
 
 | Frame | Unit | Key | Why |
 | --- | --- | --- | --- |
+| 0 | `dawn` | none | The first frame |
+| 45 | `dawn` | `dawn-sprout` | The key dawn-sprout |
+| 60 | `dawn` | none | The frame at film.hookSeconds |
+| 195 | `dawn` | `dawn-seedling` | The key dawn-seedling |
+| 420 | `rain` | `rain` | The key rain |
+| 780 | `night` | `night` | The key night |
+| 1080 | `frost` | `frost` | The key frost |
+| 1350 | `bloom` | `bloom-opening` | The key bloom-opening |
+| 1515 | `bloom` | `bloom-hero` | The key bloom-hero |
+| 1755 | `field` | `field` | The key field |
 
 ## Look lock
 
@@ -265,6 +275,12 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · The field. 12,687 neighbors stand in rows `field.rowSpacingM` apart with a plant every `field.plantSpacingM`, out to 60 m, wider with distance, and past them one sheet of canopy runs to the horizon. Each is the plant's own code at the plant's own age, drawn at one of two levels of detail, with its own place, turn, size (0.80 to 0.93 of the plant, as the approved frost and bloom images show the neighbors standing lower than the plant), lean and tone. 8,914 of them are in view at the field key, counted by a unit test against `field.minPlantsInView`. Their own seeds and timing come in Phase 3.
 - 2026-11-21 · Phase 2 · The companion. `field.companion.leftM` 0.65 to 0.7 and `towardCameraM` 0.3 to 0.05, and the companion is neighbor number 53. `tools/fit.ts --companion --scan` tried 90 neighbors at 52 places each against the rule in `kit/02-SUBJECT.md`: no part of it in the frame through dawn, rain and night and at the frost key (held by a unit test on every fifth frame), and its leaves inside the left edge of both bloom keys. With the first values it stayed out of both bloom frames. Now its leaves reach 0.08 of the width into both. The approved images show them reaching 0.2: that is Phase 3 work on the leaves of the golden world, with the first half of the rule always first.
 - 2026-11-21 · Phase 2 · The lens is at f/2 in `bloom` (was f/4), which gives the field behind the head about the softness the approved bloom images have.
+- 2026-11-21 · Phase 2 · The frost fog is `[0.46, 0.47, 0.49]` with a sun tint of `[0.3, 0.24, 0.18]`, down from `[0.82, 0.84, 0.86]` and `[0.5, 0.4, 0.3]`: the far field was fogged to a brighter grey than the painted sky behind it and stood in the frame as a pale wall. The frost sky ambient is 0.3. These are stand-in values, set again in Phase 4.
+- 2026-11-21 · Phase 2 · The ground under the field takes less light once the neighbors have leaves (`uCover` in `src/ground/index.ts`, from the plant's height, starting 0.9 m behind the plant), so pale or frosted soil does not shine through the rows. The open strip the plant and the companion stand on keeps its full light.
+- 2026-11-21 · Phase 2 · Night stand-in: the moon is `[0.24, 0.34, 0.56]` and the leaves hang less at night (4° to 13° instead of 6° to 18°, and less droop along the blade), because the hanging leaves read as wilted against the approved `night` image.
+- 2026-11-21 · Phase 2 · Each frame the field draws only the neighbors that can be in the frame (`Field.look` in `src/field/index.ts`): any plant wholly to one side of the lens or behind it is left out before drawing. Checked on frames 45, 420, 1080, 1350 and 1755: the pictures are identical byte for byte with and without it. Measured where the time goes at 960 x 540: the far neighbors cost about 0.6 s per sample, the near ones 0.3 s and everything else 0.2 s. The field is the cost to bring down when it is built for real in Phase 4.
+- 2026-11-21 · Phase 2 · The image viewer of this workspace shows the picture it first read at a path even after the file changes. From now on every still looked at is copied to a new name first. One frost fix was judged on a stale picture before this was found; it was judged again on fresh files.
+- 2026-11-21 · Phase 2 · `references/BOARD.md` is assembled now from the scouts' notes, part by part in the order of the table in `kit/06-ASSETS.md`, with every source URL, the five observations per part and the four motion studies. The step is done once and is not repeated in Phase 3.
 
 ## Notes from Brandon
 
@@ -344,6 +360,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 03:07 UTC · Phase 2: status 08, backdrops painted out from the approved images and locked to the camera of their key, light from the sun in the picture, stand-in ground filter cost fixed
 - 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
 - 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
+- 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
 
 ## Session log
 

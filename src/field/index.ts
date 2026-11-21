@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { declareStandIn } from '../core/standins.ts'
+import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, type Surface } from '../core/shading.ts'
 import { headOpen, heightAt, paleness, type PlantInputs } from '../plant/growth.ts'
 import { plantColorGlsl } from '../plant/index.ts'
@@ -96,7 +97,7 @@ void main() {
 }
 `
 
-interface Tier { detail: Detail; mesh: THREE.Mesh; position: THREE.BufferAttribute; normal: THREE.BufferAttribute; count: number }
+interface Tier { detail: Detail; mesh: THREE.Mesh; geometry: THREE.InstancedBufferGeometry; position: THREE.BufferAttribute; normal: THREE.BufferAttribute; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; count: number }
 
 function tier(detail: Detail, places: Float32Array, material: THREE.Material): Tier {
   const count = vertexCountOf(detail)
@@ -108,14 +109,15 @@ function tier(detail: Detail, places: Float32Array, material: THREE.Material): T
   geometry.setAttribute('normal', normal)
   geometry.setAttribute('uv', new THREE.BufferAttribute(topology.uv, 2))
   geometry.setAttribute('aInfo', new THREE.BufferAttribute(topology.info, 3))
-  const each = new THREE.InstancedInterleavedBuffer(places, PLACE)
+  const each = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
+  each.setUsage(THREE.DynamicDrawUsage)
   geometry.setAttribute('aPlace', new THREE.InterleavedBufferAttribute(each, 4, 0))
   geometry.setAttribute('aVary', new THREE.InterleavedBufferAttribute(each, 4, 4))
   geometry.setIndex(new THREE.BufferAttribute(topology.index, 1))
   geometry.instanceCount = places.length / PLACE
   const mesh = new THREE.Mesh(geometry, material)
   mesh.frustumCulled = false
-  return { detail, mesh, position, normal, count: places.length / PLACE }
+  return { detail, mesh, geometry, position, normal, all: places, seen: each, count: places.length / PLACE }
 }
 
 function carpetGeometry(): THREE.BufferGeometry {
@@ -174,5 +176,35 @@ export class Field {
     u.uBloom.value = headOpen(time)
     u.uCanopy.value = canopy
     this.carpet.visible = eyeHeightM > canopy * 0.9
+  }
+
+  // Leaves out every neighbor that stands wholly to one side of the frame or behind the lens. `tanHalfWidth` is half the gate over the focal length.
+  look(pose: CameraPose, tanHalfWidth: number, aspect: number): number {
+    const flat = Math.hypot(pose.forward.x, pose.forward.z) || 1
+    const fx = pose.forward.x / flat
+    const fz = pose.forward.z / flat
+    const steep = Math.max(0.3, flat - (tanHalfWidth / aspect) * Math.abs(pose.forward.y))
+    const spread = tanHalfWidth / steep
+    const reach = 0.9
+    let total = 0
+    for (const t of [this.near, this.far]) {
+      const all = t.all
+      const seen = t.seen.array as Float32Array
+      let n = 0
+      for (let i = 0; i < all.length; i += PLACE) {
+        const dx = all[i] - pose.position.x
+        const dz = all[i + 1] - pose.position.z
+        const depth = dx * fx + dz * fz
+        if (depth < -reach) continue
+        const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
+        if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
+        for (let j = 0; j < PLACE; j++) seen[n + j] = all[i + j]
+        n += PLACE
+      }
+      t.seen.needsUpdate = true
+      t.geometry.instanceCount = n / PLACE
+      total += n / PLACE
+    }
+    return total
   }
 }

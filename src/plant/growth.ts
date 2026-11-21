@@ -263,7 +263,7 @@ export function leafLength(i: number, time: number): number {
 export function leafElevation(i: number, time: number, inputs: PlantInputs): number {
   const age = Math.max(0, leafAge(i, time))
   const open = smoothstep(0, 5.5, age)
-  const hang = (1 - inputs.lift) * (6 + 12 * smoothstep(2, 14, age))
+  const hang = (1 - inputs.lift) * (4 + 9 * smoothstep(2, 14, age))
   const settled = 24 - 26 * smoothstep(5, 30, age) + (rnd(11, i) - 0.5) * 16 - hang
   return ((74 + (settled - 74) * open) * Math.PI) / 180
 }
@@ -274,7 +274,7 @@ export function leafFold(i: number, time: number): number {
 }
 
 export function leafDroop(i: number, inputs: PlantInputs): number {
-  return 0.25 + 0.5 * rnd(22, i) + 0.5 * (1 - inputs.lift)
+  return 0.22 + 0.4 * rnd(22, i) + 0.22 * (1 - inputs.lift)
 }
 
 export function leafSeed(i: number, j: number): number {

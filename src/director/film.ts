@@ -169,7 +169,7 @@ export class Film {
     shared.uTime.value = time
     shared.uDiag.value = DIAG[this.diag]
     this.sky.setWorld(def)
-    this.ground.setState(def.ground)
+    this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(time)))
     this.ground.mesh.visible = !alone
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
@@ -177,6 +177,7 @@ export class Film {
     this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
     const eye = this.rigOf(time)
     this.field.prepare(time, inputs, eye.heightM)
+    this.field.look(this.poseAt(time), (0.5 * config.camera.gateWidthMm) / eye.focalMm, stage.width / stage.height)
     for (const m of this.field.meshes) m.visible = !alone && (m !== this.field.carpet || m.visible)
     this.companion.mesh.visible = !alone
     const height = heightAt(time + shutterSeconds)
