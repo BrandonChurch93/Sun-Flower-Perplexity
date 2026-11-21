@@ -10,12 +10,13 @@ import { flag, parseArgs, str } from './lib/args.ts'
 import { launch, machine, openPage } from './lib/browser.ts'
 import type { Hashes } from './lib/hashes.ts'
 import { at, ROOT, WORK } from './lib/paths.ts'
-import { compare, rawOf } from './lib/pixels.ts'
+import { compare, rawOf, type Raw } from './lib/pixels.ts'
 import { writeRecord } from './lib/record.ts'
 import { ensureBuild, ensureDisk, openSession, takeRenderSlot } from './lib/render.ts'
 import { serve } from './lib/server.ts'
 
 const SAME_PICTURE_DB = 30
+const TILES = 8
 const SAMPLE_EVERY = 10
 const MOST_FRAMES_BETWEEN_SAMPLES = 30
 const STALL_SECONDS = 240
@@ -166,6 +167,32 @@ function decode(file: string, index: number, out: string): void {
   execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', file, '-vf', `select=eq(n\\,${index})`, '-frames:v', '1', '-pix_fmt', 'rgb24', out])
 }
 
+// The frame rule decides. The worst tile is kept in the record, so a small overlay that the whole-frame number hides can still be seen.
+function worstTile(a: Raw, b: Raw): number {
+  let worst = Infinity
+  const w = Math.ceil(a.width / TILES)
+  const h = Math.ceil(a.height / TILES)
+  for (let ty = 0; ty < a.height; ty += h) {
+    for (let tx = 0; tx < a.width; tx += w) {
+      let sum = 0
+      let n = 0
+      for (let y = ty; y < Math.min(a.height, ty + h); y++) {
+        for (let x = tx; x < Math.min(a.width, tx + w); x++) {
+          const i = (y * a.width + x) * a.channels
+          for (let k = 0; k < 3; k++) {
+            const d = a.data[i + k] - b.data[i + k]
+            sum += d * d
+            n++
+          }
+        }
+      }
+      const psnr = sum === 0 ? Infinity : 10 * Math.log10((255 * 255 * n) / sum)
+      if (psnr < worst) worst = psnr
+    }
+  }
+  return worst
+}
+
 function range(center: number, total: number): { first: number; last: number } {
   const first = Math.min(frameCount - total, Math.max(0, clampFrame(center - Math.floor(total / 2))))
   return { first, last: first + total - 1 }
@@ -217,7 +244,7 @@ async function proof(hashes: Hashes): Promise<boolean> {
   }
   const { run, family } = found
   const unproven = family !== config.export.videoCodec
-  const note = unproven ? ` export.videoCodec (${config.export.videoCodec}) is unproven here${forced ? ' because another codec was asked for' : ' because this browser cannot encode it'}, and the pipeline was proven with ${family} instead.` : ''
+  const note = unproven ? `; export.videoCodec (${config.export.videoCodec}) is unproven here${forced ? ' because another codec was asked for' : ' because this browser cannot encode it'}, and the pipeline was proven with ${family} instead` : ''
   if (!run.result.ok || !run.saved) {
     return write(false, null, run.result.codec, run.result.frames, `Export did not produce a file for frames ${first} to ${last}: ${run.result.error ?? 'the download never arrived'}`)
   }
@@ -229,7 +256,7 @@ async function proof(hashes: Hashes): Promise<boolean> {
   if (run.result.fileName !== config.export.files.preview) problems.push(`the page named the file ${run.result.fileName}`)
 
   const session = await openSession({ format: preview.id, assets, slot: false })
-  const checks: { frame: number; psnr: number }[] = []
+  const checks: { frame: number; psnr: number; worstTilePsnr: number }[] = []
   try {
     for (const index of [0, Math.floor(total / 2), total - 1]) {
       const frame = first + index
@@ -237,9 +264,12 @@ async function proof(hashes: Hashes): Promise<boolean> {
       const still = path.join(dir, `proof-f${String(frame).padStart(4, '0')}-capture.png`)
       decode(file, index, decoded)
       fs.writeFileSync(still, (await session.render(frame, tier)).png)
-      const d = compare(await rawOf(decoded), await rawOf(still))
-      checks.push({ frame, psnr: d.psnr })
-      console.log(`frame ${frame} · export against capture · ${Number.isFinite(d.psnr) ? d.psnr.toFixed(1) : 'identical,'} dB`)
+      const a = await rawOf(decoded)
+      const b = await rawOf(still)
+      const d = compare(a, b)
+      const tile = d.psnr > 0 ? worstTile(a, b) : 0
+      checks.push({ frame, psnr: d.psnr, worstTilePsnr: tile })
+      console.log(`frame ${frame} · export against capture · ${d.psnr.toFixed(1)} dB · worst of ${TILES * TILES} tiles ${tile.toFixed(1)} dB`)
     }
   } finally {
     await session.close()
@@ -267,11 +297,11 @@ async function proof(hashes: Hashes): Promise<boolean> {
     ffprobe: p,
     psnr: checks,
   })
-  const picture = checks.map((c) => (Number.isFinite(c.psnr) ? c.psnr.toFixed(1) : 'exact')).join(', ')
+  const picture = checks.map((c) => c.psnr.toFixed(1)).join(', ')
   const made = `Export made ${config.export.files.preview} for frames ${first} to ${last}: ${p.frames} frames of ${p.codec}${p.profile ? ` ${p.profile}` : ''} at ${p.width} x ${p.height} and ${fps} frames a second in ${run.result.seconds.toFixed(1)} s`
   const detail = ok
-    ? `${made}, and its first, middle and last frames match capture stills at ${picture} dB, so they hold no interface element.${note}`
-    : `${made}, but ${problems.join('; ')}.${note}`
+    ? `${made}, and its first, middle and last frames match capture stills at ${picture} dB, so they hold no interface element${note}.`
+    : `${made}, but ${problems.join('; ')}${note}.`
   return write(ok, interfaceFree, p.codec, p.frames, detail)
 }
 

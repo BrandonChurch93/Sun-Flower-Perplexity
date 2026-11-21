@@ -212,7 +212,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   }
   const spans = (first: number, last: number) => `${(first / fps).toFixed(0)} to ${((last + 1) / fps).toFixed(0)} s`
   const rangeChoices = [{ value: 'film', text: `The whole film · ${config.film.durationSeconds} s` }, ...segments.map((s) => ({ value: s.id, text: `${capital(s.id)} clip · ${spans(s.firstFrame, s.lastFrame)}` }))]
-  if (rangeId === 'frames') rangeChoices.push({ value: 'frames', text: `Test range · frames ${testFirst} to ${testLast}` })
+  if (rangeId === 'frames') rangeChoices.push({ value: 'frames', text: `Frames ${testFirst} to ${testLast} · test` })
   const formatSelect = field('format', 'Format', formats.map((f) => ({ value: f.format.id, text: `${f.label} · ${f.format.width} x ${f.format.height}` })), format.id)
   const rangeSelect = field('range', 'Range', rangeChoices, rangeId)
   const tierSelect = field('tier', 'Quality tier', tierIds.map((id) => ({ value: id, text: `${capital(id)} · ${samplesOf(id)} ${samplesOf(id) === 1 ? 'sample' : 'samples'}` })), tier)
@@ -529,7 +529,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       const link = make('a', css.link, `Save ${name} again`)
       link.href = fileUrl
       link.download = name
-      saved.replaceChildren(make('span', undefined, `${(blob.size / 1048576).toFixed(1)} MB · `), link)
+      saved.replaceChildren(make('span', undefined, `${blob.size < 1048576 ? `${Math.ceil(blob.size / 1024)} kB` : `${(blob.size / 1048576).toFixed(1)} MB`} · `), link)
       saved.hidden = false
       link.click()
       say(`Done. ${total} ${total === 1 ? 'frame' : 'frames'} are in ${name}, in your downloads folder.`)
