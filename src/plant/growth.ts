@@ -55,6 +55,14 @@ const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
 const STACK_SECONDS = 5.5
+const CROWD_START = 20
+const CROWD_END = 40
+const CROWD_SECONDS = 1.5
+const CROWD_TIP = 0.006
+const CROWD_STEP = 0.012
+const CROWD_SPREAD = 0.003
+const CROWD_PACE = 0.3
+const CROWD_LEAVES = 6
 const HOOK_MAX = 164 * RAD
 const HOOK_BACK = 0.3
 const discRadius = config.plant.discDiameterM / 2
@@ -351,7 +359,7 @@ export function leafAge(i: number, time: number): number {
   return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, 20, time))
 }
 
-export function leafStemFraction(i: number, time: number): number {
+function jointFraction(i: number, time: number): number {
   const age = leafAge(i, time)
   const h = heightAt(time)
   if (age <= 0 || h <= 0) return 0.97
@@ -371,6 +379,21 @@ export function leafStemFraction(i: number, time: number): number {
   const rest = Math.max(tip, (0.9 + 0.075 * rank * rank) * heightAt(start + quick))
   const young = Math.min(0.992 - 0.004 * Math.min(age, 6), lerp(tip, rest, 1 - Math.exp(-Math.max(0, time - start) / quick)) / h)
   return lerp(young, grown, late)
+}
+
+// From the night to the frost the plant's upper internodes stay short: a joint rides close under the tip, the leaves above it crowded round the bud, until it reaches the height it will have at the bloom.
+export function leafStemFraction(i: number, time: number): number {
+  const fraction = jointFraction(i, time)
+  if (variant !== 0 || time <= CROWD_START || time >= CROWD_END || leafAge(i, time) <= 0) return fraction
+  const h = heightAt(time)
+  let above = 0
+  for (let k = i + 1; k < leafCount; k++) above += smoothstep(0, CROWD_SECONDS, time - leafStart(k))
+  // Only the leaves near the tip are crowded: lower down a joint stands at its own height.
+  const count = Math.min(above, CROWD_LEAVES)
+  const crowded = h - CROWD_TIP - count * (CROWD_STEP + CROWD_SPREAD * count)
+  const ahead = CROWD_END - CROWD_PACE * (CROWD_END - time)
+  const stop = jointFraction(i, ahead) * heightAt(ahead)
+  return lerp(fraction, Math.max(fraction, Math.min(crowded, stop) / h), smoothstep(CROWD_START, CROWD_START + 3, time) * smoothstep(12.5, 14.5, leafStart(i)))
 }
 
 // In the wide shot the leaves go on growing: each in its own two and a half seconds, the lower ones first.
