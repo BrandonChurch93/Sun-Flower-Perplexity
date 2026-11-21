@@ -133,7 +133,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float tail = r * r / 0.0289;
   float wide = r * r / 0.06;
   float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.42 * exp(-r * r / 0.008) + 0.07 * exp(-r / 0.07 - wide * wide);
-  vec3 glass = mix(vec3(1.0, 0.88, 0.7), vec3(1.0, 0.44, 0.12), smoothstep(0.0, 0.045, r)) * (lit * uGlow * glow);
+  vec3 glass = mix(vec3(1.0, 0.9, 0.76), vec3(1.0, 0.5, 0.2), smoothstep(0.0, 0.06, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
   // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
@@ -149,7 +149,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.6, 1.0, smoothstep(0.004, 0.05, under)), down);
   // The lit air lies thickest along the horizon under the sun, in front of the far hills.
-  float haze = 2.6 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
+  float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
   float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
   return glass + vec3(1.0, 0.4, 0.12) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
@@ -189,7 +189,7 @@ void main() {
   c = tone(c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = max(mix(vec3(l), c, uSaturation), 0.0);
-  c = max(c + uLift * (1.0 - c) - uLift * uBlack * exp(-l / 0.005), 0.0);
+  c = max(c + uLift * (1.0 - c) - uLift * uBlack * exp(-l / 0.014), 0.0);
   c = toSrgb(clamp(c, 0.0, 1.0));
   // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: strongest in the middle tones, under half of that in deep shadow, a third in the highlights.
   float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));

@@ -39,16 +39,18 @@ export interface LensLook {
   black: readonly [number, number, number]
   // 1 where the world has small lights in the air that the blur should draw as discs; 0 holds every lone bright pixel down as noise.
   specks: number
+  // Least reach of the fill, as a share of the blur circle, for things well out of focus (circle over 6 to 14 px). 0 leaves them to soft.
+  farSoft: number
 }
 
-const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, punch: 0, pale: 0, greens: 1, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0 }
+const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, punch: 0, pale: 0, greens: 1, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, farSoft: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
   dawn: { veil: 1.4, flare: 0.7 },
   rain: { flare: 0, halation: 0.2 },
   night: { flare: 0.35, halation: 0.2 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 1.6, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 3.2, star: 0, glow: 0.065, shafts: 0.008, rays: 3.5, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [0.6, 0.36, 0.95], specks: 1 },
+  golden: { veil: 1.6, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 3.2, star: 0, glow: 0.065, shafts: 0.008, rays: 1.2, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [1, 0.55, 1], specks: 1, farSoft: 0.5 },
 }
 
 export function lensLook(def: WorldDef): LensLook {
