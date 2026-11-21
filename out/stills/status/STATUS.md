@@ -1,12 +1,12 @@
-# Status 40
+# Status 41
 
-2026-11-21 17:34 UTC
+2026-11-21 17:55 UTC
 
-- Status 40 · Phase 4 · unit frost · round 8. Round 7 (field) is closed and not a pass: match 3, surface 4, motion 6, and all five jurors called the frame a real-time 3D demo (the approved image got 4 of 5 film votes). The critics' words are with the owning agents for a fix pass of at most 90 minutes. The line now has real frost, night, rain and dawn worlds, frost crystals on the leaf margins and buds over leafy plants in the crop; the finished bloom was measured again on the line and holds (0.864 and 0.951, 0.8 needed).
-- Next: Round 8 judges the frost at 36.0 s as it stands now; then dawn, night and rain get their floor rounds, and field its second round if the clock allows. Time used: 16.7 h of 30 h.
+- Status 41 · Phase 4 · unit frost · round 8. Rounds 8 to 11 (frost, dawn, rain, night) started together at 17:50 on one commit: all four have no stand-in left, so each goes to its first round now. One run of the machine checks covers the four; four agents build the four packs. Before the start the night's camera key was fitted lower so the far crop and mist sit where the approved image has them (the camera from 36 s on is unchanged to the bit), the rain world got a cream band low in the sky and dark slate far land, and dawn's first air starts thick and clears. Round 7's words for the field are with nine agents until 19:05.
+- Next: Machine checks, measures and packs for the four rounds; then three critics and the jury on each. Field's second round after its fix pass. Time used: 17.1 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frost, 36.0 s: approved (left), ours now (right)
-- `status-2.jpg`: Night, 26.0 s: approved (left), ours on the night world's branch (right)
-- `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right)
-- `status-4.jpg`: Dawn, 1.5 s: approved (left), ours (right)
+- `status-1.jpg`: Night, 26.0 s: approved (left), ours on the judged line (right), review tier
+- `status-2.jpg`: Approved (top) and ours (bottom) at 0, 1.5, 2, 6.5, 14 and 36 s, draft tier
+- `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right), rendered by the rain world's agent
+- `status-4.jpg`: Frost bud: approved (left), ours (right), rendered by the bud's agent, merged after the judged commit
