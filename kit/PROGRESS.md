@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 17:09 UTC · Round 7: machine checks (13 green, G3 on its second run after a harness time limit), pack arrived; line news; frost lens f/11
-- Last status: 38 · 2026-11-21 16:46 UTC · Phase 4 · unit field · round 7
+- Last push: 2026-11-21 17:10 UTC · Status 39: round 7 checked (13 green, pack here), frost on the line with its lens at f/11; 12 heads merged on the line
+- Last status: 39 · 2026-11-21 17:10 UTC · Phase 4 · unit field · round 7
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 17:10 UTC · status 39 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame: 1755 at final, from the pack (commit 566eb48); `status-2.jpg`: Frost 1080 on the line, approved left (frost world 9923435, rendered on its builder's VM); `status-3.jpg`: Frost lens test, the neighbors at native size: approved, f/5.6, f/8, f/11 (chosen); `status-4.jpg`: Field 1755 after round 7's commit, approved left: the crop's front comes round the companion (field b18271e, its builder's VM)
 - 2026-11-21 16:46 UTC · status 38 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
 - 2026-11-21 16:19 UTC · status 37 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right; `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right; `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
 - 2026-11-21 15:54 UTC · status 36 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Round 6, the cut at 40.00 s as the motion critic sees it; `status-2.jpg`: Round 6, twelve frames across the bloom; `status-3.jpg`: Round 6, 45 s: approved (a) and ours (b), native crops; `status-4.jpg`: Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 13:24 UTC · status 30 · Phase 3 · unit bloom · `status-1.jpg`: 45.0 s · approved on the left, ours on the right (judged commit, review tier); `status-2.jpg`: 50.5 s · approved on the left, ours on the right (judged commit, review tier); `status-3.jpg`: The head at 50.5 s · approved, the tree round 4 judged, the tree round 5 judges; `status-4.jpg`: The opening every 0.25 s from 44.5 to 51.5 s on the new schedule (draft tier)
 - 2026-11-21 12:56 UTC · status 29 · Phase 3 · unit bloom · `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier); `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier); `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left; `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
 - 2026-11-21 11:59 UTC · status 28 · Phase 3 · unit bloom · `status-1.jpg`: 45 s · approved left, build right (review tier); `status-2.jpg`: 50.5 s · approved left, build right (review tier); `status-3.jpg`: 45 s · the bud at native size, approved left, build right; `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
-- 2026-11-21 11:34 UTC · status 27 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s), approved left, build right, review tier; `status-2.jpg`: Frame 1515 (50.5 s), approved left, build right, review tier; `status-3.jpg`: Head at 45.0 s, approved left, build right; `status-4.jpg`: Head at 50.5 s, approved left, build right
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 0.56 h |
+| 4 | 8.50 h | 0.84 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 16.03 h |
+| Whole build | 30.00 h | 16.31 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -911,6 +911,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 16:44 UTC · Round 7 starts: field, floor round, judges 566eb48 (main with the Phase 4 line 8425087); budget table of Phase 3; line heads b9528ac and 8425087 logged
 - 2026-11-21 16:46 UTC · Status 38: round 7 started on 566eb48, the field's floor round; real dawn, night and frost worlds on main
 - 2026-11-21 17:09 UTC · Round 7: machine checks (13 green, G3 on its second run after a harness time limit), pack arrived; line news; frost lens f/11
+- 2026-11-21 17:10 UTC · Status 39: round 7 checked (13 green, pack here), frost on the line with its lens at f/11; 12 heads merged on the line
 
 ## Session log
 
@@ -997,4 +998,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Bloom opening, frame 1350: approved left, kept build right; Bloom hero, frame 1515: approved left, kept build right; Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; Night key, frame 780, Phase 4 line, first pass: approved left, ours right.
 - Status 38, 2026-11-21 16:46 UTC, Phase 4 · unit field · round 7. Round 7 has started: the field's floor round judges main 566eb48, which now holds the real dawn, night and frost worlds, the young neighbor rows, the frost and wet skin and a smaller bloom round the golden sun. The rain world is the last stand-in. Machine checks run here, the pack is being built on a builder's VM. Next: Machine checks, measures and the pack of round 7, then its three critics and ten jurors on frame 1755. Frost is judged next at about 17:15 UTC, then dawn, night and rain. Time used: 15.9 h of 30 h.
   Pictures: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right.
+- Status 39, 2026-11-21 17:10 UTC, Phase 4 · unit field · round 7. Round 7 (field): all 13 machine checks green on 566eb48 (the determinism check on its second run: the harness's 9 minute limit cut the first, the tool itself reported every tested frame identical). The pack is here and checked by hash and by eye; the measures at final are rendering; critics go out when the judged frame matches the Builder's own. The line took 12 reported heads since 16:50: the frost world's low fog, the bud's bowl and arms, hoar as a crust, uneven rows, the crop's front round the companion, the dawn mist and ground, the night's moon behind the plant, dew beads on hairs. Frost lens set to f/11 from three test renders. Next: Measure 1755 at final, check the pack's judged frame against it, send round 7 to its critics and jury. Then merge the line into main and start round 8 (frost) on it. Time used: 16.3 h of 30 h.
+  Pictures: Round 7 judged frame: 1755 at final, from the pack (commit 566eb48); Frost 1080 on the line, approved left (frost world 9923435, rendered on its builder's VM); Frost lens test, the neighbors at native size: approved, f/5.6, f/8, f/11 (chosen); Field 1755 after round 7's commit, approved left: the crop's front comes round the companion (field b18271e, its builder's VM).
 
