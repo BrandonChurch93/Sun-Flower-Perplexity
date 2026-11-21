@@ -553,12 +553,14 @@ export function stemLength(time: number, inputs: PlantInputs): number {
   const variant = plantVariant()
   for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === inputs.leanX && s.leanZ === inputs.leanZ && s.lift === inputs.lift) return s.length
   const target = heightAt(time)
+  // The stem is as long as it takes to stand that tall in still air. The wind then bends it and never stretches it.
+  const still = inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
   let length = 0
   if (target > 0) {
     let l0 = target
-    let f0 = place(time, inputs, l0, scratch, null) - target
+    let f0 = place(time, still, l0, scratch, null) - target
     let l1 = Math.max(1e-7, (l0 * target) / (f0 + target))
-    let f1 = place(time, inputs, l1, scratch, null) - target
+    let f1 = place(time, still, l1, scratch, null) - target
     for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
       const slope = (f1 - f0) / (l1 - l0)
       if (!(slope > 1e-6)) break
@@ -566,7 +568,7 @@ export function stemLength(time: number, inputs: PlantInputs): number {
       l0 = l1
       f0 = f1
       l1 = l2
-      f1 = place(time, inputs, l1, scratch, null) - target
+      f1 = place(time, still, l1, scratch, null) - target
     }
     length = l1
   }

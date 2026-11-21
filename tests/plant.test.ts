@@ -20,12 +20,15 @@ describe('the plant', () => {
     for (const [time, height] of config.plant.heightM) expect(heightAt(time)).toBeCloseTo(height, 9)
   })
 
-  it('stands exactly as tall as the film says, whatever shape it is in', () => {
+  it('stands exactly as tall as the film says in still air, whatever shape it is in, and the wind moves its top by millimeters', () => {
     const pos = new Float32Array(standInVertexCount * 3)
     for (let f = 0; f < frameCount; f += 7) {
       const time = timeOf(f)
-      const top = buildStandIn(time, plantInputsAt(time), pos, null)
+      const inputs = plantInputsAt(time)
+      const top = buildStandIn(time, { ...inputs, wind: 0 }, pos, null)
       expect(Math.abs(top - heightAt(time))).toBeLessThan(2e-5)
+      const blown = buildStandIn(time, inputs, pos, null)
+      expect(Math.abs(blown - heightAt(time))).toBeLessThan(5e-3)
     }
   })
 

@@ -15,7 +15,7 @@ import { companionPlace, companionVariant } from '../field/layout.ts'
 import { Ground } from '../ground/index.ts'
 import { focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
-import { stateUniforms } from '../plant/part.ts'
+import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
 import { Sky } from '../weather/sky.ts'
 import { rigAt } from './camera.ts'
@@ -36,7 +36,7 @@ export class Film {
   readonly scene = new THREE.Scene()
   readonly camera = new THREE.PerspectiveCamera()
   readonly plant = new Plant()
-  readonly companion = new Plant({ variant: companionVariant })
+  readonly companion = new Plant({ variant: companionVariant, at: companionPlace() })
   readonly field = new Field()
   readonly ground = new Ground()
   readonly sky = new Sky()
@@ -191,6 +191,8 @@ export class Film {
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
     this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
     const eye = this.rigOf(time)
+    fieldUniforms.uPlantWind.value = inputs.wind
+    fieldUniforms.uPlantHeight.value = heightAt(time)
     stateUniforms.uPlantWet.value = def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
