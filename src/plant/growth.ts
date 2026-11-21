@@ -275,7 +275,7 @@ export function setLeafTurn(v: number, turn: number | null): void {
 // The director may also hold single leaves of one neighbor by hand, as a gardener ties a leaf back: how far it droops, how high
 // it is held (at a set angle, or lifted by an angle while it goes on settling as it would) and how long it is. A hold comes on over the seven seconds before the bloom begins, so nothing differs up to the frost.
 // The plant itself is never held.
-export interface LeafHold { droop?: number; elevationDeg?: number; liftDeg?: number; lengthScale?: number }
+export interface LeafHold { droop?: number; elevationDeg?: number; liftDeg?: number; lengthScale?: number; rollDeg?: number; foldScale?: number; sinkDeg?: number }
 const leafHolds = new Map<number, Map<number, LeafHold>>()
 export function setLeafHold(v: number, leaf: number, hold: LeafHold | null): void {
   if (v === 0) throw new Error('The plant itself is never held.')
@@ -328,12 +328,25 @@ export function leafElevation(i: number, time: number, inputs: PlantInputs): num
   const hold = heldLeaf(i)
   if (hold === undefined) return angle
   const on = holdAt(time)
-  return (hold.elevationDeg === undefined ? angle : lerp(angle, hold.elevationDeg * RAD, on)) + (hold.liftDeg ?? 0) * RAD * on
+  const held = (hold.elevationDeg === undefined ? angle : lerp(angle, hold.elevationDeg * RAD, on)) + (hold.liftDeg ?? 0) * RAD * on
+  const sunk = smoothstep(bloom0, bloom1, time)
+  return hold.sinkDeg === undefined || sunk === 0 ? held : held - hold.sinkDeg * RAD * sunk
 }
 
 export function leafFold(i: number, time: number): number {
   const age = Math.max(0, leafAge(i, time))
   return ((80 - 70 * smoothstep(0, 4, age) + (rnd(12, i) - 0.5) * 8) * Math.PI) / 180
+}
+
+export function leafRoll(i: number, time: number): number {
+  const hold = heldLeaf(i)
+  const on = holdAt(time)
+  return hold?.rollDeg === undefined || on === 0 ? 0 : hold.rollDeg * RAD * on
+}
+
+export function leafFoldScale(i: number, time: number): number {
+  const hold = heldLeaf(i)
+  return hold?.foldScale === undefined ? 1 : lerp(1, hold.foldScale, holdAt(time))
 }
 
 export function leafDroop(i: number, inputs: PlantInputs, time: number): number {
