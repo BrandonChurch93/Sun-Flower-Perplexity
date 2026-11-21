@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.2 * exp(-theta / 0.2) + 0.004 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08))), 0.0);
 }
 `
 
