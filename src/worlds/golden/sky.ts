@@ -54,9 +54,12 @@ void main() {
   color = mix(color, lum * pale, 0.75 * smoothstep(0.15, 1.2, lum));
   color = mix(color, lum * vec3(0.9, 1.5, 1.62), 0.86 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta) * (1.0 - smoothstep(0.35, 1.2, lum)));
   color *= mix(vec3(1.0), vec3(1.22, 0.93, 0.68), exp(-max(el, 0.0) / 0.12) * smoothstep(0.1, 0.6, lum));
-  float shelf = smoothstep(0.065, 0.11, el) * smoothstep(0.2, 0.5, theta);
+  float shelf = smoothstep(0.06, 0.1, el) * smoothstep(0.2, 0.5, theta);
   float lit = dot(color, vec3(0.3, 0.6, 0.1));
-  color = mix(color, lit * vec3(1.2, 0.95, 0.7), shelf * smoothstep(0.08, 0.4, lit)) / (1.0 + 3.4 * shelf * lit);
+  color = mix(color, lit * vec3(1.2, 0.95, 0.7), shelf * smoothstep(0.08, 0.4, lit)) / (1.0 + 7.0 * shelf * lit);
+  vec2 deck = d.xz / (max(d.y, 0.0) + 0.12);
+  float bands = 0.65 * valueNoise(deck * 0.8 + 3.0) + 0.35 * valueNoise(deck * 1.9 + 7.0);
+  color *= 1.0 + 0.3 * (bands - 0.5) * smoothstep(0.06, 0.13, el);
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
