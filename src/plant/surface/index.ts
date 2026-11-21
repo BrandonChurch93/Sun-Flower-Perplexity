@@ -123,7 +123,7 @@ ${frostGlsl}
 ${dewGlsl}
 ${wetGlsl}
 
-vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear) {
+vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear, float sheet) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -197,8 +197,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
-  // The down of a round body holds rime all over: a frosted stem is paler than its skin. A part that knows its skin is a sheet with its own crust.
-  float body = margin < 0.0 ? 1.0 - blade : 0.0;
+  // The down of a round body holds rime all over: a frosted stem is paler than its skin. A sheet has its own crust.
+  float body = (1.0 - sheet) * (1.0 - blade);
   bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * body);
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
@@ -359,16 +359,16 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
 }
 
 vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
-  return tissueShade(t, world, view, vec2(0.0), -1.0, 0.0);
+  return tissueShade(t, world, view, vec2(0.0), -1.0, 0.0, 0.0);
 }
 
 // As shadeTissue, for a part that knows where on its skin the pixel is: 'at' in meters on the skin, 'margin' from 0 in the middle of a face to 1 at its edge or tip. The states of the skin then have a grain: frost stands in grains and gathers at the margin.
 vec3 shadeTissueAt(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
-  return tissueShade(t, world, view, at, saturate(margin), 0.0);
+  return tissueShade(t, world, view, at, saturate(margin), 0.0, 1.0);
 }
 
 // As shadeTissueAt, for a round body of clear, moist flesh, such as a young stem: 'clear' from 0 to 1 is how much of the sun its outline passes on toward the eye.
 vec3 shadeTissueClear(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear) {
-  return tissueShade(t, world, view, at, saturate(margin), saturate(clear));
+  return tissueShade(t, world, view, at, saturate(margin), saturate(clear), 0.0);
 }
 `
