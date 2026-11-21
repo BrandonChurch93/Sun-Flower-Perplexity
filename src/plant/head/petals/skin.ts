@@ -8,12 +8,12 @@ in vec3 positionB;
 in vec3 normal;
 in vec2 uv;
 in vec4 aRay;
-in vec3 aState;
+in vec4 aState;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vRay;
-out vec3 vState;
+out vec4 vState;
 out float vDepth;
 #ifdef DEPTH_PASS
 uniform float uShadowTexelM;
@@ -48,7 +48,7 @@ in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vUv;
 in vec4 vRay;
-in vec3 vState;
+in vec4 vState;
 in float vDepth;
 #ifndef PLANT_FIELD
 uniform sampler2D uRayColor;
@@ -75,6 +75,15 @@ void main() {
   float across = vUv.y * 2.0 - 1.0;
   float fresh = vState.x;
   float unfolded = vState.y;
+#ifndef PLANT_FIELD
+  // A shut ray is pleated into three slender straps that part toward the tip, the outer two ending short of the middle one.
+  float partAt = 0.3 * hash11(vRay.x * 23.9 + 1.7);
+  float parted = vState.w * smoothstep(0.03 + partAt, 0.3 + partAt, u);
+  float wing = step(0.3333, abs(across));
+  float endAt = mix(1.0, 0.5 + 0.45 * hash11(vRay.x * 37.1 + sign(across) * 5.3), wing);
+  float slender = mix(0.34, (0.2 + 0.09 * hash11(vRay.x * 71.3 + sign(across) * wing * 2.9)) * (1.0 - smoothstep(endAt - 0.3, endAt, u)), parted);
+  if (abs(abs(across) - 0.6667 * wing) > slender) discard;
+#endif
   float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
@@ -108,8 +117,8 @@ void main() {
   through *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.07, abs(across))) * (1.0 - vState.z) * (1.0 - fresh);
   // The veins run the length of a ray and pass less light than the tissue between them.
   float streak = smoothstep(0.72, 1.0, abs(sin(across * 21.0 + own * 6.0))) * smoothstep(1.0, 0.8, u) * smoothstep(0.02, 0.2, u);
-  through *= 1.0 - 0.3 * streak * mix(1.3, 1.0, vState.z);
-  albedo *= 1.0 - 0.15 * streak;
+  through *= 1.0 - 0.18 * streak * mix(2.0, 1.0, vState.z);
+  albedo *= 1.0 - 0.08 * streak;
 
   Tissue t;
   t.face = n;
@@ -127,8 +136,8 @@ void main() {
   rel.b = mix(1.0, rel.b, 0.3);
   albedo *= mix(vec3(1.0), rel, 0.6);
   float vein = data.b;
-  through *= (0.45 + 0.75 * data.g) * (1.0 - 0.3 * vein);
-  through.g *= 1.0 - 0.25 * vein;
+  through *= (0.45 + 0.75 * data.g) * (1.0 - 0.18 * vein);
+  through.g *= 1.0 - 0.15 * vein;
   float texels = texelDensity(m, uRaySize);
   // The slopes are taken in the map and by formula: screen differences of a fine height break into blocks on a steep fold.
   vec2 step = max(texels, 1.5) / uRaySize;
@@ -158,9 +167,10 @@ void main() {
   float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
-  // A shut strap is folded to two ridges: dark along its edges and down the furrow between them, brightest on the ridges.
-  float seam = max(smoothstep(0.6, 1.0, abs(across)), 0.8 * (1.0 - smoothstep(0.0, 0.14, abs(across)))) * fresh * smoothstep(1.0, 0.6, u);
-  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.6 * fresh * (1.0 - smoothstep(0.0, 0.2, abs(abs(across) - 0.36))));
+  // A shut strap is pleated to three ridges: dark in the two creases between them and along its edges, brightest on the ridges.
+  float crest = min(abs(across), abs(abs(across) - 0.6667));
+  float seam = max(smoothstep(0.85, 1.0, abs(across)), 1.0 - smoothstep(0.0, 0.13, abs(abs(across) - 0.3333))) * fresh * smoothstep(1.0, 0.6, u);
+  t.albedo *= (1.0 - 0.6 * seam) * (1.0 + 0.6 * fresh * (1.0 - smoothstep(0.0, 0.15, crest)));
   t.through *= 1.0 - 0.85 * seam;
   t.occlusion = (1.0 - 0.7 * seam) * mix(0.42, 1.0, smoothstep(0.0, 0.32, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);

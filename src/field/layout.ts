@@ -18,13 +18,17 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
 setLeafTurn(companionVariant, 228.3 * RAD)
-// Four of its leaves are held by hand for the bloom frames: an upper one turned broadside across the sun, a longer one under it, a long low one in the corner
-// and the top one, also broadside, hanging in from the top left. The two upper ones sink through the bloom as the stem carries them up,
-// so that they stay where they are in the frame.
-setLeafHold(companionVariant, 20, { droop: 0, liftDeg: 12.8, sinkDeg: 21.2, lengthScale: 1.135, rollDeg: -91 })
+// Its upper leaves are held by hand for the bloom frames, as a cluster along the left edge: one swung round the stem and turned broadside across the sun
+// on a stalk that rises from the lower left, a small dark one above it, three under it and two in the bottom corner. The one that grew toward the sun
+// is swung out of the frame. They sink through the bloom as the stem carries them up, so that they stay where they are in the frame.
+setLeafHold(companionVariant, 20, { droop: 0.2, lengthScale: 0.7, swingDeg: 180 })
+setLeafHold(companionVariant, 19, { droop: 0.007, liftDeg: 31.2, sinkDeg: 5.8, lengthScale: 1.064, rollDeg: -61.4, foldScale: 0.947, swingDeg: 131.3 })
+setLeafHold(companionVariant, 18, { droop: 0.085, liftDeg: 13.3, sinkDeg: 10, lengthScale: 1.1, rollDeg: -0.3, foldScale: 0.295, swingDeg: -31.7 })
+setLeafHold(companionVariant, 16, { droop: 0.316, liftDeg: 21.4, lengthScale: 2.4, rollDeg: 11.2, foldScale: 1.2, swingDeg: -104.8 })
+setLeafHold(companionVariant, 14, { droop: 0, liftDeg: 62.4, sinkDeg: -4.2, lengthScale: 1.915, rollDeg: 39.6, foldScale: 0.535, swingDeg: 143.7 })
 setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
 setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 36, lengthScale: 1.75 })
-setLeafHold(companionVariant, 23, { droop: 0, liftDeg: -8.8, sinkDeg: 21.2, lengthScale: 1.88, rollDeg: -65, foldScale: 0.76 })
+setLeafHold(companionVariant, 23, { droop: 0.064, liftDeg: -14.7, sinkDeg: 47.3, lengthScale: 1.374, rollDeg: -1.4, foldScale: 0.032, swingDeg: 0.7 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
@@ -55,14 +59,14 @@ export const budTurn = (time: number, id: number): number => {
   return away * (1 - ramp(start, start + 3.4, time))
 }
 
-// Full plants to here, simpler ones to the next, pictures of plants to the third, and one carpet from there to the last.
+// Full plants to here, simpler ones to the next, pictures of plants to the last row, where the field ends on a straight edge.
+// A carpet closes the tops over the last rows.
 export const fieldNearM = 12
 export const fieldFarM = 40
-export const fieldPicturesM = 150
-export const fieldEndM = 600
+export const fieldPicturesM = 66
 const NEAR_BAND_M = 4
 const FAR_BAND_M = 12
-export const carpetBandM = 30
+export const carpetBandM = 14
 
 // Two turns of each simpler kind are drawn as pictures.
 export const pictureTurns = 2
@@ -72,9 +76,12 @@ export const pictureCount = farVariants.length * pictureTurns
 export const meanTurn = 0.25
 const TURN_SCATTER = 0.8
 const SIDEWAYS = 0.2
+const BEHIND = 0.22
 const SHORT = 0.1
 const STRAGGLERS = 0.05
-export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
+// Each kind of picture is drawn once from the front and once from the side or from behind, no two at the same angle.
+const PICTURE_TURNS = [[-0.1, 1.55], [0.35, 3.0], [0.7, -1.2], [0.15, 2.3]]
+export const pictureTurn = (kind: number, turn: number): number => PICTURE_TURNS[kind][turn]
 
 export const fieldHalfWidth = (depth: number): number => 10 + 0.85 * depth
 
@@ -107,10 +114,11 @@ function edgeRows(across: number): number {
   return Math.max(bay * BAY.rows, wander)
 }
 
-// Two neighbors of the third row are set by hand, to the right of the plant at sunset: both in a lane the sun comes down, one of the early kind facing the lens, one turned three quarters.
+// Three neighbors of the second row are set by hand, to the right of the plant at sunset: a group of tall heads, one of the early kind facing the lens, one turned part away, one seen from the side.
 const EDGE = [
-  { row: 2, across: 0.93, size: 0.82, turn: 0.2, kind: 2 },
-  { row: 2, across: 1.31, size: 0.8, turn: 1.0, kind: 1 },
+  { row: 1, across: 0.762, size: 0.859, turn: 0.2, kind: 2, more: false },
+  { row: 1, across: 0.896, size: 0.88, turn: -0.6, kind: 1, more: true },
+  { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 1, more: true },
 ]
 
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
@@ -155,17 +163,16 @@ export function fieldPlaces(): FieldPlaces {
       if (reach < fieldFarM + (pick - 0.5) * FAR_BAND_M) {
         const straggler = hash01(SEED, 11, id) < STRAGGLERS
         const side = hash01(SEED, 17, id) < SIDEWAYS ? (hash01(SEED, 18, id) < 0.5 ? -1 : 1) * (1.0 + 0.6 * hash01(SEED, 19, id)) : 0
-        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + side + bell(id, 36) * TURN_SCATTER
         const close = reach < fieldNearM + (pick - 0.5) * NEAR_BAND_M
+        // Past the full plants one head in five has its back to the lens.
+        const behind = !close && hash01(SEED, 46, id) < BEHIND
+        const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : behind ? Math.PI + bell(id, 36) * 0.6 : meanTurn + side + bell(id, 36) * TURN_SCATTER
         // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
         const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0
         const list = close ? near : far
         list.push(x, z, turn, tall ? 0.72 + 0.09 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
       }
-      // The pictures thin out with distance and hand over to the carpet plant by plant.
-      const keep = (1 - 0.6 * step(58, 110, reach)) * (1 - step(fieldPicturesM - carpetBandM, fieldPicturesM, reach))
-      if (hash01(SEED, 13, id) >= keep) continue
       const kind = 0.45 * hash01(SEED, 14, id) + 0.55 * Math.min(1, Math.max(0, 0.5 + (noise(28, x * 0.06, z * 0.06) - 0.5) * 2.4))
       pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, leanX, leanZ, tone, id)
     }
@@ -178,7 +185,7 @@ export function fieldPlaces(): FieldPlaces {
     for (let i = 0; i < near.length; i += PLACE) if (Math.hypot(near[i] - x, near[i + 1] - z) < Math.hypot(near[at] - x, near[at + 1] - z)) at = i
     do id++
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
-    near.splice(at, PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
+    near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
   return made
