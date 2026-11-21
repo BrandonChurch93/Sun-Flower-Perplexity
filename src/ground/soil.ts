@@ -389,7 +389,7 @@ void main() {
   }
   albedo = dampened(albedo, damp);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
+  albedo = mix(albedo, (fieldOn() ? vec3(0.045, 0.052, 0.036) : vec3(0.03, 0.045, 0.016)) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * frosted(h, under));
   albedo *= 1.0 - 0.45 * pool;
 
@@ -407,6 +407,9 @@ void main() {
   open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
   if (fieldOn()) {
+    float patchLit = fieldPatch(p, d) * (1.0 - 0.5 * thatch);
+    ndl = mix(ndl, max(ndl, 0.15), thatch * step(lit, patchLit));
+    lit = max(lit, patchLit);
     open *= foot;
     lit *= foot;
   }
