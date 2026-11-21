@@ -29,6 +29,14 @@ uniform float uGlow;
 uniform float uShafts;
 uniform float uRays;
 uniform float uSunClear;
+uniform vec3 uGlowNear;
+uniform vec3 uGlowFar;
+uniform vec3 uAirTint;
+uniform float uLowRays;
+uniform float uRayLen;
+uniform float uRayWide;
+uniform float uKnee;
+uniform float uDisc;
 uniform vec3 uBlack;
 uniform float uFarFill;
 uniform float uSaturation;
@@ -67,8 +75,8 @@ vec3 tone(vec3 c) {
   // The brightest light loses its hue: on film the area round a sun in the frame is near white, not the sun's own color.
   float white = dot(y, vec3(0.2126, 0.7152, 0.0722));
   y = mix(y, vec3(white), uWhiten * smoothstep(0.6, 1.0, white));
-  vec3 over = max(y - 0.88, 0.0);
-  return min(y, 0.88) + uTop * (1.0 - exp(-over / uTop));
+  vec3 over = max(y - uKnee, 0.0);
+  return min(y, uKnee) + uTop * (1.0 - exp(-over / uTop));
 }
 // The star the edges of the aperture blades draw round a point of light: seven blades, fourteen soft rays, one pair far longer than the rest, widest at the light and fading to nothing, as bright as what shows of the light itself.
 vec3 star(vec2 px) {
@@ -118,6 +126,19 @@ float rays(float turn, float r, float down) {
   float x = across / wide;
   return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 14.0, 1.0)));
 }
+// The rays of a sun that stands just over the land, in the mist that lies on it: many, short and thin, below and beside the sun and never up into the sky.
+float lowRays(float turn, float r) {
+  float t = turn * uLowRays;
+  float k = floor(t);
+  vec3 h = vec3(hash31(vec3(k, 21.0, 1.0)), hash31(vec3(k, 22.0, 1.0)), hash31(vec3(k, 23.0, 1.0)));
+  float girth = 6.2831853 * r * uSize.x;
+  float across = (t - k - 0.25 - 0.5 * h.x) / uLowRays * girth;
+  float wide = (uSize.y / 1080.0 + mix(0.004, 0.009, h.y) * girth) * uRayWide;
+  float along = saturate(1.0 - r / (uRayLen * mix(0.55, 1.0, h.z)));
+  float x = across / wide;
+  float below = smoothstep(0.0, 0.07, turn) * (1.0 - smoothstep(0.43, 0.5, turn));
+  return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 24.0, 1.0))) * below;
+}
 // What a low sun in the frame does. In the glass: a warm core and a wide orange halo, which lie over everything. In the air of the field: short thin rays, wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
@@ -133,7 +154,9 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float tail = r * r / 0.0289;
   float wide = r * r / 0.06;
   float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.42 * exp(-r * r / 0.008) + 0.07 * exp(-r / 0.07 - wide * wide);
-  vec3 glass = mix(vec3(1.0, 0.9, 0.76), vec3(1.0, 0.5, 0.2), smoothstep(0.0, 0.06, r)) * (lit * uGlow * glow);
+  vec3 glass = mix(uGlowNear, uGlowFar, smoothstep(0.0, 0.06, r)) * (lit * uGlow * glow);
+  // Through mist the sun burns out as a flat disc with a soft edge, wider than itself.
+  if (uDisc > 0.0) glass += uGlowNear * (lit * uGlow * 2.0 * (1.0 - smoothstep(uDisc - 0.013, uDisc, r)));
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
   // Up against the cloud the lit air is nearly even and breaks along its length: the sky draws its own shafts there, and a second set from the lens reads as ruled lines.
@@ -144,7 +167,7 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
   // Above the sun only the open sky is behind the lit air: what else stands there is a near leaf.
-  float open = uShafts > 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
+  float open = uShafts > 0.0 && uLowRays <= 0.0 && r < 0.56 ? openSky(ivec2(px)) : 0.0;
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.6, 1.0, smoothstep(0.004, 0.05, under)), down);
@@ -152,7 +175,8 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float haze = 3.4 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
   float air = (mix(2.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.4 * exp(-r / 0.09) + haze) * hold + uRays * rays(turn, r, down) * near;
-  return glass + vec3(1.0, 0.4, 0.12) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
+  if (uLowRays > 0.0) air = 0.4 * exp(-r / 0.09) * hold + uRays * lowRays(turn, r) * near;
+  return glass + uAirTint * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
@@ -178,7 +202,7 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a, dot(c, vec3(0.2126, 0.7152, 0.0722)));
+  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, abs(f.a), dot(c, vec3(0.2126, 0.7152, 0.0722)));
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;
