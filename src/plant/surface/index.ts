@@ -351,8 +351,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
     vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
     color += direct * own * (TISSUE_CLEAR * clear * line * line * side * (0.2 + 0.8 * against * against));
   }
-  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin.
-  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
+  // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin. The beads stand on the down and send the light on, not back: seen face on they are the skin's own shade, along the outline they are a bright rim.
+  color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against) * (0.03 + 0.97 * rim)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
 
   return color;
 #endif
