@@ -81,7 +81,7 @@ void main() {
     albedo = mix(albedo, pale * 1.15, smoothstep(0.8, 1.0, ax) * 0.75);
     albedo *= 0.93 + 0.14 * fine;
     albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
-    if (inner) albedo = mix(albedo, vec3(0.12, 0.19, 0.08), 0.7);
+    if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     float thin = saturate(0.04 + 0.55 * smoothstep(0.38, 0.98, u) + 0.8 * smoothstep(0.3, 0.95, ax) * smoothstep(0.05, 0.3, u));
     thin *= 1.0 - 0.45 * max(keel, line);

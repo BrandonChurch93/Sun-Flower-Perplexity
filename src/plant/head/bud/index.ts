@@ -43,6 +43,8 @@ const LOOSE = [0.5, 0.42, 0.14]
 const COLLAR = [1.25, 0.95, 0.65]
 const COLLAR_FROM = -1
 const COLLAR_TAKES = 2.5
+// Bracts on the side away from the first rays stay on the body this much longer, in seconds.
+const COLLAR_LATE = 2
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = 1.3
 const FLARE = [0.25, 0.25, 0.5]
@@ -393,7 +395,8 @@ export function create(options: PartOptions): PlantPart | null {
       const cone = Math.pow(smoothstep(0.1, 0.7, grown), 0.6) * held
       const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
-      const collar = smoothstep(bloom0 + COLLAR_FROM, bloom0 + COLLAR_FROM + COLLAR_TAKES, time)
+      const late = COLLAR_LATE * smoothstep(0, 0.6, ox) * (1 - smoothstep(0.45, 0.85, oy)) * (1 - under)
+      const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
       const wrapped = lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, stand, ready)
