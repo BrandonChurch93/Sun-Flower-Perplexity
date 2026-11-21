@@ -56,6 +56,7 @@ const float TISSUE_FORWARD = 0.5;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
+const float TISSUE_DOWN = 0.35;
 // A thin part shaded by a thin part this close still gets the sun that came through it.
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
@@ -221,6 +222,8 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   float catches = (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against);
   vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
   color += (direct * catches + skyFront * (0.5 * open)) * pale * (TISSUE_FUZZ * fuzz * rim);
+  // The down on a blade scatters the sky well before the edge: a soft sheen, cooler than the green under it.
+  color += skyFront * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim));
 
   float px = length(fwidth(world));
   float lumps = 1.0 + 0.35 * saturate(2.0 - 420.0 * px) * sin(world.y * 420.0 + 2.0 * sin(world.x * 190.0 + world.z * 230.0))
