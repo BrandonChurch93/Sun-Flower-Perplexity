@@ -3,12 +3,13 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 
 const TAKE = process.argv[2] ?? 'out/work/sky-night/take-plant-out.jpg'
 const LAND_FROM = Number(process.argv[3] ?? 0.655)
-const W = 1408
-const H = 792
+const W = 2816
+const H = 1584
+const S = W / 1408
 const COVER = 1.3
-const FULL = [2048, 1152]
-const WEB = [1024, 576]
-const TABLE = [96, 54]
+const FULL = [3660, 2059]
+const WEB = [1830, 1030]
+const TABLE = [256, 144]
 
 const raw = async (img) => {
   const { data, info } = await img.removeAlpha().raw().toBuffer({ resolveWithObject: true })
@@ -19,45 +20,25 @@ const srgb = (v) => Math.round(255 * Math.min(1, Math.max(0, v <= 0.0031308 ? v 
 
 const small = sharp(TAKE).resize(W, H, { kernel: 'lanczos3' })
 const points = await raw(small.clone())
-const OPEN = Number(process.argv[4] ?? 4)
-const BIG = Number(process.argv[5] ?? 10)
+const FINE = Number(process.argv[4] ?? 7)
+const WIDE = Number(process.argv[5] ?? 25)
 const LEFT = Number(process.argv[6] ?? 0.6)
 const take = await raw(sharp(TAKE))
-const discOf = (r) => {
-  const d = []
-  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r + 1) d.push([dx, dy])
-  return d
-}
-const pass = (src, pick, disc) => {
-  const dst = Buffer.alloc(src.length)
-  for (let y = 0; y < take.h; y++) {
-    for (let x = 0; x < take.w; x++) {
-      for (let c = 0; c < 3; c++) {
-        let v = src[(y * take.w + x) * 3 + c]
-        for (const [dx, dy] of disc) v = pick(v, src[(Math.min(take.h - 1, Math.max(0, y + dy)) * take.w + Math.min(take.w - 1, Math.max(0, x + dx))) * 3 + c])
-        dst[(y * take.w + x) * 3 + c] = v
-      }
-    }
-  }
-  return dst
-}
-const open = (r) => pass(pass(take.data, Math.min, discOf(r)), Math.max, discOf(r))
-const fine = open(OPEN)
-const coarse = open(BIG)
+const fine = (await raw(sharp(TAKE).median(FINE))).data
+const coarse = (await raw(sharp(TAKE).median(WIDE))).data
 const core = Buffer.alloc(take.w * take.h)
 for (let i = 0; i < take.w * take.h; i++) {
   const lf = 0.3 * lin(fine[i * 3]) + 0.6 * lin(fine[i * 3 + 1]) + 0.1 * lin(fine[i * 3 + 2])
   const lc = 0.3 * lin(coarse[i * 3]) + 0.6 * lin(coarse[i * 3 + 1]) + 0.1 * lin(coarse[i * 3 + 2])
   core[i] = (lf - lc) / (lc + 0.01) > LEFT ? 255 : 0
 }
-const cover = await raw(sharp(core, { raw: { width: take.w, height: take.h, channels: 1 } }).blur(BIG / 2).toColourspace('b-w'))
+const cover = await raw(sharp(core, { raw: { width: take.w, height: take.h, channels: 1 } }).blur(5).toColourspace('b-w'))
 const opened = Buffer.alloc(fine.length)
 for (let i = 0; i < take.w * take.h; i++) {
   const s = Math.min(1, cover.data[i * cover.data.length / (take.w * take.h)] / 40)
   for (let c = 0; c < 3; c++) opened[i * 3 + c] = Math.round(fine[i * 3 + c] * (1 - s) + coarse[i * 3 + c] * s)
 }
 const calm = await raw(sharp(opened, { raw: { width: take.w, height: take.h, channels: 3 } }).blur(1.0).resize(W, H, { kernel: 'lanczos3' }))
-const wide = await raw(small.clone().blur(14))
 
 const out = Buffer.alloc(W * H * 3)
 const lum = (img, x, y) => 0.3 * lin(img.data[(y * W + x) * 3]) + 0.6 * lin(img.data[(y * W + x) * 3 + 1]) + 0.1 * lin(img.data[(y * W + x) * 3 + 2])
@@ -67,34 +48,34 @@ for (let x = 0; x < W; x++) {
   let best = 0
   found[x] = from
   for (let y = from; y < Math.round(0.81 * H); y++) {
-    const drop = (lum(calm, x, y + 4) - lum(calm, x, y - 4)) / (lum(calm, x, y - 4) + 1e-4)
+    const drop = (lum(calm, x, y + 4 * S) - lum(calm, x, y - 4 * S)) / (lum(calm, x, y - 4 * S) + 1e-4)
     if (drop < best) {
       best = drop
-      found[x] = y - 4
+      found[x] = y - 4 * S
     }
   }
 }
 const edge = new Int32Array(W)
 for (let x = 0; x < W; x++) {
   let top = H
-  for (let k = -8; k <= 8; k++) top = Math.min(top, found[Math.min(W - 1, Math.max(0, x + k))])
-  edge[x] = top - 7
+  for (let k = -8 * S; k <= 8 * S; k++) top = Math.min(top, found[Math.min(W - 1, Math.max(0, x + k))])
+  edge[x] = top - 7 * S
 }
 const foot = new Float64Array(W * 3)
 for (let x = 0; x < W; x++) {
   for (let c = 0; c < 3; c++) {
     let lo = 0
-    for (let j = 0; j < 8; j++) lo += lin(calm.data[((edge[x] - 2 - j) * W + x) * 3 + c])
-    foot[x * 3 + c] = lo / 8
+    for (let j = 0; j < 8 * S; j++) lo += lin(calm.data[((edge[x] - 2 * S - j) * W + x) * 3 + c])
+    foot[x * 3 + c] = lo / (8 * S)
   }
 }
-const run = 48
+const run = 48 * S
 const footE = new Float64Array(W * 3)
 for (let c = 0; c < 3; c++) {
   for (let x = 0; x < W; x++) {
     let s = 0
     let n = 0
-    for (let k = -run; k <= run; k += 2) {
+    for (let k = -run; k <= run; k += 2 * S) {
       const w = 1 - Math.abs(k) / (run + 1)
       s += w * foot[Math.min(W - 1, Math.max(0, x + k)) * 3 + c]
       n += w
@@ -107,7 +88,7 @@ for (let y = 0; y < H; y++) {
     for (let c = 0; c < 3; c++) {
       const i = (y * W + x) * 3 + c
       const sky = Math.min(lin(calm.data[i]), lin(points.data[i]) * 1.15 + 0.002)
-      const t = Math.min(1, Math.max(0, (y - (edge[x] - 10)) / 10))
+      const t = Math.min(1, Math.max(0, (y - (edge[x] - 10 * S)) / (10 * S)))
       const s = t * t * (3 - 2 * t)
       out[i] = srgb(sky * (1 - s) + footE[x * 3 + c] * s)
     }
@@ -119,12 +100,12 @@ const padY = Math.round((H * (COVER - 1)) / 2)
 const DW = W + 2 * padX
 const DH = H + 2 * padY
 const spread = await raw(sharp(out, { raw: { width: W, height: H, channels: 3 } }).extend({ top: padY, bottom: padY, left: padX, right: padX, extendWith: 'mirror' }))
-const soft = await raw(sharp(spread.data, { raw: { width: DW, height: DH, channels: 3 } }).blur(9))
+const soft = await raw(sharp(spread.data, { raw: { width: DW, height: DH, channels: 3 } }).blur(9 * S))
 const domeRaw = Buffer.alloc(DW * DH * 3)
 for (let y = 0; y < DH; y++) {
   for (let x = 0; x < DW; x++) {
     const off = Math.max(padX - x, x - (padX + W - 1), padY - y, y - (padY + H - 1), 0)
-    const t = Math.min(1, off / 120)
+    const t = Math.min(1, off / (120 * S))
     const s = t * t * (3 - 2 * t)
     for (let c = 0; c < 3; c++) {
       const i = (y * DW + x) * 3 + c
