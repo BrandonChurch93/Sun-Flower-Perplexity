@@ -72,10 +72,10 @@ interface Ray {
 }
 
 function outline(u: number): number {
-  const peak = 0.4
+  const peak = 0.38
   const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.55)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.2 + 0.8 * rise) * (0.05 + 0.95 * Math.pow(1 - Math.pow(s, 1.55), 0.9))
+  return (0.2 + 0.8 * rise) * (0.04 + 0.96 * Math.pow(1 - Math.pow(s, 1.25), 0.95))
 }
 
 function makeRays(seed: number): Ray[] {
@@ -93,19 +93,19 @@ function makeRays(seed: number): Ray[] {
     const strong = r(5, k) > 0.7 ? 3.4 : 1
     return {
       rank,
-      width: 0.3 + 0.045 * r(1, k),
-      droop: rank ? 0.12 + 0.45 * r(2, k) : 0.42 * r(2, k) * r(2, k),
-      tipCurl: (r(3, k) - 0.3) * 2.3,
+      width: 0.35 + 0.05 * r(1, k),
+      droop: rank ? 0.1 + 0.4 * r(2, k) : 0.4 * r(2, k) * r(2, k),
+      tipCurl: (r(3, k) - 0.45) * 0.8 + (r(3, k) > 0.76 ? 1.5 : 0),
       hard: hard.includes(k) ? 1.0 + 0.6 * r(13, k) : 0,
       hardAt: 0.34 + 0.22 * r(14, k),
       twist: (r(4, k) < 0.5 ? -1 : 1) * (0.12 + 0.3 * r(36, k)) * strong,
       yaw: (r(6, k) - 0.5) * 0.5,
-      lean: 0.11 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.12,
+      lean: 0.07 * Math.sin(k * 2.4 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.1,
       clump: 0.11 * Math.sin(k * 1.9 + 6.283 * r(26, 0)) + (r(27, k) - 0.5) * 0.16,
       arch: r(28, k),
       hook: (r(29, k) - 0.4) * 0.9,
-      pleat: half.includes(k) ? 1.0 : 0.42 + 0.4 * r(7, k),
-      trough: half.includes(k) ? 0.8 : 0.22 + 0.4 * r(8, k),
+      pleat: half.includes(k) ? 1.0 : 0.36 + 0.4 * r(7, k),
+      trough: half.includes(k) ? 0.8 : 0.12 + 0.4 * r(8, k),
       lay: (rank ? -0.03 : 0.14) + (r(9, k) - 0.5) * 0.2,
       roll: 0.07 + (r(10, k) - 0.5) * 0.36,
       buckle: 0.06 + 0.18 * r(30, k),
@@ -113,7 +113,7 @@ function makeRays(seed: number): Ray[] {
       sway: (r(32, k) - 0.5) * 0.26,
       edgeCurl: r(33, k) < 0.6 ? 0.4 + 0.9 * r(34, k) : 0,
       edgeSide: r(35, k) < 0.5 ? -1 : 1,
-      wave: 0.014 + 0.022 * r(15, k),
+      wave: 0.02 + 0.03 * r(15, k),
       waveFreq: 8 + 8 * r(16, k),
       wavePhase: 6.283 * r(17, k),
       crumple: 0.008 + 0.012 * r(18, k),
@@ -232,7 +232,9 @@ export function create(options: PartOptions): PlantPart | null {
     let pz = frame.oz + oz * outward - h.az * back
     const rise = Math.PI / 2 - rayAngle(k, time)
     const span = h.radius > 0 ? length / h.radius : 0
-    const riseEnd = 0.23 + 0.04 * ray.rank + 0.04 * ray.arch
+    // A ray that has just opened still stands forward of the face, and settles back over the next second.
+    const young = 0.5 * (1 - rayOpen(k, time - 1.2))
+    const riseEnd = 0.28 + 0.04 * ray.rank + 0.04 * ray.arch
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
@@ -260,7 +262,7 @@ export function create(options: PartOptions): PlantPart | null {
       const rho = Math.max(0, 0.95 + FOOT_OUT - e * span)
       const dome = Math.PI - Math.atan((2 * h.depth * FLOOR_DOME * rho) / Math.max(h.radius, 1e-6))
       const shut = mix(1.62, dome - 0.05, smooth(0, riseEnd, e)) + ray.hook * smooth(0.8, 1, e)
-      const openPitch = ray.lay - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
+      const openPitch = ray.lay + young * (1 - 0.5 * e) - ray.droop * Math.pow(e, 1.3) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
@@ -313,7 +315,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = Math.min(1, 0.45 + 4 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
+      const strap = 0.88 * Math.min(1, 0.45 + 4 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
