@@ -74,7 +74,7 @@ void main() {
 
   vec3 body = mix(vec3(0.72, 0.39, 0.02), vec3(0.81, 0.53, 0.05), smoothstep(0.15, 0.9, u));
   // A ray just out of the bud is still green yellow.
-  body = mix(body, vec3(0.30, 0.35, 0.045), 0.95 * fresh);
+  body = mix(body, vec3(0.235, 0.30, 0.045), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0);
@@ -82,7 +82,7 @@ void main() {
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
   vec3 through = mix(vec3(0.9, 0.40, 0.03), vec3(1.0, 0.56, 0.06), smoothstep(0.0, 0.8, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(0.34, 0.44, 0.05), 0.9 * fresh);
+  through = mix(through, vec3(0.27, 0.40, 0.05), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
