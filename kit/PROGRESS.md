@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 05:09 UTC · Round 2: machine checks green
+- Last push: 2026-11-21 05:21 UTC · Round 2: pack made, critic started
 - Last status: 13 · 2026-11-21 05:06 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 3.13 h |
+| 2 | 3.50 h | 3.35 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.26 h |
+| Whole build | 30.00 h | 4.48 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -324,7 +324,7 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-None.
+- `reviewer_02` · critic, R4 blockout, round 2, Gemini family (round 1 was the GPT family) · no folder, no branch · it gets only the 10 pack images, its section of `kit/07-QUALITY-BAR.md`, the severity scale, the return format and the pack's manifest; the message is kept as `out/work/briefs/round-002-r4-blockout-message.txt` · started 2026-11-21 05:22 UTC · limit 45 minutes, so 06:07 UTC.
 
 Finished in this task:
 
@@ -352,7 +352,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 
 - Started 2026-11-21 05:08 UTC. Judges commit `9c0c8bb`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent of another model family than round 1. Extra round: the clock printed `extra rounds: yes` at 05:07 UTC (whole build 4.26 h, extra rounds stop at 5.5 h). This is the last blockout round the limit allows (`rounds.blockout` is 2).
 - [x] Machine checks (`npm run gate -- --phase 2 --machine`): 05:09 UTC, all 12 green (G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
-- [ ] Pack (`npm run pack -- --phase 2 --round 2`)
+- [x] Pack (`npm run pack -- --phase 2 --round 2`): 05:20 UTC, 10 files in 10.4 minutes (budget said about 12), the same make-up as round 1: three whole film sheets, four cut sheets, the eight key pairs on three images, all at the `review` tier, each at most 1400 px, no metadata, the settled line of the `field` key with pair 8 word for word. The Builder looked at every file before sending it
 - [ ] R4 blockout answer in `scorecards/round-002/R4-blockout.json`
 - [ ] Fixes
 - [ ] Summary, status, push
@@ -400,6 +400,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:07 UTC · Round 1: fix pass, summary, status 13
 - 2026-11-21 05:07 UTC · Round 2 starts: blockout, extra round, judges 9c0c8bb
 - 2026-11-21 05:09 UTC · Round 2: machine checks green
+- 2026-11-21 05:21 UTC · Round 2: pack made, critic started
 
 ## Session log
 
