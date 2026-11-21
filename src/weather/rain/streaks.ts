@@ -38,12 +38,16 @@ void main() {
   vAcross = position.x;
   vAlong = position.y * (lengthM + 2.0 * halfM) / max(r, 1e-5);
   // A fine drop is a clean ball and gathers the band into one hard line; a heavy one is flattened by the air and wobbles, and spreads the same light over its width.
-  vShare = min(1.0, uGain * mix(1.0, 0.3, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
+  vShare = min(1.0, uGain * mix(1.0, 0.1, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
-  vSeen = clamp(r / (halfPx * pixelM) * 1.5 - 0.5, 0.0, 1.0);
+  float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
+  vSeen = min(1.0, max(0.09, least * least));
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
   if (-a.z < 0.02 || -b.z < 0.02) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+#ifdef OWN_BLUR
+  if (coc > 4.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+#endif
 }
 `
 
@@ -61,25 +65,34 @@ void main() {
   float u = vAcross * vAcross;
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
-  float core = exp(-u / 0.09) * swing;
-  // Where the drop is wider than a pixel and the blur, only that line and a faint body show; where it is not, the strip is the blur itself and holds the line's light evenly.
-  vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, vSeen));
-  float body = (1.0 - u) * mix(1.5, 0.35, vSeen);
+  float core = exp(-u / vSeen) * swing;
+  float seen = 1.0 - vSeen;
+  // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
+  vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));
+  float body = (1.0 - u) * mix(1.5, 0.35, seen);
   // Seen from above, a drop shows the dark land behind it and little of the band.
-  float level = smoothstep(-0.12, 0.0, normalize(vWorld - uCamPos).y);
-  outColor = vec4(applyFog(color, vWorld), saturate(vShare * mix(body, body + 1.5 * core, vSeen)) * mix(0.3, 1.0, level));
+  float rise = normalize(vWorld - uCamPos).y;
+  float level = smoothstep(-0.12, 0.0, rise);
+  float cover = saturate(vShare * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
+#ifdef OWN_BLUR
+  // A line held sharp in front of blurred land is its own thing to the lens. It is already drawn as wide as its blur, so where it covers the pixel the fill is told to leave it and not to spread it as the land behind it. Over the sky nothing spreads it.
+  if (cover < 0.25 || rise > 0.0) discard;
+  outColor = vec4(0.0);
+#else
+  outColor = vec4(applyFog(color, vWorld), cover);
+#endif
 }
 `
 
 const MAX_STREAKS = 60000
 const HEAVY_REACH_M = 6
 // The fine rain is drawn where the lens holds it as lines, from this share of the focus distance to that one. Nearer and farther a drizzle drop is spread over a blur many times its width and adds only a grey haze of wide soft strips, which the approved image does not have.
-const FINE_NEAR = 0.8
-const FINE_REACH = 1.34
+const FINE_NEAR = 0.82
+const FINE_REACH = 1.28
 const SLOWEST_M_PER_S = 0.5
 
 export interface Streaks {
-  mesh: THREE.Mesh
+  meshes: THREE.Mesh[]
   count(): number
   // Lays out every drop in the air over the part of the ground the lens looks across, between the open shutter and its close.
   prepare(open: number, close: number, pose: CameraPose, tanX: number, tanY: number, samples: number, width: number, flash: number): void
@@ -101,7 +114,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 24 },
+    uGain: { value: 16 },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
   }
@@ -110,12 +123,17 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   mesh.frustumCulled = false
   mesh.matrixAutoUpdate = false
   mesh.renderOrder = 44
+  const own = makeSurface({ name: 'rain streaks blur circle', vertex: `#define OWN_BLUR 1\n${vertex}`, fragment: `#define OWN_BLUR 1\n${fragment}`, uniforms, side: THREE.DoubleSide, transparent: true, cocOnly: true, depthWrite: false })
+  const ownMesh = new THREE.Mesh(geometry, own.main)
+  ownMesh.frustumCulled = false
+  ownMesh.matrixAutoUpdate = false
+  ownMesh.renderOrder = 45
   let made = 0
   const flat = new THREE.Vector3()
   const side = new THREE.Vector3()
 
   return {
-    mesh,
+    meshes: [mesh, ownMesh],
     count: () => made,
     prepare(open, close, pose, tanX, tanY, samples, width, flash) {
       flat.set(pose.forward.x, 0, pose.forward.z).normalize()
