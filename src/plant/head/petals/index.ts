@@ -41,7 +41,7 @@ const FOOT_STAGGER = 0.03
 const TIP_TUCK = 0.35
 // Where rays have lifted away, the shut straps beside the gap comb over it and the ones across from it reach past the eye.
 const GAP_COMB = 0.5
-const GAP_REACH = 0.28
+const GAP_REACH = 0.16
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
 const TEETH = [
@@ -59,6 +59,7 @@ const mix = (a: number, b: number, t: number): number => a + (b - a) * t
 interface Ray {
   rank: number
   deep: number
+  cut: number
   cup: number
   short: number
   nod: number
@@ -115,6 +116,7 @@ function makeRays(seed: number): Ray[] {
     return {
       rank,
       deep: r(48, k),
+      cut: rank * 0.26 * r(49, k) * r(49, k),
       short: r(37, k) < 0.14 ? 0.8 + 0.1 * r(38, k) : 1,
       nod: r(39, k) < 0.3 ? 0.6 + 0.9 * r(46, k) : 0,
       width: 0.5 + 0.12 * r(1, k),
@@ -258,8 +260,8 @@ export function create(options: PartOptions): PlantPart | null {
     const reach = GAP_REACH * smooth(0.15, 0.7, across) * (1 - alone)
     const side = (n: number) => (rayOpen((k + n + rayCount) % rayCount, time) + rayOpen((k + 2 * n + rayCount) % rayCount, time)) * 0.5
     const comb = GAP_COMB * (side(2) - side(-2))
-    const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
-    const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
+    const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0.02, 0.1, ray.cut)) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
+    const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
     const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - mix(0.178, 0.145, lifted) - 0.3 * lifted * (1 - lifted)) * full
@@ -351,7 +353,7 @@ export function create(options: PartOptions): PlantPart | null {
       u0 = u
 
       const strap = 1.1 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9))
-      const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.76 * u) * (1 - 0.85 * smooth(0.9, 1, u)) * STRAP_FILL * Math.min(1, grown / 0.72)
+      const place = h.radius * (Math.PI / rayCount) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * Math.min(1, grown / 0.72)
       const halfWidth = mix(mix(place, wide * strap, along * smooth(0.2, 0.5, open)), wide * outline(u), flat)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
