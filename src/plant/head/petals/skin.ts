@@ -72,7 +72,7 @@ void main() {
   float foot = 1.0 - smoothstep(0.0, 0.5, u);
   float claw = 1.0 - smoothstep(0.0, 0.1, u);
 
-  vec3 body = mix(vec3(0.76, 0.42, 0.02), vec3(0.88, 0.58, 0.06), smoothstep(0.15, 0.9, u));
+  vec3 body = mix(vec3(0.82, 0.56, 0.03), vec3(0.93, 0.76, 0.09), smoothstep(0.1, 0.8, u));
   // A ray just out of the bud is still green yellow.
   body = mix(body, vec3(0.58, 0.55, 0.2), 0.95 * fresh);
   // Each ray has its own depth of yellow.
@@ -81,9 +81,9 @@ void main() {
   // The thin edges and the far end let the most light through, and it comes out pale.
   float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
   body = mix(body, vec3(1.0, 0.78, 0.32), 0.65 * pale * (1.0 - fresh));
-  vec3 albedo = mix(body, vec3(0.52, 0.27, 0.02), 0.7 * foot);
+  vec3 albedo = mix(body, vec3(0.6, 0.36, 0.02), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.62, 0.25, 0.02), vec3(1.18, 0.62, 0.065), smoothstep(0.0, 0.7, u));
+  vec3 through = mix(vec3(0.72, 0.37, 0.02), vec3(1.3, 0.88, 0.09), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(1.7, 1.14, 0.5), 0.8 * pale);
   through = mix(through, vec3(0.8, 0.78, 0.22), 0.9 * fresh);
