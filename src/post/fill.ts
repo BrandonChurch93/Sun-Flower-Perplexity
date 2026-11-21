@@ -17,6 +17,8 @@ uniform sampler2D tNear;
 uniform float uRadiusScale;
 uniform float uSpecks;
 uniform float uSkyHold;
+uniform float uAirSoft;
+uniform float uAirFloor;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -46,6 +48,9 @@ void main() {
   // With specks in the air a lone bright pixel in a blurred area is one copy of a light, and the fill draws its disc from it.
   rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, uSpecks * smoothstep(1.5, 3.0, c.a));
   float reach = min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)});
+  // Kilometres of warm air soften what stands at the far end of them, whatever the lens does: the far land, the sky and the line between, and nothing of the field in front.
+  // The blur circle alone cannot tell a far thing from one at half the focus distance, so the air works only from a line under the low sun upward, where no near thing stands.
+  if (uAirSoft > 0.0 && uFar > 0.0) { float share = c.a / uFar; reach = max(reach, uAirSoft * smoothstep(0.935, 0.95, share) * (1.0 - smoothstep(1.0005, 1.002, share)) * smoothstep(uAirFloor, uAirFloor + 0.05, vUv.y)); }
   // A held sky pixel carries its reach with the sign turned: the fill reads that as a place that gathers but is never gathered. Only pure sky is held: one lens sample of a far hill in the pixel and it is the first step of that hill's edge, which has to be smoothed.
   outColor = vec4(rgb, uSkyHold > 0.5 && uFar > 0.0 && abs(c.a / uFar - 1.0) < 0.0002 ? -reach : reach);
 }

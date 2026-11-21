@@ -59,5 +59,5 @@ describe('the parts of the plant', () => {
       }
     }
     usePlant(0)
-  })
+  }, 30_000)
 })

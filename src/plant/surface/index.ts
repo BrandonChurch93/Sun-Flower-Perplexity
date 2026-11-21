@@ -95,6 +95,14 @@ const float TISSUE_SLATE = 0.21;
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
 
+// The share by which a blade passes more of the sun once the evening has come.
+const float TISSUE_LATE = 4.0;
+
+// The evening, from 52 s: the high sky goes out behind the haze and the low sun is all the light a leaf has. Exactly 0 before.
+float tissueEvening() {
+  return smoothstep(52.0, 55.0, uTime);
+}
+
 // A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun.
 float tissueClearSun() {
   return smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
@@ -258,13 +266,19 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float sheer = saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6);
   // Most of what a sheet passes is spread wide; a blade keeps a share close to the line of the sun, a petal's skin of small domes does not. The parts together stay under what arrives.
   float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * (2.0 * against * against * against + TISSUE_BEAM * (1.0 - sheer) * a4 * a4);
+  // In the evening a blade is lit from behind and glows: a petal, far sheerer, is left as it is.
+  float dusk = tissueEvening() * (1.0 - sheer) * (1.0 - sheer);
+  // What it passes then is the low sun hardly dyed, most where the face stands square to it: gold on one blade, green on the next.
+  // Never more than the blade has left after what it returns.
+  float room = max((1.0 - max(albedo.r, max(albedo.g, albedo.b))) / max(peak, 1e-4) - 1.0, 0.0);
+  vec3 lamp = through * uSunColor * (min(TISSUE_LATE * dusk * (0.2 + 1.6 * wrap * saturate(-ndl)), room) * wrap * lobe);
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
-  color += passed * (uSunColor * (wrap * lobe * sun) + skyBack * (open * (0.6 + 0.4 * sun)));
+  color += passed * (uSunColor * (wrap * lobe * sun) + skyBack * (open * (0.6 + 0.4 * sun))) + lamp * sun;
   color += (uSunColor * (sun * (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against)) + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
   // The wax of a shaded leaf mirrors the high sky: the slate in the shade of a field. Broad, and gone at the very edge.
-  color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim) * uClosed);
+  color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim) * uClosed * (1.0 - dusk));
   return color;
 #else
   vec3 H = normalize(L + view);
@@ -322,22 +336,23 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // The neighbors that shade a thin part stand in front of some of its sky.
   float cover = 1.0 - 0.8 * thin * shade;
   vec3 color = albedo * (direct * (matte * enter * under * skin) + skyFront * buried * (under * cover));
-  color += direct * (gloss * skin) + skyGloss * (mirror * open * cover);
+  // The evening's high sky is no mirror image worth the name on a blade: the cold face goes with it.
+  color += direct * (gloss * skin) + skyGloss * (mirror * open * cover * (1.0 - 0.85 * dusk));
   // What hides the sun hides the brightest of the sky behind as well: a shaded blade does not glow by itself.
   float behind = 0.6 + 0.4 * lit1;
-  color += passed * (uSunColor * glow * (crease * wrap * lobe) + skyBack * (open * behind));
+  color += passed * (uSunColor * glow * (crease * wrap * lobe) + skyBack * (open * behind)) + lamp * glow * crease;
   // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.
   color += albedo * hue * uSunColor * (TISSUE_BOUNCE * crease * thin * reach * shade * under);
   // Only the side that faces the sun: the far side of a stem stays in shade.
   float catches = smoothstep(-0.3, 0.4, 0.5 * (fdl + ndl)) * (0.15 + 0.85 * against * against);
   vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.6);
-  color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover)) * pale * fuzz;
+  color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover * (1.0 - 0.7 * dusk))) * pale * fuzz;
   // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
-  color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
+  color += skyFront * pale * (TISSUE_DOWN * (1.0 - 0.85 * dusk) * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
   // On the broad face of a sheet the down scatters the high sky: the cool sheen of a dark leaf, the short end most and not dyed by the pigment under it. Only what the tissue neither returns nor passes is there to scatter.
   float up = saturate(0.5 + 0.5 * N.y);
   float spare = 1.0 - keep * max(total.r, max(total.g, total.b));
-  color += uSkyZenith * vec3(0.6, 0.85, 1.0) * (TISSUE_SLATE * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
+  color += uSkyZenith * vec3(0.6, 0.85, 1.0) * (TISSUE_SLATE * (1.0 - dusk) * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
@@ -354,6 +369,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   }
   // The dew returns the light in its own color: a silver over the green, brightest when the light comes from behind and low over the skin. The beads stand on the down and send the light on, not back: seen face on they are the skin's own shade, along the outline they are a bright rim.
   color += (direct * (DEW_SUN * smoothstep(-0.25, 0.35, fdl) * (0.35 + 1.65 * against * against) * (0.03 + 0.97 * rim)) + skyFront * (DEW_SKY * open * (0.3 + 0.7 * grazing))) * (mist * under);
+  // On the face of a sheet that sees the light the beads lie open to it: a cold sheen in the light's own color, never on a face turned from it.
+  color += direct * (DEW_FACE * sheet * smoothstep(0.0, 0.3, min(ndl, fdl)) * (0.35 + 1.65 * against * against) * (1.0 - rim) * mist * under);
 
   return color;
 #endif
