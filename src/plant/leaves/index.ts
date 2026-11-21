@@ -522,7 +522,7 @@ export function create(options: PartOptions): PlantPart {
     // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
     const ripe = Math.max(smoothstep(5, 12, age), smoothstep(33, 40, time))
     // Its margins roll under only once the plant is in bloom: until then a blade is nearly a flat plate.
-    const rolled = ripe * (1 - 0.8 * early)
+    const rolled = ripe * (1 - 0.65 * early)
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = lerp(clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1), 0.65, cold)
     // The hanging leaf under the head keeps its edge to the lens.
@@ -621,7 +621,7 @@ export function create(options: PartOptions): PlantPart {
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
     // On the young plant a stalk is nearly as stout as the stem it leaves.
-    const thick = Math.min((0.5 + 0.16 * early + 0.14 * cold) * stem, (0.036 + 0.024 * early) * size * REACH)
+    const thick = Math.min((0.5 + 0.16 * early - 0.08 * cold) * stem, (0.036 + 0.024 * early) * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
@@ -647,7 +647,7 @@ export function create(options: PartOptions): PlantPart {
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early - 0.2 * cold) * k) + clasp
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early - 0.15 * cold) * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -790,7 +790,7 @@ export function create(options: PartOptions): PlantPart {
           cr[o] = px - ox * inside
           cr[o + 1] = py - oy * inside
           cr[o + 2] = pz - oz * inside
-          cr[o + 3] = (0.002 + 0.002 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
+          cr[o + 3] = (0.003 + 0.003 * hair.r1) * scale * (inside > 0 ? 0.6 : 1)
           cl[o] = dx + ux * stand
           cl[o + 1] = dy + uy * stand
           cl[o + 2] = dz + uz * stand
@@ -835,7 +835,7 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // Before the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * lerp(0.35, 1, smoothstep(36, 40, pose.time))
+      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * lerp(0.2, 1, smoothstep(36, 40, pose.time))
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
       fillBeads(slot, pose)
