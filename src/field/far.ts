@@ -141,7 +141,7 @@ void main() {
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
-    float clump = 0.45 * valueNoise(p * 3.1) + 0.3 * valueNoise(p * 7.7) + 0.25 * valueNoise(p * 17.0);
+    float clump = 0.25 * valueNoise(p * 3.1) + 0.35 * valueNoise(p * 7.7) + 0.4 * valueNoise(p * 17.0);
     float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach);
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
