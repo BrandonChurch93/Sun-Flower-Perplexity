@@ -142,9 +142,11 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   }
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(0.9, 1.0, 1.06) * grey, 0.15) * 0.9, frost);
+  // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
+  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, frost);
   albedo = mix(albedo, FROST_RIME, bloom);
-  through *= 1.0 - 0.65 * bloom;
+  // Rime on the sun's side sends most of the sun back before it reaches the blade.
+  through *= (1.0 - 0.8 * frost) * (1.0 - 0.65 * bloom);
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
 

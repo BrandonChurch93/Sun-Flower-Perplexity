@@ -4,6 +4,7 @@ const float FROST_GRAIN_M = 0.0012;
 const float FROST_BEAD_M = 0.0034;
 const vec3 FROST_RIME = vec3(0.74, 0.79, 0.86);
 const float FROST_FLASH = 5.0;
+const vec3 FROST_COLD = vec3(0.42, 1.22, 0.7);
 
 // One grain to a cell, whole inside it. x: its share of the pixel, y: the flash of its face when it mirrors the sun to the eye.
 vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3 N, vec3 view) {
@@ -31,7 +32,7 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float bank = valueNoise(at * (1.0 / 0.006));
   float fine = valueNoise(at * (1.0 / 0.0013) + 17.0);
   float grown = saturate((0.06 + 0.5 * up * up) * (0.3 + 1.4 * bank * bank) * (0.6 + 0.4 * sheen) + gather * sqrt(gather));
-  float veil = 0.02 + 0.2 * grown * fine + 0.5 * grown * grown * grown;
+  float veil = 0.02 + 0.2 * grown * fine + 0.65 * grown * grown;
 
   vec2 g = at * (1.0 / FROST_GRAIN_M);
   // A grain finer than the pixel is its share of the pixel: it never flickers.
