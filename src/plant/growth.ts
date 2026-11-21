@@ -199,25 +199,55 @@ export function rayLength(k: number, time: number): number {
 }
 
 // Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together, then the front travels round the head
-// both ways, so the far side opens last.
+// both ways. Past `RAY_NEAR` each ray keeps its own start and its own pace, so the far side lifts ray by ray and never as one block.
 const RAY_SECONDS = 3
+const RAY_NEAR = 95 * RAD
 const frontCurve = new Monotone([
   [0, bloom0],
   [45 * RAD, bloom0],
-  [95 * RAD, bloom0 + 2.4],
+  [RAY_NEAR, bloom0 + 2.4],
   [140 * RAD, bloom0 + 4],
   [Math.PI, bloom1 - RAY_SECONDS - 0.3],
 ])
+const farCurve = new Monotone([
+  [RAY_NEAR, bloom0 + 2.4],
+  [140 * RAD, bloom0 + 3],
+  [Math.PI, bloom0 + 3.5],
+])
 
-export function rayOpen(k: number, time: number): number {
+function raySpan(k: number): [number, number, number] {
   const away = Math.acos(Math.cos((k / rayCount) * TAU - RAY_FIRST))
-  const start = frontCurve.at(away) + 0.3 * rnd(41, k)
-  return smootherstep(start, start + RAY_SECONDS, time)
+  if (away <= RAY_NEAR) {
+    const start = frontCurve.at(away) + 0.3 * rnd(41, k)
+    return [start, start + RAY_SECONDS, 0]
+  }
+  const far = (away - RAY_NEAR) / (Math.PI - RAY_NEAR)
+  const start = farCurve.at(away) + lerp(0.3, 0.8, far) * rnd(41, k)
+  const seconds = lerp(RAY_SECONDS, 4.4, far) * (1 + 0.15 * (rnd(43, k) - 0.5) * smoothstep(0, 0.25, far))
+  return [start, Math.min(start + seconds, bloom1), 0.7 * smoothstep(0, 0.3, far)]
 }
 
-// A ray lies folded in over the face until it opens.
+const rayRise = (span: [number, number, number], time: number): number => lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
+
+export function rayOpen(k: number, time: number): number {
+  return rayRise(raySpan(k), time)
+}
+
+// A ray lies folded in over the face until it opens. It arrives cupped forward and flattens over the seconds that follow.
+// Whatever a ray had done by `RAY_HELD` it keeps.
+const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
+const RAY_CUP = 32
+
 export function rayAngle(k: number, time: number): number {
-  return lerp(-68, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
+  const span = raySpan(k)
+  const open = rayRise(span, time)
+  const lift = lerp(-68, 84 + 12 * (rnd(42, k) - 0.5), open)
+  const held = rayRise(span, RAY_HELD)
+  if (open <= held) return lift * RAD
+  const cup = Math.min(RAY_CUP, 76 * (1 - held)) * (0.85 + 0.3 * rnd(44, k))
+  const from = lerp(span[0], span[1], 0.69)
+  const flat = smootherstep(from, from + lerp(4.5, 8, rnd(45, k)), time)
+  return (lift - cup * smoothstep(held, 1, open) * (1 - flat)) * RAD
 }
 
 // The seed leaves shrink as the true leaves take over, then wither and are shed before the bud swells.
