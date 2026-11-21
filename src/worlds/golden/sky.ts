@@ -40,9 +40,10 @@ void main() {
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
   vec3 color = sky * uGain * lift;
   float lum = dot(color, vec3(0.3, 0.6, 0.1));
-  vec3 pale = mix(vec3(1.24, 1.0, 0.62), vec3(1.07, 1.0, 0.88), smoothstep(0.15, 0.8, theta));
-  color = mix(color, lum * pale, 0.6 * smoothstep(0.15, 1.2, lum));
+  vec3 pale = mix(vec3(1.6, 0.9, 0.4), vec3(1.3, 0.97, 0.6), smoothstep(0.15, 0.8, theta));
+  color = mix(color, lum * pale, 0.75 * smoothstep(0.15, 1.2, lum));
   color = mix(color, lum * vec3(0.9, 1.5, 1.62), 0.86 * smoothstep(0.03, 0.1, el) * smoothstep(0.18, 0.6, theta) * (1.0 - smoothstep(0.35, 1.2, lum)));
+  color *= mix(vec3(1.0), vec3(1.2, 0.93, 0.68), exp(-max(el, 0.0) / 0.12) * smoothstep(0.1, 0.6, lum));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
@@ -57,7 +58,7 @@ void main() {
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 1.1 * exp(-theta / 0.028) + 0.2 * exp(-theta / 0.12)) + mix(uGlow * vec3(1.0, 0.76, 0.5), vec3(0.5, 0.58, 0.56), smoothstep(0.1, 0.5, theta)) * (0.68 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 1.1 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.2 * exp(-theta / 0.12)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.68 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
   color += vec3(0.064, 0.083, 0.08) * exp(-theta / 0.5) * smoothstep(0.0, 0.08, el);
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));

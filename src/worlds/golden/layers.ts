@@ -106,7 +106,7 @@ void main() {
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float bank = 0.55 + 0.9 * valueNoise(vec2(vInfo.x * 0.004 + uTime * 0.012 + uLayer * 5.0, vWorld.y * 0.06 + uLayer * 13.0 - uTime * 0.004));
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z));
-  outColor = vec4(uGlow * (uShare * thick * bank * (1.3 * exp(-theta / 0.07) + 0.5 * exp(-theta / 0.2) + 0.015 * exp(-theta / 0.5))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.8, 0.6) * (uShare * thick * bank * (0.6 * exp(-theta / 0.07) + 0.85 * exp(-theta / 0.2) + 0.015 * exp(-theta / 0.5))), 0.0);
 }
 `
 
@@ -152,13 +152,13 @@ const STRIPS: Strip[] = [
 ]
 
 const VEILS = [
-  { radiusM: 14, heightM: 30, scaleM: 8, share: 0.24 },
-  { radiusM: 30, heightM: 40, scaleM: 9, share: 0.28 },
-  { radiusM: 60, heightM: 50, scaleM: 10, share: 0.32 },
-  { radiusM: 120, heightM: 60, scaleM: 12, share: 0.36 },
-  { radiusM: 240, heightM: 70, scaleM: 14, share: 0.36 },
-  { radiusM: 480, heightM: 80, scaleM: 16, share: 0.3 },
-  { radiusM: 1100, heightM: 110, scaleM: 22, share: 0.3 },
+  { radiusM: 14, heightM: 30, scaleM: 5, share: 0.24 },
+  { radiusM: 30, heightM: 40, scaleM: 6, share: 0.28 },
+  { radiusM: 60, heightM: 50, scaleM: 6, share: 0.32 },
+  { radiusM: 120, heightM: 60, scaleM: 7, share: 0.36 },
+  { radiusM: 240, heightM: 70, scaleM: 7, share: 0.36 },
+  { radiusM: 480, heightM: 80, scaleM: 8, share: 0.3 },
+  { radiusM: 1100, heightM: 110, scaleM: 9, share: 0.3 },
 ]
 
 const SUN_GAP_DEG = 9
