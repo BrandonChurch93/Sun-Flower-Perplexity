@@ -38,7 +38,7 @@ export const farVariants = [131, 149, 157, 173]
 // most are behind it and still buds when it is open. The clocks part slowly before the bloom and meet again before the last frame.
 export type Tier = 'near' | 'far' | 'pictures'
 const AHEAD_S: Record<Tier, number[]> = {
-  near: [-4.5, 1.5, 3.6, -1.5, -3.5, -0.5, -2.5],
+  near: [-4.5, -0.6, 0.8, -1.5, -3.5, 0.4, -2.5],
   far: [-4.5, 1.5, -3, -4],
   pictures: [-4.6, -2.5, -4.2, -3.5],
 }
@@ -79,6 +79,10 @@ const SIDEWAYS = 0.2
 const BEHIND = 0.22
 const SHORT = 0.1
 const STRAGGLERS = 0.05
+const UNDER_FROM_M = 7
+const UNDER_TO_M = 18
+const UNDER_PER_GAP = 2
+const UNDER_ID = 1000000
 // Each kind of picture is drawn once from the front and once from the side or from behind, no two at the same angle.
 const PICTURE_TURNS = [[-0.1, 1.55], [0.35, 3.0], [0.7, -1.2], [0.15, 2.3]]
 export const pictureTurn = (kind: number, turn: number): number => PICTURE_TURNS[kind][turn]
@@ -116,12 +120,12 @@ function edgeRows(across: number): number {
 
 // Three neighbors of the second row are set by hand, to the right of the plant at sunset: a group of tall heads, one of the early kind facing the lens, one turned part away, one seen from the side.
 const EDGE = [
-  { row: 1, across: 0.762, size: 0.859, turn: 0.2, kind: 2, more: false },
+  { row: 1, across: 0.762, size: 0.859, turn: 0.2, kind: 5, more: false },
   { row: 1, across: 0.896, size: 0.88, turn: -0.6, kind: 1, more: true },
-  { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 1, more: true },
+  { row: 1, across: 1.132, size: 0.877, turn: 1.3, kind: 3, more: true },
 ]
 
-export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
+export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array; under: Float32Array }
 
 let made: FieldPlaces | null = null
 
@@ -132,6 +136,7 @@ export function fieldPlaces(): FieldPlaces {
   const near: number[] = []
   const far: number[] = []
   const pictures: number[] = []
+  const under: number[] = []
   const { plantSpacingM, rowSpacingM, plantAheadOfRowM } = config.field
   let id = 0
   for (let k = 0; plantAheadOfRowM + k * rowSpacingM <= fieldPicturesM; k++) {
@@ -149,6 +154,15 @@ export function fieldPlaces(): FieldPlaces {
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
       const reach = Math.hypot(x, z)
+      // A crop sown thick: in the first rows a shorter plant stands in every gap of the row, in the shade of the tall ones, so there are leaves at every height.
+      for (let u = 0; reach < UNDER_TO_M && u < UNDER_PER_GAP; u++) {
+        const uid = UNDER_ID + id * UNDER_PER_GAP + u
+        if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
+        const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
+        if (k < edgeRows(off) - 0.5) continue
+        const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
+        under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
+      }
       const away = step(20, 60, reach)
       const wide = noise(25, x * 0.035, z * 0.035)
       const thin = 0.05 * step(0.62, 0.8, noise(21, across * 0.5, depth * 0.5)) + 0.3 * away * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))
@@ -168,7 +182,7 @@ export function fieldPlaces(): FieldPlaces {
         const behind = !close && hash01(SEED, 46, id) < BEHIND
         const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : behind ? Math.PI + bell(id, 36) * 0.6 : meanTurn + side + bell(id, 36) * TURN_SCATTER
         // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
-        const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0
+        const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0.5
         const list = close ? near : far
         list.push(x, z, turn, tall ? 0.72 + 0.09 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
@@ -187,7 +201,7 @@ export function fieldPlaces(): FieldPlaces {
     while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
-  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
+  made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under) }
   return made
 }
 
