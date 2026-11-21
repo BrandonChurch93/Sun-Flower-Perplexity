@@ -9,7 +9,6 @@ import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { LANDING_FLOATS, fineLandings, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
-import { rivuletFragment, rivuletGeometry, rivuletVertex } from './rivulets.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
@@ -17,15 +16,12 @@ const MAX_RINGS = 6144
 const FINE_REACH_M = 0.11
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
-const CUT_STARTS_S = 8.5
-const CUT_ENDS_S = 13
 
 // The water standing on the ground: level surfaces in its low places that mirror the sky, and the rings of every drop that lands in them.
 export class Puddles {
   readonly meshes: THREE.Object3D[]
   private readonly water: THREE.Mesh
   private readonly crowns: THREE.Mesh
-  private readonly rivulets: THREE.Mesh
   private readonly span = { value: new THREE.Vector2() }
   private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
   private readonly splashDrop: THREE.InstancedBufferAttribute
@@ -58,15 +54,7 @@ export class Puddles {
     this.crowns.frustumCulled = false
     this.crowns.visible = false
     this.crowns.renderOrder = -9
-    const thread = makeSurface({ name: 'rivulets', vertex: rivuletVertex, fragment: rivuletFragment, uniforms: { ...this.uniforms, uSpan: this.span }, side: THREE.DoubleSide, transparent: true, castShadow: false })
-    thread.main.polygonOffset = true
-    thread.main.polygonOffsetFactor = -1
-    thread.main.polygonOffsetUnits = -2
-    this.rivulets = new THREE.Mesh(rivuletGeometry(), thread.main)
-    this.rivulets.frustumCulled = false
-    this.rivulets.visible = false
-    this.rivulets.renderOrder = -11
-    this.meshes = [this.water, this.crowns, this.rivulets]
+    this.meshes = [this.water, this.crowns]
   }
 
   // Once a frame, with the film second at the open shutter and at its close.
@@ -74,12 +62,9 @@ export class Puddles {
     const wet = def.ground.wet
     this.water.visible = shown && wet > 0.5 && !!rainSkyUniforms.tRainSky.value
     this.crowns.visible = this.water.visible
-    this.rivulets.visible = this.water.visible
     if (!this.water.visible) return
-    const cut = Math.min(1, Math.max(0, (time - CUT_STARTS_S) / (CUT_ENDS_S - CUT_STARTS_S)))
-    const eased = 0.25 + 0.75 * cut * cut * (3 - 2 * cut)
     const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet
-    this.level.value.set(y, eased)
+    this.level.value.set(y, 0)
     const cx = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
     const cz = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
     const reach = rippleBox.halfM * Math.SQRT2
