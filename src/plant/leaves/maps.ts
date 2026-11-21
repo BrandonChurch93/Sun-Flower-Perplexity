@@ -14,11 +14,11 @@ function veinPixels(width: number, height: number): Uint8Array {
   const out = new Uint8Array(SETS * width * height * 4)
   for (let set = 0; set < SETS; set++) {
     const sides = [veinsOf(VEIN_SEED, set, 0), veinsOf(VEIN_SEED, set, 1)]
-    for (let y = 0; y < height; y++) {
-      const s = (y + 0.5) / height
-      for (let x = 0; x < width; x++) {
-        const u = ((x + 0.5) / width - PAD) / (1 - 2 * PAD)
-        const w = Math.max(-1, Math.min(1, u * 2 - 1))
+    for (let x = 0; x < width; x++) {
+      const u = ((x + 0.5) / width - PAD) / (1 - 2 * PAD)
+      const w = Math.max(-1, Math.min(1, u * 2 - 1))
+      for (let y = 0; y < height; y++) {
+        const s = (y + 0.5) / height
         const f = veinField(sides[w < 0 ? 0 : 1], w, s)
         const pillow = Math.min(1, f.near / 0.022)
         const high = pillow * (2 - pillow) * 0.42 - 0.22 * f.main - 0.08 * f.rung

@@ -71,26 +71,47 @@ const field: VeinField = { near: 1, main: 0, rung: 0 }
 const MIDRIB = 0.0095
 const SIDE = 0.0044
 
+// The half width of the average blade, tabled, and what each vein needs at one distance from the midrib, kept from the last call:
+// the map asks for millions of places, column by column.
+const WIDE_STEPS = 2048
+const wideTable = Float64Array.from({ length: WIDE_STEPS + 1 }, (_, i) => Math.max(0.05, widthAt(i / WIDE_STEPS, 0.6, 0.3)))
+let keptVeins: Vein[] | null = null
+let keptAcross = -1
+const keptAt: number[] = []
+const keptSlope: number[] = []
+const keptHalf: number[] = []
+
 // The veins at a place on the blade.
 export function veinField(veins: Vein[], w: number, s: number): VeinField {
   const a = Math.abs(w)
-  const wide = Math.max(0.05, widthAt(s, 0.6, 0.3))
+  if (veins !== keptVeins || a !== keptAcross) {
+    keptVeins = veins
+    keptAcross = a
+    for (let k = 0; k < veins.length; k++) {
+      const v = veins[k]
+      keptAt[k] = veinAt(v, a)
+      keptSlope[k] = v.c * v.p * Math.pow(Math.max(a, 1e-4), v.p - 1) * ASPECT
+      keptHalf[k] = Math.max(SIDE * v.width * (1 - 0.6 * a) * smoothstep(0, 0.04, a), 1e-5)
+    }
+  }
+  const row = clamp(s) * WIDE_STEPS
+  const low = Math.min(WIDE_STEPS - 1, Math.floor(row))
+  const wide = wideTable[low] + (wideTable[low + 1] - wideTable[low]) * (row - low)
   const across = (a * wide) / ASPECT
   const rib = MIDRIB * (1 - 0.85 * s)
   let near = across
-  let main = Math.exp(-((across / rib) ** 2))
+  let main = across < 3 * rib ? Math.exp(-((across / rib) ** 2)) : 0
   let below = 0
   let above = 1
   let lower = 0
   for (let k = 0; k < veins.length; k++) {
-    const v = veins[k]
-    const at = veinAt(v, a)
+    const at = keptAt[k]
     const ds = s - at
-    const slope = (v.c * v.p * Math.pow(Math.max(a, 1e-4), v.p - 1) * ASPECT) / wide
+    const slope = keptSlope[k] / wide
     const d = Math.abs(ds) / Math.sqrt(1 + slope * slope)
-    const half = SIDE * v.width * (1 - 0.6 * a) * smoothstep(0, 0.04, a)
     if (d < near) near = d
-    main = Math.max(main, Math.exp(-((d / Math.max(half, 1e-5)) ** 2)))
+    const q = d / keptHalf[k]
+    if (q < 3) main = Math.max(main, Math.exp(-q * q))
     if (ds >= 0 && at >= below) {
       below = at
       lower = k + 1
@@ -101,8 +122,9 @@ export function veinField(veins: Vein[], w: number, s: number): VeinField {
   const f = (s - below) / gap
   const lines = a * 15 + 0.22 * Math.sin(f * 5 + lower * 2.1) + lower * 0.37
   const off = Math.abs(lines - Math.round(lines)) / 15 / ASPECT
+  const t = off / 0.0011
   field.near = near
   field.main = clamp(main)
-  field.rung = Math.exp(-((off / 0.0011) ** 2)) * smoothstep(0.02, 0.1, a) * smoothstep(0, 0.012, near)
+  field.rung = t < 3 ? Math.exp(-t * t) * smoothstep(0.02, 0.1, a) * smoothstep(0, 0.012, near) : 0
   return field
 }
