@@ -4,8 +4,8 @@ import { basin } from './basin.ts'
 import { LANDING_FLOATS } from './landings.ts'
 
 // A ring fades in this many seconds, the smallest drop's and what the largest adds, and is gone after this many fades.
-const RING_FADE_S = [0.12, 0.45]
-const RING_FADES = 3.5
+const RING_FADE_S = [0.12, 0.5]
+const RING_FADES = 3
 // The longest a ring lives from the landing of its drop: of a heavy drop, and of the fine rain.
 export const RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1])
 export const FINE_RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1] * 0.37)
@@ -26,17 +26,17 @@ void main() {
   float seed = hash21(drop.xy * 91.7);
   float fade = ${RING_FADE_S[0].toFixed(2)} + ${RING_FADE_S[1].toFixed(2)} * size;
   float life = ${RING_FADES.toFixed(1)} * fade;
-  float rc = 0.002 + (0.17 + 0.07 * size + 0.03 * seed) * t;
-  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / 0.12) * (1.0 - smoothstep(0.75 * life, life, t)) * (0.25 + 0.75 * size);
+  float rc = 0.002 + (0.18 + 0.1 * size + 0.03 * seed) * t;
+  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.05 + 0.09 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size;
   amp *= smoothstep(0.0003, 0.003, waterDepth(drop.xy));
-  if (amp <= 0.0) {
+  if (amp < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  float w = 0.003 + 0.004 * size + (0.02 + 0.03 * size) * t;
+  float w = 0.003 + 0.008 * size + (0.02 + 0.05 * size) * t;
   float a = ring.x * 6.2831853;
-  vOff = vec2(cos(a), sin(a)) * mix(max(rc - 6.0 * w, 0.0), (rc + 2.3 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 0.9 * amp, 0.004 + 0.008 * size + (0.006 + 0.014 * size) * t + 0.004 * seed);
+  vOff = vec2(cos(a), sin(a)) * mix(max(rc - 4.0 * w, 0.0), (rc + 2.2 * w) * 1.01, ring.y);
+  vWave = vec4(rc, w, 2.6 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4(boxPlace(drop.xy + vOff), 0.0, 1.0);
 }
