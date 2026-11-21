@@ -101,6 +101,7 @@ export function create(options: PartOptions): PlantPart {
   const weight = new Float64Array(CELLS)
   const cum = new Float64Array(CELLS + 1)
   const ringS = new Float64Array(main)
+  const ringM = new Float64Array(main)
   const ringR = new Float32Array(main)
   const ringNeck = new Float32Array(main)
   const grid = new Float32Array(main * row)
@@ -159,44 +160,52 @@ export function create(options: PartOptions): PlantPart {
       }
     }
 
-    // Rings go where the shape needs them: where the stem bends, at each node, in the flare under the head and at the foot.
     const cell = length / CELLS
-    weight.fill(22 / CELLS)
-    let px = 0
-    let py = 1
-    let pz = 0
-    for (let c = 0; c <= CELLS; c++) {
-      const n = stemAt(pose, c / CELLS)
-      if (c > 0) weight[c - 1] += Math.acos(Math.min(1, px * n.tx + py * n.ty + pz * n.tz)) / 0.07
-      px = n.tx
-      py = n.ty
-      pz = n.tz
+    // At the close of the shutter every ring stays on the tissue it sat on at the open, so the skin does not slide while the shutter is open.
+    if (!first) {
+      for (let j = 0; j < main; j++) ringS[j] = clamp(anchors.sAt(ringM[j]), 0, length)
+      for (let j = 1; j < main; j++) ringS[j] = Math.max(ringS[j], ringS[j - 1])
     }
-    if (full && cell > 0) {
-      for (let k = 0; k < nodes; k++) {
-        const sigma = Math.max(1.7 * nodeR[k], 2 * cell)
-        const share = (5 * Math.min(1, 3 * nodeAmp[k]) * cell) / (sigma * Math.sqrt(Math.PI))
-        const c0 = Math.max(0, Math.floor((nodeS[k] - 2.5 * sigma) / cell))
-        const c1 = Math.min(CELLS - 1, Math.ceil((nodeS[k] + 2.5 * sigma) / cell))
-        for (let c = c0; c <= c1; c++) {
-          const d = ((c + 0.5) * cell - nodeS[k]) / sigma
-          weight[c] += share * Math.exp(-d * d)
-        }
+    // Rings go where the shape needs them: where the stem bends, at each node, in the flare under the head and at the foot.
+    if (first) {
+      weight.fill(22 / CELLS)
+      let px = 0
+      let py = 1
+      let pz = 0
+      for (let c = 0; c <= CELLS; c++) {
+        const n = stemAt(pose, c / CELLS)
+        if (c > 0) weight[c - 1] += Math.acos(Math.min(1, px * n.tx + py * n.ty + pz * n.tz)) / 0.07
+        px = n.tx
+        py = n.ty
+        pz = n.tz
       }
-      const flareCells = Math.ceil(0.04 * CELLS)
-      for (let c = CELLS - flareCells; c < CELLS; c++) weight[c] += (10 * hasHead) / flareCells
-      const footCells = Math.max(1, Math.min(CELLS, Math.ceil((3 * rFoot + 0.004) / cell)))
-      for (let c = 0; c < footCells; c++) weight[c] += 3 / footCells
+      if (full && cell > 0) {
+        for (let k = 0; k < nodes; k++) {
+          const sigma = Math.max(1.7 * nodeR[k], 2 * cell)
+          const share = (5 * Math.min(1, 3 * nodeAmp[k]) * cell) / (sigma * Math.sqrt(Math.PI))
+          const c0 = Math.max(0, Math.floor((nodeS[k] - 2.5 * sigma) / cell))
+          const c1 = Math.min(CELLS - 1, Math.ceil((nodeS[k] + 2.5 * sigma) / cell))
+          for (let c = c0; c <= c1; c++) {
+            const d = ((c + 0.5) * cell - nodeS[k]) / sigma
+            weight[c] += share * Math.exp(-d * d)
+          }
+        }
+        const flareCells = Math.ceil(0.04 * CELLS)
+        for (let c = CELLS - flareCells; c < CELLS; c++) weight[c] += (10 * hasHead) / flareCells
+        const footCells = Math.max(1, Math.min(CELLS, Math.ceil((3 * rFoot + 0.004) / cell)))
+        for (let c = 0; c < footCells; c++) weight[c] += 3 / footCells
+      }
+      cum[0] = 0
+      for (let c = 0; c < CELLS; c++) cum[c + 1] = cum[c] + weight[c]
+      const total = cum[CELLS]
+      for (let j = 0, c = 0; j < main; j++) {
+        const want = (total * j) / (main - 1)
+        while (c < CELLS - 1 && cum[c + 1] < want) c++
+        ringS[j] = Math.min(length, (c + (want - cum[c]) / weight[c]) * cell)
+      }
+      ringS[main - 1] = length
+      for (let j = 0; j < main; j++) ringM[j] = anchors.labelAt(ringS[j])
     }
-    cum[0] = 0
-    for (let c = 0; c < CELLS; c++) cum[c + 1] = cum[c] + weight[c]
-    const total = cum[CELLS]
-    for (let j = 0, c = 0; j < main; j++) {
-      const want = (total * j) / (main - 1)
-      while (c < CELLS - 1 && cum[c + 1] < want) c++
-      ringS[j] = Math.min(length, (c + (want - cum[c]) / weight[c]) * cell)
-    }
-    ringS[main - 1] = length
 
     const rEnd = base(1, length)
     const slopeEnd = length > 0 ? (3 * Math.max(0, flareTo - stemRadius(time, 1) * grown * (1 + 0.16 * hasHead))) / (0.03 * length) : 0
@@ -343,7 +352,7 @@ export function create(options: PartOptions): PlantPart {
       lean[o + 1] = 1
       lean[o + 2] = 0
       lean[o + 3] = hash01(seed, 81, i)
-      if (shown <= 0 || length <= 0) {
+      if (length <= 0) {
         root[o] = 0
         root[o + 1] = 0
         root[o + 2] = 0
@@ -351,11 +360,13 @@ export function create(options: PartOptions): PlantPart {
         continue
       }
       const s = S[k] + hairAt[i] * span
-      const f = Math.min(CELLS - 1e-6, s / cell)
-      const c = Math.floor(f)
-      let j = Math.min(main - 2, Math.floor(((cum[c] + (f - c) * weight[c]) / total) * (main - 1)))
-      while (j > 0 && ringS[j] > s) j--
-      while (j < main - 2 && ringS[j + 1] < s) j++
+      let j = 0
+      let hi = main - 1
+      while (hi - j > 1) {
+        const mid = (j + hi) >> 1
+        if (ringS[mid] <= s) j = mid
+        else hi = mid
+      }
       const step = Math.max(1e-9, ringS[j + 1] - ringS[j])
       const fr = clamp((s - ringS[j]) / step)
       const a = hash01(seed, 82, i) * TAU

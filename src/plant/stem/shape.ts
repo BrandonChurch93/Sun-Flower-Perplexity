@@ -65,6 +65,7 @@ export class Anchors {
     const s = this.s
     const m = this.m
     if (at <= 0) return at
+    if (at >= s[ANCHORS - 1]) return m[ANCHORS - 1]
     for (let k = 1; k < ANCHORS; k++) {
       if (at <= s[k] || k === ANCHORS - 1) {
         const span = s[k] - s[k - 1]
@@ -72,6 +73,19 @@ export class Anchors {
       }
     }
     return m[ANCHORS - 1]
+  }
+
+  sAt(label: number): number {
+    const s = this.s
+    const m = this.m
+    if (label <= 0) return label
+    for (let k = 1; k < ANCHORS; k++) {
+      if (label <= m[k]) {
+        const span = m[k] - m[k - 1]
+        return span > 1e-12 ? s[k - 1] + ((label - m[k - 1]) / span) * (s[k] - s[k - 1]) : s[k]
+      }
+    }
+    return s[ANCHORS - 1]
   }
 }
 
