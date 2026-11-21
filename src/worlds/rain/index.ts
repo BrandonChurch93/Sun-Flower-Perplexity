@@ -42,7 +42,7 @@ export const stage: WorldStageMaker = () => {
   let open = 0
   let close = 0
   return {
-    objects: [...far.meshes, ...streaks.meshes],
+    objects: [...far.meshes, streaks.mesh],
     load: (assets) => sky.load(assets),
     prepare(frame) {
       open = frame.time

@@ -45,9 +45,6 @@ void main() {
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
   if (-a.z < 0.02 || -b.z < 0.02) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-#ifdef OWN_BLUR
-  if (coc > 4.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-#endif
 }
 `
 
@@ -74,13 +71,7 @@ void main() {
   float rise = normalize(vWorld - uCamPos).y;
   float level = smoothstep(-0.12, 0.0, rise);
   float cover = saturate(vShare * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
-#ifdef OWN_BLUR
-  // A line held sharp in front of blurred land is its own thing to the lens. It is already drawn as wide as its blur, so where it covers the pixel the fill is told to leave it and not to spread it as the land behind it. Over the sky nothing spreads it.
-  if (cover < 0.25 || rise > 0.0) discard;
-  outColor = vec4(0.0);
-#else
   outColor = vec4(applyFog(color, vWorld), cover);
-#endif
 }
 `
 
@@ -92,7 +83,7 @@ const FINE_REACH = 1.28
 const SLOWEST_M_PER_S = 0.5
 
 export interface Streaks {
-  meshes: THREE.Mesh[]
+  mesh: THREE.Mesh
   count(): number
   // Lays out every drop in the air over the part of the ground the lens looks across, between the open shutter and its close.
   prepare(open: number, close: number, pose: CameraPose, tanX: number, tanY: number, samples: number, width: number, flash: number): void
@@ -123,17 +114,12 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   mesh.frustumCulled = false
   mesh.matrixAutoUpdate = false
   mesh.renderOrder = 44
-  const own = makeSurface({ name: 'rain streaks blur circle', vertex: `#define OWN_BLUR 1\n${vertex}`, fragment: `#define OWN_BLUR 1\n${fragment}`, uniforms, side: THREE.DoubleSide, transparent: true, cocOnly: true, depthWrite: false })
-  const ownMesh = new THREE.Mesh(geometry, own.main)
-  ownMesh.frustumCulled = false
-  ownMesh.matrixAutoUpdate = false
-  ownMesh.renderOrder = 45
   let made = 0
   const flat = new THREE.Vector3()
   const side = new THREE.Vector3()
 
   return {
-    meshes: [mesh, ownMesh],
+    mesh,
     count: () => made,
     prepare(open, close, pose, tanX, tanY, samples, width, flash) {
       flat.set(pose.forward.x, 0, pose.forward.z).normalize()
