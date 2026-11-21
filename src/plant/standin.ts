@@ -411,7 +411,7 @@ export function leafFrame(i: number, time: number, inputs: PlantInputs, length: 
   const grown = smoothstep(0, 0.006, heightAt(time))
   const u = leafStemFraction(i, time)
   const n = stemNode(u, length)
-  const az = leafAzimuth(i)
+  const az = leafAzimuth(i, time)
   const c = Math.cos(az)
   const s = Math.sin(az)
   const ox = n.rx * s - n.bx * c

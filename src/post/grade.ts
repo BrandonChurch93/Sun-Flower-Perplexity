@@ -29,6 +29,7 @@ uniform float uGlow;
 uniform float uShafts;
 uniform float uRays;
 uniform float uSunClear;
+uniform vec3 uBlack;
 uniform float uFarFill;
 uniform float uSaturation;
 uniform float uVignette;
@@ -124,9 +125,9 @@ vec3 sunAir(vec2 px, float circle, float under) {
   vec4 seen = texelFetch(tSun, ivec2(0), 0);
   vec2 d = (px - uSunAt * uSize) / uSize.x - seen.gb;
   float r = length(d);
-  float shown = seen.r * 1.37;
+  float shown = seen.r * 3.2;
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
-  float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
+  float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.22) : shown;
   float tight = 1.0 + r * r / 0.0004;
   // The core's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
   float tail = r * r / 0.0289;
@@ -186,7 +187,7 @@ void main() {
   c = tone(c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = max(mix(vec3(l), c, uSaturation), 0.0);
-  c = c + uLift * (1.0 - c);
+  c = max(c + uLift * (1.0 - c) - uLift * uBlack * exp(-l / 0.005), 0.0);
   c = toSrgb(clamp(c, 0.0, 1.0));
   // Grain: one part per pixel and one part in clumps two pixels wide, which is the part a video encoder keeps. Mostly in brightness, and it follows tone as film does: strongest in the middle tones, under half of that in deep shadow, a third in the highlights.
   float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
