@@ -358,7 +358,8 @@ export function leafStemFraction(i: number, time: number): number {
   const late = smoothstep(20, 40, time)
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
-  const quick = Math.min(seconds, 1.6)
+  // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
+  const quick = Math.min(seconds, lerp(1.6, 8, smoothstep(16, 21, leafStart(i))))
   // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
   const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
   const tip = 0.99 * heightAt(start)

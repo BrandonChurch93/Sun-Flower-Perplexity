@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { Uniforms } from '../../core/fullscreen.ts'
-import { fogLight } from '../../weather/fog/index.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
+import { fogFarAt, fogLight } from '../../weather/fog/index.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -28,11 +28,11 @@ in float vDepth;
 uniform vec3 uBase;
 uniform float uLayer;
 uniform float uSee;
+uniform float uSeeGain;
 uniform float uCrown;
 uniform float uFloor;
 ${fogLight}
 ${skylineCanopy}
-const float FOOT = 0.7;
 void main() {
   float top = vInfo.z;
 #ifdef TREES
@@ -47,8 +47,7 @@ void main() {
   vec3 color = uBase * (0.6 + 0.8 * mass) * skyAmbient(vec3(0.0, 0.4, 0.0)) * (0.55 + 0.45 * f);
   // Hoar on the crowns: the tops are paler than the mass under them.
   color = mix(color, vec3(0.5, 0.53, 0.56) * skyAmbient(vec3(0.0, 1.0, 0.0)), 0.35 * smoothstep(0.55, 1.0, f) * smoothstep(0.3, 0.8, mass));
-  // The fog lies low: the foot of every far shape is gone in it and only its upper part stands out.
-  float see = uSee * smoothstep(0.0, FOOT, f) * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
+  float see = uSee * uSeeGain * (1.0 + 0.6 * uFogThin * exp(-acos(clamp(dot(v, uSunDir), -1.0, 1.0)) / 0.3));
   outColor = finish(mix(fogLight(v), color, see), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
@@ -58,8 +57,12 @@ in vec3 vWorld;
 in vec3 vInfo;
 in float vDepth;
 ${fogLight}
+const vec3 LAND = vec3(0.1, 0.12, 0.115);
+uniform float uSeeGain;
+const float LAND_SEE = 0.4;
 void main() {
-  outColor = finish(fogLight(normalize(vWorld - uCamPos)), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
+  vec3 v = normalize(vWorld - uCamPos);
+  outColor = finish(mix(fogLight(v), LAND * skyAmbient(vec3(0.0, 1.0, 0.0)), LAND_SEE * uSeeGain), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -76,12 +79,16 @@ const TONES: { base: [number, number, number]; see: number }[] = [
   { base: [0.07, 0.075, 0.07], see: 0.5 },
 ]
 
+// The far shapes stand fainter behind the banks through the unit and come out this much as the fog thins, so the last second shows the ridge the cut needs.
+const SEE_GAIN = 1.25
+
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // skylineAzimuthDeg is the bearing the skyline is laid out round: the same one in every world, so the hills and the trees stand in the same places across a cut.
 export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
+  const gain = { value: 1 }
   const rings = SKYLINE.map((_, i) => skylineRing(i, skylineAzimuthDeg))
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material): void => {
     const mesh = new THREE.Mesh(geometry, material)
@@ -102,7 +109,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
         position[v] = Math.sin(az) * r
-        position[v + 1] = 1.3
+        position[v + 1] = SKYLINE_LAND_M
         position[v + 2] = Math.cos(az) * r
         info[v] = r
         if (j > 0) {
@@ -117,7 +124,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     land.setAttribute('aInfo', new THREE.BufferAttribute(info, 3))
     land.setIndex(index)
   }
-  add(land, makeSurface({ name: 'frost far land', vertex, fragment: landFragment, uniforms: fog, side: THREE.DoubleSide, castShadow: false }).main)
+  add(land, makeSurface({ name: 'frost far land', vertex, fragment: landFragment, uniforms: { ...fog, uSeeGain: gain }, side: THREE.DoubleSide, castShadow: false }).main)
 
   SKYLINE.forEach((layer, i) => {
     const tone = TONES[i]
@@ -125,7 +132,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
       name: `frost ${layer.name}`,
       vertex,
       fragment: `${layer.trees ? '#define TREES 1\n' : ''}${stripFragment}`,
-      uniforms: { ...fog, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uSee: { value: tone.see }, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
+      uniforms: { ...fog, uBase: { value: new THREE.Vector3().fromArray(tone.base) }, uLayer: { value: skylineLayerSalt(i) }, uSee: { value: tone.see }, uSeeGain: gain, uCrown: { value: layer.crownM }, uFloor: { value: layer.floor } },
       side: THREE.DoubleSide,
       castShadow: false,
     })
@@ -136,6 +143,9 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     triangles,
     setTime(time) {
       for (const ring of rings) ring.setTime(time)
+      gain.value = 1 + (SEE_GAIN - 1) * fogFarAt(time)
+      meshes[0].position.y = skylineLandM(time) - SKYLINE_LAND_M
+      meshes[0].updateMatrix()
     },
   }
 }
