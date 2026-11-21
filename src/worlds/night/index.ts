@@ -16,8 +16,8 @@ export const world: WorldSettings = {
 }
 
 // Cold and low: a thin layer over the field under eye level, and a bank standing between the field's far edge and the foot of the hills.
-const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.36, thickness: 0.015, lit: [0.4, 0.4, 0.36], shade: [3.5, 2.4, 1.1], forward: 1, drift: [0.04, 0.015], bankM: 40, broken: 0.45 }
-const BANK: MistSettings = { fromM: 56, toM: 76, sheets: 6, heightM: 0.2, thickness: 3, lit: [0.55, 0.55, 0.5], shade: [6.7, 4.4, 2], forward: 1, drift: [0.03, 0.01], bankM: 35, broken: 0.6 }
+const MIST: MistSettings = { fromM: 12, toM: 900, sheets: 14, heightM: 0.45, thickness: 0.03, lit: [0.4, 0.4, 0.36], shade: [6.5, 5.5, 2.6], forward: 1, drift: [0.04, 0.015], bankM: 30, broken: 0.45 }
+const BANK: MistSettings = { fromM: 50, toM: 90, sheets: 6, heightM: 0.3, thickness: 0.5, lit: [0.55, 0.55, 0.5], shade: [9, 7.6, 3.6], forward: 1, drift: [0.03, 0.01], bankM: 14, broken: 0.7 }
 
 const SKY_GAIN = 0.9
 const STAR_GAIN = 4
