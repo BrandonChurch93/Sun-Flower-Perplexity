@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { config } from '../../config.ts'
-import { lerp, smoothstep } from '../../core/curves.ts'
+import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
+import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { fragment, vertex } from './shaders.ts'
 
 const TAU = Math.PI * 2
@@ -17,6 +18,12 @@ const REST_AXIS = unit(-0.26, 0.96, 0.1)
 const REST_SIDE = unit(0.87, 0, 0.5)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
+const CRUMB_MIN_M = 0.00018
+const CRUMB_MAX_M = 0.00075
+// Where a fallen crumb lies until the ground can be asked for its height.
+const CRUMB_LAND_M = 0.002
+const CRUMBS_SINK_S = 9
+const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
 
@@ -42,6 +49,34 @@ interface Shape {
   leafLoop: number
   huskRings: number
   huskLoop: number
+  stemCrumbs: number
+  huskCrumbs: number
+}
+// A crumb of soil that came up on the sprout: where it clings (a share of the stem's length and an angle round it, or a half of the husk and a place on it), when it lets go and where it comes to lie.
+interface Crumb {
+  half: number
+  along: number
+  around: number
+  size: number
+  seat: number
+  from: number
+  fall: number
+  landX: number
+  landZ: number
+  axis: [number, number, number]
+  angle: number
+  turns: number
+}
+interface Crumbs {
+  list: Crumb[]
+  each: number
+  local: Float32Array
+  localNormal: Float32Array
+  slots: Float32Array[]
+  normals: Float32Array
+  live: (THREE.BufferAttribute | null)[]
+  mesh: THREE.Mesh
+  surface: Surface
 }
 
 function unit(x: number, y: number, z: number): [number, number, number] {
@@ -51,9 +86,9 @@ function unit(x: number, y: number, z: number): [number, number, number] {
 
 function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
-  if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0 }
-  if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36 }
+  if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0 }
+  if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
@@ -65,6 +100,138 @@ function leafOutline(s: number): number {
 // The shell of the seed from its blunt end, where the halves hang together, to the torn mouth the root came out of.
 function huskOutline(s: number): number {
   return Math.max(0.004, Math.sin(Math.PI * (0.84 * s) ** 0.9) ** 0.75)
+}
+
+// A broken clod: a ball pushed in and out by a few seeded bumps, with flat faces where it broke, lower than it is wide.
+function lump(seed: number, x: number, y: number, z: number, out: Float32Array, at: number, size: number): void {
+  let r = 1
+  for (let k = 0; k < 6; k++) {
+    const cz = 2 * hash01(seed, 10 + k, 0) - 1
+    const ca = TAU * hash01(seed, 10 + k, 1)
+    const cr = Math.sqrt(Math.max(0, 1 - cz * cz))
+    const d = x * cr * Math.cos(ca) + y * cz + z * cr * Math.sin(ca)
+    r += lerp(-0.2, 0.3, hash01(seed, 10 + k, 2)) * smoothstep(0.1, 1, d)
+  }
+  for (let k = 0; k < 3; k++) {
+    const cz = 2 * hash01(seed, 20 + k, 0) - 1
+    const ca = TAU * hash01(seed, 20 + k, 1)
+    const cr = Math.sqrt(Math.max(0, 1 - cz * cz))
+    const d = x * cr * Math.cos(ca) + y * cz + z * cr * Math.sin(ca)
+    if (d > 0) r = Math.min(r, lerp(0.72, 0.95, hash01(seed, 20 + k, 2)) / d)
+  }
+  out[at] = x * r * size * lerp(0.75, 1.3, hash01(seed, 30))
+  out[at + 1] = y * r * size * lerp(0.5, 0.85, hash01(seed, 31))
+  out[at + 2] = z * r * size * lerp(0.75, 1.3, hash01(seed, 32))
+}
+
+function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
+  const count = shape.stemCrumbs + shape.huskCrumbs
+  if (count <= 0) return null
+  const seed = combine(streamSeed('seedling crumbs'), options.variant)
+  const ball = new THREE.IcosahedronGeometry(1, 2).getAttribute('position').array
+  const each = ball.length / 3
+  const local = new Float32Array(count * each * 3)
+  const localNormal = new Float32Array(count * each * 3)
+  const coords = new Float32Array(count * each * 4)
+  const state = new Float32Array(count * each * 4)
+  const list: Crumb[] = []
+  const p = new Float32Array(9)
+  const toHusk = Math.atan2(huskRest.z, huskRest.x)
+  for (let i = 0; i < count; i++) {
+    const own = combine(seed, i)
+    const onHusk = i >= shape.stemCrumbs
+    const size = lerp(CRUMB_MIN_M, CRUMB_MAX_M, hash01(own, 1) ** 2.2)
+    const far = lerp(0.004, 0.0095, hash01(own, 6))
+    const where = onHusk ? toHusk + lerp(-0.7, 0.7, hash01(own, 7)) : TAU * hash01(own, 7)
+    const az = 2 * hash01(own, 8) - 1
+    const aa = TAU * hash01(own, 9)
+    const ar = Math.sqrt(Math.max(0, 1 - az * az))
+    list.push({
+      half: onHusk ? (hash01(own, 2) < 0.5 ? -1 : 1) : 0,
+      along: onHusk ? lerp(0.2, 0.9, hash01(own, 3)) : lerp(0.15, 0.85, hash01(own, 3)),
+      around: onHusk ? lerp(-1.2, 1.2, hash01(own, 4)) : TAU * hash01(own, 4),
+      size,
+      seat: 0.4 * size,
+      from: onHusk ? lerp(1.25, 3.05, hash01(own, 5)) : lerp(1.2, 3.6, hash01(own, 5)),
+      fall: lerp(0.28, 0.45, hash01(own, 40)),
+      landX: Math.cos(where) * far,
+      landZ: Math.sin(where) * far,
+      axis: [ar * Math.cos(aa), az, ar * Math.sin(aa)],
+      angle: TAU * hash01(own, 41),
+      turns: lerp(2, 7, hash01(own, 42)) * (hash01(own, 43) < 0.5 ? -1 : 1),
+    })
+    const tone = lerp(0.62, 1.12, hash01(own, 44))
+    for (let v = 0; v < each; v++) {
+      const x = ball[v * 3]
+      const y = ball[v * 3 + 1]
+      const z = ball[v * 3 + 2]
+      const at = (i * each + v) * 3
+      lump(own, x, y, z, local, at, size)
+      // The normal from two near points of the same shape, so the faces where it broke stay flat and their edges stay soft.
+      let ux = y * 0 - z * 1
+      let uy = z * 0 - x * 0
+      let uz = x * 1 - y * 0
+      if (Math.hypot(ux, uy, uz) < 0.3) {
+        ux = 0
+        uy = -z
+        uz = y
+      }
+      const ul = Math.hypot(ux, uy, uz)
+      ux /= ul
+      uy /= ul
+      uz /= ul
+      const wx = y * uz - z * uy
+      const wy = z * ux - x * uz
+      const wz = x * uy - y * ux
+      const h = 0.09
+      const n1 = Math.hypot(x + ux * h, y + uy * h, z + uz * h)
+      const n2 = Math.hypot(x + wx * h, y + wy * h, z + wz * h)
+      lump(own, (x + ux * h) / n1, (y + uy * h) / n1, (z + uz * h) / n1, p, 0, size)
+      lump(own, (x + wx * h) / n2, (y + wy * h) / n2, (z + wz * h) / n2, p, 3, size)
+      const ax = p[0] - local[at]
+      const ay = p[1] - local[at + 1]
+      const az2 = p[2] - local[at + 2]
+      const bx = p[3] - local[at]
+      const by = p[4] - local[at + 1]
+      const bz = p[5] - local[at + 2]
+      let nx = ay * bz - az2 * by
+      let ny = az2 * bx - ax * bz
+      let nz = ax * by - ay * bx
+      const nl = Math.hypot(nx, ny, nz)
+      if (nl < 1e-18 || nx * x + ny * y + nz * z < 0) {
+        nx = -nx
+        ny = -ny
+        nz = -nz
+      }
+      const l = nl || 1
+      localNormal[at] = nx / l
+      localNormal[at + 1] = ny / l
+      localNormal[at + 2] = nz / l
+      const c = (i * each + v) * 4
+      coords[c] = x * 2.5 + i * 3.7
+      coords[c + 1] = y * 2.5 + z * 1.3
+      coords[c + 2] = 1
+      coords[c + 3] = 4
+      state[c] = tone
+      state[c + 1] = 0
+      state[c + 2] = 1
+      state[c + 3] = 0
+    }
+  }
+  const geometry = partGeometry(options)
+  const slots = [new Float32Array(count * each * 3), new Float32Array(count * each * 3)]
+  const normals = new Float32Array(count * each * 3)
+  const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
+  const position = dynamic(slots[0], 3)
+  const positionB = options.places ? null : dynamic(slots[1], 3)
+  const normal = dynamic(normals, 3)
+  geometry.setAttribute('position', position)
+  if (positionB) geometry.setAttribute('positionB', positionB)
+  geometry.setAttribute('normal', normal)
+  geometry.setAttribute('aCoord', new THREE.BufferAttribute(coords, 4))
+  geometry.setAttribute('aState', new THREE.BufferAttribute(state, 4))
+  const surface = makePartSurface(options, { name: 'seedling crumbs', vertex, fragment, side: THREE.FrontSide, castShadow: true })
+  return { list, each, local, localNormal, slots, normals, live: [position, positionB, normal], mesh: partMesh(geometry, surface), surface }
 }
 
 export function create(options: PartOptions): PlantPart | null {
@@ -152,6 +319,8 @@ export function create(options: PartOptions): PlantPart | null {
   group('seed leaves', false, shape.leafRings, shape.leafLoop, false)
   group('husk', true, shape.huskRings, shape.huskLoop, true)
 
+  const crumbs = makeCrumbs(options, shape)
+
   function fill(slot: 0 | 1, pose: Pose): void {
     const first = slot === 0
     const time = pose.time
@@ -181,7 +350,7 @@ export function create(options: PartOptions): PlantPart | null {
     const h0y = ey + ty * ride
     const h0z = ez + tz * ride
     const h1x = huskRest.x
-    const h1y = huskRest.y + 0.003
+    const h1y = huskRest.y + 0.0004
     const h1z = huskRest.z
     const lift = 0.012 * grown
     const cx = h0x + tx * lift + 0.3 * (h1x - h0x)
@@ -356,15 +525,95 @@ export function create(options: PartOptions): PlantPart | null {
         }
       }
     }
+
+    if (!crumbs) return
+    const foot = stemAt(pose, 0)
+    const fx = foot.x
+    const fz = foot.z
+    const cg = Math.cos(gape)
+    const sg = Math.sin(gape)
+    const under = smoothstep(CRUMBS_SINK_S, CRUMBS_GONE_S, time)
+    const out = crumbs.slots[slot]
+    for (let i = 0; i < crumbs.list.length; i++) {
+      const c = crumbs.list[i]
+      let x: number
+      let y: number
+      let z: number
+      if (c.half === 0) {
+        const n = stemAt(pose, c.along)
+        const ca2 = Math.cos(c.around)
+        const sa2 = Math.sin(c.around)
+        const off = stemRadius(time, c.along) * grown + c.seat
+        x = n.x + (n.rx * ca2 + n.bx * sa2) * off
+        y = n.y + (n.ry * ca2 + n.by * sa2) * off
+        z = n.z + (n.rz * ca2 + n.bz * sa2) * off
+      } else {
+        const o = huskOutline(c.along)
+        const hw = huskLength * HUSK_HALF_WIDTH * o
+        const dp = huskLength * HUSK_HALF_DEPTH * o ** 0.9
+        const reach = huskLength * c.along
+        const bx = B[0] * cg + px * c.half * sg
+        const by = B[1] * cg + py * c.half * sg
+        const bz = B[2] * cg + pz * c.half * sg
+        const ox = px * c.half * cg - B[0] * sg
+        const oy = py * c.half * cg - B[1] * sg
+        const oz = pz * c.half * cg - B[2] * sg
+        const st = Math.sin(c.around)
+        const ct = Math.cos(c.around)
+        const across = hw * st
+        const outward = dp * ct
+        let ux = qx * st * dp + ox * ct * hw
+        let uy = qy * st * dp + oy * ct * hw
+        let uz = qz * st * dp + oz * ct * hw
+        const ul = Math.hypot(ux, uy, uz) || 1
+        ux /= ul
+        uy /= ul
+        uz /= ul
+        x = hx + bx * reach + qx * across + ox * outward + ux * c.seat
+        y = hy + by * reach + qy * across + oy * outward + uy * c.seat
+        z = hz + bz * reach + qz * across + oz * outward + uz * c.seat
+      }
+      // It lets go, falls and lies where it lands; the rain takes it into the ground.
+      const gone = clamp((time - c.from) / c.fall)
+      const landY = CRUMB_LAND_M + 0.3 * c.size - under * (0.004 + 2.5 * c.size)
+      x = lerp(x, fx + c.landX, gone)
+      z = lerp(z, fz + c.landZ, gone)
+      y = lerp(y, landY, gone * gone)
+      const scale = under >= 1 ? 0 : 1
+      const angle = c.angle + c.turns * gone
+      const cs = Math.cos(angle)
+      const sn = Math.sin(angle)
+      const [kx, ky, kz] = c.axis
+      const base = i * crumbs.each * 3
+      for (let v = 0; v < crumbs.each; v++) {
+        const at = base + v * 3
+        const lx = crumbs.local[at]
+        const ly = crumbs.local[at + 1]
+        const lz = crumbs.local[at + 2]
+        const d = (kx * lx + ky * ly + kz * lz) * (1 - cs)
+        out[at] = x + scale * (lx * cs + (ky * lz - kz * ly) * sn + kx * d)
+        out[at + 1] = y + scale * (ly * cs + (kz * lx - kx * lz) * sn + ky * d)
+        out[at + 2] = z + scale * (lz * cs + (kx * ly - ky * lx) * sn + kz * d)
+        if (!first) continue
+        const mx = crumbs.localNormal[at]
+        const my = crumbs.localNormal[at + 1]
+        const mz = crumbs.localNormal[at + 2]
+        const e = (kx * mx + ky * my + kz * mz) * (1 - cs)
+        crumbs.normals[at] = mx * cs + (ky * mz - kz * my) * sn + kx * e
+        crumbs.normals[at + 1] = my * cs + (kz * mx - kx * mz) * sn + ky * e
+        crumbs.normals[at + 2] = mz * cs + (kx * my - ky * mx) * sn + kz * e
+      }
+    }
   }
 
   return {
     name: 'seedling',
-    meshes: groups.map((g) => g.mesh),
-    casters: groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })),
+    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : [])],
+    casters: [...groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })), ...(crumbs ? [{ mesh: crumbs.mesh, surface: crumbs.surface }] : [])],
     fill,
     finish() {
       for (const g of groups) for (const a of g.live) if (a) a.needsUpdate = true
+      if (crumbs) for (const a of crumbs.live) if (a) a.needsUpdate = true
     },
   }
 }

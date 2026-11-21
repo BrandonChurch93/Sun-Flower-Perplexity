@@ -32,7 +32,7 @@ void main() {
 }
 `
 
-// vCoord: along the body 0 to 1, across it -1 to 1, which face (1 upper or outer, -1 lower or inner), the body (0 and 1 seed leaves, 2 and 3 husk halves).
+// vCoord: along the body 0 to 1, across it -1 to 1, which face (1 upper or outer, -1 lower or inner), the body (0 and 1 seed leaves, 2 and 3 husk halves, 4 a crumb of soil).
 // vState: the pallor of the sprout, how withered, how open to the sky, how much soil dust.
 export const fragment = /* glsl */ `
 in vec3 vWorld;
@@ -48,7 +48,8 @@ void main() {
   float across = vCoord.y;
   float upper = smoothstep(-0.2, 0.2, vCoord.z);
   float body = vCoord.w;
-  float husk = step(1.5, body);
+  float crumb = step(3.5, body);
+  float husk = step(1.5, body) * (1.0 - crumb);
   float pale = vState.x;
   float wither = vState.y;
 
@@ -82,12 +83,14 @@ void main() {
   float huskHeight = 0.000022 * ridge * ridge + 0.00003 * white * upper + 0.00003 * dusty * grain;
 
   Tissue t;
-  t.albedo = mix(leaf, shell, husk);
-  t.through = mix(glow * ${LEAF.through}, vec3(0.0), husk);
+  // Damp soil, each crumb with its own tone (in the place of the pallor).
+  vec3 soil = vec3(0.11, 0.0694, 0.0332) * vState.x * (0.7 + 0.6 * valueNoise(vec2(along * 4.0, across * 4.0)));
+  t.albedo = mix(mix(leaf, shell, husk), soil, crumb);
+  t.through = glow * (${LEAF.through} * (1.0 - husk) * (1.0 - crumb));
   t.face = face;
-  t.normal = reliefNormal(face, vWorld, mix(leafHeight, huskHeight, husk), 1.0);
-  t.rough = mix(mix(${LEAF.rough}, 0.8, wither), mix(0.85, mix(0.3, 0.8, dusty), upper), husk);
-  t.wax = mix(${LEAF.wax} * (1.0 - 0.7 * wither), mix(0.05, 0.7 * (1.0 - dusty), upper), husk);
+  t.normal = reliefNormal(face, vWorld, mix(mix(leafHeight, huskHeight, husk), (grain - 0.5) * 0.00004, crumb), 1.0);
+  t.rough = mix(mix(mix(${LEAF.rough}, 0.8, wither), mix(0.85, mix(0.3, 0.8, dusty), upper), husk), 1.0, crumb);
+  t.wax = mix(${LEAF.wax} * (1.0 - 0.7 * wither), mix(0.05, 0.7 * (1.0 - dusty), upper), husk) * (1.0 - crumb);
   t.sheen = 0.0;
   t.occlusion = vState.z;
   vec3 color = shadeTissue(t, vWorld, view);
