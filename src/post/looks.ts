@@ -29,10 +29,10 @@ export interface LensLook {
   airTint: readonly [number, number, number]
   // Radius, in frame widths, of the flat burnt out disc a sun in mist shows. 0 draws none.
   disc: number
-  // Above 0 the thin rays are those of a sun just over the land: this many round the circle, drawn only below and beside it, `rayLen` frame widths long at most and `rayWide` times the usual width.
-  lowRays: number
-  rayLen: number
-  rayWide: number
+  // Above 0 the sun stands just over the land in mist: no rays, a gold bloom in the air that falls off over `bloomWide` frame widths, as strong as `rays`, and a warm flare in the glass of strength `lowFlare`.
+  lowSun: number
+  bloomWide: number
+  lowFlare: number
   // Extra slope through the upper half of the tones.
   punch: number
   // White a burning color takes on at the very top.
@@ -52,18 +52,34 @@ export interface LensLook {
   specks: number
   // 1 where the sky holds points of light: a sky pixel is then never spread itself and only takes the copies of blurred things in front of it.
   skyHold: number
+  // Times the grade's grain.
+  grain: number
+  // Radius, in pixels of a frame 1080 high, by which the air softens what stands beyond the field: the far land, the sky and the edge between them. Nothing nearer is touched.
+  air: number
+  // How far the lit air round the sun breaks into wide spokes, above the sun and below it.
+  spokes: number
 }
 
-const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowRays: 0, rayLen: 0.1, rayWide: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0 }
+const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowSun: 0, bloomWide: 0.1, lowFlare: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
-  dawn: { veil: 1.4, flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 3, lowRays: 36, rayLen: 0.11, rayWide: 1, airTint: [1, 0.62, 0.36] },
+  dawn: { veil: 1.4, veilTint: [1.1, 0.72, 0.45], flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
   rain: { flare: 0, halation: 0.2 },
   night: { veil: 0, flare: 0, halation: 0.2, skyHold: 1 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
   golden: { veil: 1.2, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 1.2, star: 0, glow: 0.004, shafts: 0.008, rays: 1.2, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [1, 0.55, 1], specks: 1 },
 }
 
-export function lensLook(def: WorldDef): LensLook {
-  return { ...fallback, ...(table[def.id] ?? {}) }
+// From 52.0 s the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to 52.0 s is drawn as before.
+const FIELD_FROM_S = 52
+const FIELD_FULL_S = 54
+const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
+
+export function lensLook(def: WorldDef, timeS = 0): LensLook {
+  const look = { ...fallback, ...(table[def.id] ?? {}) }
+  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return look
+  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
+  const w = t * t * (3 - 2 * t)
+  for (const key of Object.keys(overField) as (keyof typeof overField)[]) look[key] += (overField[key] - look[key]) * w
+  return look
 }

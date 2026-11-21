@@ -54,7 +54,16 @@ const goldenRad = config.plant.goldenAngleDeg * RAD
 const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
-const HOOK_MAX = 172 * RAD
+const STACK_SECONDS = 5.5
+const CROWD_START = 20
+const CROWD_END = 40
+const CROWD_SECONDS = 1.5
+const CROWD_TIP = 0.006
+const CROWD_STEP = 0.012
+const CROWD_SPREAD = 0.003
+const CROWD_PACE = 0.3
+const CROWD_LEAVES = 6
+const HOOK_MAX = 164 * RAD
 const HOOK_BACK = 0.3
 const discRadius = config.plant.discDiameterM / 2
 const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
@@ -83,11 +92,12 @@ export function stemRadius(time: number, u: number): number {
 
 // The seedling comes up as an arch and straightens once it is in the light.
 export function hookAngle(time: number): number {
-  return HOOK_MAX * (1 - smootherstep(inStage(emerge0, emerge1, 0.55), emerge1, time))
+  const settle = 5 * RAD * smoothstep(seed0 + 0.9, seed0 + 1.5, time) * (1 - smoothstep(seed0 + 1.5, seed0 + 2.6, time))
+  return HOOK_MAX * (1 - smootherstep(inStage(emerge0, emerge1, 0.55), seed0 + 1.5, time)) - settle
 }
 
 export function hookShare(time: number): number {
-  return lerp(0.92, 0.34, smoothstep(emerge0, inStage(emerge0, emerge1, 0.5), time))
+  return lerp(0.92, 0.34, smoothstep(emerge0, inStage(emerge0, emerge1, 0.5), time)) * lerp(1, 0.5, smoothstep(inStage(emerge0, emerge1, 0.55), seed0 + 1.2, time))
 }
 
 export function paleness(time: number): number {
@@ -349,7 +359,7 @@ export function leafAge(i: number, time: number): number {
   return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, 20, time))
 }
 
-export function leafStemFraction(i: number, time: number): number {
+function jointFraction(i: number, time: number): number {
   const age = leafAge(i, time)
   const h = heightAt(time)
   if (age <= 0 || h <= 0) return 0.97
@@ -361,13 +371,46 @@ export function leafStemFraction(i: number, time: number): number {
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
   // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
-  const quick = Math.min(seconds, lerp(1.6, 8, smoothstep(16, 21, leafStart(i))))
+  // A joint born late in the rain goes on rising through the night to near its last height: the leaves stand in a close stack under the bud.
+  const quick = Math.min(seconds, Math.max(lerp(1.6, 8, smoothstep(16, 21, leafStart(i))), lerp(1.6, STACK_SECONDS, smoothstep(13, 14.5, leafStart(i)))))
   // The first leaves stand in opposite pairs: the two of a pair leave the tip together, when the second is born. A later leaf rides the tip for a second.
   const start = i < OPPOSITE_LEAVES ? leafStart(i | 1) : leafStart(i) + 1
   const tip = 0.99 * heightAt(start)
   const rest = Math.max(tip, (0.9 + 0.075 * rank * rank) * heightAt(start + quick))
   const young = Math.min(0.992 - 0.004 * Math.min(age, 6), lerp(tip, rest, 1 - Math.exp(-Math.max(0, time - start) / quick)) / h)
   return lerp(young, grown, late)
+}
+
+// From the night to the frost the plant's upper internodes stay short: a joint rides close under the tip, the leaves above it crowded round the bud, until it reaches the height it will have at the bloom.
+export function leafStemFraction(i: number, time: number): number {
+  const fraction = jointFraction(i, time)
+  if (variant !== 0 || time <= CROWD_START || time >= CROWD_END || leafAge(i, time) <= 0) return fraction
+  const h = heightAt(time)
+  let above = 0
+  for (let k = i + 1; k < leafCount; k++) above += smoothstep(0, CROWD_SECONDS, time - leafStart(k))
+  // Only the leaves near the tip are crowded: lower down a joint stands at its own height.
+  const count = Math.min(above, CROWD_LEAVES)
+  const crowded = h - CROWD_TIP - count * (CROWD_STEP + CROWD_SPREAD * count)
+  const ahead = CROWD_END - CROWD_PACE * (CROWD_END - time)
+  const stop = jointFraction(i, ahead) * heightAt(ahead)
+  return lerp(fraction, Math.max(fraction, Math.min(crowded, stop) / h), smoothstep(CROWD_START, CROWD_START + 3, time) * smoothstep(12.5, 14.5, leafStart(i)))
+}
+
+// In the wide shot the leaves go on growing: each in its own two and a half seconds, the lower ones first.
+const LATE_START = config.segments[config.segments.length - 1].start
+export function leafLateGrowth(i: number, time: number, lag = 0): number {
+  // A time past the film's end asks what a leaf was planned to be: the parts size their grids by it.
+  if (time <= LATE_START || time > config.film.durationSeconds) return 0
+  const start = LATE_START + lag + 3.2 * (0.6 * (i / (leafCount - 1)) + 0.4 * rnd(13, i))
+  return smoothstep(start, start + 2.5, time)
+}
+
+// The plant fills out most: its neighbors stand in each other's shade and are nearly done.
+const lateShare = (): number => (variant === 0 ? 1 : 0.3)
+
+// A blade fills out in width a little after it has lengthened.
+export function leafBroadening(i: number, time: number): number {
+  return 1 + 0.22 * lateShare() * leafLateGrowth(i, time, 0.8)
 }
 
 export function leafLength(i: number, time: number): number {
@@ -381,7 +424,8 @@ export function leafLength(i: number, time: number): number {
   // The first leaves of the young plant fill out fast: in the rain the largest is a third of the plant's height.
   const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))
   const hold = heldLeaf(i)
-  return hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
+  const held = hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
+  return time <= LATE_START || time > config.film.durationSeconds ? held : held * (1 + (0.3 + 0.3 * Math.sin(Math.PI * rank)) * lateShare() * leafLateGrowth(i, time))
 }
 
 // Leaves open upward, settle outward and hang when the light is gone.
@@ -390,7 +434,9 @@ export function leafElevation(i: number, time: number, inputs: PlantInputs): num
   const open = smoothstep(0, 5.5, age)
   const hang = (1 - inputs.lift) * (4 + 9 * smoothstep(2, 14, age))
   const settled = 24 - 26 * smoothstep(5, 30, age) + (rnd(11, i) - 0.5) * 16 - hang
-  const angle = ((74 + (settled - 74) * open) * Math.PI) / 180
+  // A leaf that fills out lifts as it stretches and settles lower than it began.
+  const late = leafLateGrowth(i, time)
+  const angle = ((74 + (settled - 74) * open + (late > 0 ? 9 * Math.sin(Math.PI * late) - 5 * late : 0)) * Math.PI) / 180
   const hold = heldLeaf(i)
   if (hold === undefined) return angle
   const on = holdAt(time)

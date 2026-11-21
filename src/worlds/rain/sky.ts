@@ -70,7 +70,7 @@ vec3 rainSky(vec3 d, float lod) {
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn, most a little above the land and toward the sun.
   float toSun = (turn + uRainSkySunTurn) / 0.34;
   float sunward = exp(-toSun * toSun);
-  float open = (1.0 - cloud) * smoothstep(0.0, 0.012, up) * exp(-up / 0.045) * (0.15 + 0.85 * sunward);
+  float open = (1.0 - cloud) * smoothstep(0.0, 0.002, up) * exp(-up / 0.045) * (0.15 + 0.85 * sunward);
   color *= mix(vec3(1.0), vec3(5.6, 4.4, 3.0), open);
   // The cloud's foot hangs into the band in rags, lower the farther from the sun, so the band opens wide only where the sun stands.
   float rags = 0.6 * valueNoise(vec2(turn * 14.0 + 3.0, up * 40.0)) + 0.4 * valueNoise(vec2(turn * 43.0 + 1.0, up * 90.0 + 5.0));
@@ -81,6 +81,13 @@ vec3 rainSky(vec3 d, float lod) {
   float curtain = valueNoise(vec2(lean * 7.0 + uTime * 0.012, 2.0)) * 0.6 + valueNoise(vec2(lean * 31.0 + uTime * 0.03, up * 5.0 + 9.0)) * 0.4;
   color = mix(color, uRainSkyTone, 0.3 * smoothstep(0.3, 0.8, curtain) * cloud * exp(-up / 0.22));
   color = mix(color, uRainSkyTone, 0.55 * exp(-up / 0.06) * (1.0 - 0.85 * sunward));
+  // The rain falls heaviest away to the left of the sun: the low sky there stands darker and bluer behind it.
+  float heavy = (turn + 0.45) / 0.25;
+  color *= 1.0 - vec3(0.9, 0.6, 0.52) * (exp(-heavy * heavy) * exp(-up / 0.16));
+  // The rain between the lens and the cloud lays its own grey green over it: the depths lift and the lit bellies stay.
+  color = mix(color, vec3(0.11, 0.17, 0.18), vec3(0.2, 0.35, 0.38) * cloud);
+  // Its lit bellies are grey, not blue: they take back the red the paint keeps from them.
+  color.r *= 1.0 + 0.27 * cloud * smoothstep(0.08, 0.16, dot(color, vec3(0.3, 0.6, 0.1)));
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
   float near = exp(-(1.0 - dot(d, uRainFlashAt)) / 0.012);
   color += uRainFlash * vec3(0.55, 0.68, 1.0) * (0.05 + 0.8 * near) * cloud * (0.35 + 2.2 * lum) * smoothstep(0.03, 0.09, up);
