@@ -18,7 +18,7 @@ export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM:
 // The grains and lumps round the stem are drawn while the lens is within the first of these distances of the plant's foot, and shrink to nothing by the second.
 export const fineReachM = [1.2, 1.5]
 // A film of dew on a crumb gives back more of the sky that lights it, and most of its blue.
-export const dewFill = [1.4, 1.45, 1.75]
+export const dewFill = [1.05, 0.88, 1.2]
 export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
 const LANE_CRUMB_M = 0.0022
@@ -390,11 +390,11 @@ void main() {
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
-  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
-  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + 0.35) / 1.35) * lit + groundAmbient(n) * open * proud(vWorld.y) * mix(vec3(1.0), DEW_FILL, uDew));
+  float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
+  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + 0.2) / 1.2) * lit + groundAmbient(n) * open * proud(vWorld.y) * mix(vec3(1.0), DEW_FILL, uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.1, 1.0, uWet);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
   color += wetGlints(vWorld, v, n, uWet) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));

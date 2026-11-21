@@ -30,7 +30,7 @@ export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, dom
 
 // The furrow the rain fills beside the plant, a shallow hollow where its water gathers. Along the field's own axes (across the rows, and away from the field), in meters from the plant: its middle lies leftM to the left of the plant and drifts by slope for each meter away from the lens, winding by windM, from fromM toward the lens to toM behind the plant, where it closes round.
 // halfM is half the width of the standing water at each of the places atM along it, and the shore wanders by wanderM. The floor lies depthM under the mean ground and rises over easeM beyond the water's edge; the banks stand bankM over the ground and stay off the plant within clearM. Until fromS the furrow has only the share before of its depth, and all of it by toS.
-export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.0175, bankM: 0.006, easeM: 0.05, wanderM: 0.012, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
+export const furrow = { leftM: 0.1, slope: 0.18, fromM: -0.75, toM: 0.25, atM: [-0.6, -0.3, 0, 0.25], halfM: [0.055, 0.05, 0.04, 0.02], depthM: 0.0155, bankM: 0.006, easeM: 0.05, wanderM: 0.012, windM: 0.015, before: 0.25, fromS: 8.5, toS: 13, clearM: 0.03 }
 // How far along the floor's slope a level is met, from 0 at the floor to 1 at the mean ground.
 export const furrowShare = (levelM: number): number => {
   const want = 1 - Math.min(1, Math.max(0, -levelM / furrow.depthM))
@@ -196,7 +196,7 @@ vec3 groundAmbient(vec3 n) {
 }
 // Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
 vec3 proud(float heightM) {
-  return mix(vec3(1.0), mix(vec3(0.85), vec3(2.1, 1.65, 1.8), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
+  return mix(vec3(1.0), mix(vec3(0.85), vec3(1.6, 1.35, 1.5), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
 float grains(vec3 world, float share) {
@@ -356,7 +356,7 @@ void main() {
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y + 0.001) * cropLight(p, d);
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y + 0.0005) * cropLight(p, d);
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
@@ -365,6 +365,7 @@ void main() {
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
   open *= 1.0 - 0.35 * thatch;
+  open = mix(open, 0.22 + 0.78 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR
@@ -377,7 +378,7 @@ void main() {
   float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade();
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * selfShade() * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
+  color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR

@@ -10,8 +10,8 @@ import { groundStates, soilHeight } from './soil.ts'
 // The first stands at the left edge of the dawn's opening frames, in front of the plant. The second comes up between the plant and the sun while the lens pulls back. The rest are sprouts on the left.
 export interface Clump { x: number; z: number; blades: number; heightM: [number, number]; widthM: [number, number]; spreadM: number; lean: [number, number]; bornS: [number, number]; growS: number; beads: number; headingRad?: [number, number] }
 export const clumps: Clump[] = [
-  { x: -0.042, z: 0.034, blades: 3, heightM: [0.03, 0.042], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
-  { x: 0.042, z: -0.075, blades: 5, heightM: [0.045, 0.075], widthM: [0.003, 0.0042], spreadM: 0.009, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 10 },
+  { x: -0.074, z: -0.045, blades: 3, heightM: [0.04, 0.054], widthM: [0.0032, 0.0042], spreadM: 0.006, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
+  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 10 },
   { x: -0.109, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
   { x: -0.088, z: -0.04, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
@@ -192,8 +192,8 @@ void main() {
   float deep = mix(0.35, 1.0, smoothstep(0.0, 0.3, t));
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
   float ndl = dot(n, uSunDir);
-  vec3 through = albedo * vec3(0.5, 0.95, 0.35) * (0.3 + 1.2 * edge) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
-  vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
+  vec3 through = albedo * vec3(0.6, 0.8, 0.4) * (0.06 + 0.9 * edge) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
+  vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.6;
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * (0.05 + 0.25 * saturate(uWet + uDew)) * lit;
   outColor = finish(color, vWorld, vDepth, -1.0);
