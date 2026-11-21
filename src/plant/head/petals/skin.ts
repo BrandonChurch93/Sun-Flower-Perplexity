@@ -74,7 +74,7 @@ void main() {
 
   vec3 body = mix(vec3(0.82, 0.56, 0.03), vec3(0.93, 0.76, 0.09), smoothstep(0.1, 0.8, u));
   // A ray just out of the bud is still green yellow.
-  body = mix(body, vec3(0.58, 0.55, 0.2), 0.95 * fresh);
+  body = mix(body, vec3(0.44, 0.56, 0.17), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
   body *= vec3(0.92 + 0.14 * own, 0.86 + 0.24 * own, 1.0) * (0.78 + 0.3 * hash11(vRay.x * 57.3 + 9.7));
@@ -86,7 +86,7 @@ void main() {
   vec3 through = mix(vec3(0.72, 0.37, 0.02), vec3(1.3, 0.88, 0.09), smoothstep(0.0, 0.7, u));
   through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(1.7, 1.14, 0.5), 0.8 * pale);
-  through = mix(through, vec3(0.8, 0.78, 0.22), 0.9 * fresh);
+  through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
   float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
@@ -141,7 +141,12 @@ void main() {
   float valley = (1.0 - smoothstep(0.0, 0.2, abs(across))) + 0.6 * smoothstep(0.62, 0.95, abs(across));
   float creased = smoothstep(1.0, 0.7, u) * (front ? 1.0 : 0.5);
   t.albedo *= mix(vec3(1.0), vec3(0.8, 0.62, 0.5), 0.8 * valley * creased);
-  t.occlusion = mix(0.4, 1.0, smoothstep(0.0, 0.5, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
+  // A shut ray is folded like a fan: the bottom of each fold is dark, so it reads as separate narrow blades.
+  float pleatAt = min(abs(abs(across) - 0.34), abs(abs(across) - 0.97));
+  float seam = (1.0 - smoothstep(0.0, 0.13, pleatAt)) * fresh * (0.75 + 0.25 * sin(u * 23.0 + own * 40.0));
+  t.albedo *= 1.0 - 0.72 * seam;
+  t.through *= 1.0 - 0.85 * seam;
+  t.occlusion = (1.0 - 0.7 * seam) * mix(0.4, 1.0, smoothstep(0.0, 0.5, u)) * mix(0.6, 1.0, unfolded) * (1.0 - 0.45 * valley * creased) * (1.0 - 0.25 * fold * creased);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
 }
 `
