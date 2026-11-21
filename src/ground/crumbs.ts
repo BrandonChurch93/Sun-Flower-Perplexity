@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { config } from '../config.ts'
 import { stream } from '../core/random.ts'
 import { cropLight } from './light.ts'
-import { groundStates, soilHeight } from './soil.ts'
+import { groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+
+export { laneDir }
 
 // Loose soil on the near ground. Far from the plant: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
 // Round the plant, where the dawn lens is a finger's width away: grains under a millimeter, aggregates of a few millimeters and masses over a centimeter, each aggregate and mass built of smaller crumbs stuck to it.
@@ -14,11 +15,8 @@ export const crumbScatter: Scatter = { count: 3500, detail: 1, minM: 0.001, maxM
 export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 export const grainScatter: Scatter = { count: 4200, detail: 2, minM: 0.0003, maxM: 0.0011, skew: 1.6, innerM: 0.004, outerM: 0.13, spread: 1.25, stones: 0.04, sink: 0.3, beside: 0.25, beads: 0.3 }
 export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM: 0.0036, skew: 1.5, innerM: 0.007, outerM: 0.13, spread: 1.3, stones: 0, sink: 0.45, beside: 0.3, frontM: 0.0026, cover: 0.5, childM: [0.0004, 0.001], beads: 0.25 }
-export const massScatter: Scatter = { count: 9, detail: 5, minM: 0.0045, maxM: 0.0075, skew: 1, innerM: 0.011, outerM: 0.03, spread: 1, stones: 0, sink: 0.5, frontM: 0.0045, cover: 1, childM: [0.0004, 0.0013], beads: 0.3, flat: 0.75 }
+export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
-// The way to the camera of the dawn shots, which stays low over the soil: nothing in it stands taller than a crumb.
-const LANE = (config.camera.keys[0].azimuthDeg * Math.PI) / 180
-export const laneDir = { x: Math.sin(LANE), z: Math.cos(LANE) }
 const LANE_CRUMB_M = 0.0022
 
 export function lane(x: number, z: number, padM = 0): number {
@@ -54,7 +52,7 @@ function grain3(x: number, y: number, z: number): number {
 }
 
 // How far the surface of a lump stands from its center along the direction d, as a share of its radius: broad knobs with four sizes of grain on them. A stone is nearly a plain ball.
-function lumpAt(x: number, y: number, z: number, seed: number, stone: number): number {
+export function lumpAt(x: number, y: number, z: number, seed: number, stone: number): number {
   const qx = x * 2.3 + seed
   const qy = y * 2.3 + seed
   const qz = z * 2.3 + seed
@@ -127,7 +125,10 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const ahead = x * laneDir.x + z * laneDir.z
     const front = Math.min(1, Math.max(0, (ahead - 0.008) / 0.022)) * Math.min(1, Math.max(0, (0.3 - ahead) / 0.1))
     const low = s.frontM === undefined ? s.maxM : s.maxM + (s.frontM - s.maxM) * front
-    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low)
+    const sunward = x * sunWayDir.x + z * sunWayDir.z
+    const aside = Math.abs(x * sunWayDir.z - z * sunWayDir.x)
+    const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
+    const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low, lit)
     const e = spin()
     const sx = radius * (0.7 + 0.7 * random.next())
     const sy = radius * (0.45 + 0.4 * random.next()) * (s.flat ?? 1)
@@ -136,12 +137,12 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const shade = random.next() * 97
     const tone = random.next()
     const stone = random.next() < s.stones ? 1 : 0
-    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.cover ? 0.5 : 1, detail: detailOf(radius, s.detail) })
+    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.cover ? 0.85 : 1, detail: detailOf(radius, s.detail) })
     const on = (wx: number, wy: number, wz: number, sink: number): [number, number, number] => {
       const lx = e[0] * wx + e[1] * wy + e[2] * wz
       const ly = e[4] * wx + e[5] * wy + e[6] * wz
       const lz = e[8] * wx + e[9] * wy + e[10] * wz
-      const lump = (1 + (s.cover ? 0.5 : 1) * (lumpAt(lx, ly, lz, shade, stone) - 1)) * sink
+      const lump = (1 + (s.cover ? 0.85 : 1) * (lumpAt(lx, ly, lz, shade, stone) - 1)) * sink
       const px = lx * lump * sx
       const py = ly * lump * sy
       const pz = lz * lump * sz
@@ -167,10 +168,10 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
       const n = Math.round((s.cover * 2.6 * radius * radius) / (mean * mean))
       for (let c = 0; c < n; c++) {
         const [wx, wy, wz] = up(-0.35)
-        const [ox, oy, oz] = on(wx, wy, wz, 0.93)
-        const size = s.childM[0] + (most - s.childM[0]) * Math.pow(random.next(), 1.4)
+        const [ox, oy, oz] = on(wx, wy, wz, 0.9)
+        const size = s.childM[0] + (most - s.childM[0]) * Math.pow(random.next(), 2)
         const ce = spin()
-        blobs.push({ x, y, z, ox, oy, oz, sx: size * (0.75 + 0.6 * random.next()), sy: size * (0.6 + 0.5 * random.next()), sz: size * (0.75 + 0.6 * random.next()), e: ce, radius: size, whole: radius, shade: shade + 3.7 * (c + 1), tone: Math.min(1, Math.max(0, tone + 0.5 * (random.next() - 0.5))), kind: random.next() < 0.03 ? 1 : 0, rugged: 0.6, detail: detailOf(size, 2) })
+        blobs.push({ x, y, z, ox, oy, oz, sx: size * (0.75 + 0.6 * random.next()), sy: size * (0.6 + 0.5 * random.next()), sz: size * (0.75 + 0.6 * random.next()), e: ce, radius: size, whole: radius, shade: shade + 3.7 * (c + 1), tone: Math.min(1, Math.max(0, tone + 0.5 * (random.next() - 0.5))), kind: random.next() < 0.03 ? 1 : 0, rugged: 1, detail: detailOf(size, 2) })
         if (s.beads && wy > 0.2 && random.next() < s.beads) bead(ox, oy, oz, size)
       }
     } else if (s.beads && stone === 0 && random.next() < s.beads) bead(0, 0, 0, Math.min(sx, sy, sz))
@@ -278,7 +279,7 @@ void main() {
   vec2 c = place.xz;
   float seen = aSeed.w * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place).w, 1e-4);
   float bead = step(1.5, aSeed.z);
-  float keep = smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04) * mix(1.0, smoothstep(0.0, 0.4, uDew) * (1.0 - smoothstep(0.0, 0.3, uWet)), bead);
+  float keep = smoothstep(0.35, 0.8, seen) * nearFade(c * 1.04) * mix(1.0, smoothstep(0.0, 0.4, uDew) * (1.0 - smoothstep(0.4, 0.8, uWet)), bead);
   vSeed = aSeed;
   if (keep <= 0.0) {
     vWorld = place.xyz;
@@ -334,16 +335,23 @@ uniform vec2 uToward;
 ${groundStates}
 ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
+vec3 beadSky(vec3 d, float open) {
+  return mix(uSkyHorizon, uSkyZenith, sqrt(saturate(d.y))) + uSunColor * open * (0.25 * pow(max(dot(d, uSunDir), 0.0), 40.0) + 30.0 * pow(max(dot(d, uSunDir), 0.0), 1500.0));
+}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
   if (vSeed.z > 1.5) {
     vec3 nb = normalize(vNormal);
     float shadow = sunShadow(vWorld, nb, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
-    vec3 hb = normalize(v + uSunDir);
-    float skim = pow(1.0 - max(dot(nb, v), 0.0), 5.0);
-    vec3 drop = groundAmbient(reflect(-v, nb)) * (0.04 + 0.96 * skim) + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.02;
-    drop += uSunColor * shadow * (pow(max(dot(nb, hb), 0.0), 500.0) * 40.0 + pow(max(dot(normalize(refract(-v, nb, 0.75)), uSunDir), 0.0), 20.0) * 5.0);
+    float facing = max(dot(nb, v), 0.0);
+    vec3 through = normalize(-v - 1.2 * (nb - facing * v));
+    vec3 back = reflect(-v, nb);
+    float skim = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
+    vec3 below = skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.04;
+    vec3 drop = mix(below, beadSky(through, shadow), smoothstep(-0.05, 0.12, through.y)) * (1.0 - skim) * 0.9;
+    drop += mix(below, beadSky(back, shadow), smoothstep(-0.05, 0.12, back.y)) * skim;
+    drop += uSunColor * shadow * pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 500.0) * 40.0;
     outColor = finish(drop, vWorld, vDepth, 1.0);
     return;
   }
@@ -368,11 +376,11 @@ void main() {
 
   float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
   float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
-  vec3 color = albedo * (uSunColor * max(dot(n, uSunDir), 0.0) * lit + groundAmbient(n) * open * proud(vWorld.y));
+  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + 0.25) / 1.25) * lit + groundAmbient(n) * open * proud(vWorld.y) * mix(1.0, 1.5, uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
-  color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.35, 0.1, uWet) * open;
+  color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
   color += wetGlints(vWorld, v, n, uWet) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
