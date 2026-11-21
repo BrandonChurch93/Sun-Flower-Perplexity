@@ -1,12 +1,12 @@
-# Status 45
+# Status 46
 
-2026-11-21 20:14 UTC
+2026-11-21 20:39 UTC
 
-- Status 45 · Phase 4 · unit rain · round 10. The fix pass for dawn, rain, night and frost ends at 20:25. Since 19:41 the working line took 21 tested commits from the twelve builders, each read file by file and tested here (113 of 113). The rain's camera now stands nearer and lower at 14 s, so the plant fills the approved's share of the frame (0.69 of the height; it was 0.54); the bloom's frames are untouched, proven by hashing the camera's values for frames 1080 to 1559. The night runs at f/8; its upper leaves are small, pointed and turned off the lens axis; the dawn soil is matt and its sky cooler up high; the frost bud has every bract its own length and lean. A request for a taller skyline under the dawn sun was tested and dropped: it gave no dark band and put a ridge on the rain's horizon.
-- Next: At 20:30 one cut of the line starts the second rounds of all five open units (rounds 12 to 16): machine checks here, packs and final stills by builders, fresh critics and jurors. Still wrong and named for the next pass: the night's field is a flat dark band and its plant has too few leaves under the bud, the dawn's far ground toward the sun is too bright, the rain's soil is too smooth. Time used: 19.4 h of 30 h.
+- Status 46 · Phase 4 · unit field · round 12. The fix pass for dawn, rain, night and frost ended at 20:25 inside its 90 minutes. One joint cut (main 921385e) carries 68 tested deliveries from the twelve builders since the first rounds; tests 116 of 116. The second rounds of all five units, rounds 12 to 16, started on it at 20:35. A byte proof of the merged whole: the key frames of the finished bloom and of the field (1350, 1515, 1559, 1755) are unchanged to the byte. The bloom's first frames are not: until 44.6 s the blurred neighbors behind the plant differ by a level or two, because neighbors grow up to 4.6 s behind the plant and still carry the new pre-bloom leaf posture. That is logged as a correction to earlier entries; the kit's rule for finished units asks for unchanged key stills, which hold, so the cut went ahead. Tested and dropped: a farther night camera (a neighbor's leaves entered at the left edge) and f/11 for the rain (no visible gain, and it would move judged dawn frames).
+- Next: Machine checks run until about 20:58 while five builders render the judges' packs at final tier. Then measures, three fresh critics and five jurors per judged frame for each unit; results about 21:45. One more fix pass of at most 90 minutes, third rounds about 23:15. Extra rounds stop at 23:51 UTC. Time used: 19.8 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Rain 14.0 s · approved left, the working line right with the camera nearer and lower (review tier)
-- `status-2.jpg`: Dawn 6.5 s · approved left, the working line right: matt soil, a cooler sky up high (review tier)
-- `status-3.jpg`: Night 26.0 s, the plant · approved left, a builder's still right: upper leaves small, pointed, turned to the sides (review tier, crop)
-- `status-4.jpg`: Frost 36.0 s, the bud · approved left, a builder's still right (review tier, crop)
+- `status-1.jpg`: Field 58.5 s · approved left, the judged commit right (review tier)
+- `status-2.jpg`: Night 26.0 s · approved left, the working line right: the green glow is gone, leaves stand to the sides (review tier)
+- `status-3.jpg`: Frost 36.0 s · approved left, the working line right (review tier)
+- `status-4.jpg`: Dawn 1.5 s · approved left, the working line right (review tier)
