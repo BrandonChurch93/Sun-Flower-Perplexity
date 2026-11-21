@@ -10,7 +10,7 @@ import { leafFrameAt, type Pose } from '../skeleton.ts'
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
-import { SETS, sweepAt, toothAt, veinAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
+import { SETS, sweepAt, toothAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
 
 // The stalk is the first third of a leaf's whole reach: it rises from the stem and arches over, and the blade hangs from its end.
 const REACH = 1.25
@@ -29,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 40000 },
+  hero: { step: 1, rows: 96, wide: 1, hairs: 60000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -306,27 +306,10 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.22) {
+      if (pick < 0.7) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
-      } else if (pick < 0.52 && leaf.i !== witheredLeaf) {
-        hair.kind = 1
-        const side = r(6) < 0.5 ? 0 : 1
-        const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
-        let w = 0
-        let s = 0.02 + 0.9 * r(5)
-        if (r(7) > 0.65) w = 0.05 + 0.85 * r(9)
-        else if (r(7) > 0.25) {
-          const v = veins[2 + Math.floor(r(8) * (veins.length - 2))]
-          w = 0.04 + 0.9 * r(9)
-          s = Math.min(0.97, veinAt(v, w))
-        }
-        const signed = side ? w : -w
-        let c = 0
-        while (c < HERO_COLS.length - 2 && HERO_COLS[c + 1] < signed) c++
-        hair.a = s * (leaf.nu - 1.001)
-        hair.b = 1 + c + clamp((signed - HERO_COLS[c]) / (HERO_COLS[c + 1] - HERO_COLS[c]))
       } else {
         hair.kind = 2
         hair.a = 1 + Math.pow(r(5), 1.2) * (RINGS_STALK + 2)
@@ -536,7 +519,7 @@ export function create(options: PartOptions): PlantPart {
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.0008 + 0.0036 * hair.r1 * hair.r3) * scale
+        long = (0.0012 + 0.0036 * hair.r1) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
@@ -573,18 +556,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0004 + 0.0013 * hair.r1 * hair.r4) * scale
-        } else {
-          const jx = hair.r2 - 0.5
-          const jy = hair.r3 - 0.5
-          dx = -nx + jx * 1.1
-          dy = -ny + jy * 0.6 - 0.2
-          dz = -nz + (hair.r4 - 0.5) * 1.1
-          const sink = 0.0012 * scale * (tb === 0 ? 1 : 0.3)
-          px -= nx * sink
-          py -= ny * sink
-          pz -= nz * sink
-          long = (0.0006 + 0.0012 * hair.r1) * scale
+          long = (0.0008 + 0.0024 * hair.r1) * scale
         }
       }
       root[o] = px
