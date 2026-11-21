@@ -5,17 +5,17 @@ The Builder's memory. Read this first in every task. Update it before every comm
 ## Status
 
 - Build: in progress
-- Current phase: 2 · Engine and blockout
-- Current unit: none
-- Current round: none (the blockout loop closed after round 2, by its round limit)
+- Current phase: 3 · The look lock
+- Current unit: bloom
+- Current round: none (the first `bloom` round starts when nothing its frames show is a stand-in)
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 06:52 UTC · Phase 2: whole preview film, proofs, M1 open item
-- Last status: 16 · 2026-11-21 06:39 UTC · Phase 2
+- Last push: 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
+- Last status: 17 · 2026-11-21 06:54 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 06:54 UTC · status 17 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Autopilot on the hosted app: seven screenshots taken while the film played
 - 2026-11-21 06:39 UTC · status 16 · Phase 2 · `status-1.jpg`: Whole film, frames 0 to 565 (dawn, rain); `status-2.jpg`: Whole film, frames 617 to 1183 (rain, night, frost); `status-3.jpg`: Whole film, frames 1234 to 1799 (bloom, field); `status-4.jpg`: Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face
 - 2026-11-21 06:04 UTC · status 15 · Phase 2 · round 2 · `status-1.jpg`: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; `status-2.jpg`: Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); `status-3.jpg`: Night, frost and field keys: approved image (left), blockout frame (right)
 - 2026-11-21 05:31 UTC · status 14 · Phase 2 · round 2 · `status-1.jpg`: The film from 40 to 60 s after the round 1 fixes, twelve frames in order; `status-2.jpg`: Night, frost and bloom-opening keys: approved image (left), blockout frame (right); `status-3.jpg`: Bloom-hero and field keys: approved image (left), blockout frame (right)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 03:07 UTC · status 08 · Phase 2 · `status-1.jpg`: Keys 1 to 4, approved image left, film frame right: dawn-sprout, dawn-seedling, rain, night; `status-2.jpg`: Keys 5 to 8, approved image left, film frame right: frost, bloom-opening, bloom-hero, field
 - 2026-11-21 02:49 UTC · status 07 · Phase 2 · `status-1.jpg`: Golden hour: the approved bloom-hero image, and the same image with the plant and the companion's leaves painted out; `status-2.jpg`: Dawn and rain with the plant painted out; `status-3.jpg`: Night and frost with the plant painted out
 - 2026-11-21 02:25 UTC · status 06 · Phase 2 · `status-1.jpg`: Frame 420 (14 s, rain world): the soil and the plant's shadow are drawn for the first time. Stand-in shapes; `status-2.jpg`: Frame 60 (2 s, dawn world), draft tier, with the ground; `status-3.jpg`: Frame 1755 (58.5 s): the high wide view. The field is not built yet; `status-4.jpg`: Texel view of frame 60: how many texture samples each pixel gets, used by a measure
-- 2026-11-21 01:59 UTC · status 05 · Phase 1 · `status-1.jpg`: Rough cut, frame 420 (14 s, rain). Made from the approved still; `status-2.jpg`: Rough cut, frame 1515 (50.5 s, bloom). Made from the approved still; `status-3.jpg`: Rough cut check: one frame from every segment and the frame each side of every cut
 
 ## Clock
 
@@ -44,12 +44,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 4.88 h |
+| 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.00 h |
+| Whole build | 30.00 h | 6.05 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -59,8 +59,8 @@ Continuations and extensions are listed under this table with their own hours.
 | --- | --- | --- | --- |
 | 0 · Ground truth | done | 2026-11-21 01:54 UTC: `npm run gate -- --phase 0` all green (G1 build clean, G2 48 of 48 tests, G3 frames 45, 780 and 1515 pixel identical across fresh page loads and in another order, G4 stills 1920 x 1080, 960 x 540 and 3840 x 2160 and `frameCount` 1800, G10 needs only EXT_color_buffer_float and sizes inside the record). Four pushes. Workspace record, tool record, pinned versions and render budget table are above. Inline display proven at status 01. Published 01:56 UTC at https://sunflower-film.pplx.app | `0cbd576` |
 | 1 · Rough cut | done | 2026-11-21 02:01 UTC: `npm run gate -- --phase 1` green (D1: `out/roughcut.mp4` has 1800 frames at 960 x 540, 30 fps, 16.6 MB, h264 High, a keyframe on every cut). Order and timing checked on `out/work/roughcut/check-sheet.jpg`: one frame from each segment, the frames each side of cuts 240, 600, 900 and 1200, frame 0 and frame 1799, each showing the right approved still and the right label. On the review page under Films. Status 05 posted | `ada2748` |
-| 2 · Engine and blockout | in progress | | |
-| 3 · The look lock | not started | | |
+| 2 · Engine and blockout | done | 2026-11-21 06:46 UTC: `npm run gate -- --phase 2` all 14 green on the final build of the phase (engine hash `883ccb0f6f431fcb`): G1 build clean, G2 68 of 68 tests, G3 frames 45, 780 and 1515 pixel identical across fresh page loads and in another order, G4 stills 1920 x 1080, 960 x 540 and 3840 x 2160 and `frameCount` 1800, G5 no interface element in capture or autopilot and the export proof frames clean, G6 config valid and all 10 judged frames on the list, G7 the master fits X, G8 10 generated files have recipes, G9 212 tracked files, the largest 16.6 MB, no secret, 8 approved files match the manifest, G10 the app needs only what the Phase 0 record holds, G11 textures web 61 MB of 800 and full 119 MB of 2400, G12 the worst step ratio across each of the four cuts is 1.00 (limit 1.5), D2 `out/preview.mp4` has 1800 frames at 960 x 540 and 30 fps, 28.7 MB, from this build, with the M1 result of every frame, D3 the export proof matches capture stills at 35.9, 37.7 and 37.8 dB and `npm run proof -- --memory` held 240 frames across the cut at frame 240 with textures at most 118.8 MB. R4 blockout: its limit was reached, not a pass (round 1 score 7 with one severe issue, round 2 score 6 with one severe issue, both severe issues fixed after their rounds; `quality.blockoutMaxRounds` is 2). The three blockout issues still open and the M1 failures of 115 frames are under "Open items", each marked with the phase that settles it. The judged frame list is under "Judged frames". `out/preview.mp4` is committed (`1bc8b7d`). Autopilot: published at 06:49 UTC; the published address asks for an organization sign-in that the harness cannot give, so the film was played from the hosting's own copy of the same upload: frames 0 to 1799 in order in 61.8 s, every unit shown, `window.autopilot` ended `done` with no error and the console clean (`out/work/autopilot/hosted.json`, seven screenshots). Status 17 posted with the whole film sheets | `1bc8b7d` |
+| 3 · The look lock | in progress | | |
 | 4 · The other units | not started | | |
 | 5 · The whole film | not started | | |
 | 6 · Polish and deliver | not started | | |
@@ -73,12 +73,12 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 
 | Unit | State | Rounds run | R1 | R2 | R3 | R4 | Ended by | Commit | Open items |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| dawn | not started | 0 | | | | | | | |
-| rain | not started | 0 | | | | | | | |
-| night | not started | 0 | | | | | | | |
-| frost | not started | 0 | | | | | | | |
-| bloom | not started | 0 | | | | | | | |
-| field | not started | 0 | | | | | | | |
+| dawn | stand-in | 0 | | | | | | | |
+| rain | stand-in | 0 | | | | | | | |
+| night | stand-in | 0 | | | | | | | |
+| frost | stand-in | 0 | | | | | | | |
+| bloom | in progress | 0 | | | | | | | 3 carried from the blockout and the film's M1 check, see "Open items" |
+| field | stand-in | 0 | | | | | | | |
 
 ## Workspace record
 
@@ -333,6 +333,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · Round 2, what the fix pass did not change, and why. The head's width across the petals is `plant.headDiameterM` and the plant's height is `plant.fullHeightM`, both fixed facts in `kit/02-SUBJECT.md`, so the hero's head was not made larger for the field key. The first row stands `field.plantAheadOfRowM` behind the plant and the lens at the bloom keys is the one the approved image was measured with, so neither was moved to make the heads behind the hero smaller, and a neighbor's head stays 0.7 of the hero's as round 1 set it. The companion was not moved again: `tools/fit.ts --companion` shows it 0.045 of the frame outside the left edge at its nearest before the bloom (frame 825) and reaching x 0.114 and 0.134 in the two bloom keys. All three are under "Open items" with the phase that settles them.
 - 2026-11-21 · Phase 2 · The blockout loop is closed by its round limit (`rounds.blockout` is 2): R4 blockout scored 7 in round 1 and 6 in round 2, each with one severe issue, so the bar (7 with no severe issue open) was not met in a judged round. The build that goes on is the round 1 build with every later fix, machine checks green. Both severe issues were fixed after they were raised and checked by the Builder on frames, not by a critic. This is a limit reached and is reported as one.
 - 2026-11-21 · Phase 2 · M1 on the film of the final build: 115 frames fail, against 333 on the scene of 03:10 UTC. The cause is found (the entry under "Open items") and it is in how the lens picks its focus point on a large closed bud, which is head work. It is not fixed in Phase 2: the fix changes the focus distance of every frame from 25 s on, the film for this gate is rendered, the phase is past its box, and D2 asks for the failed frames to be logged, which they are. It is the first change to the camera in Phase 3, made with the real head, and it has to be green on frames 1350 and 1515 before the `bloom` unit can pass.
+- 2026-11-21 · Phase 2 · The gate line "The app plays the whole film in `autopilot`, from the published URL" was checked on the hosting's own copy of the upload and not through the public address, because the public address sends an unsigned browser to the organization sign-in and the harness has no sign-in to give. The files are the same upload; the film played to the last frame there. A person signed in to the organization sees the same files at https://sunflower-film.pplx.app.
+- 2026-11-21 · Phase 2 · The units table now reads `stand-in` for five units and `in progress` for `bloom`: the blockout is the stand-in of every unit, and Phase 3 works on `bloom`.
 
 ## Notes from Brandon
 
@@ -363,6 +365,9 @@ None.
 
 Finished in this task:
 
+- Autopilot check of the published app · 2026-11-21 06:48 to 06:53 UTC · `out/work/scratch/autopilot-check.ts`, results in `out/work/autopilot/`. From `https://sunflower-film.pplx.app/` the harness's browser is sent to the organization sign-in, so nothing played there (`published.json`). From the hosting's own copy of the same upload (a temporary address the publish step gives) the film played from frame 0 to frame 1799 in order in 61.8 s after 2.0 s of loading, 38 frames shown on this software renderer (8 in `dawn`, 11 in `rain`, 9 in `night`, 5 in `frost`, 3 in `bloom`, 2 in `field`), ended `done`, no error, no console message (`hosted.json`, seven screenshots looked at by the Builder).
+- `npm run gate -- --phase 2` · started 06:45 UTC, ended 06:46 UTC (results of this build were reused where the build had not changed) · log `out/work/logs/gate-p2.log` · all 14 green, the lines are in the "Phases" table.
+- `npm run proof` (ended 06:41 UTC), `npm run proof -- --memory` (ended 06:44 UTC), `npm run keep` (06:45 UTC) · logs `out/work/logs/proof-p2.log` and `proof-mem-p2.log` · proof: 30 frames 1500 to 1529 through Export, frames 1500, 1515 and 1529 match capture stills at 35.9, 37.7 and 37.8 dB; memory: 240 frames across the cut at frame 240, textures at most 118.8 MB of 2400; keep: `out/preview.mp4` (30,086,723 bytes) with its record.
 - `npm run film` · the whole preview film (frames 0 to 1799, 960 x 540) at the `draft` tier, the final build of Phase 2 (engine hash `883ccb0f6f431fcb`) · log `out/work/logs/film-p2.log` · this VM · started 2026-11-21 06:05 UTC, ended 06:35 UTC (30 minutes, 20 to 28 expected; the frame time rose from 0.64 s in `dawn` to 0.94 s in `field`) · 1800 frames, 30 fps, 960 x 540, 28.7 MB, verified by `ffprobe`. M1 by chunk: `dawn` 0 of 240 failed, `rain` 0 of 360, `night` 3 of 300, `frost` 0 of 300, `bloom` 112 of 360, `field` 0 of 240. The failed frames are under "Open items".
 - `npm run film` · the whole preview film at the `draft` tier, started 05:44 UTC on the build round 2 judged · stopped by the Builder at 05:49 UTC at frame 408 of 1800 (0.64 s a frame, the `dawn` chunk was complete), because the round 2 answer asks for a change to the plant's head, which changes every frame's hash. It runs again after the fix pass.
 - `npm run budget -- --scene "Phase 2 blockout (stand-in plant and field, six stand-in worlds)"` · started 2026-11-21 05:22 UTC, ended 05:37 UTC (15 minutes, about 16 expected) · log `out/work/logs/budget-p2b.log` · its table is under "Render budget".
@@ -458,6 +463,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 06:05 UTC · Round 2: fix pass (the head holds one facing, cameras fitted again, shorter neighbors), summary, status 15; the blockout loop closes at its round limit
 - 2026-11-21 06:05 UTC · Phase 2: the final preview film is rendering
 - 2026-11-21 06:52 UTC · Phase 2: whole preview film, proofs, M1 open item
+- 2026-11-21 06:55 UTC · Phase 2 gate met: 14 checks green, preview film committed, autopilot checked on the hosted app, status 17
 
 ## Session log
 
@@ -500,4 +506,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: The head from 41 s to 58.5 s after the fix, ten frames in order: it turns one way only; Bloom-opening and bloom-hero keys: approved image (left), blockout frame (right); Night, frost and field keys: approved image (left), blockout frame (right).
 - Status 16, 2026-11-21 06:39 UTC, Phase 2. The whole preview film is rendered from the final build of this phase: 1800 frames, 28.7 MB. The sanity measure failed on 115 frames (3 at the end of night, 112 in bloom while the bud is closed) and the cause is found: the lens holds a point inside the bud, so the bud's rim is sharp and its face is not. Next: Close the Phase 2 gate: export proof, memory proof, gate checks, review page, publish. The focus fix goes into Phase 3 with the real head. Time used: 5.8 h of 30 h.
   Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Frame 1333 in the focus view: green is the sharp zone. It is a ring round the closed bud where it should be the bud's face.
+- Status 17, 2026-11-21 06:54 UTC, Phase 2. Phase 2 is closed. All fourteen gate checks are green on the final blockout build, the export and memory proofs pass, the preview film is committed and the app is published. Autopilot played the whole film from the hosted copy, frame 0 to 1799, with no error. The blockout critic loop ended at its limit of two rounds (scores 7 and 6), not as a pass; three framing issues and the focus failure on 115 frames are carried as open items. Next: Phase 3, the look lock on bloom: merge the plant scaffold, then send agents to build the real stem, leaves, bud, disc, petals, hairs, surface, golden world, lens and field in parallel while the focus fix goes in. Time used: 6.0 h of 30 h.
+  Pictures: Whole film, frames 0 to 565 (dawn, rain); Whole film, frames 617 to 1183 (rain, night, frost); Whole film, frames 1234 to 1799 (bloom, field); Autopilot on the hosted app: seven screenshots taken while the film played.
 
