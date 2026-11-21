@@ -78,11 +78,11 @@ void main() {
     albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
     if (inner) albedo = mix(albedo, vec3(0.12, 0.19, 0.08), 0.7);
-    else albedo *= vec3(1.35, 1.5, 1.2);
+    else albedo *= vec3(1.1, 1.22, 1.05);
     float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.12 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
-    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.2, thin) * (0.8 + 0.4 * grain);
+    t.through = vec3(0.56, 0.8, 0.08) * mix(0.03, 0.16, thin) * (0.8 + 0.4 * grain);
     height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
     float buried = smoothstep(0.0, 0.16, u);
     t.sheen = 0.45;
