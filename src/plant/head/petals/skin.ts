@@ -73,22 +73,28 @@ void main() {
   through = mix(through, vec3(0.80, 0.86, 0.10), 0.7 * fresh);
   through = mix(through, vec3(0.62, 0.24, 0.01), 0.85 * foot);
 
+  // The two folds a ray keeps from the bud, and the groove of its middle vein.
+  float fold = 1.0 - smoothstep(0.0, 0.07, abs(abs(across) - 0.34));
+  float groove = 1.0 - smoothstep(0.0, 0.05, abs(across));
+  float lines = (fold - 0.7 * groove) * smoothstep(1.0, 0.75, u);
+  through *= 1.0 - 0.22 * (fold + groove) * smoothstep(1.0, 0.75, u);
+
   Tissue t;
   t.face = n;
 #ifdef PLANT_FIELD
   t.normal = n;
   float texels = -1.0;
 #else
-  vec2 m = vec2(vRay.w + u * 0.84, vRay.y + vRay.z * across * 0.36 * 0.66);
+  vec2 m = vec2(vRay.w + u * 0.84, vRay.y + vRay.z * across * 0.3);
   vec3 tint = texture(uRayColor, m).rgb;
   vec3 data = texture(uRayData, m).rgb;
   vec3 rel = clamp(tint / ${MAP_MEAN}, 0.35, 1.9);
   rel.b = mix(1.0, rel.b, 0.3);
-  albedo *= rel;
+  albedo *= mix(vec3(1.0), rel, 0.6);
   float vein = data.b;
   through *= (0.45 + 0.75 * data.g) * (1.0 - 0.3 * vein);
   through.g *= 1.0 - 0.25 * vein;
-  float height = (data.r - 0.5) * 0.00028 * (front ? 1.0 : -1.4);
+  float height = ((data.r - 0.5) * 0.00028 + lines * 0.00022) * (front ? 1.0 : -1.4);
   t.normal = reliefNormal(n, vWorld, height, 1.0);
   float texels = texelDensity(m, uRaySize);
 #endif
