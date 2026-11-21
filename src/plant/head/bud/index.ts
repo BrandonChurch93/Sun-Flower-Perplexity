@@ -28,14 +28,17 @@ const WIDEST = 0.2
 const SHOULDER = 0.07
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
-const HAIR_WIDTH_M = 0.00008
+const HAIR_WIDTH_M = 0.00005
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
-// A bract folds back with the rays in front of it, this many seconds ahead of them. growth.ts has no sectors for bracts.
-const SECTOR_LEAD = 0.35
+// A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
+const FOLD_LAG = [0.45, 0.65, 0.85]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.72, 1, 1.38]
-const STAND = [1.47, 1.36, 0.87]
+const STAND = [0.92, 0.5, 0.28]
+const FLARE = [0.5, 0.7, 0.76]
+const FOLD_SLOW = 0.7
+const HANG = 2.35
 const FOLD = [2.3, 2.22, 2.12]
 const LONG = [0.92, 0.9, 0.84]
 const SIDE_FEET = 0.9
@@ -43,7 +46,7 @@ const SIDE_FEET = 0.9
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 
-interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hang: boolean; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -73,6 +76,7 @@ export function create(options: PartOptions): PlantPart | null {
       side: (rnd(7, i) - 0.5) * 0.3,
       tip: (rnd(8, i) - 0.5) * 0.6,
       lean: (rnd(16, i) - 0.5) * 0.3,
+      hang: series === 0 && rnd(17, i) < 0.16,
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
       hug: 0.13 + 0.06 * rnd(11, i),
@@ -138,7 +142,7 @@ export function create(options: PartOptions): PlantPart | null {
   const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
   const faceEach = shape.bracts > 0 ? Math.floor((shape.faceHairs * share) / shape.bracts) : 0
   const hairCount = backHairs + shape.bracts * (edgeEach * 2 + faceEach)
-  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', undefined, HAIR_WIDTH_M) : null
+  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', [0.66, 0.7, 0.58], HAIR_WIDTH_M) : null
   const hairBase = new Int32Array(hairCount)
   const hairWidth = new Int32Array(hairCount)
   const hairAt = new Float32Array(hairCount * 2)
@@ -316,7 +320,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(0.235 * L, 0.42 * R) * k.wide
+      const W = Math.min(0.26 * L, 0.45 * R) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -326,13 +330,14 @@ export function create(options: PartOptions): PlantPart | null {
       for (let m = -1; m <= 2; m++) {
         const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
         behind = Math.max(behind, lerp(-Math.PI, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0, 0.008, rayLength(ray, time))))
-        opened += rayOpen(ray, time + SECTOR_LEAD) / 4
+        opened += (rayOpen(ray, time - FOLD_LAG[k.series]) + rayOpen(ray, time - FOLD_LAG[k.series] - FOLD_SLOW)) / 8
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
-      const folded = smoothstep(0.14 * k.series, 0.72 + 0.14 * k.series, opened)
+      const folded = smoothstep(0, 1, opened)
       const inBud = Math.min(time, bloom0 - 1)
-      const angle = lerp(lerp(bractAngle(j, inBud), STAND[k.series] + k.lean, ready), FOLD[k.series] + 0.5 * k.lean, folded)
-      const curl = lerp(lerp(bractCurl(j, inBud), k.series === 2 ? 0.3 : 0.16, ready), -0.22, folded)
+      const stand = k.hang ? HANG : STAND[k.series] + k.lean
+      const angle = lerp(lerp(bractAngle(j, inBud), stand, ready), FOLD[k.series] + 0.5 * k.lean, folded)
+      const curl = lerp(lerp(bractCurl(j, inBud), k.hang ? 0.1 : -FLARE[k.series], ready), -0.22, folded)
       const hugEnd = k.hug
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)

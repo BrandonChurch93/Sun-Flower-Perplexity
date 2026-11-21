@@ -77,14 +77,15 @@ void main() {
     vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.3 * keel + 0.4 * line + 0.12 * rank * (1.0 - toTip)));
     albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
-    if (inner) albedo = mix(albedo, vec3(0.1, 0.18, 0.06), 0.3);
-    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.5 * ax * ax * ax * smoothstep(0.1, 0.4, u));
+    if (inner) albedo = mix(albedo, vec3(0.13, 0.2, 0.075), 0.6);
+    else albedo *= vec3(1.5, 1.95, 2.0);
+    float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.25 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
     t.through = vec3(0.56, 0.8, 0.08) * mix(0.04, 0.28, thin) * (0.8 + 0.4 * grain);
     height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
-    float buried = smoothstep(0.0, 0.32, u);
-    t.occlusion = mix(0.28, 1.0, buried) * (inner ? mix(0.4, 0.85, toTip) : 1.0);
+    float buried = smoothstep(0.0, 0.16, u);
+    t.occlusion = mix(0.5, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0);
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     t.wax = 0.15 + 0.3 * uPlantWet;
   } else if (kind > 0.5) {
@@ -93,8 +94,8 @@ void main() {
     vec3 cream = mix(vec3(0.42, 0.47, 0.2), vec3(0.52, 0.52, 0.27), grain);
     vec3 tan = mix(vec3(0.36, 0.27, 0.13), vec3(0.46, 0.36, 0.2), grain);
     t.albedo = mix(cream, tan, uBudOpen * smoothstep(1.0, 0.3, rho));
-    t.albedo = mix(t.albedo, vec3(0.085, 0.15, 0.05), smoothstep(0.84, 0.96, rho));
-    t.occlusion = mix(0.45, 0.9, uBudOpen) * mix(1.0, 0.5, smoothstep(0.84, 0.96, rho));
+    t.albedo = mix(t.albedo, mix(vec3(0.07, 0.13, 0.045), vec3(0.05, 0.06, 0.028), uBudOpen), smoothstep(0.8, 0.93, rho));
+    t.occlusion = mix(0.45, 0.9, uBudOpen) * mix(1.0, 0.5, smoothstep(0.8, 0.93, rho));
     t.rough = 0.9;
     t.wax = 0.1;
     t.sheen = 0.0;
@@ -109,9 +110,11 @@ void main() {
     t.albedo *= 0.8 + 0.3 * pits;
     height = 0.0005 * grain + 0.0002 * rib + 0.00035 * pits;
     t.occlusion = mix(1.0, 0.4, smoothstep(0.3, 0.75, v));
+    float shoulder = smoothstep(0.55, 0.8, v);
+    t.albedo = mix(t.albedo, mix(vec3(0.05, 0.1, 0.035), vec3(0.04, 0.05, 0.024), uBudOpen), shoulder);
     t.rough = 0.9;
-    t.wax = 0.1;
-    t.sheen = 0.8;
+    t.wax = 0.1 * (1.0 - shoulder);
+    t.sheen = 0.8 * (1.0 - shoulder);
   }
   t.normal = reliefNormal(face, vWorld, height, 1.0);
 #endif
