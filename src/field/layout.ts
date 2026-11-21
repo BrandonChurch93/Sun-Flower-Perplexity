@@ -57,13 +57,15 @@ const KNEE = 12
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
 export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_S) / Math.max(heightAt(time), 0.001)))
 // Before the bloom the rows are uneven: the plants in poorer ground are well behind, and catch up as the buds fill.
-export const lagAt = (time: number): number => 0.3 * (1 - ramp(35, 40, time))
+export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - ramp(35, 40, time))
 export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
 // At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
 export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time)
 // In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
 export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(36.5, 40, time))
+// In the rain the young rows are broad: each plant spreads its leaves wide over the open ground before the rows close and the leaves hang.
+export const wideAt = (time: number): number => 0.6 * ramp(8, 13, time) * (1 - ramp(16, 24, time))
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
