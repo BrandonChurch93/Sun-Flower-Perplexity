@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uSquat: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -55,6 +55,7 @@ uniform float uPlantHeight;
 uniform vec4 uHeadAt;
 uniform float uHeadGrow;
 uniform float uSquat;
+uniform float uHang;
 ${swayGlsl}
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
@@ -75,7 +76,7 @@ vec3 plantWorld(vec3 local) {
   vec3 q = local - uHeadAt.xyz;
   local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   vec3 p = local * aPlace.w;
-  p.y *= 1.0 - uSquat;
+  p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0);
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
   vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
@@ -113,6 +114,7 @@ uniform float uPlantDew;
 #ifdef PLANT_FIELD
 uniform float uCanopy;
 uniform float uClosed;
+uniform float uDeep;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -148,7 +150,7 @@ float plantSky(vec3 world) {
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = uClosed;
   // A crop in bloom stands taller and closer still, and keeps less of the sky.
-  float deep = smoothstep(1.0, 1.25, uCanopy);
+  float deep = uDeep;
   return mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
 #else
   return 1.0;
