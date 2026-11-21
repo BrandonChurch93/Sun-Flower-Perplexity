@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 16:44 UTC · Round 7 starts: field, floor round, judges 566eb48 (main with the Phase 4 line 8425087); budget table of Phase 3; line heads b9528ac and 8425087 logged
-- Last status: 37 · 2026-11-21 16:19 UTC · Phase 3 · unit bloom · round 6
+- Last push: 2026-11-21 16:46 UTC · Status 38: round 7 started on 566eb48, the field's floor round; real dawn, night and frost worlds on main
+- Last status: 38 · 2026-11-21 16:46 UTC · Phase 4 · unit field · round 7
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 16:46 UTC · status 38 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
 - 2026-11-21 16:19 UTC · status 37 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right; `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right; `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
 - 2026-11-21 15:54 UTC · status 36 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Round 6, the cut at 40.00 s as the motion critic sees it; `status-2.jpg`: Round 6, twelve frames across the bloom; `status-3.jpg`: Round 6, 45 s: approved (a) and ours (b), native crops; `status-4.jpg`: Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress)
 - 2026-11-21 15:29 UTC · status 35 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: 45 s, judged frame 1350 at final quality: approved image left, round 6 right; `status-2.jpg`: 50.5 s, judged frame 1515 at final quality: approved image left, round 6 right; `status-3.jpg`: Phase 4 in progress, 58.5 s (field): approved image left, the field builder's branch right (his render, not yet checked by the Builder's own still, not on main)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 12:56 UTC · status 29 · Phase 3 · unit bloom · `status-1.jpg`: Round 4 judged frame, 45.0 s (final tier); `status-2.jpg`: Round 4 judged frame, 50.5 s (final tier); `status-3.jpg`: Main now at 45.0 s, right, beside the approved image, left; `status-4.jpg`: Main now at 50.5 s, right, beside the approved image, left
 - 2026-11-21 11:59 UTC · status 28 · Phase 3 · unit bloom · `status-1.jpg`: 45 s · approved left, build right (review tier); `status-2.jpg`: 50.5 s · approved left, build right (review tier); `status-3.jpg`: 45 s · the bud at native size, approved left, build right; `status-4.jpg`: Sun and neighbor's leaf at native size · approved left, build right · 45 s above, 50.5 s below
 - 2026-11-21 11:34 UTC · status 27 · Phase 3 · unit bloom · `status-1.jpg`: Frame 1350 (45.0 s), approved left, build right, review tier; `status-2.jpg`: Frame 1515 (50.5 s), approved left, build right, review tier; `status-3.jpg`: Head at 45.0 s, approved left, build right; `status-4.jpg`: Head at 50.5 s, approved left, build right
-- 2026-11-21 11:07 UTC · status 26 · Phase 3 · unit bloom · `status-1.jpg`: 39.5 s to 51.5 s after the growth change (drafts): the frost bud, then the bloom about every second; `status-2.jpg`: 45.0 s: approved left, ours right (draft); `status-3.jpg`: 50.5 s: approved left, ours right (draft)
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 0.37 h |
+| 4 | 8.50 h | 0.44 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 15.83 h |
+| Whole build | 30.00 h | 15.90 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -899,6 +899,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 16:10 UTC · Round 6: jury 7 of 10 (passes), key, summary, measures, manifests; result not a pass, the look lock ends at its limit
 - 2026-11-21 16:22 UTC · Phase 3 done at its limit: gate all 13 green, look lock written, bloom finished on cd262c1, published; Status 37; Phase 4 starts
 - 2026-11-21 16:44 UTC · Round 7 starts: field, floor round, judges 566eb48 (main with the Phase 4 line 8425087); budget table of Phase 3; line heads b9528ac and 8425087 logged
+- 2026-11-21 16:46 UTC · Status 38: round 7 started on 566eb48, the field's floor round; real dawn, night and frost worlds on main
 
 ## Session log
 
@@ -983,4 +984,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Round 6, the cut at 40.00 s as the motion critic sees it; Round 6, twelve frames across the bloom; Round 6, 45 s: approved (a) and ours (b), native crops; Phase 4 line, dawn 1.5 s: approved left, the Builder's own still right (work in progress).
 - Status 37, 2026-11-21 16:19 UTC, Phase 3 · unit bloom · round 6. Round 6 of the bloom is fully judged: match critic 5, craft critic 4, motion critic 5 (9 needed from each), jury 7 of 10 against the controls' 6 of 10 (passes), machine checks and all three measures green. Not a pass: the look lock ended at its limit of four rounds. The kept build is round 6's, the only judged round with every check green. Its 7 severe and 18 major issues are logged as open items for Phases 4 and 6. The Phase 4 line holds the first passes at the rain and night worlds. Next: The Phase 3 gate finishes in minutes and the phase closes. Then the Phase 4 line goes to main and round 7 judges the field unit at about 16:45 UTC; frost follows at about 17:15 and dawn at about 17:40. Time used: 15.5 h of 30 h.
   Pictures: Bloom opening, frame 1350: approved left, kept build right; Bloom hero, frame 1515: approved left, kept build right; Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; Night key, frame 780, Phase 4 line, first pass: approved left, ours right.
+- Status 38, 2026-11-21 16:46 UTC, Phase 4 · unit field · round 7. Round 7 has started: the field's floor round judges main 566eb48, which now holds the real dawn, night and frost worlds, the young neighbor rows, the frost and wet skin and a smaller bloom round the golden sun. The rain world is the last stand-in. Machine checks run here, the pack is being built on a builder's VM. Next: Machine checks, measures and the pack of round 7, then its three critics and ten jurors on frame 1755. Frost is judged next at about 17:15 UTC, then dawn, night and rain. Time used: 15.9 h of 30 h.
+  Pictures: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right.
 

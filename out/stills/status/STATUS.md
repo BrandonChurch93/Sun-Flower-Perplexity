@@ -1,12 +1,12 @@
-# Status 37
+# Status 38
 
-2026-11-21 16:19 UTC
+2026-11-21 16:46 UTC
 
-- Status 37 · Phase 3 · unit bloom · round 6. Round 6 of the bloom is fully judged: match critic 5, craft critic 4, motion critic 5 (9 needed from each), jury 7 of 10 against the controls' 6 of 10 (passes), machine checks and all three measures green. Not a pass: the look lock ended at its limit of four rounds. The kept build is round 6's, the only judged round with every check green. Its 7 severe and 18 major issues are logged as open items for Phases 4 and 6. The Phase 4 line holds the first passes at the rain and night worlds.
-- Next: The Phase 3 gate finishes in minutes and the phase closes. Then the Phase 4 line goes to main and round 7 judges the field unit at about 16:45 UTC; frost follows at about 17:15 and dawn at about 17:40. Time used: 15.5 h of 30 h.
+- Status 38 · Phase 4 · unit field · round 7. Round 7 has started: the field's floor round judges main 566eb48, which now holds the real dawn, night and frost worlds, the young neighbor rows, the frost and wet skin and a smaller bloom round the golden sun. The rain world is the last stand-in. Machine checks run here, the pack is being built on a builder's VM.
+- Next: Machine checks, measures and the pack of round 7, then its three critics and ten jurors on frame 1755. Frost is judged next at about 17:15 UTC, then dawn, night and rain. Time used: 15.9 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right
-- `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right
-- `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right
-- `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
+- `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48
+- `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right
+- `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right
+- `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
