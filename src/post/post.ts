@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
-import { fillFragment, reachFragment } from './fill.ts'
+import { fillFragment, nearFragment, reachFragment } from './fill.ts'
 import { brightFragment, downFragment, flareFragment, levelGain, upFragment } from './glare.ts'
 import { gradeFragment } from './grade.ts'
 import { lensLook } from './looks.ts'
@@ -63,7 +63,9 @@ export class Post {
   private up: THREE.WebGLRenderTarget[] = []
   private flareTarget: THREE.WebGLRenderTarget | null = null
   private flareLevel = 0
-  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 } })
+  private nearTarget: THREE.WebGLRenderTarget | null = null
+  private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
+  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 } })
   private readonly fillWide = fillPass(3)
   private readonly fillTight = fillPass(2)
   private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 } })
@@ -100,6 +102,7 @@ export class Post {
   private buildChain(width: number, height: number): void {
     for (const t of [...this.down, ...this.up]) t.dispose()
     this.flareTarget?.dispose()
+    this.nearTarget?.dispose()
     this.down = []
     this.up = []
     // The widest level is about eight texels tall: one texel of it is an eighth of the frame, which is what carries the veil.
@@ -115,6 +118,7 @@ export class Post {
     this.flareLevel = Math.max(0, levels - 5)
     const at = this.down[this.flareLevel]
     this.flareTarget = halfTarget(at.width, at.height)
+    this.nearTarget = halfTarget(Math.max(2, Math.ceil(width / 8)), Math.max(2, Math.ceil(height / 8)))
   }
 
   setSize(width: number, height: number): void {
@@ -127,14 +131,27 @@ export class Post {
     let sum = (this.fillA.width * this.fillA.height * 16) * 2
     for (const t of [...this.down, ...this.up]) sum += t.width * t.height * 8
     if (this.flareTarget) sum += this.flareTarget.width * this.flareTarget.height * 8
+    if (this.nearTarget) sum += this.nearTarget.width * this.nearTarget.height * 8
     return sum
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, samples: number): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, samples: number, farCircle: number): THREE.Texture {
+    const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
+    const near = this.nearTarget as THREE.WebGLRenderTarget
+    if (farCircle > 0) {
+      const n = this.near.uniforms
+      n.tFrame.value = frame
+      n.uRadiusScale.value = scale
+      n.uFar.value = farCircle
+      n.uReach.value = Math.min(128, 2 * farCircle + 8)
+      this.near.render(renderer, near)
+    }
     const r = this.reach.uniforms
     r.tFrame.value = frame
-    r.uRadiusScale.value = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
+    r.tNear.value = near.texture
+    r.uRadiusScale.value = scale
+    r.uFar.value = farCircle
     this.reach.render(renderer, this.fillA)
     let from = this.fillA
     let to = this.fillB
@@ -187,7 +204,7 @@ export class Post {
     return from.texture
   }
 
-  // The frame before lens and grade stays in the accumulator. `sun` is where the main light sits in the picture; without it there is no flare.
+  // The frame before lens and grade stays in the accumulator. `sun` is where the main light sits in the picture and how wide infinity blurs; without it there is no flare and the sky is filled like everything else.
   render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null): void {
     const mode = MODES[diag]
     const g = this.grade.uniforms
@@ -196,7 +213,7 @@ export class Post {
     let source = frame
     if (mode === 0) {
       const look = lensLook(def)
-      source = this.fillGaps(renderer, frame, frameIndex, samples)
+      source = this.fillGaps(renderer, frame, frameIndex, samples, sun ? sun.farCircle : 0)
       const bloom = this.scatter(renderer, source, def, look.veil, look.halation)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget

@@ -233,7 +233,7 @@ export class Film {
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
       if (pause) await breathe()
     }
-    const sunAt = alone ? null : sunInFrame(this.poseAt(time + 0.5 * shutterSeconds), sunDirection(def, this.sun), config.camera.gateWidthMm, stage.width / stage.height)
+    const sunAt = alone ? null : sunInFrame(this.poseAt(time + 0.5 * shutterSeconds), sunDirection(def, this.sun), config.camera.gateWidthMm, stage.width, stage.height)
     this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
     stage.finish()
     if (stage.lost) throw new Error('the WebGL context was lost')

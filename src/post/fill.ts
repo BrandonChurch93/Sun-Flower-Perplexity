@@ -2,20 +2,36 @@ import { glslCommon } from '../core/shading.ts'
 
 export const maxFillPx = 96
 
+const skyness = /* glsl */ `
+uniform float uFar;
+// The sky arrives already blurred, with exactly the circle of infinity in alpha: it has no copies to join.
+float sky(float a) {
+  return uFar > 0.0 ? 1.0 - smoothstep(0.001, 0.003, abs(a / uFar - 1.0)) : 0.0;
+}
+`
+
 // The radius over which each pixel is spread, with the sharp zone grown by one pixel so the soft edge pixels of a sharp thing keep their own color.
 export const reachFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
+uniform sampler2D tNear;
 uniform float uRadiusScale;
+in vec2 vUv;
 layout(location = 0) out vec4 outColor;
+${skyness}
+float circle(ivec2 q, float near) {
+  float a = texelFetch(tFrame, q, 0).a;
+  return a * max(1.0 - sky(a), near);
+}
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 top = ivec2(uSize) - 1;
   vec4 c = texelFetch(tFrame, p, 0);
-  float a = c.a;
-  a = min(a, texelFetch(tFrame, min(p + ivec2(1, 0), top), 0).a);
-  a = min(a, texelFetch(tFrame, max(p - ivec2(1, 0), ivec2(0)), 0).a);
-  a = min(a, texelFetch(tFrame, min(p + ivec2(0, 1), top), 0).a);
-  a = min(a, texelFetch(tFrame, max(p - ivec2(0, 1), ivec2(0)), 0).a);
+  float near = uFar > 0.0 ? texture(tNear, vUv).r : 1.0;
+  float a = circle(p, near);
+  a = min(a, circle(min(p + ivec2(1, 0), top), near));
+  a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
+  a = min(a, circle(min(p + ivec2(0, 1), top), near));
+  a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
   outColor = vec4(max(c.rgb, 0.0), min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
 }
 `
@@ -31,6 +47,33 @@ function discTaps(rings: number): [number, number, number][] {
     }
   }
   return taps
+}
+
+// Where blurred things stand close enough that their copies fall across the sky: there the sky is filled with them, as far as the horizon needs.
+export function nearFragment(): string {
+  const taps = discTaps(3)
+    .map(([x, y, r]) => `  TAP(vec2(${x.toFixed(5)}, ${y.toFixed(5)}), ${r.toFixed(5)})`)
+    .join('\n')
+  return /* glsl */ `${glslCommon}
+uniform sampler2D tFrame;
+uniform float uRadiusScale;
+uniform float uReach;
+in vec2 vUv;
+layout(location = 0) out vec4 outColor;
+${skyness}
+float needs(vec2 at, ivec2 top) {
+  float a = texelFetch(tFrame, clamp(ivec2(at), ivec2(0), top), 0).a;
+  return (1.0 - sky(a)) * smoothstep(0.5, 1.5, a * uRadiusScale);
+}
+#define TAP(o, len) near = max(near, needs(center + o * uReach, top) * (1.0 - smoothstep(0.6, 1.0, len)));
+void main() {
+  ivec2 top = ivec2(uSize) - 1;
+  vec2 center = vUv * uSize;
+  float near = needs(center, top);
+${taps}
+  outColor = vec4(near);
+}
+`
 }
 
 // Each pixel gathers the neighbors whose own blur circle reaches it. A sharp neighbor reaches nobody, so the head never bleeds into the field behind it, and a sharp pixel gathers nothing.
