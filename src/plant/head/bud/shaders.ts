@@ -97,6 +97,7 @@ void main() {
     vec3 pale = mix(vec3(0.11, 0.2, 0.066), vec3(0.17, 0.27, 0.078), grain);
     vec3 albedo = mix(dark, pale, saturate(0.35 * toTip + 0.4 * keel + 0.6 * line + 0.12 * rank * (1.0 - toTip) + 0.3 * (blotch - 0.5) + 0.4 * rim - 0.25 * middle));
     albedo = mix(albedo, pale * 1.15, smoothstep(0.8, 1.0, ax) * 0.75);
+    albedo = mix(albedo, pale * 1.3, 0.6 * smoothstep(0.05, 0.015, ax) * (1.0 - smoothstep(0.75, 0.95, u)));
     albedo *= 0.93 + 0.14 * fine;
     albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
