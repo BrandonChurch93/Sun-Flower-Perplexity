@@ -1,0 +1,49 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "foreground grass, middle-ground field rows, and left/right horizon ridge across f0599 to f0600 (19.97 s to 20.00 s)",
+      "what": "only the hero plant aligns across the cut: dense foreground grass and puddles vanish into bare dirt with sparse tufts, the crop canopy drops and changes layout, and distant mountain ridges appear on the left and right horizon where f0599 was flat",
+      "fix": "keep identical terrain, foreground grass geometry, background crop rows, and distant mountain horizon across f0599 and f0600 so only lighting, sky, and weather change on the cut"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-03.png",
+      "where": "central stem apex and emerging bud in f0756-f0759 (25.20 s-25.30 s, also visible in set-D-02.png)",
+      "what": "the stem terminates in a bare smooth rounded capsule and spiky involucral bracts plus detached floating hairs pop abruptly outward through the capsule wall over two frames while intersecting the adjacent upper petiole",
+      "fix": "enclose the shoot apex inside overlapping folded young bracts throughout growth and unfold them continuously around the bud with collision and surface-locked hair grooms"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "main stem below the upper petioles in rain frames f0594-f0599 (19.80 s-19.97 s)",
+      "what": "bright specular water droplets on the stem jump to uncorrelated random positions every frame, creating a 30 Hz flicker along the stem",
+      "fix": "bind rain droplets persistently to the stem surface UVs and slide them smoothly downward over consecutive frames instead of reseeding per frame"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "developing flower head at the stem apex in f0845-f0899 (28.2 s-30.0 s)",
+      "what": "between f0845 and f0872 a large dark bract or leaf lobe swells across and engulfs the right two-thirds of the spiky flower bud before flattening into a cap in f0899, passing through the head instead of unfolding away from it",
+      "fix": "peel outer involucral bracts and upper leaves outward and downward from the base of the receptacle without intersecting or covering the formed flower head"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "foreground puddles and broad upper leaves in rain frames f0594-f0599 (19.80 s-19.97 s)",
+      "what": "rain streaks pass over the image without landing: puddles remain completely flat motionless grey shapes with no ripples or splashes and leaves show no droplet impacts",
+      "fix": "add raindrop impact splashes and expanding concentric ripples on the puddles and wet soil plus subtle impact splashes and bounce on broad leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "horizon mist band along the base of the mountains across f0600-f0899 (20.0 s-30.0 s, and set-D-02.png f0748-f0759)",
+      "what": "the fog and mist lumps stay completely frozen relative to the mountain silhouette across the entire 10-second time-lapse while stars and plant growth move rapidly",
+      "fix": "advect and evolve the valley mist layer horizontally across the field with subtle turbulent drift matched to the time-lapse speed"
+    }
+  ]
+}
