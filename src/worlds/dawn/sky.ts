@@ -36,7 +36,7 @@ void main() {
   // One lens sample stands for its share of the disc of confusion: the picture and the sun are drawn that wide, so the samples close into a smooth blur.
   float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
   float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
-  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.45 * exp(-theta / 0.16)) * mix(vec3(0.7, 1.3, 1.62), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.15, 0.8, 0.5), exp(-theta / 0.25) * (1.0 - smoothstep(0.05, 0.11, max(el, 0.0))));
+  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.45 * exp(-theta / 0.16)) * mix(vec3(0.7, 1.3, 1.62), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.15, 0.76, 0.42), exp(-theta / 0.25) * (1.0 - smoothstep(0.035, 0.1, max(el, 0.0))));
 
   // Low over the land the sky turns to peach; high and away from the sun it is a cool cyan that lightens with the day, and over the sun it pales. Thin cloud lies over it in long faint streaks.
   float up = max(el, 0.0);

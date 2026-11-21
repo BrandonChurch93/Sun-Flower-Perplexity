@@ -18,6 +18,7 @@ uniform vec3 uCenter;
 uniform float uPixelAngle;
 uniform float uSamples;
 uniform float uWidth;
+uniform float uStay;
 out vec3 vColor;
 out float vSize;
 flat out vec3 vAt;
@@ -46,7 +47,7 @@ void main() {
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(0.9, 1.3, world.y) * (1.0 - smoothstep(2.1, 2.5, world.y));
   float behind = smoothstep(0.88, 0.97, toSun) * (1.0 - smoothstep(0.06, 0.1, v.y));
-  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(0.003, 0.006, coc / uWidth));
+  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(0.003, 0.006, coc / uWidth)) * uStay;
   vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(2)} * max(1.0, 3.1416 * coc * coc / (px * px)));
   vSize = px;
   vAt = world;
@@ -84,6 +85,7 @@ export function makeAir(): Air {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
     uWidth: { value: 1920 },
+    uStay: { value: 1 },
     uToward: { value: new THREE.Vector2(windToward.x, windToward.z) },
   }
   const meshes = CLOUDS.map((cloud, c) => {
@@ -119,6 +121,8 @@ export function makeAir(): Air {
       uniforms.uPixelAngle.value = pixelAngle
       uniforms.uSamples.value = Math.max(1, samples)
       uniforms.uWidth.value = width
+      const gone = Math.min(1, Math.max(0, (time - 52) / 2))
+      uniforms.uStay.value = 1 - gone * gone * (3 - 2 * gone)
     },
   }
 }
