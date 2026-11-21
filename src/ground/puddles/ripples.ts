@@ -9,6 +9,8 @@ const RING_FADES = 3
 // The longest a ring lives from the landing of its drop: of a heavy drop, and of the fine rain.
 export const RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1])
 export const FINE_RING_LIFE_S = RING_FADES * (RING_FADE_S[0] + RING_FADE_S[1] * 0.37)
+// A ring's strength goes with its drop's radius to this power: a drizzle drop a tenth as wide still rings a quarter as strongly.
+const RING_BY_RADIUS = 0.6
 const SEGMENTS = 48
 const SIZE = 2048
 
@@ -22,7 +24,7 @@ flat out vec4 vWave;
 flat out float vPhase;
 void main() {
   float t = mix(uSpan.x, uSpan.y, uShutter) - drop.z;
-  float size = drop.w / 0.0022;
+  float size = pow(drop.w / 0.0022, ${RING_BY_RADIUS.toFixed(2)});
   float seed = hash21(drop.xy * 91.7);
   float fade = ${RING_FADE_S[0].toFixed(2)} + ${RING_FADE_S[1].toFixed(2)} * size;
   float life = ${RING_FADES.toFixed(1)} * fade;
