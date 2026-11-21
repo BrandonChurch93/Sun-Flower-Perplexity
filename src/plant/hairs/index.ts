@@ -59,6 +59,8 @@ const float STRAND_GAIN = SUN_THROUGH * 2.5066 * TT_SPREAD / 0.714;
 const vec3 RIME = vec3(0.92, 0.96, 1.0);
 const float RIME_SUN = 0.4;
 const float RIME_SKY = 0.85;
+// Rime on a hair that stands toward the eye is seen end on, against the body: a point, not a needle.
+const float RIME_FACE = 0.4;
 
 struct Strand {
   vec3 world;
@@ -116,13 +118,17 @@ void readHair(int k) {
   hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
   hairRoot.w *= 0.5 + h6;
+  // A drop is the size a hair can hold, whatever the strand stands for, and down holds none.
+  float one = min(uHairWidth, 0.00006) * smoothstep(0.001, 0.002, hairRoot.w);
   // A strand given a width past an eighth of its length stands for the down round it. It is drawn that slim and carries the rest as light, so close up it is still a hair and not a grain.
   hairSlim = min(1.0, hairRoot.w / (8.0 * uHairWidth * (0.5 + fract(hairOwn * 91.71 + 0.43))));
   hairBead = 0.0;
   // Rime grows on every hair: a thick white needle, a little longer than the hair.
   if (uPlantFrost > 0.0) {
     hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
-    hairWide *= 1.0 + uPlantFrost * (3.5 + 3.5 * h4);
+    hairWide *= 1.0 + uPlantFrost * (3.5 + 3.5 * h4) * hairSlim;
+    // Rime grows on a hair, not on the felt a strand of down stands for.
+    hairShare *= mix(1.0, hairSlim * hairSlim, uPlantFrost);
   }
   // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
   if (uPlantWet > 0.0) {
@@ -131,10 +137,10 @@ void readHair(int k) {
     hairWide *= 1.0 + 2.0 * uPlantWet * point;
     hairDir = normalize(hairDir + (aside * 0.35 + vec3(0.0, -0.6, 0.0)) * uPlantWet);
     hairRoot.w *= 1.0 - 0.2 * uPlantWet;
-    hairBead = uHairWidth * 3.0 * uPlantWet * step(h5, 0.06);
+    hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
   }
   // Dew sits as a bead near the tip of one hair in three.
-  if (uPlantDew > 0.0) hairBead += uHairWidth * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
+  if (uPlantDew > 0.0) hairBead += one * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
   mat4 toClip = projectionMatrix * viewMatrix;
   hairFoot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
   hairTip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
@@ -188,16 +194,16 @@ Strand strandAt(float t) {
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairStand);
-  // How far round the dark side a hair still reaches the sun goes with its length: down is in the body's shade a few degrees past the edge of the light.
-  float clear = min(0.95, sqrt(hairRoot.w * plantSize() / 0.004));
-  float shade = smoothstep(-clear, -0.63 * clear, dot(out3, uSunDir) - FACE_SHADE * max(dot(out3, s.toEye), 0.0));
+  // How far round the dark side a hair still reaches the sun goes with its length: down is in the body's shade sooner than a long hair, and on the face toward the eye it is dark right up to the outline.
+  float clear = min(0.95, sqrt(hairRoot.w * plantSize() / 0.0015));
+  float shade = smoothstep(-clear, -0.63 * clear, dot(out3, uSunDir) - FACE_SHADE * (0.9 / (clear * clear)) * max(dot(out3, s.toEye), 0.0));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
   float against = smoothstep(0.93, 0.995, -dot(s.toEye, uSunDir));
   vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(mix(-SUN_PALE, SUN_DEEPEN, against) * (1.0 - uPlantFrost)));
   vSun = lit * mix(THROUGH_TINT, vec3(1.0), uPlantFrost) * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
   // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
-  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * RIME_SKY, uPlantFrost) * (fog * behind);
+  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * (RIME_SKY * mix(RIME_FACE, 1.0, open)), uPlantFrost) * (fog * behind);
   vSkyY = normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y;
   vBead = vec3(t, hairBead * plantSize() / s.pixel, 1.0);
   return s;
