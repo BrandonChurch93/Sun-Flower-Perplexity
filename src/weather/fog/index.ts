@@ -58,11 +58,11 @@ uniform float uLayer;
 uniform vec2 uToward;
 uniform float uCanopyM;
 uniform float uSunShare;
+uniform float uDeep;
 ${fogLight}
 const float BANK_SOLID = 0.5;
-const float BANK_DEEP = 0.2;
-const vec3 BANK_AMONG = vec3(0.88, 1.0, 0.94);
-const vec3 SUN_AMONG = vec3(0.8, 1.0, 1.15);
+const vec3 BANK_AMONG = vec3(0.72, 1.0, 0.8);
+const vec3 SUN_AMONG = vec3(0.75, 1.0, 1.3);
 float bankBroad(vec2 q, float y) {
   return valueNoise(vec2(q.x + 0.31 * q.y, 2.6 * y + 0.53 * q.y) / uScaleM + uLayer);
 }
@@ -92,29 +92,31 @@ void main() {
   float open = smoothstep(0.4 * uCanopyM, uCanopyM, vWorld.y);
   vec3 calm = fogCalm(v);
   vec3 sunny = max(fogLight(v) - calm, 0.0);
-  outColor = vec4((calm * mix(BANK_DEEP * BANK_AMONG, vec3(1.0), open) + sunny * (uSunShare * mix(SUN_AMONG, vec3(1.0), open))) * (1.0 + 0.6 * lit), alpha);
+  outColor = vec4((calm * (mix(uDeep, 1.0, open) * mix(BANK_AMONG, vec3(1.0), smoothstep(0.6 * uCanopyM, uCanopyM, vWorld.y))) + sunny * mix(uSunShare * SUN_AMONG, vec3(min(uSunShare, 1.0)), open)) * (1.0 + 0.6 * lit), alpha);
 }
 `
 
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 1.9, topM: 1.9, scaleM: 2.5, alpha: 0.16, speed: 0.05 },
-  { radiusM: 2.5, topM: 1.9, scaleM: 2.5, alpha: 0.14, speed: 0.08 },
-  { radiusM: 3, topM: 1.9, scaleM: 3, alpha: 0.14, speed: 0.07 },
-  { radiusM: 3.8, topM: 1.9, scaleM: 3.5, alpha: 0.2, speed: 0.06 },
-  { radiusM: 5, topM: 1.9, scaleM: 4, alpha: 0.3, speed: 0.09 },
-  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.45, speed: 0.08 },
-  { radiusM: 11, topM: 1.9, scaleM: 8, alpha: 0.6, speed: 0.11 },
-  { radiusM: 20, topM: 1.65, scaleM: 15, alpha: 0.68, speed: 0.1 },
+  { radiusM: 1.9, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.05 },
+  { radiusM: 2.5, topM: 1.55, scaleM: 2.5, alpha: 0.12, speed: 0.08 },
+  { radiusM: 3, topM: 1.55, scaleM: 3, alpha: 0.14, speed: 0.07 },
+  { radiusM: 3.8, topM: 1.7, scaleM: 3.5, alpha: 0.26, speed: 0.06 },
+  { radiusM: 5, topM: 1.9, scaleM: 4, alpha: 0.4, speed: 0.09 },
+  { radiusM: 7, topM: 1.9, scaleM: 5, alpha: 0.55, speed: 0.08 },
+  { radiusM: 11, topM: 1.9, scaleM: 8, alpha: 0.65, speed: 0.11 },
+  { radiusM: 20, topM: 1.65, scaleM: 15, alpha: 0.7, speed: 0.1 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
 const BANK_ORDER = 10
 const THIN_OVER_S = 3.5
-const SUN_NEAR = 0.1
-const SUN_FAR = 1.7
-const SUN_FAR_M = 7
+const SUN_NEAR = 0.2
+const SUN_FAR = 2.2
+const DEEP_NEAR = 0.12
+const DEEP_FAR = 0.45
+const FAR_M = 7
 
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
@@ -153,12 +155,13 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
   const canopy = { value: 1 }
   const toward = { value: new THREE.Vector2(windToward.x, windToward.z) }
   const meshes = BANKS.map((bank, i) => {
+    const far = smooth(BANKS[0].radiusM, FAR_M, bank.radiusM)
     const geometry = ringStrip(96, () => ({ radius: bank.radiusM, top: bank.topM }))
     const surface = makeSurface({
       name: `fog bank ${i}`,
       vertex,
       fragment,
-      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * smooth(BANKS[0].radiusM, SUN_FAR_M, bank.radiusM) } },
+      uniforms: { ...uniforms, uNow: now, uToward: toward, uCanopyM: canopy, uAlpha: { value: bank.alpha }, uScaleM: { value: bank.scaleM }, uSpeed: { value: bank.speed }, uLayer: { value: 7.3 * i + 2.9 }, uSunShare: { value: SUN_NEAR + (SUN_FAR - SUN_NEAR) * far }, uDeep: { value: DEEP_NEAR + (DEEP_FAR - DEEP_NEAR) * far } },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
