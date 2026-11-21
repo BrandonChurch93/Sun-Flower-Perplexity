@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
-import { setLeafTurn } from '../plant/growth.ts'
+import { setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
@@ -17,32 +17,31 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 // Which neighbor the companion is: its own seed, so its own leaf angles and timing.
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
-setLeafTurn(companionVariant, 118 * RAD)
+setLeafTurn(companionVariant, 228.3 * RAD)
+// Three of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it and a long low one in the corner.
+setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 13.8 })
+setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
+setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 45.7, lengthScale: 1.9 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// The field opens with the plant and then runs ahead of it: at 45 s a kind is up to 1.3 s behind the plant and still a bud, by 50 s it is 1.0 to 2.8 s ahead.
-// One near kind stays behind throughout and is a bud when the others are open.
-const LEAD_S = [1.0, 2.8]
-const BEHIND_S = [-1.3, 0.2]
-const LATE_S = -3.5
-// One kind of each tier is early: at 45 s it is already open and faces the lens, a dark head with a ring of lit rays.
-const EARLY_S = 3.6
-export const opensEarly = (index: number, count: number): boolean => (index * 3) % count === count - 1
+// The field never opens in step with the plant. Through the bloom each kind runs on its own clock: a few are seconds ahead of the plant,
+// most are behind it and still buds when it is open. The clocks part slowly before the bloom and meet again before the last frame.
+export type Tier = 'near' | 'far' | 'pictures'
+const AHEAD_S: Record<Tier, number[]> = {
+  near: [-4.5, 1.5, 3.6, -1.5, -3.5, -0.5, -2.5],
+  far: [-5, 1.5, -3, -4],
+  pictures: [-5, -2.5, -4.5, -3.5],
+}
+const EARLY_S = 3
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
   return x * x * (3 - 2 * x)
 }
-export const kindTime = (time: number, index: number, count: number): number => {
-  const order = (index * 3) % count
-  const share = order / Math.max(1, count - 1)
-  const lead = count > 4 && order === 0 ? LATE_S : LEAD_S[0] + (LEAD_S[1] - LEAD_S[0]) * share
-  const behind = opensEarly(index, count) ? EARLY_S : BEHIND_S[0] + (BEHIND_S[1] - BEHIND_S[0]) * (((order * 2 + 1) % count) / Math.max(1, count - 1))
-  const open = ramp(45, 50, time)
-  return time + (behind + (lead - behind) * open) * ramp(40, 44, time) * (1 - ramp(53, 59, time))
-}
+export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
+export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(53, 59, time))
 
 // A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
 const AWAY_SHARE = 0.85
@@ -69,7 +68,7 @@ export const pictureCount = farVariants.length * pictureTurns
 // The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
 export const meanTurn = 0.25
 const TURN_SCATTER = 0.8
-const SIDEWAYS = 0.14
+const SIDEWAYS = 0.2
 const SHORT = 0.1
 const STRAGGLERS = 0.05
 export const pictureTurn = (turn: number): number => meanTurn + (turn - (pictureTurns - 1) / 2) * 0.6
@@ -105,9 +104,10 @@ function edgeRows(across: number): number {
   return Math.max(bay * BAY.rows, wander)
 }
 
+// Two neighbors of the third row are set by hand, to the right of the plant at sunset: both in a lane the sun comes down, one of the early kind facing the lens, one turned three quarters.
 const EDGE = [
-  { across: 0.52, size: 0.68, turn: 0.2, early: true },
-  { across: 0.86, size: 0.85, turn: 2.7, early: false },
+  { row: 2, across: 0.93, size: 0.82, turn: 0.2, kind: 2 },
+  { row: 2, across: 1.31, size: 0.8, turn: 1.0, kind: 1 },
 ]
 
 export interface FieldPlaces { near: Float32Array; far: Float32Array; pictures: Float32Array }
@@ -145,7 +145,7 @@ export function fieldPlaces(): FieldPlaces {
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
       const short = hash01(SEED, 15, id) < SHORT
-      const size = short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.3 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
+      const size = short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
       const tone = Math.min(1, Math.max(0, (0.65 - 0.3 * away) * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + away * (0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5))))
@@ -153,8 +153,11 @@ export function fieldPlaces(): FieldPlaces {
         const straggler = hash01(SEED, 11, id) < STRAGGLERS
         const side = hash01(SEED, 17, id) < SIDEWAYS ? (hash01(SEED, 18, id) < 0.5 ? -1 : 1) * (1.0 + 0.6 * hash01(SEED, 19, id)) : 0
         const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : meanTurn + side + bell(id, 36) * TURN_SCATTER
-        const list = reach < fieldNearM + (pick - 0.5) * NEAR_BAND_M ? near : far
-        list.push(x, z, turn, size, leanX, leanZ, tone, id)
+        const close = reach < fieldNearM + (pick - 0.5) * NEAR_BAND_M
+        // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
+        const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0
+        const list = close ? near : far
+        list.push(x, z, turn, tall ? 0.76 + 0.1 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
       }
       // The pictures thin out with distance and hand over to the carpet plant by plant.
@@ -164,12 +167,15 @@ export function fieldPlaces(): FieldPlaces {
       pictures.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, leanX, leanZ, tone, id)
     }
   }
-  // Two neighbors stand in the bay on the front row, to the right of the plant at sunset: one of the early kind that faces the lens, one that keeps its back to it.
   const kindOf = (n: number): number => Math.floor(hash01(SEED, 15, n) * nearVariants.length)
   for (const edge of EDGE) {
+    const x = -toward.x * (plantAheadOfRowM + edge.row * rowSpacingM) + right.x * edge.across
+    const z = -toward.z * (plantAheadOfRowM + edge.row * rowSpacingM) + right.z * edge.across
+    let at = 0
+    for (let i = 0; i < near.length; i += PLACE) if (Math.hypot(near[i] - x, near[i + 1] - z) < Math.hypot(near[at] - x, near[at + 1] - z)) at = i
     do id++
-    while (kindOf(id) === 0 || opensEarly(kindOf(id), nearVariants.length) !== edge.early || (!edge.early && hash01(SEED, 40, id) < AWAY_SHARE))
-    near.push(-toward.x * plantAheadOfRowM + right.x * edge.across, -toward.z * plantAheadOfRowM + right.z * edge.across, edge.turn, edge.size, 0, 0, 0.6, id)
+    while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
+    near.splice(at, PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
   }
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures) }
   return made

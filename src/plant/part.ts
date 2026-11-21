@@ -116,9 +116,9 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float across = world.x * toSun.y - world.z * toSun.x;
   float streak = valueNoise(vec2(along * 0.11, across * 0.8));
   // A picture of a plant is drawn without shadows, and so as a plant outside a lane.
-  float lane = uShadowOn * smoothstep(0.5, 0.66, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
-  // One lane lies open from the sun to the two neighbors that stand nearest the plant.
-  lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.6, abs(across - (0.14 * toSun.y + 1.65 * toSun.x)))));
+  float lane = uShadowOn * smoothstep(0.64, 0.78, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
+  // One gap toward the sun lights two neighbors of the third row.
+  lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.55, length(world.xz - vec2(0.03, -3.2)))));
   float under = max(uCanopy * (1.07 + 0.12 * streak) - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
@@ -135,7 +135,9 @@ float plantSky(vec3 world) {
   // The sky comes from above whatever the sun does: a closed crop keeps most of it down to mid height and under half at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
-  return mix(mix(1.0, 0.8, closed), mix(0.8, 0.3, closed), smoothstep(0.25, 1.0, under));
+  // A crop in bloom stands taller and closer still, and keeps less of the sky.
+  float deep = smoothstep(1.0, 1.25, uCanopy);
+  return mix(mix(1.0, 0.8 - 0.36 * deep, closed), mix(0.8, 0.3 - 0.25 * deep, closed), smoothstep(0.25 - 0.2 * deep, 1.0 - 0.4 * deep, under));
 #else
   return 1.0;
 #endif
