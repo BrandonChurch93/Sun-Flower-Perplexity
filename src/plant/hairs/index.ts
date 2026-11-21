@@ -24,6 +24,9 @@ const STRAND_FROM_PX = 2
 const CROWD_CELL_PX = 8
 // How thick the rime on a hair is, in meters, whatever the hair.
 const RIME_M = 0.00014
+const MOST_PICKS = 24000
+const EXTRA_FROM_M = 0.002
+const EXTRA_SHARE = 0.4
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
@@ -282,6 +285,113 @@ void main() {
 }
 `
 
+// A bead or a drop is a ball of clear water or ice: it mirrors the sun as a point, and what is seen through it is the world behind it turned over. A frozen one is clouded and shows mostly its own white.
+export const ball = /* glsl */ `
+const float BALL_GLINT = 30.0;
+const float BALL_SHARP = 400.0;
+const float BALL_SUN = 40.0;
+const vec3 BALL_ICE = vec3(0.9, 0.95, 1.0);
+vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen) {
+  float off = min(length(d), 0.999);
+  vec3 toEye = normalize(uCamPos - world);
+  vec3 out2 = (right * d.x + up * d.y) / max(length(d), 1e-3);
+  vec3 n = out2 * off + toEye * sqrt(1.0 - off * off);
+  float turn = 2.0 * (asin(off) - asin(off / 1.33));
+  vec3 through = -toEye * cos(turn) - out2 * sin(turn);
+  float edge = 0.02 + 0.98 * pow(1.0 - saturate(dot(n, toEye)), 5.0);
+  float sky = plantSky(world);
+  vec3 lens = skyAmbient(through) * sky + uSunColor * (BALL_SUN * sun * pow(saturate(dot(through, uSunDir)), 60.0));
+  vec3 mirror = skyAmbient(reflect(-toEye, n)) * sky;
+  vec3 matt = BALL_ICE * skyAmbient(n) * sky;
+  return mix(mix(lens, matt, 0.85 * frozen), mirror, edge) + uSunColor * (BALL_GLINT * sun * pow(saturate(dot(n, normalize(toEye + uSunDir))), BALL_SHARP));
+}
+`
+
+// What rime and dew add to a long hair: two side barbs of ice and two beads, one near the tip and a smaller one below it.
+const extraVertex = /* glsl */ `
+uniform sampler2D uPicks;
+out vec2 vAt;
+out vec3 vShape;
+out vec3 vRight;
+out vec3 vUp;
+${strand}
+void main() {
+  int p = gl_VertexID / 16;
+  int j = gl_VertexID % 16;
+  int piece = j >> 2;
+  float sx = float(j & 1) * 2.0 - 1.0;
+  float end = float((j >> 1) & 1);
+  readHair(int(texelFetch(uPicks, ivec2(p & 2047, p >> 11), 0).r + 0.5));
+  float n = float(piece);
+  float hA = fract(hairOwn * (419.3 + 61.7 * n) + 0.13 * n);
+  float hB = fract(hairOwn * (523.9 + 37.1 * n) + 0.41);
+  if (piece < 2) {
+    Strand s = strandAt(0.25 + 0.3 * n + 0.2 * hA);
+    vec3 ref = abs(s.along.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 e1 = normalize(cross(s.along, ref));
+    vec3 aside = e1 * cos(6.2832 * hB) + cross(s.along, e1) * sin(6.2832 * hB);
+    vec3 axis = normalize(s.along * 0.7 + aside);
+    float reach = hairRoot.w * plantSize() * (0.12 + 0.2 * hB);
+    float longPx = reach * length(cross(axis, s.toEye)) / s.pixel;
+    float stretch = max(1.0, 1.5 / max(longPx, 1e-3));
+    vec3 here = s.world + axis * (reach * (0.5 + (end - 0.5) * stretch));
+    float halfPx = 0.35 * s.width * (1.0 - 0.9 * end) / s.pixel;
+    vAt = vec2(sx * (halfPx + 0.75), 0.0);
+    vShape = vec3(0.0, halfPx, s.share / stretch);
+    vRight = vec3(0.0);
+    vUp = vec3(0.0);
+    gl_Position = projectionMatrix * viewMatrix * vec4(here + normalize(cross(axis, s.toEye)) * (vAt.x * s.pixel), 1.0);
+  } else {
+    float tip = piece == 2 ? 1.0 : 0.0;
+    Strand s = strandAt(mix(0.35 + 0.3 * hA, 0.75 + 0.15 * hA, tip));
+    // One long hair in ten holds a bead near its tip, and one in twenty a smaller one below it.
+    float radius = 0.00006 * (1.2 + 1.8 * hB) * mix(0.6, 1.0, tip) * plantSize() * (hA < mix(0.1, 0.2, tip) ? 1.0 : 0.0);
+    float rPx = radius / s.pixel;
+    float sy = end * 2.0 - 1.0;
+    vRight = normalize(cross(vec3(0.0, 1.0, 0.0), s.toEye));
+    vUp = cross(s.toEye, vRight);
+    float reachPx = max(rPx, 0.5) + 0.75;
+    vAt = vec2(sx, sy) * reachPx;
+    vShape = vec3(1.0, rPx, min(1.0, s.share));
+    gl_Position = projectionMatrix * viewMatrix * vec4(s.world + (vRight * vAt.x + vUp * vAt.y) * (radius > 0.0 ? s.pixel : 0.0), 1.0);
+  }
+}
+`
+
+const extraFragment = /* glsl */ `
+in vec3 vWorld;
+in vec3 vLitAt;
+in float vDepth;
+in vec3 vSun;
+in vec3 vSky;
+in float vSkyY;
+in vec2 vAt;
+in vec3 vShape;
+in vec3 vRight;
+in vec3 vUp;
+${ball}
+void main() {
+  float cover;
+  vec3 color;
+  float sun = plantSun(vLitAt, uSunDir);
+  if (vShape.x < 0.5) {
+    float x = abs(vAt.x);
+    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z);
+    color = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+  } else {
+    float r = max(vShape.y, 0.5);
+    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z;
+    color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost);
+  }
+#ifdef BLUR_CIRCLE
+  outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
+#else
+  if (cover < 0.004) discard;
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, cover);
+#endif
+}
+`
+
 const fragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vLitAt;
@@ -348,6 +458,9 @@ export class HairSet {
   private readonly ribbons = new THREE.BufferGeometry()
   private readonly linesSharp = new THREE.BufferGeometry()
   private readonly ribbonsSharp = new THREE.BufferGeometry()
+  private readonly extras = new THREE.BufferGeometry()
+  private readonly picks: Float32Array
+  private readonly pickTexture: THREE.DataTexture
   private readonly data: Float32Array
   private readonly texture: THREE.DataTexture
   private shown: number
@@ -413,7 +526,28 @@ export class HairSet {
     nearSharp.renderOrder = HAIR_ORDER + 2
     far.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, far, false)
     near.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, near, true)
-    this.meshes = [far, near, farSharp, nearSharp]
+    const most = Math.min(count, MOST_PICKS)
+    this.picks = new Float32Array(2048 * Math.max(1, Math.ceil(most / 2048)))
+    this.pickTexture = new THREE.DataTexture(this.picks, 2048, this.picks.length / 2048, THREE.RedFormat, THREE.FloatType)
+    this.pickTexture.colorSpace = THREE.NoColorSpace
+    this.pickTexture.minFilter = THREE.NearestFilter
+    this.pickTexture.magFilter = THREE.NearestFilter
+    this.pickTexture.generateMipmaps = false
+    this.pickTexture.needsUpdate = true
+    const extraIndex = new Uint32Array(most * 24)
+    for (let k = 0; k < most * 4; k++) {
+      const v = k * 4
+      extraIndex.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
+    }
+    this.extras.setIndex(new THREE.BufferAttribute(extraIndex, 1))
+    const extraUniforms = { ...own, uPicks: { value: this.pickTexture } }
+    const extra = (label: string, define: string, sharp: boolean): THREE.Mesh =>
+      partMesh(this.extras, makePartSurface(options, { name: label, vertex: extraVertex, fragment: `${define}${extraFragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: sharp, castShadow: false, uniforms: extraUniforms }))
+    const barbs = extra(`${name} barbs and beads`, '', false)
+    const barbsSharp = extra(`${name} barbs and beads blur circle`, '#define BLUR_CIRCLE 1\n', true)
+    barbs.renderOrder = HAIR_ORDER + 3
+    barbsSharp.renderOrder = HAIR_ORDER + 4
+    this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp]
   }
 
   // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
@@ -510,6 +644,18 @@ export class HairSet {
       const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
       out[k * 16 + 11] *= Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
     }
+    // Rime grows barbs and beads on the long hairs that show.
+    let picked = 0
+    if (stateUniforms.uPlantFrost.value > 0.5) {
+      const most = this.extras.getIndex()!.count / 24
+      for (let k = 0; k < n && picked < most; k++) {
+        const q = k * 16
+        if (out[q + 3] * size < EXTRA_FROM_M || out[q + 11] <= 0 || (out[q + 7] * 211.31 + 0.77) % 1 > EXTRA_SHARE) continue
+        this.picks[picked++] = k
+      }
+      this.pickTexture.needsUpdate = true
+    }
+    this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : picked * 24)
     this.kept = n
     this.nearest = nearest
     this.longest = longest
