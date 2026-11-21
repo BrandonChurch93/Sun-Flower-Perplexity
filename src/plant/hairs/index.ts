@@ -21,6 +21,11 @@ const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
 const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
+const WIDE_FROM_S = 52
+const WIDE_FULL_S = 53.5
+const WIDE_STRAND_PX = 0.15
+const WIDE_GAIN = 2
+const WIDE_LONG_PX = 3
 const CROWD_CELL_PX = 8
 // How thick the rime on a hair is, in meters, whatever the hair.
 const RIME_M = 0.00014
@@ -149,9 +154,11 @@ void readHair(int k) {
   // A strand given a width past an eighth of its length stands for the down round it. It is drawn that slim and carries the rest as light, so close up it is still a hair and not a grain.
   hairSlim = min(1.0, hairRoot.w / (8.0 * uHairWidth * (0.5 + fract(hairOwn * 91.71 + 0.43))));
   hairBead = 0.0;
-  // Rime grows on every hair: a thick white needle, a little longer than the hair.
+  // Rime grows on every hair as a white needle of its own: down gains a little length, a long hair is iced over part of its length, most of them a short part, and no two needles point alike.
   if (uPlantFrost > 0.0) {
-    hairRoot.w *= 1.0 + uPlantFrost * (0.3 + 0.4 * h2);
+    hairRoot.w *= mix(1.0, mix(1.3 + 0.4 * h2, 0.35 + 0.95 * h2 * h2, coat), uPlantFrost);
+    float skew = 6.2832 * fract(hairOwn * 173.31 + 0.21);
+    hairDir = normalize(hairDir + (e1 * cos(skew) + e2 * sin(skew)) * (uPlantFrost * (0.25 + 0.75 * sqrt(fract(hairOwn * 61.17 + 0.83)))));
     hairWide += uPlantFrost * RIME_M * (0.6 + 0.8 * h4) / uHairWidth * hairSlim;
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
@@ -210,7 +217,7 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 + 0.2 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
@@ -567,6 +574,9 @@ export class HairSet {
     const at = this.at
     const perM = (camera.projectionMatrix.elements[5] * height) / 2
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    // In the wide shot a hair is a fraction of a pixel wide and a coat of them would sum to one even line. There a few stand for the many, each bright enough to show as a bristle.
+    const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
+    const wide = ease * ease * (3 - 2 * ease)
     let n = 0
     let nearest = Infinity
     let longest = 0
@@ -587,8 +597,9 @@ export class HairSet {
       let share = 1
       const scale = (size * perM) / w
       // A hair too short on the screen to show as a strand stands for itself, so a part with short hairs loses none of their light.
-      const brief = Math.min(1, Math.max(0, (length * scale - STRAND_FROM_PX) / STRAND_FROM_PX))
-      const fine = Math.min(1, (this.widthM * thick * scale) / STRAND_PX)
+      const near = Math.min(1, Math.max(0, (length * scale - STRAND_FROM_PX) / STRAND_FROM_PX))
+      const brief = near + (1 - near) * wide
+      const fine = Math.min(1, (this.widthM * thick * scale) / (STRAND_PX + (WIDE_STRAND_PX - STRAND_PX) * wide))
       const part = (1 - brief * (1 - fine)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
       if (part < 1) {
         const keep = part * (1 + THIN_EASE)
@@ -598,6 +609,9 @@ export class HairSet {
         const whole = keep * (1 - THIN_EASE)
         share = s / (keep <= 1 ? keep * (1 - 0.5 * THIN_EASE) : whole + 0.5 * (1 - whole) * (1 + (keep - 1) / (THIN_EASE * keep)))
       }
+      // A hair there is drawn long enough to stand off the outline, with the light of its true length and a little more.
+      const stands = Math.max(length, (wide * WIDE_LONG_PX * (0.6 + 0.8 * ((own * 59.31 + 0.19) % 1))) / scale)
+      share *= (length / stands) * (1 + (WIDE_GAIN - 1) * wide * (1 - fine))
       const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
       const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
       const q = n * 16
@@ -609,7 +623,7 @@ export class HairSet {
       out[q] = x
       out[q + 1] = y
       out[q + 2] = z
-      out[q + 3] = length
+      out[q + 3] = stands
       out[q + 4] = rb[o]
       out[q + 5] = rb[o + 1]
       out[q + 6] = rb[o + 2]
