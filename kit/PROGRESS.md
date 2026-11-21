@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 20:26 UTC · Progress: the line at 509fccf, the fix pass after rounds 8 to 11 ends, the night key stays, the rain stays at f/9
+- Last push: 2026-11-21 20:34 UTC · Rounds 12 to 16 start: field, frost, dawn, rain and night, second rounds, on the joint cut 921385e
 - Last status: 45 · 2026-11-21 20:14 UTC · Phase 4 · unit rain · round 10
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 3.91 h |
+| 4 | 8.50 h | 4.19 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 19.38 h |
+| Whole build | 30.00 h | 19.65 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -646,6 +646,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 4 · 20:24 UTC. `petal_builder` raised a red measure before the cut, and it is settled before any critic sees the round: with the nearer camera of `d584dcb` alone the rain's M3 at frame 420 read 0.794 at `review` (needs 0.8); with his crowns `32680b4` on `d584dcb` 0.810; on `31344ca` with the same crowns 0.937 at f/9, over 215649 sharp pixels (his numbers, from his second worktree). The rain stays at f/9 for this cut; he measures f/11 beside it, and the Builder commits that number only on a better picture. The round's own measure runs at `final` on the judged commit and decides.
 - 2026-11-21 · Phase 4 · 20:24 UTC. The line stands at `509fccf`, pushed, tests 116 of 116 (`out/work/logs/p4-line-test-2024.log`): on `31344ca` four commits of one file each, each diff read: the night's world `66dfbb7` (the bank's shade a fifth brighter), the bud `f6ad702` (the wrapped bud's folded first bracts meet in a point over the stem's tip), the lens `1b93108` (the dawn's wide veil is amber, not white) and the puddles `32680b4` (crown cups half as wide, teeth capped). The rig's hashes for frames 1080 to 1199 and 1200 to 1559 are unchanged. The fix pass after rounds 8 to 11 ends here, at 20:25 UTC, inside its 90 minutes (it began 19:00 UTC). `bud_builder` proves the merged whole at frames 1200, 1350, 1515, 1559 and 1755, on `31344ca` and then on `509fccf`; the joint cut waits on the second proof.
 - 2026-11-21 · Phase 4 · 20:24 UTC. `leaf_builder` sent the growth patch asked for at 20:09 UTC as a file, not a commit (`crowd.patch` against `d584dcb`: between 20 and 40 s the main plant's joints from leaf 9 up ride close under the tip; his bit proofs say every value from 40.0 s, every neighbor and the dawn and rain are unchanged). It is for the next pass, not for this cut. His own reading of his stills: four leaves stand round the bud at 780 instead of two, but the stem under them is barer, and the approved's night differs from ours by leaf posture and size more than by joints. Whether it is taken (with a leaves commit tuned on top) or the night and frost are done by posture alone is decided with the second rounds' notes in hand.
+- 2026-11-21 · Phase 4 · 20:34 UTC. The byte proof of the merged whole, and a correction to what this log has said since 15:20 UTC about the bloom's frames. `bud_builder` rendered frames 1200, 1350, 1515, 1559 and 1755 at `review` on `31344ca` and on `509fccf` against stills from `1232b1c` (his reports and his picture read): 1350, 1515, 1559 and 1755 are the same byte for byte; frame 1200 is not: 514810 of 8294400 values differ, only below y 534, largest difference 28 levels, mean 1.26 levels where it differs, all of it in the out of focus neighbors behind the plant; the plant, the ground strip and the sky are the same. `field_builder` proved his own `d562ab7` clean at 1200 and 1201 (0 values). The cause as the Builder reads it from `src/field/layout.ts`: the neighbors run on their own clocks, up to 4.6 s behind the plant (`AHEAD_S`; at 40.0 s the slowest kind stands at about 37.1 s of the plant's clock), so a change to the plant that eases out by 40.0 s, as every builder was told to make it, still shows on the neighbors in the bloom's first frames until the slowest kind passes 40.0 s at about 44.6 s (frame 1338). The shutter opens at the frame's time (`src/director/film.ts`), so nothing of the plant itself before 40.0 s is in frame 1200. So the sentence "frames 1200 to 1559 stay byte identical" was proven only at the key frames 1350 and 1515 (and now 1559): the bloom's frames 1200 to about 1338 have changed in their blurred neighbors, by a level or two, since the unit was finished on `cd262c1`. Decision: the cut goes ahead. `kit/07-QUALITY-BAR.md`, Freshness, covers exactly this (a later change to the shared plant can change a finished unit: render its key stills again, look at them beside the kept ones, fix it if they got worse, do not run its rounds again), and the bloom's two key stills are unchanged. The first frames of the bloom are in front of a motion critic in this cut all the same, in the frost's R4 pack across the cut at 40.0 s. `field_builder` is naming the merge that moves frame 1200 and `bud_builder` counts frames 1260, 1320 and 1340, for the record; neither holds the cut.
+- 2026-11-21 · Phase 4 · 20:35 UTC. The joint cut: `main` merges the line at `509fccf` as `921385e` (type check clean, build clean, engine `6a3e309f0b524dd3`; units dawn `e9892f9e201e23b7`, rain `144dfe3ec5e8ef7d`, night `4de8199e57bacb0b`, frost `c907d8f7394a61b3`, bloom `c69d4b22594c0491`, field `b11ff70827a3d146`). Rounds 12 (`field`), 13 (`frost`), 14 (`dawn`), 15 (`rain`) and 16 (`night`) judge it, each the second round of its unit. The rain stays at f/9: `petal_builder` measured f/11 beside it on `31344ca` with his crowns (M3 0.975 over 254270 sharp pixels against 0.937 over 215649; his picture looked at beside the approved image, no gain the Builder can see at whole-frame size), and the f-number's curve runs through every unit's keys, so f/11 at 14 s would also move the dawn between 1.5 and 6.5 s and the night and frost between 14 and 36 s (frame 60, a judged dawn frame, among them). The packs are built on builders' VMs in second worktrees at `921385e`: `field` by `stem_builder` (not `leaf_builder` as planned at 19:50 UTC: his leaves carry the night's and the frost's heaviest notes and he works on while the round is judged), `frost` by `harness_builder`, `dawn` by `golden_builder`, `rain` by `lens_builder`, `night` by `disc_builder`. `leaf_builder`'s growth patch is not taken for now: by his own stills the approved's night and frost differ from ours by the leaves' posture and size, not by where the joints stand, and he starts on posture at once.
 
 ## Notes from Brandon
 
@@ -683,9 +685,10 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running (20:25 UTC):
+Running (20:35 UTC):
 
-- Nothing renders on the Builder's VM; the next job is the joint cut's machine gate.
+- The machine checks of rounds 12 to 16 · `npm run gate -- --phase 4 --machine` on `921385e` on the Builder's VM, nothing else rendering beside it · started 20:35 UTC · about 23 minutes (the run for rounds 8 to 11 took 23.7) · log `out/work/logs/gate-r12.log`
+- The packs of rounds 12 to 16 · `npm run pack -- --phase 4 --round N --unit id` at `921385e` in second worktrees on five builders' VMs (4 cores each): `stem_builder` (12, `field`), `harness_builder` (13, `frost`), `golden_builder` (14, `dawn`, four judged frames), `lens_builder` (15, `rain`), `disc_builder` (16, `night`) · asked 20:36 UTC · 16 to 35 minutes each · the tars, keys and logs come back as attachments
 
 
 
@@ -950,6 +953,71 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [ ] Fixes
 - [x] Summary, status, push: `scorecards/round-011/SUMMARY.md`, `MEASURES.json`, the four manifests and `KEY.json` written 19:20 UTC; Status 42 (18:29 UTC) carries the judged frame beside the approved image, Status 43 (19:11 UTC) the result
 
+### Round 12 · Phase 4 · `field` · extra round
+
+- Started 2026-11-21 20:35 UTC. Judges commit `921385e` (engine `6a3e309f0b524dd3`, unit `field` `b11ff70827a3d146`): `main` with the Phase 4 line `509fccf` merged in. Rounds 12 to 16 start together at 20:35 UTC on this one commit, the joint cut after the fix pass of 19:00 to 20:25 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. For the field the fix pass was the one of 17:33 to 19:05 UTC after round 7; the unit is frozen since at `8d8f509` but for the camera's last key, and frame 1755 is the same picture byte for byte as on `1232b1c`. Unit `field` (52 to 60 s, frames 1560 to 1799), the second of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 1755 (`field`, 58.5 s). An extra round: `npm run clock -- --phase 4` at 20:30:57 UTC says extra rounds yes (4.19 h used of the phase's 8.50 h, 19.65 h of the build's 30 h). Families rotate against the unit's round 7: R1 GPT, R3 Gemini, R4 Claude; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 7. Before the round: type check clean on `main`, 116 of 116 tests on the line's head (`out/work/logs/p4-line-test-2024.log`), and `bud_builder`'s byte proof of the merged whole at `review` against `1232b1c` (frames 1350, 1515, 1559 and 1755: 0 values differ; frame 1200: see the decision of 20:34 UTC). What the Builder sees before any critic does, on its own `review` still of 1755 on this commit beside the approved image (`out/work/scratch/r12-own-1755-pair.jpg`): two plants stand in front where the approved has the one (the second is the settled companion), their leaves a lighter, more even green than the approved's dark ones; the sun's rays are hard spokes across the sky where the approved has a soft glow and a veil of dust over the crop; the crop is a brighter, flatter green with small heads in even rows, the approved's is darker with larger heads near the lens; the near ground is plain dark grass with a few pale tufts.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 13 · Phase 4 · `frost` · extra round
+
+- Started 2026-11-21 20:35 UTC. Judges commit `921385e` (engine `6a3e309f0b524dd3`, unit `frost` `c907d8f7394a61b3`): `main` with the Phase 4 line `509fccf` merged in. Rounds 12 to 16 start together at 20:35 UTC on this one commit, the joint cut after the fix pass of 19:00 to 20:25 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `frost` (30 to 40 s, frames 900 to 1199), the second of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 1080 (`frost`, 36.0 s). An extra round: `npm run clock -- --phase 4` at 20:30:57 UTC says extra rounds yes (4.19 h used of the phase's 8.50 h, 19.65 h of the build's 30 h). Families rotate against the unit's round 8: R1 Gemini, R3 Claude, R4 GPT; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 8. Before the round: type check clean on `main`, 116 of 116 tests on the line's head (`out/work/logs/p4-line-test-2024.log`), and `bud_builder`'s byte proof of the merged whole at `review` against `1232b1c` (frames 1350, 1515, 1559 and 1755: 0 values differ; frame 1200: see the decision of 20:34 UTC). What the Builder sees before any critic does, on its own `review` still of 1080 on the line at `31344ca` beside the approved image (the four commits since do not touch the frost): the framing is the approved's; the bud is darker than the approved's and its bracts carry less frost; the leaves are broad, level and dark with a white scalloped margin where the approved's are narrower, pointed, hang from long stalks and are dusted grey over the blade; the stem under the bud is thicker than the approved's; the neighbors are softer than in round 8 but still darker than the approved's veiled rows.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 14 · Phase 4 · `dawn` · extra round
+
+- Started 2026-11-21 20:35 UTC. Judges commit `921385e` (engine `6a3e309f0b524dd3`, unit `dawn` `e9892f9e201e23b7`): `main` with the Phase 4 line `509fccf` merged in. Rounds 12 to 16 start together at 20:35 UTC on this one commit, the joint cut after the fix pass of 19:00 to 20:25 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `dawn` (0 to 8 s, frames 0 to 239), the second of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frames 0, 45 (`dawn-sprout`, 1.5 s), 60 and 195 (`dawn-seedling`, 6.5 s). An extra round: `npm run clock -- --phase 4` at 20:30:57 UTC says extra rounds yes (4.19 h used of the phase's 8.50 h, 19.65 h of the build's 30 h). Families rotate against the unit's round 9: R1 Claude, R3 GPT, R4 Gemini; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 9. Before the round: type check clean on `main`, 116 of 116 tests on the line's head (`out/work/logs/p4-line-test-2024.log`), and `bud_builder`'s byte proof of the merged whole at `review` against `1232b1c` (frames 1350, 1515, 1559 and 1755: 0 values differ; frame 1200: see the decision of 20:34 UTC). What the Builder sees before any critic does, on its own `review` stills of 45 on the line at `31344ca` and of 195 at `d584dcb` beside the approved images (the amber veil of `1b93108` came after both): at 45 the ground is darker and more even than the approved's, with fewer glints, the glow round the sun is smaller and paler, and the near grass blade at left is a hard bright green; at 195 the husk rests on the soil but casts no shadow, the far ground beside the sun is pale where the approved's is dark, and the stem carries flat pale bead discs.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 15 · Phase 4 · `rain` · extra round
+
+- Started 2026-11-21 20:35 UTC. Judges commit `921385e` (engine `6a3e309f0b524dd3`, unit `rain` `144dfe3ec5e8ef7d`): `main` with the Phase 4 line `509fccf` merged in. Rounds 12 to 16 start together at 20:35 UTC on this one commit, the joint cut after the fix pass of 19:00 to 20:25 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `rain` (8 to 20 s, frames 240 to 599), the second of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 420 (`rain`, 14.0 s). An extra round: `npm run clock -- --phase 4` at 20:30:57 UTC says extra rounds yes (4.19 h used of the phase's 8.50 h, 19.65 h of the build's 30 h). Families rotate against the unit's round 10: R1 GPT, R3 Gemini, R4 Claude; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 10. Before the round: type check clean on `main`, 116 of 116 tests on the line's head (`out/work/logs/p4-line-test-2024.log`), and `bud_builder`'s byte proof of the merged whole at `review` against `1232b1c` (frames 1350, 1515, 1559 and 1755: 0 values differ; frame 1200: see the decision of 20:34 UTC). What the Builder sees before any critic does, on its own `review` still of 420 on the line at `31344ca` beside the approved image (the narrower crown cups of `32680b4` came after): the plant now stands as the approved's does (top 0.125, foot 0.807 of the height, horizon 0.49); its leaves are narrower and held further out than the approved's broad hanging ones; the middle ground is a flat dark band with thin grass tufts where the approved has rows of leafy seedlings; the water is one smooth channel where the approved has broken puddles among clods; the far wood at left is a single dark wedge.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
+### Round 16 · Phase 4 · `night` · extra round
+
+- Started 2026-11-21 20:35 UTC. Judges commit `921385e` (engine `6a3e309f0b524dd3`, unit `night` `4de8199e57bacb0b`): `main` with the Phase 4 line `509fccf` merged in. Rounds 12 to 16 start together at 20:35 UTC on this one commit, the joint cut after the fix pass of 19:00 to 20:25 UTC; the machine checks are one run on the commit and count for all five rounds, the measures and the pack are each unit's own. Unit `night` (20 to 30 s, frames 600 to 899), the second of at most three rounds of its loop (`maxRoundsPerUnit` 3); judged frame 780 (`night`, 26.0 s). An extra round: `npm run clock -- --phase 4` at 20:30:57 UTC says extra rounds yes (4.19 h used of the phase's 8.50 h, 19.65 h of the build's 30 h). Families rotate against the unit's round 11: R1 Gemini, R3 Claude, R4 GPT; the jury is five jurors over five families (GPT, Gemini, Claude, GLM, Grok) on each judged frame, and the controls' votes are the ones collected in round 11. Before the round: type check clean on `main`, 116 of 116 tests on the line's head (`out/work/logs/p4-line-test-2024.log`), and `bud_builder`'s byte proof of the merged whole at `review` against `1232b1c` (frames 1350, 1515, 1559 and 1755: 0 values differ; frame 1200: see the decision of 20:34 UTC). What the Builder sees before any critic does, on its own `review` still of 780 on the line at `31344ca` beside the approved image (the brighter bank of `66dfbb7` came after): the leaves are dark now and the green glow of round 11 is gone; the plant is still another plant than the approved's, with few large level leaves on a long bare stem where the approved has a dense stack of pointed hanging leaves up to the bud; its top stands at 0.23 of the height against 0.27; the crop is a flat dark band where the approved shows single plants with buds and silver rims; the fog bank is thinner and the Milky Way paler and smoother than the approved's.
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+
 ## Final scores
 
 Written by the record round in Phase 6.
@@ -1067,6 +1135,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 19:59 UTC · Round 7 Fixes ticked; the night at f/8, the camera's last key, the line at 1232b1c, decisions of 19:45 to 19:58
 - 2026-11-21 20:15 UTC · Status 45: the rain's camera nearer and lower, the skyline request dropped, the line at d584dcb then 31344ca
 - 2026-11-21 20:26 UTC · Progress: the line at 509fccf, the fix pass after rounds 8 to 11 ends, the night key stays, the rain stays at f/9
+- 2026-11-21 20:34 UTC · Rounds 12 to 16 start: field, frost, dawn, rain and night, second rounds, on the joint cut 921385e
 
 ## Session log
 
