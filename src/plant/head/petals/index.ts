@@ -26,7 +26,7 @@ const FOLD_BUD = [0.3, 0.3, -0.8, 0.8, 0.3, 0.3]
 const STRAP_BUD = 0.6
 // One ray in three on the side that opens first stays shut a while longer and spreads over the place its neighbors left, so the young florets stay covered.
 const LAG_EVERY = 3
-const LAG_S = 2.6
+const LAG_S = 2.0
 const STRAP_COVER = 1.3
 const LIFT_ANGLE = 1.0
 const RIM_TURN = 1.1
@@ -267,7 +267,7 @@ export function create(options: PartOptions): PlantPart | null {
     const rise = Math.PI / 2 - rayAngle(k, time)
     // A lifting ray stays rolled and narrow, cupped forward with a hooked tip, and spreads flat only at the end of its lift.
     const unfold = smooth(0.58, 0.98, open)
-    const young = (0.35 + 0.7 * ray.arch) * (1 - unfold)
+    const young = (0.12 + 0.3 * ray.arch) * (1 - unfold)
     let tx = frame.mx
     let ty = frame.my
     let tz = frame.mz
@@ -294,7 +294,7 @@ export function create(options: PartOptions): PlantPart | null {
       const across = smooth(0, 1, unfold * 1.25 - 0.25 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
       const shut = 1.75 + 0.55 * smooth(0, 0.15, e) + 0.95 * e + 0.12 * (ray.arch - 0.5) - 0.35 * alone * smooth(0.1, 0.6, e) + 0.2 * ray.hook * smooth(0.75, 1, e)
-      const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e) + (0.7 + 0.8 * ray.arch) * (1 - across) * smooth(0.6, 1, e)
+      const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e) + (0.5 + 0.6 * ray.arch) * (1 - across) * smooth(0.7, 1, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
