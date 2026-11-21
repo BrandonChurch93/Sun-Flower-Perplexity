@@ -175,6 +175,16 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   }
 #endif
 
+  // At the outline the eye meets the tips of the hairs, which the hair part draws, and not the skin: within two pixels of it the sun on the skin fades, so no term can draw a line one pixel wide.
+  float fv = abs(dot(F, view));
+  float inside = smoothstep(0.4, 2.4, 0.5 * fv / max(fwidth(fv), 1e-5));
+  float gf = 1.0 - fv;
+  // A round body turns its whole edge to grazing: the sheens of a blade would draw a rail down each side of it.
+  vec3 fw = fwidth(F);
+  vec3 ww = fwidth(world);
+  float blade = 1.0 - smoothstep(15.0, 45.0, sqrt(dot(fw, fw) / max(dot(ww, ww), 1e-12)));
+  float soft = gf * gf * inside * blade;
+
   float frost = uPlantFrost;
   float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
   float flash = 0.0;
@@ -184,6 +194,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
+  // The down of a round body holds rime all over: a frosted stem is paler than its skin.
+  bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * (1.0 - blade));
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
   // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
@@ -223,15 +235,6 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   }
   float lit1 = max(glow.r, max(glow.g, glow.b));
 #endif
-  // At the outline the eye meets the tips of the hairs, which the hair part draws, and not the skin: within two pixels of it the sun on the skin fades, so no term can draw a line one pixel wide.
-  float fv = abs(dot(F, view));
-  float inside = smoothstep(0.4, 2.4, 0.5 * fv / max(fwidth(fv), 1e-5));
-  float gf = 1.0 - fv;
-  // A round body turns its whole edge to grazing: the sheens of a blade would draw a rail down each side of it.
-  vec3 fw = fwidth(F);
-  vec3 ww = fwidth(world);
-  float blade = 1.0 - smoothstep(15.0, 45.0, sqrt(dot(fw, fw) / max(dot(ww, ww), 1e-12)));
-  float soft = gf * gf * inside * blade;
   float open = plantSky(world) * t.occlusion;
   float shown = mix(TISSUE_HID, 1.0, saturate(lit1));
   vec3 skyFront = tissueSky(N, shown);

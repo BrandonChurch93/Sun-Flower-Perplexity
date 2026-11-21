@@ -7,6 +7,7 @@ const float FROST_FLASH = 5.0;
 const vec3 FROST_COLD = vec3(0.45, 1.2, 0.5);
 // The share of the sun that the rime on the down of a round body sends on, on the sun's side.
 const float FROST_SIDE = 1.0;
+const float FROST_DOWN = 0.08;
 
 // One grain to a cell, whole inside it. x: its share of the pixel, y: the flash of its face when it mirrors the sun to the eye.
 vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3 N, vec3 view) {
