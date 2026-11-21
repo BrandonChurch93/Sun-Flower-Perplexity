@@ -47,3 +47,33 @@ export function bractFrameAt(p: Pose, j: number): Frame {
 export function rayFrameAt(p: Pose, k: number): Frame {
   return rayFrame(k, p.time, p.head)
 }
+
+// The floor of the head: the gently domed front of the receptacle, where the florets stand and the petals leave the rim.
+// The bud draws it, the disc stands on it and the petals start from its rim, so all three read it from here.
+export interface FloorPoint { x: number; y: number; z: number; nx: number; ny: number; nz: number; ox: number; oy: number; oz: number }
+// How far in front of the head's middle the floor lies at its rim, and how much higher at the axis, both as shares of the half depth.
+export const FLOOR_RIM = 0.5
+export const FLOOR_DOME = 0.22
+const floor: FloorPoint = { x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0, ox: 1, oy: 0, oz: 0 }
+
+// A point of the floor at a share rho of the head's radius (0 on the axis, 1 at the rim) and an angle theta round the axis, from p toward q:
+// the point, the floor's normal n there and the direction o that points outward from the axis.
+export function floorAt(p: Pose, rho: number, theta: number, out: FloorPoint = floor): FloorPoint {
+  const h = p.head
+  const c = Math.cos(theta)
+  const s = Math.sin(theta)
+  out.ox = h.px * c + h.qx * s
+  out.oy = h.py * c + h.qy * s
+  out.oz = h.pz * c + h.qz * s
+  const r = rho * h.radius
+  const up = h.depth * (FLOOR_RIM + FLOOR_DOME * (1 - rho * rho))
+  out.x = h.cx + out.ox * r + h.ax * up
+  out.y = h.cy + out.oy * r + h.ay * up
+  out.z = h.cz + out.oz * r + h.az * up
+  const slope = h.radius > 0 ? (2 * h.depth * FLOOR_DOME * rho) / h.radius : 0
+  const l = Math.hypot(1, slope)
+  out.nx = (h.ax + out.ox * slope) / l
+  out.ny = (h.ay + out.oy * slope) / l
+  out.nz = (h.az + out.oz * slope) / l
+  return out
+}

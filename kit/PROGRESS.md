@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 0.00 h |
+| 3 | 9.00 h | 0.15 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.05 h |
+| Whole build | 30.00 h | 6.20 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -335,6 +335,11 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 2 · M1 on the film of the final build: 115 frames fail, against 333 on the scene of 03:10 UTC. The cause is found (the entry under "Open items") and it is in how the lens picks its focus point on a large closed bud, which is head work. It is not fixed in Phase 2: the fix changes the focus distance of every frame from 25 s on, the film for this gate is rendered, the phase is past its box, and D2 asks for the failed frames to be logged, which they are. It is the first change to the camera in Phase 3, made with the real head, and it has to be green on frames 1350 and 1515 before the `bloom` unit can pass.
 - 2026-11-21 · Phase 2 · The gate line "The app plays the whole film in `autopilot`, from the published URL" was checked on the hosting's own copy of the upload and not through the public address, because the public address sends an unsigned browser to the organization sign-in and the harness has no sign-in to give. The files are the same upload; the film played to the last frame there. A person signed in to the organization sees the same files at https://sunflower-film.pplx.app.
 - 2026-11-21 · Phase 2 · The units table now reads `stand-in` for five units and `in progress` for `bloom`: the blockout is the stand-in of every unit, and Phase 3 works on `bloom`.
+- 2026-11-21 · Phase 3 · The scaffold is merged into `main` (`dfc65a0`, a merge of the local branch `p3-scaffold`). Every piece of the plant is now a part with its own folder (`src/plant/stem/`, `leaves/`, `head/bud/`, `head/disc/`, `head/petals/`, `seedling/`), each exporting `create(options)`; a part that returns nothing leaves its stand-in drawn, so the plant is whole at every commit. Hairs (`src/plant/hairs/`) and the tissue shading (`src/plant/surface/`) are shared libraries with frozen signatures. A world folder may export a `stage` (objects, a per-frame `prepare`, a sky) and the golden world is the first to be asked for one. The wind is two inputs of the pose (`wind` from 0 to 1 and the film time), brought to zero at every cut by `windEase`. Checked after the merge: tsc clean, 71 tests, build clean, stills at frames 1350 and 1515 show the stand-in plant with the example stem drawn on it, and every fact of the Phase 2 fix passes is intact (`headAzimuth`, `FACE_AZIMUTH`, `EARLY_TURN`, the neighbor sizes, the fitted keys, `SEAT`, `NECK_FLARE`, `NEIGHBOR_HEAD`, companion 37, `leftM` 0.73).
+- 2026-11-21 · Phase 3 · The head's floor is one shared function, `floorAt(pose, rho, theta)` in `src/plant/skeleton.ts`: a point, its normal and the outward direction on the front of the receptacle, `rho` from 0 at the middle to 1 at the rim, `theta` from the head's `p` toward `q`. The floor stands `depth x (0.5 + 0.22 x (1 - rho x rho))` along the head's axis, a shallow dome. The receptacle, the disc florets and the feet of the rays all sit on it, so three agents working apart meet on one surface.
+- 2026-11-21 · Phase 3 · G8 (every generated asset has its recipe) now takes the nearest `RECIPE.md` from the asset's own folder up to its owner's folder, where it took only the owner's. A set folder (`full`, `web`) is skipped. The check is the same check: every asset still needs a recipe with its source, prompt and takes. It lets an agent keep one recipe per part folder without the Builder merging ten files into one.
+- 2026-11-21 · Phase 3 · No agent is given the ground in the look lock. In the `standins` view of frames 1350 and 1515 the soil is under the canopy of the field and the hero's own leaves and no pixel of it shows; the ground is `dawn` and `rain` work in Phase 4. It is looked at again in the first integrated frames, and if soil shows it gets an owner then.
+- 2026-11-21 · Phase 3 · Ten supporting agents build the look lock, one folder each: stem, leaves, bud (receptacle and bracts), disc, petals, hairs, tissue shading, the golden world with its air, the lens and grade, the field. The Builder keeps the skeleton, the director, the focus, the sway of the stem and of the field, the shadow map, the companion's foliage at the left edge, the fit of the camera, the integration, the rounds and the gate.
 
 ## Notes from Brandon
 

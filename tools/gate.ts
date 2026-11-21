@@ -166,9 +166,22 @@ const g8: Check = () => {
   for (const file of made) {
     const rel = path.relative(at('public', 'assets'), file).split(path.sep)
     const owner = rel[0] === 'worlds' ? path.join('worlds', rel[1]) : rel[0]
-    const recipe = at('assets-src', owner, 'RECIPE.md')
-    if (!fs.existsSync(recipe)) problems.push(`${rel.join('/')} has no recipe at assets-src/${owner}/RECIPE.md`)
-    else if (!fs.readFileSync(recipe, 'utf8').includes(path.basename(file))) problems.push(`assets-src/${owner}/RECIPE.md does not name ${path.basename(file)}`)
+    // The recipe sits beside the part that owns the file: the nearest RECIPE.md from the file's own folder (without its set) up to its owner.
+    const sets = Object.keys(config.assetSets)
+    const folders = rel.slice(0, -1).filter((name) => !sets.includes(name))
+    const least = owner.split(path.sep).length
+    const tried: string[] = []
+    let named = false
+    let found = false
+    for (let depth = folders.length; depth >= least && !named; depth--) {
+      const recipe = at('assets-src', ...folders.slice(0, depth), 'RECIPE.md')
+      tried.push(path.relative(ROOT, recipe).split(path.sep).join('/'))
+      if (!fs.existsSync(recipe)) continue
+      found = true
+      named = fs.readFileSync(recipe, 'utf8').includes(path.basename(file))
+    }
+    if (!found) problems.push(`${rel.join('/')} has no recipe (looked for ${tried.join(', ')})`)
+    else if (!named) problems.push(`no recipe names ${path.basename(file)} (looked in ${tried.join(', ')})`)
   }
   return { id: 'G8', ok: problems.length === 0, detail: problems.length ? problems.slice(0, 6).join('; ') : `${third.length} third-party files have ledger rows, ${made.length} generated files have recipes` }
 }
