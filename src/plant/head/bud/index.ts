@@ -19,13 +19,15 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: steps(3, 1), floor: steps(10).reverse(), bracts: 55, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 55, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 14, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
 
 // How far in front of the head's middle the body is widest, as a share of its half depth. Behind it the back is one shallow dome.
 const WIDEST = 0.2
+// How much wider than the floor the body is at its widest. From there it rounds in to the rim of the floor.
+const SHOULDER = 0.07
 // The stand-in shortens its bracts by this share while the head opens. A real bract does not shrink, so it is taken out again.
 const WRAP = 0.3
 // How far a bract stays behind the ray in front of it, in radians.
@@ -36,7 +38,7 @@ const HAIR_WIDTH_M = 0.00006
 const SECTOR_LAG = 2.2
 const SECTOR_LEAD = 0.3
 // How far past the widest ring the innermost feet sit, as a share of the way to the rim.
-const SIDE_FEET = 0.6
+const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
@@ -61,7 +63,7 @@ export function create(options: PartOptions): PlantPart | null {
     bracts.push({
       rank,
       az: turn + i * GOLDEN,
-      foot: lerp(0.2, 1.33, Math.pow(rank, 0.85)) + (rnd(2, i) - 0.5) * 0.05,
+      foot: lerp(0.2, 1.5, Math.pow(rank, 0.8)) + (rnd(2, i) - 0.5) * 0.05,
       long: lerp(1.32, 1, rank) * (0.92 + 0.16 * rnd(3, i)),
       wide: lerp(1.18, 0.86, rank) * (0.88 + 0.24 * rnd(4, i)),
       tail: 0.22 + 0.1 * rnd(5, i),
@@ -248,7 +250,9 @@ export function create(options: PartOptions): PlantPart | null {
     const grown = Math.min(1, heightAt(time) / 0.006)
     const stemR = (u: number): number => Math.max(stemRadius(time, u) * grown, NECK_FLARE * R * Math.max(0, (u - 0.97) / 0.03))
     // The dome starts where it is as wide as the stem's end, a hair behind the joint.
-    const sin0 = clamp(stemR(1) / R, 0.1, 0.92)
+    const Rw = R * (1 + SHOULDER)
+    const sideR = (h: number): number => R + (Rw - R) * Math.sqrt(Math.max(0, 1 - ((h - hw) / (hr - hw)) ** 2))
+    const sin0 = clamp(stemR(1) / Rw, 0.1, 0.92)
     const psi0 = Math.min(Math.asin(sin0), Math.acos(clamp((hw + SEAT * D) / Hb, 0, 1)) + 0.02)
 
     let row = 0
@@ -283,9 +287,9 @@ export function create(options: PartOptions): PlantPart | null {
     }
     for (const f of shape.dome) {
       const psi = psi0 + (Math.PI / 2 - psi0) * f
-      ring(R * Math.sin(psi), hw - Hb * Math.cos(psi))
+      ring(Rw * Math.sin(psi), hw - Hb * Math.cos(psi))
     }
-    for (const f of shape.side) ring(R, hw + (hr - hw) * f)
+    for (const f of shape.side) ring(sideR(hw + (hr - hw) * f), hw + (hr - hw) * f)
     for (const rho of shape.floor) {
       for (let b = 0; b < cols; b++) {
         floorAt(pose, rho, (b / shape.sides) * TAU, floor)
@@ -347,19 +351,19 @@ export function create(options: PartOptions): PlantPart | null {
       const tz = qz * co - pz * so
 
       let psi = psi0 + (Math.PI / 2 - psi0) * Math.min(k.foot, 1)
-      let r = R * Math.sin(psi)
-      let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((k.foot - 1) / 0.33)
+      let h = hw - Hb * Math.cos(psi) + (hr - hw) * SIDE_FEET * clamp((k.foot - 1) / 0.5)
+      let r = h > hw ? sideR(h) : Rw * Math.sin(psi)
       const total = (shape.nu - 1) * sub
       const ds = L / total
       for (let step = 0; step <= total; step++) {
         const u = step / total
         const s = u * L
         const lift = (0.0003 + 0.1 * s) * small
-        const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(R * Math.cos(psi), Hb * Math.sin(psi)) : 0
+        const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
         const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW * (1 - 0.6 * Math.max(curl, 0)) + sway * u * u
         const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
-        const Re = R + lift
+        const Re = Rw + lift
         if (h < hw) {
           const e = (r * r) / (Re * Re) + ((h - hw) * (h - hw)) / ((Hb + lift) * (Hb + lift))
           if (e < 1) {
@@ -367,10 +371,10 @@ export function create(options: PartOptions): PlantPart | null {
             r *= g
             h = hw + (h - hw) * g
           }
-        } else if (h < hr) r = Math.max(r, Re)
+        } else if (h < hr) r = Math.max(r, sideR(h) + lift)
         else {
           const f = (h - hr) / (Hf + lift)
-          if (f < 1) r = Math.max(r, Re * Math.sqrt(1 - f * f))
+          if (f < 1) r = Math.max(r, (R + lift) * Math.sqrt(1 - f * f))
         }
         if (gap > 0) {
           const vr = r - RAY_FOOT * R
@@ -392,7 +396,7 @@ export function create(options: PartOptions): PlantPart | null {
         }
         r += Math.sin(theta) * ds
         h += Math.cos(theta) * ds
-        if (psi < Math.PI / 2) psi = Math.min(Math.PI / 2, psi + ds / Math.hypot(R * Math.cos(psi), Hb * Math.sin(psi)))
+        if (psi < Math.PI / 2) psi = Math.min(Math.PI / 2, psi + ds / Math.hypot(Rw * Math.cos(psi), Hb * Math.sin(psi)))
       }
 
       const base = bodyCount + i * perBract
