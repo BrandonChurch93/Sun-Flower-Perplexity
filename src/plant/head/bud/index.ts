@@ -36,7 +36,7 @@ const FOLD_LAG = [0.45, 0.65, 0.85]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.5, 0.78, 1]
 const HUG = [0.3, 0.24, 0.25]
-const STAND = [0.4, 0.36, 0.14]
+const STAND = [0.5, 0.42, 0.14]
 const FLARE = [0.25, 0.25, 0.5]
 // While the bud is shut each series leans in this much further than growth.ts says, so the inner points close over the face. In radians.
 const SHUT = [0.3, 0.9, 1.7]
@@ -339,7 +339,7 @@ export function create(options: PartOptions): PlantPart | null {
       let rayLong = 0
       for (let m = -1; m <= 2; m++) {
         const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
-        behind = Math.max(behind, lerp(-Math.PI, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0, 0.008, rayLength(ray, time))))
+        behind = Math.max(behind, lerp(-1.9, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0.002, 0.03, rayLength(ray, time))))
         opened += (rayOpen(ray, time - FOLD_LAG[k.series]) + rayOpen(ray, time - FOLD_LAG[k.series] - FOLD_SLOW)) / 8
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
@@ -354,7 +354,8 @@ export function create(options: PartOptions): PlantPart | null {
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
       const rayC = Math.cos(behind - RAY_CLEAR)
-      const gap = RAY_GAP * smoothstep(0, 0.008, rayLong)
+      const pushed = smoothstep(0, 0.008, rayLong)
+      const gap = RAY_GAP * pushed
       const sway = wind * 0.05 * flutter(time, k.seed)
       const co = Math.cos(k.az)
       const so = Math.sin(k.az)
@@ -405,7 +406,7 @@ export function create(options: PartOptions): PlantPart | null {
           const vh = h - hr
           const along = vr * rayS + vh * rayC
           const clear = vr * rayC - vh * rayS
-          const need = (gap - clear) * smoothstep(-0.004, 0, along) * (1 - smoothstep(rayLong, rayLong + 0.004, along)) * smoothstep(-0.012, -0.006, clear)
+          const need = pushed * (gap - clear) * smoothstep(-0.004, 0, along) * (1 - smoothstep(rayLong, rayLong + 0.004, along)) * smoothstep(-0.012, -0.006, clear)
           if (need > 0) {
             r += rayC * need
             h -= rayS * need
@@ -447,7 +448,7 @@ export function create(options: PartOptions): PlantPart | null {
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
-        const tail = 0.5 * (1 - u) + 0.006
+        const tail = 0.75 * (1 - u) + 0.006
         const half = W * lerp(body, tail, smoothstep(k.tail + 0.06, k.tail + 0.5, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
