@@ -169,9 +169,9 @@ void main() {
   float close = 1.0 - smoothstep(1.3, 2.6, density);
   vec4 cD = texture(tColor, uvD);
   vec4 dD = texture(tData, uvD);
-  albedo *= mix(vec3(1.0), cD.rgb * uMeanInv, 0.75 * close);
-  g += ((dD.rg * 2.0 - 1.0) * TURN_B) * 1.5 * close;
-  h += (dD.a - 0.55) * 0.5 * close;
+  albedo *= mix(vec3(1.0), cD.rgb * uMeanInv, 0.9 * close);
+  g += ((dD.rg * 2.0 - 1.0) * TURN_B) * 2.1 * close;
+  h += (dD.a - 0.55) * 0.7 * close;
   density = mix(density, texelDensity(uvD, uColorSize), step(0.5, close));
   float big = 0.6 * valueNoise(p * 0.13 + 7.0) + 0.4 * valueNoise(p * 0.037 + 3.0);
   albedo *= mix(0.82, 1.16, big) * mix(0.7, 1.1, lump);
@@ -223,7 +223,7 @@ void main() {
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
-  float open = (0.5 + 0.5 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
+  float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
@@ -237,7 +237,7 @@ void main() {
   float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit;
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  color += skyAmbient(reflect(-v, n)) * graze * gloss * 0.1 * open * (1.0 - 0.8 * under);
+  color += skyAmbient(reflect(-v, n)) * (0.03 + graze) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
