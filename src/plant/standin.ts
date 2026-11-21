@@ -646,6 +646,19 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
   return out
 }
 
+// The stem two hands under the bud or the head: the part of it a close frame shows beside them. Before there is a bud it is the held point itself.
+const UNDER_HEAD_M = 0.2
+export function carrierAt<T extends Vec3>(time: number, inputs: PlantInputs, held: Vec3, out: T): T {
+  const length = stemLength(time, inputs)
+  layStem(time, inputs)
+  const share = smoothstep(0, 0.02, layHead(time, length).radius)
+  const n = stemNode(archShare(time) * (1 - Math.min(0.5, UNDER_HEAD_M / Math.max(length, 1e-6))), length)
+  out.x = lerp(held.x, n.x, share)
+  out.y = lerp(held.y, n.y, share)
+  out.z = lerp(held.z, n.z, share)
+  return out
+}
+
 export function plantNumbers(time: number, inputs: PlantInputs): number[] {
   const tip = tipAt(time, inputs, { x: 0, y: 0, z: 0 })
   let leafSum = 0

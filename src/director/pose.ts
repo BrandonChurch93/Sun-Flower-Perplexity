@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
 import { clamp } from '../core/curves.ts'
-import type { CameraPose } from '../core/lens.ts'
+import { cocScalePx, type CameraPose } from '../core/lens.ts'
 import type { RigPath } from './rig.ts'
 
 export interface Rig extends RigPath { fNumber: number }
@@ -30,7 +30,12 @@ export function eyeOf(r: RigPath, out: THREE.Vector3): THREE.Vector3 {
   return out.set(r.distanceM * Math.sin(r.azimuthRad), r.heightM, r.distanceM * Math.cos(r.azimuthRad))
 }
 
-export function poseOf(r: Rig, focusPoint: THREE.Vector3): CameraPose {
+// How much of the sharp zone's blur limit the held point may take when the focus is shared with the stem behind it.
+const HELD_SHARE = 0.55
+
+// `focusPoint` is the point the lens holds. With a `carrier`, the stem that carries the head, the focus lies between the two, so both are inside the sharp zone:
+// the blur is shared evenly, and the held point never takes more than `HELD_SHARE` of the limit, counted at the master's width.
+export function poseOf(r: Rig, focusPoint: THREE.Vector3, carrier: THREE.Vector3 | null = null): CameraPose {
   const sa = Math.sin(r.azimuthRad)
   const ca = Math.cos(r.azimuthRad)
   const d = r.distanceM
@@ -45,8 +50,13 @@ export function poseOf(r: Rig, focusPoint: THREE.Vector3): CameraPose {
   const pitch = Math.atan2(rise, d * Math.cos(pan))
   const forward = level.clone().multiplyScalar(Math.cos(pitch)).addScaledVector(UP, Math.sin(pitch))
   const up = UP.clone().multiplyScalar(Math.cos(pitch)).addScaledVector(level, -Math.sin(pitch))
-  const focusM = Math.max(0.02, focusPoint.clone().sub(position).dot(forward))
-  return { position, forward, right, up, focalMm: r.focalMm, focusM, fNumber: r.fNumber }
+  const heldM = Math.max(0.02, focusPoint.clone().sub(position).dot(forward))
+  const pose = { position, forward, right, up, focalMm: r.focalMm, focusM: heldM, fNumber: r.fNumber }
+  if (!carrier) return pose
+  const behind = 1 / heldM - 1 / Math.max(heldM, carrier.clone().sub(position).dot(forward))
+  const most = (HELD_SHARE * config.detail.focusCocPx) / cocScalePx(pose, config.camera.gateWidthMm, config.formats.master.width)
+  pose.focusM = 1 / (1 / heldM - Math.min(0.5 * behind, most))
+  return pose
 }
 
 // Where a point lands in the frame: x from the left, y from the top, as fractions, and its depth along the lens axis.
