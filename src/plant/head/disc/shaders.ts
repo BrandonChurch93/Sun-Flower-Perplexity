@@ -83,9 +83,10 @@ void main() {
   float rise = smoothstep(0.2, 1.05, phase) * (1.0 - under);
   float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 2.0) * (1.0 - under);
   // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
-  float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge);
+  float late = smoothstep(RIPE_FROM, RIPE_FROM + 4.0, f.time);
+  float over = smoothstep(mix(1.0, 6.5, late), mix(9.5, 14.0, late), aFloret.z - f.time) * (1.0 - edge);
   // No floret is wider than its share of the floor.
-  float girth = mix((0.88 + 0.2 * h2) * mix(0.8, 1.0, smoothstep(0.3, 0.75, rho)), 1.0, open);
+  float girth = mix((0.88 + 0.2 * h2) * mix(mix(0.8, 0.68, late), 1.0, smoothstep(0.3, 0.75, rho)), 1.0, open);
 
   float tilt = aSeed.w * 6.2832;
   vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.1 + 0.2 * open) * aSeed.x);
@@ -128,13 +129,13 @@ void main() {
       z = min(0.45 * tall + 0.4 * w * open, throat);
       normal = radial;
       along = 0.33;
-      occ = mix(mix(0.26, 0.46, ripe), 0.22, open);
+      occ = mix(mix(0.26, 0.36, ripe), 0.22, open);
     } else if (level < 2.5) {
       r = rc * corner * girth * mix(0.74 + 0.08 * h2 + 0.1 * (1.0 - ripe), 0.7, open);
       z = throat;
       normal = normalize(radial + axis * 0.55 * (1.0 - open));
       along = 0.66;
-      occ = mix(mix(0.7, 0.68, ripe), 0.7, open);
+      occ = mix(mix(0.7, 0.84, ripe), 0.7, open);
     } else {
       float spread = lobes * (1.5 + 0.7 * aSeed.x);
       float reach = w * 0.2;
@@ -175,7 +176,7 @@ void main() {
     float hs = fract(h3 + 0.37 * twin + 0.61 * h1 * twin);
     float high = w * 1.4 * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown * (1.0 - 0.3 * twin);
     float lid = tall * (0.98 + 0.14 * aSeed.x) + (0.12 + 0.1 * twin) * w * grown;
-    float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, 0.45 + (hs - 0.5) * 0.7 + (twin - 0.5) * 0.5, over);
+    float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, 0.45 + (hs - 0.5) * mix(0.7, 0.25, late) + (twin - 0.5) * mix(0.5, 0.2, late), over);
     turn = mix(turn, (twin - 0.5) * 1.1, edge);
     vec3 away = fx * cos(turn) + fy * sin(turn);
     vec3 across = cross(axis, away);
@@ -223,7 +224,7 @@ void main() {
 `
 
 export const floretFragment = /* glsl */ `
-#define RAY_LIGHT 0.75
+#define RAY_LIGHT 0.48
 in vec3 vWorld;
 in vec3 vNormal;
 in float vDepth;
@@ -251,11 +252,12 @@ void main() {
   float grain = mix(0.5, valueNoise(vec2(around * 4.0 + seed * 61.0, along * 9.0 + vMore.z * 37.0)), fine);
 
   float ripe = vKind.x;
-  float tone = vKind.z * (1.0 + 0.25 * vMore.w);
+  float tone = mix(vKind.z, 0.4 + 0.6 * vKind.z, vKind.x) * (1.0 + 0.25 * vMore.w);
   float centre = 1.0 - smoothstep(0.3, 0.8, rho);
   // While the disc is young its middle is the darkest part.
   float deep = smoothstep(0.3, 0.95, rho);
 
+  float lit = 1.0;
   Tissue t;
   t.through = vec3(0.0);
   t.rough = 0.7;
@@ -266,12 +268,12 @@ void main() {
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(mix(0.3, 0.18, ripe), mix(0.85, 0.75, ripe), along);
-    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.085, 0.1, 0.013), centre);
-    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.145, 0.205, 0.03), centre);
+    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.14, 0.15, 0.019), centre);
+    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.25, 0.31, 0.045), centre);
     float olive = 4.0 * centre * (1.0 - centre);
     dark += vec3(0.03, 0.01, 0.0) * olive;
     pale += vec3(0.06, 0.02, 0.0) * olive;
-    vec3 ochre = vec3(0.38, 0.145, 0.017);
+    vec3 ochre = vec3(0.31, 0.12, 0.015);
     dark = mix(dark, ochre * 0.6, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
@@ -302,13 +304,15 @@ void main() {
     float gap = mix(1.0, 0.45 + 1.1 * valueNoise(crumb * 1.7 + 5.1), crumbs);
     vec3 grains = mix(pollen, vec3(0.8, 0.58, 0.22), smoothstep(0.62, 0.8, valueNoise(crumb * 1.3 + 9.1)) * crumbs);
     t.albedo = mix(vec3(0.15, 0.055, 0.012) * (0.7 + 0.6 * grain), grains * (0.8 + 0.4 * grain) * gap, dust);
+    lit = 1.0 - 0.35 * dust;
     t.rough = mix(0.7, 1.0, dust);
     t.wax = mix(0.06, 0.0, dust);
     t.sheen = mix(0.05, 0.25, dust);
     t.through = pollen * dust * mix(0.12, 0.4, smoothstep(0.72, 0.92, vKind.w));
   } else if (piece < 2.5) {
     t.albedo = mix(vec3(0.7, 0.36, 0.04), pollen, 0.5 * grain);
-    t.through = vec3(0.5, 0.24, 0.025);
+    t.through = vec3(0.3, 0.145, 0.015);
+    lit = 0.6;
     t.rough = 1.0;
     t.wax = 0.0;
     t.sheen = 0.25;
@@ -335,8 +339,8 @@ void main() {
   float seen = (0.35 + 0.65 * smoothstep(0.1, 0.7, vInfo.w)) * (1.0 - 0.8 * coarse);
   t.wax *= seen;
   t.sheen *= seen;
-  float toRays = saturate(0.35 + 0.65 * dot(face, vRays.xyz));
-  vec3 fromRays = uSunColor * vec3(1.0, 0.62, 0.1) * (RAY_LIGHT * vRays.w * toRays * (0.5 + 0.5 * vInfo.w));
+  float toRays = saturate(0.42 + 0.58 * dot(face, vRays.xyz));
+  vec3 fromRays = uSunColor * vec3(1.0, 0.62, 0.1) * (RAY_LIGHT * lit * vRays.w * toRays * (0.25 + 0.75 * vInfo.w));
   outColor = finish(shadeTissue(t, vWorld, view) + t.albedo * plantTone() * fromRays, vWorld, vDepth, -1.0);
 }
 `
@@ -384,6 +388,7 @@ void main() {
   vec3 flower = vec3(0.26, 0.1, 0.011);
   vec3 albedo = mix(closed, opening, smoothstep(uFront.x - 0.06, uFront.x + 0.06, rho));
   albedo = mix(albedo, flower, smoothstep(uFront.y - 0.06, uFront.y + 0.06, rho));
+  float lit = 1.0;
   Tissue t;
   t.albedo = albedo * (0.8 + 0.3 * arms);
   t.through = vec3(0.0);
