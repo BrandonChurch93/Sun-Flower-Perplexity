@@ -123,7 +123,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
 // How much of the sky a point sees, 0 to 1.
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
-  // The sky comes from above whatever the sun does: a closed crop keeps about a fifth of it at the floor.
+  // The sky comes from above whatever the sun does: a closed crop keeps a little under half of it at the floor.
   float under = max(uCanopy * 1.04 - world.y, 0.0) / max(uCanopy, 0.05);
   float closed = smoothstep(0.2, 0.85, uCanopy);
   return mix(mix(0.6, 0.46, closed), 1.0, exp(-mix(1.5, 2.0, closed) * under));
