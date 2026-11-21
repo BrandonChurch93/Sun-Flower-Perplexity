@@ -69,7 +69,7 @@ export function stemBaseRadius(time: number): number {
 }
 
 export function stemRadius(time: number, u: number): number {
-  const taper = 0.12 + 0.43 * smoothstep(0.05, 0.6, heightAt(time))
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5))
 }
 
