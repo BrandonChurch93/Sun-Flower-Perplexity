@@ -10,15 +10,17 @@ import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opens
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
+// The kinds whose leaves fill the gaps of the first rows.
+const UNDER_KINDS = [0, 3, 4, 6]
 
-interface Group { all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
-function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number): Group {
+function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
   const seen = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
   seen.setUsage(THREE.DynamicDrawUsage)
   const plant = new Plant({ detail, variant, places: seen })
-  return { plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
+  return { bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -28,12 +30,14 @@ export class Field {
   readonly far: FarField
   readonly meshes: THREE.Mesh[]
   private time = 0
+  private rise = 0
 
   constructor() {
     const places = fieldPlaces()
     this.groups = [
       ...nearVariants.map((v, i) => group('near', v, shareOf(places.near, i, nearVariants.length), i)),
       ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i)),
+      ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, true)),
     ]
     this.far = new FarField(places.pictures)
     this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
@@ -53,6 +57,8 @@ export class Field {
     for (const g of this.groups) g.plant.prepare(kindTime(timeOpen, g.index, g.tier), kindTime(timeClose, g.index, g.tier), open, close)
     const canopy = heightAt(timeOpen) * CANOPY
     fieldUniforms.uCanopy.value = canopy
+    // The leaves in the gaps come up as the crop closes over them.
+    this.rise = THREE.MathUtils.smoothstep(canopy, 0.3, 1.0)
     this.far.prepare(timeOpen, timeClose, open, close, eyeHeightM, canopy)
   }
 
@@ -85,11 +91,13 @@ export class Field {
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         placeTurned(all, i, seen, still, n, early ? 0 : budTurn(clock, all[i + 7]))
+        if (g.bare) seen[n + 3] = still[n + 3] = all[i + 3] * this.rise
         n += PLACE
       }
       g.seen.needsUpdate = true
       g.still.needsUpdate = true
       g.plant.show(n / PLACE)
+      if (g.bare) for (const part of g.plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
       total += n / PLACE
     }
     this.far.look(pose)

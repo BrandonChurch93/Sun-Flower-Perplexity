@@ -71,17 +71,19 @@ void main() {
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
   float fan = atan(dot(d, over), dot(d, side));
-  float rays = 0.6 * valueNoise(vec2(fan * 2.4, 3.7)) + 0.4 * valueNoise(vec2(fan * 8.0, 9.1));
-  rays = smoothstep(0.35, 0.75, rays);
-  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.3) * smoothstep(0.0, 0.07, el) * (0.55 + uPale);
-  color *= 1.0 + 0.7 * (rays - 0.45) * reach;
+  float rays = 0.65 * valueNoise(vec2(fan * 1.7, 3.7)) + 0.35 * valueNoise(vec2(fan * 4.6, 9.1));
+  rays = smoothstep(0.3, 0.8, rays);
+  // The cloud breaks each shaft along its length.
+  rays = mix(0.45, rays, smoothstep(0.25, 0.7, 0.6 * valueNoise(vec2(fan * 2.3 + 5.0, theta * 7.0)) + 0.4 * valueNoise(deck * 2.1 + 17.0)));
+  float reach = smoothstep(0.035, 0.14, theta) * exp(-theta / 0.3) * (1.0 - smoothstep(0.16, 0.34, theta)) * smoothstep(0.0, 0.07, el) * (0.55 + uPale);
+  color *= 1.0 + 0.75 * (rays - 0.45) * reach;
   color += uGlow * (0.2 * (rays - 0.3) * reach);
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.58 + 0.95 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
+  color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.5 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.66 + 0.78 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el) * (0.55 + uPale));
   color += uGlow * vec3(1.0, 0.74, 0.56) * ((0.39 - 0.37 * uPale) * exp(-theta * theta / 0.115) * smoothstep(0.06, 0.13, el));
   color += vec3(0.098, 0.17, 0.2) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el) + vec3(0.0, 0.024, 0.036) * smoothstep(0.25, 0.6, theta) * smoothstep(0.06, 0.12, el);
   color = mix(color, vec3(dot(color, vec3(0.3, 0.6, 0.1))), max(0.7 * uPale, min(0.9, exp(-theta / 0.1) + uPale + 0.4 * smoothstep(0.4, 0.75, theta)) * exp(-max(el, 0.0) / 0.07)) * smoothstep(0.015, 0.06, theta));
