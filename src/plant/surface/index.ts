@@ -284,7 +284,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float fresnel = TISSUE_F0 + (1.0 - TISSUE_F0) * f5;
   float d = ndh * ndh * (a2 - 1.0) + 1.0;
   float vis = 0.5 / max(lit * (ndv * (1.0 - a) + a) + ndv * (lit * (1.0 - a) + a), 1e-4);
-  float gloss = min(wax * fresnel * (a2 / (d * d)) * vis * lit, 2.0);
+  // The mist of beads that breaks the mirror of the sky breaks the mirror of the sun.
+  float gloss = min(wax * fresnel * (a2 / (d * d)) * vis * lit, 2.0) * (1.0 - DEW_BREAK * mist);
 
   float g5 = grazing * grazing;
   g5 = g5 * g5 * grazing;
