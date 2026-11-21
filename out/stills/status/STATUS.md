@@ -1,12 +1,12 @@
-# Status 20
+# Status 21
 
-2026-11-21 08:04 UTC
+2026-11-21 08:37 UTC
 
-- Status 20 · Phase 3 · unit bloom. Six of the ten agents have reported and their work is merged. The head now has a real receptacle with pointed bracts, 1,500 disc florets on the exact spiral, 34 veined rays that unfurl, real tissue shading, hairs, and a new lens and grade. Rays now grow folded in the bud and stretch as they open, in a tighter sector. Known in these frames: the bracts are too long (a correction applied twice, being fixed), the shut rays do not yet cover the face at 45 s, and the stem, leaves, field and sky are still stand-ins, so the picture is far brighter than the approved one.
-- Next: Each of the six has a second pass against the approved images, due 08:56 UTC. The stem, leaves, golden world and field are due by then too. Then the grade and the camera are fitted and the first critic round on bloom starts. Time used: 7.2 h of 30 h.
+- Status 21 · Phase 3 · unit bloom. Every part of the plant, the field and the golden sky is now real and merged on main: stem, leaves, bud, disc, rays, hairs, skin, sky, field, lens. The companion stands nearer the camera and leans, so its leaves fill the left edge and its head stays out of both bloom frames. The sky now fills the shadows: bracts and stem read green, not black.
+- Next: Second passes with targets measured on the approved pair: a dark green readable field, dark rim lit leaves, cloud and tree line in the sky, a thick hairy stem, a cupped bud at 45 s. Then the ground, the lens opening, the camera fit and the first critic round. Time used: 7.8 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frame 1350 (45 s), first merge of the real head
-- `status-2.jpg`: Frame 1515 (50.5 s), first merge of the real head
-- `status-3.jpg`: Frame 1350, the head at full size
-- `status-4.jpg`: Frame 1515, the head at full size
+- `status-1.jpg`: Frame 1350, all parts real (top) and the approved bloom-opening (bottom)
+- `status-2.jpg`: Frame 1515, all parts real (top) and the approved bloom-hero (bottom)
+- `status-3.jpg`: Head at 1350: build (left), approved (right)
+- `status-4.jpg`: Head at 1515: build (left), approved (right)
