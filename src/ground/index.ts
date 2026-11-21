@@ -5,12 +5,12 @@ import type { Caster } from '../core/shadow.ts'
 import { endStandIn } from '../core/standins.ts'
 import { makeSurface, type Surface } from '../core/shading.ts'
 import { right, toward } from '../field/layout.ts'
-import { grassTimes } from './cover.ts'
+import { grassCover, grassTimes } from './cover.ts'
 import { clodScatter, crumbFragment, crumbScatter, crumbVertex, laneDir, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
 import { grassFragment, grassVertex, tufts } from './grass.ts'
 import { litterPixels } from './litter.ts'
-import { clodReliefM, clodScale, detailScale, emergence, litterTileM, ridgeHeightM, soilFragment, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex } from './soil.ts'
+import { clodReliefM, clodScale, detailScale, emergence, groundStates, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilReliefM, soilTileM, soilVertex, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
@@ -24,6 +24,8 @@ export class Ground {
   readonly grass: Surface
   readonly loose: Surface
   readonly mesh = new THREE.Group()
+  // For what lies on the ground, puddles and frost: the height of the near ground in meters (soilHeight(p, soilLod(p)), flat beyond it), where water stands (pooled) and frost settles (frosted), and where grass grows (grassMask). Their uniforms are in `shared`.
+  static readonly glsl = { height: soilHeight, states: groundStates, cover: grassCover }
   private readonly cast: Caster[] = []
   private readonly uniforms: Record<string, THREE.IUniform>
 
@@ -51,6 +53,7 @@ export class Ground {
       uEmerge: { value: new THREE.Vector4(emergence.riseS, emergence.liftM, emergence.radiusM, emergence.cracks) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
+      uWater: { value: new THREE.Vector2(waterLevelsM[0], waterLevelsM[1]) },
       uMeanInv: { value: new THREE.Vector3(1 / soilMean[0], 1 / soilMean[1], 1 / soilMean[2]) },
     }
     this.surface = makeSurface({ name: 'soil', vertex: soilVertex, fragment: soilFragment, castShadow: false, uniforms: this.uniforms })
@@ -73,6 +76,10 @@ export class Ground {
   get casters(): Caster[] {
     this.uniforms.uCast.value = 1
     return this.cast
+  }
+
+  get shared(): Record<string, THREE.IUniform> {
+    return this.uniforms
   }
 
   show(visible: boolean): void {

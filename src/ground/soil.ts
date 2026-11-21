@@ -64,6 +64,22 @@ float soilHeight(vec2 p, float lod) {
 }
 `
 
+// The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
+// Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
+export const waterLevelsM = [-0.03, -0.0075]
+export const groundStates = /* glsl */ `
+uniform vec2 uWater;
+float waterLevel(float wet) {
+  return mix(uWater.x, uWater.y, wet);
+}
+float pooled(float heightM, float wet) {
+  return wet * smoothstep(0.0, 0.003, waterLevel(wet) - heightM);
+}
+float frosted(float h, float under) {
+  return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
+}
+`
+
 export const soilVertex = /* glsl */ `
 in vec3 position;
 out vec3 vWorld;
@@ -101,6 +117,7 @@ uniform float uLitter;
 uniform vec2 uScales;
 uniform vec3 uMeanInv;
 ${soilHeight}
+${groundStates}
 ${cropLight}
 ${grassCover}
 
@@ -146,6 +163,7 @@ void main() {
   vec2 broken = emerge(p);
   vec2 tilt = g - vec2(emerge(p + vec2(0.0003, 0.0)).x - broken.x, emerge(p + vec2(0.0, 0.0003)).x - broken.x) / 0.0003;
   albedo *= 1.0 - 0.35 * broken.y;
+  float pool = pooled(vWorld.y, uWet) * fade;
 #else
   vec2 uvB = TURN_B * p * (uTiles.x * 0.73) + vec2(0.37, 0.61);
   vec4 cB = texture(tColor, uvB);
@@ -170,15 +188,17 @@ void main() {
   vec2 tilt = g * 1.6 * clod - uToward * slope;
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
   albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
+  float pool = pooled((h - 0.55) * uRelief.x - 0.006 * (1.0 - ridge) * rowAmt, uWet);
 #endif
 
-  vec3 n = normalize(vec3(tilt.x, 1.0, tilt.y));
+  vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(luma) * vec3(1.0, 0.9, 0.8), 0.5) * 0.24, damp);
   albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under));
+  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * frosted(h, under));
+  albedo *= 1.0 - 0.45 * pool;
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
@@ -197,10 +217,11 @@ void main() {
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = uWet * uWet * (1.3 - rough);
+  float gloss = uWet * uWet * (1.3 - rough) * (1.0 - pool);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * gloss * 0.25 * lit;
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
   color += skyAmbient(reflect(-v, n)) * graze * gloss * 0.1 * open * (1.0 - 0.8 * under);
+  color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
 #ifdef NEAR
   if (uDew > 0.0) {
