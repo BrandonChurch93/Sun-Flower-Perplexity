@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { FullscreenPass, type Uniforms } from '../../core/fullscreen.ts'
 import { glslCommon, shared } from '../../core/shading.ts'
 import type { WorldDef } from '../../core/world.ts'
+import { windToward } from '../../plant/wind.ts'
 import { fogLight } from '../../weather/fog/index.ts'
 
 // There is no sky in the frost: this is the fog itself where nothing stands in it, slow banks high up, and the sun's disc as the fog lets it through.
@@ -11,11 +12,14 @@ uniform vec4 uProj;
 uniform float uPixelAngle;
 uniform float uNow;
 uniform vec3 uDisc;
+uniform vec2 uToward;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${fogLight}
 
-const float DISC = 0.018;
+const float DISC = 0.0145;
+const float DISC_SOFT = 0.65;
+const float WISPS = 0.16;
 
 void main() {
   vec2 ndc = vUv * 2.0 - 1.0;
@@ -26,10 +30,13 @@ void main() {
   float el = asin(clamp(d.y, -1.0, 1.0));
   vec3 color = fogLight(d);
   vec2 deck = d.xz / (max(d.y, 0.0) + 0.35);
-  float banks = 0.6 * valueNoise(deck * vec2(1.7, 1.1) + vec2(0.011 * uNow, 3.0)) + 0.4 * valueNoise(deck * vec2(3.9, 2.3) + vec2(-0.017 * uNow, 11.0));
-  color *= 1.0 + 0.07 * (banks - 0.5) * smoothstep(0.02, 0.2, el);
+  // The fog overhead is a slow deck of thicker and thinner air that drifts with the wind, the finer wisps a little faster than the broad ones.
+  vec2 broad = deck - uToward * (0.035 * uNow);
+  vec2 fine = deck - uToward * (0.06 * uNow);
+  float banks = 0.5 * valueNoise(broad * vec2(1.7, 1.1) + vec2(0.0, 3.0)) + 0.32 * valueNoise(fine * vec2(3.9, 2.3) + vec2(0.0, 11.0)) + 0.18 * valueNoise(fine * vec2(8.3, 4.9) + vec2(5.0, 0.0));
+  color *= 1.0 + WISPS * (banks - 0.5) * smoothstep(0.02, 0.2, el);
   // The disc is white through the fog and has no hard edge of its own. As the fog thins round it, it stands out a little more.
-  float soft = DISC * (0.45 - 0.15 * uFogThin);
+  float soft = DISC * (DISC_SOFT - 0.15 * uFogThin);
   color = mix(color, uDisc * (1.0 + 0.3 * uFogThin), 1.0 - smoothstep(DISC - soft, DISC + soft, theta));
   float grey = dot(color, vec3(0.3, 0.6, 0.1));
   if (uDiag == 7) color = vec3(grey);
@@ -51,6 +58,7 @@ export class FrostSky {
       uProj: { value: new THREE.Vector4() },
       uPixelAngle: { value: 0.001 },
       uNow: { value: 0 },
+      uToward: { value: new THREE.Vector2(windToward.x, windToward.z) },
       uDisc: { value: new THREE.Vector3().setScalar(def.sky.disc) },
     })
   }

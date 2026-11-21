@@ -257,7 +257,7 @@
       {"time": 50.5, "distanceM": 0.8685, "heightM": 1.6595, "aimHeightM": 1.6445, "frameX": 0.6115, "azimuthDeg": 20, "focalMm": 35},
       {"time": 52, "distanceM": 0.9264, "heightM": 1.6809, "aimHeightM": 1.6548, "frameX": 0.6055, "azimuthDeg": 20.6, "focalMm": 35},
       {"time": 58.5, "distanceM": 4.643, "heightM": 2.7843, "aimHeightM": 1.7125, "frameX": 0.5054, "azimuthDeg": 23.24, "focalMm": 25},
-      {"time": 60, "distanceM": 5.2545, "heightM": 3.0172, "aimHeightM": 1.7229, "frameX": 0.5054, "azimuthDeg": 23.74, "focalMm": 24}
+      {"time": 60, "distanceM": 5.62, "heightM": 3.1565, "aimHeightM": 1.7291, "frameX": 0.5054, "azimuthDeg": 24.04, "focalMm": 24}
     ]
   },
   "field": {
