@@ -150,7 +150,8 @@ const YOUNG_SHORT = [0, 0, 0.2]
 const YOUNG_FRINGE = 1.8
 // The bud comes out wrapped: its first bracts stand on the stem's own tip, lean in over it by this much and take this long to unfold, so nothing comes out through the stem's skin.
 const YOUNG_IN = [0.5, 0.6, 0.7]
-const UNFOLD_S = [0.3, 2.6]
+const UNFOLD_S = [0, 0.3, 0.7]
+const UNFOLD_TAKES_S = 1.6
 const LENGTHEN_S = [0.1, 1.9]
 const TIP_WIDE = 1.2
 const TIP_HIGH = 0.0048
@@ -483,7 +484,6 @@ export function create(options: PartOptions): PlantPart | null {
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
     const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, time)
-    const unfold = smoothstep(bloom0 - 18 + UNFOLD_S[0], bloom0 - 18 + UNFOLD_S[1], time)
     const lengthen = smoothstep(bloom0 - 18 + LENGTHEN_S[0], bloom0 - 18 + LENGTHEN_S[1], time)
     const tipR = (1 - smoothstep(bloom0 - 16, bloom0 - 14, time)) * (TIP_WIDE * stemR(1) + 0.0004)
     const tipH = -SEAT * D
@@ -494,6 +494,7 @@ export function create(options: PartOptions): PlantPart | null {
       const spread = lerp(k.star, k.spread, early)
       const crown = lerp(k.crown, k.claw, early)
       const tuft = k.series === 2 ? 1 - crown : 0
+      const unfold = smoothstep(bloom0 - 18 + UNFOLD_S[k.series], bloom0 - 18 + UNFOLD_S[k.series] + UNFOLD_TAKES_S, time)
       const L = bractLength(i, time) * k.long * lerp(1, lerp(SHUT_LONG_LATE[k.series], SHUT_LONG[k.series], early), lerp(tight, globe, early)) * (1 + young * (YOUNG_LONG[k.series] * k.leafy * lengthen - YOUNG_SHORT[k.series] * (1 - k.leafy))) * (1 + (lerp(CROWN_LONG_LATE, CROWN_LONG, early) * crown + TUFT_LONG * tuft * early + lerp(SPREAD_LONG_LATE, SPREAD_LONG, early) * spread) * globe)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R * (1 + 1.2 * young), 0.019) * (1 + YOUNG_WIDE[k.series] * young) * k.wide * lerp(1, lerp(SHUT_BROAD_LATE[k.series], SHUT_BROAD[k.series], early), tight) * (1 - SPREAD_SLIM * spread * globe * early) * (1 + TUFT_BROAD * tuft * globe * early) * (1 - CROWN_SLIM * crown * globe * early)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
