@@ -18,10 +18,12 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
 setLeafTurn(companionVariant, 228.3 * RAD)
-// Three of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it and a long low one in the corner.
-setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 13.8 })
+// Four of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it, a long low one in the corner
+// and the top one, which keeps the length it had before the top leaves were shortened.
+setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 14.8 })
 setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
-setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 45.7, lengthScale: 1.9 })
+setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 36, lengthScale: 1.75 })
+setLeafHold(companionVariant, 23, { lengthScale: 1.56 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
@@ -32,8 +34,8 @@ export const farVariants = [131, 149, 157, 173]
 export type Tier = 'near' | 'far' | 'pictures'
 const AHEAD_S: Record<Tier, number[]> = {
   near: [-4.5, 1.5, 3.6, -1.5, -3.5, -0.5, -2.5],
-  far: [-5, 1.5, -3, -4],
-  pictures: [-5, -2.5, -4.5, -3.5],
+  far: [-4.5, 1.5, -3, -4],
+  pictures: [-4.6, -2.5, -4.2, -3.5],
 }
 const EARLY_S = 3
 const ramp = (a: number, b: number, t: number): number => {
@@ -41,7 +43,7 @@ const ramp = (a: number, b: number, t: number): number => {
   return x * x * (3 - 2 * x)
 }
 export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
-export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(53, 59, time))
+export const kindTime = (time: number, index: number, tier: Tier): number => time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, 60, time))
 
 // A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
 const AWAY_SHARE = 0.85
@@ -157,7 +159,7 @@ export function fieldPlaces(): FieldPlaces {
         // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
         const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0
         const list = close ? near : far
-        list.push(x, z, turn, tall ? 0.76 + 0.1 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
+        list.push(x, z, turn, tall ? 0.72 + 0.09 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
       }
       // The pictures thin out with distance and hand over to the carpet plant by plant.
