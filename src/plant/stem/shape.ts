@@ -15,7 +15,7 @@ export const TOP_M = heightAt(END)
 
 // Under its seed leaves the young stem widens into the collar they stand on. It is there while the seedling is one, and nothing of it is left when the stem is a stalk.
 export function collarAt(time: number): number {
-  return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(12, 20, time))
+  return 0.55 * smoothstep(2.2, 5, time) * (1 - smoothstep(8.5, 12.5, time))
 }
 export const COLLAR_M = 0.014
 // The seedling's stem stands a little sturdier than the sprout it was and the stalk it becomes, by this share of the collar's swell.

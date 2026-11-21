@@ -577,7 +577,8 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const raining = stateUniforms.uPlantWet.value > 0.5
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length
         const b = leaves.bodies[k]
@@ -608,7 +609,13 @@ export function create(options: PartOptions): PlantPart | null {
         const own = beadSpot[i * 4 + 2]
         const open = smoothstep(0.07, 0.6, seedLeafAngle(b.side < 0 ? 0 : 1, time))
         const out0 = beadSpot[i * 4 + 3] * 0.6
-        const size = raining ? (own > 0.85 ? 0.0006 + 0.004 * (own - 0.85) : 0.00018 + 0.0003 * beadSpot[i * 4 + 3]) : beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        const wetSize = own > 0.85 ? 0.0003 + 0.002 * (own - 0.85) : 0.00012 + 0.0002 * beadSpot[i * 4 + 3]
+        const dewSize = beadAt(own, fa / (b.rings - 1), 0, time, bead).radiusM * (own > 0.85 ? DEW_EDGE : DEW_FACE * clamp(1.5 - 2 * beadSpot[i * 4 + 3], 0, 1))
+        const size = lerp(dewSize, wetSize, rain)
+        const lit = b.side < 0 ? 0 : 1
+        tint[i * 3] = lerp(lerp(0.07, 0.2, lit), 0.02, rain)
+        tint[i * 3 + 1] = lerp(lerp(0.17, 0.26, lit), 0.06, rain)
+        tint[i * 3 + 2] = lerp(lerp(0.1, 0.12, lit), 0.035, rain)
         seat[o + 3] = size * smoothstep(out0, out0 + 0.4, open) * (1 - wither)
       }
     }
