@@ -41,7 +41,7 @@ void main() {
   float facing = max(dot(n, v), 0.0);
   float mirror = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
   vec3 r = reflect(-v, n);
-  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 4.0), smoothstep(-0.06, 0.02, r.y));
+  vec3 sky = mix(uGroundBounce * 0.25, skyMirror(normalize(vec3(r.x, abs(r.y), r.z)), 3.0), smoothstep(-0.06, 0.02, r.y));
   float clear = exp(-depth / 0.008) * (1.0 - mirror);
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;

@@ -126,10 +126,16 @@ void main() {
     color = vec3(0.035, 0.03, 0.026) * skyAmbient(n) + seen(reflect(-v, n)) * 0.03;
   } else {
     float facing = max(dot(n, v), 0.0);
-    float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
-    float lens = vKind > 0.5 ? 0.6 * smoothstep(0.3, 0.9, facing) : 0.2 + 0.25 * smoothstep(0.6, 1.0, vTop);
-    alpha = saturate(mirror + lens + 0.06);
-    color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, vKind > 0.5 ? 0.75 : 0.92)) * lens) / alpha;
+    if (vKind > 0.5) {
+      float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
+      float lens = 0.6 * smoothstep(0.3, 0.9, facing);
+      alpha = saturate(mirror + lens + 0.06);
+      color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
+    } else {
+      float mirror = 0.06 + 0.94 * pow(1.0 - facing, 3.0);
+      alpha = saturate(mirror + 0.05 + 0.2 * vTop * vTop);
+      color = (seen(reflect(-v, n)) * mirror + vec3(0.04, 0.036, 0.032) * skyAmbient(n) * 0.1) / alpha;
+    }
   }
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
 }
