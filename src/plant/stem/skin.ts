@@ -95,10 +95,10 @@ void main() {
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.06, 0.082, 0.016), vec3(0.25, 0.255, 0.05), tone);
-  grown = mix(grown, vec3(0.46, 0.44, 0.18), 0.85 * thread);
-  grown *= 1.0 - 0.34 * ribbed * furrow;
-  grown = mix(grown, vec3(0.44, 0.42, 0.16), ribbed * smoothstep(0.25, 0.9, crest) * (0.25 + 0.6 * streak));
+  vec3 grown = mix(vec3(0.042, 0.069, 0.006), vec3(0.18, 0.225, 0.02), tone);
+  grown = mix(grown, vec3(0.29, 0.33, 0.05), 0.7 * thread);
+  grown *= 1.0 - 0.15 * ribbed * furrow;
+  grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.15 + 0.4 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
@@ -118,8 +118,8 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = ${GUIDE.sheen} * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
-  t.occlusion = vSkin2.x * (1.0 - 0.32 * ribbed * furrow);
+  t.sheen = mix(0.3, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.occlusion = vSkin2.x * (1.0 - 0.12 * ribbed * furrow);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
 }
 `

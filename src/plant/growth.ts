@@ -93,9 +93,10 @@ const bodyCurve = new Monotone([
   [inStage(bud0, bud1, 0.263), 0.02],
   [inStage(bud0, bud1, 0.579), 0.037],
   [inStage(bud0, bud1, 0.79), 0.054],
-  [inStage(bud0, bud1, 0.947), 0.068],
-  [inStage(bloom0, bloom1, 0.25), discRadius * 0.96],
-  [inStage(bloom0, bloom1, 0.5), discRadius * 0.985],
+  [inStage(bud0, bud1, 0.947), 0.061],
+  [inStage(bloom0, bloom1, 0.25), discRadius * 0.825],
+  [inStage(bloom0, bloom1, 0.5), discRadius * 0.9],
+  [inStage(bloom0, bloom1, 0.75), discRadius * 0.965],
   [inStage(bloom0, bloom1, 0.9375), discRadius],
 ])
 
@@ -132,17 +133,17 @@ export function bodyHalfDepth(time: number): number {
 }
 const elevationCurve = new Monotone([
   [tiltStart, 90],
-  [turnStart, 13],
+  [turnStart, 34],
   [turnEnd, 9],
   [config.film.durationSeconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
-const EARLY_TURN = 19 * RAD
+const EARLY_TURN = 6 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
-export const RAY_FIRST = 2.4
+export const RAY_FIRST = 3.2
 // How long a shut ray is, as a share of its open length.
-const RAY_SHUT = 0.72
-const BRACT_LONGEST = 0.07
+const RAY_SHUT = 0.85
+const BRACT_LONGEST = 0.085
 
 // The head stands upright as a bud, then leans over to the side it will face for good. It never turns back.
 export function headElevation(time: number): number {
@@ -191,23 +192,32 @@ export function bractLength(j: number, time: number): number {
   return r <= 0 ? 0 : Math.min(0.01 * smoothstep(0, 0.01, r) + r, BRACT_LONGEST * headScale()) * (0.85 + 0.3 * rnd(31, j))
 }
 
-// A ray grows folded inside the bud to most of its length, and stretches the rest of the way as it opens.
+// A ray grows folded inside the shut bud to most of its length, so nothing lengthens across the disc once the bracts part. It stretches the rest of the way as it opens.
 export function rayLength(k: number, time: number): number {
-  const grown = smootherstep(bloom0 - 1, bloom0 + 0.7, time)
+  const grown = smootherstep(inStage(bud0, bud1, 0.58), inStage(bud0, bud1, 0.87), time)
   return rayFull * headScale() * grown * lerp(RAY_SHUT, 1, rayOpen(k, time)) * (0.92 + 0.16 * rnd(40, k))
 }
 
-// Rays open by sector: one side of the head is seconds ahead of the other.
+// Rays open as a front inside the bloom stage: the sector round `RAY_FIRST` lifts together, then the front travels round the head
+// both ways, so the far side opens last.
+const RAY_SECONDS = 3
+const frontCurve = new Monotone([
+  [0, bloom0],
+  [45 * RAD, bloom0],
+  [95 * RAD, bloom0 + 2.4],
+  [140 * RAD, bloom0 + 4],
+  [Math.PI, bloom1 - RAY_SECONDS - 0.3],
+])
+
 export function rayOpen(k: number, time: number): number {
-  const around = (k / rayCount) * TAU
-  const delay = 0.85 * (1 - Math.cos(around - RAY_FIRST)) + 0.25 * rnd(41, k)
-  const start = bloom0 + 0.45 + delay * 2.3
-  return smootherstep(start, start + 2, time)
+  const away = Math.acos(Math.cos((k / rayCount) * TAU - RAY_FIRST))
+  const start = frontCurve.at(away) + 0.3 * rnd(41, k)
+  return smootherstep(start, start + RAY_SECONDS, time)
 }
 
 // A ray lies folded in over the face until it opens.
 export function rayAngle(k: number, time: number): number {
-  return lerp(-48, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
+  return lerp(-68, 84 + 12 * (rnd(42, k) - 0.5), rayOpen(k, time)) * RAD
 }
 
 // The seed leaves shrink as the true leaves take over, then wither and are shed before the bud swells.
@@ -286,7 +296,7 @@ export function leafLength(i: number, time: number): number {
   const age = leafAge(i, time)
   if (age <= 0) return 0
   const rank = i / (leafCount - 1)
-  const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
+  const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
   return full * (1 - Math.exp(-Math.pow(age / lerp(7, 3.6, smoothstep(0.45, 0.8, rank)), 1.1)))
 }
 

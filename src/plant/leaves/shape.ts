@@ -1,6 +1,6 @@
 // The flat shape of a sunflower leaf: its outline, its teeth and where its veins run.
 // Everything here is in the leaf's own two numbers: s along the midrib (0 at the stalk, 1 at the tip) and w across (-1 and 1 at the two edges).
-import { clamp, smoothstep } from '../../core/curves.ts'
+import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { hash01 } from '../../core/random.ts'
 
 export const SETS = 3
@@ -38,7 +38,8 @@ export function widthAt(s: number, cord: number, tip: number): number {
   const h0 = 0.1 + 0.46 * cord
   if (s < WIDEST) return h0 + (1 - h0) * Math.pow(Math.sin((0.5 * Math.PI * s) / WIDEST), 0.75)
   const q = (s - WIDEST) / (1 - WIDEST)
-  return Math.pow(Math.max(0, 1 - Math.pow(q, 1.7)), 0.9) * (1 - tip * smoothstep(0.5, 0.97, q))
+  // Past its widest the blade narrows almost straight to a drawn out point: a heart, not an oval.
+  return lerp(Math.pow(Math.max(0, 1 - Math.pow(q, 1.7)), 0.9), Math.pow(Math.max(0, 1 - q), 0.8), 0.65) * (1 - tip * smoothstep(0.5, 0.97, q))
 }
 
 // How far the lobes of a heart shaped base reach back past the end of the stalk, as a share of the length.

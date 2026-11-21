@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.05, 0.095, 0.028) : vec3(0.075, 0.115, 0.048)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.03, 0.032, 0.006) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.08, 0.095, 0.008) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -96,7 +96,6 @@ void main() {
   float hole = mark.r + vMark.y * edge - vMark.x - 0.3 * (1.0 - vState.w);
   float tear = -1.0;
   if (vMark.z > 1.5 && vUv.x > 0.0) tear = (vUv.x - 0.42) * 0.085 - abs(vUv.y - 0.5 - 0.1 * (vUv.x - 1.0) + 0.02 * (mark.g - 0.5));
-  if (hole > 0.0 || tear > 0.0) discard;
   float scar = max(smoothstep(-0.05, -0.008, hole), smoothstep(-0.012, -0.002, tear));
   float dryFrom = 0.8 - (vMark.z - 1.0);
   float dry = vMark.z > 0.5 && vMark.z < 1.5 ? smoothstep(dryFrom, dryFrom + 0.13, vUv.y + 0.1 * (mark.g - 0.5) + 0.25 * (vMark.z - 1.0) * abs(vUv.x)) * vState.w : 0.0;
@@ -108,22 +107,24 @@ void main() {
   float lum = dot(var, vec3(0.3, 0.6, 0.1));
   float tone = 0.86 + 0.28 * mark.g;
 
-  vec3 upper = vec3(0.036, 0.07, 0.022) * mix(vec3(1.0), var, 0.85) * tone;
+  vec3 upper = vec3(0.045, 0.086, 0.028) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
   vec3 albedo = (top ? upper : under) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
-  albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
+  albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
-  // The blade is thick and felted: against the sun it passes a dull warm olive, and more only in small thin spots. The main veins hold the light back.
+  // With the sun behind it the blade glows yellow green, unevenly, and its veins stand dark in the glow: they are thick and hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  float thin = 1.0 + 1.6 * smoothstep(0.84, 0.96, mark.g);
-  vec3 through = vec3(0.03, 0.032, 0.006) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
-  through *= 1.0 - 0.6 * vein.r;
-  through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.036, 0.03, 0.005) * thin * (0.5 + 0.5 * lum), yellow);
+  // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
+  float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
+  float thin = (0.6 + 0.6 * smoothstep(0.3, 0.9, mark.g)) * taper;
+  vec3 through = vec3(0.08, 0.094, 0.008) * thin * (0.45 + 0.55 * pow(lum, 1.7)) * (1.0 - 0.3 * thick);
+  through *= 1.0 - 0.8 * vein.r;
+  through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
+  through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
@@ -134,7 +135,7 @@ void main() {
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
-  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (1.0 - 0.5 * smoothstep(0.8, 0.92, mark.g));
+  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through;
@@ -144,7 +145,10 @@ void main() {
   t.wax = 0.12 * margin;
   t.sheen = (top ? 0.3 : 0.25) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
+  // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
+  if (hole > 0.0 || tear > 0.0) discard;
+  outColor = shaded;
 }
 #endif
 `
