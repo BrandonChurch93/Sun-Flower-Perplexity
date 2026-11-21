@@ -178,7 +178,7 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, f.a, dot(c, vec3(0.2126, 0.7152, 0.0722)));
+  c += texture(tBloom, vUv).rgb * uBloom + texture(tFlare, vUv).rgb * uFlare + star(gl_FragCoord.xy) + sunAir(gl_FragCoord.xy, abs(f.a), dot(c, vec3(0.2126, 0.7152, 0.0722)));
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;
