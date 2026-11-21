@@ -133,6 +133,8 @@ export function ringStrip(segments: number, at: (az: number) => { radius: number
   return geometry
 }
 
+export const skylineLayerSalt = (i: number): number => i * 17.3 + 1.7
+
 export function skylineStrip(i: number, sunAzimuthDeg: number): THREE.BufferGeometry {
   return ringStrip(SKYLINE[i].segments, (az) => skylineAt(i, az, sunAzimuthDeg))
 }
