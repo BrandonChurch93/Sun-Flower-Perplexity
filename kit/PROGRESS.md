@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 04:23 UTC · Phase 2: status 11, round 1 machine checks green
+- Last push: 2026-11-21 04:33 UTC · Round 1: pack built, critic started; shot list says four cuts
 - Last status: 11 · 2026-11-21 04:22 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -311,7 +311,7 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-None.
+- `reviewer_01` · critic, R4 blockout, round 1 · owns no folder and no branch, works in its own sandbox with the 10 pack images as attachments · brief: its section of `kit/07-QUALITY-BAR.md`, the severity scale and the return format, word for word, plus the pack's manifest · model family: GPT (the Builder is on Claude) · started 04:33 UTC · limit 05:18 UTC (`limits.agentWaitMinutes` 45)
 
 Finished in this task:
 
@@ -328,7 +328,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 
 - Started 2026-11-21 04:17 UTC. Judges commit `5b235aa`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent.
 - [x] Machine checks (`npm run gate -- --phase 2 --machine`): 04:20 UTC, all 12 green (G1 to G12; G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
-- [ ] Pack (`npm run pack -- --phase 2 --round 1`)
+- [x] Pack (`npm run pack -- --phase 2 --round 1`): 04:31 UTC, 10 files, each at most 1400 px on its long edge, with no metadata: three whole film sheets of 12 frames, one sheet of 12 consecutive frames across each of the four cuts, and the eight key pairs on three images. Everything at the `review` tier. The settled line of the `field` key goes with pair 8, word for word. The Builder looked at every file before sending it
 - [ ] R4 blockout answer in `scorecards/round-001/`
 - [ ] Fixes
 - [ ] Summary, status, push
@@ -371,6 +371,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
 - 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
 - 2026-11-21 04:23 UTC · Phase 2: status 11, round 1 machine checks green
+- 2026-11-21 04:33 UTC · Round 1: pack built, critic started; shot list says four cuts
 
 ## Session log
 

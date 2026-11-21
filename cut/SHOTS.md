@@ -1,6 +1,6 @@
 # Shots
 
-One camera move runs through the whole film. The camera never cuts: at each of the five cuts the world changes around a plant and a camera that carry straight on, so the plant sits at the same place and size on both sides of every cut. The numbers below come from `camera.keys` in `config/showcase.json` and from `src/units/<id>/index.ts`, read at the first and last frame of each segment. Positions in the frame are fractions of the frame, x from the left and y from the top.
+One camera move runs through the whole film. The camera never cuts: at each of the four cuts the world changes around a plant and a camera that carry straight on, so the plant sits at the same place and size on both sides of every cut. Between `bloom` and `field` the world stays the same, so there is no cut there. The numbers below come from `camera.keys` in `config/showcase.json` and from `src/units/<id>/index.ts`, read at the first and last frame of each segment. Positions in the frame are fractions of the frame, x from the left and y from the top.
 
 Lens: a 36 mm wide gate. Focus sits on the growing tip of the plant in every frame, and on the center of the head once there is a head. Shutter 180°.
 
