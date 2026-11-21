@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 04:33 UTC · Round 1: pack built, critic started; shot list says four cuts
+- Last push: 2026-11-21 04:35 UTC · Round 1: R4 blockout answer, score 7 with one severe issue
 - Last status: 11 · 2026-11-21 04:22 UTC · Phase 2 · round 1
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -43,12 +43,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
-| 2 | 3.50 h | 2.39 h |
+| 2 | 3.50 h | 2.57 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 3.52 h |
+| Whole build | 30.00 h | 3.70 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -311,10 +311,11 @@ None.
 
 One entry per supporting agent while it runs: its name, the folder it owns, its branch, its brief in one line, when it started, and its limit or the time of its last push.
 
-- `reviewer_01` · critic, R4 blockout, round 1 · owns no folder and no branch, works in its own sandbox with the 10 pack images as attachments · brief: its section of `kit/07-QUALITY-BAR.md`, the severity scale and the return format, word for word, plus the pack's manifest · model family: GPT (the Builder is on Claude) · started 04:33 UTC · limit 05:18 UTC (`limits.agentWaitMinutes` 45)
+None.
 
 Finished in this task:
 
+- `reviewer_01` · critic, R4 blockout, round 1, GPT family · started 04:33 UTC, answered 04:35 UTC · one JSON object, saved word for word as `scorecards/round-001/R4-blockout.json`. It saw only the 10 pack images, its section of `kit/07-QUALITY-BAR.md`, the severity scale, the return format and the pack's manifest.
 - `board_scout_a`, `board_scout_b`, `board_scout_c`, `motion_scout` · reported by 02:35 UTC · 90 photographs over 15 parts in `references/cache/board/<part>/` (six each, with `NOTES.md` and a contact sheet) and four motion studies in `references/cache/board/motion/`. Caveats they gave: many pictures are stock previews with a light watermark or under 900 px; no usable reference was found for a cracked hard soil crust, a macro of an adult stem at mid height, or dew on bare soil; in the stem study the weeks of leaf growth come from published descriptions, not from footage. The cache is never committed. The Builder writes `references/BOARD.md` from the notes.
 - `harness_builder` · reported 03:10 UTC · branch `agent/tools` at `47395be`, merged into `main` at `9ae6135`. Commands: `sheet` (`--film`, `--cut N`, `--unit id`), `compare --key id`, `film` (chunks, resumable, `--first`, `--last`, `--unit`, `--format`, `--from-master`, `--join`, M1 on every frame), `measure --unit id` (M1 to M3), `pack --phase N --round R`, `keep` (`--clips`, `--unit`), `seq`, `crops --frame`, `clip --unit`, `stress --unit`. Its own test: a whole preview film at the draft tier, 1800 frames, 28.6 MB. The looks it made went to `agent/tools-looks`, which is never merged.
 - `modes_builder` · reported 03:14 UTC · branch `agent/director` at `bf4642d`, merged into `main` at `7943dca` (checked by the Builder: build clean, 59 tests, G5 green). The `live` mode (drag to orbit, wheel or pinch to move in and out, `0` resets, a timeline bar, Space plays, arrows step), the menu on `M`, and `autopilot` (`hold=1`, `loop=1`, `unit=`, with `window.autopilot` reporting frame, playing, done and error). Not tested by it: the path where the asset set fails to load, a real GPU, Firefox, Safari. These go to the QA gauntlet.
@@ -329,7 +330,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - Started 2026-11-21 04:17 UTC. Judges commit `5b235aa`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent.
 - [x] Machine checks (`npm run gate -- --phase 2 --machine`): 04:20 UTC, all 12 green (G1 to G12; G12: the worst step ratio across each of the four cuts is 1.00, limit 1.5)
 - [x] Pack (`npm run pack -- --phase 2 --round 1`): 04:31 UTC, 10 files, each at most 1400 px on its long edge, with no metadata: three whole film sheets of 12 frames, one sheet of 12 consecutive frames across each of the four cuts, and the eight key pairs on three images. Everything at the `review` tier. The settled line of the `field` key goes with pair 8, word for word. The Builder looked at every file before sending it
-- [ ] R4 blockout answer in `scorecards/round-001/`
+- [x] R4 blockout answer in `scorecards/round-001/R4-blockout.json`: arrived 04:35 UTC, two minutes after the critic started. Score 7, one severe issue and three major ones, so the pass bar (7 with no severe issue open) does not hold. The key went into the round folder after it, since this round has one critic
 - [ ] Fixes
 - [ ] Summary, status, push
 
@@ -372,6 +373,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
 - 2026-11-21 04:23 UTC · Phase 2: status 11, round 1 machine checks green
 - 2026-11-21 04:33 UTC · Round 1: pack built, critic started; shot list says four cuts
+- 2026-11-21 04:35 UTC · Round 1: R4 blockout answer, score 7 with one severe issue
 
 ## Session log
 
