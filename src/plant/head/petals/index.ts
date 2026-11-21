@@ -42,6 +42,8 @@ const TIP_TUCK = 0.35
 // Where rays have lifted away, the shut straps beside the gap comb over it and the ones across from it reach past the eye.
 const GAP_COMB = 0.5
 const GAP_REACH = 0.16
+// After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
+const LATE_FROM_S = 52
 
 // How far each column of the tip stands out or back, in shares of the length: three teeth, a notch, or a slant.
 const TEETH = [
@@ -91,6 +93,12 @@ interface Ray {
   nickRow: number
   nickSide: number
   seed: number
+  lateLong: number
+  lateWide: number
+  lateLay: number
+  lateDroop: number
+  lateCurl: number
+  lateTwist: number
 }
 
 function outline(u: number): number {
@@ -156,6 +164,12 @@ function makeRays(seed: number): Ray[] {
       nickRow: k === nick ? 7 + Math.floor(5 * r(19, k)) : -1,
       nickSide: r(23, k) < 0.5 ? -1 : 1,
       seed: r(12, k),
+      lateLong: r(37, k) < 0.14 ? 0.03 : 0.06 + 0.16 * r(60, k),
+      lateWide: 0.12 * r(61, k),
+      lateLay: rank ? -0.1 - 0.2 * r(62, k) : r(62, k) < 0.3 ? 0.1 + 0.12 * r(63, k) : -0.05 * r(63, k),
+      lateDroop: 0.08 + 0.2 * r(64, k),
+      lateCurl: rank ? (r(65, k) < 0.45 ? 0.5 + 0.9 * r(66, k) : 0.15 * r(66, k)) : r(65, k) < 0.25 ? 0.25 + 0.35 * r(66, k) : 0.1 * r(66, k),
+      lateTwist: (r(4, k) < 0.5 ? -1 : 1) * (r(67, k) < 0.3 ? 0.25 + 0.3 * r(68, k) : 0.06 * r(68, k)),
     }
   })
 }
@@ -251,6 +265,14 @@ export function create(options: PartOptions): PlantPart | null {
     const grown = full > 0 ? rayLength(k, time) / full : 0
     const h = pose.head
     const open = rayOpen(k, time)
+    const late = (slot: number, lead: number, spread: number, least: number, most: number): number => {
+      const start = LATE_FROM_S + lead + spread * hash01(seed, slot, k)
+      return smooth(start, start + mix(least, most, hash01(seed, slot + 1, k)), time)
+    }
+    const longer = late(70, 0, 3.5, 3, 5)
+    const sunk = late(72, 0, 2.5, 3, 4.5)
+    const curled = late(74, 0.5, 4, 2.5, 4)
+    const twisted = late(76, 0.3, 4.5, 2.5, 4)
     // An open ray lies in over the outer florets, and it is that much longer so its tip stays where the growth puts it.
     const lifted = smooth(0.1, 0.9, open)
     // A ray that is up but still cupped stands on the rim; its foot slides in over the outer florets only as it lies back.
@@ -271,7 +293,7 @@ export function create(options: PartOptions): PlantPart | null {
     const side = (n: number) => (rayOpen((k + n + rayCount) % rayCount, time) + rayOpen((k + 2 * n + rayCount) % rayCount, time)) * 0.5
     const comb = GAP_COMB * (side(2) - side(-2))
     const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0.02, 0.1, ray.cut)) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
-    const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short
+    const length = (rayLength(k, time) + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - rayLength(k, time), (FOOT_SHUT - FOOT_OPEN) * h.radius + 0.06 * full, lifted)) * ray.short * (1 + ray.lateLong * longer)
     Object.assign(frame, rayFrameAt(pose, k))
     const outward = foot * h.radius
     const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted) + 0.05 * seat) * full
@@ -295,7 +317,7 @@ export function create(options: PartOptions): PlantPart | null {
     let ny = frame.ny
     let nz = frame.nz
     const wind = pose.inputs.wind * flutter(time, ray.seed)
-    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1)
+    const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer)
     const fresh = 1 - smooth(0.02, 0.45, open)
     const ripe = smooth(0.8, 1, open)
     let pitch0 = 0
@@ -311,13 +333,13 @@ export function create(options: PartOptions): PlantPart | null {
       const flat = smooth(0, 1, unfold * 1.25 - 0.25 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
       const shut = 1.58 + 0.52 * smooth(0, 0.15, e) + 1.15 * e + 0.12 * (ray.arch - 0.5) - 0.35 * alone * smooth(0.1, 0.6, e) + (0.2 * ray.hook + TIP_TUCK * tuck) * smooth(0.75, 1, e) + RANK_PITCH * (0.5 - ray.rank) * smooth(0.15, 0.6, e)
-      const openPitch = ray.lay + ray.cup * unfold + young - shaped * (ray.droop * Math.pow(e, 1.3) - ray.nod * smooth(0.25, 0.9, e) + ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) + ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.4 * (1 - unfold) * smooth(0.7, 1, e)
+      const openPitch = ray.lay + ray.lateLay * sunk + ray.cup * unfold + young - shaped * ((ray.droop + ray.lateDroop * sunk) * Math.pow(e, 1.3) - ray.nod * smooth(0.25, 0.9, e) + (ray.tipCurl + ray.lateCurl * curled) * Math.pow(smooth(0.68, 1, e), 1.5) + ray.hard * (1 + 0.4 * curled) * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.4 * (1 - unfold) * smooth(0.7, 1, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
       const yaw = mix((0.08 + 0.62 * e) * swirl + 0.8 * ray.clump * e + 0.1 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
-      const twist = mix(SHINGLE, ray.roll + ray.twist * Math.pow(e, 1.25), along) + 0.02 * wind * e * e + 1.6 * (ray.hook - 0.09) * cupped * e
+      const twist = mix(SHINGLE, ray.roll + (ray.twist + ray.lateTwist * twisted) * Math.pow(e, 1.25), along) + 0.02 * wind * e * e + 1.6 * (ray.hook - 0.09) * cupped * e
 
       let d = pitch - pitch0
       let c = Math.cos(d)
