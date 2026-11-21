@@ -161,7 +161,7 @@ void main() {
     level -= 4.0 * twin;
     float hs = fract(h3 + 0.37 * twin + 0.61 * h1 * twin);
     // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
-    float over = smoothstep(2.0, 15.0, aFloret.z - f.time) * (1.0 - edge);
+    float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge);
     float high = w * 1.4 * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown * (1.0 - 0.3 * twin);
     float lid = tall * (0.98 + 0.14 * aSeed.x) + (0.12 + 0.1 * twin) * w * grown;
     float turn = mix((aSeed.x - 0.5) * 1.2 + 1.9 * twin, (hs - 0.5) * 0.8 + (twin - 0.5) * 0.4, over);
@@ -242,8 +242,8 @@ void main() {
     float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
     vec3 dark = mix(vec3(0.085, 0.06, 0.012), vec3(0.07, 0.1, 0.015), centre);
     vec3 pale = mix(vec3(0.31, 0.24, 0.035), vec3(0.2, 0.29, 0.045), centre);
-    vec3 ochre = vec3(0.17, 0.095, 0.026);
-    dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
+    vec3 ochre = vec3(0.3, 0.185, 0.03);
+    dark = mix(dark, ochre * 0.3, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge);
     vec3 young = mix(vec3(0.19, 0.33, 0.065), vec3(0.52, 0.72, 0.18), ridge);
