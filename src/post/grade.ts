@@ -145,8 +145,10 @@ vec3 sunAir(vec2 px, float circle, float under) {
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
+  // The lit air lies thickest along the horizon under the sun, in front of the far hills.
+  float haze = 1.7 * down * smoothstep(0.75, 1.0, depth) * exp(d.y / 0.06 - abs(d.x) / 0.25);
   float near = r / (r + 0.02);
-  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.3 * exp(-r / 0.07) + 0.45 * down * smoothstep(0.75, 1.0, depth) * exp(-r / 0.16)) * hold + uRays * rays(turn, r, down) * near;
+  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.3 * exp(-r / 0.07) + haze) * hold + uRays * rays(turn, r, down) * near;
   return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
 vec3 three(vec3 p) {
