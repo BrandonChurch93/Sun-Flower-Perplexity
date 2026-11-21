@@ -159,7 +159,7 @@ export function create(options: PartOptions): PlantPart {
         const amp = smoothstep(0, 0.05, leafLength(i, time))
         if (amp < 0.004) continue
         nodeS[nodes] = anchors.s[3 + i]
-        nodeA[nodes] = leafAzimuth(i) - Math.PI / 2
+        nodeA[nodes] = leafAzimuth(i, time) - Math.PI / 2
         nodeAmp[nodes] = amp
         nodeReach[nodes] = 0.5 * leafLength(i, time)
         nodeR[nodes] = Math.max(1e-5, base(length > 0 ? anchors.s[3 + i] / length : 0, anchors.s[3 + i]))

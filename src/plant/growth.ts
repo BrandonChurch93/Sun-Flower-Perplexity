@@ -273,9 +273,9 @@ export function setLeafTurn(v: number, turn: number | null): void {
 }
 
 // The director may also hold single leaves of one neighbor by hand, as a gardener ties a leaf back: how far it droops, how high
-// it is held (at a set angle, or lifted by an angle while it goes on settling as it would) and how long it is. A hold comes on over the seven seconds before the bloom begins, so nothing differs up to the frost.
+// it is held (at a set angle, or lifted by an angle while it goes on settling as it would), how long it is and how far round the stem it is swung. A hold comes on over the seven seconds before the bloom begins, so nothing differs up to the frost.
 // The plant itself is never held.
-export interface LeafHold { droop?: number; elevationDeg?: number; liftDeg?: number; lengthScale?: number; rollDeg?: number; foldScale?: number; sinkDeg?: number }
+export interface LeafHold { droop?: number; elevationDeg?: number; liftDeg?: number; lengthScale?: number; rollDeg?: number; foldScale?: number; sinkDeg?: number; swingDeg?: number }
 const leafHolds = new Map<number, Map<number, LeafHold>>()
 export function setLeafHold(v: number, leaf: number, hold: LeafHold | null): void {
   if (v === 0) throw new Error('The plant itself is never held.')
@@ -288,10 +288,12 @@ export function setLeafHold(v: number, leaf: number, hold: LeafHold | null): voi
 const heldLeaf = (i: number): LeafHold | undefined => (variant === 0 ? undefined : leafHolds.get(variant)?.get(i))
 const holdAt = (time: number): number => smoothstep(bloom0 - 7, bloom0, time)
 
-export function leafAzimuth(i: number): number {
+export function leafAzimuth(i: number, time?: number): number {
   const turn = variant === 0 ? 0.6 : (leafTurns.get(variant) ?? 0.6 + TAU * rnd(2))
-  if (i < OPPOSITE_LEAVES) return turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI
-  return turn + (i - OPPOSITE_LEAVES + 1) * goldenRad
+  const free = i < OPPOSITE_LEAVES ? turn + Math.floor(i / 2) * (Math.PI / 2) + (i % 2) * Math.PI : turn + (i - OPPOSITE_LEAVES + 1) * goldenRad
+  const hold = time === undefined ? undefined : heldLeaf(i)
+  const on = time === undefined ? 0 : holdAt(time)
+  return hold?.swingDeg === undefined || on === 0 ? free : free + hold.swingDeg * RAD * on
 }
 
 export function leafAge(i: number, time: number): number {
