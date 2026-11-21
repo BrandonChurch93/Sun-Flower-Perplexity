@@ -1,12 +1,12 @@
-# Status 31
+# Status 32
 
-2026-11-21 13:49 UTC
+2026-11-21 14:14 UTC
 
-- Status 31 · Phase 3 · unit bloom. Round 5 is rendering on 11207fd. Machine checks 13 of 13 green. The judged stills at 48 samples are in: M1 and M2 pass, M3 fails at both frames (0.672 at 45 s, 0.786 at 50.5 s, 0.8 needed), lower than round 4, because the rays' veins are quieter and the bracts' relief is faded. All twelve builders have their round 6 jobs with the numbers to reach.
-- Next: The pack ends at about 14:03, then three critics and ten jurors. Reports for round 6 by 14:45, the last round the look lock allows, to start before 15:21 UTC. Time used: 13.0 h of 30 h.
+- Status 32 · Phase 3 · unit bloom. Round 5 is being judged on 11207fd. The match critic gave 4: our leaves glow yellow green where the approved's are dark blue green with a bright rim, the sun is a hard point with spokes where the approved has a wide warm glow, and the field reads too sharp. The surface critic gave 7 with no severe issue, up from 5. The jury so far: 7 of 9 votes for a frame from a top-budget film, against 4 of 10 last round; four jurors named the lit hairs on the stem as their reason. Every builder has the critics' words on its part with measured tones. The field agent's round 6 branch is in and prepared: at 45 s the near heads are buds and backs, the bare stalks are behind leaves, the floor reads at the approved's tones.
+- Next: The motion critic and the last juror answer. Builders report by 14:45 UTC; merges, checks, then round 6, the last round the look lock allows, starts by 15:15 UTC. Builders whose bloom part is in start on the dawn and frost units now, on their own branches. Time used: 13.4 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Round 5 judged still, 45.0 s, approved left, ours right (48 samples)
-- `status-2.jpg`: Round 5 judged still, 50.5 s, approved left, ours right (48 samples)
-- `status-3.jpg`: The crown at 45 s at native size: approved left, ours right. The approved's bracts are slender and lit through
-- `status-4.jpg`: The opening every 0.25 s on the opening agent's branch: right side rays now start one by one from 45.02 s
+- `status-1.jpg`: The field right of the plant at 45 s: main, the field agent's round 6 branch, approved
+- `status-2.jpg`: Round 5 pack at 45 s, native size: approved (a) left, ours (b) right. Head, stem, a leaf, the neighbor
+- `status-3.jpg`: The neighbor's leaf and the sun: main, with the field agent's patch, approved (45 s above, 50.5 s below)
+- `status-4.jpg`: Round 5 motion sheet: twelve frames across the bloom, 40 to 52 s
