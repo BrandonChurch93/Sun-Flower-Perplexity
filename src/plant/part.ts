@@ -115,7 +115,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
   vec2 toSun = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   float streak = valueNoise(vec2(dot(world.xz, toSun) * 0.11, (world.x * toSun.y - world.z * toSun.x) * 0.8));
   float under = max(uCanopy * (1.0 + 0.22 * streak) - world.y, 0.0);
-  return exp(-1.5 * under / max(uSunDir.y, 0.06));
+  return exp(-mix(0.4, 1.5, smoothstep(0.2, 0.85, uCanopy)) * under / max(uSunDir.y, 0.06));
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
@@ -125,7 +125,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
 float plantSky(vec3 world) {
 #ifdef PLANT_FIELD
   float under = max(uCanopy * 1.04 - world.y, 0.0);
-  return mix(0.05, 1.0, exp(-4.5 * under / max(uCanopy, 0.05)));
+  float closed = smoothstep(0.2, 0.85, uCanopy);
+  return mix(mix(0.6, 0.05, closed), 1.0, exp(-mix(1.5, 4.5, closed) * under / max(uCanopy, 0.05)));
 #else
   return 1.0;
 #endif
