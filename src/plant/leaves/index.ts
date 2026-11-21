@@ -499,7 +499,9 @@ export function create(options: PartOptions): PlantPart {
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom the upper leaves of a plant of the field are already near their bloom length and hang off the flat, so a lens at their height sees blades and not edges.
     const upper = hero || time >= BLOOM ? 0 : smoothstep(0.55, 0.8, i / (leafCount - 1)) * smoothstep(0.5, 4, age)
-    const total = (size + 0.8 * upper * Math.max(0, bloomLength[i] - size)) * REACH * leaf.reach
+    // The first pair stands a little taller between the seed leaves than its length alone gives.
+    const first = i < 2 && time < 9 ? 1 + 0.3 * (1 - smoothstep(6.5, 9, time)) : 1
+    const total = (size + 0.8 * upper * Math.max(0, bloomLength[i] - size)) * first * REACH * leaf.reach
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(35.5, 40, time)
     // A new blade sits on the stem: its stalk grows out under it in its first seconds.
@@ -851,7 +853,7 @@ export function create(options: PartOptions): PlantPart {
             cr[q] = px - ox * inside + sx * along
             cr[q + 1] = py - oy * inside + sy * along
             cr[q + 2] = pz - oz * inside + sz * along
-            cr[q + 3] = (point ? 0.0025 : spike ? 0.0015 : 0.003 + 0.001 * r1) * scale
+            cr[q + 3] = (point ? 0.004 : spike ? 0.003 : 0.005 + 0.002 * r1) * scale
             cl[q] = ox + ux * (stand + (r3 - 0.5) * 0.8) + sx * (r1 - 0.5) * 0.6
             cl[q + 1] = oy + uy * (stand + (r3 - 0.5) * 0.8) + sy * (r1 - 0.5) * 0.6
             cl[q + 2] = oz + uz * (stand + (r3 - 0.5) * 0.8) + sz * (r1 - 0.5) * 0.6
