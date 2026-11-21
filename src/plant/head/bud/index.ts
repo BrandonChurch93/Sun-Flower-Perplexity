@@ -12,14 +12,14 @@ import { fragment, vertex } from './shaders.ts'
 const TAU = Math.PI * 2
 const [bloom0] = config.plant.stages.bloom
 
-interface Shape { sides: number; neck: number[]; dome: number[]; side: number[]; floor: number[]; bracts: number; nu: number; nv: number; backHairs: number; edgeHairs: number; faceHairs: number }
+interface Shape { sides: number; neck: number[]; dome: number[]; side: number[]; floor: number[]; bracts: number; nu: number; nv: number; backHairs: number; edgeHairs: number; faceHairs: number; downHairs: number }
 
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 45, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000 },
-  near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
-  far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 54, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 36000, faceHairs: 12000, downHairs: 72000 },
+  near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
+  far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0, downHairs: 0 },
 }
 
 // How far in front of the head's middle the body is widest, as a share of its half depth. Behind it the back is one shallow dome.
@@ -29,13 +29,14 @@ const SHOULDER = 0.04
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
 const HAIR_WIDTH_M = 0.00003
+const DOWN_WIDTH_M = 0.00016
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
 // A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
 const FOLD_LAG = [0.2, 0.3, 0.4]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.5, 0.78, 1]
-const HUG = [0.52, 0.4, 0.28]
+const HUG = [0.39, 0.31, 0.23]
 const STAND = [0.5, -0.5, -1.2]
 // Where a bract stands once it has let go of the cone, on its way back.
 const LOOSE = [0.5, 0.42, 0.14]
@@ -69,24 +70,26 @@ const LOW_SWING = 0.5
 // Once it stands free in the collar a bract is folded along its midrib like a boat, by up to this angle each side, so it shows a lit flank and a dark one from any side. Flat again against the cone and behind the rays, where a deep fold would cut into them.
 const KEEL = 0.8
 // In the collar a bract under the head lies back toward the stem, from this angle off the axis, and curls under by up to this much, each by its own amount, so the lower ones are uneven and half hidden. The head looks up, so anything less would hang straight down.
-const LOW_AWAY = 2.5
-const LOW_CURL = 2.2
+const LOW_AWAY = 2.3
+const LOW_CURL = 1.4
 // With more bracts than this each one is narrower, so they still overlap by the same share.
 const BRACTS_BROAD = 43
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
-const LONG = [0.78, 0.86, 1.06]
+const LONG = [0.98, 1.02, 1.2]
 // How much shorter the shortest bract of a series is. The inner series stays even so the shut bud is covered; the outer ones differ more.
 const LONG_VARY = [0.3, 0.26, 0.12]
 const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
 const BROAD = [0.25, 0.25, 0.23]
+// The blade narrows to a slender point over its last third or more: half width of that point at its foot, as a share of the blade's.
+const POINT_WIDE = 0.22
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 
-interface Bract { keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -114,9 +117,10 @@ export function create(options: PartOptions): PlantPart | null {
       long: options.variant === 0 ? LONG[series] * (1 - LONG_VARY[series] * rnd(3, i)) : LONG_NEIGHBOR[series] * (0.95 + 0.1 * rnd(3, i)),
       wide: ((series === 2 ? 0.98 : 0.9) + 0.16 * rnd(4, i)) * narrow,
       tail: 0.2 + 0.08 * rnd(5, i),
+      point: 0.7 + 0.1 * rnd(903, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
-      side: (rnd(7, i) - 0.5) * 0.3,
-      tip: (rnd(8, i) - 0.5) * 0.6,
+      side: (rnd(7, i) - 0.5) * 0.4,
+      tip: (rnd(8, i) - 0.35) * 1.5,
       lean: (rnd(16, i) - 0.5) * 0.3,
       hook: HOOK * (0.5 + 0.5 * rnd(18, i)),
       low: series === 2 ? LOW_CURL * (0.9 + 0.45 * rnd(17, i)) : LOW_CURL * (0.35 + 0.75 * rnd(17, i)),
@@ -188,13 +192,17 @@ export function create(options: PartOptions): PlantPart | null {
   const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
   const faceEach = shape.bracts > 0 ? Math.floor((shape.faceHairs * share) / shape.bracts) : 0
   const hairCount = backHairs + shape.bracts * (edgeEach * 2 + faceEach)
+  const downEach = shape.bracts > 0 ? Math.floor((shape.downHairs * share) / shape.bracts / 2) : 0
+  const downCount = shape.bracts * downEach * 2
+  const allCount = hairCount + downCount
   const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', [0.45, 0.48, 0.4], HAIR_WIDTH_M) : null
-  const hairBase = new Int32Array(hairCount)
-  const hairWidth = new Int32Array(hairCount)
-  const hairAt = new Float32Array(hairCount * 2)
-  // kind: 0 the back of the receptacle, 1 and -1 the two margins of a bract, 2 its outer face.
-  const hairKind = new Int8Array(hairCount)
-  const hairLong = new Float32Array(hairCount)
+  const down: HairSet | null = downCount > 0 ? createHairs(options, downCount, 'bud down', [0.45, 0.48, 0.4], DOWN_WIDTH_M) : null
+  const hairBase = new Int32Array(allCount)
+  const hairWidth = new Int32Array(allCount)
+  const hairAt = new Float32Array(allCount * 2)
+  // kind: 0 the back of the receptacle, 1 and -1 the two margins of a bract, 2 its outer face, 3 and -3 the down on the margins.
+  const hairKind = new Int8Array(allCount)
+  const hairLong = new Float32Array(allCount)
   if (hairs) {
     let n = 0
     const lastBack = shape.neck.length + (shape.dome.length - 1) * 0.5
@@ -210,7 +218,7 @@ export function create(options: PartOptions): PlantPart | null {
     for (let b = 0; b < shape.bracts; b++) {
       const base = bodyCount + b * perBract
       for (let i = 0; i < edgeEach * 2; i++, n++) {
-        const u = 0.03 + 0.97 * rnd(23 + b, i)
+        const u = 0.03 + 0.97 * Math.pow(rnd(23 + b, i), 0.75)
         const left = i % 2 === 0
         hairBase[n] = base
         hairWidth[n] = shape.nv
@@ -232,7 +240,21 @@ export function create(options: PartOptions): PlantPart | null {
       }
     }
   }
-  const jitter = hairs ? Float32Array.from({ length: hairCount * 4 }, (_, i) => hash01(seed, 700 + (i % 4), i >> 2)) : null
+  if (down) {
+    let n = hairCount
+    for (let b = 0; b < shape.bracts; b++) {
+      for (let i = 0; i < downEach * 2; i++, n++) {
+        const left = i % 2 === 0
+        hairBase[n] = bodyCount + b * perBract
+        hairWidth[n] = shape.nv
+        hairAt[n * 2] = (0.02 + 0.98 * Math.pow(rnd(1023 + b, i), 0.75)) * (shape.nu - 1)
+        hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
+        hairKind[n] = left ? -3 : 3
+        hairLong[n] = 0.0004 + 0.0005 * rnd(1123 + b, i)
+      }
+    }
+  }
+  const jitter = hairs ? Float32Array.from({ length: allCount * 4 }, (_, i) => hash01(seed, 700 + (i % 4), i >> 2)) : null
 
   const floor: FloorPoint = { x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0, ox: 1, oy: 0, oz: 0 }
   const sub = shape.nu > 1 ? Math.max(2, Math.ceil(48 / (shape.nu - 1))) : 1
@@ -516,7 +538,7 @@ export function create(options: PartOptions): PlantPart | null {
         const uy = ny * cw - t1y * sw
         const uz = nz * cw - t1z * sw
         const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
-        const tail = 0.95 * Math.pow(clamp((1 - u) / 0.72), 1.5) + 0.006
+        const tail = 0.95 * Math.pow(clamp((k.point - u) / (k.point - 0.2)), 1.2) + POINT_WIDE * Math.pow(1 - u, 0.9) + 0.004
         const half = W * lerp(body, tail, smoothstep(k.tail + 0.02, k.tail + 0.2, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, lerp(k.fold, k.keel, collar * (1 - folded)), smoothstep(0.25, 0.65, u)))
@@ -544,12 +566,14 @@ export function create(options: PartOptions): PlantPart | null {
 
   const fillHairs = (slot: 0 | 1, pos: Float32Array, nor: Float32Array, pose: Pose) => {
     if (!hairs || !jitter) return
-    const root = hairs.root(slot)
-    const lean = hairs.lean(slot)
+    const hairRoot = hairs.root(slot)
+    const hairLean = hairs.lean(slot)
+    const downRoot = down ? down.root(slot) : hairRoot
+    const downLean = down ? down.lean(slot) : hairLean
     const R = pose.head.radius
     const scale = clamp(R / 0.012) * lerp(0.7, 1, smoothstep(0.015, 0.05, R))
     const h = pose.head
-    for (let i = 0; i < hairCount; i++) {
+    for (let i = 0; i < allCount; i++) {
       const nv = hairWidth[i]
       const fa = hairAt[i * 2]
       const fb = hairAt[i * 2 + 1]
@@ -607,26 +631,31 @@ export function create(options: PartOptions): PlantPart | null {
           ex /= el
           ey /= el
           ez /= el
-          const up = 0.15 + j2 * 0.9
-          dx = ex + ux * (0.35 + j0 * 0.5) + nx * up
-          dy = ey + uy * (0.35 + j0 * 0.5) + ny * up
-          dz = ez + uz * (0.35 + j0 * 0.5) + nz * up
+          const plain = kind > 2 || kind < -2 ? 0 : 1
+          const up = (0.15 + j2 * 0.9) * plain
+          const on = (0.35 + j0 * 0.5) * plain
+          dx = ex + ux * on + nx * up
+          dy = ey + uy * on + ny * up
+          dz = ez + uz * on + nz * up
         }
       }
-      root[i * 4] = x
-      root[i * 4 + 1] = y
-      root[i * 4 + 2] = z
-      root[i * 4 + 3] = hairLong[i] * scale
-      lean[i * 4] = dx
-      lean[i * 4 + 1] = dy
-      lean[i * 4 + 2] = dz
-      lean[i * 4 + 3] = jitter[i * 4 + 3]
+      const root = i < hairCount ? hairRoot : downRoot
+      const lean = i < hairCount ? hairLean : downLean
+      const o = (i < hairCount ? i : i - hairCount) * 4
+      root[o] = x
+      root[o + 1] = y
+      root[o + 2] = z
+      root[o + 3] = hairLong[i] * scale
+      lean[o] = dx
+      lean[o + 1] = dy
+      lean[o + 2] = dz
+      lean[o + 3] = jitter[i * 4 + 3]
     }
   }
 
   return {
     name: 'bud',
-    meshes: hairs ? [mesh, ...hairs.meshes] : [mesh],
+    meshes: [mesh, ...(hairs ? hairs.meshes : []), ...(down ? down.meshes : [])],
     casters: [{ mesh, surface }],
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
@@ -640,6 +669,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true
       hairs?.finish()
+      down?.finish()
     },
   }
 }
