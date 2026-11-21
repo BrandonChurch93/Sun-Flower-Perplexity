@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
+import { lumpAt } from '../../ground/crumbs.ts'
+import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
 import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../part.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
@@ -14,14 +16,13 @@ const leaves0 = config.plant.stages.leaves[0]
 const HUSK_HALF_WIDTH = 0.31
 const HUSK_HALF_DEPTH = 0.25
 const HUSK_WALL = 0.023
-const REST_AXIS = unit(-0.26, 0.96, 0.1)
+const REST_AXIS = unit(-0.42, 0.86, 0.28)
 const REST_SIDE = unit(0.87, 0, 0.5)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
-// Where a fallen crumb lies until the ground can be asked for its height.
-const CRUMB_LAND_M = 0.002
+const HUSK_ON_SOIL_M = 0.003
 const CRUMBS_SINK_S = 9
 const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
@@ -96,7 +97,7 @@ function shapeOf(options: PartOptions): Shape | null {
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
 function leafOutline(s: number): number {
   const foot = lerp(0.34, 1, smoothstep(0, 0.36, s)) * Math.sqrt(smoothstep(0, 0.03, s))
-  return Math.max(0.004, foot * Math.sin(Math.PI * s ** 0.82) ** 0.55)
+  return Math.max(0.004, foot * Math.sin(Math.PI * s ** 0.82) ** 0.45)
 }
 
 // The shell of the seed from its blunt end, where the halves hang together, to the torn mouth the root came out of.
@@ -121,6 +122,7 @@ function lump(seed: number, x: number, y: number, z: number, out: Float32Array, 
     const d = x * cr * Math.cos(ca) + y * cz + z * cr * Math.sin(ca)
     if (d > 0) r = Math.min(r, lerp(0.72, 0.95, hash01(seed, 20 + k, 2)) / d)
   }
+  r *= lumpAt(x, y, z, 10 * hash01(seed, 33), 0) / 0.75
   out[at] = x * r * size * lerp(0.75, 1.3, hash01(seed, 30))
   out[at + 1] = y * r * size * lerp(0.5, 0.85, hash01(seed, 31))
   out[at + 2] = z * r * size * lerp(0.75, 1.3, hash01(seed, 32))
@@ -130,7 +132,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   const count = shape.stemCrumbs + shape.huskCrumbs
   if (count <= 0) return null
   const seed = combine(streamSeed('seedling crumbs'), options.variant)
-  const ball = new THREE.IcosahedronGeometry(1, 2).getAttribute('position').array
+  const ball = new THREE.IcosahedronGeometry(1, options.variant === 0 ? 3 : 2).getAttribute('position').array
   const each = ball.length / 3
   const local = new Float32Array(count * each * 3)
   const localNormal = new Float32Array(count * each * 3)
@@ -355,7 +357,7 @@ export function create(options: PartOptions): PlantPart | null {
     const h0y = ey + ty * ride
     const h0z = ez + tz * ride
     const h1x = huskRest.x
-    const h1y = huskRest.y + 0.0004
+    const h1y = soilHeightAt(huskRest.x, huskRest.z, time) + HUSK_ON_SOIL_M
     const h1z = huskRest.z
     const lift = 0.012 * grown
     const cx = h0x + tx * lift + 0.3 * (h1x - h0x)
@@ -490,7 +492,7 @@ export function create(options: PartOptions): PlantPart | null {
               state[at * 4] = 0
               state[at * 4 + 1] = 0
               state[at * 4 + 2] = outer ? 1 : inside
-              state[at * 4 + 3] = lerp(0.55, 0.85, drop)
+              state[at * 4 + 3] = lerp(0.55, 0.3, drop)
             }
           }
         }
@@ -580,7 +582,7 @@ export function create(options: PartOptions): PlantPart | null {
       }
       // It lets go, falls and lies where it lands; the rain takes it into the ground.
       const gone = clamp((time - c.from) / c.fall)
-      const landY = CRUMB_LAND_M + 0.3 * c.size - under * (0.004 + 2.5 * c.size)
+      const landY = soilHeightAt(fx + c.landX, fz + c.landZ, time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
       x = lerp(x, fx + c.landX, gone)
       z = lerp(z, fz + c.landZ, gone)
       y = lerp(y, landY, gone * gone)

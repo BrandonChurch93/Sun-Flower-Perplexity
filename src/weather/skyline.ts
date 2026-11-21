@@ -139,6 +139,72 @@ export function skylineStrip(i: number, sunAzimuthDeg: number): THREE.BufferGeom
   return ringStrip(SKYLINE[i].segments, (az) => skylineAt(i, az, sunAzimuthDeg))
 }
 
+// Through the film. Early on the near rows stand low and, where the dawn sun rises, the land lies under the sun's lower limb. Both ease to the golden hour's line in the frost, before the bloom. One curve of film time for every world, so no cut moves the line.
+export const SKYLINE_DAWN_SUN_DEG = 175.007
+const EARLY_ROW = 0.3
+const DAWN_FULL_DEG = 14
+const DAWN_CLEAR_DEG = 26
+const UNDER_DAWN_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.4, 0.44, 0.3, 0.3]
+
+// 1 until 30 s, 0 from 38 s.
+export const skylineEarly = (time: number): number => 1 - smooth(30, 38, time)
+
+function earlyTop(i: number, az: number, radius: number, top: number): number {
+  const low = SKYLINE[i].rowM ? top * EARLY_ROW : top
+  let off = Math.abs(az - SKYLINE_DAWN_SUN_DEG * RAD) % (2 * Math.PI)
+  if (off > Math.PI) off = 2 * Math.PI - off
+  const cap = radius * Math.tan(UNDER_DAWN_SUN_DEG[i] * RAD)
+  return low + (Math.min(low, cap) - low) * smooth(DAWN_CLEAR_DEG, DAWN_FULL_DEG, off / RAD)
+}
+
+// Where layer i stands at a bearing and how high its top is there at a time of the film.
+export function skylineAtTime(i: number, az: number, sunAzimuthDeg: number, time: number): { radius: number; top: number } {
+  const at = skylineAt(i, az, sunAzimuthDeg)
+  const early = skylineEarly(time)
+  return early > 0 ? { radius: at.radius, top: at.top + (earlyTop(i, az, at.radius, at.top) - at.top) * early } : at
+}
+
+export interface SkylineRing {
+  geometry: THREE.BufferGeometry
+  // Call once a frame, before it is drawn, with the frame's time in seconds of the film.
+  setTime(time: number): void
+}
+
+// The strip of layer i that follows the film's time. A world draws it in place of skylineStrip and calls setTime in prepare.
+export function skylineRing(i: number, sunAzimuthDeg: number): SkylineRing {
+  const segments = SKYLINE[i].segments
+  const late = new Float32Array(segments + 1)
+  const early = new Float32Array(segments + 1)
+  for (let s = 0; s <= segments; s++) {
+    const az = s === segments ? 0 : (s / segments) * 2 * Math.PI
+    const at = skylineAt(i, az, sunAzimuthDeg)
+    late[s] = at.top
+    early[s] = earlyTop(i, az, at.radius, at.top)
+  }
+  const geometry = skylineStrip(i, sunAzimuthDeg)
+  const position = geometry.getAttribute('position') as THREE.BufferAttribute
+  const info = geometry.getAttribute('aInfo') as THREE.BufferAttribute
+  let set = 0
+  return {
+    geometry,
+    setTime(time: number): void {
+      const w = skylineEarly(time)
+      if (w === set) return
+      set = w
+      for (let s = 0; s <= segments; s++) {
+        const top = late[s] + (early[s] - late[s]) * w
+        const v = s * 6
+        position.array[v + 4] = top
+        info.array[v + 2] = top
+        info.array[v + 4] = top
+        info.array[v + 5] = top
+      }
+      position.needsUpdate = true
+      info.needsUpdate = true
+    },
+  }
+}
+
 // For a layer of trees: the height of the canopy at a run along the strip, as a share of the strip's top. It needs valueNoise and hash21.
 export const skylineCanopy = /* glsl */ `
 float skylineCrown(float run, float widthM, float salt) {

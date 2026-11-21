@@ -70,12 +70,12 @@ void main() {
   float lane = across * 2.6 + 0.07 * (valueNoise(vec2(along * 9.0, across * 3.0 + body)) - 0.5);
   float band = abs(fract(lane + 0.5) - 0.5) * 2.0;
   float wide = hash11(floor(lane + 0.5) + body * 17.0);
-  float white = smoothstep(0.26 + 0.26 * wide, 0.36 + 0.26 * wide, band);
+  float white = smoothstep(0.14 + 0.24 * wide, 0.24 + 0.24 * wide, band);
   float hairline = smoothstep(0.75, 0.95, abs(fract(across * 13.0 + body * 0.37) - 0.5) * 2.0);
   white = saturate(white - 0.3 * hairline * white + 0.08 * hairline * (1.0 - white));
   float scuff = valueNoise(vec2(across * 9.0 + body * 5.0, along * 26.0));
-  vec3 outer = mix(vec3(0.022, 0.021, 0.02), vec3(0.56, 0.53, 0.46), white * (0.75 + 0.25 * scuff));
-  vec3 inner = mix(vec3(0.34, 0.3, 0.23), vec3(0.6, 0.56, 0.46), 0.5 * grain + 0.5 * smoothstep(0.3, 0.8, abs(fract(across * 9.0) - 0.5) * 2.0));
+  vec3 outer = mix(vec3(0.05, 0.048, 0.046), vec3(0.74, 0.7, 0.62), white * (0.75 + 0.25 * scuff));
+  vec3 inner = mix(vec3(0.46, 0.42, 0.34), vec3(0.7, 0.66, 0.56), 0.5 * grain + 0.5 * smoothstep(0.3, 0.8, abs(fract(across * 9.0) - 0.5) * 2.0));
   vec3 shell = mix(inner, outer, upper);
   float dusty = vState.w * smoothstep(0.42, 0.75, scuff + 0.25 * grain);
   shell = mix(shell, vec3(0.2, 0.15, 0.1) * (0.7 + 0.6 * grain), 0.7 * dusty);
