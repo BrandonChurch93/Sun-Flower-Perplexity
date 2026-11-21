@@ -113,6 +113,8 @@ export function create(options: PartOptions): PlantPart {
   const planeList: number[] = []
   const index: number[] = []
 
+  // The companion keeps the narrower folded blades: its leaf at the sun was placed with them and must not cover the sun.
+  const main = options.variant === 0
   for (let i = 0; i < leafCount; i += shape.step) {
     const r = (k: number) => hash01(seed, i, k)
     const rank = i / (leafCount - 1)
@@ -121,7 +123,7 @@ export function create(options: PartOptions): PlantPart {
     const rowsHero = Math.round(clamp(36 + 60 * ((full - 0.1) / 0.15), 36, shape.rows) * (options.variant === 0 ? 1 : 0.6))
     const rows = hero ? rowsHero : options.detail === 'near' ? NEAR_ROWS : FAR_ROWS
     const nu = typeof rows === 'number' ? rows : rows.length
-    const share = shares[i] * lerp(1, 0.96, upper) * shape.wide
+    const share = shares[i] * lerp(1, main ? 0.96 : 0.86, upper) * shape.wide
     const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
@@ -130,8 +132,8 @@ export function create(options: PartOptions): PlantPart {
     const waveAmp = 0.018 + 0.024 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
-    const blade = lerp(1, 0.9, upper)
-    const roll = withered ? 0.2 : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
+    const blade = lerp(1, main ? 0.9 : 0.76, upper)
+    const roll = withered ? (main ? 0.2 : 0.42) : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
@@ -158,12 +160,12 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? 0.3 : 0.08 + 0.45 * r(19),
+      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19),
       tipCurl: withered ? 1.5 : dry ? 1.1 : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
       rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
-      crease: withered ? 0.3 : 0.08 + 0.3 * r(36),
+      crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
     for (let a = 0; a < nu; a++) {
