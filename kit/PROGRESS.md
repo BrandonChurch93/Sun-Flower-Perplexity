@@ -7,14 +7,14 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 3 · The look lock
 - Current unit: bloom
-- Current round: fix pass after round 4 of `bloom` (not a pass); round 5 renders at about 13:30 UTC if the clock prints `extra rounds: yes`
+- Current round: round 5 of `bloom` (extra round), judging `11207fd`; its chain of machine checks, measures and pack started 13:27 UTC and takes about 36 minutes
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 12:57 UTC · Round 4 scorecards and summary (not a pass); Status 29; second merges after round 4: field, disc, petals, the neighbors' stalk halo
+- Last push: 2026-11-21 13:24 UTC · Round 5 of bloom starts on 11207fd: third merges after round 4 (stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens)
 - Last status: 29 · 2026-11-21 12:56 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 6.03 h |
+| 3 | 9.00 h | 6.42 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 12.08 h |
+| Whole build | 30.00 h | 12.47 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -77,7 +77,7 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 | rain | stand-in | 0 | | | | | | | |
 | night | stand-in | 0 | | | | | | | |
 | frost | stand-in | 0 | | | | | | | |
-| bloom | in progress | 2 (rounds 3 and 4) | 4 | passes at the edge (4 of 10 against the controls' 6 of 10) | 5 | 6 | | | 3 carried from the blockout and the film's M1 check, see "Open items" |
+| bloom | in progress | 3 (rounds 3 to 5; round 5 is running and the scores here are round 4's) | 4 | passes at the edge (4 of 10 against the controls' 6 of 10) | 5 | 6 | | | 3 carried from the blockout and the film's M1 check, see "Open items" |
 | field | stand-in | 0 | | | | | | | |
 
 ## Workspace record
@@ -426,6 +426,13 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · The tonal floor, measured on both keys at 12:45 UTC. In the field to the right of the head (x 0.62 to 0.98, y 0.56 to 0.95) the tenth, middle and ninetieth percentile are, at 45 s, 9,18,15 · 20,31,22 · 87,74,41 in the approved and 18,22,13 · 31,33,17 · 54,53,23 in ours; at 50.5 s 12,19,9 · 28,33,17 · 92,72,30 against 18,21,13 · 30,32,16 · 66,57,23. Our darks are lifted and our lights are low: the range is about half the approved's. The darkest tenth of the disc is 18 to 23,17,11 against 22 to 25,13,0 to 2. `lens_builder`, `golden_builder` and `skin_builder` each look for what their part adds to black.
 
 
+- 2026-11-21 · Phase 3 · The third set of merges after round 4, 13:03 to 13:19 UTC, eleven branches, each merged in the worktree `sf-prep`, type checked there, every commit checked for the trailer, then `main` fast forwarded: stem `0be6109` (merge `98780f1`: the skin takes occlusion from the head and leaves above it, less red, more long hairs), petals `fb9b197` (`ac2e262`: a shut ray is three slender straps with real gaps, the cap a dome, quieter veins on the open rays), companion `388aff9` (`8430ffb`: a hold can swing a leaf round the stem, `swingDeg`; leaf 19 crosses the sun at both keys; seven leaves in frame), disc `4ee0f2e` (`10cd67f`: the open ring wide on the sun side, young crowns without yellow dots), field `39b893b` (`82d3f70`: the field ends 66 m out, far heads from the side and from behind, three set neighbors on the right), golden `e63a70e` (`78a1d32`: two rows of tree crowns at 79 and 84 m, the skyline in one module `src/weather/skyline.ts` that the frost world must draw from, uneven shafts, textured cloud), leaves `8b27509` (`5e143ce`: rounded uneven teeth, an even glow broken by veins, bowed stalks, a down on the margins), hairs `eeaa7a2` (`24c8456`: lengths skewed to short, bare stretches, strands that thin from the foot), bud `559e9f1` (`e2e9da5`: the near inner bracts stay up over the ray feet until 45 s, far side bracts spread behind the rays, more margin hairs, relief that fades under three pixels), opening `834d7a7` (`d49f87e`), lens `f072228` (`11207fd`). `skin_builder` had nothing to merge (its tree equals `main`). Round 5 judges `11207fd`.
+- 2026-11-21 · Phase 3 · The opening as merged (`opening_builder`, only `rayOpen`, `rayAngle` and their constants in `src/plant/growth.ts`). Rays within 95 degrees of the first ray keep their schedule bit for bit; beyond 95 degrees each ray has its own start (45.4 s at 95 degrees, 45.9 at 140, 46.2 at 180, plus 0.3 to 0.8 s by ray) and its own time (3 to 4.4 s), arrives cupped about 32 degrees short of flat and flattens over 4.5 to 8 s without ever stopping or turning back (checked every 0.01 s for all 34 rays); every ray is flat by 57.8 s and `rayOpen(k, 51.0)` is 1. Up to 45.0167 s the hero's rays are bit identical to before, so M1 at frame 1350 is unchanged; the field's neighbors run up to 3.6 s ahead and so open the new way inside frame 1350, which the Builder accepts (they are neighbors of the same species and should open by the same rule). The Builder's two changes to its brief are accepted: 180 degrees starts at 46.2 s, not 46.6, and the latest rays take 3.6 to 4.2 s so that all are open by 51.0 s. Still wrong by its own report: the left opens first and the right waits until about 47 s. Decision for round 6: rays beyond 95 degrees may start from 45.02 s (the plant at frame 1350 stays identical); the first sector is not slowed.
+- 2026-11-21 · Phase 3 · The lens as merged (`lens_builder`, only `src/post/`). The floor of the picture was the golden world's `grade.lift` (0.0034, 0.005, 0.0036), found by a black probe: a plant returning no light read 11,15,11. The lift is not lowered (that would pull the leaves' middle blue from 19 to 12); a toe takes a share of it back only in the deepest shade (`black` per world in `src/post/looks.ts`, golden 0.6, 0.36, 0.95), so true black reads about 7,13,2 against the approved's 5,10,0 to 7,11,0. The bloom now follows a sun hidden by a leaf (37 taps out to two and a half disc radii, share to the power 0.22) and sits on the light that shows, at the blade's lower edge. Lone lights out of focus are no longer held down before the fill (`specks`, golden 1). The other worlds are bit identical at draft (frames 45, 420, 780, 1080). Its measure of the stripes R3 saw in the dark field: none with the grain off and none in the grain; they are the far stalks of the field, sharp before the lens, and go to `field_builder`.
+- 2026-11-21 · Phase 3 · The bud's relief fade is kept. `bud_builder` offered the same tree with (`559e9f1`) and without (`4ad45c6`) a fade of the bract relief where its width nears a pixel, and asked for M3 with it. With the fade, on `e2e9da5`, M3 at `review` reads 0.739 at frame 1350 (0.764 on `af87de1` before the third set of merges). The Builder did not render the tree without it: the fade removes two by two pixel blocks on the bracts that `skin_builder` showed at three times size (`r6-checker-3x.png`), which is a defect a critic sees, and frame 1350 fails M3 with or without it. The detail the bracts lack is to come from geometry and hairs, not from relief finer than the pixel.
+- 2026-11-21 · Phase 3 · M3 by part, measured by the Builder on `e2e9da5` with `out/work/scratch/m3map.cjs` (the sharp zone of the focus view, the Laplacian of the review still, cells of 120 px; pictures `out/work/scratch/m3map-1350.jpg`, `m3map-1515.jpg`). At frame 1515 the rays lost detail against the tree round 4 judged (cells round the disc 13 to 15 where they were 16 to 21): the petals' veins are quieter, which is closer to the approved, where the rays are broad and softly pleated; the ratio fell from 0.870 to 0.798 and the lens's toe brought it to 0.825 on `11207fd`. At frame 1350 the ratio is 0.755 on `11207fd`. Where the approved holds detail and ours does not: the stem with its lit hairs (approved 22 to 25 a cell, ours 6 to 8, and most of our stem lies outside the sharp zone: `hair_builder` measures 1.75 px of blur on its hairs at frame 1515 and 2.0 px at frame 1350, the zone ends at 1.5 px), the leaf interiors (ours 4 to 8, the approved about 17 by `skin_builder`'s map) and the lower bracts in shade (ours 5 to 6). The cap of shut rays reads 12 to 22. Nothing is sharpened in post to pass; the detail has to be in the parts. Jobs for round 6 follow from this: leaf interiors (`leaf_builder`), lower bracts (`bud_builder`), the stem's hairs inside the zone (`stem_builder`, `hair_builder`).
+- 2026-11-21 · Phase 3 · The disc's request to turn the head toward the sun is not taken; the pose stays. Measured with the film's own modules (`out/work/scratch/sunaxis.ts`): at frame 1515 the sun stands 34.5 degrees behind the disc's plane (axis · sun −0.567) and at frame 1350 20.9 degrees behind, so a turn of 15 to 20 degrees cannot bring the sun in front of the disc, and the facing matches the approved image. The warm light on the florets at the left of the disc in the approved comes off the backlit rays beside them: the rays become a light source for the ring, a joint job of `disc_builder` and `skin_builder` for round 6.
+- 2026-11-21 · Phase 3 · What `skin_builder` found after round 4 (no code to merge). The black level, as in the lens entry above. By part at frame 1350, at `review`: the cap of shut rays is 34 % of the sharp zone at energy 7.97 (approved 10.45), leaf interiors 27 % at about 8 (17), lower bracts 9.82 (14.8), and the stem top, stalks and hair rims lie almost wholly outside our sharp zone while the approved's best box sits exactly there; any two of the three gains pass M3. Turning the relief off drops M3 from 0.730 to 0.640, so relief stays; `reliefNormal` draws two by two pixel blocks on the bracts because it uses screen derivatives.
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -451,10 +458,11 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-None at 12:58 UTC.
+Running: the round 5 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 5 --unit bloom` · logs `out/work/logs/r5-gate.log`, `r5-measure.log`, `r5-pack.log`, `r5-chain.log` · this VM · started 2026-11-21 13:27 UTC · about 36 minutes by round 4's chain (gate 12 min, two `final` stills 8 min, pack 16 min). No build and no source edit on `main` while it runs; merges are prepared in the worktree `sf-prep`.
 
 Finished in this task:
 
+- Checks of the merged `main` before round 5 · `78a1d32` (13:09 to 13:11 UTC, log `m10.log`: build clean, 92 of 92 tests, review stills of 1350 and 1515) · `e2e9da5` (13:12 to 13:16 UTC, logs `m11.log`, `m11-measure.log`: 92 of 92 tests, M1 pass, M2 pass, M3 0.739 at frame 1350 and 0.798 at frame 1515, both fail) · `11207fd` (13:19 to 13:22 UTC, logs `m12.log`, `m12-measure.log`: 92 of 92 tests, M1 pass, M2 pass, M3 0.755 at frame 1350 (fails) and 0.825 at frame 1515 (passes), all at `review`). The Builder looked at both stills of each beside the approved (`out/work/scratch/m11-*.jpg`, `m12-*.jpg`).
 - Check of the merged `main` (`af87de1`) · build, `npx vitest run`, review 16x9 stills of 1350 and 1515, `npm run measure -- --unit bloom --tier review` · started 12:53 UTC, ended 12:57 UTC · logs `out/work/logs/m8.log`, `m8-measure.log` · build clean, 92 of 92 tests, M1 pass, M2 pass, M3 0.764 at frame 1350 (fails; 0.732 before the second merges) and 0.870 at frame 1515.
 - Check of the merged `main` (`8219a4e`) · build, `npx vitest run`, review stills, `npm run measure -- --unit bloom --tier review` · 12:31 to 12:38 UTC · build clean, 92 of 92 tests, M1 pass, M2 pass, M3 0.732 at frame 1350 (fails) and 0.896 at frame 1515.
 - Round 4 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (the two judged stills at `final`), then `npm run pack -- --phase 3 --round 4 --unit bloom` · started 2026-11-21 11:53:36 UTC, ended 12:30 UTC (36 minutes, 28 expected: the gate 12 min, the two `final` stills 233 s and 251 s, the pack 15.7 min) · logs `out/work/logs/r4-gate.log`, `r4-measure.log`, `r4-pack.log` · gate 13 of 13 green, M3 fails at frame 1350 (0.722), packs in `out/work/packs/round-004/`.
@@ -499,6 +507,8 @@ State at 11:42 UTC, in the fix pass after round 3 (12 running, the limit). On `m
 State at 11:57 UTC, round 4 rendering (12 running, the limit): all twelve were told at 11:55 UTC that `origin/main` is `10aa6af` and that round 5 renders at about 13:25 UTC, with reports by 12:45 UTC and a second by 13:15 UTC. `stem_builder`, `leaf_builder` and `ground_builder` report at 12:20 UTC (ground at 12:15) and then wait, so three places are free for the critics of round 4, since at most twelve agents run at once; they get the critics' notes at about 12:40 UTC. `skin_builder` goes on from a fresh branch `agent/surface-b`.
 
 State at 12:58 UTC, in the fix pass after round 4 (12 running, the limit). All twelve were sent the round's scores, the critics' and jurors' words on their part, the measured tones, the rung of the ladder their issue is on and the decisions above, by 12:52 UTC (texts in `out/work/briefs/round-004-notes/`); reports are due by 13:20 UTC and round 5 renders at about 13:30 UTC. `ground_builder` works as `opening_builder` on `agent/opening` and owns only `rayOpen` and `rayAngle` in `src/plant/growth.ts`; its ground work rests on `agent/ground` until Phase 4. `skin_builder` has a second job, the map of where frame 1350 loses M3. `golden_builder` owns the shared skyline module. On `main` `af87de1` since the notes went out: field `57e16af`, disc `bcdb9c1`, petals `20a8f3f`.
+
+State at 13:25 UTC, round 5 starting (12 running, the limit). Second reports came in from 13:00 to 13:14 UTC from stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens and skin; all are merged at `11207fd` except skin's, which had no change. Each gets its answers and its job for round 6 by 13:35 UTC, with a report due 14:25 UTC for a round 6 that would render at about 14:35 UTC if the clock still prints `extra rounds: yes`. The critics and jurors of round 5 (`reviewer_39` to `reviewer_51`) need thirteen places for about fifteen minutes from about 14:03 UTC: builders that have reported wait then, so that no more than twelve agents run at once.
 
 Finished in this task:
 
@@ -559,9 +569,23 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R2 jury answers: jurors `reviewer_29` to `reviewer_38`, sent from 12:32 UTC, the last answered at 12:43 UTC, none had to be replaced. Only the two judged frames were asked: the controls' 6 of 10 (a) votes from round 3 stand for the unit, as the entry above says. Each image had one juror from each of five families (GPT, Gemini, Claude, GLM, Grok). Judged frames: 4 of 10 (a) (frame 1515 two of five, frame 1350 two of five; four votes for (e), a real-time web 3D demo, two for (b), a stock photograph). R2 passes exactly at the edge (0.4 against 0.6 minus 0.2); round 3 had 7 of 10. `scorecards/round-004/R2-JURORS.md` word for word, tally in `R2.json`, key in `KEY.json`
 - [x] R3 answer: `reviewer_27`, Claude family, sent 12:31 UTC, answered 12:33 UTC. Score 5, not a pass: 5 major, 3 minor. `scorecards/round-004/R3.json`
 - [x] R4 answer: `reviewer_28`, GPT family, sent 12:31 UTC, answered 12:33 UTC. Score 6, not a pass: 2 severe, 1 major. `scorecards/round-004/R4.json`
-- [ ] Fixes: running since 12:35 UTC with twelve agents, each sent the critics' and jurors' words on its part by 12:50 UTC (texts in `out/work/briefs/round-004-notes/`). What is merged is listed under "Decisions". This box is ticked when round 5 starts or the clock closes the loop
+- [x] Fixes: 12:35 to 13:23 UTC with twelve agents, each sent the critics' and jurors' words on its part by 12:50 UTC (texts in `out/work/briefs/round-004-notes/`). What is merged is listed under "Decisions". Three sets of merges went in (12:36 to 12:40, 12:51 to 12:53, 13:03 to 13:19 UTC) and round 5 started at 13:26 UTC on `11207fd`
 - [x] Summary, status, push: `scorecards/round-004/SUMMARY.md`, Status 29
 - Result: not a pass. R1 4, R3 5, R4 6, R2 passes at the edge, machine checks 13 of 13, M3 fails at 1350. 6 severe and 11 major issues open
+
+### Round 5 · Phase 3 · `bloom` · extra round
+
+- Started 2026-11-21 13:26 UTC. Judges commit `11207fd`. Unit `bloom`, the third round of its loop (the look lock allows 4: rounds 3 to 6); judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Extra round: the clock printed `extra rounds: yes` at 13:20 UTC (Phase 3 6.42 h of its 9 h box, whole build 12.47 h of 30 h). Critics, each a fresh sandbox agent that gets attachments only: R1 match, R3 surface and detail, R4 motion, and the R2 jury (5 jurors for each of the 2 judged images; the controls' share of round 3, 6 of 10, is reused as the kit allows). Families rotate against rounds 3 and 4: R1 Claude, R3 GPT, R4 Gemini; each image's five jurors come from five families.
+- [ ] Machine checks (`npm run gate -- --phase 3 --machine`)
+- [ ] Measures (`npm run measure -- --unit bloom`, the judged stills at `final`)
+- [ ] Pack (`npm run pack -- --phase 3 --round 5 --unit bloom`)
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4 answer
+- [ ] Fixes
+- [ ] Summary, status, push
+- Result: pending
 
 ## Final scores
 
@@ -634,6 +658,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 11:59 UTC · Status 28: round 4 running; the neighbor's leaf aim corrected (broadside, in front of the sun at both keys)
 - 2026-11-21 12:40 UTC · Round 4 judged (R1 4, R3 5, R4 6); prep merges for round 5 on main: leaves, disc, ground, skin, lens, golden, companion, hairs with stem, petals, bud, field
 - 2026-11-21 12:57 UTC · Round 4 scorecards and summary (not a pass); Status 29; second merges after round 4: field, disc, petals, the neighbors' stalk halo
+- 2026-11-21 13:24 UTC · Round 5 of bloom starts on 11207fd: third merges after round 4 (stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens)
 
 ## Session log
 
