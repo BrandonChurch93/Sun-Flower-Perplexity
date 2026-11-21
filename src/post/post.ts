@@ -99,6 +99,7 @@ export class Post {
     uStarLen: { value: 1 },
     uGlow: { value: 0 },
     uShafts: { value: 0 },
+    uRays: { value: 0 },
     uSunClear: { value: 0 },
     uFarFill: { value: 1 },
     uSaturation: { value: 1 },
@@ -266,6 +267,7 @@ export class Post {
       g.uStar.value = sun ? look.star * sun.weight * seen : 0
       g.uGlow.value = sun ? look.glow * sun.weight * seen : 0
       g.uShafts.value = sun ? look.shafts * sun.weight * seen : 0
+      g.uRays.value = look.rays
       g.uSunClear.value = look.sunClear
       g.tRaw.value = frame
       g.uFar.value = sun ? sun.farCircle : 0

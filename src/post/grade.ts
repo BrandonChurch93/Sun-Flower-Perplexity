@@ -26,6 +26,7 @@ uniform float uStar;
 uniform float uStarLen;
 uniform float uGlow;
 uniform float uShafts;
+uniform float uRays;
 uniform float uSunClear;
 uniform float uFarFill;
 uniform float uSaturation;
@@ -100,7 +101,20 @@ float fanNoise(float t, float n, float s) {
   f = f * f * (3.0 - 2.0 * f);
   return mix(hash31(vec3(mod(i, n), s, 1.0)), hash31(vec3(mod(i + 1.0, n), s, 1.0)), f);
 }
-// What a low sun in the frame does. In the glass: a broad soft bloom, peach white at the sun and amber further out, which lies over everything. In the air of the field: wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. Both follow how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
+// Thin rays out of the sun: thirteen round the circle at uneven angles, each a wedge with its own width, length and strength, so they open as they run and never draw a line of one width.
+float rays(float turn, float r, float down) {
+  float t = turn * 13.0;
+  float k = floor(t);
+  vec3 h = vec3(hash31(vec3(k, 11.0, 1.0)), hash31(vec3(k, 12.0, 1.0)), hash31(vec3(k, 13.0, 1.0)));
+  float girth = 6.2831853 * r * uSize.x;
+  float across = (t - k - 0.25 - 0.5 * h.x) / 13.0 * girth;
+  float wide = max(mix(0.004, 0.012, h.y) * girth, uSize.y / 1080.0);
+  float len = mix(0.16, 0.52, h.z * h.z) * mix(1.0, 0.6, down);
+  float along = saturate(1.0 - r / len);
+  float x = across / wide;
+  return exp(-x * x) * along * along * (0.45 + 0.55 * hash31(vec3(k, 14.0, 1.0)));
+}
+// What a low sun in the frame does. In the glass: a small near white core and a short soft glow, which lie over everything. In the air of the field: thin rays and wide soft shafts fanning out from the sun and a warm spill round it, which lie only over what is behind them. The air follows how much of the sun shows, down to a floor: a leaf across the disc shades little of the air behind it.
 vec3 sunAir(vec2 px, float circle, float under) {
   if (uGlow <= 0.0 && uShafts <= 0.0) return vec3(0.0);
   vec2 d = (px - uSunAt * uSize) / uSize.x;
@@ -108,10 +122,10 @@ vec3 sunAir(vec2 px, float circle, float under) {
   float shown = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
   // The bloom is nothing without the sun, but a sun half covered keeps more than half of it: the eye reads the bloom's size, which shrinks slower than its light.
   float lit = uSunClear > 0.0 ? uSunClear * pow(min(shown / uSunClear, 1.5), 0.6) : shown;
-  float tight = 1.0 + r * r / 0.0012;
-  // The tight lobe's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
+  float tight = 1.0 + r * r / 0.0004;
+  // The core's tail ends inside a fifth of the width: left to run, it lays a warm grey over every black in the frame.
   float tail = r * r / 0.0289;
-  float glow = 0.64 / (tight * sqrt(tight)) * exp(-tail * tail) + 0.36 * exp(-r * r / 0.0056);
+  float glow = exp(-tail * tail) / (tight * sqrt(tight)) + 0.12 * exp(-r * r / 0.002) + 0.05 * exp(-r / 0.05);
   vec3 glass = mix(vec3(1.0, 0.92, 0.82), vec3(1.0, 0.46, 0.14), smoothstep(0.0, 0.08, r)) * (lit * uGlow * glow);
   float turn = atan(d.y, d.x) / 6.2831853 + 0.5;
   float down = smoothstep(0.02, 0.1, turn) * (1.0 - smoothstep(0.42, 0.5, turn));
@@ -126,8 +140,9 @@ vec3 sunAir(vec2 px, float circle, float under) {
   behind = max(open, behind * smoothstep(0.0, 0.015, turn) * (1.0 - smoothstep(0.485, 0.5, turn)));
   // Lit haze in front of a dark field leaves its deepest holes dark.
   float hold = mix(1.0, mix(0.3, 1.0, smoothstep(0.004, 0.05, under)), down);
-  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * r / (r + 0.02) + 0.35 * exp(-r / 0.07)) * behind * hold;
-  return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air);
+  float near = r / (r + 0.02);
+  float air = (mix(4.0 * smoothstep(0.04, 0.2, r), 1.0, down) * beams * reach * reach * near + 0.3 * exp(-r / 0.07) + 0.45 * down * smoothstep(0.75, 1.0, depth) * exp(-r / 0.16)) * hold + uRays * rays(turn, r, down) * near;
+  return glass + vec3(1.0, 0.45, 0.27) * (max(shown, 0.6 * uSunClear) * uShafts * air * behind);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
