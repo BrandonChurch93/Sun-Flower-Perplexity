@@ -38,6 +38,9 @@ const YOUNG_STRAIGHT = 0.25
 // Before the bloom a blade keeps this much of its grown shape at most.
 const YOUNG_RIPE = 0.25
 const FALL = 0.8
+// How far the first pair has parted by the end of the dawn, as a share of its way to open.
+const PART = 0.3
+const ASKEW = 0.7
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
 const TROUGH = 0.0045
@@ -251,7 +254,7 @@ export function create(options: PartOptions): PlantPart {
         // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
         for (let ripe = 0; ripe < 2; ripe++) {
           const cordNow = cord * (ripe ? 1 : 0.5)
-          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2), ripe ? 0.65 : YOUNG_STRAIGHT) * share * (ripe ? 1 : 0.98)
+          const wide = widthAt(s, cordNow, ripe ? tip : i < 2 ? 0.2 : Math.min(0.62, tip + 0.2), ripe ? 0.65 : i < 2 ? 0.08 : YOUNG_STRAIGHT) * share * (ripe ? 1 : 0.98)
           const rolled = roll * (ripe ? 1 : 0.3) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
           // A tooth on a rolled edge runs down the slope, so it reaches less far out.
           const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
@@ -540,9 +543,10 @@ export function create(options: PartOptions): PlantPart {
     // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
     if (i < 2 && time < 12) {
       const az = leafAzimuth(i, time)
-      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time))
+      // In the dawn the plant's pair stands a little askew to the lens, so both blades and the gap opening between them are seen.
+      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time)) + (main ? ASKEW * (1 - smoothstep(8, 11, time)) : 0)
       const steep = leafElevation(i, time, pose.inputs)
-      const stand = steep + (1.52 - steep) * (1 - smoothstep(8, 9.5, time))
+      const stand = steep + (1.52 - steep) * (1 - lerp(PART * smoothstep(5.8, 8, time), 1, smoothstep(8, 9.5, time)))
       const c = Math.cos(steep)
       const k = Math.sin(steep)
       const ox = frame.mx * c - frame.nx * k
@@ -624,7 +628,7 @@ export function create(options: PartOptions): PlantPart {
       }
     }
     // The blades of the shut pair are cupped, not folded: they lie against each other.
-    const fold = leafFold(i, time) * (i < 2 ? lerp(0.3, 1, smoothstep(8.5, 10.5, time)) : 1)
+    const fold = leafFold(i, time) * (i < 2 ? lerp(main ? 0.6 : 0.3, 1, smoothstep(8.5, 10.5, time)) : 1)
     // Before the bloom a blade is stiff: it leaves its stalk nearly straight.
     const stiff = 1 - 0.6 * firm
     const grown = smoothstep(2, 12, age)
@@ -654,7 +658,7 @@ export function create(options: PartOptions): PlantPart {
 
     const tilt = upper * (1 - smoothstep(36, BLOOM, time)) * (0.45 + 0.25 * leaf.seed)
     // A leaf held up round the bud bends its tip down.
-    const nod = 0.45 * crown * smoothstep(2, 7, age)
+    const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
     const fall = round > 0 ? FALL * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
@@ -689,7 +693,7 @@ export function create(options: PartOptions): PlantPart {
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     // The first pair opens narrow, and the leaves under the bud stay narrow and pointed till the bloom.
-    const broad = leafBroadening(i, time) * (i < 2 ? lerp(0.7, 1, smoothstep(6.5, 10, time)) : 1 - 0.3 * crown)
+    const broad = leafBroadening(i, time) * (i < 2 ? lerp(main ? 0.55 : 0.7, 1, smoothstep(main ? 6 : 6.5, 10, time)) : 1 - 0.3 * crown)
     // Before the bloom a blade is cupped along its midrib, not folded on a knife edge.
     const soft = (main ? 0.16 : 0.05) * early
     const { nu, nv } = leaf
