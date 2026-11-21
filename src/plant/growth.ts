@@ -55,7 +55,7 @@ const NUTATION_SECONDS = 3.7
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
 const STACK_SECONDS = 5.5
-const HOOK_MAX = 172 * RAD
+const HOOK_MAX = 164 * RAD
 const HOOK_BACK = 0.3
 const discRadius = config.plant.discDiameterM / 2
 const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
@@ -84,11 +84,12 @@ export function stemRadius(time: number, u: number): number {
 
 // The seedling comes up as an arch and straightens once it is in the light.
 export function hookAngle(time: number): number {
-  return HOOK_MAX * (1 - smootherstep(inStage(emerge0, emerge1, 0.55), emerge1, time))
+  const settle = 5 * RAD * smoothstep(seed0 + 0.9, seed0 + 1.5, time) * (1 - smoothstep(seed0 + 1.5, seed0 + 2.6, time))
+  return HOOK_MAX * (1 - smootherstep(inStage(emerge0, emerge1, 0.55), seed0 + 1.5, time)) - settle
 }
 
 export function hookShare(time: number): number {
-  return lerp(0.92, 0.34, smoothstep(emerge0, inStage(emerge0, emerge1, 0.5), time))
+  return lerp(0.92, 0.34, smoothstep(emerge0, inStage(emerge0, emerge1, 0.5), time)) * lerp(1, 0.5, smoothstep(inStage(emerge0, emerge1, 0.55), seed0 + 1.2, time))
 }
 
 export function paleness(time: number): number {
