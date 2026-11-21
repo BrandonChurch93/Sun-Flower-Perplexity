@@ -8,4 +8,5 @@ export const world: WorldSettings = {
   fog: { color: [0.75, 0.62, 0.48], sunTint: [1.6, 0.9, 0.3], density: 0.012, falloff: 1.4 },
   grade: { exposure: 0.78, contrast: 1.28, white: 9, saturation: 1.04, gain: [1.03, 1, 0.96], lift: [0, 0, 0.004], bloom: 0.11, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0.25, frost: 0, dew: 1 },
+  wind: 0.1,
 }

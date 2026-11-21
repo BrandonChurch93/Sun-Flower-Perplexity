@@ -76,7 +76,7 @@ function inputsOf(worldId: string): PlantInputs {
   const s = sunOf(worldId)
   const flat = Math.hypot(s.x, s.z) || 1
   const w = worlds[worldId]
-  return { leanX: (s.x / flat) * w.sun.lean, leanZ: (s.z / flat) * w.sun.lean, lift: w.sun.lift }
+  return { leanX: (s.x / flat) * w.sun.lean, leanZ: (s.z / flat) * w.sun.lean, lift: w.sun.lift, wind: 0 }
 }
 
 const topology = standInTopology()

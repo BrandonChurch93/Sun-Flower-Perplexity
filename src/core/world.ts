@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+import type { Assets } from './assets.ts'
+import type { CameraPose } from './lens.ts'
 import { shared } from './shading.ts'
 
 export type RGB = [number, number, number]
@@ -12,7 +14,37 @@ export interface WorldSettings {
   fog: { color: RGB; sunTint: RGB; density: number; falloff: number }
   grade: { exposure: number; contrast: number; white: number; saturation: number; gain: RGB; lift: RGB; bloom: number; bloomKnee: number; vignette: number; grain: number }
   ground: { wet: number; frost: number; dew: number }
+  // How hard the wind blows on the plants, 0 to 1.
+  wind: number
 }
+
+// What a world's own code is told about the frame it is about to draw.
+export interface WorldFrame {
+  frame: number
+  // The time at the open shutter and at its close, in seconds of the film.
+  time: number
+  timeClose: number
+  // The camera at the open shutter.
+  pose: CameraPose
+  width: number
+  height: number
+  samples: number
+}
+
+// What a world adds to the picture beyond its settings: its own sky, its far layers, its air and its weather.
+export interface WorldStage {
+  // Drawn with the scene, in this world's frames only.
+  readonly objects: THREE.Object3D[]
+  load?(assets: Assets): Promise<void>
+  // Once a frame, before its first sample.
+  prepare(frame: WorldFrame): void
+  // Once a sample, after the camera is placed for it.
+  sample?(camera: THREE.PerspectiveCamera, shutter: number): void
+  // Draws this world's sky behind everything, in place of the shared one.
+  sky?(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, pixelX: number, pixelY: number, width: number, height: number): void
+}
+
+export type WorldStageMaker = (def: WorldDef) => WorldStage
 
 export interface BackdropLock { right: THREE.Vector3; up: THREE.Vector3; forward: THREE.Vector3; scaleX: number; scaleY: number }
 

@@ -8,19 +8,20 @@ import { DIAG, shared, type DiagName } from '../core/shading.ts'
 import { ShadowMap, type Caster } from '../core/shadow.ts'
 import { Stage } from '../core/stage.ts'
 import { samplesOf } from '../core/tiers.ts'
-import { applyWorld, sunDirection, type WorldDef } from '../core/world.ts'
+import { applyWorld, sunDirection, type WorldDef, type WorldStage } from '../core/world.ts'
 import { breathe } from '../core/yield.ts'
 import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
 import { Ground } from '../ground/index.ts'
 import { heightAt, plantReach, tipAt, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
+import { stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
 import { Sky } from '../weather/sky.ts'
 import { rigAt } from './camera.ts'
 import { plantInputsAt, plantInputsFor } from './inputs.ts'
 import { farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
-import { worldOf } from './registry.ts'
+import { stageMakers, worldOf } from './registry.ts'
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame, worldAt } from './timeline.ts'
 
@@ -35,12 +36,14 @@ export class Film {
   readonly scene = new THREE.Scene()
   readonly camera = new THREE.PerspectiveCamera()
   readonly plant = new Plant()
-  readonly companion = new Plant(companionVariant)
+  readonly companion = new Plant({ variant: companionVariant })
   readonly field = new Field()
   readonly ground = new Ground()
   readonly sky = new Sky()
   readonly shadow = new ShadowMap()
   readonly post: Post
+  // Each world's own stage, for the worlds that have one.
+  readonly stages = new Map<string, WorldStage>()
   format: Format
   diag: DiagName = 'beauty'
   lastTier: TierId = 'draft'
@@ -62,13 +65,19 @@ export class Film {
     this.post = new Post(format.width, format.height)
     const place = companionPlace()
     const ratio = config.field.companion.heightRatio
-    this.companion.mesh.matrixAutoUpdate = false
-    this.companion.mesh.matrix.makeScale(ratio, ratio, ratio).setPosition(place.x, 0, place.z)
-    this.companion.mesh.matrixWorld.copy(this.companion.mesh.matrix)
-    this.scene.add(this.ground.mesh, ...this.field.meshes, this.companion.mesh, this.plant.mesh)
+    this.companion.place(new THREE.Matrix4().makeScale(ratio, ratio, ratio).setPosition(place.x, 0, place.z))
+    this.scene.add(this.ground.mesh, ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
+    for (const w of config.worlds) {
+      const make = stageMakers[w.id]
+      if (!make) continue
+      const made = make(worldOf(w.id))
+      for (const o of made.objects) o.visible = false
+      this.scene.add(...made.objects)
+      this.stages.set(w.id, made)
+    }
     this.scene.matrixWorldAutoUpdate = false
-    this.casters = [{ mesh: this.plant.mesh, surface: this.plant.surface }]
-    this.bothCasters = [...this.casters, { mesh: this.companion.mesh, surface: this.companion.surface }]
+    this.casters = this.plant.casters
+    this.bothCasters = [...this.plant.casters, ...this.companion.casters]
     shared.uFocusCoc.value = config.detail.focusCocPx
   }
 
@@ -76,7 +85,11 @@ export class Film {
     if (!this.loaded) {
       this.loaded = (async () => {
         this.ground.load(this.assets)
+        await this.plant.load(this.assets)
+        await this.companion.load(this.assets)
+        await this.field.load(this.assets)
         for (const w of config.worlds) await this.sky.load(this.assets, worldOf(w.id))
+        for (const made of this.stages.values()) await made.load?.(this.assets)
         const total = this.assets.megabytes()
         if (total > this.assets.limitMb()) throw new Error(`the ${this.assets.set} asset set needs ${total.toFixed(0)} MB of textures, over its limit`)
       })()
@@ -176,16 +189,22 @@ export class Film {
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
     this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
     const eye = this.rigOf(time)
-    this.field.prepare(time, inputs, eye.heightM)
+    stateUniforms.uPlantWet.value = def.ground.wet
+    stateUniforms.uPlantFrost.value = def.ground.frost
+    stateUniforms.uPlantDew.value = def.ground.dew
+    this.field.prepare(time, time + shutterSeconds, inputs, inputsClose, eye.heightM)
     this.field.look(this.poseAt(time), (0.5 * config.camera.gateWidthMm) / eye.focalMm, stage.width / stage.height)
-    for (const m of this.field.meshes) m.visible = !alone && (m !== this.field.carpet || m.visible)
-    this.companion.mesh.visible = !alone
+    this.field.show(!alone)
+    this.companion.visible = !alone
+    const own = alone ? null : (this.stages.get(def.id) ?? null)
+    for (const made of this.stages.values()) for (const o of made.objects) o.visible = made === own
+    own?.prepare({ frame, time, timeClose: time + shutterSeconds, pose: this.poseAt(time), width: stage.width, height: stage.height, samples: count })
     const height = heightAt(time + shutterSeconds)
-    const own = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
+    const reach = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
     // Once the camera is far enough back to see the ground round the plant, the shadow map takes in the companion too.
     const place = companionPlace()
     const wide = alone ? 0 : smoothstep(1.0, 1.8, eye.distanceM)
-    const radius = lerp(own, Math.hypot(place.x, place.z) + own * config.field.companion.heightRatio, wide)
+    const radius = lerp(reach, Math.hypot(place.x, place.z) + reach * config.field.companion.heightRatio, wide)
     const casters = wide > 0 ? this.bothCasters : this.casters
     this.center.set(0, 0.5 * height, 0)
     stage.accumulator.reset()
@@ -206,7 +225,9 @@ export class Film {
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)
       renderer.clear(true, true, false)
-      if (!alone) this.sky.render(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
+      own?.sample?.(camera, s.shutter)
+      if (own?.sky) own.sky(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
+      else if (!alone) this.sky.render(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
       renderer.render(this.scene, camera)
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
       if (pause) await breathe()

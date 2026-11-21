@@ -7,6 +7,8 @@ export interface PlantInputs {
   leanX: number
   leanZ: number
   lift: number
+  // How hard the wind blows, 0 to 1. 0 is still air.
+  wind: number
 }
 
 export interface Vec3 { x: number; y: number; z: number }

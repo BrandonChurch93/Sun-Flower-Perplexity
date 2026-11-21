@@ -1,12 +1,27 @@
 import * as THREE from 'three'
-import { declareStandIn } from '../core/standins.ts'
-import { makeSurface, type Surface } from '../core/shading.ts'
-import { headOpen, paleness, usePlant, type PlantInputs } from './growth.ts'
-import { buildStandIn, plantNumbers, standInTopology, standInVertexCount, tipAt } from './standin.ts'
+import { config } from '../config.ts'
+import type { Assets } from '../core/assets.ts'
+import { allUnits, declareStandIn } from '../core/standins.ts'
+import type { Surface } from '../core/shading.ts'
+import type { Caster } from '../core/shadow.ts'
+import { bodyRadius, headOpen, leafCount, leafLength, paleness, rayCount, rayLength, usePlant, type PlantInputs } from './growth.ts'
+import { real as hairsReal } from './hairs/index.ts'
+import { create as createBud } from './head/bud/index.ts'
+import { create as createDisc } from './head/disc/index.ts'
+import { create as createPetals } from './head/petals/index.ts'
+import { create as createLeaves } from './leaves/index.ts'
+import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartMaker, type PartOptions, type PlantPart } from './part.ts'
+import { create as createSeedling } from './seedling/index.ts'
+import { poseAt } from './skeleton.ts'
+import { HERO, PART, buildStandIn, plantNumbers, standInTopology, tipAt, vertexCountOf, type Detail } from './standin.ts'
+import { create as createStem } from './stem/index.ts'
+import { real as surfaceReal } from './surface/index.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
+#ifndef PLANT_FIELD
 in vec3 positionB;
+#endif
 in vec3 normal;
 in vec2 uv;
 in vec3 aInfo;
@@ -16,10 +31,15 @@ out vec2 vUv;
 out vec3 vInfo;
 out float vDepth;
 void main() {
-  vec4 world = modelMatrix * vec4(mix(position, positionB, uShutter), 1.0);
+#ifdef PLANT_FIELD
+  vec4 world = vec4(plantWorld(position), 1.0);
+  vNormal = plantDirection(normal);
+#else
+  vec4 world = vec4(plantWorld(mix(position, positionB, uShutter)), 1.0);
+  vNormal = normal;
+#endif
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
-  vNormal = normal;
   vUv = uv;
   vInfo = aInfo;
   vDepth = -view.z;
@@ -77,8 +97,22 @@ in float vDepth;
 ${plantColorGlsl}
 void main() {
   vec3 n = normalize(vNormal);
-  if (!gl_FrontFacing) n = -n;
   vec3 v = normalize(uCamPos - vWorld);
+#ifdef PLANT_FIELD
+  if (dot(n, v) < 0.0) n = -n;
+  float ndl = dot(n, uSunDir);
+  vec3 albedo;
+  vec3 through;
+  plantColor(int(vInfo.x + 0.5), vUv, vInfo.z, true, albedo, through);
+  albedo *= 0.78 + 0.44 * vPlantTone;
+  float high = saturate(vWorld.y / max(uCanopy, 0.001));
+  float open = mix(0.22, 1.0, smoothstep(0.25, 0.95, high));
+  float reach = mix(smoothstep(0.5, 0.95, high), 1.0, saturate(uSunDir.y * 1.5));
+  vec3 color = albedo * (uSunColor * max(ndl, 0.0) * reach + skyAmbient(n) * open);
+  color += through * uSunColor * max(-ndl, 0.0) * reach * 0.25;
+  color += through * skyAmbient(-n) * 0.25 * open;
+#else
+  if (!gl_FrontFacing) n = -n;
   float ndl = dot(n, uSunDir);
   vec3 toLight = ndl >= 0.0 ? n : -n;
   float lit = sunShadow(vWorld, toLight, uShadowTexelM * 2.5);
@@ -90,46 +124,151 @@ void main() {
   color += through * skyAmbient(-n) * 0.25;
   float rim = pow(1.0 - saturate(dot(n, v)), 4.0);
   color += uSunColor * rim * 0.06 * lit * saturate(0.4 + dot(-v, uSunDir));
+#endif
   outColor = finish(color, vWorld, vDepth, -1.0);
 }
 `
 
+// How finely the neighbors are built.
+const NEAR: Detail = { stemRings: 6, stemSides: 4, seedU: 3, seedV: 2, huskRings: 0, huskSides: 0, leafStep: 2, leafU: 4, leafV: 3, bodyRings: 4, bodySides: 7, bractStep: 3, bractU: 3, bractV: 2, rayStep: 2, rayU: 3, rayV: 2 }
+const FAR: Detail = { stemRings: 2, stemSides: 4, seedU: 0, seedV: 0, huskRings: 0, huskSides: 0, leafStep: 5, leafU: 3, leafV: 2, bodyRings: 3, bodySides: 6, bractStep: 0, bractU: 0, bractV: 0, rayStep: 5, rayU: 3, rayV: 2 }
+const DETAIL: Record<PartDetail, Detail> = { hero: HERO, near: NEAR, far: FAR }
+
+const bit = (part: number) => 1 << part
+const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk) | bit(PART.body) | bit(PART.bract) | bit(PART.ray)
+
+// Which units a piece of the plant is in: every unit with a moment at which the piece has a size.
+function unitsWith(size: (time: number) => number): string[] {
+  return config.segments
+    .filter((s) => {
+      for (let t = s.start; t <= s.end; t += 0.25) if (size(Math.min(t, s.end - 1e-6)) > 0) return true
+      return false
+    })
+    .map((s) => s.id)
+}
+
+const anyLeaf = (time: number) => {
+  for (let i = 0; i < leafCount; i++) if (leafLength(i, time) > 0) return 1
+  return 0
+}
+const anyRay = (time: number) => {
+  for (let k = 0; k < rayCount; k++) if (rayLength(k, time) > 0) return 1
+  return 0
+}
+
+// The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of and the units it is in.
+const SLOTS: { name: string; make: PartMaker; pieces: number; units: () => string[] }[] = [
+  { name: 'stem', make: createStem, pieces: bit(PART.stem), units: allUnits },
+  { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), units: () => unitsWith(anyLeaf) },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), units: allUnits },
+  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), units: () => unitsWith(bodyRadius) },
+  { name: 'disc', make: createDisc, pieces: 0, units: () => unitsWith(headOpen) },
+  { name: 'petals', make: createPetals, pieces: bit(PART.ray), units: () => unitsWith(anyRay) },
+]
+
+export interface PlantOptions {
+  // 0 is the plant. Any other number builds a neighbor with its own small differences.
+  variant?: number
+  detail?: PartDetail
+  // The places of the neighbors, when one shape is drawn once per neighbor.
+  places?: THREE.InstancedInterleavedBuffer | null
+}
+
 export class Plant {
+  readonly variant: number
+  readonly detail: PartDetail
+  // The stand-in: every piece no real part has taken over yet.
   readonly surface: Surface
   readonly mesh: THREE.Mesh
+  readonly parts: PlantPart[] = []
+  readonly meshes: THREE.Mesh[]
+  readonly casters: Caster[]
+  private readonly shape: Detail
   private readonly a: THREE.BufferAttribute
-  private readonly b: THREE.BufferAttribute
+  private readonly b: THREE.BufferAttribute | null
   private readonly n: THREE.BufferAttribute
+  private readonly hide: number
 
-  // variant 0 is the plant. Any other number builds a neighbor with its own small differences.
-  constructor(readonly variant = 0) {
-    declareStandIn('plant')
-    const topology = standInTopology()
-    const geometry = new THREE.BufferGeometry()
-    this.a = new THREE.BufferAttribute(new Float32Array(standInVertexCount * 3), 3).setUsage(THREE.DynamicDrawUsage)
-    this.b = new THREE.BufferAttribute(new Float32Array(standInVertexCount * 3), 3).setUsage(THREE.DynamicDrawUsage)
-    this.n = new THREE.BufferAttribute(new Float32Array(standInVertexCount * 3), 3).setUsage(THREE.DynamicDrawUsage)
+  constructor(o: PlantOptions = {}) {
+    this.variant = o.variant ?? 0
+    this.detail = o.detail ?? 'hero'
+    const places = o.places ?? null
+    const options: PartOptions = { detail: this.detail, variant: this.variant, places }
+    const who = places ? 'neighbors' : 'plant'
+    let hide = 0
+    for (const slot of SLOTS) {
+      const part = slot.make(options)
+      if (part) {
+        this.parts.push(part)
+        hide |= slot.pieces
+      } else declareStandIn(`${who} ${slot.name}`, slot.units())
+    }
+    if (!hairsReal) declareStandIn('plant hairs')
+    if (!surfaceReal) declareStandIn('plant surface')
+    this.hide = hide
+    this.shape = DETAIL[this.detail]
+    const count = vertexCountOf(this.shape)
+    const topology = standInTopology(this.shape)
+    const geometry = partGeometry(options)
+    const dynamic = () => new THREE.BufferAttribute(new Float32Array(count * 3), 3).setUsage(THREE.DynamicDrawUsage)
+    this.a = dynamic()
+    this.b = places ? null : dynamic()
+    this.n = dynamic()
     geometry.setAttribute('position', this.a)
-    geometry.setAttribute('positionB', this.b)
+    if (this.b) geometry.setAttribute('positionB', this.b)
     geometry.setAttribute('normal', this.n)
     geometry.setAttribute('uv', new THREE.BufferAttribute(topology.uv, 2))
     geometry.setAttribute('aInfo', new THREE.BufferAttribute(topology.info, 3))
     geometry.setIndex(new THREE.BufferAttribute(topology.index, 1))
-    this.surface = makeSurface({ name: variant === 0 ? 'plant stand-in' : 'companion stand-in', vertex, fragment, side: THREE.DoubleSide, standIn: true, uniforms: { uPale: { value: 0 }, uBloom: { value: 0 } } })
-    this.mesh = new THREE.Mesh(geometry, this.surface.main)
-    this.mesh.frustumCulled = false
+    const name = places ? 'field stand-in' : this.variant === 0 ? 'plant stand-in' : 'companion stand-in'
+    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, standIn: true, uniforms: { uPale: { value: 0 }, uBloom: { value: 0 } } })
+    this.mesh = partMesh(geometry, this.surface)
+    this.mesh.visible = hide !== ALL
+    this.meshes = [this.mesh, ...this.parts.flatMap((p) => p.meshes)]
+    this.casters = places ? [] : [{ mesh: this.mesh, surface: this.surface }, ...this.parts.flatMap((p) => p.casters)]
+  }
+
+  async load(assets: Assets): Promise<void> {
+    for (const part of this.parts) await part.load?.(assets)
+  }
+
+  // Where the whole plant stands: every mesh of it takes the same matrix.
+  place(matrix: THREE.Matrix4): void {
+    for (const m of this.meshes) {
+      m.matrixAutoUpdate = false
+      m.matrix.copy(matrix)
+      m.matrixWorld.copy(matrix)
+    }
+  }
+
+  // How many neighbors are drawn, when the plant is drawn once per neighbor.
+  show(count: number): void {
+    for (const m of this.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry && m.geometry.getAttribute('aPlace')) m.geometry.instanceCount = count
+  }
+
+  set visible(on: boolean) {
+    for (const m of this.meshes) m.visible = on && (m !== this.mesh || this.hide !== ALL)
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs): void {
     usePlant(this.variant)
-    buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array)
-    buildStandIn(timeClose, close, this.b.array as Float32Array, null)
+    if (this.hide !== ALL) {
+      buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
+      if (this.b) buildStandIn(timeClose, close, this.b.array as Float32Array, null, this.shape, this.hide)
+      this.a.needsUpdate = true
+      if (this.b) this.b.needsUpdate = true
+      this.n.needsUpdate = true
+    }
+    if (this.parts.length) {
+      const first = poseAt(timeOpen, open)
+      for (const part of this.parts) part.fill(0, first)
+      const second = poseAt(timeClose, close)
+      for (const part of this.parts) part.fill(1, second)
+      for (const part of this.parts) part.finish(timeOpen, open)
+    }
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)
     this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)
-    this.a.needsUpdate = true
-    this.b.needsUpdate = true
-    this.n.needsUpdate = true
   }
 
   tip(time: number, inputs: PlantInputs, out: THREE.Vector3): THREE.Vector3 {
