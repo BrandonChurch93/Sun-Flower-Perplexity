@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { world as dawn } from '../worlds/dawn/index.ts'
-import { grassCover } from './cover.ts'
+import { grassCover, stemFoot, turfCover } from './cover.ts'
 import { cropLight } from './light.ts'
 
 // The soil's tile is the scan's own size on the ground. Its mean color and the depth of its relief come from the recipe.
@@ -303,6 +303,7 @@ ${soilHeight}
 ${groundStates}
 ${cropLight}
 ${grassCover}
+${turfCover}
 
 const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
@@ -379,9 +380,16 @@ void main() {
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
+  float foot = 1.0;
+  if (fieldOn()) {
+    vec2 tf = turf(p);
+    float near = stemNear(p) + 0.03 * (valueNoise(p * 31.0) - 0.5);
+    thatch = smoothstep(-3.5, -2.9, dot(p, uToward)) * grassSeason() * (1.0 - 0.6 * tf.y) * smoothstep(${stemFoot.bareM.toFixed(2)}, ${(0.5 * (stemFoot.bareM + stemFoot.fullM)).toFixed(3)}, near) * smoothstep(0.05, 0.45, 0.5 * tf.x + 0.5 * h);
+    foot = 1.0 - 0.6 * exp(-near * near / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
+  }
   albedo = dampened(albedo, damp);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, vec3(0.03, 0.045, 0.016) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
+  albedo = mix(albedo, (fieldOn() ? vec3(0.045, 0.052, 0.036) : vec3(0.03, 0.045, 0.016)) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * frosted(h, under));
   albedo *= 1.0 - 0.45 * pool;
 
@@ -398,6 +406,13 @@ void main() {
   open *= 1.0 - 0.35 * thatch;
   open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;
+  if (fieldOn()) {
+    float patchLit = fieldPatch(p, d) * (1.0 - 0.5 * thatch);
+    ndl = mix(ndl, max(ndl, 0.15), thatch * step(lit, patchLit));
+    lit = max(lit, patchLit);
+    open *= foot;
+    lit *= foot;
+  }
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);

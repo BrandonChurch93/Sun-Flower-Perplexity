@@ -52,9 +52,15 @@ export interface LensLook {
   specks: number
   // 1 where the sky holds points of light: a sky pixel is then never spread itself and only takes the copies of blurred things in front of it.
   skyHold: number
+  // Times the grade's grain.
+  grain: number
+  // Radius, in pixels of a frame 1080 high, by which the air softens what stands beyond the field: the far land, the sky and the edge between them. Nothing nearer is touched.
+  air: number
+  // How far the lit air round the sun breaks into wide spokes, above the sun and below it.
+  spokes: number
 }
 
-const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowRays: 0, rayLen: 0.1, rayWide: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0 }
+const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowRays: 0, rayLen: 0.1, rayWide: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
   dawn: { veil: 1.4, flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 3, lowRays: 36, rayLen: 0.11, rayWide: 1, airTint: [1, 0.62, 0.36] },
@@ -64,6 +70,16 @@ const table: Record<string, Partial<LensLook>> = {
   golden: { veil: 1.2, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 1.2, star: 0, glow: 0.004, shafts: 0.008, rays: 1.2, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [1, 0.55, 1], specks: 1 },
 }
 
-export function lensLook(def: WorldDef): LensLook {
-  return { ...fallback, ...(table[def.id] ?? {}) }
+// From 52.0 s the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to 52.0 s is drawn as before.
+const FIELD_FROM_S = 52
+const FIELD_FULL_S = 54
+const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
+
+export function lensLook(def: WorldDef, timeS = 0): LensLook {
+  const look = { ...fallback, ...(table[def.id] ?? {}) }
+  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return look
+  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
+  const w = t * t * (3 - 2 * t)
+  for (const key of Object.keys(overField) as (keyof typeof overField)[]) look[key] += (overField[key] - look[key]) * w
+  return look
 }
