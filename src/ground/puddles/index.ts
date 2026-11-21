@@ -1,11 +1,11 @@
 import * as THREE from 'three'
-import type { Assets } from '../../core/assets.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { declareStandIn } from '../../core/standins.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { toward } from '../../field/layout.ts'
 import { nearGeometry, nearRadiusM } from '../geometry.ts'
 import { waterLevelsM } from '../soil.ts'
+import { rainSkyUniforms } from '../../worlds/rain/sky.ts'
 import { rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { LANDING_FLOATS, landings } from './landings.ts'
@@ -32,7 +32,6 @@ export class Puddles {
   private readonly ripples: Ripples
   private readonly level = { value: new THREE.Vector2() }
   private readonly drops = new Float32Array(MAX_DROPS * LANDING_FLOATS)
-  private readonly mirrors = new Map<string, THREE.Texture>()
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor(ground: Record<string, THREE.IUniform>) {
@@ -43,9 +42,7 @@ export class Puddles {
       uLevel: this.level,
       uBox: this.ripples.uniforms.uBox,
       tRipple: { value: this.ripples.target.texture },
-      tMirror: { value: null },
-      uMirrorBasis: { value: new THREE.Matrix3() },
-      uMirrorScale: { value: new THREE.Vector3(1, 1, 1) },
+      ...rainSkyUniforms,
     }
     const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false, standIn: true })
     const plane = new THREE.PlaneGeometry(2 * nearRadiusM, 2 * nearRadiusM)
@@ -73,26 +70,17 @@ export class Puddles {
     this.meshes = [this.water, this.crowns]
   }
 
-  async load(assets: Assets, worlds: WorldDef[]): Promise<void> {
-    for (const def of worlds) if (def.backdrop.file && def.lock) this.mirrors.set(def.id, await assets.texture(`worlds/${def.id}`, def.backdrop.file))
-  }
-
   // Once a frame, with the film second at the open shutter and at its close.
   prepare(def: WorldDef, time: number, timeClose: number, shown = true): void {
-    const mirror = this.mirrors.get(def.id)
     const wet = def.ground.wet
-    this.water.visible = shown && wet > 0.5 && !!mirror && !!def.lock
+    this.water.visible = shown && wet > 0.5 && !!rainSkyUniforms.tRainSky.value
     this.crowns.visible = this.water.visible
     this.rivulets.visible = this.water.visible
-    if (!this.water.visible || !mirror || !def.lock) return
+    if (!this.water.visible) return
     const cut = Math.min(1, Math.max(0, (time - CUT_STARTS_S) / (CUT_ENDS_S - CUT_STARTS_S)))
     const eased = 0.25 + 0.75 * cut * cut * (3 - 2 * cut)
     const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet - waterLevelsM[1] + standInLevelM
     this.level.value.set(y, eased)
-    const { right, up, forward, scaleX, scaleY } = def.lock
-    this.uniforms.tMirror.value = mirror
-    this.uniforms.uMirrorBasis.value.set(right.x, up.x, forward.x, right.y, up.y, forward.y, right.z, up.z, forward.z)
-    this.uniforms.uMirrorScale.value.set(scaleX, scaleY, def.backdrop.gain)
     const cx = toward.x * rippleBox.aheadM
     const cz = toward.z * rippleBox.aheadM
     const count = landings(cx, cz, rippleBox.halfM + 0.3, y, time - RING_LIFE_S, timeClose, this.drops)
