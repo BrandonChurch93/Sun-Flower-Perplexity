@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { makePartSurface, partMesh, type PartOptions } from '../part.ts'
+import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 
 // `real` turns true once this folder holds the plant's hairs at their real quality.
@@ -20,21 +20,32 @@ const REGATHER_M = 0.03
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
 uniform sampler2D uHairs;
+uniform float uPlantWet;
+uniform float uPlantFrost;
+uniform float uPlantDew;
 out vec3 vWorld;
 out float vDepth;
 out vec3 vSun;
 out vec3 vSky;
 out float vSkyY;
+out vec3 vBead;
 uniform vec3 uHairColor;
 uniform float uHairWidth;
 
-const float STRAND_GAIN = 12.0;
+// How bright a hair is at its brightest, seen straight against the sun, in white cards that face the sun. Set by eye against the approved bloom pictures. It is more than the sun's disc alone would give a fiber: it also stands for the bright sky round the sun, which a fiber sends on with it.
+const float SUN_THROUGH = 10.0;
+// A hair bright enough to burn the film pales toward white there. The lit color is pushed this far past the sun's own, by its own hue, so the burnt hair still lands on the sun's color.
+const float SUN_DEEPEN = 0.6;
 const float TT_SPREAD = 0.34;
 const float TT_TURN = 3.5;
 const float R_SPREAD = 0.16;
 const float EVEN = 0.035;
 const float SKY_BACK = 0.12;
 const float SKY_THROUGH = 0.5;
+const float STRAND_GAIN = SUN_THROUGH * 2.5066 * TT_SPREAD / 0.714;
+const vec3 RIME = vec3(0.92, 0.96, 1.0);
+const float RIME_SUN = 0.4;
+const float RIME_SKY = 0.85;
 
 struct Strand {
   vec3 world;
@@ -51,6 +62,8 @@ vec3 hairDir;
 vec3 hairBend;
 float hairOwn;
 float hairShare;
+float hairWide;
+float hairBead;
 
 // Four texels a hair: its root and length, its root at the close of the shutter and its own number, its direction and how many hairs it stands for, its direction at the close.
 void readHair(int k) {
@@ -65,12 +78,32 @@ void readHair(int k) {
   hairShare = c.w;
   float h1 = fract(hairOwn * 13.37 + 0.21);
   float h2 = fract(hairOwn * 47.13 + 0.67);
+  float h4 = fract(hairOwn * 233.31 + 0.09);
+  float h5 = fract(hairOwn * 71.93 + 0.5);
   vec3 ref = abs(hairDir.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 e1 = normalize(cross(hairDir, ref));
   vec3 e2 = cross(hairDir, e1);
   float turn = h1 * 6.2832;
-  // The place for the skin states: wet hairs lean together and carry beads (uPlantWet), frost grows crystals along them (uPlantFrost), dew sits on them as beads (uPlantDew).
-  hairBend = (e1 * cos(turn) + e2 * sin(turn)) * (0.06 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
+  vec3 aside = e1 * cos(turn) + e2 * sin(turn);
+  hairBend = aside * (0.06 + 0.3 * h2 * h2) + vec3(0.0, -0.05, 0.0);
+  hairWide = 1.0;
+  hairBead = 0.0;
+  // Rime grows on every hair: a thick white needle, a little longer than the hair.
+  if (uPlantFrost > 0.0) {
+    hairRoot.w *= 1.0 + uPlantFrost * (0.15 + 0.2 * h2);
+    hairWide = 1.0 + uPlantFrost * (3.5 + 3.5 * h4);
+  }
+  // Wet hairs stick together in points. One hair in three stands for a point, thick at its foot, and the others fade into it. All of them lie flatter, and a few carry a drop.
+  if (uPlantWet > 0.0) {
+    float point = step(h4, 0.34);
+    hairShare *= mix(1.0 - uPlantWet, 1.0, point);
+    hairWide *= 1.0 + 2.0 * uPlantWet * point;
+    hairDir = normalize(hairDir + (aside * 0.35 + vec3(0.0, -0.6, 0.0)) * uPlantWet);
+    hairRoot.w *= 1.0 - 0.2 * uPlantWet;
+    hairBead = uHairWidth * 3.0 * uPlantWet * step(h5, 0.06);
+  }
+  // Dew sits as a bead near the tip of one hair in three.
+  if (uPlantDew > 0.0) hairBead += uHairWidth * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
 }
 
 vec3 hairPoint(float t) {
@@ -94,7 +127,10 @@ vec3 scatter(vec3 along, vec3 toEye, vec3 toSun) {
   float mirror = 0.04 + 0.96 * pow(1.0 - glance, 5.0);
   float through = lobe(sinI + sinO, TT_SPREAD) * 0.714 * exp(-TT_TURN * (1.0 + round)) * (1.0 - mirror) * (1.0 - mirror);
   float back = lobe(sinI + sinO, R_SPREAD) * 0.25 * sqrt(saturate(0.5 + 0.5 * round)) * mirror;
-  return (uHairColor * through + vec3(back)) * (cosI / max(between, 0.2)) + uHairColor * (EVEN * cosI);
+  vec3 clear = vec3((through + back) * cosI / max(between, 0.2)) + uHairColor * (EVEN * cosI);
+  // Rime is matt: it sends the sun on evenly, a little more against the light, where the ice lets it through.
+  if (uPlantFrost > 0.0) clear = mix(clear, RIME * (RIME_SUN * cosI * (0.7 - 0.3 * round) / STRAND_GAIN), uPlantFrost);
+  return clear;
 }
 
 Strand strandAt(float t) {
@@ -107,21 +143,23 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * mix(1.0, 0.1, pow(t, 0.7 + 0.9 * h1));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairWide * mix(1.0, 0.1 + 0.3 * uPlantFrost, pow(t, 0.7 + 0.9 * h1));
   s.share = hairShare;
   float reach = length(s.world - uCamPos);
-  float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach);
+  float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
   vWorld = s.world;
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairDir);
   float shade = smoothstep(-0.7, -0.3, dot(out3, uSunDir));
   float behind = smoothstep(-0.85, -0.6, dot(out3, s.toEye));
-  vSun = uSunColor * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
-  // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has.
+  vec3 lit = uSunColor * pow(uSunColor / max(uSunColor.r, max(uSunColor.g, uSunColor.b)), vec3(SUN_DEEPEN * (1.0 - uPlantFrost)));
+  vSun = lit * scatter(s.along, s.toEye, uSunDir) * (STRAND_GAIN * fog * shade * behind);
+  // Sky light comes through a fiber as sunlight does, from behind it, where the body it grows on is not in the way. The little it sends back is all a hair on the near face has. Rime takes the sky from all round, as a white card does.
   float open = 1.0 - smoothstep(-0.1, 0.6, dot(out3, s.toEye));
-  vSky = uHairColor * ((SKY_BACK + SKY_THROUGH * open) * fog * behind);
+  vSky = mix(uHairColor * (SKY_BACK + SKY_THROUGH * open), RIME * RIME_SKY, uPlantFrost) * (fog * behind);
   vSkyY = normalize(vec3(0.0, 0.5, 0.0) - s.toEye * open + s.toEye * (1.0 - open)).y;
+  vBead = vec3(t, hairBead * plantSize() / s.pixel, 1.0);
   return s;
 }
 `
@@ -142,12 +180,14 @@ void main() {
   vec2 run = (b - a) * 0.5 * uSize;
   float major = max(abs(run.x), abs(run.y));
   float slant = length(run) / max(major, 1e-4);
-  // A hair seen end on is shorter than a pixel and would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, so it does not sparkle.
+  // A hair seen end on is shorter than a pixel and would light one whole pixel in some samples and none in others. It is drawn two pixels long and that much fainter, level in depth, so it does not sparkle.
   float stretch = max(1.0, 2.0 / max(major, 1e-3));
   vec2 mid = 0.5 * (a + b);
   vec2 at = mid + (here.xy / max(here.w, 1e-5) - mid) * stretch;
-  vCover = s.width / s.pixel * slant * s.share / stretch;
   float level = 0.5 * (foot.z / max(foot.w, 1e-5) + tip.z / max(tip.w, 1e-5));
+  vCover = s.width / s.pixel * slant * s.share / stretch;
+  vBead.y *= sqrt(s.share);
+  vBead.z = max(major, 2.0);
   gl_Position = stretch > 1.0 ? vec4(at * here.w, level * here.w, here.w) : here;
 }
 `
@@ -163,9 +203,11 @@ void main() {
   Strand s = strandAt(0.25 * float(j >> 1));
   vec3 side = normalize(cross(s.along, s.toEye));
   float halfPx = 0.5 * s.width / s.pixel;
-  vAcross = (float(j & 1) * 2.0 - 1.0) * (halfPx + 0.75);
+  // The ribbon opens at its tip to hold the bead.
+  vAcross = (float(j & 1) * 2.0 - 1.0) * ((j >= 8 ? max(halfPx, vBead.y) : halfPx) + 0.75);
   vHalf = halfPx;
   vShare = s.share;
+  vBead.z = hairRoot.w * plantSize() / s.pixel;
   vec3 world = s.world + side * (vAcross * s.pixel);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }
@@ -177,6 +219,7 @@ in float vDepth;
 in vec3 vSun;
 in vec3 vSky;
 in float vSkyY;
+in vec3 vBead;
 #ifdef RIBBON
 in float vAcross;
 in float vHalf;
@@ -184,6 +227,8 @@ in float vShare;
 #else
 in float vCover;
 #endif
+const float BEAD_THROUGH = 3.0;
+const float BEAD_SKY = 2.0;
 void main() {
 #ifdef RIBBON
   float x = abs(vAcross);
@@ -191,7 +236,22 @@ void main() {
 #else
   float cover = vCover;
 #endif
-  vec3 color = (vSun * plantSun(vWorld, uSunDir) + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld)) * cover;
+  float sun = plantSun(vWorld, uSunDir);
+  vec3 color = (vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld)) * cover;
+  // A bead of water is a lens: it throws the sun on toward an eye that looks against it, and shows the bright low sky from anywhere.
+  if (vBead.y > 0.0) {
+    float against = exp(-4.0 * (1.0 + dot(normalize(uCamPos - vWorld), uSunDir)));
+    vec3 bead = uSunColor * ((BEAD_THROUGH * against + 0.05) * sun) + skyAmbient(vec3(0.0, 0.35, 0.0)) * (BEAD_SKY * plantSky(vWorld));
+    float r = vBead.y;
+#ifdef RIBBON
+    float q = length(vec2(vAcross, (1.0 - vBead.x) * vBead.z - r));
+    float small = 3.0 * r * r / ((r + 0.5) * (r + 0.5) * (r + 0.5));
+    color += bead * (saturate(r - q + 0.5) * mix(small, 1.0, smoothstep(0.75, 1.5, r)) * vShare);
+#else
+    float t3 = vBead.x * vBead.x * vBead.x;
+    color += bead * (21.99 * r * r * t3 * t3 / vBead.z);
+#endif
+  }
   // Light is added to what is behind, as a clear fiber does. The blur circle is the smaller of the hair's own and the one behind it, and only where the hair shows, so the lens does not smear a sharp bright hair into a soft background.
   float shows = dot(color, vec3(0.3, 0.6, 0.1));
   outColor = vec4(color, shows > 0.012 ? cocOf(vDepth) : 4096.0);
@@ -340,7 +400,8 @@ export class HairSet {
     const m = object.matrixWorld.elements
     const size = Math.hypot(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
-    const close = (this.widthM * 1.5 * size) / pixel > RIBBON_FROM_PX
+    const thick = (1 + 5 * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const close = (this.widthM * thick * 1.5 * size) / pixel > RIBBON_FROM_PX
     if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
       geometry.setDrawRange(0, 0)
       return
