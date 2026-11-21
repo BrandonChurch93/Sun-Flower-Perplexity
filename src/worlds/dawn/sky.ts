@@ -41,7 +41,7 @@ void main() {
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (1.0 * exp(-theta / 0.014) + 0.22 * exp(-theta / 0.05) + 0.05 * exp(-theta / 0.17) + 0.006 * exp(-theta / 0.6));
+  color += uGlow * (1.0 * exp(-theta / 0.014) + 0.22 * exp(-theta / 0.05) + 0.07 * exp(-theta / 0.17) + 0.006 * exp(-theta / 0.6));
   float share = 0.5 * wide * uPixelAngle;
   float radius = sqrt(SUN_RADIUS * SUN_RADIUS + share * share);
   color += uDisc * (SUN_RADIUS * SUN_RADIUS / (radius * radius)) * (1.0 - smoothstep(radius - max(share, 0.75 * uPixelAngle), radius + max(share, 0.75 * uPixelAngle), theta));

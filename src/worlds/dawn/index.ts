@@ -23,16 +23,16 @@ const AIR_PER_M = 0.00025
 
 export const mist: MistSettings = {
   fromM: 0.55,
-  toM: 1.5,
-  sheets: 8,
+  toM: 1,
+  sheets: 5,
   heightM: 0.012,
   thickness: 0.993,
-  lit: [0.12, 0.1, 0.118],
-  shade: [0.35, 0.33, 0.2],
+  lit: [0.15, 0.125, 0.15],
+  shade: [0.45, 0.5, 0.36],
   forward: 1,
   drift: [0.05, 0.02],
-  bankM: 0.6,
-  broken: 0.55,
+  bankM: 0.15,
+  broken: 0.5,
 }
 
 export const stage: WorldStageMaker = (def) => {
