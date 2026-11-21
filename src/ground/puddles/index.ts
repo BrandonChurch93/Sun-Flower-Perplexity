@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
 import { makeSurface } from '../../core/shading.ts'
+import { declareStandIn } from '../../core/standins.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { toward } from '../../field/layout.ts'
 import { nearRadiusM } from '../geometry.ts'
@@ -32,6 +33,7 @@ export class Puddles {
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor(ground: Record<string, THREE.IUniform>) {
+    declareStandIn('puddle furrow', ['rain'])
     this.ripples = new Ripples(ground, this.level, this.drops)
     this.uniforms = {
       ...ground,
@@ -42,7 +44,7 @@ export class Puddles {
       uMirrorBasis: { value: new THREE.Matrix3() },
       uMirrorScale: { value: new THREE.Vector3(1, 1, 1) },
     }
-    const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false })
+    const surface = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms: this.uniforms, transparent: true, castShadow: false, standIn: true })
     const plane = new THREE.PlaneGeometry(2 * nearRadiusM, 2 * nearRadiusM)
     plane.rotateX(-Math.PI / 2)
     this.water = new THREE.Mesh(plane, surface.main)
