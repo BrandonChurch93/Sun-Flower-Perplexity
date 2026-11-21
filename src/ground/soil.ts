@@ -410,8 +410,8 @@ void main() {
     float patchLit = fieldPatch(p, d) * (1.0 - 0.5 * thatch);
     ndl = mix(ndl, max(ndl, 0.15), thatch * step(lit, patchLit));
     lit = max(lit, patchLit);
-    open *= foot;
-    lit *= foot;
+    open *= foot * edgeShade(d);
+    lit *= foot * edgeShade(d);
   }
   vec3 shade = mix(vec3(1.0), vec3(0.6, 0.57, 0.42), under);
 #ifdef NEAR

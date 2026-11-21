@@ -4,7 +4,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
+import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -137,6 +137,12 @@ export function create(options: PartOptions): PlantPart {
 
   // The companion keeps the narrower folded blades: its leaf at the sun was placed with them and must not cover the sun.
   const main = options.variant === 0
+  // Before the bloom a leaf near the tip is small: the stem carries the height, not the leaves standing over it.
+  const lengthAt = (i: number, time: number): number => {
+    const length = leafLength(i, time)
+    if (i < 2 || time >= BLOOM || length <= 0) return length
+    return length * lerp(1, lerp(0.4, 1, smoothstep(1.5, 6, leafAge(i, time))), 1 - smoothstep(35.5, BLOOM, time))
+  }
   for (let i = 0; i < leafCount; i += shape.step) {
     const r = (k: number) => hash01(seed, i, k)
     const rank = i / (leafCount - 1)
@@ -431,7 +437,7 @@ export function create(options: PartOptions): PlantPart {
       const leaf = leaves[spot.leaf]
       const o = k * 4
       seat[o + 3] = 0
-      const size = leafLength(leaf.i, pose.time)
+      const size = lengthAt(leaf.i, pose.time)
       // A blade still folded holds no water on its face.
       if (size <= 0 || leafFold(leaf.i, pose.time) > 0.25) continue
       beadAt(spot.own, spot.along, spot.across, pose.time, bead)
@@ -490,7 +496,7 @@ export function create(options: PartOptions): PlantPart {
     const i = leaf.i
     const time = pose.time
     const wind = pose.inputs.wind
-    const size = leafLength(i, time)
+    const size = lengthAt(i, time)
     const f = leafFrameAt(pose, i)
     frame.ox = f.ox; frame.oy = f.oy; frame.oz = f.oz
     frame.mx = f.mx; frame.my = f.my; frame.mz = f.mz
@@ -628,6 +634,7 @@ export function create(options: PartOptions): PlantPart {
     const crease = main ? fold + leaf.crease * grown * (1 - 0.6 * early) : (fold + leaf.crease * grown) * leafFoldScale(i, time)
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
+    const broad = leafBroadening(i, time)
     const { nu, nv } = leaf
     for (let a = 0; a < nu; a++) {
       const s = Math.max(0, leaf.sig[a])
@@ -658,7 +665,7 @@ export function create(options: PartOptions): PlantPart {
         const v = a * nv + b
         const px = ripe >= 1 ? leaf.px[v] : leaf.qx[v] + (leaf.px[v] - leaf.qx[v]) * ripe
         const pz = rolled >= 1 ? leaf.pz[v] : leaf.qz[v] + (leaf.pz[v] - leaf.qz[v]) * rolled
-        const across = px * cf * blade
+        const across = px * cf * blade * broad
         const up = (Math.abs(px) * sf + pz + leaf.pc[v] * creased) * blade
         const along = (ripe >= 1 ? leaf.py[v] : leaf.qy[v] + (leaf.py[v] - leaf.qy[v]) * ripe) * blade
         const o = (leaf.base + v) * 3
@@ -753,7 +760,7 @@ export function create(options: PartOptions): PlantPart {
     for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
-      const size = leafLength(leaf.i, pose.time)
+      const size = lengthAt(leaf.i, pose.time)
       const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.35, 1)
       const o = h * 4
       let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, long = 0
