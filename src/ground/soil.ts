@@ -209,7 +209,7 @@ void main() {
   vec2 tilt = g * 1.6 * clod - uToward * slope;
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
   albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
-  float pool = pooled((h - 0.55) * uRelief.x - 0.006 * (1.0 - ridge) * rowAmt, uWet);
+  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.54) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
 #endif
 
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
