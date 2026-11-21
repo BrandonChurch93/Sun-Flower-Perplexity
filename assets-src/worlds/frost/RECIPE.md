@@ -19,3 +19,10 @@
 - What draws it: `src/worlds/frost/sky.ts`, a full screen pass that reads `fogLight(direction)` from `src/weather/fog/index.ts`: the fog's color at eye level (`fog.color`), its color overhead (`FOG_HIGH` in `src/worlds/frost/index.ts`), the sun's light through it (`fog.sunTint`) and the glow round the sun (`sky.glow`), plus the white disc (`sky.disc`) and slow high banks of 3.5 percent either way.
 - How the numbers were found: a least squares fit of those four colors to the approved image `references/approved/frost.png`, scaled to 1920 x 1080 and taken back through the grade to scene values, over the sky above y 560 with the plant masked out. The far shapes, the banks and the neighbors fade toward the same `fogLight`, so a thing that is gone in the fog is exactly the sky behind it.
 - Checks: the tones of named boxes of the sky beside the approved at 1920 x 1080 are in the reports of `agent/frost-world`.
+
+## Decisions (no file)
+
+- Air: the air of the frost is the fog and its six drifting banks (`src/weather/fog/`), at 4, 7, 11, 16, 24 and 42 m. Ice specks in the air were tried and dropped: at the size the lens gives them they read as dust on the glass.
+- Ground: no frame of the unit shows the ground. Draft stills of frames 900 to 1170 every 30 frames and 1199, and the `depth` view of frame 900, show the neighbors' leaves over every pixel under the horizon. So no crystals are placed on the grass and `src/ground/frost/` holds nothing. The pale crust on the soil and the grass is the ground's own frost state (`ground.frost: 1`). Open: if a later camera or a thinner field shows the ground in this unit, crystals from `src/weather/frost/` go on the grass blades.
+- Far shapes: the nine layers of the shared skyline, drawn from `skylineRing` so they follow the film's one easing. Their feet fade into the low fog (`FOOT` in `src/worlds/frost/layers.ts`); their top edge is the shared one, so nothing steps at the cut to the golden hour.
+- `standIn` is `false` from this point: the sky, the far layers, the air, the state of the ground and the weather are all drawn by the parts above.
