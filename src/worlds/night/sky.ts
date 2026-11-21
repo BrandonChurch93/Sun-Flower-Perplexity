@@ -40,6 +40,8 @@ uniform mat3 uToMap;
 uniform vec2 uMapScale;
 uniform float uPixelAngle;
 uniform float uGain;
+uniform float uCurve;
+uniform float uSaturation;
 uniform vec3 uMeteorHead;
 uniform vec3 uMeteorTail;
 uniform float uMeteor;
@@ -58,7 +60,9 @@ void main() {
   float el = asin(clamp(d.y, -1.0, 1.0));
   vec3 m = uToMap * d;
   vec2 uv = 0.5 + m.xy / max(m.z, 0.2) * uMapScale;
-  vec3 paint = texture(tGlow, clamp(uv, 0.002, 0.998)).rgb * uGain;
+  vec3 paint = texture(tGlow, clamp(uv, 0.002, 0.998)).rgb;
+  float level = max(dot(paint, vec3(0.3, 0.6, 0.1)), 1e-5);
+  paint = max(mix(vec3(level), paint, uSaturation), 0.0) * (uGain * pow(level, uCurve - 1.0));
   vec3 plain = mix(uHorizon, uZenith, smoothstep(0.0, 0.6, el));
   vec2 off = abs(uv - 0.5);
   float inside = (1.0 - smoothstep(0.44, 0.5, max(off.x, off.y))) * smoothstep(0.2, 0.5, m.z);
@@ -186,7 +190,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
 
 export const GLOW_FILE = 'glow.jpg'
 
-export interface NightSkyLook { gain: number; stars: number; glow: [number, number, number]; glowPower: number; zenith: [number, number, number]; horizon: [number, number, number] }
+export interface NightSkyLook { gain: number; curve: number; saturation: number; stars: number; glow: [number, number, number]; glowPower: number; zenith: [number, number, number]; horizon: [number, number, number] }
 
 export class NightSky {
   private readonly pass: FullscreenPass
@@ -221,6 +225,8 @@ export class NightSky {
       uMeteorTail: { value: this.meteorTail },
       uMeteor: { value: 0 },
       uGain: { value: look.gain },
+      uCurve: { value: look.curve },
+      uSaturation: { value: look.saturation },
       uGlow: { value: new THREE.Vector3().fromArray(look.glow) },
       uGlowPower: { value: look.glowPower },
       uZenith: { value: new THREE.Vector3().fromArray(look.zenith) },
