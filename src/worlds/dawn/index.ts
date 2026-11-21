@@ -6,7 +6,7 @@ import { makeFarLayers } from './layers.ts'
 import { DawnSky } from './sky.ts'
 
 export const world: WorldSettings = {
-  standIn: true,
+  standIn: false,
   sun: { azimuthDeg: SKYLINE_DAWN_SUN_DEG, elevationDeg: 1.005, color: [12.8, 7.8, 3.7], softnessDeg: 1.2, lean: 1, lift: 1 },
   sky: { zenith: [0.2, 0.3, 0.42], horizon: [0.9, 0.85, 0.8], bounce: [0.07, 0.05, 0.035], ambient: 1, glow: [9, 4.7, 2.3], glowPower: 60, disc: 35 },
   backdrop: { file: null, key: 'dawn-seedling', sunAt: null, gain: 1, blur: 0.25 },
