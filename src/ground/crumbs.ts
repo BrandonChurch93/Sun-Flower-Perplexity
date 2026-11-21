@@ -9,14 +9,17 @@ export { laneDir }
 // Loose soil on the near ground. Far from the plant: crumbs a few millimeters across, a share of them stones, and clods up to a few centimeters.
 // Round the plant, where the dawn lens is a finger's width away: grains under a millimeter, aggregates of a few millimeters and masses over a centimeter, each aggregate and mass built of smaller crumbs stuck to it.
 // `beside` is the share of a scatter laid in a band across the way to the camera at the plant's own distance, where the dawn lens is sharp. `frontM` is the largest size between that band and the lens, so the band is seen over it.
-// `cover` is how much of a lump's upper side its own crumbs hide, and `childM` their sizes. `beads` is the share of lumps and crumbs that carry a bead of dew.
-export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number }
+// `rugged` is how broken a lump's own outline is, from 0 for a ball; a large lump with no crumbs of its own is kept round, or it reads as a stone. `cover` is how much of a lump's upper side its own crumbs hide, and `childM` their sizes. `beads` is the share of lumps and crumbs that carry a bead of dew.
+export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number; rugged?: number }
 export const crumbScatter: Scatter = { count: 3500, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.1, outerM: 0.9, spread: 1.4, stones: 0.03, sink: 0.38 }
-export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
+export const clodScatterKept: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
+export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.01, skew: 1.8, innerM: 0.2, outerM: 0.9, spread: 1.3, stones: 0, sink: 0.45, rugged: 0.4 }
 export const grainScatter: Scatter = { count: 4200, detail: 2, minM: 0.0003, maxM: 0.0011, skew: 1.6, innerM: 0.004, outerM: 0.13, spread: 1.25, stones: 0.04, sink: 0.3, beside: 0.25, beads: 0.3 }
 export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM: 0.0036, skew: 1.5, innerM: 0.007, outerM: 0.13, spread: 1.3, stones: 0, sink: 0.45, beside: 0.3, frontM: 0.0026, cover: 0.5, childM: [0.0004, 0.001], beads: 0.25 }
 // The grains and lumps round the stem are drawn while the lens is within the first of these distances of the plant's foot, and shrink to nothing by the second.
 export const fineReachM = [1.2, 1.5]
+// A film of dew on a crumb gives back more of the sky that lights it, and most of its blue.
+export const dewFill = [0.95, 0.95, 1.3]
 export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
 const LANE_CRUMB_M = 0.0022
@@ -139,7 +142,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const shade = random.next() * 97
     const tone = random.next()
     const stone = random.next() < s.stones ? 1 : 0
-    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.cover ? 0.85 : 1, detail: detailOf(radius, s.detail) })
+    blobs.push({ x, y, z, ox: 0, oy: 0, oz: 0, sx, sy, sz, e, radius, whole: radius, shade, tone, kind: stone, rugged: s.rugged ?? (s.cover ? 0.85 : 1), detail: detailOf(radius, s.detail) })
     const on = (wx: number, wy: number, wz: number, sink: number): [number, number, number] => {
       const lx = e[0] * wx + e[1] * wy + e[2] * wz
       const ly = e[4] * wx + e[5] * wy + e[6] * wz
@@ -262,7 +265,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
   return new THREE.Mesh(geometry)
 }
 
-// A bead of dew: a small ball of water that shows the sky upside down through itself, mirrors it at its rim and throws the sun back from one point.
+// A bead of dew: a small ball of water that shows the sky upside down through itself, mirrors it at its rim, throws the sun back from one point and glows where the sun behind it comes through.
 export const beadLook = /* glsl */ `
 vec3 beadSky(vec3 d, float open) {
   return mix(uSkyHorizon, uSkyZenith, sqrt(saturate(d.y))) + uSunColor * open * 0.25 * pow(max(dot(d, uSunDir), 0.0), 40.0);
@@ -275,7 +278,7 @@ vec3 beadColor(vec3 nb, vec3 v, float shadow) {
   vec3 below = skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.04;
   vec3 drop = mix(below, beadSky(through, shadow), smoothstep(-0.05, 0.12, through.y)) * (1.0 - skim) * 0.9;
   drop += mix(below, beadSky(back, shadow), smoothstep(-0.05, 0.12, back.y)) * skim;
-  drop += uSunColor * shadow * (pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 500.0) * 40.0 + pow(max(dot(through, uSunDir), 0.0), 300.0) * 12.0);
+  drop += uSunColor * shadow * (pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 500.0) * 40.0 + pow(max(dot(through, uSunDir), 0.0), 300.0) * 12.0 + pow(max(dot(through, uSunDir), 0.0), 24.0) * 0.5);
   return drop;
 }
 `
@@ -356,13 +359,14 @@ uniform vec2 uToward;
 ${groundStates}
 ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
+const vec3 DEW_FILL = vec3(${dewFill.join(', ')});
 ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
   if (vSeed.z > 1.5) {
     vec3 nb = normalize(vNormal);
-    float shadow = sunShadow(vWorld, nb, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
+    float shadow = lowSun(sunShadow(vWorld, nb, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
     vec3 drop = beadColor(nb, v, shadow);
     outColor = finish(drop, vWorld, vDepth, 1.0);
     return;
@@ -378,20 +382,20 @@ void main() {
   vec2 g = dD.rg * 2.0 - 1.0 + (grit.rg * 2.0 - 1.0) * TURN_K * 0.9;
   vec3 smoothN = normalize(vNormal);
   smoothN *= sign(dot(smoothN, v) + 0.35);
-  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(0.9, 0.25, vSeed.z));
+  vec3 n = normalize(smoothN + vec3(g.x, 0.0, g.y) * mix(mix(0.9, 0.45, uDew), 0.25, vSeed.z));
   vec3 albedo = cD.rgb * mix(0.62, 1.12, vSeed.y);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
-  float damp = saturate(uWet + 0.6 * uDew) * mix(1.0, 0.6, vSeed.z);
+  float damp = saturate(uWet + 0.3 * uDew) * mix(1.0, 0.6, vSeed.z);
   albedo = dampened(albedo, damp);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
-  float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
-  float open = (0.25 + 0.75 * saturate(0.5 + 0.5 * vBall.y)) * (0.15 + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
-  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + 0.25) / 1.25) * lit + groundAmbient(n) * open * proud(vWorld.y) * mix(1.0, 1.5, uDew));
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
+  float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a);
+  vec3 color = albedo * (uSunColor * saturate((dot(n, uSunDir) + mix(0.25, 0.2, uDew)) / (1.0 + mix(0.25, 0.2, uDew))) * lit + groundAmbient(n) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open;
   color += wetGlints(vWorld, v, n, uWet) * open;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));

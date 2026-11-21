@@ -27,6 +27,9 @@ const RIME_M = 0.00014
 const MOST_PICKS = 24000
 const EXTRA_FROM_M = 0.002
 const EXTRA_SHARE = 0.4
+// Dew beads sit on one hair in six of those long enough to hold one.
+const DEW_FROM_M = 0.00015
+const DEW_SHARE = 0.16
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
@@ -70,6 +73,9 @@ const float RIME_VELVET = 0.28;
 // A needle on the outline is seen from its shaded side, against the bright air.
 const float RIME_SHADE = 0.85;
 const float RIME_M = ${RIME_M.toFixed(6)};
+const float DEW_M = 0.00004;
+const float DEW_OF_HAIR = 0.3;
+const float DEW_FACE = 0.03;
 
 struct Strand {
   vec3 world;
@@ -158,8 +164,6 @@ void readHair(int k) {
     hairRoot.w *= 1.0 - 0.2 * uPlantWet;
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
   }
-  // Dew sits as a bead near the tip of one hair in three.
-  if (uPlantDew > 0.0) hairBead += one * (1.5 + 2.0 * h2) * uPlantDew * (1.0 - uPlantWet) * step(0.85, h5);
   mat4 toClip = projectionMatrix * viewMatrix;
   hairFoot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
   hairTip = toClip * vec4(plantWorld(hairPoint(1.0)), 1.0);
@@ -290,8 +294,10 @@ export const ball = /* glsl */ `
 const float BALL_GLINT = 30.0;
 const float BALL_SHARP = 400.0;
 const float BALL_SUN = 40.0;
+const float BALL_WATER_SUN = 0.25;
+const float BALL_WATER = 0.1;
 const vec3 BALL_ICE = vec3(0.9, 0.95, 1.0);
-vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen) {
+vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen, float px) {
   float off = min(length(d), 0.999);
   vec3 toEye = normalize(uCamPos - world);
   vec3 out2 = (right * d.x + up * d.y) / max(length(d), 1e-3);
@@ -300,10 +306,12 @@ vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen)
   vec3 through = -toEye * cos(turn) - out2 * sin(turn);
   float edge = 0.02 + 0.98 * pow(1.0 - saturate(dot(n, toEye)), 5.0);
   float sky = plantSky(world);
-  vec3 lens = skyAmbient(through) * sky + uSunColor * (BALL_SUN * sun * pow(saturate(dot(through, uSunDir)), 60.0));
+  vec3 lens = skyAmbient(through) * sky + uSunColor * (BALL_SUN * mix(BALL_WATER_SUN, 1.0, frozen) * sun * pow(saturate(dot(through, uSunDir)), 60.0));
   vec3 mirror = skyAmbient(reflect(-toEye, n)) * sky;
   vec3 matt = BALL_ICE * skyAmbient(n) * sky;
-  return mix(mix(lens, matt, 0.85 * frozen), mirror, edge) + uSunColor * (BALL_GLINT * sun * pow(saturate(dot(n, normalize(toEye + uSunDir))), BALL_SHARP));
+  // Clear water mirrors little of the sun: its sparkle is the sun seen through it. A highlight smaller than a pixel is spread over the pixel.
+  float fine = mix(clamp(px * px * 0.0625, 0.01, 1.0), 1.0, frozen);
+  return mix(mix(lens, matt, 0.85 * frozen), mirror, edge) + uSunColor * (BALL_GLINT * mix(BALL_WATER, 1.0, frozen) * fine * sun * pow(saturate(dot(n, normalize(toEye + uSunDir))), BALL_SHARP * fine));
 }
 `
 
@@ -340,19 +348,26 @@ void main() {
     vShape = vec3(0.0, halfPx, s.share / stretch);
     vRight = vec3(0.0);
     vUp = vec3(0.0);
-    gl_Position = projectionMatrix * viewMatrix * vec4(here + normalize(cross(axis, s.toEye)) * (vAt.x * s.pixel), 1.0);
+    gl_Position = uPlantFrost > 0.5 ? projectionMatrix * viewMatrix * vec4(here + normalize(cross(axis, s.toEye)) * (vAt.x * s.pixel), 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
   } else {
     float tip = piece == 2 ? 1.0 : 0.0;
     Strand s = strandAt(mix(0.35 + 0.3 * hA, 0.75 + 0.15 * hA, tip));
     // One long hair in ten holds a bead near its tip, and one in twenty a smaller one below it.
     float radius = 0.00006 * (1.2 + 1.8 * hB) * mix(0.6, 1.0, tip) * plantSize() * (hA < mix(0.1, 0.2, tip) ? 1.0 : 0.0);
+    float shows = 1.0;
+    // Dew: each hair that was picked holds one bead at its tip, no larger than the hair can carry. On a face turned to the eye a clear bead shows the skin behind it and little else.
+    if (uPlantFrost < 0.5) {
+      s = strandAt(0.8 + 0.15 * hA);
+      radius = min(DEW_M * (0.6 + 1.4 * hB), DEW_OF_HAIR * hairRoot.w) * plantSize() * tip * sqrt(uPlantDew * (1.0 - uPlantWet));
+      shows = mix(DEW_FACE, 1.0, 1.0 - smoothstep(0.0, 0.6, dot(plantDirection(hairStand), s.toEye)));
+    }
     float rPx = radius / s.pixel;
     float sy = end * 2.0 - 1.0;
     vRight = normalize(cross(vec3(0.0, 1.0, 0.0), s.toEye));
     vUp = cross(s.toEye, vRight);
     float reachPx = max(rPx, 0.5) + 0.75;
     vAt = vec2(sx, sy) * reachPx;
-    vShape = vec3(1.0, rPx, min(1.0, s.share));
+    vShape = vec3(1.0, rPx, min(1.0, s.share) * shows);
     gl_Position = projectionMatrix * viewMatrix * vec4(s.world + (vRight * vAt.x + vUp * vAt.y) * (radius > 0.0 ? s.pixel : 0.0), 1.0);
   }
 }
@@ -381,7 +396,7 @@ void main() {
   } else {
     float r = max(vShape.y, 0.5);
     cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z;
-    color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost);
+    color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost, vShape.y);
   }
 #ifdef BLUR_CIRCLE
   outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
@@ -646,11 +661,15 @@ export class HairSet {
     }
     // Rime grows barbs and beads on the long hairs that show.
     let picked = 0
-    if (stateUniforms.uPlantFrost.value > 0.5) {
+    const rimed = stateUniforms.uPlantFrost.value > 0.5
+    const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0
+    if (rimed || dewy) {
       const most = this.extras.getIndex()!.count / 24
+      const from = rimed ? EXTRA_FROM_M : DEW_FROM_M
+      const share = rimed ? EXTRA_SHARE : DEW_SHARE
       for (let k = 0; k < n && picked < most; k++) {
         const q = k * 16
-        if (out[q + 3] * size < EXTRA_FROM_M || out[q + 11] <= 0 || (out[q + 7] * 211.31 + 0.77) % 1 > EXTRA_SHARE) continue
+        if (out[q + 3] * size < from || out[q + 11] <= 0 || (out[q + 7] * 211.31 + 0.77) % 1 > share) continue
         this.picks[picked++] = k
       }
       this.pickTexture.needsUpdate = true

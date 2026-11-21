@@ -58,11 +58,10 @@ in vec3 vInfo;
 in float vDepth;
 ${fogLight}
 const vec3 LAND = vec3(0.1, 0.12, 0.115);
-uniform float uSeeGain;
-const float LAND_SEE = 0.4;
+const float LAND_SEE = 0.5;
 void main() {
   vec3 v = normalize(vWorld - uCamPos);
-  outColor = finish(mix(fogLight(v), LAND * skyAmbient(vec3(0.0, 1.0, 0.0)), LAND_SEE * uSeeGain), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
+  outColor = finish(mix(fogLight(v), LAND * skyAmbient(vec3(0.0, 1.0, 0.0)), LAND_SEE), uCamPos, min(vDepth, 100.0 * uFocusM), -1.0);
 }
 `
 
@@ -80,7 +79,8 @@ const TONES: { base: [number, number, number]; see: number }[] = [
 ]
 
 // The far shapes stand fainter behind the banks through the unit and come out this much as the fog thins, so the last second shows the ridge the cut needs.
-const SEE_GAIN = 1.25
+const SEE_GAIN = 2
+const SEE_FAINT = 0.5
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
@@ -88,7 +88,7 @@ export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(ti
 export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
-  const gain = { value: 1 }
+  const gain = { value: SEE_FAINT }
   const rings = SKYLINE.map((_, i) => skylineRing(i, skylineAzimuthDeg))
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material): void => {
     const mesh = new THREE.Mesh(geometry, material)
@@ -124,7 +124,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     land.setAttribute('aInfo', new THREE.BufferAttribute(info, 3))
     land.setIndex(index)
   }
-  add(land, makeSurface({ name: 'frost far land', vertex, fragment: landFragment, uniforms: { ...fog, uSeeGain: gain }, side: THREE.DoubleSide, castShadow: false }).main)
+  add(land, makeSurface({ name: 'frost far land', vertex, fragment: landFragment, uniforms: fog, side: THREE.DoubleSide, castShadow: false }).main)
 
   SKYLINE.forEach((layer, i) => {
     const tone = TONES[i]
@@ -143,7 +143,7 @@ export function makeFarLayers(skylineAzimuthDeg: number, fog: Uniforms): FarLaye
     triangles,
     setTime(time) {
       for (const ring of rings) ring.setTime(time)
-      gain.value = 1 + (SEE_GAIN - 1) * fogFarAt(time)
+      gain.value = SEE_FAINT + (SEE_GAIN - SEE_FAINT) * fogFarAt(time)
       meshes[0].position.y = skylineLandM(time) - SKYLINE_LAND_M
       meshes[0].updateMatrix()
     },

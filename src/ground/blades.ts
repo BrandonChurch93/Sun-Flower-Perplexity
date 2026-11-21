@@ -9,17 +9,26 @@ import { groundStates, soilHeight } from './soil.ts'
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame.
 // The first stands at the left edge of the dawn's opening frames, in front of the plant. The second comes up between the plant and the sun while the lens pulls back. The rest are sprouts on the left.
 export interface Clump { x: number; z: number; blades: number; heightM: [number, number]; widthM: [number, number]; spreadM: number; lean: [number, number]; bornS: [number, number]; growS: number; beads: number; headingRad?: [number, number] }
-export const clumps: Clump[] = [
+export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number }
+export const beadSizes: BeadSizes = { tipM: [0.0006, 0.0009], leastM: 0.00025, moreM: 0.0006 }
+export const beadSizesKept: BeadSizes = { tipM: [0.00045, 0.0007], leastM: 0.00016, moreM: 0.0004 }
+export const clumpsKept: Clump[] = [
   { x: -0.042, z: 0.034, blades: 3, heightM: [0.034, 0.048], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
   { x: 0.042, z: -0.075, blades: 8, heightM: [0.045, 0.075], widthM: [0.002, 0.0032], spreadM: 0.011, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 12 },
   { x: -0.109, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
   { x: -0.088, z: -0.04, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
 ]
+export const clumps: Clump[] = [
+  { x: -0.042, z: 0.034, blades: 3, heightM: [0.036, 0.048], widthM: [0.0022, 0.003], spreadM: 0.005, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
+  { x: 0.046, z: -0.07, blades: 6, heightM: [0.05, 0.09], widthM: [0.0035, 0.005], spreadM: 0.012, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 20 },
+  { x: -0.15, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
+  { x: -0.138, z: -0.036, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
+]
 
 const ROWS = 16
 const FOLD = 0.35
 
-export function blades(): THREE.Mesh {
+export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const random = stream('ground blades')
   const ball = mergeVertices(new THREE.IcosahedronGeometry(1, 2).deleteAttribute('normal').deleteAttribute('uv'), 1e-4)
   const dirs = ball.getAttribute('position').array as Float32Array
@@ -92,7 +101,7 @@ export function blades(): THREE.Mesh {
         const tip = tipBead && k === 0
         const t = tip ? 0.985 : 0.12 + 0.84 * Math.pow(random.next(), 0.8)
         const half = frame(t)
-        const size = tip ? random.range(0.00045, 0.0007) : 0.00016 + 0.0004 * Math.pow(random.next(), 2)
+        const size = tip ? random.range(bead.tipM[0], bead.tipM[1]) : bead.leastM + bead.moreM * Math.pow(random.next(), 2)
         const across = tip ? 0 : random.range(-0.75, 0.75)
         const upper = face.y >= 0 ? 1 : -1
         const lift = tip ? -0.7 * size : upper * (0.75 * size + half * FOLD * Math.abs(across))
@@ -166,6 +175,7 @@ in float vKind;
 uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
+uniform float uKeptS;
 uniform vec2 uToward;
 ${groundStates}
 ${cropLight}
@@ -175,7 +185,7 @@ void main() {
   vec2 p = vWorld.xz;
   vec3 n = normalize(vNormal);
   if (vKind > 1.5) {
-    float shadow = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
+    float shadow = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
     outColor = finish(beadColor(n, v, shadow), vWorld, vDepth, -1.0);
     return;
   }
@@ -190,10 +200,14 @@ void main() {
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.1, 0.7, t));
   float deep = mix(0.35, 1.0, smoothstep(0.0, 0.3, t));
-  float lit = sunShadow(vWorld, n, uShadowTexelM * 1.5) * cropLight(p, -dot(p, uToward));
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
   float ndl = dot(n, uSunDir);
   vec3 through = albedo * vec3(2.4, 2.0, 0.5) * (0.55 + 0.45 * edge) * (1.0 - 0.4 * rib) * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
+  if (uTime < uKeptS) {
+    through = albedo * vec3(0.6, 0.8, 0.4) * (0.06 + 0.9 * edge) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
+    color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.6;
+  }
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * (0.05 + 0.25 * saturate(uWet + uDew)) * lit;
   outColor = finish(color, vWorld, vDepth, -1.0);
