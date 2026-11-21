@@ -23,6 +23,8 @@ const CRUMB_MAX_M = 0.00075
 // Where a fallen crumb lies until the ground can be asked for its height.
 const CRUMB_LAND_M = 0.002
 const CRUMBS_SINK_S = 9
+const CRUMBS_KEY_S = 1.5
+const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
 const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
@@ -140,7 +142,10 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   for (let i = 0; i < count; i++) {
     const own = combine(seed, i)
     const onHusk = i >= shape.stemCrumbs
-    const size = lerp(CRUMB_MIN_M, CRUMB_MAX_M, hash01(own, 1) ** 2.2)
+    // Three of the husk's crumbs are in the air at the dawn's first key, one below the other.
+    const staged = onHusk && i - shape.stemCrumbs < CRUMBS_IN_AIR.length ? CRUMBS_IN_AIR[i - shape.stemCrumbs] : 0
+    const size = staged ? lerp(0.00038, 0.00048, hash01(own, 1)) : lerp(CRUMB_MIN_M, CRUMB_MAX_M, hash01(own, 1) ** 2.2)
+    const fall = lerp(0.28, 0.45, hash01(own, 40))
     const far = lerp(0.004, 0.0095, hash01(own, 6))
     const where = onHusk ? toHusk + lerp(-0.7, 0.7, hash01(own, 7)) : TAU * hash01(own, 7)
     const az = 2 * hash01(own, 8) - 1
@@ -152,8 +157,8 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       around: onHusk ? lerp(-1.2, 1.2, hash01(own, 4)) : TAU * hash01(own, 4),
       size,
       seat: 0.4 * size,
-      from: onHusk ? lerp(1.25, 3.05, hash01(own, 5)) : lerp(1.2, 3.6, hash01(own, 5)),
-      fall: lerp(0.28, 0.45, hash01(own, 40)),
+      from: staged ? CRUMBS_KEY_S - staged * fall : onHusk ? lerp(1.25, 3.05, hash01(own, 5)) : lerp(1.2, 3.6, hash01(own, 5)),
+      fall,
       landX: Math.cos(where) * far,
       landZ: Math.sin(where) * far,
       axis: [ar * Math.cos(aa), az, ar * Math.sin(aa)],

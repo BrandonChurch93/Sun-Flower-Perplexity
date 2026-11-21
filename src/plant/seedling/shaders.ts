@@ -62,7 +62,7 @@ void main() {
   leaf = mix(leaf, vec3(0.2, 0.27, 0.08) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
-  vec3 glow = mix(vec3(0.07, 0.12, 0.022), vec3(0.012, 0.024, 0.006), lens) * (1.0 - 0.5 * mid);
+  vec3 glow = mix(vec3(0.09, 0.12, 0.066), vec3(0.016, 0.024, 0.012), lens) * (1.0 - 0.5 * mid);
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
   float leafHeight = -0.00016 * mid * upper + (grain - 0.5) * 0.000012 + (cloud - 0.5) * 0.00006 * wither;
