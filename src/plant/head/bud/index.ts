@@ -10,16 +10,15 @@ import { flutter } from '../../wind.ts'
 import { fragment, vertex } from './shaders.ts'
 
 const TAU = Math.PI * 2
-const GOLDEN = (config.plant.goldenAngleDeg * Math.PI) / 180
-const [bloom0, bloom1] = config.plant.stages.bloom
+const [bloom0] = config.plant.stages.bloom
 
 interface Shape { sides: number; neck: number[]; dome: number[]; side: number[]; floor: number[]; bracts: number; nu: number; nv: number; backHairs: number; edgeHairs: number; faceHairs: number }
 
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 55, nu: 32, nv: 13, backHairs: 9000, edgeHairs: 16000, faceHairs: 15000 },
-  near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 14, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 39, nu: 32, nv: 13, backHairs: 8000, edgeHairs: 22000, faceHairs: 10000 },
+  near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
 
@@ -27,23 +26,24 @@ const SHAPE: Record<PartDetail, Shape> = {
 const WIDEST = 0.2
 // How much wider than the floor the body is at its widest. From there it rounds in to the rim of the floor.
 const SHOULDER = 0.07
-// The stand-in shortens its bracts by this share while the head opens. A real bract does not shrink, so it is taken out again.
-const WRAP = 0.3
 const RAY_CLEAR = 0.21
-const HUG_FROM = 0.08
-const HAIR_WIDTH_M = 0.00006
-// A bract folds back just ahead of the rays behind it: until they open it runs this many seconds behind the timing of growth.ts, which has no sectors.
-const SECTOR_LAG = 2.2
-const SECTOR_LEAD = 0.3
-// Past this angle from the head's axis a bract swings back less than growth.ts says, so its point still shows between the rays from the front.
-const REFLEX_FROM = 1.62
-const REFLEX_EASE = 0.55
+const HUG_FROM = 0.04
+const HAIR_WIDTH_M = 0.00008
+// Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
+const ROLL = 0.16
+// A bract folds back with the rays in front of it, this many seconds ahead of them. growth.ts has no sectors for bracts.
+const SECTOR_LEAD = 0.35
+// Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
+const FEET = [0.72, 1, 1.38]
+const STAND = [1.47, 1.36, 0.87]
+const FOLD = [2.3, 2.22, 2.12]
+const LONG = [0.92, 0.9, 0.84]
 const SIDE_FEET = 0.9
 // Where the rays leave the rim, as a share of the radius (the same number as rayFrameAt), and how far a bract keeps off the back of a ray, in meters.
 const RAY_FOOT = 0.95
 const RAY_GAP = 0.003
 
-interface Bract { rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
+interface Bract { series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
 export function create(options: PartOptions): PlantPart | null {
   const shape = SHAPE[options.detail]
@@ -58,21 +58,24 @@ export function create(options: PartOptions): PlantPart | null {
 
   const bracts: Bract[] = []
   const turn = TAU * rnd(1, 0)
+  const each = Math.max(1, Math.ceil(shape.bracts / 3))
   for (let i = 0; i < shape.bracts; i++) {
-    const rank = shape.bracts > 1 ? i / (shape.bracts - 1) : 0
+    const series = i % 3
     bracts.push({
-      rank,
-      az: turn + i * GOLDEN,
-      foot: lerp(0.2, 1.5, Math.pow(rank, 0.8)) + (rnd(2, i) - 0.5) * 0.05,
-      long: lerp(1.32, 1, rank) * (0.92 + 0.16 * rnd(3, i)),
-      wide: lerp(1.18, 0.96, rank) * (0.88 + 0.24 * rnd(4, i)),
-      tail: 0.22 + 0.1 * rnd(5, i),
-      twist: (rnd(6, i) - 0.5) * 1.9,
-      side: (rnd(7, i) - 0.5) * 0.5,
-      tip: -0.25 + 1.6 * Math.pow(rnd(8, i), 2),
+      series,
+      rank: series / 2,
+      az: turn + ((Math.floor(i / 3) + series / 3 + (rnd(2, i) - 0.5) * 0.3) / each) * TAU,
+      foot: FEET[series] + (rnd(15, i) - 0.5) * 0.07,
+      long: LONG[series] * (0.95 + 0.1 * rnd(3, i)),
+      wide: 0.92 + 0.16 * rnd(4, i),
+      tail: 0.2 + 0.08 * rnd(5, i),
+      twist: (rnd(6, i) - 0.5) * 1.1,
+      side: (rnd(7, i) - 0.5) * 0.3,
+      tip: (rnd(8, i) - 0.5) * 0.6,
+      lean: (rnd(16, i) - 0.5) * 0.3,
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
-      hug: 0.3 + 0.14 * rnd(11, i),
+      hug: 0.13 + 0.06 * rnd(11, i),
       rmin: 0.0008 + 0.0045 * rnd(12, i),
       fold: 0.14 + 0.26 * rnd(13, i),
       seed: rnd(14, i),
@@ -164,7 +167,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -1 : 1
-        hairLong[n] = (0.0005 + 0.001 * rnd(123 + b, i)) * (1 - 0.45 * u)
+        hairLong[n] = (0.0012 + 0.001 * rnd(123 + b, i)) * (1 - 0.25 * u)
       }
       for (let i = 0; i < faceEach; i++, n++) {
         const keel = rnd(223 + b, i) < 0.3
@@ -305,17 +308,15 @@ export function create(options: PartOptions): PlantPart | null {
     if (shape.bracts === 0) return
 
     const open = headOpen(time)
-    const turnStart = lerp(bloom0, bloom1, 0.25)
-    const unwrap = 1 / (1 - WRAP * smoothstep(bloom0 - 2, turnStart, time))
+    const ready = smoothstep(bloom0 - 2.5, bloom0 + 0.6, time)
     const Hf = FLOOR_DOME * D + 0.3 * R * (1 - 0.8 * open)
     const small = clamp(R / 0.03, 0.3, 1)
     const wind = pose.inputs.wind
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
-      const j = i * 3
-      const outer = 1 - k.rank
-      const L = bractLength(j, time) * unwrap * k.long
-      const W = Math.min(0.3 * L, 0.33 * R) * k.wide
+      const j = i * 3 + 2 - k.series
+      const L = bractLength(i, time) * k.long
+      const W = Math.min(0.235 * L, 0.42 * R) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount
@@ -328,13 +329,11 @@ export function create(options: PartOptions): PlantPart | null {
         opened += rayOpen(ray, time + SECTOR_LEAD) / 4
         rayLong = Math.max(rayLong, rayLength(ray, time))
       }
-      const own = time - SECTOR_LAG * smoothstep(bloom0 - 4, bloom0, time) * (1 - opened)
-      const swing = lerp(bractAngle(j, own), bractAngle(j + 2, own), outer)
-      const angle = swing - REFLEX_EASE * Math.max(0, swing - REFLEX_FROM)
-      const pushed = smoothstep(0.15, 0.75, rayLong / Math.max(L, 1e-6))
-      const closed = lerp(bractCurl(j, own), bractCurl(j + 2, own), outer)
-      const curl = lerp(closed, Math.min(closed, 0.12), pushed)
-      const hugEnd = lerp(k.hug, HUG_FROM + 0.08, clamp((k.foot - 0.75) / 0.4))
+      const folded = smoothstep(0.14 * k.series, 0.72 + 0.14 * k.series, opened)
+      const inBud = Math.min(time, bloom0 - 1)
+      const angle = lerp(lerp(bractAngle(j, inBud), STAND[k.series] + k.lean, ready), FOLD[k.series] + 0.5 * k.lean, folded)
+      const curl = lerp(lerp(bractCurl(j, inBud), k.series === 2 ? 0.3 : 0.16, ready), -0.22, folded)
+      const hugEnd = k.hug
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
       const rayC = Math.cos(behind - RAY_CLEAR)
@@ -357,10 +356,10 @@ export function create(options: PartOptions): PlantPart | null {
       for (let step = 0; step <= total; step++) {
         const u = step / total
         const s = u * L
-        const lift = (0.0003 + 0.1 * s) * small
+        const lift = (-0.0008 + 0.0011 * smoothstep(0, 0.004, s) + 0.1 * s + (2 - k.series) * 0.0012 * smoothstep(0.003, 0.012, s)) * small
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW * (1 - 0.6 * Math.max(curl, 0)) + sway * u * u
+        const free = Math.max(angle - 1.3 * curl * u * u, behind) + k.tip * tipW * tipW + sway * u * u
         const theta = Math.max(lerp(surfaceAngle, free, smoothstep(HUG_FROM, hugEnd, u)), lerp(-Math.PI, behind, smoothstep(hw - 0.4 * D, hw, h)))
         const Re = Rw + lift
         if (h < hw) {
@@ -421,19 +420,20 @@ export function create(options: PartOptions): PlantPart | null {
         const ux = nx * cw - tx * sw
         const uy = ny * cw - ty * sw
         const uz = nz * cw - tz * sw
-        const body = 0.74 + 0.26 * Math.sin(Math.PI * clamp(u / 0.46))
-        const tail = 0.34 * Math.pow(1 - u, 0.9) + 0.012
-        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.45, u))
+        const body = 0.86 + 0.14 * Math.sin(Math.PI * clamp(u / 0.42))
+        const tail = 0.5 * (1 - u) + 0.008
+        const half = W * lerp(body, tail, smoothstep(k.tail, k.tail + 0.55, u))
         const hug = 1 - smoothstep(HUG_FROM, hugs[i], u)
         const fold = Math.tan(lerp(0.03, k.fold, smoothstep(0.3, 0.75, u)))
         const soft = 0.2 * half + 1e-6
         const keel = 0.0007 * size * (1 - 0.6 * u)
         const round = Math.max(rowR[a], 0.25 * R)
+        const roll = ROLL * (1 - smoothstep(0.15, 0.6, u))
         for (let b = 0; b < shape.nv; b++) {
           const x = (b / (shape.nv - 1)) * 2 - 1
           const xi = x * half
           const wave = 0.07 * half * smoothstep(0.1, 0.4, u) * Math.sin(u * TAU * k.waves + k.phase + (x > 0 ? 0 : 1.7)) * Math.abs(x * x * x)
-          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave
+          const dn = (-xi * xi * hug) / (2 * round) - fold * (Math.sqrt(xi * xi + soft * soft) - soft) + keel * Math.exp(-(x * x) / 0.0256) + wave + (xi + half) * roll
           const v = (base + a * shape.nv + b) * 3
           out[v] = mx + wx * xi + ux * dn
           out[v + 1] = my + wy * xi + uy * dn

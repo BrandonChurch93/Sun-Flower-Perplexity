@@ -45,8 +45,8 @@ void main() {
   t.face = face;
   t.normal = face;
   t.through = vec3(0.0);
-  t.rough = 0.86;
-  t.wax = 0.07;
+  t.rough = 0.85;
+  t.wax = 0.15;
   t.sheen = 1.0;
   t.occlusion = 1.0;
 #ifdef PLANT_FIELD
@@ -68,46 +68,50 @@ void main() {
     float rank = kind - 2.0;
     float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
     float fine = hash21(floor(vec2(x * 40.0, u * 220.0) + seed * 50.0));
-    float vein = abs(fract(x * 4.5 + 0.5) - 0.5) * 2.0;
-    float line = smoothstep(0.75, 1.0, vein) * (1.0 - smoothstep(0.55, 0.95, u));
-    float keel = smoothstep(0.12, 0.0, ax);
+    float vein = abs(fract(x * 2.0 + 0.5 + 0.06 * grain) - 0.5) * 2.0;
+    float line = smoothstep(0.86, 1.0, vein) * (1.0 - smoothstep(0.6, 0.97, u)) * (1.0 - smoothstep(0.8, 1.0, ax));
+    float keel = smoothstep(0.1, 0.0, ax);
     float toTip = smoothstep(0.3, 1.0, u);
-    vec3 dark = mix(vec3(0.07, 0.135, 0.036), vec3(0.15, 0.25, 0.066), grain);
-    vec3 pale = mix(vec3(0.24, 0.36, 0.085), vec3(0.34, 0.44, 0.1), grain);
-    vec3 albedo = mix(dark, pale, saturate(0.62 * toTip + 0.3 * keel + 0.22 * line + 0.25 * rank * (1.0 - toTip)));
-    albedo = mix(albedo, pale * 1.1, smoothstep(0.82, 1.0, ax) * 0.5);
+    vec3 dark = mix(vec3(0.03, 0.078, 0.04), vec3(0.068, 0.14, 0.058), grain);
+    vec3 pale = mix(vec3(0.11, 0.2, 0.066), vec3(0.17, 0.27, 0.078), grain);
+    vec3 albedo = mix(dark, pale, saturate(0.4 * toTip + 0.3 * keel + 0.4 * line + 0.12 * rank * (1.0 - toTip)));
+    albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
-    if (inner) albedo = mix(albedo, vec3(0.3, 0.43, 0.12), 0.65);
+    if (inner) albedo = mix(albedo, vec3(0.1, 0.18, 0.06), 0.3);
     float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.5 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
-    t.through = vec3(0.52, 0.74, 0.07) * thin * (0.75 + 0.5 * grain);
+    t.through = vec3(0.56, 0.8, 0.08) * mix(0.04, 0.28, thin) * (0.8 + 0.4 * grain);
     height = 0.00022 * grain + 0.00012 * line + 0.00005 * fine;
     float buried = smoothstep(0.0, 0.32, u);
-    t.occlusion = mix(0.28, 1.0, buried) * (inner ? mix(0.35, 1.0, max(uBudOpen, toTip * 0.7)) : 1.0);
+    t.occlusion = mix(0.28, 1.0, buried) * (inner ? mix(0.4, 0.85, toTip) : 1.0);
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
-    t.wax = 0.07 + 0.3 * uPlantWet;
+    t.wax = 0.15 + 0.3 * uPlantWet;
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
     vec3 cream = mix(vec3(0.42, 0.47, 0.2), vec3(0.52, 0.52, 0.27), grain);
     vec3 tan = mix(vec3(0.36, 0.27, 0.13), vec3(0.46, 0.36, 0.2), grain);
     t.albedo = mix(cream, tan, uBudOpen * smoothstep(1.0, 0.3, rho));
-    t.occlusion = mix(0.45, 0.9, uBudOpen);
+    t.albedo = mix(t.albedo, vec3(0.085, 0.15, 0.05), smoothstep(0.84, 0.96, rho));
+    t.occlusion = mix(0.45, 0.9, uBudOpen) * mix(1.0, 0.5, smoothstep(0.84, 0.96, rho));
+    t.rough = 0.9;
+    t.wax = 0.1;
     t.sheen = 0.0;
   } else {
     float v = vInfo.x;
     float grain = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 26.0);
     float rib = abs(fract(vInfo.y * 3.3422538 + 0.2 * grain) - 0.5) * 2.0;
     vec3 neck = vec3(0.2, 0.3, 0.09);
-    vec3 body = mix(vec3(0.085, 0.15, 0.04), vec3(0.17, 0.26, 0.07), grain);
+    vec3 body = mix(vec3(0.035, 0.075, 0.032), vec3(0.075, 0.14, 0.05), grain);
     t.albedo = mix(neck, body, smoothstep(0.08, 0.4, v)) * (0.92 + 0.16 * rib);
     float pits = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 90.0);
     t.albedo *= 0.8 + 0.3 * pits;
     height = 0.0005 * grain + 0.0002 * rib + 0.00035 * pits;
     t.occlusion = mix(1.0, 0.4, smoothstep(0.3, 0.75, v));
-    t.rough = 0.93;
-    t.wax = 0.03;
+    t.rough = 0.9;
+    t.wax = 0.1;
+    t.sheen = 0.8;
   }
   t.normal = reliefNormal(face, vWorld, height, 1.0);
 #endif
