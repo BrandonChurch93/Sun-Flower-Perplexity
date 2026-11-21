@@ -74,7 +74,7 @@ void main() {
 
   vec3 body = mix(vec3(0.82, 0.56, 0.03), vec3(0.93, 0.76, 0.09), smoothstep(0.1, 0.8, u));
   // A ray just out of the bud is still green yellow.
-  body = mix(body, vec3(0.8, 0.46, 0.03), 0.85 * (1.0 - vState.z * vState.z));
+  body = mix(body, vec3(0.82, 0.5, 0.03), 0.7 * (1.0 - vState.z * vState.z));
   body = mix(body, vec3(0.44, 0.56, 0.17), 0.95 * fresh);
   // Each ray has its own depth of yellow.
   float own = hash11(vRay.x * 91.7 + 3.1);
@@ -90,7 +90,7 @@ void main() {
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.48, 0.3), vec3(1.0), unfolded);
   // A ray just opened is still thick with sap: the light through it is deep orange, and it thins to yellow over the next second.
-  through *= mix(vec3(0.42, 0.26, 0.15), vec3(1.0), vState.z);
+  through *= mix(vec3(0.5, 0.36, 0.22), vec3(1.0), vState.z);
   through = mix(through, vec3(0.62, 0.86, 0.22), 0.9 * fresh);
 
   // The two folds a ray keeps from the bud, and the groove of its middle vein.
