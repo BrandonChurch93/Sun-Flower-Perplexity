@@ -38,15 +38,17 @@ void main() {
   float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
   vec3 sky = textureLod(tSky, uv, lod).rgb;
   // The cloud's own light and dark are drawn out against its smooth mean, so its breaks and undersides survive the lens.
-  vec3 mean = textureLod(tSky, uv, lod + 4.5).rgb;
+  float rim = 0.075 + 0.014 * smoothstep(0.62, 0.8, theta);
+  float under = (1.0 - smoothstep(rim - 0.004, rim + 0.016, el)) * smoothstep(0.2, 0.5, theta);
+  vec3 mean = textureLod(tSky, vec2(uv.x, mix(uv.y, min(uv.y, 0.19), under)), lod + 4.5).rgb;
   vec3 detail = sky - mean;
   detail = mix(vec3(dot(detail, vec3(0.3, 0.6, 0.1))), detail, 0.45);
-  float shelf = smoothstep(0.075, 0.105, el) * smoothstep(0.2, 0.5, theta);
-  sky = max(sky + detail * (mix(-0.7 * smoothstep(0.2, 0.5, theta), 0.9, smoothstep(0.065, 0.105, el)) * smoothstep(0.05, 0.1, el)), vec3(0.0));
+  float shelf = smoothstep(rim, rim + 0.03, el) * smoothstep(0.2, 0.5, theta);
+  sky = max(sky + detail * mix(-0.85 * smoothstep(0.2, 0.5, theta) * smoothstep(0.02, 0.05, el), 1.4, smoothstep(rim, rim + 0.03, el)), vec3(0.0));
   float low = exp(-max(el, 0.0) / 0.085);
   float lift = 1.0 + low * 0.3 * exp(-theta / 0.3) + 1.2 * exp(-theta / 0.05) + 0.3 * exp(-max(el, 0.0) / 0.05);
   // Bright sky bleaches: the picture's saturated orange goes to pale gold as it climbs.
-  vec3 color = sky * uGain * lift;
+  vec3 color = sky * uGain * lift * (1.0 + 0.6 * under * smoothstep(0.045, rim, el));
   // The clear band holds its tone: only the sun and the glow close round it go to white.
   color *= mix(0.5, 1.3, smoothstep(0.1, 0.6, theta));
   color /= 1.0 + 0.45 * dot(color, vec3(0.3, 0.6, 0.1));
@@ -58,8 +60,9 @@ void main() {
   float lit = dot(color, vec3(0.3, 0.6, 0.1));
   color = mix(color, lit * vec3(1.2, 0.95, 0.7), shelf * smoothstep(0.08, 0.4, lit)) / (1.0 + 5.5 * shelf * lit);
   vec2 deck = d.xz / (max(d.y, 0.0) + 0.12);
-  float bands = 0.65 * valueNoise(deck * 0.8 + 3.0) + 0.35 * valueNoise(deck * 1.9 + 7.0);
-  color *= 1.0 + 0.3 * (bands - 0.5) * smoothstep(0.06, 0.13, el);
+  float bands = 0.5 * valueNoise(deck * 0.8 + 3.0) + 0.3 * valueNoise(deck * 1.9 + 7.0) + 0.2 * valueNoise(deck * 4.6 + 11.0);
+  color *= 1.0 + 0.55 * (bands - 0.5) * smoothstep(0.075, 0.13, el);
+  color += vec3(0.05, 0.03, 0.012) * (0.4 + 1.2 * bands) * shelf * (1.0 - smoothstep(0.11, 0.22, el));
 
   vec3 side = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)));
   vec3 over = cross(side, uSunDir);
