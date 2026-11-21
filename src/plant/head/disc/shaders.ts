@@ -67,7 +67,7 @@ void main() {
   float blotch = sin(aFloret.y * 2.0 + rho * 9.0) * sin(aFloret.y * 3.0 - rho * 5.0 + 1.3);
 
   float tilt = aSeed.w * 6.2832;
-  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * 0.3 * open * aSeed.x);
+  vec3 axis = normalize(f.normal + f.outward * (0.05 + open * (0.06 + 0.22 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.07 + 0.23 * open) * aSeed.x);
   vec3 fx = normalize(f.outward - axis * dot(f.outward, axis));
   vec3 fy = cross(axis, fx);
   float ct = cos(aSeed.y);
