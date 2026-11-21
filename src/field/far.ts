@@ -5,18 +5,17 @@ import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { bodyRadius, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
 import { Plant } from '../plant/index.ts'
-import { makePartSurface } from '../plant/part.ts'
+import { fieldUniforms, makePartSurface } from '../plant/part.ts'
 import { tissueGlsl } from '../plant/surface/index.ts'
-import { windToward } from '../plant/wind.ts'
+import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { PLACE, carpetBandM, farVariants, fieldEndM, fieldFarM, fieldHalfWidth, fieldPicturesM, lagOf, pictureCount, pictureTurn, pictureTurns, right, toward } from './layout.ts'
 
 const TILE_W = 64
 const TILE_H = 128
-// The lean a full gust gives a neighbor, per meter of its height. The same wave bends the pictures.
-const SWAY = 0.035
+const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
-const UNDER_FROM_M = 11
-const UNDER_BAND_M = 16
+const UNDER_FROM_M = 5
+const UNDER_BAND_M = 9
 // The dark layers, as shares of the height of the tops.
 const UNDER_LEVELS = [0.5, 0.76]
 
@@ -32,20 +31,19 @@ uniform vec3 uRight;
 uniform vec2 uTile;
 uniform float uCrop;
 uniform float uCount;
-uniform float uWind;
-// The wave of src/plant/wind.ts.
-float gust(float time, vec2 p) {
-  vec2 dir = vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)});
-  float along = dot(p, dir) - time * 1.6;
-  float across = p.y * dir.x - p.x * dir.y;
-  return 0.55 * sin(along * 0.9 + 0.6 * sin(across * 0.31 + time * 0.13)) + 0.3 * sin(along * 2.3 + 1.7 + across * 0.9) + 0.15 * sin(along * 5.1 + 4.2 - across * 1.7);
-}
+uniform float uPlantWind;
+uniform float uPlantHeight;
+${swayGlsl}
 void main() {
   float v = mix(1.0 - uCrop, 1.0, position.y);
   float h = v * uTile.y * aPlace.w;
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * (position.x * uTile.x * aPlace.w);
-  vec2 lean = aVary.xy + vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (gust(uTime, aPlace.xy) * uWind * ${SWAY.toFixed(4)});
-  world.xz += lean * h;
+  world.xz += aVary.xy * h;
+  // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
+  float tall = max(uPlantHeight * aPlace.w, 0.001);
+  float k = clamp((h / tall - 0.3) / 0.7, 0.0, 1.0);
+  float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, aPlace.xy));
+  world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
   vUv = vec2((aPlace.z + mix(inset, 1.0 - inset, position.x + 0.5)) / uCount, v);
@@ -160,12 +158,12 @@ ${tissueGlsl}
 void main() {
   vec2 p = vWorld.xz + uLevel * 37.0;
   float clump = 0.6 * valueNoise(p * 3.1) + 0.4 * valueNoise(p * 7.7);
-  float share = uCover * (0.72 - 0.25 * uLevel) * smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  float share = uCover * (0.78 - 0.22 * uLevel) * (0.25 + 0.75 * smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz)));
   if (clump > share) discard;
   float inside = (share - clump) / max(share, 0.01);
   Tissue t;
   t.albedo = mix(vec3(0.06, 0.13, 0.03), vec3(0.13, 0.25, 0.07), inside);
-  t.through = vec3(0.3, 0.5, 0.06);
+  t.through = vec3(0.14, 0.5, 0.05);
   // A leaf in the mass tips toward the viewer, so the light behind it comes through.
   t.normal = normalize(vec3(-uSunDir.x, 0.9, -uSunDir.z));
   t.face = t.normal;
@@ -173,7 +171,9 @@ void main() {
   t.wax = 0.1;
   t.sheen = 0.0;
   t.occlusion = 0.45 + 0.55 * inside;
-  outColor = finish(shadeTissue(t, vWorld, normalize(uCamPos - vWorld)), vWorld, vDepth, -1.0);
+  // The layer stands for the upper leaves of the mass, so it takes their light.
+  vec3 lit = vec3(vWorld.x, uCanopy * mix(0.74, 0.97, inside * uLevel / 0.76), vWorld.z);
+  outColor = finish(shadeTissue(t, lit, normalize(uCamPos - vWorld)), vWorld, vDepth, -1.0);
 }
 `
 
@@ -239,7 +239,8 @@ export class FarField {
     uTile: { value: new THREE.Vector2(1, 1) },
     uCrop: { value: 1 },
     uCount: { value: pictureCount },
-    uWind: { value: 0 },
+    uPlantWind: fieldUniforms.uPlantWind,
+    uPlantHeight: fieldUniforms.uPlantHeight,
     uToward: { value: new THREE.Vector2(toward.x, toward.z) },
     uCover: { value: 0 },
   }
@@ -318,7 +319,6 @@ export class FarField {
     })
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
-    this.uniforms.uWind.value = open.wind
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55)
     this.carpetHeight.value = canopy * 0.97
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
@@ -374,11 +374,12 @@ export class FarField {
     const target = renderer.getRenderTarget()
     const alpha = renderer.getClearAlpha()
     renderer.getClearColor(this.clear)
-    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value }
+    const keep = { x: shared.uCamPos.value.x, y: shared.uCamPos.value.y, z: shared.uCamPos.value.z, fog: shared.uFogDensity.value, coc: shared.uCocScale.value, shadow: shared.uShadowOn.value, wind: fieldUniforms.uPlantWind.value }
     shared.uCamPos.value.copy(this.eye)
     shared.uFogDensity.value = 0
     shared.uCocScale.value = 0
     shared.uShadowOn.value = 0
+    fieldUniforms.uPlantWind.value = 0
     renderer.setRenderTarget(this.atlas)
     renderer.setClearColor(0x000000, 1)
     renderer.clear(true, true, false)
@@ -387,6 +388,7 @@ export class FarField {
     shared.uFogDensity.value = keep.fog
     shared.uCocScale.value = keep.coc
     shared.uShadowOn.value = keep.shadow
+    fieldUniforms.uPlantWind.value = keep.wind
     renderer.setRenderTarget(target)
     renderer.setClearColor(this.clear, alpha)
   }
