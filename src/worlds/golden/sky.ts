@@ -68,6 +68,7 @@ void main() {
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
   color += uGlow * (60.0 * exp(-theta / 0.008) + 2.0 * exp(-theta / 0.028)) + uGlow * vec3(1.0, 0.8, 0.6) * (0.3 * exp(-theta / 0.1)) + mix(uGlow * vec3(1.0, 0.66, 0.4), vec3(0.5, 0.58, 0.56), smoothstep(0.2, 0.7, theta)) * (0.75 * exp(-theta / 0.2)) * mix(1.0, 0.62 + 0.8 * rays, smoothstep(0.035, 0.14, theta) * smoothstep(0.0, 0.07, el));
+  color += uGlow * vec3(1.0, 0.74, 0.56) * (0.42 * exp(-theta * theta / 0.09) * smoothstep(0.06, 0.13, el));
   color += vec3(0.095, 0.15, 0.17) * exp(-theta / 0.6) * smoothstep(0.0, 0.08, el);
   float edge = 0.75 * uPixelAngle;
   color += uDisc * (1.0 - smoothstep(SUN_RADIUS - edge, SUN_RADIUS + edge, theta));

@@ -53,7 +53,7 @@ void main() {
   float top = vInfo.z;
 #ifdef TREES
   float crowns = max(max(crown(vInfo.x, 17.0, uLayer), crown(vInfo.x + 6.1, 26.0, uLayer + 3.0)), 0.8 * crown(vInfo.x + 2.7, 11.0, uLayer + 5.0));
-  top *= 0.8 + 0.14 * crowns * (0.4 + 1.2 * valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.06 * valueNoise(vec2(vInfo.x * 0.6, uLayer + 7.0));
+  top *= 0.74 + 0.2 * crowns * (0.5 + valueNoise(vec2(vInfo.x * 0.02, uLayer + 2.0))) + 0.03 * valueNoise(vec2(vInfo.x * 0.12, uLayer + 7.0));
   if (vInfo.y > top) discard;
   float mass = valueNoise(vec2(vInfo.x * 0.22, vInfo.y * 0.3 + uLayer));
 #else
