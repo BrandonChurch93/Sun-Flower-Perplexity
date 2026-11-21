@@ -125,8 +125,8 @@ export function create(options: PartOptions): PlantPart {
     const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
-    const teeth = 17 + 12 * r(4)
-    const depth = 0.07 + 0.06 * r(5)
+    const teeth = 10 + 7 * r(4)
+    const depth = 0.1 + 0.08 * r(5)
     const waveAmp = 0.018 + 0.024 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf

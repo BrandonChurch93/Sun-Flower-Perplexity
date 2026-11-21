@@ -63,7 +63,7 @@ void main() {
   Tissue t;
   t.albedo = (top ? vec3(0.05, 0.095, 0.028) : vec3(0.075, 0.115, 0.048)) * shade;
   t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.03, 0.032, 0.006) * (1.0 - 0.4 * rib) * shade;
+  t.through = vec3(0.08, 0.095, 0.008) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
   t.face = face;
   t.normal = face;
   t.rough = top ? 0.82 : 0.9;
@@ -117,13 +117,15 @@ void main() {
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.2, 0.115, 0.045) * (0.6 + 0.4 * lum), brown);
 
-  // The blade is thick and felted: against the sun it passes a dull warm olive, and more only in small thin spots. The main veins hold the light back.
+  // With the sun behind it the blade glows yellow green, unevenly, and its veins stand dark in the glow: they are thick and hold the light back.
   float thick = saturate((0.97 - vein.g) * 3.0);
-  float thin = 1.0 + 1.6 * smoothstep(0.84, 0.96, mark.g);
-  vec3 through = vec3(0.03, 0.032, 0.006) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * tone * (1.0 - 0.25 * thick);
-  through *= 1.0 - 0.6 * vein.r;
-  through *= 1.0 + 0.25 * vein.b * (1.0 - vein.r);
-  through = mix(through, vec3(0.036, 0.03, 0.005) * thin * (0.5 + 0.5 * lum), yellow);
+  // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
+  float taper = mix(0.22, 1.25, smoothstep(0.2, 0.8, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
+  float thin = (0.6 + 0.6 * smoothstep(0.3, 0.9, mark.g)) * taper;
+  vec3 through = vec3(0.115, 0.135, 0.011) * thin * (0.45 + 0.55 * pow(lum, 1.7)) * (1.0 - 0.3 * thick);
+  through *= 1.0 - 0.8 * vein.r;
+  through *= 1.0 - 0.3 * vein.b * (1.0 - vein.r);
+  through = mix(through, vec3(0.12, 0.1, 0.014) * thin * (0.5 + 0.5 * lum), yellow);
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
 
   // Relief finer than about three pixels is left out: it would only sparkle.
