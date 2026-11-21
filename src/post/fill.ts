@@ -41,7 +41,8 @@ void main() {
     most = max(most, max(n.r, max(n.g, n.b)));
   }
   float own = max(rgb.r, max(rgb.g, rgb.b));
-  rgb *= min(1.0, (2.0 * most + 0.02) / max(own, 1e-6));
+  // Only where the picture is sharp: in a blurred area a lone bright pixel is one copy of a light, and the fill draws its disc from it.
+  rgb *= mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, smoothstep(1.5, 3.0, c.a));
   outColor = vec4(rgb, min(max(a, 0.0) * uRadiusScale, ${maxFillPx.toFixed(1)}));
 }
 `
