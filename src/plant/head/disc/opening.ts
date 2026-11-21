@@ -16,7 +16,7 @@ export const FIRST_SIDE = 2.4
 const startAt = new Monotone([
   [0, end + 20],
   [0.36, end],
-  [0.6, bloom1 - 0.5],
+  [0.66, bloom1 - 0.5],
   [RIM_SHARE, bloom0 + 5],
 ])
 const openAt = new Monotone([

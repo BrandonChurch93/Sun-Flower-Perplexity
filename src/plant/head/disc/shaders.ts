@@ -89,6 +89,7 @@ void main() {
   float along = 0.0;
   float around = aShape.w;
   float occ = 1.0;
+  float state = open;
 
   if (piece < 0.5) {
     vec3 radial = ex * cos(aShape.z) + ey * sin(aShape.z);
@@ -146,19 +147,22 @@ void main() {
     occ = 1.0;
   } else {
     float lateral = aShape.z;
-    // In the young middle the scales arch in over the florets they stand behind.
-    float over = 1.0 - smoothstep(0.12, 0.5, rho);
-    float high = w * mix(1.4, 1.5, over) * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown;
-    float turn = (aSeed.x - 0.5) * mix(1.2, 0.5, over);
+    // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of green points.
+    float over = smoothstep(2.0, 15.0, aFloret.z - f.time);
+    float high = w * 1.4 * (0.9 + 0.2 * aSeed.w) * (1.0 + 0.12 * swell) * grown;
+    float lid = tall * (0.98 + 0.14 * aSeed.x) + 0.12 * w * grown;
+    float turn = mix((aSeed.x - 0.5) * 1.2, 0.4 + (aSeed.x - 0.5) * 0.7, over);
     vec3 away = fx * cos(turn) + fy * sin(turn);
     vec3 across = cross(axis, away);
-    float x = w * (level < 0.5 ? 0.52 : level < 1.5 ? (aShape.w > 0.5 ? mix(0.58, 0.5, over) : mix(0.42, 0.3, over)) : mix(0.4, -0.5, over));
-    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.36, over));
-    float z = high * (level < 0.5 ? -0.08 : level < 1.5 ? mix(0.62, 0.5, over) : mix(1.0, 0.62, over));
+    float far = 1.5 + 1.1 * aSeed.w;
+    float x = w * (level < 0.5 ? 0.52 : level < 1.5 ? mix(aShape.w > 0.5 ? 0.58 : 0.42, -0.1, over) : mix(0.4, -far, over));
+    float y = w * lateral * (level < 0.5 ? 0.34 : mix(0.27, 0.15, over));
+    float z = level < 0.5 ? -0.08 * high : level < 1.5 ? mix(0.62 * high, lid + 0.06 * w * aShape.w, over) : mix(high, lid + 0.05 * w, over);
     local = f.at + away * x + across * y + axis * z;
-    normal = normalize(away * mix(1.0, 0.45, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
+    normal = normalize(away * mix(1.0, 0.25, over) + across * lateral * 0.7 + axis * mix(0.35, 1.0, over));
     along = level * 0.5;
-    occ = level < 0.5 ? 0.03 : level < 1.5 ? mix(0.22, 0.5, over) : mix(mix(0.8, 0.3, open), 1.0, over);
+    occ = level < 0.5 ? 0.03 : level < 1.5 ? mix(0.22, 0.6, over) : mix(mix(0.8, 0.3, open), 1.0, over);
+    state = over;
   }
 
   occ *= mix(1.0, 0.5 + 0.4 * (1.0 - rho), uCover);
@@ -168,7 +172,7 @@ void main() {
   vNormal = plantDirection(normalize(normal));
   vDepth = -view.z;
   vInfo = vec4(piece, along, around, occ);
-  vState = vec4(open, rho, aSeed.x, swell);
+  vState = vec4(state, rho, aSeed.x, swell);
   vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
@@ -203,25 +207,25 @@ void main() {
   t.rough = 0.85;
   t.wax = 0.12;
   t.sheen = 0.35;
-  vec3 pollen = vec3(0.9, 0.63, 0.15);
+  vec3 pollen = vec3(0.56, 0.25, 0.05);
 
   if (piece < 0.5) {
-    float centre = 1.0 - smoothstep(0.14, 0.7, rho);
+    float centre = 1.0 - smoothstep(0.2, 0.72, rho);
     float ridge = around * around * mix(0.35, 1.0, smoothstep(0.3, 0.7, along));
-    vec3 dark = mix(vec3(0.07, 0.046, 0.02), vec3(0.075, 0.115, 0.03), centre);
-    vec3 pale = mix(vec3(0.27, 0.18, 0.07), vec3(0.25, 0.34, 0.1), centre);
-    vec3 ochre = vec3(0.42, 0.27, 0.055);
+    vec3 dark = mix(vec3(0.026, 0.021, 0.005), vec3(0.026, 0.05, 0.008), centre);
+    vec3 pale = mix(vec3(0.065, 0.052, 0.014), vec3(0.055, 0.095, 0.028), centre);
+    vec3 ochre = vec3(0.085, 0.048, 0.013);
     dark = mix(dark, ochre * 0.4, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
     vec3 closed = mix(dark, pale, ridge) * (0.8 + 0.4 * seed) * (1.0 + 0.18 * vMore.w);
-    vec3 young = mix(vec3(0.2, 0.29, 0.08), vec3(0.46, 0.55, 0.22), ridge) * (0.85 + 0.3 * seed);
+    vec3 young = mix(vec3(0.09, 0.14, 0.035), vec3(0.26, 0.34, 0.12), ridge) * (0.85 + 0.3 * seed);
     closed = mix(closed, young, uYoung);
-    vec3 flower = mix(vec3(0.6, 0.27, 0.025), vec3(0.86, 0.5, 0.05), smoothstep(0.3, 0.7, along));
-    flower = mix(flower, vec3(0.3, 0.07, 0.03), smoothstep(0.78, 1.0, along) * 0.85);
+    vec3 flower = mix(vec3(0.055, 0.026, 0.008), vec3(0.11, 0.052, 0.012), smoothstep(0.3, 0.7, along));
+    flower = mix(flower, vec3(0.05, 0.018, 0.008), smoothstep(0.78, 1.0, along) * 0.85);
     flower = mix(flower, pollen, 0.25 * smoothstep(0.55, 0.75, grain) * smoothstep(0.5, 1.0, along));
     float bloom = smoothstep(0.05, 0.6, open);
     t.albedo = mix(closed, flower, bloom);
-    t.through = vec3(0.8, 0.36, 0.03) * bloom * smoothstep(0.6, 0.8, along);
+    t.through = vec3(0.09, 0.036, 0.006) * bloom * smoothstep(0.6, 0.8, along);
     t.wax = mix(0.3, 0.1, bloom);
     t.rough = mix(0.6, 0.85, bloom);
   } else if (piece < 1.5) {
@@ -232,19 +236,18 @@ void main() {
     t.rough = mix(0.5, 1.0, dust);
     t.wax = mix(0.35, 0.0, dust);
     t.sheen = mix(0.3, 1.0, dust);
-    t.through = pollen * dust * 0.5;
+    t.through = pollen * dust * 0.3;
   } else if (piece < 2.5) {
-    t.albedo = mix(vec3(0.82, 0.55, 0.06), pollen, 0.5 * grain);
-    t.through = vec3(0.9, 0.5, 0.05);
+    t.albedo = mix(vec3(0.62, 0.36, 0.05), pollen, 0.5 * grain);
+    t.through = vec3(0.5, 0.26, 0.03);
     t.rough = 1.0;
     t.wax = 0.0;
     t.sheen = 1.0;
   } else {
-    float centre = 1.0 - smoothstep(0.2, 0.62, rho);
-    vec3 green = mix(mix(vec3(0.3, 0.38, 0.13), vec3(0.36, 0.5, 0.15), centre), vec3(0.5, 0.56, 0.24), uYoung);
-    vec3 dry = vec3(0.26, 0.17, 0.06);
-    t.albedo = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - 0.7 * uYoung) * (1.0 - 0.8 * centre)) * (0.85 + 0.3 * around);
-    t.through = vec3(0.3, 0.38, 0.06) * 0.6;
+    vec3 green = mix(mix(vec3(0.07, 0.09, 0.03), vec3(0.05, 0.09, 0.024), open), vec3(0.3, 0.36, 0.14), uYoung);
+    vec3 dry = vec3(0.07, 0.042, 0.016);
+    t.albedo = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - 0.7 * uYoung) * (1.0 - open)) * (0.85 + 0.3 * around) * (0.75 + 0.5 * seed);
+    t.through = vec3(0.05, 0.08, 0.012);
     t.sheen = 0.6;
   }
 
@@ -295,10 +298,10 @@ void main() {
   float rho = vDome.x * 0.93;
   float arms = sin(vDome.y * 21.0 + rho * 38.0) * sin(vDome.y * 13.0 - rho * 46.0);
   float centre = 1.0 - smoothstep(0.08, 0.58, rho);
-  vec3 closed = mix(vec3(0.13, 0.1, 0.035), vec3(0.14, 0.18, 0.05), centre);
-  closed = mix(closed, vec3(0.3, 0.38, 0.13), uYoung);
-  vec3 opening = vec3(0.42, 0.24, 0.035);
-  vec3 flower = vec3(0.34, 0.19, 0.035);
+  vec3 closed = mix(vec3(0.06, 0.04, 0.019), vec3(0.055, 0.075, 0.024), centre);
+  closed = mix(closed, vec3(0.17, 0.23, 0.075), uYoung);
+  vec3 opening = vec3(0.12, 0.068, 0.02);
+  vec3 flower = vec3(0.17, 0.085, 0.024);
   vec3 albedo = mix(closed, opening, smoothstep(uFront.x - 0.06, uFront.x + 0.06, rho));
   albedo = mix(albedo, flower, smoothstep(uFront.y - 0.06, uFront.y + 0.06, rho));
   Tissue t;
