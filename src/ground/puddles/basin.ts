@@ -1,3 +1,4 @@
+import { right, toward } from '../../field/layout.ts'
 import { soilHeight } from '../soil.ts'
 import { standInBank } from './scratch.ts'
 
@@ -11,6 +12,12 @@ uniform vec2 uRight;
 vec2 furrowPlace(vec2 p) {
   float d = -dot(p, uToward);
   return vec2(dot(p, uRight) - ${furrowCourse.acrossAtPlantM.toFixed(3)} - ${furrowCourse.acrossPerAwayM.toFixed(3)} * d - 0.015 * sin(d * 13.0 + 1.0), d);
+}
+uniform vec3 uBox;
+// A place on the ground inside the square whose ripples are kept, -1 to 1 across it and along it.
+vec2 boxPlace(vec2 p) {
+  vec2 k = p - uBox.xy;
+  return vec2(dot(k, uRight), dot(k, uToward)) * uBox.z;
 }
 float furrowHalf(float away) {
   return mix(0.057, 0.04, saturate((away + 0.6) / 0.6)) - 0.02 * saturate(away / 0.25);
@@ -28,5 +35,13 @@ float waterDepth(vec2 p) {
 }
 `
 
-// The square of ground whose ripples are kept, as its center along the line to the lens and its half size, in meters.
-export const rippleBox = { aheadM: 0.25, halfM: 0.8 }
+// The square of ground whose ripples are kept, laid along the furrow: its center in the ground's own axes and its half size, in meters.
+export const rippleBox = { acrossM: -0.14, awayM: -0.24, halfM: 0.6 }
+
+// True within reach of the furrow's middle line, for the fine rain whose rings are kept only there.
+export function nearFurrow(x: number, z: number, reachM: number): boolean {
+  const a = x * right.x + z * right.z
+  const d = -(x * toward.x + z * toward.z)
+  const off = a - furrowCourse.acrossAtPlantM - furrowCourse.acrossPerAwayM * d - 0.015 * Math.sin(d * 13 + 1)
+  return Math.abs(off) < reachM && d > furrowCourse.nearAwayM - reachM && d < furrowCourse.endAwayM + reachM
+}

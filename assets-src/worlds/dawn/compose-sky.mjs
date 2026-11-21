@@ -3,13 +3,13 @@
 import fs from 'node:fs'
 import sharp from 'sharp'
 
-const WIDTH = 4096
-const HEIGHT = 1024
+const WIDTH = 8192
+const HEIGHT = 2048
 const TAKE = 'out/work/dawnsky/sunward-1.png'
 const SUN_X = 0.6335
 const SPAN_DEG = 60
 // The film sees the lowest eight degrees of this sky through a long lens: the take's whole height is laid over RISE_DEG.
-const RISE_DEG = 9
+const RISE_DEG = 7
 const BOTTOM_ROW = 1540
 const TOP_ROW = 40
 const SEAM_DEG = 8
