@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 06:05 UTC · Round 2: fix pass (the head holds one facing, cameras fitted again, shorter neighbors), summary, status 15; the blockout loop closes at its round limit
+- Last push: 2026-11-21 06:05 UTC · Phase 2: the final preview film is rendering
 - Last status: 15 · 2026-11-21 06:04 UTC · Phase 2 · round 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -357,7 +357,7 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-None.
+- `npm run film` · the whole preview film (frames 0 to 1799, 960 x 540) at the `draft` tier, the final build of Phase 2 (engine hash `883ccb0f6f431fcb`) · log `out/work/logs/film-p2.log` · this VM (`space-sandbox`, 2 cores) · started 2026-11-21 06:08 UTC · the budget says about 20 to 28 minutes; restarted once if it runs past twice that.
 
 Finished in this task:
 
@@ -453,6 +453,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 05:44 UTC · Phase 2: preview film rendering while the round 2 critic is out
 - 2026-11-21 05:49 UTC · Round 2: the R4 blockout answer, word for word, with its manifest and key
 - 2026-11-21 06:05 UTC · Round 2: fix pass (the head holds one facing, cameras fitted again, shorter neighbors), summary, status 15; the blockout loop closes at its round limit
+- 2026-11-21 06:05 UTC · Phase 2: the final preview film is rendering
 
 ## Session log
 
