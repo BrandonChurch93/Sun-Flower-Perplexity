@@ -35,6 +35,7 @@ export const stage: WorldStageMaker = (def) => {
     prepare(frame) {
       open = frame.time
       close = frame.timeClose
+      far.setTime(frame.time)
     },
     sample(_camera, shutter) {
       const time = open + (close - open) * shutter

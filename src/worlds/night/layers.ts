@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -99,12 +99,13 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.03, 0.04, 0.035], rim: 0.04, fogShare: 0.3 },
 ]
 
-export interface FarLayers { meshes: THREE.Mesh[]; triangles: number }
+export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }
 
 // The land is the same land in every world: its line is laid out round the bearing of the golden hour's sun.
 export function makeFarLayers(landBearingDeg: number): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
+  const rings = SKYLINE.map((_, i) => skylineRing(i, landBearingDeg))
   const airUniforms = {
     uAirCool: { value: new THREE.Vector3(0.012, 0.022, 0.034) },
     uAirWarm: { value: new THREE.Vector3(0.03, 0.06, 0.08) },
@@ -121,13 +122,13 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
   const land = new THREE.BufferGeometry()
   {
     const sides = 180
-    const rings: number[] = []
-    for (let r = SKYLINE_LAND_FROM_M; r < SKYLINE_LAND_TO_M; r *= 1.35) rings.push(r)
-    rings.push(SKYLINE_LAND_TO_M)
-    const position = new Float32Array(rings.length * sides * 3)
-    const info = new Float32Array(rings.length * sides * 3)
+    const radii: number[] = []
+    for (let r = SKYLINE_LAND_FROM_M; r < SKYLINE_LAND_TO_M; r *= 1.35) radii.push(r)
+    radii.push(SKYLINE_LAND_TO_M)
+    const position = new Float32Array(radii.length * sides * 3)
+    const info = new Float32Array(radii.length * sides * 3)
     const index: number[] = []
-    rings.forEach((r, j) => {
+    radii.forEach((r, j) => {
       for (let s = 0; s < sides; s++) {
         const az = (s / sides) * 2 * Math.PI
         const v = (j * sides + s) * 3
@@ -150,7 +151,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
   add(land, makeSurface({ name: 'night far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
   SKYLINE.forEach((layer, i) => {
-    const geometry = skylineStrip(i, landBearingDeg)
+    const geometry = rings[i].geometry
     const tone = TONES[i]
     const surface = makeSurface({
       name: `night ${layer.name}`,
@@ -163,5 +164,5 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
     add(geometry, surface.main, 0)
   })
 
-  return { meshes, triangles }
+  return { meshes, triangles, setTime: (time) => rings.forEach((ring) => ring.setTime(time)) }
 }
