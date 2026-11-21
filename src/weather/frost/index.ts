@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { fieldUniforms, makePartSurface, partMesh, stateUniforms, type PartOptions } from '../../plant/part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
+import { ball } from '../../plant/hairs/index.ts'
+import { config } from '../../config.ts'
 
 // Crystals are see-through at their edges and are drawn after the bodies they grow on and before the hairs (20).
 export const CRYSTAL_ORDER = 18
@@ -9,6 +11,7 @@ export const CRYSTAL_ORDER = 18
 const ROW = 512
 const NEEDLES = 5
 const REGATHER_M = 0.03
+const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
@@ -23,18 +26,20 @@ out vec3 vSky;
 out float vAcross;
 out float vHalf;
 out float vFade;
+out vec3 vBall;
+out vec3 vRight;
+out vec3 vUp;
 
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
-// Ice in its own shade is lit by the sky alone and goes a little blue.
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
 const float MATT = 0.15;
 const float THROUGH = 0.2;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
-// Frost grows toward the side the air came from.
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
 const float MELT_FROM_S = 38.0;
+const float DROP_SHARE = 0.004;
 
 float hash(float own, float n) {
   return fract(sin(own * 917.13 + n * 37.71 + 0.31) * 4375.85);
@@ -55,7 +60,6 @@ void main() {
   float own = b.w;
   float n = float(needle);
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
-  // Most crystals are the low crust of an edge, tufts that point every way. One in four is a spike that stands straight off it.
   bool spike = hash(own, 4.0) > 0.74;
   float h5 = hash(own, 5.0);
   grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.5 : 1.8));
@@ -63,7 +67,8 @@ void main() {
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
   float high = smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
   float from = MELT_FROM_S + 6.0 * hash(own, 6.0);
-  float melt = high * smoothstep(from, from + 1.5, uTime);
+  float now = uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
+  float melt = high * smoothstep(from, from + 1.5, now);
   size *= 1.0 - 0.75 * melt;
 
   vec3 ref = abs(grow.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -78,7 +83,6 @@ void main() {
   float reach = size;
   float wide = 0.16 * size;
   if (feather) {
-    // A feathered blade: a flat spine with barbs standing off it in its own plane, shorter toward the tip.
     vec3 flat0 = e1 * cos(6.2832 * hash(own, 10.0)) + e2 * sin(6.2832 * hash(own, 10.0));
     if (needle > 0) {
       float along = 0.18 + 0.17 * n + 0.08 * hash(own, 11.0 + n);
@@ -88,7 +92,6 @@ void main() {
       wide = 0.1 * size;
     }
   } else {
-    // A cluster: two to five needles from one foot.
     axis = normalize(grow + aside * (needle == 0 ? 0.0 : spike ? 0.35 + 0.5 * hash(own, 14.0 + n) : 0.6 + 1.2 * hash(own, 14.0 + n)));
     reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.5 + 0.5 * hash(own, 15.0 + n)) : 0.0;
     wide = 0.09 * size;
@@ -111,7 +114,6 @@ void main() {
   vFade = (reach > 0.0 ? 1.0 : 0.0) / stretch * (1.0 - 0.5 * melt);
   vec3 world = here + across * (vAcross * pixel);
 
-  // The facet of a needle faces some way round its axis.
   float face = 6.2832 * hash(own, 16.0 + n);
   vec3 f1 = normalize(cross(axis, abs(axis.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
   vec3 facet = f1 * cos(face) + cross(axis, f1) * sin(face);
@@ -124,6 +126,32 @@ void main() {
   vWorld = world;
   vLitAt = root + grow * (0.004 * plantSize());
   vDepth = depth;
+  vBall = vec3(0.0);
+  vRight = vec3(0.0);
+  vUp = vec3(0.0);
+  // The water of a melted crystal gathers under it as a drop, hangs, and falls.
+  if (needle == 4 && high > 0.0 && hash(own, 19.0) < DROP_SHARE) {
+    float falls = from + 1.5 + 0.3 * hash(own, 20.0);
+    float fallen = max(now - falls, 0.0);
+    float radius = (0.0005 + 0.0004 * hash(own, 21.0)) * plantSize() * smoothstep(from + 0.5, falls, now);
+    vec3 center = root - vec3(0.0, radius + 4.905 * fallen * fallen, 0.0);
+    if (center.y < 0.0) radius = 0.0;
+    toEye = normalize(uCamPos - center);
+    depth = -(viewMatrix * vec4(center, 1.0)).z;
+    pixel = depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
+    vRight = normalize(cross(vec3(0.0, 1.0, 0.0), toEye));
+    vUp = cross(toEye, vRight);
+    float rPx = radius / pixel;
+    float reachPx = max(rPx, 0.5) + 0.75;
+    vAcross = side * reachPx;
+    vBall = vec3((end * 2.0 - 1.0) * reachPx, rPx, 1.0);
+    vHalf = 0.0;
+    vFade = 1.0;
+    world = center + (vRight * vAcross + vUp * vBall.x) * (radius > 0.0 ? pixel : 0.0);
+    vWorld = center;
+    vLitAt = center;
+    vDepth = depth;
+  }
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }
 `
@@ -137,14 +165,21 @@ in vec3 vSky;
 in float vAcross;
 in float vHalf;
 in float vFade;
+in vec3 vBall;
+in vec3 vRight;
+in vec3 vUp;
+${ball}
 void main() {
   float x = abs(vAcross);
   float cover = saturate(max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * vFade);
+  float r = max(vBall.y, 0.5);
+  if (vBall.z > 0.5) cover = saturate(r - length(vec2(vAcross, vBall.x)) + 0.5) * (vBall.y * vBall.y / (r * r));
 #ifdef BLUR_CIRCLE
   outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
 #else
   if (cover < 0.004) discard;
-  vec3 color = vSun * plantSun(vLitAt, uSunDir) + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
+  float sun = plantSun(vLitAt, uSunDir);
+  vec3 color = vBall.z > 0.5 ? ballLight(vec2(vAcross, vBall.x) / r, vRight, vUp, vWorld, sun, 0.0) : vSun * sun + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, cover);
 #endif
 }
@@ -180,7 +215,6 @@ export class CrystalSet {
     this.texture.magFilter = THREE.NearestFilter
     this.texture.generateMipmaps = false
     this.texture.needsUpdate = true
-    // The vertices carry nothing: a vertex knows its crystal, its needle and its corner from its number.
     const index = new Uint32Array(count * NEEDLES * 6)
     for (let k = 0; k < count * NEEDLES; k++) {
       const v = k * 4
@@ -198,7 +232,6 @@ export class CrystalSet {
     this.meshes = [drawn, kept]
   }
 
-  // A crystal outside the picture is left out.
   private gather(camera: THREE.Camera, object: THREE.Object3D): void {
     const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
     const m = object.matrixWorld.elements
@@ -256,7 +289,6 @@ export class CrystalSet {
       this.geometry.setDrawRange(0, 0)
       return
     }
-    // The samples of one frame differ by the width of the lens. A camera farther than that from where the crystals were gathered is another view.
     if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
     this.geometry.setDrawRange(0, this.kept * NEEDLES * 6)
   }
