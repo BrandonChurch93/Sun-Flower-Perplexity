@@ -23,7 +23,7 @@ const UNDER_LEVELS = [0.5, 0.68, 0.84]
 const HEADS_FROM_M = 16
 const HEAD_AT = 0.9
 const RAY_DEEP = [0.82, 0.25]
-const LEAF_SKY = 2.0
+const LEAF_SKY = 1.2
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -150,9 +150,9 @@ void main() {
     // Seen from over the tops the upper leaves show the faces they turn to the sky.
     color += vec3(0.045, 0.09, 0.022) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift);
     // The low sun comes through the upper leaves of a clump, green, and here and there a leaf catches it whole. Looking into the sun the eye meets the shaded side of every clump.
-    float lit = smoothstep(0.5, 0.72, valueNoise(p * 9.0 + 5.0));
+    float lit = smoothstep(0.6, 0.78, valueNoise(p * 9.0 + 5.0));
     float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz))));
-    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.1 + 0.8 * lit) * lee * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
+    color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);
