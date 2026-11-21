@@ -77,7 +77,7 @@ void main() {
   float depth = uThickness * amount * run / across;
   float alpha = (1.0 - exp(-depth)) * smoothstep(0.15, 0.6, length(ray.xz) / uRadiusM);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
-  float glow = 0.02 + uForward * (exp(-pow(theta / 0.34, 3.0)) + 2.0 * exp(-theta / 0.1));
+  float glow = 0.02 + uForward * (exp(-pow(theta / 0.24, 3.0)) + 2.0 * exp(-theta / 0.1));
   vec3 color = uLit * uSunColor * glow + uShade * skyAmbient(vec3(0.0, 1.0, 0.0));
   outColor = vec4(color, alpha);
 }

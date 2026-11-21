@@ -35,7 +35,7 @@ void main() {
   // One lens sample stands for its share of the disc of confusion: the picture and the sun are drawn that wide, so the samples close into a smooth blur.
   float wide = max(1.0, 1.4 * coc / sqrt(uSamples));
   float lod = max(0.0, log2(wide * uPixelAngle / uTexelAngle));
-  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.3 * exp(-theta / 0.16)) * mix(vec3(0.93, 1.28, 1.45), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.08, 0.92, 0.74), exp(-theta / 0.2));
+  vec3 color = textureLod(tSky, uv, lod).rgb * uGain * (1.0 + 0.3 * exp(-theta / 0.16)) * mix(vec3(0.84, 1.3, 1.5), vec3(1.0), exp(-theta / 0.35)) * mix(vec3(1.0), vec3(1.08, 0.92, 0.74), exp(-theta / 0.2));
 
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
