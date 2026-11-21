@@ -68,6 +68,7 @@ void main() {
   float rib = vSkin.x;
   float tone = 0.5 + 0.2 * rib;
   float streak = 0.5;
+  float thread = 0.0;
   float fleck = 0.0;
   float spot = 0.0;
   float dust = 0.5;
@@ -84,6 +85,7 @@ void main() {
   float tone = 0.58 * wide.g + 0.42 * fine.g;
   tone = mix(saturate(0.5 + (tone - 0.5) * 1.45), 0.5, 0.45 * thin);
   float streak = wide.g;
+  float thread = smoothstep(0.55, 0.8, fine.g) * (0.35 + 0.65 * wide.g);
   float fleck = saturate(vSkin2.y * (0.8 * smoothstep(0.76, 0.86, fine.b) + 0.4 * smoothstep(0.74, 0.86, wide.b)));
   float spot = smoothstep(0.84, 0.97, fine.a) * (1.0 - youth);
   float dust = fine.a;
@@ -93,8 +95,10 @@ void main() {
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.05, 0.115, 0.026), vec3(0.19, 0.3, 0.078), tone);
-  grown *= 1.0 + ribbed * (0.19 * crest - 0.22 * furrow);
+  vec3 grown = mix(vec3(0.07, 0.097, 0.02), vec3(0.245, 0.255, 0.056), tone);
+  grown = mix(grown, vec3(0.38, 0.38, 0.17), 0.8 * thread);
+  grown *= 1.0 - 0.34 * ribbed * furrow;
+  grown = mix(grown, vec3(0.36, 0.36, 0.15), ribbed * smoothstep(0.25, 0.9, crest) * (0.25 + 0.6 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);
@@ -114,7 +118,7 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = ${GUIDE.sheen} * mix(0.7, 1.0, vSkin2.z) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
+  t.sheen = mix(1.0, ${GUIDE.sheen}, thin) * (1.0 - 0.8 * pale) * (1.0 - 0.6 * vSkin3.z);
   t.occlusion = vSkin2.x * (1.0 - 0.32 * ribbed * furrow);
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, density);
 }
