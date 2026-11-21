@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, shareOf, type Tier } from './layout.ts'
+import { PLACE, budTurn, farVariants, fieldPlaces, kindTime, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -35,6 +35,7 @@ export class Field {
   readonly meshes: THREE.Mesh[]
   private time = 0
   private rise = 0
+  private ahead = 1
 
   constructor() {
     const places = fieldPlaces()
@@ -68,7 +69,8 @@ export class Field {
       g.grow.value = headOpen(clock)
       usePlant(0)
     }
-    const canopy = heightAt(timeOpen) * CANOPY
+    this.ahead = plantAhead(timeOpen)
+    const canopy = heightAt(timeOpen) * sizeAt(CANOPY, youngOf(0.5), this.ahead)
     fieldUniforms.uCanopy.value = canopy
     // The leaves in the gaps come up as the crop closes over them.
     this.rise = THREE.MathUtils.smoothstep(canopy, 0.3, 1.0)
@@ -104,7 +106,7 @@ export class Field {
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         placeTurned(all, i, seen, still, n, early ? 0 : budTurn(clock, all[i + 7]))
-        if (g.bare) seen[n + 3] = still[n + 3] = all[i + 3] * this.rise
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6]), this.ahead) * (g.bare ? this.rise : 1)
         n += PLACE
       }
       g.seen.needsUpdate = true
