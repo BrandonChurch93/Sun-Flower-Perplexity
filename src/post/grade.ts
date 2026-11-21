@@ -96,7 +96,7 @@ vec3 sunAir(vec2 px, float circle) {
   float depth = circle / max(uFarFill, 1e-4);
   float behind = smoothstep(0.3, 0.7, depth) * (1.0 - smoothstep(1.03, 1.25, depth));
   float shafts = fan * beams * reach * reach * r / (r + 0.02) * behind;
-  return texture(tHot, uSunAt).rgb * (vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.66, 0.38) * (uShafts * shafts));
+  return texture(tHot, uSunAt).rgb * (vec3(1.0, 0.62, 0.3) * (uGlow * glow) + vec3(1.0, 0.7, 0.45) * (uShafts * shafts));
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
