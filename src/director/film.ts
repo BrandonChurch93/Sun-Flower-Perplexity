@@ -189,6 +189,9 @@ export class Film {
     this.sky.setWorld(def)
     this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(time)))
     this.ground.show(!alone)
+    stateUniforms.uPlantWet.value = def.ground.wet
+    stateUniforms.uPlantFrost.value = def.ground.frost
+    stateUniforms.uPlantDew.value = def.ground.dew
     const inputs = this.inputsAt(time)
     const inputsClose = this.inputsAt(time + shutterSeconds)
     this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
@@ -203,9 +206,6 @@ export class Film {
     if (beside) this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
     fieldUniforms.uPlantWind.value = inputs.wind
     fieldUniforms.uPlantHeight.value = heightAt(time)
-    stateUniforms.uPlantWet.value = def.ground.wet
-    stateUniforms.uPlantFrost.value = def.ground.frost
-    stateUniforms.uPlantDew.value = def.ground.dew
     this.field.prepare(time, time + shutterSeconds, inputs, inputsClose, eye.heightM)
     this.field.look(first, tanX, stage.width / stage.height)
     this.field.show(!alone)
