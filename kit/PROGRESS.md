@@ -7,14 +7,14 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 3 · The look lock
 - Current unit: bloom
-- Current round: round 5 of `bloom` (extra round), judging `11207fd`; its chain started 13:24:40 UTC: machine checks green at 13:36, measures in at 13:46 (M3 fails at both frames), the pack ends at about 14:03 UTC
+- Current round: round 5 of `bloom` (extra round), judging `11207fd`; machine checks green 13:36, measures 13:46 (M3 fails at both frames), pack 14:03; R1 4 and R3 7 are in, R4 and the jury are out. Round 6, the last the look lock allows, has to start before 15:21 UTC
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 13:52 UTC · Status 31: round 5 measures in (M3 fails at both frames), round 6 jobs out
+- Last push: 2026-11-21 14:07 UTC · Round 5: pack built and checked; R1 4 and R3 7 saved word for word
 - Last status: 31 · 2026-11-21 13:49 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 6.91 h |
+| 3 | 9.00 h | 7.16 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 12.96 h |
+| Whole build | 30.00 h | 13.21 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -465,10 +465,11 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running: the round 5 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 5 --unit bloom` · logs `out/work/logs/r5-gate.log`, `r5-measure.log`, `r5-pack.log`, `r5-chain.log` · this VM · started 2026-11-21 13:24:40 UTC (the gate ended 13:36:31 UTC, all 13 green) · about 36 minutes by round 4's chain (gate 12 min, two `final` stills 8 min, pack 16 min). No build and no source edit on `main` while it runs; merges are prepared in the worktree `sf-prep`.
+Running: review stills of the other units for the Phase 4 briefs · `npm run still -- --frames 0,45,60,195,420,780,1080,1755 --tier review --format 16x9` · log `out/work/logs/p4-stills.log` · this VM · started 2026-11-21 14:05 UTC · about 7 minutes (8 stills of about 50 s).
 
 Finished in this task:
 
+- Round 5 chain · `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 5 --unit bloom` · started 2026-11-21 13:24:40 UTC, ended 14:03:51 UTC (39 minutes, 36 expected: the gate 12 min, the two `final` stills 278 s and 284 s, the pack 17.4 min) · logs `out/work/logs/r5-gate.log`, `r5-measure.log`, `r5-pack.log`, `r5-chain.log` · gate 13 of 13 green, M3 fails at both frames (0.672 and 0.786), packs in `out/work/packs/round-005/`.
 - Checks of the merged `main` before round 5 · `78a1d32` (13:09 to 13:11 UTC, log `m10.log`: build clean, 92 of 92 tests, review stills of 1350 and 1515) · `e2e9da5` (13:12 to 13:16 UTC, logs `m11.log`, `m11-measure.log`: 92 of 92 tests, M1 pass, M2 pass, M3 0.739 at frame 1350 and 0.798 at frame 1515, both fail) · `11207fd` (13:19 to 13:22 UTC, logs `m12.log`, `m12-measure.log`: 92 of 92 tests, M1 pass, M2 pass, M3 0.755 at frame 1350 (fails) and 0.825 at frame 1515 (passes), all at `review`). The Builder looked at both stills of each beside the approved (`out/work/scratch/m11-*.jpg`, `m12-*.jpg`).
 - Check of the merged `main` (`af87de1`) · build, `npx vitest run`, review 16x9 stills of 1350 and 1515, `npm run measure -- --unit bloom --tier review` · started 12:53 UTC, ended 12:57 UTC · logs `out/work/logs/m8.log`, `m8-measure.log` · build clean, 92 of 92 tests, M1 pass, M2 pass, M3 0.764 at frame 1350 (fails; 0.732 before the second merges) and 0.870 at frame 1515.
 - Check of the merged `main` (`8219a4e`) · build, `npx vitest run`, review stills, `npm run measure -- --unit bloom --tier review` · 12:31 to 12:38 UTC · build clean, 92 of 92 tests, M1 pass, M2 pass, M3 0.732 at frame 1350 (fails) and 0.896 at frame 1515.
@@ -587,10 +588,10 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - Started 2026-11-21 13:24 UTC (this entry was pushed at 13:24:22 UTC as `515d9c6`, the chain started at 13:24:40; the 13:26 first written here was a guess made ahead of the push). Judges commit `11207fd`. Unit `bloom`, the third round of its loop (the look lock allows 4: rounds 3 to 6); judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Extra round: the clock printed `extra rounds: yes` at 13:20 UTC (Phase 3 6.42 h of its 9 h box, whole build 12.47 h of 30 h). Critics, each a fresh sandbox agent that gets attachments only: R1 match, R3 surface and detail, R4 motion, and the R2 jury (5 jurors for each of the 2 judged images; the controls' share of round 3, 6 of 10, is reused as the kit allows). Families rotate against rounds 3 and 4: R1 Claude, R3 GPT, R4 Gemini; each image's five jurors come from five families.
 - [x] Machine checks (`npm run gate -- --phase 3 --machine`): 13:36 UTC, all 13 green. G2 92 of 92 tests; G3 determinism passes (3 frames, 16x9, `review`); G11 texture memory web 118 MB of 800, full 350 MB of 2400; G13 no finished unit yet, 6 stand-ins remain and none is in a finished unit
 - [x] Measures (`npm run measure -- --unit bloom`, the judged stills at `final`, 278.1 s and 284.1 s): 13:46 UTC. M1 passes and M2 passes (0.00 %) at both frames. M3 fails at both: 0.672 at frame 1350 (our energy 9.568 against the approved's 14.240 in the sharp region, 217474 sharp pixels) and 0.786 at frame 1515 (10.716 against 13.642, 270157 pixels); 0.8 is needed. Round 4 at `final` read 0.722 and 0.849. Numbers in `out/work/measures/bloom.json`
-- [ ] Pack (`npm run pack -- --phase 3 --round 5 --unit bloom`)
-- [ ] R1 answer
+- [x] Pack (`npm run pack -- --phase 3 --round 5 --unit bloom`): ended 14:03:51 UTC, built in 17.4 min, exit 0; `out/work/packs/round-005/` (R1 eight images, R2 four, R3 six, R4 four, each with its manifest), key outside the packs in `out/work/packs/keys/round-005.json`. The Builder looked at every file before sending: pairs and crops are the right frames at the right places, labels match the manifests, nothing in a name or a label says which image is ours
+- [x] R1 answer: `reviewer_39`, Claude family, sent 14:05 UTC, answered 14:06 UTC. Score 4, not a pass: 3 severe, 5 major, 1 minor. `scorecards/round-005/R1.json`, word for word
 - [ ] R2 jury answers
-- [ ] R3 answer
+- [x] R3 answer: `reviewer_40`, GPT family, sent 14:05 UTC, answered 14:07 UTC. Score 7, not a pass: 4 major, none severe. `scorecards/round-005/R3.json`, word for word
 - [ ] R4 answer
 - [ ] Fixes
 - [ ] Summary, status, push
@@ -670,6 +671,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 13:24 UTC · Round 5 of bloom starts on 11207fd: third merges after round 4 (stem, petals, companion, disc, field, golden, leaves, hairs, bud, opening, lens)
 - 2026-11-21 13:25 UTC · Status 30: round 5 of bloom starts
 - 2026-11-21 13:52 UTC · Status 31: round 5 measures in (M3 fails at both frames), round 6 jobs out
+- 2026-11-21 14:07 UTC · Round 5: pack built and checked; R1 4 and R3 7 saved word for word
 
 ## Session log
 
