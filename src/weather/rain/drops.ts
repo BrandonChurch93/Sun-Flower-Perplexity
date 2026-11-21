@@ -1,5 +1,4 @@
 import { combine, streamSeed } from '../../core/random.ts'
-import { windToward } from '../../plant/wind.ts'
 
 // Every raindrop of the film, in closed form. The ground plane y = 0 is cut into square cells; each cell owns a few series of drops,
 // and each series lands one drop per period at a fresh place inside the cell. The streaks in the air and every landing read from here.
@@ -21,24 +20,25 @@ export interface Drop {
 export const RAIN_CELL_M = 0.25
 // The first series of a cell carry the heavy drops, the ones that splash. The rest carry the fine rain between them.
 export const RAIN_SERIES = 8
-export const RAIN_FINE_SERIES = 420
+export const RAIN_FINE_SERIES = 620
 
-const SLANT_DEG = 5
+const SLANT_DEG = 12
+// The level bearing the rain leans toward: to the left of the frame at the rain's key, as in the approved image.
+const LEAN_TOWARD_DEG = -80.5
 const PERIOD_MIN_S = 0.9
 const PERIOD_MAX_S = 1.6
 const RADIUS_MIN_M = 0.0005
 const RADIUS_MAX_M = 0.0022
 const FINE_MIN_M = 0.00015
-const FINE_MAX_M = 0.001
+const FINE_MAX_M = 0.0008
 const SEED = streamSeed('rain drops')
 const UNIT = 1 / 4294967296
 
-const slant = Math.tan((SLANT_DEG * Math.PI) / 180)
-const along = Math.hypot(windToward.x, windToward.z)
-const norm = Math.hypot(slant, 1)
+const slant = (SLANT_DEG * Math.PI) / 180
+const lean = (LEAN_TOWARD_DEG * Math.PI) / 180
 
-// The direction every drop travels in: almost straight down, leaning with the wind.
-export const fallDir: readonly [number, number, number] = [(windToward.x / along) * slant / norm, -1 / norm, (windToward.z / along) * slant / norm]
+// The direction every drop travels in: down, with a slant.
+export const fallDir: readonly [number, number, number] = [Math.sin(lean) * Math.sin(slant), -Math.cos(slant), Math.cos(lean) * Math.sin(slant)]
 
 // How hard it rains, 0.55 to 1: slow swells with a burst now and then. A drop exists when its rank is under this at its landing.
 export function rainStrength(time: number): number {
@@ -71,7 +71,7 @@ export function dropOf(i: number, j: number, s: number, n: number): Drop | null 
   const id = combine(seed, n | 0)
   if (combine(id, 5) * UNIT > rainStrength(time)) return null
   const size = combine(id, 3) * UNIT
-  const radius = s < RAIN_SERIES ? RADIUS_MIN_M + (RADIUS_MAX_M - RADIUS_MIN_M) * size * size : FINE_MIN_M + (FINE_MAX_M - FINE_MIN_M) * size * size
+  const radius = s < RAIN_SERIES ? RADIUS_MIN_M + (RADIUS_MAX_M - RADIUS_MIN_M) * size * size : FINE_MIN_M + (FINE_MAX_M - FINE_MIN_M) * size * size * size
   return { id, x: (i + combine(id, 1) * UNIT) * RAIN_CELL_M, z: (j + combine(id, 2) * UNIT) * RAIN_CELL_M, time, radius, speed: fallSpeed(radius) }
 }
 

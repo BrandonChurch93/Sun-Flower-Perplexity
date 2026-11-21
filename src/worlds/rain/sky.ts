@@ -44,7 +44,7 @@ void main() {
   vec3 color = sky * uGain;
   // The band is where the sun stands behind thin cloud: the paint holds it back, the film lets it burn.
   float open = (1.0 - cloud) * exp(-up / 0.07);
-  color *= mix(vec3(1.0), vec3(1.45, 1.36, 1.22), open);
+  color *= mix(vec3(1.0), vec3(1.3, 1.24, 1.12), open);
 
   // Lightning deep in the cloud: its body lights up from inside round one place, brightest where it is thin.
   float near = exp(-(1.0 - dot(d, uFlashAt)) / 0.035);
