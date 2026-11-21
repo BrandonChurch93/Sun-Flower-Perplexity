@@ -15,7 +15,7 @@ in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${fogLight}
 
-const float DISC = 0.0135;
+const float DISC = 0.018;
 
 void main() {
   vec2 ndc = vUv * 2.0 - 1.0;
@@ -29,7 +29,7 @@ void main() {
   float banks = 0.6 * valueNoise(deck * vec2(1.7, 1.1) + vec2(0.011 * uNow, 3.0)) + 0.4 * valueNoise(deck * vec2(3.9, 2.3) + vec2(-0.017 * uNow, 11.0));
   color *= 1.0 + 0.07 * (banks - 0.5) * smoothstep(0.02, 0.2, el);
   // The disc is white through the fog and has no hard edge of its own. As the fog thins round it, it stands out a little more.
-  float soft = DISC * (0.4 - 0.15 * uFogThin);
+  float soft = DISC * (0.45 - 0.15 * uFogThin);
   color = mix(color, uDisc * (1.0 + 0.3 * uFogThin), 1.0 - smoothstep(DISC - soft, DISC + soft, theta));
   float grey = dot(color, vec3(0.3, 0.6, 0.1));
   if (uDiag == 7) color = vec3(grey);

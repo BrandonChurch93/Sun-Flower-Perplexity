@@ -52,6 +52,8 @@ in vec4 aPlace;
 in vec4 aVary;
 uniform float uPlantWind;
 uniform float uPlantHeight;
+uniform vec4 uHeadAt;
+uniform float uHeadGrow;
 ${swayGlsl}
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
@@ -68,6 +70,9 @@ vec3 plantWorld(vec3 local) {
 #ifdef PLANT_FIELD
   float c = cos(aPlace.z);
   float s = sin(aPlace.z);
+  // A short neighbor's head is nearly as large as the plant's own: the head and what touches it are drawn larger about the head's middle.
+  vec3 q = local - uHeadAt.xyz;
+  local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   vec3 p = local * aPlace.w;
   p.xz += aVary.xy * p.y;
   vPlantTone = aVary.z;
@@ -125,7 +130,9 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
   // Below the tops the sun in a lane comes through the leaves in flecks: a piece of a stalk, the edge of a leaf.
   float fleck = smoothstep(0.5, 0.68, valueNoise(vec2(world.y * 6.0 + across * 2.3, along * 1.7 + world.y * 2.0)));
-  return mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under));
+  // Out in the body of the field the grazing sun gets into the upper crop in thin shafts that lie along its rays: a head, an edge, a stretch of stalk is lit.
+  float shaft = smoothstep(0.6, 0.78, valueNoise(vec2(across * 5.0 + 3.0, world.y * 7.0 + along * 0.5))) * (1.0 - smoothstep(0.2, 0.45, under)) * smoothstep(9.0, 18.0, length(world.xz));
+  return max(mix(1.0, top, closed) * exp(-mix(1.0, mix(12.0, 0.5, lane), closed) * under / (0.6 + uSunDir.y)) * mix(1.0, fleck, closed * smoothstep(0.1, 0.4, under)), closed * shaft);
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
 #endif
