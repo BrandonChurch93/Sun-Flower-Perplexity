@@ -112,7 +112,7 @@ void main() {
   // The same net read at the size it was photographed: the smallest veinlets and the cells they close, 2 to 3 mm across.
   vec2 fUv = vPlane * 16.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
-  float cells = smoothstep(0.98, 1.4, fine);
+  float cells = smoothstep(0.96, 1.25, fine);
 
   vec3 upper = vec3(0.03, 0.075, 0.05) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.09, 0.13, 0.06), 0.8 * vein.r + 0.3 * vein.b);

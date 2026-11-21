@@ -597,7 +597,7 @@ export function create(options: PartOptions): PlantPart {
           dx = nx * side + (lx / ll) * ahead
           dy = ny * side + (ly / ll) * ahead
           dz = nz * side + (lz / ll) * ahead
-          long = (0.0003 + 0.0009 * hair.r1 * hair.r1) * scale
+          long = (0.0005 + 0.0011 * hair.r1) * scale
         } else {
           const inner = v00 + (b === 1 ? 3 : -3)
           let ex = out[v00] - out[inner]
@@ -610,12 +610,12 @@ export function create(options: PartOptions): PlantPart {
           let fz = out[v10 + 2] - out[v00 + 2]
           const fl = Math.hypot(fx, fy, fz) || 1
           fx /= fl; fy /= fl; fz /= fl
-          const tilt = (hair.r2 - 0.5) * 2.2
+          const tilt = (hair.r2 - 0.5) * 1.5
           const ahead = -0.3 + 1.3 * hair.r3
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0004 + 0.0034 * Math.pow(hair.r1, 3)) * scale
+          long = (0.0006 + 0.0028 * hair.r1 * hair.r1) * scale
         }
       }
       root[o] = px
