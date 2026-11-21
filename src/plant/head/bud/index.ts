@@ -105,21 +105,21 @@ const SHUT_BROAD = [1.25, 1.1, 0.7]
 // and its face swells between the margins by this share of its half width.
 const SHUT_BELLY = 0.25
 // Shut, the outer series leaves the globe near its base and curls up like a claw, the two inner ones lean in over the top and turn their points up again. Radians from the head's axis, then how far each curls in and how far its point turns out.
-const SHUT_ANGLE = [1.15, 0, -0.8]
+const SHUT_ANGLE = [0.8, 0, -0.8]
 const SHUT_CURL = [0.9, 0, 0]
 // A few of the outer series stand out further than the rest, by up to this much.
 const SHUT_SPREAD = 0.8
 // The outer series is the leafiest and reaches furthest while the bud is shut.
-const SHUT_LONG = [0.9, 1.12, 0.95]
+const SHUT_LONG = [0.62, 1.12, 0.95]
 const SHUT_TIP = [0.35, 0.7, 0.7]
 // Every other bract of the inner series stands up behind the middle one and leans its long point out: the crown round the tuft.
 const CROWN_ANGLE = 0.6
 const CROWN_LONG = 0.12
 const CROWN_TIP = 0.7
 // A bract that spreads is longer by this much for each radian it stands out.
-const SPREAD_LONG = 1.4
-const SPREAD_OUT = 0.2
-const SPREAD_OPEN = 0.35
+const SPREAD_LONG = 2.6
+const SPREAD_OUT = 0.4
+const SPREAD_OPEN = 0.1
 // When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
 const YOUNG_OUT = [0.4, 0.2, 0]
 const YOUNG_LONG = [0.8, 0.35, 0]
@@ -168,7 +168,7 @@ export function create(options: PartOptions): PlantPart | null {
       fold: 0.14 + 0.26 * rnd(13, i),
       keel: KEEL * (0.65 + 0.35 * rnd(902, i)),
       seed: rnd(14, i),
-      spread: series === 0 ? SHUT_SPREAD * rnd(904, i) : 0,
+      spread: series === 0 ? SHUT_SPREAD * smoothstep(0.4, 0.75, rnd(904, i)) : 0,
       crown: series === 2 && Math.floor(i / 3) % 2 === 0 ? 1 : 0,
     })
   }
