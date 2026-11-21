@@ -1,3 +1,5 @@
+import { frostGlsl } from './frost/index.ts'
+
 // The skin of the plant: one way of lighting every part of it.
 // `real` turns true once this folder holds the plant's skin at its real quality.
 export const real = true
@@ -92,7 +94,9 @@ vec3 tissueSky(vec3 n, float shown) {
 #endif
 }
 
-vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
+${frostGlsl}
+
+vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -129,9 +133,17 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
 
   float frost = uPlantFrost;
   float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  float flash = 0.0;
+#ifndef PLANT_FIELD
+  if (frost > 0.0 && margin >= 0.0) {
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, rim);
+    bloom = frost * crust.x;
+    flash = frost * crust.y;
+  }
+#endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(albedo, vec3(0.9, 1.0, 1.06) * grey, 0.15) * 0.9, frost);
-  albedo = mix(albedo, vec3(0.7, 0.76, 0.84), bloom);
+  albedo = mix(albedo, FROST_RIME, bloom);
   through *= 1.0 - 0.65 * bloom;
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
@@ -265,8 +277,18 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
+  color += direct * (FROST_FLASH * flash);
 
   return color;
 #endif
+}
+
+vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
+  return tissueShade(t, world, view, vec2(0.0), -1.0);
+}
+
+// As shadeTissue, for a part that knows where on its skin the pixel is: 'at' in meters on the skin, 'margin' from 0 in the middle of a face to 1 at its edge or tip. The states of the skin then have a grain: frost stands in grains and gathers at the margin.
+vec3 shadeTissueAt(Tissue t, vec3 world, vec3 view, vec2 at, float margin) {
+  return tissueShade(t, world, view, at, saturate(margin));
 }
 `
