@@ -28,11 +28,11 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 8.0 + floor(7.0 * seed);
-  float wide = 0.005 + 0.011 * size;
+  float wide = 0.008 + 0.012 * size;
   if (x >= 1.0) {
     float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
     float stands = sin(3.14159265 * pow(k, 0.7));
-    float r = wide * (0.3 * (1.0 - 0.8 * v) + 0.13 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.85, 1.0, k) * 0.5);
+    float r = wide * (0.15 * (1.0 - 0.75 * v) + 0.09 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.85, 1.0, k) * 0.5);
     vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
     return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
@@ -40,11 +40,12 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 3.0);
-  float ragged = 0.4 + 1.1 * hash11(mod(floor(tooth), teeth) + 17.0 * seed);
+  float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
+  float ragged = 0.2 + 2.0 * lot * lot * lot;
   float lobe = 1.0 + 0.22 * sin(th * 2.0 + seed * 40.0) + 0.14 * sin(th * 3.0 + seed * 91.0);
   float lean = 1.0 + 0.3 * cos(th - TAU * fract(seed * 29.0));
   float finger = bump * ragged * v * v * v * v;
-  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (v + 0.55 * finger);
+  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (v + 0.8 * finger);
   float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.7 + 0.3 * v + 0.4 * v * v * mix(1.0, 0.55, onWater) + 0.22 * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
 }
@@ -139,7 +140,7 @@ void main() {
     } else {
       float mirror = 0.04 + 0.96 * pow(1.0 - facing, 4.0);
       vec3 through = mix(seen(refract(-v, n, 0.75)), vec3(0.007, 0.006, 0.005) * skyAmbient(n), vMud);
-      alpha = mirror + (1.0 - mirror) * mix(0.6, 0.95, max(smoothstep(0.88, 1.0, vTop) * (1.0 - vMud), vMud * (1.0 - 0.7 * vTop)));
+      alpha = mirror + (1.0 - mirror) * mix(0.35, 0.95, max(smoothstep(0.9, 1.0, vTop) * (1.0 - vMud), vMud * (1.0 - 0.7 * vTop)));
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
