@@ -1,0 +1,4 @@
+set-C-01.png: the whole frame at 58.5 s, made smaller to fit (1400 x 788).
+set-C-02.png: crops of the frame at 58.5 s at native size, the size the frame is delivered at. Crop 1: the flower head. Crop 2: the petals. Crop 3: the stem and its hairs. Crop 4: a leaf seen from the front. Crop 5: a leaf with the light behind it. Crop 6: the soil where the stem meets it.
+set-C-03.png: crops of the frame at 58.5 s at native size, the size the frame is delivered at. Crop 7: the ground nearest the lens, with its grass, soil or nearest rows. Crop 8: the near neighbor at the edge of the frame. Crop 9: the field behind the plant. Crop 10: the far background at the skyline. Crop 11: the sun and the sky round it.
+Not shown for the frame at 58.5 s: water, frost or dew on the plant (this part of the film has no water, frost or dew); the sky (too little sky is in this frame).

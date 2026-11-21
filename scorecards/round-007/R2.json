@@ -1,0 +1,139 @@
+{
+  "critic": "R2",
+  "round": 7,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 5,
+    "a": 4,
+    "share": 0.8
+  },
+  "controlFromRound": null,
+  "judged": {
+    "votes": 5,
+    "a": 0,
+    "share": 0
+  },
+  "pass": false,
+  "perImage": {
+    "set-B-01.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1755,
+      "key": "field",
+      "letters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ]
+    },
+    "set-B-02.png": {
+      "control": true,
+      "what": "control: the approved image of the key",
+      "frame": null,
+      "key": "field",
+      "letters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "b"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_68",
+      "family": "GPT",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 87,
+      "answer": "e, 87/100. The near-identical sunflower meshes repeated across the field look like instanced assets in a real-time 3D scene."
+    },
+    {
+      "juror": "reviewer_69",
+      "family": "Gemini",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 95,
+      "answer": "e, 95 — The visibly faceted low-polygon geometry on the two foreground sunflower stalks alongside the abrupt LOD transition from uniform instanced meshes to billboarded background flowers."
+    },
+    {
+      "juror": "reviewer_70",
+      "family": "Claude",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 45,
+      "answer": "e — confidence 45. The biggest clue: it's clearly CG rather than a photo. The sunflowers are copies of a few identical models, with thin, sparse stems and leaves, simple grass, and a sun glare that looks like a stock lens effect. That looks like real-time rendering, more than top-budget film-quality work. My second choice would be (d), amateur generated art."
+    },
+    {
+      "juror": "reviewer_71",
+      "family": "GLM",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 94,
+      "answer": "e, 94/100. The same sunflower geometry appears visibly repeated across the field, like instanced 3D assets."
+    },
+    {
+      "juror": "reviewer_72",
+      "family": "Grok",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 86,
+      "answer": "(e) 86 — stiff low-poly leaves and card-like grass tufts on a flat ground, with repeated instanced flower heads and weak contact shadows, which read as a real-time engine demo rather than a cinematic or a photograph."
+    },
+    {
+      "juror": "reviewer_73",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 86,
+      "answer": "a, 86/100: the carefully staged sunset backlight isolates the central sunflower like a cinematic hero shot."
+    },
+    {
+      "juror": "reviewer_74",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, confidence: 82. The one thing that most influenced my answer is the deliberate 16:9 cinema staging and color grade—isolating a single rim-lit hero sunflower in front of a moody, low-key backlit field with fine 35mm-style film grain and atmospheric mist, rather than the bright, clean, evenly lit look of stock or catalog photography."
+    },
+    {
+      "juror": "reviewer_75",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 65,
+      "answer": "a, confidence 65. The biggest factor was the cinematic look: a widescreen ~16:9 frame with teal-and-orange film grading, a lifted, film-like black level and haze, and a single sunflower placed as the center hero subject in front of a backlit sunset. That reads like a film still more than stock photography. Runner-up is (b) stock photo."
+    },
+    {
+      "juror": "reviewer_76",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82/100. The dramatic backlighting makes the lone foreground sunflower feel deliberately staged as the subject of a cinematic shot."
+    },
+    {
+      "juror": "reviewer_77",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": true,
+      "letter": "b",
+      "confidence": 71,
+      "answer": "b, 71, the lone foreground sunflower in a golden-hour field is a commercial stock composition, with no film, game, or documentary-specific tell."
+    }
+  ]
+}
