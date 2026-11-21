@@ -7,14 +7,14 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 2 · Engine and blockout
 - Current unit: none
-- Current round: none
+- Current round: 1 · blockout · floor round
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
+- Last push: 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
 - Last status: 10 · 2026-11-21 03:55 UTC · Phase 2
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -323,7 +323,14 @@ Finished in this task:
 
 One entry per round, written and pushed when the round starts: number, phase, unit, the commit it judges, and whether it is a floor round or an extra round. Each part is ticked off as it finishes: checks, measures, pack, each critic, fixes. Scores and what changes next are added when it ends.
 
-None yet.
+### Round 1 · Phase 2 · blockout · floor round
+
+- Started 2026-11-21 04:21 UTC. Judges commit `5b235aa`. Unit: none, the whole film as a blockout. Critic: R4 blockout, one fresh agent.
+- [ ] Machine checks (`npm run gate -- --phase 2 --machine`)
+- [ ] Pack (`npm run pack -- --phase 2 --round 1`)
+- [ ] R4 blockout answer in `scorecards/round-001/`
+- [ ] Fixes
+- [ ] Summary, status, push
 
 ## Final scores
 
@@ -361,6 +368,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 03:29 UTC · Phase 2: status 09, the plant as a function of time (hook, husk, seed leaves, leaves, bud, bracts, rays, head turn), stem length solved to the film's height, harness and modes merged
 - 2026-11-21 03:56 UTC · Phase 2: camera fit at every key, stand-in field and companion, status 10
 - 2026-11-21 04:16 UTC · Phase 2: reference board, shot list, judged frames, frost and night stand-in fixes, the field draws only what the lens can see
+- 2026-11-21 04:16 UTC · Round 1 starts: blockout, floor round, judges 5b235aa
 
 ## Session log
 
