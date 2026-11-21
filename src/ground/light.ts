@@ -1,6 +1,7 @@
 // From the field shot on the light comes through the crop in patches, most of it round the plant's foot and to its right, and none under the crop itself.
 // What comes through is share of the open sun; each stem throws a shadow stemM wide at its foot, wider by stemSpread for each meter, that fades over stemReachM.
-export const fieldLight = { share: 0.6, stemM: 0.03, stemSpread: 0.025, stemReachM: 1.6, rightM: 0.55, aheadM: 0, reachM: 0.65, underFromM: 1.15, underToM: 1.7 }
+// The crop keeps the sky off the ground before its front: by edgeDark within edgeNearM of the front, by nothing from edgeFarM.
+export const fieldLight = { edgeDark: 0.6, edgeNearM: 0.5, edgeFarM: 1.2, share: 0.6, stemM: 0.03, stemSpread: 0.025, stemReachM: 1.6, rightM: 0.55, aheadM: 0, reachM: 0.65, underFromM: 1.15, underToM: 1.7 }
 export const fieldGate = /* glsl */ `
 uniform vec4 uField;
 uniform vec4 uStems;
@@ -25,6 +26,10 @@ float cropLight(vec2 p, float d) {
   float gap = smoothstep(0.6, 0.85, valueNoise(vec2(q.x * 3.7, q.y * 0.11) + 11.0)) * smoothstep(0.4, 0.8, valueNoise(q * vec2(6.0, 1.9) + 3.0));
   if (fieldOn()) gap = 0.0;
   return 1.0 - shade * (1.0 - 0.4 * gap);
+}
+float edgeShade(float d) {
+  if (!fieldOn() || uCrop.z <= 0.0) return 1.0;
+  return 1.0 - ${fieldLight.edgeDark.toFixed(2)} * uCrop.z * smoothstep(uCrop.x - ${fieldLight.edgeFarM.toFixed(2)}, uCrop.x - ${fieldLight.edgeNearM.toFixed(2)}, d);
 }
 float stemShadow(vec2 w, vec2 s) {
   float along = -dot(w, s);
