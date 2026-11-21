@@ -23,7 +23,7 @@ vec3 skyMirror(vec3 d, float blur) {
 `
 
 // The share of the surface that the fine rain keeps too rough to mirror sharply.
-const ROUGH = 0.15
+const ROUGH = 0.3
 
 export const waterFragment = /* glsl */ `
 in vec3 vWorld;
