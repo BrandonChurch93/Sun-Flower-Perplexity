@@ -62,7 +62,8 @@ vec3 tone(vec3 c) {
   float hi = max(y.r, max(y.g, y.b));
   y += vec3(1.0, 1.0, 0.8) * (uPale * burn * burn * smoothstep(0.3, 0.6, (hi - min(y.r, min(y.g, y.b))) / max(hi, 1e-5)));
   // The brightest light loses its hue: on film the area round a sun in the frame is near white, not the sun's own color.
-  y = mix(y, vec3(max(y.r, max(y.g, y.b))), uWhiten * smoothstep(0.8, 0.93, dot(y, vec3(0.2126, 0.7152, 0.0722))));
+  float white = dot(y, vec3(0.2126, 0.7152, 0.0722));
+  y = mix(y, vec3(white), uWhiten * smoothstep(0.6, 1.0, white));
   vec3 over = max(y - 0.88, 0.0);
   return min(y, 0.88) + uTop * (1.0 - exp(-over / uTop));
 }
