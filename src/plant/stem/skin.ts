@@ -126,8 +126,10 @@ void main() {
   t.normal = normal;
   t.rough = rough;
   t.wax = wax;
-  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z);
-  t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow);
+  // The bracts keep the sky off the stem's last centimeter, so little rime settles there.
+  float lee = uPlantFrost * vSkin3.x;
+  t.sheen = mix(0.5, ${GUIDE.sheen}, thin) * (1.0 - 0.4 * pale) * (1.0 - 0.6 * (1.0 - pale) * vSkin3.z) * (1.0 - 0.95 * lee);
+  t.occlusion = vSkin2.x * (1.0 - 0.5 * ribbed * furrow) * (1.0 - 0.9 * lee);
 #ifdef PLANT_FIELD
   vec3 color = shadeTissue(t, vWorld, view);
   // No hairs are drawn on a neighbor: the halo they catch against the sun pales the stalk from its edge inward.

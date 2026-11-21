@@ -468,7 +468,7 @@ export function create(options: PartOptions): PlantPart {
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
         if (shown > 0) c.drawn = Math.max(c.drawn, i + 1)
-        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1)
+        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1) * (1 - stateUniforms.uPlantFrost.value * hasHead * (1 - smoothstep(0.005, 0.02, length - s)))
         lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
         lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope

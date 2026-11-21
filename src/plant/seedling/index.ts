@@ -395,9 +395,9 @@ export function create(options: PartOptions): PlantPart | null {
     const h1z = huskRest.z
     const h1y = soilHeightAt(h1x, h1z, time) + HUSK_ON_SOIL_M
     const lift = 0.005 * grown
-    const cx = h0x + tx * lift
-    const cy = h0y + ty * lift
-    const cz = h0z + tz * lift
+    const cx = h0x + tx * lift + 0.5 * (h1x - h0x)
+    const cy = h0y + ty * lift + 0.5 * (h1y - h0y)
+    const cz = h0z + tz * lift + 0.5 * (h1z - h0z)
     const ka = (1 - drop) * (1 - drop)
     const kb = 2 * drop * (1 - drop)
     const kc = drop * drop

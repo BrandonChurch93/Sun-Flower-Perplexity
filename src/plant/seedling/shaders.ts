@@ -59,17 +59,22 @@ void main() {
   float rung = abs(fract(along * 7.0 - abs(across) * 1.9 + 0.11 * cloud) - 0.5) * 2.0;
   float vein = (1.0 - smoothstep(0.0, 0.16, rung)) * smoothstep(0.04, 0.2, abs(across)) * (1.0 - smoothstep(0.7, 0.98, abs(across))) * (1.0 - 0.6 * along);
   vec3 leaf = mix(vec3(0.007, 0.055, 0.028), vec3(0.0145, 0.08, 0.038), 0.65 * cloud + 0.35 * grain);
+  // The skin of a seed leaf is a mosaic of cells, some paler, with darker moist patches.
+  float cells = valueNoise(vec2(across * 70.0 + body * 4.0, along * 190.0));
+  float patchy = valueNoise(vec2(across * 5.0 - body * 3.0, along * 13.0));
+  leaf *= (0.8 + 0.4 * cells) * (0.62 + 0.76 * patchy);
   leaf = mix(leaf * vec3(1.9, 1.5, 2.0), leaf, upper);
+  leaf *= mix(vec3(1.0), vec3(0.6, 0.78, 1.05), 1.0 - wither);
   leaf = mix(leaf, vec3(0.3, 0.47, 0.13), (0.45 * mid + 0.1 * vein) * upper);
   leaf = mix(leaf, vec3(0.2, 0.27, 0.08) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
-  vec3 glow = mix(vec3(0.030, 0.063, 0.047), vec3(0.0049, 0.0123, 0.0085), lens) * (1.0 - 0.5 * mid) * (1.0 + 0.35 * vein);
+  vec3 glow = mix(vec3(0.030, 0.063, 0.047), vec3(0.0085, 0.021, 0.0105), lens) * (1.0 - 0.5 * mid) * (1.0 - 0.45 * vein) * (0.6 + 0.8 * patchy) * mix(vec3(1.0), vec3(0.75, 0.85, 1.03), 1.0 - wither);
   // The thin margin of the leaf passes the sun almost whole.
   glow = mix(glow, vec3(0.2, 0.25, 0.13), 0.3 * smoothstep(0.97, 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.13, 0.04), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
-  float leafHeight = -0.00016 * mid * upper - 0.00004 * vein * upper + (grain - 0.5) * 0.00002 + (cloud - 0.5) * 0.00006 * wither;
+  float leafHeight = -0.00016 * mid * upper - 0.00005 * vein * upper + (grain - 0.5) * 0.00002 + (cells - 0.5) * 0.000028 + (cloud - 0.5) * 0.00006 * wither;
 
   // Out of the soil the shell is damp and dark; lying in the air it dries pale, and its dark bands narrow to lines.
   float damp = smoothstep(0.14, 0.55, vState.w);
