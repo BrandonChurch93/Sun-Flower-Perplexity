@@ -56,17 +56,15 @@ const float TISSUE_FORWARD = 0.5;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
-const float TISSUE_DOWN = 0.22;
+// The sun on the down of a part that turns away: a soft band, never a line.
+const float TISSUE_GLANCE = 0.09;
+const float TISSUE_DOWN = 0.14;
 // A thin part shaded by a thin part this close still gets the sun that came through it.
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
 // The share of the sun a shaded thin tissue gets off its lit neighbors, and how far toward the sun the head is asked whether it is lit.
-const float TISSUE_BOUNCE = 0.03;
+const float TISSUE_BOUNCE = 0.042;
 const float TISSUE_BOUNCE_M = 0.15;
-// Hairs too short to draw: a line of light along the outline of a hairy part.
-const float TISSUE_FELT = 1.5;
-const vec3 TISSUE_HAIR = vec3(0.92, 0.95, 0.62);
-const float TISSUE_FELT_M = 0.03;
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
 vec3 tissueSky(vec3 n) {
@@ -78,13 +76,12 @@ vec3 tissueSky(vec3 n) {
 #ifndef PLANT_FIELD
   float lum = dot(sky, vec3(0.3, 0.6, 0.1));
   float cool = dot(uSkyZenith, vec3(0.3, 0.6, 0.1));
-  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.75 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
+  sky = mix(sky, uSkyZenith * (lum / max(cool, 1e-4)), 0.2 * level * (1.0 - side) * smoothstep(-0.4, 0.0, n.y));
 #endif
-  return sky * mix(1.0, 0.2 + 2.56 * side * side * side, level);
+  return sky * mix(1.0, 0.32 + 2.176 * side * side * side, level);
 }
 
-// 'edge' is 1 on the margin of a blade and falls to 0 a pixel or two inside: a flat blade has an outline the skin cannot find by itself.
-vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
+vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -129,13 +126,14 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   fuzz = max(fuzz, bloom);
 
   float peak = max(through.r, max(through.g, through.b));
-  // A thin part is asked on the sun's side. A thick one is asked just off its skin, where its hairs stand.
+  // A thin part is asked on the sun's side, a thick one on the side that is seen.
   vec3 lee = fdl >= 0.0 || peak <= 0.0 ? F : -F;
-  // How far inside the outline the pixel is, in pixels, from how fast the face turns away.
+  float sun = plantSun(world, lee);
+  // At the outline the eye meets the tips of the hairs, which the hair part draws, and not the skin: within two pixels of it the sun on the skin fades, so no term can draw a line one pixel wide.
   float fv = abs(dot(F, view));
-  float line = max(1.0 - smoothstep(0.3, 1.7, 0.5 * fv / max(fwidth(fv), 1e-5)), edge);
-  // On the outline of a thick part the sun is asked where the tips of its hairs are, clear of the part itself.
-  float sun = plantSun(world + L * (TISSUE_FELT_M * line * step(peak, 0.0)), lee);
+  float inside = smoothstep(0.4, 2.4, 0.5 * fv / max(fwidth(fv), 1e-5));
+  float gf = 1.0 - fv;
+  float soft = gf * gf * inside;
   float open = plantSky(world) * t.occlusion;
   vec3 skyFront = tissueSky(N);
   vec3 skyBack = tissueSky(-N);
@@ -145,13 +143,15 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   vec3 hue = through / max(peak, 1e-4);
   // A longer path inside the blade deepens the color.
   float slant = saturate(0.6 * (1.0 / max(ndv, 0.3) - 1.0));
-  vec3 passed = through * mix(vec3(1.0), hue, slant) * (1.0 - 0.3 * slant);
+  vec3 passed = through * mix(vec3(1.0), hue, 0.6 + 0.4 * slant) * (1.0 - 0.3 * slant);
   float lobe = (1.0 - TISSUE_FORWARD) + TISSUE_FORWARD * 2.5 * against * against * against;
 
 #ifdef PLANT_FIELD
   vec3 color = albedo * (uSunColor * (max(ndl, 0.0) * sun) + skyFront * open);
   color += passed * (uSunColor * (wrap * lobe * sun) + skyBack * (open * (0.6 + 0.4 * sun)));
   color += (uSunColor * (sun * (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against)) + skyFront * (0.5 * open)) * (TISSUE_FUZZ * fuzz * rim);
+  // The wax of a shaded leaf mirrors the high sky: the slate in the shade of a field. Broad, and gone at the very edge.
+  color += uSkyZenith * (0.8 * wax * open * grazing * (1.0 - rim));
   return color;
 #else
   vec3 glow = vec3(sun);
@@ -192,6 +192,7 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   l5 = l5 * l5 * l5 * l5 * l5;
   float enter = 1.0 - wax * (TISSUE_F0 + (1.0 - TISSUE_F0) * l5);
   float under = (1.0 - mirror) * (1.0 - 0.5 * fuzz * rim);
+  float skin = mix(1.0, inside, fuzz * smoothstep(0.2, 0.8, against));
 
   float s = dot(L, view) - ndl * ndv;
   float q = s > 0.0 ? max(max(ndl, 0.0), ndv) : 1.0;
@@ -209,33 +210,21 @@ vec3 shadeTissueEdge(Tissue t, vec3 world, vec3 view, float edge) {
   float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
-  vec3 color = albedo * (direct * (matte * enter * under) + skyFront * buried * (under * (1.0 - 0.65 * thin * shade)));
-  color += direct * gloss + skyGloss * (mirror * open);
+  vec3 color = albedo * (direct * (matte * enter * under * skin) + skyFront * buried * (under * (1.0 - 0.65 * thin * shade)));
+  color += direct * (gloss * skin) + skyGloss * (mirror * open);
   // What hides the sun hides the brightest of the sky behind as well: a shaded blade does not glow by itself.
   float behind = 0.6 + 0.4 * lit1;
-  // Straight through toward the eye the light has the shortest way inside: it loses less color and comes out pale.
-  float straight = smoothstep(0.5, 1.5, wrap * lobe * lit1) * (1.0 - slant) * sheer;
-  vec3 sunPassed = mix(passed, peak * sqrt(hue), straight);
-  color += sunPassed * uSunColor * glow * (crease * wrap * lobe) + passed * skyBack * (open * behind);
+  color += passed * (uSunColor * glow * (crease * wrap * lobe) + skyBack * (open * behind));
   // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.
   color += albedo * hue * uSunColor * (TISSUE_BOUNCE * crease * thin * reach * shade * under);
-  float catches = (0.5 + 0.5 * ndl) * (0.15 + 0.85 * against * against);
-  vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
-  color += (direct * catches + skyFront * (0.5 * open)) * pale * (TISSUE_FUZZ * fuzz * rim);
-  // The down on a blade scatters the sky well before the edge: a soft sheen, cooler than the green under it.
-  color += skyFront * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim));
+  // Only the side that faces the sun: the far side of a stem stays in shade.
+  float catches = smoothstep(-0.3, 0.4, 0.5 * (fdl + ndl)) * (0.15 + 0.85 * against * against);
+  vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.6);
+  color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside)) * pale * fuzz;
+  // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
+  color += skyFront * pale * (TISSUE_DOWN * open * fuzz * grazing * grazing * (1.0 - rim));
 
-  float px = length(fwidth(world));
-  float lumps = 1.0 + 0.35 * saturate(2.0 - 420.0 * px) * sin(world.y * 420.0 + 2.0 * sin(world.x * 190.0 + world.z * 230.0))
-    + 0.25 * saturate(2.0 - 2100.0 * px) * sin(world.y * 2100.0 + world.x * 900.0 - world.z * 700.0);
-  float toSun = (0.2 + 0.8 * against * against) * (0.5 + 0.5 * saturate(0.5 + 0.5 * fdl));
-  // Where a part is thin its hairs are drawn by the hair part; the felt is kept low there so the two do not make a wire.
-  color += direct * TISSUE_HAIR * (TISSUE_FELT * fuzz * (1.0 - 0.6 * saturate(peak * 20.0)) * line * lumps * toSun);
   return color;
 #endif
-}
-
-vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
-  return shadeTissueEdge(t, world, view, 0.0);
 }
 `
