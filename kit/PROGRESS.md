@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 21:45 UTC · Status 48: the second rounds answered, the last fix pass under way, the agent limit slip logged
-- Last status: 48 · 2026-11-21 21:45 UTC · Phase 4 · unit night · round 16
+- Last push: 2026-11-21 22:07 UTC · Status 49: the last fix pass, five changes merged on the working line
+- Last status: 49 · 2026-11-21 22:07 UTC · Phase 4 · unit rain · round 15
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-21 22:07 UTC · status 49 · Phase 4 · unit rain · round 15 · `status-1.jpg`: Rain, frame 420. Approved left, ours right: thin dense streaks, a dark shelf of cloud, a warm opening behind the stem; `status-2.jpg`: Frost, frame 1080. Approved left, ours right: the halo tighter and amber, the near fog thinner; `status-3.jpg`: Dawn, frame 195. Approved, before, after: the tree line now crosses the frame and the sun sits in a gap; `status-4.jpg`: Night, frame 780 at f/8, f/11 and f/16, whole frame above and a crop below. The film now uses f/11
 - 2026-11-21 21:45 UTC · status 48 · Phase 4 · unit night · round 16 · `status-1.jpg`: Night 26.0 s · approved left, the working line right: new sky, the youngest leaves under the bud, singles in the crop (review tier); `status-2.jpg`: Frost 36.0 s · approved left, the working line right: claws on the bud, a first fog sheet (review tier); `status-3.jpg`: Rain 14.0 s, the far land · approved left, a builder's still right: the land follows the approved line (review tier, crop); `status-4.jpg`: Dawn 6.5 s, the skyline · approved on top, a builder's still below: a tree line across the frame (a tested request, not merged yet)
 - 2026-11-21 21:22 UTC · status 47 · Phase 4 · unit dawn · round 14 · `status-1.jpg`: Dawn 1.5 s · approved left, the judged frame right (final tier) · jury 4 of 5; `status-2.jpg`: Rain 14.0 s · approved left, the judged frame right (final tier) · jury 1 of 5; `status-3.jpg`: Night 26.0 s · approved left, the judged frame right (final tier) · jury 3 of 5; `status-4.jpg`: Frost 36.0 s · approved left, the judged frame right (final tier) · jury 2 of 5
 - 2026-11-21 20:39 UTC · status 46 · Phase 4 · unit field · round 12 · `status-1.jpg`: Field 58.5 s · approved left, the judged commit right (review tier); `status-2.jpg`: Night 26.0 s · approved left, the working line right: the green glow is gone, leaves stand to the sides (review tier); `status-3.jpg`: Frost 36.0 s · approved left, the working line right (review tier); `status-4.jpg`: Dawn 1.5 s · approved left, the working line right (review tier)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 17:34 UTC · status 40 · Phase 4 · unit frost · round 8 · `status-1.jpg`: Frost, 36.0 s: approved (left), ours now (right); `status-2.jpg`: Night, 26.0 s: approved (left), ours on the night world's branch (right); `status-3.jpg`: Rain, 14.0 s: approved (left), ours (right); `status-4.jpg`: Dawn, 1.5 s: approved (left), ours (right)
 - 2026-11-21 17:10 UTC · status 39 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame: 1755 at final, from the pack (commit 566eb48); `status-2.jpg`: Frost 1080 on the line, approved left (frost world 9923435, rendered on its builder's VM); `status-3.jpg`: Frost lens test, the neighbors at native size: approved, f/5.6, f/8, f/11 (chosen); `status-4.jpg`: Field 1755 after round 7's commit, approved left: the crop's front comes round the companion (field b18271e, its builder's VM)
 - 2026-11-21 16:46 UTC · status 38 · Phase 4 · unit field · round 7 · `status-1.jpg`: Round 7 judged frame 1755 (58.5 s): approved left, ours right, own review still of 566eb48; `status-2.jpg`: Frame 1515 (50.5 s) after the golden look's smaller sun bloom: approved left, ours right; `status-3.jpg`: Frost 1080 (36 s) on the line b9528ac, real frost world: approved left, ours right; `status-4.jpg`: Dawn 195 (6.5 s) on the line b9528ac, real dawn world: approved left, ours right
-- 2026-11-21 16:19 UTC · status 37 · Phase 3 · unit bloom · round 6 · `status-1.jpg`: Bloom opening, frame 1350: approved left, kept build right; `status-2.jpg`: Bloom hero, frame 1515: approved left, kept build right; `status-3.jpg`: Rain key, frame 420, Phase 4 line, first pass: approved left, ours right; `status-4.jpg`: Night key, frame 780, Phase 4 line, first pass: approved left, ours right
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 5.42 h |
+| 4 | 8.50 h | 5.79 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 20.89 h |
+| Whole build | 30.00 h | 21.26 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1164,6 +1164,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 21:25 UTC · Status 47: second rounds judged
 - 2026-11-21 21:31 UTC · Round 14: the motion critic's answer (4) and the key
 - 2026-11-21 21:45 UTC · Status 48: the second rounds answered, the last fix pass under way, the agent limit slip logged
+- 2026-11-21 22:07 UTC · Status 49: the last fix pass, five changes merged on the working line
 
 ## Session log
 
@@ -1270,4 +1271,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Dawn 1.5 s · approved left, the judged frame right (final tier) · jury 4 of 5; Rain 14.0 s · approved left, the judged frame right (final tier) · jury 1 of 5; Night 26.0 s · approved left, the judged frame right (final tier) · jury 3 of 5; Frost 36.0 s · approved left, the judged frame right (final tier) · jury 2 of 5.
 - Status 48, 2026-11-21 21:45 UTC, Phase 4 · unit night · round 16. The second rounds (12 to 16) are all answered and none is a pass: field 5, 4, 4; frost 4, 6, 8; dawn 4, 7, 4; rain 5, 4, 6; night 4, 6, 7 (match, surface, motion; 9 needed). The last fix pass began 21:34 with every builder on its critics' words; seven changes are on the working line since. A slip of mine is logged: from 19:00 to 21:20 more agents ran at once than the 12 the kit allows; it is 12 again since 21:25. Next: The fix pass runs to 23:10; the joint cut and the third and last rounds (17 to 21) follow at 23:20 if the clock allows. Summaries of rounds 12 to 16 are next. Time used: 20.9 h of 30 h.
   Pictures: Night 26.0 s · approved left, the working line right: new sky, the youngest leaves under the bud, singles in the crop (review tier); Frost 36.0 s · approved left, the working line right: claws on the bud, a first fog sheet (review tier); Rain 14.0 s, the far land · approved left, a builder's still right: the land follows the approved line (review tier, crop); Dawn 6.5 s, the skyline · approved on top, a builder's still below: a tree line across the frame (a tested request, not merged yet).
+- Status 49, 2026-11-21 22:07 UTC, Phase 4 · unit rain · round 15. The last fix pass. On the working line since Status 48: the dawn tree line runs across the frame with the sun in a gap; rain is a dense curtain of thin streaks under a dark shelf of cloud with a warm opening behind the stem; frost has a tighter amber halo and thinner fog near the lens; the runnel's water gathers over 5.7 s instead of flooding in a second; every splash crown has its own shape. Night's lens goes from f/8 to f/11, chosen from a strip of three openings. In test now, mine: livelier air on the leaves in the rain and in the last shot, a quick small circle of the seedling's tip, the plant's upper leaves filling out first in the last shot. Next: Merges close 23:10 UTC. The cut for the third and last rounds 17 to 21 at 23:20, if the clock still allows extra rounds. Time used: 21.3 h of 30 h.
+  Pictures: Rain, frame 420. Approved left, ours right: thin dense streaks, a dark shelf of cloud, a warm opening behind the stem; Frost, frame 1080. Approved left, ours right: the halo tighter and amber, the near fog thinner; Dawn, frame 195. Approved, before, after: the tree line now crosses the frame and the sun sits in a gap; Night, frame 780 at f/8, f/11 and f/16, whole frame above and a crop below. The film now uses f/11.
 
