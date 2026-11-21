@@ -23,8 +23,8 @@
 
 - `node assets-src/worlds/golden/compose-sky.mjs`, run from the repo root, reads the two kept takes and writes both output files.
 - The sunward picture covers 100 degrees of azimuth, from 28.6 degrees left of the sun to 71.4 degrees right of it. The film sees from about 14 degrees left of the sun to 61 degrees right of it, so every sky pixel of the film comes from this one picture.
-- Its height is laid over 13 degrees of elevation, with the sun's row at the sun's elevation of 2.18 degrees. The take was shot level with a wide lens, so cloud near the horizon is seen edge on and its rows stand for far less sky than its columns do. Below the sun's row the picture is turned over, since the take has the sun on its bottom edge and the film has it 2.18 degrees up.
-- Above 9.5 to 13 degrees the dome fades into a strong blur of the top rows of the take, dimmed by up to 30 percent overhead. The film sees up to about 16 degrees.
+- Up to 5 degrees of elevation the take's rows are laid at the steep scale of 13 degrees for its whole height, with the sun's row at the sun's elevation of 2.18 degrees: the take was shot level with a wide lens, so the clear band under the cloud is seen edge on. From 5 degrees up the scale eases over about 2 degrees into the scale of the take's width (28 columns or rows per degree), so the cloud's shapes are as tall as they are wide and its body reaches to about 37 degrees. Below the sun's row the picture is turned over, since the take has the sun on its bottom edge and the film has it 2.18 degrees up.
+- From 30 to 37 degrees the dome fades into a strong blur of the top rows of the take, dimmed by up to 30 percent overhead. The film sees up to about 16 degrees.
 - The away picture is laid twice, the second time mirrored, over the other 260 degrees. It is pulled toward the tone of the sunward picture where they meet, less with every degree from the seam, and the two are cross-faded over 12 degrees.
 - Where a row of the dome covers more than one row of a take, the take is averaged over that span.
 
