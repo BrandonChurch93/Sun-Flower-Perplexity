@@ -8,7 +8,7 @@ const HEIGHT = 2048
 const SUN = { x: 0.2862, row: 1486, elevationDeg: 2.18 }
 const SPAN_DEG = 100
 // The takes were shot level with a wide lens, so their height is far less sky than their width at the same scale: cloud near the horizon is seen edge on.
-const RISE_DEG = 15
+const RISE_DEG = 13
 const BOTTOM_ROW = 1528
 const AWAY_BOTTOM_ROW = 1575
 const AWAY_SPAN_DEG = 134
@@ -68,7 +68,7 @@ for (let Y = 0; Y < HEIGHT; Y++) {
   // The take has the sun on its bottom edge and the film has it 2.18 degrees up: the sky under the sun is the sky over it, turned over.
   const row = SUN.row - Math.abs(el - SUN.elevationDeg) * rowsPerDeg
   const rowAway = AWAY_BOTTOM_ROW - el * rowsPerDeg
-  const over = smooth(11, 15, el)
+  const over = smooth(9.5, 13, el)
   const dim = 1 - 0.3 * smooth(30, 90, el)
   // The away take is pulled toward the tone of the sunward take where they meet, less with every degree from the seam.
   const gains = [leftDeg + 6, rightDeg - 6].map((seam) => {

@@ -8,7 +8,7 @@ export const world: WorldSettings = {
   sun: { azimuthDeg: -133.67, elevationDeg: 2.18, color: [8.5, 5.0, 2.0], softnessDeg: 1.2, lean: 0.8, lift: 1 },
   sky: { zenith: [0.055, 0.075, 0.115], horizon: [0.26, 0.2, 0.135], bounce: [0.04, 0.028, 0.014], ambient: 0.8, glow: [1, 0.62, 0.27], glowPower: 40, disc: 90 },
   backdrop: { file: null, key: 'bloom-hero', sunAt: null, gain: 1, blur: 0.25 },
-  fog: { color: [0.1, 0.105, 0.11], sunTint: [0.4, 0.23, 0.09], density: 0.0004, falloff: 0.05 },
+  fog: { color: [0.07, 0.072, 0.07], sunTint: [0.4, 0.23, 0.09], density: 0.0003, falloff: 0.05 },
   grade: { exposure: 0.74, contrast: 1.3, white: 9, saturation: 1.06, gain: [1.03, 1, 0.96], lift: [0.003, 0.004, 0.008], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 },
   ground: { wet: 0, frost: 0, dew: 0 },
   wind: 0.5,

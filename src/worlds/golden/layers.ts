@@ -64,7 +64,7 @@ void main() {
   vec3 v = normalize(vWorld - uCamPos);
   color += uBase * uSunColor * uRim * smoothstep(0.7, 1.0, f) * (0.15 + pow(saturate(dot(v, uSunDir)), 8.0));
   // Mist lies at the foot of every layer.
-  color = mix(aerial(color, vWorld), 1.6 * airTone(v), 0.55 * exp(-max(vInfo.y, 0.0) / (0.3 * max(top, 6.0))));
+  color = mix(aerial(color, vWorld), 1.6 * airTone(v), 0.5 * exp(-max(vInfo.y, 0.0) / (0.22 * max(top, 6.0))));
   outColor = finish(color, vWorld, vDepth, -1.0);
 }
 `
@@ -148,7 +148,7 @@ const STRIPS: Strip[] = [
   { name: 'middle ridge', radiusM: 3900, wander: 0.06, lowDeg: 0.55, highDeg: 1.7, cells: 11, segments: 720, trees: false, base: [0.15, 0.2, 0.15], rim: 0 },
   { name: 'near ridge', radiusM: 2500, wander: 0.08, lowDeg: 0.6, highDeg: 1.9, cells: 13, segments: 900, trees: false, base: [0.1, 0.14, 0.09], rim: 0.01 },
   { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, base: [0.07, 0.1, 0.05], rim: 0.02 },
-  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.3, highDeg: 2.8, cells: 40, segments: 2880, trees: true, base: [0.04, 0.06, 0.03], rim: 0.035 },
+  { name: 'tree line', radiusM: 700, wander: 0.12, lowDeg: 1.3, highDeg: 2.8, cells: 40, segments: 2880, trees: true, base: [0.03, 0.045, 0.02], rim: 0.035 },
 ]
 
 const VEILS = [
