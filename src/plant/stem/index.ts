@@ -13,8 +13,8 @@ import { fragment, vertex } from './skin.ts'
 const TAU = Math.PI * 2
 const CELLS = 512
 const NODES = leafCount + 2
-const RIB_HEIGHT = 0.05
-const BUMP_MAX = 0.5
+const RIB_HEIGHT = 0.03
+const BUMP_MAX = 0.7
 const JOINT_OVERLAP_M = 0.004
 // A stem bristle is a little thicker than the down of a leaf.
 const HAIR_WIDTH_M = 0.00005
@@ -253,15 +253,17 @@ export function create(options: PartOptions): PlantPart {
       for (let k = 0; k < nodes; k++) {
         const rn = nodeR[k]
         const d = s + off - nodeS[k]
-        if (d < -18 * rn || d > 2.6 * rn) continue
-        const above = d / (1.3 * rn)
-        const under = d / (1.5 * rn)
-        const along = d >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(d / (5 * rn))
+        if (d < -18 * rn || d > 3.6 * rn) continue
+        // The stalk leaves upward, so it comes out of the skin a little above its node and the cushion under it runs on down the stem.
+        const e = d - 0.6 * rn
+        const above = e / (1.1 * rn)
+        const under = e / (1.8 * rn)
+        const along = e >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(e / (5 * rn))
         actA[active] = nodeA[k]
-        actAmp[active] = (0.36 * nodeAmp[k] * along) / BUMP_MAX
+        actAmp[active] = (0.6 * nodeAmp[k] * along) / BUMP_MAX
         active++
-        const wide = d / (2 * rn)
-        swell += 0.06 * nodeAmp[k] * Math.exp(-wide * wide)
+        const wide = d / (2.2 * rn)
+        swell += 0.1 * nodeAmp[k] * Math.exp(-wide * wide)
       }
       if (j >= below && j < below + main) {
         ringR[j - below] = whole
@@ -398,12 +400,7 @@ export function create(options: PartOptions): PlantPart {
       const ox = n.rx * ca + n.bx * sa
       const oy = n.ry * ca + n.by * sa
       const oz = n.rz * ca + n.bz * sa
-      const wx = n.bx * ca - n.rx * sa
-      const wy = n.by * ca - n.ry * sa
-      const wz = n.bz * ca - n.rz * sa
       const q = hash01(seed, 83, i)
-      const up = 0.45 - slope + 0.8 * (hash01(seed, 84, i) - 0.4)
-      const round = 0.7 * (hash01(seed, 85, i) - 0.5)
       const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
       // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
       const patch = stretched * Math.min(1, r0 / hairThick[i])
@@ -414,10 +411,10 @@ export function create(options: PartOptions): PlantPart {
       root[o + 1] = n.y + oy * reach
       root[o + 2] = n.z + oz * reach
       if (shown > 0) hairsDrawn = Math.max(hairsDrawn, i + 1)
-      root[o + 3] = Math.min(0.9 * r0, (0.0015 + 0.003 * q * Math.sqrt(q)) * (0.85 + 0.15 * hairTop[i])) * mature * shown
-      lean[o] = ox + n.tx * up + wx * round
-      lean[o + 1] = oy + n.ty * up + wy * round
-      lean[o + 2] = oz + n.tz * up + wz * round
+      root[o + 3] = Math.min(0.9 * r0, 0.0025 + 0.001 * q) * mature * shown
+      lean[o] = ox - n.tx * slope
+      lean[o + 1] = oy - n.ty * slope
+      lean[o + 2] = oz - n.tz * slope
     }
   }
 
