@@ -108,7 +108,9 @@ void main() {
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
-    albedo *= mix(vec3(1.0), mix(mix(vec3(1.15, 2.0, 0.85), mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), uBudEarly), vec3(2.6), smoothstep(0.78, 1.0, ax)), uBudShut);
+    albedo *= mix(vec3(1.0), mix(mix(vec3(1.15, 2.0, 0.85), mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), uBudEarly), vec3(2.6), smoothstep(0.78, 1.0, ax) * (1.0 - uBudEarly)), uBudShut);
+    // A young bract thins and pales from its keel to its lip.
+    albedo = mix(albedo, vec3(0.3, 0.37, 0.25), saturate(0.85 * pow(smoothstep(0.0, 0.9, ax), 1.3) + 0.45 * smoothstep(0.3, 1.0, u)) * smoothstep(0.03, 0.35, u) * (1.0 - 0.6 * smoothstep(0.5, 1.0, rank)) * uBudEarly * uBudShut);
     // The head and the open rays shade a bract under or behind them, so only one standing in the sun passes it through its whole blade.
     float lit = (1.0 - smoothstep(0.0, 0.8, vLow)) * (1.0 - smoothstep(0.35, 0.9, uBudOpen));
     float blade = saturate(0.3 + 0.4 * smoothstep(0.2, 0.9, u) + 0.5 * smoothstep(0.1, 0.9, ax)) * smoothstep(0.03, 0.3, u);
@@ -118,9 +120,11 @@ void main() {
     float thin = mix(margin, blade, lit);
     // The inner bracts of a shut bud are young and thin through their whole blade.
     thin = mix(thin, 0.9, uBudShut * uBudEarly * smoothstep(0.5, 1.0, rank) * smoothstep(0.1, 0.4, u));
+    // Shut and young, every lip is thin enough to pass the sun behind it: a soft bright rim.
+    thin = mix(thin, max(thin, pow(smoothstep(0.25, 1.0, ax), 1.5)), uBudShut * uBudEarly);
     thin *= 1.0 - 0.65 * max(max(keel, line), 0.6 * rib);
     t.albedo = albedo;
-    t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.66, 0.78, 0.1), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain);
+    t.through = mix(vec3(0.56, 0.8, 0.08), vec3(0.66, 0.78, 0.1), lit) * mix(0.03, mix(0.36, 0.24, lit), thin) * (0.8 + 0.4 * grain) * (1.0 + 0.8 * uBudShut * uBudEarly);
     albedo = mix(albedo, pale, 0.45 * rib);
     t.albedo = albedo;
     at = vec2(x, u);
@@ -136,7 +140,9 @@ void main() {
     t.occlusion *= 1.0 - 0.45 * shaded;
     t.through *= 1.0 - 0.6 * shaded;
     t.wax = 0.15 + 0.3 * uPlantWet;
-    gather = max(max(smoothstep(0.82, 1.0, ax), smoothstep(0.8, 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
+    // Rime settles on the points and on a lip the air reaches: where a lip lies tucked under its neighbor there is none.
+    float open = smoothstep(0.25, 0.7, u) * smoothstep(-0.25, 0.25, sin(u * 11.0 + seed * 40.0 + step(0.0, x) * 2.1) * sin(u * 5.3 + seed * 17.0 + 1.0) + 0.15);
+    gather = max(max(smoothstep(0.82, 1.0, ax) * mix(1.0, open, uBudEarly * uBudShut), smoothstep(0.8, 1.0, u)), mix(0.4, 0.1, uBudEarly) * keel);
   } else if (kind > 0.5) {
     float rho = vInfo.x;
     float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
