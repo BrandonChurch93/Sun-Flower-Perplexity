@@ -211,8 +211,8 @@ const frontCurve = new Monotone([
 ])
 const farCurve = new Monotone([
   [RAY_NEAR, bloom0 + 2.4],
-  [140 * RAD, bloom0 + 3],
-  [Math.PI, bloom0 + 3.5],
+  [140 * RAD, bloom0 + 2.9],
+  [Math.PI, bloom0 + 3.2],
 ])
 
 function raySpan(k: number): [number, number, number] {
@@ -224,7 +224,7 @@ function raySpan(k: number): [number, number, number] {
   const far = (away - RAY_NEAR) / (Math.PI - RAY_NEAR)
   const start = farCurve.at(away) + lerp(0.3, 0.8, far) * rnd(41, k)
   const seconds = lerp(RAY_SECONDS, 4.4, far) * (1 + 0.15 * (rnd(43, k) - 0.5) * smoothstep(0, 0.25, far))
-  return [start, Math.min(start + seconds, bloom1), 0.7 * smoothstep(0, 0.3, far)]
+  return [start, Math.min(start + seconds, bloom1), smoothstep(0, 0.3, far)]
 }
 
 const rayRise = (span: [number, number, number], time: number): number => lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
