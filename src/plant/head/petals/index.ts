@@ -235,7 +235,7 @@ export function create(options: PartOptions): PlantPart | null {
     const oy = h.py * ca + h.qy * sa
     const oz = h.pz * ca + h.qz * sa
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 - mix(0.105, 0.125, lifted)) * full
+    const back = (ray.rank * 0.025 - mix(0.12, 0.125, lifted)) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -267,7 +267,7 @@ export function create(options: PartOptions): PlantPart | null {
       const along = smooth(0, 1, open * 1.5 - 0.22 * Math.pow(e, 1.5))
       const across = smooth(0, 1, settled * 1.5 - 0.3 * u)
       // A shut ray stands up from the rim and arches over the face, so the shut rays make a low cone that swirls to a point.
-      const shut = mix(1.56 + 0.16 * ray.arch + 0.1 * ray.rank, 2.72 + 0.12 * ray.rank, smooth(0, 0.55, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
+      const shut = mix(1.56 + 0.16 * ray.arch + 0.1 * ray.rank, 2.7 + 0.12 * ray.rank + 0.4 * (ray.arch - 0.5), smooth(0, 0.55, e)) + 0.5 * ray.hook * smooth(0.75, 1, e)
       const openPitch = ray.lay + young * (0.5 + 0.7 * e) - ray.droop * Math.pow(e, 1.3) + ray.nod * smooth(0.25, 0.9, e) - ray.tipCurl * Math.pow(smooth(0.68, 1, e), 1.5) - ray.hard * smooth(ray.hardAt, ray.hardAt + 0.3, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
@@ -321,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
       pz += tz * step
       u0 = u
 
-      const strap = 0.94 * Math.min(1, 0.9 + 5 * u) * (0.22 + 0.78 * Math.pow(1 - Math.pow(u, 2.2), 0.8))
+      const strap = mix(0.94, 0.76, smooth(0.04, 0.4, u)) * (0.06 + 0.94 * Math.pow(1 - Math.pow(u, 2.4), 0.8))
       const halfWidth = wide * mix(strap, outline(u), across)
       const ragged = 0.075 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 9.1 + ray.seed * 53) + 0.6 * Math.sin(u * 21.3 + ray.seed * 97))
