@@ -125,7 +125,7 @@ void main() {
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
   float grain = 0.35 + 0.65 * vRipe;
-  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(vec3(1.9, 2.3, 1.3), vec3(1.0), vRipe);
+  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(vec3(1.25, 1.7, 0.95), vec3(1.0), vRipe);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
@@ -162,7 +162,7 @@ void main() {
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.95;
   t.wax = (top ? 0.45 : 0.04) * margin;
-  t.sheen = (top ? 0.6 : 0.12) * margin;
+  t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.12) * margin;
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
   vec4 shaded = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.

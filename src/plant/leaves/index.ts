@@ -216,12 +216,12 @@ export function create(options: PartOptions): PlantPart {
         let y = 0
         // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
         for (let ripe = 0; ripe < 2; ripe++) {
-          const cordNow = cord * (ripe ? 1 : 0.3)
-          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.82)
+          const cordNow = cord * (ripe ? 1 : 0.5)
+          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.98)
           const rolled = roll * (ripe ? 1 : 0.5) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
           // A tooth on a rolled edge runs down the slope, so it reaches less far out.
           const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.3)) * smoothstep(0.6, 1, aw)) / steep : 0
+          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.45)) * smoothstep(0.6, 1, aw)) / steep : 0
           const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
           x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
           y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
@@ -229,7 +229,7 @@ export function create(options: PartOptions): PlantPart {
           // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
           const ae = aw * (1 + tooth) * wobble
           const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
-          let z = (ripe ? 0.019 : 0.006) * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
+          let z = (ripe ? 0.019 : 0.011) * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
           z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
           z += waveAmp * (ripe ? 1 : 0.35) * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
           z -= rolled * ae * ae * ae
@@ -401,7 +401,7 @@ export function create(options: PartOptions): PlantPart {
     const age = Math.max(0, leafAge(i, time))
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
     const early = 1 - smoothstep(33, 40, time)
-    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.4 + 0.6 * smoothstep(3, 14, age), early)
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.7 + 0.3 * smoothstep(3, 14, age), early)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
