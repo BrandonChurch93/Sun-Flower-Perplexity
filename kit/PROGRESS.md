@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-21 14:52 UTC · Status 33: round 5 written up (4, 7, 5, jury 7 of 10, not a pass); round 6 prepared, M3 0.962 and 1.016 at review; motion issues traced
+- Last push: 2026-11-21 14:56 UTC · Round 6 starts: judges cd262c1 (all twelve part branches, centered lens samples, held camera view, frost draws the shared skyline)
 - Last status: 33 · 2026-11-21 14:52 UTC · Phase 3 · unit bloom
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -45,11 +45,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 1.08 h |
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
-| 3 | 9.00 h | 7.96 h |
+| 3 | 9.00 h | 8.02 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 14.01 h |
+| Whole build | 30.00 h | 14.07 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -452,6 +452,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-21 · Phase 3 · 14:44 UTC. Two calls. (1) `field_builder`'s extra step `45301fe` (sun shafts into the crop's tops) is not taken for round 6: the left middle is already brighter than the approved (55,50,20 against 40,39,24 by its own figures), one head at 50.5 s goes fully lit, and golden's new banks now dim the far field. It stays on the branch for the `field` unit, where frame 1755 gains. (2) `leaf_builder`'s growth patch is taken (`src/plant/growth.ts`, `leafStemFraction`, `faca0a8`): the node of the leaf under the head sits at 0.923 of the stem at 45 s instead of 0.888 and is unchanged at 50.5 s. R1 of round 5: "different leaf placement ... a leaf close under the head". In world space the node now stays at about 1.477 m while the stem above it lengthens, which is how the top of a sunflower grows.
 - 2026-11-21 · Phase 3 · 14:30 to 14:50 UTC. The motion critic's three issues of round 5: causes and what was done. (1) Single frame jumps of the horizon (major). Cause found: not the camera, whose direction is a smooth function of time, but the blur. `frameSamples` turns the lens set every frame, and with the 8 samples of `review` its weighted middle sat up to a quarter of the opening's radius off the axis: in height -0.070, 0.161, -0.106 at frames 1332 to 1334 and -0.039, -0.111, 0.011 at 1339 to 1341. Everything out of focus shifts with that lean, about 10 px per unit here, which is the measured 464.9, 462.4, 465.0 and 463.7, 464.8, 463.3 px. At `final` (48 samples) the lean was under 0.02. Fix in `src/core/sampler.ts` (`727a943`): the set is moved so its weighted middle is on the axis (worst over all 1800 frames 0.0002 at 8 samples); still a pure function of the frame; the sampler's tests pass. (2) The camera between 45.4 s and 52.0 s (severe). Cause found: the keys at 45 s and 50.5 s share one view of the far background (a far point at x 1226.2 and 1226.0 px, the horizon at 507.6 and 507.5 px), but each channel ran on its own curve between them, so the background went 11.5 px right by 46.5 s and came back by 50 s, and the horizon sank 7.6 px by 48.5 s and rose again. Fix in `config/showcase.json` (`74d0051`): seven keys between the two (45.25, 45.5, 46.5, 47.5, 48.5, 49.5 and 50.25 s), solved so the view of the far background holds within 0.1 px while distance, height and azimuth run evenly and the plant slides 70 px left; the key at 52 s takes 0.6 of its step from 50.5 s, so the horizon travels 20 px instead of 33 px in the bloom's last 1.5 s while the crane's peak speed stays what it was. The fitted keys at 45 s and 50.5 s are unchanged, and every judged frame of the other units stands on a key that did not move. What the two fitted keys do not allow is a view that drifts one way through the whole bloom: it must end where it began, so the far background holds and the plant moves against it. (3) The cut at 40.00 s (severe, third round in a row). `quality.plateauRounds` is passed, so the technique changes by the ladder "A cut reads as a glitch" in `kit/04-LOOK.md`. Rung 1, the test for a cut in `kit/03-METHOD.md` (plant, grass and horizon line up): the plant and the camera line up (measured in round 4); the grass lines up (`field_builder`, 14:47 UTC: nothing in `src/field/` reads the world, places come from one fixed list, the three nearest stalks right of the plant sit at the same x in frames 1199 and 1200; what reads as other spacing is frost's fog showing only the six or so nearest silhouettes); the horizon does not: the frost stand-in ends at the bare horizon with single trees, golden draws the shared skyline about 34 px higher. `harness_builder`, the frost world's owner, was asked at 14:43 UTC to draw the shared skyline (`src/weather/skyline.ts`) through frost's fog at the same height and to drop the single trees. It goes into round 6 only if it is built, tested and pushed by 15:03 UTC; otherwise it leads the `frost` unit in Phase 4. Rungs 2 and 3 are not the trouble here: the two worlds already differ plainly in light and color, and nothing in golden starts late.
 - 2026-11-21 · Phase 4 · 14:22 to 14:43 UTC. Jobs sent as each builder's bloom part was merged (texts in `out/work/briefs/p4/`): `bud_builder` (14:22, keeps `agent/bud`), `harness_builder` (14:27, `agent/frost-world`), `field_builder` (keeps `agent/field`), `petal_builder` (`agent/puddles`), `leaf_builder` (keeps `agent/leaves`), `disc_builder` (`agent/night-world`), `lens_builder` (`agent/rain-world`) and `golden_builder` (`agent/dawn-world`) at 14:43. All twelve builders now work on Phase 4 (12 running, the limit); first reports 15:30 to 15:45 UTC; each also renders its part of the round 6 clip at about 15:20 UTC. `skin_builder` asked at 14:43 UTC for a change in the Builder's `src/director/film.ts` (set the three state uniforms before the plant's `prepare`, so parts placed by the weather see this frame's state, patch attached to its mail); it goes onto the Phase 4 line once round 6 has started. Nothing of Phase 4 reaches `main` before the Phase 3 gate closes.
+- 2026-11-21 · Phase 3 · 14:48 to 14:56 UTC. The cut at 40.00 s, the ladder's first rung, done inside the limit set for it. `harness_builder` pushed `agent/frost-world` `ff4706e` at 14:48 UTC (the limit was 15:03): the frost world draws all nine layers of the shared skyline (`skylineStrip` and `skylineCanopy` with golden's sun azimuth and canopy salt) in the fog's colors, its backdrop picture with its own single trees is no longer drawn, and its sky is computed. Only `src/worlds/frost/` and `src/weather/fog/` change, and `standIn` stays true: the world is unjudged Phase 4 work in progress. It is on `main` for round 6 because the cut is a Phase 3 issue (the motion critic of `bloom` judges the cut into the bloom) and its fix lives in frost's folder; nothing else of Phase 4 is on `main`. Checked by the Builder, not taken on its word: the trailer on all four commits, a type check, 98 of 98 tests, G12 green (worst ratio 1.00 at all four cuts), and the Builder's own stills of frames 1199 and 1200 at `review` on the prepared tree. The ridge's top edge (steepest step of luma in an 80 px column) at x 100, 350, 600, 900, 1650, 1850: frame 1199 at y 514, 516, 516, 514, 512, 513, frame 1200 at 515, 517, 516, 514, 516, 517. Largest difference 4 px, on the right, where golden's softer skyline of round 6 puts its steepest step a little lower than on the frost branch's reading (2 px there); round 5's critic read about 34 px. Pictures `out/work/scratch/r6/cutG-full.jpg` and `cutG-over.jpg`. Still different across the cut, and named by its owners: the neighbors show as thin grey stalks with small heads in the fog against golden's leafy rows (same places, `field_builder`), and the ridge's foot shows as a line at about y 548 at frame 1199. Frame 1199 takes 73.7 s at `review` on the prepared tree against 56.8 s for frame 1200; its owner cuts that in Phase 4. Its request to move the skyline's canopy salt into `src/weather/skyline.ts` as one exported function goes onto the Phase 4 line (no pixel changes).
+- 2026-11-21 · Phase 3 · 14:51 UTC. The horizon check on the prepared tree with the centered lens samples, the Builder's own stills at `review`: the far skyline reads 464.20, 463.93, 463.78 px at frames 1332, 1333, 1334, an even drift of about 0.2 px a frame, where the round 5 frames read 464.9, 462.4, 465.0. The `review` measure of the tree that round 6 judges: M1 passes (1.441 px of 1.5 at the tip at 45 s), M2 passes (0.00 %), M3 0.962 at frame 1350 and 1.016 at frame 1515 (log `out/work/logs/prep-measure-1446.log`). The judged stills are rendered at `final`, where M3 has read about 0.08 and 0.04 lower.
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
@@ -477,7 +479,7 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running at 14:48 UTC: the `review` measure of the prepared tree with the Builder's three commits, in the worktree `sf-prep` (`npm run build && npm run measure -- --unit bloom --tier review`, then stills of frames 1332 to 1334 at `review` to check the horizon; log `out/work/logs/prep-measure-1446.log`; started 14:45 UTC, about 7 min). Round 6's chain starts on `main` when it is green and looked at.
+Running since 14:57 UTC on this VM, in the main checkout: round 6's chain as one detached command, `npm run gate -- --phase 3 --machine`, then `npm run measure -- --unit bloom` (frames 1350 and 1515 at `final`), then `npm run pack -- --phase 3 --round 6 --unit bloom` (the critics' sheets, motion frames of unit frames 1200 to 1559 and the frames before the cut). Log `out/work/logs/r6-chain.log`. By the render budget about 40 min (round 5: 12 min, 10 min, 17.4 min), so it ends at about 15:40 UTC. The clip's frames are rendered by the twelve builders on their own machines from the judged commit.
 
 Finished in this task:
 
@@ -614,6 +616,20 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Summary, status, push: `scorecards/round-005/SUMMARY.md` and `MEASURES.json` written 14:48 UTC; Status 32 (14:14 UTC) and Status 33 carry the pictures
 - Result: not a pass. R1 4, R3 7, R4 5 (9 needed from each), R2 passes (7 of 10 against the controls' 6 of 10), machine checks 13 of 13 green, M1 and M2 pass, M3 fails at both frames (0.672 and 0.786 at `final`, 0.8 needed). Open: 5 severe and 10 major issues across the three critics
 
+### Round 6 · Phase 3 · `bloom` · extra round
+
+- Started 2026-11-21 14:57 UTC. Judges commit `cd262c1` (engine `5ac2814e4342d561`). Unit `bloom`, the fourth and last round of its loop (the look lock allows 4: rounds 3 to 6); judged frames 1350 (`bloom-opening`, 45.0 s) and 1515 (`bloom-hero`, 50.5 s). Extra round: the clock printed `extra rounds: yes` at 14:56:13 UTC (Phase 3 at 8.02 h of its 9 h box, the whole build at 14.07 h of 30 h). Families rotate again: R1 GPT, R3 Gemini, R4 Claude; the jury is ten jurors over five families on the two judged frames, the controls' 6 of 10 from round 3 stand. Before the round: 98 of 98 tests, the build clean, G12 green on the prepared tree, M1 and M2 pass and M3 reads 0.962 and 1.016 at `review`
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R1 answer
+- [ ] R2 jury answers
+- [ ] R3 answer
+- [ ] R4
+- [ ] Fixes
+- [ ] Summary, status, push
+- Result: pending
+
 ## Final scores
 
 Written by the record round in Phase 6.
@@ -693,6 +709,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-21 14:20 UTC · Log: two slips (round 5 key pushed before R4 answered, 13 agents for half a minute); skin's round 6 report taken; Phase 4 jobs to hair, stem, ground, skin
 - 2026-11-21 14:30 UTC · Round 5: R4 5 saved word for word (2 severe, 1 major); all critics in
 - 2026-11-21 14:52 UTC · Status 33: round 5 written up (4, 7, 5, jury 7 of 10, not a pass); round 6 prepared, M3 0.962 and 1.016 at review; motion issues traced
+- 2026-11-21 14:56 UTC · Round 6 starts: judges cd262c1 (all twelve part branches, centered lens samples, held camera view, frost draws the shared skyline)
 
 ## Session log
 
