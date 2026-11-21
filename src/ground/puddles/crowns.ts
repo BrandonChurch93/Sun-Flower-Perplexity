@@ -8,6 +8,8 @@ const AROUND = 64
 const UP = [0, 0.4, 0.7, 0.88, 1]
 const BEADS = 10
 const GRIT = 6
+// On water a column stands up from the middle after the cup has fallen, until this many cup lives after the landing.
+const JET_ENDS = 2.7
 
 export const crownVertex = /* glsl */ `
 in vec3 position;
@@ -25,7 +27,14 @@ const float G = 9.81;
 
 vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float teeth = 9.0 + floor(9.0 * seed);
-  float wide = 0.006 + 0.014 * size;
+  float wide = 0.005 + 0.011 * size;
+  if (x >= 1.0) {
+    float k = (x - 1.0) / ${(JET_ENDS - 1).toFixed(2)};
+    float stands = sin(3.14159265 * pow(k, 0.7));
+    float r = wide * (0.3 * (1.0 - 0.8 * v) + 0.13 * exp(-(v - 0.86) * (v - 0.86) / 0.012) * smoothstep(0.1, 0.5, k)) * smoothstep(0.0, 0.12, k) * (1.0 - smoothstep(0.85, 1.0, k) * 0.5);
+    vec2 lean = vec2(cos(TAU * seed * 5.0), sin(TAU * seed * 5.0)) * 0.25 * wide * v * stands;
+    return vec3(cos(th) * r + lean.x, wide * (1.3 + 0.9 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
+  }
   float tall = wide * mix(1.25, 0.6, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
   float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
@@ -33,7 +42,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float ragged = 0.4 + 1.1 * hash11(mod(floor(tooth), teeth) + 17.0 * seed);
   float lobe = 1.0 + 0.22 * sin(th * 2.0 + seed * 40.0) + 0.14 * sin(th * 3.0 + seed * 91.0);
   float lean = 1.0 + 0.3 * cos(th - TAU * fract(seed * 29.0));
-  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (v + 0.3 * bump * bump * ragged * v * v * v);
+  float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (v + 0.2 * bump * bump * ragged * v * v * v);
   float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.7 + 0.3 * v + 0.4 * v * v * mix(1.0, 0.55, onWater));
   return vec3(cos(th) * r, y, sin(th) * r);
 }
@@ -57,7 +66,7 @@ void main() {
   vec3 at;
   vec3 n;
   if (part.x < 0.5) {
-    if (x >= 1.0) return;
+    if (x >= 1.0 && (onWater < 0.6 || size < 0.42 || x >= ${JET_ENDS.toFixed(2)})) return;
     float th = part.y * TAU;
     at = cup(th, part.z, x, size, onWater, seed);
     vec3 round = cup(th + 0.02, part.z, x, size, onWater, seed) - at;
@@ -105,7 +114,7 @@ in float vKind;
 in float vTop;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 4.0), smoothstep(-0.08, 0.03, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 2.0), smoothstep(-0.08, 0.03, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -118,9 +127,9 @@ void main() {
   } else {
     float facing = max(dot(n, v), 0.0);
     float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
-    float lens = vKind > 0.5 ? 0.6 * smoothstep(0.3, 0.9, facing) : 0.14 + 0.5 * smoothstep(0.7, 1.0, vTop);
-    alpha = saturate(mirror + lens + 0.08);
-    color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, 0.75)) * lens) / alpha;
+    float lens = vKind > 0.5 ? 0.6 * smoothstep(0.3, 0.9, facing) : 0.2 + 0.25 * smoothstep(0.6, 1.0, vTop);
+    alpha = saturate(mirror + lens + 0.06);
+    color = (seen(reflect(-v, n)) * mirror + seen(refract(-v, n, vKind > 0.5 ? 0.75 : 0.92)) * lens) / alpha;
   }
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
 }

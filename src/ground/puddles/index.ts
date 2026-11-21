@@ -4,26 +4,29 @@ import { makeSurface } from '../../core/shading.ts'
 import { declareStandIn } from '../../core/standins.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { toward } from '../../field/layout.ts'
-import { nearRadiusM } from '../geometry.ts'
+import { nearGeometry, nearRadiusM } from '../geometry.ts'
 import { waterLevelsM } from '../soil.ts'
 import { rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { LANDING_FLOATS, landings } from './landings.ts'
 import { RING_LIFE_S, Ripples } from './ripples.ts'
-import { standInLevelM, standInRiseM } from './scratch.ts'
+import { rivuletFragment, rivuletVertex } from './rivulets.ts'
+import { standInLevelM } from './scratch.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
 const MAX_DROPS = 2048
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
-const RAIN_STARTS_S = 8
-const RAIN_LASTS_S = 12
+const CUT_STARTS_S = 8.5
+const CUT_ENDS_S = 13
 
 // The water standing on the ground: level surfaces in its low places that mirror the sky, and the rings of every drop that lands in them.
 export class Puddles {
   readonly meshes: THREE.Object3D[]
   private readonly water: THREE.Mesh
   private readonly crowns: THREE.Mesh
+  private readonly rivulets: THREE.Mesh
+  private readonly span = { value: new THREE.Vector2() }
   private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
   private readonly splashDrop: THREE.InstancedBufferAttribute
   private readonly ripples: Ripples
@@ -52,13 +55,21 @@ export class Puddles {
     this.water.renderOrder = -10
     this.water.visible = false
     this.water.onBeforeRender = (renderer) => this.ripples.render(renderer)
-    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: { value: new THREE.Vector2() } }, side: THREE.DoubleSide, transparent: true, castShadow: false })
+    const crown = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms: { ...this.uniforms, uSpan: this.span }, side: THREE.DoubleSide, transparent: true, castShadow: false })
     const made = crownGeometry(this.splashes, LANDING_FLOATS)
     this.splashDrop = made.drop
     this.crowns = new THREE.Mesh(made.geometry, crown.main)
     this.crowns.frustumCulled = false
     this.crowns.visible = false
     this.crowns.renderOrder = -9
+    const thread = makeSurface({ name: 'rivulets', vertex: rivuletVertex, fragment: rivuletFragment, uniforms: { ...this.uniforms, uSpan: this.span }, transparent: true, castShadow: false })
+    thread.main.polygonOffset = true
+    thread.main.polygonOffsetFactor = -1
+    thread.main.polygonOffsetUnits = -2
+    this.rivulets = new THREE.Mesh(nearGeometry(), thread.main)
+    this.rivulets.frustumCulled = false
+    this.rivulets.visible = false
+    this.rivulets.renderOrder = -11
     this.meshes = [this.water, this.crowns]
   }
 
@@ -72,11 +83,11 @@ export class Puddles {
     const wet = def.ground.wet
     this.water.visible = shown && wet > 0.5 && !!mirror && !!def.lock
     this.crowns.visible = this.water.visible
+    this.rivulets.visible = this.water.visible
     if (!this.water.visible || !mirror || !def.lock) return
-    const spread = Math.min(1, Math.max(0, (time - RAIN_STARTS_S) / RAIN_LASTS_S))
-    const eased = spread * spread * (3 - 2 * spread)
-    const ground = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet
-    const y = ground - waterLevelsM[1] + standInLevelM + standInRiseM * (eased - 1)
+    const cut = Math.min(1, Math.max(0, (time - CUT_STARTS_S) / (CUT_ENDS_S - CUT_STARTS_S)))
+    const eased = 0.25 + 0.75 * cut * cut * (3 - 2 * cut)
+    const y = waterLevelsM[0] + (waterLevelsM[1] - waterLevelsM[0]) * wet - waterLevelsM[1] + standInLevelM
     this.level.value.set(y, eased)
     const { right, up, forward, scaleX, scaleY } = def.lock
     this.uniforms.tMirror.value = mirror
@@ -89,6 +100,6 @@ export class Puddles {
     const geometry = this.crowns.geometry as THREE.InstancedBufferGeometry
     geometry.instanceCount = landings(toward.x * SPLASH_AHEAD_M, toward.z * SPLASH_AHEAD_M, SPLASH_HALF_M, 0, time - SPLASH_LIFE_S, timeClose, this.splashes)
     this.splashDrop.needsUpdate = true
-    ;(this.crowns.material as THREE.RawShaderMaterial).uniforms.uSpan.value.set(time, timeClose)
+    this.span.value.set(time, timeClose)
   }
 }

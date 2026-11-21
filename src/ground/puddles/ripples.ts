@@ -4,7 +4,7 @@ import { basin } from './basin.ts'
 import { LANDING_FLOATS } from './landings.ts'
 
 // A ring lives this long from the landing of its drop.
-export const RING_LIFE_S = 1.7
+export const RING_LIFE_S = 2.6
 const SEGMENTS = 48
 const SIZE = 1024
 
@@ -22,7 +22,7 @@ void main() {
   float size = drop.w / 0.0022;
   float seed = hash21(drop.xy * 91.7);
   float life = ${RING_LIFE_S.toFixed(2)} * (0.7 + 0.3 * size);
-  float amp = smoothstep(0.0, 0.02, t) * exp(-t / (0.35 + 0.3 * size)) * (1.0 - smoothstep(0.7 * life, life, t)) * (0.2 + 0.8 * size);
+  float amp = smoothstep(0.0, 0.02, t) * exp(-t / (0.6 + 0.5 * size)) * (1.0 - smoothstep(0.7 * life, life, t)) * (0.2 + 0.8 * size);
   amp *= smoothstep(0.0003, 0.003, waterDepth(drop.xy));
   if (amp <= 0.0) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -32,7 +32,7 @@ void main() {
   float w = 0.004 + 0.03 * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 6.0 * w, 0.0), (rc + 2.3 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 0.8 * amp, 0.009 + 0.012 * t + 0.004 * seed);
+  vWave = vec4(rc, w, 0.8 * amp, 0.008 + 0.009 * t + 0.007 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4((drop.xy + vOff - uBox.xy) * uBox.z, 0.0, 1.0);
 }
@@ -46,7 +46,7 @@ layout(location = 0) out vec4 outColor;
 void main() {
   float r = length(vOff);
   float x = (r - vWave.x) / vWave.y;
-  x *= x < 0.0 ? 0.38 : 1.0;
+  x *= x < 0.0 ? 0.55 : 1.0;
   float s = vWave.z * exp(-x * x) * sin(6.2831853 * (r - vWave.x) / vWave.w + vPhase) / sqrt(1.0 + r / 0.03);
   outColor = vec4(vOff / max(r, 1e-5) * s, 0.0, 1.0);
 }
