@@ -128,9 +128,9 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   fuzz = min(1.0, fuzz + 0.2 * dew * rim);
 
   float frost = uPlantFrost;
-  float bloom = frost * (0.16 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
+  float bloom = frost * (0.04 + 0.1 * saturate(N.y) * saturate(N.y) + 0.34 * rim) * (0.55 + 0.45 * t.sheen);
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
-  albedo = mix(albedo, mix(albedo, vec3(0.92, 1.0, 1.04) * grey, 0.4) * 0.85, frost);
+  albedo = mix(albedo, mix(albedo, vec3(0.9, 1.0, 1.06) * grey, 0.15) * 0.9, frost);
   albedo = mix(albedo, vec3(0.7, 0.76, 0.84), bloom);
   through *= 1.0 - 0.65 * bloom;
   rough = mix(rough, 1.0, bloom);
