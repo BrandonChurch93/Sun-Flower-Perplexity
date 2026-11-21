@@ -20,16 +20,17 @@ const JOINT_OVERLAP_M = 0.004
 const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
+const SPROUT_WIDTH_M = 0.00005
 
 // `hairs` is how many stand on a square meter of grown skin.
-interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number }
-interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; full: boolean }
+interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean }
+interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
-  if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, full: false }
-  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, full: true }
-  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, full: true }
+  if (options.detail === 'near') return { main: 11, sides: 5, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
+  if (options.detail === 'far') return { main: 3, sides: 3, below: 0, cap: 0, hairs: 0, sprout: 0, full: false }
+  if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 500, full: true }
+  return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 1600, full: true }
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -90,7 +91,7 @@ export function create(options: PartOptions): PlantPart {
     const set = perM2 ? createHairs(options, Math.round(perM2 * hairTable[CELLS]), name, undefined, widthM) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0 }
+    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: false }
     for (let i = 0; i < n; i++) {
       const want = ((i + hash01(seed, salt, i)) / n) * hairTable[CELLS]
       let cell = Math.min(CELLS - 1, Math.floor((i / n) * CELLS))
@@ -107,7 +108,22 @@ export function create(options: PartOptions): PlantPart {
     }
     return c
   }
-  const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009)].filter((c): c is Coat => c !== null)
+  // The young stem below the seed leaves wears a few very fine short hairs, evenly from the foot to the joint. They are what the low sun lights on its outline, and they are shed before the stem is a stalk.
+  const sproutCoat = (count: number, salt: number): Coat | null => {
+    const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
+    if (!set) return null
+    const n = set.count
+    const c: Coat = { set, low: 0.0004, high: 0.00075, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true }
+    for (let i = 0; i < n; i++) {
+      const x = (i + hash01(seed, salt, i)) / n
+      c.seg[i] = x < 0.5 ? 0 : 1
+      c.at[i] = x < 0.5 ? 2 * x : 2 * x - 1
+      const a = hash01(seed, salt + 2, i) * TAU
+      c.own.set([hash01(seed, salt + 1, i), a, Math.cos(a), Math.sin(a), hash01(seed, salt + 3, i), hash01(seed, salt + 7, i)], i * 6)
+    }
+    return c
+  }
+  const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009), sproutCoat(shape.sprout, 100)].filter((c): c is Coat => c !== null)
 
   const anchors = new Anchors()
   const weight = new Float64Array(CELLS)
@@ -139,6 +155,7 @@ export function create(options: PartOptions): PlantPart {
     const rFoot = stemRadius(time, 0) * grown
     const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
+    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time)))
     const flareTo = NECK_FLARE * headR
 
     const base = (u: number, s: number): number => {
@@ -231,7 +248,7 @@ export function create(options: PartOptions): PlantPart {
       let s = 0
       let off = 0
       let scale = 1
-      if (j < below) off = -(0.006 + 0.6 * rFoot) * grown
+      if (j < below) off = -(0.014 + 0.6 * rFoot) * grown
       else if (j < below + main) s = ringS[j - below]
       else {
         const k = j - below - main + 1
@@ -291,7 +308,7 @@ export function create(options: PartOptions): PlantPart {
       const open = (0.55 + 0.45 * smoothstep(0, 0.002 + 0.6 * rFoot, s + off)) * (0.3 + 0.7 * sky)
       const joint = hasHead * (1 - smoothstep(0, 0.014, length - s - off))
       const sprout = pale * (1 - 0.45 * smoothstep(0.3, 1, u))
-      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - 0.45 * pale) * (1 - pale * smoothstep(0.1, 0.55, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
+      const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.2, 0.5, u)) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
         const c = Math.cos(a)
@@ -317,7 +334,7 @@ export function create(options: PartOptions): PlantPart {
         coords[at * 3 + 1] = label / SKIN_TILE_M
         coords[at * 3 + 2] = label / TOP_M
         skin[at * 4] = rib
-        skin[at * 4 + 1] = youth
+        skin[at * 4 + 1] = youth + 1 + 4 * tender
         skin[at * 4 + 2] = sprout
         skin[at * 4 + 3] = foot
         skin2[at * 4] = open
@@ -326,7 +343,7 @@ export function create(options: PartOptions): PlantPart {
         skin2[at * 4 + 3] = thin
         skin3[at * 4] = joint
         skin3[at * 4 + 1] = ribbed
-        skin3[at * 4 + 2] = bald * (0.45 + 0.55 * sun)
+        skin3[at * 4 + 2] = bald * lerp(0.45 + 0.55 * sun, 0.85 + 0.15 * sun, pale)
         skin3[at * 4 + 3] = ribHeight
       }
     }
@@ -370,6 +387,7 @@ export function create(options: PartOptions): PlantPart {
 
     const S = anchors.s
     const M = anchors.m
+    const shed = 1 - smoothstep(18, 30, time)
     for (const c of coats) {
       const root = c.set.root(slot)
       const lean = c.set.lean(slot)
@@ -421,7 +439,7 @@ export function create(options: PartOptions): PlantPart {
         // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
         const patch = stretched * Math.min(1, r0 / c.thick[i])
         const own = c.own[w + 5]
-        const shown = smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
+        const shown = c.sprout ? shed * smoothstep(0.2 * own, 0.2 * own + 0.25, time) * smoothstep(0.0005, 0.0025, S[SEED_ANCHOR] - s) : smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
         const reach = shown > 0 ? radius : 0
         root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * reach
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
