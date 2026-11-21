@@ -18,6 +18,7 @@ const crystal = /* glsl */ `
 uniform sampler2D uCrystals;
 uniform float uPlantFrost;
 uniform float uPlantHeight;
+uniform float uMelts;
 out vec3 vWorld;
 out vec3 vLitAt;
 out float vDepth;
@@ -58,15 +59,17 @@ void main() {
   vec4 c = texelFetch(uCrystals, at + ivec2(2, 0), 0);
   vec4 d = texelFetch(uCrystals, at + ivec2(3, 0), 0);
   vec3 root = plantWorld(mix(a.xyz, b.xyz, uShutter));
-  float own = b.w;
+  // The wearer's number says what the crystal is: 0 to 1 the set chooses, 1 to 2 a low tuft, 2 to 3 a spike.
+  float chosen = floor(b.w);
+  float own = b.w - chosen;
   float n = float(needle);
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
-  bool spike = hash(own, 4.0) > 0.74;
+  bool spike = chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74);
   float h5 = hash(own, 5.0);
-  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.5 : 1.8));
+  grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 0.5 : 0.8));
   float size = a.w * plantSize() * (spike ? 0.7 + 1.4 * h5 * h5 : 0.2 + 0.3 * h5) * uPlantFrost;
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
-  float high = smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
+  float high = uMelts * smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
   float turn6 = hash(own, 6.0) / MELT_SHARE;
   float from = MELT_FROM_S + 2.5 * turn6;
   float now = uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
@@ -94,8 +97,8 @@ void main() {
       wide = 0.1 * size;
     }
   } else {
-    axis = normalize(grow + aside * (needle == 0 ? 0.0 : spike ? 0.35 + 0.5 * hash(own, 14.0 + n) : 0.6 + 1.2 * hash(own, 14.0 + n)));
-    reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.5 + 0.5 * hash(own, 15.0 + n)) : 0.0;
+    axis = normalize(grow + aside * (needle == 0 ? 0.0 : spike ? 0.35 + 0.5 * hash(own, 14.0 + n) : 0.3 + 0.6 * hash(own, 14.0 + n)));
+    reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.6 + 0.4 * hash(own, 15.0 + n)) : 0.0;
     wide = 0.09 * size;
   }
   wide = max(wide, (needle == 0 ? 0.00014 : 0.0001) * plantSize());
@@ -181,7 +184,7 @@ void main() {
 #else
   if (cover < 0.004) discard;
   float sun = plantSun(vLitAt, uSunDir);
-  vec3 color = vBall.z > 0.5 ? ballLight(vec2(vAcross, vBall.x) / r, vRight, vUp, vWorld, sun, 0.0) : vSun * sun + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
+  vec3 color = vBall.z > 0.5 ? ballLight(vec2(vAcross, vBall.x) / r, vRight, vUp, vWorld, sun, 0.0, r) : vSun * sun + vSky * skyAmbient(vec3(0.0, 0.6, 0.0)) * plantSky(vWorld);
   outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, cover);
 #endif
 }
@@ -204,7 +207,7 @@ export class CrystalSet {
   private readonly seen = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
 
-  constructor(options: PartOptions, readonly count: number, name: string) {
+  constructor(options: PartOptions, readonly count: number, name: string, melts = true) {
     if (options.places) throw new Error('crystals are worn by the plant, the companion and the ground only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -223,7 +226,7 @@ export class CrystalSet {
       index.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
     }
     this.geometry.setIndex(new THREE.BufferAttribute(index, 1))
-    const uniforms = { uCrystals: { value: this.texture }, uPlantHeight: fieldUniforms.uPlantHeight }
+    const uniforms = { uCrystals: { value: this.texture }, uPlantHeight: fieldUniforms.uPlantHeight, uMelts: { value: melts ? 1 : 0 } }
     this.surface = makePartSurface(options, { name, vertex: crystal, fragment, side: THREE.DoubleSide, transparent: true, castShadow: false, uniforms })
     const sharp = makePartSurface(options, { name: `${name} blur circle`, vertex: crystal, fragment: `#define BLUR_CIRCLE 1\n${fragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: true, castShadow: false, uniforms })
     const drawn = partMesh(this.geometry, this.surface)
@@ -317,6 +320,7 @@ export class CrystalSet {
   }
 }
 
-export function createCrystals(options: PartOptions, count: number, name: string): CrystalSet | null {
-  return options.places || count <= 0 ? null : new CrystalSet(options, count, name)
+// A wearer whose crystals outlast the frost (the bud, the ground) passes melts as false.
+export function createCrystals(options: PartOptions, count: number, name: string, melts = true): CrystalSet | null {
+  return options.places || count <= 0 ? null : new CrystalSet(options, count, name, melts)
 }
