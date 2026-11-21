@@ -39,7 +39,8 @@ const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
 const float MELT_FROM_S = 38.0;
-const float DROP_SHARE = 0.004;
+const float MELT_SHARE = 0.12;
+const float DROP_SHARE = 0.007;
 
 float hash(float own, float n) {
   return fract(sin(own * 917.13 + n * 37.71 + 0.31) * 4375.85);
@@ -66,9 +67,10 @@ void main() {
   float size = a.w * plantSize() * (spike ? 0.7 + 1.4 * h5 * h5 : 0.2 + 0.3 * h5) * uPlantFrost;
   // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
   float high = smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
-  float from = MELT_FROM_S + 6.0 * hash(own, 6.0);
+  float turn6 = hash(own, 6.0) / MELT_SHARE;
+  float from = MELT_FROM_S + 2.5 * turn6;
   float now = uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
-  float melt = high * smoothstep(from, from + 1.5, now);
+  float melt = high * step(turn6, 1.0) * smoothstep(from, from + 1.5, now);
   size *= 1.0 - 0.75 * melt;
 
   vec3 ref = abs(grow.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -130,7 +132,7 @@ void main() {
   vRight = vec3(0.0);
   vUp = vec3(0.0);
   // The water of a melted crystal gathers under it as a drop, hangs, and falls.
-  if (needle == 4 && high > 0.0 && hash(own, 19.0) < DROP_SHARE) {
+  if (needle == 4 && high > 0.0 && turn6 < 1.0 && hash(own, 19.0) < DROP_SHARE) {
     float falls = from + 1.5 + 0.3 * hash(own, 20.0);
     float fallen = max(now - falls, 0.0);
     float radius = (0.0005 + 0.0004 * hash(own, 21.0)) * plantSize() * smoothstep(from + 0.5, falls, now);
