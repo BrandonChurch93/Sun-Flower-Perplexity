@@ -17,7 +17,7 @@ interface Shape { sides: number; neck: number[]; dome: number[]; side: number[];
 const steps = (n: number, from = 0): number[] => Array.from({ length: n + 1 - from }, (_, i) => (i + from) / n)
 
 const SHAPE: Record<PartDetail, Shape> = {
-  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 39, nu: 32, nv: 13, backHairs: 10000, edgeHairs: 14000, faceHairs: 16000 },
+  hero: { sides: 64, neck: [0.006, 0.003], dome: steps(16), side: [0.3, 0.55, 0.75, 0.9, 0.97, 1], floor: steps(10).reverse(), bracts: 39, nu: 32, nv: 13, backHairs: 16000, edgeHairs: 7000, faceHairs: 17000 },
   near: { sides: 8, neck: [], dome: [0, 0.5, 1], side: [1], floor: [1, 0], bracts: 15, nu: 4, nv: 2, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
   far: { sides: 5, neck: [], dome: [0], side: [1], floor: [0], bracts: 0, nu: 0, nv: 0, backHairs: 0, edgeHairs: 0, faceHairs: 0 },
 }
@@ -25,18 +25,19 @@ const SHAPE: Record<PartDetail, Shape> = {
 // How far in front of the head's middle the body is widest, as a share of its half depth. Behind it the back is one shallow dome.
 const WIDEST = 0.2
 // How much wider than the floor the body is at its widest. From there it rounds in to the rim of the floor.
-const SHOULDER = 0.07
+const SHOULDER = 0.04
 const RAY_CLEAR = 0.21
 const HUG_FROM = 0.04
-const HAIR_WIDTH_M = 0.00005
+const HAIR_WIDTH_M = 0.00003
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
 // A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
 const FOLD_LAG = [0.45, 0.65, 0.85]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
-const FEET = [0.72, 1, 1.38]
-const STAND = [1.2, 0.85, 0.45]
-const FLARE = [0.32, 0.45, 0.5]
+const FEET = [0.6, 0.82, 1.02]
+const HUG = [0.13, 0.2, 0.25]
+const STAND = [1.2, 0.85, 0.14]
+const FLARE = [0.32, 0.45, 0.62]
 const FOLD_SLOW = 0.7
 const HANG = 2.35
 const FOLD = [2.3, 2.22, 2.12]
@@ -70,7 +71,7 @@ export function create(options: PartOptions): PlantPart | null {
       az: turn + ((Math.floor(i / 3) + series / 3 + (rnd(2, i) - 0.5) * 0.3) / each) * TAU,
       foot: FEET[series] + (rnd(15, i) - 0.5) * 0.07,
       long: LONG[series] * (0.95 + 0.1 * rnd(3, i)),
-      wide: 0.92 + 0.16 * rnd(4, i),
+      wide: (series === 2 ? 1.12 : 0.92) + 0.16 * rnd(4, i),
       tail: 0.2 + 0.08 * rnd(5, i),
       twist: (rnd(6, i) - 0.5) * 1.1,
       side: (rnd(7, i) - 0.5) * 0.3,
@@ -79,7 +80,7 @@ export function create(options: PartOptions): PlantPart | null {
       hang: series === 0 && rnd(17, i) < 0.16,
       phase: TAU * rnd(9, i),
       waves: 2 + 2.5 * rnd(10, i),
-      hug: 0.13 + 0.06 * rnd(11, i),
+      hug: HUG[series] + 0.05 * rnd(11, i),
       rmin: 0.0008 + 0.0045 * rnd(12, i),
       fold: 0.14 + 0.26 * rnd(13, i),
       seed: rnd(14, i),
@@ -142,7 +143,7 @@ export function create(options: PartOptions): PlantPart | null {
   const edgeEach = shape.bracts > 0 ? Math.floor((shape.edgeHairs * share) / shape.bracts / 2) : 0
   const faceEach = shape.bracts > 0 ? Math.floor((shape.faceHairs * share) / shape.bracts) : 0
   const hairCount = backHairs + shape.bracts * (edgeEach * 2 + faceEach)
-  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', [0.66, 0.7, 0.58], HAIR_WIDTH_M) : null
+  const hairs: HairSet | null = hairCount > 0 ? createHairs(options, hairCount, 'bud hairs', [0.45, 0.48, 0.4], HAIR_WIDTH_M) : null
   const hairBase = new Int32Array(hairCount)
   const hairWidth = new Int32Array(hairCount)
   const hairAt = new Float32Array(hairCount * 2)
@@ -171,7 +172,7 @@ export function create(options: PartOptions): PlantPart | null {
         hairAt[n * 2] = u * (shape.nu - 1)
         hairAt[n * 2 + 1] = left ? 0 : shape.nv - 1
         hairKind[n] = left ? -1 : 1
-        hairLong[n] = (0.0013 + 0.0012 * rnd(123 + b, i)) * (1 - 0.25 * u)
+        hairLong[n] = (0.0012 + 0.0016 * rnd(123 + b, i)) * (1 - 0.25 * u)
       }
       for (let i = 0; i < faceEach; i++, n++) {
         const keel = rnd(223 + b, i) < 0.3
@@ -320,7 +321,7 @@ export function create(options: PartOptions): PlantPart | null {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
       const L = bractLength(i, time) * k.long
-      const W = Math.min(0.26 * L, 0.45 * R) * k.wide
+      const W = Math.min(0.275 * L, 0.46 * R) * k.wide
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
       const at = (turns - Math.floor(turns)) * rayCount

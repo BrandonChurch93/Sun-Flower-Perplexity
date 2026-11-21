@@ -78,7 +78,7 @@ void main() {
     albedo = mix(albedo, pale, smoothstep(0.85, 1.0, ax) * 0.4);
     albedo *= 0.93 + 0.14 * fine;
     if (inner) albedo = mix(albedo, vec3(0.17, 0.27, 0.1), 0.7);
-    else albedo *= vec3(1.8, 2.3, 2.3);
+    else albedo *= vec3(1.9, 2.2, 1.5);
     float thin = saturate(0.04 + 0.96 * smoothstep(0.38, 0.98, u) + 0.12 * ax * ax * ax * smoothstep(0.1, 0.4, u));
     thin *= 1.0 - 0.45 * max(keel, line);
     t.albedo = albedo;
@@ -95,8 +95,8 @@ void main() {
     vec3 cream = mix(vec3(0.42, 0.47, 0.2), vec3(0.52, 0.52, 0.27), grain);
     vec3 tan = mix(vec3(0.36, 0.27, 0.13), vec3(0.46, 0.36, 0.2), grain);
     t.albedo = mix(cream, tan, uBudOpen * smoothstep(1.0, 0.3, rho));
-    t.albedo = mix(t.albedo, mix(vec3(0.07, 0.13, 0.045), vec3(0.05, 0.06, 0.028), uBudOpen), smoothstep(0.8, 0.93, rho));
-    t.occlusion = mix(0.45, 0.9, uBudOpen) * mix(1.0, 0.5, smoothstep(0.8, 0.93, rho));
+    t.albedo = mix(t.albedo, mix(vec3(0.085, 0.155, 0.055), vec3(0.05, 0.06, 0.028), uBudOpen), smoothstep(0.8, 0.93, rho));
+    t.occlusion = mix(mix(0.45, 0.9, uBudOpen), mix(0.75, 0.45, uBudOpen), smoothstep(0.8, 0.93, rho));
     t.rough = 0.9;
     t.wax = 0.1;
     t.sheen = 0.0;
@@ -105,14 +105,14 @@ void main() {
     float grain = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 26.0);
     float rib = abs(fract(vInfo.y * 3.3422538 + 0.2 * grain) - 0.5) * 2.0;
     vec3 neck = vec3(0.2, 0.3, 0.09);
-    vec3 body = mix(vec3(0.035, 0.075, 0.032), vec3(0.075, 0.14, 0.05), grain);
+    vec3 body = mix(vec3(0.05, 0.1, 0.04), vec3(0.1, 0.18, 0.065), grain);
     t.albedo = mix(neck, body, smoothstep(0.08, 0.4, v)) * (0.92 + 0.16 * rib);
     float pits = valueNoise((0.35 + v) * vec2(cos(vInfo.y), sin(vInfo.y)) * 90.0);
     t.albedo *= 0.8 + 0.3 * pits;
     height = 0.0005 * grain + 0.0002 * rib + 0.00035 * pits;
-    t.occlusion = mix(1.0, 0.4, smoothstep(0.3, 0.75, v));
+    t.occlusion = mix(1.0, mix(0.7, 0.45, uBudOpen), smoothstep(0.3, 0.75, v));
     float shoulder = smoothstep(0.55, 0.8, v);
-    t.albedo = mix(t.albedo, mix(vec3(0.05, 0.1, 0.035), vec3(0.04, 0.05, 0.024), uBudOpen), shoulder);
+    t.albedo = mix(t.albedo, mix(vec3(0.085, 0.155, 0.055), vec3(0.04, 0.05, 0.024), uBudOpen), shoulder);
     t.rough = 0.9;
     t.wax = 0.1 * (1.0 - shoulder);
     t.sheen = 0.8 * (1.0 - shoulder);
