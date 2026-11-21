@@ -74,15 +74,13 @@ void main() {
 interface Bank { radiusM: number; topM: number; scaleM: number; alpha: number; speed: number }
 
 const BANKS: Bank[] = [
-  { radiusM: 2.4, topM: 5, scaleM: 2.2, alpha: 0.16, speed: 0.05 },
-  { radiusM: 3.6, topM: 6, scaleM: 2.8, alpha: 0.2, speed: 0.07 },
-  { radiusM: 5.2, topM: 7, scaleM: 3.6, alpha: 0.24, speed: 0.06 },
-  { radiusM: 7.5, topM: 9, scaleM: 5, alpha: 0.26, speed: 0.09 },
-  { radiusM: 11, topM: 11, scaleM: 7, alpha: 0.28, speed: 0.08 },
-  { radiusM: 16, topM: 14, scaleM: 10, alpha: 0.3, speed: 0.11 },
-  { radiusM: 24, topM: 18, scaleM: 15, alpha: 0.3, speed: 0.1 },
-  { radiusM: 36, topM: 24, scaleM: 22, alpha: 0.32, speed: 0.13 },
-  { radiusM: 54, topM: 32, scaleM: 32, alpha: 0.32, speed: 0.12 },
+  { radiusM: 5.2, topM: 7, scaleM: 3.6, alpha: 0.03, speed: 0.06 },
+  { radiusM: 7.5, topM: 9, scaleM: 5, alpha: 0.06, speed: 0.09 },
+  { radiusM: 11, topM: 11, scaleM: 7, alpha: 0.14, speed: 0.08 },
+  { radiusM: 16, topM: 14, scaleM: 10, alpha: 0.25, speed: 0.11 },
+  { radiusM: 24, topM: 18, scaleM: 15, alpha: 0.35, speed: 0.1 },
+  { radiusM: 36, topM: 24, scaleM: 22, alpha: 0.4, speed: 0.13 },
+  { radiusM: 54, topM: 32, scaleM: 32, alpha: 0.45, speed: 0.12 },
 ]
 
 // The banks are see-through and hide what is behind them, so they are drawn far to near and before the hairs of the plant (20).
