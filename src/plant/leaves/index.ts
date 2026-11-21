@@ -54,6 +54,9 @@ interface Leaf {
   py: Float32Array
   pz: Float32Array
   pc: Float32Array
+  qx: Float32Array
+  qy: Float32Array
+  qz: Float32Array
   seed: number
   mirror: number
   set: number
@@ -182,6 +185,9 @@ export function create(options: PartOptions): PlantPart {
       py: new Float32Array(nu * nv),
       pz: new Float32Array(nu * nv),
       pc: new Float32Array(nu * nv),
+      qx: new Float32Array(nu * nv),
+      qy: new Float32Array(nu * nv),
+      qz: new Float32Array(nu * nv),
       seed: r(15),
       mirror,
       set,
@@ -199,52 +205,66 @@ export function create(options: PartOptions): PlantPart {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
       const onStalk = typeof rows !== 'number' && rows[a] < 0
       leaf.sig[a] = onStalk ? -1 : s
-      const wide = widthAt(s, cord, tip) * share
       for (let b = 0; b < nv; b++) {
         const hem = hero && (b === 0 || b === nv - 1)
         const w = cols[hero ? clamp(b - 1, 0, cols.length - 1) : b]
         const aw = Math.abs(w)
         const side = w < 0 ? 0 : 1
         const veins = veinSets[set][mirror > 0 ? side : 1 - side]
-        const rolled = roll * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
-        // A tooth on a rolled edge runs down the slope, so it reaches less far out.
-        const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-        const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth) * smoothstep(0.6, 1, aw)) / steep : 0
-        const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
-        let x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
-        let y = sweepAt(s, w, cord) * (1 + 0.3 * (r(24 + side) - 0.5))
-        const across = Math.abs(x)
-        // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
-        const ae = aw * (1 + tooth) * wobble
-        const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
-        let z = 0.019 * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
-        z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
-        z += waveAmp * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
-        z -= rolled * ae * ae * ae
-        z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
-        z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
-        const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
-        let bent = 0
-        for (let c = 0; c < creases.length; c += 5) {
-          if (creases[c] !== side) continue
-          const d = s - creases[c + 1] - creases[c + 2] * ae * wide
-          bent += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
-        }
-        if (pleat) bent += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
-        if (onStalk) {
-          x = w * 0.012
-          y = 0
-          z = 0
-        }
-        if (hem) {
-          x -= Math.sign(w) * Math.min(HEM_IN, across * 0.5)
-          z -= HEM_DROP * Math.min(1, wide * 12)
-        }
         const v = a * nv + b
-        leaf.px[v] = x
-        leaf.py[v] = y
-        leaf.pz[v] = z
-        leaf.pc[v] = onStalk ? 0 : bent
+        let x = 0
+        let y = 0
+        // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
+        for (let ripe = 0; ripe < 2; ripe++) {
+          const cordNow = cord * (ripe ? 1 : 0.3)
+          const wide = widthAt(s, cordNow, ripe ? tip : Math.min(0.62, tip + 0.2)) * share * (ripe ? 1 : 0.82)
+          const rolled = roll * (ripe ? 1 : 0.5) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
+          // A tooth on a rolled edge runs down the slope, so it reaches less far out.
+          const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
+          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0.3)) * smoothstep(0.6, 1, aw)) / steep : 0
+          const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
+          x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
+          y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
+          const across = Math.abs(x)
+          // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
+          const ae = aw * (1 + tooth) * wobble
+          const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
+          let z = (ripe ? 0.019 : 0.006) * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
+          z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
+          z += waveAmp * (ripe ? 1 : 0.35) * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
+          z -= rolled * ae * ae * ae
+          z += lump * (ripe ? 1 : 0.15) * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+          z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cordNow
+          let bent = 0
+          if (ripe) {
+            const flat = smoothstep(0.03, 0.2, aw) * Math.min(1, wide * 5)
+            for (let c = 0; c < creases.length; c += 5) {
+              if (creases[c] !== side) continue
+              const d = s - creases[c + 1] - creases[c + 2] * ae * wide
+              bent += creases[c + 4] * (ramp(d) - ramp(d - creases[c + 3])) * flat
+            }
+            if (pleat) bent += pleat[side * 2 + 1] * wide * ramp(ae - pleat[side * 2]) * smoothstep(0.05, 0.3, s)
+          }
+          if (onStalk) {
+            x = w * 0.012
+            y = 0
+            z = 0
+          }
+          if (hem) {
+            x -= Math.sign(w) * Math.min(HEM_IN, across * 0.5)
+            z -= HEM_DROP * Math.min(1, wide * 12)
+          }
+          if (ripe) {
+            leaf.px[v] = x
+            leaf.py[v] = y
+            leaf.pz[v] = z
+            leaf.pc[v] = onStalk ? 0 : bent
+          } else {
+            leaf.qx[v] = x
+            leaf.qy[v] = y
+            leaf.qz[v] = z
+          }
+        }
         uvList.push(w, s)
         leafList.push(i, set, leaf.seed, mirror)
         markList.push(threshold, bias, withered && dry ? 1.14 : dry ? 1 : torn ? 2 : 0, 0.3 + 0.7 * old)
@@ -280,8 +300,10 @@ export function create(options: PartOptions): PlantPart {
   }
   geometry.setIndex(index)
   const state = new Float32Array(LEAVES * 4)
+  const ripeness = new Float32Array(LEAVES)
   const uniforms = {
     uLeafState: { value: state },
+    uLeafRipe: { value: ripeness },
     uVeins: { value: null as THREE.Texture | null },
     uDetail: { value: null as THREE.Texture | null },
     uMarks: { value: null as THREE.Texture | null },
@@ -377,18 +399,23 @@ export function create(options: PartOptions): PlantPart {
     const stalk = leaf.stalk
     const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
-    const droop = leafDroop(i, pose.inputs, time)
+    // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
+    const early = 1 - smoothstep(33, 40, time)
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.4 + 0.6 * smoothstep(3, 14, age), early)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
     // A young blade is smooth: the creases set in as it ages.
     const creased = smoothstep(3, 16, age)
+    const set = lerp(grown, smoothstep(0.5, 4, age), early)
+    // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
+    const ripe = Math.max(smoothstep(5, 12, age), smoothstep(33, 40, time))
     // A blade that points away shows its underside instead, so it turns the other way.
     const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
     // The hanging leaf under the head keeps its edge to the lens.
-    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
+    const facing = main ? (i === witheredLeaf ? 1.25 * grown : -FACING * set * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE))) : 0
     const held = main ? 0 : leafRoll(i, time)
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
-    const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
+    const rise = set * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
@@ -450,10 +477,11 @@ export function create(options: PartOptions): PlantPart {
       const nz = uz * ct - frame.wz * st
       for (let b = 0; b < nv; b++) {
         const v = a * nv + b
-        const px = leaf.px[v]
+        const px = ripe >= 1 ? leaf.px[v] : leaf.qx[v] + (leaf.px[v] - leaf.qx[v]) * ripe
+        const pz = ripe >= 1 ? leaf.pz[v] : leaf.qz[v] + (leaf.pz[v] - leaf.qz[v]) * ripe
         const across = px * cf * blade
-        const up = (Math.abs(px) * sf + leaf.pz[v] + leaf.pc[v] * creased) * blade
-        const along = leaf.py[v] * blade
+        const up = (Math.abs(px) * sf + pz + leaf.pc[v] * creased) * blade
+        const along = (ripe >= 1 ? leaf.py[v] : leaf.qy[v] + (leaf.py[v] - leaf.qy[v]) * ripe) * blade
         const o = (leaf.base + v) * 3
         out[o] = cx + tx * along + wx * across + nx * up
         out[o + 1] = cy + ty * along + wy * across + ny * up
@@ -467,12 +495,14 @@ export function create(options: PartOptions): PlantPart {
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
       state[i * 4 + 2] = smoothstep(0.35, 1.3, fold)
       state[i * 4 + 3] = smoothstep(5, 24, age)
+      ripeness[i] = ripe
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
     const tube = tubeSlots[slot]
     const stem = stemRadius(time, leafStemFraction(i, time))
-    const thick = Math.min(0.5 * stem, 0.036 * size * REACH)
+    // On the young plant a stalk is nearly as stout as the stem it leaves.
+    const thick = Math.min((0.5 + 0.16 * early) * stem, 0.036 * size * REACH)
     for (let ring = 0; ring < RINGS; ring++) {
       const onBlade = ring >= RINGS_STALK
       const k = onBlade ? 0 : ring / (RINGS_STALK - 1)
@@ -498,7 +528,7 @@ export function create(options: PartOptions): PlantPart {
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.5 * k) + clasp
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early) * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.

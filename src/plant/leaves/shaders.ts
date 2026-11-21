@@ -15,11 +15,13 @@ in vec3 normal;
 in vec2 uv;
 in vec4 aLeaf;
 uniform vec4 uLeafState[${LEAVES}];
+uniform float uLeafRipe[${LEAVES}];
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vLeaf;
 out vec4 vState;
+out float vRipe;
 out float vDepth;
 void main() {
 #ifdef PLANT_FIELD
@@ -36,6 +38,7 @@ void main() {
   vUv = uv;
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
+  vRipe = uLeafRipe[int(aLeaf.x + 0.5)];
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
@@ -50,6 +53,7 @@ in vec3 vNormal;
 in vec2 vUv;
 in vec4 vLeaf;
 in vec4 vState;
+in float vRipe;
 in float vDepth;
 ${tissueGlsl}
 #ifdef PLANT_FIELD
@@ -116,11 +120,12 @@ void main() {
   float cells = smoothstep(0.96, 1.25, fine);
 
   vec3 upper = vec3(0.024, 0.068, 0.042) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), 0.85 * vein.r + 0.45 * vein.b);
+  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.25 + 0.75 * vRipe));
   vec3 under = vec3(0.06, 0.09, 0.04) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
-  vec3 albedo = (top ? upper * (1.0 + 0.6 * net + 1.1 * cells) : under * (1.0 + 0.8 * net + 0.8 * cells)) * (1.2 + 1.3 * (1.0 - smoothstep(0.0, 0.12, vState.w)));
+  float grain = 0.35 + 0.65 * vRipe;
+  vec3 albedo = (top ? upper * (1.0 + (0.6 * net + 1.1 * cells) * grain) : under * (1.0 + (0.8 * net + 0.8 * cells) * grain)) * 1.2 * mix(vec3(1.9, 2.3, 1.3), vec3(1.0), vRipe);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.04) * (0.7 + 0.3 * lum), yellow * 0.85);
   albedo = mix(albedo, vec3(0.085, 0.05, 0.02) * (0.6 + 0.4 * lum), brown);
 
@@ -129,7 +134,7 @@ void main() {
   // A blade is thickest at its base and along the midrib and thins toward the tip and the margin.
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float sheer = smoothstep(0.5, 0.92, mark.g);
-  float thin = (0.16 + 1.0 * smoothstep(0.35, 0.85, mark.g) + 4.6 * sheer) * taper * uGlow;
+  float thin = (0.16 + 1.0 * smoothstep(0.35, 0.85, mark.g) + 4.6 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
   // A leaf holds back red: what comes through is a fresh green, yellower where the blade is thinnest and against the low sun.
   vec3 through = mix(vec3(0.2, 0.3, 0.07), vec3(0.3, 0.29, 0.085), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
