@@ -197,8 +197,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
-  // The down of a round body holds rime all over: a frosted stem is paler than its skin.
-  bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * (1.0 - blade));
+  // The down of a round body holds rime all over: a frosted stem is paler than its skin. A part that knows its skin is a sheet with its own crust.
+  float body = margin < 0.0 ? 1.0 - blade : 0.0;
+  bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * body);
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
   // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
@@ -343,7 +344,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float vl = dot(view, L);
   float side = smoothstep(0.0, 0.6, (fdl - fv * vl) / max(sqrt(max(1.0 - vl * vl, 0.0)), 0.05));
   // The rime on the down of a round body lights up where the sun comes through it: the pale side of a frosted stem.
-  color += (direct + skyFront * open) * FROST_RIME * (FROST_SIDE * frost * (0.4 + 0.6 * t.sheen) * (1.0 - blade) * saturate((1.0 - fv) / 0.6) * side);
+  color += (direct + skyFront * open) * FROST_RIME * (FROST_SIDE * frost * (0.4 + 0.6 * t.sheen) * body * saturate((1.0 - fv) / 0.6) * side);
   // The sun enters a clear body at its outline and leaves toward the eye: a bright line down the sun's side, near the sun's own color.
   if (clear > 0.0) {
     float line = 1.0 - smoothstep(0.08, 0.45, fv);
