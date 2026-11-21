@@ -107,6 +107,9 @@ const SHUT_SPREAD = 0.6
 // The outer series is the leafiest and reaches furthest while the bud is shut.
 const SHUT_LONG = [1.5, 1.15, 1.2]
 const SHUT_TIP = [0.35, 0.8, 1]
+// When the tip has just tightened the outer bracts are still young leaves standing out round a small bud.
+const YOUNG_OUT = [0.4, 0.2, 0]
+const YOUNG_LONG = [0.8, 0.35, 0]
 
 interface Bract { spread: number; point: number; keel: number; low: number; away: number; series: number; rank: number; az: number; foot: number; long: number; wide: number; tail: number; twist: number; side: number; tip: number; lean: number; hook: number; reflex: number; phase: number; waves: number; hug: number; rmin: number; fold: number; seed: number }
 
@@ -426,11 +429,12 @@ export function create(options: PartOptions): PlantPart | null {
     const small = clamp(R / 0.03, 0.3, 1)
     const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
     const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
+    const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, time)
     const wind = pose.inputs.wind
     for (let i = 0; i < shape.bracts; i++) {
       const k = bracts[i]
       const j = i * 3 + 2 - k.series
-      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight)
+      const L = bractLength(i, time) * k.long * lerp(1, SHUT_LONG[k.series], tight) * (1 + YOUNG_LONG[k.series] * young)
       const W = Math.min(BROAD[k.series] * bractLength(i, time), 0.48 * R, 0.019) * k.wide * lerp(1, SHUT_BROAD[k.series], tight)
       // The bract stays behind the nearest rays once they have any length, so it swings back just ahead of them.
       const turns = k.az / TAU
@@ -466,7 +470,7 @@ export function create(options: PartOptions): PlantPart | null {
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
       const gone = Math.max(back, smoothstep(0.2, 1, passed))
-      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut, SHUT_ANGLE[k.series] + k.lean + k.spread, globe), stand, ready)
+      const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + (YOUNG_OUT[k.series] + k.spread) * young, SHUT_ANGLE[k.series] + k.lean + k.spread, globe), stand, ready)
       const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
