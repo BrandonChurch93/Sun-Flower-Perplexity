@@ -46,7 +46,7 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float seen = 1.0 - smoothstep(0.4, 1.2, reach * (FROST_GRAIN_M / 0.0013));
   float ragged = grown + 0.3 * (fine - 0.5) * seen + 0.2 * (bank - 0.5);
   // Under the grains a face open to the sky wears a thin grey bloom all over, in drifts.
-  float veil = 0.02 + 0.1 * grown + FROST_BLOOM * open * (0.15 + 0.85 * bank * bank) * mix(1.0, 0.5 + fine, seen) + smoothstep(0.38, 0.66, ragged) * mix(0.6, 0.12 + 0.88 * fine * fine, seen);
+  float veil = 0.02 + 0.1 * grown + FROST_BLOOM * open * (0.04 + 0.96 * bank * bank * bank) * mix(1.0, 0.5 + fine, seen) + smoothstep(0.38, 0.66, ragged) * mix(0.6, 0.12 + 0.88 * fine * fine, seen);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
   float chance = 0.94 * grown;
   float most = 0.17 + 0.18 * grown;
