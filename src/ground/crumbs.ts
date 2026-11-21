@@ -270,6 +270,9 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
 }
 
 // A bead of dew: a small ball of water that shows the sky upside down through itself, mirrors it at its rim, throws the sun back from one point and glows where the sun behind it comes through.
+// The large lumps round the seedling stand at this share of their size through the dawn and swell to full as the stem thickens in the rain.
+const MASS_YOUNG = 0.62
+
 export const beadLook = /* glsl */ `
 vec3 beadSky(vec3 d, float open) {
   return mix(uSkyHorizon, uSkyZenith, sqrt(saturate(d.y))) + uSunColor * open * 0.25 * pow(max(dot(d, uSunDir), 0.0), 40.0);
@@ -295,6 +298,7 @@ in vec4 aCenter;
 uniform float uDew;
 uniform float uWet;
 uniform float uFine;
+uniform vec2 uRainS;
 in vec4 aSeed;
 out vec3 vWorld;
 out float vDepth;
@@ -328,7 +332,8 @@ void main() {
   float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (0.25 + 0.3 * hash11(own + 7.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
   mat3 m = mat3(modelMatrix);
-  vec3 rel = m * mix(position * keep, aRound + (position - aRound) * keep, bead);
+  float young = mass * (1.0 - smoothstep(0.035, 0.05, r)) * (1.0 - smoothstep(uRainS.x, uRainS.y, uTime));
+  vec3 rel = m * mix(position * keep, aRound + (position - aRound) * keep, bead) * mix(1.0, ${MASS_YOUNG}, young);
   vec3 ball = m * mix(aRound, aNormal, bead);
   vec3 normal = m * aNormal;
   rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));

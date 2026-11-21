@@ -265,7 +265,7 @@ vec3 sunGlow(vec3 world, vec3 v, vec3 n, float dew) {
   float toSun = saturate(dot(normalize(r.xz + vec2(1e-5, 0.0)), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
   float skim = 1.0 - max(v.y, 0.0);
   float far = smoothstep(0.14, 0.5, length(uCamPos - world));
-  return uSunColor * (low * dew * pow(toSun, 48.0) * pow(skim, 16.0) * far * 0.17);
+  return uSunColor * (low * dew * pow(toSun, 48.0) * pow(skim, 16.0) * far * 0.1);
 }
 // Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
 float selfShade() {
@@ -422,6 +422,9 @@ void main() {
   float atFoot = footShade(p, dull);
   open *= atFoot;
   lit *= atFoot;
+#ifdef NEAR
+  lit *= 1.0 - 0.9 * broken.y * dull;
+#endif
   open *= 1.0 - 0.35 * thatch;
   open = mix(open, 0.14 + 0.86 * open, uDew);
   lit *= 1.0 - 0.5 * thatch;

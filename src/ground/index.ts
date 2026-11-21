@@ -83,6 +83,7 @@ export class Ground {
       uFurrowWas: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / shoreKept)) },
       uFurrowKept: { value: new THREE.Vector3(keptS, furrowKept.depthM, furrowKept.bankM) },
       uKeptS: { value: keptS },
+      uRainS: { value: new THREE.Vector2(segmentById('rain').start, segmentById('rain').end) },
       uField: { value: new THREE.Vector4(fieldS, fieldLight.rightM, fieldLight.aheadM, fieldLight.reachM) },
       uStems: { value: new THREE.Vector4(0, 0, companion.x, companion.z) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
