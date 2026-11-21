@@ -4,6 +4,7 @@ import type { Assets } from '../core/assets.ts'
 import type { Caster } from '../core/shadow.ts'
 import { endStandIn } from '../core/standins.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
+import { smoothstep } from '../core/curves.ts'
 import { segmentById } from '../director/timeline.ts'
 import { companionPlace, right, toward } from '../field/layout.ts'
 import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsKept } from './blades.ts'
@@ -21,6 +22,9 @@ const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
 
 export interface GroundState { wet: number; frost: number; dew?: number }
 
+// After the rain the ground stays soaked into the night and dries over this long, while the dew settles on it.
+const dryS = 4.5
+
 export class Ground {
   // The soil beyond the near ground, the near ground itself, the loose soil on it, the grass, and the single blades close to the plant.
   readonly surface: Surface
@@ -34,6 +38,7 @@ export class Ground {
   // For what lies on the ground, puddles and frost: the height of the near ground in meters (soilHeight(p, soilLod(p)), flat beyond it), where water stands (pooled) and frost settles (frosted), and where grass grows (grassMask). Their uniforms are in `shared`.
   static readonly glsl = { height: soilHeight, states: groundStates, cover: grassCover }
   private readonly cast: Caster[] = []
+  private readonly nightS = segmentById('night').start
   private readonly uniforms: Record<string, THREE.IUniform>
 
   constructor() {
@@ -78,6 +83,7 @@ export class Ground {
       uFurrowWas: { value: new THREE.Vector4(...furrow.halfM.map((half) => half / shoreKept)) },
       uFurrowKept: { value: new THREE.Vector3(keptS, furrowKept.depthM, furrowKept.bankM) },
       uKeptS: { value: keptS },
+      uRainS: { value: new THREE.Vector2(segmentById('rain').start, segmentById('rain').end) },
       uField: { value: new THREE.Vector4(fieldS, fieldLight.rightM, fieldLight.aheadM, fieldLight.reachM) },
       uStems: { value: new THREE.Vector4(0, 0, companion.x, companion.z) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
@@ -162,9 +168,11 @@ export class Ground {
   // `cover` is how much of the ground under the field its leaves shade, from 0 to 1.
   setState(state: GroundState, cover: number): void {
     const u = this.uniforms
-    u.uWet.value = state.wet
+    const t = shared.uTime.value
+    const settled = t < this.nightS ? 1 : smoothstep(this.nightS, this.nightS + dryS, t)
+    u.uWet.value = Math.max(state.wet, 1 - settled)
     u.uFrost.value = state.frost
-    u.uDew.value = state.dew ?? 0
+    u.uDew.value = (state.dew ?? 0) * settled
     u.uCover.value = cover
     u.uCrop.value.set(config.field.plantAheadOfRowM, cover * CROP_HEIGHT_M, cover)
   }

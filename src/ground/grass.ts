@@ -261,7 +261,7 @@ void main() {
   }
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
   float rained = smoothstep(0.3, 1.0, uWet);
-  albedo *= mix(vec3(1.0), vec3(1.7, 2.1, 1.5), rained);
+  albedo *= mix(vec3(1.0), vec3(1.3, 1.55, 1.2), rained);
   albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.15, 0.8, t));
   vec2 p = vWorld.xz;
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
