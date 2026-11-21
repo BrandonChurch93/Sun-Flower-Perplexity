@@ -269,15 +269,22 @@ export function create(options: PartOptions): PlantPart {
   }
 
   const hairCount = options.variant === 0 ? shape.hairs : Math.round(shape.hairs / 4)
-  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', [0.92, 0.95, 0.8], 0.00007) : null
+  const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs') : null
   const plan: Hair[] = []
+  // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
+  const hairsUpTo: number[] = []
+  let hairsShown = 0
   if (hairs) {
+    const area = (leaf: Leaf) => fullLength[leaf.i] * fullLength[leaf.i] * shares[leaf.i]
     let sum = 0
-    for (const leaf of leaves) sum += fullLength[leaf.i]
+    for (const leaf of leaves) sum += area(leaf)
     let leafAt = 0
-    let reached = fullLength[leaves[0].i]
+    let reached = area(leaves[0])
     for (let h = 0; h < hairs.count; h++) {
-      while (leafAt < leaves.length - 1 && (h / hairs.count) * sum > reached) reached += fullLength[leaves[++leafAt].i]
+      while (leafAt < leaves.length - 1 && (h / hairs.count) * sum > reached) {
+        hairsUpTo[leafAt] = h
+        reached += area(leaves[++leafAt])
+      }
       const leaf = leaves[leafAt]
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
@@ -309,6 +316,7 @@ export function create(options: PartOptions): PlantPart {
       }
       plan.push(hair)
     }
+    for (let k = leafAt; k < leaves.length; k++) hairsUpTo[k] = hairs.count
   }
 
   const fillLeaf = (leaf: Leaf, slot: 0 | 1, pose: Pose): void => {
@@ -470,7 +478,11 @@ export function create(options: PartOptions): PlantPart {
     const lean = hairs.lean(slot)
     const out = slots[slot]
     const tube = tubeSlots[slot]
-    for (let h = 0; h < plan.length; h++) {
+    let born = 0
+    while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
+    const count = born > 0 ? hairsUpTo[born - 1] : 0
+    if (slot === 0) hairsShown = count
+    for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
       const size = leafLength(leaf.i, pose.time)
@@ -587,7 +599,7 @@ export function create(options: PartOptions): PlantPart {
       if (positionB) positionB.needsUpdate = true
       normal.needsUpdate = true
       for (const a of tubeAttributes) a.needsUpdate = true
-      hairs?.finish()
+      hairs?.finish(hairsShown)
     },
   }
 }
