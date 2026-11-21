@@ -184,7 +184,7 @@ float soilHeight(vec2 p, float lod) {
 `
 
 // With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
-export const dampFill = [1.1, 1.4, 1.35]
+export const dampFill = [1, 1.12, 1.1]
 const MATT_EASE_S = 3.5
 export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
@@ -413,6 +413,7 @@ void main() {
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
+  lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);

@@ -403,10 +403,11 @@ void main() {
   float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a) * (1.0 - 0.5 * pore);
   float foot = footShade(p, dull);
   open *= foot;
-  lit *= foot;
+  lit *= foot * mix(1.0, smoothstep(-0.5, 0.2, dot(vBall, uSunDir)), dull * (1.0 - smoothstep(0.02, 0.035, uSunDir.y)));
+  vec3 toSky = normalize(mix(n, smoothN, 0.6 * dull));
   float wrap = mix(0.25, 0.2, uDew) * (1.0 - 0.8 * dull * uDew);
   vec3 toSun = normalize(mix(n, smoothN, 0.85 * dull * uDew));
-  vec3 color = albedo * (uSunColor * saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap)) * lit + groundAmbient(n) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
+  vec3 color = albedo * (uSunColor * saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap)) * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);

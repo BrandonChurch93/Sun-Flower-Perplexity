@@ -263,8 +263,8 @@ void main() {
     float vein = mix(0.5, 0.5 + 0.5 * cos(vAlong.y * 28.3), fine) * (1.0 - rib);
     float mottle = valueNoise(vec2(t * 13.0 + vAlong.z * 40.0, vAlong.y * 1.5 + vAlong.z * 90.0));
     albedo *= mix(0.84, 1.06, vein) * mix(0.8, 1.12, mottle);
-    through = albedo * vec3(0.6, 0.8, 0.4) * (0.07 + 0.4 * edge) * mix(0.7, 1.2, vein) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
-    color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.6;
+    through = albedo * vec3(0.45, 0.55, 0.3) * (0.07 + 0.4 * edge) * mix(0.7, 1.2, vein) * (1.0 - 0.6 * rib) * max(-ndl, 0.0);
+    color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep * 0.45;
   }
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 40.0) * (0.05 + 0.25 * saturate(uWet + uDew)) * lit;
