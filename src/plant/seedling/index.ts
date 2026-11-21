@@ -19,12 +19,12 @@ const HUSK_HALF_WIDTH = 0.31
 const HUSK_HALF_DEPTH = 0.25
 const HUSK_WALL = 0.023
 const REST_AXIS = unit(-0.42, 0.86, 0.28)
-const REST_SIDE = unit(0.87, 0, 0.5)
+const REST_SIDE = unit(0.96, 0, 0.28)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
 const CRUMB_MAX_M = 0.00075
-const HUSK_ON_SOIL_M = 0.003
+const HUSK_ON_SOIL_M = -0.001
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
@@ -394,18 +394,17 @@ export function create(options: PartOptions): PlantPart | null {
     const h1x = huskRest.x
     const h1z = huskRest.z
     const h1y = soilHeightAt(h1x, h1z, time) + HUSK_ON_SOIL_M
-    const lift = 0.005 * grown
-    const cx = h0x + tx * lift + 0.5 * (h1x - h0x)
-    const cy = h0y + ty * lift + 0.5 * (h1y - h0y)
-    const cz = h0z + tz * lift + 0.5 * (h1z - h0z)
-    const ka = (1 - drop) * (1 - drop)
-    const kb = 2 * drop * (1 - drop)
-    const kc = drop * drop
-    const hx = ka * h0x + kb * cx + kc * h1x
-    const hy = ka * h0y + kb * cy + kc * h1y - (1 - kept) * 0.016
-    const hz = ka * h0z + kb * cz + kc * h1z
+    // The shell is pushed off the tips along their own line, and only then falls beside the stem.
+    const beat = Math.sqrt(drop)
+    const off = 0.7 * huskLength * smoothstep(0, 0.5, beat)
+    const freed = clamp((beat - 0.35) / 0.65)
+    const fall = freed * freed
+    const hx = lerp(h0x + tx * off, h1x, fall)
+    const hy = lerp(h0y + ty * off, h1y, fall) - (1 - kept) * 0.016
+    // It falls clear of the seed leaves on the near side before it comes down.
+    const hz = lerp(h0z + tz * off, h1z, 1 - (1 - freed) * (1 - freed))
     // The shell tumbles from hanging mouth down on the tips to standing mouth up in the crumbs.
-    const turn = smoothstep(0.12, 0.95, drop)
+    const turn = smoothstep(0.2, 0.95, drop)
     let ax = -ty * REST_AXIS[2] + tz * REST_AXIS[1]
     let ay = -tz * REST_AXIS[0] + tx * REST_AXIS[2]
     let az = -tx * REST_AXIS[1] + ty * REST_AXIS[0]
