@@ -89,16 +89,16 @@ void main() {
   float fleck = saturate(vSkin2.y * (0.8 * smoothstep(0.76, 0.86, fine.b) + 0.4 * smoothstep(0.74, 0.86, wide.b)));
   float spot = smoothstep(0.84, 0.97, fine.a) * (1.0 - youth);
   float dust = fine.a;
-  float height = rib * vSkin3.w * 0.7 + (fine.r - 0.5) * mix(0.00016, 0.00003, thin) + (wide.r - 0.5) * 0.00012 * ribbed;
+  float height = rib * vSkin3.w * 0.45 + (fine.r - 0.5) * mix(0.00016, 0.00003, thin) + (wide.r - 0.5) * 0.00012 * ribbed;
   vec3 normal = reliefNormal(face, vWorld, height, 1.0);
   float density = texelDensity(vCoord.xy, vec2(${SKIN_W}.0, ${SKIN_H}.0));
 #endif
   float crest = saturate(rib);
   float furrow = saturate(-rib * 2.6);
-  vec3 grown = mix(vec3(0.042, 0.069, 0.006), vec3(0.18, 0.225, 0.02), tone);
+  vec3 grown = mix(vec3(0.065, 0.095, 0.008), vec3(0.155, 0.2, 0.018), tone);
   grown = mix(grown, vec3(0.29, 0.33, 0.05), 0.7 * thread);
   grown *= 1.0 - 0.15 * ribbed * furrow;
-  grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.15 + 0.4 * streak));
+  grown = mix(grown, vec3(0.28, 0.315, 0.045), ribbed * smoothstep(0.25, 0.9, crest) * (0.06 + 0.2 * streak));
   vec3 young = mix(vec3(0.17, 0.36, 0.075), vec3(0.36, 0.58, 0.17), tone);
   vec3 albedo = mix(grown, young, youth);
   albedo = mix(albedo, vec3(0.4, 0.5, 0.25), 0.7 * spot);

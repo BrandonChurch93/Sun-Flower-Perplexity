@@ -10,12 +10,15 @@ import { leafFrameAt, type Pose } from '../skeleton.ts'
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
-import { SETS, sweepAt, toothAt, veinAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
+import { SETS, sweepAt, toothAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
 
 // The stalk is the first third of a leaf's whole reach: it rises from the stem and arches over, and the blade hangs from its end.
 const REACH = 1.25
 const STALK = 0.36
 const PATH = 48
+// The blades of the main plant turn their faces to the open side of the row, where the lens stands in the bloom.
+const OPEN_SIDE = 0.35
+const FACING = 1.2
 const HEM_DROP = 0.0022
 const HEM_IN = 0.004
 const TROUGH = 0.0045
@@ -26,7 +29,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 96, wide: 1, hairs: 40000 },
+  hero: { step: 1, rows: 96, wide: 1, hairs: 30000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -132,9 +135,12 @@ export function create(options: PartOptions): PlantPart {
     const waveAmp = 0.018 + 0.024 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
-    const blade = lerp(1, main ? 0.9 : 0.76, upper)
-    const roll = withered ? (main ? 0.2 : 0.42) : 0.02 + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
+    // The leaf that hangs right under the head is a small one on an arched stalk.
+    const tuck = main ? Math.exp(-(((rank - 0.913) / 0.03) ** 2)) : 0
+    const blade = lerp(1, main ? 0.9 : 0.76, upper) * (1 - 0.42 * tuck)
+    const roll = withered ? (main ? 0.2 : 0.42) : (main ? 0.08 : 0.02) + 0.12 * r(8) + (r(9) > 0.7 ? 0.14 : 0)
     const lump = 0.011 + 0.017 * r(30)
+    const folds = main ? 2.2 : 1
     const set = Math.min(SETS - 1, Math.floor(r(10) * SETS))
     const mirror = r(11) < 0.5 ? -1 : 1
     const dry = i === dryLeaf || withered
@@ -160,11 +166,11 @@ export function create(options: PartOptions): PlantPart {
       mirror,
       set,
       twist: (r(16) - 0.5) * 0.7 + (r(17) > 0.82 ? (r(18) - 0.5) * 1.4 : 0),
-      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19),
-      tipCurl: withered ? 1.5 : dry ? 1.1 : 0.15 + 0.5 * r(20) * r(20),
+      kink: withered ? (main ? 0.3 : 1.5) : 0.08 + 0.45 * r(19) + 0.5 * tuck,
+      tipCurl: withered ? 1.5 : dry ? 1.1 : main ? 0.45 + 0.7 * r(20) : 0.15 + 0.5 * r(20) * r(20),
       reach: STALK + (1 - STALK) * blade,
       stalk: STALK / (STALK + (1 - STALK) * blade),
-      rise: lerp(0.95, 0.6, upper) * (0.8 + 0.4 * r(35)),
+      rise: lerp(0.95, main ? 0.85 : 0.6, upper) * (0.8 + 0.4 * r(35)),
       crease: withered ? (main ? 0.3 : 1.15) : main ? 0.08 + 0.3 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
     }
@@ -194,7 +200,7 @@ export function create(options: PartOptions): PlantPart {
         z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
         z += waveAmp * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
         z -= rolled * ae * ae * ae
-        z += lump * (Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
+        z += lump * (folds * Math.sin(6.2832 * (1.7 * s + r(31))) * Math.sin(2.6 * w + 6.2832 * r(32)) + 0.4 * Math.sin(6.2832 * (4.1 * s + r(33))) * Math.sin(5.3 * w + 6.2832 * r(34)) + 0.32 * Math.sin(6.2832 * (7.3 * s + r(37))) * Math.sin(9.1 * w + 6.2832 * r(38))) * smoothstep(0.05, 0.45, aw) * Math.min(1, wide * 5)
         z -= 0.03 * Math.pow(ae, 2) * Math.pow(Math.max(0, 1 - s / 0.3), 2) * cord
         if (onStalk) {
           x = w * 0.012
@@ -303,27 +309,10 @@ export function create(options: PartOptions): PlantPart {
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
       const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4) }
-      if (pick < 0.22) {
+      if (pick < 0.3) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
         hair.b = r(6) < 0.5 ? 1 : leaf.nv - 2
-      } else if (pick < 0.52 && leaf.i !== witheredLeaf) {
-        hair.kind = 1
-        const side = r(6) < 0.5 ? 0 : 1
-        const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
-        let w = 0
-        let s = 0.02 + 0.9 * r(5)
-        if (r(7) > 0.65) w = 0.05 + 0.85 * r(9)
-        else if (r(7) > 0.25) {
-          const v = veins[2 + Math.floor(r(8) * (veins.length - 2))]
-          w = 0.04 + 0.9 * r(9)
-          s = Math.min(0.97, veinAt(v, w))
-        }
-        const signed = side ? w : -w
-        let c = 0
-        while (c < HERO_COLS.length - 2 && HERO_COLS[c + 1] < signed) c++
-        hair.a = s * (leaf.nu - 1.001)
-        hair.b = 1 + c + clamp((signed - HERO_COLS[c]) / (HERO_COLS[c + 1] - HERO_COLS[c]))
       } else {
         hair.kind = 2
         hair.a = 1 + Math.pow(r(5), 1.2) * (RINGS_STALK + 2)
@@ -349,9 +338,12 @@ export function create(options: PartOptions): PlantPart {
     const stalk = leaf.stalk
     const blade = total * (1 - stalk)
     const age = Math.max(0, leafAge(i, time))
-    const droop = leafDroop(i, pose.inputs)
+    const droop = leafDroop(i, pose.inputs, time)
     const fold = leafFold(i, time)
     const grown = smoothstep(2, 12, age)
+    // A blade that points away shows its underside instead, so it turns the other way.
+    const toward = clamp(1 + 2 * (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)), -1, 1)
+    const facing = main ? -FACING * grown * toward * (frame.wx * Math.sin(OPEN_SIDE) + frame.wz * Math.cos(OPEN_SIDE)) : 0
     // The stalk stands up from the stem at about 45 degrees and arches over before the blade begins.
     const rise = grown * clamp(leaf.rise - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rock = wind * (0.04 * gust(time, frame.ox, frame.oz) + 0.025 * flutter(time, leaf.seed))
@@ -393,7 +385,7 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + sway * (0.3 + 0.7 * s)
+      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const cx = frame.ox + frame.mx * at.x + frame.nx * at.z
@@ -444,7 +436,7 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const turn = leaf.twist * s * grown + sway * (0.3 + 0.7 * s)
+      const turn = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
       const tx = frame.mx * ca + frame.nx * sa
@@ -459,8 +451,8 @@ export function create(options: PartOptions): PlantPart {
       const nx = ux * ct - frame.wx * st
       const ny = uy * ct - frame.wy * st
       const nz = uz * ct - frame.wz * st
-      const flare = ring === 0 ? 1 : 1 + 0.5 * Math.exp(-(share * total) / Math.max(1.3 * stem, 1e-5))
-      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) * flare
+      const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
+      const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - 0.42 * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
@@ -530,7 +522,7 @@ export function create(options: PartOptions): PlantPart {
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
         dz = dz / l + ((tube[v1 + 2] - tube[v0 + 2]) / tl) * along
-        long = (0.0008 + 0.0036 * hair.r1 * hair.r3) * scale
+        long = (0.002 + 0.002 * hair.r1) * scale
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
@@ -567,18 +559,7 @@ export function create(options: PartOptions): PlantPart {
           dx = ex + nx * tilt + fx * ahead
           dy = ey + ny * tilt + fy * ahead
           dz = ez + nz * tilt + fz * ahead
-          long = (0.0004 + 0.0013 * hair.r1 * hair.r4) * scale
-        } else {
-          const jx = hair.r2 - 0.5
-          const jy = hair.r3 - 0.5
-          dx = -nx + jx * 1.1
-          dy = -ny + jy * 0.6 - 0.2
-          dz = -nz + (hair.r4 - 0.5) * 1.1
-          const sink = 0.0012 * scale * (tb === 0 ? 1 : 0.3)
-          px -= nx * sink
-          py -= ny * sink
-          pz -= nz * sink
-          long = (0.0006 + 0.0012 * hair.r1) * scale
+          long = (0.002 + 0.002 * hair.r1) * scale
         }
       }
       root[o] = px

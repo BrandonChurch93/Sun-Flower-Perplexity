@@ -16,10 +16,10 @@ export interface LensLook {
   core: number
   // Strength of the star the aperture blades draw round the sun.
   star: number
-  // Wide warm glow round a sun in the frame, and the soft shafts that fan down from it.
+  // Bloom of the glass round a sun in the frame, and the lit air round it: soft shafts and a warm spill.
   glow: number
   shafts: number
-  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of. 0 leaves them tied to what shows.
+  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what shows.
   sunClear: number
   // Extra slope through the upper half of the tones.
   punch: number
@@ -36,7 +36,7 @@ const table: Record<string, Partial<LensLook>> = {
   rain: { flare: 0, halation: 0.2 },
   night: { flare: 0.35, halation: 0.2 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 1.6, veilTint: [1.15, 0.62, 0.3], flare: 1, halation: 0.5, keep: 0.3, core: 3.2, star: 0.006, glow: 0.06, shafts: 0.0165, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45 },
+  golden: { veil: 1.6, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 3.2, star: 0, glow: 0.065, shafts: 0.008, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45 },
 }
 
 export function lensLook(def: WorldDef): LensLook {

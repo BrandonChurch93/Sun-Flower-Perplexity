@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
-import { setLeafTurn } from '../plant/growth.ts'
+import { setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
@@ -17,7 +17,11 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 // Which neighbor the companion is: its own seed, so its own leaf angles and timing.
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
-setLeafTurn(companionVariant, 118 * RAD)
+setLeafTurn(companionVariant, 228.3 * RAD)
+// Three of its leaves are held by hand for the bloom frames: an upper one level over the sun, a longer one under it and a long low one in the corner.
+setLeafHold(companionVariant, 20, { droop: 0.064, liftDeg: 13.8 })
+setLeafHold(companionVariant, 17, { droop: 0, liftDeg: 25, lengthScale: 1.75 })
+setLeafHold(companionVariant, 15, { droop: 0.1, liftDeg: 45.7, lengthScale: 1.9 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
