@@ -40,7 +40,7 @@ export const PLACE = 8
 
 // How high the canopy of the field stands. The neighbors are lit by their depth in it instead of by the shadow map.
 // The wind's strength and the height of a full size neighbor, so that each neighbor sways with the swell that reaches its own place.
-export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
+export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDeep: { value: 0 }, uSquat: { value: 0 }, uHang: { value: 0 }, uWide: { value: 0 }, uLate: { value: 0 }, uEdge: { value: new THREE.Vector3(0, 1, 0) }, uPlantWind: { value: 0 }, uPlantHeight: { value: 1 } }
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
@@ -57,6 +57,8 @@ uniform float uHeadGrow;
 uniform float uSquat;
 uniform float uHang;
 uniform float uWide;
+uniform float uLate;
+uniform vec3 uHeadAxis;
 ${swayGlsl}
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
@@ -76,6 +78,15 @@ vec3 plantWorld(vec3 local) {
   // A short neighbor's head is nearly as large as the plant's own: the head and what touches it are drawn larger about the head's middle.
   vec3 q = local - uHeadAt.xyz;
   local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
+  // Late in the bloom every head has its own weight: it nods by its own angle and is its own size. The whole of aVary.w is the nod, the rest the size.
+  if (uLate > 0.0 && uHeadAt.w > 0.0) {
+    float atHead = uLate * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q)));
+    float nod = atHead * floor(aVary.w) * ${(1 / 64).toFixed(6)};
+    vec3 k = normalize(cross(vec3(0.0, 1.0, 0.0), uHeadAxis) + vec3(1e-5, 0.0, 0.0));
+    q = local - uHeadAt.xyz;
+    q = q * cos(nod) + cross(k, q) * sin(nod) + k * (dot(k, q) * (1.0 - cos(nod)));
+    local = uHeadAt.xyz + q * mix(1.0, 2.0 * fract(aVary.w), atHead);
+  }
   vec3 p = local * aPlace.w;
   p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
   p.xz *= 1.0 + uWide * smoothstep(0.02, 0.06, length(p.xz));
@@ -119,6 +130,7 @@ uniform float uClosed;
 uniform float uDeep;
 uniform vec3 uEdge;
 uniform float uHang;
+uniform float uLate;
 #endif
 
 // How much of the sun reaches a point, 0 to 1. offsetDir is the surface normal on the lit side.
@@ -131,6 +143,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float streak = valueNoise(vec2(along * 0.11, across * 0.8));
   // A picture of a plant is drawn without shadows, and so as a plant outside a lane.
   float lane = uShadowOn * smoothstep(0.64, 0.78, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0)));
+  // Late in the bloom the sun is lower still and finds more lanes.
+  if (uLate > 0.0) lane = max(lane, uLate * uShadowOn * smoothstep(0.48, 0.68, valueNoise(vec2(along * 0.07 + 31.0, across * 1.15 + 7.0))));
   // One gap toward the sun lights three neighbors of the second row.
   lane = max(lane, uShadowOn * (1.0 - smoothstep(0.3, 0.55, length(world.xz - vec2(0.1, -2.42)))));
   // While the leaves of the young crop hang, they shut most of its lanes.
@@ -139,6 +153,7 @@ float plantSun(vec3 world, vec3 offsetDir) {
   float closed = uClosed;
   // The tops stand in the long grazing shade of the crop toward the sun: over a third of the sun is left there, and all of it in an open lane.
   float top = mix(0.38, 1.0, lane * smoothstep(0.05, 0.35, under));
+  if (uLate > 0.0) top += 0.2 * uLate * (1.0 - top);
   // Below the tops the sun in a lane comes through the leaves in flecks: a piece of a stalk, the edge of a leaf.
   float fleck = smoothstep(0.5, 0.68, valueNoise(vec2(world.y * 6.0 + across * 2.3, along * 1.7 + world.y * 2.0)));
   // Out in the body of the field the grazing sun gets into the upper crop in thin shafts that lie along its rays: a head, an edge, a stretch of stalk is lit.
