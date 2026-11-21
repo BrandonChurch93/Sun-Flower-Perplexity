@@ -56,7 +56,7 @@ const float TISSUE_FORWARD = 0.4;
 // Wax over a cell wall: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 // The fuzz at its brightest, as a share of the sun.
-const float TISSUE_FUZZ = 0.25;
+const float TISSUE_FUZZ = 0.22;
 // A thin part shaded by another thin part lying against it still gets the sun that came through that one, taken as a layer of its own kind. Anything farther than this toward the sun shades it fully.
 const float TISSUE_LAYER = 1.6;
 const float TISSUE_LAYER_M = 0.006;
@@ -87,7 +87,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float against = saturate(dot(-view, L));
   float grazing = 1.0 - ndv;
   float rim = grazing * grazing;
-  rim *= rim;
+  rim *= rim * grazing;
   float tone = plantTone();
   vec3 albedo = t.albedo * tone;
   vec3 through = t.through * (tone * TISSUE_THROUGH);
@@ -166,7 +166,7 @@ vec3 shadeTissue(Tissue t, vec3 world, vec3 view) {
   float fresnel = TISSUE_F0 + (1.0 - TISSUE_F0) * f5;
   float d = ndh * ndh * (a2 - 1.0) + 1.0;
   float vis = 0.5 / max(lit * (ndv * (1.0 - a) + a) + ndv * (lit * (1.0 - a) + a), 1e-4);
-  float gloss = wax * fresnel * (a2 / (d * d)) * vis * lit;
+  float gloss = min(wax * fresnel * (a2 / (d * d)) * vis * lit, 8.0);
 
   // The sky in the wax: dim on a dull leaf, a clear rim on a wet one.
   float g5 = grazing * grazing;
