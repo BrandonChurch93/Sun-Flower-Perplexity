@@ -41,7 +41,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
     return vec3(cos(th) * r + lean.x, wide * (0.6 + 0.5 * fract(seed * 17.0)) * stands * v, sin(th) * r + lean.y);
   }
   float tall = wide * mix(0.7, 0.8, onWater) * (0.75 + 0.5 * fract(seed * 13.0));
-  float rise = smoothstep(0.0, 0.22, x) * (1.0 - smoothstep(0.5, 1.0, x));
+  float rise = smoothstep(0.0, mix(0.22, 0.12, onWater), x) * (1.0 - smoothstep(mix(0.5, 0.72, onWater), 1.0, x));
   float tooth = th * teeth / TAU + seed * 7.0;
   float bump = pow(0.5 - 0.5 * cos(TAU * fract(tooth)), 2.5);
   float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
@@ -51,7 +51,7 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float finger = bump * ragged * v * v * v;
   float y = tall * rise * (0.6 + 0.4 * lobe * lean) * (mix(0.5, 0.75, onWater) * v + 1.1 * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
-  float r = wide * (0.35 + 0.65 * sqrt(x)) * (0.8 + 0.2 * lobe) * (0.8 + foot + 0.2 * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
+  float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (0.8 + foot + 0.2 * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.5, onWater) * finger);
   return vec3(cos(th) * r, y, sin(th) * r);
 }
 

@@ -8,8 +8,8 @@ import { DENSITY, DENSITY_SIZE, GLOW_COVER } from './density.ts'
 const RAD = Math.PI / 180
 
 // The painted glow is laid where the camera of the night key saw it and is fixed to the stars from there on.
-const MAP_AZ_DEG = -166.8002
-const MAP_EL_DEG = 7.3127
+const MAP_AZ_DEG = -167.2364
+const MAP_EL_DEG = 9.5298
 const MAP_SCALE_X = 1.1388889
 const MAP_SCALE_Y = MAP_SCALE_X * (16 / 9)
 const KEY_TIME_S = 26
@@ -22,8 +22,8 @@ const TURN_DEG_PER_SECOND = 0.6
 const METEOR_AT_S = 22.3
 const METEOR_SECONDS = 0.5
 const METEOR_TRAIL = 0.3
-const METEOR_FROM_DEG: [number, number] = [-187.7, 16.7]
-const METEOR_TO_DEG: [number, number] = [-181.7, 11.4]
+const METEOR_FROM_DEG: [number, number] = [-188.1, 18.9]
+const METEOR_TO_DEG: [number, number] = [-182.1, 13.6]
 const METEOR_LIGHT = 0.5
 
 const STARS = 150000
@@ -108,7 +108,7 @@ void main() {
   float sigma = aLight.a * uWidth / 1920.0;
   float size = ceil(6.0 * sigma) + 2.0;
   float air = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) / (uFogFalloff * max(w.y, 1e-4));
-  float dim = exp(-air) * exp(-0.035 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
+  float dim = exp(-air) * exp(-0.06 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
   vLight = aLight.rgb * (uGain * dim / (6.2832 * sigma * sigma));
   vSigma = sigma;
   bool hidden = v.z > -0.05 || uDiag > 1;
