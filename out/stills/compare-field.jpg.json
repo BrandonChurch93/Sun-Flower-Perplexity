@@ -1,24 +1,24 @@
 {
   "kind": "compare",
-  "engineHash": "b9de284219d214c9",
+  "engineHash": "f4da6d9bf14270bc",
   "unitHashes": {
     "dawn": "609ff98b65fa38e3",
-    "rain": "cdb9bfbbb4e44942",
-    "night": "dd84d117aab66acc",
+    "rain": "9b15161ed47d967d",
+    "night": "104ce1a4b84575bd",
     "frost": "8162048fd525a7c9",
-    "bloom": "d9662b45d5344491",
-    "field": "c229e6a6f41a2960"
+    "bloom": "7f4b2c0c57a37c10",
+    "field": "85ecd6aea5f49c50"
   },
   "diag": "beauty",
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T00:35:17.877Z",
+  "at": "2026-11-22T04:52:49.040Z",
   "format": "16x9",
   "tier": "final",
   "assets": "full",
@@ -57,7 +57,7 @@
       "x": 0.4929751389931864,
       "y": 0.5051269102852297,
       "depthM": 4.692237706300397,
-      "cocPx": 0.01050963718444109
+      "cocPx": 0.010525865480303764
     }
   }
 }

@@ -1,89 +1,24 @@
 {
   "kind": "sheet",
-  "engineHash": "883ccb0f6f431fcb",
+  "engineHash": "f4da6d9bf14270bc",
   "unitHashes": {
-    "dawn": "7a53aed8d27461eb",
-    "rain": "0106310b0f31255c",
-    "night": "f076338aed740aae",
-    "frost": "58236098c12c5476",
-    "bloom": "0caa5e69480e1fc8",
-    "field": "84bb14740ea79de1"
+    "dawn": "609ff98b65fa38e3",
+    "rain": "9b15161ed47d967d",
+    "night": "104ce1a4b84575bd",
+    "frost": "8162048fd525a7c9",
+    "bloom": "7f4b2c0c57a37c10",
+    "field": "85ecd6aea5f49c50"
   },
   "diag": "beauty",
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
-    "cores": 2,
-    "ramMb": 7958
+    "boot": "4b3e1392-af3f-458b-87ee-01d6128b0bf9",
+    "cores": 4,
+    "ramMb": 7957
   },
-  "standIns": [
-    {
-      "name": "field",
-      "units": [
-        "dawn",
-        "rain",
-        "night",
-        "frost",
-        "bloom",
-        "field"
-      ]
-    },
-    {
-      "name": "ground",
-      "units": [
-        "dawn",
-        "rain",
-        "night",
-        "frost",
-        "bloom",
-        "field"
-      ]
-    },
-    {
-      "name": "plant",
-      "units": [
-        "dawn",
-        "rain",
-        "night",
-        "frost",
-        "bloom",
-        "field"
-      ]
-    },
-    {
-      "name": "world dawn",
-      "units": [
-        "dawn"
-      ]
-    },
-    {
-      "name": "world frost",
-      "units": [
-        "frost"
-      ]
-    },
-    {
-      "name": "world golden",
-      "units": [
-        "bloom",
-        "field"
-      ]
-    },
-    {
-      "name": "world night",
-      "units": [
-        "night"
-      ]
-    },
-    {
-      "name": "world rain",
-      "units": [
-        "rain"
-      ]
-    }
-  ],
-  "at": "2026-11-21T06:39:02.493Z",
+  "standIns": [],
+  "at": "2026-11-22T04:41:08.217Z",
   "format": "preview",
   "tier": "review",
   "assets": "full",

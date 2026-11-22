@@ -1,13 +1,13 @@
 {
   "kind": "still",
-  "engineHash": "b9de284219d214c9",
+  "engineHash": "f4da6d9bf14270bc",
   "unitHashes": {
     "dawn": "609ff98b65fa38e3",
-    "rain": "cdb9bfbbb4e44942",
-    "night": "dd84d117aab66acc",
+    "rain": "9b15161ed47d967d",
+    "night": "104ce1a4b84575bd",
     "frost": "8162048fd525a7c9",
-    "bloom": "d9662b45d5344491",
-    "field": "c229e6a6f41a2960"
+    "bloom": "7f4b2c0c57a37c10",
+    "field": "85ecd6aea5f49c50"
   },
   "format": "16x9",
   "tier": "final",
@@ -16,25 +16,25 @@
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+    "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-21T23:28:24.734Z",
+  "at": "2026-11-22T04:31:31.104Z",
   "frames": [
     780
   ],
   "samples": 48,
-  "seconds": 227.14039999999105,
+  "seconds": 219.417,
   "check": {
     "frame": 780,
     "invalid": 0,
     "tip": {
-      "x": 0.5760684125937905,
-      "y": 0.3078385366342331,
-      "depthM": 1.0153339913151018,
-      "cocPx": 0.1524377316236496
+      "x": 0.5578016350956397,
+      "y": 0.307934122190307,
+      "depthM": 1.0162842008570268,
+      "cocPx": 0.15369673073291779
     }
   }
 }

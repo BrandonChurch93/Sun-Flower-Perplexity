@@ -1,13 +1,13 @@
 {
   "kind": "still",
-  "engineHash": "5ac2814e4342d561",
+  "engineHash": "f4da6d9bf14270bc",
   "unitHashes": {
-    "dawn": "c179aad68f92134f",
-    "rain": "789a18dc076ec1fb",
-    "night": "fd16ca7bd680da94",
-    "frost": "33f5ee075b9c7547",
-    "bloom": "a3c4425208d2ca9c",
-    "field": "914531c0d2e40ab6"
+    "dawn": "609ff98b65fa38e3",
+    "rain": "9b15161ed47d967d",
+    "night": "104ce1a4b84575bd",
+    "frost": "8162048fd525a7c9",
+    "bloom": "7f4b2c0c57a37c10",
+    "field": "85ecd6aea5f49c50"
   },
   "format": "16x9",
   "tier": "final",
@@ -16,66 +16,25 @@
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
-    "cores": 2,
-    "ramMb": 7958
+    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+    "cores": 4,
+    "ramMb": 7957
   },
-  "standIns": [
-    {
-      "name": "neighbors seedling",
-      "units": [
-        "dawn",
-        "rain",
-        "night"
-      ]
-    },
-    {
-      "name": "plant seedling",
-      "units": [
-        "dawn",
-        "rain",
-        "night"
-      ]
-    },
-    {
-      "name": "world dawn",
-      "units": [
-        "dawn"
-      ]
-    },
-    {
-      "name": "world frost",
-      "units": [
-        "frost"
-      ]
-    },
-    {
-      "name": "world night",
-      "units": [
-        "night"
-      ]
-    },
-    {
-      "name": "world rain",
-      "units": [
-        "rain"
-      ]
-    }
-  ],
-  "at": "2026-11-21T15:24:16.164Z",
+  "standIns": [],
+  "at": "2026-11-22T04:29:23.612Z",
   "frames": [
     1515
   ],
   "samples": 48,
-  "seconds": 429.034799999997,
+  "seconds": 292.284,
   "check": {
     "frame": 1515,
     "invalid": 0,
     "tip": {
-      "x": 0.5427535182222063,
-      "y": 0.4094782117972239,
-      "depthM": 0.7753489166560811,
-      "cocPx": 0.5476805567741394
+      "x": 0.5438921353480247,
+      "y": 0.41088286633729654,
+      "depthM": 0.7745394919512728,
+      "cocPx": 0.5488715767860413
     }
   }
 }
