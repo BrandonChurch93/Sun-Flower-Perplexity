@@ -1,12 +1,12 @@
-# Status 68
+# Status 69
 
-2026-11-22 03:47 UTC
+2026-11-22 04:09 UTC
 
-- Status 68 · Phase 5. Round 22, the whole film round, ends at its limit and not at a pass (R5 7, R6 6, R7 6, R4 8, the jury fails frames 420, 780, 1755). Its one fix pass closed inside 90 minutes with ten merges; the kept build is 41ab097. Twelve open groups are written under Open items. The final build is rendering on eleven builders: eight of its ten judged frames are in and none looks worse than the frame the round judged.
-- Next: The last judged frames, the sheets and the 26 parts of the preview film come in; the machine checks and the measures finish on the kept build; then the preview film, the comparison images, the review page and the Phase 5 gate. Time used: 26.9 h of 30 h.
+- Status 69 · Phase 5. The final build of Phase 5 (41ab097) passed all 13 machine checks at 04:05 UTC. All 26 parts of its preview film came back from twelve machines and are joined: 1800 frames, 960 x 540, 30 fps, no frame failed the tip and focus check (M1). The four cut sheets and the stills beside the cuts are looked at: each hard cut lands on its exact frame and the plant and camera carry straight across. The eight comparison images are remade from the final stills.
+- Next: The six measures finish on this machine (two of six done, both clean); then the preview film is kept, the review page is rebuilt and published, and the Phase 5 gate is closed. The twelve machines are already rendering the record round's extra pictures and the 26 parts of the master film. Time used: 27.3 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frame 1515, judged by round 22 left, the kept build right
-- `status-2.jpg`: Frames 0 and 45, judged left, kept build right: dawn's own blades with dew stand from the first frame
-- `status-3.jpg`: Frames 420 and 780, judged left, kept build right
-- `status-4.jpg`: Frame 1350, judged left, kept build right
+- `status-1.jpg`: Whole film sheet 1 of 3, final build
+- `status-2.jpg`: Whole film sheet 2 of 3
+- `status-3.jpg`: Whole film sheet 3 of 3
+- `status-4.jpg`: The four cuts, frame before, frame after, and both laid over each other
