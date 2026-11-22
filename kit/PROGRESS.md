@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 00:33 UTC · Kit read again after a compaction; Status lines brought up to date
+- Last push: 2026-11-22 00:43 UTC · dawn finished on 47d93fd (round limit): clip, judged stills and both comparison images kept
 - Last status: 56 · 2026-11-22 00:31 UTC · Phase 4 · unit rain · round 20
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 8.21 h |
+| 4 | 8.50 h | 8.27 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 23.68 h |
+| Whole build | 30.00 h | 23.73 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -73,7 +73,7 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 
 | Unit | State | Rounds run | R1 | R2 | R3 | R4 | Ended by | Commit | Open items |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| dawn | in progress | 3 (rounds 9, 14 and 19; the scores here are round 19's) | 4 | passes (14 of 20 against the controls' 5 of 10) | 7 | 7 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison images from `47d93fd` come next, then `finished`. 10 entries from round 19 (6 severe and 13 major issues) under "Open items" |
+| dawn | finished | 3 (rounds 9, 14 and 19; the scores here are round 19's) | 4 | passes (14 of 20 against the controls' 5 of 10) | 7 | 7 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 10 entries from round 19 (6 severe and 13 major issues), see "Open items". Clip `out/clips/dawn.mp4` (240 frames at the `review` tier, no frame failed M1), comparison images `out/stills/compare-dawn-sprout.jpg` and `out/stills/compare-dawn-seedling.jpg`, finished 00:44 UTC on 2026-11-22 |
 | rain | in progress | 3 (rounds 10, 15 and 20; the scores here are round 20's) | 3 | passes on the edge (2 of 5 against the controls' 3 of 5) | 6 | 9 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 8 entries from round 20 (3 severe and 8 major issues) under "Open items" |
 | night | in progress | 3 (rounds 11, 16 and 21; the scores here are round 21's) | 5 | passes on the edge (3 of 5 against the controls' 4 of 5) | 4 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 21 (5 severe and 11 major issues) under "Open items", one major issue declined |
 | frost | in progress | 3 (rounds 8, 13 and 18; the scores here are round 18's) | 5 | passes (4 of 5 against the controls' 2 of 5) | 4 | 6 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 18 (3 severe and 15 major issues) under "Open items" |
@@ -708,6 +708,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 4 · 00:18 UTC. The clip parts stood still. Woken at 00:13 UTC for their finished parts, seven builders reported the same thing from the write times of their frame files: the detached script ran on for about a quarter of an hour after the builder's turn ended (23:37 to 23:41) and then the whole machine stood still until the wake (18 to 23 minutes lost each; load averages near 0.3 over five minutes, the processes alive with the same pids). The idle test of 23:38 had only covered eight minutes, inside that quarter of an hour, so it read "runs on". Measured pace while a machine runs: dawn 52 to 60 s a frame, frost 38 to 43 s. Decided: every builder with parts stays in a turn and polls its log every three to four minutes until its last part is sent (ten asked at 00:15, `lens_builder` at 00:17 when a juror's slot came free, `golden_builder` as soon as the last critic's slot is free, so that never more than 12 agents run). To bring the end forward, the fifth part of four builders with five parts goes to four with shorter lists, who start it when their own are done: frost 900 to 929 from `ground_builder` to `stem_builder`, 930 to 959 from `petal_builder` to `harness_builder`, 960 to 989 from `bud_builder` to `disc_builder`, 990 to 1019 from `hair_builder` to `lens_builder`. Each part is checked on arrival by `out/work/scratch/take-parts.cjs` (engine and unit hash, tier, 30 frames at 1920 x 1080, no stand-in, the M1 list) before it is copied to `out/work/film/`. 8 of 48 parts are in at 00:17 (dawn 6 of 8, frost 2 of 10), no frame failed M1. Expected end of the last part: about 01:35 UTC, where the plan of 23:26 said 01:20.
 - 2026-11-22 · Phase 4 · 00:24 UTC. After a compaction at about 00:19 UTC the kit was read again from disk as `AGENTS.md` orders: "Status", "Units" and "Look lock" of this file, `kit/addenda/README.md` (there is still no addendum), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md` and `kit/08-BUILD-ORDER.md` from Phase 4 to the end. Nothing in hand changes. Clip parts: `golden_builder` was woken at 00:23 UTC into a long turn as the twelfth running agent, once round 20's motion critic had answered and ended (frost 1170 to 1199 was on frame 21 of 30 at 00:23:39, 43.7 s a frame). The last three fifth parts moved so that all lists end at about the same time: night 840 to 869 from `field_builder` and frost 1020 to 1049 from `skin_builder` to `golden_builder`, night 870 to 899 from `leaf_builder` to `lens_builder`; the donors stop their scripts after their fourth part. Every part is still rendered once, at `review`, from `47d93fd`, and `take-parts.cjs` checks each file's record (engine, unit hash, frames, M1) whoever sends it. 11 of 48 parts are in.
 - 2026-11-22 · Phase 4 · 00:34 UTC. After a compaction of the Builder's context at about 00:31 UTC the kit was read again from disk, as `AGENTS.md` asks: "Status", "Units" and "Look lock" here, `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md`, and `kit/08-BUILD-ORDER.md` from Phase 4 to the end. What it confirms for the hours left: the five loops are over and none is reopened; each unit is marked `finished` only when its clip and its comparison images from `47d93fd` exist (steps 5 to 7 of Phase 4), with `round limit` as what ended it; the budget report comes before any floor work in hand; a status at the end of every finished unit and at the gate. "Current unit" and "Current round" under "Status" were brought up to date with this entry.
+- 2026-11-22 · Phase 4 · 00:44 UTC. `dawn` is finished on `47d93fd`, ended by the round limit, not by a pass (round 19: R1 4, R3 7, R4 7, the jury passes; 10 entries stay under "Open items"). Steps 5 to 7 of Phase 4: the eight clip parts (30 frames each, rendered on eight builders' machines) were checked one by one (engine `b9de284219d214c9`, unit hash `609ff98b65fa38e3`, 30 frames, M1 of every frame) and joined by `npm run clip -- --unit dawn --tier review` into `out/work/clips/dawn.mp4`: 240 frames, 30 fps, 1920 x 1080, 22.3 MB, M1 failed on 0 of 240 frames. The Builder's own check of the joined clip (`out/work/scratch/clip-check.cjs`, results in `out/work/scratch/clipcheck/dawn.txt`): the clip's frames 0, 45, 60 and 195 match the `final` tier judged stills at 40.6, 39.5, 39.7 and 37.1 dB, and across each of the seven seams the frame to frame difference is the same as inside the parts (largest drop 0.1 dB, at frame 60); the seam pairs were looked at side by side. `npm run compare` made both comparison images from the judged stills of the same commit (no render, their records match the build), and `npm run keep -- --unit dawn --clips` kept the four judged stills, the two comparison images and the clip.
 
 ## Notes from Brandon
 
@@ -1378,6 +1379,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 00:31 UTC · Status 56; round 20 (rain) closed at the round limit: summary, 8 open items, Units row. The loops of all five units are over on 47d93fd
 - 2026-11-22 00:32 UTC · Running jobs and running agents brought up to 00:32 UTC
 - 2026-11-22 00:33 UTC · Kit read again after a compaction; Status lines brought up to date
+- 2026-11-22 00:43 UTC · dawn finished on 47d93fd (round limit): clip, judged stills and both comparison images kept
 
 ## Session log
 
