@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:37 UTC · Status 64: round 22 answered (7, 8, 6, 6; jury fails on rain, night, field), fix pass open
+- Last push: 2026-11-22 02:38 UTC · Fix pass of round 22: jobs at 02:38, the cuts judge's check
 - Last status: 64 · 2026-11-22 02:37 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -734,6 +734,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 02:32 UTC. `field_builder`'s head start came in (`a67ab27` on `agent/field`, engine `405de72ef57a030d`, tests 125 of 125 by its count) and was read by its pictures (`out/work/scratch/p5/field-head/`): the bright seam of frames 1777 and 1799 is gone and an uneven ridge of crop stands where the flat bare strip was. Not merged: the ridge comes up by 2.2 m over 52 to 55 s, and land may not rise in view (the brief said: what is there at 60.0 s is there from 52.0 s on). Sent back with that as point one. Its finding is logged for the owner: the seam is the golden world's far land plane seen over the bank strips once the lens passes 2.95 m.
 - 2026-11-22 · Phase 5 · 02:35 UTC. `disc_builder`'s head start came in (`1ec0f16` on `agent/night-world`, only `src/worlds/night/sky.ts` and `layers.ts`, tests 125 of 125 by its count) and was read by its pictures (`out/work/scratch/p5/disc-head/`: the night sheet before and after, cut sheets 2 and 3 after; records name engine `305e9520118781cf` and the night's unit hash `104ce1a4b84575bd`): the hills and the mist bank stand in one tone and shape on all twelve frames from 600 to 899, the plant lines up across both cuts, the hills are there on frame 600 and gone on frame 900. Merged into main as `adaf813`; `tsc` clean. Still there and not the night's: small crop silhouettes against the mist at the left horizon in the first and last seconds of the night.
 - 2026-11-22 · Phase 5 · 02:34 UTC. Fix pass of round 22 prepared while the last jurors answer; R5 7, R4 8, R6 6 and R7 6 are in. Worst first by owner, briefs in `out/work/briefs/p5-fix-*.md`, reports due 03:20 UTC: `ground_builder` the first frames at phone size (R6 severe and major, inside the settled opening); `field_builder` the ridge that may not move, one plant standing clear at the end (R5 major), then heads that read as copies (jury on frame 1755); `lens_builder` the rain streaks under the encoder (R7, two majors); `golden_builder`, added to its head start, the specks under the encoder (R7 major); `hair_builder` the rim hairs that blink at frames 1641 to 1652; `leaf_builder` the leaf outlines that jurors on four frames read as polygons; `petal_builder` the folded rays at frame 1350 and rays that stand still in the wind. Not taken on in this pass, kept open: R5's two majors on the night (the rows behind against the rain's, the hero's lower leaves as the lens turns) and its major on the hero's leaf mass at 58.5 s; they need the plant or the camera, which no 90 minute pass can change safely.
+- 2026-11-22 · Phase 5 · 02:38 UTC. The cuts judge's one issue (the pack does not show the fastest growth at frame cadence) is answered inside the fix pass by a check, not by a new pack: `bud_builder` renders runs of twelve consecutive frames through the hook's emergence, the husk's release and the rays' release (three runs, with native crops of the head) and lists every pop, pass-through and stall it sees; the Builder reads the sheets too. The pack for this critic stays the one `kit/` defines.
 
 ## Notes from Brandon
 
@@ -825,6 +826,14 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 ## Running jobs
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
+
+Running (02:38 UTC, 2026-11-22):
+
+- The fix pass of round 22 · opened 02:34 UTC when the four critics and 49 of 50 jurors had answered, ends by 04:04 UTC at the latest (`floorFixMinutes` 90) · eight builders in their own folders on their own branches from main, briefs `out/work/briefs/p5-fix-*.md`, reports due 03:20 UTC (the check 03:15), twice the wait is the end of the pass: `ground_builder` (the first frames at phone size), `field_builder` (the ridge at full height from frame 1560, one plant standing clear at the end, heads that read as copies), `lens_builder` (the rain streaks under the encoder), `golden_builder` (head start of 02:13 UTC: the specks' volume, the field's sun and haze; plus the specks under the encoder), `hair_builder` (rim hairs that blink at frames 1641 to 1652), `leaf_builder` (leaf outlines near the lens), `petal_builder` (the folded rays at frame 1350, rays in the wind), `bud_builder` (no code: runs of consecutive frames through the fastest growth, the check the cuts judge asked for).
+- The render budget of Phase 5 (step 6) · on `harness_builder`'s machine since 02:17 UTC · due by 02:40 UTC, twice that is 03:00; the brief stops it after 40 minutes.
+- The last juror of round 22 · `reviewer_298` (frame 1080, Gemini family), asked 02:28:25 UTC · replaced once if silent at 03:13 UTC (`agentWaitMinutes` 45).
+
+Ended since the last entry: the machine checks of the Phase 5 build (01:54:23 to 02:20:37 UTC, 26 min, all thirteen green), the two last stress sets (taken in by 02:21 UTC), the measures of all six units (02:21:36 to 02:27:46 UTC, 6 min, all green), the pack of round 22 (02:21:50 to 02:22:25 UTC), and of the head start `disc_builder` (reported 02:35 UTC, merged as `adaf813`) and `field_builder` (reported 02:32 UTC, sent back).
 
 Running (02:17 UTC, 2026-11-22):
 
@@ -1488,6 +1497,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:30 UTC · Round 22: R7 scores 6; the fix asked on frame 0 declined against the settled opening, the issue kept
 - 2026-11-22 02:35 UTC · Round 22: night far land merged, fix pass briefs out, agents at 02:36
 - 2026-11-22 02:37 UTC · Status 64: round 22 answered (7, 8, 6, 6; jury fails on rain, night, field), fix pass open
+- 2026-11-22 02:38 UTC · Fix pass of round 22: jobs at 02:38, the cuts judge's check
 
 ## Session log
 
