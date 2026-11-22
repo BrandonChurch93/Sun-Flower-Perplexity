@@ -135,8 +135,22 @@ export function bodyRadius(time: number): number {
   return variant === 0 ? body : Math.max(NEIGHBOR_HEAD * body, Math.min(body, NEIGHBOR_HELD))
 }
 
+// The director may keep one neighbor's head young, as a later sowing is: past the second given, its bracts, rays and disc stay as they were then.
+// The stem under it goes on as before, so nothing else of that plant moves. The plant itself is never kept.
+const headKeeps = new Map<number, number>()
+export function setHeadKeep(v: number, second: number | null): void {
+  if (second === null) headKeeps.delete(v)
+  else headKeeps.set(v, second)
+}
+// The stem is measured against the head the plant would have had unkept: a kept head sits on the same stem, under the same leaves.
+let measuring = false
+export function measureStem(on: boolean): void {
+  measuring = on
+}
+const headTime = (time: number): number => (variant === 0 || measuring ? time : Math.min(time, headKeeps.get(variant) ?? time))
+
 export function headOpen(time: number): number {
-  return smootherstep(inStage(bloom0, bloom1, 0.06), inStage(bloom0, bloom1, 0.82), time)
+  return smootherstep(inStage(bloom0, bloom1, 0.06), inStage(bloom0, bloom1, 0.82), headTime(time))
 }
 
 const tiltStart = bloom0 - 3
@@ -204,13 +218,14 @@ export function bractRing(j: number): number {
 }
 
 export function bractAngle(j: number, time: number): number {
-  return (lerp(innerBracts.at(time), outerBracts.at(time), bractRing(j)) + (rnd(30, j) - 0.5) * 12) * RAD
+  const kept = headTime(time)
+  return (lerp(innerBracts.at(kept), outerBracts.at(kept), bractRing(j)) + (rnd(30, j) - 0.5) * 12) * RAD
 }
 
 // How far a bract curls in over the bud. It lets go as the head opens.
 export function bractCurl(j: number, time: number): number {
   const closed = lerp(0.95, 0.1, bractRing(j))
-  return lerp(closed, -0.12, smootherstep(bloom0 - 1, turnEnd, time))
+  return lerp(closed, -0.12, smootherstep(bloom0 - 1, turnEnd, headTime(time)))
 }
 
 // A bract grows with the bud and keeps its length for good.
@@ -255,7 +270,10 @@ function raySpan(k: number): [number, number, number] {
   return [start, Math.min(start + seconds, bloom1), 1]
 }
 
-const rayRise = (span: [number, number, number], time: number): number => lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
+const rayRise = (span: [number, number, number], at: number): number => {
+  const time = headTime(at)
+  return lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
+}
 
 export function rayOpen(k: number, time: number): number {
   return rayRise(raySpan(k), time)
@@ -270,7 +288,7 @@ export function rayAngle(k: number, time: number): number {
   if (open <= held) return lift * RAD
   const cup = Math.min(RAY_CUP, 76 * (1 - held)) * (0.85 + 0.3 * rnd(44, k))
   const from = lerp(span[0], span[1], 0.69)
-  const flat = smootherstep(from, Math.min(from + lerp(4.5, 8, rnd(45, k)) + 3.5 * span[2], RAY_FLAT), time)
+  const flat = smootherstep(from, Math.min(from + lerp(4.5, 8, rnd(45, k)) + 3.5 * span[2], RAY_FLAT), headTime(time))
   return (lift - cup * smoothstep(held, 1, open) * (1 - flat)) * RAD
 }
 

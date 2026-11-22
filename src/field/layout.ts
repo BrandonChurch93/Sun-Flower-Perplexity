@@ -1,6 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
-import { heightAt, setLeafHold, setLeafTurn } from '../plant/growth.ts'
+import { heightAt, setHeadKeep, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
@@ -18,6 +18,8 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
 setLeafTurn(companionVariant, 228.3 * RAD)
+// Its head is kept young, a bud just breaking: the field's last frames have one open face standing clear, the plant's.
+setHeadKeep(companionVariant, 44)
 // Its upper leaves are held by hand for the bloom frames, as a cluster along the left edge: one swung round the stem and turned broadside across the sun
 // on a stalk that rises from the lower left, a small dark one above it, three under it and two in the bottom corner. The one that grew toward the sun
 // is swung out of the frame. They sink through the bloom as the stem carries them up, so that they stay where they are in the frame.
