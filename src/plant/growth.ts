@@ -74,8 +74,10 @@ const discRadius = config.plant.discDiameterM / 2
 const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
 
 // The top of the whole plant: the arch of the hook, then the leaf tips, then the bracts, then the petals.
+// The sprout has a head start of five frames when the film opens, so the pale arch stands in the cleft in the first frame; it is gone by 1.4 s.
+export const headStartSeconds = 1 / 6
 export function heightAt(time: number): number {
-  return heightCurve.at(time)
+  return heightCurve.at(time + headStartSeconds * (1 - smoothstep(0, 1.4, time)))
 }
 
 // A sprout is 2.4 mm through and thickens fast once its leaves work. From 40.3 s, when the youngest neighbor in the bloom is that old, the girth is the old curve to the last bit.

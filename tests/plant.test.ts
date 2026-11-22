@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount, timeOf } from '../src/config.ts'
 import { plantInputsAt } from '../src/director/inputs.ts'
-import { bodyRadius, headElevation, heightAt, huskSize, leafBirth, leafCount, leafLength, rayCount, rayLength, rayOpen, seedLeafLength, stemBaseRadius } from '../src/plant/growth.ts'
+import { Monotone } from '../src/core/curves.ts'
+import { bodyRadius, headElevation, headStartSeconds, heightAt, huskSize, leafBirth, leafCount, leafLength, rayCount, rayLength, rayOpen, seedLeafLength, stemBaseRadius } from '../src/plant/growth.ts'
 import { buildStandIn, plantNumbers, standInVertexCount, stemLength, tipAt } from '../src/plant/standin.ts'
 
 describe('the plant', () => {
@@ -32,12 +33,15 @@ describe('the plant', () => {
       expect(h).toBeGreaterThanOrEqual(last)
       last = h
     }
-    expect(heightAt(0)).toBe(0)
+    expect(heightAt(0)).toBeGreaterThan(0)
+    expect(heightAt(0)).toBeCloseTo(new Monotone(config.plant.heightM).at(headStartSeconds), 12)
     expect(heightAt(config.film.durationSeconds)).toBeCloseTo(config.plant.fullHeightM, 6)
   })
 
-  it('passes through every height the config names', () => {
-    for (const [time, height] of config.plant.heightM) expect(heightAt(time)).toBeCloseTo(height, 9)
+  it('starts with a head start that is gone by 1.4 s, and passes through every height the config names from 1.5 s on', () => {
+    const curve = new Monotone(config.plant.heightM)
+    expect(heightAt(1.4)).toBe(curve.at(1.4))
+    for (const [time, height] of config.plant.heightM) if (time >= 1.5) expect(heightAt(time)).toBeCloseTo(height, 9)
   })
 
   it('stands exactly as tall as the film says in still air, whatever shape it is in, and the wind moves its top by millimeters', () => {
@@ -85,8 +89,9 @@ describe('the plant', () => {
     }
   })
 
-  it('starts the seed leaves, the bud and the rays at zero', () => {
-    expect(seedLeafLength(0)).toBe(0)
+  it('starts the seed leaves folded and no longer than they lie in the husk, and the bud and the rays at zero', () => {
+    expect(seedLeafLength(0)).toBeGreaterThan(0)
+    expect(seedLeafLength(0)).toBeLessThan(0.013)
     expect(bodyRadius(config.plant.stages.bud[0])).toBe(0)
     expect(bodyRadius(config.plant.stages.bud[0] - 1)).toBe(0)
     expect(bodyRadius(config.film.durationSeconds)).toBeCloseTo(config.plant.discDiameterM / 2, 9)
