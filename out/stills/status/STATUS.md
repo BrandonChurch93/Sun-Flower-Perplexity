@@ -1,12 +1,12 @@
-# Status 57
+# Status 58
 
-2026-11-22 00:44 UTC
+2026-11-22 01:04 UTC
 
-- Status 57 · Phase 4 · unit dawn. dawn is finished on 47d93fd, ended by the round limit and not by a pass (round 19: match 4, surface 7, motion 7, the jury passes; 10 entries stay open). Its clip is joined from eight parts: 240 frames at the review tier, no frame failed the sanity check, and it matches the judged stills at 37 to 41 dB with no step at any seam. The review page is published with it. Clip parts: 22 of 48.
-- Next: Rain, night, frost and field the same way as their parts arrive (the last at about 01:45 UTC), then the Phase 4 gate. Time used: 23.9 h of 30 h.
+- Status 58 · Phase 4 · unit rain. Clip parts 29 of 48 are in from the builders' machines (rain 9 of 12, field 5 of 8, frost 6 of 10, night 1 of 10, dawn complete); no part since the last status failed the tip sharpness measure. The camera smoothing pass for Phase 5 is drafted on its own branch and its four keys are rendering for a look before anything is merged.
+- Next: Join and check the rain clip as its last three parts land, mark rain finished with its open items, then field, frost and night the same way; then the Phase 4 gate. Time used: 24.2 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Dawn 1.5 s: approved left, the judged frame right, with crops at native size
-- `status-2.jpg`: Dawn 6.5 s: approved left, the judged frame right, with crops at native size
-- `status-3.jpg`: Dawn 5.0 s, from the clip: the seed leaves open
-- `status-4.jpg`: Dawn 7.97 s, from the clip: the last frame before the cut to rain
+- `status-1.jpg`: Rain, frame 585 (19.5 s), from the clip part 570 to 599
+- `status-2.jpg`: Night, frame 615 (20.5 s), from the clip part 600 to 629
+- `status-3.jpg`: Frost, frame 1005 (33.5 s), from the clip part 990 to 1019
+- `status-4.jpg`: Field, frame 1695 (56.5 s), from the clip part 1680 to 1709
