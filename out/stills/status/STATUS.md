@@ -1,12 +1,12 @@
-# Status 82
+# Status 83
 
-2026-11-22 08:45 UTC
+2026-11-22 09:13 UTC
 
-- Status 82 · Phase 6. Round 24, the last polish round the kit allows, is judged and closed, not a pass: story 7, direction 7, hook 6, motion 10, and the jury passes the rain 2 of 5, the night 4 of 5 and fails the end frame 0 of 5. Fourteen fixes are in the build. Worst still open: the skyline jumps at cut 2, two plants stand at the end, the hook's first frame, the jury on the end frame.
-- Next: Freeze the build, then the record round: every critic on fresh agents over the full judged list, then the master, clips, proof and the QA list. Time used: 1.9 h of 10 h.
+- Status 83 · Phase 6. The build is frozen and the record round (round 25) is running: its scores are the film's final scores, and no fixes follow it. The measures are green for all six units on every judged frame. The packs are cut from the frozen build and go to 24 fresh critics and 50 fresh jurors as the builders free up. The export proof passed on this build. The twelve builders are rendering the master film in 26 parts, 8 are in.
+- Next: Collect every critic's and juror's answer, write the final scores, then join the master film, cut the clips and the preview film, and run the QA gauntlet. Time used: 2.4 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Rain, frame 420 at native size: round 23 left, round 24 right
-- `status-2.jpg`: Cut 2, rain to night, frames 594 to 605: the place changes at the cut, the worst open issue
-- `status-3.jpg`: Bloom hero, frame 1515: approved image left, the film right
-- `status-4.jpg`: Field, frame 1755: approved image left, the film right
+- `status-1.jpg`: Dawn, the frozen build: twelve frames across 0 to 8 s
+- `status-2.jpg`: Night, the frozen build: twelve frames across 20 to 30 s
+- `status-3.jpg`: Bloom, the frozen build: twelve frames across 40 to 52 s
+- `status-4.jpg`: Field, the frozen build: twelve frames across 52 to 60 s
