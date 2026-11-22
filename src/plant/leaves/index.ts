@@ -273,7 +273,7 @@ export function create(options: PartOptions): PlantPart {
       teeth,
       depth: hero ? depth : 0,
       // In the open field's air each leaf lifts and swings at its stalk by its own measure, at its own pace.
-      own: [0.06 + 0.045 * r(80), 1.5 + 2.5 * r(81), 1.5 + 2.5 * r(82), (r(83) < 0.5 ? 0 : Math.PI) + 0.7 * (r(84) - 0.5), (r(85) < 0.5 ? 0 : Math.PI) + 0.7 * (r(86) - 0.5), 0.06 + 0.045 * r(87), 1.5 + 2.5 * r(88), 1.5 + 2.5 * r(89), (r(90) < 0.5 ? 0 : Math.PI) + 0.7 * (r(91) - 0.5), (r(92) < 0.5 ? 0 : Math.PI) + 0.7 * (r(93) - 0.5), 0.04 + 0.2 * r(94), 0.7 + 0.5 * r(95), 0.8 + 0.4 * r(96)],
+      own: [0.09 + 0.08 * r(80), 1.5 + 2.5 * r(81), 1.5 + 2.5 * r(82), (r(83) < 0.5 ? 0 : Math.PI) + 0.44 * (r(84) - 0.5), (r(85) < 0.5 ? 0 : Math.PI) + 0.44 * (r(86) - 0.5), 0.09 + 0.08 * r(87), 1.5 + 2.5 * r(88), 1.5 + 2.5 * r(89), (r(90) < 0.5 ? 0 : Math.PI) + 0.44 * (r(91) - 0.5), (r(92) < 0.5 ? 0 : Math.PI) + 0.44 * (r(93) - 0.5), 0.04 + 0.2 * r(94), 0.7 + 0.5 * r(95), 0.8 + 0.4 * r(96)],
     }
     for (let a = 0; a < nu; a++) {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
