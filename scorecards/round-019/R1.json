@@ -1,0 +1,91 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground soil across the bottom third",
+      "what": "dark soil clods only form a narrow mound around the stem while the left and right sides drop away into smooth blur instead of rough clods spanning the full width",
+      "fix": "extend rough, dark, rim-lit soil clods across the full width of the foreground to match set-A-01-a.png"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "midground field behind the plant (also set-A-02.png region 2 and set-A-03.png region 5)",
+      "what": "the field is a smooth, featureless tan-brown blur with warm muddy shadows, losing the receding soil clods, cool dark shadows on the left, sunlit mist, and golden bokeh circles",
+      "fix": "restore out-of-focus dark soil clod texture, cool deep shadow blacks on the left, low backlit ground mist, and warm specular bokeh highlights"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 1 and region 2, seed head and arched upper stem",
+      "what": "the seed shell looks dry and matte with a uniform bright-green side slit and no wet soil crumbs or falling particles, and the arched green stem lacks bright golden backlit translucency",
+      "fix": "give the seed coat a wet glossy sheen with cool sky reflection, clinging dirt crumbs, falling crumbs beneath the tip, a small rounded cotyledon only at the bottom tip, and strong warm subsurface scattering in the stem hook"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "midground field and mist behind the plant (also set-A-05.png region 2 and set-A-06.png region 5)",
+      "what": "the midground is a flat, smooth dark-brown blur without soil clod relief, cool shadow depth on the left, golden specular bokeh, or glowing backlit ground fog",
+      "fix": "add textured out-of-focus dark soil clods with cool shadow tones on the left, bright golden low mist behind the seedling, and warm circular bokeh highlights"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05.png",
+      "where": "region 1 and region 3, cotyledons and central bud",
+      "what": "the leaves look waxy and veinless with bright white polka-dot droplets scattered over their dark surfaces, a hard dark gap at the leaf base, and a dull brown central bud without glowing hairs",
+      "fix": "give the leaves natural venation, softer matte-organic shading, and warm golden translucency on the right leaf, cluster tiny dewdrops mainly on the sunlit upper rims, soften the petiole junction, and add dense backlit white-gold fuzz on the central bud"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-06.png",
+      "where": "region 6, far background at the skyline",
+      "what": "the distant ridge is a pale, washed-out smooth gray silhouette instead of a dark, high-contrast deep blue-teal tree-lined ridge above glowing ground fog",
+      "fix": "darken and cool the skyline ridge to a deep blue-teal wooded silhouette with subtle foliage contour and bright mist along its base"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, lower stem pigment and hairs",
+      "what": "the reddish-magenta band extends too high and opaque up the stem, and the hairs form a uniform dotted white outline with sparse round CG beads",
+      "fix": "keep the red-pink tint softer and lower on a more translucent stem, vary the fine backlit stem hairs, and replace uniform beads with irregular soil specks and moisture droplets"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 2, stem and shed seed hull at the base",
+      "what": "the stem is a stiff vertical cylinder with spaced-out white prickle dots and muted green shading, and the split seed hull on the soil is flat, dull gray-brown without rim light",
+      "fix": "add a slight organic curve, bright yellow-green backlit translucency, and dense fine fuzz to the stem, and increase stripe contrast and golden specular rim lighting on the shed hull"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 1 and region 4, right-side grass clump and sun",
+      "what": "the grass clump in front of the sun is a dense dark silhouette lacking glowing dewdrop bokeh, and the sun sits too high with a smooth pale-cream glow",
+      "fix": "thin out the grass into delicate backlit blades catching bright circular dewdrop bokeh, and lower the sun to the horizon with richer warm orange-gold rays and flare"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "left and right grass shoots and sun (also set-A-02.png region 4)",
+      "what": "the left grass blade sits lower and darker without sunlit dew bokeh, an extra grass clump appears under the sun on the right, and the sun is smaller and higher in smooth pale haze",
+      "fix": "raise and brighten the left grass shoot with rim-lit bokeh highlights, remove or subdue the right grass clump, and enlarge and warm the low sun at a mistier irregular horizon"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5 and region 6, left midground and skyline (also set-A-06.png region 6)",
+      "what": "distracting blurred yellow and dark-green blobs appear in the left midground, and the distant skyline in set-A-03.png is a sharper gray mountain cutout than the soft misty horizon in set-A-01-a.png",
+      "fix": "remove the isolated yellow and green midground blobs and soften the set-A-01-b.png horizon into lower, mist-veiled hills"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7, the sky (also set-A-06.png region 7)",
+      "what": "the upper sky is an overly clean, smooth cyan-blue gradient lacking muted slate-blue tones, warm pinkish cloud wisps, and natural film grain",
+      "fix": "shift the upper sky toward desaturated slate-blue with subtle warm cloud haze and add matching fine photographic grain across the frame"
+    }
+  ]
+}
