@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 04:09 UTC · Phase 5: final build passes the 13 machine checks, preview film joined (M1 0 failed), cut sheets looked at, Status 69
+- Last push: 2026-11-22 04:20 UTC · Phase 5: the upper ray layer's lift comes out (bloom M1 at frame 1350 read 1.59 px against 1.5 on 41ab097); the corrected build replaces it
 - Last status: 69 · 2026-11-22 04:09 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 2.33 h |
+| 5 | 3.00 h | 2.53 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 27.29 h |
+| Whole build | 30.00 h | 27.49 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -791,6 +791,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 03:52 UTC. While the machine checks hold this machine and the Phase 5 gate is still open, each builder got its next list at 03:52 UTC (brief `out/work/briefs/p6-renders.json`, plan `out/work/scratch/master-parts-plan.json`), to start when its list of the final build is sent: the renders the record round needs beyond the final build's (four stress pairs, six runs of twelve consecutive stills at `review`, six growth sheets) and then the 26 parts of the master film at `draft` in 16x9, all from the kept build `41ab097` (engine `7733fb920a361fcd`); `harness_builder`, idle, starts three master parts at once, so twelve agents run, the limit. Why before the gate closes and before the freeze: the builders' machines would stand idle for about twenty minutes and the clock leaves three hours; the frozen build is this commit unless a machine check or a measure fails on it, and none of these renders can change a result. The price if the build changes before the freeze: they are made again. The master is at `draft` because `review` in 16x9 is about 44 s a frame, 22 hours of render over twelve machines, more than `sandbox.previewFilmMaxHours` (1.5 h) allows; `draft` is the tier the kit names as the lowest allowed. No critic of the record round is asked before the Phase 5 gate is closed and the build is frozen.
 - 2026-11-22 · Phase 5 · 03:55 UTC. Freshness, the rest of the kept build's pictures so far: the `final` stills of judged frames 195 and 1755 and of the hook frames 8, 15, 23, 30, 38 and 53 (each with a check entry, invalid 0), and the three whole film sheets at `review` (36 frames) were looked at by the Builder, the judged frames beside the frames round 22 judged. None is worse: 195 the same seedling with dawn's blades; 1755 the same wide field, the far rise one even line; the hook reads from frame 8 (the pale back of the hook is out of the crumbs) and stands by frame 15; across the 36 frames every world is whole, the plant grows without a break and no part is missing. With the eight frames of the line before, all ten judged frames of the kept build have been looked at. Still to come: the four cut sheets (three are in) and the preview film itself.
 - 2026-11-22 · Phase 5 · 04:01 UTC. Final build, cut sheets and stills beside the cuts looked at (all `hair_builder`, review, preview format, engine `7733fb920a361fcd`, each taken in with its record): the four cut sheets (`cut-1` to `cut-4`, twelve frames each) show each hard cut on its exact frame (239 to 240, 599 to 600, 899 to 900, 1199 to 1200), the plant, its leaves and the camera carrying straight across with no jump in size, place or pose, and nothing in a world leaning toward the next before its cut; the eight stills beside the cuts (239, 240, 599, 600, 899, 900, 1199, 1200) are in `out/work/stills`. Cut 4 keeps the open item already written (the light changes side at the cut, frost sun to the right, bloom sun low at the left edge); nothing new found. Preview film parts: 23 of 26 in, every one with `m1.failed` 0; the last three (field 1560 to 1634, 1635 to 1709, 1710 to 1784) are rendering on `golden_builder`, `bud_builder` and `skin_builder`. While the gate ran on this machine I ran the unit tests once by mistake through a scratch test setup (my merged setup took in `tests/` as well): 129 of 130 passed, the one that did not was `tests/leafhold.test.ts` "rolls and flattens only the held blade"; the gate's own G2 on this commit reads 129 of 129; I rerun that file alone when the gate is done and write what it says.
+- 2026-11-22 · Phase 5 · 04:20 UTC. The final build 41ab097 cannot be kept as it is, and it is corrected. On it the 13 machine checks are green (ended 04:05:49) and the measures of dawn, rain, night, frost and field pass (ended 04:11:57), but bloom M1 fails on the judged frame 1350: the blur circle at the tip reads 1.59 px against the limit 1.5, where round 22's judged build 4676c5d read 1.44 (tip position and depth are the same in both). kit/07-QUALITY-BAR.md keeps later fixes only while the machine checks and measures stay green. Traced on this machine with two review renders of frame 1350 with the check (04:14 to 04:19, worktree trial): with the rays file as round 22 judged it the tip reads 1.4402; with only the upper layer's lift from the fix 3b11fdb (RANK_APART_UP, 0.09) set to 0 and the lower layer still sunk it reads 1.4402 too. Decision: the upper layer's lift comes out and nothing else; no threshold is touched. Crops of the head at 1350 looked at side by side (as judged, 41ab097, corrected): the rays read alike in all three, the lower layer still sits sunk behind the upper. Everything rendered from 41ab097 is stale (16 finals, film and cut sheets, 26 preview parts and the joined preview, the eight comparison images, and the record round's renders under way) and is rendered again from the corrected build; its files are set aside in out/work/*-41ab097. Price: about 45 minutes of the clock, taken out of Phase 6. Also: tests/leafhold.test.ts run alone at 04:19 with nothing rendering passes 6 of 6 (an earlier scratch run of all tests under render load had read 129 of 130; the gate's own run read 129 of 129).
 
 ## Notes from Brandon
 
@@ -1615,6 +1616,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 03:38 UTC · Status 67: the last three fixes of round 22, the final build of Phase 5 is out
 - 2026-11-22 03:48 UTC · Round 22 ends at its limit: fixes ticked, summary, twelve open groups, Status 68; freshness looks of eight judged frames
 - 2026-11-22 04:09 UTC · Phase 5: final build passes the 13 machine checks, preview film joined (M1 0 failed), cut sheets looked at, Status 69
+- 2026-11-22 04:20 UTC · Phase 5: the upper ray layer's lift comes out (bloom M1 at frame 1350 read 1.59 px against 1.5 on 41ab097); the corrected build replaces it
 
 ## Session log
 

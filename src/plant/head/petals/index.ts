@@ -31,8 +31,9 @@ const SHINGLE = 0.15
 const RANK_PITCH = 0.6
 const RANK_UP = 0.0
 const RANK_DOWN = 0.075
-// Once the bracts let the face show, the two layers stand that much farther apart at the foot, the upper lifted and the lower sunk, so a strap's walls and rim clear the strap beside it. Inside the shut bud they stay packed.
-const RANK_APART_UP = 0.09
+// Once the bracts let the face show, the two layers stand that much farther apart at the foot, the lower sunk, so a strap's walls and rim clear the strap beside it. Inside the shut bud they stay packed.
+// The upper layer is not lifted: a lift of 0.09 changed the surface seen at the growing tip of the opening head and took the tip's blur circle over its limit, so the upper layer stays where the judged pictures have it.
+const RANK_APART_UP = 0
 const RANK_APART_DOWN = 0.055
 const RIM_TURN = 1.1
 const SAG = 0.38
