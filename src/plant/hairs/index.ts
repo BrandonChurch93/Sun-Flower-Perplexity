@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../../config.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 
@@ -21,7 +22,7 @@ const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
 const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
-const WIDE_FROM_S = 52
+const WIDE_FROM_S = segmentStart('field')
 const WIDE_FULL_S = 53.5
 const WIDE_STRAND_PX = 0.15
 const WIDE_GAIN = 2

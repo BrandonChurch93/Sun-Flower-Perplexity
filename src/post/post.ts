@@ -248,7 +248,7 @@ export class Post {
     if (mode === 0) {
       const look = lensLook(def, frameIndex / config.film.fps)
       const grade = gradeOf(def, frameIndex / config.film.fps)
-      const airSoft = sun ? (look.air * this.fillA.height) / 1080 : 0
+      const airSoft = sun ? (look.air * this.fillA.height) / config.formats.master.height : 0
       // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
       const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
       source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0, look.specks, look.skyHold, airSoft, sun ? sun.y - 0.25 : 2)

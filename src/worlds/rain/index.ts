@@ -28,7 +28,7 @@ const MIST: [number, number, number] = [0.07, 0.115, 0.13]
 const STREAK_HALF_PX = 1.8
 const STREAK_SHUTTER = 1.7
 const STREAK_GAIN = 24
-const MASTER_WIDTH = 1920
+const MASTER_WIDTH = config.formats.master.width
 
 // One stroke of lightning inside the cloud, as two swells of glow that are gone within ten frames.
 const FLASH_AT_S = 17.2

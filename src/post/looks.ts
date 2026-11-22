@@ -1,3 +1,4 @@
+import { segmentStart } from '../config.ts'
 import type { WorldDef } from '../core/world.ts'
 
 // What the lens needs per world beyond WorldSettings.grade. Kept here by world id until the Builder moves it into the settings.
@@ -54,7 +55,7 @@ export interface LensLook {
   skyHold: number
   // Times the grade's grain.
   grain: number
-  // Radius, in pixels of a frame 1080 high, by which the air softens what stands beyond the field: the far land, the sky and the edge between them. Nothing nearer is touched.
+  // Radius, in pixels of a frame as high as the master format, by which the air softens what stands beyond the field: the far land, the sky and the edge between them. Nothing nearer is touched.
   air: number
   // How far the lit air round the sun breaks into wide spokes, above the sun and below it.
   spokes: number
@@ -70,8 +71,8 @@ const table: Record<string, Partial<LensLook>> = {
   golden: { veil: 1.2, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 1.2, star: 0, glow: 0.004, shafts: 0.008, rays: 1.2, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [1, 0.55, 1], specks: 1 },
 }
 
-// From 52.0 s the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to 52.0 s is drawn as before.
-const FIELD_FROM_S = 52
+// From the field's start the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to it is drawn as before.
+const FIELD_FROM_S = segmentStart('field')
 const FIELD_FULL_S = 54
 const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
 const fieldBlack: readonly [number, number, number] = [0.5, 0.6, 0.5]

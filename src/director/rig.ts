@@ -1,12 +1,13 @@
-import { config, type CameraKey } from '../config.ts'
+import { config, keyTime, type CameraKey } from '../config.ts'
 import { clamp, Monotone } from '../core/curves.ts'
 
 const keys = config.camera.keys
 
-// The path from the frost key on is the finished bloom's. Its slopes at that key were set with the night key where it stood then, and they are held, so a later fit of the night key moves nothing after 36 s.
-const HELD_AT = 36
+// The path from the frost key on is the finished bloom's. Its slopes at that key were set with the night key where it stood then, and they are held, so a later fit of the night key moves nothing after the frost key.
+const HELD_AT = keyTime('frost')
+const NIGHT_KEY_AT = keyTime('night')
 const NIGHT_THEN: Partial<CameraKey> = { heightM: 0.5112, aimHeightM: 0.639, frameX: 0.6028 }
-const then = keys.map((k) => (k.time === 26 ? { ...k, ...NIGHT_THEN } : k))
+const then = keys.map((k) => (k.time === NIGHT_KEY_AT ? { ...k, ...NIGHT_THEN } : k))
 
 const track = (pick: (k: CameraKey) => number): Monotone => {
   const held = new Monotone(then.map((k) => [k.time, pick(k)] as const)).slopeAt(HELD_AT)
@@ -24,7 +25,7 @@ export interface RigPath { distanceM: number; heightM: number; aimHeightM: numbe
 
 // Up to the rain key the tilt has a track of its own, through the tilt each key gives, and the aim height follows from it.
 // Distance, height and aim height each run evenly between two keys, but the tilt they give together does not: the horizon rocked up and down between the dawn keys.
-const TILT_UNTIL = 14
+const TILT_UNTIL = keyTime('rain')
 const STEP = 1e-4
 const gate = config.camera.gateWidthMm
 

@@ -1,5 +1,9 @@
+import { config } from '../config.ts'
 import { glslCommon } from '../core/shading.ts'
 import { skyness } from './fill.ts'
+
+// The master frame's height in pixels, as shader text: the widths below are given for that height and scale with the frame drawn.
+const MASTER_HEIGHT_PX = config.formats.master.height.toFixed(1)
 
 export const gradeFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
@@ -85,7 +89,7 @@ float starRay(float a, float k, float r) {
   vec3 h = vec3(hash31(vec3(id, 5.0, 2.0)), hash31(vec3(id, 3.0, 7.0)), hash31(vec3(id, 9.0, 4.0)));
   float t = saturate(1.0 - r / (uStarLen * 0.75 * (0.45 + 0.55 * h.x)));
   float across = (a - k - 0.5 * (h.z - 0.5)) * (6.2831853 / 14.0) * r;
-  float w = 3.0 * uSize.y / 1080.0 + 0.07 * r;
+  float w = 3.0 * uSize.y / ${MASTER_HEIGHT_PX} + 0.07 * r;
   // No two rays alike, and a few of the fourteen fail altogether.
   return exp(-across * across / (w * w)) * t * sqrt(t) * smoothstep(0.15, 0.45, h.y) * mix(0.35, 1.0, h.y);
 }
@@ -107,7 +111,7 @@ float openSky(ivec2 p) {
   float open = sky(texelFetch(tRaw, p, 0).a);
   for (int i = 0; i < 16; i++) {
     float a = (float(i) + 0.5 * float(i / 8)) * 0.7853982;
-    vec2 o = vec2(cos(a), sin(a)) * (i < 8 ? 6.0 : 12.0) * uSize.y / 1080.0;
+    vec2 o = vec2(cos(a), sin(a)) * (i < 8 ? 6.0 : 12.0) * uSize.y / ${MASTER_HEIGHT_PX};
     open += sky(texelFetch(tRaw, clamp(p + ivec2(round(o)), ivec2(0), top), 0).a);
   }
   return smoothstep(0.6, 1.0, open / 17.0);
@@ -125,7 +129,7 @@ float rays(float turn, float r, float down) {
   vec3 h = vec3(hash31(vec3(k, 11.0, 1.0)), hash31(vec3(k, 12.0, 1.0)), hash31(vec3(k, 13.0, 1.0)));
   float girth = 6.2831853 * r * uSize.x;
   float across = (t - k - 0.25 - 0.5 * h.x) / 13.0 * girth;
-  float wide = 1.5 * uSize.y / 1080.0 + mix(0.006, 0.014, h.y) * girth;
+  float wide = 1.5 * uSize.y / ${MASTER_HEIGHT_PX} + mix(0.006, 0.014, h.y) * girth;
   // The longest run down and to the right, where the field lies open under the sun.
   float lean = (turn - 0.36) / 0.1;
   float len = mix(0.12, 0.3, h.z * h.z) * mix(0.6, 0.4 + 0.6 * exp(-lean * lean), down);

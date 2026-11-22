@@ -448,7 +448,7 @@ export function create(options: PartOptions): PlantPart | null {
     }
     const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)
     const globe = tight * smoothstep(bloom0 - 15, bloom0 - 9, time)
-    // The bloom is a kept unit: from 37.5 s the low starred build eases into the build the bloom opens from, and is that exactly from 40 s.
+    // The bloom is a kept unit: from 5.5 s before the bloom stage begins the low starred build eases into the build the bloom opens from, and is that exactly from 3 s before it, where the bloom's segment starts.
     // A neighbor's clock runs up to 4.6 s behind in the bloom, so it keeps the bloom's build throughout.
     const early = options.variant === 0 ? 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, time) : 0
     const hw = (WIDEST - SHUT_LOW * globe * early) * D

@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
 import { heightAt } from '../plant/growth.ts'
 
@@ -147,7 +148,7 @@ const DAWN_FULL_DEG = 2
 const DAWN_CLEAR_DEG = 6
 const UNDER_DAWN_SUN_DEG = [0.3, 0.34, 0.4, 0.42, 0.46, 0.62, 0.62, 0.3, 0.3]
 
-// 1 until 12 s, 0 from 22 s: nine tenths of the way lie inside the rain, after its key at 14 s.
+// 1 until 12 s, 0 from 22 s: nine tenths of the way lie inside the rain, after its key.
 export const skylineEarly = (time: number): number => 1 - smooth(12, 22, time)
 
 function earlyTop(i: number, az: number, radius: number, top: number): number {
@@ -158,9 +159,10 @@ function earlyTop(i: number, az: number, radius: number, top: number): number {
   return low + (Math.min(low, cap) - low) * smooth(DAWN_CLEAR_DEG, DAWN_FULL_DEG, off / RAD)
 }
 
-// The far land between the field's edge and the ridges lies at the height of the crop's tops: 1.3 m from 40 s on, lower before in step with the plant.
+// The far land between the field's edge and the ridges lies at the height of the crop's tops: 1.3 m from the bloom's start on, lower before in step with the plant.
 export const SKYLINE_LAND_M = 1.3
-export const skylineLandM = (time: number): number => SKYLINE_LAND_M * Math.min(1, heightAt(time) / heightAt(40))
+const BLOOM_FROM_S = segmentStart('bloom')
+export const skylineLandM = (time: number): number => SKYLINE_LAND_M * Math.min(1, heightAt(time) / heightAt(BLOOM_FROM_S))
 
 // Where layer i stands at a bearing and how high its top is there at a time of the film.
 export function skylineAtTime(i: number, az: number, sunAzimuthDeg: number, time: number): { radius: number; top: number } {

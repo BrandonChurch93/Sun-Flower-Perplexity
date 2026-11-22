@@ -1,4 +1,4 @@
-import { config } from '../config.ts'
+import { config, keyTime, segmentStart } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { combine, hash01, streamSeed } from '../core/random.ts'
 import { STEM_LEAN, STEM_SWING, sway, windToward } from './wind.ts'
@@ -48,20 +48,26 @@ const [leaves0, leaves1] = config.plant.stages.leaves
 const [bud0, bud1] = config.plant.stages.bud
 const [bloom0, bloom1] = config.plant.stages.bloom
 const inStage = (a: number, b: number, f: number) => a + (b - a) * f
+// The film's own times, read from the config: where the night, the frost and the bloom start, and where the rain's and the frost's keys stand.
+const NIGHT_S = segmentStart('night')
+const FROST_S = segmentStart('frost')
+const BLOOM_S = segmentStart('bloom')
+const RAIN_KEY_S = keyTime('rain')
+const FROST_KEY_S = keyTime('frost')
 
 export const leafCount = config.plant.leafCount
 export const rayCount = config.plant.rayFlorets
 export const bractCount = 21
 const goldenRad = config.plant.goldenAngleDeg * RAD
 const NUTATION_SECONDS = 3.7
-// The seedling's own quick circle. The plant's phase puts 1.5, 6.5 and 14 s where the tip crosses the middle, so the judged frames keep their pose.
+// The seedling's own quick circle. The plant's phase puts the dawn's two keys and the rain's key where the tip crosses the middle, so the judged frames keep their pose.
 const DANCE_SECONDS = 2.5
 const DANCE_PHASE = 0.4
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
 const STACK_SECONDS = 5.5
-const CROWD_START = 20
-const CROWD_END = 40
+const CROWD_START = NIGHT_S
+const CROWD_END = BLOOM_S
 const CROWD_SECONDS = 1.5
 const CROWD_TIP = 0.006
 const CROWD_STEP = 0.012
@@ -84,7 +90,7 @@ export function heightAt(time: number): number {
 export function stemBaseRadius(time: number): number {
   const h = heightAt(time)
   const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
-  const settled = smoothstep(30, 40.3, time)
+  const settled = smoothstep(FROST_S, 40.3, time)
   if (settled >= 1) return full
   const lean = 1 - 0.14 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
   return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled) * lean
@@ -92,7 +98,7 @@ export function stemBaseRadius(time: number): number {
 
 export function stemRadius(time: number, u: number): number {
   // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
-  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(14, 36, time) * (1 - smoothstep(36.5, 40.3, time))
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(RAIN_KEY_S, FROST_KEY_S, time) * (1 - smoothstep(36.5, 40.3, time))
   const slim = 0.18 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u))
 }
@@ -404,9 +410,9 @@ export function leafAzimuth(i: number, time?: number): number {
 
 export function leafAge(i: number, time: number): number {
   const start = leafStart(i)
-  if (i >= 2 || time >= 20) return time - start
+  if (i >= 2 || time >= NIGHT_S) return time - start
   const head = PAIR_PACE * PAIR_EARLY_S
-  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, 20, time))
+  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, NIGHT_S, time))
 }
 
 function jointFraction(i: number, time: number): number {
@@ -417,7 +423,7 @@ function jointFraction(i: number, time: number): number {
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
   const settled = heightAt(leafStart(i) + seconds * (1 - Math.exp(-age / seconds)))
   const grown = lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
-  const late = smoothstep(20, 40, time)
+  const late = smoothstep(NIGHT_S, BLOOM_S, time)
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
   // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
@@ -470,7 +476,7 @@ export function leafLength(i: number, time: number): number {
   const rank = i / (leafCount - 1)
   const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
   const slow = lerp(7, 3.6, smoothstep(0.45, 0.8, rank))
-  const late = smoothstep(20, 40, time)
+  const late = smoothstep(NIGHT_S, BLOOM_S, time)
   const share = (seconds: number): number => 1 - Math.exp(-Math.pow(age / seconds, 1.1))
   // The first leaves of the young plant fill out fast: in the rain the largest is a third of the plant's height.
   const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))

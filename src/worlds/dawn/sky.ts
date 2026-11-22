@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { keyTime } from '../../config.ts'
 import type { Assets } from '../../core/assets.ts'
 import { FullscreenPass } from '../../core/fullscreen.ts'
 import { glslCommon, shared } from '../../core/shading.ts'
@@ -70,8 +71,8 @@ void main() {
 export const SKY_FILE = 'sky.jpg'
 const DRIFT_TURNS_PER_SECOND = 0.00001
 // The sky away from the sun lightens and pales as the sun climbs, between these seconds of the film.
-const DAY_FROM_S = 1.5
-const DAY_TO_S = 6.5
+const DAY_FROM_S = keyTime('dawn-sprout')
+const DAY_TO_S = keyTime('dawn-seedling')
 // At the film's start thin cloud low over the land lies across the sun and holds its core down; it clears evenly and is gone just before the sprout key.
 const CORE_AT_START = 0.5
 const CORE_CLEAR_AT_S = 1.44

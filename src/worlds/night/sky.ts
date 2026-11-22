@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { config, keyTime, masterAspect } from '../../config.ts'
 import type { Assets } from '../../core/assets.ts'
 import { FullscreenPass } from '../../core/fullscreen.ts'
 import { stream } from '../../core/random.ts'
@@ -12,8 +13,8 @@ const RAD = Math.PI / 180
 const MAP_AZ_DEG = -167.2364
 const MAP_EL_DEG = 9.5298
 const MAP_SCALE_X = 1.1388889
-const MAP_SCALE_Y = MAP_SCALE_X * (16 / 9)
-const KEY_TIME_S = 26
+const MAP_SCALE_Y = MAP_SCALE_X * masterAspect
+const KEY_TIME_S = keyTime('night')
 
 const POLE_AZ_DEG = 180
 const POLE_EL_DEG = 42
@@ -161,7 +162,7 @@ void main() {
   int li;
   float ridge = ridgeAt(w, lu, li);
   vec3 v = uView * w;
-  float sigma = max(aLight.a * uWidth / 1920.0, ${NARROWEST_PX});
+  float sigma = max(aLight.a * uWidth / ${config.formats.master.width.toFixed(1)}, ${NARROWEST_PX});
   float size = ceil(6.0 * sigma) + 2.0;
   float air = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) / (uFogFalloff * max(w.y, 1e-4));
   float dim = exp(-air) * exp(-0.12 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
@@ -328,7 +329,7 @@ export class NightSky {
         ...this.land,
         uView: { value: this.view3 },
         uProj: { value: new THREE.Vector4() },
-        uWidth: { value: 1920 },
+        uWidth: { value: config.formats.master.width },
         uGain: { value: look.stars },
         uFogDensity: shared.uFogDensity,
         uFogFalloff: shared.uFogFalloff,

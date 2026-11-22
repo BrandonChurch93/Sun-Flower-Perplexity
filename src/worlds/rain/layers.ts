@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentEnd, segmentStart } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, ringStrip, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing, type SkylineRing } from '../../weather/skyline.ts'
 
@@ -165,7 +166,7 @@ const VEILS = [
 
 // The wood behind the field stands on rising ground, over the rain that lies low: it keeps its dark.
 const ROW_AIR = 0.12
-// The night's own line, so the cut at 20.0 s changes no silhouette: crowns that end in small crowns and stand in clumps, a hedge on the two level banks, woods along the ridges. All grow in after the cut at 8.0 s, which the dawn's line meets.
+// The night's own line, so the cut into the night changes no silhouette: crowns that end in small crowns and stand in clumps, a hedge on the two level banks, woods along the ridges. All grow in after the cut into the rain, which the dawn's line meets.
 const HEDGE_CROWN_M = 2.4
 const HEDGE_FLOOR = 0.66
 const TWIGS = 0.14
@@ -173,8 +174,8 @@ const TWIGS = 0.14
 const HILL_SMOOTH = 0.65
 const CLUMPS = 0.3
 const WOODS_FLOOR = 0.8
-const RAIN_FROM_S = 8
-const RAIN_TO_S = 20
+const RAIN_FROM_S = segmentStart('rain')
+const RAIN_TO_S = segmentEnd('rain')
 const smooth = (a: number, b: number, x: number): number => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 
 export interface FarLayers { meshes: THREE.Mesh[]; flash(amount: number): void; setTime(time: number): void }

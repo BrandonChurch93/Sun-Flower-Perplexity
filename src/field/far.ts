@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { config } from '../config.ts'
+import { config, segmentStart } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
@@ -378,7 +378,7 @@ export class FarField {
     this.uniforms.uLag.value = lagAt(timeOpen)
     this.uniforms.uLow.value = nightAt(timeOpen) * NIGHT_LOW
     // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
-    this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, 30, 40)
+    this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, segmentStart('frost'), segmentStart('bloom'))
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))

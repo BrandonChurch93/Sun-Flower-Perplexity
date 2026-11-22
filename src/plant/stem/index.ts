@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../../config.ts'
 import type { Assets } from '../../core/assets.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
@@ -23,7 +24,9 @@ const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
 // The dew on a stem is finer than the shared bead sizes.
-const RAIN_FROM_S = 8
+const RAIN_FROM_S = segmentStart('rain')
+const FROST_FROM_S = segmentStart('frost')
+const BLOOM_FROM_S = segmentStart('bloom')
 const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
 
@@ -176,7 +179,7 @@ export function create(options: PartOptions): PlantPart {
     const pale = paleness(time)
     const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
-    const grounded = 1 - smoothstep(36.5, 40, time)
+    const grounded = 1 - smoothstep(36.5, BLOOM_FROM_S, time)
 
     const base = (u: number, s: number): number => {
       let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
@@ -412,7 +415,7 @@ export function create(options: PartOptions): PlantPart {
 
     const S = anchors.s
     const M = anchors.m
-    const shed = 1 - smoothstep(18, 30, time)
+    const shed = 1 - smoothstep(18, FROST_FROM_S, time)
     for (const c of coats) {
       const root = c.set.root(slot)
       const lean = c.set.lean(slot)
