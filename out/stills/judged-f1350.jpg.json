@@ -1,12 +1,12 @@
 {
   "kind": "still",
-  "engineHash": "f4da6d9bf14270bc",
+  "engineHash": "eb23778849521a72",
   "unitHashes": {
-    "dawn": "609ff98b65fa38e3",
-    "rain": "9b15161ed47d967d",
+    "dawn": "107705edf82c0200",
+    "rain": "1e5806ee2c45212e",
     "night": "104ce1a4b84575bd",
     "frost": "8162048fd525a7c9",
-    "bloom": "7f4b2c0c57a37c10",
+    "bloom": "f8b8ac67c3d305b9",
     "field": "85ecd6aea5f49c50"
   },
   "format": "16x9",
@@ -16,17 +16,17 @@
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T04:31:07.055Z",
+  "at": "2026-11-22T05:53:22.154Z",
   "frames": [
     1350
   ],
   "samples": 48,
-  "seconds": 266.776799999997,
+  "seconds": 274.4265,
   "check": {
     "frame": 1350,
     "invalid": 0,
@@ -34,7 +34,7 @@
       "x": 0.5692473204537918,
       "y": 0.3926836995042605,
       "depthM": 0.7016357651309904,
-      "cocPx": 1.4401482343673706
+      "cocPx": 1.214937686920166
     }
   }
 }

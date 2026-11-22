@@ -1,12 +1,12 @@
-# Status 75
+# Status 76
 
-2026-11-22 06:21 UTC
+2026-11-22 06:27 UTC
 
-- Status 75 · Phase 6. Polish round 1: the merged build holds. Machine checks are all 13 green and the six measures pass, so the ten fixes stay. Answers so far, none a pass: the hook 7 (was 6, no severe issue now), the story 8 (was 7; it faults the cut from frost to bloom), the jury passes frames 420 and 780 now and fails 1755 again (1 of 5), the whole film sheets for motion 6.
-- Next: Two answers are still out: the consecutive frame sheets for motion and the compression pairs. Then the round's summary and the open items. The budget report is due at about 06:52 UTC; nothing new starts after it. Time used: 29.5 h of 30 h.
+- Status 76 · Phase 6. Polish round 1 is closed, not at a pass. Scores on the merged build: story 8 (was 7), hook 7 (was 6), compression 7 (was 6), motion 4 (was 8), jury fails frame 1755 only (420 and 780 now pass). Motion fell because the pack now shows the fastest growth frame by frame for the first time: rays crossing each other, soil highlights blinking in the first frames, a husk that lands in one frame. Thirteen new open items are logged with what to try next.
+- Next: Polish round 2 opens on the worst of them until the budget report, which is due at about 06:52 UTC. Time used: 29.6 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frame 420 at the final tier: rain, wet hairs in tufts, wider streaks (the jury now passes it)
-- `status-2.jpg`: Frame 780 at the final tier: night, the rows lower than the hero (the jury now passes it)
-- `status-3.jpg`: Frame 1755 at the final tier: the field (the jury fails it, 1 of 5)
-- `status-4.jpg`: Whole film sheet 3 of 3: bloom and field on the merged build
+- `status-1.jpg`: Bloom hero: approved image against the build, frame 1515
+- `status-2.jpg`: Field: approved image against the build, frame 1755
+- `status-3.jpg`: Cut 4, frost to bloom: the cut two critics fault (the land and the sun change sides)
+- `status-4.jpg`: Frames 0 to 11 at frame cadence: the cleft, the hook, and the crumbs whose highlights blink

@@ -1,24 +1,24 @@
 {
   "kind": "compare",
-  "engineHash": "f4da6d9bf14270bc",
+  "engineHash": "eb23778849521a72",
   "unitHashes": {
-    "dawn": "609ff98b65fa38e3",
-    "rain": "9b15161ed47d967d",
+    "dawn": "107705edf82c0200",
+    "rain": "1e5806ee2c45212e",
     "night": "104ce1a4b84575bd",
     "frost": "8162048fd525a7c9",
-    "bloom": "7f4b2c0c57a37c10",
+    "bloom": "f8b8ac67c3d305b9",
     "field": "85ecd6aea5f49c50"
   },
   "diag": "beauty",
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+    "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T04:52:49.040Z",
+  "at": "2026-11-22T06:26:05.365Z",
   "format": "16x9",
   "tier": "final",
   "assets": "full",
