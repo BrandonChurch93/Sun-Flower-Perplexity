@@ -95,6 +95,7 @@ interface Leaf {
   yellows: number
   teeth: number
   depth: number
+  own: number[]
 }
 
 interface Hair { leaf: number; kind: number; a: number; b: number; r1: number; r2: number; r3: number; r4: number; spike: boolean; bay: number }
@@ -103,7 +104,33 @@ const frame = { ox: 0, oy: 0, oz: 0, mx: 1, my: 0, mz: 0, wx: 0, wy: 0, wz: 1, n
 const pathX = new Float64Array(PATH + 1)
 const pathZ = new Float64Array(PATH + 1)
 const pathA = new Float64Array(PATH + 1)
-const at = { x: 0, z: 0, a: 0 }
+const pathY = new Float64Array(PATH + 1)
+const pathD = new Float64Array(PATH + 1)
+const at = { x: 0, z: 0, a: 0, y: 0, d: 0 }
+
+// The field's air begins with its segment; the leaves cross their rest about the field's key, so the key keeps its pose.
+const FIELD_START = config.segments.find((s) => s.id === 'field')?.start ?? Infinity
+const FIELD_REST = config.keys.find((k) => k.unit === 'field')?.time ?? FIELD_START
+
+// One of a leaf's two own motions at a time, about -1 to 1: two slow swells, and it dips a little farther than it rises.
+function ownAt(own: number[], k: number, time: number): number {
+  const t = time - FIELD_REST
+  const o = 0.7 * Math.sin((6.2832 * t) / own[k + 1] + own[k + 3]) + 0.3 * Math.sin((6.2832 * t) / own[k + 2] + own[k + 4])
+  return own[k] * (o - 0.2 * o * o)
+}
+
+// The gust that crosses the field's rows, as the field lays it: where it blows toward, when it strikes the plant, and when it has died.
+const GUST_TOWARD = { x: 0.9659, z: 0.2588 }
+const GUST_AT = 56.12
+const GUST_OVER = [57.5, 58.4]
+
+// How hard the gust holds a leaf, 0 to about 1, a time after it strikes: pushed over, held with a shake, let go, and a swing back past its rest that dies.
+function gustAt(tau: number, hold: number): number {
+  if (tau <= 0) return 0
+  const free = smoothstep(0, 0.5, tau - hold)
+  const after = Math.max(0, tau - hold - 0.5)
+  return smoothstep(0, 0.28, tau) * (1 - free) * (1 + 0.14 * Math.sin(14 * tau)) - 0.35 * free * Math.exp(-after / 0.45) * Math.cos((6.2832 * after) / 1.1)
+}
 
 const toothKey = (seed: number): number => Math.floor(hash01(seed, 5) * 65535)
 
@@ -116,6 +143,8 @@ function sample(share: number): void {
   at.x = pathX[k] + (pathX[k + 1] - pathX[k]) * t
   at.z = pathZ[k] + (pathZ[k + 1] - pathZ[k]) * t
   at.a = pathA[k] + (pathA[k + 1] - pathA[k]) * t
+  at.y = pathY[k] + (pathY[k + 1] - pathY[k]) * t
+  at.d = pathD[k] + (pathD[k + 1] - pathD[k]) * t
 }
 
 export function create(options: PartOptions): PlantPart {
@@ -243,6 +272,8 @@ export function create(options: PartOptions): PlantPart {
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
       teeth,
       depth: hero ? depth : 0,
+      // In the open field's air each leaf lifts and swings at its stalk by its own measure, at its own pace.
+      own: [0.06 + 0.045 * r(80), 1.5 + 2.5 * r(81), 1.5 + 2.5 * r(82), (r(83) < 0.5 ? 0 : Math.PI) + 0.7 * (r(84) - 0.5), (r(85) < 0.5 ? 0 : Math.PI) + 0.7 * (r(86) - 0.5), 0.06 + 0.045 * r(87), 1.5 + 2.5 * r(88), 1.5 + 2.5 * r(89), (r(90) < 0.5 ? 0 : Math.PI) + 0.7 * (r(91) - 0.5), (r(92) < 0.5 ? 0 : Math.PI) + 0.7 * (r(93) - 0.5), 0.04 + 0.2 * r(94), 0.7 + 0.5 * r(95), 0.8 + 0.4 * r(96)],
     }
     for (let a = 0; a < nu; a++) {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
@@ -688,6 +719,28 @@ export function create(options: PartOptions): PlantPart {
     const trail = wind * 0.08 * flutter(time - 0.18, leaf.seed * 0.73 + 0.11)
     const sway = wind * 0.075 * flutter(time - 0.07, leaf.seed * 0.41 + 0.37)
 
+    // The stalk leads, the blade trails it and the tip comes last.
+    const air = hero ? smoothstep(FIELD_START + 0.05, FIELD_START + 1.2, time) : 0
+    const late = (share: number): number => 0.1 * smoothstep(0.4 * stalk, stalk + 0.25, share) + 0.3 * Math.max(0, (share - stalk) / (1 - stalk)) ** 2
+    // The gust blows a leaf round toward where it goes, lifts one that points into it and presses one that points with it.
+    const into = -(GUST_TOWARD.x * frame.mx + GUST_TOWARD.z * frame.mz)
+    const blowUp = 0.12 * leaf.own[12] * into * (into > 0 ? 1 : 0.5)
+    const blowRound = 0.16 * leaf.own[12] * (GUST_TOWARD.x * frame.wx + GUST_TOWARD.z * frame.wz)
+    const blow = (t: number): number => gustAt(t - GUST_AT - leaf.own[10], leaf.own[11]) * (1 - smoothstep(GUST_OVER[0], GUST_OVER[1], t))
+    const liftAt = (t: number): number => air * (ownAt(leaf.own, 0, t) + blowUp * blow(t))
+    const swingAt = (t: number): number => air * (ownAt(leaf.own, 5, t) + blowRound * blow(t))
+    const swing = air > 0 ? swingAt(time) : 0
+    if (swing !== 0) {
+      const c = Math.cos(swing)
+      const k = Math.sin(swing)
+      const mx = frame.mx * c + frame.wx * k
+      const my = frame.my * c + frame.wy * k
+      const mz = frame.mz * c + frame.wz * k
+      frame.wx = frame.wx * c - frame.mx * k
+      frame.wy = frame.wy * c - frame.my * k
+      frame.wz = frame.wz * c - frame.mz * k
+      frame.mx = mx; frame.my = my; frame.mz = mz
+    }
     const tilt = upper * (1 - smoothstep(36, BLOOM, time)) * (0.45 + 0.25 * leaf.seed)
     // A leaf held up round the bud bends its tip down.
     const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
@@ -699,14 +752,19 @@ export function create(options: PartOptions): PlantPart {
       let x = 0
       let z = 0
       let low = 0
+      let y = 0
       for (let k = 0; k <= PATH; k++) {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) + rock + trail * bladeShare * bladeShare - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
+        const a = rise * (1 - smoothstep((0.2 + 0.3 * cold) * stalk, 1.15 * stalk + 0.25 * cold, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) + rock + trail * bladeShare * bladeShare + (air > 0 ? liftAt(time - late(share)) : 0) - (raining ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
+        const behind = air > 0 ? swingAt(time - late(share)) - swing : 0
+        pathY[k] = y
+        pathD[k] = behind
+        y += (Math.sin(behind) * Math.cos(a) * total) / PATH
         low = Math.min(low, frame.my * x + frame.ny * z)
         x += (Math.cos(a) * total) / PATH
         z += (Math.sin(a) * total) / PATH
@@ -735,25 +793,33 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s) + (air > 0 ? 0.8 * swingAt(time - 0.12 - late(share)) * (0.3 + 0.7 * s) : 0)
       const turn = held === 0 ? free : free + held
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
-      const cx = frame.ox + frame.mx * at.x + frame.nx * at.z
-      const cy = frame.oy + frame.my * at.x + frame.ny * at.z
-      const cz = frame.oz + frame.mz * at.x + frame.nz * at.z
-      const tx = frame.mx * ca + frame.nx * sa
-      const ty = frame.my * ca + frame.ny * sa
-      const tz = frame.mz * ca + frame.nz * sa
+      const cx = frame.ox + frame.mx * at.x + frame.nx * at.z + frame.wx * at.y
+      const cy = frame.oy + frame.my * at.x + frame.ny * at.z + frame.wy * at.y
+      const cz = frame.oz + frame.mz * at.x + frame.nz * at.z + frame.wz * at.y
+      const cd = Math.cos(at.d)
+      const sd = Math.sin(at.d)
+      const ax = frame.mx * ca + frame.nx * sa
+      const ay = frame.my * ca + frame.ny * sa
+      const az = frame.mz * ca + frame.nz * sa
+      const tx = ax * cd + frame.wx * sd
+      const ty = ay * cd + frame.wy * sd
+      const tz = az * cd + frame.wz * sd
+      const bx = frame.wx * cd - ax * sd
+      const by = frame.wy * cd - ay * sd
+      const bz = frame.wz * cd - az * sd
       const ux = frame.nx * ca - frame.mx * sa
       const uy = frame.ny * ca - frame.my * sa
       const uz = frame.nz * ca - frame.mz * sa
-      const wx = frame.wx * ct + ux * st
-      const wy = frame.wy * ct + uy * st
-      const wz = frame.wz * ct + uz * st
-      const nx = ux * ct - frame.wx * st
-      const ny = uy * ct - frame.wy * st
-      const nz = uz * ct - frame.wz * st
+      const wx = bx * ct + ux * st
+      const wy = by * ct + uy * st
+      const wz = bz * ct + uz * st
+      const nx = ux * ct - bx * st
+      const ny = uy * ct - by * st
+      const nz = uz * ct - bz * st
       for (let b = 0; b < nv; b++) {
         const v = a * nv + b
         const px = ripe >= 1 ? leaf.px[v] : leaf.qx[v] + (leaf.px[v] - leaf.qx[v]) * ripe
@@ -792,31 +858,39 @@ export function create(options: PartOptions): PlantPart {
       sample(share)
       const ca = Math.cos(at.a)
       const sa = Math.sin(at.a)
-      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s)
+      const free = leaf.twist * s * grown + facing * smoothstep(0, 0.3, s) + sway * (0.3 + 0.7 * s) + (air > 0 ? 0.8 * swingAt(time - 0.12 - late(share)) * (0.3 + 0.7 * s) : 0)
       const turn = held === 0 ? free : free + held
       const ct = Math.cos(turn)
       const st = Math.sin(turn)
-      const tx = frame.mx * ca + frame.nx * sa
-      const ty = frame.my * ca + frame.ny * sa
-      const tz = frame.mz * ca + frame.nz * sa
+      const cd = Math.cos(at.d)
+      const sd = Math.sin(at.d)
+      const ax = frame.mx * ca + frame.nx * sa
+      const ay = frame.my * ca + frame.ny * sa
+      const az = frame.mz * ca + frame.nz * sa
+      const tx = ax * cd + frame.wx * sd
+      const ty = ay * cd + frame.wy * sd
+      const tz = az * cd + frame.wz * sd
+      const bx = frame.wx * cd - ax * sd
+      const by = frame.wy * cd - ay * sd
+      const bz = frame.wz * cd - az * sd
       const ux = frame.nx * ca - frame.mx * sa
       const uy = frame.ny * ca - frame.my * sa
       const uz = frame.nz * ca - frame.mz * sa
-      const wx = frame.wx * ct + ux * st
-      const wy = frame.wy * ct + uy * st
-      const wz = frame.wz * ct + uz * st
-      const nx = ux * ct - frame.wx * st
-      const ny = uy * ct - frame.wy * st
-      const nz = uz * ct - frame.wz * st
+      const wx = bx * ct + ux * st
+      const wy = by * ct + uy * st
+      const wz = bz * ct + uz * st
+      const nx = ux * ct - bx * st
+      const ny = uy * ct - by * st
+      const nz = uz * ct - bz * st
       const clasp = Math.max(0.58 * stem - thick, 0.3 * thick) * clamp(size / 0.06) * Math.exp(-(share * total) / Math.max(0.9 * stem, 1e-5))
       const radius = onBlade ? thick * 0.58 * Math.pow(Math.max(0, 1 - s / (RIB_END + 0.02)), 0.75) : thick * (1 - (0.5 - 0.2 * early - 0.15 * cold) * k) + clasp
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
       const back = ring === 0 ? Math.min((0.7 * stem) / Math.max(0.4, Math.hypot(tx, tz)), 0.5 * stalk * total) : 0
-      const cx = frame.ox + frame.mx * at.x + frame.nx * at.z - tx * back - nx * drop
-      const cy = frame.oy + frame.my * at.x + frame.ny * at.z - ty * back - ny * drop
-      const cz = frame.oz + frame.mz * at.x + frame.nz * at.z - tz * back - nz * drop
+      const cx = frame.ox + frame.mx * at.x + frame.nx * at.z + frame.wx * at.y - tx * back - nx * drop
+      const cy = frame.oy + frame.my * at.x + frame.ny * at.z + frame.wy * at.y - ty * back - ny * drop
+      const cz = frame.oz + frame.mz * at.x + frame.nz * at.z + frame.wz * at.y - tz * back - nz * drop
       for (let j = 0; j <= SIDES; j++) {
         const theta = (j / SIDES) * Math.PI * 2
         const c = Math.cos(theta)
