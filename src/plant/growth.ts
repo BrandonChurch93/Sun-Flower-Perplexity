@@ -74,8 +74,10 @@ const discRadius = config.plant.discDiameterM / 2
 const rayFull = (config.plant.headDiameterM - config.plant.discDiameterM) / 2
 
 // The top of the whole plant: the arch of the hook, then the leaf tips, then the bracts, then the petals.
+// The sprout has a head start of five frames when the film opens, so the pale arch stands in the cleft in the first frame; it is gone by 1.4 s.
+export const headStartSeconds = 1 / 6
 export function heightAt(time: number): number {
-  return heightCurve.at(time)
+  return heightCurve.at(time + headStartSeconds * (1 - smoothstep(0, 1.4, time)))
 }
 
 // A sprout is 2.4 mm through and thickens fast once its leaves work. From 40.3 s, when the youngest neighbor in the bloom is that old, the girth is the old curve to the last bit.
@@ -305,14 +307,18 @@ export function huskDrop(time: number): number {
   return k * k
 }
 
-// Once pushed off the tips it tumbles down for twelve frames and rocks once where it lands.
+// Once pushed off the tips it slides clear of them.
 export function huskFall(time: number): number {
   return clamp((time - (seed0 + 0.62)) / 0.4)
 }
 
-export function huskRock(time: number): number {
-  const u = clamp((time - (seed0 + 1.02)) / 0.3)
-  return Math.sin(2 * Math.PI * u) * (1 - u) * (1 - u)
+// How far down its tumble the shell is. Half of the way goes at an even pace; over the rest it loses its speed frame by frame and lies still, with no rock.
+const HUSK_BRAKE = 0.5
+export function huskLand(time: number): number {
+  const k = (time - (seed0 + 0.72)) / 0.3
+  if (k <= HUSK_BRAKE) return clamp(k)
+  const left = 1 - HUSK_BRAKE
+  return 1 - left * (1 - clamp((k - HUSK_BRAKE) / (3 * left))) ** 3
 }
 
 export const huskLengthM = 0.0143
