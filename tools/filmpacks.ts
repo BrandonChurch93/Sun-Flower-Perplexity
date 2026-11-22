@@ -5,6 +5,7 @@ import { config, timeOf } from '../src/config.ts'
 import { cuts, judgedFrames, segmentAt } from '../src/director/timeline.ts'
 import { renderChecked } from './lib/checked.ts'
 import { hookFrames, juryFrames, keysInOrder, KEYS_PER_FILE } from './lib/filmplan.ts'
+import { growthRuns, type GrowthRun } from './lib/growthruns.ts'
 import { computeHashes } from './lib/hashes.ts'
 import { canvas, cropped, rel, scaled, strip, type Placed } from './lib/layout.ts'
 import { ROOT } from './lib/paths.ts'
@@ -12,7 +13,7 @@ import { asPng, pixelsOnly, wholeImage, wholeSize } from './lib/packimage.ts'
 import { matches, readRecord } from './lib/record.ts'
 import { regionsOf } from './lib/regions.ts'
 import type { Pack, PackContext, PackFile } from './pack.ts'
-import { cutSheet, cutSheetPlan, filmSheetPlans, filmSheets, frameLabel, sheetReady, type SheetOptions, type SheetPlan } from './sheet.ts'
+import { cutSheet, cutSheetPlan, filmSheetPlans, filmSheets, frameLabel, runSheet, runSheetPlan, sheetReady, type SheetOptions, type SheetPlan } from './sheet.ts'
 import { stillPath } from './still.ts'
 import { stress, stressFiles, stressRange, stressReady } from './stress.ts'
 import { packsOf, type Group } from './unitpacks.ts'
@@ -48,11 +49,15 @@ export function stillHave(frame: number, tier: string, format: string, checked: 
   return matches(record, computeHashes(), { kind: 'still', format, tier, assets: ASSETS, diag: 'beauty', units: [segmentAt(frame).id] }) && (!checked || record?.check !== undefined)
 }
 
+const runPlan = (run: GrowthRun, o: SheetOptions): SheetPlan => runSheetPlan(segmentAt(run.first).id, run.first, o)
+const GROWS = { height: 'gains height', opening: 'opens' }
+
 function sheetPlans(context: PackContext): { plan: SheetPlan; make: string }[] {
   const SHEETS = sheetsOf(context)
   const film = wanted(context, 'R5') || wanted(context, 'R4') ? filmSheetPlans(SHEETS).map((plan) => ({ plan, make: sheetCommand('--film', SHEETS) })) : []
   const across = wanted(context, 'R4') ? cuts.map((c) => ({ plan: cutSheetPlan(c.index, SHEETS), make: sheetCommand(`--cut ${c.index}`, SHEETS) })) : []
-  return [...across, ...film]
+  const runs = wanted(context, 'R4') ? growthRuns().map((run) => runPlan(run, SHEETS)) : []
+  return [...across, ...film, ...runs.map((plan) => ({ plan, make: stillCommand(plan.frames, SHEETS.tier, SHEETS.format, false) }))]
 }
 
 export function stillNeed(frame: number, tier: string): Need {
@@ -213,15 +218,28 @@ async function compressionPacks(context: PackContext): Promise<Pack[]> {
 }
 
 async function motionPacks(SHEETS: SheetOptions): Promise<Pack[]> {
-  const groups: Group[] = []
+  const close: { first: number; group: Group }[] = []
   for (const cut of cuts) {
     const s = await cutSheet(cut.index, SHEETS)
-    groups.push({
-      files: [{ image: await asPng(s.file), meaning: { what: `consecutive frames across cut ${cut.index} (${cut.fromSegment} to ${cut.toSegment}, the cut falls on frame ${cut.frame})`, frames: s.frames, tier: SHEETS.tier, source: source(s.file) } }],
-      lines: (names) => [`${names[0]}: ${per} consecutive frames across cut ${cut.index} of ${cuts.length} of the film. The cut falls at ${seconds(cut.frame)}.`],
+    close.push({
+      first: s.frames[0],
+      group: {
+        files: [{ image: await asPng(s.file), meaning: { what: `consecutive frames across cut ${cut.index} (${cut.fromSegment} to ${cut.toSegment}, the cut falls on frame ${cut.frame})`, frames: s.frames, tier: SHEETS.tier, source: source(s.file) } }],
+        lines: (names) => [`${names[0]}: ${per} consecutive frames across cut ${cut.index} of ${cuts.length} of the film. The cut falls at ${seconds(cut.frame)}.`],
+      },
     })
   }
-  groups.push(...(await filmGroups(SHEETS)))
+  for (const run of growthRuns()) {
+    const s = await runSheet(segmentAt(run.first).id, run.first, SHEETS)
+    close.push({
+      first: s.frames[0],
+      group: {
+        files: [{ image: await asPng(s.file), meaning: { what: `consecutive frames from a stretch where the plant ${GROWS[run.measure]} fastest`, frames: s.frames, measure: run.measure, change: run.change, tier: SHEETS.tier, source: source(s.file) } }],
+        lines: (names) => [`${names[0]}: ${per} consecutive frames starting at ${seconds(s.frames[0])}, from a stretch where the plant ${GROWS[run.measure]} fastest. Each tile is a whole frame made smaller.`],
+      },
+    })
+  }
+  const groups = [...close.sort((a, b) => a.first - b.first).map((c) => c.group), ...(await filmGroups(SHEETS))]
   return packsOf('R4', 'D', groups, ['Every tile carries its frame number and its time. The frames are 1/' + config.film.fps + ' s apart where they are consecutive.', ''])
 }
 
