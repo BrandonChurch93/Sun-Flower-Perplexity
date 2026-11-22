@@ -19,6 +19,8 @@ export const shared = {
   uSunColor: { value: new THREE.Vector3(1, 1, 1) },
   uSkyZenith: { value: new THREE.Vector3(0.2, 0.3, 0.5) },
   uSkyHorizon: { value: new THREE.Vector3(0.6, 0.6, 0.6) },
+  // The sky low toward the sun, as the sky itself says: the far land and the air take their warm side from it.
+  uSkyHorizonSun: { value: new THREE.Vector3(0.6, 0.6, 0.6) },
   uGroundBounce: { value: new THREE.Vector3(0.05, 0.04, 0.03) },
   uFogColor: { value: new THREE.Vector3(0.5, 0.5, 0.5) },
   uFogSunTint: { value: new THREE.Vector3(0, 0, 0) },
@@ -55,6 +57,7 @@ uniform vec3 uSunDir;
 uniform vec3 uSunColor;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
+uniform vec3 uSkyHorizonSun;
 uniform vec3 uGroundBounce;
 uniform vec3 uFogColor;
 uniform vec3 uFogSunTint;

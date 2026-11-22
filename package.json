@@ -31,6 +31,7 @@
     "push": "tsx tools/push.ts",
     "inline": "tsx tools/inline.ts",
     "bench": "tsx tools/bench.ts",
+    "looks": "tsx tools/agentlooks.ts",
     "filmclock": "tsx tools/filmclock.ts"
   },
   "dependencies": {

@@ -73,16 +73,6 @@ export interface Moment {
 
 export type Quality = 'film' | 'high' | 'low'
 
-export interface View {
-  // The camera at the open shutter.
-  pose: CameraPose
-  width: number
-  height: number
-  quality: Quality
-  // Samples that will be drawn for this frame.
-  samples: number
-}
-
 // What the sky says about the light it gives, in the scene's linear units. Read from tables made at load: no reading back from the graphics card.
 export interface SkyLight {
   // The direct sun or moon at the ground, before `sunThrough`.
@@ -91,6 +81,18 @@ export interface SkyLight {
   // The sky just above the horizon, away from the sun and toward it.
   horizon: RGB
   horizonSun: RGB
+}
+
+export interface View {
+  // The camera at the open shutter.
+  pose: CameraPose
+  width: number
+  height: number
+  quality: Quality
+  // Samples that will be drawn for this frame.
+  samples: number
+  // What the sky says about its light at the open shutter.
+  light: SkyLight
 }
 
 export interface Sky {
