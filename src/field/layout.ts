@@ -29,6 +29,8 @@ setLeafHold(companionVariant, 14, { droop: 0.005, liftDeg: 67.6, sinkDeg: -4.2, 
 setLeafHold(companionVariant, 17, { droop: 0.047, liftDeg: 34, sinkDeg: 6, lengthScale: 1.404, rollDeg: -1.9, foldScale: 0.413, swingDeg: 108.5 })
 setLeafHold(companionVariant, 15, { droop: 0.191, liftDeg: 40.5, sinkDeg: -1.7, lengthScale: 1.841, rollDeg: 4.2, foldScale: 0.86, swingDeg: 13.3 })
 setLeafHold(companionVariant, 23, { droop: 0, liftDeg: -16, sinkDeg: 53.6, lengthScale: 1.212, rollDeg: -3.4, foldScale: 0.022, swingDeg: 17 })
+// Its leaves from the foot to the middle are those of a grown plant of its height, as long as the plant's own: none of them reaches a bloom frame.
+for (const leaf of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) setLeafHold(companionVariant, leaf, { lengthScale: 1.42 })
 
 // The kinds of neighbor, each its own plant: seven for the full plants, four for the simpler ones and the pictures made of them.
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
