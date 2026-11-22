@@ -223,6 +223,16 @@ void main() {
     float chosen = fract(aTuft.w * 7.31);
     float rough = mix(0.4, 1.2, tf.x) * mix(0.75, 1.25, chosen) / (0.6 + 0.6 * patchy(c * 4.3 + vec2(3.0, 1.0)));
     rough *= step(tf.y, 0.1 + 0.9 * chosen) * smoothstep(${stemFoot.bareM.toFixed(2)}, ${stemFoot.fullM.toFixed(2)}, near);
+    float kind = fract(aTuft.w * 53.9);
+    float each = fract(aTuft.w * 91.7 + aAlong.y * 37.3);
+    float lying = step(0.76, kind);
+    float girth = length(place[0].xyz) / max(tall, 1e-5);
+    vec2 outward = normalize(position.xz + vec2(1e-5, 0.0));
+    vec2 over = vec2(cos(aTuft.w * 19.0), sin(aTuft.w * 19.0));
+    local *= mix(0.45, 1.2, each) * step(0.28, fract(each * 3.3));
+    local.xz += (outward * local.y * mix(0.0, 0.7, fract(each * 7.7)) + over * mix(0.1, 0.7, fract(kind * 9.1))) * local.y / max(girth, 0.3);
+    local.y *= mix(1.0, 0.25, lying);
+    local.xz *= mix(1.0, 1.5, lying);
     local *= rough;
     tall *= rough;
     vField = vec3(1.0, tf.x, near);
@@ -272,7 +282,8 @@ void main() {
     float chosen = fract(vTuft.w * 13.7);
     float dry = step(0.6 + 0.32 * vField.y, chosen) * (1.0 - weed);
     albedo *= vec3(1.5, 0.8, 2.4) * mix(0.65, 1.15, fract(vTuft.w * 29.3));
-    albedo = mix(albedo, mix(vec3(0.05, 0.043, 0.03), vec3(0.19, 0.155, 0.09), t), dry);
+    albedo = mix(albedo, mix(vec3(0.04, 0.036, 0.026), vec3(0.115, 0.096, 0.058), t) * mix(0.7, 1.1, fract(vTuft.w * 41.9)), dry);
+    albedo *= mix(vec3(1.0), vec3(1.1, 1.75, 0.8), (1.0 - dry) * smoothstep(0.3, 0.75, vField.y) * mix(0.4, 1.0, fract(vTuft.w * 67.3)));
     shut = 1.0 - 0.55 * exp(-vField.z * vField.z / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
   }
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
