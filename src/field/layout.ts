@@ -138,7 +138,7 @@ export function lateLean(id: number): { x: number; z: number } {
   const lean = hash01(SEED, 152, id) < 0.1 ? 0.1 + 0.05 * hash01(SEED, 153, id) : 0.02 + 0.07 * hash01(SEED, 153, id)
   return { x: Math.cos(way) * lean, z: Math.sin(way) * lean }
 }
-// In the evening air of the last eight seconds every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
+// In the evening air of the field segment every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
 // by up to 2.3 degrees; its leaves swing round the stem by up to 3.5 degrees and its head by up to 5, each on its own period. Those set by hand stand still.
 export const SWAY_FROM_S = FIELD_S
 export const swayAt = (time: number): number => ramp(SWAY_FROM_S, SWAY_FROM_S + 1.1, time)

@@ -22,7 +22,7 @@ export interface LensLook {
   shafts: number
   // Strength of the thin rays out of the sun against the wide shafts.
   rays: number
-  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what shows.
+  // Brightness of the hottest patch of an uncovered sun in the master format, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what shows.
   sunClear: number
   // Color of the glass's bloom hard by the sun and out in its halo, and of the lit air.
   glowNear: readonly [number, number, number]
