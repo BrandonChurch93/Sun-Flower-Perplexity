@@ -1,0 +1,133 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "far background and skyline, upper left to centre (region 6)",
+      "what": "a shows a cool blue-grey haze with a soft, low hedgerow and blurred plants. b has a clear grey mountain ridge with a band of warm amber bokeh under it, so the place reads as a different location",
+      "fix": "remove the defined ridge and amber band and bring back the soft, cool, hazy low treeline of a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground left and mid-ground, both sides of the plant",
+      "what": "b adds several large out-of-focus grass blades at the left edge, two sharp blades with dew at mid-left, and a grass clump at the right. a has only one tall thin blade at the far left edge, and the mid-ground there is bare soil",
+      "fix": "remove the extra blades and clump and keep only the single tall blade at the far left, as in a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "bud and seed coat (regions 1-3)",
+      "what": "in a the seed coat is crusted with soil, has broad grey-white stripes, and is split to show the green cotyledon, with soil crumbs falling from it. In b the coat is clean and darker, with fine stripes and only a thin yellow-green seam, and nothing falls",
+      "fix": "add soil crumbs to the coat, widen and lighten the stripes, open the split to show more cotyledon, and bring back the falling soil"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "overall grade, mid-ground and soil",
+      "what": "a is cooler, with teal-blue shadows, a pink-peach sky and deep black soil. b is pushed warm amber-brown through the mid-ground, and its soil blacks are lifted to brown",
+      "fix": "cool the shadows toward teal, deepen the soil blacks, and pull the amber out of the mid-ground"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "soil mound around the stem base",
+      "what": "b builds a raised, sharply detailed mound of round clods in the centre and lights it warm. a has broad, wet, glinting clods spread across the frame, with many small specular sparkles and bokeh points",
+      "fix": "flatten the mound into a spread of clods and add back the wet speculars and bokeh glints across the foreground soil"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, sun and sky round it",
+      "what": "a's sun has a strong starburst with rays fanning down-left and an orange glow along the horizon. b's sun is a soft disc with faint rays, and the sky around it is flat beige",
+      "fix": "restore the starburst rays and the warm orange horizon glow under the sun"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, stem and hairs",
+      "what": "a's stem has dense, fine, backlit hairs with dew beads and soil clumps on it. b's stem is smoother, with sparse short hairs and a few clean dark specks",
+      "fix": "thicken the rim-lit hair fringe and add dew beads and soil clumps on the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7, sky",
+      "what": "a's sky goes from teal-blue to pink-peach near the horizon. b's sky goes from blue to grey-beige with no pink, and a grey ridge band sits low in it",
+      "fix": "warm the lower sky toward pink-peach and remove the grey ridge band"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-02.png",
+      "where": "all crops",
+      "what": "a has a fine film grain and a photographic texture. b is clean and smooth and looks rendered",
+      "fix": "add matching fine grain and a little texture irregularity"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "far background, upper left (region 6)",
+      "what": "a shows a dark teal hillside and treeline with clear silhouette detail and good contrast. b replaces it with a low-contrast grey misty ridge",
+      "fix": "darken and cool the hillside toward teal and bring back the treeline silhouette and its contrast"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "grass in mid-ground and on the right",
+      "what": "a has a sparse right-hand grass clump full of dew sparkles and bokeh, and a thin blade at mid-left. b has a dense clump of long, arching blades on the right with few sparkles, plus a new cluster of sharp blades just left of the seed shell",
+      "fix": "thin the right-hand clump back to a's sparse, dew-sparkling blades and remove the added blades next to the shell"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "mid-ground band behind the plant (region 5)",
+      "what": "a has a glowing low ground mist lit by the sun across the mid-ground, over dark soil with cool green-grey bokeh. b has a warm amber-brown bokeh band and no glowing mist",
+      "fix": "add back the sunlit ground mist and cool the mid-ground bokeh"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "regions 1 and 3, the cotyledons",
+      "what": "a's leaves are a rounded, soft-sheened mid green with rim-lit hairs and sparse dew. b's leaves are more saturated, sit slightly larger and higher to the right, and are covered evenly in bright white dot droplets that look stamped on",
+      "fix": "lower the saturation, remove most of the uniform dots and keep only a few irregular dew beads, bring back the edge hairs, and match a's leaf size and position"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 2, stem",
+      "what": "a's stem is pale yellow-green with a soft backlit hair fringe. b's stem is a darker grey-green covered in white bead dots",
+      "fix": "lighten the stem toward pale yellow-green and replace the bead dots with a fine rim-lit hair fringe"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 4, sun and sky round it",
+      "what": "a's sun sits low, with a strong starburst and an orange horizon glow behind dewy grass. b's sun is a soft disc with weak rays over a flat beige sky",
+      "fix": "restore the starburst rays and the orange horizon glow"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-04-b.png",
+      "where": "foreground soil and overall blacks",
+      "what": "a's foreground soil is deep black with scattered wet glints and bokeh. b's soil is lifted to brown and is sharply detailed and lit warm, with few speculars",
+      "fix": "deepen the soil blacks, soften the near clods, and add the wet glints back"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-06.png",
+      "where": "region 7, sky",
+      "what": "a's sky is pale blue-grey above and turns pink-peach near the horizon. b's sky is bluer and greyer, with no pink, and it fades into a grey haze band",
+      "fix": "warm the lower sky toward pink-peach"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-05.png",
+      "where": "all crops",
+      "what": "a has fine film grain. b is grain-free and looks rendered",
+      "fix": "add matching fine grain"
+    }
+  ]
+}

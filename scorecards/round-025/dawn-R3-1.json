@@ -1,0 +1,49 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crops 1–2, the hook and the long, backlit stem",
+      "what": "The stem has nearly parallel sides and little shading across its broad face. The hairs mostly register as a uniform line of bright pinpricks, giving the hook the look of a molded tube.",
+      "fix": "Vary the stem's thickness and cross section through the bend, give the front face more rounded shading, and vary the length, spacing and direction of individual hairs."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1 and 5, the pale green arch emerging at soil level",
+      "what": "The in-focus green surface is conspicuously smooth next to the soil, and its lower silhouette changes direction in an abrupt, stepped notch over the dark clod.",
+      "fix": "Round out the silhouette, give the surface subtle microstructure, and vary which small grains overlap the sprout at emergence."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crops 1 and 3, the yellow-green tissue and split seed coat",
+      "what": "The exposed tissue reads as a smooth, uniformly colored insert, and the two shell lips terminate in hard, stepped tips.",
+      "fix": "Add soft thickness and backlit color variation to the tissue, and make the shell break thinner and more irregular."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crop 5, the sides of the soil opening beside the stem",
+      "what": "The clod faces on either side turn into dark, smooth, vertically stretched grooves, an abrupt change from the granular detail on top at similar depth.",
+      "fix": "Carry granular relief down the faces and break up the steep sides with smaller loose clods and partly buried grains."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7, the paired grass blades and their dew",
+      "what": "The blades are smooth green ribbons with little variation beyond a central stripe. Several bright beads sit just off the silhouette without a visible attachment to the blade.",
+      "fix": "Give the blades varied folds, thickness and transmitted light, and seat each droplet visibly against the surface before applying depth of field."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-09.png",
+      "where": "crop 8, the boundary between the blue-gray background and the brown field",
+      "what": "A broad gray band ends in a nearly straight horizontal transition with little variation in depth, making the horizon read as a separate blurred backdrop.",
+      "fix": "Break up the transition with irregular distant terrain and carry atmospheric haze gradually from the field into the skyline."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crops 1 and 3, both cotyledon faces, especially the upright right blade",
+      "what": "The uniformly smooth faces and continuous bright rims read as molded plastic. The veins on the left blade read as fine surface lines rather than relief, and the right blade stays smooth across most of its lit face.",
+      "fix": "Add subtle vein relief and cuticle roughness variation, and vary the blade thickness, curvature and transmitted light along the margins."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2, both stem edges below the leaf junction",
+      "what": "The stem is nearly straight-sided and smooth, and its backlit hairs merge into two nearly continuous dotted outlines instead of resolving into irregular fibers.",
+      "fix": "Break up the edge sparkle with individually tapered hairs of varying length, density and angle, and add slight variation to the stem profile and skin."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 4, dew across the cotyledon faces and around the left rim",
+      "what": "Many droplets register only as similarly sized pinprick highlights, so the dew reads as scattered glitter rather than beads sitting on the leaf.",
+      "fix": "Vary droplet size and contact shape and give the larger in-focus beads visible translucent bodies and refraction beneath their highlights."
+    }
+  ]
+}
