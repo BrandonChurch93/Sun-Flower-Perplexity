@@ -1,0 +1,56 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-03.png",
+      "where": "soil mound left and right of the emergence hole in f0000-f0011 (also visible in set-D-02.png)",
+      "what": "as the soil mound heaves during emergence, world-space procedural displacement causes individual dirt clods and highlights to morph shape, swell, and flicker by 50-80 luminance units on alternating 1/30 s frames instead of moving as solid dirt",
+      "fix": "bind soil displacement to rest/UV coordinates or simulate rigid granular clods so the heaving mound translates and rotates coherently without boiling or flickering"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "seed husk from f0000 to f0239 (and f0000-f0011 in set-D-03.png)",
+      "what": "the seed husk emerges in f0000-f0011 already splayed wide open at its outer tip, closes back into a pointed seed in f0022-f0087, splits from the opposite end in f0109, and by f0130 lands balanced vertically upright on its sharp point where it freezes in pose and shrinks to 0.46x height by f0239 (faster than the 0.68x camera pullback)",
+      "fix": "keep the seed coat closed at emergence, split it once from its base as the cotyledons expand, drop it onto its side with gravity and subtle settling on the soil, and hold its world-space scale constant"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "stem apex and emerging cotyledons in f0109 (3.6 s)",
+      "what": "between f0087 and f0130 the curved hypocotyl hook snaps into a straight vertical cylinder capped with a blunt rounded stump, with two thin wire-like green strips separated by empty sky bridging up into the floating seed husk instead of fleshy cotyledons unfolding continuously",
+      "fix": "preserve continuous hypocotyl-to-cotyledon anatomy as the hook straightens so thick paired cotyledon blades slide smoothly out of the seed coat without a blunt stump or hollow gap"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "seed husk valves, stem-to-husk junction, and dirt clumps on the stem in f0000-f0011",
+      "what": "both striped husk valves and the pre-attached dirt blobs on the stem pass straight through the foreground dark soil clod along a hard clipping line without displacing dirt, and the green stem cylinder terminates in a flat seam against the husk",
+      "fix": "open a colliding cavity in the soil with displaced crumbs around the emerging sprout, and model the stem tapering continuously inside the split seed coat"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "upper and right backlit silhouette edge of the stem arch in f0000-f0011",
+      "what": "instead of distinct backlit stem hairs, a translucent glow band surrounds the stem with an un-antialiased 1-pixel stair-stepped dark-and-bright beaded seam along the inner contour that crawls across pixel rows as the arch rises",
+      "fix": "replace the shell-glow seam with antialiased fine trichome hair geometry and supersampled edge shading so the backlit rim is free of pixel-stepping"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "grass clump to the right of the plant in f0196-f0239 (6.5 s to 8.0 s)",
+      "what": "as the camera pulls back and depth of field deepens, tiny dew highlights on the right grass clump abruptly resolve into dozens of harsh single-pixel white pinpoints in f0217-f0239, causing specular pop-in and shimmer",
+      "fix": "apply roughness clamping or specular antialiasing to sub-pixel dew droplets so highlights transition smoothly out of bokeh without pinpoint sparkling"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "top border of native-size crop tiles f0009-f0011",
+      "what": "the fixed crop window sits slightly too low and clips the top crest of the rising hypocotyl arch and its attached soil clump in the last three frames",
+      "fix": "shift the fixed native-size crop box upward by about 25 pixels so the full arch crest remains visible across all 12 frames"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "critic": "R5",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-E-03.png",
+      "where": "foreground of the field frames, 53.1 s through 60.0 s",
+      "what": "a second, taller, unopened stalk enters beside the bloomed plant and stays equally prominent on a grass margin in front of the crop, so the ending reads as two plants posed before a field instead of the one life released into it",
+      "fix": "widen on the same open flower alone and place it inside the crop so the field takes that one plant"
+    },
+    {
+      "severity": "major",
+      "file": "set-E-01.png",
+      "where": "right edge of the dawn frame at 3.4 s",
+      "what": "a dense backlit grass clump appears where the ground was bare at 1.7 s, in a locked shot",
+      "fix": "keep the same right-edge blades and let them grow in place"
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "horizon on either side of the plant at 20.6 s",
+      "what": "a row of tall neighboring stalks lines a horizon that was low vegetation at the end of the rain, so the place fills in at the cut while the hero stays put",
+      "fix": "hold the same low field and distant hills through the night cut, and bring neighbors in only when the camera later opens onto the field"
+    }
+  ]
+}
