@@ -114,7 +114,14 @@ export interface Session {
   close(): Promise<void>
 }
 
+let forbidden = false
+
+export function forbidRenders(): void {
+  forbidden = true
+}
+
 export async function openSession(options: SessionOptions = {}): Promise<Session> {
+  if (forbidden) throw new Error(`a ${options.what ?? 'render'} was asked for, and --no-render forbids making it`)
   const hashes = ensureBuild()
   ensureDisk()
   const release = options.slot === false ? () => undefined : await takeRenderSlot(options.what ?? 'render')

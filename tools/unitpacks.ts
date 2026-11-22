@@ -9,7 +9,7 @@ import { asPng, atMasterSize, wholeImage, wholeSize } from './lib/packimage.ts'
 import { fastestRun, regionsOf, type Absent, type Region } from './lib/regions.ts'
 import type { Pack, PackContext, PackFile } from './pack.ts'
 import { sheetCommand, sheetNeed, stillCommand, stillNeed, type Need } from './filmpacks.ts'
-import { cutSheet, cutSheetPlan, detailSheet, detailSheetFile, detailSize, runSheet, runSheetPlan, unitSheet, unitSheetPlan, type SheetOptions } from './sheet.ts'
+import { cutSheet, cutSheetPlan, detailReady, detailSheet, detailSheetFile, detailSize, runSheet, runSheetPlan, unitSheet, unitSheetPlan, type SheetOptions } from './sheet.ts'
 
 const master = config.formats.master
 const most = config.critics.maxFilesPerMessage
@@ -219,7 +219,9 @@ export function unitNeeds(unit: string, tier: string, critics: string[]): Need[]
   const run = runSheetPlan(unit, fastestRun(unit, config.critics.contactSheetFrames).first, big)
   const make = stillCommand(run.frames, big.tier, big.format, false)
   out.push(sheetNeed(run, big, make))
-  out.push(sheetNeed(run, big, make, detailSheetFile(unit, run.frames[0], big)))
+  const found = regionsOf(run.frames[0] + Math.floor(run.frames.length / 2), detailSize.width, detailSize.height)
+  const box = found.regions.find((r) => r.id === 'head') ?? found.regions.find((r) => r.id === 'stem') ?? found.regions[0]
+  if (box) out.push(sheetNeed(run, big, make, detailSheetFile(unit, run.frames[0], big), detailReady(unit, run.frames[0], box, big)))
   const cut = cuts.find((c) => c.toSegment === unit)
   if (cut) out.push(sheetNeed(cutSheetPlan(cut.index, o), o, sheetCommand(`--cut ${cut.index}`, o)))
   return out

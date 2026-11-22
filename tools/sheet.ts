@@ -130,16 +130,26 @@ export function runSheet(unit: string, first: number, o: SheetOptions): Promise<
   return makeSheet(plan.file, plan.frames, plan.caption, o)
 }
 
+function detailBox(box: { left: number; top: number }, o: SheetOptions): { left: number; top: number; w: number; h: number } {
+  const w = Math.floor((longEdge - (COLS + 1) * GAP) / COLS)
+  const h = Math.floor((longEdge - (ROWS + 1) * GAP) / ROWS) - STRIP
+  const size = formatById(o.format)
+  return { left: Math.round(Math.min(size.width - w, Math.max(0, box.left))), top: Math.round(Math.min(size.height - h, Math.max(0, box.top))), w, h }
+}
+
+export function detailReady(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions): boolean {
+  const frames = Array.from({ length: per }, (_, i) => first + i)
+  const existing = readRecord(detailSheetFile(unit, first, o))
+  const { left, top } = detailBox(box, o)
+  return matches(existing, computeHashes(), { kind: 'sheet', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units: [unit] }) && sameFrames(existing?.frames, frames) && existing?.left === left && existing?.top === top
+}
+
 export async function detailSheet(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions): Promise<Sheet> {
   const frames = Array.from({ length: per }, (_, i) => first + i)
   const file = detailSheetFile(unit, first, o)
   const caption = `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}, native size crops`
   const hashes = computeHashes()
-  const w = Math.floor((longEdge - (COLS + 1) * GAP) / COLS)
-  const h = Math.floor((longEdge - (ROWS + 1) * GAP) / ROWS) - STRIP
-  const size = formatById(o.format)
-  const left = Math.round(Math.min(size.width - w, Math.max(0, box.left)))
-  const top = Math.round(Math.min(size.height - h, Math.max(0, box.top)))
+  const { left, top, w, h } = detailBox(box, o)
   const existing = readRecord(file)
   if (matches(existing, hashes, { kind: 'sheet', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units: [unit] }) && sameFrames(existing?.frames, frames) && existing?.left === left && existing?.top === top) {
     console.log(`sheet · reused · ${rel(file)}`)

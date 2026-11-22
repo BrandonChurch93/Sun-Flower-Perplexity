@@ -15,6 +15,7 @@ import { ROOT, WORK } from './lib/paths.ts'
 import { asPng, pixelsOnly } from './lib/packimage.ts'
 import { filmNeeds, filmPacks, needLines } from './filmpacks.ts'
 import { subPacks } from './lib/recordplan.ts'
+import { forbidRenders } from './lib/render.ts'
 import { recordNeeds, recordPacks, renderLines } from './recordpacks.ts'
 import { unitPacks } from './unitpacks.ts'
 import { cutSheet, filmSheets, type SheetOptions } from './sheet.ts'
@@ -127,6 +128,7 @@ export async function buildPacks(context: PackContext): Promise<string[]> {
   const record = builders.includes(recordPacks)
   if (context.list || context.noRender) {
     if (!builders.includes(filmPacks) && !record) throw new Error('--list and --no-render are for the packs of the whole film round (phase 5) and of the record round (phase 6)')
+    if (context.noRender) forbidRenders()
     if (context.list) {
       for (const line of record ? renderLines(recordNeeds(context)) : needLines(filmNeeds(context))) console.log(`pack · ${line}`)
       return []

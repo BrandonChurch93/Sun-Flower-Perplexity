@@ -60,8 +60,8 @@ export function stillNeed(frame: number, tier: string): Need {
   return { what: 'still', label: `frame ${frame}`, tier, format: master.id, file: stillPath({ frame, tier, format: master.id, assets: ASSETS, diag: 'beauty' }), have, frames: have ? [] : [frame], make: stillCommand([frame], tier, master.id, true) }
 }
 
-export function sheetNeed(plan: SheetPlan, o: SheetOptions, make: string, file = plan.file): Need {
-  const have = sheetReady({ ...plan, file }, o)
+export function sheetNeed(plan: SheetPlan, o: SheetOptions, make: string, file = plan.file, ready?: boolean): Need {
+  const have = ready ?? sheetReady({ ...plan, file }, o)
   const lacking = have ? [] : plan.frames.filter((f) => !stillHave(f, o.tier, o.format, false))
   const held = plan.frames.length - lacking.length
   return { what: 'sheet', label: `frames ${plan.frames[0]} to ${plan.frames[plan.frames.length - 1]}`, tier: o.tier, format: o.format, file, have: have || lacking.length === 0, ...(have ? {} : { stills: `the sheet is not made; ${held} of ${plan.frames.length} of its stills are here` }), frames: lacking, make }
