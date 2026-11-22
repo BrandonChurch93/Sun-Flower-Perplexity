@@ -1,4 +1,4 @@
-QA item 20. Searches of src/ (all but src/config.ts) on commit a39e447, 2026-11-22 10:35 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md.
+QA item 20. Searches of src/ (all but src/config.ts) on commit d8f4d04, 2026-11-22 10:46 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md.
 
 == 1. Format sizes: rg -n '\b(1920|1080|3840|2160|960|540)(\.0)?\b' src --glob '!src/config.ts'
 src/worlds/rain/layers.ts:27:  float right = 180.0 - mod(degrees(atan(position.x, position.z)) - uSunDeg + 540.0, 360.0);
@@ -10,8 +10,6 @@ src/worlds/rain/layers.ts:131:  float t = (mod(degrees(atan(vWorld.x, vWorld.z))
 src/weather/skyline.ts:39:  { name: 'far trees', radiusM: 1500, wander: 0.1, lowDeg: 0.35, highDeg: 1.0, cells: 40, segments: 1800, trees: true, crownM: 15, floor: 0.45 },
 
 == 3. Cut frames: rg -n '\b(240|600|900|1200)(\.0)?\b' src --glob '!src/config.ts'
-src/plant/leaves/index.ts:177:  const dryLeaf = 5 + Math.floor(hash01(seed, 900) * 6)
-src/plant/head/bud/index.ts:195:  const edge = Float32Array.from({ length: shape.bracts * shape.nu * 2 }, (_, n) => 1 + 0.16 * (hash01(seed, 900, n) - 0.5))
 src/capture/export.module.css:26:  font-weight: 600;
 src/capture/export.module.css:34:  font-weight: 600;
 src/capture/export.module.css:70:  font-weight: 600;
@@ -21,25 +19,27 @@ src/worlds/golden/layers.ts:208:  { radiusM: 240, heightM: 70, scaleM: 7, share:
 src/worlds/rain/layers.ts:164:  { radiusM: 600, heightM: 60, scaleM: 2, share: 0.15, light: 2.6 },
 src/weather/rain/drops.ts:64:  return 9.65 - 10.3 * Math.exp(-1200 * radius)
 src/director/menu.module.css:71:  font-weight: 600;
+src/plant/head/bud/index.ts:195:  const edge = Float32Array.from({ length: shape.bracts * shape.nu * 2 }, (_, n) => 1 + 0.16 * (hash01(seed, 900, n) - 0.5))
+src/plant/leaves/index.ts:177:  const dryLeaf = 5 + Math.floor(hash01(seed, 900) * 6)
 
 == 4. Frame rate and duration written as numbers: rg -n '(/ ?30\b|\* ?30\b|\b30 ?\*|\b30 ?/|fps ?[:=] ?[0-9]|frameRate|durationSeconds ?[:=] ?[0-9]|\b60 ?\* ?30)' src --glob '!src/config.ts'
 src/plant/index.ts:81:    albedo = mix(vec3(0.12, 0.25, 0.06), vec3(0.26, 0.4, 0.12), fbm(uv * vec2(6.0, 14.0) + seed * 30.0));
 src/plant/leaves/shaders.ts:258:  float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
-src/capture/export.ts:467:    const muxer = new Muxer({ target, video: { codec: choice.container, width: size.width, height: size.height, frameRate: fps }, fastStart: 'in-memory', firstTimestampBehavi
 src/plant/head/bud/shaders.ts:46:  float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
 src/plant/head/bud/shaders.ts:90:    float grain = valueNoise(vec2(x * 6.0 + seed * 91.0, u * 30.0 + seed * 17.0));
 src/plant/head/bud/shaders.ts:148:    float grain = valueNoise((0.3 + rho) * vec2(cos(vInfo.y), sin(vInfo.y)) * 30.0);
+src/capture/export.ts:467:    const muxer = new Muxer({ target, video: { codec: choice.container, width: size.width, height: size.height, frameRate: fps }, fastStart: 'in-memory', firstTimestampBehavi
 
 == 5. Tier sample counts and tier names: rg -n "(samples ?[:=] ?(1|8|48)\b|'(draft|review|final)')" src --glob '!src/config.ts'
 src/ground/puddles/index.ts:68:  prepare(def: WorldDef, time: number, timeClose: number, shown = true, samples = 1): void {
 src/capture/export.ts:386:      await film.renderFrame(hero.frame, 'review', true)
 src/capture/export.ts:387:      secondsPerSample = (performance.now() - t0) / 1000 / samplesOf('review')
 src/worlds/golden/index.ts:26:  let samples = 1
-src/director/modes.ts:82:    tier: tier && isTier(tier) ? tier : mode === 'export' ? 'final' : 'draft',
+src/director/film.ts:53:  lastTier: TierId = 'draft'
 src/director/live.ts:48:  let tier: TierId = options.chosen.tier ? options.tier : 'review'
 src/director/live.ts:346:          await draw('draft')
 src/director/live.ts:347:          refined = tier === 'draft'
-src/director/film.ts:53:  lastTier: TierId = 'draft'
+src/director/modes.ts:82:    tier: tier && isTier(tier) ? tier : mode === 'export' ? 'final' : 'draft',
 
 == 6. World, segment and key names: rg -n "'(dawn|rain|night|frost|bloom|field|golden|dawn-sprout|dawn-seedling|bloom-opening|bloom-hero)'" src --glob '!src/config.ts'
 src/field/layout.ts:8:const SEED = streamSeed('field')
@@ -55,11 +55,9 @@ src/ground/index.ts:47:    const keptS = segmentById('bloom').start
 src/ground/index.ts:48:    const fieldS = segmentById('field').start
 src/ground/index.ts:90:      uRainS: { value: new THREE.Vector2(segmentById('rain').start, segmentById('rain').end) },
 src/ground/index.ts:121:      const rainS = segmentById('rain').start
-src/units/bloom/index.ts:7:  heldShare: [[segmentStart('bloom'), 0.55], [42, 0.3], [43.5, 0.1], [44.5, -0.12], [44.75, -0.12], [keyTime('bloom-opening'), 0.4], [46.5, 0.4], [48, 0.55]],
 src/ground/puddles/index.ts:23:const GATHERS_S = [segmentStart('rain'), 13.7]
 src/ground/soil.ts:91:  const heap = collarAt(x, z, time, segmentById('bloom').start)
 src/ground/soil.ts:258:const NIGHT_FROM_S = segmentStart('night').toFixed(1)
-src/worlds/frost/index.ts:11:  backdrop: { file: null, key: 'frost', sunAt: null, gain: 1, blur: 0.25 },
 src/plant/growth.ts:52:const NIGHT_S = segmentStart('night')
 src/plant/growth.ts:53:const FROST_S = segmentStart('frost')
 src/plant/growth.ts:54:const BLOOM_S = segmentStart('bloom')
@@ -68,17 +66,7 @@ src/plant/growth.ts:56:const FROST_KEY_S = keyTime('frost')
 src/plant/growth.ts:137:const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(config.segments.find((s) => s.id === 'bloom')!.start)
 src/plant/growth.ts:254:const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
 src/plant/growth.ts:255:const RAY_FLAT = config.keys.find((key) => key.id === 'field')!.time - 0.2
-src/worlds/golden/index.ts:10:  backdrop: { file: null, key: 'bloom-hero', sunAt: null, gain: 1, blur: 0.25 },
-src/worlds/golden/layers.ts:196:const FIELD_FROM_S = segmentStart('field')
 src/plant/surface/index.ts:25:const FIELD_FROM_S = segmentStart('field').toFixed(1)
-src/worlds/golden/air.ts:13:const OPEN_FROM_S = segmentStart('field')
-src/worlds/golden/sky.ts:125:const LATE_FROM_S = segmentStart('field')
-src/worlds/golden/sky.ts:134:const SMALL_FROM_S = segmentStart('field')
-src/worlds/rain/index.ts:14:  backdrop: { file: null, key: 'rain', sunAt: null, gain: 1.3, blur: 0.25 },
-src/worlds/rain/layers.ts:177:const RAIN_FROM_S = segmentStart('rain')
-src/worlds/rain/layers.ts:178:const RAIN_TO_S = segmentEnd('rain')
-src/worlds/night/index.ts:13:  backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
-src/worlds/night/index.ts:57:  const mist = makeMist('night', MIST)
 src/plant/seedling/index.ts:31:const RAIN_FROM_S = segmentStart('rain')
 src/plant/seedling/index.ts:35:const CRUMBS_KEY_S = keyTime('dawn-sprout')
 src/plant/leaves/index.ts:31:const BLOOM = segmentStart('bloom')
@@ -92,29 +80,41 @@ src/plant/leaves/index.ts:119:const FIELD_REST = config.keys.find((k) => k.unit 
 src/plant/leaves/index.ts:560:  const dawnEnd = config.segments.find((seg) => seg.id === 'dawn')?.end ?? 0
 src/plant/leaves/index.ts:561:  const nightStart = config.segments.find((seg) => seg.id === 'night')?.start ?? 0
 src/plant/leaves/index.ts:562:  const nightEnd = config.segments.find((seg) => seg.id === 'night')?.end ?? 0
-src/worlds/night/sky.ts:17:const KEY_TIME_S = keyTime('night')
-src/worlds/dawn/index.ts:13:  backdrop: { file: null, key: 'dawn-seedling', sunAt: null, gain: 1, blur: 0.25 },
-src/worlds/dawn/index.ts:93:  const air = makeMist('dawn', mist)
 src/plant/head/petals/index.ts:57:const LATE_FROM_S = segmentStart('field')
-src/worlds/dawn/layers.ts:73:const EARLY_AIR_FROM_S = keyTime('dawn-sprout')
-src/worlds/dawn/sky.ts:74:const DAY_FROM_S = keyTime('dawn-sprout')
-src/worlds/dawn/sky.ts:75:const DAY_TO_S = keyTime('dawn-seedling')
-src/weather/fog/index.ts:170:  const unit = config.segments.find((s) => s.world === 'frost')
-src/weather/fog/index.ts:178:  const unit = config.segments.find((s) => s.world === 'frost')
-src/weather/fog/index.ts:184:  const unit = config.segments.find((s) => s.world === 'frost')
 src/plant/stem/index.ts:27:const RAIN_FROM_S = segmentStart('rain')
 src/plant/stem/index.ts:28:const FROST_FROM_S = segmentStart('frost')
 src/plant/stem/index.ts:29:const BLOOM_FROM_S = segmentStart('bloom')
-src/weather/skyline.ts:164:const BLOOM_FROM_S = segmentStart('bloom')
 src/plant/stem/shape.ts:163:const SEEDLING_KEY_S = keyTime('dawn-seedling')
 src/plant/hairs/index.ts:25:const WIDE_FROM_S = segmentStart('field')
 src/post/looks.ts:75:const FIELD_FROM_S = segmentStart('field')
 src/post/looks.ts:83:  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return 0
+src/capture/export.ts:48:const HERO = 'bloom-hero'
+src/units/bloom/index.ts:7:  heldShare: [[segmentStart('bloom'), 0.55], [42, 0.3], [43.5, 0.1], [44.5, -0.12], [44.75, -0.12], [keyTime('bloom-opening'), 0.4], [46.5, 0.4], [48, 0.55]],
+src/worlds/night/index.ts:13:  backdrop: { file: null, key: 'night', sunAt: null, gain: 1, blur: 0.25 },
+src/worlds/night/index.ts:57:  const mist = makeMist('night', MIST)
+src/worlds/frost/index.ts:11:  backdrop: { file: null, key: 'frost', sunAt: null, gain: 1, blur: 0.25 },
+src/worlds/golden/index.ts:10:  backdrop: { file: null, key: 'bloom-hero', sunAt: null, gain: 1, blur: 0.25 },
+src/worlds/golden/layers.ts:196:const FIELD_FROM_S = segmentStart('field')
+src/worlds/golden/air.ts:13:const OPEN_FROM_S = segmentStart('field')
+src/worlds/golden/sky.ts:125:const LATE_FROM_S = segmentStart('field')
+src/worlds/golden/sky.ts:134:const SMALL_FROM_S = segmentStart('field')
+src/worlds/rain/index.ts:14:  backdrop: { file: null, key: 'rain', sunAt: null, gain: 1.3, blur: 0.25 },
+src/worlds/rain/layers.ts:177:const RAIN_FROM_S = segmentStart('rain')
+src/worlds/rain/layers.ts:178:const RAIN_TO_S = segmentEnd('rain')
+src/weather/fog/index.ts:170:  const unit = config.segments.find((s) => s.world === 'frost')
+src/weather/fog/index.ts:178:  const unit = config.segments.find((s) => s.world === 'frost')
+src/weather/fog/index.ts:184:  const unit = config.segments.find((s) => s.world === 'frost')
+src/weather/skyline.ts:164:const BLOOM_FROM_S = segmentStart('bloom')
 src/director/rig.ts:7:const HELD_AT = keyTime('frost')
 src/director/rig.ts:8:const NIGHT_KEY_AT = keyTime('night')
 src/director/rig.ts:28:const TILT_UNTIL = keyTime('rain')
 src/director/inputs.ts:31:  if (world === 'rain') return RAIN_AIR
-src/capture/export.ts:48:const HERO = 'bloom-hero'
+src/worlds/dawn/index.ts:13:  backdrop: { file: null, key: 'dawn-seedling', sunAt: null, gain: 1, blur: 0.25 },
+src/worlds/dawn/index.ts:93:  const air = makeMist('dawn', mist)
+src/worlds/dawn/layers.ts:73:const EARLY_AIR_FROM_S = keyTime('dawn-sprout')
+src/worlds/dawn/sky.ts:74:const DAY_FROM_S = keyTime('dawn-sprout')
+src/worlds/dawn/sky.ts:75:const DAY_TO_S = keyTime('dawn-seedling')
+src/worlds/night/sky.ts:17:const KEY_TIME_S = keyTime('night')
 
 == 7. Thresholds of the quality bar (passScore, focusCocPx, tipMarginFraction, maxStepRatio, minPlantsInView) read anywhere but through config: rg -n '(passScore|focusCocPx|tipMarginFraction|maxStepRatio|minPlantsInView)' src
 src/config.ts:53:    minPlantsInView: number
@@ -160,51 +160,49 @@ src/plant/leaves/shape.ts:26:    const end = 0.585 + 0.36 * at + 0.012 * (r(20 +
 src/plant/head/bud/index.ts:525:    const tipR = (1 - smoothstep(bloom0 - 16, bloom0 - 14, time)) * (TIP_WIDE * stemR(1) + 0.0004)
 src/plant/head/bud/index.ts:553:        opened += (rayOpen(ray, time + FOLD_LEAD[k.series]) + rayOpen(ray, time + FOLD_LEAD[k.series] - FOLD_SLOW)) / 8
 src/plant/head/bud/shaders.ts:175:  if (kind > 1.5) t.normal = reliefSlope(face, vWorld, at, slope, 1.0);
-src/plant/head/disc/shaders.ts:79:  float tuck = (1.0 - smoothstep(SHOWN_FROM + 6.5, SHOWN_FROM + 9.5, f.time)) * smoothstep(0.72, 0.86, rho) * (0.75 + 0.25 * h1);
-src/plant/stem/index.ts:486:      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
-src/plant/stem/index.ts:515:        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * lerp(DEW_FINE, RAIN_FINE * (1 - b.hang), rain) * smoothstep(0.004, 0.012, sHigh - sLow) *
 src/worlds/golden/sky.ts:8:// The picture is 8 bit. The range of the real sky is carried here: the picture times a smooth gain that climbs toward the sun and the horizon, then the haze, the sun's aure
 src/worlds/night/sky.ts:105:    float bank = valueNoise(vec2(lu.x * 14.0 + 0.012 * uLandTime, 3.7));
 src/worlds/dawn/sky.ts:8:// The painted sky holds the color of a clear sunrise in 8 bit. Its range is carried here: a gain that climbs toward the sun, the haze over the horizon, the sun's aureole in t
 src/weather/frost/index.ts:8:// Crystals are see-through at their edges and are drawn after the bodies they grow on and before the hairs (20).
 src/weather/frost/index.ts:88:  float melt = high * step(turn6, 1.0) * smoothstep(from, from + 1.5, now);
-src/post/post.ts:16:// How far past the spacing of the lens samples each copy is spread. At 1 the copies of an out of focus edge still show, at 8 samples and at 48.
 src/capture/export.ts:111:  if (seconds < 5400) return `about ${Math.round(seconds / 60)} minutes`
+src/plant/stem/index.ts:486:      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
+src/plant/stem/index.ts:515:        const size = length <= 0 || sHigh <= sLow || b.fallM > 0 ? 0 : b.radiusM * lerp(DEW_FINE, RAIN_FINE * (1 - b.hang), rain) * smoothstep(0.004, 0.012, sHigh - sLow) *
+src/plant/head/disc/shaders.ts:79:  float tuck = (1.0 - smoothstep(SHOWN_FROM + 6.5, SHOWN_FROM + 9.5, f.time)) * smoothstep(0.72, 0.86, rho) * (0.75 + 0.25 * h1);
 
 == 9. Named constants set to a segment edge or a key time: rg -n 'const [A-Z][A-Z_0-9]* = \[?(8|20|30|40|52|60|1\.5|6\.5|14|26|36|45|50\.5|58\.5)\b' src --glob '!src/config.ts' --glob '!*.test.ts'
 src/ground/index.ts:20:const WIDE = 8.3
+src/plant/growth.ts:71:const CROWD_SECONDS = 1.5
+src/plant/surface/wet/index.ts:259:const CARRY = 1.5
 src/ground/grass.ts:11:const HALF_WIDTH_M = 6.5
 src/ground/grass.ts:12:const FRONT_M = 1.5
-src/plant/growth.ts:71:const CROWD_SECONDS = 1.5
 src/ground/puddles/index.ts:21:const SPLASH_HALF_M = 1.5
-src/plant/surface/wet/index.ts:259:const CARRY = 1.5
-src/plant/part.ts:39:export const PLACE = 8
+src/worlds/golden/air.ts:14:const OPEN_TO_S = 52.6
+src/worlds/night/index.ts:28:const VALLEY_STEP_DEG = 8
+src/worlds/night/layers.ts:127:const WOOD_CROWN_M = 45
+src/worlds/dawn/layers.ts:72:const EARLY_AIR = 8
+src/weather/skyline.ts:49:const SUN_RIDGE_TOP_DEG = 1.5
 src/plant/head/bud/index.ts:54:const BACK_LAG = [1.5, 1.6, 1.7]
 src/plant/head/bud/index.ts:65:const HOOK = 1.5
 src/plant/head/bud/index.ts:175:const WRAP_IN_S = [20.5, 24.2]
-src/worlds/golden/air.ts:14:const OPEN_TO_S = 52.6
-src/worlds/night/index.ts:28:const VALLEY_STEP_DEG = 8
 src/plant/hairs/index.ts:10:export const HAIR_ORDER = 20
 src/plant/hairs/index.ts:30:const CROWD_CELL_PX = 8
-src/worlds/night/layers.ts:127:const WOOD_CROWN_M = 45
 src/plant/standin.ts:126:const STEM_RINGS = 40
-src/weather/skyline.ts:49:const SUN_RIDGE_TOP_DEG = 1.5
-src/worlds/dawn/layers.ts:72:const EARLY_AIR = 8
+src/plant/part.ts:39:export const PLACE = 8
 
 == 10. Segment edges and key times written as seconds in words or in a comparison: rg -n --pcre2 '\b(8|20|30|40|52|60|6\.5|14|26|36|45|50\.5|58\.5)(\.0)? s\b|(time|timeS|seconds|\bt) ?(<|>|<=|>=|===) ?(8|20|30|40|52|60|1\.5|6\.5|14|26|36|45|50\.5|58\.5)\b' src --glob '!src/config.ts' --glob '!*.test.ts'
-src/field/layout.ts:141:// In the evening air of the last eight seconds every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
+src/field/layout.ts:141:// In the evening air of the field segment every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
 src/field/layout.ts:168:  if (time <= 52.1 || end === 0) return null
 
 == 11. The film's name, the worlds' names and the export file names: rg -n -i '(sunflower|Dawn with dew|Downpour|Night under stars|Cold fog and frost|Golden hour|proof-preview|\.mp4)' src --glob '!src/config.ts' --glob '!*.test.ts'
 src/ground/soil.ts:54:// From the golden hour on the furrow is the deep cut it was when that unit was judged, with banks as high as it is deep and a floor that starts 0.3 of the way out.
 src/plant/index.ts:50:// The stand-in colors of each part of a sunflower, shared with the neighbors in the field.
 src/plant/leaves/shape.ts:1:// The flat shape of a sunflower leaf: its outline, its teeth and where its veins run.
-src/worlds/night/layers.ts:136:// The land is the same land in every world: its line is laid out round the bearing of the golden hour's sun.
 src/weather/skyline.ts:144:// Through the film. Early on, where the dawn sun rises, the land lies under the sun's lower limb, and it stands at its full height from 6 degrees to either side, so the sun
+src/worlds/night/layers.ts:136:// The land is the same land in every world: its line is laid out round the bearing of the golden hour's sun.
 
 == 12. Judged frames, the picture's shape and the plants in view written as numbers: rg -n '(\b(195|420|780|1350|1515|1755|3000)\b|16 ?/ ?9|16:9|16x9)' src --glob '!src/config.ts' --glob '!*.test.ts'
 src/ground/litter.ts:50:  const straws = 420
 src/ground/soil.ts:95:  const s = (a * e.cracks) / 6.2832 + 0.07 * Math.sin(r * 420 + a * 2) + 0.05 * Math.sin(r * 1300)
 src/ground/soil.ts:219:  float s = a * uEmerge.w / 6.2832 + 0.07 * sin(r * 420.0 + a * 2.0) + 0.05 * sin(r * 1300.0);
-src/post/looks.ts:25:  // Brightness of the hottest patch of an uncovered sun at 16x9, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what sho
 src/director/live.ts:17:const IDLE_MS = 3000
