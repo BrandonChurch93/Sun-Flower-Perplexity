@@ -1,27 +1,27 @@
 {
   "kind": "clip",
-  "engineHash": "b9de284219d214c9",
+  "engineHash": "a4c82933ba906236",
   "unitHashes": {
-    "dawn": "609ff98b65fa38e3",
-    "rain": "cdb9bfbbb4e44942",
-    "night": "dd84d117aab66acc",
+    "dawn": "8ebbafaa0d28e07b",
+    "rain": "cc96331076d01a36",
+    "night": "1e33829500718753",
     "frost": "8162048fd525a7c9",
-    "bloom": "d9662b45d5344491",
-    "field": "c229e6a6f41a2960"
+    "bloom": "f8b8ac67c3d305b9",
+    "field": "85ecd6aea5f49c50"
   },
   "format": "16x9",
-  "tier": "review",
+  "tier": "draft",
   "assets": "full",
   "diag": "beauty",
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
+    "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T00:42:05.142Z",
+  "at": "2026-11-22T09:47:28.328Z",
   "frames": [
     0,
     239
@@ -35,102 +35,12 @@
   "m1Details": {},
   "parts": [
     {
-      "file": "chunk-dawn-16x9-review-full-0-29.mp4",
+      "file": "chunk-dawn-16x9-draft-full-0-74.mp4",
       "frames": [
         0,
-        29
+        74
       ],
-      "at": "2026-11-22T00:15:22.349Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-30-59.mp4",
-      "frames": [
-        30,
-        59
-      ],
-      "at": "2026-11-22T00:17:56.826Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-60-89.mp4",
-      "frames": [
-        60,
-        89
-      ],
-      "at": "2026-11-22T00:15:55.464Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "7d76ff88-5bd2-466e-978b-d12f9a568a85",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-90-119.mp4",
-      "frames": [
-        90,
-        119
-      ],
-      "at": "2026-11-22T00:14:55.510Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-120-149.mp4",
-      "frames": [
-        120,
-        149
-      ],
-      "at": "2026-11-22T00:15:22.455Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-150-179.mp4",
-      "frames": [
-        150,
-        179
-      ],
-      "at": "2026-11-21T23:54:47.793Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-dawn-16x9-review-full-180-209.mp4",
-      "frames": [
-        180,
-        209
-      ],
-      "at": "2026-11-22T00:15:58.703Z",
+      "at": "2026-11-22T09:12:22.212Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
@@ -140,20 +50,50 @@
       "browser": "147.0.7727.15"
     },
     {
-      "file": "chunk-dawn-16x9-review-full-210-239.mp4",
+      "file": "chunk-dawn-16x9-draft-full-75-149.mp4",
       "frames": [
-        210,
-        239
+        75,
+        149
       ],
-      "at": "2026-11-22T00:41:23.550Z",
+      "at": "2026-11-22T09:23:29.640Z",
       "machine": {
         "host": "space-sandbox",
-        "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
+        "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-dawn-16x9-draft-full-150-224.mp4",
+      "frames": [
+        150,
+        224
+      ],
+      "at": "2026-11-22T09:11:18.689Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-dawn-16x9-draft-full-225-239.mp4",
+      "frames": [
+        225,
+        239
+      ],
+      "at": "2026-11-22T09:08:43.183Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
         "cores": 4,
         "ramMb": 7957
       },
       "browser": "147.0.7727.15"
     }
   ],
-  "chunk": "chunk-dawn-16x9-review-full.mp4"
+  "chunk": "chunk-dawn-16x9-draft-full.mp4"
 }

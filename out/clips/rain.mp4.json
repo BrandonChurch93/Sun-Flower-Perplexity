@@ -1,27 +1,27 @@
 {
   "kind": "clip",
-  "engineHash": "b9de284219d214c9",
+  "engineHash": "a4c82933ba906236",
   "unitHashes": {
-    "dawn": "609ff98b65fa38e3",
-    "rain": "cdb9bfbbb4e44942",
-    "night": "dd84d117aab66acc",
+    "dawn": "8ebbafaa0d28e07b",
+    "rain": "cc96331076d01a36",
+    "night": "1e33829500718753",
     "frost": "8162048fd525a7c9",
-    "bloom": "d9662b45d5344491",
-    "field": "c229e6a6f41a2960"
+    "bloom": "f8b8ac67c3d305b9",
+    "field": "85ecd6aea5f49c50"
   },
   "format": "16x9",
-  "tier": "review",
+  "tier": "draft",
   "assets": "full",
   "diag": "beauty",
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+    "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T01:07:51.798Z",
+  "at": "2026-11-22T09:47:32.962Z",
   "frames": [
     240,
     599
@@ -55,52 +55,52 @@
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.615748606265957,
-        "y": 0.26999506162954023,
-        "depthM": 0.4772231382708777,
-        "cocPx": 1.5041093826293945
+        "x": 0.6158833483624593,
+        "y": 0.26999261463336593,
+        "depthM": 0.477214708543581,
+        "cocPx": 1.501953125
       }
     },
     "304": {
       "frame": 304,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 1.57 px, not under 1.5"
+        "the blur circle at the tip is 1.56 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6148935902674875,
-        "y": 0.2684780617126422,
-        "depthM": 0.4793785149998352,
-        "cocPx": 1.566293716430664
+        "x": 0.6150280546378747,
+        "y": 0.26847623320476505,
+        "depthM": 0.4793723080746446,
+        "cocPx": 1.560546875
       }
     },
     "305": {
       "frame": 305,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 1.63 px, not under 1.5"
+        "the blur circle at the tip is 1.61 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6140289354918631,
-        "y": 0.26666307325126704,
-        "depthM": 0.48152230875717394,
-        "cocPx": 1.625868320465088
+        "x": 0.61416286662283,
+        "y": 0.2666618846000134,
+        "depthM": 0.4815183398402433,
+        "cocPx": 1.61328125
       }
     },
     "306": {
       "frame": 306,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 1.68 px, not under 1.5"
+        "the blur circle at the tip is 1.67 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6131574597719687,
-        "y": 0.2645502869172226,
-        "depthM": 0.48365389589451835,
-        "cocPx": 1.6804792881011963
+        "x": 0.6132906041131685,
+        "y": 0.2645497613075356,
+        "depthM": 0.4836521723106485,
+        "cocPx": 1.6748046875
       }
     },
     "307": {
@@ -111,10 +111,10 @@
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6122820447451238,
-        "y": 0.2621317494004274,
-        "depthM": 0.48577271734549893,
-        "cocPx": 1.743079662322998
+        "x": 0.6124141533236459,
+        "y": 0.26213191159765425,
+        "depthM": 0.48577323842030806,
+        "cocPx": 1.7373046875
       }
     },
     "308": {
@@ -125,38 +125,38 @@
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6114057032494624,
-        "y": 0.25942469353161335,
-        "depthM": 0.48787802844912226,
-        "cocPx": 1.814884901046753
+        "x": 0.6115365249350235,
+        "y": 0.2594255695974642,
+        "depthM": 0.48788078539527135,
+        "cocPx": 1.8076171875
       }
     },
     "309": {
       "frame": 309,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 1.90 px, not under 1.5"
+        "the blur circle at the tip is 1.89 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6105315943553723,
-        "y": 0.25643388338969964,
-        "depthM": 0.48996918309511733,
-        "cocPx": 1.896073818206787
+        "x": 0.6106608799367259,
+        "y": 0.2564355000996976,
+        "depthM": 0.4899741587100598,
+        "cocPx": 1.8916015625
       }
     },
     "310": {
       "frame": 310,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 1.98 px, not under 1.5"
+        "the blur circle at the tip is 1.97 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6096630080073968,
-        "y": 0.25316496091228013,
-        "depthM": 0.492045540716733,
-        "cocPx": 1.98136568069458
+        "x": 0.6097905105164105,
+        "y": 0.25316734525128914,
+        "depthM": 0.4920527091932605,
+        "cocPx": 1.974609375
       }
     },
     "311": {
@@ -167,167 +167,122 @@
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6088033688060384,
-        "y": 0.24962433591009053,
-        "depthM": 0.4941064724966551,
-        "cocPx": 2.113178253173828
+        "x": 0.608928843958881,
+        "y": 0.2496275145092136,
+        "depthM": 0.4941157992413521,
+        "cocPx": 2.109375
       }
     },
     "312": {
       "frame": 312,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 2.22 px, not under 1.5"
+        "the blur circle at the tip is 2.21 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6079713446313371,
-        "y": 0.2470770627624519,
-        "depthM": 0.4961416806495169,
-        "cocPx": 2.222114324569702
+        "x": 0.608094233966565,
+        "y": 0.24708102206240862,
+        "depthM": 0.4961530924517352,
+        "cocPx": 2.21484375
       }
     },
     "313": {
       "frame": 313,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 2.38 px, not under 1.5"
+        "the blur circle at the tip is 2.36 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6071733123240597,
-        "y": 0.24524557089808013,
-        "depthM": 0.4981530848720087,
-        "cocPx": 2.3806369304656982
+        "x": 0.6072931583710142,
+        "y": 0.2452502852438322,
+        "depthM": 0.4981664921954398,
+        "cocPx": 2.361328125
       }
     },
     "314": {
       "frame": 314,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 2.51 px, not under 1.5"
+        "the blur circle at the tip is 2.50 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6064039965338068,
-        "y": 0.24325253510017164,
-        "depthM": 0.5001472642353836,
-        "cocPx": 2.510934829711914
+        "x": 0.6065205808476926,
+        "y": 0.2432579988420726,
+        "depthM": 0.5001625858918658,
+        "cocPx": 2.501953125
       }
     },
     "315": {
       "frame": 315,
       "pass": false,
       "reasons": [
-        "the blur circle at the tip is 2.67 px, not under 1.5"
+        "the blur circle at the tip is 2.65 px, not under 1.5"
       ],
       "invalid": 0,
       "tip": {
-        "x": 0.6056667035334654,
-        "y": 0.24108115235488442,
-        "depthM": 0.5021241753808856,
-        "cocPx": 2.670677423477173
+        "x": 0.6057798239294515,
+        "y": 0.24108735808868464,
+        "depthM": 0.502141322484797,
+        "cocPx": 2.654296875
       }
     }
   },
   "parts": [
     {
-      "file": "chunk-rain-16x9-review-full-240-269.mp4",
+      "file": "chunk-rain-16x9-draft-full-240-314.mp4",
       "frames": [
         240,
-        269
+        314
       ],
-      "at": "2026-11-22T00:43:17.217Z",
+      "at": "2026-11-22T09:21:23.688Z",
       "machine": {
         "host": "space-sandbox",
-        "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+        "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
         "cores": 4,
         "ramMb": 7957
       },
       "browser": "147.0.7727.15"
     },
     {
-      "file": "chunk-rain-16x9-review-full-270-299.mp4",
+      "file": "chunk-rain-16x9-draft-full-315-389.mp4",
       "frames": [
-        270,
-        299
-      ],
-      "at": "2026-11-22T00:40:32.363Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "7d76ff88-5bd2-466e-978b-d12f9a568a85",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-300-329.mp4",
-      "frames": [
-        300,
-        329
-      ],
-      "at": "2026-11-22T00:38:21.115Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-330-359.mp4",
-      "frames": [
-        330,
-        359
-      ],
-      "at": "2026-11-22T00:37:55.984Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-360-389.mp4",
-      "frames": [
-        360,
+        315,
         389
       ],
-      "at": "2026-11-22T00:35:03.171Z",
+      "at": "2026-11-22T09:09:44.048Z",
       "machine": {
         "host": "space-sandbox",
-        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
         "cores": 4,
         "ramMb": 7957
       },
       "browser": "147.0.7727.15"
     },
     {
-      "file": "chunk-rain-16x9-review-full-390-419.mp4",
+      "file": "chunk-rain-16x9-draft-full-390-464.mp4",
       "frames": [
         390,
-        419
+        464
       ],
-      "at": "2026-11-22T00:38:07.896Z",
+      "at": "2026-11-22T09:19:47.254Z",
       "machine": {
         "host": "space-sandbox",
-        "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
         "cores": 4,
         "ramMb": 7957
       },
       "browser": "147.0.7727.15"
     },
     {
-      "file": "chunk-rain-16x9-review-full-420-449.mp4",
+      "file": "chunk-rain-16x9-draft-full-465-539.mp4",
       "frames": [
-        420,
-        449
+        465,
+        539
       ],
-      "at": "2026-11-22T01:04:30.366Z",
+      "at": "2026-11-22T09:10:29.090Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
@@ -337,80 +292,20 @@
       "browser": "147.0.7727.15"
     },
     {
-      "file": "chunk-rain-16x9-review-full-450-479.mp4",
-      "frames": [
-        450,
-        479
-      ],
-      "at": "2026-11-22T01:06:40.187Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-480-509.mp4",
-      "frames": [
-        480,
-        509
-      ],
-      "at": "2026-11-22T01:03:47.705Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "7d76ff88-5bd2-466e-978b-d12f9a568a85",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-510-539.mp4",
-      "frames": [
-        510,
-        539
-      ],
-      "at": "2026-11-22T01:00:02.824Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-540-569.mp4",
+      "file": "chunk-rain-16x9-draft-full-540-599.mp4",
       "frames": [
         540,
-        569
-      ],
-      "at": "2026-11-22T00:58:39.367Z",
-      "machine": {
-        "host": "space-sandbox",
-        "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
-        "cores": 4,
-        "ramMb": 7957
-      },
-      "browser": "147.0.7727.15"
-    },
-    {
-      "file": "chunk-rain-16x9-review-full-570-599.mp4",
-      "frames": [
-        570,
         599
       ],
-      "at": "2026-11-22T00:55:48.853Z",
+      "at": "2026-11-22T09:17:42.736Z",
       "machine": {
         "host": "space-sandbox",
-        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
+        "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
         "cores": 4,
         "ramMb": 7957
       },
       "browser": "147.0.7727.15"
     }
   ],
-  "chunk": "chunk-rain-16x9-review-full.mp4"
+  "chunk": "chunk-rain-16x9-draft-full.mp4"
 }

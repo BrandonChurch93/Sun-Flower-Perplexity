@@ -1,0 +1,43 @@
+{
+  "kind": "sheet",
+  "engineHash": "a4c82933ba906236",
+  "unitHashes": {
+    "dawn": "8ebbafaa0d28e07b",
+    "rain": "cc96331076d01a36",
+    "night": "1e33829500718753",
+    "frost": "8162048fd525a7c9",
+    "bloom": "f8b8ac67c3d305b9",
+    "field": "85ecd6aea5f49c50"
+  },
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T09:00:45.430Z",
+  "format": "preview",
+  "tier": "review",
+  "assets": "full",
+  "frames": [
+    0,
+    22,
+    43,
+    65,
+    87,
+    109,
+    130,
+    152,
+    174,
+    196,
+    217,
+    239
+  ],
+  "units": [
+    "dawn"
+  ],
+  "caption": "Unit dawn: 12 frames across its segment (frames 0 to 239)"
+}
