@@ -46,6 +46,7 @@ const FOOT_SHUT = 0.05
 const FOOT_OPEN = -0.06
 // The feet stand at uneven depths behind the rim, so the row of them is no straight line.
 const FOOT_STAGGER = 0.03
+const ROOT_DROP = 0.65
 // The tip of a shut strap curls down over the eye.
 const TIP_TUCK = 0.35
 // Where rays have lifted away, the shut straps beside the gap comb over it and the ones across from it reach past the eye.
@@ -493,6 +494,8 @@ export function create(options: PartOptions): PlantPart | null {
       const midX = rimmed ? cx[(nv - 1) / 2] : (cx[0] + cx[nv - 1]) * 0.5
       const midY = rimmed ? cy[(nv - 1) / 2] : (cy[0] + cy[nv - 1]) * 0.5
       const tipShare = smooth(0.8, 1, u)
+      // The blade of a lifting ray floats forward off the rim, but its claw stays rooted there: no gap opens under its foot for the bracts behind to show through.
+      const root = i === 0 && m < 0 ? ROOT_DROP * lifted * (1 - lifted) * full : 0
       const rumple = ray.crumple * full * (1 + 2.2 * fresh) * Math.min(1, halfWidth / (0.004 * (full / 0.07)))
       for (let j = 0; j < nv; j++) {
         const v = vs[j]
@@ -504,9 +507,9 @@ export function create(options: PartOptions): PlantPart | null {
         if (i === ray.nickRow && v * ray.nickSide > 0.6) x -= ray.nickSide * 0.04 * full * grown * (Math.abs(v) > 0.95 ? 1 : Math.abs(v) > 0.9 ? 0.85 : 0.25)
         const reach = rimmed ? TEETH[ray.teeth][j] * length * tipShare * tipShare : 0
         const at = (base + i * nv + j) * 3
-        out[at] = px + wx * x + nx * y + tx * reach
-        out[at + 1] = py + wy * x + ny * y + ty * reach
-        out[at + 2] = pz + wz * x + nz * y + tz * reach
+        out[at] = px + wx * x + nx * y + tx * reach - h.ax * root
+        out[at + 1] = py + wy * x + ny * y + ty * reach - h.ay * root
+        out[at + 2] = pz + wz * x + nz * y + tz * reach - h.az * root
         if (slot === 0) {
           const st = (base + i * nv + j) * 4
           state[st] = fresh
