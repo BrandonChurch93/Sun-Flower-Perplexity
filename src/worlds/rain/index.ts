@@ -25,9 +25,9 @@ const AIR_TONE: [number, number, number] = [0.1, 0.16, 0.19]
 const MIST: [number, number, number] = [0.07, 0.115, 0.13]
 
 // Under the encoder a line finer than about three pixels of the master breaks into steps, so no streak is drawn finer, and each is smeared over a longer exposure than the plant's; the gain keeps the rain as dense to the eye.
-const STREAK_HALF_PX = 1.5
-const STREAK_SHUTTER = 1.35
-const STREAK_GAIN = 21
+const STREAK_HALF_PX = 1.8
+const STREAK_SHUTTER = 1.7
+const STREAK_GAIN = 24
 const MASTER_WIDTH = 1920
 
 // One stroke of lightning inside the cloud, as two swells of glow that are gone within ten frames.
