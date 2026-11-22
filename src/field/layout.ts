@@ -173,8 +173,13 @@ export function gustOf(id: number, x: number, z: number, time: number): { x: num
     nod: end * 0.14 * blowOf(tau - 0.08 - 0.1 * hash01(SEED, 150, id), a, c, b),
   }
 }
+// Open and heavy, the heads of a field come to face one way, the lens's side here: from 52 s nine in ten of the middle and far rows come round to it,
+// each to within 20 degrees, lift from their hang and fill out to the size of the larger heads. The near rows keep their own ways.
+export const faceAt = (id: number, reach: number): number => (hash01(SEED, 156, id) < 0.1 ? 0 : step(9, 17, reach))
+export const faceTurn = (id: number): number => meanTurn + (hash01(SEED, 155, id) - 0.5) * 0.7
+export const shortWay = (turn: number): number => turn - 2 * Math.PI * Math.round(turn / (2 * Math.PI))
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
-export const ownCode = (own: Own, nod = 0): number => Math.max(0, Math.round((own.nod + nod) * 64)) + own.head * 0.5
+export const ownCode = (own: Own, nod = 0, face = 0): number => Math.max(0, Math.round((own.nod + nod - face * 0.7 * Math.max(own.nod - 0.2, 0)) * 64)) + (own.head + face * 0.6 * (1.15 - own.head)) * 0.5
 // Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
 const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
 export const earlyCode = (own: Own, bud = own.bud, leaf = own.leaf, droop = own.droop): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(leaf, 0.75, 1.6) + 1024 * steps(droop, -0.15, 0.6) + 32768 * steps(bud, 0.8, 2.6)
