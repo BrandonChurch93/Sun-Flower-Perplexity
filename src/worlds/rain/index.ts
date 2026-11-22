@@ -24,6 +24,12 @@ const DROP_SHADE: [number, number, number] = [0.25, 0.3, 0.34]
 const AIR_TONE: [number, number, number] = [0.1, 0.16, 0.19]
 const MIST: [number, number, number] = [0.07, 0.115, 0.13]
 
+// Under the encoder a line finer than about three pixels of the master breaks into steps, so no streak is drawn finer, and each is smeared over a longer exposure than the plant's; the gain keeps the rain as dense to the eye.
+const STREAK_HALF_PX = 1.5
+const STREAK_SHUTTER = 1.35
+const STREAK_GAIN = 21
+const MASTER_WIDTH = 1920
+
 // One stroke of lightning inside the cloud, as two swells of glow that are gone within ten frames.
 const FLASH_AT_S = 17.2
 
@@ -39,6 +45,8 @@ export const stage: WorldStageMaker = () => {
   const sky = new RainSky()
   const far = makeFarLayers(golden.sun.azimuthDeg, AIR_TONE, MIST)
   const streaks = makeStreaks(DROP_LIGHT, DROP_SHADE)
+  const streakUniforms = (streaks.mesh.material as THREE.RawShaderMaterial).uniforms
+  streakUniforms.uGain.value = STREAK_GAIN
   let open = 0
   let close = 0
   return {
@@ -52,7 +60,9 @@ export const stage: WorldStageMaker = () => {
       sky.prepare(frame.time, SKY_GAIN, flash, frame.samples)
       far.flash(flash)
       far.setTime(frame.time)
-      streaks.prepare(frame.time, frame.timeClose, frame.pose, tanX, (tanX * frame.height) / frame.width, frame.samples, frame.width, flash)
+      const smear = 0.5 * (STREAK_SHUTTER - 1) * (frame.timeClose - frame.time)
+      streakUniforms.uLeast.value = Math.max(1, (STREAK_HALF_PX * frame.width) / MASTER_WIDTH)
+      streaks.prepare(frame.time - smear, frame.timeClose + smear, frame.pose, tanX, (tanX * frame.height) / frame.width, frame.samples, frame.width, flash)
     },
     sample(_camera, shutter) {
       // The stroke lights the plant and the ground through the light of the sky they already read.
