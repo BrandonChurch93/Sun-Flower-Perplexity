@@ -6,7 +6,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 - Build: in progress
 - Current phase: 4 · The other units
-- Current unit: rain, night, frost and field: the loop of each ended at the round limit on `47d93fd` (rounds 17, 18, 20 and 21, none a pass); their clips are rendering in parts on the builders' machines (29 of 48 parts here at 01:03 UTC) and each is marked `finished` when its clip and its comparison image are kept. `dawn` and `bloom` are finished
+- Current unit: night and frost: the loop of each ended at the round limit on `47d93fd` (rounds 21 and 18, neither a pass); the last four parts of their clips are rendering on the builders' machines (44 of 48 parts here at 01:24 UTC) and each is marked `finished` when its clip and its comparison image are kept. `dawn`, `rain`, `field` and `bloom` are finished
 - Current round: none running. Rounds 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`) are closed, each the third and last of its unit
 - Blocked: no
 - Budget: running
@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 01:14 UTC · Status 60: field finished and published; four of six units finished
+- Last push: 2026-11-22 01:29 UTC · night finished at its round limit on 47d93fd: clip and comparison image kept
 - Last status: 60 · 2026-11-22 01:14 UTC · Phase 4 · unit field
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 8.91 h |
+| 4 | 8.50 h | 9.08 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 24.38 h |
+| Whole build | 30.00 h | 24.55 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -75,7 +75,7 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | dawn | finished | 3 (rounds 9, 14 and 19; the scores here are round 19's) | 4 | passes (14 of 20 against the controls' 5 of 10) | 7 | 7 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 10 entries from round 19 (6 severe and 13 major issues), see "Open items". Clip `out/clips/dawn.mp4` (240 frames at the `review` tier, no frame failed M1), comparison images `out/stills/compare-dawn-sprout.jpg` and `out/stills/compare-dawn-seedling.jpg`, finished 00:44 UTC on 2026-11-22 |
 | rain | finished | 3 (rounds 10, 15 and 20; the scores here are round 20's) | 3 | passes on the edge (2 of 5 against the controls' 3 of 5) | 6 | 9 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 9 entries (8 from round 20: 3 severe and 8 major issues; and M1 in the clip), see "Open items". Clip `out/clips/rain.mp4` (360 frames at the `review` tier; M1 failed on 13 of them, frames 303 to 315), comparison image `out/stills/compare-rain.jpg`, finished 01:09 UTC on 2026-11-22 |
-| night | in progress | 3 (rounds 11, 16 and 21; the scores here are round 21's) | 5 | passes on the edge (3 of 5 against the controls' 4 of 5) | 4 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 21 (5 severe and 11 major issues) under "Open items", one major issue declined |
+| night | finished | 3 (rounds 11, 16 and 21; the scores here are round 21's) | 5 | passes on the edge (3 of 5 against the controls' 4 of 5) | 4 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 9 entries from round 21 (5 severe and 11 major issues), see "Open items"; one major issue declined. Clip `out/clips/night.mp4` (300 frames at the `review` tier, no frame failed M1), comparison image `out/stills/compare-night.jpg`, finished 01:30 UTC on 2026-11-22 |
 | frost | in progress | 3 (rounds 8, 13 and 18; the scores here are round 18's) | 5 | passes (4 of 5 against the controls' 2 of 5) | 4 | 6 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 18 (3 severe and 15 major issues) under "Open items" |
 | bloom | finished | 4 (rounds 3 to 6; the scores here are round 6's) | 5 | passes (7 of 10 against the controls' 6 of 10) | 4 | 5 | round limit (`quality.lookLockMaxRounds`, 4 rounds) | `cd262c1` | 11 entries from round 6 (7 severe and 18 major issues), see "Open items" |
 | field | finished | 3 (rounds 7, 12 and 17; the scores here are round 17's) | 4 | fails (1 of 5 against the controls' 4 of 5) | 7 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 10 entries from round 17 (5 severe and 9 major issues and the failed jury), see "Open items". Clip `out/clips/field.mp4` (240 frames at the `review` tier, no frame failed M1), comparison image `out/stills/compare-field.jpg`, finished 01:12 UTC on 2026-11-22 |
@@ -714,6 +714,9 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 4 · 01:06 UTC. After a compaction the kit was read again from disk before anything else was decided: "Status", "Units" and "Look lock" of this file, `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md`, and `kit/08-BUILD-ORDER.md` from Phase 4 to its end. Nothing in them changes the plan in hand: each open unit is marked `finished` when its clip from `47d93fd` is joined, checked and kept with its comparison image; then the Phase 4 gate; then Phase 5 with the camera's smoothing pass drafted on the branch `phase5/camera` (not merged, not judged). While the parts render, a mistake by `petal_builder` was told at once and costs nothing: its loop script stopped at 01:01 UTC while the part night 720 to 749 kept rendering, so that part comes without its "PART" line and is checked here by its record like every other part.
 - 2026-11-22 · Phase 4 · 01:10 UTC. `rain` is finished at its round limit on `47d93fd`. Its clip was joined from 12 parts rendered on the builders' machines at the `review` tier, each part's record checked here for the engine hash `b9de284219d214c9`, the unit hash `cdb9bfbbb4e44942` and no stand-ins: 360 frames, 30 fps, 1920 x 1080, 18.9 Mbit/s, 27.1 MB. Checked here: the clip's frame 420 against the `final` still of the same commit reads 36.4 dB; across the 11 seams the frame to frame likeness never drops by more than 0.1 dB against the frames on either side, and the seam pairs were looked at (`out/work/scratch/clipcheck/rain-seams.jpg`): no step in the plant, the rain, the light or the land. M1 failed on 13 of 360 frames (303 to 315, the blur circle at the tip); it is a new open item, not hidden and not fixed, because the loop is over. Kept with `npm run keep -- --unit rain --clips`: `out/clips/rain.mp4`, `out/stills/compare-rain.jpg`, `out/stills/judged-f0420.jpg`.
 - 2026-11-22 · Phase 4 · 01:12 UTC. `field` is finished at its round limit on `47d93fd`, with its jury failed and its issues open, not as a pass. Its clip was joined from 8 parts rendered on the builders' machines at the `review` tier, each part's record checked here for the engine hash `b9de284219d214c9`, the unit hash `c229e6a6f41a2960` and no stand-ins: 240 frames, 30 fps, 1920 x 1080, 20.1 Mbit/s, 19.2 MB, M1 failed on none. Checked here: the clip's frame 1755 against the `final` still of the same commit reads 32.5 dB (the field's grain is 2.1 times the bloom's and 8 samples stand against 48); across the 7 seams the frame to frame likeness never drops by more than 0.2 dB against the frames on either side, and the seam pairs were looked at (`out/work/scratch/clipcheck/field-seams.jpg`): no step. Kept with `npm run keep -- --unit field --clips`: `out/clips/field.mp4`, `out/stills/compare-field.jpg`, `out/stills/judged-f1755.jpg`.
+- 2026-11-22 · Phase 4 · 01:20 UTC. Read again after a compaction: "Status", "Units" and "Look lock" here, `kit/addenda/README.md` (no addenda), `AGENTS.md`, `kit/02`, `03`, `04`, `06`, `07` and `kit/08` from Phase 4 to the end.
+- 2026-11-22 · Phase 4 · 01:19 UTC. Two grade jobs started as preparation for Phase 5 step 1, on builders whose clip parts were sent, while the last clip parts render elsewhere. The folder split is changed for these jobs only. `hair_builder`: the field's grade (round 17's severe match issue: "a cleaner, greener, more saturated CG look"), branch `agent/field-grade` from `47d93fd`, may edit `src/post/looks.ts` and `src/post/post.ts`: a grade that eases in from 52.0 s to 54.0 s on the curve the field's lens look already uses, frames up to 52.0 s byte for byte the same (proof by the hash of frame 1515 before and after). Targets are box statistics of the approved image against frame 1755: whole frame saturation 0.38 against 0.49, dark tenths 11,19,12 against 5,13,3 in the mid field, medians a third darker in the field, sky already equal. `bud_builder`: the rain's grade (round 20's major match issue: "deeper blacks in the soil and a slight warm cast at the horizon"), branch `agent/rain-grade` from `47d93fd`, may edit the `grade` line, `sky.horizon` and `SKY_GAIN` in `src/worlds/rain/index.ts`: the soil's dark tenth 6,15,24 where the approved has 6,10,13 (the grade's blue lift), the pale band's median 120,136,145 against 169,178,178. Both report by 01:45 UTC with before and after tables and pictures; nothing is merged before Phase 5 and before I have looked. Briefs: `out/work/briefs/field-grade-0117.md`, `rain-grade-0119.md`.
+- 2026-11-22 · Phase 4 · 01:30 UTC. `night` is finished at its round limit on `47d93fd` (steps 5 to 7 of the unit). Its clip is joined from ten parts of 30 frames rendered at the `review` tier on seven builders' machines (`field_builder`, `leaf_builder`, `ground_builder`, `petal_builder`, `bud_builder`, `skin_builder`, `lens_builder`; every record carries engine `b9de284219d214c9`, unit hash `dd84d117aab66acc`, no stand-in): 300 frames, 30 fps, 1920 x 1080, 25.2 MB, M1 failed on 0 of 300 frames. Checked here with `out/work/scratch/clip-check.cjs`: the nine joins between parts change the picture no more than the frames beside them do (largest drop 0.3 dB, at frame 810), and the clip's frame 780 stands 39.9 dB from the `final` tier still. Kept with `npm run keep -- --unit night --clips`; the comparison image is `out/stills/compare-night.jpg`. What round 21 left open stays under "Open items" for Phase 6.
 
 ## Notes from Brandon
 
@@ -804,6 +807,13 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 ## Running jobs
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
+
+Running (01:24 UTC, 2026-11-22):
+
+- The clips in 48 parts of 30 frames (the entry of 23:26 UTC below, carried on) · 44 of 48 parts are in and checked by `out/work/scratch/take-parts.cjs`. Still rendering on four builders' machines: night 630 to 659 (`field_builder`, started 01:04), night 660 to 689 (`leaf_builder`, 01:07), frost 960 to 989 (`disc_builder`, 01:09), frost 1020 to 1049 (`golden_builder`, 01:12) · 36 to 48 s a frame, so each about 20 to 24 minutes; limit 48 minutes each.
+- Camera stills for Phase 5 step 4 in the second worktree `/home/user/workspace/sf-prep` (branch `phase5/camera`, not merged): `npm run still -- --frames 1515,1350 --tier review --fresh` · log `sf-prep/out/work/scratch/cam-stills-c.log` · this VM · started 01:23 UTC · about 4 minutes expected (100 to 110 s a still).
+
+Ended since 00:32 UTC: the clips of `dawn` (joined and kept 00:44 UTC), `rain` (01:09) and `field` (01:12), each from its eight to twelve parts, with `npm run clip` and `npm run keep -- --clips`; the same two camera stills with two earlier versions of the bloom's keys (01:03 to 01:07 and 01:16 to 01:20 UTC, about 100 s a still).
 
 Running (00:32 UTC, 2026-11-22):
 
@@ -961,6 +971,8 @@ Finished in this task:
 - `export_builder` · reported 02:47 UTC · branch `agent/capture` at `640f955`, merged into `main` at `5e90a2c` (three files: `src/capture/export.ts`, `export.module.css`, `tools/proof.ts`). Its own test: 30 frames of h264 High at 960 x 540, frames 1500, 1515 and 1529 match capture stills at 40.0, 41.6 and 41.8 dB; memory test 240 frames across the cut at frame 240, textures at most 20.3 MB. The Builder runs both again on the final build of the phase. Its one request outside its files (open the Export page when loading fails, so the offer of the web set can be shown) is applied in `src/main.ts`.
 
 State at 00:32 UTC, 2026-11-22, the loops of all five units closed (12 running, the limit). The twelve builders `field_builder`, `leaf_builder`, `ground_builder`, `petal_builder`, `bud_builder`, `hair_builder`, `skin_builder`, `stem_builder`, `harness_builder`, `disc_builder`, `lens_builder` and `golden_builder` each stay in one long turn, because a builder's machine stands still about a quarter of an hour after its turn ends. Each renders its clip parts (see "Running jobs"), sends every part as it ends and ends its turn when its last part is sent. No critic or juror runs: those of rounds 17 to 21 have all answered and ended (the last, `reviewer_233`, at 00:21 UTC), and the next free name is `reviewer_263`. `modes_builder` and `export_builder` are idle. Phase 5's critics and jurors start as the builders' turns end, so that never more than 12 run.
+
+State at 01:24 UTC, 2026-11-22 (6 running of 12 allowed). Rendering their last clip part, each ends its turn when it is sent: `field_builder` (night 630), `leaf_builder` (night 660), `disc_builder` (frost 960), `golden_builder` (frost 1020). On a new job since 01:19 UTC, each due by 01:45 UTC and replaced once after 45 minutes of silence: `hair_builder` (the field's grade, branch `agent/field-grade`, may edit `src/post/looks.ts` and `src/post/post.ts`), `bud_builder` (the rain's grade, branch `agent/rain-grade`, may edit three settings in `src/worlds/rain/index.ts`). All parts sent and turn ended: `skin_builder` (01:17), `harness_builder`, `lens_builder` and `stem_builder` (01:21), `petal_builder` and `ground_builder` (01:23). `modes_builder` and `export_builder` are idle. No critic or juror runs; the next free name is `reviewer_263`.
 
 ## Rounds
 
@@ -1392,6 +1404,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 01:09 UTC · rain finished at its round limit on 47d93fd: clip, comparison image, M1 open item
 - 2026-11-22 01:11 UTC · Status 59: rain finished and published. field finished at its round limit on 47d93fd: clip and comparison image kept
 - 2026-11-22 01:14 UTC · Status 60: field finished and published; four of six units finished
+- 2026-11-22 01:29 UTC · night finished at its round limit on 47d93fd: clip and comparison image kept
 
 ## Session log
 
