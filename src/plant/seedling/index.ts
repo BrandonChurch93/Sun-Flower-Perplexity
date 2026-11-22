@@ -3,7 +3,7 @@ import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
-import { heightAt, huskDrop, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
+import { heightAt, huskDrop, huskFall, huskLengthM, huskRest, huskRock, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
@@ -37,6 +37,7 @@ const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
 const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
+const HUSK_ROCK = 0.17
 
 interface Body {
   husk: boolean
@@ -398,14 +399,19 @@ export function create(options: PartOptions): PlantPart | null {
     // The shell is pushed off the tips along their own line, and only then falls beside the stem.
     const beat = Math.sqrt(drop)
     const off = 0.7 * huskLength * smoothstep(0, 0.84, beat)
-    const freed = clamp((beat - 0.84) / 0.16)
-    const fall = freed * freed
-    const hx = lerp(h0x + tx * off, h1x, fall)
-    const hy = lerp(h0y + ty * off, h1y, fall) - (1 - kept) * 0.016
+    const freed = huskFall(time)
+    // It slides clear of the tips first, and tips over only then.
+    const loose = clamp((freed - 0.25) / 0.75)
+    const fall = loose * loose
+    const away = off + 0.4 * huskLength * smoothstep(0, 0.35, freed) * (1 - fall)
+    const hx = lerp(h0x + tx * away, h1x, smoothstep(0, 1, loose))
+    const hy = lerp(h0y + ty * away, h1y, fall) - (1 - kept) * 0.016
     // It falls clear of the seed leaves on the near side before it comes down.
-    const hz = lerp(h0z + tz * off, h1z, 1 - (1 - freed) * (1 - freed))
-    // The shell tumbles from hanging mouth down on the tips to standing mouth up in the crumbs.
-    const turn = smoothstep(0, 1, freed)
+    const hz = lerp(h0z + tz * away, h1z, 1 - (1 - loose) ** 3)
+    // The shell tumbles from hanging mouth down on the tips to standing mouth up in the crumbs, and rocks once as it lands.
+    const turn = loose * loose * (2.5 - 1.5 * loose)
+    const settle = smoothstep(0, 1, clamp((time - (seed0 + 0.62)) / 0.62))
+    const rise = settle + 0.5 * settle * Math.sin(Math.PI * settle)
     let ax = -ty * REST_AXIS[2] + tz * REST_AXIS[1]
     let ay = -tz * REST_AXIS[0] + tx * REST_AXIS[2]
     let az = -tx * REST_AXIS[1] + ty * REST_AXIS[0]
@@ -419,7 +425,7 @@ export function create(options: PartOptions): PlantPart | null {
       ay = ry
       az = rz
     }
-    const angle = turn * Math.acos(Math.max(-1, Math.min(1, -(tx * REST_AXIS[0] + ty * REST_AXIS[1] + tz * REST_AXIS[2]))))
+    const angle = HUSK_ROCK * huskRock(time) + turn * Math.acos(Math.max(-1, Math.min(1, -(tx * REST_AXIS[0] + ty * REST_AXIS[1] + tz * REST_AXIS[2]))))
     const ca = Math.cos(angle)
     const sa = Math.sin(angle)
     const spin = (x: number, y: number, z: number): [number, number, number] => {
@@ -444,7 +450,7 @@ export function create(options: PartOptions): PlantPart | null {
     const qz = B[0] * py - B[1] * px
     const loosen = smoothstep(seed0 - 1.5, seed0 + 0.2, time)
     const gape = lerp(0.035, 0.12, loosen) + 0.03 * smoothstep(0, 0.84, beat) + 0.14 * freed + 0.5 * (1 - kept)
-    const pinch = (1 - 0.3 * freed) * (1 - smoothstep(seed0 + 0.7, seed0 + 1.6, time))
+    const pinch = (1 - 0.3 * rise) * (1 - smoothstep(seed0 + 0.7, seed0 + 1.6, time))
 
     for (const g of groups) {
       const out = g.slots[slot]
@@ -504,7 +510,7 @@ export function create(options: PartOptions): PlantPart | null {
           const arc = b.loop / 2
           const shown = kept > 0 ? 1 : 0
           const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
-          const shell = huskLength * (1 + 0.3 * freed)
+          const shell = huskLength * (1 + 0.3 * smoothstep(0, 1, loose))
           for (let a = 0; a < b.rings; a++) {
             const s = 0.5 - 0.5 * Math.cos((Math.PI * a) / (b.rings - 1))
             const o = huskOutline(s) * shown

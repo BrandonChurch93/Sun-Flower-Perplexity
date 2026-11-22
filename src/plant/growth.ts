@@ -305,6 +305,16 @@ export function huskDrop(time: number): number {
   return k * k
 }
 
+// Once pushed off the tips it tumbles down for twelve frames and rocks once where it lands.
+export function huskFall(time: number): number {
+  return clamp((time - (seed0 + 0.62)) / 0.4)
+}
+
+export function huskRock(time: number): number {
+  const u = clamp((time - (seed0 + 1.02)) / 0.3)
+  return Math.sin(2 * Math.PI * u) * (1 - u) * (1 - u)
+}
+
 export const huskLengthM = 0.0143
 
 // The husk lies in the crumbs until the rain has beaten the soil over it.
