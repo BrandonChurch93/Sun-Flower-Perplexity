@@ -357,7 +357,7 @@ export function setLeafHold(v: number, leaf: number, hold: LeafHold | null): voi
   else leafHolds.delete(v)
 }
 const heldLeaf = (i: number): LeafHold | undefined => (variant === 0 ? undefined : leafHolds.get(variant)?.get(i))
-const holdAt = (time: number): number => smoothstep(bloom0 - 7, bloom0, time)
+const holdAt = (time: number): number => smoothstep(bloom0 - 7, bloom0 - 4, time)
 
 export function leafAzimuth(i: number, time?: number): number {
   const turn = variant === 0 ? 0.6 : (leafTurns.get(variant) ?? 0.6 + TAU * rnd(2))
