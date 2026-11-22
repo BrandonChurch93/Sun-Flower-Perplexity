@@ -51,7 +51,7 @@ const NEAR_ROWS = [-1, 0, 0.16, 0.38, 0.6, 0.82, 1]
 const FAR_ROWS = [-1, 0.3, 1]
 
 const SHAPE: Record<PartDetail, { step: number; rows: number; wide: number; hairs: number }> = {
-  hero: { step: 1, rows: 128, wide: 1, hairs: 54000 },
+  hero: { step: 1, rows: 192, wide: 1, hairs: 54000 },
   near: { step: 1, rows: NEAR_ROWS.length, wide: 1, hairs: 0 },
   far: { step: 3, rows: FAR_ROWS.length, wide: 1.7, hairs: 0 },
 }
@@ -167,7 +167,7 @@ export function create(options: PartOptions): PlantPart {
     const upper = smoothstep(0.62, 1, rank)
     const full = fullLength[i]
     // The neighbor's upper leaves are the largest leaves in the frame.
-    const rowsHero = !main && i >= 14 ? shape.rows : Math.round(clamp(40 + 88 * ((full - 0.1) / 0.15), 40, shape.rows) * (main ? 1 : 0.6))
+    const rowsHero = !main && i >= 14 ? shape.rows : Math.round(clamp(40 + 88 * ((full - 0.1) / 0.15), 40, 128) * (main ? 1.5 : 0.6))
     const rows = hero ? rowsHero : options.detail === 'near' ? NEAR_ROWS : FAR_ROWS
     const nu = typeof rows === 'number' ? rows : rows.length
     const share = shares[i] * lerp(1, main ? 0.96 : 0.86, upper) * shape.wide
@@ -251,6 +251,7 @@ export function create(options: PartOptions): PlantPart {
         const v = a * nv + b
         let x = 0
         let y = 0
+        const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
         // Each place on the blade is laid out twice: as the smooth narrow oval of a leaf just open, then as the creased heart it grows into.
         for (let ripe = 0; ripe < 2; ripe++) {
           const cordNow = cord * (ripe ? 1 : 0.5)
@@ -265,7 +266,6 @@ export function create(options: PartOptions): PlantPart {
           const across = Math.abs(x)
           // The bends are laid over the leaf as it really lies, so a tooth carries on the surface it grows from.
           const ae = aw * (1 + tooth) * wobble
-          const pillow = hero ? Math.min(1, veinField(veins, w, s).near / 0.028) : 1
           let z = (ripe ? 0.019 : 0.011) * pillow * (2 - pillow) * smoothstep(0, 0.08, aw) * Math.min(1, wide * 6)
           z -= TROUGH * (1 - 0.7 * s) * Math.exp(-((across / 0.016) ** 2))
           z += waveAmp * (ripe ? 1 : 0.35) * Math.pow(ae, 2.5) * (Math.sin(6.2832 * (waveRate * s + r(26 + side))) * (0.55 + 0.45 * Math.sin(6.2832 * (0.37 * waveRate * s + r(39 + side)))) + 0.5 * Math.sin(6.2832 * (1.83 * waveRate * s + r(41 + side)))) * smoothstep(0, 0.12, s) * Math.min(1, wide * 5)
@@ -662,7 +662,7 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
     const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
-    const facing = fall > 0 ? faced * (1 - (0.55 + 0.45 * smoothstep(19.5, 22.5, time)) * fall / FALL) : faced
+    const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
     const lay = (hang: number): number => {
       let x = 0
       let z = 0
