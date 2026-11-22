@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:35 UTC · Round 22: night far land merged, fix pass briefs out, agents at 02:36
-- Last status: 63 · 2026-11-22 02:13 UTC · Phase 5
+- Last push: 2026-11-22 02:37 UTC · Status 64: round 22 answered (7, 8, 6, 6; jury fails on rain, night, field), fix pass open
+- Last status: 64 · 2026-11-22 02:37 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 02:37 UTC · status 64 · Phase 5 · `status-1.jpg`: The first two seconds at phone size, as the scroll stop judge saw them (score 6); `status-2.jpg`: Night after the fix: the same hills and mist on all twelve frames; `status-3.jpg`: Field, frame 1755: approved image left, ours right. Two plants stand clear where one should; `status-4.jpg`: Far edge at the last frame: the bright seam before (top), a trial ridge after (bottom), not merged yet
 - 2026-11-22 02:13 UTC · status 63 · Phase 5 · `status-1.jpg`: The whole film, 0 to 19 s: dawn and rain (review tier); `status-2.jpg`: 20 to 40 s: night and frost; `status-3.jpg`: 40 to 60 s: bloom and field; `status-4.jpg`: The first two seconds at the final tier, the frames the scroll stop judge sees
 - 2026-11-22 01:50 UTC · status 62 · Phase 4 · `status-1.jpg`: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below; `status-2.jpg`: Rain at 14 s and night at 26 s: approved left, the film right; `status-3.jpg`: Frost at 36 s and the opening bud at 45 s: approved left, the film right; `status-4.jpg`: Bloom at 50.5 s and the field at 58.5 s: approved left, the film right
 - 2026-11-22 01:33 UTC · status 61 · Phase 4 · unit frost · `status-1.jpg`: Night, approved image beside the film's frame 780; `status-2.jpg`: Frost, approved image beside the film's frame 1080; `status-3.jpg`: Night clip, frame 750 (25.0 s); `status-4.jpg`: Frost clip, frame 1050 (35.0 s)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 00:21 UTC · status 55 · Phase 4 · unit dawn · round 19 · `status-1.jpg`: Dawn 1.5 s, final tier. Approved left, the judged frame of round 19 right; `status-2.jpg`: Dawn 6.5 s, final tier. Approved left, the judged frame of round 19 right
 - 2026-11-22 00:04 UTC · status 54 · Phase 4 · unit night · round 21 · `status-1.jpg`: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; `status-2.jpg`: Night 26.0 s, final tier. Approved left, the judged frame of round 21 right
 - 2026-11-21 23:46 UTC · status 53 · Phase 4 · unit frost · round 18 · `status-1.jpg`: Frost 36.0 s, final tier. Approved left, the judged frame of round 18 right; `status-2.jpg`: Field 58.5 s, final tier. Approved left, the judged frame of round 17 right
-- 2026-11-21 23:19 UTC · status 52 · Phase 4 · unit night · round 16 · `status-1.jpg`: Night 26.0 s. Approved left, the line's head right: darker rows, hills at full height (review tier, a builder's render); `status-2.jpg`: Dawn 1.5 s. Approved left, the line's head right: the hook, the hull and the soil (review tier, a builder's render); `status-3.jpg`: Field far edge, a trial that is not in the film. Top: approved, the line. Bottom: the trial at 58.5 s and at 60 s (review tier); `status-4.jpg`: Night leaves, a trial that was declined. Approved left, blades seen edge on right: narrower than the approved, so it stays out (review tier)
 
 ## Clock
 
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 0.59 h |
+| 5 | 3.00 h | 0.80 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 25.55 h |
+| Whole build | 30.00 h | 25.75 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1028,7 +1028,7 @@ State at 01:50 UTC (12 running of 12, the limit). Rendering for the whole film r
 
 State at 02:07 UTC (8 running of 12 allowed). Round 22's renders, third send of 01:53 UTC for the eight still builders (`2fb6538`, with the frame check) and second send of 01:49 UTC for the other three (`41f10a3`); both commits build engine `305e9520118781cf`. Done and idle, their files taken in after each record was read: `field_builder` (finals 420 and 780), `disc_builder` (1515 and 1755), `golden_builder` (whole film sheets 1 to 3), `leaf_builder` in its last minutes (1080 and 1350). Still in their turns: `skin_builder` (0 in; 8, then the night stress), `lens_builder` (15 in; 23, then the field stress), `stem_builder` (30 in; 38), `petal_builder` (45 in; 53), `ground_builder` (60 in; 195), `hair_builder` (cut sheets 1 and 2 in; 3 and 4, then the eight stills each side of the cuts), `bud_builder` (the dawn stress in; the rain stress). `harness_builder` reported at 01:59 UTC and is idle: the film packs build for R5, R6, R4 and R2 at the `draft` tier and for R7 on the night set only; R7 for dawn, rain and field and the fallback of the fixed crop boxes are unproven until the real sets arrive. Idle: `modes_builder`, `export_builder`. No reviewer is running; `reviewer_01` to `reviewer_262` are used and closed.
 
-State at 02:36 UTC (9 running of 12 allowed). Round 22's critics and jury: `reviewer_263` (R4, GPT family), `reviewer_264` (R5, Claude family), `reviewer_265` (R6, Grok family) and `reviewer_266` (R7, Gemini family) were spawned at 02:24 UTC with their packs only and have all answered (02:25 to 02:30 UTC); the fifty jurors `reviewer_267` to `reviewer_316`, one judged frame each, five families a frame, were spawned 02:24 to 02:30 UTC as places came free under the limit, and 49 have answered; `reviewer_298` (frame 1080, Gemini family) is still out. Builders in their turns on the fix pass of round 22, briefs `out/work/briefs/p5-fix-*.md` sent 02:34 UTC, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder`, `petal_builder`, and `golden_builder` (head start of 02:13 UTC plus the addition). `harness_builder` runs the render budget of the judged build since 02:17 UTC, due 02:40 UTC. Idle: `disc_builder` (its head start merged as `adaf813`), `skin_builder`, `stem_builder`, `bud_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
+State at 02:35 UTC (9 running of 12 allowed). Round 22's critics and jury: `reviewer_263` (R4, GPT family), `reviewer_264` (R5, Claude family), `reviewer_265` (R6, Grok family) and `reviewer_266` (R7, Gemini family) were spawned at 02:24 UTC with their packs only and have all answered (02:25 to 02:30 UTC); the fifty jurors `reviewer_267` to `reviewer_316`, one judged frame each, five families a frame, were spawned 02:24 to 02:30 UTC as places came free under the limit, and 49 have answered; `reviewer_298` (frame 1080, Gemini family) is still out. Builders in their turns on the fix pass of round 22, briefs `out/work/briefs/p5-fix-*.md` sent 02:34 UTC, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder`, `petal_builder`, and `golden_builder` (head start of 02:13 UTC plus the addition). `harness_builder` runs the render budget of the judged build since 02:17 UTC, due 02:40 UTC. Idle: `disc_builder` (its head start merged as `adaf813`), `skin_builder`, `stem_builder`, `bud_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
 
 ## Rounds
 
@@ -1487,6 +1487,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:29 UTC · Round 22: measures green on all six units, R6 scores 6
 - 2026-11-22 02:30 UTC · Round 22: R7 scores 6; the fix asked on frame 0 declined against the settled opening, the issue kept
 - 2026-11-22 02:35 UTC · Round 22: night far land merged, fix pass briefs out, agents at 02:36
+- 2026-11-22 02:37 UTC · Status 64: round 22 answered (7, 8, 6, 6; jury fails on rain, night, field), fix pass open
 
 ## Session log
 
@@ -1623,4 +1624,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below; Rain at 14 s and night at 26 s: approved left, the film right; Frost at 36 s and the opening bud at 45 s: approved left, the film right; Bloom at 50.5 s and the field at 58.5 s: approved left, the film right.
 - Status 63, 2026-11-22 02:13 UTC, Phase 5. Round 22, the first whole film round, is counted and judges main 4676c5d. From that build: all 16 final stills, the three whole film sheets, the four cut sheets and the dawn stress set are in; every cut lines up when the frame before is laid over the frame after; the keys are no worse than the kept ones. Next: The last three stress sets and the machine checks, then the measures, the packs, four critics and fifty jurors; three builders already work on the night's hills and the field's far edge, sun and specks. Time used: 25.4 h of 30 h.
   Pictures: The whole film, 0 to 19 s: dawn and rain (review tier); 20 to 40 s: night and frost; 40 to 60 s: bloom and field; The first two seconds at the final tier, the frames the scroll stop judge sees.
+- Status 64, 2026-11-22 02:37 UTC, Phase 5. Round 22, the first judging of the whole film, is answered: one film 7, cuts 8, scroll stop 6, encode 6, and the jury passes seven of ten judged frames (rain, night and field fail). Machine checks and all measures are green. The night's far hills now stand in one tone from its first frame to its last (merged). The fix pass is open with seven builders. Next: Read the builders' fixes by their pictures at 03:20 UTC, merge what is better, then the preview film and the Phase 5 gate. Time used: 25.8 h of 30 h.
+  Pictures: The first two seconds at phone size, as the scroll stop judge saw them (score 6); Night after the fix: the same hills and mist on all twelve frames; Field, frame 1755: approved image left, ours right. Two plants stand clear where one should; Far edge at the last frame: the bright seam before (top), a trial ridge after (bottom), not merged yet.
 

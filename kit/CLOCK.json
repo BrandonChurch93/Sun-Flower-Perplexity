@@ -1,17 +1,17 @@
 {
  "version": 1,
  "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
- "last": 1795314281960,
+ "last": 1795315025745,
  "phases": {
   "0": 3884.505,
   "1": 175.665,
   "2": 17718.923,
   "3": 33900.26200000001,
   "4": 34171.755999999994,
-  "5": 2119.8489999999997
+  "5": 2863.634
  },
- "sinceStatus": 690.952,
- "lastStatusAt": "2026-11-22T02:13:11Z",
+ "sinceStatus": 0,
+ "lastStatusAt": "2026-11-22T02:37:05Z",
  "continuations": [],
  "extensions": {},
  "log": [
@@ -1171,6 +1171,18 @@
    "kind": "phase",
    "id": 5,
    "addedSeconds": 205
+  },
+  {
+   "at": "2026-11-22T02:37:04Z",
+   "kind": "phase",
+   "id": 5,
+   "addedSeconds": 743
+  },
+  {
+   "at": "2026-11-22T02:37:05Z",
+   "kind": "phase",
+   "id": 5,
+   "addedSeconds": 1
   }
  ]
 }
