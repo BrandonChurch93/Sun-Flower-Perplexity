@@ -253,7 +253,13 @@
       {"time": 48.5, "distanceM": 0.83915, "heightM": 1.64168, "aimHeightM": 1.623991, "frameX": 0.62618, "azimuthDeg": 18.8204, "focalMm": 35},
       {"time": 49.5, "distanceM": 0.85383, "heightM": 1.65425, "aimHeightM": 1.634245, "frameX": 0.61884, "azimuthDeg": 19.0901, "focalMm": 35},
       {"time": 50.5, "distanceM": 0.8685, "heightM": 1.6669, "aimHeightM": 1.6445, "frameX": 0.6115, "azimuthDeg": 19.3599, "focalMm": 35},
-      {"time": 52, "distanceM": 0.9264, "heightM": 1.68881, "aimHeightM": 1.6548, "frameX": 0.60049, "azimuthDeg": 19.7775, "focalMm": 35},
+      {"time": 51.5, "distanceM": 0.9496, "heightM": 1.6851, "aimHeightM": 1.6514, "frameX": 0.6046, "azimuthDeg": 19.6234, "focalMm": 35},
+      {"time": 52.5, "distanceM": 1.1336, "heightM": 1.7184, "aimHeightM": 1.6585, "frameX": 0.5951, "azimuthDeg": 19.9765, "focalMm": 34.862},
+      {"time": 53.5, "distanceM": 1.4028, "heightM": 1.7739, "aimHeightM": 1.6658, "frameX": 0.5802, "azimuthDeg": 20.5087, "focalMm": 33.877},
+      {"time": 54.5, "distanceM": 1.802, "heightM": 1.8666, "aimHeightM": 1.6732, "frameX": 0.5619, "azimuthDeg": 21.1527, "focalMm": 32.209},
+      {"time": 55.5, "distanceM": 2.3695, "heightM": 2.018, "aimHeightM": 1.6812, "frameX": 0.5428, "azimuthDeg": 21.8283, "focalMm": 30.172},
+      {"time": 56.5, "distanceM": 3.0664, "heightM": 2.2376, "aimHeightM": 1.6901, "frameX": 0.5253, "azimuthDeg": 22.4549, "focalMm": 28.081},
+      {"time": 57.5, "distanceM": 3.8336, "heightM": 2.5092, "aimHeightM": 1.7004, "frameX": 0.512, "azimuthDeg": 22.9523, "focalMm": 26.253},
       {"time": 58.5, "distanceM": 4.643, "heightM": 2.7843, "aimHeightM": 1.7125, "frameX": 0.5054, "azimuthDeg": 23.24, "focalMm": 25},
       {"time": 60, "distanceM": 6.3, "heightM": 3.31, "aimHeightM": 1.741, "frameX": 0.503, "azimuthDeg": 23.4, "focalMm": 24}
     ]
