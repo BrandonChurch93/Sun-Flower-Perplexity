@@ -1,0 +1,299 @@
+{
+  "critic": "R2",
+  "round": 23,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 40,
+    "a": 24,
+    "share": 0.6
+  },
+  "controlsByUnit": {
+    "dawn": {
+      "votes": 10,
+      "a": 5,
+      "share": 0.5,
+      "fromRound": 9
+    },
+    "rain": {
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "fromRound": 10
+    },
+    "night": {
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
+      "fromRound": 11
+    },
+    "frost": {
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "fromRound": 8
+    },
+    "bloom": {
+      "votes": 10,
+      "a": 6,
+      "share": 0.6,
+      "fromRound": 3
+    },
+    "field": {
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
+      "fromRound": 7
+    }
+  },
+  "judged": {
+    "votes": 15,
+    "a": 8,
+    "share": 0.5333333333333333
+  },
+  "passOverall": true,
+  "passEveryFrame": false,
+  "failingFrames": [
+    1755
+  ],
+  "pass": false,
+  "perImage": {
+    "set-B-06.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1755,
+      "key": "field",
+      "unit": "field",
+      "letters": [
+        "a",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 1,
+      "share": 0.2,
+      "controlShare": 0.8,
+      "controlVotes": 5,
+      "controlA": 4,
+      "controlFromRound": 7,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-07.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 420,
+      "key": "rain",
+      "unit": "rain",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "a"
+      ],
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
+      "controlShare": 0.6,
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlFromRound": 10,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-09.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 780,
+      "key": "night",
+      "unit": "night",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "e",
+        "a"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "controlShare": 0.8,
+      "controlVotes": 5,
+      "controlA": 4,
+      "controlFromRound": 11,
+      "missing": false,
+      "pass": true
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_317",
+      "family": "GPT",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1755,
+      "unit": "field",
+      "letter": "a",
+      "confidence": 77,
+      "answer": "a, 77/100. The strongest cue was the layered sunset lighting, with warm haze across the field and precise rim light on the foreground leaves."
+    },
+    {
+      "juror": "reviewer_318",
+      "family": "Gemini",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1755,
+      "unit": "field",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92 — The low-poly faceted 3D leaf/stem geometry on the foreground plants paired with heavily repeated instanced sunflower meshes and billboard grass tufts across the terrain."
+    },
+    {
+      "juror": "reviewer_319",
+      "family": "Claude",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1755,
+      "unit": "field",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55. The main clue is that this is clearly a CG render. The same sunflower model is copied across the field in near-identical poses, all facing the camera rather than the sun, and the ground is sparse with simple grass cards. That looks like a skilled hobbyist render (for example, made in Blender) given a cinematic color grade, not a top-budget production. My second choice is (a)."
+    },
+    {
+      "juror": "reviewer_320",
+      "family": "GLM",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1755,
+      "unit": "field",
+      "letter": "e",
+      "confidence": 86,
+      "answer": "e, 86/100. The same angular sunflower models repeat across the field like instanced 3D assets."
+    },
+    {
+      "juror": "reviewer_321",
+      "family": "Grok",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1755,
+      "unit": "field",
+      "letter": "e",
+      "confidence": 70,
+      "answer": "e, 70, instanced low-poly sunflowers with alpha-card leaves and simple screen-space fog rather than photographic or cinematic detail"
+    },
+    {
+      "juror": "reviewer_322",
+      "family": "GPT",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 420,
+      "unit": "rain",
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76/100. The carefully staged storm backlight, which picks out the seedling’s fine hairs, most strongly reads as cinematic."
+    },
+    {
+      "juror": "reviewer_323",
+      "family": "Gemini",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 420,
+      "unit": "rain",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e), confidence: 92. The most influential factor is the real-time 3D geometry and shader look, particularly the low-poly faceted leaves, flat ribbon-mesh grass tufts, and procedural normal-mapped water ripples where the cylindrical stem meets the displaced soil mesh."
+    },
+    {
+      "juror": "reviewer_324",
+      "family": "Claude",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 420,
+      "unit": "rain",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "My answer is (a), with 55 confidence. What swayed me most was the polished cinematic CG look: wide 16:9 framing, shallow depth of field, a backlit stormy sky, and detailed rain and water. It reads as a film or game-cinematic render, not a photo or a web demo. The plant's slightly odd anatomy leaves some chance it's (d)."
+    },
+    {
+      "juror": "reviewer_325",
+      "family": "GLM",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 420,
+      "unit": "rain",
+      "letter": "a",
+      "confidence": 75,
+      "answer": "a, 75/100. The most influential cue was the cinematic backlighting that picks out individual hairs and droplets along the seedling’s silhouette."
+    },
+    {
+      "juror": "reviewer_326",
+      "family": "Grok",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 420,
+      "unit": "rain",
+      "letter": "a",
+      "confidence": 80,
+      "answer": "a, 80, Groomed particle hairs and perfectly parallel simulated rain with clean shader lighting read as a high-end cinematic 3D frame, not a photo, catalog, amateur generation, or web demo."
+    },
+    {
+      "juror": "reviewer_327",
+      "family": "GPT",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 780,
+      "unit": "night",
+      "letter": "a",
+      "confidence": 81,
+      "answer": "a, 81/100: The precise rim lighting picking out individual hairs on the foreground stem gives the shot a polished cinematic look."
+    },
+    {
+      "juror": "reviewer_328",
+      "family": "Gemini",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 780,
+      "unit": "night",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "(e)\nConfidence: 88\nMost influential factor: Non-physical real-time depth-of-field and LOD instancing—midground copies of an identical low-poly instanced plant mesh are blurred by a screen-space DOF pass while the much farther procedural heightmap mountain ridge and single-pixel stars behind them remain razor-sharp."
+    },
+    {
+      "juror": "reviewer_329",
+      "family": "Claude",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 780,
+      "unit": "night",
+      "letter": "a",
+      "confidence": 60,
+      "answer": "a, 60. Biggest factor: the cinematic 2.39:1-style widescreen framing and film-like grade. A rim-lit hairy sunflower seedling is set against a detailed Milky Way, and the haze is controlled like a high-end nature-documentary or CG cinematic shot. Stock photography (b) is my close second."
+    },
+    {
+      "juror": "reviewer_330",
+      "family": "GLM",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 780,
+      "unit": "night",
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100. The leaves have angular, repeating silhouettes that look like instanced 3D meshes."
+    },
+    {
+      "juror": "reviewer_331",
+      "family": "Grok",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 780,
+      "unit": "night",
+      "letter": "a",
+      "confidence": 68,
+      "answer": "a\n68\nThe rim-lit hero plant under a clean Milky Way has the polish of a film or AAA cinematic frame, not a catalog plate, amateur image, or web demo."
+    }
+  ]
+}
