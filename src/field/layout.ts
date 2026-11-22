@@ -318,11 +318,12 @@ export function fieldPlaces(): FieldPlaces {
   return made
 }
 
-// In the field's last part the land rises past the last rows to the foot of the tree row: a ring of plants, thinner toward an uneven edge short of the bank.
-// It stands whole from the part's first frame to its last.
+// In the film's last world the land rises past the last rows to the foot of the tree row: a ring of plants, thinner toward an uneven edge short of the bank.
+// It stands whole from the world's first frame to its last.
 export const fieldBeyondM: [number, number] = [65.5, 73.6]
-const LAST_PART = config.segments.find((s) => s.id === 'field')
-export const beyondAt = (time: number): boolean => LAST_PART !== undefined && time > LAST_PART.start - 1e-6
+const LAST_WORLD = config.segments[config.segments.length - 1].world
+const LAST_WORLD_FROM_S = Math.min(...config.segments.filter((s) => s.world === LAST_WORLD).map((s) => s.start))
+export const beyondAt = (time: number): boolean => time > LAST_WORLD_FROM_S - 1e-6
 const BEYOND_ID = 3000000
 let beyond: Float32Array | null = null
 export function beyondPlaces(): Float32Array {
