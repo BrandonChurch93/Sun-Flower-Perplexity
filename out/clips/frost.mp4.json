@@ -1,0 +1,189 @@
+{
+  "kind": "clip",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "format": "16x9",
+  "tier": "review",
+  "assets": "full",
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T01:31:47.657Z",
+  "frames": [
+    900,
+    1199
+  ],
+  "unit": "frost",
+  "bitrateMbps": 20,
+  "m1": {
+    "checked": 300,
+    "failed": []
+  },
+  "m1Details": {},
+  "parts": [
+    {
+      "file": "chunk-frost-16x9-review-full-900-929.mp4",
+      "frames": [
+        900,
+        929
+      ],
+      "at": "2026-11-22T01:21:43.654Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-930-959.mp4",
+      "frames": [
+        930,
+        959
+      ],
+      "at": "2026-11-22T01:20:52.565Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-960-989.mp4",
+      "frames": [
+        960,
+        989
+      ],
+      "at": "2026-11-22T01:27:43.787Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-990-1019.mp4",
+      "frames": [
+        990,
+        1019
+      ],
+      "at": "2026-11-22T01:02:54.455Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1020-1049.mp4",
+      "frames": [
+        1020,
+        1049
+      ],
+      "at": "2026-11-22T01:31:18.221Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "4b3e1392-af3f-458b-87ee-01d6128b0bf9",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1050-1079.mp4",
+      "frames": [
+        1050,
+        1079
+      ],
+      "at": "2026-11-22T00:16:22.794Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1080-1109.mp4",
+      "frames": [
+        1080,
+        1109
+      ],
+      "at": "2026-11-22T00:03:07.662Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1110-1139.mp4",
+      "frames": [
+        1110,
+        1139
+      ],
+      "at": "2026-11-22T00:19:31.765Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1140-1169.mp4",
+      "frames": [
+        1140,
+        1169
+      ],
+      "at": "2026-11-22T00:19:44.799Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-frost-16x9-review-full-1170-1199.mp4",
+      "frames": [
+        1170,
+        1199
+      ],
+      "at": "2026-11-22T00:29:36.556Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "4b3e1392-af3f-458b-87ee-01d6128b0bf9",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    }
+  ],
+  "chunk": "chunk-frost-16x9-review-full.mp4"
+}

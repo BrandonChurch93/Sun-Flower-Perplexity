@@ -1,0 +1,56 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "shadowed outer bracts and folded inner petals across the flower bud (also set-C-02.png crops 1, 2, 4)",
+      "what": "dark bracts in deep shadow have bright white jagged sawtooth outlines where no rim light can reach, and the unopened inner petals are smooth plastic-like straps that crisscross and interpenetrate across the face of the bud",
+      "fix": "replace the unlit white bract-edge outline with properly shadowed fine marginal hairs that only brighten in direct rim light, and model layered imbricated inner petals and bracts with collision instead of intersecting flat ribbons"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-04.png",
+      "where": "foreground neighbor leaves at the bottom-left edge (also set-C-01.png, set-C-03.png crop 7, and set-C-06.png crop 7)",
+      "what": "the shadowed neighbor leaves read as flat, single-tone slate-blue waxy cards with crude, sharp geometric V-shaped sawtooth cutouts and zero lamina thickness",
+      "fix": "give the foreground neighbor leaves organic serrated margins, physical leaf thickness, fine surface trichomes, and natural shadow color variation"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "ray petals and bract bases around the flower head in crops 1, 2, 4 (also set-C-02.png crops 1, 2 and set-C-06.png crop 11)",
+      "what": "petals have smooth waxy surfaces with heavy painted-on brown stripes, razor-sharp 1-pixel dark outlines along backlit edges, angular low-poly bract facets visible between petal bases, and a stray bright floret fragment sitting on the lower-left backlit petal at 8 o'clock",
+      "fix": "subdivide petal and bract geometry, remove the dark 1-pixel edge outline, replace painted stripes with subtle displaced venation and velvety cellular micro-roughness, and remove the stray floret geometry on the petal"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "hero plant leaves and petiole-to-stem junctions in crops 3, 4, 5 (also set-C-05.png crops 3, 4, 5, 6 and set-C-06.png crop 8)",
+      "what": "backlit leaves show blurry opaque dark-painted vein bands instead of raised translucent veins; the curled right leaf has hard polygonal creases, paper-thin edges, beaded rim-pixel aliasing, and loses its arching stem petiole at 50.5 s; and lower petioles meet the stem in straight unblended cuts with no clasping node",
+      "fix": "model raised vein geometry with realistic subsurface scattering, subdivide leaf meshes to remove polygonal folds and rim aliasing, blend petioles into swollen stem nodes, and keep the upper-right leaf petiole consistently attached across frames"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "out-of-focus midground leaves and background flower heads in crops 7, 8, 9 (also set-C-03.png crop 7 and set-C-05.png crop 5)",
+      "what": "blurred midground leaves on the left have pale glowing halo rings around flat dark-green centers, and background sunflowers read as repeated round yellow rings with overly dark black centers facing away from the sun even inside bright golden haze",
+      "fix": "render true optical depth of field without Z-defocus edge halos, vary background flower head shapes and orientations toward the sun, and apply realistic atmospheric veil over distant dark disc centers"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "sky extending rightward from the sun below the cloud deck in crop 10 (also set-C-06.png crop 10, set-C-01.png, and set-C-04.png)",
+      "what": "a sharp, ruler-straight horizontal brightness step cuts across the sky from the sun toward the flower head, exposing an unfeathered horizontal lens-flare or glow-strip boundary",
+      "fix": "feather the vertical falloff and expand the bounds of the horizontal sun-flare element so no straight horizontal edge is visible in the sky gradient"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-05.png",
+      "where": "central unopened disc florets in crops 1 and 2",
+      "what": "the inner disc center is composed of overly uniform, smooth green bead-like spheres with an abrupt transition to the outer ring of open florets",
+      "fix": "add fine star-tipped tubular bud geometry, subtle fuzz, and a gradual opening transition from inner disc buds to outer florets"
+    }
+  ]
+}

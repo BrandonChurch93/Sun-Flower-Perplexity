@@ -1,0 +1,59 @@
+{
+  "unit": "field",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": true
+  },
+  "frames": [
+    {
+      "frame": 1755,
+      "key": "field",
+      "why": "the key field",
+      "m1": {
+        "frame": 1755,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.4929751389931864,
+          "y": 0.5051269102852297,
+          "depthM": 4.692237706300397,
+          "cocPx": 0.01050963718444109
+        }
+      },
+      "m2": {
+        "frame": 1755,
+        "pixels": 2073600,
+        "textured": 358607,
+        "soft": 0,
+        "texturedOutsideSharpZone": 0,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 1.111995505075946,
+        "frameEnergy": 13.576248062189137,
+        "approvedEnergy": 12.208905521845539,
+        "sharpPixels": 1687658,
+        "region": {
+          "left": 1,
+          "top": 181,
+          "width": 1883,
+          "height": 896
+        }
+      }
+    }
+  ]
+}

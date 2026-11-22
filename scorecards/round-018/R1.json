@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "hero plant from the upper leaf pair to the bottom edge",
+      "what": "The bud is roughly in place, but the straighter stem and different leaf positions change the whole silhouette. The top pair droops much lower, the large face-on middle leaf hangs on the right instead of filling the lower left, and the lower-right and bottom foliage is mostly missing.",
+      "fix": "Keep the bud roughly where it is, but bring the upper pair up under it, restore the broad lower-left and layered right leaves at the target heights and angles, and fill the bottom edge with the lower foliage."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground lighting across the stem, leaf rims and bud",
+      "what": "The right-side sun is in essentially the right place, but it does not produce the target's luminous warm rim on the frost, hairs and droplets. The foreground reads muted and flat rather than crisp against the mist.",
+      "fix": "Restore the fine, bright, sun-facing rim with small warm glints, retain the cold blue-white frost on the cooler surfaces, and keep the shaded greens deep."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "background flower line, especially the cluster to the right of the stem",
+      "what": "Several large, high dark heads rise into the open mist under the sun, replacing the lower, more distributed skyline in the target; their broad cup shapes also read differently from the target's pointed buds.",
+      "fix": "Lower and shrink the right-side cluster, distribute the distant heads more like the target, and use softer pointed bud-and-leaf silhouettes so the space directly beneath the sun stays open."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, bud crown and lower bracts",
+      "what": "The crown has straighter, longer, crossing spikes and a broad shelf of rounded lower bracts. The target has a rounder overlapping bud with outward-curving points and more legible fine hairs and frost along its edges.",
+      "fix": "Round the bud body, stagger and curl the bract tips outward rather than crossing them, and bring back the fine rim detail without changing the overall bud scale."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 2 and 3, stem surface, petioles and leaf faces",
+      "what": "The stem reads as an even speckled shaft instead of having individually lit projecting hairs. The leaf faces are soft and mottled, with heavy uneven edges, where the target has clearer veins, curled thickness, discrete crystals and hanging droplets.",
+      "fix": "Resolve individual hairs at the stem and petiole edges, define the leaf veins and folds, and replace the broad mottling with fine frost crystals and a few distinct droplets."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5, lower and middle field",
+      "what": "The field is grayer and more uniformly smeared, with fewer readable leaf edges and less separation between near dark green plants and the cool hazy layers behind them.",
+      "fix": "Keep the background defocused but recover softly legible leaves and stems, deeper green near-field blacks and selective cool edge highlights; let contrast fall off progressively into the fog."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, sun and surrounding halo",
+      "what": "The sun's white core is softer and less defined, and its peach glow is wider and more even than in the target.",
+      "fix": "Give the white disk a slightly more defined edge and pull the peach halo in closer while preserving the haze and the sun's position."
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "region 7, open upper sky",
+      "what": "The sky is a little smoother and grayer than the target's subtly textured cool-to-warm mist gradient.",
+      "fix": "Bring back a restrained atmospheric texture and the gentle blue-gray to warm-gray transition."
+    }
+  ]
+}

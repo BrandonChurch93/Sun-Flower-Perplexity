@@ -1,0 +1,49 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-02.png",
+      "where": "crop 5 and crop 6, neighboring and midground plants across the field",
+      "what": "surrounding plants are repeated low-poly proxy models made of flat, un-serrated triangular cards in a single uniform green on straight stick stems with geometric star buds",
+      "fix": "replace the flat card proxies with detailed sunflower geometry featuring serrated curved leaves, varied poses, surface shading, and fine hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2, crop 4, and upper-left of crop 6, backlit hero leaves",
+      "what": "leaf blades combine a waxy, clay-like corrugated upper sheen with paper-thin polygonal margins, knife-sharp sawtooth cutouts, a flat triangular tab at the mid-left leaf base, and hard angular folds",
+      "fix": "give the leaves realistic thickness, organic margin curl, fine surface trichomes, and subsurface scattering instead of waxy ripples and sharp polygon creases"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2, crop 3, and crop 4, downward-hanging right leaf and mid-left leaf tip",
+      "what": "veins appear as thick, flat dark-black stripes painted onto a uniform green surface with no raised rib relief or realistic backlit translucency",
+      "fix": "model raised underside vein geometry and shade backlit leaves with proper transmitted light rather than dark painted lines"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 2, crop 3, and crop 4, main stem and leaf axils",
+      "what": "coarse white spiky hairs form a bright rim on the lower stem that abruptly stops above the mid-left petiole, leaving the upper stem bare and smooth against the sky except for clumped fuzz in the nodes",
+      "fix": "distribute fine, tapered translucent hairs continuously up the entire stem and petioles with a gradual natural change in density toward the bud"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 2, crop 3, and crop 4, leaf tips and serrated margins",
+      "what": "spherical water droplets hang from the upper-left leaf tip, middle-right leaf edge, and serrated teeth of the mid-left and lower leaves despite this part of the film having no water, frost, or dew",
+      "fix": "remove all leftover water droplets from the plant surfaces and leaf margins"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 5 and crop 6, mountain skyline and horizon mist",
+      "what": "the distant ridge reads as a tack-sharp, flat black cutout with a repetitive scalloped silhouette and a sharp vertical notch on the right of crop 6, paired with a flat airbrushed mist band",
+      "fix": "use natural terrain profiles with appropriate optical softness at the horizon and replace the flat gradient band with volumetric ground mist integrated into the field"
+    }
+  ]
+}

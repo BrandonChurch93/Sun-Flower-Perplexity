@@ -1,0 +1,63 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-03.png",
+      "where": "soil surface around the emerging hypocotyl hook and striped seed coat (f0004-f0011)",
+      "what": "the stem, attached dirt lumps, and seed hull push upward at ~18 px/frame straight through completely static, rigid soil clods with zero soil displacement or cracking",
+      "fix": "simulate or deform local soil clods and loose crumbs so the emerging hook and seed coat lift, part, and tumble surrounding dirt aside rather than intersecting static ground geometry"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "left grass blades (f0022-f0239), right grass tuft (f0130-f0239), seedling leaves, and distant valley mist (f0000-f0239)",
+      "what": "the left grass blades stay completely frozen for all 8.0 s, the right grass tuft freezes into a rigid statue after f0130 (4.3-8.0 s), the seedling shows no time-lapse nutation or wind micro-motion, and the background mist never drifts",
+      "fix": "add independent wind sway and subtle time-lapse micro-motion to each grass blade and seedling leaf throughout the full 8.0 s segment, and animate slow horizontal drift in the distant valley mist"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "seed hull and cotyledon tips from f0087 (2.9 s) through f0130 (4.3 s)",
+      "what": "the seed hull pops from a closed black shell (f0087) into a wide-open pale clamshell hanging mid-air with slow real-time fall blur (f0109) inside a multi-day time-lapse while the cotyledons snap straight without sliding out of the hull, then perches rigidly on edge on the soil through f0239",
+      "fix": "keep the hull pinched on the cotyledon tips until swelling slides it free, drop it within 1-2 frames as in real time-lapse rather than slow mid-air motion blur, and settle it flat onto the soil"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "central true-leaf bud (f0174-f0239) and cotyledons (f0109-f0174)",
+      "what": "the first pair of true leaves scales up uniformly from the cotyledon node as a single rigid closed spear mesh without separating or unfolding, and the cotyledons hinge outward like flat rigid paddles while scaling larger",
+      "fix": "animate each cotyledon and true leaf unfolding along its own curved path with longitudinal curl, lamina expansion, and tip separation instead of uniform node scaling"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "empty space below the seed hull (f0043-f0087) and along the hypocotyl stem (f0022-f0152)",
+      "what": "an orphan dirt crumb floats disconnected in mid-air below the seed coat from f0043 to f0087, while other dirt pellets stay glued to fixed stem UVs before shrinking in place to zero (f0109-f0152) as static UV-pinned dew drops fade in",
+      "fix": "remove the floating mid-air crumb, let adhered soil crumbs fall off under gravity instead of scaling down on the stem, and avoid fading static UV-locked dew drops in and holding them frozen across days of growth"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "horizon line and sun across f0000-f0239",
+      "what": "camera vertical pitch reverses direction twice while tracking the plant top - the horizon moves down ~16 px (f0000-f0087), reverses upward ~6 px (f0087-f0152), then reverses downward ~14 px (f0152-f0239) - and horizontal sun drift stalls after f0196",
+      "fix": "drive camera position and look-at target along one smooth monotonic spline with damped inertia so camera direction never reverses or stalls"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "backlit trichomes on the upper rim and inner arch of the hypocotyl (f0005-f0011)",
+      "what": "fine stem hairs smear into an artificial sharp parallel line separated from the stem skin along the upper rim and break into noisy crawling clumps under the arch",
+      "fix": "eliminate the gap at hair roots and increase hair sub-steps and sampling during fast emergence so backlit trichomes render cleanly without double-rim banding or under-arch noise"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "tiles f0000-f0003 and top border of f0011 (matching set-D-02.png)",
+      "what": "the 12-frame fastest-change window starts at 0.00 s before germination so the first four frames show empty soil with no plant, and by f0011 the rising arch clips the top border of the native crop",
+      "fix": "start the consecutive fastest-change window once the plant has breached the soil (or across the rapid hook-straightening/hull-shed stretch) and place the native crop box slightly higher so the arch does not clip"
+    }
+  ]
+}

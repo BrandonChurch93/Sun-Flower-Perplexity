@@ -1,0 +1,5 @@
+A file whose name ends in -a and a file whose name ends in -b with the same number are one pair. In a tile label inside a grid, a and b mean the same as -a and -b in a file name.
+
+set-A-01-a.png and set-A-01-b.png: one pair, the same moment (14.0 s), both 1400 x 788.
+set-A-02.png: crops of that pair at native size (the size of set-A-01-b.png before it was made smaller to fit; set-A-01-a.png was brought to that size first), regions 1 to 4, one region to a row. In every row the left tile, labeled a, is cut from set-A-01-a.png and the right tile, labeled b, is cut from set-A-01-b.png, at the same place in the picture. Region 1: the head or bud. Region 2: the stem and its hairs. Region 3: a leaf seen from the front. Region 4: the field behind the plant.
+set-A-03.png: crops of that pair at native size (the size of set-A-01-b.png before it was made smaller to fit; set-A-01-a.png was brought to that size first), regions 5 to 6, one region to a row. In every row the left tile, labeled a, is cut from set-A-01-a.png and the right tile, labeled b, is cut from set-A-01-b.png, at the same place in the picture. Region 5: the far background at the skyline. Region 6: the sky.

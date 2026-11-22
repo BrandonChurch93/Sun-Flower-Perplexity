@@ -1,0 +1,55 @@
+# Round 9 · R2 jury · the jurors' answers, word for word
+
+Each juror is a fresh agent that received one image and the question, and nothing else. The question:
+
+> You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.
+
+Which file is a control is in `KEY.json`.
+
+## set-B-01.png
+
+- `reviewer_95` (GPT): a, 82/100. The low sunrise backlight renders the seedling’s fine hairs with unusually convincing cinematic detail.
+- `reviewer_96` (Gemini): e, 92, the clean procedural 3D meshes and instanced spherical water droplets—especially on the ribbon-like grass blades, smooth cotyledons, and geometrically uniform striped seed shell—paired with heightmap soil and real-time post-process depth of field.
+- `reviewer_97` (Claude): a — confidence 40. What influenced me most: it's clearly a CG render with film-quality lighting. It has a physically plausible backlit sunset, soft shadows, real depth of field with bokeh, and densely detailed soil, which looks like an offline path-traced render, not real-time web 3D or a photo. Against that, the simple, uniform geometry (smooth leaves, evenly spaced dew drops, a basic seed shell) means it could also be skilled hobbyist CG (d).
+- `reviewer_98` (GLM): e, 73 — the dew beads look like tiny, uniformly spherical objects placed along the smooth grass blades.
+- `reviewer_99` (Grok): (d) 72. The surfaces are synthetic: noise-free sky, plastic leaves, bead-like dew, and shader-like soil, which reads as amateur generated art rather than a photograph or a finished film or game frame.
+
+## set-B-02.png
+
+- `reviewer_100` (GPT): a, 83/100. The dramatic sunrise rim light makes the ground-level seedling macro look like a frame from a nature documentary.
+- `reviewer_101` (Gemini): (d), confidence: 85. Most influenced by: the crisp soil crumbs suspended mid-air beneath the seed tip without motion blur, which are physically implausible for a slow-growing sprout and reveal an unedited AI generation despite the cinematic lighting and grain.
+- `reviewer_102` (Claude): (a), confidence 55. What swayed me most: it's framed like a movie shot. The image is 16:9 widescreen, the camera sits low with a very shallow depth of field, the sunrise lights it from behind, and bits of soil are caught falling from the sunflower seed husk. That looks like a single frame from a cinema-quality nature documentary sequence rather than a stock photo. (b) stock photo is the runner-up.
+- `reviewer_103` (GLM): a, 85/100: The precise sunrise rim lighting isolates the seedling against the dark soil like a cinematic macro shot.
+- `reviewer_104` (Grok): (b) 80 — The staged commercial hero composition: one perfect seedling backlit at sunrise as a growth metaphor, with shallow depth of field and no labels, story context, or render artifacts.
+
+## set-B-03.png
+
+- `reviewer_105` (GPT): a, 78/100. The precisely rim-lit hairs on the seedling give the shot the look of a polished cinematic macro render.
+- `reviewer_106` (Gemini): (e), confidence: 92. Most influenced by the real-time 3D rendering giveaways—specifically the perfectly spherical water droplets on the grass ribbons reflecting a static environment map without meniscus or true refraction, paired with the glossy, stretched procedural displacement mesh of the soil clumps.
+- `reviewer_107` (Claude): d, 50. The image is clearly CG, and it has a polished hobbyist Blender look. The soil is detailed and the depth of field and sun bloom look like a cinematic offline render. But the grass blades are simple, smooth extrusions with evenly spaced, identical dew drops, and the soil looks uniformly glossy. That mix of strong lighting with simple, repeated assets points to amateur generated or rendered art, not a top-budget production or a real-time web demo.
+- `reviewer_108` (GLM): a, 86/100. The finely rim-lit hairs on the sprout give the macro shot a polished cinematic look.
+- `reviewer_109` (Grok): d, 64, glassy procedural soil and mathematically perfect dew that read as a personal offline render, not a film frame, photograph, catalog plate, or real-time web demo
+
+## set-B-04.png
+
+- `reviewer_110` (GPT): e, 83/100: The seedling’s unnaturally uniform, smoothly curved stem looks like a modeled 3D mesh.
+- `reviewer_111` (Gemini): (e), confidence: 92. Most influenced by the real-time procedural 3D geometry and shaders—specifically the continuous noise-displaced glossy soil mesh paired with simple ribbon-polygon grass blades bearing uniform spherical droplet primitives and a procedural sky/depth-of-field pass.
+- `reviewer_112` (Claude): d — confidence 50. Biggest factor: it's clearly a CG render (a sunflower seed sprouting from glossy, uniform soil clumps, with droplets floating off the grass blade). It looks like a polished hobbyist Blender-style still, not a film frame or a photo. The lighting and depth of field are good, but the subject is stylized and the soil and droplets look procedural rather than at film-production level.
+- `reviewer_113` (GLM): e, 74, the almost perfectly smooth, uniform curve of the seedling stem looks like modeled geometry.
+- `reviewer_114` (Grok): (a) 74. Noise-free cinematic subsurface scattering and displacement-mapped wet soil read as high-end offline CGI, not a photograph.
+
+## set-B-05.png
+
+- `reviewer_115` (GPT): a, 78/100, the low-angle sunrise rim lighting makes the seedling feel like a cinematic nature close-up.
+- `reviewer_116` (Gemini): d, confidence: 85. Most influential factor: the biologically impossible empty sunflower seed hull standing upright like an open clamshell in the soil beside a separate, already-sprouted stem, which is a classic AI prompt-literalism hallucination rather than how a seedling actually germinates.
+- `reviewer_117` (Claude): d — confidence 55. Main reason: it has the standard AI "cinematic" look (golden-hour sunburst, heavy bokeh, fake film grain, mist, dew on everything), and the botany is off. The empty seed husk sits apart from the seedling instead of being pushed up on its cotyledons, which points to generated art rather than a real film frame or a stock photo. Runner-up is (b), stock photo.
+- `reviewer_118` (GLM): a, 76/100: The dramatic sunrise backlighting gives the ground-level macro shot a cinematic nature-documentary look.
+- `reviewer_119` (Grok): (b) 78. The centered hero seedling, golden-hour backlight, and mist read as a staged commercial growth metaphor rather than an observational documentary frame.
+
+## set-B-06.png
+
+- `reviewer_120` (GPT): e, 68/100. The nearly identical spherical dew beads on the left-hand grass look like repeated 3D objects.
+- `reviewer_121` (Gemini): e, 88 — The faceted low-poly displacement geometry of the dirt clod paired with identical environment-mapped sphere instances for water droplets along the ribbon-like grass blade and a real-time post-process depth-of-field shader.
+- `reviewer_122` (Claude): d, 55. What most influenced me: this is clearly a CG render, not a photo. The grass blade is a single flat, perfectly smooth shape, and the dew drops are identical, evenly spaced spheres. The soil looks glossy, like it's built from procedural displacement. The look is cinematic (shallow depth of field, sunburst, bokeh), but the simple single-object setup suggests a hobbyist Blender-style piece rather than a top-budget production. The quality of the offline-style depth of field makes a real-time web demo less likely.
+- `reviewer_123` (GLM): a, 76/100. The precise macro focus on the soil, with the landscape dissolving behind it, feels like a deliberately staged cinematic shot.
+- `reviewer_124` (Grok): e, 72. The grass is a flat polygon card with shader-perfect dew and the soil shows blocky displacement facets, which reads as a real-time 3D demo rather than a photograph or film frame.

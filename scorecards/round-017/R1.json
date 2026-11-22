@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "sun and sky round it, upper left (region 5)",
+      "what": "-a has a large blooming sun sitting on the treeline with wide flare rays, glowing broken cloud banks and a thick warm haze plume pouring over the left of the field; -b has a small tight sun disk floating above the treeline, thin streaky clouds, little bloom and almost no haze over the field",
+      "fix": "lower the sun onto the treeline, widen its bloom and rays, bring back the lit cloud banks round it and the warm haze drifting across the left field"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole frame, color and grade",
+      "what": "-a is a warm, filmic grade with lifted, slightly milky blacks, soft contrast and fine grain; -b is a cleaner, greener, more saturated CG look with crisper contrast and a cooler blue sky",
+      "fix": "warm the overall grade toward amber, desaturate the greens, lift the blacks slightly and add matching film grain and softness"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "skyline and far background (region 7)",
+      "what": "-a has rolling hills and a dense dark treeline across the whole skyline, sitting lower in frame; -b has a flat, empty dark band of bare ground before a thin treeline with odd small bumps, and the horizon sits higher on the left and is flatter",
+      "fix": "replace the flat band with the -a rolling hills and continuous treeline, and match the horizon height and shape to -a"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "field behind the plant (region 6)",
+      "what": "-a field is backlit with heads mostly turned toward the sun, dim and soft with depth falling off into haze; -b heads face the camera brightly, leaves are large and glossy, and the field stays sharp and bright into the distance with little atmospheric falloff",
+      "fix": "turn the heads away toward the sun, darken and soften the field with distance, and add haze and focus falloff toward the horizon"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "foreground plant leaves (regions 2 and 3, tile b)",
+      "what": "-a leaves are thin, translucent and rim-lit with a warm edge glow; -b leaves are oversized, waxy and saturated yellow-green with hard yellow edge highlights",
+      "fix": "reduce leaf size, give them backlit translucency and a soft warm rim instead of the hard yellow edges"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "stem and its hairs (region 2, tile b)",
+      "what": "-a stem is bright and rim-lit with visible fine hairs; -b stem is dark and smooth with no visible hairs",
+      "fix": "add a warm rim light along the stem and bring back the fine backlit hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "foreground grass, bottom of frame",
+      "what": "-a has soft green grass with warm sunlit tufts; -b has dark ground with hard-edged straw patches and long shadow streaks running right",
+      "fix": "replace the straw patches with green grass and soft, warm sunlit tufts as in -a"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-02.png",
+      "where": "flower head (region 1, tile b)",
+      "what": "the flower head is a little smaller and flatter, with more saturated petals and less warm backlit glow round the petal edges than in -a",
+      "fix": "scale the head up slightly and add a warm translucent rim to the petals"
+    }
+  ]
+}

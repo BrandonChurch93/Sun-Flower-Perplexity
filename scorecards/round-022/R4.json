@@ -1,0 +1,14 @@
+{
+  "critic": "R4",
+  "score": 8,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-05.png, set-D-06.png, set-D-07.png",
+      "where": "Review pack: fastest growth intervals, including early emergence and petal release around 44.5–48.0 s",
+      "what": "The growth sheets sample roughly every 1.7 s, and all four consecutive-frame sheets are centered on world cuts. None shows the fastest growth at frame cadence, so the apparent unfolding cannot be checked for pops, intersections, or brief stalls.",
+      "fix": "Add review-tier or higher sheets of consecutive 30 fps frames through the fastest growth in each unit, including seed-coat release and petal unfurling, or supply the corresponding clips at full frame rate."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 4 and lower third across the field in set-A-01-b.png",
+      "what": "the three distinct neighbor sunflower stalks on the left and the structured midground plants across the field are missing, replaced by a low, blurry black silhouette mass with no discernible buds, leaves, green color, or rim light",
+      "fix": "restore distinct neighbor sunflower plants rising on the left and across the midground with visible buds, leaves, dark-green tone, and left-side rim highlights matching set-A-01-a.png"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5 and full horizon skyline in set-A-01-b.png",
+      "what": "the wooded hills on both the left and right are much lower and flatter than in -a, a bright uniform fog band extends all the way across the right horizon where -a is dark, and a broad washed-out glow brightens the sky above the left hills",
+      "fix": "raise the left hill and right wooded ridge silhouettes to match -a, concentrate the mist in the left-center valley while darkening the right treeline and haze, and pull down the excess sky glow above the left horizon"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "main foreground plant and bud (regions 1 to 3 in set-A-02.png)",
+      "what": "the hero plant does not read as the same plant: the stem is too thin and bare along the upper-left side, the large lower leaves at the bottom of the frame and front-facing heart-shaped upper leaf are missing, and the bud is a small spiky black ball lacking its wide collar of pointed bracts",
+      "fix": "thicken the stem with natural upward taper, surround the bud with a broader leafy crown of pointed green bracts, and fill out the lower-frame and mid-upper foliage to match the fullness and proportions of -a"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2 · the stem and its hairs",
+      "what": "the stem body is crushed to flat black while spiky white hairs are rim-lit along both left and right edges, whereas -a has directional cool light from the left illuminating the left side of the green stem cylinder and softer fine hairs",
+      "fix": "light the stem directionally from the left so cool rim light catches the left side of the stem surface and fine hairs, tone down the bright right-edge hair rim, and restore subtle dark-green cylindrical shading on the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 1 and 3 leaf surfaces, and upper-left leaf tip in set-A-03.png region 5",
+      "what": "leaves lack surface veining, wet sheen, and edge dew droplets (including the hanging water drop in region 5), and most leaves are opaque black silhouettes except for one isolated bright translucent green patch on a mid-left leaf",
+      "fix": "add cool top-left rim highlights, subtle vein texture, wet surface sheen, and fine dew droplets along leaf margins and tips, and balance the dark-green leaf shading consistently across the foliage"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6 · the sky and mid-left sky in set-A-02.png region 2",
+      "what": "stars are sparser, dimmer, and softer than in -a, the Milky Way dust clouds lose fine granular stellar detail, and the mid-left sky shifts slightly brighter and more teal",
+      "fix": "increase star density, pinpoint sharpness, and fine texture in the starfield and Milky Way clouds, and deepen the mid-left sky tone to match the darker contrast of -a"
+    }
+  ]
+}

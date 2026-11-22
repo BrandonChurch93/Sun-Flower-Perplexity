@@ -1,0 +1,35 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "sky above the horizon between the left neighbor plant and the hero flower head in f1582 (52.7 s) through f1647 (54.9 s), clearest in f1582 and f1603",
+      "what": "drifting backlit pollen specks cut off along a razor-straight horizontal line in mid-air because the particle emitter is confined to a small hard-edged bounding box around the two foreground plants that slides down the sky as the camera cranes up",
+      "fix": "expand the particle volume above the camera frustum and across the field with soft density falloff at its bounds so no emitter box edge is ever visible"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-03.png",
+      "where": "backlit white hairs along both edges of the hero stem, right-side phyllary bract tips, and lower leaf margins across f1641 to f1652",
+      "what": "single-pixel specular rim hairs blink up and down by 30 to 180 luminance on alternating frames during the slow pullback, creating strong buzzing shimmer and crawling noise at normal playback speed",
+      "fix": "increase hair thickness/roughness slightly or prefilter and supersample sub-pixel backlit trichomes with temporal anti-aliasing so rim brightness varies smoothly across frames"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "distant dark hillside under the sun on the left half of the frame in f1777 (59.2 s) and f1799 (60.0 s)",
+      "what": "as the camera reaches peak crane height at the end of the move, a bright straight horizontal seam pops open across the dark hill silhouette from the left edge past the sun",
+      "fix": "extend the bottom skirt of the distant hill geometry well below the terrain and haze plane so craning upward never exposes a gap through the ridge"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "ray petals around the hero flower head and surrounding background sunflower heads across f1641 to f1652 (and across set-D-01.png)",
+      "what": "all ray petals on the hero head and all background field heads remain completely rigid with zero flutter or nod while airborne pollen streaks past rapidly in the wind",
+      "fix": "add subtle asynchronous wind flutter to individual ray petals and gentle phase-varied sway across the background sunflower heads matching the breeze speed"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "f0004–f0011 (0.13–0.37 s), where the hook and seed coat break through the soil",
+      "what": "The preformed hook comes up largely as one piece while the dirt at the contact line barely gives way. The seed coat looks as if it slides through the crust rather than prying it open.",
+      "fix": "Let the hook flex and lead the rise, and make the seed coat push aside the few soil grains it contacts before it clears the surface."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "f0109 (3.6 s), at the opening seed coat and cotyledon tips",
+      "what": "The upper tip reads noticeably softer than the stem edge beneath it at the moment the coat opens, so the growing tip is no longer the clearest point of attention.",
+      "fix": "Track focus on the cotyledon tips as they come out of the coat, without trying to follow the detached shell."
+    }
+  ]
+}

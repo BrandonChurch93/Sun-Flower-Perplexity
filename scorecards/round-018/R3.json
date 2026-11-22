@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2, crop 3 and crop 5, lower edge of the upper-right leaf and base fold of the middle-right leaf",
+      "what": "the leaves read as zero-thickness flat cards: the upper-right leaf margin is cut into uniform, knife-sharp triangular teeth, and the middle-right leaf folds over its stalk along two dead-straight polygon creases meeting at a sharp corner",
+      "fix": "give leaf blades physical thickness, irregular organic serrations with slightly curled edges, and smooth curved deformation where blades bend over petioles"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 3 and crop 4, backlit leaves and outer bud bracts (also crop 9 in set-C-03.png)",
+      "what": "no light passes through thin plant parts despite the low sun sitting directly behind the plant; backlit leaf blades and thin bract margins remain completely opaque dark slate-green with no warm subsurface glow or vein transmission",
+      "fix": "enable physically plausible subsurface light transmission through thin leaf blades and outer bract margins, modulated by vein thickness and surface frost"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, crop 2, crop 4 and crop 5, upper leaf surfaces and flared stem neck beneath the bud",
+      "what": "frost across the leaf faces looks like cloudy grey-white procedural noise painted flat onto a smooth dark surface while ice spikes appear only stuck along the outer edges, and frost on the stem neck is flat white salt-and-pepper dots ending at a hard cutoff line under the bud",
+      "fix": "replace painted mottling and baked white dots with fine three-dimensional rime ice crystals distributed continuously across leaf faces, veins, and the upper stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2 and crop 4, where the upper-left base of the large foreground leaf meets the right side of the stem",
+      "what": "the foreground leaf is already blurred right where its base touches the razor-sharp stem, while a crisp, flat, straight-edged green triangular tab protrudes downward beneath the blurred lobe along the stem",
+      "fix": "clean up the clipped leaf-base/stalk geometry against the stem and tie depth-of-field blur smoothly to actual distance from the focal plane"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 3, involucral bracts across the front of the bud",
+      "what": "the bracts have smooth, waxy, molded-plastic dark green surfaces with flat light-green veins painted on without relief, and the same symmetrical Y-shaped vein pattern repeats across neighboring bracts",
+      "fix": "give each bract unique venation with subtle raised relief, break up the smooth waxy shading with fine surface hairs, and vary bract surface detail"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2, crop 3, crop 4 and crop 5, petioles meeting the main stem",
+      "what": "the petioles are smooth, pale, waxy light-green tubes with painted lengthwise stripes that intersect the dark, rough stem at clean cylinder seams with no organic transition",
+      "fix": "model swollen clasping nodal bases where petioles join the stem and blend stem color, roughness, frost, and trichomes continuously onto the stalks"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7 (and crop 6 in set-C-02.png), out-of-focus foliage in the field",
+      "what": "background leaves alternate between flat, featureless pale grey-green heart-shaped cards and flat jet-black silhouettes on the same stems, giving away unshaded card geometry or broken two-sided normals",
+      "fix": "fix backface normals and two-sided shading on field foliage and give background leaves curved geometry and consistent atmospheric shading"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 8 and crop 9 (and across the skyline in set-C-01.png), distant plants along the horizon",
+      "what": "skyline plants are bare, stick-straight vertical poles topped with repeated open five-pointed cup silhouettes that read as low-detail proxy models and contradict the hero plant's closed leafy bud",
+      "fix": "replace simplified skyline proxies with varied higher-detail plant instances featuring upper stem leaves, natural stem curve, and closed buds matching the hero growth stage"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 1, fine hairs along the upper-left bract tips against the sky",
+      "what": "when zoomed past delivery size, thin diagonal bract-tip hairs break into faint stair-stepped pixels against the bright sky",
+      "fix": "increase antialiasing samples on fine trichome strands against high-contrast sky"
+    }
+  ]
+}
