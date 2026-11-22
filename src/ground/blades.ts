@@ -32,7 +32,7 @@ export const clumps: Clump[] = [
 export const clumpsDawn: Clump[] = [
   { x: -0.035, z: -0.012, blades: 3, heightM: [0.024, 0.036], widthM: [0.0016, 0.0022], spreadM: 0.005, lean: [0.08, 0.35], bornS: [-100, -100], growS: 1, beads: 9, headingRad: [-2.0, -1.1] },
   { x: 0.031, z: -0.015, blades: 2, heightM: [0.022, 0.032], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 6, headingRad: [-2.0, -1.1] },
-  { x: -0.026, z: 0.06, blades: 2, heightM: [0.02, 0.028], widthM: [0.0015, 0.002], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 4, headingRad: [-2.0, -1.1] },
+  { x: -0.026, z: 0.06, blades: 2, heightM: [0.02, 0.028], widthM: [0.0015, 0.002], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 4, headingRad: [-2.0, -1.1], beadsSeen: 0 },
 ]
 
 const ROWS = 16
