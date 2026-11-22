@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 09:04 UTC · Round 25: measures green for all six units on the frozen build; growth sheets and the first runs of stills in
+- Last push: 2026-11-22 09:12 UTC · Round 25: the pack is cut from the frozen build (24 critic packs, ten judged frames for the jury); export proof passed
 - Last status: 82 · 2026-11-22 08:45 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -1655,7 +1655,31 @@ One entry per round, written and pushed when the round starts: number, phase, un
 
 - Started 2026-11-22 08:55 UTC. Judges the frozen build: the source of `5506686` (engine `a4c82933ba906236`; unit hashes dawn `8ebbafaa0d28e07b`, rain `cc96331076d01a36`, night `1e33829500718753`, frost `8162048fd525a7c9`, bloom `f8b8ac67c3d305b9`, field `85ecd6aea5f49c50`), frozen at 08:54 UTC. It is the record round of `kit/07-QUALITY-BAR.md`: the measures and every critic, R1 to R7, on the full judged list (frames 0, 45, 60, 195, 420, 780, 1080, 1350, 1515, 1755), every critic and juror a fresh agent, the families moved on one place from each role's last round. Run 1 of `quality.recordRoundMaxRuns` (2). It is a record: its scores are the final scores, and no fixes follow it. The machine checks ran green on this same source at 08:24 UTC (`npm run gate -- --phase 6 --machine`, G1 to G13, see round 24); the gate of Phase 6 runs them once more at the end, with the deliverables in place.
 - [x] Measures: 08:55 to 09:01 UTC on the Builder's VM, on the frozen build (the source of `5506686`, engine `a4c82933ba906236`), tier `final`, format 16x9, full assets. `npm run measure` for every unit, all six with exit code 0, **M1, M2 and M3 pass for dawn, rain, night, frost, bloom and field** on every judged frame of the unit: dawn M1 pass at frames 0 (0.58 px), 45 (0.48 px), 60 (0.46 px), 195 (0.42 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.974 at 45, 1.122 at 195; rain M1 pass at frames 420 (0.11 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.855 at 420; night M1 pass at frames 780 (0.15 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.828 at 780; frost M1 pass at frames 1080 (0.55 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 1.038 at 1080; bloom M1 pass at frames 1350 (1.21 px), 1515 (0.55 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.839 at 1350, 0.961 at 1515; field M1 pass at frames 1755 (0.01 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 1.142 at 1755. M1 is the focus at the growing tip (allowed 1.5 px of blur), M3 the sharpness against the approved image (needs 0.8). The cards are in `out/work/measures/`, the log is `out/work/scratch/measures-r25.log`. The machine checks ran green on this same source at 08:24 UTC and run once more in the gate of Phase 6.
-- [ ] Pack
+- [x] Pack: 09:09 to 09:11 UTC, all from the frozen build (the source of `5506686`, engine `a4c82933ba906236`), nothing rendered by the pack tool (`--no-render`). Of the 55 files the packs are cut from, 37 were here from this same source (the sixteen `final` stills of step 3, the cut and film sheets and the stress pairs of round 24, which judged this source) and 18 are new: the six growth sheets (`review`, preview) and the six runs of twelve stills (`review`, 16x9; dawn 0 to 11, rain 528 to 539, night 746 to 757, frost 907 to 918, bloom 1331 to 1342, field 1641 to 1652), rendered by twelve builders from `5506686` between 08:54 and 09:08, every record with the frozen engine, every picture looked at by the Builder before the pack was cut. The run sheets and detail sheets were cut from those stills on the Builder's VM and looked at. Twenty four critics, each a fresh agent: `dawn-R1` (8 files) to `reviewer_357`, Claude; `dawn-R3-1` (9 files) to `reviewer_358`, GPT; `dawn-R3-2` (3 files) to `reviewer_359`, GPT; `dawn-R4` (3 files) to `reviewer_360`, Gemini; `rain-R1` (4 files) to `reviewer_361`, GPT; `rain-R3` (3 files) to `reviewer_362`, Gemini; `rain-R4` (4 files) to `reviewer_363`, Claude; `night-R1` (4 files) to `reviewer_364`, Gemini; `night-R3` (3 files) to `reviewer_365`, Claude; `night-R4` (4 files) to `reviewer_366`, GPT; `frost-R1` (4 files) to `reviewer_367`, Gemini; `frost-R3` (3 files) to `reviewer_368`, Claude; `frost-R4` (4 files) to `reviewer_369`, GPT; `bloom-R1` (8 files) to `reviewer_370`, Gemini; `bloom-R3` (6 files) to `reviewer_371`, Claude; `bloom-R4` (4 files) to `reviewer_372`, GPT; `field-R1` (4 files) to `reviewer_373`, GPT; `field-R3` (3 files) to `reviewer_374`, Gemini; `field-R4` (3 files) to `reviewer_375`, Claude; `film-R4-1` (10 files) to `reviewer_376`, Claude; `film-R4-2` (3 files) to `reviewer_377`, Claude; `film-R5` (5 files) to `reviewer_378`, Grok; `film-R6` (9 files) to `reviewer_379`, GLM; `film-R7` (8 files) to `reviewer_380`, GPT. Two packs are split because a message carries at most ten files: `dawn-R3-1` and `dawn-R3-2`, `film-R4-1` and `film-R4-2`; the lower score of the two halves is the critic's score. R2: the ten judged frames (`set-B-01` frame 1080, `set-B-02` frame 780, `set-B-03` frame 1350, `set-B-04` frame 420, `set-B-05` frame 45, `set-B-06` frame 1515, `set-B-07` frame 0, `set-B-08` frame 195, `set-B-09` frame 1755, `set-B-10` frame 60), each to five jurors of five families (GPT, Gemini, Claude, GLM, Grok), fifty fresh agents `reviewer_381` to `reviewer_430`; the controls' votes are reused from the units' own rounds, as `kit/07-QUALITY-BAR.md` says. The families moved on one place from each role's last round (the film's roles went to a family that held that role in none of rounds 22 to 24). Key: `out/work/packs/keys/round-025.json`, kept from every critic and pushed only after every answer is in.
+- [ ] dawn-R1 answer
+- [ ] dawn-R3-1 answer
+- [ ] dawn-R3-2 answer
+- [ ] dawn-R4 answer
+- [ ] rain-R1 answer
+- [ ] rain-R3 answer
+- [ ] rain-R4 answer
+- [ ] night-R1 answer
+- [ ] night-R3 answer
+- [ ] night-R4 answer
+- [ ] frost-R1 answer
+- [ ] frost-R3 answer
+- [ ] frost-R4 answer
+- [ ] bloom-R1 answer
+- [ ] bloom-R3 answer
+- [ ] bloom-R4 answer
+- [ ] field-R1 answer
+- [ ] field-R3 answer
+- [ ] field-R4 answer
+- [ ] film-R4-1 answer
+- [ ] film-R4-2 answer
+- [ ] film-R5 answer
+- [ ] film-R6 answer
+- [ ] film-R7 answer
 - [ ] R2 jury answers
 - [ ] Summary, status, push
 
@@ -1876,6 +1900,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 08:47 UTC · Round 24 closed, not a pass (R4 7, R5 7, R6 6, R7 10): summary, open items, kept stills, status 82; polish at its limit
 - 2026-11-22 08:55 UTC · Phase 6: the build is frozen at the source of 5506686; record round (round 25) opened, renders out to twelve builders
 - 2026-11-22 09:04 UTC · Round 25: measures green for all six units on the frozen build; growth sheets and the first runs of stills in
+- 2026-11-22 09:12 UTC · Round 25: the pack is cut from the frozen build (24 critic packs, ten judged frames for the jury); export proof passed
 
 ## Session log
 
