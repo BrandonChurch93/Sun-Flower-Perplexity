@@ -27,9 +27,7 @@ const METEOR_FROM_DEG: [number, number] = [-188.1, 18.9]
 const METEOR_TO_DEG: [number, number] = [-182.1, 13.6]
 const METEOR_LIGHT = 0.5
 
-// The wooded hills of the night stand where the approved night has them: their line, their tone and the tone of the mist at their foot are read from it by bearing. They come out of the haze after the cut into the night and go back into it before the cut out, so both cuts show the land every world shares.
-const HILLS_IN_S: [number, number] = [20, 22]
-const HILLS_OUT_S: [number, number] = [28, 30]
+// The wooded hills of the night stand where the approved night has them: their line, their tone and the tone of the mist at their foot are read from it by bearing. They are the night's own far land, the same from its first frame to its last.
 const HORIZON_V = 0.5 - (Math.tan(MAP_EL_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
 const MIST_TOP_DEG = 1.9
 const MIST_TOP_V = HORIZON_V + (Math.tan(MIST_TOP_DEG * RAD) * MAP_SCALE_Y) / GLOW_COVER
@@ -97,8 +95,8 @@ void main() {
   if (cover > 0.0) {
     vec3 under = texelFetch(tRidge, ivec2(li, 1), 0).rgb;
     vec3 mist = texelFetch(tRidge, ivec2(li, 2), 0).rgb;
-    float bank = valueNoise(vec2(lu.x * 14.0 + 0.012 * uLandTime, 0.05 * uLandTime));
-    float knot = valueNoise(vec2(lu.x * 47.0 - 0.02 * uLandTime, lu.y * 90.0 + 0.04 * uLandTime));
+    float bank = valueNoise(vec2(lu.x * 14.0 + 0.012 * uLandTime, 3.7));
+    float knot = valueNoise(vec2(lu.x * 47.0 - 0.02 * uLandTime, lu.y * 90.0));
     float topV = uMistRows.x + 0.022 * (bank - 0.5) + 0.006 * (knot - 0.5);
     float thick = 1.0 - smoothstep(uMistRows.y, topV, lu.y);
     vec3 hill = mix(under, mist * (0.8 + 0.4 * bank), pow(thick, 1.8));
@@ -242,13 +240,6 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
 
 export const GLOW_FILE = 'glow.jpg'
 
-const ease = (a: number, b: number, x: number): number => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
-  return t * t * (3 - 2 * t)
-}
-
-export const nightLand = (time: number): number => ease(HILLS_IN_S[0], HILLS_IN_S[1], time) * (1 - ease(HILLS_OUT_S[0], HILLS_OUT_S[1], time))
-
 const toLinear = (v: number): number => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
 
 function ridgeTable(): THREE.DataTexture {
@@ -289,7 +280,7 @@ export class NightSky {
     tRidge: { value: ridgeTable() },
     uLandMap: { value: this.mapBasis },
     uLandScale: { value: new THREE.Vector2(MAP_SCALE_X / GLOW_COVER, MAP_SCALE_Y / GLOW_COVER) },
-    uLand: { value: 0 },
+    uLand: { value: 1 },
   }
 
   constructor(look: NightSkyLook) {
@@ -365,7 +356,6 @@ export class NightSky {
     const toMap = this.pass.uniforms.uToMap.value as THREE.Matrix3
     toMap.copy(this.mapBasis).multiply(this.back3)
     const u = this.pass.uniforms
-    this.land.uLand.value = nightLand(time)
     u.uLandTime.value = time
     const s = (time - METEOR_AT_S) / METEOR_SECONDS
     u.uMeteor.value = s > 0 && s < 1 ? METEOR_LIGHT * Math.sin(Math.PI * s) : 0
