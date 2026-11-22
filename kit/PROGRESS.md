@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 03:16 UTC · Phase 5: re-read after a compaction logged; the field line carries its real time
+- Last push: 2026-11-22 03:20 UTC · Phase 5: the Phase 6 pack job goes to the tools owner; the final build's parts are dealt to eleven renderers
 - Last status: 66 · 2026-11-22 03:13 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 1.46 h |
+| 5 | 3.00 h | 1.51 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 26.41 h |
+| Whole build | 30.00 h | 26.47 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -782,6 +782,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 03:09 UTC. `bud_builder`'s bloom run sheets read (frames 1338, 1374, 1410, twelve each, engine `305e9520118781cf`, in `out/work/scratch/p5/bud/`; I looked at the closer cut of 1338 to 1349). No pop and no stall in the opening; its measure of change per frame is even (4.1 to 6.4 levels). Two things written down for the judges' eye: the soil did not move while the hook came up (the ground's first push now answers it) and a short chain of bright yellow green flecks grows at the disc's left rim from frame 1341. The one clear fault of its five runs stays the husk's pop at frames 109 to 111, with `stem_builder` since 02:54.
 - 2026-11-22 · Phase 5 · 03:15 UTC. `field_builder`'s second pass read (`0a974b6` on `agent/field`, one line in `src/field/layout.ts`; records read: before `9acef799334c8e85`, after `175618e590a1b476`; pictures in `out/work/scratch/p5/field3/`). The far rise now stands from the first frame of the golden world (read from `config.segments`, no time in the code). Its measure of the step 1559 to 1560 in rows 190 to 240: 3.87 levels against 3.91 on main (6.8 at `7e410c0`), so the two frames differ only by the lens's own move. Bloom keys measured by me (pixels over 6 levels): 1350 1.7% of the frame, all in rows 231 to 262; 1515 2.4%, all in rows 213 to 250. My look at the strips: the band under the skyline is a touch lighter left of the head and one notch in the tree row right of the head is filled, a hair flatter there; not worse as a picture, and 1260 and 1799 show nothing odd and no bright seam. Taken; it merges when the early run of the machine checks has ended. Its own correction, written down: the carpet rise tops out at 3.09 to 3.39 m, partly under the lens at the very end, so the seam is closed by the ring of plant pictures and would return if the ring were thinned; the rise's foot follows the crop and climbs 6 cm over 40 to 52 s with it; frame 1777 was not rendered at this commit. A taller rise (lift 2.15 m) was tried by it and left out: it lays a flat band over the tree row in both bloom keys.
 - 2026-11-22 · Phase 5 · 03:16 UTC. After a compaction at about 02:58 UTC: read again from disk `kit/PROGRESS.md` (Status, Running jobs, Running agents, round 22), `kit/addenda/README.md` (no addenda), `AGENTS.md` whole, `kit/07-QUALITY-BAR.md` from R5 to the record round, `kit/08-BUILD-ORDER.md` Phase 5 step 8 and gate and Phase 6. Nothing in them changes the plan: the fix pass ends by 04:04 UTC, then step 8 from the final build, the gate, and Phase 6 until the clock prints the budget report.
+- 2026-11-22 · Phase 5 · 03:20 UTC. A tools job for Phase 6 went to `harness_builder` at 03:20 UTC (brief `out/work/briefs/p6-packs.json`, report by 04:15): `npm run pack` has packs for phases 2 to 5 only, and the record round needs the six units' R1, R3 and R4 packs and the whole film's R5, R6, R7, R4 and R2 packs under one round number, with one key, `--list`, `--no-render` and `--only`; nothing reworded, phases 2 to 5 unchanged, tools only. So `harness_builder` renders nothing in the final build of Phase 5: its three film parts go to `bud_builder` (five parts) and `skin_builder` (three), eleven renderers and one tools job, twelve agents. Fallback if the tool is late: each unit's pack is built as in Phase 4 on a builder's machine and the film's as in Phase 5.
 
 ## Notes from Brandon
 
@@ -1570,6 +1571,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 03:13 UTC · Phase 5: Status 66, round 22 fix pass with six changes merged
 - 2026-11-22 03:15 UTC · Phase 5: round 22 fix pass, the field's second pass read
 - 2026-11-22 03:16 UTC · Phase 5: re-read after a compaction logged; the field line carries its real time
+- 2026-11-22 03:20 UTC · Phase 5: the Phase 6 pack job goes to the tools owner; the final build's parts are dealt to eleven renderers
 
 ## Session log
 
