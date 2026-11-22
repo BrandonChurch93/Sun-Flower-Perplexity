@@ -1,0 +1,25 @@
+{
+ "before": "SUNFLOWER · EXPORT Make the film file on this machine Every frame is drawn here, encoded here and saved as one file. Nothing is uploaded. PREVIEW The film canvas, showing frame 1515. Only this picture goes into the file. DOES THIS MACHINE DRAW IT THE SAME This machine The kept still Frame 1515 at the review tier, beside the still the critics saw. They should look the same. SETTINGS Format Master · 1920 x 1080 UHD · 3840 x 2160 Preview · 960 x 540 Range The whole film · 60 s Dawn clip · 0 to 8 s Rain clip · 8 to 20 s Night clip · 20 to 30 s Frost clip · 30 to 40 s Bloom clip · 40 to 52 s Field clip · 52 to 60 s Frames 1500 to 1529 · test Quality tier Draft · 1 sample Review · 8 samples Final · 48 samples 30 frames at 30 frames a second · 1 sample a frame · 20 Mbit a second · saved as proof-preview.mp4 · about 6 minutes on this machine. CHECKS AND EXPORT Video encoder H.264, High profile, ",
+ "during": "SUNFLOWER · EXPORT Make the film file on this machine Every frame is drawn here, encoded here and saved as one file. Nothing is uploaded. PREVIEW The film canvas, showing frame 1507. Only this picture goes into the file. DOES THIS MACHINE DRAW IT THE SAME This machine The kept still Frame 1515 at the review tier, beside the still the critics saw. They should look the same. SETTINGS Format Master · 1920 x 1080 UHD · 3840 x 2160 Preview · 960 x 540 Range The whole film · 60 s Dawn clip · 0 to 8 s Rain clip · 8 to 20 s Night clip · 20 to 30 s Frost clip · 30 to 40 s Bloom clip · 40 to 52 s Field clip · 52 to 60 s Frames 1500 to 1529 · test Quality tier Draft · 1 sample Review · 8 samples Final · 48 samples 30 frames at 30 frames a second · 1 sample a frame · 20 Mbit a second · saved as proof-preview.mp4 · about 4 minutes on this machine. CHECKS AND EXPORT Video encoder H.264, High profile, level 3.2, at 960 x 540. Asset set The full set is loaded, 513 MB of textures. Bloom frame Drawn. Compare it with the kept still. Export running Stop Drawing and encoding 30 frames. Keep this tab open and in front. Frames done 8 of 30 Elapsed 0:51 Remaining 2:21",
+ "progress": {
+  "done": 9,
+  "total": 30,
+  "textureMb": 512.6839396158854
+ },
+ "running": "export-running.png",
+ "duringAfter": "SUNFLOWER · EXPORT Make the film file on this machine Every frame is drawn here, encoded here and saved as one file. Nothing is uploaded. PREVIEW The film canvas, showing frame 1512. Only this picture goes into the file. DOES THIS MACHINE DRAW IT THE SAME This machine The kept still Frame 1515 at the review tier, beside the still the critics saw. They should look the same. SETTINGS Format Master · 1920 x 1080 UHD · 3840 x 2160 Preview · 960 x 540 Range The whole film · 60 s Dawn clip · 0 to 8 s Rain clip · 8 to 20 s Night clip · 20 to 30 s Frost clip · 30 to 40 s Bloom clip · 40 to 52 s Field clip · 52 to 60 s Frames 1500 to 1529 · test Quality tier Draft · 1 sample Review · 8 samples Final · 48 samples 30 frames at 30 frames a second · 1 sample a frame · 20 Mbit a second · saved as proof-preview.mp4 · about 4 minutes on this machine. CHECKS AND EXPORT Video encoder H.264, High profile, level 3.2, at 960 x 540. Asset set The full set is loaded, 513 MB of textures. Bloom frame Drawn. Compare it with the kept still. Export running Stop Drawing and encoding 30 frames. Keep this tab open and in front. Frames done 13 of 30 Elapsed 1:24 Remaining 1:50",
+ "done": {
+  "ok": true,
+  "frames": 30,
+  "fileName": "proof-preview.mp4",
+  "codec": "avc1.640020",
+  "seconds": 191.93159999999403,
+  "error": null
+ },
+ "errors": [],
+ "failedRequests": [],
+ "files": [
+  "export-before.png",
+  "export-running.png"
+ ]
+}

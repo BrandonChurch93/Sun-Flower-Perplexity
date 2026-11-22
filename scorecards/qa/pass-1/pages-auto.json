@@ -1,0 +1,38 @@
+{
+ "url": "/index.html?mode=autopilot",
+ "mode": "autopilot",
+ "elementsWithText": 0,
+ "shots": [
+  {
+   "secondsAfterStart": 72.2,
+   "frameBefore": 1,
+   "frameAfter": 1799,
+   "playing": false,
+   "done": true,
+   "error": null,
+   "file": "autopilot-1.png"
+  },
+  {
+   "secondsAfterStart": 72.5,
+   "frameBefore": 1799,
+   "frameAfter": 1799,
+   "playing": false,
+   "done": true,
+   "error": null,
+   "file": "autopilot-2.png"
+  },
+  {
+   "secondsAfterStart": 72.9,
+   "frameBefore": 1799,
+   "frameAfter": 1799,
+   "playing": false,
+   "done": true,
+   "error": null,
+   "file": "autopilot-3.png"
+  }
+ ],
+ "errors": [
+  "THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The \"position\" attribute is likely to have NaN values. Tl"
+ ],
+ "failedRequests": []
+}

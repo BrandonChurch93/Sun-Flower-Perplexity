@@ -1,0 +1,20 @@
+
+> sunflower-film@0.1.0 gate
+> tsx tools/gate.ts --phase 6
+
+G1 pass · npm run build exits clean, no type errors
+G2 pass · 133 of 133 unit tests pass
+G3 pass · frames 45, 780, 1515 are pixel identical across fresh page loads and in another order (16x9, review; result of this build reused)
+G4 pass · stills are 16x9 1920 x 1080, preview 960 x 540, uhd 3840 x 2160; 391 stills on disk match their format; info().frameCount is 1800
+G5 pass · no interface element in capture or autopilot; the export proof frames are clean
+G6 pass · the config passes validation and all 10 computed judged frames are on the list in kit/PROGRESS.md
+G7 pass · the master (1920 x 1080, 30 fps, 20 Mbps, 60 s) fits X
+G8 pass · 0 third-party files have ledger rows, 20 generated files have recipes
+G9 pass · 741 tracked files, 385 MB in all, the largest 28.7 MB (out/clips/bloom.mp4); no secret; 8 approved files match the manifest
+G10 pass · everything the app requires is in the Phase 0 record (16x9: EXT_color_buffer_float; MAX_TEXTURE_SIZE 8192, MAX_RENDERBUFFER_SIZE 2048, MAX_VERTEX_ATTRIBS 8, MAX_DRAW_BUFFERS 1 | uhd: EXT_color_buffer_float; MAX_TEXTURE_SIZE 8192, MAX_RENDERBUFFER_SIZE 3840, MAX_VERTEX_ATTRIBS 8, MAX_DRAW_BUFFERS 1)
+G11 pass · texture memory: web 133 MB of 800, full 513 MB of 2400
+G12 pass · cut 1 worst ratio 1.00 (camera y), cut 2 worst ratio 1.00 (f-number), cut 3 worst ratio 1.00 (focal length), cut 4 worst ratio 1.00 (aim x); the limit is 1.5
+G13 pass · finished units: dawn, rain, night, frost, bloom, field; 0 stand-ins remain, none in a finished unit
+D2 pass · out/preview.mp4 has 1800 frames at 960 x 540, 30 fps, 28.1 MB, from the current build, with the M1 result of every frame
+D3 pass · Export made proof-preview.mp4 for frames 1500 to 1529: 30 frames of h264 High at 960 x 540 and 30 frames a second in 204.5 s, and its first, middle and last frames match capture stills at 33.1, 36.1, 36.1 dB, so they hold no interface element.
+gate: all 15 green

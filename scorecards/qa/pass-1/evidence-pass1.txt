@@ -1,0 +1,51 @@
+engine of dist: a4c82933ba906236
+== 10 clips: ffprobe frame counts against segments
+dawn frames 240 wanted 240 | record first 0 last 239 engine a4c82933ba906236 tier draft format 16x9
+rain frames 360 wanted 360 | record first 240 last 599 engine a4c82933ba906236 tier draft format 16x9
+night frames 300 wanted 300 | record first 600 last 899 engine a4c82933ba906236 tier draft format 16x9
+frost frames 300 wanted 300 | record first 900 last 1199 engine a4c82933ba906236 tier draft format 16x9
+bloom frames 360 wanted 360 | record first 1200 last 1559 engine a4c82933ba906236 tier draft format 16x9
+field frames 240 wanted 240 | record first 1560 last 1799 engine a4c82933ba906236 tier draft format 16x9
+all six match
+== 12 comparison images
+out/stills/compare-bloom-hero.jpg engine a4c82933ba906236 frame 1515 tier final
+out/stills/compare-bloom-opening.jpg engine a4c82933ba906236 frame 1350 tier final
+out/stills/compare-dawn-seedling.jpg engine a4c82933ba906236 frame 195 tier final
+out/stills/compare-dawn-sprout.jpg engine a4c82933ba906236 frame 45 tier final
+out/stills/compare-field.jpg engine a4c82933ba906236 frame 1755 tier final
+out/stills/compare-frost.jpg engine a4c82933ba906236 frame 1080 tier final
+out/stills/compare-night.jpg engine a4c82933ba906236 frame 780 tier final
+out/stills/compare-rain.jpg engine a4c82933ba906236 frame 420 tier final
+== 14 judged stills
+out/stills/judged-f0000.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f0045.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f0060.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f0195.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f0420.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f0780.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f1080.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f1350.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f1515.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+out/stills/judged-f1755.jpg engine a4c82933ba906236 tier final samples 48 standIns []
+== 22 export proof
+-rw-r--r-- 1 user user 2207057 Nov 22 09:06 out/work/export/proof-preview.mp4
+codec_name=h264 profile=High width=960 height=540 r_frame_rate=30/1 nb_frames=30 
+proof.json ok true engine a4c82933ba906236 | Export made proof-preview.mp4 for frames 1500 to 1529: 30 frames of h264 High at 960 x 540 and 30 frames a second in 204.5 s, and its first, middle and last frames match capture stills at 33.1, 36.1, 36.1 dB, so they hold no interface element.
+memory.json ok true engine a4c82933ba906236 limitMb 2400 maxTextureMb 512.6839396158854 samples 25 maxHeapMb 498.6 | Export ran 240 frames at 960 x 540 and the draft tier with the full set: 25 samples from frame 120 to 359, across the cut at frame 240, textures at most 512.7 MB of the 2400 MB allowed, page heap between 460.1 and 498.6 MB (performance.memory).
+== 28 cut files
+cut/CUES.md cut/SHOTS.md 
+== 29 deliverables tracked
+out/clips/bloom.mp4 out/clips/bloom.mp4.json out/clips/dawn.mp4 out/clips/dawn.mp4.json out/clips/field.mp4 out/clips/field.mp4.json out/clips/frost.mp4 out/clips/frost.mp4.json out/clips/night.mp4 out/clips/night.mp4.json out/clips/rain.mp4 out/clips/rain.mp4.json out/preview.mp4 out/roughcut.mp4 
+tracked files under out/stills: 67
+== 30 scorecards
+qa round-001 round-002 round-003 round-004 round-005 round-006 round-007 round-008 round-009 round-010 round-011 round-012 round-013 round-014 round-015 round-016 round-017 round-018 round-019 round-020 round-021 round-022 round-023 round-024 round-025 
+rounds 25 last 25 missing [] untracked 0
+== 32 clock
+kit/CLOCK.json
+| Phase | Planned box | Time used | | --- | --- | --- | | 0 | 1.50 h | 1.08 h | | 1 | 0.50 h | 0.05 h | | 2 | 3.50 h | 4.92 h | | 3 | 9.00 h | 9.42 h | | 4 | 8.50 h | 9.49 h | | 5 | 3.00 h | 3.12 h | | 6 | 4.00 h | 5.11 h | | Whole build | 30.00 h | 33.18 h | 
+
+== 33 pushed
+0
+origin/main 3807ca3 Status 85: QA gauntlet pass 1 under way, item 20 found failing, decision logged
+HEAD 3807ca3
+## main...origin/main
