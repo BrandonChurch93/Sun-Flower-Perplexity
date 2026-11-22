@@ -144,10 +144,10 @@ export function detailReady(unit: string, first: number, box: { left: number; to
   return matches(existing, computeHashes(), { kind: 'sheet', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units: [unit] }) && sameFrames(existing?.frames, frames) && existing?.left === left && existing?.top === top
 }
 
-export async function detailSheet(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions): Promise<Sheet> {
+export async function detailSheet(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions, note = 'native size'): Promise<Sheet> {
   const frames = Array.from({ length: per }, (_, i) => first + i)
   const file = detailSheetFile(unit, first, o)
-  const caption = `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}, native size crops`
+  const caption = `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}, ${note} crops`
   const hashes = computeHashes()
   const { left, top, w, h } = detailBox(box, o)
   const existing = readRecord(file)
@@ -161,7 +161,7 @@ export async function detailSheet(unit: string, first: number, box: { left: numb
     const x = GAP + (i % COLS) * (w + GAP)
     const y = GAP + Math.floor(i / COLS) * (h + STRIP + GAP)
     parts.push({ input: await cropped(stills[i], left, top, w, h), left: x, top: y })
-    parts.push({ input: strip(w, STRIP, `${frameLabel(frames[i], 2)} · native size`), left: x, top: y + h })
+    parts.push({ input: strip(w, STRIP, `${frameLabel(frames[i], 2)} · ${note}`), left: x, top: y + h })
   }
   ensureDir(file)
   await canvas(COLS * w + (COLS + 1) * GAP, ROWS * (h + STRIP) + (ROWS + 1) * GAP, parts).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toFile(file)

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import sharp from 'sharp'
 import { config, timeOf } from '../src/config.ts'
+import { formatById } from '../src/core/tiers.ts'
 import { cuts, judgedFrames, segmentAt } from '../src/director/timeline.ts'
 import { renderChecked } from './lib/checked.ts'
 import { hookFrames, juryFrames, keysInOrder, KEYS_PER_FILE } from './lib/filmplan.ts'
@@ -11,9 +12,9 @@ import { canvas, cropped, rel, scaled, strip, type Placed } from './lib/layout.t
 import { ROOT } from './lib/paths.ts'
 import { asPng, pixelsOnly, wholeImage, wholeSize } from './lib/packimage.ts'
 import { matches, readRecord } from './lib/record.ts'
-import { regionsOf } from './lib/regions.ts'
+import { regionsOf, type Region } from './lib/regions.ts'
 import type { Pack, PackContext, PackFile } from './pack.ts'
-import { cutSheet, cutSheetPlan, filmSheetPlans, filmSheets, frameLabel, runSheet, runSheetPlan, sheetReady, type SheetOptions, type SheetPlan } from './sheet.ts'
+import { cutSheet, cutSheetPlan, detailReady, detailSheet, detailSheetFile, detailSize, filmSheetPlans, filmSheets, frameLabel, runSheetPlan, sheetReady, type SheetOptions, type SheetPlan } from './sheet.ts'
 import { stillPath } from './still.ts'
 import { stress, stressFiles, stressRange, stressReady } from './stress.ts'
 import { packsOf, type Group } from './unitpacks.ts'
@@ -49,15 +50,28 @@ export function stillHave(frame: number, tier: string, format: string, checked: 
   return matches(record, computeHashes(), { kind: 'still', format, tier, assets: ASSETS, diag: 'beauty', units: [segmentAt(frame).id] }) && (!checked || record?.check !== undefined)
 }
 
-const runPlan = (run: GrowthRun, o: SheetOptions): SheetPlan => runSheetPlan(segmentAt(run.first).id, run.first, o)
 const GROWS = { height: 'gains height', opening: 'opens' }
+
+interface CloseRun { run: GrowthRun; unit: string; plan: SheetPlan; file: string; box: Region; at: { left: number; top: number }; share: number }
+
+function closeRuns(o: SheetOptions): CloseRun[] {
+  const share = formatById(o.format).width / master.width
+  const out: CloseRun[] = []
+  for (const run of growthRuns()) {
+    const unit = segmentAt(run.first).id
+    const found = regionsOf(run.first + Math.floor(per / 2), detailSize.width / share, detailSize.height / share)
+    const box = found.regions.find((r) => r.id === 'head') ?? found.regions.find((r) => r.id === 'stem') ?? found.regions[0]
+    if (!box) continue
+    out.push({ run, unit, plan: runSheetPlan(unit, run.first, o), file: detailSheetFile(unit, run.first, o), box, at: { left: box.left * share, top: box.top * share }, share })
+  }
+  return out
+}
 
 function sheetPlans(context: PackContext): { plan: SheetPlan; make: string }[] {
   const SHEETS = sheetsOf(context)
   const film = wanted(context, 'R5') || wanted(context, 'R4') ? filmSheetPlans(SHEETS).map((plan) => ({ plan, make: sheetCommand('--film', SHEETS) })) : []
   const across = wanted(context, 'R4') ? cuts.map((c) => ({ plan: cutSheetPlan(c.index, SHEETS), make: sheetCommand(`--cut ${c.index}`, SHEETS) })) : []
-  const runs = wanted(context, 'R4') ? growthRuns().map((run) => runPlan(run, SHEETS)) : []
-  return [...across, ...film, ...runs.map((plan) => ({ plan, make: stillCommand(plan.frames, SHEETS.tier, SHEETS.format, false) }))]
+  return [...across, ...film]
 }
 
 export function stillNeed(frame: number, tier: string): Need {
@@ -86,6 +100,7 @@ export function filmNeeds(context: PackContext): Need[] {
   for (const frame of stillFrames(context)) out.push(stillNeed(frame, tier))
   const SHEETS = sheetsOf(context)
   for (const { plan, make } of sheetPlans(context)) out.push(sheetNeed(plan, SHEETS, make))
+  if (wanted(context, 'R4')) for (const c of closeRuns(SHEETS)) out.push(sheetNeed(c.plan, SHEETS, stillCommand(c.plan.frames, SHEETS.tier, SHEETS.format, false), c.file, detailReady(c.unit, c.run.first, c.at, SHEETS)))
   if (wanted(context, 'R7')) {
     for (const unit of config.quality.stress.units) {
       const files = stressFiles(unit)
@@ -229,13 +244,14 @@ async function motionPacks(SHEETS: SheetOptions): Promise<Pack[]> {
       },
     })
   }
-  for (const run of growthRuns()) {
-    const s = await runSheet(segmentAt(run.first).id, run.first, SHEETS)
+  for (const c of closeRuns(SHEETS)) {
+    const size = c.share === 1 ? 'the size the frame is delivered at' : `${c.share} of the size the frame is delivered at`
+    const s = await detailSheet(c.unit, c.run.first, c.at, SHEETS, c.share === 1 ? 'native size' : `${c.share} of native size`)
     close.push({
       first: s.frames[0],
       group: {
-        files: [{ image: await asPng(s.file), meaning: { what: `consecutive frames from a stretch where the plant ${GROWS[run.measure]} fastest`, frames: s.frames, measure: run.measure, change: run.change, tier: SHEETS.tier, source: source(s.file) } }],
-        lines: (names) => [`${names[0]}: ${per} consecutive frames starting at ${seconds(s.frames[0])}, from a stretch where the plant ${GROWS[run.measure]} fastest. Each tile is a whole frame made smaller.`],
+        files: [{ image: await asPng(s.file), meaning: { what: `consecutive frames from a stretch where the plant ${GROWS[c.run.measure]} fastest, crops round ${c.box.label}`, frames: s.frames, measure: c.run.measure, change: c.run.change, box: c.box, share: c.share, tier: SHEETS.tier, source: source(s.file) } }],
+        lines: (names) => [`${names[0]}: ${per} consecutive frames starting at ${seconds(s.frames[0])}, from a stretch where the plant ${GROWS[c.run.measure]} fastest. Each tile is the part of the frame round ${c.box.label}, the same place in every frame, at ${size}.`],
       },
     })
   }
