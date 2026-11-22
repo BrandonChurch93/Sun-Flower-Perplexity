@@ -24,6 +24,10 @@ function say(text: string): void {
 try {
   const film = new Film(canvas, options.format, options.assets)
   film.diag = options.diag
+  film.view.azimuthDeg = options.az
+  film.view.elevationDeg = options.el
+  film.view.dolly = options.dolly
+  film.view.world = options.world
   const ready = film.load()
   installShowcase(film, ready)
   ready.then(
