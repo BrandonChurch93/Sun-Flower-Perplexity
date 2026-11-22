@@ -1,3 +1,4 @@
+import { segmentStart } from '../../config.ts'
 import { dewGlsl } from './dew/index.ts'
 import { frostGlsl } from './frost/index.ts'
 import { wetGlsl } from './wet/film.ts'
@@ -20,6 +21,8 @@ export const tissueGuide = {
 } as const
 
 // A part fills a Tissue for the pixel and gives it to shadeTissue. Needs the chunks of `makePartSurface` before it.
+// The field's start in film seconds, as shader text: the evening light begins there.
+const FIELD_FROM_S = segmentStart('field').toFixed(1)
 export const tissueGlsl = /* glsl */ `
 struct Tissue {
   // The color of the skin.
@@ -98,9 +101,9 @@ const float TISSUE_CLEAR = 0.6;
 // The share by which a blade passes more of the sun once the evening has come.
 const float TISSUE_LATE = 4.0;
 
-// The evening, from 52 s: the high sky goes out behind the haze and the low sun is all the light a leaf has. Exactly 0 before.
+// The evening, from the field's start: the high sky goes out behind the haze and the low sun is all the light a leaf has. Exactly 0 before.
 float tissueEvening() {
-  return smoothstep(52.0, 55.0, uTime);
+  return smoothstep(${FIELD_FROM_S}, 55.0, uTime);
 }
 
 // A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun.

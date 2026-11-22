@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { keyTime } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { SKYLINE, skylineCanopy, skylineLayerSalt, skylineRing, type SkylineRing } from '../../weather/skyline.ts'
 
@@ -69,7 +70,7 @@ const TONES: { base: [number, number, number]; rim: number }[] = [
 
 // The first light's air is thick and clears as the sun climbs: how many times thicker at the start, and the seconds over which it clears.
 const EARLY_AIR = 8
-const EARLY_AIR_FROM_S = 1.5
+const EARLY_AIR_FROM_S = keyTime('dawn-sprout')
 const EARLY_AIR_TO_S = 6
 
 export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(time: number): void }

@@ -11,6 +11,9 @@ export const BEAD_ORDER = 19
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
 const beadUniforms = { uBeadLee: { value: 0 } }
 
+// Half the master frame's height in pixels, as shader text: a bead is judged by how wide it stands in the finished frame.
+const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
+
 const vertex = /* glsl */ `
 in vec2 aCorner;
 in vec4 aSeatA;
@@ -63,7 +66,7 @@ void main() {
   vHang = hang;
   vDepth = -view.z;
   // A bead narrower than three pixels of the finished frame is no bead to the eye: the damp sheen of the skin stands for it.
-  vWide = 2.0 * r * projectionMatrix[1][1] * 540.0 / max(-view.z, 1e-4);
+  vWide = 2.0 * r * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(-view.z, 1e-4);
   gl_Position = vWide >= 3.0 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
 }
 `

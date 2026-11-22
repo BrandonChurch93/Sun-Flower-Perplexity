@@ -203,3 +203,22 @@ export function frameOf(seconds: number): number {
 export function timeOf(frame: number): number {
   return frame / config.film.fps
 }
+
+// The film seconds at which a segment starts and ends and at which a key stands, by id. Code that means one of these times asks here and holds no copy of the number.
+export function segmentStart(id: string): number {
+  const segment = config.segments.find((s) => s.id === id)
+  return segment ? segment.start : fail(`no segment "${id}"`)
+}
+
+export function segmentEnd(id: string): number {
+  const segment = config.segments.find((s) => s.id === id)
+  return segment ? segment.end : fail(`no segment "${id}"`)
+}
+
+export function keyTime(id: string): number {
+  const key = config.keys.find((k) => k.id === id)
+  return key ? key.time : fail(`no key "${id}"`)
+}
+
+// The master picture's width over its height.
+export const masterAspect = config.formats.master.width / config.formats.master.height

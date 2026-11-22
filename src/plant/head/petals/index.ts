@@ -1,5 +1,6 @@
 // The ray florets: 34 strips round the rim of the head, folded shut in the bud and unfurled by `rayOpen`.
 import * as THREE from 'three'
+import { segmentStart } from '../../../config.ts'
 import type { Assets } from '../../../core/assets.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { headOpen, rayAngle, rayCount, rayLength, rayOpen } from '../../growth.ts'
@@ -53,7 +54,7 @@ const TIP_TUCK = 0.35
 const GAP_COMB = 0.5
 const GAP_REACH = 0.16
 // After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
-const LATE_FROM_S = 52
+const LATE_FROM_S = segmentStart('field')
 // A neighbor's clock runs up to 1.5 s ahead of the plant's. From this second of its own clock a ray also draws out long and narrow.
 const DRAWN_FROM_S = 53.55
 // The late whorl: rays of the hero head that come out between the others after the bloom, each from its own foot, shorter than the first.

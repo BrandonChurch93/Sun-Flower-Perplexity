@@ -71,7 +71,7 @@ export function startAutopilot(film: Film, options: Options, _host: HTMLElement)
   run().catch((error: unknown) => {
     state.playing = false
     state.error = error instanceof Error ? error.message : String(error)
-    document.title = 'Sunflower, stopped'
+    document.title = `${config.name}, stopped`
     console.error(`The film stopped drawing: ${state.error}`)
   })
 }

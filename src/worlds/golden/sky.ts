@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../../config.ts'
 import type { Assets } from '../../core/assets.ts'
 import { FullscreenPass } from '../../core/fullscreen.ts'
 import { glslCommon, shared } from '../../core/shading.ts'
@@ -120,8 +121,8 @@ const HAZE_TO_S = 51
 const THICK_FROM_S = 51.5
 const THICK_TO_S = 57.5
 
-// From 52 s the camera climbs out of the bloom: the heavy cloud gives way to the clear evening sky and the far land comes into its own.
-const LATE_FROM_S = 52
+// From the field's start the camera climbs out of the bloom: the heavy cloud gives way to the clear evening sky and the far land comes into its own.
+const LATE_FROM_S = segmentStart('field')
 const LATE_TO_S = 54.2
 
 export function lateEvening(time: number): number {
@@ -129,8 +130,8 @@ export function lateEvening(time: number): number {
   return t * t * (3 - 2 * t)
 }
 
-// Out in the open evening the sun is a small hot point on the ridge: its close glow and the disc's spill ease down from 52 s.
-const SMALL_FROM_S = 52
+// Out in the open evening the sun is a small hot point on the ridge: its close glow and the disc's spill ease down from the field's start.
+const SMALL_FROM_S = segmentStart('field')
 const SMALL_TO_S = 55
 
 export function smallSun(time: number): number {

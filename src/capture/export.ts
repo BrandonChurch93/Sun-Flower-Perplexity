@@ -158,6 +158,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   let lostTold = false
 
   host.classList.add(css.page)
+  host.style.setProperty('--still-aspect', `${config.formats.master.width} / ${config.formats.master.height}`)
   const shell = make('div', css.shell)
   const header = make('header', css.header)
   header.append(make('p', css.eyebrow, `${config.name} · Export`), make('h1', css.title, 'Make the film file on this machine'), make('p', css.lead, 'Every frame is drawn here, encoded here and saved as one file. Nothing is uploaded.'))

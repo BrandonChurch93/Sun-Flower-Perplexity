@@ -1,7 +1,7 @@
 // The leaves: 24 blades on their stalks, each with its own outline, veins, curl and marks, grown by the timing in growth.ts.
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
-import { config } from '../../config.ts'
+import { config, keyTime, segmentStart } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, stemRadius, usePlant } from '../growth.ts'
@@ -28,7 +28,13 @@ const DAWN_GLOW = 0.35
 const RAIN_GLOW = 0.5
 const NIGHT_GLOW = 0.65
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
-const BLOOM = 40
+const BLOOM = segmentStart('bloom')
+// The film's other times the leaves are timed to, read from the config: where the rain, the night and the frost start, and where the seedling's and the frost's keys stand.
+const RAIN_S = segmentStart('rain')
+const NIGHT_S = segmentStart('night')
+const FROST_S = segmentStart('frost')
+const SEEDLING_KEY_S = keyTime('dawn-seedling')
+const FROST_KEY_S = keyTime('frost')
 // The share of the plain margin hairs that carry a spike of ice: most spikes sit on the teeth.
 const SPIKES = 0.1
 const CROWN_ANGLE = 0.72
@@ -190,7 +196,7 @@ export function create(options: PartOptions): PlantPart {
     // Beside the bud it is no wider than the bud: it lengthens as the stem carries it down.
     const under = (1 - leafStemFraction(i, time)) * heightAt(time)
     // From the night to the frost a leaf below the bud fills out ahead of its time, so the plant is leafy up to it.
-    const ahead = Math.min((main ? lerp(2.8, 4.5, smoothstep(0.03, 0.09, under)) : 0) * smoothstep(20, 24, time) * (1 - smoothstep(35.5, BLOOM, time)), 0.75 * Math.max(0, leafAge(i, time)))
+    const ahead = Math.min((main ? lerp(2.8, 4.5, smoothstep(0.03, 0.09, under)) : 0) * smoothstep(NIGHT_S, 24, time) * (1 - smoothstep(35.5, BLOOM, time)), 0.75 * Math.max(0, leafAge(i, time)))
     const length = leafLength(i, time + ahead)
     if (length <= 0) return length
     return length * lerp(1, lerp(0.8, 1, smoothstep(1.5, 6, leafAge(i, time))) * lerp(main ? lerp(0.9, 0.75, smoothstep(17, 22, time)) : 0.45, 1, smoothstep(0.01, lerp(0.045, 0.075, smoothstep(16, 24, time)), under)) * (main ? lerp(1, 0.8, smoothstep(10, 16, i)) : 1), 1 - smoothstep(35.5, BLOOM, time))
@@ -591,10 +597,10 @@ export function create(options: PartOptions): PlantPart {
     // Before the bloom the upper leaves of a plant of the field are already near their bloom length and hang off the flat, so a lens at their height sees blades and not edges.
     const upper = hero || time >= BLOOM ? 0 : smoothstep(0.55, 0.8, i / (leafCount - 1)) * smoothstep(0.5, 4, age)
     // The first pair stands a little taller between the seed leaves than its length alone gives.
-    const first = i < 2 && time < 9 ? 1 + 0.1 * (1 - smoothstep(6.5, 9, time)) : 1
+    const first = i < 2 && time < 9 ? 1 + 0.1 * (1 - smoothstep(SEEDLING_KEY_S, 9, time)) : 1
     const total = (size + 0.8 * upper * Math.max(0, bloomLength[i] - size)) * first * REACH * leaf.reach
     // Before the bloom a young leaf is held up and out: its stalk stands and its blade does not yet hang.
-    const early = 1 - smoothstep(35.5, 40, time)
+    const early = 1 - smoothstep(35.5, BLOOM, time)
     // A new blade sits on the stem: its stalk grows out under it in its first seconds.
     const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(7, 11, i) : 1) * (main && i >= 2 ? 1 - 0.2 * (1 - smoothstep(18, 23, time)) : 1)
     const blade = total * (1 - stalk)
@@ -602,14 +608,14 @@ export function create(options: PartOptions): PlantPart {
     const firm = main ? early : 0.5 * early
     const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm)
     // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
-    const cold = smoothstep(22, 30, time) * early
+    const cold = smoothstep(22, FROST_S, time) * early
     // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
     if (i < 2 && time < 12) {
       const az = leafAzimuth(i, time)
       // In the dawn the plant's pair stands a little askew to the lens, so both blades and the gap opening between them are seen.
-      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time)) + (main ? ASKEW * (1 - smoothstep(8, 11, time)) : 0)
+      const swing = (Math.PI * Math.round(az / Math.PI) - az) * (1 - smoothstep(8.5, 12, time)) + (main ? ASKEW * (1 - smoothstep(RAIN_S, 11, time)) : 0)
       const steep = leafElevation(i, time, pose.inputs)
-      const stand = steep + (1.52 - steep) * (1 - lerp(PART * smoothstep(5.8, 8, time), 1, smoothstep(8, 9.5, time)))
+      const stand = steep + (1.52 - steep) * (1 - lerp(PART * smoothstep(5.8, RAIN_S, time), 1, smoothstep(RAIN_S, 9.5, time)))
       const c = Math.cos(steep)
       const k = Math.sin(steep)
       const ox = frame.mx * c - frame.nx * k
@@ -666,7 +672,7 @@ export function create(options: PartOptions): PlantPart {
       lifted = Math.max(crown, (1 - near) * (1 - smoothstep(18, 23, time)))
       ceiling = lerp(1.6, lerp(lerp(0.6, 0.3, near), 0.75, lifted), early * smoothstep(1.5, 5, age))
     }
-    const guard = 1 - smoothstep(37, 40, time)
+    const guard = 1 - smoothstep(37, BLOOM, time)
     const bud = bodyRadius(time)
     if (ceiling < 1.6 || lifted > 0 || (guard > 0 && bud > 0)) {
       const u = leafStemFraction(i, time)
@@ -699,8 +705,8 @@ export function create(options: PartOptions): PlantPart {
     const creased = smoothstep(3, 16, age) * (main && early > 0 ? lerp(1, 0.3, early) : 1)
     const set = lerp(grown, smoothstep(0.5, 4, age), early)
     // A blade opens as a smooth narrow oval and widens into a toothed heart. From the bloom on every blade is grown.
-    const tint = Math.max(smoothstep(5, 12, age) * (main ? lerp(1, 0.45, smoothstep(7, 11, i)) : 1), smoothstep(33, 40, time))
-    const ripe = main ? Math.max(smoothstep(5, 12, age) * YOUNG_RIPE, smoothstep(36.5, 40, time)) : tint
+    const tint = Math.max(smoothstep(5, 12, age) * (main ? lerp(1, 0.45, smoothstep(7, 11, i)) : 1), smoothstep(33, BLOOM, time))
+    const ripe = main ? Math.max(smoothstep(5, 12, age) * YOUNG_RIPE, smoothstep(36.5, BLOOM, time)) : tint
     // Its margins roll under only once the plant is in bloom: until then a blade is nearly a flat plate.
     const rolled = ripe * (1 - 0.65 * early)
     // A blade that points away shows its underside instead, so it turns the other way.
@@ -741,7 +747,7 @@ export function create(options: PartOptions): PlantPart {
       frame.wz = frame.wz * c - frame.mz * k
       frame.mx = mx; frame.my = my; frame.mz = mz
     }
-    const tilt = upper * (1 - smoothstep(36, BLOOM, time)) * (0.45 + 0.25 * leaf.seed)
+    const tilt = upper * (1 - smoothstep(FROST_KEY_S, BLOOM, time)) * (0.45 + 0.25 * leaf.seed)
     // A leaf held up round the bud bends its tip down.
     const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
@@ -783,7 +789,7 @@ export function create(options: PartOptions): PlantPart {
     const cf = Math.cos(crease)
     const sf = Math.sin(crease)
     // The first pair opens narrow, and the leaves under the bud stay narrow and pointed till the bloom.
-    const broad = leafBroadening(i, time) * (i < 2 ? lerp(main ? 0.55 : 0.7, 1, smoothstep(main ? 6 : 6.5, 10, time)) : 1 - 0.3 * crown)
+    const broad = leafBroadening(i, time) * (i < 2 ? lerp(main ? 0.55 : 0.7, 1, smoothstep(main ? 6 : SEEDLING_KEY_S, 10, time)) : 1 - 0.3 * crown)
     // Before the bloom a blade is cupped along its midrib, not folded on a knife edge.
     const soft = (main ? 0.16 : 0.05) * early
     const { nu, nv } = leaf
@@ -842,7 +848,7 @@ export function create(options: PartOptions): PlantPart {
       // Before the bloom the plant's blades are whole: the holes and bites come with the summer.
       state[i * 4 + 3] = main && early > 0 ? lerp(smoothstep(5, 24, age), -2, early) : smoothstep(5, 24, age)
       ripeness[i] = tint
-      cut[i * 4 + 1] = lerp(YOUNG_TEETH, leaf.depth, ripe) * (i < 2 ? smoothstep(8, 11, time) : 1)
+      cut[i * 4 + 1] = lerp(YOUNG_TEETH, leaf.depth, ripe) * (i < 2 ? smoothstep(RAIN_S, 11, time) : 1)
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
@@ -927,7 +933,7 @@ export function create(options: PartOptions): PlantPart {
     if (slot === 0) hairsShown = count
     const frosted = stateUniforms.uPlantFrost.value > 0
     // The ice grows after the cut to the frost: at the cut the edge is the one the night left.
-    const rime = smoothstep(30, 33, pose.time)
+    const rime = smoothstep(FROST_S, 33, pose.time)
     for (let h = 0; h < count; h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
@@ -1098,7 +1104,7 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? DAWN_GLOW : pose.time < nightStart ? RAIN_GLOW : pose.time < nightEnd ? NIGHT_GLOW : lerp(0.2, 1, smoothstep(36, 40, pose.time)))
+      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * (pose.time < dawnEnd ? DAWN_GLOW : pose.time < nightStart ? RAIN_GLOW : pose.time < nightEnd ? NIGHT_GLOW : lerp(0.2, 1, smoothstep(FROST_KEY_S, BLOOM, pose.time)))
       if (slot === 0) uniforms.uFresh.value = pose.time < dawnEnd ? 1 : 0
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)

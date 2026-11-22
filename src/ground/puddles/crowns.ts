@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import { basin } from './basin.ts'
+import { config } from '../../config.ts'
 import { skyMirror } from './water.ts'
+
+// Half the master frame's height in pixels, as shader text: a crown is sized by how large it stands in the finished frame.
+const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
 
 // A splash is over this long after its drop lands: the cup rises and falls first, its beads and grit fly on.
 export const SPLASH_LIFE_S = 0.5
@@ -129,7 +133,7 @@ void main() {
     float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under, over))) - base;
     if (flown > 0.0 && center.y < floorM - radius) return;
     vec3 shape = grit ? position * (0.7 + 0.6 * vec3(ha, hb, hc)) : position;
-    vTop = smoothstep(0.5, 1.4, radius * projectionMatrix[1][1] * 540.0 / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z));
+    vTop = smoothstep(0.5, 1.4, radius * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z));
     at = center + shape * radius;
     n = normalize(position);
   }

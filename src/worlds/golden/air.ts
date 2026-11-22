@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { config, segmentStart } from '../../config.ts'
 import { hash01, streamSeed } from '../../core/random.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
@@ -9,11 +10,13 @@ const PEAK = 0.35
 const LEAVE_FROM_S = 55
 const LEAVE_TO_S = 58
 // As the lens leaves the close view the cloud has no level top: it thins with height and toward its faces, between these seconds.
-const OPEN_FROM_S = 52
+const OPEN_FROM_S = segmentStart('field')
 const OPEN_TO_S = 52.6
 // As the lens cranes away the specks are fewer and coarser, each a soft dot wide enough to hold in the picture, the ones far out of focus are gone and none stands more than about 4 degrees over the horizon: eased in between these seconds.
 const COARSE_FROM_S = 53.5
 const COARSE_TO_S = 55
+// The preview frame's width in pixels, as shader text: the coarse speck's least size is given for that width.
+const PREVIEW_WIDTH_PX = config.formats.preview.width.toFixed(1)
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
@@ -54,7 +57,7 @@ void main() {
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
   float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
   float need = max(angle / uPixelAngle, 2.4 * coc / sqrt(uSamples));
-  float px = clamp(need, mix(1.0, 3.4 * uWidth / 960.0, uCoarse), 64.0);
+  float px = clamp(need, mix(1.0, 3.4 * uWidth / ${PREVIEW_WIDTH_PX}, uCoarse), 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(0.9, 1.3, world.y) * (1.0 - smoothstep(mix(2.1, 1.9, uOpen), mix(2.5, 3.3, uOpen), world.y));
   float thin = 1.0 - smoothstep(0.0, mix(0.3, 0.07, uCoarse), v.y);
@@ -96,7 +99,7 @@ export function makeAir(): Air {
     uWind: { value: 0 },
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uWidth: { value: 1920 },
+    uWidth: { value: config.formats.master.width },
     uStay: { value: 1 },
     uOpen: { value: 0 },
     uCoarse: { value: 0 },

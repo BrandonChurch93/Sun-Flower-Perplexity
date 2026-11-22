@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import type { WorldDef } from '../../core/world.ts'
 import { right, toward } from '../../field/layout.ts'
@@ -19,7 +20,7 @@ const FINE_CROWN_M = 0.00025
 const SPLASH_AHEAD_M = -0.6
 const SPLASH_HALF_M = 1.5
 // The rain's water gathers: none of it mirrors when the rain starts, and it comes to its full face between these film seconds, slowly at first, a film on the wet soil before it is a mirror.
-const GATHERS_S = [8, 13.7]
+const GATHERS_S = [segmentStart('rain'), 13.7]
 
 // The water standing on the ground: level surfaces in its low places that mirror the sky, and the rings of every drop that lands in them.
 export class Puddles {

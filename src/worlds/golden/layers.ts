@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { segmentStart } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { eveningHaze, lateEvening } from './sky.ts'
 import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_TO_M, ringStrip, skylineAt, skylineCanopy, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
@@ -192,7 +193,8 @@ const TONES: { base: Rgb; rim: number; fogShare: number; dark: Rgb; haze: number
   { base: [0.035, 0.024, 0.012], rim: 0.04, fogShare: 0.3, dark: [0.009, 0.008, 0.006], haze: 0.07 },
 ]
 
-// From 52 s a wood stands on the near ridge, the tree tops are ragged and every layer takes its share of the evening haze.
+const FIELD_FROM_S = segmentStart('field')
+// From the field's start a wood stands on the near ridge, the tree tops are ragged and every layer takes its share of the evening haze.
 const WOODS: { name: string; layer: number; heightM: number; crownM: number; floor: number; near: number; dark: Rgb; haze: number; rag: number; stand: [number, number, number] }[] = [
   { name: 'wood on the ridge', layer: 2, heightM: 26, crownM: 15, floor: 0.3, near: 0.5, dark: [0.009, 0.008, 0.006], haze: 0.07, rag: 1, stand: [1, 0.07, 0.4] },
 ]
@@ -341,8 +343,8 @@ export function makeFarLayers(sunAzimuthDeg: number, glow: [number, number, numb
     for (const wood of woods) wood.visible = late.value > 0
     wide.value = h
     lateShare.forEach((share, i) => { share.value = lateVeils[i].share * h })
-    // From the crane the banks would each end in a line on the tops of the crop: they thin away as the lens rises, from 52 s.
-    const up = Math.min(1, Math.max(0, (time - 52) / 5))
+    // From the crane the banks would each end in a line on the tops of the crop: they thin away as the lens rises, from the field's start.
+    const up = Math.min(1, Math.max(0, (time - FIELD_FROM_S) / 5))
     shadeShare.forEach((share) => { share.value = share.full * (1 - up * up * (3 - 2 * up)) })
     shadeTone.value.set(SHADE_TONE[0] + (HAZE_TONE[0] - SHADE_TONE[0]) * h, SHADE_TONE[1] + (HAZE_TONE[1] - SHADE_TONE[1]) * h, SHADE_TONE[2] + (HAZE_TONE[2] - SHADE_TONE[2]) * h)
     airUniforms.uAirCool.value.set(AIR_COOL[0] + (AIR_HAZE[0] - AIR_COOL[0]) * h, AIR_COOL[1] + (AIR_HAZE[1] - AIR_COOL[1]) * h, AIR_COOL[2] + (AIR_HAZE[2] - AIR_COOL[2]) * h)

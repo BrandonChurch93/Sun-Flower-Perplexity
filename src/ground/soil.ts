@@ -1,4 +1,4 @@
-import { config } from '../config.ts'
+import { config, segmentStart } from '../config.ts'
 import { segmentById } from '../director/timeline.ts'
 import { world as dawn } from '../worlds/dawn/index.ts'
 import { grassCover, stemFoot, turfCover } from './cover.ts'
@@ -254,6 +254,8 @@ export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
 export const waterLevelsM = [-0.03, -0.0075]
+// The night's start in film seconds, as shader text: the ring of shade round the stem's foot has its full reach by then.
+const NIGHT_FROM_S = segmentStart('night').toFixed(1)
 export const groundStates = /* glsl */ `
 uniform vec2 uWater;
 uniform float uCast;
@@ -280,7 +282,7 @@ float dawnOnly() {
 const vec3 DAWN_SKY = vec3(${dawnSky.join(', ')});
 // The stem stands in its own shade: the soil round its foot is dark, in a ring that widens as the stem thickens.
 float footShade(vec2 p, float dull) {
-  float reach = mix(0.006, 0.014, smoothstep(2.0, 20.0, uTime));
+  float reach = mix(0.006, 0.014, smoothstep(2.0, ${NIGHT_FROM_S}, uTime));
   return 1.0 - 0.7 * dull * exp(-dot(p, p) / (reach * reach));
 }
 float sheen(float wet, float dew) {
