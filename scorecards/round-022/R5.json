@@ -1,0 +1,56 @@
+{
+  "critic": "R5",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-E-03.png",
+      "where": "f1593 to f1799 (field), foreground plants",
+      "what": "When the camera pulls back, a second sunflower stalk comes in at left (f1593), and by f1645 to f1799 two similar plants stand together. The left one is as tall as or taller than the hero, and both heads shrink to small discs, so the viewer loses track of which plant is the one we followed. That weakens the ending.",
+      "fix": "Keep a single hero in the foreground, clearly the tallest and largest head, held near the frame centre through the pull-back. Keep neighbouring plants back in the field and visibly smaller."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-05.png",
+      "where": "58.5 s frame, hero plant",
+      "what": "The hero's stalk looks thinner and its head much smaller than at 50.5 s. Some of that comes from the wider framing, but it also lacks the heavy stem and big leaves it had at the bloom, so it reads as a different, younger plant.",
+      "fix": "Keep the stem thickness, the leaf mass, and the head size relative to the stem the same as at the bloom peak while the camera pulls back."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "f0617 to f0874 (night), background",
+      "what": "Rain ends on bare soil with small sprouts, but night cuts to a dense field of near-mature plants as tall as the hero. The surrounding field jumps ahead of the hero, so it no longer feels like the same place growing with it.",
+      "fix": "Make the night background a field that is only part-grown and visibly shorter than the hero. Then let the neighbours catch up in frost and bloom."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "f0617 vs f0668 vs f0771, lower leaves of the hero",
+      "what": "Within the night world the hero's lower leaves change size and arrangement from frame to frame: big leaves at lower left in f0617, one large leaf at centre-left in f0668, a different layout in f0771. The plant seems to re-form rather than grow.",
+      "fix": "Lock the leaf layout across the night segment so leaves only grow and new ones are added at the top."
+    },
+    {
+      "severity": "minor",
+      "file": "set-E-01.png",
+      "where": "f0308 to f0360 (rain), foreground soil",
+      "what": "A running rivulet and puddle appear in the foreground soil between 10.3 s and 12.0 s, where 10.3 s had none. The ground changes inside a single world.",
+      "fix": "Have the stream there from the first rain frame, or let it fill up gradually over the frames."
+    },
+    {
+      "severity": "minor",
+      "file": "set-E-01.png",
+      "where": "f0206 to f0257 (dawn to rain), horizon",
+      "what": "The horizon changes from a misty hill line to a lower, flatter ridge with a different profile, which hints at a different place rather than different weather.",
+      "fix": "Keep the same distant hill silhouette in every world."
+    },
+    {
+      "severity": "minor",
+      "file": "set-E-03.png",
+      "where": "f1542 to f1593 (bloom to field cut)",
+      "what": "Bloom and field share the same warm backlit sunset palette, so the cut into the field reads as part of the same camera move rather than a new world. It still works as the release, but it is the weakest cut.",
+      "fix": "Make the field visibly its own light, such as a clearer, higher sun or a golden-hour wash without the storm clouds, so the release reads as a change."
+    }
+  ]
+}
