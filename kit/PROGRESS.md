@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:56 UTC · Phase 5: render budget measured again, the husk's pop found and sent out, golden hour pass read
-- Last status: 64 · 2026-11-22 02:37 UTC · Phase 5
+- Last push: 2026-11-22 02:56 UTC · Status 65: round 22 judged in full, budget measured, husk pop out for a fix, golden hour pass read
+- Last status: 65 · 2026-11-22 02:56 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 02:56 UTC · status 65 · Phase 5 · `status-1.jpg`: Dawn, frames 102 to 113: the husk drops from the tip to the soil in two frames, a pop; out for a fix; `status-2.jpg`: Field 53.4 s, before left, after right: the specks no longer end at a level line; `status-3.jpg`: Field 58.5 s, before left, after right: softer haze under the sun; the lower, dimmer sun is not better and comes out; `status-4.jpg`: Rain 14 s and night 26 s: two of the three frames the jury read as a real-time demo
 - 2026-11-22 02:37 UTC · status 64 · Phase 5 · `status-1.jpg`: The first two seconds at phone size, as the scroll stop judge saw them (score 6); `status-2.jpg`: Night after the fix: the same hills and mist on all twelve frames; `status-3.jpg`: Field, frame 1755: approved image left, ours right. Two plants stand clear where one should; `status-4.jpg`: Far edge at the last frame: the bright seam before (top), a trial ridge after (bottom), not merged yet
 - 2026-11-22 02:13 UTC · status 63 · Phase 5 · `status-1.jpg`: The whole film, 0 to 19 s: dawn and rain (review tier); `status-2.jpg`: 20 to 40 s: night and frost; `status-3.jpg`: 40 to 60 s: bloom and field; `status-4.jpg`: The first two seconds at the final tier, the frames the scroll stop judge sees
 - 2026-11-22 01:50 UTC · status 62 · Phase 4 · `status-1.jpg`: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below; `status-2.jpg`: Rain at 14 s and night at 26 s: approved left, the film right; `status-3.jpg`: Frost at 36 s and the opening bud at 45 s: approved left, the film right; `status-4.jpg`: Bloom at 50.5 s and the field at 58.5 s: approved left, the film right
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 00:31 UTC · status 56 · Phase 4 · unit rain · round 20 · `status-1.jpg`: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; `status-2.jpg`: Dawn 0.27 s, from a clip part at review tier: the hook breaks the soil; `status-3.jpg`: Dawn 3.6 s, from a clip part: the hull opens; `status-4.jpg`: Frost 39.97 s, from a clip part: the last frame before the bloom
 - 2026-11-22 00:21 UTC · status 55 · Phase 4 · unit dawn · round 19 · `status-1.jpg`: Dawn 1.5 s, final tier. Approved left, the judged frame of round 19 right; `status-2.jpg`: Dawn 6.5 s, final tier. Approved left, the judged frame of round 19 right
 - 2026-11-22 00:04 UTC · status 54 · Phase 4 · unit night · round 21 · `status-1.jpg`: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; `status-2.jpg`: Night 26.0 s, final tier. Approved left, the judged frame of round 21 right
-- 2026-11-21 23:46 UTC · status 53 · Phase 4 · unit frost · round 18 · `status-1.jpg`: Frost 36.0 s, final tier. Approved left, the judged frame of round 18 right; `status-2.jpg`: Field 58.5 s, final tier. Approved left, the judged frame of round 17 right
 
 ## Clock
 
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 1.03 h |
+| 5 | 3.00 h | 1.12 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 25.99 h |
+| Whole build | 30.00 h | 26.08 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1540,6 +1540,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:38 UTC · Fix pass of round 22: jobs at 02:38, the cuts judge's check
 - 2026-11-22 02:46 UTC · Round 22: the jury is in (29 of 50 overall; fails on frames 420, 780, 1755)
 - 2026-11-22 02:56 UTC · Phase 5: render budget measured again, the husk's pop found and sent out, golden hour pass read
+- 2026-11-22 02:56 UTC · Status 65: round 22 judged in full, budget measured, husk pop out for a fix, golden hour pass read
 
 ## Session log
 
@@ -1678,4 +1679,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: The whole film, 0 to 19 s: dawn and rain (review tier); 20 to 40 s: night and frost; 40 to 60 s: bloom and field; The first two seconds at the final tier, the frames the scroll stop judge sees.
 - Status 64, 2026-11-22 02:37 UTC, Phase 5. Round 22, the first judging of the whole film, is answered: one film 7, cuts 8, scroll stop 6, encode 6, and the jury passes seven of ten judged frames (rain, night and field fail). Machine checks and all measures are green. The night's far hills now stand in one tone from its first frame to its last (merged). The fix pass is open with seven builders. Next: Read the builders' fixes by their pictures at 03:20 UTC, merge what is better, then the preview film and the Phase 5 gate. Time used: 25.8 h of 30 h.
   Pictures: The first two seconds at phone size, as the scroll stop judge saw them (score 6); Night after the fix: the same hills and mist on all twelve frames; Field, frame 1755: approved image left, ours right. Two plants stand clear where one should; Far edge at the last frame: the bright seam before (top), a trial ridge after (bottom), not merged yet.
+- Status 65, 2026-11-22 02:56 UTC, Phase 5. Round 22 is judged in full: scores 7 (whole film), 6 (scroll stop), 6 (compression), 8 (cuts); the jury passes the film overall (29 of 50 against the controls' 24 of 40) but fails frames 420, 780 and 1755, mostly for plants and grass that read as copies. The render budget was measured again. A check of consecutive frames found a pop where the husk lets go at 3.6 s; it is out for a fix. The golden hour pass was read: specks and haze are better, the lower sun was not and comes out. Next: Read the builders' fix reports from 03:20 UTC, merge only what is better, then the final stills, the preview film and the Phase 5 gate. Time used: 26.1 h of 30 h.
+  Pictures: Dawn, frames 102 to 113: the husk drops from the tip to the soil in two frames, a pop; out for a fix; Field 53.4 s, before left, after right: the specks no longer end at a level line; Field 58.5 s, before left, after right: softer haze under the sun; the lower, dimmer sun is not better and comes out; Rain 14 s and night 26 s: two of the three frames the jury read as a real-time demo.
 
