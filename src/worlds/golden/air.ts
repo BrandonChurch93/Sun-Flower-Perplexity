@@ -11,7 +11,7 @@ const LEAVE_TO_S = 58
 // As the lens leaves the close view the cloud has no level top: it thins with height and toward its faces, between these seconds.
 const OPEN_FROM_S = 52
 const OPEN_TO_S = 52.6
-// As the lens cranes away the specks are fewer and coarser, each a soft dot wide enough to hold in the picture, and the ones far out of focus are gone: eased in between these seconds.
+// As the lens cranes away the specks are fewer and coarser, each a soft dot wide enough to hold in the picture, the ones far out of focus are gone and none stands more than about 4 degrees over the horizon: eased in between these seconds.
 const COARSE_FROM_S = 53.5
 const COARSE_TO_S = 55
 
@@ -57,9 +57,9 @@ void main() {
   float px = clamp(need, mix(1.0, 3.4 * uWidth / 960.0, uCoarse), 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(0.9, 1.3, world.y) * (1.0 - smoothstep(mix(2.1, 1.9, uOpen), mix(2.5, 3.3, uOpen), world.y));
-  float thin = 1.0 - smoothstep(0.0, 0.3, v.y);
+  float thin = 1.0 - smoothstep(0.0, mix(0.3, 0.07, uCoarse), v.y);
   float behind = smoothstep(0.88, 0.97, toSun) * mix(1.0 - smoothstep(0.06, 0.1, v.y), smoothstep(0.0, 0.12, thin - 0.9 * aSeed.w), uOpen);
-  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(mix(0.003, 0.0012, uCoarse), mix(0.006, 0.003, uCoarse), coc / uWidth)) * smoothstep(0.0, 0.08, mix(1.08, 0.2, uCoarse) - aSeed.y) * uStay;
+  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(mix(0.003, 0.0012, uCoarse), mix(0.006, 0.003, uCoarse), coc / uWidth)) * smoothstep(0.0, 0.03, mix(1.08, 0.07, uCoarse) - aSeed.y) * uStay;
   vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(2)} * max(1.0, 3.1416 * coc * coc / (px * px)));
   vSize = px;
   vAt = world;
