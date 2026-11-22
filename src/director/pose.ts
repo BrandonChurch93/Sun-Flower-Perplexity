@@ -4,7 +4,7 @@ import { clamp } from '../core/curves.ts'
 import { cocScalePx, type CameraPose } from '../core/lens.ts'
 import type { RigPath } from './rig.ts'
 
-export interface Rig extends RigPath { fNumber: number }
+export interface Rig extends RigPath { fNumber: number; heldShare?: number }
 export interface Orbit { azimuthDeg: number; elevationDeg: number; dolly: number }
 
 const UP = new THREE.Vector3(0, 1, 0)
@@ -54,7 +54,7 @@ export function poseOf(r: Rig, focusPoint: THREE.Vector3, carrier: THREE.Vector3
   const pose = { position, forward, right, up, focalMm: r.focalMm, focusM: heldM, fNumber: r.fNumber }
   if (!carrier) return pose
   const behind = 1 / heldM - 1 / Math.max(heldM, carrier.clone().sub(position).dot(forward))
-  const most = (HELD_SHARE * config.detail.focusCocPx) / cocScalePx(pose, config.camera.gateWidthMm, config.formats.master.width)
+  const most = ((r.heldShare ?? HELD_SHARE) * config.detail.focusCocPx) / cocScalePx(pose, config.camera.gateWidthMm, config.formats.master.width)
   pose.focusM = 1 / (1 / heldM - Math.min(0.5 * behind, most))
   return pose
 }

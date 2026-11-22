@@ -62,6 +62,13 @@ export function worldOf(id: string): WorldDef {
   return def
 }
 
+export function heldSharePoints(): [number, number][] {
+  const points: [number, number][] = []
+  for (const s of config.segments) for (const p of fits[s.id].heldShare ?? []) points.push([p[0], p[1]])
+  points.sort((a, b) => a[0] - b[0])
+  return points
+}
+
 export function fNumberPoints(): [number, number][] {
   const points: [number, number][] = []
   for (const s of config.segments) {
