@@ -6,15 +6,15 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 - Build: in progress
 - Current phase: 4 · The other units
-- Current unit: dawn, rain, night, frost and field, all five in their third and last rounds (17 to 21) on `47d93fd`; `bloom` is finished
-- Current round: 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`), started together 23:23 UTC on `47d93fd`, the third and last round of each unit. Rounds 12 to 16 are answered, none a pass
+- Current unit: dawn, rain, night, frost and field: the loop of each ended at the round limit on `47d93fd` (rounds 17 to 21, none a pass); their clips are rendering in 48 parts and their comparison images come from the same commit, then each is marked `finished`. `bloom` is finished
+- Current round: none running. Rounds 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`) are closed, each the third and last of its unit
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 00:32 UTC · Running jobs and running agents brought up to 00:32 UTC
+- Last push: 2026-11-22 00:33 UTC · Kit read again after a compaction; Status lines brought up to date
 - Last status: 56 · 2026-11-22 00:31 UTC · Phase 4 · unit rain · round 20
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 8.19 h |
+| 4 | 8.50 h | 8.21 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 23.66 h |
+| Whole build | 30.00 h | 23.68 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -707,6 +707,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 4 · 00:13 UTC. After a compaction at about 00:08 the Builder read again from disk, as `AGENTS.md` orders: `AGENTS.md`, `kit/addenda/README.md` (no addenda), `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md`, `kit/08-BUILD-ORDER.md` from Phase 4 to its end, and "Status", "Units" and "Look lock" here. Nothing in them changes the plan: close rounds 17, 19 and 20 as their last answers arrive, then clips, comparison images and `finished` for the five units, the Phase 4 gate, Phase 5.
 - 2026-11-22 · Phase 4 · 00:18 UTC. The clip parts stood still. Woken at 00:13 UTC for their finished parts, seven builders reported the same thing from the write times of their frame files: the detached script ran on for about a quarter of an hour after the builder's turn ended (23:37 to 23:41) and then the whole machine stood still until the wake (18 to 23 minutes lost each; load averages near 0.3 over five minutes, the processes alive with the same pids). The idle test of 23:38 had only covered eight minutes, inside that quarter of an hour, so it read "runs on". Measured pace while a machine runs: dawn 52 to 60 s a frame, frost 38 to 43 s. Decided: every builder with parts stays in a turn and polls its log every three to four minutes until its last part is sent (ten asked at 00:15, `lens_builder` at 00:17 when a juror's slot came free, `golden_builder` as soon as the last critic's slot is free, so that never more than 12 agents run). To bring the end forward, the fifth part of four builders with five parts goes to four with shorter lists, who start it when their own are done: frost 900 to 929 from `ground_builder` to `stem_builder`, 930 to 959 from `petal_builder` to `harness_builder`, 960 to 989 from `bud_builder` to `disc_builder`, 990 to 1019 from `hair_builder` to `lens_builder`. Each part is checked on arrival by `out/work/scratch/take-parts.cjs` (engine and unit hash, tier, 30 frames at 1920 x 1080, no stand-in, the M1 list) before it is copied to `out/work/film/`. 8 of 48 parts are in at 00:17 (dawn 6 of 8, frost 2 of 10), no frame failed M1. Expected end of the last part: about 01:35 UTC, where the plan of 23:26 said 01:20.
 - 2026-11-22 · Phase 4 · 00:24 UTC. After a compaction at about 00:19 UTC the kit was read again from disk as `AGENTS.md` orders: "Status", "Units" and "Look lock" of this file, `kit/addenda/README.md` (there is still no addendum), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md` and `kit/08-BUILD-ORDER.md` from Phase 4 to the end. Nothing in hand changes. Clip parts: `golden_builder` was woken at 00:23 UTC into a long turn as the twelfth running agent, once round 20's motion critic had answered and ended (frost 1170 to 1199 was on frame 21 of 30 at 00:23:39, 43.7 s a frame). The last three fifth parts moved so that all lists end at about the same time: night 840 to 869 from `field_builder` and frost 1020 to 1049 from `skin_builder` to `golden_builder`, night 870 to 899 from `leaf_builder` to `lens_builder`; the donors stop their scripts after their fourth part. Every part is still rendered once, at `review`, from `47d93fd`, and `take-parts.cjs` checks each file's record (engine, unit hash, frames, M1) whoever sends it. 11 of 48 parts are in.
+- 2026-11-22 · Phase 4 · 00:34 UTC. After a compaction of the Builder's context at about 00:31 UTC the kit was read again from disk, as `AGENTS.md` asks: "Status", "Units" and "Look lock" here, `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md`, and `kit/08-BUILD-ORDER.md` from Phase 4 to the end. What it confirms for the hours left: the five loops are over and none is reopened; each unit is marked `finished` only when its clip and its comparison images from `47d93fd` exist (steps 5 to 7 of Phase 4), with `round limit` as what ended it; the budget report comes before any floor work in hand; a status at the end of every finished unit and at the gate. "Current unit" and "Current round" under "Status" were brought up to date with this entry.
 
 ## Notes from Brandon
 
@@ -1376,6 +1377,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 00:29 UTC · Round 17 (field) closed at the round limit: summary, 10 open items, Units row
 - 2026-11-22 00:31 UTC · Status 56; round 20 (rain) closed at the round limit: summary, 8 open items, Units row. The loops of all five units are over on 47d93fd
 - 2026-11-22 00:32 UTC · Running jobs and running agents brought up to 00:32 UTC
+- 2026-11-22 00:33 UTC · Kit read again after a compaction; Status lines brought up to date
 
 ## Session log
 
