@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
-import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, gustOf, hangAt, kindTime, lagAt, lateAt, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, swayOf, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, gustOf, hangAt, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, swayOf, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -159,8 +159,9 @@ export class Field {
         still[n + 7] = late > 0 ? lateLeafCode(all[i + 7]) : seen[n + 7]
         const move = swayOf(all[i + 7], this.time)
         const gust = late > 0 ? gustOf(all[i + 7], all[i], all[i + 1], this.time) : null
-        const mx = (move ? move.x : 0) + (gust ? gust.x : 0)
-        const mz = (move ? move.z : 0) + (gust ? gust.z : 0)
+        const off = late > 0 ? lateLean(all[i + 7]) : null
+        const mx = (move ? move.x : 0) + (gust ? gust.x : 0) + (off ? late * off.x : 0)
+        const mz = (move ? move.z : 0) + (gust ? gust.z : 0) + (off ? late * off.z : 0)
         turnBy(seen, n, (move ? move.head : 0) + (gust ? gust.head : 0))
         turnBy(still, n, leafSpin(all[i + 7]) + (move ? move.leaves : 0) + (gust ? gust.leaves : 0))
         if (mx !== 0 || mz !== 0) {

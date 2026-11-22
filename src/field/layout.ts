@@ -121,6 +121,14 @@ export function ownOf(id: number): Own {
 export const leafSpin = (id: number): number => (handSet.has(id) || CLEAR.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
 // Late in the bloom the stalk under a heavy head has gone on growing past its last leaves: each neighbor has its own length of bare neck.
 export const leafShort = (id: number): number => (handSet.has(id) ? 0 : 0.2 * Math.pow(hash01(SEED, 122, id), 1.5))
+// Under a heavy head no stalk stays plumb: from 52 s every neighbor comes to stand off its line its own way, most by 1 to 5 degrees, one in ten by 6 to 9.
+// Those set by hand stand as they stood.
+export function lateLean(id: number): { x: number; z: number } {
+  if (handSet.has(id)) return { x: 0, z: 0 }
+  const way = 2 * Math.PI * hash01(SEED, 151, id)
+  const lean = hash01(SEED, 152, id) < 0.1 ? 0.1 + 0.05 * hash01(SEED, 153, id) : 0.02 + 0.07 * hash01(SEED, 153, id)
+  return { x: Math.cos(way) * lean, z: Math.sin(way) * lean }
+}
 // In the evening air of the last eight seconds every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
 // by up to 2.3 degrees; its leaves swing round the stem by up to 3.5 degrees and its head by up to 5, each on its own period. Those set by hand stand still.
 export const SWAY_FROM_S = 52
@@ -135,7 +143,7 @@ export function swayOf(id: number, time: number): { x: number; z: number; leaves
   const across = on * 0.012 * beat(134, 2.6, 5.2)
   return { x: Math.cos(way) * along - Math.sin(way) * across, z: Math.sin(way) * along + Math.cos(way) * across, leaves: on * 0.06 * beat(136, 2.4, 5.6), head: on * 0.087 * beat(138, 3.6, 7.4) }
 }
-// One gust crosses the field from the sun's side: its front leaves the far edge at 52.8 s and passes the plant at about 56 s, uneven along its length.
+// One gust crosses the field from the sun's side, left to right in the last frames: its front enters at the far left at about 53.5 s and passes the plant at 56.1 s, uneven along its length.
 // Each neighbor is pushed over as it is struck, shakes while it is held, and springs back on a period and with a damping of its own; its head and its leaves
 // follow, each with its own lag. All is still again by 58.4 s.
 export const GUST = { fromS: 53.4, fromM: -49, speedMS: 18, x: 0.9659, z: 0.2588, stillS: 58.4 }
@@ -154,7 +162,7 @@ export function gustOf(id: number, x: number, z: number, time: number): { x: num
   const a = hash01(SEED, 141, id)
   const b = hash01(SEED, 142, id)
   const c = hash01(SEED, 143, id)
-  const lean = end * (0.105 + 0.053 * hash01(SEED, 144, id)) * (1 - 0.45 * step(12, 45, Math.hypot(x, z))) * blowOf(tau, a, b, c)
+  const lean = end * (0.07 + 0.035 * hash01(SEED, 144, id)) * (1 - 0.45 * step(12, 45, Math.hypot(x, z))) * blowOf(tau, a, b, c)
   const way = (hash01(SEED, 145, id) - 0.5) * 0.5
   const side = (channel: number): number => (hash01(SEED, channel, id) < 0.5 ? -1 : 1)
   return {
@@ -171,7 +179,7 @@ export const ownCode = (own: Own, nod = 0): number => Math.max(0, Math.round((ow
 const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
 export const earlyCode = (own: Own, bud = own.bud, leaf = own.leaf, droop = own.droop): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(leaf, 0.75, 1.6) + 1024 * steps(droop, -0.15, 0.6) + 32768 * steps(bud, 0.8, 2.6)
 // Late in the bloom the leaves use the same slot for their own: how far each neighbor's leaves reach and how far they hang. Its stalk stays as it is.
-export const lateLeafCode = (id: number): number => (handSet.has(id) ? steps(1, 0.75, 1.3) + 32 * steps(1, 0.75, 1.6) + 1024 * steps(0, -0.15, 0.6) : steps(1, 0.75, 1.3) + 32 * steps(0.85 + 0.45 * hash01(SEED, 123, id), 0.75, 1.6) + 1024 * steps(-0.12 + 0.5 * Math.pow(hash01(SEED, 124, id), 1.3), -0.15, 0.6))
+export const lateLeafCode = (id: number): number => (handSet.has(id) ? steps(1, 0.75, 1.3) + 32 * steps(1, 0.75, 1.6) + 1024 * steps(0, -0.15, 0.6) : steps(1, 0.75, 1.3) + 32 * steps(0.78 + 0.62 * hash01(SEED, 123, id), 0.75, 1.6) + 1024 * steps(-0.12 + 0.66 * Math.pow(hash01(SEED, 124, id), 1.3), -0.15, 0.6))
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
