@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { nightLand } from './sky.ts'
-import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineRing } from '../../weather/skyline.ts'
+import { SKYLINE, SKYLINE_LAND_FROM_M, SKYLINE_LAND_M, SKYLINE_LAND_TO_M, skylineCanopy, skylineLandM, skylineLayerSalt, skylineStrip } from '../../weather/skyline.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -115,7 +114,7 @@ const TONES: { base: [number, number, number]; rim: number; fogShare: number }[]
   { base: [0.03, 0.04, 0.035], rim: 0.04, fogShare: 0.3 },
 ]
 
-// The night's haze lies in the valley on the left of its view, round this bearing: the air to the right of it is clear and the land there stays dark. It gathers and clears with the hills of the sky pass, so both cuts show the shared land as the other worlds leave it.
+// The night's haze lies in the valley on the left of its view, round this bearing: the air to the right of it is clear and the land there stays dark. It lies there through the whole night, as the hills of the sky pass do.
 const VALLEY_DEG = 215
 const RAD = Math.PI / 180
 // In the valley the far rows stand in the mist: the lit haze takes this share of them.
@@ -138,12 +137,11 @@ export interface FarLayers { meshes: THREE.Mesh[]; triangles: number; setTime(ti
 export function makeFarLayers(landBearingDeg: number): FarLayers {
   const meshes: THREE.Mesh[] = []
   let triangles = 0
-  const rings = SKYLINE.map((_, i) => skylineRing(i, landBearingDeg))
   const airUniforms = {
     uAirCool: { value: new THREE.Vector3(0.012, 0.022, 0.034) },
     uAirWarm: { value: new THREE.Vector3(0.03, 0.06, 0.08) },
     uAir: { value: 0.00015 },
-    uValleyOn: { value: 0 },
+    uValleyOn: { value: 1 },
     uValleyFog: { value: VALLEY_FOG },
     uValley: { value: new THREE.Vector2(Math.sin(VALLEY_DEG * RAD), Math.cos(VALLEY_DEG * RAD)) },
   }
@@ -187,7 +185,7 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
   add(land, makeSurface({ name: 'night far land', vertex, fragment: landFragment, uniforms: airUniforms, side: THREE.DoubleSide, castShadow: false }).main, 0)
 
   SKYLINE.forEach((layer, i) => {
-    const geometry = rings[i].geometry
+    const geometry = skylineStrip(i, landBearingDeg)
     const tone = TONES[i]
     const hedge = !layer.trees && layer.rowM !== undefined
     const wooded = !layer.trees && layer.rowM === undefined
@@ -207,8 +205,6 @@ export function makeFarLayers(landBearingDeg: number): FarLayers {
     meshes,
     triangles,
     setTime: (time) => {
-      rings.forEach((ring) => ring.setTime(time))
-      airUniforms.uValleyOn.value = nightLand(time)
       plain.position.y = skylineLandM(time) - SKYLINE_LAND_M
       plain.updateMatrix()
     },
