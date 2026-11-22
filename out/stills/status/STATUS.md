@@ -1,12 +1,12 @@
-# Status 62
+# Status 63
 
-2026-11-22 01:50 UTC
+2026-11-22 02:13 UTC
 
-- Status 62 · Phase 4. Phase 4 gate closed at 01:47 UTC: machine checks all 13 green, all six units finished (each at its round limit, none by a pass), eight comparison images and six clips kept and on the review page. For Phase 5 the camera got its smoothing pass (the plant no longer swings left and back in the frost) and the field and rain grades were eased toward their neighbours.
-- Next: merge the Phase 5 build, machine checks, then the first whole film round (4 critics and 50 jurors) on renders that eleven builders are making now. Time used: 25.0 h of 30 h.
+- Status 63 · Phase 5. Round 22, the first whole film round, is counted and judges main 4676c5d. From that build: all 16 final stills, the three whole film sheets, the four cut sheets and the dawn stress set are in; every cut lines up when the frame before is laid over the frame after; the keys are no worse than the kept ones.
+- Next: The last three stress sets and the machine checks, then the measures, the packs, four critics and fifty jurors; three builders already work on the night's hills and the field's far edge, sun and specks. Time used: 25.4 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below
-- `status-2.jpg`: Rain at 14 s and night at 26 s: approved left, the film right
-- `status-3.jpg`: Frost at 36 s and the opening bud at 45 s: approved left, the film right
-- `status-4.jpg`: Bloom at 50.5 s and the field at 58.5 s: approved left, the film right
+- `status-1.jpg`: The whole film, 0 to 19 s: dawn and rain (review tier)
+- `status-2.jpg`: 20 to 40 s: night and frost
+- `status-3.jpg`: 40 to 60 s: bloom and field
+- `status-4.jpg`: The first two seconds at the final tier, the frames the scroll stop judge sees
