@@ -1,0 +1,49 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-13.png",
+      "where": "all tiles f1234 to f1799 (41.1 s to 60.0 s, bloom and field)",
+      "what": "the camera move breaks continuity of speed and direction: lateral motion stalls and slightly reverses between f1388 and f1542 (46.3 s to 51.4 s), abruptly launches into a high-speed backward pullback at f1542 to f1593 (51.4 s to 53.1 s), and then eases nearly to a stop between f1748 and f1799 (58.3 s to 60.0 s, where the horizon moves by only 1 px)",
+      "fix": "drive the camera along a single continuous spline with smooth mass and non-zero velocity from bloom through the end of field without stalling, reversing, jumping in pullback rate, or braking to a stop at 60.0 s"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-13.png",
+      "where": "f1234 (41.1 s, top-left tile) across the cut from set-D-12.png f1182 (39.4 s, bottom-right tile)",
+      "what": "the horizon and neighboring crop silhouettes do not line up across the frost-to-bloom cut: the horizon jumps upward by roughly 29 px from well below the flower bud in f1182 to the base of the bud in f1234, far exceeding the 2 to 4 px per 1.7 s vertical drift on either side of the cut",
+      "fix": "match camera pitch, height, horizon position, and background plant geometry exactly across the frost-to-bloom cut frame"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-11.png",
+      "where": "lower-left foreground beside the split seed hull between f0206 (6.9 s, dawn) and f0257 (8.6 s, rain)",
+      "what": "three of the four foreground grass blades standing immediately left of the split seed hull in f0206 vanish across the cut in f0257 while the adjacent seed hull, stem base, and right grass clump stay in place",
+      "fix": "preserve the exact foreground grass geometry and placement across the dawn-to-rain cut so the plant, grass, and horizon all align"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "upper-left and center sky around the neighboring left stalk in f1593 (53.1 s, row 3 middle tile)",
+      "what": "hundreds of sharp single-pixel white pinprick specks appear across the upper sky in f1593 as depth of field abruptly tightens from f1542's soft bokeh, then vanish by f1645 (54.8 s), producing a visible burst of sky shimmer",
+      "fix": "keep airborne pollen motes below the canopy with smooth, continuous depth-of-field transition across the pullback so sharp white specks do not flash across the upper sky"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "upper sky cloud layer across f1234 to f1542 (41.1 s to 51.4 s, bloom)",
+      "what": "while the sunflower head unfurls in rapid time-lapse over 10.3 s, the cloud layer translates rigidly with the camera without internal drift or evolution, reading as a frozen matte backdrop",
+      "fix": "add continuous wind-driven cloud drift and subtle shape evolution throughout the bloom time-lapse"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-12.png",
+      "where": "low valley mist band along the horizon hills in f0617 to f0874 (20.6 s to 29.1 s, night)",
+      "what": "the distant mist band sits nearly static against the hill base across 8.5 s of rapid plant growth and star rotation instead of drifting laterally",
+      "fix": "give the valley mist a slow, continuous horizontal drift across the night segment"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "horizon across the cut from f0899 (29.97 s) to f0900 (30.00 s), especially the far left and right third of the frame",
+      "what": "the horizon does not line up across the cut: dark ridge and treeline silhouettes on the left and right in the night frames disappear in f0900, dropping the horizon by roughly 55 to 65 pixels at delivery size to lower, differently shaped misty hills",
+      "fix": "use the exact same distant terrain and horizon silhouette geometry in both the night and frost scenes so the horizon matches across the cut at 30.00 s"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "underside of the flower bud on the right in f0982–f1036 (32.7–34.5 s) and on the left in f1117–f1172 (37.2–39.1 s)",
+      "what": "new upper stem leaves appear as miniature blades inside the base of the bud and scale up while passing directly through the lower involucre bracts as they slide down onto the stem",
+      "fix": "have upper leaves originate at pre-existing stem nodes below the receptacle or unfold outward along collision-free paths without scaling out from inside the bud or intersecting the bracts"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "junction between the flared stem collar and the base of the bud in f1172–f1199 (39.1–40.0 s)",
+      "what": "upward growth pulls the bud head off the top of the stem collar, exposing a flat horizontal cap rim and dark gap beneath the lower bracts",
+      "fix": "keep the receptacle and lower involucre bracts welded to the elongating peduncle tip so no flat seam or gap opens at the base of the bud"
+    }
+  ]
+}

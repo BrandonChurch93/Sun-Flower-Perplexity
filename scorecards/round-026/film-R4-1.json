@@ -1,0 +1,56 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-05.png",
+      "where": "horizon and midfield behind the plant across cut 2 (f0599 at 19.97 s to f0600 at 20.00 s)",
+      "what": "the horizon and field geometry jump at the cut: a low flat treeline and dense midfield grass in f0599 are replaced in f0600 by a much higher jagged mountain ridge, a mist band, and silhouettes of neighboring young sunflower stalks",
+      "fix": "use identical terrain horizon geometry and midfield grass/plant placement on both sides of the 20.00 s cut so only lighting, sky, and weather change"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-02.png",
+      "where": "split seed husk to the left of the stem across f0120–f0131 (4.00 s–4.37 s)",
+      "what": "the detached seed husk drifts down slowly over 11 time-lapse frames on an eased curve instead of dropping in one frame under gravity, and after touching the ground at f0123 its lower third continues sinking roughly 80 delivery-size pixels straight through stationary soil clods",
+      "fix": "make the shed husk drop at time-lapse gravity speed (within a frame) and collide rigidly with the soil surface without interpenetrating the ground"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "in-focus midground soil bed across the full frame width in f0000–f0011 (0.00 s–0.37 s)",
+      "what": "soil clods far from the emerging hypocotyl hook continuously morph, swell, and crawl in shape every frame even after accounting for camera motion, reading as animated procedural displacement across stationary dirt",
+      "fix": "lock world-space soil geometry outside the immediate emergence hole so only clods physically pushed or tumbled by the sprout move"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-10.png",
+      "where": "unfolding ray petals along the lower-left (6–8 o'clock) and right rim of the flower head in f1409–f1420",
+      "what": "adjacent curved yellow-orange ray petals intersect and slide straight through one another's blades (most visibly forming an X-shaped mesh penetration at 7 o'clock) as they unfold",
+      "fix": "stagger petal attachment angles and enforce non-interpenetrating curl paths or cloth/shell collisions between neighboring ligules"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-09.png",
+      "where": "upper-left to top bract-petal boundary (10–12 o'clock) of the opening bud in f1341–f1352",
+      "what": "yellow ray petals unfold outward by passing through closed green involucral bracts and neighboring petals while adjacent bracts remain clamped over the head",
+      "fix": "peel the involucral bracts back ahead of the emerging ray petals and resolve mesh collisions between petals and bracts"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-05.png",
+      "where": "night sky stars and Milky Way in f0600–f0605 (and persisting in set-D-06.png f0894–f0899)",
+      "what": "undersampled point stars shimmer by 40–65 gray levels from frame to frame during sub-pixel sky drift and the dark Milky Way sky shows uncorrelated per-frame crawling noise",
+      "fix": "pre-filter star point sources to at least a 1.5–2 px anti-aliased footprint before sub-pixel sky rotation and temporally stabilize or denoise the night sky render"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "falling rain streaks and upper/lower leaf surfaces in f0290–f0301 (and set-D-05.png f0594–f0599)",
+      "what": "rain streaks appear as uncorrelated frame-to-frame lines that never land, splash, or deflect on the broad leaves, while surface water droplets sit frozen on the leaf blades without impact reaction",
+      "fix": "add raindrop-leaf impact splashes, droplet motion, and subtle leaf-hit impulses so rain visibly lands with weight on the plant as well as the soil"
+    }
+  ]
+}

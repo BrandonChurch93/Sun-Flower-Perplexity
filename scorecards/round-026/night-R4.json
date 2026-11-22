@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "horizon and mid-ground field across the full width between f0599 (19.97 s) and f0600 (20.00 s)",
+      "what": "the horizon does not line up across the cut: the low flat treeline in f0599 jumps upward by about 12-16 px into taller jagged mountain ridges in f0600, and the grassy mid-ground field is replaced by a bright mist band and dark rows of background sunflowers",
+      "fix": "lock the horizon silhouette, elevation and field layout across f0599 and f0600 so only lighting, sky and weather change on the cut frame"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "foreground grass along the bottom edge and lowest two stem leaves between f0599 (19.97 s) and f0600 (20.00 s)",
+      "what": "foreground grass blades snap sideways and change bend angle by about 6-15 px in one frame across the cut, and the lowest two stem leaves jump by about 3-5 px, whereas consecutive frames before and after move less than 1 px",
+      "fix": "carry continuous wind displacement and leaf/grass pose state across the cut boundary from f0599 into f0600"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "falling rain across the plant leaves and foreground grass in f0594-f0599 (19.80 s-19.97 s)",
+      "what": "heavy rain streaks pass straight through the frame without landing: there are no drop impacts, splashes or bounce reactions on any of the broad upper leaf surfaces or in the grass",
+      "fix": "add raindrop landing splashes on the upper surfaces of the leaves and grass along with subtle contact micro-impacts on hit leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "small upper-left leaf just left of the central bud in f0754-f0757 (25.13 s-25.23 s)",
+      "what": "after unfolding smoothly at 2-4 px/frame in f0746-f0753, the leaf whips downward at roughly 19 px/frame over just four frames, smearing its hairy upper edge into a wide motion-blurred streak that breaks the discrete-exposure look of real plant time-lapse",
+      "fix": "ease that leaf's downward unfurling curve over a longer window (around 15-25 frames) and avoid heavy shutter velocity blur on time-lapse growth motion"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "bright star above the upper-right leaf hair in f0751 (25.03 s) and bright star left of the upper-left leaf tip in f0754 (25.13 s)",
+      "what": "point stars right next to fine leaf hairs or fast-moving leaf edges bloom into blurred ~6 px discs for a single frame before snapping back to sharp 2 px points",
+      "fix": "prevent foreground depth-of-field and motion-blur dilation from bleeding onto background star pixels around fine trichomes and moving silhouettes"
+    }
+  ]
+}

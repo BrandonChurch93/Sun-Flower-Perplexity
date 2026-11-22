@@ -1,0 +1,488 @@
+{
+ "dawn": {
+  "unit": "dawn",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 0,
+    "key": null,
+    "why": "the first frame",
+    "m1": {
+     "frame": 0,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.579471247079868,
+      "y": 0.7190459033834637,
+      "depthM": 0.14661534608287277,
+      "cocPx": 0.5774909853935242
+     }
+    },
+    "m2": {
+     "frame": 0,
+     "pixels": 2073600,
+     "textured": 62016,
+     "soft": 0,
+     "texturedOutsideSharpZone": 1244397,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": null
+   },
+   {
+    "frame": 45,
+    "key": "dawn-sprout",
+    "why": "the key dawn-sprout",
+    "m1": {
+     "frame": 45,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.6450274462534887,
+      "y": 0.24311179537732858,
+      "depthM": 0.15838553192230534,
+      "cocPx": 0.4822375178337097
+     }
+    },
+    "m2": {
+     "frame": 45,
+     "pixels": 2073600,
+     "textured": 126809,
+     "soft": 0,
+     "texturedOutsideSharpZone": 1127353,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 0.974293726900756,
+     "frameEnergy": 12.557604819906853,
+     "approvedEnergy": 12.888931205431032,
+     "sharpPixels": 161859,
+     "region": {
+      "left": 881,
+      "top": 533,
+      "width": 629,
+      "height": 257
+     }
+    }
+   },
+   {
+    "frame": 60,
+    "key": null,
+    "why": "the frame at film.hookSeconds",
+    "m1": {
+     "frame": 60,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.6520417903527815,
+      "y": 0.21788732236077973,
+      "depthM": 0.1653374715513542,
+      "cocPx": 0.4648835062980652
+     }
+    },
+    "m2": {
+     "frame": 60,
+     "pixels": 2073600,
+     "textured": 123582,
+     "soft": 0,
+     "texturedOutsideSharpZone": 1141504,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": null
+   },
+   {
+    "frame": 195,
+    "key": "dawn-seedling",
+    "why": "the key dawn-seedling",
+    "m1": {
+     "frame": 195,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.6068572765754662,
+      "y": 0.4231124731164624,
+      "depthM": 0.2892990611244837,
+      "cocPx": 0.41953667998313904
+     }
+    },
+    "m2": {
+     "frame": 195,
+     "pixels": 2073600,
+     "textured": 70645,
+     "soft": 0,
+     "texturedOutsideSharpZone": 1170912,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 1.1224358337466027,
+     "frameEnergy": 13.012873600757157,
+     "approvedEnergy": 11.593423169074358,
+     "sharpPixels": 128045,
+     "region": {
+      "left": 861,
+      "top": 625,
+      "width": 582,
+      "height": 220
+     }
+    }
+   }
+  ]
+ },
+ "rain": {
+  "unit": "rain",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 420,
+    "key": "rain",
+    "why": "the key rain",
+    "m1": {
+     "frame": 420,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.6161896539400725,
+      "y": 0.19947515211802203,
+      "depthM": 0.6932227858804825,
+      "cocPx": 0.10753021389245987
+     }
+    },
+    "m2": {
+     "frame": 420,
+     "pixels": 2073600,
+     "textured": 180306,
+     "soft": 0,
+     "texturedOutsideSharpZone": 804254,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 0.8545647085128031,
+     "frameEnergy": 15.608094814806636,
+     "approvedEnergy": 18.264380285454763,
+     "sharpPixels": 220708,
+     "region": {
+      "left": 537,
+      "top": 669,
+      "width": 702,
+      "height": 314
+     }
+    }
+   }
+  ]
+ },
+ "night": {
+  "unit": "night",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 780,
+    "key": "night",
+    "why": "the key night",
+    "m1": {
+     "frame": 780,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.5578016350956397,
+      "y": 0.307934122190307,
+      "depthM": 1.0162842008570268,
+      "cocPx": 0.15369673073291779
+     }
+    },
+    "m2": {
+     "frame": 780,
+     "pixels": 2073600,
+     "textured": 140948,
+     "soft": 0,
+     "texturedOutsideSharpZone": 24792,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 0.8275071508964726,
+     "frameEnergy": 11.203930816651129,
+     "approvedEnergy": 13.539376432594507,
+     "sharpPixels": 155003,
+     "region": {
+      "left": 865,
+      "top": 397,
+      "width": 389,
+      "height": 398
+     }
+    }
+   }
+  ]
+ },
+ "frost": {
+  "unit": "frost",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 1080,
+    "key": "frost",
+    "why": "the key frost",
+    "m1": {
+     "frame": 1080,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.5655086305899135,
+      "y": 0.29273587891065583,
+      "depthM": 0.7175579702453341,
+      "cocPx": 0.5520544052124023
+     }
+    },
+    "m2": {
+     "frame": 1080,
+     "pixels": 2073600,
+     "textured": 69042,
+     "soft": 0,
+     "texturedOutsideSharpZone": 64855,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 1.0378628798143172,
+     "frameEnergy": 14.864621308324022,
+     "approvedEnergy": 14.322336406311624,
+     "sharpPixels": 121865,
+     "region": {
+      "left": 897,
+      "top": 229,
+      "width": 311,
+      "height": 392
+     }
+    }
+   }
+  ]
+ },
+ "bloom": {
+  "unit": "bloom",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 1350,
+    "key": "bloom-opening",
+    "why": "the key bloom-opening",
+    "m1": {
+     "frame": 1350,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.5692473204537918,
+      "y": 0.3926836995042605,
+      "depthM": 0.7016357651309904,
+      "cocPx": 1.214937686920166
+     }
+    },
+    "m2": {
+     "frame": 1350,
+     "pixels": 2073600,
+     "textured": 105575,
+     "soft": 0,
+     "texturedOutsideSharpZone": 328463,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 0.8392126383058343,
+     "frameEnergy": 13.160307273317375,
+     "approvedEnergy": 15.681731509531158,
+     "sharpPixels": 192557,
+     "region": {
+      "left": 837,
+      "top": 533,
+      "width": 430,
+      "height": 448
+     }
+    }
+   },
+   {
+    "frame": 1515,
+    "key": "bloom-hero",
+    "why": "the key bloom-hero",
+    "m1": {
+     "frame": 1515,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.5438921353480247,
+      "y": 0.41088286633729654,
+      "depthM": 0.7745394919512728,
+      "cocPx": 0.5488811135292053
+     }
+    },
+    "m2": {
+     "frame": 1515,
+     "pixels": 2073600,
+     "textured": 136800,
+     "soft": 0,
+     "texturedOutsideSharpZone": 371325,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 0.9609116174424622,
+     "frameEnergy": 14.453749091206662,
+     "approvedEnergy": 15.04170501099403,
+     "sharpPixels": 235940,
+     "region": {
+      "left": 809,
+      "top": 429,
+      "width": 426,
+      "height": 554
+     }
+    }
+   }
+  ]
+ },
+ "field": {
+  "unit": "field",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+   "focusCocPx": 1.5,
+   "minTexelsPerPixel": 1,
+   "maxSoftPixelFraction": 0.02,
+   "minSharpnessRatio": 0.8,
+   "tipMarginFraction": 0.05
+  },
+  "pass": {
+   "m1": true,
+   "m2": true,
+   "m3": true
+  },
+  "frames": [
+   {
+    "frame": 1755,
+    "key": "field",
+    "why": "the key field",
+    "m1": {
+     "frame": 1755,
+     "pass": true,
+     "reasons": [],
+     "invalid": 0,
+     "tip": {
+      "x": 0.4929751389931864,
+      "y": 0.5051269102852297,
+      "depthM": 4.692237706300397,
+      "cocPx": 0.010525865480303764
+     }
+    },
+    "m2": {
+     "frame": 1755,
+     "pixels": 2073600,
+     "textured": 432699,
+     "soft": 0,
+     "texturedOutsideSharpZone": 0,
+     "softShare": 0,
+     "pass": true
+    },
+    "m3": {
+     "pass": true,
+     "ratio": 1.141766890614521,
+     "frameEnergy": 13.939724095484038,
+     "approvedEnergy": 12.208905521845539,
+     "sharpPixels": 1687674,
+     "region": {
+      "left": 1,
+      "top": 181,
+      "width": 1883,
+      "height": 896
+     }
+    }
+   }
+  ]
+ }
+}

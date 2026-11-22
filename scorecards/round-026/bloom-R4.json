@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "frames f1363 to f1559 (45.4 s to 52.0 s), full-frame camera move",
+      "what": "the camera move stalls horizontally and reverses pan direction after f1363, then abruptly surges backward and tilts between f1526 and f1559 so the horizon drops 3.5x faster, the hero flower shrinks ~18%, and a neighbor stalk rushes in on the left",
+      "fix": "re-key the camera onto one smooth C2-continuous arc-and-pullback spline with steady mass and monotonic velocity across the entire 40.0 s to 52.0 s segment"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "frames f1396 to f1461 (46.5 s to 48.7 s), right and lower-right rim of the opening flower head",
+      "what": "unfolding yellow ray petals pass directly through the solid dark central disc dome and outer green bracts, leaving clipped triangular petal wedges embedded inside the disc",
+      "fix": "place ray petal hinge pivots outside the receptacle disc perimeter and constrain unfolding curves and bract clearance so petals peel open around the head without interpenetration"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "frames f1331 to f1342, dark green bract margins across center/lower-right and backlit upper-left petal ridges",
+      "what": "fine marginal bract hairs and sub-pixel backlit petal ridges break into 1-pixel stair-stepped dots whose brightness oscillates across consecutive frames, producing crawling shimmer at native delivery size",
+      "fix": "increase temporal supersampling and sub-pixel hair anti-aliasing (or slightly thicken screen-space minimum hair width) so backlit cilia and thin ridges stay temporally stable"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "frames f1331 to f1342, upper-left emerging yellow petals and upper-center inner green bracts",
+      "what": "rising yellow petals on the upper-left slice straight through neighboring petals and green bracts (especially f1335 to f1342), and inner green bracts crisscross through one another across the bud crown",
+      "fix": "stagger radial layer offsets per whorl and enforce non-intersecting peel trajectories between inner bracts and emerging ray petals"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-01.png",
+      "where": "frames f1200 to f1559 (40.0 s to 52.0 s), sky clouds and low horizon mist band",
+      "what": "the cloud deck and horizon mist band remain completely frozen relative to the distant hill ridge across the entire 12-second time-lapse while the field blooms",
+      "fix": "animate slow lateral drift and subtle cloud and mist evolution in the sky dome consistent with the time-lapse speed"
+    }
+  ]
+}

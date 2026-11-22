@@ -1,13 +1,13 @@
 {
   "kind": "clip",
-  "engineHash": "a4c82933ba906236",
+  "engineHash": "96146165ee8a578d",
   "unitHashes": {
-    "dawn": "8ebbafaa0d28e07b",
-    "rain": "cc96331076d01a36",
-    "night": "1e33829500718753",
+    "dawn": "ee1e49721342026a",
+    "rain": "e84fa5d0cd9e14b0",
+    "night": "b081c7695df8f54d",
     "frost": "8162048fd525a7c9",
-    "bloom": "f8b8ac67c3d305b9",
-    "field": "85ecd6aea5f49c50"
+    "bloom": "cb614d83ee125711",
+    "field": "2496ed8b3b90e3cc"
   },
   "format": "16x9",
   "tier": "draft",
@@ -21,7 +21,7 @@
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T09:47:50.049Z",
+  "at": "2026-11-22T11:35:21.583Z",
   "frames": [
     1200,
     1559
@@ -87,7 +87,7 @@
         1200,
         1274
       ],
-      "at": "2026-11-22T09:08:04.914Z",
+      "at": "2026-11-22T11:13:30.572Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
@@ -102,7 +102,7 @@
         1275,
         1349
       ],
-      "at": "2026-11-22T09:17:47.796Z",
+      "at": "2026-11-22T11:23:21.937Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
@@ -117,7 +117,7 @@
         1350,
         1424
       ],
-      "at": "2026-11-22T09:18:39.521Z",
+      "at": "2026-11-22T11:17:57.000Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
@@ -132,7 +132,7 @@
         1425,
         1499
       ],
-      "at": "2026-11-22T09:09:02.688Z",
+      "at": "2026-11-22T11:14:24.397Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
@@ -147,7 +147,7 @@
         1500,
         1559
       ],
-      "at": "2026-11-22T09:27:00.385Z",
+      "at": "2026-11-22T11:26:18.524Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
