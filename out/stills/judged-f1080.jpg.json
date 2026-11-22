@@ -1,13 +1,13 @@
 {
   "kind": "still",
-  "engineHash": "a4c82933ba906236",
+  "engineHash": "96146165ee8a578d",
   "unitHashes": {
-    "dawn": "8ebbafaa0d28e07b",
-    "rain": "cc96331076d01a36",
-    "night": "1e33829500718753",
+    "dawn": "ee1e49721342026a",
+    "rain": "e84fa5d0cd9e14b0",
+    "night": "b081c7695df8f54d",
     "frost": "8162048fd525a7c9",
-    "bloom": "f8b8ac67c3d305b9",
-    "field": "85ecd6aea5f49c50"
+    "bloom": "cb614d83ee125711",
+    "field": "2496ed8b3b90e3cc"
   },
   "format": "16x9",
   "tier": "final",
@@ -16,17 +16,17 @@
   "browser": "147.0.7727.15",
   "machine": {
     "host": "space-sandbox",
-    "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
+    "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
     "cores": 4,
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T08:02:10.540Z",
+  "at": "2026-11-22T10:42:09.577Z",
   "frames": [
     1080
   ],
   "samples": 48,
-  "seconds": 236.73770000000297,
+  "seconds": 240.00640000000595,
   "check": {
     "frame": 1080,
     "invalid": 0,

@@ -1,13 +1,13 @@
 {
   "kind": "still",
-  "engineHash": "a4c82933ba906236",
+  "engineHash": "96146165ee8a578d",
   "unitHashes": {
-    "dawn": "8ebbafaa0d28e07b",
-    "rain": "cc96331076d01a36",
-    "night": "1e33829500718753",
+    "dawn": "ee1e49721342026a",
+    "rain": "e84fa5d0cd9e14b0",
+    "night": "b081c7695df8f54d",
     "frost": "8162048fd525a7c9",
-    "bloom": "f8b8ac67c3d305b9",
-    "field": "85ecd6aea5f49c50"
+    "bloom": "cb614d83ee125711",
+    "field": "2496ed8b3b90e3cc"
   },
   "format": "16x9",
   "tier": "final",
@@ -21,12 +21,12 @@
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T07:58:49.893Z",
+  "at": "2026-11-22T10:43:40.661Z",
   "frames": [
     1755
   ],
   "samples": 48,
-  "seconds": 336.6668000000119,
+  "seconds": 339.018,
   "check": {
     "frame": 1755,
     "invalid": 0,

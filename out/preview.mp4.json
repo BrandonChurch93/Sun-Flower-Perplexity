@@ -1,13 +1,13 @@
 {
   "kind": "film",
-  "engineHash": "a4c82933ba906236",
+  "engineHash": "96146165ee8a578d",
   "unitHashes": {
-    "dawn": "8ebbafaa0d28e07b",
-    "rain": "cc96331076d01a36",
-    "night": "1e33829500718753",
+    "dawn": "ee1e49721342026a",
+    "rain": "e84fa5d0cd9e14b0",
+    "night": "b081c7695df8f54d",
     "frost": "8162048fd525a7c9",
-    "bloom": "f8b8ac67c3d305b9",
-    "field": "85ecd6aea5f49c50"
+    "bloom": "cb614d83ee125711",
+    "field": "2496ed8b3b90e3cc"
   },
   "format": "preview",
   "tier": "draft",
@@ -21,7 +21,7 @@
     "ramMb": 7957
   },
   "standIns": [],
-  "at": "2026-11-22T09:49:25.938Z",
+  "at": "2026-11-22T11:39:27.457Z",
   "frames": [
     0,
     1799
@@ -281,7 +281,7 @@
         0,
         74
       ],
-      "at": "2026-11-22T09:12:22.212Z",
+      "at": "2026-11-22T11:17:10.796Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
@@ -296,7 +296,7 @@
         75,
         149
       ],
-      "at": "2026-11-22T09:23:29.640Z",
+      "at": "2026-11-22T11:28:23.508Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
@@ -311,7 +311,7 @@
         150,
         224
       ],
-      "at": "2026-11-22T09:11:18.689Z",
+      "at": "2026-11-22T11:12:20.703Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
@@ -326,7 +326,7 @@
         225,
         239
       ],
-      "at": "2026-11-22T09:08:43.183Z",
+      "at": "2026-11-22T11:07:43.500Z",
       "machine": {
         "host": "space-sandbox",
         "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
@@ -361,7 +361,7 @@
     "fps": 30,
     "codec": "h264",
     "pixFmt": "yuv420p",
-    "mbps": 3.932283
+    "mbps": 3.936364
   },
   "fromMaster": "film-16x9-draft.mp4"
 }
