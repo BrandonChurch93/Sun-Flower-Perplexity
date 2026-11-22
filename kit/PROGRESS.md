@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:31 UTC · Log: state at 06:32 UTC, round 24's fix batch out; re-read after compaction
+- Last push: 2026-11-22 06:37 UTC · Note from Brandon (06:35 UTC): do not stop, keep going till finished; applied to the budget stop, continuation 1 starts when it comes due
 - Last status: 76 · 2026-11-22 06:27 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,8 +48,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 1.57 h |
-| Whole build | 30.00 h | 29.64 h |
+| 6 | 4.00 h | 1.61 h |
+| Whole build | 30.00 h | 29.68 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -817,12 +817,13 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 06:20 UTC. Polish round 1, the motion pack: the run sheets added in this round's batch bring it to 13 sheets, over `critics.maxFilesPerMessage` (10), so it is split across two fresh critics with the same rubric, part 1 (ten sheets of consecutive frames) on the Gemini family and part 2 (the three whole film sheets) on the Grok family; their answers are merged with the lower score, as in the unit rounds. Families this round: hook Claude, story GPT, compression GLM, motion Gemini and Grok; none of them judged the same rubric in round 22. The compression critic was asked at 06:20 UTC, the last to go out.
 - 2026-11-22 · Phase 6 · 06:29 UTC. Polish round 1 (round 23) closed at 06:28 UTC, not at a pass; the batch of ten fixes stays on `5abb284` because the machine checks (all 13 green) and the six measures are green on it. Decision on the cuts: two critics name the land and the light changing across cut 2 and cut 4 as severe; the worlds follow the eight approved images, the cuts are hard by a ruling, and nothing in a world may fade toward the next, so no world is changed for it; the entry under "Open items" asks Brandon for the call. Polish round 2 (round 24) opened at 06:29 UTC with seven pieces, worst first, because the clock still prints `extra rounds: yes`; with about 22 minutes left to the budget report its builders were told to push small proven changes or measurements by 06:47 UTC.
 - 2026-11-22 · Phase 6 · 06:31 UTC. After a compaction at about 06:29 UTC: read again from disk `kit/PROGRESS.md` (Status, Clock, Phases, Units, Running jobs, Running agents, round 23 and the new round 24) and `kit/addenda/README.md` (there are no addenda), and the budget report's rules in `AGENTS.md` and its block in `kit/08-BUILD-ORDER.md`. State found: main at `e67a2eb`, its source equal to `5abb284`, type check clean; the clock at 29.64 h of 30.00 h; round 24's seven briefs out since 06:29:34 UTC with no box ticked.
+- 2026-11-22 · Phase 6 · 06:37 UTC. Brandon wrote in the thread at 06:35 UTC: "Please output a link to the review page so I can take a look. Don't stop working, please keep going till finished". Decision: the link was answered at once, and the note is applied to the one stop in sight, the budget report due at about 06:52 UTC: the build will not end its task there. At `budget report: due` the kit's own continuation is started (`npm run clock -- --continue 1`, 10 more hours on the clock, "Budget" stays `running`) and the work carries on where it stands, with no agent stopped. Logged word for word under "Notes from Brandon". Round 24 therefore carries on past 06:51 UTC: its builders will be told that their reports are still due at 06:47 UTC and that the round does not stop at the clock.
 
 ## Notes from Brandon
 
 Anything Brandon wrote in the task thread, in his words, with the time and what was done about it.
 
-None yet.
+- 2026-11-22 06:35 UTC, in the thread, while polish round 2 (round 24) had its fix batch out and the clock stood at 29.7 h of 30 h: "Please output a link to the review page so I can take a look. Don't stop working, please keep going till finished". What was done. (1) The link was answered in the thread at once: https://sunflower-film.pplx.app/review.html. It is also the last line of every status. (2) `AGENTS.md`: "If Brandon writes in the thread while you work, he is steering. Apply what he asks ... His note beats the kit on its own topic, the same way an addendum does." The note's topic is stopping. The only stop that was near is the budget report, due at about 06:52 UTC, which every status since 06:21 UTC names; Brandon's words are read as: do not stop there, carry on until the film is finished. So the build does not end its task at the 30 hour mark. It carries on the way the kit itself carries a build past its budget: when the clock prints `budget report: due`, `npm run clock -- --continue 1` is run, "Continuation 1" is logged, "Continuations" becomes 1, "Budget" stays `running`, no agent is stopped, and the work goes on where it stands. The continuation has `budget.continueHours` (10 h) and every clock rule applies to those hours as before. (3) Nothing else changes: the bar, the round limits, the floor, the gates and the stop for a blocker stand as written. Everything left in Phase 6 is bounded by counts (one polish round, the record round at most twice, the QA gauntlet at most twice), so the build ends at BUILD COMPLETE. If the continuation's hours were to run out first, the same note is applied the same way and logged again.
 
 ## Declined issues
 
@@ -1735,6 +1736,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 06:28 UTC · Round 23 closed: polish round 1 not at a pass (R5 8, R6 7, R7 7, R4 4, jury fails 1755); summary, open items, kept stills, Status 76
 - 2026-11-22 06:29 UTC · Polish round 2 (round 24) opened: seven pieces out, worst first
 - 2026-11-22 06:31 UTC · Log: state at 06:32 UTC, round 24's fix batch out; re-read after compaction
+- 2026-11-22 06:37 UTC · Note from Brandon (06:35 UTC): do not stop, keep going till finished; applied to the budget stop, continuation 1 starts when it comes due
 
 ## Session log
 
