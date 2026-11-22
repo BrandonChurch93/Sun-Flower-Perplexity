@@ -5,6 +5,8 @@ import { REQUIRED_EXTENSIONS } from '../core/stage.ts'
 import { standIns, type StandIn } from '../core/standins.ts'
 import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
 import type { Film, FrameCheck, FrameState, TexelCheck } from '../director/film.ts'
+import { madeSoFar, type Made } from '../v2/counter.ts'
+import { views, type ViewName } from '../v2/shots.ts'
 
 declare const __ENGINE_HASH__: string
 declare const __UNIT_HASHES__: Record<string, string>
@@ -34,6 +36,12 @@ export interface Showcase {
   requirements(): { extensions: string[]; limits: Record<string, number> }
   check(frameIndex: number): FrameCheck
   texels(frameIndex: number): TexelCheck
+  // Draws the film's own moments once so that nothing is left to make while it plays.
+  warm(tier: string): Promise<void>
+  // What the graphics card has been asked to make since the page opened.
+  made(): Made
+  setView(name: string): void
+  sky(): string
 }
 
 declare global {
@@ -71,6 +79,16 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
     },
     check: (frameIndex) => film.check(frameIndex),
     texels: (frameIndex) => film.texels(frameIndex),
+    warm: (tier) => {
+      if (!isTier(tier)) throw new Error(`unknown tier "${tier}"`)
+      return film.warm(tier as TierId)
+    },
+    made: () => madeSoFar(),
+    setView: (name) => {
+      if (name !== 'film' && !(name in views)) throw new Error(`unknown view "${name}"`)
+      film.view.fixed = name === 'film' ? null : views[name as Exclude<ViewName, 'film'>]
+    },
+    sky: () => film.skyName,
     requirements: () => ({
       extensions: REQUIRED_EXTENSIONS.slice(),
       limits: {

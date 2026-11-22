@@ -10,7 +10,9 @@ export function isDiag(name: string): name is DiagName {
 
 export const shared = {
   uShutter: { value: 0 },
+  // uTime is the plant's clock: it stands still in a hold. uReal is the film second: everything that moves by itself runs on it. uWorldTime is the day count.
   uTime: { value: 0 },
+  uReal: { value: 0 },
   uWorldTime: { value: 0 },
   uFrame: { value: 0 },
   uSunDir: { value: new THREE.Vector3(0, 1, 0) },
@@ -46,6 +48,7 @@ precision highp sampler2DShadow;
 export const glslCommon = /* glsl */ `
 uniform float uShutter;
 uniform float uTime;
+uniform float uReal;
 uniform float uWorldTime;
 uniform int uFrame;
 uniform vec3 uSunDir;

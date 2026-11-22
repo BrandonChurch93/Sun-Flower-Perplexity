@@ -8,30 +8,49 @@ import { DIAG, shared, type DiagName } from '../core/shading.ts'
 import { ShadowMap, type Caster } from '../core/shadow.ts'
 import { Stage } from '../core/stage.ts'
 import { samplesOf } from '../core/tiers.ts'
-import { applyWorld, sunDirection, type WorldDef, type WorldStage } from '../core/world.ts'
+import { applyWorld, type WorldDef } from '../core/world.ts'
 import { breathe } from '../core/yield.ts'
 import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
-import { companionInView, companionMatrix } from './companion.ts'
 import { Ground } from '../ground/index.ts'
 import { carrierAt, focusAt, heightAt, plantReach, type PlantInputs } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import { Post } from '../post/post.ts'
 import { sunInFrame } from '../post/sun.ts'
-import { Sky } from '../weather/sky.ts'
-import { rigAt } from './camera.ts'
-import { plantInputsAt, plantInputsFor } from './inputs.ts'
+import type { Moment, Part, Quality, Sky, SkyLight, View } from '../v2/api.ts'
+import { tauAt } from '../v2/clock.ts'
+import { plantInputsOf } from '../v2/inputs.ts'
+import { blankLook, lookAt } from '../v2/look.ts'
+import { blankMoment, later, momentAt, now, setNow, shutterSeconds } from '../v2/now.ts'
+import { fixedPose, rigAtFilm } from '../v2/rig.ts'
+import { views, type FixedView, type ViewName } from '../v2/shots.ts'
+import { companionInView, companionMatrix } from './companion.ts'
 import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
-import { stageMakers, worldOf } from './registry.ts'
-import { Puddles } from '../ground/puddles/index.ts'
 import { stateAt, type FrameState } from './state.ts'
-import { clampFrame, worldAt } from './timeline.ts'
-
+import { clampFrame } from './timeline.ts'
 
 const GREY = new THREE.Color().setRGB(0.18, 0.18, 0.18)
 const BLACK = new THREE.Color().setRGB(0, 0, 0)
-const shutterSeconds = config.film.shutterDegrees / 360 / config.film.fps
+
+const skyModules = import.meta.glob<{ make: () => Sky }>('../sky*/index.ts')
+const partModules = import.meta.glob<{ make: () => Part[] }>('../**/onstage.ts', { eager: true })
+
+// The folder a part lives in, as the name it is shown and hidden by: src/weather/rain/onstage.ts is "rain".
+const partName = (path: string): string => path.split('/').slice(-2)[0]
+
+export function skyNames(): string[] {
+  return Object.keys(skyModules).map((p) => p.split('/').slice(-2)[0])
+}
+
+export interface FilmOptions {
+  // The folder of the sky to draw: "sky" is the film's own. A sky under trial lives in its own folder beside it.
+  sky?: string
+  // What is drawn, by name: sky, ground, plant, companion, field, and every part by its folder. Empty draws everything.
+  only?: string[]
+  view?: ViewName
+  quality?: Quality | null
+}
 
 export class Film {
   readonly stage: Stage
@@ -42,18 +61,21 @@ export class Film {
   readonly companion = new Plant({ variant: companionVariant, at: companionPlace() })
   readonly field = new Field()
   readonly ground = new Ground()
-  readonly sky = new Sky()
   readonly shadow = new ShadowMap()
   readonly post: Post
-  // Each world's own stage, for the worlds that have one.
-  readonly stages = new Map<string, WorldStage>()
-  readonly puddles: Puddles
+  readonly parts: { name: string; part: Part }[] = []
+  readonly look: WorldDef = blankLook()
+  readonly skyLight: SkyLight = { direct: [1, 1, 1], zenith: [0.2, 0.3, 0.5], horizon: [0.5, 0.5, 0.5], horizonSun: [0.5, 0.5, 0.5] }
+  sky: Sky | null = null
+  readonly skyName: string
   format: Format
   diag: DiagName = 'beauty'
   lastTier: TierId = 'draft'
   lastFrame = -1
-  // What the live mode may change: the camera turned about the plant, and a world held whatever the time is.
-  readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, world: null }
+  quality: Quality | null
+  // What the live mode may change: the camera turned about the plant.
+  readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, world: null, fixed: null }
+  private readonly only: Set<string>
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
   private readonly tip = new THREE.Vector3()
@@ -62,24 +84,28 @@ export class Film {
   private readonly sun = new THREE.Vector3()
   private readonly center = new THREE.Vector3()
   private readonly middle = new THREE.Vector3()
+  private readonly at: Moment = blankMoment()
   private loaded: Promise<void> | null = null
   private busy: Promise<void> = Promise.resolve()
 
-  constructor(canvas: HTMLCanvasElement, format: Format, assetSet: AssetSetId) {
+  constructor(canvas: HTMLCanvasElement, format: Format, assetSet: AssetSetId, options: FilmOptions = {}) {
     this.format = format
     this.stage = new Stage(canvas, format)
     this.assets = new Assets(this.stage.renderer, assetSet)
     this.post = new Post(format.width, format.height)
     this.companion.place(companionMatrix())
-    this.puddles = new Puddles(this.ground.shared)
-    this.scene.add(this.ground.mesh, ...this.ground.casters.map((c) => c.mesh), ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes, ...this.puddles.meshes)
-    for (const w of config.worlds) {
-      const make = stageMakers[w.id]
-      if (!make) continue
-      const made = make(worldOf(w.id))
-      for (const o of made.objects) o.visible = false
-      this.scene.add(...made.objects)
-      this.stages.set(w.id, made)
+    this.only = new Set(options.only ?? [])
+    this.quality = options.quality ?? null
+    this.view.fixed = options.view && options.view !== 'film' ? views[options.view] : null
+    const names = skyNames()
+    this.skyName = options.sky && names.includes(options.sky) ? options.sky : names.includes('sky') ? 'sky' : names[0]
+    this.scene.add(this.ground.mesh, ...this.ground.casters.map((c) => c.mesh), ...this.field.meshes, ...this.companion.meshes, ...this.plant.meshes)
+    for (const [path, module] of Object.entries(partModules)) {
+      for (const part of module.make()) {
+        for (const o of part.objects) o.visible = false
+        this.scene.add(...part.objects)
+        this.parts.push({ name: partName(path), part })
+      }
     }
     this.scene.matrixWorldAutoUpdate = false
     this.casters = [...this.plant.casters, ...this.ground.casters]
@@ -87,20 +113,41 @@ export class Film {
     shared.uFocusCoc.value = config.detail.focusCocPx
   }
 
+  shows(name: string): boolean {
+    return this.only.size === 0 || this.only.has(name)
+  }
+
   load(): Promise<void> {
     if (!this.loaded) {
       this.loaded = (async () => {
+        const { renderer } = this.stage
         await this.ground.load(this.assets)
         await this.plant.load(this.assets)
         await this.companion.load(this.assets)
         await this.field.load(this.assets)
-        for (const w of config.worlds) await this.sky.load(this.assets, worldOf(w.id))
-        for (const made of this.stages.values()) await made.load?.(this.assets)
-        const total = this.assets.megabytes()
+        const module = await skyModules[`../${this.skyName}/index.ts`]()
+        this.sky = module.make()
+        await this.sky.load(renderer, this.assets)
+        for (const { part } of this.parts) await part.load?.(renderer, this.assets)
+        const total = this.assets.megabytes() + this.sky.megabytes()
         if (total > this.assets.limitMb()) throw new Error(`the ${this.assets.set} asset set needs ${total.toFixed(0)} MB of textures, over its limit`)
       })()
     }
     return this.loaded
+  }
+
+  // Draws the film's own moments once, so every program is built, every texture is with the graphics card and every buffer exists before the film starts.
+  async warm(tier: TierId = 'draft', onStep?: (done: number, of: number) => void): Promise<void> {
+    await this.load()
+    const { renderer } = this.stage
+    this.sky?.warm(renderer)
+    for (const { part } of this.parts) part.warm?.(renderer)
+    const frames = warmFrames()
+    for (let i = 0; i < frames.length; i++) {
+      await this.renderFrame(frames[i], tier)
+      onStep?.(i + 1, frames.length)
+      await breathe()
+    }
   }
 
   async setFormat(format: Format): Promise<void> {
@@ -113,32 +160,35 @@ export class Film {
   async setAssets(set: AssetSetId): Promise<void> {
     await this.busy
     if (set === this.assets.set && this.loaded) return this.loaded
-    this.assets.clear()
-    this.sky.clear()
-    this.assets.set = set
-    this.loaded = null
-    await this.load()
+    throw new Error('the asset set is chosen when the page opens')
   }
 
-  private rigOf(time: number): Rig {
-    const rig = rigAt(time)
+  private rigOf(seconds: number): Rig {
+    const rig = rigAtFilm(seconds)
     const v = this.view
     return v.azimuthDeg === 0 && v.elevationDeg === 0 && v.dolly === 1 ? rig : orbited(rig, v)
   }
 
-  private inputsAt(time: number): PlantInputs {
-    return this.view.world ? plantInputsFor(worldOf(this.view.world)) : plantInputsAt(time)
+  private inputsAt(seconds: number): PlantInputs {
+    return plantInputsOf(momentAt(seconds, this.at))
   }
 
-  poseAt(time: number): CameraPose {
-    const rig = this.rigOf(time)
-    const inputs = this.inputsAt(time)
-    focusAt(time, inputs, eyeOf(rig, this.eye), this.tip)
-    return poseOf(rig, this.tip, carrierAt(time, inputs, this.tip, this.carrier))
+  // The camera at one film second.
+  poseAt(seconds: number): CameraPose {
+    if (this.view.fixed) return fixedPose(this.view.fixed)
+    const rig = this.rigOf(seconds)
+    const inputs = this.inputsAt(seconds)
+    const tau = tauAt(seconds)
+    focusAt(tau, inputs, eyeOf(rig, this.eye), this.tip)
+    return poseOf(rig, this.tip, carrierAt(tau, inputs, this.tip, this.carrier))
   }
 
-  worldIdAt(frameIndex: number): string {
-    return this.view.world ?? worldAt(clampFrame(frameIndex))
+  private nearAt(seconds: number): number {
+    return this.view.fixed ? 0.003 + 0.02 * this.view.fixed.distanceM : nearPlane(this.rigOf(seconds))
+  }
+
+  worldIdAt(_frameIndex: number): string {
+    return 'place'
   }
 
   state(frameIndex: number): FrameState {
@@ -151,7 +201,7 @@ export class Film {
     return job
   }
 
-  private light(def: WorldDef, pose: CameraPose): boolean {
+  private light(def: WorldDef, pose: CameraPose, shutter: number): boolean {
     if (this.diag === 'plant') {
       shared.uSunColor.value.set(0, 0, 0)
       shared.uSkyZenith.value.set(1, 1, 1)
@@ -171,59 +221,80 @@ export class Film {
       return true
     }
     applyWorld(def)
-    sunDirection(def, this.sun)
-    return this.sun.y > 0.01 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 0
+    this.sun.copy(now.light).lerp(later.light, shutter).normalize()
+    return now.lightKind !== 'none' && this.sun.y > 0.005 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 1e-4
   }
 
   private async draw(frameIndex: number, tier: TierId, pause: boolean): Promise<void> {
     if (this.stage.lost) throw new Error('the WebGL context was lost')
     await this.load()
+    const sky = this.sky as Sky
     const frame = clampFrame(frameIndex)
-    const time = timeOf(frame)
-    const def = worldOf(this.worldIdAt(frame))
     const { stage, camera } = this
     const { renderer } = stage
     const count = samplesOf(tier)
     const alone = this.diag === 'plant' || this.diag === 'backlight'
     this.lastTier = tier
+    setNow(frame)
+    const seconds = now.t
+    const tau = now.tau
+    const tauClose = later.tau
+    const def = lookAt(now, sky.light(now, this.skyLight), this.look)
     shared.uFrame.value = frame
-    shared.uTime.value = time
+    shared.uTime.value = tau
+    shared.uReal.value = seconds
+    shared.uWorldTime.value = now.world
     shared.uDiag.value = DIAG[this.diag]
-    this.sky.setWorld(def)
-    this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(time)))
-    this.ground.show(!alone)
+    this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(tau)))
+    this.ground.show(!alone && this.shows('ground'))
     stateUniforms.uPlantWet.value = def.ground.plantWet ?? def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
-    this.puddles.prepare(def, time, time + shutterSeconds, !alone, count)
-    const inputs = this.inputsAt(time)
-    const inputsClose = this.inputsAt(time + shutterSeconds)
-    this.plant.prepare(time, time + shutterSeconds, inputs, inputsClose)
-    const eye = this.rigOf(time)
-    const first = this.poseAt(time)
-    const tanX = (0.5 * config.camera.gateWidthMm) / eye.focalMm
+    const inputs = plantInputsOf(now)
+    const inputsClose = plantInputsOf(later)
+    const plantOn = this.shows('plant')
+    this.plant.visible = plantOn
+    if (plantOn) this.plant.prepare(tau, tauClose, inputs, inputsClose)
+    const first = this.poseAt(seconds)
+    const fixed = this.view.fixed
+    const eye = this.rigOf(seconds)
+    const distanceM = fixed ? fixed.distanceM : eye.distanceM
+    const heightM = fixed ? fixed.heightM : eye.heightM
+    const tanX = (0.5 * config.camera.gateWidthMm) / first.focalMm
     const tanY = (tanX * stage.height) / stage.width
+    const near = this.nearAt(seconds)
     // The companion is drawn when the lens could see a part of it, and once the camera is far enough back to see the ground it stands on.
-    const wide = alone ? 0 : smoothstep(1.0, 1.8, eye.distanceM)
-    const beside = !alone && (wide > 0 || companionInView(time, inputs, first, tanX, tanY, nearPlane(eye)))
+    const wide = alone ? 0 : smoothstep(1.0, 1.8, distanceM)
+    const beside = !alone && this.shows('companion') && (wide > 0 || companionInView(tau, inputs, first, tanX, tanY, near))
     this.companion.visible = beside
-    if (beside) this.companion.prepare(time, time + shutterSeconds, inputs, inputsClose)
+    if (beside) this.companion.prepare(tau, tauClose, inputs, inputsClose)
     fieldUniforms.uPlantWind.value = Math.min(inputs.calm ?? inputs.wind, inputs.wind)
-    fieldUniforms.uPlantHeight.value = heightAt(time)
-    this.field.prepare(time, time + shutterSeconds, inputs, inputsClose, eye.heightM)
-    this.field.look(first, tanX, stage.width / stage.height)
-    this.field.show(!alone)
-    const own = alone ? null : (this.stages.get(def.id) ?? null)
-    for (const made of this.stages.values()) for (const o of made.objects) o.visible = made === own
-    own?.prepare({ frame, time, timeClose: time + shutterSeconds, pose: first, width: stage.width, height: stage.height, samples: count })
-    const height = heightAt(time + shutterSeconds)
-    const reach = Math.max(0.012, 0.5 * height + plantReach(time + shutterSeconds) + 0.004)
+    fieldUniforms.uPlantHeight.value = heightAt(tau)
+    const fieldOn = !alone && this.shows('field')
+    if (fieldOn) {
+      this.field.prepare(tau, tauClose, inputs, inputsClose, heightM)
+      this.field.look(first, tanX, stage.width / stage.height)
+    }
+    this.field.show(fieldOn)
+    const quality: Quality = this.quality ?? (count > 1 ? 'film' : 'high')
+    const view: View = { pose: first, width: stage.width, height: stage.height, quality, samples: count }
+    for (const { name, part } of this.parts) {
+      if (alone || !this.shows(name)) {
+        for (const o of part.objects) o.visible = false
+        continue
+      }
+      part.prepare(now, later, view)
+    }
+    const skyOn = !alone && this.shows('sky')
+    if (skyOn) sky.prepare(renderer, now, later, view)
+    const height = heightAt(tauClose)
+    const reach = Math.max(0.012, 0.5 * height + plantReach(tauClose) + 0.004)
     // Once the camera is far enough back to see the ground round the plant, the shadow map takes in both plants whole.
     // In a close-up it takes in what the lens sees at the plant's depth and no more, so that the shadow of a bract or a petal is as fine as the frame.
     const place = companionPlace()
     const both = Math.hypot(place.x, place.z) + reach * config.field.companion.heightRatio
     const whole = lerp(reach, both, wide)
-    const depthM = this.tip.sub(first.position).dot(first.forward)
+    const depthM = fixed ? Math.max(0.05, -first.position.dot(first.forward)) : this.tip.sub(first.position).dot(first.forward)
     const seen = 1.25 * depthM * tanX * Math.hypot(1, stage.height / stage.width) + 0.02
     const fit = Math.max(wide, smoothstep(0.75, 1, seen / whole))
     const radius = Math.max(lerp(seen, whole, fit), Math.min(seen, 0.5))
@@ -235,29 +306,28 @@ export class Film {
     stage.accumulator.reset()
     const samples = frameSamples(frame, count)
     for (const s of samples) {
-      const at = time + shutterSeconds * s.shutter
+      const at = seconds + shutterSeconds * s.shutter
       const pose = this.poseAt(at)
-      const rig = this.rigOf(at)
       shared.uShutter.value = s.shutter
-      const lit = this.light(def, pose)
+      const lit = this.light(def, pose, s.shutter)
       shared.uSunDir.value.copy(this.sun)
-      applyLens(camera, pose, { gateMm: config.camera.gateWidthMm, width: stage.width, height: stage.height, near: nearPlane(rig), far: farPlane, pixelX: s.pixelX, pixelY: s.pixelY, lensX: s.lensX, lensY: s.lensY })
+      applyLens(camera, pose, { gateMm: config.camera.gateWidthMm, width: stage.width, height: stage.height, near: this.nearAt(at), far: farPlane, pixelX: s.pixelX, pixelY: s.pixelY, lensX: s.lensX, lensY: s.lensY })
       shared.uCamPos.value.copy(camera.position)
       shared.uFocusM.value = pose.focusM
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
-      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span, s.index)
+      if (lit && plantOn) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span, s.index)
       else this.shadow.off()
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)
       renderer.clear(true, true, false)
-      own?.sample?.(camera, s.shutter)
-      if (own?.sky) own.sky(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
-      else if (!alone) this.sky.render(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
+      for (const { name, part } of this.parts) if (!alone && this.shows(name)) part.sample?.(camera, s.shutter)
+      if (skyOn) sky.render(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
       renderer.render(this.scene, camera)
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
       if (pause) await breathe()
     }
-    const sunAt = alone ? null : sunInFrame(this.poseAt(time + 0.5 * shutterSeconds), sunDirection(def, this.sun), config.camera.gateWidthMm, stage.width, stage.height)
+    const sunSeen = !alone && now.lightKind === 'sun'
+    const sunAt = sunSeen ? sunInFrame(this.poseAt(seconds + 0.5 * shutterSeconds), this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize(), config.camera.gateWidthMm, stage.width, stage.height) : null
     this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
     stage.finish()
     if (stage.lost) throw new Error('the WebGL context was lost')
@@ -320,11 +390,19 @@ export class Film {
   }
 
   textureMb(): number {
-    return this.assets.megabytes()
+    return this.assets.megabytes() + (this.sky?.megabytes() ?? 0)
   }
 }
 
-export interface FilmView { azimuthDeg: number; elevationDeg: number; dolly: number; world: string | null }
+// The frames drawn before the film starts: every look of the film and the turns between them.
+export function warmFrames(): number[] {
+  const fps = config.film.fps
+  const frames = new Set<number>()
+  for (const s of [0, 2, 7.2, 12, 28.5, 35.4, 49.5, 56.0, 57.5, 62.6, 63.2, 69.5, 70.2, 80, 97, 99, 104, 118, 126]) frames.add(clampFrame(Math.round(s * fps)))
+  return [...frames].sort((a, b) => a - b)
+}
+
+export interface FilmView { azimuthDeg: number; elevationDeg: number; dolly: number; world: string | null; fixed: FixedView | null }
 
 export interface TexelCheck { frame: number; pixels: number; textured: number; soft: number; texturedOutsideSharpZone: number; softShare: number }
 

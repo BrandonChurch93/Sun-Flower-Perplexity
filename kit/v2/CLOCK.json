@@ -1,0 +1,39 @@
+{
+ "version": 1,
+ "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
+ "last": 1795390437676,
+ "phases": {
+  "0": 2220,
+  "1": 2760,
+  "2": 657.676
+ },
+ "sinceStatus": 5637.676,
+ "lastStatusAt": null,
+ "continuations": [],
+ "extensions": {},
+ "log": [
+  {
+   "at": "2026-11-22T22:00:00Z",
+   "kind": "start",
+   "addedSeconds": 0
+  },
+  {
+   "at": "2026-11-22T22:46:00Z",
+   "kind": "phase",
+   "id": 1,
+   "addedSeconds": 2760
+  },
+  {
+   "at": "2026-11-22T23:23:00Z",
+   "kind": "phase",
+   "id": 0,
+   "addedSeconds": 2220
+  },
+  {
+   "at": "2026-11-22T23:33:57Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 658
+  }
+ ]
+}

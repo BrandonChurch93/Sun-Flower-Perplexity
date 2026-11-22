@@ -1,6 +1,8 @@
 import { config, frameCount, type AssetSetId, type Format, type TierId } from '../config.ts'
 import { isDiag, type DiagName } from '../core/shading.ts'
 import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
+import type { Quality } from '../v2/api.ts'
+import { views, type ViewName } from '../v2/shots.ts'
 import { clampFrame, segments } from './timeline.ts'
 
 export type Mode = 'live' | 'autopilot' | 'capture' | 'export'
@@ -24,6 +26,13 @@ export interface Options {
   az: number
   el: number
   dolly: number
+  // A sky under trial, by its folder. What is drawn, by name. A fixed camera. The sky's quality level.
+  sky: string | null
+  only: string[]
+  view: ViewName | null
+  quality: Quality | null
+  // Counts what the graphics card is asked to make, from the first call on.
+  count: boolean
   // Which of these the address named itself. A value nobody chose does not follow a change of mode.
   chosen: { format: boolean; tier: boolean; assets: boolean }
 }
@@ -92,6 +101,11 @@ export function readOptions(search: string): Options {
     az: clampAzimuth(number('az') ?? 0),
     el: clampElevation(number('el') ?? 0),
     dolly: clampDolly(number('dolly') ?? 1),
+    sky: p.get('sky'),
+    only: (p.get('only') ?? '').split(',').map((x) => x.trim()).filter(Boolean),
+    view: p.get('view') === 'film' || (p.get('view') ?? '') in views ? (p.get('view') as ViewName) : null,
+    quality: p.get('quality') === 'film' || p.get('quality') === 'high' || p.get('quality') === 'low' ? (p.get('quality') as Quality) : null,
+    count: isOn(p.get('count')) || heavy,
     chosen: { format: Boolean(formatId), tier: Boolean(tier && isTier(tier)), assets: Boolean(assets && isAssetSet(assets)) },
   }
 }
@@ -113,6 +127,11 @@ export function writeOptions(options: Options): string {
   if (options.az !== 0) p.set('az', String(options.az))
   if (options.el !== 0) p.set('el', String(options.el))
   if (options.dolly !== 1) p.set('dolly', String(options.dolly))
+  if (options.sky) p.set('sky', options.sky)
+  if (options.only.length) p.set('only', options.only.join(','))
+  if (options.view) p.set('view', options.view)
+  if (options.quality) p.set('quality', options.quality)
+  if (options.count !== base.count) p.set('count', options.count ? '1' : '0')
   if (options.hold) p.set('hold', '1')
   if (options.loop) p.set('loop', '1')
   const text = p.toString()
