@@ -12,7 +12,7 @@ const rise = new Monotone(RISE.map((v, i) => [i, v] as const))
 const set = new Monotone(SET.map((v, i) => [i + DAY, v] as const))
 
 export const MOON_AZIMUTH_DEG = 168
-export const MOON_ELEVATION_DEG = 34
+export const MOON_ELEVATION_DEG = 13
 
 const smooth = (x: number): number => {
   const t = clamp(x)

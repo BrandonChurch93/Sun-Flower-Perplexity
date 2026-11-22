@@ -28,7 +28,7 @@ export const shots: Shot[] = [
   { id: '03-morning', seconds: 2.8, view: 'up', what: 'the sun 20 degrees up in a fair sky with small cumulus' },
   { id: '04-noon', seconds: bar(3.1), view: 'up', what: 'high sun, deep blue above, cumulus' },
   { id: '05-sunset', seconds: bar(4.33), view: 'low', what: 'the first sunset: the sun 5 degrees up, left of centre' },
-  { id: '06-night', seconds: bar(4.74), view: 'low', what: 'the quick night: stars and the moon' },
+  { id: '06-night', seconds: bar(4.74), view: 'low', what: 'the quick night: stars, and the moon 13 degrees up at the right of the frame' },
   { id: '07-frost', seconds: bar(21), view: 'low', what: 'the frost morning: a low sun through thick mist' },
   { id: '08-lapse', seconds: bar(29.25), view: 'wide', what: 'time lapse at full speed: racing cumulus, sun 17 degrees up' },
   { id: '09-front', seconds: bar(32.5), view: 'wide', what: 'the storm front closing the sky' },
