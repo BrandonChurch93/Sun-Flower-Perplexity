@@ -7,7 +7,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
-import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, hangAt, kindTime, lagAt, lateAt, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, swayOf, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, gustOf, hangAt, kindTime, lagAt, lateAt, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, swayOf, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -158,12 +158,16 @@ export class Field {
         seen[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.4 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own)
         still[n + 7] = late > 0 ? lateLeafCode(all[i + 7]) : seen[n + 7]
         const move = swayOf(all[i + 7], this.time)
-        if (move) {
-          turnBy(seen, n, move.head)
-          leanBy(seen, n, move.x, move.z)
+        const gust = late > 0 ? gustOf(all[i + 7], all[i], all[i + 1], this.time) : null
+        const mx = (move ? move.x : 0) + (gust ? gust.x : 0)
+        const mz = (move ? move.z : 0) + (gust ? gust.z : 0)
+        turnBy(seen, n, (move ? move.head : 0) + (gust ? gust.head : 0))
+        turnBy(still, n, leafSpin(all[i + 7]) + (move ? move.leaves : 0) + (gust ? gust.leaves : 0))
+        if (mx !== 0 || mz !== 0) {
+          leanBy(seen, n, mx, mz)
+          leanBy(still, n, mx, mz)
         }
-        turnBy(still, n, leafSpin(all[i + 7]) + (move ? move.leaves : 0))
-        if (move) leanBy(still, n, move.x, move.z)
+        if (gust && before === 0) seen[n + 7] = ownCode(own, gust.nod)
         if (late > 0 && !g.bare) still[n + 3] *= 1 - late * leafShort(all[i + 7])
         n += PLACE
       }

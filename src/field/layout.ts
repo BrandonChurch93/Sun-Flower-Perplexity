@@ -135,8 +135,38 @@ export function swayOf(id: number, time: number): { x: number; z: number; leaves
   const across = on * 0.012 * beat(134, 2.6, 5.2)
   return { x: Math.cos(way) * along - Math.sin(way) * across, z: Math.sin(way) * along + Math.cos(way) * across, leaves: on * 0.06 * beat(136, 2.4, 5.6), head: on * 0.087 * beat(138, 3.6, 7.4) }
 }
+// One gust crosses the field from the sun's side: its front leaves the far edge at 52.8 s and passes the plant at about 56 s, uneven along its length.
+// Each neighbor is pushed over as it is struck, shakes while it is held, and springs back on a period and with a damping of its own; its head and its leaves
+// follow, each with its own lag. All is still again by 58.4 s.
+export const GUST = { fromS: 53.4, fromM: -49, speedMS: 18, x: 0.9659, z: 0.2588, stillS: 58.4 }
+const gustHit = (x: number, z: number): number => Math.max(52.1, GUST.fromS + (x * GUST.x + z * GUST.z - GUST.fromM) / GUST.speedMS)
+const blowOf = (tau: number, a: number, b: number, c: number): number => {
+  if (tau <= 0) return 0
+  const held = ramp(0, 0.28, tau) * (1 - ramp(0.7 + 0.3 * a, 1.2 + 0.45 * a, tau)) * (1 + 0.14 * Math.sin(2 * Math.PI * (tau / (0.36 + 0.2 * b) + c)))
+  const free = tau - (0.95 + 0.37 * a)
+  return held - (free > 0 ? (0.2 + 0.25 * b) * ramp(0, 0.2, free) * Math.exp(-free / (0.3 + 0.25 * c)) * Math.sin((2 * Math.PI * free) / (0.8 + 0.7 * a)) : 0)
+}
+export function gustOf(id: number, x: number, z: number, time: number): { x: number; z: number; leaves: number; head: number; nod: number } | null {
+  const end = 1 - ramp(57.5, GUST.stillS, time)
+  if (time <= 52.1 || end === 0) return null
+  const tau = time - gustHit(x, z) - 0.25 * hash01(SEED, 140, id) - 0.35 * noise(32, x * 0.07, z * 0.07)
+  if (tau <= 0) return null
+  const a = hash01(SEED, 141, id)
+  const b = hash01(SEED, 142, id)
+  const c = hash01(SEED, 143, id)
+  const lean = end * (0.105 + 0.053 * hash01(SEED, 144, id)) * (1 - 0.45 * step(12, 45, Math.hypot(x, z))) * blowOf(tau, a, b, c)
+  const way = (hash01(SEED, 145, id) - 0.5) * 0.5
+  const side = (channel: number): number => (hash01(SEED, channel, id) < 0.5 ? -1 : 1)
+  return {
+    x: (Math.cos(way) * GUST.x - Math.sin(way) * GUST.z) * lean,
+    z: (Math.sin(way) * GUST.x + Math.cos(way) * GUST.z) * lean,
+    head: end * 0.22 * side(146) * blowOf(tau - 0.06 - 0.16 * hash01(SEED, 147, id), b, c, a),
+    leaves: end * 0.17 * side(148) * blowOf(tau - 0.04 - 0.2 * hash01(SEED, 149, id), c, a, b),
+    nod: end * 0.14 * blowOf(tau - 0.08 - 0.1 * hash01(SEED, 150, id), a, c, b),
+  }
+}
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
-export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
+export const ownCode = (own: Own, nod = 0): number => Math.max(0, Math.round((own.nod + nod) * 64)) + own.head * 0.5
 // Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
 const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
 export const earlyCode = (own: Own, bud = own.bud, leaf = own.leaf, droop = own.droop): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(leaf, 0.75, 1.6) + 1024 * steps(droop, -0.15, 0.6) + 32768 * steps(bud, 0.8, 2.6)
