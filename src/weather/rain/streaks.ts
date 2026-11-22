@@ -5,7 +5,10 @@ import { RAIN_CELL_M, RAIN_FINE_SERIES, RAIN_SERIES, dropOf, fallDir, firstIndex
 
 // A drop crosses many times its own width while the shutter is open, so it is drawn as the whole path it sweeps: a strip from where it is at the open shutter
 // to where it is at the close, as wide as the drop, holding the share of the exposure the drop spends over each point of it.
+const PLANT_REACH_M = 0.3
+
 const vertex = /* glsl */ `
+const float PLANT_REACH_M = ${PLANT_REACH_M.toFixed(2)};
 in vec2 position;
 in vec4 aOpen;
 in vec4 aClose;
@@ -57,6 +60,13 @@ void main() {
   vSeen = min(1.0, max(0.09, least * least));
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
+  // Seen past the plant, a drop nearer than it reads as falling through the leaves. Within the plant's reach every drop is tested against the picture's depth as if it fell just behind the plant, so a leaf hides it and the streak ends on the leaf's edge.
+  vec3 ray = normalize(vWorld - uCamPos);
+  float axisAt = -dot(uCamPos.xz, ray.xz) / max(dot(ray.xz, ray.xz), 1e-6);
+  if (axisAt > 0.0 && length(uCamPos.xz + ray.xz * axisAt) < PLANT_REACH_M && length(vWorld - uCamPos) < axisAt + PLANT_REACH_M) {
+    vec4 behind = projectionMatrix * viewMatrix * vec4(uCamPos + ray * (axisAt + PLANT_REACH_M), 1.0);
+    gl_Position.z = behind.z * gl_Position.w / behind.w;
+  }
   if (-a.z < 0.02 || -b.z < 0.02) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
 }
 `
@@ -72,6 +82,23 @@ in float vRun;
 in vec3 vWorld;
 uniform vec3 uLight;
 uniform vec3 uShade;
+uniform vec3 uRainUp;
+float litFromSun(vec3 q) {
+  vec4 sc = uShadowMatrix * vec4(q, 1.0);
+  vec3 p = sc.xyz / sc.w;
+  if (p.x <= 0.0 || p.x >= 1.0 || p.y <= 0.0 || p.y >= 1.0 || p.z >= 1.0) return 1.0;
+  return texture(uShadowMap, vec3(p.xy, p.z - uShadowBias));
+}
+// A drop that met a leaf or the stem on its way down has landed and is not in the air under it: the path it came by is walked back up, and a point of it that lies in shade with the light two centimetres above it is a point just under a surface.
+bool landedAbove(vec3 world) {
+  if (uShadowOn < 0.5) return false;
+  float start = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  for (int i = 0; i < 22; i++) {
+    vec3 q = world + uRainUp * ((float(i) + start) * 0.016);
+    if (litFromSun(q) < 0.5 && litFromSun(q + uSunDir * 0.02) > 0.5) return true;
+  }
+  return false;
+}
 void main() {
   if (uDiag > 1) discard;
   float cap = max(0.0, 1.0 - min(vEnds.x, vEnds.y));
@@ -90,6 +117,7 @@ void main() {
   // The line a drop gathers swells in and out of sight as the drop swings, so a streak has no hard end.
   float ends = smoothstep(0.0, 0.3, min(vRun, 1.0 - vRun));
   float cover = saturate(vShare * 1.25 * ends * mix(body, body + 1.5 * core, seen)) * mix(0.3, 1.0, level);
+  if (cover > 0.004 && landedAbove(vWorld)) discard;
   outColor = vec4(applyFog(color, vWorld), cover);
 }
 `
@@ -104,7 +132,7 @@ const SOFT_NEAR = 0.85
 const SOFT_REACH = 1.21
 const SOFT_KEEP = 0.6
 // The air holds more of the finest rain than marks the puddles.
-const FINE_IN_AIR = 2.8
+const FINE_IN_AIR = 2
 const SLOWEST_M_PER_S = 0.5
 // The wind carries a light drop farther than a heavy one, and gusts carry each a little differently, so no two fall at one angle. Every path still ends at its own landing.
 const CARRY_SPREAD = 0.32
@@ -149,6 +177,7 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
     uBand: { value: new THREE.Vector4(SOFT_NEAR, FINE_NEAR, FINE_REACH, SOFT_REACH) },
     uLight: { value: new THREE.Vector3().fromArray(light) },
     uShade: { value: new THREE.Vector3().fromArray(shade) },
+    uRainUp: { value: new THREE.Vector3(-fallDir[0], -fallDir[1], -fallDir[2]) },
   }
   const surface = makeSurface({ name: 'rain streaks', vertex, fragment, uniforms, side: THREE.DoubleSide, transparent: true, depthWrite: false })
   const mesh = new THREE.Mesh(geometry, surface.main)
