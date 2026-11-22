@@ -334,7 +334,8 @@ void main() {
   float near = 1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r);
   float go = smoothstep(start, start + 0.6, uTime) * near * (1.0 - mass);
   float heave = heaved() * near * mass;
-  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (0.35 + 0.4 * hash11(own + 7.0));
+  float first8 = uTime < uRainS.x ? 1.0 : 0.0;
+  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (mix(0.25, 0.35, first8) + mix(0.3, 0.4, first8) * hash11(own + 7.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
   mat3 m = mat3(modelMatrix);
   float young = mass * (1.0 - smoothstep(0.035, 0.05, r)) * (1.0 - smoothstep(uRainS.x, uRainS.y, uTime));
@@ -344,7 +345,7 @@ void main() {
   rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));
   ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
   normal = normal * cos(angle) + cross(axis, normal) * sin(angle) + axis * dot(axis, normal) * (1.0 - cos(angle));
-  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * (0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r))));
+  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * mix(0.002, 0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r)), first8));
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;

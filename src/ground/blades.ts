@@ -27,6 +27,9 @@ export const clumps: Clump[] = [
   { x: -0.105, z: -0.02, blades: 3, heightM: [0.012, 0.02], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [1.6, 2.8], growS: 3.5, beads: 5 },
   { x: -0.12, z: -0.11, blades: 3, heightM: [0.012, 0.022], widthM: [0.0015, 0.0021], spreadM: 0.005, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3.5, beads: 5 },
   { x: -0.075, z: -0.16, blades: 2, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2.4, 3.6], growS: 3.5, beads: 4 },
+]
+// The blades that stand by the mound in the dawn only, beaded and lit from behind: left and right of it in the plane of focus, and one soft before the lens.
+export const clumpsDawn: Clump[] = [
   { x: -0.035, z: -0.012, blades: 3, heightM: [0.024, 0.036], widthM: [0.0016, 0.0022], spreadM: 0.005, lean: [0.08, 0.35], bornS: [-100, -100], growS: 1, beads: 9, headingRad: [-2.0, -1.1] },
   { x: 0.031, z: -0.015, blades: 2, heightM: [0.022, 0.032], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 6, headingRad: [-2.0, -1.1] },
   { x: -0.026, z: 0.06, blades: 2, heightM: [0.02, 0.028], widthM: [0.0015, 0.002], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 4, headingRad: [-2.0, -1.1] },
@@ -38,7 +41,8 @@ const GUST = '1.3'
 const FOLD = 0.35
 const DROOP_BEADS = 12
 
-export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
+export function blades(clumps: Clump[], bead: BeadSizes, first: Clump[] = []): THREE.Mesh {
+  let stay = -1
   const random = stream('ground blades')
   const loose = stream('ground blades drops')
   const drops = bead.drops
@@ -59,7 +63,8 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const n = new THREE.Vector3()
   const down = new THREE.Vector3()
   const out = new THREE.Vector3()
-  for (const clump of clumps) {
+  for (const clump of [...clumps, ...first]) {
+    if (clump === first[0]) stay = index.length
     for (let b = 0; b < clump.blades; b++) {
       const place = random.next() * Math.PI * 2
       const away = clump.spreadM * Math.sqrt(random.next())
@@ -186,6 +191,7 @@ export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   geometry.setAttribute('aCenter', new THREE.Float32BufferAttribute(center, 4))
   geometry.setAttribute('aAlong', new THREE.Float32BufferAttribute(along, 4))
   geometry.setIndex(index)
+  geometry.userData.stay = stay < 0 ? index.length : stay
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 0.3)
   return new THREE.Mesh(geometry)
 }
