@@ -333,8 +333,8 @@ void main() {
   float start = 0.02 + 1.3 * first * first;
   float near = 1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r);
   float go = smoothstep(start, start + 0.6, uTime) * near * (1.0 - mass);
-  float heave = smoothstep(-0.8, uEmerge.x, uTime) * near * mass;
-  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (0.25 + 0.3 * hash11(own + 7.0));
+  float heave = heaved() * near * mass;
+  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (0.35 + 0.4 * hash11(own + 7.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
   mat3 m = mat3(modelMatrix);
   float young = mass * (1.0 - smoothstep(0.035, 0.05, r)) * (1.0 - smoothstep(uRainS.x, uRainS.y, uTime));
@@ -344,7 +344,7 @@ void main() {
   rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));
   ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
   normal = normal * cos(angle) + cross(axis, normal) * sin(angle) + axis * dot(axis, normal) * (1.0 - cos(angle));
-  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * 0.002);
+  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * (0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r))));
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -376,7 +376,10 @@ const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
 const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
 const vec3 DEW_FILL = vec3(${dewFill.join(', ')});
 // At dawn the sun skims over each lump's crest: its rough upper side toward the sun takes the light this far round, at this strength.
-const vec2 CREST = vec2(0.3, 0.8);
+const vec2 CREST = vec2(0.55, 1.4);
+const float CREST_TOP = 0.7;
+// The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, and how bright it is.
+const vec2 DEW_GLINT = vec2(0.1, 0.5);
 ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -420,7 +423,8 @@ void main() {
   float wrap = mix(0.25, 0.2, uDew) * (1.0 - 0.8 * dull * uDew);
   vec3 toSun = normalize(mix(n, smoothN, 0.85 * dull * uDew));
   float sunOn = saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap));
-  float crest = saturate((dot(normalize(vBall), uSunDir) + CREST.x) / (1.0 + CREST.x)) * smoothstep(0.4, 0.8, dD.a) * (0.45 + grit.a);
+  vec3 ball = normalize(vBall);
+  float crest = saturate((dot(ball, uSunDir) + CREST.x + CREST_TOP * max(ball.y, 0.0)) / (1.0 + CREST.x)) * smoothstep(0.4, 0.8, dD.a) * (0.45 + grit.a);
   float dawn = dawnOnly() * uDew;
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
@@ -429,6 +433,7 @@ void main() {
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
+  color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
