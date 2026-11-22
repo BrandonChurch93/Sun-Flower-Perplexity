@@ -7,7 +7,7 @@ import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { smoothstep } from '../core/curves.ts'
 import { segmentById } from '../director/timeline.ts'
 import { companionPlace, right, toward } from '../field/layout.ts'
-import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsKept } from './blades.ts'
+import { beadSizes, beadSizesKept, bladeFragment, bladeVertex, blades, clumps, clumpsDawn, clumpsKept } from './blades.ts'
 import { grassCover, grassTimes } from './cover.ts'
 import { clodScatter, clodScatterKept, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, lumpScatterYoung, massScatter, massScatterYoung, scatter } from './crumbs.ts'
 import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
@@ -111,6 +111,13 @@ export class Ground {
       mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= keptS === kept ? all : 0)
       return mesh
     }
+    const young = (mesh: THREE.Mesh): THREE.Mesh => {
+      const all = mesh.geometry.getIndex()!.count
+      const stay = mesh.geometry.userData.stay as number
+      const rainS = segmentById('rain').start
+      mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= keptS ? 0 : shared.uTime.value < rainS ? all : stay)
+      return mesh
+    }
     const from = (mesh: THREE.Mesh): THREE.Mesh => {
       const all = mesh.geometry.getIndex()!.count
       mesh.onBeforeRender = () => mesh.geometry.setDrawRange(0, shared.uTime.value >= fieldS ? all : 0)
@@ -131,7 +138,7 @@ export class Ground {
     add(close(scatter('ground grains', grainScatter)), this.fine, true)
     add(when(scatter('ground masses', massScatterYoung), false), this.loose, true)
     add(when(scatter('ground masses', massScatter), true), this.loose, true)
-    add(when(blades(clumps, beadSizes), false), this.blades, true)
+    add(young(blades(clumps, beadSizes, clumpsDawn)), this.blades, true)
     add(when(blades(clumpsKept, beadSizesKept), true), this.blades, true)
     for (const mesh of tufts()) add(mesh, this.grass, true)
     for (const mesh of fieldTufts()) add(from(mesh), this.grass, true)

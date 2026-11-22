@@ -27,6 +27,12 @@ export const sunWayRise = Math.tan((dawn.sun.elevationDeg * Math.PI) / 180)
 
 export const MATT_EASE_S = 3.5
 export const emergence = { riseS: 2.3, liftM: 0.0075, radiusM: 0.025, cracks: 5 }
+// The seed heaves hardest as the film opens: this share of the lift comes in a first push that starts leadS before the film and is spent after pushS, the rest eases over the whole rise from restLeadS before the film.
+export const heave = { push: 0.3, leadS: 0.05, pushS: 0.45, restLeadS: 0.8 }
+export const heaveAt = (time: number): number => {
+  const v = 1 - Math.min(1, Math.max(0, (time + heave.leadS) / (heave.pushS + heave.leadS)))
+  return heave.push * (1 - v * v) + (1 - heave.push) * step(-heave.restLeadS, emergence.riseS, time)
+}
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
 
@@ -82,7 +88,7 @@ export function soilHeightAt(x: number, z: number, time: number): number {
   const r = Math.hypot(x, z)
   const heap = collarAt(x, z, time, segmentById('bloom').start)
   if (r > e.radiusM * 1.7) return heap
-  const rise = step(-0.8, e.riseS, time) * (1 - 0.3 * step(e.riseS, e.riseS + 5, time))
+  const rise = heaveAt(time) * (1 - 0.3 * step(e.riseS, e.riseS + 5, time))
   const a = Math.atan2(z, x)
   const s = (a * e.cracks) / 6.2832 + 0.07 * Math.sin(r * 420 + a * 2) + 0.05 * Math.sin(r * 1300)
   const id = ((Math.floor(s) % e.cracks) + e.cracks) % e.cracks
@@ -166,11 +172,15 @@ float clodShape(float c) {
 uniform vec4 uEmerge;
 uniform vec4 uHole;
 uniform vec3 uDome;
+float heaved() {
+  float a = 1.0 - clamp((uTime + ${heave.leadS}) / ${heave.pushS + heave.leadS}, 0.0, 1.0);
+  return ${heave.push} * (1.0 - a * a) + ${1 - heave.push} * smoothstep(-${heave.restLeadS}, uEmerge.x, uTime);
+}
 // x is the height the breaking soil adds, y how deep inside a crack the point is, from 0 to 1.
 vec2 emerge(vec2 p) {
   float r = length(p);
   if (r > uEmerge.z * 1.7) return vec2(0.0);
-  float rise = smoothstep(-0.8, uEmerge.x, uTime) * (1.0 - 0.3 * smoothstep(uEmerge.x, uEmerge.x + 5.0, uTime));
+  float rise = heaved() * (1.0 - 0.3 * smoothstep(uEmerge.x, uEmerge.x + 5.0, uTime));
   float a = atan(p.y, p.x);
   float s = a * uEmerge.w / 6.2832 + 0.07 * sin(r * 420.0 + a * 2.0) + 0.05 * sin(r * 1300.0);
   float id = mod(floor(s), uEmerge.w);
