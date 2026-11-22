@@ -1,0 +1,63 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "upper midground across the back edge of the sunflower field (also native crops 10 and 11 in set-C-03.png)",
+      "what": "a hard horizontal detail cutoff runs across the entire frame where 3D sunflowers abruptly stop, leaving a noisy stippled transition strip and a bare, featureless dark hillside above it",
+      "fix": "extend scattered sunflower geometry and multi-stage distance proxies continuously up the slope with natural density falloff so no LOD transition line is visible"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7 upper row, crop 8 left neighbor, and crop 9 field behind the plant",
+      "what": "all neighboring and field plants are low-detail models with single-tone flat green card leaves, smooth knife-sharp un-serrated edges, no veins or backlit translucency, hairless stems, and repeated cookie-cutter flower heads around flat dark discs, creating a stark detail drop next to the hero pair",
+      "fix": "replace near- and mid-field proxy plants with detailed assets featuring leaf thickness, serrated margins, venation, surface roughness variation, stem hairs on close stalks, and varied flower-head geometry"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 2 hero flower heads",
+      "what": "an overlapping second head and stem directly behind the right hero bloom creates a bright, blurry horizontal-streaked white halo outside the upper-right petals and a doubled glowing stem below the head; the back-facing left head is a smooth oval cap with painted dark stripes instead of layered green bracts; and shaded petals on the right head look muddy and opaque against the backlight",
+      "fix": "reposition or remove the overlapping background head behind the right hero flower to eliminate the fuzzy white halo and double stem, model overlapping involucral bracts on the back of the left head, and add warm backlit translucency to thin petals"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 3, crop 4, and crop 5 hero leaves",
+      "what": "hero leaves have a waxy, plastic sheen with uniform parallel accordion-like corrugations instead of branching veins, coarse polygonal notches along margins, and bright zero-thickness rim lines; in crop 5, backlit leaves shade as opaque corrugated facets rather than transmitting light attenuated by internal veins",
+      "fix": "subdivide leaf meshes for organic curvature and fine serrated edges, replace parallel wave ridges with hierarchical branching veins and matte bristly micro-roughness, and use thickness-mapped subsurface scattering for backlit leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 3 hero stems",
+      "what": "backlit hairs on both straight cylindrical hero stems render as an unbroken, uniform glowing white fuzz outline hugging each side of the stalk rather than discrete varied hairs",
+      "fix": "vary hair length, clumping, density, and angle along the stems and petioles, and add subtle organic stem taper and surface ridging"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 10 and crop 11 skyline and sky",
+      "what": "in crop 10, two distant mountain silhouettes on the right skyline are razor-sharp and jagged right beside heavily blurred horizon trees at the same depth, accompanied by a faint bright halo along the hill crest; both crops also show heavy noise across the sky and out-of-focus treeline",
+      "fix": "apply consistent depth-of-field blur across all distant horizon elements, remove the crest edge halo, and denoise the sky and out-of-focus background"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6 soil at the stem bases (and set-C-03.png crop 7 foreground ground)",
+      "what": "exposed soil patches inside the sharp foreground zone—including the pale mound between the hero plants in crop 6 and the lit spot at lower left of crop 7—are soft and blurry beside crisp grass blades, sunlit dirt in crop 6 shows smeared bump ripples instead of granular clods, contact shadows are weak on the pale mound, and crop 7 grass blades are stiff flat V-ribbons",
+      "fix": "use crisp high-resolution displaced soil granules, clods, and litter throughout the sharp zone, add grounded contact shadow where stems and low leaves meet the soil, and vary grass blade width and curvature"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-03.png",
+      "where": "crop 11 sunlit hill crest and set-C-02.png crop 1 flower-head edges",
+      "what": "isolated 1-to-2-pixel dark specks sit along the sunlit hill ridge from sub-pixel distant geometry, and zoomed inspection shows a 1-pixel detached green rim line above the left flower head and slight pixel stair-stepping on petal tips",
+      "fix": "cull or filter sub-pixel horizon geometry to prevent single-pixel aliasing specks and increase anti-aliasing samples on fine bract and petal edges"
+    }
+  ]
+}

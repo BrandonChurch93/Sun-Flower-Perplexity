@@ -1,0 +1,56 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-05.png",
+      "where": "horizon behind the plant, f0599 to f0600",
+      "what": "the horizon does not line up across the cut. The rain shot has a flat treeline at about 57% of frame height. The night shot puts a mountain silhouette about 5 tile px higher, about 20 px native, with a fog band below it, so the line visibly steps up at the cut. The ground also turns from open meadow grass into dark field foliage with a different layout.",
+      "fix": "lock the night plate's horizon height and profile, and its ground-plane grass layout, to the rain plate. Change only the weather, light and sky."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "top of the upper leaf pair, f0290 to f0301",
+      "what": "in this fastest-growth stretch the top of the plant rises about 3 px per frame at half size for seven frames. It then stops dead at f0297 and backs off 1 px by f0301, while the background keeps drifting steadily. Growth halts abruptly instead of easing, which reads as a hitch.",
+      "fix": "keep the growth velocity continuous through this stretch. Any change in rate should ease over many frames, and leaf bob from rain hits should sit on top of the steady rise."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "background soil and sky band, all 12 frames (also set-D-08, set-D-09, set-D-10)",
+      "what": "the defocused background shifts by 0.2 px or less at half size across 0.37 s in these stretches. The camera reads as locked off or stopped rather than making one continuous move with mass.",
+      "fix": "keep a slow, continuous camera move (push or arc) running through every stretch, with measurable parallax between the plant and the background in every frame."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "shed seed-coat halves left of the stem, f0120 to f0126",
+      "what": "the seed coat falls about 70 px at half size, about 140 px native, over six frames under real-time gravity, blurred in mid-air, and then lands. The plant is growing at time-lapse speed in the same frames, so the two time scales clash.",
+      "fix": "make the seed coat drop between frames, or over one or two frames at most, as it would in a real time-lapse. Otherwise keep it lying on the soil."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "small grass tuft left of the seed coat, f0239 to f0240",
+      "what": "across the cut, the dawn shot has a clump of four or five blades here, but the rain shot has a single thin blade. The foreground grass does not match exactly.",
+      "fix": "carry the same grass geometry across the cut and change only its wetness and lighting."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-05.png",
+      "where": "lower-left leaf and the lowest leaves, f0599 to f0600",
+      "what": "the leaf positions match, but the lower-left leaf's fold and its pale underside shading change across the cut. When the frames are overlaid, the leaf outline fringes.",
+      "fix": "keep the leaf pose identical across the cut so that only the lighting changes."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-08.png",
+      "where": "out-of-focus sky band upper right",
+      "what": "under strong zoom, the smooth sky shows block-pattern grain that changes from frame to frame and is uncorrelated between frames (the same happens in the set-D-09 sky). It could shimmer faintly on large screens.",
+      "fix": "denoise or stabilize grain in the soft gradients, and encode at a higher bitrate."
+    }
+  ]
+}
