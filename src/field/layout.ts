@@ -114,13 +114,27 @@ export function ownOf(id: number): Own {
   const young = hash01(SEED, 100, id) < 0.085 ? 0.35 + 0.25 * hash01(SEED, 104, id) : 0.84 + 0.26 * hash01(SEED, 104, id)
   const way = hash01(SEED, 105, id) * 2 * Math.PI
   const lean = hash01(SEED, 106, id) < 0.04 ? 0.25 + 0.2 * hash01(SEED, 107, id) : 0.12 * hash01(SEED, 107, id)
-  const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
+  const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.12 + 0.33 * hash01(SEED, 82, id))
   return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
 }
 // Every neighbor wears its leaves its own way round its stem, for good: the same kind is never seen twice from the same side. Those set by hand keep theirs, as do the three that stand clear under the moon.
 export const leafSpin = (id: number): number => (handSet.has(id) || CLEAR.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
 // Late in the bloom the stalk under a heavy head has gone on growing past its last leaves: each neighbor has its own length of bare neck.
 export const leafShort = (id: number): number => (handSet.has(id) ? 0 : 0.2 * Math.pow(hash01(SEED, 122, id), 1.5))
+// In the evening air of the last eight seconds every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
+// by up to 2.3 degrees; its leaves swing round the stem by up to 3.5 degrees and its head by up to 5, each on its own period. Those set by hand stand still.
+export const SWAY_FROM_S = 52
+export const swayAt = (time: number): number => ramp(SWAY_FROM_S, SWAY_FROM_S + 1.1, time)
+export function swayOf(id: number, time: number): { x: number; z: number; leaves: number; head: number } | null {
+  const on = swayAt(time)
+  if (on === 0 || handSet.has(id)) return null
+  const turn = 2 * Math.PI
+  const beat = (channel: number, low: number, high: number): number => Math.sin(turn * (time / (low + (high - low) * hash01(SEED, channel, id)) + hash01(SEED, channel + 1, id)))
+  const way = turn * hash01(SEED, 130, id)
+  const along = on * (0.022 + 0.018 * hash01(SEED, 131, id)) * beat(132, 3.2, 6.8)
+  const across = on * 0.012 * beat(134, 2.6, 5.2)
+  return { x: Math.cos(way) * along - Math.sin(way) * across, z: Math.sin(way) * along + Math.cos(way) * across, leaves: on * 0.06 * beat(136, 2.4, 5.6), head: on * 0.087 * beat(138, 3.6, 7.4) }
+}
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
 export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
 // Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
