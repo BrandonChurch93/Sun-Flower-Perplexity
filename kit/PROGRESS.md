@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 01:09 UTC · rain finished at its round limit on 47d93fd: clip, comparison image, M1 open item
-- Last status: 58 · 2026-11-22 01:04 UTC · Phase 4 · unit rain
+- Last push: 2026-11-22 01:11 UTC · Status 59: rain finished and published. field finished at its round limit on 47d93fd: clip and comparison image kept
+- Last status: 59 · 2026-11-22 01:11 UTC · Phase 4 · unit rain
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 01:11 UTC · status 59 · Phase 4 · unit rain · `status-1.jpg`: Rain key, frame 420: approved image (left) beside the film at the final tier (right); `status-2.jpg`: Rain clip, frame 270 (9.0 s), one second after the cut; `status-3.jpg`: Rain clip, frame 549 (18.3 s); `status-4.jpg`: Rain clip, frame 585 (19.5 s)
 - 2026-11-22 01:04 UTC · status 58 · Phase 4 · unit rain · `status-1.jpg`: Rain, frame 585 (19.5 s), from the clip part 570 to 599; `status-2.jpg`: Night, frame 615 (20.5 s), from the clip part 600 to 629; `status-3.jpg`: Frost, frame 1005 (33.5 s), from the clip part 990 to 1019; `status-4.jpg`: Field, frame 1695 (56.5 s), from the clip part 1680 to 1709
 - 2026-11-22 00:44 UTC · status 57 · Phase 4 · unit dawn · `status-1.jpg`: Dawn 1.5 s: approved left, the judged frame right, with crops at native size; `status-2.jpg`: Dawn 6.5 s: approved left, the judged frame right, with crops at native size; `status-3.jpg`: Dawn 5.0 s, from the clip: the seed leaves open; `status-4.jpg`: Dawn 7.97 s, from the clip: the last frame before the cut to rain
 - 2026-11-22 00:31 UTC · status 56 · Phase 4 · unit rain · round 20 · `status-1.jpg`: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; `status-2.jpg`: Dawn 0.27 s, from a clip part at review tier: the hook breaks the soil; `status-3.jpg`: Dawn 3.6 s, from a clip part: the hull opens; `status-4.jpg`: Frost 39.97 s, from a clip part: the last frame before the bloom
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 22:34 UTC · status 50 · Phase 4 · unit dawn · round 14 · `status-1.jpg`: Dawn 6.5 s. Approved left, the working line right: the hull now stands beside the stem (review tier); `status-2.jpg`: Night 26.0 s, the bud. Approved, the line before, the line now: a wider crown, no ring of bright points (review tier, crop); `status-3.jpg`: Frost 36.0 s, the bud. Approved, the line before, the line now: rounder, no needle tips, wider rime (review tier, crop); `status-4.jpg`: Night 26.0 s. Approved left, the working line right at f/11 with the new bud; the wooded hills are still to come (review tier)
 - 2026-11-21 22:07 UTC · status 49 · Phase 4 · unit rain · round 15 · `status-1.jpg`: Rain, frame 420. Approved left, ours right: thin dense streaks, a dark shelf of cloud, a warm opening behind the stem; `status-2.jpg`: Frost, frame 1080. Approved left, ours right: the halo tighter and amber, the near fog thinner; `status-3.jpg`: Dawn, frame 195. Approved, before, after: the tree line now crosses the frame and the sun sits in a gap; `status-4.jpg`: Night, frame 780 at f/8, f/11 and f/16, whole frame above and a crop below. The film now uses f/11
 - 2026-11-21 21:45 UTC · status 48 · Phase 4 · unit night · round 16 · `status-1.jpg`: Night 26.0 s · approved left, the working line right: new sky, the youngest leaves under the bud, singles in the crop (review tier); `status-2.jpg`: Frost 36.0 s · approved left, the working line right: claws on the bud, a first fog sheet (review tier); `status-3.jpg`: Rain 14.0 s, the far land · approved left, a builder's still right: the land follows the approved line (review tier, crop); `status-4.jpg`: Dawn 6.5 s, the skyline · approved on top, a builder's still below: a tree line across the frame (a tested request, not merged yet)
-- 2026-11-21 21:22 UTC · status 47 · Phase 4 · unit dawn · round 14 · `status-1.jpg`: Dawn 1.5 s · approved left, the judged frame right (final tier) · jury 4 of 5; `status-2.jpg`: Rain 14.0 s · approved left, the judged frame right (final tier) · jury 1 of 5; `status-3.jpg`: Night 26.0 s · approved left, the judged frame right (final tier) · jury 3 of 5; `status-4.jpg`: Frost 36.0 s · approved left, the judged frame right (final tier) · jury 2 of 5
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 8.74 h |
+| 4 | 8.50 h | 8.86 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 24.20 h |
+| Whole build | 30.00 h | 24.33 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -78,7 +78,7 @@ State is one of `not started`, `stand-in`, `in progress` or `finished`. A finish
 | night | in progress | 3 (rounds 11, 16 and 21; the scores here are round 21's) | 5 | passes on the edge (3 of 5 against the controls' 4 of 5) | 4 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 21 (5 severe and 11 major issues) under "Open items", one major issue declined |
 | frost | in progress | 3 (rounds 8, 13 and 18; the scores here are round 18's) | 5 | passes (4 of 5 against the controls' 2 of 5) | 4 | 6 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 9 entries from round 18 (3 severe and 15 major issues) under "Open items" |
 | bloom | finished | 4 (rounds 3 to 6; the scores here are round 6's) | 5 | passes (7 of 10 against the controls' 6 of 10) | 4 | 5 | round limit (`quality.lookLockMaxRounds`, 4 rounds) | `cd262c1` | 11 entries from round 6 (7 severe and 18 major issues), see "Open items" |
-| field | in progress | 3 (rounds 7, 12 and 17; the scores here are round 17's) | 4 | fails (1 of 5 against the controls' 4 of 5) | 7 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | the loop is over; the clip and the comparison image from `47d93fd` come next, then `finished`. 10 entries from round 17 (5 severe and 9 major issues and the failed jury) under "Open items" |
+| field | finished | 3 (rounds 7, 12 and 17; the scores here are round 17's) | 4 | fails (1 of 5 against the controls' 4 of 5) | 7 | 5 | round limit (`quality.maxRoundsPerUnit`, 3 rounds) | `47d93fd` | 10 entries from round 17 (5 severe and 9 major issues and the failed jury), see "Open items". Clip `out/clips/field.mp4` (240 frames at the `review` tier, no frame failed M1), comparison image `out/stills/compare-field.jpg`, finished 01:12 UTC on 2026-11-22 |
 
 ## Workspace record
 
@@ -713,6 +713,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 4 · 00:50 UTC. After a compaction: read again from disk "Status", "Units" and "Look lock" of this file, `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md` and `kit/08-BUILD-ORDER.md` from Phase 4 to the end. Nothing in them changes the plan: the four open units wait only for their clip parts, then clip, comparison image, keep, `finished`, push, review page, publish and status for each, then the Phase 4 gate.
 - 2026-11-22 · Phase 4 · 01:06 UTC. After a compaction the kit was read again from disk before anything else was decided: "Status", "Units" and "Look lock" of this file, `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, `kit/02-SUBJECT.md`, `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/06-ASSETS.md`, `kit/07-QUALITY-BAR.md`, and `kit/08-BUILD-ORDER.md` from Phase 4 to its end. Nothing in them changes the plan in hand: each open unit is marked `finished` when its clip from `47d93fd` is joined, checked and kept with its comparison image; then the Phase 4 gate; then Phase 5 with the camera's smoothing pass drafted on the branch `phase5/camera` (not merged, not judged). While the parts render, a mistake by `petal_builder` was told at once and costs nothing: its loop script stopped at 01:01 UTC while the part night 720 to 749 kept rendering, so that part comes without its "PART" line and is checked here by its record like every other part.
 - 2026-11-22 · Phase 4 · 01:10 UTC. `rain` is finished at its round limit on `47d93fd`. Its clip was joined from 12 parts rendered on the builders' machines at the `review` tier, each part's record checked here for the engine hash `b9de284219d214c9`, the unit hash `cdb9bfbbb4e44942` and no stand-ins: 360 frames, 30 fps, 1920 x 1080, 18.9 Mbit/s, 27.1 MB. Checked here: the clip's frame 420 against the `final` still of the same commit reads 36.4 dB; across the 11 seams the frame to frame likeness never drops by more than 0.1 dB against the frames on either side, and the seam pairs were looked at (`out/work/scratch/clipcheck/rain-seams.jpg`): no step in the plant, the rain, the light or the land. M1 failed on 13 of 360 frames (303 to 315, the blur circle at the tip); it is a new open item, not hidden and not fixed, because the loop is over. Kept with `npm run keep -- --unit rain --clips`: `out/clips/rain.mp4`, `out/stills/compare-rain.jpg`, `out/stills/judged-f0420.jpg`.
+- 2026-11-22 · Phase 4 · 01:12 UTC. `field` is finished at its round limit on `47d93fd`, with its jury failed and its issues open, not as a pass. Its clip was joined from 8 parts rendered on the builders' machines at the `review` tier, each part's record checked here for the engine hash `b9de284219d214c9`, the unit hash `c229e6a6f41a2960` and no stand-ins: 240 frames, 30 fps, 1920 x 1080, 20.1 Mbit/s, 19.2 MB, M1 failed on none. Checked here: the clip's frame 1755 against the `final` still of the same commit reads 32.5 dB (the field's grain is 2.1 times the bloom's and 8 samples stand against 48); across the 7 seams the frame to frame likeness never drops by more than 0.2 dB against the frames on either side, and the seam pairs were looked at (`out/work/scratch/clipcheck/field-seams.jpg`): no step. Kept with `npm run keep -- --unit field --clips`: `out/clips/field.mp4`, `out/stills/compare-field.jpg`, `out/stills/judged-f1755.jpg`.
 
 ## Notes from Brandon
 
@@ -1389,6 +1390,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 00:45 UTC · Status 57: dawn finished; bloom looked at again after the shared changes (not worse); review page published
 - 2026-11-22 01:04 UTC · Status 58: clip parts 29 of 48; current unit line updated
 - 2026-11-22 01:09 UTC · rain finished at its round limit on 47d93fd: clip, comparison image, M1 open item
+- 2026-11-22 01:11 UTC · Status 59: rain finished and published. field finished at its round limit on 47d93fd: clip and comparison image kept
 
 ## Session log
 
@@ -1515,4 +1517,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Dawn 1.5 s: approved left, the judged frame right, with crops at native size; Dawn 6.5 s: approved left, the judged frame right, with crops at native size; Dawn 5.0 s, from the clip: the seed leaves open; Dawn 7.97 s, from the clip: the last frame before the cut to rain.
 - Status 58, 2026-11-22 01:04 UTC, Phase 4 · unit rain. Clip parts 29 of 48 are in from the builders' machines (rain 9 of 12, field 5 of 8, frost 6 of 10, night 1 of 10, dawn complete); no part since the last status failed the tip sharpness measure. The camera smoothing pass for Phase 5 is drafted on its own branch and its four keys are rendering for a look before anything is merged. Next: Join and check the rain clip as its last three parts land, mark rain finished with its open items, then field, frost and night the same way; then the Phase 4 gate. Time used: 24.2 h of 30 h.
   Pictures: Rain, frame 585 (19.5 s), from the clip part 570 to 599; Night, frame 615 (20.5 s), from the clip part 600 to 629; Frost, frame 1005 (33.5 s), from the clip part 990 to 1019; Field, frame 1695 (56.5 s), from the clip part 1680 to 1709.
+- Status 59, 2026-11-22 01:11 UTC, Phase 4 · unit rain. Rain is finished at its round limit on 47d93fd (round 20: match 3, surface 6, motion 9, jury passes on the edge). Its clip is joined from 12 parts, checked across every seam and kept with the comparison image; 13 frames of it (303 to 315) fail the tip sharpness measure and are logged as an open item. Published. Next: Field is joined and checked and is marked finished next; frost and night follow as their parts land (35 of 48 parts in), then the Phase 4 gate. Time used: 24.3 h of 30 h.
+  Pictures: Rain key, frame 420: approved image (left) beside the film at the final tier (right); Rain clip, frame 270 (9.0 s), one second after the cut; Rain clip, frame 549 (18.3 s); Rain clip, frame 585 (19.5 s).
 
