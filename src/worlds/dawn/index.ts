@@ -79,12 +79,11 @@ const bankHeightAt = (time: number): number => {
   return bank.heightM + (BANK_LOW_M - bank.heightM) * t * t * (3 - 2 * t)
 }
 
-// In the film's first half second a gap in the low cloud lets the warm glow round the rising sun down onto the near ground; the gap closes before one second.
-const GLOW_HOLDS_TO_S = 0.5
-const GLOW_GONE_AT_S = 0.95
+// At the film's start a gap in the low cloud lets the warm glow round the rising sun down onto the ground; the gap closes slowly and is shut just before the sprout key.
+const GLOW_GONE_AT_S = 1.44
 const GLOW_ON_GROUND: [number, number, number] = [0.72, 0.41, 0.2]
 const glowAt = (time: number): number => {
-  const t = Math.min(1, Math.max(0, (time - GLOW_HOLDS_TO_S) / (GLOW_GONE_AT_S - GLOW_HOLDS_TO_S)))
+  const t = Math.min(1, Math.max(0, time / GLOW_GONE_AT_S))
   return 1 - t * t * (3 - 2 * t)
 }
 
