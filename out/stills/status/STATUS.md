@@ -1,12 +1,12 @@
-# Status 66
+# Status 67
 
-2026-11-22 03:13 UTC
+2026-11-22 03:38 UTC
 
-- Status 66 · Phase 5. Round 22 fix pass: seven reports read, six changes merged. Dawn ground has raking light, dew and beaded blades from frame 0, and the crumbs part as the hook comes up. Rain streaks are softer and lean in sheets. Shut rays no longer cut through each other at 45 s and open rays answer gusts. Golden air: specks few and low, a wider softer haze under a sun that stands free. Far hairs are even strokes in the wide shot. Blades are sampled finer.
-- Next: Three fixes still out (the husk's drop, the far rise from the golden world's first frame, shadow steps), then the final build of the phase: stills, sheets and the preview film. Time used: 26.4 h of 30 h.
+- Status 67 · Phase 5. Fix pass of round 22: the last three fixes are merged. The husk no longer pops off in two frames: it slides off the tips, tumbles and falls over twelve frames, then rocks once. The dark stepped line along the nearest night blade is all but gone: the shadow map's grid now moves by part of a texel per sample. The far rise behind the field stands from the first frame of the golden world, so no land grows in view. Still open: the blocky patches on the backlit blade at frame 1515 are the shadow's own shape, not the map. The early machine checks were all green; the final build of Phase 5 (main 41ab097) is with eleven builders.
+- Next: Take in the sixteen final stills and look at each beside the kept one; join the preview film from 26 parts; close round 22 at its limit with its open items; machine checks and measures on the final build; Phase 5 gate. Time used: 26.8 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Frames 0 and 8: before above, after below
-- `status-2.jpg`: Frame 420: before left, after right
-- `status-3.jpg`: Frame 1350, the head at twice size: before left, after right
-- `status-4.jpg`: Frame 1755: before left, after right
+- `status-1.jpg`: The husk's fall, frames 114 to 125: before on the left, after on the right
+- `status-2.jpg`: Frame 780, the nearest blade: before on the left, after on the right
+- `status-3.jpg`: The far rise stands from the golden world's first frame: frames 1260 and 1799
+- `status-4.jpg`: Frame 1515, still open: the patches are the same before (left) and after (right)
