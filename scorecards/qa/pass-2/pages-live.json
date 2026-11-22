@@ -1,0 +1,48 @@
+{
+ "mode": "live",
+ "shots": [
+  {
+   "at": 0.2,
+   "value": "362",
+   "live": {
+    "frame": 362,
+    "shown": 362,
+    "tier": "review",
+    "playing": false,
+    "error": null
+   },
+   "text": "Menu M dawn rain night frost bloom field 12.07 s rain",
+   "file": "live-scrub-1.png"
+  },
+  {
+   "at": 0.55,
+   "value": "995",
+   "live": {
+    "frame": 995,
+    "shown": 995,
+    "tier": "review",
+    "playing": false,
+    "error": null
+   },
+   "text": "Menu M dawn rain night frost bloom field 33.17 s frost",
+   "file": "live-scrub-2.png"
+  },
+  {
+   "at": 0.9,
+   "value": "1627",
+   "live": {
+    "frame": 1627,
+    "shown": 1627,
+    "tier": "review",
+    "playing": false,
+    "error": null
+   },
+   "text": "Menu M dawn rain night frost bloom field 54.23 s field",
+   "file": "live-scrub-3.png"
+  }
+ ],
+ "errors": [
+  "THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The \"position\" attribute is likely to have NaN values. kl"
+ ],
+ "failedRequests": []
+}

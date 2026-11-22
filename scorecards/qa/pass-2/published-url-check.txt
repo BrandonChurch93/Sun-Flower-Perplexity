@@ -1,0 +1,9 @@
+QA item 25. The published URL from the harness, 2026-11-22 12:48 UTC, after the publish of the corrected build (engine 96146165ee8a578d) at 12:48 UTC:
+$ curl -s -o body -w "%{http_code}" -L https://sunflower-film.pplx.app/
+401
+{"error":"auth_required","site_id":"547457d5-7066-4871-b762-1715efa50d06"}
+$ curl -s -o /dev/null -w "%{http_code}" "https://sunflower-film.pplx.app/?mode=autopilot"
+401
+$ curl -s -o /dev/null -w "%{http_code}" https://sunflower-film.pplx.app/review.html
+401
+The site's visibility is Organization, so a request without a signed-in session gets 401 auth_required. The harness has no session. As the item allows, the same dist/ is served locally for items 24 and 25: the files of dist/ that make the app (26 files, sha256 in dist-files.txt, taken 12:31 UTC, build.json names engine 96146165ee8a578d, built 11:42:52 UTC) are the files that were published.

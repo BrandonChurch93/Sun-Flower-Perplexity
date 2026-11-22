@@ -1,0 +1,68 @@
+{
+ "url": "/index.html?mode=autopilot",
+ "mode": "autopilot",
+ "elementsWithText": 0,
+ "shots": [
+  {
+   "passedFrame": 180,
+   "frameOnScreen": 267,
+   "secondsAfterFirstFrame": 20.117,
+   "file": "autopilot-1.jpg"
+  },
+  {
+   "passedFrame": 720,
+   "frameOnScreen": 876,
+   "secondsAfterFirstFrame": 36.377,
+   "file": "autopilot-2.jpg"
+  },
+  {
+   "passedFrame": 1320,
+   "frameOnScreen": 1482,
+   "secondsAfterFirstFrame": 56.012,
+   "file": "autopilot-3.jpg"
+  }
+ ],
+ "end": {
+  "frame": 1799,
+  "playing": false,
+  "done": true,
+  "error": null
+ },
+ "endFile": "autopilot-end.png",
+ "framesShown": 9,
+ "firstShown": [
+  0,
+  0
+ ],
+ "lastShown": [
+  1799,
+  74637
+ ],
+ "secondsFromFirstToLast": 74.637,
+ "shownEveryTenSeconds": [
+  {
+   "atSeconds": 10,
+   "frame": 0
+  },
+  {
+   "atSeconds": 20,
+   "frame": 0
+  },
+  {
+   "atSeconds": 30,
+   "frame": 604
+  },
+  {
+   "atSeconds": 40,
+   "frame": 876
+  },
+  {
+   "atSeconds": 50,
+   "frame": 1278
+  }
+ ],
+ "errors": [
+  "THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The \"position\" attribute is likely to have NaN values. kl"
+ ],
+ "failedRequests": []
+}

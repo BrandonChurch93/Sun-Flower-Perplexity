@@ -1,12 +1,12 @@
-# Status 92
+# Status 93
 
-2026-11-22 12:46 UTC
+2026-11-22 13:07 UTC
 
-- Status 92 · Phase 6. Record round 26 (run 2 of 2, the last run) closed 12:43 UTC on the corrected build: not a pass for any unit or the film. R1 lowest 3 (rain, night, frost, field), R2 fails on frames 0, 45 and 1755 (26 of 50 for a, controls 24 of 40), R3 lowest 4 (dawn), R4 lowest 4 (the whole film), R5 8, R6 8, R7 6; measures and machine checks green. These are the final scores; 135 open entries added, nothing is fixed after the record round. QA pass 2 has its page evidence from the corrected build: autopilot, live, subfolder and export all ran.
-- Next: Review page and publish of the corrected build; QA gauntlet pass 2 of 2 (the stills render now, then the clean clone and the full gate); then BUILD COMPLETE. Time used: 5.9 h of 10 h.
+- Status 93 · Phase 6. QA gauntlet pass 2 of 2 on the corrected build: the last frame rendered at the final tier, both sides of all four cuts and the stand-in view of the ten judged frames rendered again; no stand-in anywhere. Round 26 stays the record: not a pass.
+- Next: Push, then the clean clone check and the full Phase 6 gate, the review page and the publish once more, the 33 lines of pass 2, then BUILD COMPLETE. Time used: 6.3 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Autopilot on the corrected build, three moments while it played and its last frame: rain, night, bloom, the field
-- `status-2.jpg`: Live mode scrubbed to 12.1 s (rain), 33.2 s (frost) and 54.2 s (field)
-- `status-3.jpg`: Frame 0 beside frame 5: the soil at the hook has moved (QA item 1)
-- `status-4.jpg`: The export page while it draws and encodes frames 1500 to 1529 on this machine (QA item 23)
+- `status-1.jpg`: QA items 2 and 9: frame 60 (2 s, the hook clear of the soil) and the last frame 1799, both at the final tier
+- `status-2.jpg`: QA item 4: the four cuts, the last frame of the old world on top and the first frame of the new one below
+- `status-3.jpg`: QA item 13: the stand-in view of the ten judged frames, no flag colour in any
+- `status-4.jpg`: Bloom hero: approved image left, film frame 1515 right (final tier), the kept comparison

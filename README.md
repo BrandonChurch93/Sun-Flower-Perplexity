@@ -63,7 +63,7 @@ The file lands in `out/work/clips/`. The segments are `dawn`, `rain`, `night`, `
 
 - Comparison images, each kept still beside its approved image: `out/stills/compare-<key>.jpg`, one for each of the eight keys, and on the review page.
 - The approved images the build aimed at: `references/approved/`.
-- The scorecards of every round, with the critics' answers word for word, the measures and a summary: `scorecards/round-NNN/`. The last round, `scorecards/round-025/`, judged the build as delivered; its scores are under "Final scores" in `kit/PROGRESS.md`.
+- The scorecards of every round, with the critics' answers word for word, the measures and a summary: `scorecards/round-NNN/`. The last round, `scorecards/round-026/`, judged the build as delivered; its scores are under "Final scores" in `kit/PROGRESS.md`. It is the second run of the record round: `scorecards/round-025/` judged the same pictures before a fix in the source that changed none of them.
 - The evidence of the last checks: `scorecards/qa/` and "QA results" in `kit/PROGRESS.md`.
 - The whole history, every decision and every open item: `kit/PROGRESS.md`.
 - The shot list and the sound cues: `cut/SHOTS.md` and `cut/CUES.md`.
