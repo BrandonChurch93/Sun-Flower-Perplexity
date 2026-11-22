@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 01:50 UTC · Phase 4 gate closed (13 of 13 machine checks, six units finished at their limits); Status 62; Phase 5 open, camera smoothing on phase5/camera 41f10a3
+- Last push: 2026-11-22 01:55 UTC · Phase 5: main merged with phase5/camera (4676c5d), still --check, machine checks running; published at the Phase 4 gate
 - Last status: 62 · 2026-11-22 01:50 UTC · Phase 4
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 0.02 h |
+| 5 | 3.00 h | 0.11 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 24.98 h |
+| Whole build | 30.00 h | 25.06 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -725,6 +725,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 4 · 01:41 UTC. While the Phase 4 gate runs here, the renders the whole film round needs went out to eleven builders' machines at 01:40 UTC, from `b7c8982` on `phase5/camera` (the list is under "Running jobs"). Why before the gate closes: the gate holds this machine for about 25 minutes and the builders' machines stood idle; the gate tests the units' finished builds and none of these renders can change its result. The price if the build of the round changes before it starts: these renders are made again. `b7c8982` is `47d93fd` in `src/`, `public/` and `config/` plus four files (`config/showcase.json`, `src/post/looks.ts`, `src/post/post.ts`, `src/worlds/rain/index.ts`), with the harness of `agent/harness` merged in (tools and one test only; read by its file list). The harness adds the packs of the whole film round to `npm run pack -- --phase 5` and makes `npm run stress` keep the frame before encoding, which R7's pack needs; `npm run pack -- --phase 5 --round 22 --list` names 31 files: 16 stills at `final` (the ten judged frames and frames 8, 15, 23, 30, 38 and 53 for R6), 4 cut sheets, 3 film sheets and 8 stress stills. The kept `final` stills of the units' finished builds are copied to `out/work/stills-47d93fd/` so the new ones can be laid beside them.
 - 2026-11-22 · Phase 4 · 01:49 UTC. The smooth move first through night and frost (kit/01, The camera: "If two approved images cannot both be matched exactly without a jerk between them, keep the move smooth"). With the night and frost keys each placed as its image, the plant swung across the frost: 1087 px at 30 s, 1016 px at 36 s, 1112 px at 40 s, that is 71 px left and back (the frost stem drift of the open items, whose Next names this pass). Changed on `phase5/camera` `41f10a3`: `frameX` 0.5936 to 0.575 at 26 s and 0.5294 to 0.56 at 36 s. Now 1088, 1075, 1146 px (13 px left, then the turn right that carries into the bloom), and the far view's speed across the night is even (13.5 px/s; it was 11, 0, 19). Cost, logged as the rule asks: at its key the night plant sits 36 px left of its image's place and the frost plant 59 px right of its image's; the frost disc moves from 1479 to 1541 px and stays in frame; the rain between 14 and 26 s follows the new curve; subject, size and light at both keys are unchanged; frames before 14 s and after 45 s keep the same path. Checks: 125 of 125 tests (the companion test included), build engine `305e9520118781cf`. Because every record carries the engine, the eleven builders were told at 01:49 UTC to stop and render the whole round again from `41f10a3`; the ten files already sent from `1aae30c97649ad15` are not used. The machine checks on this VM had not started, so the cost is about 9 minutes of the builders' time and none on the path.
 - 2026-11-22 · Phase 4 · 01:50 UTC. Phase 4 gate closed at 01:47 UTC: machine checks all 13 green on the kept build (engine `b9de284219d214c9`), all six units `finished` (every one at its round limit, none by a pass), eight comparison images and six clips committed and published. Phase 4 took 9 h 25 min of its 8.5 h box (16:22 to 01:47 UTC). Phase 5 opens at 01:47 UTC with 3 h in its box; the clock stands at 24.96 h of 30 h. For Phase 5 it prints `extra rounds: yes` until the whole build reaches the sum of the boxes through Phase 5, 26 h, which is about 02:52 UTC. The first whole film round is a floor round and gets its fix pass of at most `floorFixMinutes` whatever the clock says; a second round starts only if the clock still prints yes when it would start. The budget report comes when the clock says so, before any step in hand.
+- 2026-11-22 · Phase 5 · 01:55 UTC. Read again from disk after a compaction and at the start of Phase 5: `kit/PROGRESS.md` (Status, Phases, Units, Look lock, Running jobs), `kit/addenda/README.md` (there are no addenda), `AGENTS.md`, the cuts, camera and light sections of `kit/01-FILM.md`, sections 6 to 8 of `kit/03-METHOD.md`, `kit/04-LOOK.md`, `kit/07-QUALITY-BAR.md` and Phases 4 to 6 of `kit/08-BUILD-ORDER.md`. What it changes: nothing in the plan; it confirms that a final still enters a pack only with its frame check, and that the camera rule "the smooth move comes first" is the one the 01:49 change rests on.
+- 2026-11-22 · Phase 5 · 01:55 UTC. My mistake, caught from `harness_builder`'s report before any time was lost on the path: the film packs take a final still only when its record carries the frame check (the rule of the unit packs), and the 01:40 brief had the builders render with `npm run still`, which wrote none. The check reads the accumulated frame of the render itself (invalid values, the blur circle at the tip), so it cannot be added afterwards. Added `--check` to `tools/still.ts` (tools only, engine unchanged at `305e9520118781cf`; tried here on frame 1080 at `draft`: the record holds `check` with `invalid` 0), commit `2fb6538` on `phase5/camera`; the eight builders with stills were told at 01:53 UTC to render theirs again with `--check` (brief `out/work/briefs/p5-renders-3.md`). `phase5/camera` is merged into main as `4676c5d` (build prints engine `305e9520118781cf`), and the machine checks of the Phase 5 build started here at 01:54 UTC (log `out/work/scratch/gate5.log`).
 
 ## Notes from Brandon
 
@@ -816,7 +818,14 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
-Running (01:50 UTC, 2026-11-22):
+Running (01:56 UTC, 2026-11-22):
+
+- The machine checks of the Phase 5 build · `npm run gate -- --phase 5 --machine` on main `4676c5d` (engine `305e9520118781cf`) · log `out/work/scratch/gate5.log` · this VM · started 01:54 UTC · about 25 minutes by the last runs here (the Phase 4 gate took 13), so due by 02:20 UTC, twice that is 02:46. No render runs on this VM beside it.
+- The renders of the whole film round on eleven builders' machines, from engine `305e9520118781cf`: the eight with final stills (`skin_builder` 0, 8; `lens_builder` 15, 23; `stem_builder` 30, 38; `petal_builder` 45, 53; `ground_builder` 60, 195; `field_builder` 420, 780; `leaf_builder` 1080, 1350; `disc_builder` 1515, 1755) render them again since 01:53 UTC from `2fb6538` with `--check` (brief `out/work/briefs/p5-renders-3.md`), two stills of 4 to 6 minutes each, due by 02:08 UTC, twice that is 02:22; then the night stress (`skin_builder`) and the field stress (`lens_builder`). `golden_builder` (film sheets 1 to 3), `hair_builder` (cut sheets 1 to 4, then eight review stills each side of the cuts) and `bud_builder` (the dawn stress, then the rain stress) carry on from `41f10a3` since 01:49 UTC, due by about 02:20 UTC, twice that is 02:50.
+
+Ended since the last entry: the publish of the Phase 4 gate (01:54 UTC), the merge of `phase5/camera` into main (`4676c5d`).
+
+Running (01:50 UTC, 2026-11-22), kept as it stood:
 
 - The renders of the whole film round, second send, from `41f10a3` on branch `phase5/camera` (engine `305e9520118781cf`: `b7c8982` plus the two `frameX` values of the 01:49 decision) · sent at 01:49 UTC to the same eleven builders (brief `out/work/briefs/p5-renders-2.md`): each stops its render, checks out `41f10a3`, builds, and does its whole job of the 01:40 brief again, sending each file with its record · finals 0, 8 and the night stress (`skin_builder`); 15, 23 and the field stress (`lens_builder`); 30, 38 (`stem_builder`); 45, 53 (`petal_builder`); 60, 195 (`ground_builder`); 420, 780 (`field_builder`); 1080, 1350 (`leaf_builder`); 1515, 1755 (`disc_builder`); film sheets 1 to 3 (`golden_builder`); cut sheets 1 to 4 and the review stills each side of the cuts (`hair_builder`); the dawn and rain stress (`bud_builder`) · a final takes 4 to 6 minutes there, so the last item is due by about 02:20 UTC, twice that is 02:50.
 - Next on this VM: the merge of `phase5/camera` into main, the build, and the machine checks on the Phase 5 build (about 25 minutes by the last runs).
@@ -1434,6 +1443,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 01:33 UTC · frost finished at its round limit on 47d93fd: all six units finished; Status 61
 - 2026-11-22 01:41 UTC · Phase 5 prepared: camera pass C, field and rain grades and the film packs on phase5/camera; renders of the whole film round sent out
 - 2026-11-22 01:50 UTC · Phase 4 gate closed (13 of 13 machine checks, six units finished at their limits); Status 62; Phase 5 open, camera smoothing on phase5/camera 41f10a3
+- 2026-11-22 01:55 UTC · Phase 5: main merged with phase5/camera (4676c5d), still --check, machine checks running; published at the Phase 4 gate
 
 ## Session log
 
