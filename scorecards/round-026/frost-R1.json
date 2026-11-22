@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "all leaves and the bud of the hero plant",
+      "what": "the thick white frost rim and the frost crystals that cover the leaves in -a are almost gone; the leaves read as plain dark green with only a faint pale edge, so the backlit frosted look is lost",
+      "fix": "bring back the dense white frost fringe on every leaf edge and bract tip, and the frost speckle across the leaf faces, lit from behind by the sun as in -a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "the hero plant's leaf layout, lower half of frame",
+      "what": "the large frosted lower-left leaf, the lower-right leaf and the bottom leaf pair seen in -a are missing; -b has a different set of leaves (a small drooping leaf at the left, a large flat leaf to the right of the stem) and empty space at the bottom of the frame",
+      "fix": "rebuild the leaf layout of -a: upper leaf pair under the bud, a large frosted leaf to the right at mid height, a large leaf lower left, and leaves filling the bottom edge"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5, the field behind the plant, and the whole lower background",
+      "what": "the field is lifted and washed out to a flat pale grey-teal with milky blacks and little contrast; in -a it is deep, dark green with real shadow and rim-lit leaves",
+      "fix": "darken the field and deepen its blacks, put back the green saturation and the contrast between leaves, keep the fog only as a soft veil that grows with distance"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, the head or bud",
+      "what": "the bud in -b is bigger, sits higher and slightly right, and is spikier and more open with long thin bracts; -a's bud is a tighter rounded cluster with frosted bract tips; the frost on the bract edges is nearly missing",
+      "fix": "make the bud smaller and tighter, place it where it is in -a, and frost the bract tips"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs",
+      "what": "the stem in -b is a straight, uniformly thick dark column with short dull hairs; in -a it is thinner, slightly curved, with bright backlit hairs and side branches to each leaf",
+      "fix": "thin and curve the stem slightly, add the leaf branches, and backlight the hairs so they glow"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6, the far background at the skyline",
+      "what": "the far plants in -b are flat, dark silhouettes with flat heads that stand up sharply against the sky, including a cluster on the right that is not in -a; in -a they fade softly into the fog, keep some green and have rounded buds",
+      "fix": "fade the far plants into the haze with distance, soften their edges, give them rounded buds and remove the extra dark cluster at the right"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "the background plants on both sides",
+      "what": "the near background plants in -a (clear buds at left and right, at mid height) are replaced by faint thin stalks; the layering of near, middle and far plants is lost",
+      "fix": "put back the mid-distance plants with visible buds at the left and right, darker and sharper than the far ones"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7, the sky",
+      "what": "the sky in -b is a cooler blue-grey; -a's sky is a warmer, lighter neutral grey",
+      "fix": "warm the sky slightly and lift it toward the neutral pale grey of -a"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-02.png",
+      "where": "region 4, the sun and the sky round it",
+      "what": "the sun in -b sits a little further right and higher, and its warm peach halo is a bit smaller and weaker than in -a",
+      "fix": "move the sun slightly left and down to its place in -a and widen the warm halo around it"
+    }
+  ]
+}

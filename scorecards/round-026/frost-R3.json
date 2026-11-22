@@ -1,0 +1,28 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4, thin scalloped margin and tip of the broad backlit leaf on the right",
+      "what": "The blade stays dark and opaque right up to the pale frost rim. The thin lobes do not pick up the light behind them, so the blade reads like a cutout.",
+      "fix": "Let light pass through the thin lobes and tip while keeping the thicker veins and the frost visually distinct."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1 and 5, lower bud bracts and right-hand leaf edges",
+      "what": "Frost follows several overlapping edges as a nearly continuous white outline, with little change in how far it spreads onto the surface. It looks like an edge treatment rather than a deposit.",
+      "fix": "Break the rim into sparse and dense clusters, vary crystal size, and carry some deposits onto exposed faces and hairs while leaving sheltered edges bare."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 8, silhouetted heads across the skyline",
+      "what": "Several distant heads resolve to the same shallow, spiked cup silhouette even through the blur, making the stand look instanced.",
+      "fix": "Vary bract profiles, head tilt, and growth stage among the plants that break the skyline."
+    }
+  ]
+}

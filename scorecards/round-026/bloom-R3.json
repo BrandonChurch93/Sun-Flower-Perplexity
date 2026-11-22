@@ -1,0 +1,35 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "bright sky strip between the low sun and the foreground bud",
+      "what": "The pale glow has a straight horizontal edge and a squared-off right end just left of the bud, visible even in the reduced whole frame.",
+      "fix": "Remove the hard boundary in the glow and blend its falloff continuously across the sky behind the bud."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 2, upper and left-facing petals",
+      "what": "Several adjacent petals carry nearly identical, evenly spaced orange grooves along smooth blades. The regular striping and sharply cut tips make them read as molded pieces.",
+      "fix": "Vary the ridges and thickness per petal, and add finer irregular folds and softer, slightly uneven tips."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1 and 2, narrow green folds across the middle of the bud",
+      "what": "The dark green folds flatten into stacked, sharply tapered strips with little surface relief or edge thickness at the overlaps.",
+      "fix": "Give the folds shallow curvature, tapered edge thickness, and soft contact shading where they overlap."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 7, broad foreground leaves along the left and lower edges",
+      "what": "Several leaf tips retain long, straight triangular edges and abrupt planar folds even through the foreground blur. The same silhouettes are visible in the 45.0 s near-neighbor crop.",
+      "fix": "Break up the straight outlines with irregular margins and tip curl, and soften the creases with curved geometry."
+    }
+  ]
+}

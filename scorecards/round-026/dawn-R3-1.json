@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-02.png",
+      "where": "crops 1 to 5, emerging stem arch and seed coat (also visible in set-C-01.png center)",
+      "what": "the hooked sprout has a flat-shaded, bald matte grey-green side face bounded by a hard white rim crease, a grid-like row of hair dots restricted to the top strip with a boxy brown tuft sitting upright on top, and a straight diagonal seam into a blurry, stretched grey seed-coat mesh that clips directly into the soil and a smooth black mound",
+      "fix": "rebuild the 0.0 s sprout mesh and UVs as a continuous rounded hypocotyl with evenly distributed trichomes, high-resolution seed-hull geometry and texture, and displaced loose soil crumbs around the emergence point"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "upper dewdrop next to the right-side grass clump (also floating in set-C-07.png)",
+      "what": "a bright spherical dewdrop floats detached in mid-air in the gap to the left of the taller right-hand grass blade, touching neither blade",
+      "fix": "skin or constrain all dewdrop instances directly to the deforming grass-blade surface and flatten their contact base with a wetting meniscus so droplets stay attached as the grass sways"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crops 2 and 5, parted soil fissure around the stem base (also in set-C-08.png crops 2 and 5)",
+      "what": "the inner walls of the soil crack flanking the stem stretch vertically into smooth, glossy, streaked brown-black displacement polygons with smeared textures, and the stem cylinder intersects cleanly into the dark gap with no clinging soil crumbs or contact shadow breakup",
+      "fix": "populate the emergence fissure with 3D scattered soil clods and fine particulate geometry instead of stretched heightfield displacement, and add adhering crumbs and contact occlusion around the stem collar"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crops 1, 3, and 4, sunflower seed hull and stem junction (also in set-C-08.png crops 1, 3, and 4)",
+      "what": "the green stem cylinder clips directly through a thick, squared-off polygonal rim at the open top of the seed hull with a hard intersection seam, while the hull texture inside the sharp zone is soft and breaks into stepped pixelation along its lower-right curved edge",
+      "fix": "taper the seed-coat rim with a thin papery inner membrane wrapping the stem, subdivide the hull silhouette, and use a sharper high-resolution fibrous shell texture"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crops 1, 3, and 4, yellow-green cotyledon inside the split hull (also in set-C-05.png crops 1, 3, and 4)",
+      "what": "the emerging cotyledon leaf is a smooth, waxy surface of one flat yellow-green tone with no cellular micro-relief, vein structure, or translucent subsurface light transmission",
+      "fix": "add fine epidermal micro-bump, subtle primary venation, and warm subsurface scattering to the cotyledon"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crops 1, 2, 4, and set-C-09.png crop 9, upper stem hook, stem dew, and attached dirt pebbles (also at 1.5 s in set-C-05.png and set-C-06.png)",
+      "what": "silhouetted against the sun, the outer curve of the stem hook is a smooth, nearly hairless edge while uniform stubby white hair dots start abruptly on the lower shaft; the dew on the arch in crop 4 reads as tiny flat opaque yellow-green dots and rings rather than clear water, and dark dirt pebbles perch at single tangent points on the stem and hull edges like glued-on rocks",
+      "fix": "extend variable-length backlit trichomes continuously over the upper hook with stronger internal subsurface glow, shade stem dewdrops as clear refractive water with meniscus wetting, and embed irregular damp soil crumbs naturally into the hair layer"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7, dewdrops on the left-side grass blades (also in set-C-06.png and set-C-09.png crop 7)",
+      "what": "dewdrops sit as rigid spheres tangent to a single point along knife-sharp grass edges, with one droplet hanging off the right margin of the left blade without wetting contact",
+      "fix": "seat droplets onto the grass surface with a flattened contact angle and wetting meniscus"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-08.png",
+      "where": "crop 5, steep faces of in-focus soil clods on the upper right of the mound (also in set-C-02.png and set-C-05.png crop 5)",
+      "what": "steep displaced clod faces show sharp flat triangular facets catching bright backlight alongside tiny pinpoint specular fireflies",
+      "fix": "replace stretched height-displaced clod faces with high-resolution 3D rock/clod geometry and clamp micro-specular fireflies"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-08.png",
+      "where": "crop 6, in-focus grass blades on the right (also in set-C-02.png and set-C-05.png crop 6)",
+      "what": "the grass blades have razor-sharp ribbon silhouettes and flat painted longitudinal stripes with minimal blade thickness or ridge relief",
+      "fix": "give the grass blades subtle physical edge thickness, fine marginal serration, and raised bump along the parallel veins"
+    }
+  ]
+}

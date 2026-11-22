@@ -1,0 +1,77 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5, the sun and sky round it (both frames, also set-A-06.png region 5)",
+      "what": "a has a broad sunburst: long god-rays fanning up into the sky and down across the hills, with a hazy glow wrapping the leaf edge. b has only a small hot spot partly hidden behind the leaf, sitting lower on a flat horizon, with short stubby rays and no shafts in the sky",
+      "fix": "raise the sun to sit just under the leaf tip at the hill line, open it up so it blooms through the leaf edge, and add the long volumetric rays fanning into the upper-left sky and across the field"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "regions 2, 3 and 4, the plant's leaves and the near neighbor (also set-A-05.png regions 2-4)",
+      "what": "a's leaves are backlit: dark, warm olive silhouettes with thin bright rims and little face detail. b's leaves are lit from the front and glow see-through, with bright yellow-green patches and every vein showing, and the near-neighbor leaves at left have gone a cold blue-grey. The light reads as coming from a different direction",
+      "fix": "light the leaves from behind as in a: darken the leaf faces toward warm olive, keep only the rim light and a faint glow at the edges, drop the dappled front light, and warm the left-edge neighbor leaves from blue-grey to dark warm green-brown"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole frame, mid-air between the plant and the field",
+      "what": "b is full of large round bokeh orbs and floating specks, especially across the left half and around the sun. a has only a few fine dust motes",
+      "fix": "take out the big orbs and keep only a light scatter of small, soft dust motes in the backlight"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, the bud (frame 1)",
+      "what": "the bud has a different build. In a it is a compact, rounded, closed bud with a ring of short pointed bracts and petals just opening along the left side. In b it is taller and leans right, with long spiky bracts edged by bright white hairs, and loose petals splaying out of the top-left",
+      "fix": "make the bud rounder and more compact, shorten the bracts to smooth pointed tips with fine rim light rather than white bristle edges, and keep the yellow petals as a tidy fan on the left side only"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and branching leaf stalks (also set-A-05.png region 2)",
+      "what": "a's stem forks: curved, hairy leaf stalks branch off to a leaf on the right and to the lower-left leaf. b has a single straight stem with no visible branching stalks, and the leaves sit flat against it. The lower-right leaf from a is missing or replaced in b",
+      "fix": "put back the curved hairy leaf stalks branching off the main stem, and the upper-right drooping leaf and the lower-right leaf in their places in a"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7, the far background at the skyline (also set-A-06.png region 7)",
+      "what": "a's skyline is a soft rolling line of hills and trees with a pale band of haze in front. b's horizon is nearly flat and straight, darker, with little haze between the field and the skyline",
+      "fix": "bring back the gently uneven hill and tree line, and add warm haze in front of it so the background fades in depth"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6, the field behind the plant (frame 1)",
+      "what": "a's field is dense with many soft, round sunflower heads and glowing stems in the bokeh. Frame 1 of b shows a sparse field, mostly dark leaves with a few orange blobs and thin vertical stems",
+      "fix": "fill the field with more soft sunflower heads at a's density and size, with warm rim-lit glows"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "overall grade and texture (both frames)",
+      "what": "a has a filmic look: fine grain, lifted, warm-amber shadows and soft halation round the highlights. b looks clean and digital, with no grain, crisper detail on the petals and bracts, cooler and greener mid-tones in the field, and harder edges",
+      "fix": "add fine film grain, warm the shadows and mid-tones toward amber, add a little halation on the bright rims, and soften the over-crisp detail"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 1 and overall framing of the flower head (frame 2)",
+      "what": "in b the head sits slightly larger and lower-left, the stem is set further left and is thicker, and the petals are a deeper orange with darker streaks. a's petals are a lighter, even golden yellow",
+      "fix": "set the head back to a's size and position, put the stem directly below it as in a, and shift the petal color toward a's lighter gold"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "region 8, the sky (also set-A-06.png region 8)",
+      "what": "a's storm clouds have soft, grainy texture with faint rays. b's sky is smoother and flatter, and a little more teal",
+      "fix": "add soft cloud texture and grain, and shift the color slightly from teal toward a's neutral slate grey"
+    }
+  ]
+}

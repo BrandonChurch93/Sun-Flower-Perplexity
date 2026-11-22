@@ -1,0 +1,56 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-03.png",
+      "where": "the emerging hypocotyl hook, f0000 to f0011",
+      "what": "the hook does not push up out of the soil; it grows as a whole from a small arch into a big one, with the brown tip speck, the dark surface dots and the bright rim all getting bigger together. It reads as an object scaling up in place, not tissue lengthening and lifting out of the ground. In 0.37 s it gets roughly three times bigger, which shows up as a sudden swell when played",
+      "fix": "keep the hook the same thickness and lengthen it from the soil line, so new stem comes out of the ground and the surface marks travel upward with the tissue. Slow the first second so the emergence carries across several seconds of the segment"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "the striped seed-coat pieces under the arch, f0003 to f0011",
+      "what": "a second striped seed-coat piece shows up under the arch around f0003 to f0005 and gets bigger frame by frame without being pushed out of the soil. The pieces also sit against and behind the stem with no contact, as if they pass through it",
+      "fix": "show one seed coat from the first frame. Have it split along a seam and get carried up by the hook, with clear contact and no overlap with the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "the soil around the base of the arch and the dark clod under it",
+      "what": "the soil does not move while the hook forces its way up. The clods stay fixed, no crumbs lift or roll, and the dark area under the arch is a flat black shape that never changes. The stem meets the soil at a hard line",
+      "fix": "lift and crack the crust as the hook pushes through, let a few crumbs fall away, and give the opening some depth and shading that changes over time"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "outline of the hypocotyl in every frame",
+      "what": "a hard bright halo traces the whole outline and looks pasted on. Its width stays the same while the stem grows, so the edge looks cut out and sits on top of the image rather than in it",
+      "fix": "tie the rim light to the stem's shape and the light direction, softening and thinning it where the stem turns away from the sun"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "the grass at the left and right edges, f0000 to f0239",
+      "what": "the grass changes more than a smooth camera move would explain. The tall blades at the left edge in f0000 to f0043 are gone by f0130, and the clump at the right grows from a few blades to a large tuft. Background plants seem to appear and change in ways that do not match a single steady move",
+      "fix": "keep the background plants fixed in the scene and let only parallax from one steady camera move change where they sit in frame. Any growth should be slow and steady"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-02.png",
+      "where": "the dew beads on the grass and the background haze, f0000 to f0011",
+      "what": "the dew highlights and the grass blades stay perfectly still across the 12 frames. Over these frames the camera move cannot be told apart from no move at all, so the background looks frozen while the seedling changes fast",
+      "fix": "add slight wind sway to each blade, small shifts in the dew highlights and a slow drift in the haze, and make sure the camera keeps moving through this stretch"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-01.png",
+      "where": "the seed coat from f0109 to f0130",
+      "what": "the coat goes from sitting on the cotyledon tips to lying open on the soil to the left of the stem between two sample frames, and its fall can't be checked here",
+      "fix": "show the coat sliding off and dropping with weight, landing next to the stem"
+    }
+  ]
+}

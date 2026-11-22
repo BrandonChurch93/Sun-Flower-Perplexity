@@ -1,0 +1,21 @@
+{
+  "critic": "R5",
+  "score": 8,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-E-03.png",
+      "where": "frost into bloom, 39.4 s on set-E-02.png to 41.1 s on set-E-03.png",
+      "what": "The bud stays near the same screen position, but the low sun jumps from the far right to the far left and the horizon rises behind it. The change in weather is clear, but the matching bud makes the reversal feel like a jump to another camera position rather than the same view warming up.",
+      "fix": "Match the bud, horizon, and sun side across the cut, then let the frost give way to warm light. If the reverse light is important, motivate it with a visible camera arc before the petals open."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-05.png",
+      "where": "58.5 s field frame, the two isolated stalks in the lower center",
+      "what": "The pullback gives the bloom room to breathe, but the taller unopened neighbor rivals the hero in the final silhouette. The open flower is still traceable on the right, yet on the held wide frame the pair reads more strongly than the one plant we followed.",
+      "fix": "Keep the same pullback and the neighboring plant, but give the open flower a little more separation and hold its rim light against a darker patch so the eye can stay with it."
+    }
+  ]
+}

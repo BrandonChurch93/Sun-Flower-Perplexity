@@ -1,0 +1,56 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5 (and full skyline across set-A-01-b.png)",
+      "what": "the distant horizon is a razor-sharp, jagged rocky or cutout silhouette instead of soft, out-of-focus tree-covered rolling hills",
+      "fix": "replace the jagged hard-edged ridge with gently rolling tree-canopy hills and apply optical depth-of-field blur matching -a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "midground valley mist across the lower third (also regions 4 and 5)",
+      "what": "the luminous ground mist that threads around the field stalks on the left and extends as a soft blue-grey haze across the right valley is missing, confined to a flat band behind a dark foliage wall on the far left",
+      "fix": "bring continuous, softly glowing low mist forward around and between the midground stalks on the left and carry subtle atmospheric haze across the right side in front of the dark hills"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 4 (and midground field plants across set-A-01-b.png and region 5)",
+      "what": "neighbor plants have flat horizontal cap-like tops and smooth featureless dark leaves with no rim highlights or bokeh texture, instead of compact spiky flower buds and dewy rim-lit serrated leaves",
+      "fix": "give neighbor stalks multi-bract young sunflower buds, serrated leaf silhouettes, crisp cool-white rim and dew highlights from the left sky/mist, and natural out-of-focus softness"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2 · the stem and its hairs (and upper stem in region 1)",
+      "what": "the lower stem is thinner and edged on both the lit left side and shadow right side by coarse, clumpy bright white spikes while the upper stem under the bud is nearly smooth and bare",
+      "fix": "thicken the stem with soft left-to-right cylindrical falloff, replace the coarse white spikes with fine translucent hairs all along the stem up to the bud, and keep bright rim lighting on the left side while dimming the right shadow edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 1, 2, and 3 · hero bud and leaves",
+      "what": "the terminal bud has only a few stiff upright prongs instead of a dense layered bract cluster, and the leaves look smooth and waxy with dark vein lines and unnatural green internal glow over dark background rather than opaque dark foliage with wet specular sheen and fine dew along serrated edges",
+      "fix": "build a denser multi-bract bud, make the leaves more opaque dark green with serrated margins and fine dewy rim/surface highlights facing upper-left, and remove the backlit stained-glass green glow on the lower front leaf"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6 · the sky",
+      "what": "stars are tiny sparse 1-2 pixel pinpricks with muted color and the Milky Way clouds look overly smooth with slightly lifted dark sky values",
+      "fix": "render stars with slightly larger, softer optical point-spread discs, stronger blue and warm gold color variation, deeper dark-sky blacks, and crisper granular star-cloud and dust-lane contrast"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "lower field shadows (regions 4 and 5)",
+      "what": "foliage shadows sit at a lifted, flat murky green-grey floor with low local contrast instead of reaching deep blacks paired with bright specular highlights",
+      "fix": "deepen the shadow black point in the occluded field foliage to match -a while restoring crisp rim highlights for separation"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "critic": "R3",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "rain streaks across the whole frame, including in front of the plant and over the far field",
+      "what": "the rain is one uniform layer of bright, equally sharp, equally long streaks at one angle; streaks in front of the stem and over the blurred background have the same sharpness and brightness, so the rain sits on top of the picture rather than inside the depth of the scene",
+      "fix": "render rain in depth: defocus and dim streaks away from the focal plane, vary length and opacity with distance, and let a few drops break or splash on leaves and soil"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 3, 5: the edges of the top leaves and the stem",
+      "what": "the hairs are an evenly spaced, bright white spiky fringe of the same length all round every edge; they glow like frost or a rim halo and read as a procedural fur shell, not plant hairs",
+      "fix": "vary hair length, density and direction, cut their brightness, and let them catch light only where they are backlit"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4: the large leaves with the bright sky behind them",
+      "what": "the leaves stay opaque dark green against the bright sky; no light comes through the blades and the veins do not show up as darker lines, so they read as solid painted cards",
+      "fix": "add subsurface or translucency to the leaf material so backlit blades glow yellow-green with the vein network visible"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 2, 4, 6: the dark leaf or cotyledon at the base of the stem",
+      "what": "this leaf is a flat near-black shape with a single hard edge and no surface detail, sheen or thickness; it reads as a cut-out card",
+      "fix": "give it the same leaf material, veins, wetness and thickness as the upper leaves, and light it"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 2 and 4: the stem surface",
+      "what": "the white dots on the stem sit in regular vertical rows at even spacing, a visibly repeated pattern",
+      "fix": "scatter the droplets and hair bases randomly with varied size"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 3 and 5: the upper leaf surfaces and water drops",
+      "what": "the leaves are one even dark green with a waxy, plastic sheen, and the water drops are small beads of near-identical size laid along the veins and edges",
+      "fix": "add colour variation and wear to the blades, a rougher wet specular response, and drops of varied size that run and merge"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 6: where the stem meets the soil",
+      "what": "the stem enters the soil cleanly with almost no contact shadow, mud splash or disturbed soil at its base",
+      "fix": "add a darker occlusion ring, wet mud clinging to the stem base and a few splashed grains"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-03.png",
+      "where": "crops 7 and 8",
+      "what": "both crops show the same patch of near soil with the same grass tuft and pebble, so the field behind the plant was not actually shown for review; the soil there is smooth, with even clods and a uniform wet sheen",
+      "fix": "re-crop 8 from the mid-field rows, and break up the soil with more varied clods, puddles and rain pitting"
+    }
+  ]
+}

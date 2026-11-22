@@ -1,0 +1,14 @@
+{
+  "critic": "R6",
+  "score": 8,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-F-01.png",
+      "where": "center foreground, just above the soil mound",
+      "what": "At phone size the opening reads as a sunrise over soil: the seedling is only a small pale sliver, while the sun and taller edge shoots draw the eye. The sprout becomes legible by 0.27 s, and its rapid rise rewards staying without sound.",
+      "fix": "Start with just enough of the curved sprout and seed coat above the soil to register at 400 px, while preserving the fast rise that follows."
+    }
+  ]
+}

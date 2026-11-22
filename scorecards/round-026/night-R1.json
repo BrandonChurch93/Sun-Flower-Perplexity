@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "the hero plant, whole figure",
+      "what": "it is not the same plant: -a has a dense, rounded head of broad heart-shaped leaves in pairs down the stem; -b has a sparse plant with a few long, narrow, sharply toothed leaves, a thin spiky bud and a different leaf layout. It also sits about 25 px further left and its top reaches higher (about y 180 against y 210)",
+      "fix": "rebuild the plant to the -a structure: broad heart-shaped leaves in opposite pairs, the full clustered head, stem at about x 825, top at about y 210"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "far background skyline, right half (set-A-03 region 5)",
+      "what": "the low, rounded tree-lined hills of -a have turned into a jagged rocky mountain ridge, so it reads as a different place",
+      "fix": "bring back the soft rounded hill line topped with tree silhouettes, at the -a height"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "bottom center foreground leaf (set-A-02 region 2)",
+      "what": "a huge flat leaf, lit green from the front, fills the lower middle of the frame where -a has a smaller, dark, backlit leaf at lower left with a rim-lit edge and dew",
+      "fix": "make this leaf smaller and darker and move it to the -a position, with a silver rim edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "leaves of the hero plant (regions 1 and 3)",
+      "what": "light direction and quality have changed: -a is backlit by the sky, with dark leaf faces, bright silver rim lines on every edge and dew drops that catch the light; -b lights the leaf faces green from the front, the rims are weak and the dew drops are almost all missing",
+      "fix": "move the key light behind the plant, darken the leaf faces toward near-black green, bring back the bright edge rims and the scattered dew highlights"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "near neighbor at the left edge of the frame (region 4)",
+      "what": "-a shows small, crisp sunflower seedlings with defined buds, rim-lit against a bright band of mist; -b shows a blurrier, larger-leaved plant with broad dark leaves and no clear bud, and the mist behind it is fainter",
+      "fix": "replace it with the small budded seedlings of -a, sharpen them to the -a level of focus and add back their rim light"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "ground mist band across the middle distance",
+      "what": "the thick, glowing band of fog that lies over the field in -a is much thinner in -b and almost gone on the right, which removes the air between near and far",
+      "fix": "thicken the mist band again and brighten it across the whole width at the base of the hills"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "midground field (region 5) and the bottom of the frame",
+      "what": "-a has dense rows of small, upright, budded seedlings that get smaller with distance; -b has large, broad-leaved, soft plants with light spots scattered through them, so the field reads as a different crop and the sense of scale is lost",
+      "fix": "go back to dense rows of small budded seedlings that shrink toward the horizon, and remove the scattered light spots"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-01-b.png",
+      "where": "stem of the hero plant (set-A-02 region 2)",
+      "what": "the stem hairs are a heavy, bright white fringe that is stronger than the fine rim-lit hairs of -a, and the stem has lost its dew",
+      "fix": "reduce how bright and dense the hair fringe is to match -a, and add back the small dew highlights"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "sky (region 6)",
+      "what": "the star field is slightly softer and has fewer of the bright blue-white stars than -a, and the dust lanes of the Milky Way are a little smoother",
+      "fix": "bring back the star density and the bright points from -a, and sharpen the dust structure slightly"
+    }
+  ]
+}

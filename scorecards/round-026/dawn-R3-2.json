@@ -1,0 +1,63 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 3 (also crops 1 and 4), both cotyledon leaves",
+      "what": "both leaves have smooth, waxy plastic surfaces with flat green gradients, faint veins that look painted onto smooth geometry without relief, and knife-sharp silhouettes with a bright white rim halo along the lower edge of the right leaf",
+      "fix": "add cellular micro-displacement and roughness variation across the leaf epidermis, give the veins subtle physical relief and translucency variation, and thicken and soften the leaf margins to remove the sharp CG silhouette and white halo"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 4 (also crops 1, 2 and 3), dew across the cotyledons and stem",
+      "what": "dew droplets appear as tiny opaque white and yellow pixelated specks and blocky burrs along the leaf edge rather than clear refractive water domes, glowing brightly even on the dark shadowed face of the right leaf",
+      "fix": "model and shade droplets as transparent refractive water domes with proper contact wetting, environment refraction, and realistic shadowing on unlit surfaces"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 1 (also crops 3 and 4), node junction where the two cotyledons meet the top of the stem",
+      "what": "intersecting geometry at the top of the stem forms a flat dark cap with an angular polygonal notch cut into the bright green base of the right cotyledon",
+      "fix": "remodel the node as a continuous, smoothly blended botanical collar where both petiole bases merge organically into the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 5 (also crop 2), base of the stem where it meets the soil",
+      "what": "the straight cylindrical stem plunges into a gap between clods with no contact shadow, root-crown taper, or adhering soil, and its bright backlit rim highlight runs uninterrupted right down to the clipping soil edge",
+      "fix": "add contact shadowing and ambient occlusion where the stem enters the soil, introduce subtle organic taper and curvature to the stem, and place fine displaced soil crumbs clinging around the emergence point"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 6, upper boundary of the blurred foreground soil mound from left to center",
+      "what": "a hard, stair-stepped pixelated line separates the out-of-focus foreground soil clod from the sharper mid-ground soil behind it, revealing a post-process depth-of-field boundary artifact",
+      "fix": "render true optical camera depth of field or deep-composited defocus so blurred foreground soil edges bleed smoothly and semi-transparently across sharper mid-ground clods"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crops 1 and 2, emerging central bud and backlit left and right edges of the stem",
+      "what": "the emerging bud has stiff, thick peg-like spikes along its left side over a soft texture, while the stem edges show only a uniform 1 to 2 pixel stippled row of bright dots instead of fine hairs",
+      "fix": "replace both with fine, tapered, translucent plant trichomes of varied length and angle that catch the backlight naturally without pixel stippling"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crops 2 and 5, split sunflower seed hull on the soil left of the stem",
+      "what": "both halves of the seed hull have paper-thin, angular polygonal cut rims at their upper tips, and the concave interior of the left half shows wavy painted-on dark exterior stripes instead of pale fibrous inner tissue",
+      "fix": "give the seed hull realistic wall thickness with fibrous split rims, and texture the inner concave faces with matte pale fibrous pericarp rather than warped exterior hull stripes"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-12.png",
+      "where": "crop 9, backlit leaf tip on the left and grass blades below the sun (also visible in set-C-10.png)",
+      "what": "the right leaf tip shows visible pixel stair-stepping and a bright rim halo against the sky, while the surrounding grass blades read as smooth, evenly fanned flat ribbons with noisy bokeh spots near the bottom edge",
+      "fix": "cleanly anti-alias the backlit leaf silhouette without haloing, add slight thickness, twist, and longitudinal ridging to the grass blades, and increase sampling on out-of-focus droplet highlights"
+    }
+  ]
+}

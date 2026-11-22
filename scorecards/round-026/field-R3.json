@@ -1,0 +1,63 @@
+{
+  "critic": "R3",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "band between the far edge of the sunflowers and the skyline, full width (about y 160-205 in the frame)",
+      "what": "the field stops on a hard line and gives way to a wide, flat, dark band with no rows, plants, texture or perspective. It reads as an empty ground plane where the scattered plants run out, and you can see it at normal speed",
+      "fix": "carry the planted rows, or a believable stubble field or hedgerow with texture that thins with distance, all the way to the skyline, and blend the edge of the plants into atmospheric haze"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 10, the distant hills at the skyline (center and right)",
+      "what": "the hills are low-poly silhouettes with sharp faceted peaks that sit on the horizon like cut-out cards. The left and center ones are crisp, but the right-hand group is a soft blurred blob at the same distance, so focus and haze do not match",
+      "fix": "replace them with properly modeled or matte-painted terrain, and apply one consistent atmospheric falloff and defocus across the whole skyline"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crops 9 and 10, the mid and far field",
+      "what": "the flower heads are near-identical copies. Same size, same tilt toward the lens, same petal count, spaced in an even dotted pattern, so the field reads as an instanced, repeated tile and not a real crop",
+      "fix": "vary the head size, the facing angle (heads track one direction, toward the sun, not the camera), the droop, the petal wear and the spacing, and break up the instance pattern with gaps and other species"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 11, the lower part of the field under the sun",
+      "what": "some leaves are a saturated, flat, bright green that stays unhazed even though the flowers and leaves around them are washed out by backlit haze, so they look pasted on top of the fog and not inside it",
+      "fix": "apply the volumetric haze and the backlight color to all foliage at that depth, and remove the unlit or emissive green on those leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 4 and 6, the lower leaves of both hero plants",
+      "what": "the leaf edges carry bright, jagged, aliased rim lines, and the leaf surfaces show blotchy, painted-looking mottling with little vein relief. Several lower leaves read as flat cards with a texture on them",
+      "fix": "add leaf thickness, curl and normal-mapped venation, use proper subsurface for the backlit edges, and raise anti-aliasing on the thin rim highlights"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, where the stems meet the soil",
+      "what": "the stem bases are hidden behind the lowest leaves and a dark patch of soil, so neither contact nor a contact shadow can be checked. The soil under the plants is a uniform dark smear with no clods or crumb",
+      "fix": "show the stem entering the ground with a contact shadow and a soil mound, and give the soil real granular texture"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crops 1, 2 and 5 are the same view, and crops 4 and 6 are the same view",
+      "what": "the pack repeats wide views in place of close crops of the flower head, petals and backlit leaf. The hero head is only about 80 px across, so the disc florets, petal edges and translucency cannot be checked at native size",
+      "fix": "supply tight crops of the flower head, the petals and a single backlit leaf so those surfaces can be judged"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-03.png",
+      "where": "crops 10 and 11, the sky",
+      "what": "there is coarse, uniform grain in the smooth sky gradient, heavier than in the foreground. It reads as render noise and not film grain",
+      "fix": "denoise the sky and apply one matched grain layer across the whole frame"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5: the sun and the sky round it",
+      "what": "the sun is a small, hard-edged white disc sitting on the ridge with a narrow triangular cone of orange haze below it, missing the large blooming golden glare across the clouds and the broad veil of sunlit mist over the left side of the field",
+      "fix": "enlarge and soften the sun into a wide, warm overexposed bloom that illuminates the surrounding clouds, obscures the ridge directly beneath it, and spreads low golden mist across the left and mid field"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6: the field behind the plant",
+      "what": "hundreds of field sunflowers face flat toward the camera like uniform yellow-and-black bullseyes and remain pin-sharp to the back of the field, instead of facing mostly sideways or toward the sun at varied angles with golden rim light and progressive depth-of-field blur",
+      "fix": "turn and vary the field flower heads so most catch warm upper-left rim light on their petals and backs against dark shadows, and add camera depth of field that progressively softens the mid and far field"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 7: the far background at the skyline",
+      "what": "the flowers stop short of the horizon leaving a wide featureless dark band, the layered blue-grey hills and textured wooded treeline are replaced by a flat dark ridge with tiny razor-sharp jagged peaks beside blurred ridge segments, and the sky is muted grey-slate with flat streaks instead of deep teal-blue with warm-rimmed cumulus clouds",
+      "fix": "carry the out-of-focus golden field back to the base of an irregular dark wooded treeline with soft layered blue-grey hills behind it, blur the entire distant skyline consistently, and restore the richer teal-blue upper sky and warm-lit cumulus clouds"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "lower half of the field and foreground shadow floor",
+      "what": "foliage shadows are lifted to a washed-out olive-green with a dense bush-like wall of uniform bright-green leaves along the front of the field and orange ground showing between stalks, losing the deep green-black shadows, spaced upright stalks, and crisp golden rim contrast",
+      "fix": "deepen shadow values across the foliage and between rows to rich dark greens and near-blacks, expose tall spaced stalks and some dried lower leaves along the front edge of the field, and confine bright values to warm golden rim highlights"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1: the flower head",
+      "what": "the hero flower head is smaller and slightly lower, with sparser spiky petals, flat ochre shading without bright golden backlit translucency on the left petals, a green inner circle in the disc, and white-lit calyx hairs protruding past its shadowed upper-right edge",
+      "fix": "make the flower head larger and fuller with overlapping golden petals that glow with warm backlit translucency on the sunward left side, give the seed disc a unified dark warm umber texture, and align and shade the calyx so no bright white fuzz sticks out on the shadowed right side"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2: the stem and its hairs",
+      "what": "the stem is a rigid, nearly black vertical cylinder outlined equally on both left and right edges by bright white hair strips even in shadow, instead of a textured olive-green stem with warm golden backlit hairs mainly on the sunlit side",
+      "fix": "shade the stem and curved petioles a natural ridged olive-green and light the fine hairs warmly along the sun-facing left edges while letting the shadowed right side fall dark"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3: a leaf seen from the front",
+      "what": "foreground leaves look thick and waxy with coarse parallel washboard ribs, broad pale lime-green shading across their front faces, and jagged polygonal edge cutouts instead of thin dark-green leaves with fine veins and crisp golden rim light",
+      "fix": "replace the corrugated shading and jagged cutouts with thinner, darker green leaves that have fine branching veins, natural serrated margins, deep front-surface shadow, and thin warm golden rim highlights"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 3 and 4: foreground ground around and right of the plant",
+      "what": "bare grey dirt shows under the foreground plants and a mottled bright orange-brown bare dirt streak sits to the right with sparse grass tufts, instead of continuous dark meadow grass with crisp sunlit grass blades on the right",
+      "fix": "cover the bare grey and orange dirt areas with continuous dark grassy turf and let low golden sunlight catch individual grass blades to the right of the hero plant"
+    }
+  ]
+}

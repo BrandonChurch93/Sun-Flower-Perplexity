@@ -1,0 +1,35 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "Crops 2 and 3, broad lit folds of the foreground leaves",
+      "what": "The folds have broad, smooth highlights that make the leaves look molded and waxy. Fine surface relief largely disappears in the lit areas.",
+      "fix": "Break up the sheen with fine leaf-surface relief and local roughness variation, especially between the veins."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "Crop 4, arched leaf extending to the lower right",
+      "what": "Past the lit fold, the long blade reads as a near-black strip with a thin bright outline rather than as tissue with varying thickness.",
+      "fix": "Carry a little transmitted light through the thin parts of the blade, retaining darker veins and varying the edge thickness and curl."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "Crops 2 and 4, lit edge of the main stem beneath the middle leaf junction",
+      "what": "The backlit hairs merge into a coarse, nearly continuous white fringe that loses the shape of individual fibers.",
+      "fix": "Taper the fibers, break up their spacing and length, and reduce the hottest rim highlights so individual strands still separate at delivery size."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "Crops 5 and 6, ridge along the skyline behind the field",
+      "what": "The ridge reads as a flat silhouette, particularly on the right, where a scalloped contour and a narrow notch border a largely uniform dark mass.",
+      "fix": "Break up the contour and add subtle depth and tonal separation between ridge forms without bringing the background into focus."
+    }
+  ]
+}

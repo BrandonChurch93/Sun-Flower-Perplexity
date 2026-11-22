@@ -1,0 +1,84 @@
+{
+  "critic": "R1",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground grass and soil around the sprout",
+      "what": "The tall diagonal grass crossing the left edge and sky is missing; upright blades at the bottom left, center-left and right replace it. Broad amber highlights on the soil make the center mound stand out instead of the target's cool, dark clods with pinpoint glints.",
+      "fix": "Restore the tall soft diagonal blade at far left, thin out or relocate the upright blades, and lower and cool the reflection on clod faces while retaining isolated warm edge highlights and wet bokeh."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "right grass cluster and ground plane",
+      "what": "A dark upright fan of grass crowds the sprout's right leaf and partly cuts across the sun's glow. The target's cluster sits farther right, is more open, and sparkles with soft dew discs; the target's foreground is also cooler and less broadly amber-lit.",
+      "fix": "Shift the cluster right, open up and vary the spacing of its blades, match the tall lit diagonal and soft dew discs, and reduce amber on the faces of the foreground clods."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-06.png",
+      "where": "regions 5 and 6, field and skyline at 6.5 s",
+      "what": "The background reads as a dark amber field under a nearly level gray ridge. The target has a deeper blue-green ridge stepping down to the right and a separate, bright layer of low mist above cooler soil dotted with soft dew glints.",
+      "fix": "Match the more pronounced descending silhouette, cool and deepen the ridge, and bring back a low, softly luminous mist layer and scattered out-of-focus dew to separate the ridge from the soil."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 1 and 3, hanging seed hull and green seam at 1.5 s",
+      "what": "The seed hangs a little farther right and lower, with a long exposed yellow-green slit high on its face. The target's rougher blue-gray hull opens more at the lower tip, with finer striped texture and adhering dirt.",
+      "fix": "Raise the hanging tip slightly and bring it left, close the upper seam and expose the green at the lower tip, and restore cool fibrous ridges, dirt flecks and a warm rim at the bottom."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, hooked stem and air under the hull at 1.5 s",
+      "what": "The stem is straighter below a tighter hook and ends farther right. Its olive and burgundy areas look flatter, the rim hairs more uniform, and the dirt fragments hanging in the air under the target hull are absent.",
+      "fix": "Arc the stem more gradually toward the target base, restore the green-to-pink-to-pale shading and irregular backlit hairs, and return the small suspended soil crumbs below the seed."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "regions 1 and 3, crown, emerging bud and cotyledon faces at 6.5 s",
+      "what": "The fork is blunter and the separate pointed, fuzzy bud is harder to read. The leaf faces are smooth with isolated pinprick droplets, and the right leaf has a broad lime highlight where the target has finer veins and more restrained warm edge transmission.",
+      "fix": "Restore the distinct upright fuzzy bud and tapered fork, give both leaves fine directional surface texture, reduce the contrast of isolated droplets and confine the brightest yellow-green to the rim and lower right leaf."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 2, upright stem and discarded shell at 6.5 s",
+      "what": "The stem looks darker and more cylindrical, with several conspicuous pale dots instead of fine hairs and warm edge shading. The shell lobes look darker and narrower, with less of the target's cupped interior and backlit edge.",
+      "fix": "Warm and model the stem with a fine, irregular rim of hairs rather than bright dots, and open the shell lobes enough to show softly lit pale interiors and sharp fibrous edges."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, sun and haze at 1.5 s",
+      "what": "The bright disk is smaller and farther left, with pale yellow glow over a comparatively uniform brown field. The target has a larger, warmer halo with streaks of light visible through the ground haze.",
+      "fix": "Shift the disk slightly right, broaden its soft white center and peach-orange spill, and make the rays show through a separate low layer of mist."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "region 4, sun and haze at 6.5 s",
+      "what": "The sun sits higher and farther right, separated from the ridge in a uniform buttery glow. The target sun sits just at the ridge with a more radiant warm fan, brighter near-ground mist and soft colored flare.",
+      "fix": "Move the disk left and down to the skyline, warm the near-horizon spill toward peach, and restore rays, glints and subtle flare below the disk."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "regions 5 through 7, field, far ridge and sky at 1.5 s",
+      "what": "Layered blue-green field shadows, varied soft shapes and horizontal haze are replaced by a browner field and a flat gray background band. The lower sky is more neutral yellow-gray and has less of the target's soft peach separation above the ridge.",
+      "fix": "Rebuild the cool shadowed midground and diffuse low mist, preserve several indistinct field shapes at different depths, and give the lower sky a soft peach transition beneath the blue."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-06.png",
+      "where": "region 7, sky immediately above the left ridge at 6.5 s",
+      "what": "The blue holds farther down into the skyline and blends into muted gray-beige; the target has a clearer pale peach transition following the darker ridge.",
+      "fix": "Keep the cool upper sky but lighten and warm the transition just above the corrected ridge."
+    }
+  ]
+}

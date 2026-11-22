@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "midground field behind the plant and region 4 of set-A-02.png",
+      "what": "the dense field of out-of-focus young seedlings across wet furrows is replaced by a flat black band with only a few sparse, blurry plants and small grass tufts",
+      "fix": "populate the midground with dense rows of out-of-focus broadleaf sunflower seedlings over wet, furrowed soil that catches soft sky highlights"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground soil across the bottom of the frame and region 4 of set-A-02.png",
+      "what": "the ground is dull, matte grey-black mud with smooth blobs and added stiff green grass tufts, missing the coarse clod detail and sparkling wet specular highlights",
+      "fix": "remove the grass tufts, break the mud into chunky wet soil clods, and add crisp micro-specular highlights reflecting the sky across the wet dirt"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "rain across the full frame and region 6 of set-A-03.png",
+      "what": "rain streaks are sparse, uniform parallel lines tilted around 20 degrees instead of 10 degrees, with no depth layering, atmospheric mist, or airborne ground spray",
+      "fix": "render a dense, multi-layered rain curtain at a shallower ~10-degree angle with varied streak thickness and opacity, plus distant rain haze and fine splash droplets near the soil and leaves"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "plant crown, leaves, and base, and regions 1 to 3 of set-A-02.png",
+      "what": "the top has two stiff V-angled leaves on a blunt stem with no central bud cluster, the leaves have blotchy bumpy noise and plastic sheen instead of crisp venation and backlit translucency, and the basal cotyledons are oversized and nearly black",
+      "fix": "build a compact cluster of overlapping young leaves cupping a central bud, give the leaves crisp embossed veins, fine serrated edges, warm-green subsurface backlighting, and hanging water droplets, and replace the dark basal leaves with a small bright-green lower leaf"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "water channel in the lower-left foreground",
+      "what": "the puddle is a narrow ribbon with smooth sine-wave ripples, soft matte edges, and almost no raindrop splashes",
+      "fix": "break up the puddle edges around rough mud clods, sharpen the wet sky reflections, and add active crown splashes and bouncing droplets across the water surface"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs (also visible in regions 1 and 3)",
+      "what": "the stem is too thick and rigid with sparse, long spiky white needles and clumped fuzz on leaf tips instead of a slender, gently curved stem with dense, short fine hairs and a continuous rim light",
+      "fix": "make the stem slightly thinner and organically curved, replace the coarse spikes with a dense coat of short fine translucent hairs, remove fuzz clumps from leaf tips, and add a crisp bright rim highlight along the stem edges"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6, the sky, and upper clouds in set-A-01-b.png",
+      "what": "the clouds show small, lumpy procedural noise cells with overly smooth gradients and no film grain, while the bright sky gap behind the lower stem is wider and brighter than the target",
+      "fix": "replace the lumpy procedural noise with broad, softly layered stratus storm clouds, narrow and tone down the bright horizon opening behind the stem, and add fine photographic grain across the frame"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5, the far background at the skyline",
+      "what": "the distant tree-lined ridge is blurred into a low-contrast grey smear and partially blocked by overscaled midground plants rising across the horizon",
+      "fix": "restore a darker slate-teal forested ridge silhouette with subtle tree-crown irregularity softened by rain haze, and scale down the midground seedlings so they stay below the skyline"
+    }
+  ]
+}

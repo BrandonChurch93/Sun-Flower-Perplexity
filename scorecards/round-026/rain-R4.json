@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 8,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "f0528-f0539, rain around the canopy and above the puddle at lower left",
+      "what": "The rain reads mainly as parallel streaks. The sheets show few clear contacts with the leaves or the puddle, so the downpour looks less grounded than the plant motion.",
+      "fix": "Show a few distinct drops striking and breaking on leaf edges and sending out small, irregular ripples where they hit the puddle."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "top edge of the native-size tiles, on the taller left leaflet of the growing tip",
+      "what": "The fixed crop clips the end of the tallest new leaflet, making its tip motion and fine edge stability hard to verify at delivery size.",
+      "fix": "Reframe the native-size crop with enough headroom to keep both leaflet tips visible in all 12 frames. Keep that crop fixed across the sequence."
+    }
+  ]
+}

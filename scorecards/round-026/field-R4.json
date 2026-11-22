@@ -1,0 +1,14 @@
+{
+  "critic": "R4",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "Foreground sunflower and adjacent green head, f1560–f1799; see also the native-size sequence f1641–f1652 in set-D-03.png",
+      "what": "The camera retreat supplies most of the visible change. The open flower retains essentially the same petal arrangement, and the neighboring head remains closed. The leaves and head move, but even the designated fastest-change stretch shows sway rather than recognizable unfolding, so the unit reads as a pullback from mature plants rather than a growth time-lapse.",
+      "fix": "Keep the smooth retreat and existing sway, but stage a visible progression of growth during the shot: let selected petals uncurl at different rates from their bases and let the younger head or a nearby leaf gradually open, maintaining consistent attachment and overlap."
+    }
+  ]
+}

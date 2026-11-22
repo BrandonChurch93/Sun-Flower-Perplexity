@@ -1,0 +1,42 @@
+{
+  "critic": "R7",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-G-04.png",
+      "where": "place 1 and place 2, rain streaks across the storm sky",
+      "what": "after encoding the rain streaks break into blotchy, smeared dashes with soft broken ends, many of the faint thin streaks vanish entirely, and the cloud behind them goes mottled where the streaks were; the rain reads thinner and smudgier at native size",
+      "fix": "raise the bitrate floor or use a slower preset with higher-quality motion search for the rain shots (e.g. -preset slow, -tune film or grain, lower crf/raise maxrate for 12-16 s), or render rain slightly wider/brighter so it survives quantisation"
+    },
+    {
+      "severity": "major",
+      "file": "set-G-06.png",
+      "where": "place 1 and place 2, the star field around the plant and along the Milky Way",
+      "what": "a large share of the dim stars disappear and the coloured (orange/blue) star tints wash out; the dark sky between stars becomes faintly blotchy instead of a clean dark field, so the sky reads noticeably sparser at native size",
+      "fix": "use -tune grain or aq-mode 3 with higher aq-strength so dark flat areas keep bits, raise the bitrate for the night section, or make the faintest stars 1-2 px larger/brighter so they are not quantised away"
+    },
+    {
+      "severity": "minor",
+      "file": "set-G-08.png",
+      "where": "place 1, the hazy sky above the setting sun",
+      "what": "the rendered grain is replaced by a flat surface with faint macroblock-sized mottling and slight vertical smears, visible only when zoomed or contrast-stretched; no hard banding",
+      "fix": "add a light deband/dither or -tune grain for the sunset shot so the smooth gradient keeps its texture"
+    },
+    {
+      "severity": "minor",
+      "file": "set-G-02.png",
+      "where": "place 1, the blurred sky and fog band",
+      "what": "fine grain is gone and the gradient shows faint soft blotches along block boundaries when zoomed; no visible banding at native size",
+      "fix": "same as above: aq-mode 3 or a 10-bit encode to keep smooth fog gradients clean"
+    },
+    {
+      "severity": "minor",
+      "file": "set-G-04.png",
+      "where": "place 1, the fine hairs along the stem and leaf edges",
+      "what": "the backlit hairs are slightly softened and a few of the thinnest ones fade, though the edges still read as hairy at native size",
+      "fix": "no change required beyond the bitrate allocation for the rain shot"
+    }
+  ]
+}
