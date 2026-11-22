@@ -1,0 +1,132 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "merged": {
+    "rule": "kit/07-QUALITY-BAR.md: a set over critics.maxFilesPerMessage is split across two fresh critics with the same rubric and their answers are merged; the merged score is the lower of the two, the issues are both lists in order",
+    "parts": [
+      {
+        "file": "R4-1.json",
+        "agent": "reviewer_334",
+        "family": "Gemini",
+        "images": 10,
+        "score": 4,
+        "pass": false
+      },
+      {
+        "file": "R4-2.json",
+        "agent": "reviewer_335",
+        "family": "Grok",
+        "images": 3,
+        "score": 6,
+        "pass": false
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-05.png",
+      "where": "horizon and midground grass field across cut 2 from f0599 to f0600",
+      "what": "the horizon and midground grass do not line up across the cut: the flat treeline and tall grass meadow in f0599 jump in one frame to a higher mountain ridge, a bright misty valley band below the former treeline, and dark midground sunflower silhouettes in f0600",
+      "fix": "keep the horizon ridge silhouette, midground grass, and background plant geometry aligned across f0599 and f0600 so only sky, lighting, and weather change on the cut",
+      "part": "R4-1"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-10.png",
+      "where": "lower-center and lower-right rim of the flower disc across f1393 to f1404",
+      "what": "unfolding orange-yellow ray petals sweep directly through one another and through surrounding green bracts, forming hard X-shaped geometry intersections across all 12 frames",
+      "fix": "resolve petal-to-petal and petal-to-bract collisions or stagger unfolding trajectories so ray florets clear neighboring petals and bracts without interpenetrating",
+      "part": "R4-1"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "sunlit foreground soil clods on the left and right of the sprout across f0000 to f0011",
+      "what": "subpixel micro-highlights on bumpy soil grains blink on and off every frame as the camera creeps downward, producing strong crawling specular shimmer across the dirt bed",
+      "fix": "prefilter high-frequency soil roughness/specular glints and increase temporal-spatial supersampling so highlights evolve smoothly without twinkling",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "split striped seed husk on the soil to the left of the stem base in f0120 to f0125",
+      "what": "the shed seed husk has heavy motion-blur ghosting in f0120 that snaps off to razor-sharp in f0121 and then rocks at real-time speed across f0121 to f0125 while the cotyledons unfold at time-lapse speed",
+      "fix": "drop the seed husk cleanly between time-lapse exposures so it rests statically on the soil without a single-frame smear pop or multi-frame real-time bounce",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "left tip of the emerging hypocotyl arch and striped seed-coat prongs in f0006 to f0011",
+      "what": "the rising striped seed-coat prongs pass straight through static sunlit soil clods on the left edge of the hole without displacing or crumbling the intersected dirt",
+      "fix": "push aside and crumble the overlying soil clods ahead of the rising seed coat and hypocotyl hook so plant geometry never intersects static soil",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-09.png",
+      "where": "left and upper-left unfolding yellow ray petals and adjacent green bracts across f1341 to f1352",
+      "what": "emerging yellow ray petals pass directly through overlapping green bracts and neighboring petals instead of peeling the bracts outward first",
+      "fix": "open the outer green phyllaries ahead of the ray florets and separate neighboring petal paths to prevent interpenetration",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "rain streaks crossing the cotyledons and upper leaves across f0290 to f0301",
+      "what": "falling rain streaks slice straight across and through the leaves without landing, splashing, or deflecting individual leaves, while surface water beads remain frozen in place",
+      "fix": "collide raindrops with leaf surfaces to produce small impact splashes, dynamic droplet motion, and subtle independent leaf bounce under raindrop weight",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-06.png",
+      "where": "pinpoint stars across the night sky in f0894 to f0899 (also in set-D-05.png f0600 to f0605)",
+      "what": "as the starfield drifts subpixel-by-subpixel, 1-pixel stars alias across the pixel grid and fluctuate strongly in peak brightness from frame to frame, causing crawling star shimmer",
+      "fix": "render pinpoint stars with a slightly wider prefiltered point-spread function and higher spatial supersampling so subpixel drift maintains steady star brightness",
+      "part": "R4-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-08.png",
+      "where": "backlit trichome hairs along the left outer bract and upper bract tips across f1217 to f1228",
+      "what": "fine rim-lit hairs break up into disconnected 1-pixel bright dots that sparkle and crawl from frame to frame as the bud shifts slowly",
+      "fix": "supersample and prefilter thin backlit trichome hairs so rim highlights stay continuous and temporally stable",
+      "part": "R4-1"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-06.png",
+      "where": "background fog and mist in the frost scene across f0900 to f0905 (also in set-D-07.png f1194 to f1199)",
+      "what": "unlike the drifting mist in the dawn and night segments, the frost-scene fog and haze remain nearly static across consecutive frames",
+      "fix": "add slow lateral advection and subtle density variation to the morning frost fog so the mist visibly drifts",
+      "part": "R4-1"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-13.png",
+      "where": "field frames from 53.1 s to 60.0 s, foreground sunflower heads and leaves",
+      "what": "petal bends, leaf angles, and stem curves stay identical while the camera pulls back, so the plants read as frozen rather than each leaf moving on its own",
+      "fix": "keep a light independent motion on every leaf and petal through the pullback, with no held pose",
+      "part": "R4-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "pullback from the 51.4 s bloom close-up through 54.8 s",
+      "what": "the head shrinks and the horizon rises much faster in this stretch than in the later pullback, so the move surges instead of one smooth move with mass",
+      "fix": "ease the dolly so scale and horizon drift at one constant rate, with no speed jump",
+      "part": "R4-2"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-11.png",
+      "where": "dawn frames from 0.0 s to 6.9 s, horizon and soil",
+      "what": "the horizon, soil, and grass stay locked, so the camera is stopped rather than in one continuous move",
+      "fix": "keep a single slow move running through the opening, with no held frame",
+      "part": "R4-2"
+    }
+  ]
+}

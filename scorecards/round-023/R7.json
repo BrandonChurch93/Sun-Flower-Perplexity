@@ -1,0 +1,35 @@
+{
+  "critic": "R7",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-G-04.png",
+      "where": "encoded sky and far-ground crops, especially left of the growing tip and above the horizon",
+      "what": "Continuous diagonal rain streaks break into short, ragged dashes, and the cloud tones behind them group into blocky patches.",
+      "fix": "Give the rain shot more bits within the 5 Mbit/s encode using two-pass allocation and a slower preset. If needed, make the thinnest rain streaks slightly wider and less numerous."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "encoded growing-tip and far-ground crops, behind the central sunflower",
+      "what": "Smaller flower heads and the foliage between them merge into smeared patches. The central flower still reads, but some of its seed-head and petal texture is visibly softened.",
+      "fix": "Allocate more bits to the dense field shot and tune adaptive quantization to retain separate petal, stem, and leaf edges."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "encoded sky crop, in the gold haze below and to either side of the sun",
+      "what": "The halo still reads, but the transition from the gold haze into the field breaks into soft rectangular patches instead of a smooth falloff.",
+      "fix": "Reduce quantization in the low-contrast glow and verify that the halo fades smoothly in the 5 Mbit/s test."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-06.png",
+      "where": "encoded sky crop, in the open blue sky to the right of the Milky Way above the plant tip",
+      "what": "Some faint stars that read as separate points before encoding soften into the background or disappear, leaving the star field visibly thinner in places.",
+      "fix": "Preserve more detail in the dark sky through adaptive quantization, or give the faintest intended stars slightly broader cores so they survive the encode."
+    }
+  ]
+}
