@@ -14,7 +14,7 @@ import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/ra
 import { flutter, gust } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
-import { SETS, sweepAt, toothAt, toothPoint, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
+import { SETS, bayAt, sweepAt, toothPoint, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
 
 // The stalk is the first third of a leaf's whole reach: it rises from the stem and arches over, and the blade hangs from its end.
 const REACH = 1.25
@@ -35,6 +35,8 @@ const CROWN_ANGLE = 0.72
 const SIDE_ANGLE = 0.6
 // The young blade's sides are curved, not drawn straight to the tip, and its fine teeth are cut in the skin.
 const YOUNG_STRAIGHT = 0.25
+// How deep the bays of a blade just open are cut, as a share of its half width.
+const YOUNG_TEETH = 0.03
 // Before the bloom a blade keeps this much of its grown shape at most.
 const YOUNG_RIPE = 0.25
 const FALL = 0.8
@@ -92,15 +94,18 @@ interface Leaf {
   crease: number
   yellows: number
   teeth: number
+  depth: number
 }
 
-interface Hair { leaf: number; kind: number; a: number; b: number; r1: number; r2: number; r3: number; r4: number; spike: boolean }
+interface Hair { leaf: number; kind: number; a: number; b: number; r1: number; r2: number; r3: number; r4: number; spike: boolean; bay: number }
 
 const frame = { ox: 0, oy: 0, oz: 0, mx: 1, my: 0, mz: 0, wx: 0, wy: 0, wz: 1, nx: 0, ny: 1, nz: 0 }
 const pathX = new Float64Array(PATH + 1)
 const pathZ = new Float64Array(PATH + 1)
 const pathA = new Float64Array(PATH + 1)
 const at = { x: 0, z: 0, a: 0 }
+
+const toothKey = (seed: number): number => Math.floor(hash01(seed, 5) * 65535)
 
 const ramp = (d: number): number => 0.5 * (d + Math.sqrt(d * d + 0.00015))
 
@@ -174,8 +179,8 @@ export function create(options: PartOptions): PlantPart {
     const cord = lerp(0.95, 0.4, upper) * (0.65 + 0.35 * r(1))
     const tip = 0.22 + 0.25 * r(2)
     const lean = (r(3) - 0.5) * 0.26
-    const teeth = 15 + 8 * r(4)
-    const depth = 0.055 + 0.05 * r(5)
+    const teeth = 9.5 + 5 * r(4)
+    const depth = 0.035 + 0.025 * r(5)
     const waveAmp = 0.026 + 0.03 * r(6)
     const waveRate = 3.5 + 4 * r(7)
     const withered = i === witheredLeaf
@@ -237,6 +242,7 @@ export function create(options: PartOptions): PlantPart {
       crease: withered ? (main ? 0.3 : 1.15) : main ? 0.2 + 0.4 * r(36) : 0.12 + 0.5 * r(36),
       yellows: (i < 7 ? 0.35 + 0.65 * r(21) : 0.25 * r(21)) * (0.4 + 0.6 * old),
       teeth,
+      depth: hero ? depth : 0,
     }
     for (let a = 0; a < nu; a++) {
       const s = typeof rows === 'number' ? a / (nu - 1) : Math.max(0, rows[a])
@@ -257,9 +263,8 @@ export function create(options: PartOptions): PlantPart {
           const cordNow = cord * (ripe ? 1 : 0.5)
           const wide = widthAt(s, cordNow, ripe ? tip : i < 2 ? 0.2 : Math.min(0.62, tip + 0.2), ripe ? 0.65 : i < 2 ? 0.08 : YOUNG_STRAIGHT) * share * (ripe ? 1 : 0.98)
           const rolled = roll * (ripe ? 1 : 0.3) * (0.55 + 0.9 * r(28 + side)) * Math.min(1, wide * 4)
-          // A tooth on a rolled edge runs down the slope, so it reaches less far out.
-          const steep = Math.hypot(1, (3 * rolled) / Math.max(wide, 0.05))
-          const tooth = hero ? (toothAt(s, combine(seed, i * 2 + side), teeth, depth * (ripe ? 1 : 0)) * smoothstep(0.6, 1, aw)) / steep : 0
+          // The grid reaches as far as the longest tooth: the bays between the teeth are cut in the skin.
+          const tooth = hero && ripe ? depth * smoothstep(0, 0.1, s) * smoothstep(1, 0.78, s) * smoothstep(0.6, 1, aw) : 0
           const wobble = 1 + 0.035 * Math.sin(9 * s + 6.28 * r(22 + side)) * aw
           x = w * wide * (1 + (side ? lean : -lean)) * (1 + tooth) * wobble
           y = sweepAt(s, w, cordNow) * (1 + 0.3 * (r(24 + side) - 0.5))
@@ -338,11 +343,22 @@ export function create(options: PartOptions): PlantPart {
   geometry.setIndex(index)
   const state = new Float32Array(LEAVES * 4)
   const ripeness = new Float32Array(LEAVES)
-  const serration = new Float32Array(LEAVES)
+  const cut = new Float32Array(LEAVES * 4)
+  const edges = new Float32Array(LEAVES * 4)
+  for (const leaf of leaves) {
+    cut[leaf.i * 4] = leaf.teeth
+    for (let side = 0; side < 2; side++) {
+      const sd = combine(seed, leaf.i * 2 + side)
+      edges[leaf.i * 4 + side * 2] = 3 * hash01(sd, 1)
+      edges[leaf.i * 4 + side * 2 + 1] = 6.28 * hash01(sd, 2)
+      cut[leaf.i * 4 + 2 + side] = toothKey(sd)
+    }
+  }
   const uniforms = {
     uLeafState: { value: state },
     uLeafRipe: { value: ripeness },
-    uLeafTeeth: { value: serration },
+    uLeafCut: { value: cut },
+    uLeafEdge: { value: edges },
     uVeins: { value: null as THREE.Texture | null },
     uDetail: { value: null as THREE.Texture | null },
     uMarks: { value: null as THREE.Texture | null },
@@ -405,7 +421,7 @@ export function create(options: PartOptions): PlantPart {
       const leaf = leaves[leafAt]
       const r = (k: number) => hash01(seed, 5000 + h, k)
       const pick = r(0)
-      const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4), spike: false }
+      const hair: Hair = { leaf: leafAt, kind: 0, a: 0, b: 0, r1: r(1), r2: r(2), r3: r(3), r4: r(4), spike: false, bay: 0 }
       if (pick < 0.38) {
         hair.kind = 0
         hair.a = Math.pow(r(5), 0.9) * (leaf.nu - 1.001)
@@ -425,7 +441,10 @@ export function create(options: PartOptions): PlantPart {
       crystalAt.push(crystalSlots)
       // On a tooth's point one spike of ice, and along the margin a close fringe of low tufts: four to each hair.
       const s = Math.max(0, leaf.sig[Math.round(hair.a)])
-      hair.spike = hair.kind === 0 && toothPoint(s, combine(seed, leaf.i * 2 + (hair.b === 1 ? 0 : 1)), leaf.teeth) > 0.93
+      const sd = combine(seed, leaf.i * 2 + (hair.b === 1 ? 0 : 1))
+      hair.spike = hair.kind === 0 && toothPoint(s, sd, leaf.teeth, toothKey(sd)) > 0.93
+      // A hair of the margin stands on the cut edge, not on the grid's.
+      hair.bay = hair.kind === 0 && leaf.hem ? bayAt(s, sd, leaf.teeth, toothKey(sd)) : 0
       crystalSlots += hair.kind === 0 ? FRINGE : hair.kind === 1 && hair.r4 < 0.3 ? 1 : 0
     }
     crystalAt.push(crystalSlots)
@@ -466,7 +485,20 @@ export function create(options: PartOptions): PlantPart {
       const b0 = leaf.hem ? 1 : 0
       const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
       const fa = clamp(bead.along, 0, 1) * (leaf.nu - 1.001)
-      const fb = b0 + (0.5 + 0.5 * clamp(bead.across, -1, 1)) * (b1 - b0 - 0.001)
+      let fb = b0 + (0.5 + 0.5 * clamp(bead.across, -1, 1)) * (b1 - b0 - 0.001)
+      if (leaf.hem) {
+        // A bead keeps to the skin: it does not sit in the bay between two teeth.
+        const k0 = Math.floor(fb) - 1
+        const w = HERO_COLS[k0] + (HERO_COLS[k0 + 1] - HERO_COLS[k0]) * (fb - 1 - k0)
+        const sd = combine(seed, leaf.i * 2 + (w < 0 ? 0 : 1))
+        const reach = 0.97 - bayAt(clamp(bead.along, 0, 1), sd, leaf.teeth, toothKey(sd)) * cut[leaf.i * 4 + 1]
+        if (Math.abs(w) > reach) {
+          const to = Math.sign(w) * reach
+          let k = 0
+          while (k < HERO_COLS.length - 2 && HERO_COLS[k + 1] < to) k++
+          fb = 1 + k + (to - HERO_COLS[k]) / (HERO_COLS[k + 1] - HERO_COLS[k])
+        }
+      }
       const a = Math.floor(fa)
       const b = Math.floor(fb)
       const ta = fa - a
@@ -744,7 +776,7 @@ export function create(options: PartOptions): PlantPart {
       // Before the bloom the plant's blades are whole: the holes and bites come with the summer.
       state[i * 4 + 3] = main && early > 0 ? lerp(smoothstep(5, 24, age), -2, early) : smoothstep(5, 24, age)
       ripeness[i] = tint
-      serration[i] = (1 - ripe) * (i < 2 ? smoothstep(8, 11, time) : 1)
+      cut[i * 4 + 1] = lerp(YOUNG_TEETH, leaf.depth, ripe) * (i < 2 ? smoothstep(8, 11, time) : 1)
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
@@ -855,8 +887,17 @@ export function create(options: PartOptions): PlantPart {
       } else {
         const a = Math.floor(hair.a)
         const t = hair.a - a
-        const b = Math.floor(hair.b)
-        const tb = hair.b - b
+        let b = Math.floor(hair.b)
+        let tb = hair.b - b
+        if (hair.bay > 0) {
+          const left = hair.b === 1
+          let k = 0
+          const reach = 1 - hair.bay * cut[leaf.i * 4 + 1]
+          while (k < 4 && Math.abs(HERO_COLS[k + 1]) > reach) k++
+          const share = clamp((1 - hair.bay * cut[leaf.i * 4 + 1] - Math.abs(HERO_COLS[k])) / (Math.abs(HERO_COLS[k + 1]) - Math.abs(HERO_COLS[k])))
+          b = left ? 1 + k : leaf.nv - 3 - k
+          tb = left ? share : 1 - share
+        }
         const v00 = (leaf.base + a * leaf.nv + b) * 3
         const v10 = v00 + leaf.nv * 3
         const more = tb > 0 ? 3 : 0

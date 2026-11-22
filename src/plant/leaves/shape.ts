@@ -48,24 +48,34 @@ export function sweepAt(s: number, w: number, cord: number): number {
   return -0.15 * cord * k * k * Math.pow(Math.abs(w), 1.5)
 }
 
-// One tooth of the edge: it rises slowly and falls fast, so its point leans toward the tip. No two are the same size.
-export function toothAt(s: number, seed: number, count: number, depth: number): number {
-  const x = count * Math.pow(s, 0.85) + 3 * hash01(seed, 1) + 0.4 * Math.sin(7.3 * s + 6.28 * hash01(seed, 2))
+// Where a place on the edge lies among the teeth: the whole part counts the tooth, the rest runs from bay to bay.
+function toothRun(s: number, seed: number, count: number): number {
+  return count * Math.pow(s, 0.85) + 3 * hash01(seed, 1) + 0.4 * Math.sin(7.3 * s + 6.28 * hash01(seed, 2))
+}
+
+// The size of one tooth. No two are the same, and now and then one is all but missing. The skin's shader counts the same way.
+export function toothSize(id: number, key: number): number {
+  let n = (Math.imul(id + 64, 747796405) + key) >>> 0
+  n = Math.imul(n ^ (n >>> 16), 2246822519) >>> 0
+  n = (n ^ (n >>> 13)) >>> 0
+  return (0.45 + (1.1 * (n & 65535)) / 65536) * (((n >>> 16) & 65535) / 65536 < 0.22 ? 0.3 : 1)
+}
+
+// How far in from the grid's edge the bay beside a tooth is cut, for a depth of one. A tooth rises slowly and falls fast, so its round point leans toward the tip.
+export function bayAt(s: number, seed: number, count: number, key: number): number {
+  const x = toothRun(s, seed, count)
   const id = Math.floor(x)
   const f = x - id
   const edge = f < 0.62 ? f / 0.62 : (1 - f) / 0.38
-  // A tooth is a rounded point between rounded bays, and now and then one is all but missing.
-  const saw = edge * edge * (3 - 2 * edge)
-  const size = depth * (0.45 + 1.1 * hash01(seed, 3, id)) * (hash01(seed, 4, id) < 0.22 ? 0.3 : 1) * smoothstep(0, 0.1, s) * smoothstep(1, 0.78, s)
-  return size * (saw - 0.35)
+  return smoothstep(0, 0.1, s) * smoothstep(1, 0.78, s) * (1 - toothSize(id, key) * (edge * edge * (3 - 2 * edge) - 0.35))
 }
 
 // How near a place on the edge is to the point of its tooth: 1 on the point, 0 in the bay. A tooth that is all but missing has no point.
-export function toothPoint(s: number, seed: number, count: number): number {
-  const x = count * Math.pow(s, 0.85) + 3 * hash01(seed, 1) + 0.4 * Math.sin(7.3 * s + 6.28 * hash01(seed, 2))
+export function toothPoint(s: number, seed: number, count: number, key: number): number {
+  const x = toothRun(s, seed, count)
   const id = Math.floor(x)
   const f = x - id
-  return hash01(seed, 4, id) < 0.22 || s < 0.1 || s > 0.9 ? 0 : f < 0.62 ? f / 0.62 : (1 - f) / 0.38
+  return toothSize(id, key) < 0.4 || s < 0.1 || s > 0.9 ? 0 : f < 0.62 ? f / 0.62 : (1 - f) / 0.38
 }
 
 export interface VeinField {

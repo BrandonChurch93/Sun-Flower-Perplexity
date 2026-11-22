@@ -16,14 +16,16 @@ in vec2 uv;
 in vec4 aLeaf;
 uniform vec4 uLeafState[${LEAVES}];
 uniform float uLeafRipe[${LEAVES}];
-uniform float uLeafTeeth[${LEAVES}];
+uniform vec4 uLeafCut[${LEAVES}];
+uniform vec4 uLeafEdge[${LEAVES}];
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
 out vec4 vLeaf;
 out vec4 vState;
 out float vRipe;
-out float vTeeth;
+out vec4 vCut;
+out float vKey;
 out float vDepth;
 void main() {
 #ifdef PLANT_FIELD
@@ -41,7 +43,10 @@ void main() {
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
   vRipe = uLeafRipe[int(aLeaf.x + 0.5)];
-  vTeeth = uLeafTeeth[int(aLeaf.x + 0.5)];
+  vec4 edgeOf = uLeafEdge[int(aLeaf.x + 0.5)];
+  vec4 cutOf = uLeafCut[int(aLeaf.x + 0.5)];
+  vCut = vec4(cutOf.xy, uv.x < 0.0 ? edgeOf.xy : edgeOf.zw);
+  vKey = uv.x < 0.0 ? cutOf.z : cutOf.w;
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
@@ -50,14 +55,19 @@ void main() {
 // The mean of the detail map in linear light, so that the map carries variation and the colors below carry the hue.
 const DETAIL_MEAN = 'vec3(0.163, 0.269, 0.111)'
 
-// The fine teeth of a young blade's edge, cut in the skin: how far in from the edge the bay between two teeth reaches, as a share of the half width.
+// The teeth of the edge, cut in the skin: how far in from the edge the bay beside a tooth reaches, as a share of the half width. It counts as bayAt does, so the hairs of the margin find the edge.
 const serrationGlsl = /* glsl */ `
-float serration(vec2 uv, float seed, float amount) {
-  float x = 30.0 * pow(max(uv.y, 0.0), 0.85) + 17.0 * seed + 0.43 * step(0.0, uv.x);
-  float f = fract(x);
-  float point = f < 0.72 ? f / 0.72 : (1.0 - f) / 0.28;
-  float size = 0.55 + 0.9 * fract(sin(floor(x) * 12.9898 + seed * 78.233) * 43758.5453);
-  return amount * 0.05 * size * (1.0 - point * point * (3.0 - 2.0 * point)) * smoothstep(0.03, 0.14, uv.y) * smoothstep(1.0, 0.9, uv.y);
+float serration(vec2 uv, float key, vec4 cut) {
+  float s = clamp(uv.y, 0.0, 1.0);
+  float x = cut.x * pow(s, 0.85) + cut.z + 0.4 * sin(7.3 * s + cut.w);
+  float id = floor(x);
+  float f = x - id;
+  float edge = f < 0.62 ? f / 0.62 : (1.0 - f) / 0.38;
+  highp uint n = uint(int(id) + 64) * 747796405u + uint(key + 0.5);
+  n = (n ^ (n >> 16u)) * 2246822519u;
+  n ^= n >> 13u;
+  float size = (0.45 + 1.1 * float(n & 65535u) / 65536.0) * (float((n >> 16u) & 65535u) / 65536.0 < 0.22 ? 0.3 : 1.0);
+  return cut.y * smoothstep(0.0, 0.1, s) * smoothstep(1.0, 0.78, s) * (1.0 - size * (edge * edge * (3.0 - 2.0 * edge) - 0.35));
 }
 `
 
@@ -68,7 +78,8 @@ in vec2 vUv;
 in vec4 vLeaf;
 in vec4 vState;
 in float vRipe;
-in float vTeeth;
+in vec4 vCut;
+in float vKey;
 in float vDepth;
 ${tissueGlsl}
 ${serrationGlsl}
@@ -172,7 +183,8 @@ void main() {
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
-  float margin = 1.0 - smoothstep(0.86, 0.98, abs(vUv.x)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
+  float bay = serration(vUv, vKey, vCut);
+  float margin = 1.0 - smoothstep(0.86, 0.98, min(1.0, abs(vUv.x) + bay)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through;
@@ -187,7 +199,7 @@ void main() {
   vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;
-  if (vTeeth > 0.0 && abs(vUv.x) > 1.0 - serration(vUv, vLeaf.z, vTeeth)) discard;
+  if (bay > 0.0 && abs(vUv.x) > 1.0 - bay) discard;
   outColor = shaded;
 }
 #endif
@@ -199,13 +211,15 @@ in vec4 vLeaf;
 in vec4 vMark;
 in vec4 vState;
 in vec2 vPlane;
-in float vTeeth;
+in vec4 vCut;
+in float vKey;
 uniform sampler2D uMarks;
 ${serrationGlsl}
 void main() {
   float mark = texture(uMarks, vPlane * 8.0 + vec2(vLeaf.z * 31.0, vLeaf.z * 17.0)).r;
   if (mark + vMark.y * smoothstep(0.62, 1.0, abs(vUv.x)) - vMark.x - 0.3 * (1.0 - vState.w) > 0.0) discard;
-  if (vTeeth > 0.0 && abs(vUv.x) > 1.0 - serration(vUv, vLeaf.z, vTeeth)) discard;
+  float bay = serration(vUv, vKey, vCut);
+  if (bay > 0.0 && abs(vUv.x) > 1.0 - bay) discard;
   outColor = vec4(1.0);
 }
 `
