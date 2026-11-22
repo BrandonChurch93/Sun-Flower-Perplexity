@@ -1,0 +1,86 @@
+{
+ "frames": [
+  362,
+  995,
+  1627
+ ],
+ "steps": [
+  {
+   "at": "load",
+   "nan": 0
+  },
+  {
+   "asked": 362,
+   "live": {
+    "frame": 362,
+    "shown": 0,
+    "busy": true,
+    "tier": "review"
+   },
+   "waitedMs": 147134,
+   "nan": 1
+  },
+  {
+   "asked": 995,
+   "live": {
+    "frame": 995,
+    "shown": 362,
+    "busy": true,
+    "tier": "review"
+   },
+   "waitedMs": 124771,
+   "nan": 1
+  },
+  {
+   "asked": 1627,
+   "live": {
+    "frame": 1627,
+    "shown": 995,
+    "busy": true,
+    "tier": "review"
+   },
+   "waitedMs": 83946,
+   "nan": 1
+  }
+ ],
+ "found": [
+  {
+   "liveFrame": 362,
+   "liveShown": 0,
+   "info": {
+    "name": "",
+    "type": "InstancedBufferGeometry",
+    "ctor": "kl",
+    "attributes": {
+     "position": "4 x 2",
+     "aOpen": "60000 x 4",
+     "aClose": "60000 x 4"
+    },
+    "indexCount": 6,
+    "instanceCount": 3319,
+    "drawRange": {
+     "start": 0,
+     "count": null
+    },
+    "userData": {},
+    "positionNumbers": 8,
+    "nanNumbers": 0,
+    "firstNanAt": -1,
+    "lastNanAt": -1,
+    "aroundFirst": null
+   },
+   "stack": [
+    "at console.error (<anonymous>:2:1021)",
+    "at Ri (http://localhost:37559/assets/index-C2CkvbcM.js:4:37494)",
+    "at kl.computeBoundingSphere (http://localhost:37559/assets/index-C2CkvbcM.js:4:134878)",
+    "at Qe (http://localhost:37559/assets/index-C2CkvbcM.js:4228:34710)",
+    "at Qe (http://localhost:37559/assets/index-C2CkvbcM.js:4228:35134)",
+    "at sp.render (http://localhost:37559/assets/index-C2CkvbcM.js:4228:33011)",
+    "at tB.draw (http://localhost:37559/assets/index-C2CkvbcM.js:10300:9007)"
+   ]
+  }
+ ],
+ "errors": [
+  "THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The \"position\" attribute is likely to have NaN values. kl"
+ ]
+}
