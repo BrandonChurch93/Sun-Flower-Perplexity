@@ -55,7 +55,7 @@ npx playwright-core install chromium
 npm run bench -- --sky sky-0 --shots 02,05
 ```
 
-The last line must print two shots and write a sheet under `out/work/bench/sky-0/`. If the clone, the install or the push fails twice, tell `/root` at once with the exact error.
+The last line must print two shots and write a sheet under `out/work/bench/sky-0/`. On a sandbox whose system the browser installer does not know, set `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` for the install and for every bench run. If the clone, the install or the push fails twice, tell `/root` at once with the exact error.
 
 - `npm run bench -- --sky sky-0 --shots all` draws the sixteen moments of `src/v2/shots.ts` at 960 x 540 with one sample. `--format 16x9` is 1920 x 1080. `--tier review` is 8 samples. `--only all` draws the whole scene, `--only sky,ground,plant` names what is drawn. `--view film` is the film's own camera, and `low`, `up`, `wide`, `west` and `crane` are fixed ones. `--clip 73,85 --view wide` makes a clip of those film seconds. The top of `tools/bench.ts` lists it all.
 - Open every picture you render and look at it at full size, beside the reference pictures. A report that says a thing looks right without a picture you looked at is not accepted.
