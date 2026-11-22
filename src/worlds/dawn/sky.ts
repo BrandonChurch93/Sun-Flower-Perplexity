@@ -17,6 +17,7 @@ uniform float uGain;
 uniform float uDrift;
 uniform float uSamples;
 uniform float uDay;
+uniform float uCore;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
@@ -52,10 +53,10 @@ void main() {
   float depth = a / (uFogFalloff * max(d.y, 1e-4));
   color = mix(color, uFogColor + uFogSunTint * pow(saturate(toSun), 6.0), 1.0 - exp(-depth));
 
-  color += uGlow * (1.0 * exp(-theta / 0.014) + 0.22 * exp(-theta / 0.05) + 0.11 * exp(-theta / 0.17) + 0.006 * exp(-theta / 0.6));
+  color += uGlow * (uCore * exp(-theta / 0.014) + 0.22 * exp(-theta / 0.05) + 0.11 * exp(-theta / 0.17) + 0.006 * exp(-theta / 0.6));
   float share = 0.5 * wide * uPixelAngle;
   float radius = sqrt(SUN_RADIUS * SUN_RADIUS + share * share);
-  color += uDisc * (SUN_RADIUS * SUN_RADIUS / (radius * radius)) * (1.0 - smoothstep(radius - max(share, 0.75 * uPixelAngle), radius + max(share, 0.75 * uPixelAngle), theta));
+  color += uDisc * uCore * (SUN_RADIUS * SUN_RADIUS / (radius * radius)) * (1.0 - smoothstep(radius - max(share, 0.75 * uPixelAngle), radius + max(share, 0.75 * uPixelAngle), theta));
 
   float grey = dot(color, vec3(0.3, 0.6, 0.1));
   if (uDiag == 7) color = vec3(grey);
@@ -71,6 +72,9 @@ const DRIFT_TURNS_PER_SECOND = 0.00001
 // The sky away from the sun lightens and pales as the sun climbs, between these seconds of the film.
 const DAY_FROM_S = 1.5
 const DAY_TO_S = 6.5
+// At the film's start thin cloud low over the land lies across the sun and holds its core down; it clears evenly and is gone just before the sprout key.
+const CORE_AT_START = 0.5
+const CORE_CLEAR_AT_S = 1.44
 
 export class DawnSky {
   private readonly pass: FullscreenPass
@@ -89,6 +93,7 @@ export class DawnSky {
       uDrift: { value: 0 },
       uSamples: { value: 1 },
       uDay: { value: 0 },
+      uCore: { value: 1 },
     })
   }
 
@@ -105,6 +110,8 @@ export class DawnSky {
     u.uDrift.value = time * DRIFT_TURNS_PER_SECOND
     const t = Math.min(1, Math.max(0, (time - DAY_FROM_S) / (DAY_TO_S - DAY_FROM_S)))
     u.uDay.value = t * t * (3 - 2 * t)
+    const c = Math.min(1, Math.max(0, time / CORE_CLEAR_AT_S))
+    u.uCore.value = CORE_AT_START + (1 - CORE_AT_START) * c * c * (3 - 2 * c)
   }
 
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, width: number): void {
