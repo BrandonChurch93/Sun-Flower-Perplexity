@@ -33,8 +33,8 @@ export const heaveAt = (time: number): number => {
   const v = 1 - Math.min(1, Math.max(0, (time + heave.leadS) / (heave.pushS + heave.leadS)))
   return heave.push * (1 - v * v) + (1 - heave.push) * step(-heave.restLeadS, emergence.riseS, time)
 }
-// The one cleft the seed opens over itself as the film starts, in the loose crumbs only: the land under them does not move. It runs toward the lens and a little toward the sun (turn, as a slope), so the lens looks along it and the sun skims its left lip: this long each way from its middle, which lies aheadM toward the lens, the crumbs this far aside to each lip at the first frame and at openS, winding by windM. The sun reaches lipM into its left lip. The crumbs within footM of the stem (fully out at three times that) fall back in from footS, the others one by one from fillS, and at shutS the cleft is gone.
-export const crack = { halfLenM: 0.024, aheadM: 0.006, turn: 0.07, fromM: 0.003, toM: 0.0058, openS: 0.27, windM: 0.0012, lipM: 0.006, footM: 0.004, footS: 0.3, fillS: 0.5, shutS: 1.3, fallS: 0.2 }
+// The one cleft the seed opens over itself as the film starts, in the loose crumbs only: the land under them does not move. It runs toward the lens and a little toward the sun (turn, as a slope), so the lens looks along it and the sun skims its left lip: this long each way from its middle, which lies aheadM toward the lens, the crumbs this far aside to each lip at the first frame and at openS, winding by windM. The sun reaches lipM into its left lip. Only the crumbs within reachM of it (none beyond two and a half times that) stand aside, and the cleft widens at one even speed, so the bed beside it lies still. To the left of the stem, where the seed coat comes up, it widens into a bay bayM deep and bayLenM long each way, clear from the first frame. The crumbs within footM of the stem (fully out at three times that) fall back in from footS, those of the bay between bayFromS and bayToS when the seed coat has left the ground, the others one by one from fillS, and at shutS the cleft is gone.
+export const crack = { halfLenM: 0.024, aheadM: 0.006, turn: 0.07, fromM: 0.003, toM: 0.0058, openS: 0.4, windM: 0.0012, lipM: 0.006, footM: 0.004, footS: 0.3, fillS: 0.5, shutS: 1.3, fallS: 0.2, reachM: 0.004, bayM: 0.008, bayLenM: 0.006, bayFromS: 0.85, bayToS: 1.1 }
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
 
@@ -119,17 +119,24 @@ float crackSpan(vec2 p) {
   if (uTime >= uCrackCut.z) return 0.0;
   return 1.0 - smoothstep(0.35 * uCrack.x, uCrack.x, abs(dot(p, uLane) - uCrackWay.x));
 }
-float crackOpen() {
-  float v = 1.0 - clamp(uTime / max(uCrack.w, 1e-4), 0.0, 1.0);
-  return uCrack.y + (uCrack.z - uCrack.y) * (1.0 - v * v);
+uniform vec4 uCrackBay;
+float crackBay(vec2 p, float line) {
+  float s = dot(p, uLane) / uCrackBay.y;
+  return line < 0.0 ? exp(-s * s) : 0.0;
 }
-float crackFill(vec2 p, float seed) {
+float crackOpen() {
+  return uCrack.y + (uCrack.z - uCrack.y) * clamp(uTime / max(uCrack.w, 1e-4), 0.0, 1.0);
+}
+float crackFill(vec2 p, float seed, float bay) {
   float from = mix(uCrackWay.z, uCrackWay.w + (uCrackCut.z - uCrackWay.w - ${crack.fallS}) * seed, smoothstep(uCrackCut.x, 3.0 * uCrackCut.x, length(p)));
+  from = mix(from, uCrackBay.z + (uCrackBay.w - uCrackBay.z) * seed, smoothstep(0.2, 0.5, bay));
   return smoothstep(from, from + ${crack.fallS}, uTime);
 }
 float cracked(vec2 p) {
-  float h = crackOpen() * crackSpan(p) * (1.0 - crackFill(p, 0.6));
-  return h <= 0.0 ? 0.0 : 1.0 - smoothstep(0.5 * h, h + 0.0005, abs(crackLine(p)));
+  float line = crackLine(p);
+  float bay = crackBay(p, line);
+  float h = (crackOpen() + uCrackBay.x * bay) * crackSpan(p) * (1.0 - crackFill(p, 0.6, bay));
+  return h <= 0.0 ? 0.0 : 1.0 - smoothstep(0.5 * h, h + 0.0005, abs(line));
 }`
 
 // The height of the near ground, shared by its surface and by everything that sits on it.
@@ -289,16 +296,13 @@ vec3 proud(float heightM, float dew) {
   return mix(vec3(1.0), mix(vec3(0.85), mix(vec3(2.1, 1.65, 1.8), vec3(1.6, 1.35, 1.5), dew), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
-float grainsAt(vec3 world, float share, float px) {
-  float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * px, 0.0005));
+float grains(vec3 world, float share) {
+  float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 3.0, 0.0005));
   vec3 a = world * exp2(-floor(l));
   vec3 b = a * 0.5;
   float fine = step(1.0 - share, hash31(floor(a))) * smoothstep(0.42, 0.15, length(fract(a) - 0.5));
   float coarse = step(1.0 - share, hash31(floor(b))) * smoothstep(0.42, 0.15, length(fract(b) - 0.5));
   return mix(fine, coarse, fract(l));
-}
-float grains(vec3 world, float share) {
-  return grainsAt(world, share, 3.0);
 }
 float sparkle(vec3 world, vec3 v, vec3 n) {
   float skim = 1.0 - max(dot(n, v), 0.0);

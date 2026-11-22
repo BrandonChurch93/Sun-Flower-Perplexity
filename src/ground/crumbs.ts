@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
-import { crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+import { crack, crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
 export { laneDir }
 
@@ -349,8 +349,9 @@ void main() {
   float span = crackSpan(c);
   if (span > 0.0) {
     float d = crackLine(c);
-    float edge = span * (crackOpen() + 0.6 * aCenter.w) * (1.0 - crackFill(c, hash11(own + 13.0)));
-    c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(0.012, 0.03, abs(d))));
+    float bay = crackBay(c, d);
+    float edge = span * (crackOpen() + uCrackBay.x * bay + 0.6 * aCenter.w) * (1.0 - crackFill(c, hash11(own + 13.0), bay));
+    c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(${crack.reachM} + uCrackBay.x * bay, ${2.5 * crack.reachM} + 2.0 * uCrackBay.x * bay, abs(d))));
   }
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
@@ -389,10 +390,8 @@ const vec2 CREST = vec2(0.55, 1.4);
 const float CREST_TOP = 0.7;
 // How much of the sun the crack's left lip takes where it turns to the gap.
 const float CRACK_LIP = 0.8;
-// The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, how bright it is, and how many pixels a grain spans at the least, so that no point lives inside one pixel.
-const vec3 DEW_GLINT = vec3(0.1, 0.3, 6.0);
-// In the dawn the gloss widens by this much of the normal's spread across one pixel.
-const float SPREAD = 0.5;
+// The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, and how bright it is.
+const vec2 DEW_GLINT = vec2(0.1, 0.5);
 ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -441,7 +440,7 @@ void main() {
   float dawn = dawnOnly() * uDew;
   float span = crackSpan(p);
   if (span > 0.0) {
-    float d = -crackLine(p) - crackOpen() * span;
+    float d = -crackLine(p) - (crackOpen() + uCrackBay.x * crackBay(p, -1.0)) * span;
     float lip = span * (1.0 - smoothstep(uCrackWay.w, uCrackCut.z, uTime)) * (1.0 - smoothstep(0.0, uCrackCut.w, d)) * step(-0.001, d) * smoothstep(-0.3, 0.4, dot(ball.xz, vec2(uLane.y, -uLane.x)));
     lit = max(lit, lip * foot * smoothstep(-0.002, 0.004, vWorld.y));
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
@@ -450,12 +449,10 @@ void main() {
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  float power = mix(24.0, 160.0, uWet);
-  float held = mix(power, power / (1.0 + power * SPREAD * (dot(dFdx(n), dFdx(n)) + dot(dFdy(n), dFdy(n)))), dawn);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), held) * (held / power) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
-  color += uSunColor * (grainsAt(vWorld + 0.37, DEW_GLINT.x, DEW_GLINT.z) * DEW_GLINT.y * dawn * lit);
+  color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
