@@ -38,6 +38,9 @@ const DEW_SHARE = 0.05
 // A damp hair is drawn at least this wide and this long on the screen, and that much fainter: the same light, spread, so it is a soft stroke and never a row of single lit pixels.
 const SOFT_HALF_PX = 0.75
 const SOFT_LONG_PX = 3
+// Wet hairs gather into tufts: this many rows of them from the first hair of a coat to its last, and they lean this hard toward their tuft.
+const TUFT_BANDS = 350
+const TUFT_LEAN = 1.1
 // A soft stroke loses none of its light to the pixel grid as a line does. This holds the rim at the light it had as lines.
 const SOFT_LIGHT = 0.85
 // A wet hair long enough may carry a drop: six in a hundred do.
@@ -90,6 +93,8 @@ const float DEW_OF_HAIR = 0.3;
 const float DEW_FACE = 0.0;
 const float SOFT_HALF_PX = ${SOFT_HALF_PX.toFixed(2)};
 const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
+const float TUFT_BANDS = ${(TUFT_BANDS * 2 * Math.PI).toFixed(2)};
+const float TUFT_LEAN = ${TUFT_LEAN.toFixed(2)};
 const float WET_BACK = 0.3;
 const float WET_THROUGH = 6.0;
 const float DEW_GLOW = 0.2;
@@ -119,6 +124,10 @@ float hairWide;
 float hairBead;
 float hairSlim;
 float hairCoat;
+
+float tuftField(vec2 q) {
+  return sin(q.x + 1.3 * sin(2.0 * q.y)) * sin(5.0 * q.y + 0.8 * sin(0.37 * q.x));
+}
 
 vec3 hairPoint(float t) {
   return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
@@ -195,6 +204,17 @@ void readHair(int k) {
     hairWide *= 1.0 + 0.6 * uPlantWet * point;
     hairDir = normalize(hairDir + (aside * 0.15 + vec3(0.0, -0.25, 0.0)) * uPlantWet);
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
+    // Rain gathers wet hairs into tufts. The tufts belong to the tissue: a hair knows its place by its number in the coat, which runs from the foot up, and by the way it points round the stem. It leans toward the nearest tuft so neighbors meet in a point; a tuft is long, and between tufts the hairs are short and some are beaten flat and do not show.
+    float rain = smoothstep(0.3, 0.9, uPlantWet);
+    vec2 tq = vec2(d.w * TUFT_BANDS, atan(hairStand.z, hairStand.x));
+    float t0 = tuftField(tq);
+    float rise = (tuftField(tq + vec2(0.2, 0.0)) - t0) * 5.0;
+    float round = (tuftField(tq + vec2(0.0, 0.04)) - t0) * 5.0;
+    vec3 upward = vec3(0.0, 1.0, 0.0) - hairStand * hairStand.y;
+    vec3 across = cross(hairStand, vec3(0.0, 1.0, 0.0));
+    hairDir = normalize(hairDir + (upward * rise + across * round) * (TUFT_LEAN * rain));
+    hairRoot.w *= mix(1.0, 0.45 + 1.4 * smoothstep(-0.5, 0.7, t0), rain);
+    hairShare *= mix(1.0, 0.2 + 0.8 * smoothstep(-0.75, -0.15, t0), rain);
   }
   mat4 toClip = projectionMatrix * viewMatrix;
   hairFoot = toClip * vec4(plantWorld(hairPoint(0.0)), 1.0);
@@ -691,7 +711,7 @@ export class HairSet {
       out[q + 12] = lb[o] / lb2
       out[q + 13] = lb[o + 1] / lb2
       out[q + 14] = lb[o + 2] / lb2
-      out[q + 15] = 0
+      out[q + 15] = i / this.count
       n++
       if (w < nearest) nearest = w
       if (long > longest) longest = long
