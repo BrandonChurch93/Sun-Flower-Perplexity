@@ -32,7 +32,7 @@ export function renderLines(needs: Need[]): string[] {
     return `missing · ${first.what} · ${[...new Set(group.map((n) => n.label))].join(' + ')} · ${first.tier} · ${first.format} · ${group.map((n) => rel(n.file)).join(' + ')} · ${frames} ${frames === 1 ? 'frame' : 'frames'} to make · ${make}`
   })
   const missing = needs.filter((n) => !n.have).length
-  return [...lines, `${needs.length} files needed · ${needs.length - missing} here · ${missing} missing · ${lines.length} commands · ${total} frames to make`]
+  return [...lines, `${needs.length} files needed · ${needs.length - missing} here · ${missing} missing · ${lines.length} ${lines.length === 1 ? 'command' : 'commands'} · ${total} frames to make`]
 }
 
 export async function recordPacks(context: PackContext): Promise<Pack[]> {
