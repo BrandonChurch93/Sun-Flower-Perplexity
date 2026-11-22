@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 04:20 UTC · Phase 5: the upper ray layer's lift comes out (bloom M1 at frame 1350 read 1.59 px against 1.5 on 41ab097); the corrected build replaces it
+- Last push: 2026-11-22 04:23 UTC · Phase 5: corrected build 36b84a5 sent to twelve builders, machine checks started on it; state logged
 - Last status: 69 · 2026-11-22 04:09 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -897,6 +897,12 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
+Running (04:22 UTC, 2026-11-22):
+
+- Everything from the corrected build `36b84a5` (engine `f4da6d9bf14270bc`) · twelve builders' VMs · sent 04:22 UTC · list A: 16 stills at `final` (220 to 375 s each), three film sheets, four cut sheets with the eight stills beside the cuts, 26 preview film parts at `draft` (3 to 7 min a part); list B: four stress pairs, six runs of twelve `review` stills, six growth sheets; list C: 26 master film parts at `draft` in 16x9 (8 to 10 min a part) · list A expected in by about 04:50 UTC, list B by about 05:10 UTC, list C by about 05:40 UTC; 06:15 UTC is the limit for list C · taken in with `out/work/scratch/take-all.sh`.
+- The machine checks of Phase 5 then the measures of the six units on `36b84a5` · the Builder's VM · started 04:22:10 UTC · about 26 min then about 6 min (the measures need the new `final` stills taken in first) · logs `out/work/scratch/gate-p5-final.log` and `out/work/scratch/measure-p5-final.log`; the same logs of `41ab097` are kept as `gate-p5-41ab097.log` and `measure-p5-41ab097.log`.
+- Stopped at 04:22 UTC: every render of `41ab097` (its record round pictures and master film parts); what had come in is set aside in `out/work/film-41ab097`, `out/work/stills-41ab097`, `out/work/sheets-41ab097`, `out/work/stress-41ab097` and is not used.
+
 Running (03:52 UTC, 2026-11-22):
 
 - The next lists, from the kept build `41ab097` (engine `7733fb920a361fcd`) · twelve builders' VMs · sent 03:52 UTC, each starts when its list of the final build is sent · for the record round: four stress pairs (about 12 min each), six runs of twelve consecutive stills at `review` in 16x9 (about 9 min each), six growth sheets at `review` in `preview` (about 5 min each); for the master film: 26 parts at `draft` in 16x9 (about 8 to 11 min a part of 75 frames) · expected in by about 04:45 UTC, 05:30 UTC is the limit · taken in with `out/work/scratch/take-p5.cjs` and `out/work/scratch/take-film-parts.cjs out/work/scratch/master-parts-plan.json`.
@@ -1138,6 +1144,8 @@ State at 03:10 UTC (3 running of 12 allowed). Reports of the fix pass of round 2
 State at 03:38 UTC (12 running of 12 allowed). The fix pass of round 22 is merged: the last three reports were read and their turns ended (`modes_builder` 03:22 UTC, `04a9059`; `stem_builder` 03:26 UTC, `e0c44a6`; `field_builder` 03:14 UTC, `0a974b6`). The final build of Phase 5 is main `41ab097`, engine `7733fb920a361fcd`. In their turns since 03:38 UTC, each rendering that build in its own `../sf-clip` (brief `out/work/briefs/p5-final.json`, plan `out/work/scratch/film-parts-plan.json`): `skin_builder` (stills 0, 8; three film parts), `lens_builder` (15, 23; two parts), `stem_builder` (30, 38; two parts), `petal_builder` (45, 53; two parts), `ground_builder` (60, 195; two parts), `field_builder` (420, 780; two parts), `leaf_builder` (1080, 1350; two parts), `disc_builder` (1515, 1755; two parts), `golden_builder` (the three whole film sheets; two parts), `hair_builder` (the four cut sheets; the two short parts), `bud_builder` (five parts). `harness_builder` (since 03:20 UTC): the packs of the record round in `tools/`, report by 04:15 UTC. Idle: `modes_builder`, `export_builder`.
 
 State at 03:52 UTC (12 running of 12 allowed). The eleven renderers of the final build are in their turns and each got its next list at 03:52 UTC, to start when its current list is sent (brief `out/work/briefs/p6-renders.json`, plan `out/work/scratch/master-parts-plan.json`), all from `41ab097` (engine `7733fb920a361fcd`) in its own `../sf-clip`: `skin_builder` (stress pair dawn; master parts dawn 0 to 74, 75 to 149), `lens_builder` (stress rain; dawn 150 to 224, rain 240 to 314), `disc_builder` (stress night; rain 315 to 389, 390 to 464), `field_builder` (stress field; rain 465 to 539, 540 to 599), `stem_builder` (run and growth sheet of dawn; night 600 to 674, 675 to 749), `petal_builder` (run and sheet of rain; night 750 to 824, 825 to 899), `ground_builder` (run and sheet of night; frost 900 to 974, 975 to 1049), `leaf_builder` (run and sheet of frost; frost 1050 to 1124, 1125 to 1199), `golden_builder` (run and sheet of bloom; field 1635 to 1709, 1710 to 1784), `hair_builder` (run and sheet of field; dawn 225 to 239, field 1785 to 1799), `bud_builder` (bloom 1425 to 1499, 1500 to 1559, field 1560 to 1634). `harness_builder`, in its turn since 03:52 UTC: master parts bloom 1200 to 1274, 1275 to 1349, 1350 to 1424. Idle: `modes_builder`, `export_builder`.
+
+State at 04:22 UTC (12 running of 12 allowed). The corrected build `36b84a5` (engine `f4da6d9bf14270bc`) went to twelve builders at 04:22 UTC, each told to stop what it was rendering from `41ab097` and to drop the rest of its lists (brief `out/work/briefs/second-build.json`, plans `out/work/scratch/film-parts-plan.json` and `out/work/scratch/master-parts-plan.json`). Each renders in its own `../sf-clip`, three lists in order. List A (the final build's own pictures): two `final` stills each on `skin_builder` (0, 8), `lens_builder` (15, 23), `stem_builder` (30, 38), `petal_builder` (45, 53), `ground_builder` (60, 195), `field_builder` (420, 780), `leaf_builder` (1080, 1350), `disc_builder` (1515, 1755); the three film sheets on `golden_builder`; the four cut sheets and the eight stills beside the cuts on `hair_builder`; the 26 preview film parts over all twelve (`bud_builder` and `harness_builder` four each). List B (the record round's extra pictures): stress pairs on `skin_builder` (dawn), `lens_builder` (rain), `disc_builder` (night), `field_builder` (field); twelve consecutive `review` stills and the growth sheet on `stem_builder` (dawn), `petal_builder` (rain), `ground_builder` (night), `leaf_builder` (frost), `golden_builder` (bloom), `hair_builder` (field). List C: the 26 master film parts at `draft` in 16x9. Idle: `modes_builder`, `export_builder`. On the Builder's VM: the machine checks of Phase 5 then the measures on `36b84a5`, started 04:22:10 UTC.
 
 ## Rounds
 
@@ -1617,6 +1625,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 03:48 UTC · Round 22 ends at its limit: fixes ticked, summary, twelve open groups, Status 68; freshness looks of eight judged frames
 - 2026-11-22 04:09 UTC · Phase 5: final build passes the 13 machine checks, preview film joined (M1 0 failed), cut sheets looked at, Status 69
 - 2026-11-22 04:20 UTC · Phase 5: the upper ray layer's lift comes out (bloom M1 at frame 1350 read 1.59 px against 1.5 on 41ab097); the corrected build replaces it
+- 2026-11-22 04:23 UTC · Phase 5: corrected build 36b84a5 sent to twelve builders, machine checks started on it; state logged
 
 ## Session log
 
