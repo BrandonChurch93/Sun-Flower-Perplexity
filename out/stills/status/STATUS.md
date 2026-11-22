@@ -1,12 +1,12 @@
-# Status 61
+# Status 62
 
-2026-11-22 01:33 UTC
+2026-11-22 01:50 UTC
 
-- Status 61 · Phase 4 · unit frost. Night and frost are finished at their round limits on 47d93fd, so all six units are. Both clips are joined from ten parts of 30 frames rendered on the builders' machines: 300 frames each, no frame failed the black frame check, and no join between parts shows. Round 21 (night) and round 18 (frost) left 9 entries each under Open items.
-- Next: The Phase 4 gate on this machine (about 25 minutes), then Phase 5: the camera pass over the bloom, the field and rain grades, and the first whole film round. Time used: 24.7 h of 30 h.
+- Status 62 · Phase 4. Phase 4 gate closed at 01:47 UTC: machine checks all 13 green, all six units finished (each at its round limit, none by a pass), eight comparison images and six clips kept and on the review page. For Phase 5 the camera got its smoothing pass (the plant no longer swings left and back in the frost) and the field and rain grades were eased toward their neighbours.
+- Next: merge the Phase 5 build, machine checks, then the first whole film round (4 critics and 50 jurors) on renders that eleven builders are making now. Time used: 25.0 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Night, approved image beside the film's frame 780
-- `status-2.jpg`: Frost, approved image beside the film's frame 1080
-- `status-3.jpg`: Night clip, frame 750 (25.0 s)
-- `status-4.jpg`: Frost clip, frame 1050 (35.0 s)
+- `status-1.jpg`: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below
+- `status-2.jpg`: Rain at 14 s and night at 26 s: approved left, the film right
+- `status-3.jpg`: Frost at 36 s and the opening bud at 45 s: approved left, the film right
+- `status-4.jpg`: Bloom at 50.5 s and the field at 58.5 s: approved left, the film right
