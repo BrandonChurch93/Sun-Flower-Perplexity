@@ -17,7 +17,7 @@ import { filmNeeds, filmPacks, needLines } from './filmpacks.ts'
 import { unitPacks } from './unitpacks.ts'
 import { cutSheet, filmSheets, type SheetOptions } from './sheet.ts'
 
-export interface PackContext { phase: number; round: number; unit: string | null; tier?: string; only?: string[]; list?: boolean; noRender?: boolean }
+export interface PackContext { phase: number; round: number; unit: string | null; tier?: string; only?: string[]; list?: boolean; noRender?: boolean; sheetTier?: string }
 export interface PackFile { image: Buffer; meaning: Record<string, unknown>; name?: string; suffix?: string }
 export interface Pack { critic: string; files: PackFile[]; manifest: (names: string[]) => string[]; manifestName?: string }
 
@@ -121,10 +121,11 @@ export async function buildPacks(context: PackContext): Promise<string[]> {
   } catch {}
   const perUnit = builders.includes(unitPacks) || builders.includes(filmPacks)
   const tier = context.tier ?? 'final'
-  const test = perUnit && tier !== 'final'
-  if (test) console.log(`pack · TEST PACK · judged stills at the ${tier} tier, not final · DO NOT SEND THIS PACK TO A CRITIC`)
+  const sheets = builders.includes(filmPacks) && context.sheetTier !== undefined && context.sheetTier !== 'review' ? context.sheetTier : null
+  const test = perUnit && (tier !== 'final' || sheets !== null)
+  if (test) console.log(`pack · TEST PACK · judged stills at the ${tier} tier${tier === 'final' ? '' : ', not final'}${sheets ? `, sheets at the ${sheets} tier, not review` : ''} · DO NOT SEND THIS PACK TO A CRITIC`)
   const began = Date.now()
-  const key: Record<string, unknown> = { round: context.round, phase: context.phase, unit: context.unit, ...(perUnit ? { tier, test } : {}), commit, engineHash: hashes.engineHash, unitHashes: hashes.unitHashes, machine: machine(), critics: {} }
+  const key: Record<string, unknown> = { round: context.round, phase: context.phase, unit: context.unit, ...(perUnit ? { tier, test, ...(sheets ? { sheetTier: sheets } : {}) } : {}), commit, engineHash: hashes.engineHash, unitHashes: hashes.unitHashes, machine: machine(), critics: {} }
   const folders: string[] = []
   for (const build of builders) {
     const built = await build(context)
@@ -158,5 +159,7 @@ if (isMain(import.meta.url)) {
   const args = parseArgs()
   const tier = typeof args.tier === 'string' ? args.tier : undefined
   if (tier !== undefined && !isTier(tier)) throw new Error(`unknown tier "${tier}"`)
-  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null, tier, only: typeof args.only === 'string' ? args.only.split(',').map((c) => c.trim().toUpperCase()) : undefined, list: flag(args, 'list'), noRender: flag(args, 'no-render') })
+  const sheetTier = typeof args['sheet-tier'] === 'string' ? args['sheet-tier'] : undefined
+  if (sheetTier !== undefined && !isTier(sheetTier)) throw new Error(`unknown tier "${sheetTier}"`)
+  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null, tier, only: typeof args.only === 'string' ? args.only.split(',').map((c) => c.trim().toUpperCase()) : undefined, list: flag(args, 'list'), noRender: flag(args, 'no-render'), sheetTier })
 }

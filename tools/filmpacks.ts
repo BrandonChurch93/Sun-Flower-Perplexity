@@ -24,7 +24,8 @@ const low = config.quality.compressionStressMbps
 const ASSETS = 'full'
 const GAP = 8
 const STRIP = 22
-const SHEETS: SheetOptions = { tier: 'review', format: config.formats.preview.id, assets: ASSETS, look: false }
+const SHEET_TIER = 'review'
+const sheetsOf = (context: PackContext): SheetOptions => ({ tier: context.sheetTier ?? SHEET_TIER, format: config.formats.preview.id, assets: ASSETS, look: false })
 const TILE_W = Math.floor((edge - 3 * GAP) / 2)
 const TILE_H = Math.round((TILE_W * master.height) / master.width)
 const PLACES = [
@@ -45,6 +46,7 @@ function stillHave(frame: number, tier: string, format: string, checked: boolean
 }
 
 function sheetPlans(context: PackContext): SheetPlan[] {
+  const SHEETS = sheetsOf(context)
   const film = wanted(context, 'R5') || wanted(context, 'R4') ? filmSheetPlans(SHEETS) : []
   const across = wanted(context, 'R4') ? cuts.map((c) => cutSheetPlan(c.index, SHEETS)) : []
   return [...across, ...film]
@@ -62,6 +64,7 @@ export function filmNeeds(context: PackContext): Need[] {
   const tier = context.tier ?? 'final'
   const out: Need[] = []
   for (const frame of stillFrames(context)) out.push({ what: 'still', label: `frame ${frame}`, tier, format: master.id, file: stillPath({ frame, tier, format: master.id, assets: ASSETS, diag: 'beauty' }), have: stillHave(frame, tier, master.id, true) })
+  const SHEETS = sheetsOf(context)
   for (const plan of sheetPlans(context)) {
     const have = sheetReady(plan, SHEETS)
     const held = plan.frames.filter((f) => stillHave(f, SHEETS.tier, SHEETS.format, false)).length
@@ -89,7 +92,7 @@ async function stillOf(frame: number, tier: string): Promise<string> {
   return still.file
 }
 
-async function filmGroups(): Promise<Group[]> {
+async function filmGroups(SHEETS: SheetOptions): Promise<Group[]> {
   const sheets = await filmSheets(SHEETS)
   const groups: Group[] = []
   for (let i = 0; i < sheets.length; i++) {
@@ -102,8 +105,8 @@ async function filmGroups(): Promise<Group[]> {
   return groups
 }
 
-async function wholePacks(tier: string): Promise<Pack[]> {
-  const groups = await filmGroups()
+async function wholePacks(tier: string, SHEETS: SheetOptions): Promise<Pack[]> {
+  const groups = await filmGroups(SHEETS)
   const keys = keysInOrder()
   for (let i = 0; i < keys.length; i += KEYS_PER_FILE) {
     const mine = keys.slice(i, i + KEYS_PER_FILE)
@@ -195,7 +198,7 @@ async function compressionPacks(context: PackContext): Promise<Pack[]> {
   return packsOf('R7', 'G', groups, [])
 }
 
-async function motionPacks(): Promise<Pack[]> {
+async function motionPacks(SHEETS: SheetOptions): Promise<Pack[]> {
   const groups: Group[] = []
   for (const cut of cuts) {
     const s = await cutSheet(cut.index, SHEETS)
@@ -204,7 +207,7 @@ async function motionPacks(): Promise<Pack[]> {
       lines: (names) => [`${names[0]}: ${per} consecutive frames across cut ${cut.index} of ${cuts.length} of the film. The cut falls at ${seconds(cut.frame)}.`],
     })
   }
-  groups.push(...(await filmGroups()))
+  groups.push(...(await filmGroups(SHEETS)))
   return packsOf('R4', 'D', groups, ['Every tile carries its frame number and its time. The frames are 1/' + config.film.fps + ' s apart where they are consecutive.', ''])
 }
 
@@ -230,10 +233,10 @@ export async function filmPacks(context: PackContext): Promise<Pack[]> {
     }
   }
   const out: Pack[] = []
-  if (wanted(context, 'R5')) out.push(...(await wholePacks(tier)))
+  if (wanted(context, 'R5')) out.push(...(await wholePacks(tier, sheetsOf(context))))
   if (wanted(context, 'R6')) out.push(...(await hookPacks(tier)))
   if (wanted(context, 'R7')) out.push(...(await compressionPacks(context)))
-  if (wanted(context, 'R4')) out.push(...(await motionPacks()))
+  if (wanted(context, 'R4')) out.push(...(await motionPacks(sheetsOf(context))))
   if (wanted(context, 'R2')) out.push(...(await juryPacks(context, tier)))
   return out
 }
