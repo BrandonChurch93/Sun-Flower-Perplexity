@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:00 UTC · Polish round 1: sixteen judged stills of 5abb284 at the final tier, the jury started, Status 74
+- Last push: 2026-11-22 06:01 UTC · Round 23: the hook critic's answer saved word for word (score 7, not a pass)
 - Last status: 74 · 2026-11-22 06:00 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -1479,7 +1479,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Fix batch merged: ten pieces on `5abb284` (engine `eb23778849521a72`; type check clean, 133 tests pass, draft stills of 19 frames looked at). Merged after each before and after was looked at: the rows low at the start of the night (`agent/p1-night-rows`); the leaves' teeth round and unequal, cut in the blade's shader (`agent/p1-leaf-teeth`); the foot row of a lifting ray held at the rim, which ends the lit flecks from frame 1341 (`agent/p1-rim-flecks`); every plant of the rows its own, and the companion's lower leaves grown (`agent/p1-rows-variety`); the wet stem hairs in tufts (`agent/p1-wet-hairs`); the bloom's focus brought forward to the folded rays, 1.27 px at most at draft 16x9 where frames 1261 to 1341 read up to 2.15 (`fcb682a`, patch by `lens_builder`); the rain's streaks wider and smeared longer (`agent/p1-rain-streaks`); the cleft in the crumbs over the seed from frame 0 (`agent/p1-dawn-crack`, second form); the warm glow on the near ground easing out before frame 44 (`agent/p1-dawn-light`, second form); the run sheets of fastest growth in the motion judge's pack (`agent/p1-run-sheets`). Not changed, measured: the hero's lower leaves through the night (the camera climbs past them), the hero's size at 1755 (the thin plant was the companion), rain frame 315 (a soft near leaf over the tip's pixel, not the focus).
 - [ ] Measures
 - [ ] Pack
-- [ ] R6 answer
+- [x] R6 answer: `reviewer_332`, Claude family, fresh, the nine files of `R6` only, asked 06:00:10, answered by 06:01 UTC. **Score 7, not a pass**: 3 major, 2 minor. Saved word for word in `scorecards/round-023/R6.json`. Major, by place: centre soil mound; upper right sun and lower left bokeh; emerging sprout, centre. Minor, by place: seed tip in the soil hollow; sprout stem to frame 9.
 - [ ] R5 answer
 - [ ] R2 jury answers
 - [ ] R7 answer
@@ -1680,6 +1680,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 05:16 UTC · Status 72: polish round 1 out to twelve builders, night rows merged, two pieces came back as measurements
 - 2026-11-22 05:44 UTC · Polish round 1: the fix batch merged on 5abb284 (ten pieces), each looked at before and after; Status 73
 - 2026-11-22 06:00 UTC · Polish round 1: sixteen judged stills of 5abb284 at the final tier, the jury started, Status 74
+- 2026-11-22 06:01 UTC · Round 23: the hook critic's answer saved word for word (score 7, not a pass)
 
 ## Session log
 

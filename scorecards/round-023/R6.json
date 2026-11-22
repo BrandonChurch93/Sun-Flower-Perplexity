@@ -1,0 +1,42 @@
+{
+  "critic": "R6",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-F-01.png",
+      "where": "centre soil mound",
+      "what": "frame 0 has no subject: an empty dark clump of soil with a black hollow, so at phone size the first frame reads as a generic out-of-focus field at dusk and nothing says what to watch",
+      "fix": "start with the seed tip already cracking the soil, or a visible bulge and crumbs lifting, so the action is already happening at 0.00 s"
+    },
+    {
+      "severity": "major",
+      "file": "set-F-01.png",
+      "where": "upper right sun and lower left bokeh",
+      "what": "the brightest, highest-contrast spots are the sun at top right and the bokeh dot at lower left, so the eye goes to them and not to the centre mound where the action will be",
+      "fix": "put a rim light or a warm highlight on the mound and sprout, and pull down the sun and bokeh highlights a little so the subject is the brightest thing"
+    },
+    {
+      "severity": "major",
+      "file": "set-F-03.png",
+      "where": "emerging sprout, centre",
+      "what": "the subject is small, about a fifth of frame height, and sits in a dim, low-contrast foreground; at 400 px wide the hook and seed are readable but not striking",
+      "fix": "frame tighter or push in during the first second so the sprout fills a third or more of the frame height"
+    },
+    {
+      "severity": "minor",
+      "file": "set-F-02.png",
+      "where": "seed tip in the soil hollow",
+      "what": "the first glimpse of the seed is a pale, featureless white blob that could read as a stone or a mushroom for a frame",
+      "fix": "show the striped seed coat or the green hook as it breaks the surface"
+    },
+    {
+      "severity": "minor",
+      "file": "set-F-06.png",
+      "where": "sprout stem to frame 9",
+      "what": "after about 1.0 s the growth slows to a gentle straightening, so the second half of the hook has less change than the first half",
+      "fix": "keep the motion going with a seed-coat drop, the leaves opening, or a slow push-in through 2.0 s"
+    }
+  ]
+}
