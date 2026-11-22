@@ -13,12 +13,12 @@ export const world: WorldSettings = {
   sky: { zenith: [0.16, 0.19, 0.24], horizon: [0.7, 0.78, 0.86], bounce: [0.03, 0.035, 0.04], ambient: 1.25, glow: [0, 0, 0], glowPower: 8, disc: 0 },
   backdrop: { file: null, key: 'rain', sunAt: null, gain: 1.3, blur: 0.25 },
   fog: { color: [0.11, 0.2, 0.19], sunTint: [0, 0, 0], density: 0.04, falloff: 0.25 },
-  grade: { exposure: 0.9, contrast: 1.3, white: 7, saturation: 0.82, gain: [0.95, 1, 1.06], lift: [0, 0.002, 0.006], bloom: 0.06, bloomKnee: 1.2, vignette: 0.34, grain: 0.014 },
+  grade: { exposure: 1.07, contrast: 1.45, white: 4, saturation: 0.82, gain: [1.01, 1, 1], lift: [0.0003, 0.0006, 0.0015], bloom: 0.06, bloomKnee: 1.2, vignette: 0.34, grain: 0.014 },
   ground: { wet: 1, frost: 0, dew: 0 },
   wind: 0.3,
 }
 
-const SKY_GAIN = 1.24
+const SKY_GAIN = 1.03
 const DROP_LIGHT: [number, number, number] = [0.95, 1.0, 1.05]
 const DROP_SHADE: [number, number, number] = [0.25, 0.3, 0.34]
 const AIR_TONE: [number, number, number] = [0.1, 0.16, 0.19]
