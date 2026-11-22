@@ -2,11 +2,11 @@
 import * as THREE from 'three'
 import type { Assets } from '../../../core/assets.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { rayAngle, rayCount, rayLength, rayOpen } from '../../growth.ts'
+import { headOpen, rayAngle, rayCount, rayLength, rayOpen } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { rayFrameAt, type Pose } from '../../skeleton.ts'
-import { flutter } from '../../wind.ts'
+import { flutter, gust } from '../../wind.ts'
 import { fragment, vertex } from './skin.ts'
 
 interface Shape { us: number[]; vs: number[]; hairs: number }
@@ -31,8 +31,16 @@ const SHINGLE = 0.15
 const RANK_PITCH = 0.6
 const RANK_UP = 0.0
 const RANK_DOWN = 0.075
+// Once the bracts let the face show, the two layers stand that much farther apart at the foot, the upper lifted and the lower sunk, so a strap's walls and rim clear the strap beside it. Inside the shut bud they stay packed.
+const RANK_APART_UP = 0.09
+const RANK_APART_DOWN = 0.055
 const RIM_TURN = 1.1
 const SAG = 0.38
+// How far the surplus air turns an open ray at its tip, in radians for each unit of it: the flap up and down, the bend a gust holds in it, the roll about its own length and the wag from side to side.
+const FLAP = 0.28
+const FLAP_GUST = 0.12
+const ROLL = 0.32
+const WAG = 0.08
 const FOOT_SHUT = 0.05
 const FOOT_OPEN = -0.06
 // The feet stand at uneven depths behind the rim, so the row of them is no straight line.
@@ -353,7 +361,8 @@ export function create(options: PartOptions): PlantPart | null {
       frame.wz = h.ax * oy - h.ay * ox
     }
     const outward = foot * h.radius
-    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - (RANK_UP * ray.rank - RANK_DOWN * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted) + 0.05 * seat) * full
+    const apart = smooth(0.02, 0.1, headOpen(time))
+    const back = (ray.rank * 0.025 * lifted - FOOT_STAGGER * ray.deep * lifted - ((RANK_UP + RANK_APART_UP * apart) * ray.rank - (RANK_DOWN + RANK_APART_DOWN * apart) * (1 - ray.rank) * (1 - 0.6 * smooth(0, 0.6, Math.abs(comb) / GAP_COMB))) * (1 - smooth(0, 0.5, open)) - 0.145 - 0.3 * lifted * (1 - lifted) + 0.05 * seat) * full
     let px = frame.ox + ox * outward - h.ax * back
     let py = frame.oy + oy * outward - h.ay * back
     let pz = frame.oz + oz * outward - h.az * back
@@ -374,6 +383,19 @@ export function create(options: PartOptions): PlantPart | null {
     let ny = frame.ny
     let nz = frame.nz
     const wind = pose.inputs.wind * flutter(time, ray.seed)
+    // In open air the light parts feel more than the steady wind the stem follows, and an open ray answers that surplus: it lifts and rolls toward its tip, harder in a gust, each ray as limp or as stiff as it is and in its own time. In air no livelier than the steady wind this is nothing.
+    const surplus = (pose.inputs.wind - Math.min(pose.inputs.calm ?? pose.inputs.wind, pose.inputs.wind)) * smooth(0.8, 1, open)
+    let flap = 0
+    let roll = 0
+    let wag = 0
+    if (surplus > 0) {
+      const limp = surplus * (0.55 + 0.9 * hash01(seed, 91, k))
+      const blow = gust(time, frame.ox, frame.oz)
+      const hard = 0.6 + 0.4 * blow
+      flap = limp * (FLAP * hard * flutter(time, ray.seed * 0.83 + 0.09) + FLAP_GUST * blow)
+      roll = limp * ROLL * hard * flutter(time - 0.07, ray.seed * 0.41 + 0.37)
+      wag = limp * WAG * flutter(time - 0.13, ray.seed * 0.67 + 0.21)
+    }
     const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer - ray.lateSlim * drawn) * Math.pow(scale, 0.75)
     const fresh = 1 - smooth(0.02, 0.45, open)
     const ripe = smooth(0.8, 1, open)
@@ -393,10 +415,11 @@ export function create(options: PartOptions): PlantPart | null {
       const openPitch = ray.lay + ray.lateLay * sunk + ray.cup * unfold + young - shaped * ((ray.droop + ray.lateDroop * sunk) * Math.pow(e, 1.3) - ray.nod * smooth(0.25, 0.9, e) + (ray.tipCurl + ray.lateCurl * curled) * Math.pow(smooth(0.68, 1, e), 1.5) + ray.hard * (1 + 0.4 * curled) * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.4 * (1 - unfold) * smooth(0.7, 1, e)
       // An open ray sags a little under its own weight, whichever way it points.
       const sag = SAG * along * Math.pow(e, 1.5)
+      const tipward = surplus > 0 ? Math.pow(e, 1.8) : 0
       const ripple = along * smooth(0.1, 0.4, e)
-      const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase)
-      const yaw = mix((0.08 + 0.62 * e) * swirl + 0.8 * ray.clump * e + 0.1 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7)
-      const twist = mix(SHINGLE, ray.roll + (ray.twist + ray.lateTwist * twisted) * Math.pow(e, 1.25), along) + 0.02 * wind * e * e + 1.6 * (ray.hook - 0.09) * cupped * e
+      const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase) + flap * tipward
+      const yaw = mix((0.08 + 0.62 * e) * swirl + 0.8 * ray.clump * e + 0.1 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.5), along) - sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.3 + ray.wavePhase * 1.7) + wag * tipward
+      const twist = mix(SHINGLE, ray.roll + (ray.twist + ray.lateTwist * twisted) * Math.pow(e, 1.25), along) + 0.02 * wind * e * e + 1.6 * (ray.hook - 0.09) * cupped * e + roll * tipward
 
       let d = pitch - pitch0
       let c = Math.cos(d)
