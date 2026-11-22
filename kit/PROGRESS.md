@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 08:55 UTC · Phase 6: the build is frozen at the source of 5506686; record round (round 25) opened, renders out to twelve builders
+- Last push: 2026-11-22 09:04 UTC · Round 25: measures green for all six units on the frozen build; growth sheets and the first runs of stills in
 - Last status: 82 · 2026-11-22 08:45 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 3.82 h |
-| Whole build | 30.00 h | 31.90 h |
+| 6 | 4.00 h | 4.12 h |
+| Whole build | 30.00 h | 32.19 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 1.90 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 2.19 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -833,6 +833,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 08:54 UTC. Step 2, the freeze. The build is frozen at the source of `5506686` (engine `a4c82933ba906236`; unit hashes dawn `8ebbafaa0d28e07b`, rain `cc96331076d01a36`, night `1e33829500718753`, frost `8162048fd525a7c9`, bloom `f8b8ac67c3d305b9`, field `85ecd6aea5f49c50`). Main stands at `bfa36a3`, and `git diff 5506686 bfa36a3 -- src public config` is empty. From here on nothing under `src/`, `public/` or `config/` changes except to fix a machine check or a failed QA item.
 - 2026-11-22 · Phase 6 · 08:54 UTC. Step 3, the stills and comparison images of the frozen build. The sixteen `final` stills in 16x9 (the ten judged frames and the six hook frames) were rendered from this very source on the builders' machines between 07:58 and 08:05 UTC, each with a record that names engine `a4c82933ba906236` and its unit hash and with check invalid 0, and each was looked at as it came. The film is deterministic (G3 checks it on every gate), so a second render of the same source gives the same pixels: these are the frozen build's stills and they are not rendered a second time. The eight comparison images were made new from those stills at 08:44 UTC (`npm run -s compare`, one key each), and `npm run keep` took the ten judged stills and the eight comparisons into `out/stills/` after checking each record against the current build.
 - 2026-11-22 · Phase 6 · 08:54 UTC. Steps 4 and 5, how they are run. The record round is round 25. Its packs need eighteen files more than exist (`npm run -s pack -- --phase 6 --round 25 --list`: 55 needed, 37 here): six growth sheets and six runs of twelve stills, 135 frames. Twelve builders got one of them each at 08:54 UTC (`out/work/briefs/p6-renders.json`), and each goes straight on to its parts of the master film for step 5 (16x9 at `draft`, 26 parts, plan in `out/work/scratch/master-parts-plan.json`). Why `draft`: a 16x9 frame at `review` took 48 to 65 s on the builders' machines in round 24, so 1800 frames across twelve machines need about 2.3 h, over `sandbox.previewFilmMaxHours` (1.5); `draft` fits. Why the builders do not wait for the critics: a builder's machine stands still after its turn ends and each new start costs up to a quarter of an hour. The critics and jurors are fresh agents and start as places come free under `sandbox.maxAgents` (12). Both steps read the frozen build only and the record round is not followed by fixes, so no result depends on which of the two ends first. Transport: each critic writes its one JSON object to a file named after it and attaches that file, so no critic's answer is copied by hand (the return format is the same object, only the carrier differs). The jurors get the question and the one transport line they have had in every round since round 5, word for word, because the control votes were collected under that text; their answers are saved from the mail as before.
+- 2026-11-22 · Phase 6 · 09:03 UTC. After a compaction at about 09:00 the Builder re-read the Status, the Notes from Brandon, the block of round 25 and `kit/addenda/README.md` (there are no addenda). Nothing changes: Brandon's one note stands, the build stays frozen at the source of `5506686`, and the record round runs on. Step 8, the proof (`npm run proof`, then `npm run proof -- --memory`), started at 09:02 on the Builder's VM as soon as the measures had ended, earlier than its place in the list of `kit/08-BUILD-ORDER.md`. That is scheduling only: the proof reads the frozen build, changes no source and no judged picture, and the Builder's VM would otherwise stand idle while the twelve builders render and the critics judge. One render process runs on this VM at a time.
+- 2026-11-22 · Phase 6 · 09:04 UTC. The disk, housekeeping at 08:57 UTC before the renders of the record round came in: the scratch folder `out/work/scratch/clipcheck`, the old part folder `out/work/film-41ab097` (parts of a build that is no longer the film) and the delivered attachment copies older than 75 minutes (every one of them copied into the workspace or saved word for word before) were deleted. 6.3 GB were free afterwards, over `sandbox.minFreeDiskGb` (3). Nothing kept, judged or pushed was touched.
 
 ## Notes from Brandon
 
@@ -1651,8 +1653,8 @@ One entry per round, written and pushed when the round starts: number, phase, un
 
 ### Round 25 · Phase 6 · the record round · floor round
 
-- Started 2026-11-22 08:56 UTC. Judges the frozen build: the source of `5506686` (engine `a4c82933ba906236`; unit hashes dawn `8ebbafaa0d28e07b`, rain `cc96331076d01a36`, night `1e33829500718753`, frost `8162048fd525a7c9`, bloom `f8b8ac67c3d305b9`, field `85ecd6aea5f49c50`), frozen at 08:54 UTC. It is the record round of `kit/07-QUALITY-BAR.md`: the measures and every critic, R1 to R7, on the full judged list (frames 0, 45, 60, 195, 420, 780, 1080, 1350, 1515, 1755), every critic and juror a fresh agent, the families moved on one place from each role's last round. Run 1 of `quality.recordRoundMaxRuns` (2). It is a record: its scores are the final scores, and no fixes follow it. The machine checks ran green on this same source at 08:24 UTC (`npm run gate -- --phase 6 --machine`, G1 to G13, see round 24); the gate of Phase 6 runs them once more at the end, with the deliverables in place.
-- [ ] Measures
+- Started 2026-11-22 08:55 UTC. Judges the frozen build: the source of `5506686` (engine `a4c82933ba906236`; unit hashes dawn `8ebbafaa0d28e07b`, rain `cc96331076d01a36`, night `1e33829500718753`, frost `8162048fd525a7c9`, bloom `f8b8ac67c3d305b9`, field `85ecd6aea5f49c50`), frozen at 08:54 UTC. It is the record round of `kit/07-QUALITY-BAR.md`: the measures and every critic, R1 to R7, on the full judged list (frames 0, 45, 60, 195, 420, 780, 1080, 1350, 1515, 1755), every critic and juror a fresh agent, the families moved on one place from each role's last round. Run 1 of `quality.recordRoundMaxRuns` (2). It is a record: its scores are the final scores, and no fixes follow it. The machine checks ran green on this same source at 08:24 UTC (`npm run gate -- --phase 6 --machine`, G1 to G13, see round 24); the gate of Phase 6 runs them once more at the end, with the deliverables in place.
+- [x] Measures: 08:55 to 09:01 UTC on the Builder's VM, on the frozen build (the source of `5506686`, engine `a4c82933ba906236`), tier `final`, format 16x9, full assets. `npm run measure` for every unit, all six with exit code 0, **M1, M2 and M3 pass for dawn, rain, night, frost, bloom and field** on every judged frame of the unit: dawn M1 pass at frames 0 (0.58 px), 45 (0.48 px), 60 (0.46 px), 195 (0.42 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.974 at 45, 1.122 at 195; rain M1 pass at frames 420 (0.11 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.855 at 420; night M1 pass at frames 780 (0.15 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.828 at 780; frost M1 pass at frames 1080 (0.55 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 1.038 at 1080; bloom M1 pass at frames 1350 (1.21 px), 1515 (0.55 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 0.839 at 1350, 0.961 at 1515; field M1 pass at frames 1755 (0.01 px), M2 0.00 % under 1 texel per pixel (allowed 2.00 %), M3 1.142 at 1755. M1 is the focus at the growing tip (allowed 1.5 px of blur), M3 the sharpness against the approved image (needs 0.8). The cards are in `out/work/measures/`, the log is `out/work/scratch/measures-r25.log`. The machine checks ran green on this same source at 08:24 UTC and run once more in the gate of Phase 6.
 - [ ] Pack
 - [ ] R2 jury answers
 - [ ] Summary, status, push
@@ -1873,6 +1875,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 08:39 UTC · Round 24: jury complete (420 passes 2 of 5, 780 passes 4 of 5, 1755 fails 0 of 5), key copied; the rain piece stays
 - 2026-11-22 08:47 UTC · Round 24 closed, not a pass (R4 7, R5 7, R6 6, R7 10): summary, open items, kept stills, status 82; polish at its limit
 - 2026-11-22 08:55 UTC · Phase 6: the build is frozen at the source of 5506686; record round (round 25) opened, renders out to twelve builders
+- 2026-11-22 09:04 UTC · Round 25: measures green for all six units on the frozen build; growth sheets and the first runs of stills in
 
 ## Session log
 
