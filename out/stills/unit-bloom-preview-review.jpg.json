@@ -1,0 +1,84 @@
+{
+  "kind": "sheet",
+  "engineHash": "5ac2814e4342d561",
+  "unitHashes": {
+    "dawn": "c179aad68f92134f",
+    "rain": "789a18dc076ec1fb",
+    "night": "fd16ca7bd680da94",
+    "frost": "33f5ee075b9c7547",
+    "bloom": "a3c4425208d2ca9c",
+    "field": "914531c0d2e40ab6"
+  },
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
+    "cores": 2,
+    "ramMb": 7958
+  },
+  "standIns": [
+    {
+      "name": "neighbors seedling",
+      "units": [
+        "dawn",
+        "rain",
+        "night"
+      ]
+    },
+    {
+      "name": "plant seedling",
+      "units": [
+        "dawn",
+        "rain",
+        "night"
+      ]
+    },
+    {
+      "name": "world dawn",
+      "units": [
+        "dawn"
+      ]
+    },
+    {
+      "name": "world frost",
+      "units": [
+        "frost"
+      ]
+    },
+    {
+      "name": "world night",
+      "units": [
+        "night"
+      ]
+    },
+    {
+      "name": "world rain",
+      "units": [
+        "rain"
+      ]
+    }
+  ],
+  "at": "2026-11-21T15:30:41.981Z",
+  "format": "preview",
+  "tier": "review",
+  "assets": "full",
+  "frames": [
+    1200,
+    1233,
+    1265,
+    1298,
+    1331,
+    1363,
+    1396,
+    1428,
+    1461,
+    1494,
+    1526,
+    1559
+  ],
+  "units": [
+    "bloom"
+  ],
+  "caption": "Unit bloom: 12 frames across its segment (frames 1200 to 1559)"
+}

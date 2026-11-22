@@ -1,0 +1,49 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-01.png",
+      "where": "far background along the horizon, left and right of the plant",
+      "what": "The landscape changes with no camera cause. A range of distant hills appears on the left at f0627–f0654, is gone by f0709, and comes back on the right at f0872. The field behind the plant changes from sparse silhouettes with ground mist (f0600) to dense leafy crop rows (f0682 on). Small far plant silhouettes pop up at the left horizon at f0845–f0899. A small, steady camera move cannot do this, so the world reads as regenerating, not as a fixed location being filmed.",
+      "fix": "Lock the background as one consistent plate or set for the whole night segment and let only parallax from the camera move change it. No hills, rows or silhouettes should appear or vanish."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "lower and middle leaves, left side of the stem",
+      "what": "The leaves do not stay the same leaves. At f0600 there are two large pale lower-left leaves. By f0682–f0736 a single large dark leaf sits at lower left with a different shape and size, and the leaf count and attachment points on the stem change between samples. This reads as morphing, not as leaves growing or leaving the frame.",
+      "fix": "Keep leaf identity and attachment points fixed over time. Let leaves grow, turn or droop along their own paths, and let them leave the frame only through the camera move."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "hairs at the growing tip and the upper right leaf edge",
+      "what": "A single long pale hair or spike above the apex and the right leaf appears and disappears from frame to frame. It is visible in f0747, gone in f0748–f0752, back in f0753–f0754, then visible again in f0756–f0757. Fine hairs pop instead of staying put.",
+      "fix": "Keep the fine hairs stable over time so each one keeps existing and moves only with its leaf."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "sky to the left of and above the tip in f0750",
+      "what": "Soft, out-of-focus round blobs appear in the star field for a single frame in f0750 and are gone in f0751. This is a one-frame pop.",
+      "fix": "Remove the one-frame bokeh blobs, or keep any out-of-focus particles present and drifting across many frames."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-04.png",
+      "where": "middle-left leaf across the cut, f0599 to f0600",
+      "what": "The stem, the top leaves, the foreground grass and the horizon height all line up across the cut. The middle-left leaf, however, changes shape and curl a little at the cut: it is broader and flatter in f0600 than in f0599. It is a small shape change on top of the expected change in lighting.",
+      "fix": "Keep the plant mesh and pose the same across the cut and change only the lighting and the world."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "star field across the whole crop",
+      "what": "The change between frames in the sky jumps roughly every third frame (f0748→f0749, f0751→f0752, f0754→f0755). This points to a slight pulsing in the star noise or grain rather than a steady drift.",
+      "fix": "Make the grain and the star rendering steady over time so the stars only drift with the camera."
+    }
+  ]
+}

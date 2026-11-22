@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "main plant lighting, foliage material, and shadow contrast",
+      "what": "the plant renders as opaque, cold blue-green CG geometry with crushed near-black upper shadows and zero backlit rim glow or warm subsurface scattering",
+      "fix": "add strong warm-white rim lighting from the bright horizon break behind the stem and warm olive-green subsurface scattering through the leaves so shadows are lifted organically"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 1, the head or bud",
+      "what": "the compact cluster of small unfolding crown leaves and central bud is missing, replaced by two oversized, stiff, dark V-shaped leaves with jagged polygonal teeth",
+      "fix": "replace the large V-shaped top leaves with a compact young apical bud surrounded by smaller, softly curved unfolding crown leaves"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground soil and central water channel",
+      "what": "chunky wet mud clods with deep shadow pockets and crisp raindrop crown splashes are replaced by flat black grit covered in noisy white specular specks, a sharp-edged puddle with smooth sinusoidal CG ripples, and a blurry ghosted splash mesh, with no foreground bokeh or impact spray",
+      "fix": "build irregular clumpy wet soil clods with clean deep blacks and shallow foreground defocus, soften the puddle banks, and replace the smooth CG waves with fine broken ripples, sharp crown splashes, and rising mist droplets"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 4, the field behind the plant",
+      "what": "the soft-focus green crop field and uneven dark mud mounds are replaced by a flat speckled black ground plane, sparse stiff grass blades, and flat grey horizontal puddle patches with almost no misty rain air",
+      "fix": "remove the flat grey puddle patches and stiff grass tufts, fill the midground with out-of-focus green crop seedlings over uneven wet soil, and add low-lying rain mist and splash haze"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6, the sky",
+      "what": "the storm clouds are smooth, blotchy, and overly cyan-blue without fine cloud texture or film grain, and the rain consists of sparse, uniform, ruler-straight CG line segments",
+      "fix": "grade the clouds toward desaturated slate-grey with fine natural cloud detail and subtle grain, and replace the uniform line segments with a dense multi-depth curtain of rain streaks varying in softness, thickness, brightness, and length"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs",
+      "what": "the stem is smooth and completely hairless, lacking the dense backlit fuzz along its edges, and has large, evenly spaced spherical bead droplets stuck along its length",
+      "fix": "add dense fine backlit trichome hairs along the stem and petioles and replace the oversized spherical beads with tiny, irregular surface moisture"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3, a leaf seen from the front",
+      "what": "the leaves have stiff angular planes, harsh sawtooth edges, and bright, sharp painted-looking pale vein lines instead of organic curvature and subtle natural venation",
+      "fix": "give the leaves softer organic wave and finer marginal serrations, and blend and recess the veins so they do not read as bright drawn lines"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5, the far background at the skyline",
+      "what": "oversized dark blurred background plants tower across and above the horizon, and the soft wooded ridge is replaced by a bare, smooth, blocky hill with weak atmospheric haze",
+      "fix": "reduce the scale of the background seedlings so they sit below the horizon line, replace the smooth hill with a soft-focus continuous treeline, and strengthen the misty aerial perspective"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "base of the main stem",
+      "what": "the lower stem is thick, tan, and covered in huge yellowish droplets, with two flat white-speckled cotyledons and a bright white split seed hull on the dirt beside it",
+      "fix": "remove the split white seed hull, speckled cotyledons, and oversized droplets, keeping a slender green hairy lower stem with a single small drooping yellowish-green lower leaf"
+    }
+  ]
+}

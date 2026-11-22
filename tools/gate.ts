@@ -54,7 +54,7 @@ const g3: Check = () => {
     const j = JSON.parse(fs.readFileSync(file, 'utf8')) as { ok: boolean; frames: number[]; format: string; tier: string }
     if (j.ok) return { id: 'G3', ok: true, detail: `frames ${j.frames.join(', ')} are pixel identical across fresh page loads and in another order (${j.format}, ${j.tier}; result of this build reused)` }
   }
-  const r = run('npx tsx tools/determinism.ts')
+  const r = run('npx tsx tools/determinism.ts', 40)
   return { id: 'G3', ok: r.ok, detail: tail(r.text, 1) }
 }
 

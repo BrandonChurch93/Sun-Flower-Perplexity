@@ -1,0 +1,81 @@
+{
+  "critic": "R2",
+  "round": 16,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 5,
+    "a": 4,
+    "share": 0.8
+  },
+  "controlFromRound": 11,
+  "judged": {
+    "votes": 5,
+    "a": 3,
+    "share": 0.6
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-01.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 780,
+      "key": "night",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "b"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_170",
+      "family": "GPT",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 81,
+      "answer": "a, 81/100. The finely controlled rim lighting picks out individual hairs on the stem against the night sky."
+    },
+    {
+      "juror": "reviewer_171",
+      "family": "Gemini",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82, the visible real-time 3D rendering traits—specifically the faceted low-poly leaf and field silhouettes combined with a Fresnel rim-light shader and procedural Milky Way skybox."
+    },
+    {
+      "juror": "reviewer_172",
+      "family": "Claude",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 60,
+      "answer": "a, 60. What most influenced me: it looks like a graded 16:9 cinematic frame. A rim-lit young sunflower with fine stem hairs stands in front of a Milky Way sky over ground fog, and that composition reads like a high-end nature documentary or CG film shot. Clean stock astrophotography (b) is the strongest alternative."
+    },
+    {
+      "juror": "reviewer_173",
+      "family": "GLM",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76, the fine rim lighting on the stem hairs makes the foreground plant read like a deliberately lit cinematic close-up."
+    },
+    {
+      "juror": "reviewer_174",
+      "family": "Grok",
+      "image": "set-B-01.png",
+      "control": false,
+      "letter": "b",
+      "confidence": 76,
+      "answer": "b, 76, isolated rim-lit plant composited on a Milky Way plate in a commercial postcard frame, with photographic noise and no narrative or documentary subject"
+    }
+  ]
+}

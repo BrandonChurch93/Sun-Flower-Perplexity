@@ -1,0 +1,63 @@
+{
+  "kind": "compare",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T00:35:17.877Z",
+  "format": "16x9",
+  "tier": "final",
+  "assets": "full",
+  "frames": [
+    1755
+  ],
+  "key": "field",
+  "approved": "references/approved/field.png",
+  "crops": [
+    {
+      "name": "at the growing tip",
+      "left": 597,
+      "top": 393,
+      "width": 700,
+      "height": 305
+    },
+    {
+      "name": "lower left third",
+      "left": 290,
+      "top": 568,
+      "width": 700,
+      "height": 305
+    },
+    {
+      "name": "upper right third",
+      "left": 930,
+      "top": 208,
+      "width": 700,
+      "height": 305
+    }
+  ],
+  "check": {
+    "frame": 1755,
+    "invalid": 0,
+    "tip": {
+      "x": 0.4929751389931864,
+      "y": 0.5051269102852297,
+      "depthM": 4.692237706300397,
+      "cocPx": 0.01050963718444109
+    }
+  }
+}

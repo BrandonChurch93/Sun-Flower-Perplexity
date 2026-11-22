@@ -27,6 +27,20 @@ export function stressRange(unit: string): [number, number] {
   return [first, first + count - 1]
 }
 
+export function stressFiles(unit: string): { frame: number; source: string; after: string; picture: string } {
+  const range = stressRange(unit)
+  const frame = range[0] + Math.floor((range[1] - range[0] + 1) / 2)
+  return { frame, source: path.join(DIR, `${unit}-source.png`), after: path.join(DIR, `${unit}-${low}mbps.png`), picture: path.join(DIR, `${unit}.jpg`) }
+}
+
+export function stressReady(unit: string): { source: boolean; after: boolean } {
+  const hashes = computeHashes()
+  const files = stressFiles(unit)
+  const wanted = { format: master.id, tier, assets: 'full', diag: 'beauty', units: [unit] }
+  const ok = (file: string, kind: string): boolean => matches(readRecord(file), hashes, { kind, ...wanted }) && sameFrames(readRecord(file)?.frames, [files.frame])
+  return { source: ok(files.source, 'stress source'), after: ok(files.after, 'stress still') }
+}
+
 async function stressUnit(unit: string, open: () => Promise<Session>, by: string): Promise<string> {
   const range = stressRange(unit)
   const count = range[1] - range[0] + 1
@@ -34,7 +48,9 @@ async function stressUnit(unit: string, open: () => Promise<Session>, by: string
   const picture = ensureDir(path.join(DIR, `${unit}.jpg`))
   const wanted = { format: master.id, tier, assets: 'full', diag: 'beauty', units: [unit] }
   const existing = readRecord(picture)
-  if (matches(existing, hashes, { kind: 'stress', ...wanted }) && sameFrames(existing?.frames, range)) {
+  const shown = stressFiles(unit)
+  const kept = (): boolean => matches(readRecord(shown.source), hashes, { kind: 'stress source', ...wanted }) && sameFrames(readRecord(shown.source)?.frames, [shown.frame])
+  if (matches(existing, hashes, { kind: 'stress', ...wanted }) && sameFrames(existing?.frames, range) && kept()) {
     console.log(`stress · reused · ${rel(picture)}`)
     return picture
   }
@@ -42,7 +58,7 @@ async function stressUnit(unit: string, open: () => Promise<Session>, by: string
   const second = path.join(DIR, `${unit}-${low}mbps.mp4`)
   const firstRecord = readRecord(first)
   let base: Record_
-  if (matches(firstRecord, hashes, { kind: 'stress film', ...wanted }) && sameFrames(firstRecord?.frames, range)) base = firstRecord as Record_
+  if (matches(firstRecord, hashes, { kind: 'stress film', ...wanted }) && sameFrames(firstRecord?.frames, range) && kept()) base = firstRecord as Record_
   else {
     const session = await open()
     fs.rmSync(FRAMES, { recursive: true, force: true })
@@ -55,8 +71,10 @@ async function stressUnit(unit: string, open: () => Promise<Session>, by: string
       console.log(`stress · unit ${unit} · frame ${f - range[0] + 1} of ${count} · ${(spent / (f - range[0] + 1)).toFixed(1)} s per frame`)
     }
     encodeFrames(path.join(FRAMES, 'f%06d.png'), range[0], count, first, high, 2)
+    fs.copyFileSync(path.join(FRAMES, `f${String(shown.frame).padStart(6, '0')}.png`), shown.source)
     fs.rmSync(FRAMES, { recursive: true, force: true })
     base = { ...recordBase(session, await session.info(), 'stress film', 'beauty'), frames: range, unit, bitrateMbps: high }
+    writeRecord(shown.source, { ...base, kind: 'stress source', frames: [shown.frame] })
     writeRecord(first, { ...base, probe: probe(first) })
   }
   encodeAgain(first, second, low, undefined, 2)

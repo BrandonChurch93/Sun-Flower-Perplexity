@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "hero plant leaf arrangement and silhouette",
+      "what": "two tiny flat horizontal stub leaves sit beneath the bud above a bare straight stem gap, the larger leaves have deeply notched ragged cutouts, and the lower stem at the bottom edge is bare instead of having full arching ovate leaves framing the bud and filling the lower stem",
+      "fix": "replace the stubby collar leaves with full-sized arching upper leaves growing right beneath the head, reshape all leaves into broad finely serrated sunflower blades on curved petioles, and add lower foliage at the bottom of the stem"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 3 · a leaf seen from the front and hero leaf surfaces",
+      "what": "the leaves have flat dark matte-green tops with a harsh white cutout border, lacking powdery bluish-white surface frost, frosted venation, tip droplets, and warm backlit green translucency on the sun-facing side",
+      "fix": "add powdery silvery-blue frost across the upper leaf faces and veins, replace the flat white border with fine 3D backlit ice crystals and occasional hanging tip droplets, and add warm green subsurface translucency from the sun on the right"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 2 · the stem and its hairs",
+      "what": "the stem and petioles are rigid smooth-edged cylinders with faint surface speckles and no rim glow, missing the natural stem curve and dense protruding hairs and frost needles catching bright sunlight",
+      "fix": "give the stem a slight organic curve and add dense protruding white trichomes and frost crystals along the stem and petioles with a strong warm-white rim light on the right edge and softer sky rim on the left"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6 · the far background at the skyline",
+      "what": "the background plants are spindly thin stalks topped with tiny flat dark blobs, clustered too high on the right and too sparse and small on the left in a slightly purplish-grey haze, instead of recognizable mid- and far-ground sunflower buds and drooping leaves",
+      "fix": "replace the thin stalks with fuller sunflower plants with thick stems, round spiky buds, and drooping leaves at matching mid-ground heights on both left and right, softened with natural optical bokeh in cooler steel-blue mist"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1 · the head or bud",
+      "what": "the bud is flatter and uniformly dark green with crushed inner shadows, needle-thin dark bract tips, a flared stem pedestal, and almost no frost or warm sun rim on the right side",
+      "fix": "make the bud rounder and more cupped with visible lighter olive-green folded inner bracts, thicker fleshy phyllaries edged in frost crystals and fine hairs, warm rim lighting on the right, and a natural junction into the upper leaf node"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5 · the field behind the plant",
+      "what": "the mid-ground field is a murky, desaturated olive-grey mix of flat dark leaf cutouts with weak contrast, missing dense heart-shaped leaves, deep cool teal-black shadow pockets, silvery-blue frosted leaf-top highlights, and creamy lens bokeh",
+      "fix": "populate the field with dense overlapping heart-shaped sunflower leaves, deepen shadows toward cool teal-black, add pale bluish-white frost highlights on upper leaf surfaces, and render out-of-focus depth with smooth circular optical bokeh"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4 · the sun and the sky round it",
+      "what": "the sun glow and surrounding sky form a smooth, grainless synthetic wash of pale peach that spreads too broadly and flatly, lacking fine film grain and subtle misty cloud mottling",
+      "fix": "tighten and enrich the warm golden-amber halo around the sun transitioning into cooler grey-taupe mist toward the edges, add subtle cloud and mist mottling, and apply matching fine photographic grain"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "region 7 · the sky",
+      "what": "the upper-left sky is a completely smooth, slightly lighter neutral-grey gradient without film grain or subtle cool slate-blue atmospheric variation",
+      "fix": "shift the upper-left sky slightly deeper toward cool slate-blue with subtle atmospheric mottling and add fine photographic sensor grain matching the target"
+    }
+  ]
+}

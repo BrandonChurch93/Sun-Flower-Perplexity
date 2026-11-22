@@ -1,0 +1,35 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "rain across the sky and field, especially the left half and the skyline",
+      "what": "The nearly parallel white streaks have a similar look in front of both the sky and the field, so much of the rain reads as a layer over the image rather than as depth in the scene.",
+      "fix": "Vary streak width, length, contrast and focus by distance, and better connect the rain near the ground to visible impacts on the mud and water."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crops 7–8, large grass tuft at the left and smaller tufts behind it",
+      "what": "The grass blades are smooth, straight tapered strips with little surface detail, and the same upright fan shape recurs in the field.",
+      "fix": "Vary the tuft silhouettes, blade bends and widths, and add fine veins and subtle wet highlights to the in-focus blades."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, where the main stem meets the soil",
+      "what": "The stem reads as a blunt cylinder set on top of a dark patch of mud. The soil does not visibly wrap around or obscure its lower edge.",
+      "fix": "Sink the base slightly into the mud and break up its lower silhouette with overlapping soil grains and tight contact shading."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 3–4, front and backlit leaf margins",
+      "what": "Some margins have thick-looking triangular sawteeth, while the thin areas between veins stay dark and opaque even against the bright sky.",
+      "fix": "Vary and taper the teeth, add slight edge curl, and let more backlight through the thin tissue between the veins."
+    }
+  ]
+}

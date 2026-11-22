@@ -1,0 +1,4 @@
+set-C-01.png: the whole frame at 14.0 s, made smaller to fit (1400 x 788).
+set-C-02.png: crops of the frame at 14.0 s at native size, the size the frame is delivered at. Crop 1: the head or bud. Crop 2: the stem and its hairs. Crop 3: a leaf seen from the front. Crop 4: a leaf with the light behind it. Crop 5: water drops on the plant. Crop 6: the soil where the stem meets it.
+set-C-03.png: crops of the frame at 14.0 s at native size, the size the frame is delivered at. Crop 7: the ground nearest the lens, with its grass, soil or nearest rows. Crop 8: the field behind the plant. Crop 9: the far background at the skyline. Crop 10: the sky.
+Not shown for the frame at 14.0 s: the petals (no petals have opened in this frame); the near neighbor at the edge of the frame (the neighbor is outside this frame); the sun and the sky round it (the sun is outside this frame).

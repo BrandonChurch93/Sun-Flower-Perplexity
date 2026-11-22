@@ -1,0 +1,49 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crops 1-4 and 2, the curved hypocotyl from the hook down to the soil (same in set-C-08.png)",
+      "what": "the stem skin is a single smooth, even waxy surface with a perfectly clean green-to-red gradient; no fine cell texture, no colour mottling, no thickness change and no light passing through the thin hook against the sun, so it reads as a plastic tube even with the rim hairs",
+      "fix": "add fine longitudinal cell texture and slight colour irregularity, add subsurface translucency so the backlit hook glows warmer and lighter than the shaded side, and vary the diameter slightly along its length"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crops 1, 3 and 4, the seed coat on the bud (same in set-C-05.png)",
+      "what": "the dark and light stripes are evenly spaced and of even width like a printed texture, and the coat's outline is knife-sharp and cleaner than the stem beside it; the opening shows a flat, even yellow-green strip with no depth",
+      "fix": "break up the stripe widths and edges, add a little dry, flaky roughness and frayed edges where the coat splits, and give the cotyledon inside the split some shading and depth"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-05.png",
+      "where": "crops 1-4, the dark soil specks on the stem (same in set-C-08.png)",
+      "what": "the specks stuck to the stem are all about the same size and roundness and sit on the surface like dots pasted onto it, with no contact shadow",
+      "fix": "vary their size and shape, add a few tiny grains, and give each one a small contact shadow on the stem"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crops 1-5, the soil clods in the focus zone (same in set-C-05.png and set-C-08.png)",
+      "what": "the clods have cool blue-grey glittery highlights and faceted edges, so they read more like gravel or coal than damp, crumbly earth",
+      "fix": "warm and soften the specular highlights, add a few fine crumbs and organic fibres, and round off some of the facets"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-08.png",
+      "where": "crop 5, where the stem enters the soil (same in set-C-05.png)",
+      "what": "the stem goes cleanly into the mound with no lifted or cracked soil ring and only a faint contact darkening, so the emergence looks placed rather than pushed up",
+      "fix": "add a small crack or lifted crumbs round the base and a deeper occlusion shadow where the stem meets the soil"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-08.png",
+      "where": "crop 4, dew on the plant (same in set-C-05.png)",
+      "what": "the dew is only a few tiny pale specks on the top of the hook, too sparse to read as dew at delivery size",
+      "fix": "add a few small beads that refract the sky and catch the sun along the hook and upper stem, or drop dew from the brief"
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "critic": "R3",
+  "score": 3,
+  "pass": false,
+  "merged": {
+    "rule": "kit/07-QUALITY-BAR.md: a set over critics.maxFilesPerMessage is split across two fresh critics with the same rubric and their answers are merged; the merged score is the lower of the two, the issues are both lists in order",
+    "parts": [
+      {
+        "file": "R3-1.json",
+        "agent": "reviewer_92",
+        "family": "Gemini",
+        "images": 9,
+        "score": 3,
+        "pass": false
+      },
+      {
+        "file": "R3-2.json",
+        "agent": "reviewer_93",
+        "family": "Gemini",
+        "images": 3,
+        "score": 4,
+        "pass": false
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "foreground soil mound across the lower half of the frame (also in set-C-04.png and set-C-07.png)",
+      "what": "the soil clods read as glossy, sharp-faceted obsidian or crumpled metallic plastic with harsh specular highlights and blue-black fill instead of porous, crumbly damp earth",
+      "fix": "replace the faceted glossy displacement shader with granular, matte-rough organic soil geometry containing fine crumbs, pores, root fibers, and diffused wet micro-roughness",
+      "part": "R3-1"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-04.png",
+      "where": "grass blades and dew drops along the left edge (also in set-C-01.png, set-C-06.png, set-C-07.png, and set-C-09.png)",
+      "what": "the grass blades are flat, ruler-straight green cards with a single painted margin stripe, and rigid glass-marble spheres stick sideways onto vertical edges and balance off needle-thin tips without gravity sag or wetting",
+      "fix": "add thickness, subtle curl, parallel fibrous venation, and fine edge serrations to the grass blades, and deform dew drops with gravity teardrops, proper contact angles, and wet surface menisci",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 1, open top rim of the sunflower seed hull where the green stem enters (also in set-C-08.png crop 1)",
+      "what": "the green stem cylinder clips directly through the yellow-green cotyledon and dark hull opening with an unshaded geometric intersection line, while the hull rim shows stair-stepped polygonal notches and transverse polygon ring bands under painted stripes",
+      "fix": "subdivide and sculpt fibrous split edges on the seed hull rim, model true physical clearance and contact cavity shading around the emerging cotyledons and stem, and add micro-displacement to the hull stripes",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, center depression of the soil mound where the sprout will emerge (and inner left cavity wall in set-C-08.png crop 5)",
+      "what": "the animated soil crack geometry is squashed and pulled into smeared, stretched glossy brown polygon ribbons",
+      "fix": "use discrete rigid/granular clod simulation or rest-pose world-space triplanar displacement instead of stretching a single continuous mesh across the opening seam",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crop 1, seed hull next to the curved stem hook",
+      "what": "the body of the seed hull becomes heavily blurred inside the sharp zone while the adjacent stem hook and the top hull intersection rim millimeters away remain tack-sharp",
+      "fix": "keep a physically consistent macro focal plane and motion-blur velocity across the entire seed head and upper stem hook",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 5, base of the stem where it meets the soil (also in set-C-08.png crop 5)",
+      "what": "the backlit lower stem stays evenly bright right down to the hard edge of the foreground clod with no contact shadow, ambient occlusion, or clinging wet fine soil collar",
+      "fix": "add ambient occlusion, light attenuation into the soil cavity, and damp fine soil grains clinging around the stem emergence base",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 2, dark soil crumbs along the stem and air to the left of the stem (also in set-C-08.png crops 1 and 2)",
+      "what": "isolated angular rock-like polygons perch cleanly on the stem silhouette with no moisture meniscus or surrounding fine dust, and a stray dark speck floats detached in mid-air to the left of the stem alongside faint vertical stamp streaks",
+      "fix": "seat irregular damp soil clusters onto the stem with wet menisci and fine dust trails, and remove floating detached particles",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "crop 2, stem surface and silhouetted stem hairs (also in set-C-08.png crops 1 and 2)",
+      "what": "the stem is a smooth, featureless cylindrical gradient tube whose hairs read as uniform, evenly spaced stubby rim spikes and single-pixel white speckles across the front face and upper hook",
+      "fix": "add longitudinal cellular striations and organic surface unevenness to the hypocotyl, and vary trichome length, bend, clumping, and anti-aliased subpixel thickness",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6 and crop 1, tiny moisture droplets across the soil clods (and grass dew highlights in set-C-09.png crops 7 and 8)",
+      "what": "moisture on the soil consists of tiny isolated glass spheres perched dryly atop dark facets, with a few beads floating above clod tips in crop 1, and bright specular highlights on grass dew drops show blocky pixel stair-stepping",
+      "fix": "replace isolated spherical beads on soil with continuous damp darkening and settled micro-films in crevices, ground all droplets onto geometry, and anti-alias specular fireflies",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 9, lower half of the blurred sun disc across the horizon (also in set-C-06.png crop 9 and set-C-09.png crop 9)",
+      "what": "evenly spaced, straight radial starburst streaks fan downward from the out-of-focus sun like a 2D post-process ray filter, contradicting the wide-open macro depth of field",
+      "fix": "remove the artificial radial spoke overlay and render natural wide-aperture optical bloom and soft atmospheric scatter around the sun",
+      "part": "R3-1"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-10.png",
+      "where": "both cotyledons and the stem of the central seedling",
+      "what": "the cotyledons read as thick, smooth, uniform olive-green plastic spoons with no epidermal texture and almost no light passing through them against the sun, mounted on a dead-straight, uniform-width cylindrical stem",
+      "fix": "add cellular surface micro-relief, subtle venation and color variation, stronger warm subsurface scattering through backlit leaves, and slight organic taper and curvature to the stem",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 1 and crop 3, central emerging leaf bud and cotyledon junction",
+      "what": "the emerging true leaf is a flat diamond-shaped card with knife-sharp straight upper edges, painted-on dark symmetrical vein lines, a flat-capped stem junction, and thick rigid spike hairs that poke through the base of the right cotyledon",
+      "fix": "give the young leaf three-dimensional curl, lamina thickness, raised translucent veins, an organic petiole transition, and fine curved hairs that do not intersect neighboring leaves",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 1, crop 3, and crop 4, dew on the cotyledon surfaces and rims",
+      "what": "dew on the cotyledon faces and rims renders as isolated 1-to-4-pixel clipped pure-white jagged specks and stair-stepped rim pixels rather than rounded refractive water droplets",
+      "fix": "model resolved, variably sized water droplets with wetting contact angles, smooth internal refraction, and filtered highlights free of pixel fireflies",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2 and crop 5, split seed hull on the left and adjacent in-focus soil clods",
+      "what": "the striped seed hull sits inside the sharp focal zone on a crisp dirt clod yet looks blurry and low-resolution with stair-stepped rim aliasing and no dirt or moisture, while nearby in-focus soil clods show hard angular polygonal facets with glossy plastic-like highlights",
+      "fix": "match the seed hull texture resolution and focal sharpness to the sharp zone, weather and seat it into damp soil with contact shadow, and replace faceted glossy clods with granular, porous soil displacement",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2, crop 4, and crop 5, backlit stem edges and stem base in the soil",
+      "what": "hairs along both backlit stem edges collapse into a jagged 1-pixel-wide bright stipple fringe, and the bright green stem plunges into the soil gap without a root-collar transition, clinging soil grains, or contact shadow darkening",
+      "fix": "render fine, anti-aliased translucent stem hairs and add contact ambient occlusion, dampness, and adhered soil particles where the stem meets the soil",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-10.png",
+      "where": "left and right grass tufts and the dew drops along their blades",
+      "what": "the grass blades are stiff repeated ribbons with uniform painted-on pale stripes, lined with evenly spaced spherical bead droplets including a perfect sphere balanced on the upper-right blade tip without gravity sag or wetting meniscus",
+      "fix": "vary grass blade geometry, rib relief, and color, and distribute droplets irregularly with realistic surface-tension contact shapes and gravity-pulled tip drops",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-12.png",
+      "where": "crop 9, radial sun streaks and the distant right horizon",
+      "what": "the right horizon is a ruler-straight featureless flat band reading like a flat backdrop, and narrow symmetrical starburst spokes radiate from the sun only downward across the ground band while vanishing in the sky above the horizon",
+      "fix": "break up the flat horizon with subtle distant terrain and atmospheric haze, and use physically consistent full-aperture optical bloom and glare around the sun",
+      "part": "R3-2"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-11.png",
+      "where": "crop 2 and crop 5, out-of-focus mid-ground soil behind the stem",
+      "what": "small gritty speckled bokeh clusters appear in the out-of-focus soil highlights behind the stem and right clod",
+      "fix": "increase depth-of-field sampling and clamp sub-pixel specular spikes in the mid-ground soil before defocus",
+      "part": "R3-2"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-12.png",
+      "where": "crop 8 and crop 10, blurred skyline and sky gradient",
+      "what": "fine high-frequency render grain is visible when inspecting the out-of-focus hill silhouette and sky gradients past delivery size",
+      "fix": "apply gentle chroma-preserving denoising or higher sample counts in the out-of-focus background and sky",
+      "part": "R3-2"
+    }
+  ]
+}

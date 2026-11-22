@@ -1,0 +1,347 @@
+{
+  "round": 12,
+  "phase": 4,
+  "unit": "field",
+  "tier": "final",
+  "test": false,
+  "commit": "921385e7d7ca55f1efeb531cdcd29997d9fe398a",
+  "engineHash": "6a3e309f0b524dd3",
+  "unitHashes": {
+    "dawn": "e9892f9e201e23b7",
+    "rain": "144dfe3ec5e8ef7d",
+    "night": "4de8199e57bacb0b",
+    "frost": "c907d8f7394a61b3",
+    "bloom": "c69d4b22594c0491",
+    "field": "b11ff70827a3d146"
+  },
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "critics": {
+    "R1": {
+      "set-A-01-a.png": {
+        "what": "the approved image of the key",
+        "key": "field",
+        "source": "references/approved/field.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-01-b.png": {
+        "what": "the film frame of the key",
+        "key": "field",
+        "frame": 1755,
+        "time": 58.5,
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-02.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "field",
+        "frame": 1755,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 1,
+            "id": "head",
+            "label": "the flower head",
+            "left": 608,
+            "top": 386,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 2,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 626,
+            "top": 641,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 3,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 627,
+            "top": 728,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 4,
+            "id": "neighbors",
+            "label": "the near neighbor at the edge of the frame",
+            "left": 438,
+            "top": 739,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      },
+      "set-A-03.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "field",
+        "frame": 1755,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 5,
+            "id": "sun",
+            "label": "the sun and the sky round it",
+            "left": 40,
+            "top": 15,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 6,
+            "id": "field",
+            "label": "the field behind the plant",
+            "left": 1232,
+            "top": 264,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 7,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 1232,
+            "top": 41,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      }
+    },
+    "R2": {
+      "set-B-01.png": {
+        "controls": true,
+        "what": "control: the approved image of the key",
+        "key": "field",
+        "source": "references/approved/field.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-02.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1755,
+        "key": "field",
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      }
+    },
+    "R3": {
+      "set-C-01.png": {
+        "what": "the judged frame, whole",
+        "frame": 1755,
+        "why": "the key field",
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-C-02.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 1755,
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 1,
+            "id": "head",
+            "label": "the flower head",
+            "left": 608,
+            "top": 352,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 2,
+            "id": "petals",
+            "label": "the petals",
+            "left": 605,
+            "top": 352,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 3,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 626,
+            "top": 588,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 4,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 625,
+            "top": 623,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 5,
+            "id": "leaf-lit",
+            "label": "a leaf with the light behind it",
+            "left": 625,
+            "top": 384,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 6,
+            "id": "soil",
+            "label": "the soil where the stem meets it",
+            "left": 626,
+            "top": 693,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      },
+      "set-C-03.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 1755,
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 7,
+            "id": "grass",
+            "label": "the ground nearest the lens, with its grass, soil or nearest rows",
+            "left": 1232,
+            "top": 693,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 8,
+            "id": "neighbors",
+            "label": "the near neighbor at the edge of the frame",
+            "left": 445,
+            "top": 647,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 9,
+            "id": "field",
+            "label": "the field behind the plant",
+            "left": 1232,
+            "top": 271,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 10,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 1232,
+            "top": 0,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 11,
+            "id": "sun",
+            "label": "the sun and the sky round it",
+            "left": 40,
+            "top": 0,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      }
+    },
+    "R4": {
+      "set-D-01.png": {
+        "what": "contact sheet across the unit field",
+        "frames": [
+          1560,
+          1582,
+          1603,
+          1625,
+          1647,
+          1669,
+          1690,
+          1712,
+          1734,
+          1756,
+          1777,
+          1799
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/unit-field-preview-review.jpg"
+      },
+      "set-D-02.png": {
+        "what": "consecutive frames from the stretch where the plant changes fastest",
+        "frames": [
+          1647,
+          1648,
+          1649,
+          1650,
+          1651,
+          1652,
+          1653,
+          1654,
+          1655,
+          1656,
+          1657,
+          1658
+        ],
+        "change": 0.010196942312057799,
+        "tier": "review",
+        "source": "out/work/sheets/run-field-f1647-16x9-review.jpg"
+      },
+      "set-D-03.png": {
+        "what": "the same consecutive frames, native size crops round the flower head",
+        "frames": [
+          1647,
+          1648,
+          1649,
+          1650,
+          1651,
+          1652,
+          1653,
+          1654,
+          1655,
+          1656,
+          1657,
+          1658
+        ],
+        "box": {
+          "id": "head",
+          "label": "the flower head",
+          "left": 785,
+          "top": 373,
+          "width": 456,
+          "height": 318
+        },
+        "tier": "review",
+        "source": "out/work/sheets/detail-field-f1647-16x9-review.jpg"
+      }
+    }
+  }
+}
