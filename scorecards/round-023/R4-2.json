@@ -1,0 +1,28 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-13.png",
+      "where": "field frames from 53.1 s to 60.0 s, foreground sunflower heads and leaves",
+      "what": "petal bends, leaf angles, and stem curves stay identical while the camera pulls back, so the plants read as frozen rather than each leaf moving on its own",
+      "fix": "keep a light independent motion on every leaf and petal through the pullback, with no held pose"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "pullback from the 51.4 s bloom close-up through 54.8 s",
+      "what": "the head shrinks and the horizon rises much faster in this stretch than in the later pullback, so the move surges instead of one smooth move with mass",
+      "fix": "ease the dolly so scale and horizon drift at one constant rate, with no speed jump"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-11.png",
+      "where": "dawn frames from 0.0 s to 6.9 s, horizon and soil",
+      "what": "the horizon, soil, and grass stay locked, so the camera is stopped rather than in one continuous move",
+      "fix": "keep a single slow move running through the opening, with no held frame"
+    }
+  ]
+}
