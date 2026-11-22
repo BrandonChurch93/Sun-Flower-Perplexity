@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 00:31 UTC · Status 56; round 20 (rain) closed at the round limit: summary, 8 open items, Units row. The loops of all five units are over on 47d93fd
+- Last push: 2026-11-22 00:32 UTC · Running jobs and running agents brought up to 00:32 UTC
 - Last status: 56 · 2026-11-22 00:31 UTC · Phase 4 · unit rain · round 20
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -796,6 +796,12 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
+Running (00:32 UTC, 2026-11-22):
+
+- The clips of dawn, rain, night, frost and field in 48 parts of 30 frames (the entry of 23:26 UTC below, carried on) · 12 of 48 parts are in and checked by `out/work/scratch/take-parts.cjs` (dawn 7 of 8, frost 5 of 10; engine, unit hash and frame count of every record as expected, no frame failed M1) · the builders' machines stood still from about 23:40 to 00:13 UTC (see "Decisions"), so the times below moved. Measured pace while a machine runs: dawn 52 to 60 s a frame, frost 38 to 44 s. The last part is now expected at about 01:45 UTC; the job's limit is twice the 104 minutes it was given (`budget.jobOverrunFactor`), 02:54 UTC · lists now, in order: `field_builder` dawn 210, rain 420, night 630; `leaf_builder` rain 240, rain 450, night 660; `ground_builder` rain 270, rain 480, night 690; `petal_builder` rain 300, rain 510, night 720; `bud_builder` rain 330, rain 540, night 750; `hair_builder` rain 360, rain 570, night 780; `skin_builder` rain 390, night 600, night 810; `stem_builder` field 1560, field 1710, frost 900; `harness_builder` field 1590, field 1740, frost 930; `disc_builder` field 1620, field 1770, frost 960; `lens_builder` field 1650, frost 990, night 870; `golden_builder` field 1680, night 840, frost 1020
+
+Ended since 23:23 UTC: the machine checks of rounds 17 to 21 (23:23:11 to 23:48:57 UTC, 13 of 13 green, log `out/work/logs/gate-r17.log`) and the five packs (each back, checked and ticked in its round's block).
+
 Running (23:23 UTC):
 
 - The machine checks of rounds 17 to 21 · `npm run gate -- --phase 4 --machine` on `47d93fd` on the Builder's VM, nothing else rendering beside it · starts 23:24 UTC · about 24 minutes (the run for rounds 12 to 16 took about that) · log `out/work/logs/gate-r17.log`
@@ -944,6 +950,8 @@ Finished in this task:
 - `harness_builder` · reported 03:10 UTC · branch `agent/tools` at `47395be`, merged into `main` at `9ae6135`. Commands: `sheet` (`--film`, `--cut N`, `--unit id`), `compare --key id`, `film` (chunks, resumable, `--first`, `--last`, `--unit`, `--format`, `--from-master`, `--join`, M1 on every frame), `measure --unit id` (M1 to M3), `pack --phase N --round R`, `keep` (`--clips`, `--unit`), `seq`, `crops --frame`, `clip --unit`, `stress --unit`. Its own test: a whole preview film at the draft tier, 1800 frames, 28.6 MB. The looks it made went to `agent/tools-looks`, which is never merged.
 - `modes_builder` · reported 03:14 UTC · branch `agent/director` at `bf4642d`, merged into `main` at `7943dca` (checked by the Builder: build clean, 59 tests, G5 green). The `live` mode (drag to orbit, wheel or pinch to move in and out, `0` resets, a timeline bar, Space plays, arrows step), the menu on `M`, and `autopilot` (`hold=1`, `loop=1`, `unit=`, with `window.autopilot` reporting frame, playing, done and error). Not tested by it: the path where the asset set fails to load, a real GPU, Firefox, Safari. These go to the QA gauntlet.
 - `export_builder` · reported 02:47 UTC · branch `agent/capture` at `640f955`, merged into `main` at `5e90a2c` (three files: `src/capture/export.ts`, `export.module.css`, `tools/proof.ts`). Its own test: 30 frames of h264 High at 960 x 540, frames 1500, 1515 and 1529 match capture stills at 40.0, 41.6 and 41.8 dB; memory test 240 frames across the cut at frame 240, textures at most 20.3 MB. The Builder runs both again on the final build of the phase. Its one request outside its files (open the Export page when loading fails, so the offer of the web set can be shown) is applied in `src/main.ts`.
+
+State at 00:32 UTC, 2026-11-22, the loops of all five units closed (12 running, the limit). The twelve builders `field_builder`, `leaf_builder`, `ground_builder`, `petal_builder`, `bud_builder`, `hair_builder`, `skin_builder`, `stem_builder`, `harness_builder`, `disc_builder`, `lens_builder` and `golden_builder` each stay in one long turn, because a builder's machine stands still about a quarter of an hour after its turn ends. Each renders its clip parts (see "Running jobs"), sends every part as it ends and ends its turn when its last part is sent. No critic or juror runs: those of rounds 17 to 21 have all answered and ended (the last, `reviewer_233`, at 00:21 UTC), and the next free name is `reviewer_263`. `modes_builder` and `export_builder` are idle. Phase 5's critics and jurors start as the builders' turns end, so that never more than 12 run.
 
 ## Rounds
 
@@ -1367,6 +1375,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 00:26 UTC · Round 19 (dawn) closed at the round limit: summary, 10 open items, Units row; kit read again after a compaction; golden_builder in a long turn, three fifth parts moved
 - 2026-11-22 00:29 UTC · Round 17 (field) closed at the round limit: summary, 10 open items, Units row
 - 2026-11-22 00:31 UTC · Status 56; round 20 (rain) closed at the round limit: summary, 8 open items, Units row. The loops of all five units are over on 47d93fd
+- 2026-11-22 00:32 UTC · Running jobs and running agents brought up to 00:32 UTC
 
 ## Session log
 
