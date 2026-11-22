@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 05:44 UTC · Polish round 1: the fix batch merged on 5abb284 (ten pieces), each looked at before and after; Status 73
-- Last status: 73 · 2026-11-22 05:34 UTC · Phase 6
+- Last push: 2026-11-22 06:00 UTC · Polish round 1: sixteen judged stills of 5abb284 at the final tier, the jury started, Status 74
+- Last status: 74 · 2026-11-22 06:00 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 06:00 UTC · status 74 · Phase 6 · `status-1.jpg`: Frame 0 at the final tier: the cleft over the seed in the first frame; `status-2.jpg`: Frame 15 at the final tier: the hook is up after half a second; `status-3.jpg`: Whole film sheet 1 of 3: dawn and rain on the merged build; `status-4.jpg`: Whole film sheet 2 of 3: night and frost on the merged build
 - 2026-11-22 05:34 UTC · status 73 · Phase 6 · `status-1.jpg`: Frames 780 and 1755, before left, after right: the rows and the plant beside the hero; `status-2.jpg`: Frame 1755, the two plants in front, before left, after right; `status-3.jpg`: Frame 1345, the rim of the head at native size, before left, after right: the lit flecks are gone; `status-4.jpg`: Frame 420, the wet stem at native size, before left, after right: tufts in place of an even fringe
 - 2026-11-22 05:16 UTC · status 72 · Phase 6 · `status-1.jpg`: The first half second as it stands, frames 0, 8 and 15: the base of polish round 1; `status-2.jpg`: Night rows at frames 600, 617 and 668: before above, after below; `status-3.jpg`: The hero's leaves through the night, numbered at their nodes, frames 617, 668 and 771; `status-4.jpg`: Frame 1755 at twice the size: the row plant beside the hero, on a bare stalk
 - 2026-11-22 04:56 UTC · status 71 · Phase 5 · `status-1.jpg`: Whole film 1 of 3, dawn and rain; `status-2.jpg`: Whole film 2 of 3, night and frost; `status-3.jpg`: Whole film 3 of 3, bloom and field; `status-4.jpg`: Bloom hero, frame 1515, beside the approved image
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 02:56 UTC · status 65 · Phase 5 · `status-1.jpg`: Dawn, frames 102 to 113: the husk drops from the tip to the soil in two frames, a pop; out for a fix; `status-2.jpg`: Field 53.4 s, before left, after right: the specks no longer end at a level line; `status-3.jpg`: Field 58.5 s, before left, after right: softer haze under the sun; the lower, dimmer sun is not better and comes out; `status-4.jpg`: Rain 14 s and night 26 s: two of the three frames the jury read as a real-time demo
 - 2026-11-22 02:37 UTC · status 64 · Phase 5 · `status-1.jpg`: The first two seconds at phone size, as the scroll stop judge saw them (score 6); `status-2.jpg`: Night after the fix: the same hills and mist on all twelve frames; `status-3.jpg`: Field, frame 1755: approved image left, ours right. Two plants stand clear where one should; `status-4.jpg`: Far edge at the last frame: the bright seam before (top), a trial ridge after (bottom), not merged yet
 - 2026-11-22 02:13 UTC · status 63 · Phase 5 · `status-1.jpg`: The whole film, 0 to 19 s: dawn and rain (review tier); `status-2.jpg`: 20 to 40 s: night and frost; `status-3.jpg`: 40 to 60 s: bloom and field; `status-4.jpg`: The first two seconds at the final tier, the frames the scroll stop judge sees
-- 2026-11-22 01:50 UTC · status 62 · Phase 4 · `status-1.jpg`: Dawn at 1.5 s and 6.5 s: approved image left, the film right, crops below; `status-2.jpg`: Rain at 14 s and night at 26 s: approved left, the film right; `status-3.jpg`: Frost at 36 s and the opening bud at 45 s: approved left, the film right; `status-4.jpg`: Bloom at 50.5 s and the field at 58.5 s: approved left, the film right
 
 ## Clock
 
@@ -48,8 +48,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 0.65 h |
-| Whole build | 30.00 h | 28.73 h |
+| 6 | 4.00 h | 1.06 h |
+| Whole build | 30.00 h | 29.14 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -811,6 +811,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 05:35 UTC. Polish round 1, merged: the motion judge's whole film pack carries sheets of 12 consecutive frames at the runs of fastest growth, found from the plant's own state with no frame number typed (`agent/p1-run-sheets`; six runs today: frames 0, 120, 290, 1217 by height gained, 1341 and 1393 by the rays opening; each tile is the part of the frame round the growing head at half the delivered size). Looked at the run 0 to 11: the hook breaks the soil at frame 5 and rises without a jump. With 13 files the pack splits by the existing rule into the consecutive sheets (10 files) and the whole film sheets (3), each judged on its own. This answers the motion judge's round 22 note that its pack lacked such sheets. Status 73 shown at 05:35 UTC.
 - 2026-11-22 · Phase 6 · 05:43 UTC. Polish round 1, the dawn cleft merged in its second form after looking at frames 0, 8, 15 and 45 at review and at fifteen draft frames from 0 to 45 (`agent/p1-dawn-crack`, `77b6df3`): the soil under the crumbs is not cut at all, the cleft is in the loose crumbs only (3 mm a side at frame 0, 5.8 mm at frame 8, a lit left lip), the crumbs near the stem are home by frame 14 so the foot stands in crumbs at frame 15, the rest fall back by frame 39, and from 1.3 s nothing of it is left (frames 45 and 195 byte identical at draft). Frame 0 now shows where the seed will come; the hook stands clear against the dark hollow at frame 8. The builder's caveats, kept: the hollow's floor is smooth bare soil at full size, and the crumbs slide home rather than tumble.
 - 2026-11-22 · Phase 6 · 05:43 UTC. Polish round 1, merged in its second form, the first light of the dawn (`agent/p1-dawn-light`, `8d0d8a2`): a warm glow of the sky on the near ground, [0.48, 0.27, 0.13] at frame 0, one smooth curve to exactly zero before frame 44, so the keys 45, 60 and 195 do not change. Looked at frames 0, 8, 15 before and after: the mound reads as brown crumbs where it was near black. Measured on a draft part of frames 0 to 45: the largest change of the lower half's mean brightness from one frame to the next is 1.41 percent (asked: at most 1.5); 1.75 percent at one frame after the draft encode. The builder's caveat, kept as a risk for the motion judge: the light on the ground falls through the first 1.4 s, the reverse of a brightening dawn. It goes out again if the critics read it as a fault.
+- 2026-11-22 · Phase 6 · 05:44 UTC. Polish round 1, the judged pictures of `5abb284` asked from the twelve builders at 05:45 UTC: the ten key frames and the six hook frames at the final tier (one frame a command, sent as each exists), the four cut sheets, the three whole film sheets, the six runs of fastest growth (three as sheets from `harness_builder`, three as stills cut into sheets here), the stress pairs of rain, night, field and dawn. The machine checks of Phase 6 started on the Builder's VM at 05:45 UTC (`out/work/scratch/gate-p6-polish.log`); the measures follow them on the new finals.
+- 2026-11-22 · Phase 6 · 06:00 UTC. Polish round 1: all sixteen judged stills of `5abb284` are in at the final tier (every record carries engine `eb23778849521a72` and a check with 0 invalid). The realism jury started at 05:58 UTC on frames 420, 780 and 1755 only, five families a frame, each juror a fresh agent with one image; the hook critic's pack is built and it is planned on a family that has not judged the hook before in this build's last round. The pack tool keeps one critic's entries per call, so the round's key is merged after each call (`out/work/scratch/packone.sh`). Status 74 shown at 06:00 UTC.
 
 ## Notes from Brandon
 
@@ -1677,6 +1679,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 05:02 UTC · Phase 5 gate closed on 36b84a5: machine checks, measures, preview film, Status 71. Phase 6: polish round 1 (round 23) starts
 - 2026-11-22 05:16 UTC · Status 72: polish round 1 out to twelve builders, night rows merged, two pieces came back as measurements
 - 2026-11-22 05:44 UTC · Polish round 1: the fix batch merged on 5abb284 (ten pieces), each looked at before and after; Status 73
+- 2026-11-22 06:00 UTC · Polish round 1: sixteen judged stills of 5abb284 at the final tier, the jury started, Status 74
 
 ## Session log
 
@@ -1833,4 +1836,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: The first half second as it stands, frames 0, 8 and 15: the base of polish round 1; Night rows at frames 600, 617 and 668: before above, after below; The hero's leaves through the night, numbered at their nodes, frames 617, 668 and 771; Frame 1755 at twice the size: the row plant beside the hero, on a bare stalk.
 - Status 73, 2026-11-22 05:34 UTC, Phase 6. Polish round 1: seven fixes merged after looking at each before and after. The rows stand lower at the start of the night; the leaves have rounder, unequal teeth; the lit flecks under the rays at frame 1345 are gone; every plant in the rows wears its leaves its own way and the plant beside the hero at the end has grown leaves; the wet stem hairs gather in tufts; the bloom's focus stays on the head while it opens (1.27 px at most where it read up to 2.15); the motion judge's pack gains sheets of the fastest growth. The dawn crack was sent back: it showed the stem's cut end. Next: Dawn light, dawn crack and rain streaks are due by 05:46 UTC; then the merged build is rendered at the final tier, checked and measured, and goes to the critics that raised these issues. Time used: 28.7 h of 30 h.
   Pictures: Frames 780 and 1755, before left, after right: the rows and the plant beside the hero; Frame 1755, the two plants in front, before left, after right; Frame 1345, the rim of the head at native size, before left, after right: the lit flecks are gone; Frame 420, the wet stem at native size, before left, after right: tufts in place of an even fringe.
+- Status 74, 2026-11-22 06:00 UTC, Phase 6. Polish round 1: the fix batch is merged (ten pieces) and the merged build is being judged. All sixteen judged stills are in at the final tier. The first frame now shows a cleft in lit brown crumbs where the seed will come; before it was near black soil. The realism jury has begun on frames 420, 780 and 1755; the opening goes to its critic next. Next: Whole film sheet 3, the cut sheets, the growth runs and the stress pairs are rendering; machine checks run on the build; then the measures and the remaining critics. The budget report is due at about 06:52 UTC. Time used: 29.1 h of 30 h.
+  Pictures: Frame 0 at the final tier: the cleft over the seed in the first frame; Frame 15 at the final tier: the hook is up after half a second; Whole film sheet 1 of 3: dawn and rain on the merged build; Whole film sheet 2 of 3: night and frost on the merged build.
 
