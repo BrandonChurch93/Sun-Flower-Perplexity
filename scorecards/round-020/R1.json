@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole plant",
+      "what": "different plant structure: a has a compact bushy crown of many broad leaves on short petioles with a curved, slender stem; b has a tall, straight, thick stem with fewer, sparser, droopier leaves arranged in widely spaced pairs and a narrow pointed apex reaching near the top frame edge. A viewer would not call them the same plant",
+      "fix": "rebuild the plant to a's silhouette: slender slightly curving stem, dense crown of ~8 upward-angled ovate leaves clustered in the upper half, top near y≈95 of 788, overall height and width as in a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "field behind the plant (left and right midground)",
+      "what": "a has dense rows of seedling plants filling the midground on both sides, glistening wet; b has mostly bare dark soil with a few sparse grass tufts and blurred tall plants only near the horizon",
+      "fix": "fill the midground with rows of out-of-focus young leafy plants like a, crowding both sides behind the stem"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground soil and water channel",
+      "what": "a has very dark, wet, clumpy tilled soil with specular highlights and a broad puddle with splashing droplets catching light at bottom center; b's soil is a smoother, lighter, dry-looking matte surface and the water is a narrow winding stream with no splashes",
+      "fix": "darken and roughen the soil into wet clods with glints, widen the water into a reflective puddle under and left of the plant with impact splashes"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "backlight / leaf edges (set-A-02 regions 1-3)",
+      "what": "a's leaves are rim-lit with a warm, soft glow from the bright horizon and show translucency; b has a cold, hard white fringe of hairs outlining every edge and the stem looks like a fuzzy, CG-shaded tube; leaf surfaces are flatter grey-green",
+      "fix": "reduce the white hair fringe to a fine soft rim, add translucent backlit glow through leaf edges, slender smooth stem with subtle fine hairs as in a"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "horizon / far background (set-A-03 region 5)",
+      "what": "a has a visible tree line and rolling hills under a bright glowing cloud band, with clear atmospheric haze; b's horizon band is dimmer and narrower, the hills are a faint dark smear, and the bright glow sits lower and smaller behind the plant",
+      "fix": "raise and widen the bright horizon band across the frame, restore the soft hazy hill and tree line silhouette"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "sky (set-A-03 region 6)",
+      "what": "a's sky is a smooth, heavy, dark teal overcast with dense fine rain streaks; b's sky has distinct puffy, mottled cloud shapes with more blue-grey contrast and rain streaks that are larger, sparser, and more uniform",
+      "fix": "flatten the cloud texture into soft overcast gradient, increase density and fineness of rain streaks"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "overall grade",
+      "what": "b is cooler and more desaturated blue-grey with lifted shadows in the soil; a has deeper blacks in the soil and a slight warm cast at the horizon",
+      "fix": "crush soil blacks, warm the horizon highlights slightly, keep greens richer"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-01-b.png",
+      "where": "depth of field in midground",
+      "what": "b's midground blur is smoother/CG with fewer bokeh highlights from droplets than a",
+      "fix": "add sparkling out-of-focus droplet highlights in the midground"
+    }
+  ]
+}

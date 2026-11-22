@@ -1,0 +1,13 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    { "severity": "severe", "file": "set-D-01.png", "where": "hero sunflower and the tall left plant, f1560 to f1799", "what": "there is no growth. Across 8 s the hero head is fully open from the first frame, and its petals, leaves and stem keep the same shape. The only change is that the camera pulls back and rises, so the unit reads as a crane shot over a mature plant, not a time-lapse", "fix": "make the hero plant visibly develop through the segment, with leaves unfolding along their own arcs and the head lifting and opening, while the camera moves" },
+    { "severity": "severe", "file": "set-D-02.png", "where": "all 12 tiles, f1647 to f1658", "what": "in the stretch meant to change fastest, the plant does not change at all. Each step is an even 1 px framing drift (measured), with matching petal and leaf shapes. Nothing grows, and wind does not move any leaf on its own", "fix": "render real growth in this window and give each leaf its own small sway, so frames differ in plant shape and not just in framing" },
+    { "severity": "major", "file": "set-D-01.png", "where": "camera speed, f1560 to f1799", "what": "the pull-back is fast at the start (hero head goes from about 120 px to about 45 px wide by 54.9 s), then eases off hard. From f1756 to f1799 the framing barely changes, so the camera is close to stopping by the end of the segment", "fix": "keep a steady move with mass right up to the cut. Use a gentler ease-out so the camera never comes to a near stop" },
+    { "severity": "major", "file": "set-D-01.png", "where": "airborne motes over the field, f1582 to f1647 compared with f1690 onward", "what": "a thick cloud of glowing particles fills the early frames, then thins out and is gone by about 56 s. It reads as an effect fading out, not as dust or pollen drifting out of frame", "fix": "keep the motes going at a steady density with real drift, or let them leave the frame physically instead of dissolving" },
+    { "severity": "minor", "file": "set-D-03.png", "where": "bright rim on the right leaf edges and stem hairs, all tiles", "what": "the backlit outline is a thin hard halo. In the difference between frames it lights up as a bright edge band, so at close zoom it is at risk of sparkling or shimmering", "fix": "soften the rim light and keep the hair detail stable over time so fine edges do not sparkle" },
+    { "severity": "minor", "file": "set-D-02.png", "where": "far rows and the starburst sun rays", "what": "they stay steady from frame to frame and I saw no flicker, but the radial streaks are stiff and identical in every frame, with no change from haze or drifting cloud", "fix": "let the light shafts change gently with haze over time" }
+  ]
+}

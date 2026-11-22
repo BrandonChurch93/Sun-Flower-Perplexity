@@ -1,0 +1,357 @@
+{
+  "round": 8,
+  "phase": 4,
+  "unit": "frost",
+  "tier": "final",
+  "test": false,
+  "commit": "0c3751f246d641a3bd00c7d0bcbe8a99599f0234",
+  "engineHash": "1b119ecb00e043d9",
+  "unitHashes": {
+    "dawn": "85722e6710beaa69",
+    "rain": "0709fa6e53394e89",
+    "night": "7fcfe88ccc4c04c8",
+    "frost": "0700abdea97005f6",
+    "bloom": "5e8238ab56ea563a",
+    "field": "37abe1b4ecedbe40"
+  },
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "critics": {
+    "R1": {
+      "set-A-01-a.png": {
+        "what": "the approved image of the key",
+        "key": "frost",
+        "source": "references/approved/frost.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-01-b.png": {
+        "what": "the film frame of the key",
+        "key": "frost",
+        "frame": 1080,
+        "time": 36,
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-A-02.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "frost",
+        "frame": 1080,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 1,
+            "id": "head",
+            "label": "the head or bud",
+            "left": 684,
+            "top": 138,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 2,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 683,
+            "top": 458,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 3,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 720,
+            "top": 267,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 4,
+            "id": "sun",
+            "label": "the sun and the sky round it",
+            "left": 1135,
+            "top": 187,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      },
+      "set-A-03.png": {
+        "what": "matching native size crops of the approved image (a, scaled once to the master format) and the film frame (b)",
+        "key": "frost",
+        "frame": 1080,
+        "tier": "final",
+        "regions": [
+          {
+            "region": 5,
+            "id": "field",
+            "label": "the field behind the plant",
+            "left": 0,
+            "top": 680,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 6,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 0,
+            "top": 457,
+            "width": 688,
+            "height": 318
+          },
+          {
+            "region": 7,
+            "id": "sky",
+            "label": "the sky",
+            "left": 232,
+            "top": 0,
+            "width": 688,
+            "height": 318
+          }
+        ]
+      }
+    },
+    "R2": {
+      "set-B-01.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1080,
+        "key": "frost",
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-02.png": {
+        "controls": true,
+        "what": "control: the approved image of the key",
+        "key": "frost",
+        "source": "references/approved/frost.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      }
+    },
+    "R3": {
+      "set-C-01.png": {
+        "what": "the judged frame, whole",
+        "frame": 1080,
+        "why": "the key frost",
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-C-02.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 1080,
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 1,
+            "id": "head",
+            "label": "the head or bud",
+            "left": 684,
+            "top": 103,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 2,
+            "id": "stem",
+            "label": "the stem and its hairs",
+            "left": 682,
+            "top": 491,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 3,
+            "id": "leaf-front",
+            "label": "a leaf seen from the front",
+            "left": 658,
+            "top": 270,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 4,
+            "id": "leaf-lit",
+            "label": "a leaf with the light behind it",
+            "left": 819,
+            "top": 672,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 5,
+            "id": "wet",
+            "label": "frost on the plant",
+            "left": 756,
+            "top": 691,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 6,
+            "id": "grass",
+            "label": "the ground nearest the lens, with its grass, soil or nearest rows",
+            "left": 0,
+            "top": 693,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      },
+      "set-C-03.png": {
+        "what": "native size crops of the surfaces in the judged frame",
+        "frame": 1080,
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "crops": [
+          {
+            "crop": 7,
+            "id": "field",
+            "label": "the field behind the plant",
+            "left": 0,
+            "top": 687,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 8,
+            "id": "far",
+            "label": "the far background at the skyline",
+            "left": 0,
+            "top": 416,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 9,
+            "id": "sun",
+            "label": "the sun and the sky round it",
+            "left": 1135,
+            "top": 152,
+            "width": 688,
+            "height": 387
+          },
+          {
+            "crop": 10,
+            "id": "sky",
+            "label": "the sky",
+            "left": 232,
+            "top": 0,
+            "width": 688,
+            "height": 387
+          }
+        ]
+      }
+    },
+    "R4": {
+      "set-D-01.png": {
+        "what": "contact sheet across the unit frost",
+        "frames": [
+          900,
+          927,
+          954,
+          982,
+          1009,
+          1036,
+          1063,
+          1090,
+          1117,
+          1145,
+          1172,
+          1199
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/unit-frost-preview-review.jpg"
+      },
+      "set-D-02.png": {
+        "what": "consecutive frames from the stretch where the plant changes fastest",
+        "frames": [
+          914,
+          915,
+          916,
+          917,
+          918,
+          919,
+          920,
+          921,
+          922,
+          923,
+          924,
+          925
+        ],
+        "change": 0.005729708465349475,
+        "tier": "review",
+        "source": "out/work/sheets/run-frost-f0914-16x9-review.jpg"
+      },
+      "set-D-03.png": {
+        "what": "the same consecutive frames, native size crops round the head or bud",
+        "frames": [
+          914,
+          915,
+          916,
+          917,
+          918,
+          919,
+          920,
+          921,
+          922,
+          923,
+          924,
+          925
+        ],
+        "box": {
+          "id": "head",
+          "label": "the head or bud",
+          "left": 854,
+          "top": 151,
+          "width": 456,
+          "height": 318
+        },
+        "tier": "review",
+        "source": "out/work/sheets/detail-frost-f0914-16x9-review.jpg"
+      },
+      "set-D-04.png": {
+        "what": "consecutive frames across cut 3 (night to frost, the cut falls on frame 900)",
+        "frames": [
+          894,
+          895,
+          896,
+          897,
+          898,
+          899,
+          900,
+          901,
+          902,
+          903,
+          904,
+          905
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-3-preview-review.jpg"
+      }
+    }
+  }
+}

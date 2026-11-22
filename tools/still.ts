@@ -16,7 +16,8 @@ export function stillPath(r: StillRequest): string {
   return path.join(WORK, 'stills', `f${String(r.frame).padStart(4, '0')}-${r.format}-${r.tier}-${r.assets}-${r.diag}.png`)
 }
 
-export async function renderStills(requests: StillRequest[], options: { fresh?: boolean; look?: boolean; by?: string } = {}): Promise<string[]> {
+// `check` adds the frame check to a beauty still's record, read from the frame that was just rendered. The packs take a still only with it.
+export async function renderStills(requests: StillRequest[], options: { fresh?: boolean; look?: boolean; by?: string; check?: boolean } = {}): Promise<string[]> {
   const hashes = computeHashes()
   const out: string[] = []
   const groups = new Map<string, StillRequest[]>()
@@ -38,7 +39,8 @@ export async function renderStills(requests: StillRequest[], options: { fresh?: 
         const { png, seconds } = await session.render(r.frame, r.tier)
         fs.writeFileSync(file, png)
         const info = await session.info()
-        writeRecord(file, { ...recordBase(session, info, 'still', r.diag), frames: [r.frame], samples: samplesOf(r.tier as never), seconds })
+        const check = options.check && r.diag === 'beauty' ? await session.page.evaluate((f) => window.showcase.check(f), r.frame) : undefined
+        writeRecord(file, { ...recordBase(session, info, 'still', r.diag), frames: [r.frame], samples: samplesOf(r.tier as never), seconds, ...(check ? { check } : {}) })
         const unit = segmentAt(r.frame).id
         console.log(`still · frame ${r.frame} (${unit}) · ${r.format} · ${r.tier} · ${r.assets} · ${r.diag} · ${seconds.toFixed(1)} s · ${path.relative(process.cwd(), file)}`)
         if (options.look !== false) addLook(file, `Frame ${r.frame} (${(r.frame / config.film.fps).toFixed(1)} s, ${unit}) at the ${r.tier} tier${r.diag === 'beauty' ? '' : `, ${r.diag} view`}`, options.by ?? 'builder')
@@ -59,5 +61,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
     .split(',')
     .map((f) => clampFrame(Number(f)))
   const requests = frames.map((frame) => ({ frame, tier, format, assets: str(args, 'assets', 'full'), diag: str(args, 'diag', 'beauty') }))
-  await renderStills(requests, { fresh: flag(args, 'fresh'), look: !flag(args, 'no-look') })
+  await renderStills(requests, { fresh: flag(args, 'fresh'), look: !flag(args, 'no-look'), check: flag(args, 'check') })
 }

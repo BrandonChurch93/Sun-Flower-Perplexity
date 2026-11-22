@@ -1,0 +1,49 @@
+{
+  "critic": "R7",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-G-04.png",
+      "where": "Place 1, Place 2, and Place 3, diagonal rain streaks across the sky, plant, and far ground",
+      "what": "crisp 1-2 px rain streaks break into stepped, blotchy, noisy fragments with mosquito ringing around brighter streaks, while thinner streaks vanish into blurry smudges",
+      "fix": "render rain streaks slightly wider and softer-edged with longer, smoother motion blur and slightly lower fine-streak density so high-frequency rain chatter does not starve the 5 Mbit/s encode"
+    },
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "Place 2, central sunflower disk florets, shadowed green leaves, and stem hairs",
+      "what": "the spiral florets in the dark brown flower center smear into a nearly featureless muddy patch, shadowed crumpled leaves turn waxy and blotchy with lost venation, and fine stem and bract hairs soften into mush",
+      "fix": "reduce uncorrelated per-frame high-frequency grain in this dense shot to free bitrate, and slightly boost micro-contrast and feature scale on the disk florets and shadowed leaf veins"
+    },
+    {
+      "severity": "major",
+      "file": "set-G-04.png",
+      "where": "Place 2, upper leaf surfaces, leaf margins, and wet stem round the growing tip",
+      "what": "bitrate starvation from full-frame rain smears dark leaf venation into soft blotches, blurs away small water droplets on the stalk, and clumps fine backlit hairs along the leaf edges and petiole",
+      "fix": "reduce full-frame temporal rain and grain entropy so the encoder preserves bits for the foreground plant, and slightly strengthen contrast on leaf veins, stem droplets, and marginal hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "Place 1 and Place 3, airborne motes above the sun glow and distant sunflowers in the far field",
+      "what": "most of the small backlit airborne specks in the sky above the sun vanish or smear into faint smudges, and dense distant sunflowers and stems in the golden haze clump into soft blotchy mush",
+      "fix": "make airborne motes slightly larger and brighter with fewer tiny 1-2 px specks so they survive quantization, and calm high-frequency clutter and grain in the far field"
+    },
+    {
+      "severity": "minor",
+      "file": "set-G-06.png",
+      "where": "Place 1 and Place 2, faintest 1-pixel stars in the night sky",
+      "what": "while bright and mid-brightness stars hold cleanly, a small fraction of the faintest single-pixel stars vanish or dim by more than half when measured against the unencoded frame",
+      "fix": "give the faintest stars a slightly wider 1.5-2 px soft footprint or slightly higher minimum contrast instead of single-pixel spikes"
+    },
+    {
+      "severity": "minor",
+      "file": "set-G-08.png",
+      "where": "Place 3, dark out-of-focus treeline and low-contrast horizon haze",
+      "what": "when zoomed past delivery size or measured, quantization strips the fine grain and leaves subtle flat 8x8 block patches in the dark treeline band",
+      "fix": "lower high-frequency temporal grain in the foreground field to free bits for smooth areas and use slightly coarser, temporally stable dither in dark horizon bands"
+    }
+  ]
+}

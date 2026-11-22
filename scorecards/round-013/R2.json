@@ -1,0 +1,81 @@
+{
+  "critic": "R2",
+  "round": 13,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 5,
+    "a": 2,
+    "share": 0.4
+  },
+  "controlFromRound": 8,
+  "judged": {
+    "votes": 5,
+    "a": 2,
+    "share": 0.4
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-02.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1080,
+      "key": "frost",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "e",
+        "b"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_162",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 72,
+      "answer": "a, 72/100. The fog-filtered sunrise creates a deliberately cinematic depth separation around the foreground bud."
+    },
+    {
+      "juror": "reviewer_163",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82, the combination of real-time atmospheric post-processing (fog, sun glow, and screen-space depth of field) with visibly lightweight 3D plant geometry—faceted leaf silhouettes, simple tubular stem/petiole meshes, and instanced low-poly background stalks."
+    },
+    {
+      "juror": "reviewer_164",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a — confidence 55. The biggest factor was the quality of the CG: the fine backlit hairs along the stems and leaf edges, the volumetric fog with depth falloff, and the hazy sun all look like an offline, film-grade render with cinematic framing. That is too polished for amateur art or a real-time web demo, and the hair is too uniform for a real stock photo."
+    },
+    {
+      "juror": "reviewer_165",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100. The repeated, nearly identical plant silhouettes in the background look like instanced 3D assets."
+    },
+    {
+      "juror": "reviewer_166",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "b",
+      "confidence": 74,
+      "answer": "b, 74, centered isolated frost-covered sunflower in fog, composed as a sellable beauty still rather than a narrative film frame or a render"
+    }
+  ]
+}

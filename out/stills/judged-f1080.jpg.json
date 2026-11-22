@@ -1,0 +1,40 @@
+{
+  "kind": "still",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "format": "16x9",
+  "tier": "final",
+  "assets": "full",
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-21T23:28:53.295Z",
+  "frames": [
+    1080
+  ],
+  "samples": 48,
+  "seconds": 231.11810000000895,
+  "check": {
+    "frame": 1080,
+    "invalid": 0,
+    "tip": {
+      "x": 0.5350830873713244,
+      "y": 0.29305150684200065,
+      "depthM": 0.7185962404215956,
+      "cocPx": 0.5517129302024841
+    }
+  }
+}

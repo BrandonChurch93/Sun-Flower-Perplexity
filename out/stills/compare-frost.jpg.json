@@ -1,0 +1,63 @@
+{
+  "kind": "compare",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T00:35:16.077Z",
+  "format": "16x9",
+  "tier": "final",
+  "assets": "full",
+  "frames": [
+    1080
+  ],
+  "key": "frost",
+  "approved": "references/approved/frost.png",
+  "crops": [
+    {
+      "name": "at the growing tip",
+      "left": 677,
+      "top": 164,
+      "width": 700,
+      "height": 305
+    },
+    {
+      "name": "lower left third",
+      "left": 290,
+      "top": 568,
+      "width": 700,
+      "height": 305
+    },
+    {
+      "name": "upper right third",
+      "left": 930,
+      "top": 208,
+      "width": 700,
+      "height": 305
+    }
+  ],
+  "check": {
+    "frame": 1080,
+    "invalid": 0,
+    "tip": {
+      "x": 0.5350830873713244,
+      "y": 0.29305150684200065,
+      "depthM": 0.7185962404215956,
+      "cocPx": 0.5517129302024841
+    }
+  }
+}

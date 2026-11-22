@@ -1,0 +1,28 @@
+{
+  "critic": "R4",
+  "score": 9,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "minor",
+      "file": "set-D-04.png",
+      "where": "grass clump to the right of the sprout in dawn frames f0234 to f0239",
+      "what": "tiny backlit dewdrop specular highlights on the thin grass blades pop and reverse brightness across consecutive frames",
+      "fix": "apply specular anti-aliasing or temporal filtering to sub-pixel dew highlights on the dawn grass so glints evolve smoothly"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "rim-lit trichome hairs along the right stem edge, lower-left petiole, and right bud leaf underside across f0528 to f0539",
+      "what": "one-pixel-wide hairs alias against pixel centers as the stem sways, causing slight frame-to-frame brightness shimmer when zoomed in or measured",
+      "fix": "increase pixel sampling or slightly soften sub-pixel hair shading so fine trichomes do not oscillate in intensity between frames"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "top border of native-size tiles f0528 to f0529 and f0531 to f0539",
+      "what": "the fixed native-size crop window clips the tip of the upper-left apical leaf in eleven of the twelve frames",
+      "fix": "shift the native crop window upward by about 45 pixels so the entire growing head stays within every tile"
+    }
+  ]
+}

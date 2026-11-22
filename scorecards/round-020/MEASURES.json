@@ -1,0 +1,59 @@
+{
+  "unit": "rain",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": true
+  },
+  "frames": [
+    {
+      "frame": 420,
+      "key": "rain",
+      "why": "the key rain",
+      "m1": {
+        "frame": 420,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.6161896539400725,
+          "y": 0.19947515211802203,
+          "depthM": 0.6932227858804825,
+          "cocPx": 0.10753021389245987
+        }
+      },
+      "m2": {
+        "frame": 420,
+        "pixels": 2073600,
+        "textured": 180545,
+        "soft": 0,
+        "texturedOutsideSharpZone": 804417,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 0.8094161155387791,
+        "frameEnergy": 14.763146334680423,
+        "approvedEnergy": 18.239254261516024,
+        "sharpPixels": 220920,
+        "region": {
+          "left": 537,
+          "top": 669,
+          "width": 702,
+          "height": 315
+        }
+      }
+    }
+  ]
+}

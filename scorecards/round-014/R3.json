@@ -1,0 +1,92 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "merged": {
+    "rule": "kit/07-QUALITY-BAR.md: a set over critics.maxFilesPerMessage is split across two fresh critics with the same rubric and their answers are merged; the merged score is the lower of the two, the issues are both lists in order",
+    "parts": [
+      {
+        "file": "R3-1.json",
+        "agent": "reviewer_184",
+        "family": "GPT",
+        "images": 9,
+        "score": 7,
+        "pass": false
+      },
+      {
+        "file": "R3-2.json",
+        "agent": "reviewer_185",
+        "family": "GPT",
+        "images": 3,
+        "score": 7,
+        "pass": false
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "Crops 1–2, the stem hook and straight stalk at 1.5 s; also visible in set-C-08.png",
+      "what": "The stalk is a near-constant-width band with little shading across its face. The hairs are present, but they mostly read as a bright, fairly even fringe on the two edges, which makes the stalk look like a flat ribbon.",
+      "fix": "Give the stem a more rounded cross-section, shape the transmitted light across its width, and vary hair length, angle and spacing across the surface as well as at the edges.",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "Crops 1 and 3, the split seed coat and green tissue inside it at 2.0 s; also visible in set-C-05.png",
+      "what": "The split coat has blunt, angular lips and uniformly ordered ridges, while the exposed green tissue is a smooth strip with little internal structure. Together they look like a molded shell and insert.",
+      "fix": "Break up the fracture edges with irregular fibers and chips, vary ridge depth and spacing, and add subtle tissue structure and transmitted light to the exposed green fold.",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "Crop 5, the in-focus clods flanking the stem at 2.0 s; also visible in set-C-02.png and set-C-05.png",
+      "what": "The dark clods have broad slick facets and hard amber glints, with little loose grit between them. They read more like broken shiny rock than soil crumbs.",
+      "fix": "Mix in matte fine grains and porous aggregates, soften the larger facets, and confine strong wet highlights to small irregular patches.",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "Crop 4, the two adjacent droplets on the front of the stem bend at 2.0 s",
+      "what": "The two face-on beads look like flat translucent disks against the stalk, unlike the more dimensional glints at the silhouette.",
+      "fix": "Shape the beads around their contact with the curved stalk, and give them directional highlights and enough refraction to bend the stem detail underneath.",
+      "part": "R3-1"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2, the main stem and both rim-lit edges",
+      "what": "the stem reads as a smooth, nearly constant-width olive tube, and its hairs merge into two nearly continuous bright fringes",
+      "fix": "add slight variation in stem contour and epidermal texture, and break up the fringe with irregularly spaced and angled individual hairs",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 4, dew down the front of the stem",
+      "what": "several beads read as flat, pale circular spots rather than curved droplets attached to the stem",
+      "fix": "give the drops varied contact footprints and coherent refracted centers, rim highlights, and attachment shading",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 3, the broad left seed leaf and its lower margin",
+      "what": "the smooth face, faint texture-like veins and long uniform rim give the leaf a molded, waxy appearance",
+      "fix": "give the vein network subtle relief and vary the margin thickness, curl, and translucency along the leaf",
+      "part": "R3-2"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-12.png",
+      "where": "crop 9, the droplet at the tip of the grass blade to the right of the sun",
+      "what": "the bead appears separated from the tip by a sliver of sky",
+      "fix": "join the bead to the blade with a visible wetted contact or remove the bead",
+      "part": "R3-2"
+    }
+  ]
+}
