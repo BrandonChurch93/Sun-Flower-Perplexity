@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:29 UTC · Polish round 2 (round 24) opened: seven pieces out, worst first
+- Last push: 2026-11-22 06:31 UTC · Log: state at 06:32 UTC, round 24's fix batch out; re-read after compaction
 - Last status: 76 · 2026-11-22 06:27 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,8 +48,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 1.52 h |
-| Whole build | 30.00 h | 29.60 h |
+| 6 | 4.00 h | 1.57 h |
+| Whole build | 30.00 h | 29.64 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -816,6 +816,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 06:03 UTC. After a compaction of the thread: `kit/PROGRESS.md` (Status, Units, Running jobs, Running agents, round 23) and `kit/addenda/README.md` were read again; no addendum exists, no note from Brandon is new. Round 23 carries on from its last ticked box. Answers so far, each saved word for word and pushed as it came: the hook critic 7 (round 22: 6; no severe issue now, three major: the first frame still has no subject, the sun and a bokeh dot outshine the mound, the sprout is small at phone size), the story critic 8 (round 22: 7; one severe: the cut from frost to bloom reads as a new camera setup; one major: the taller neighbour competes with the hero at the end, which is the CONTESTED item that waits for Brandon). Neither is a pass.
 - 2026-11-22 · Phase 6 · 06:20 UTC. Polish round 1, the motion pack: the run sheets added in this round's batch bring it to 13 sheets, over `critics.maxFilesPerMessage` (10), so it is split across two fresh critics with the same rubric, part 1 (ten sheets of consecutive frames) on the Gemini family and part 2 (the three whole film sheets) on the Grok family; their answers are merged with the lower score, as in the unit rounds. Families this round: hook Claude, story GPT, compression GLM, motion Gemini and Grok; none of them judged the same rubric in round 22. The compression critic was asked at 06:20 UTC, the last to go out.
 - 2026-11-22 · Phase 6 · 06:29 UTC. Polish round 1 (round 23) closed at 06:28 UTC, not at a pass; the batch of ten fixes stays on `5abb284` because the machine checks (all 13 green) and the six measures are green on it. Decision on the cuts: two critics name the land and the light changing across cut 2 and cut 4 as severe; the worlds follow the eight approved images, the cuts are hard by a ruling, and nothing in a world may fade toward the next, so no world is changed for it; the entry under "Open items" asks Brandon for the call. Polish round 2 (round 24) opened at 06:29 UTC with seven pieces, worst first, because the clock still prints `extra rounds: yes`; with about 22 minutes left to the budget report its builders were told to push small proven changes or measurements by 06:47 UTC.
+- 2026-11-22 · Phase 6 · 06:31 UTC. After a compaction at about 06:29 UTC: read again from disk `kit/PROGRESS.md` (Status, Clock, Phases, Units, Running jobs, Running agents, round 23 and the new round 24) and `kit/addenda/README.md` (there are no addenda), and the budget report's rules in `AGENTS.md` and its block in `kit/08-BUILD-ORDER.md`. State found: main at `e67a2eb`, its source equal to `5abb284`, type check clean; the clock at 29.64 h of 30.00 h; round 24's seven briefs out since 06:29:34 UTC with no box ticked.
 
 ## Notes from Brandon
 
@@ -934,6 +935,10 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 ## Running jobs
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
+
+Running (06:32 UTC, 2026-11-22):
+
+- Polish round 2 (round 24), the fix batch · seven builders' VMs, each on its own branch from `5abb284` (`agent/p2-ray-lanes`, `agent/p2-bracts-back`, `agent/p2-opening-crumbs`, `agent/p2-dawn-highlights`, `agent/p2-field-life`, `agent/p2-pullback-rate`, `agent/p2-cut-4`) · briefs `out/work/briefs/polish-2.json`, sent 06:29:34 UTC · reports due 06:47 UTC · nothing renders on the Builder's VM · the budget report is due at 06:51:53 UTC and stops the round where it stands.
 
 Running (06:04 UTC, 2026-11-22):
 
@@ -1203,6 +1208,8 @@ State at 05:06 UTC (12 running of 12 allowed). Polish round 1 (round 23) went to
 State at 05:32 UTC (12 running of 12 allowed). Polish round 1 (round 23), the fix batch. Merged into main after the pictures were looked at: the rows lower at the start of the night (`agent/p1-night-rows`), the leaves' teeth (`agent/p1-leaf-teeth`), the foot row of a lifting ray held at the rim (`agent/p1-rim-flecks`), the rows' plants each their own and the companion's lower leaves (`agent/p1-rows-variety`), the wet stem hairs in tufts (`agent/p1-wet-hairs`). Asked for a change before a merge, due 05:46 UTC: `ground_builder` (the dawn crack shows the stem's cut end at frames 15 and 45), `golden_builder` (the warm sky glow of the first frames must ease out evenly to frame 44). No change, measured: `bud_builder` (the hero's night leaves only grow; the camera climbs past them), `stem_builder` (the hero is the same plant at 1515 and 1755; the thin plant was the companion). Not reported yet: `lens_builder` (focus at the master size), `skin_builder` (rain streaks, branch pushed), `harness_builder` (run sheets, branch pushed). `modes_builder` and `export_builder` stay idle.
 
 State at 06:04 UTC (at most 12 running of 12 allowed). Polish round 1 (round 23), judging the merged build `5abb284` (engine `eb23778849521a72`). Answered and saved: the hook critic (`reviewer_332`, score 7) and the story critic (`reviewer_333`, score 8); twelve of fifteen jurors (`reviewer_317` to `reviewer_331`; `326`, `328` and `331` are still out). Not asked yet, their packs wait for pictures: the compression critic (stress pairs of dawn, night and field are rendering on `skin_builder` and `bud_builder`) and the motion critic (cut sheets 1, 2 and 4 are rendering on `golden_builder`, `ground_builder` and `field_builder`). Turns ended with everything sent: `lens_builder`, `hair_builder`, `harness_builder`, `petal_builder`, `leaf_builder`, `disc_builder`, `stem_builder`. `modes_builder` and `export_builder` stay idle. The machine checks run on the Builder's VM since 05:45 UTC (G1, G2, G3 pass so far).
+
+State at 06:32 UTC (7 running of 12 allowed). Polish round 1 (round 23) closed at 06:28 UTC; every critic and juror of it has answered (`reviewer_317` to `reviewer_336`, used and never used again). Polish round 2 (round 24), the fix batch, in their turns since 06:29:34 UTC, each on its own branch from `5abb284`, reports due 06:47 UTC: `petal_builder` (`agent/p2-ray-lanes`: the rays crossing one another as the head opens, frames 1341 to 1352 and 1393 to 1404), `disc_builder` (`agent/p2-bracts-back`: the bracts fold back ahead of the rays), `ground_builder` (`agent/p2-opening-crumbs`: the crumbs' blinking highlights at frames 0 to 11, the prongs through crumbs, the hook's tip in the cleft at frame 0), `golden_builder` (`agent/p2-dawn-highlights`: the same blink measured at the `final` tier, the dew dot, the sun's core), `field_builder` (`agent/p2-field-life`: the heads' own turn and nod, a sway over seconds, frame 1755), `lens_builder` (`agent/p2-pullback-rate`: the pull's rate between frames 1542 and 1645, no fit written), `bud_builder` (`agent/p2-cut-4`: measuring only, frames 1199 and 1200). Idle: `leaf_builder`, `stem_builder`, `hair_builder`, `harness_builder`, `skin_builder`, `modes_builder`, `export_builder`. No reviewer runs.
 
 ## Rounds
 
@@ -1727,6 +1734,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 06:22 UTC · Round 23: the motion critics (4 and 6, merged 4) and the compression critic (7) saved word for word; every answer is in
 - 2026-11-22 06:28 UTC · Round 23 closed: polish round 1 not at a pass (R5 8, R6 7, R7 7, R4 4, jury fails 1755); summary, open items, kept stills, Status 76
 - 2026-11-22 06:29 UTC · Polish round 2 (round 24) opened: seven pieces out, worst first
+- 2026-11-22 06:31 UTC · Log: state at 06:32 UTC, round 24's fix batch out; re-read after compaction
 
 ## Session log
 
