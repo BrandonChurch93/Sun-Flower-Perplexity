@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole plant silhouette and framing",
+      "what": "The base is close, but the crown reaches much higher and points up-left instead of up-right. The middle leaves bunch together on the left, the upper-right leaf is lower, and the low leaves read as a dark horizontal spur instead of the small hanging green leaf.",
+      "fix": "Keep the base in place, lower and turn the crown to the right, and restore the alternating leaf spacing and low hanging silhouette."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "regions 5 and 6, rain across the sky and field",
+      "what": "The streaks are longer, thicker, brighter, and more consistently slanted than the target, so a sparse set of near streaks dominates rather than layers of fine rain.",
+      "fix": "Use a more vertical overall angle, shorter and finer streaks with varied brightness and focus, and more fine distant rainfall."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground runoff and banks",
+      "what": "The water reads as a smooth, narrow reflective ribbon with broad soft ripples, bordered by largely matte dark soil. The target has broken bright reflections, sharper clods, and conspicuous splash crowns and spray.",
+      "fix": "Widen the illuminated splash zone, break up the water with small intersecting ripples and impact crowns, and restore hard wet glints on irregular clods without lifting the deepest blacks."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6 and the pale break near the horizon",
+      "what": "Distinct, smooth dark cloud bands and a compact light opening replace the target's more continuous blue-gray rain veil and broader pale backlight.",
+      "fix": "Soften the dark cloud bands behind a textured rain veil and spread the warm off-white horizon light across more of the background."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 1 and 3, crown and front-facing leaves",
+      "what": "The visible blades are more folded and edge-on, with coarse dark vein ridges and broad slick patches. The target offers fuller blade faces, fine vein and surface texture, and small discrete beads along the edges.",
+      "fix": "Open the blades toward the camera, retain natural curl, and replace exaggerated ridges and broad highlights with finer serration, venation, and pinpoint beads."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, stem and branch junctions",
+      "what": "The stem reads as a straight smooth cylinder with conspicuous white tufts at the junctions and large isolated droplets. The target has a subtler taper, fine continuous hairs, and a narrow, softer backlit rim.",
+      "fix": "Taper the stem slightly, distribute shorter finer hairs along its contour, and make the rim and water beads more restrained and directionally consistent."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, midground field",
+      "what": "The field drops into a flat near-black strip interrupted by sparse pointed grass blades. The target has denser broadleaf seedlings, graduated focus, wet reflections, and low spray between the foreground and field.",
+      "fix": "Replace the isolated grass silhouettes with layered broadleaf growth, add softened wet highlights and low mist, and restore separation between soil, plants, and distance."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5, far tree line",
+      "what": "The far ridge merges into the much darker field, with a compressed tree profile and little blue atmospheric separation. In the target the soft but distinct rolling ridge sits behind the brighter, defocused seedlings.",
+      "fix": "Rebuild a slightly more varied distant silhouette and lift it toward hazy blue-gray while preserving the darker foreground."
+    }
+  ]
+}

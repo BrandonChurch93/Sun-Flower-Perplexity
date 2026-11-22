@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 09:19 UTC · Round 25: answers in from dawn R1 (4), R3 part 1 (6), R3 part 2 (7)
+- Last push: 2026-11-22 09:22 UTC · Round 25: answers in from rain R1, R4, night R3, R4, frost R3, R4
 - Last status: 83 · 2026-11-22 09:13 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 4.28 h |
-| Whole build | 30.00 h | 32.36 h |
+| 6 | 4.00 h | 4.43 h |
+| Whole build | 30.00 h | 32.51 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 2.35 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 2.50 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1660,15 +1660,15 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] dawn-R3-1 answer: `reviewer_358`, GPT family, fresh, the nine files of `dawn/R3-1` only, asked 09:18:22, answered by 09:18 UTC. **Score 6, not at the bar**: 6 major. Saved word for word in `scorecards/round-025/dawn-R3-1.json`. Major, by place: crops 1–2, the hook and the long, backlit stem; crops 1 and 5, the pale green arch emerging at soil level; crops 1 and 3, the yellow-green tissue and split seed coat; crop 5, the sides of the soil opening beside the stem; crop 7, the paired grass blades and their dew; crop 8, the boundary between the blue-gray background and the brown field.
 - [x] dawn-R3-2 answer: `reviewer_359`, GPT family, fresh, the three files of `dawn/R3-2` only, asked 09:18:37, answered by 09:18 UTC. **Score 7, not at the bar**: 3 major. Saved word for word in `scorecards/round-025/dawn-R3-2.json`. Major, by place: crops 1 and 3, both cotyledon faces, especially the upright right blade; crop 2, both stem edges below the leaf junction; crop 4, dew across the cotyledon faces and around the left rim.
 - [ ] dawn-R4 answer
-- [ ] rain-R1 answer
+- [x] rain-R1 answer: `reviewer_361`, GPT family, fresh, the four files of `rain/R1` only, asked 09:19:06, answered by 09:19 UTC. **Score 4, not at the bar**: 4 severe, 4 major. Saved word for word in `scorecards/round-025/rain-R1.json`. Severe: whole plant silhouette and framing ("The base is close, but the crown reaches much higher and points up-left instead of up-right. The middle leaves bunch together on the left, the upper-right leaf "); regions 5 and 6, rain across the sky and field ("The streaks are longer, thicker, brighter, and more consistently slanted than the target, so a sparse set of near streaks dominates rather than layers of fine r"); foreground runoff and banks ("The water reads as a smooth, narrow reflective ribbon with broad soft ripples, bordered by largely matte dark soil. The target has broken bright reflections, sh"); region 6 and the pale break near the horizon ("Distinct, smooth dark cloud bands and a compact light opening replace the target's more continuous blue-gray rain veil and broader pale backlight"). Major, by place: regions 1 and 3, crown and front-facing leaves; region 2, stem and branch junctions; region 4, midground field; region 5, far tree line.
 - [ ] rain-R3 answer
-- [ ] rain-R4 answer
+- [x] rain-R4 answer: `reviewer_363`, Claude family, fresh, the four files of `rain/R4` only, asked 09:19:35, answered by 09:20 UTC. **Score 6, not at the bar**: 3 major, 2 minor. Saved word for word in `scorecards/round-025/rain-R4.json`. Major, by place: plant tip and right-hand grass tuft, f0239 to f0240; splash crown on the ground left of the stem, bottom of every tile; ground in front of the plant, 11.3 s to 17.8 s.
 - [ ] night-R1 answer
-- [ ] night-R3 answer
-- [ ] night-R4 answer
+- [x] night-R3 answer: `reviewer_365`, Claude family, fresh, the three files of `night/R3` only, asked 09:20:04, answered by 09:20 UTC. **Score 5, not at the bar**: 4 major, 3 minor. Saved word for word in `scorecards/round-025/night-R3.json`. Major, by place: crop 2 and crop 3, the right-hand leaf pair at the stem joint (a bead at the leaf base) and the underside of the left leaf in crop 2 (a dark round bead near its notched edge); the large lower leaf left of the stem, bottom centre of the frame (about x 570-790, y 610-788); crop 4, both edges of the main stem; crop 6, the mountain ridge on the right half of the skyline.
+- [x] night-R4 answer: `reviewer_366`, GPT family, fresh, the four files of `night/R4` only, asked 09:20:19, answered by 09:21 UTC. **Score 7, not at the bar**: 1 severe, 1 major. Saved word for word in `scorecards/round-025/night-R4.json`. Severe: f0599 to f0600 (19.97 to 20.00 s), foreground grass and skyline ("The plant holds its position, but the skyline changes height and contour and the foreground grass pattern jumps. The landscape itself appears to shift at the cu"). Major, by place: f0754 to f0756 (25.13 to 25.20 s), tip of the small leaf just left of the growing tip.
 - [ ] frost-R1 answer
-- [ ] frost-R3 answer
-- [ ] frost-R4 answer
+- [x] frost-R3 answer: `reviewer_368`, Claude family, fresh, the three files of `frost/R3` only, asked 09:21:01, answered by 09:21 UTC. **Score 6, not at the bar**: 3 major, 3 minor. Saved word for word in `scorecards/round-025/frost-R3.json`. Major, by place: crop 4 and crop 5, the leaves facing the sun and the leaf blades nearest the stem; crop 1 and crop 3, the bracts of the bud; crop 3 and crop 5, the leaf margins and bract edges.
+- [x] frost-R4 answer: `reviewer_369`, GPT family, fresh, the four files of `frost/R4` only, asked 09:21:02, answered by 09:22 UTC. **Score 9, at the bar for this critic**: 1 minor. Saved word for word in `scorecards/round-025/frost-R4.json`.
 - [ ] bloom-R1 answer
 - [ ] bloom-R3 answer
 - [ ] bloom-R4 answer
@@ -1903,6 +1903,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 09:12 UTC · Round 25: the pack is cut from the frozen build (24 critic packs, ten judged frames for the jury); export proof passed
 - 2026-11-22 09:13 UTC · Status 83: the build is frozen, the record round runs, eight master parts in
 - 2026-11-22 09:19 UTC · Round 25: answers in from dawn R1 (4), R3 part 1 (6), R3 part 2 (7)
+- 2026-11-22 09:22 UTC · Round 25: answers in from rain R1, R4, night R3, R4, frost R3, R4
 
 ## Session log
 

@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "f0599 to f0600 (19.97 to 20.00 s), foreground grass and skyline",
+      "what": "The plant holds its position, but the skyline changes height and contour and the foreground grass pattern jumps. The landscape itself appears to shift at the cut rather than only the weather and lighting changing.",
+      "fix": "Keep the same terrain and grass geometry, with continuous camera and wind motion across the cut. Switch the atmosphere, sky and lighting on f0600 without moving the skyline."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "f0754 to f0756 (25.13 to 25.20 s), tip of the small leaf just left of the growing tip",
+      "what": "The lit edge and hairs briefly smear into a pale trail beyond the leaf silhouette while the adjacent growing tip stays defined.",
+      "fix": "Render the moving leaf and its hairs together from continuous deformation, with enough shutter samples to preserve one coherent moving edge."
+    }
+  ]
+}

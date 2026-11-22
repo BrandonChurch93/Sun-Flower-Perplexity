@@ -1,0 +1,49 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4 and crop 5, the leaves facing the sun and the leaf blades nearest the stem",
+      "what": "with the sun behind and above the plant the leaf blades stay a dark opaque grey-green; no light passes through the thin blade, the veins do not glow or darken against the light, and the blades read as solid cards with a texture painted on",
+      "fix": "add subsurface or translucency to the leaf material so backlit blades glow warm green, with the vein network showing darker against the light"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 3, the bracts of the bud",
+      "what": "the bracts are near copies of one another in shape, curl and spacing and are arranged almost symmetrically, all in one flat slightly waxy green with even specular; at native size it looks like a procedural instanced model",
+      "fix": "vary each bract's length, width, twist and tip curl, break the symmetry, and add colour variation (yellower bases, darker tips) and a rougher, less glossy surface"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 3 and crop 5, the leaf margins and bract edges",
+      "what": "the frost is only a thin, even white rim that follows every edge at the same width, like an outline or fresnel pass; the leaf faces and stem carry almost no frost crystals, so the frost does not read as real rime",
+      "fix": "build frost as crystals that grow unevenly, thicker on exposed edges and upper faces and thinner in sheltered parts, with scattered crystals across the blade and on the hairs"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 5, the pale petiole curving from the stem to the lower right leaf",
+      "what": "the petiole is a smooth, evenly lit tube with no hairs or frost, paler and more plastic than the hairy main stem next to it",
+      "fix": "give the petioles the same hairy, frosted, matte material as the stem"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-03.png",
+      "where": "crop 8, the far flower heads at the skyline",
+      "what": "several distant heads have very similar silhouettes and stem heights, which hints at instanced copies",
+      "fix": "vary the head size, tilt and stem height of the background plants"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 4, the leaf margins against the bright fog",
+      "what": "the hairs on the margin form an even, regular fringe of the same length all round, slightly halo-like against the fog",
+      "fix": "randomise hair length and density along the margin and soften the bright rim"
+    }
+  ]
+}

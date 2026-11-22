@@ -1,0 +1,56 @@
+{
+  "critic": "R3",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 2 and crop 3, the right-hand leaf pair at the stem joint (a bead at the leaf base) and the underside of the left leaf in crop 2 (a dark round bead near its notched edge)",
+      "what": "water droplets sit on the leaves although this part of the film has no water, frost or dew; the bead on the left leaf reads as a dark hole or ring rather than a lit drop",
+      "fix": "remove the droplets from the leaves in this section, or if dew is wanted, make them consistent across the plant and lit with a highlight and refraction"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "the large lower leaf left of the stem, bottom centre of the frame (about x 570-790, y 610-788)",
+      "what": "its whole outline carries a thin dotted bright fringe that reads as a cut-out halo or matte edge rather than hairs; the face is a flat, evenly shaded card with soft blotchy patches and no visible thickness at the folded top edge",
+      "fix": "remove the outline fringe or replace it with sparse, varied backlit hairs; give the leaf a real curl, edge thickness and vein relief"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4, both edges of the main stem",
+      "what": "the stem hairs form a continuous, evenly bright white rim of near-identical spikes down both sides, much brighter than any other backlit part; it reads as an outline glow or halo rather than individual hairs catching light",
+      "fix": "vary hair length, density and angle, dim the rim so brightness falls off with angle to the light, and let some hairs go dark"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, the mountain ridge on the right half of the skyline",
+      "what": "the ridge is a flat, solid black silhouette with a jagged stamped profile and no atmospheric depth or texture; it reads as a flat cut-out picture behind the field",
+      "fix": "add aerial perspective, slight tonal variation and ridge detail, and soften the edge to suit the distance"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 5, the fog band between the field and the mountains on the left",
+      "what": "the mist is an even horizontal layer with a fairly hard top edge that sits on the picture rather than winding through the terrain",
+      "fix": "break up the fog density and top edge and let it thin and wrap round the land forms"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 2, the lit upper face of the left leaf",
+      "what": "zoomed past native size, the blistered surface shows stair-stepped, slightly pixelated edges along the ridges and a waxy, pale-green sheen",
+      "fix": "raise texture resolution, add antialiasing on fine relief, and lower the specular so the leaf reads less waxy"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crops 5 and 6, the out-of-focus foliage in the dark field",
+      "what": "the defocused leaves carry grainy noise and a few small bright blotches that read as render noise rather than bokeh",
+      "fix": "denoise the out-of-focus field and keep only highlights the lighting would actually make"
+    }
+  ]
+}

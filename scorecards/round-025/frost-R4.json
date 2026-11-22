@@ -1,0 +1,14 @@
+{
+  "critic": "R4",
+  "score": 9,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "f0910–f0917, fine frost hairs along the center-right bracts against the sky",
+      "what": "On close comparison, individual bright flecks along those edges vary in strength between frames even though the bracts themselves track smoothly. The variation is not apparent in the whole-frame sheet.",
+      "fix": "Keep the frost detail fixed to each bract and improve temporal sampling of the subpixel hairs."
+    }
+  ]
+}

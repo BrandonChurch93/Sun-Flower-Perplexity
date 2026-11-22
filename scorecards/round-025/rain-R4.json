@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "plant tip and right-hand grass tuft, f0239 to f0240",
+      "what": "the plant does not match exactly across the cut: the dawn tip is an open yellow-green bud, the rain tip is a closed green point; the grass tuft to the right changes blade count and shape, losing its dew-laden blades",
+      "fix": "carry the same plant and grass geometry through the cut and change only lighting, sky, soil wetness and weather"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "splash crown on the ground left of the stem, bottom of every tile",
+      "what": "a single rain splash crown stays at the same spot for all 12 frames (0.4 s), barely changing; it reads as frozen or looping, not as drops landing",
+      "fix": "spawn short-lived splashes at random positions where drops land, each lasting a few frames"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "ground in front of the plant, 11.3 s to 17.8 s",
+      "what": "a soil mound and a water rivulet appear by 11.3 s and are gone by 17.8 s, while the horizon climbs steadily in frame; the foreground layout changes more than a smooth camera move would explain, so the move reads as a drift with uncertain mass",
+      "fix": "keep foreground features persistent and let them leave frame only through a clear, steady camera move"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "rain streaks across the sky, f0529 and f0536",
+      "what": "streak angle and length vary from frame to frame, with some very long bright streaks at a steeper angle than the rest",
+      "fix": "keep one wind-driven fall angle with small per-drop variation and consistent motion-blur length"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-02.png",
+      "where": "whole plant across the 12 frames",
+      "what": "in the stretch marked fastest-changing, the leaves show almost no growth or wind response; individual leaves do not move on their own under the rain",
+      "fix": "add per-leaf flutter from wind and rain impacts and visible growth across the burst"
+    }
+  ]
+}
