@@ -7,14 +7,14 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Build: in progress
 - Current phase: 5 · The whole film
 - Current unit: none (the whole film). All six units are `finished`; the Phase 4 gate closed at 01:47 UTC. The camera pass, the field and rain grades and the film packs are on branch `phase5/camera` at `41f10a3` (engine `305e9520118781cf`), next merged into main; the renders of the whole film round are out on the builders' machines from that commit since 01:49 UTC
-- Current round: none running. Rounds 17 (`field`), 18 (`frost`), 19 (`dawn`), 20 (`rain`) and 21 (`night`) are closed, each the third and last of its unit
+- Current round: 22 · the whole film · floor round · judges `4676c5d` (engine `305e9520118781cf`) · started 02:04 UTC
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 01:55 UTC · Phase 5: main merged with phase5/camera (4676c5d), still --check, machine checks running; published at the Phase 4 gate
+- Last push: 2026-11-22 02:02 UTC · Round 22 starts: the whole film, floor round, judges 4676c5d (engine 305e9520118781cf)
 - Last status: 62 · 2026-11-22 01:50 UTC · Phase 4
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 0.11 h |
+| 5 | 3.00 h | 0.17 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 25.06 h |
+| Whole build | 30.00 h | 25.13 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1285,6 +1285,20 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Fixes: none, and none follows. Round 21 is the unit's third and last round (`quality.maxRoundsPerUnit` 3) and an extra round, so no fix pass comes after it (the clock printed `extra rounds: no` from 23:57 UTC on). The loop of `night` ends at its count, which is a limit and not a pass. The kept build is `47d93fd`, the build this round judged: it holds every fix of the two fix passes with the machine checks and M1 to M3 green. The round's 5 severe and 11 major issues stand under "Open items" in nine entries, each with what was tried and what to try next; one major issue (R3, the droplets) is declined under "Declined issues" because the approved `night` image shows them. In "Units" the loop of `night` is closed with `round limit` and `47d93fd`; the unit is marked `finished` when its clip and its comparison image are made from that build (steps 5 and 6 of the unit list in `kit/08-BUILD-ORDER.md`).
 - [x] Summary, status, push: `scorecards/round-021/SUMMARY.md` written 00:02 UTC, with `MEASURES.json`, the four manifests and `KEY.json` beside it; Status 54 (00:05 UTC) carries the result with the judged frame beside the approved image
 
+### Round 22 · Phase 5 · the whole film · floor round
+
+- Started 2026-11-22 02:04 UTC. Judges commit `4676c5d` (engine `305e9520118781cf`): `main` with branch `phase5/camera` merged in, that is the kept build of the six finished units (`47d93fd`) with the camera pass (version C over the bloom, the angle round the plant only rising in the dawn, the smooth move first through night and frost), the field grade eased in over 52 to 54 s and the rain grade moved toward its neighbours. Unit: none, the whole film. It is the first whole film round, so a floor round (`quality.wholeFilmMaxRounds` 2). Critics: R5, R6 and R7, R4 on the cuts pack, and R2 on all ten judged frames with five jurors each; the controls' votes are the ones collected in the unit rounds. The machine checks of this commit were started at 01:54 UTC, ten minutes before this entry, so that the round would not wait for them; nothing else of the round was begun before this entry was pushed. The renders for the packs are being made from this engine on the builders' machines (jobs of 01:49 and 01:53 UTC under "Running jobs").
+- [ ] Machine checks
+- [ ] Measures
+- [ ] Pack
+- [ ] R5 answer
+- [ ] R6 answer
+- [ ] R7 answer
+- [ ] R4 answer
+- [ ] R2 jury answers
+- [ ] Fixes
+- [ ] Summary, status, push
+
 ## Final scores
 
 Written by the record round in Phase 6.
@@ -1444,6 +1458,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 01:41 UTC · Phase 5 prepared: camera pass C, field and rain grades and the film packs on phase5/camera; renders of the whole film round sent out
 - 2026-11-22 01:50 UTC · Phase 4 gate closed (13 of 13 machine checks, six units finished at their limits); Status 62; Phase 5 open, camera smoothing on phase5/camera 41f10a3
 - 2026-11-22 01:55 UTC · Phase 5: main merged with phase5/camera (4676c5d), still --check, machine checks running; published at the Phase 4 gate
+- 2026-11-22 02:02 UTC · Round 22 starts: the whole film, floor round, judges 4676c5d (engine 305e9520118781cf)
 
 ## Session log
 
