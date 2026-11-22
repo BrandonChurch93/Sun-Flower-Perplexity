@@ -1,7 +1,7 @@
 {
  "version": 1,
  "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
- "last": 1795324570886,
+ "last": 1795325732197,
  "phases": {
   "0": 3884.505,
   "1": 175.665,
@@ -9,10 +9,10 @@
   "3": 33900.26200000001,
   "4": 34171.755999999994,
   "5": 11222.212000000001,
-  "6": 1186.5629999999999
+  "6": 2347.874
  },
- "sinceStatus": 0,
- "lastStatusAt": "2026-11-22T05:16:10Z",
+ "sinceStatus": 45.509,
+ "lastStatusAt": "2026-11-22T05:34:46Z",
  "continuations": [],
  "extensions": {},
  "log": [
@@ -1370,6 +1370,36 @@
    "kind": "phase",
    "id": 6,
    "addedSeconds": 87
+  },
+  {
+   "at": "2026-11-22T05:20:46Z",
+   "kind": "phase",
+   "id": 6,
+   "addedSeconds": 275
+  },
+  {
+   "at": "2026-11-22T05:25:39Z",
+   "kind": "phase",
+   "id": 6,
+   "addedSeconds": 294
+  },
+  {
+   "at": "2026-11-22T05:30:35Z",
+   "kind": "phase",
+   "id": 6,
+   "addedSeconds": 296
+  },
+  {
+   "at": "2026-11-22T05:34:46Z",
+   "kind": "phase",
+   "id": 6,
+   "addedSeconds": 251
+  },
+  {
+   "at": "2026-11-22T05:35:32Z",
+   "kind": "phase",
+   "id": 6,
+   "addedSeconds": 46
   }
  ]
 }

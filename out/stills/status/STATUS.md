@@ -1,12 +1,12 @@
-# Status 72
+# Status 73
 
-2026-11-22 05:16 UTC
+2026-11-22 05:34 UTC
 
-- Status 72 · Phase 6. Phase 5 closed on build 36b84a5. Phase 6 began with polish round 1 (round 23): twelve fixes went out at 05:05 UTC, worst first: the dark first half second, the three frames the jury failed, the night rows, focus at the master size. Two pieces came back as measurements with no change: the hero is the same plant in the wide shot (a row plant beside it is the thin one), and the night's leaves only grow (the camera climbs past them). The night rows are lower at the cut and merged.
-- Next: Patches are due 05:42 UTC, merge by about 05:58, then the judged pictures, the machine checks and the measures of the merged build, then the critics that raised these issues. The budget report falls due at about 06:52 UTC. Time used: 28.4 h of 30 h.
+- Status 73 · Phase 6. Polish round 1: seven fixes merged after looking at each before and after. The rows stand lower at the start of the night; the leaves have rounder, unequal teeth; the lit flecks under the rays at frame 1345 are gone; every plant in the rows wears its leaves its own way and the plant beside the hero at the end has grown leaves; the wet stem hairs gather in tufts; the bloom's focus stays on the head while it opens (1.27 px at most where it read up to 2.15); the motion judge's pack gains sheets of the fastest growth. The dawn crack was sent back: it showed the stem's cut end.
+- Next: Dawn light, dawn crack and rain streaks are due by 05:46 UTC; then the merged build is rendered at the final tier, checked and measured, and goes to the critics that raised these issues. Time used: 28.7 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: The first half second as it stands, frames 0, 8 and 15: the base of polish round 1
-- `status-2.jpg`: Night rows at frames 600, 617 and 668: before above, after below
-- `status-3.jpg`: The hero's leaves through the night, numbered at their nodes, frames 617, 668 and 771
-- `status-4.jpg`: Frame 1755 at twice the size: the row plant beside the hero, on a bare stalk
+- `status-1.jpg`: Frames 780 and 1755, before left, after right: the rows and the plant beside the hero
+- `status-2.jpg`: Frame 1755, the two plants in front, before left, after right
+- `status-3.jpg`: Frame 1345, the rim of the head at native size, before left, after right: the lit flecks are gone
+- `status-4.jpg`: Frame 420, the wet stem at native size, before left, after right: tufts in place of an even fringe
