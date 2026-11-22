@@ -8,7 +8,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, beyondPlaces, budTurn, fieldBeyondM, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { PLACE, beyondAt, beyondPlaces, budTurn, fieldBeyondM, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -184,10 +184,12 @@ void main() {
 }
 `
 
-// From 52 s the ground past the last rows rises to the foot of the tree row, and the tops on it come up over the rows in front as the lens does.
-const BEYOND_LIFT_M = 2.2
+// The ground past the last rows rises to the foot of the tree row, and the tops on it come up over the rows in front as the lens does.
+const BEYOND_LIFT_M = 1.8
+const BEYOND_BUMPS_M = 0.3
 const BEYOND_HEADS_M = 0.4
-const beyondLift = (at: string, liftM = BEYOND_LIFT_M): string => `uLate * smoothstep(${fieldBeyondM[0].toFixed(1)}, ${(fieldBeyondM[0] + 6).toFixed(1)}, length(${at})) * (${liftM.toFixed(2)} + ${BEYOND_LIFT_M.toFixed(2)} * (0.07 * sin(atan(${at}.x, ${at}.y) * 23.0 + 1.3) + 0.05 * sin(atan(${at}.x, ${at}.y) * 57.0 + 4.1) + 0.03 * sin(atan(${at}.x, ${at}.y) * 131.0)))`
+const BEYOND_SHADE = 0.5
+const beyondLift = (at: string, liftM = BEYOND_LIFT_M): string => `smoothstep(${fieldBeyondM[0].toFixed(1)}, ${(fieldBeyondM[0] + 6).toFixed(1)}, length(${at})) * (${liftM.toFixed(2)} + ${BEYOND_BUMPS_M.toFixed(2)} * (0.5 + 0.3 * sin(atan(${at}.x, ${at}.y) * 23.0 + 1.3) + 0.2 * sin(atan(${at}.x, ${at}.y) * 57.0 + 4.1)))`
 
 function ringGeometry(): THREE.BufferGeometry {
   const position: number[] = []
@@ -301,7 +303,6 @@ export class FarField {
     uLow: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
-    uLate: fieldUniforms.uLate,
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -340,7 +341,7 @@ export class FarField {
     this.count = places.length / PLACE
     const picture = makeSurface({ name: 'field pictures', vertex: pictureVertex, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms })
     this.pictures = plain(quad, picture)
-    const late = pictureVertex.replace('uniform float uSquat;', 'uniform float uSquat;\nuniform float uLate;').replace('  vec4 view = viewMatrix * vec4(world, 1.0);', `  world.y += ${beyondLift('aPlace.xy', BEYOND_LIFT_M + BEYOND_HEADS_M)};\n  vec4 view = viewMatrix * vec4(world, 1.0);`)
+    const late = pictureVertex.replace('  vec4 view = viewMatrix * vec4(world, 1.0);', `  world.y += ${beyondLift('aPlace.xy', BEYOND_LIFT_M + BEYOND_HEADS_M)};\n  vec4 view = viewMatrix * vec4(world, 1.0);`)
     this.beyond = plain(quads(beyondPlaces()), makeSurface({ name: 'field pictures beyond', vertex: late, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms }))
     this.beyond.renderOrder = 10.5
 
@@ -351,9 +352,9 @@ export class FarField {
     this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldPicturesM])
     this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, fieldPicturesM]))
 
-    const riseVertex = sheetVertex.replace('uniform float uHeight;', 'uniform float uHeight;\nuniform float uLate;').replace('uHeight, position.z', `uHeight + ${beyondLift('position.xz')}, position.z`)
-    const riseFragment = sheetFragment.replace('float reach = smoothstep(', 'float reach = 1.0 - smoothstep(')
-    this.end = plain(ringGeometry(), makeSurface({ name: 'field carpet rise', vertex: riseVertex, fragment: riseFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uHeight: this.carpetHeight, uLevel: { value: 0 }, uStart: { value: new THREE.Vector2(fieldBeyondM[1] + 2, 1) } } }))
+    const riseVertex = sheetVertex.replace('uHeight, position.z', `uHeight + ${beyondLift('position.xz')}, position.z`)
+    const riseFragment = sheetFragment.replace('float reach = smoothstep(', 'float reach = 1.0 - smoothstep(').replace('  if (uDiag == 7) {', `  color *= mix(1.0, ${BEYOND_SHADE.toFixed(2)}, smoothstep(0.5, ${BEYOND_LIFT_M.toFixed(2)}, vWorld.y - uHeight));\n  if (uDiag == 7) {`)
+    this.end = plain(ringGeometry(), makeSurface({ name: 'field carpet rise', vertex: riseVertex, fragment: riseFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uCover: { value: 1 }, uHeight: this.carpetHeight, uLevel: { value: 0 }, uStart: { value: new THREE.Vector2(fieldBeyondM[1] + 2, 1) } } }))
     this.end.renderOrder = 14
     // The pictures are made just before the first surface that reads them is drawn.
     this.pictures.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
@@ -432,7 +433,7 @@ export class FarField {
   show(on: boolean): void {
     this.pictures.visible = on
     this.carpet.visible = on && this.above
-    this.end.visible = on && this.above && fieldUniforms.uLate.value > 0
+    this.end.visible = on && beyondAt(this.time)
     this.beyond.visible = this.end.visible
     for (const m of this.under) m.visible = on && this.above
   }

@@ -318,8 +318,11 @@ export function fieldPlaces(): FieldPlaces {
   return made
 }
 
-// From 52 s the field rises to the foot of the tree row: a ring of plants past the last rows, thinner toward an uneven edge short of the bank.
+// In the field's last part the land rises past the last rows to the foot of the tree row: a ring of plants, thinner toward an uneven edge short of the bank.
+// It stands whole from the part's first frame to its last.
 export const fieldBeyondM: [number, number] = [65.5, 73.6]
+const LAST_PART = config.segments.find((s) => s.id === 'field')
+export const beyondAt = (time: number): boolean => LAST_PART !== undefined && time > LAST_PART.start - 1e-6
 const BEYOND_ID = 3000000
 let beyond: Float32Array | null = null
 export function beyondPlaces(): Float32Array {
