@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:57 UTC · Status 78: continuation 1 runs; round 24 second pass, cut 4 held (variant B) and the field's gust looked at; night stars and frame 1755 pieces out
-- Last status: 78 · 2026-11-22 06:57 UTC · Phase 6
+- Last push: 2026-11-22 07:21 UTC · Status 79: round 24 second and third passes looked at, not merged yet
+- Last status: 79 · 2026-11-22 07:20 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 07:20 UTC · status 79 · Phase 6 · `status-1.jpg`: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet); `status-2.jpg`: Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet); `status-3.jpg`: Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet); `status-4.jpg`: Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet)
 - 2026-11-22 06:57 UTC · status 78 · Phase 6 · `status-1.jpg`: Cut 4, frames 1199 and 1200: as now (top), variant A (middle), variant B (bottom, kept): the same leaves stand on both sides of the cut; `status-2.jpg`: Why A is dropped and what B costs: A swings a leaf across the sun at frames 1265 to 1290 (top); in B small leaf tips enter the frost at 37 to 38 s (bottom); `status-3.jpg`: The gust at frames 1680, 1700 and 1720: before above, after below. It reads in motion more than on stills; the two front plants get their own leaf motion next; `status-4.jpg`: Frame 3 of the opening, before left, after right: the crumbs' points a little wider and dimmer, a small gain against the blinking highlights
 - 2026-11-22 06:42 UTC · status 77 · Phase 6 · `status-1.jpg`: Cut 4 as it stands, frames 1199 and 1200: the bud holds, the sun and the land change with the world, and the leaf at the left edge is in motion through the cut; `status-2.jpg`: The pullback at frames 1593 (top) and 1645 (bottom), before left, a trial with an even rate right (not merged); `status-3.jpg`: Frame 1398, before left, after right: rays in lanes, first pass. The crossing at the lower left of the disc is still there; `status-4.jpg`: Frame 1755, before above, after below: the rows get a sway. The still holds; the motion is not proven yet
 - 2026-11-22 06:27 UTC · status 76 · Phase 6 · `status-1.jpg`: Bloom hero: approved image against the build, frame 1515; `status-2.jpg`: Field: approved image against the build, frame 1755; `status-3.jpg`: Cut 4, frost to bloom: the cut two critics fault (the land and the sun change sides); `status-4.jpg`: Frames 0 to 11 at frame cadence: the cleft, the hook, and the crumbs whose highlights blink
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 04:31 UTC · status 70 · Phase 5 · `status-1.jpg`: Frame 1350, the opening head at twice size: the build that failed the focus check left, the corrected build right; `status-2.jpg`: Frame 1350 from the corrected build, final tier; `status-3.jpg`: Frame 1515 from the corrected build, final tier; `status-4.jpg`: Frame 0 from the corrected build, final tier
 - 2026-11-22 04:09 UTC · status 69 · Phase 5 · `status-1.jpg`: Whole film sheet 1 of 3, final build; `status-2.jpg`: Whole film sheet 2 of 3; `status-3.jpg`: Whole film sheet 3 of 3; `status-4.jpg`: The four cuts, frame before, frame after, and both laid over each other
 - 2026-11-22 03:47 UTC · status 68 · Phase 5 · `status-1.jpg`: Frame 1515, judged by round 22 left, the kept build right; `status-2.jpg`: Frames 0 and 45, judged left, kept build right: dawn's own blades with dew stand from the first frame; `status-3.jpg`: Frames 420 and 780, judged left, kept build right; `status-4.jpg`: Frame 1350, judged left, kept build right
-- 2026-11-22 03:38 UTC · status 67 · Phase 5 · `status-1.jpg`: The husk's fall, frames 114 to 125: before on the left, after on the right; `status-2.jpg`: Frame 780, the nearest blade: before on the left, after on the right; `status-3.jpg`: The far rise stands from the golden world's first frame: frames 1260 and 1799; `status-4.jpg`: Frame 1515, still open: the patches are the same before (left) and after (right)
 
 ## Clock
 
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 2.01 h |
-| Whole build | 30.00 h | 30.09 h |
+| 6 | 4.00 h | 2.41 h |
+| Whole build | 30.00 h | 30.48 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 0.09 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 0.48 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1763,6 +1763,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 06:45 UTC · Round 24: golden_builder's report and second pass; review page published 06:45 UTC
 - 2026-11-22 06:52 UTC · Continuation 1 started at 06:52 UTC by Brandon's note; the clock has 10 more hours, round 24 carries on
 - 2026-11-22 06:57 UTC · Status 78: continuation 1 runs; round 24 second pass, cut 4 held (variant B) and the field's gust looked at; night stars and frame 1755 pieces out
+- 2026-11-22 07:21 UTC · Status 79: round 24 second and third passes looked at, not merged yet
 
 ## Session log
 
@@ -1929,4 +1930,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Cut 4 as it stands, frames 1199 and 1200: the bud holds, the sun and the land change with the world, and the leaf at the left edge is in motion through the cut; The pullback at frames 1593 (top) and 1645 (bottom), before left, a trial with an even rate right (not merged); Frame 1398, before left, after right: rays in lanes, first pass. The crossing at the lower left of the disc is still there; Frame 1755, before above, after below: the rows get a sway. The still holds; the motion is not proven yet.
 - Status 78, 2026-11-22 06:57 UTC, Phase 6. Continuation 1 runs since 06:52 UTC by Brandon's note: no stop at the 30 hour mark, the work carries on. Round 24 (the last polish round): second-pass reports are coming in. Looked at so far, none merged yet: cut 4 with the companion's leaves held before the cut (variant B, kept; variant A swings a leaf across the sun later and is dropped) and a gust that crosses the field at 53.4 to 57.5 s. Two more pieces went out: the night's stars (crawl and loss under the encoder) and a third pass on frame 1755's repeated plants, the one frame the jury fails. Next: Read the other nine reports (due 07:25 to 07:30 UTC), look at every picture, merge what the pictures prove by about 07:50 UTC, then judge the merged build: machine checks, measures, fresh critics. After round 24 closes: freeze, record round, master film, clips, proof, QA. Time used: 0.1 h of 10 h.
   Pictures: Cut 4, frames 1199 and 1200: as now (top), variant A (middle), variant B (bottom, kept): the same leaves stand on both sides of the cut; Why A is dropped and what B costs: A swings a leaf across the sun at frames 1265 to 1290 (top); in B small leaf tips enter the frost at 37 to 38 s (bottom); The gust at frames 1680, 1700 and 1720: before above, after below. It reads in motion more than on stills; the two front plants get their own leaf motion next; Frame 3 of the opening, before left, after right: the crumbs' points a little wider and dimmer, a small gain against the blinking highlights.
+- Status 79, 2026-11-22 07:20 UTC, Phase 6. Round 24, the last polish round: the second and third passes of the fix batch are in and looked at. Not merged yet. Taken so far: cut 4 (the companion's leaves held), bracts ahead of the rays, the field's gust, lean and far band of heads, the pull back on one curve to the last frame, dawn's first frame highlights, the end's leaves moving, rain landing behind the plant, the husk coming to rest, the bud's hair dots, the field's foot. Still out: the rays' order of opening, the first frame's pale dome with the new cleft, the night's stars at 16x9, the companion's face at the end, shimmer of the row leaves. Next: Close the fix batch by about 08:00 UTC, look at the merged frames, then the machine checks, the measures and fresh critics on the merged build. Time used: 0.5 h of 10 h.
+  Pictures: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet); Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet); Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet); Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet).
 

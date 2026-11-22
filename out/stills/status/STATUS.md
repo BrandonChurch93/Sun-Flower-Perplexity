@@ -1,12 +1,12 @@
-# Status 78
+# Status 79
 
-2026-11-22 06:57 UTC
+2026-11-22 07:20 UTC
 
-- Status 78 · Phase 6. Continuation 1 runs since 06:52 UTC by Brandon's note: no stop at the 30 hour mark, the work carries on. Round 24 (the last polish round): second-pass reports are coming in. Looked at so far, none merged yet: cut 4 with the companion's leaves held before the cut (variant B, kept; variant A swings a leaf across the sun later and is dropped) and a gust that crosses the field at 53.4 to 57.5 s. Two more pieces went out: the night's stars (crawl and loss under the encoder) and a third pass on frame 1755's repeated plants, the one frame the jury fails.
-- Next: Read the other nine reports (due 07:25 to 07:30 UTC), look at every picture, merge what the pictures prove by about 07:50 UTC, then judge the merged build: machine checks, measures, fresh critics. After round 24 closes: freeze, record round, master film, clips, proof, QA. Time used: 0.1 h of 10 h.
+- Status 79 · Phase 6. Round 24, the last polish round: the second and third passes of the fix batch are in and looked at. Not merged yet. Taken so far: cut 4 (the companion's leaves held), bracts ahead of the rays, the field's gust, lean and far band of heads, the pull back on one curve to the last frame, dawn's first frame highlights, the end's leaves moving, rain landing behind the plant, the husk coming to rest, the bud's hair dots, the field's foot. Still out: the rays' order of opening, the first frame's pale dome with the new cleft, the night's stars at 16x9, the companion's face at the end, shimmer of the row leaves.
+- Next: Close the fix batch by about 08:00 UTC, look at the merged frames, then the machine checks, the measures and fresh critics on the merged build. Time used: 0.5 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Cut 4, frames 1199 and 1200: as now (top), variant A (middle), variant B (bottom, kept): the same leaves stand on both sides of the cut
-- `status-2.jpg`: Why A is dropped and what B costs: A swings a leaf across the sun at frames 1265 to 1290 (top); in B small leaf tips enter the frost at 37 to 38 s (bottom)
-- `status-3.jpg`: The gust at frames 1680, 1700 and 1720: before above, after below. It reads in motion more than on stills; the two front plants get their own leaf motion next
-- `status-4.jpg`: Frame 3 of the opening, before left, after right: the crumbs' points a little wider and dimmer, a small gain against the blinking highlights
+- `status-1.jpg`: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet)
+- `status-2.jpg`: Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet)
+- `status-3.jpg`: Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet)
+- `status-4.jpg`: Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet)
