@@ -6,8 +6,8 @@ import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
-import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, hangAt, kindTime, lagAt, lateAt, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
+import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, faceAt, faceTurn, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, gustOf, hangAt, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, shortWay, sizeAt, squatAt, standsClear, swayOf, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -146,7 +146,8 @@ export class Field {
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
         const own = ownOf(all[i + 7])
         const clear = first && standsClear(all[i + 7])
-        placeTurned(all, i, seen, still, n, (early ? 0 : budTurn(clock, all[i + 7])) + late * own.turn)
+        const face = late > 0 ? faceAt(all[i + 7], Math.hypot(all[i], all[i + 1])) : 0
+        placeTurned(all, i, seen, still, n, (early ? 0 : budTurn(clock, all[i + 7])) + late * (own.turn + face * shortWay(faceTurn(all[i + 7]) - all[i + 2] - own.turn)))
         seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 - night * (clear ? clearLow(all[i + 7]) : own.low)) * (1 + behind * (own.young - 1))
         if (before > 0) {
           seen[n + 4] += before * own.leanX
@@ -155,18 +156,20 @@ export class Field {
           still[n + 5] += before * own.leanZ
         }
         if (g.bare && this.gaps > 0) seen[n + 6] = still[n + 6] = all[i + 6] + this.gaps * (gapTone(all[i + 7]) - all[i + 6])
-        seen[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.4 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own)
+        seen[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.4 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own, 0, face)
         still[n + 7] = late > 0 ? lateLeafCode(all[i + 7]) : seen[n + 7]
-        const spin = leafSpin(all[i + 7])
-        if (spin !== 0) {
-          const c = Math.cos(spin)
-          const s = Math.sin(spin)
-          const lx = still[n + 4]
-          const lz = still[n + 5]
-          still[n + 2] += spin
-          still[n + 4] = c * lx - s * lz
-          still[n + 5] = c * lz + s * lx
+        const move = swayOf(all[i + 7], this.time)
+        const gust = late > 0 ? gustOf(all[i + 7], all[i], all[i + 1], this.time) : null
+        const off = late > 0 ? lateLean(all[i + 7]) : null
+        const mx = (move ? move.x : 0) + (gust ? gust.x : 0) + (off ? late * off.x : 0)
+        const mz = (move ? move.z : 0) + (gust ? gust.z : 0) + (off ? late * off.z : 0)
+        turnBy(seen, n, (move ? move.head : 0) + (gust ? gust.head : 0))
+        turnBy(still, n, leafSpin(all[i + 7]) + (move ? move.leaves : 0) + (gust ? gust.leaves : 0))
+        if (mx !== 0 || mz !== 0) {
+          leanBy(seen, n, mx, mz)
+          leanBy(still, n, mx, mz)
         }
+        if (gust && before === 0) seen[n + 7] = ownCode(own, gust.nod, face)
         if (late > 0 && !g.bare) still[n + 3] *= 1 - late * leafShort(all[i + 7])
         n += PLACE
       }

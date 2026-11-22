@@ -114,20 +114,77 @@ export function ownOf(id: number): Own {
   const young = hash01(SEED, 100, id) < 0.085 ? 0.35 + 0.25 * hash01(SEED, 104, id) : 0.84 + 0.26 * hash01(SEED, 104, id)
   const way = hash01(SEED, 105, id) * 2 * Math.PI
   const lean = hash01(SEED, 106, id) < 0.04 ? 0.25 + 0.2 * hash01(SEED, 107, id) : 0.12 * hash01(SEED, 107, id)
-  const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
-  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
+  const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.12 + 0.33 * hash01(SEED, 82, id))
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: hash01(SEED, 154, id) < 0.3 ? 1.0 + 0.45 * hash01(SEED, 87, id) : 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
 }
 // Every neighbor wears its leaves its own way round its stem, for good: the same kind is never seen twice from the same side. Those set by hand keep theirs, as do the three that stand clear under the moon.
 export const leafSpin = (id: number): number => (handSet.has(id) || CLEAR.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
 // Late in the bloom the stalk under a heavy head has gone on growing past its last leaves: each neighbor has its own length of bare neck.
 export const leafShort = (id: number): number => (handSet.has(id) ? 0 : 0.2 * Math.pow(hash01(SEED, 122, id), 1.5))
+// Under a heavy head no stalk stays plumb: from 52 s every neighbor comes to stand off its line its own way, most by 1 to 5 degrees, one in ten by 6 to 9.
+// Those set by hand stand as they stood.
+export function lateLean(id: number): { x: number; z: number } {
+  if (handSet.has(id)) return { x: 0, z: 0 }
+  const way = 2 * Math.PI * hash01(SEED, 151, id)
+  const lean = hash01(SEED, 152, id) < 0.1 ? 0.1 + 0.05 * hash01(SEED, 153, id) : 0.02 + 0.07 * hash01(SEED, 153, id)
+  return { x: Math.cos(way) * lean, z: Math.sin(way) * lean }
+}
+// In the evening air of the last eight seconds every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
+// by up to 2.3 degrees; its leaves swing round the stem by up to 3.5 degrees and its head by up to 5, each on its own period. Those set by hand stand still.
+export const SWAY_FROM_S = 52
+export const swayAt = (time: number): number => ramp(SWAY_FROM_S, SWAY_FROM_S + 1.1, time)
+export function swayOf(id: number, time: number): { x: number; z: number; leaves: number; head: number } | null {
+  const on = swayAt(time)
+  if (on === 0 || handSet.has(id)) return null
+  const turn = 2 * Math.PI
+  const beat = (channel: number, low: number, high: number): number => Math.sin(turn * (time / (low + (high - low) * hash01(SEED, channel, id)) + hash01(SEED, channel + 1, id)))
+  const way = turn * hash01(SEED, 130, id)
+  const along = on * (0.022 + 0.018 * hash01(SEED, 131, id)) * beat(132, 3.2, 6.8)
+  const across = on * 0.012 * beat(134, 2.6, 5.2)
+  return { x: Math.cos(way) * along - Math.sin(way) * across, z: Math.sin(way) * along + Math.cos(way) * across, leaves: on * 0.06 * beat(136, 2.4, 5.6), head: on * 0.087 * beat(138, 3.6, 7.4) }
+}
+// One gust crosses the field from the sun's side, left to right in the last frames: its front enters at the far left at about 53.5 s and passes the plant at 56.1 s, uneven along its length.
+// Each neighbor is pushed over as it is struck, shakes while it is held, and springs back on a period and with a damping of its own; its head and its leaves
+// follow, each with its own lag. All is still again by 58.4 s.
+export const GUST = { fromS: 53.4, fromM: -49, speedMS: 18, x: 0.9659, z: 0.2588, stillS: 58.4 }
+const gustHit = (x: number, z: number): number => Math.max(52.1, GUST.fromS + (x * GUST.x + z * GUST.z - GUST.fromM) / GUST.speedMS)
+const blowOf = (tau: number, a: number, b: number, c: number): number => {
+  if (tau <= 0) return 0
+  const held = ramp(0, 0.28, tau) * (1 - ramp(0.7 + 0.3 * a, 1.2 + 0.45 * a, tau)) * (1 + 0.14 * Math.sin(2 * Math.PI * (tau / (0.36 + 0.2 * b) + c)))
+  const free = tau - (0.95 + 0.37 * a)
+  return held - (free > 0 ? (0.2 + 0.25 * b) * ramp(0, 0.2, free) * Math.exp(-free / (0.3 + 0.25 * c)) * Math.sin((2 * Math.PI * free) / (0.8 + 0.7 * a)) : 0)
+}
+export function gustOf(id: number, x: number, z: number, time: number): { x: number; z: number; leaves: number; head: number; nod: number } | null {
+  const end = 1 - ramp(57.5, GUST.stillS, time)
+  if (time <= 52.1 || end === 0) return null
+  const tau = time - gustHit(x, z) - 0.25 * hash01(SEED, 140, id) - 0.35 * noise(32, x * 0.07, z * 0.07)
+  if (tau <= 0) return null
+  const a = hash01(SEED, 141, id)
+  const b = hash01(SEED, 142, id)
+  const c = hash01(SEED, 143, id)
+  const lean = end * (0.07 + 0.035 * hash01(SEED, 144, id)) * (1 - 0.45 * step(12, 45, Math.hypot(x, z))) * blowOf(tau, a, b, c)
+  const way = (hash01(SEED, 145, id) - 0.5) * 0.5
+  const side = (channel: number): number => (hash01(SEED, channel, id) < 0.5 ? -1 : 1)
+  return {
+    x: (Math.cos(way) * GUST.x - Math.sin(way) * GUST.z) * lean,
+    z: (Math.sin(way) * GUST.x + Math.cos(way) * GUST.z) * lean,
+    head: end * 0.22 * side(146) * blowOf(tau - 0.06 - 0.16 * hash01(SEED, 147, id), b, c, a),
+    leaves: end * 0.17 * side(148) * blowOf(tau - 0.04 - 0.2 * hash01(SEED, 149, id), c, a, b),
+    nod: end * 0.14 * blowOf(tau - 0.08 - 0.1 * hash01(SEED, 150, id), a, c, b),
+  }
+}
+// Open and heavy, the heads of a field come to face one way, the lens's side here: from 52 s nine in ten of the middle and far rows come round to it,
+// each to within 20 degrees, lift from their hang and fill out to the size of the larger heads. The near rows keep their own ways.
+export const faceAt = (id: number, reach: number): number => (hash01(SEED, 156, id) < 0.1 ? 0 : step(9, 17, reach))
+export const faceTurn = (id: number): number => meanTurn + (hash01(SEED, 155, id) - 0.5) * 0.7
+export const shortWay = (turn: number): number => turn - 2 * Math.PI * Math.round(turn / (2 * Math.PI))
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
-export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
+export const ownCode = (own: Own, nod = 0, face = 0): number => Math.max(0, Math.round((own.nod + nod - face * 0.7 * Math.max(own.nod - 0.2, 0)) * 64)) + (own.head + face * 0.6 * (1.15 - own.head)) * 0.5
 // Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
 const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
 export const earlyCode = (own: Own, bud = own.bud, leaf = own.leaf, droop = own.droop): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(leaf, 0.75, 1.6) + 1024 * steps(droop, -0.15, 0.6) + 32768 * steps(bud, 0.8, 2.6)
 // Late in the bloom the leaves use the same slot for their own: how far each neighbor's leaves reach and how far they hang. Its stalk stays as it is.
-export const lateLeafCode = (id: number): number => (handSet.has(id) ? steps(1, 0.75, 1.3) + 32 * steps(1, 0.75, 1.6) + 1024 * steps(0, -0.15, 0.6) : steps(1, 0.75, 1.3) + 32 * steps(0.85 + 0.45 * hash01(SEED, 123, id), 0.75, 1.6) + 1024 * steps(-0.12 + 0.5 * Math.pow(hash01(SEED, 124, id), 1.3), -0.15, 0.6))
+export const lateLeafCode = (id: number): number => (handSet.has(id) ? steps(1, 0.75, 1.3) + 32 * steps(1, 0.75, 1.6) + 1024 * steps(0, -0.15, 0.6) : steps(1, 0.75, 1.3) + 32 * steps(0.78 + 0.62 * hash01(SEED, 123, id), 0.75, 1.6) + 1024 * steps(-0.12 + 0.66 * Math.pow(hash01(SEED, 124, id), 1.3), -0.15, 0.6))
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
