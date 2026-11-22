@@ -12,6 +12,7 @@ uniform sampler2D tSky;
 uniform sampler2D tLate;
 uniform float uLate;
 uniform float uSmall;
+uniform float uSink;
 uniform float uTexelAngle;
 uniform float uPixelAngle;
 uniform vec3 uGlow;
@@ -32,7 +33,13 @@ void main() {
   vec3 dv = normalize(vec3((ndc.x + uProj.z) * uProj.x, (ndc.y + uProj.w) * uProj.y, -1.0));
   vec3 d = normalize(mat3(uCamWorld) * dv);
   float coc = min(uCocScale / uFocusM, 2048.0);
-  float toSun = dot(d, uSunDir);
+  vec3 sun = uSunDir;
+  if (uSink > 0.0) {
+    float sunk = asin(clamp(uSunDir.y, -1.0, 1.0)) - uSink;
+    vec2 toward = normalize(uSunDir.xz);
+    sun = vec3(toward.x * cos(sunk), sin(sunk), toward.y * cos(sunk));
+  }
+  float toSun = dot(d, sun);
   float theta = acos(clamp(toSun, -1.0, 1.0));
   float el = asin(clamp(d.y, -1.0, 1.0));
   el += 0.012 * uHigh * smoothstep(0.0, 0.045, el);
@@ -138,6 +145,16 @@ export function smallSun(time: number): number {
   return t * t * (3 - 2 * t)
 }
 
+// The evening sun goes down: over the last eight seconds its disc and glow sink this far, to sit on the tree line.
+const SINK_FROM_S = 52
+const SINK_TO_S = 60
+const SINK_RAD = 0.005
+
+export function sunSink(time: number): number {
+  const t = Math.min(1, Math.max(0, (time - SINK_FROM_S) / (SINK_TO_S - SINK_FROM_S)))
+  return SINK_RAD * t * t * (3 - 2 * t)
+}
+
 export function eveningHaze(time: number): number {
   const t = Math.min(1, Math.max(0, (time - THICK_FROM_S) / (THICK_TO_S - THICK_FROM_S)))
   return t * t * (3 - 2 * t)
@@ -155,6 +172,7 @@ export class GoldenSky {
       tLate: { value: null },
       uLate: { value: 0 },
       uSmall: { value: 0 },
+      uSink: { value: 0 },
       uTexelAngle: { value: 0.001 },
       uPixelAngle: { value: 0.001 },
       uGlow: { value: new THREE.Vector3().fromArray(def.sky.glow) },
@@ -185,6 +203,7 @@ export class GoldenSky {
     u.uHigh.value = eveningHaze(time)
     u.uLate.value = lateEvening(time)
     u.uSmall.value = smallSun(time)
+    u.uSink.value = sunSink(time)
   }
 
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, width: number): void {
