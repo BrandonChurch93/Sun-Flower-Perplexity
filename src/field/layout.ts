@@ -115,11 +115,17 @@ export function ownOf(id: number): Own {
   const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : 0
   return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
 }
+// Every neighbor wears its leaves its own way round its stem, for good: the same kind is never seen twice from the same side. Those set by hand keep theirs, as do the three that stand clear under the moon.
+export const leafSpin = (id: number): number => (handSet.has(id) || CLEAR.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
+// Late in the bloom the stalk under a heavy head has gone on growing past its last leaves: each neighbor has its own length of bare neck.
+export const leafShort = (id: number): number => (handSet.has(id) ? 0 : 0.2 * Math.pow(hash01(SEED, 122, id), 1.5))
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
 export const ownCode = (own: Own): number => Math.round(own.nod * 64) + own.head * 0.5
 // Before the bloom the same slot carries the stalk, the leaves, their droop and the bud, 32 steps each.
 const steps = (v: number, from: number, to: number): number => Math.min(31, Math.max(0, Math.round(((v - from) / (to - from)) * 31)))
 export const earlyCode = (own: Own, bud = own.bud, leaf = own.leaf, droop = own.droop): number => steps(own.stalk, 0.75, 1.3) + 32 * steps(leaf, 0.75, 1.6) + 1024 * steps(droop, -0.15, 0.6) + 32768 * steps(bud, 0.8, 2.6)
+// Late in the bloom the leaves use the same slot for their own: how far each neighbor's leaves reach and how far they hang. Its stalk stays as it is.
+export const lateLeafCode = (id: number): number => (handSet.has(id) ? steps(1, 0.75, 1.3) + 32 * steps(1, 0.75, 1.6) + 1024 * steps(0, -0.15, 0.6) : steps(1, 0.75, 1.3) + 32 * steps(0.85 + 0.45 * hash01(SEED, 123, id), 0.75, 1.6) + 1024 * steps(-0.12 + 0.5 * Math.pow(hash01(SEED, 124, id), 1.3), -0.15, 0.6))
 export const sizeGlsl = /* glsl */ `
 uniform float uLag;float softMin(float a, float b) { return -log(exp(-${KNEE.toFixed(1)} * a) + exp(-${KNEE.toFixed(1)} * b)) / ${KNEE.toFixed(1)}; }
 float sizeAt(float size, float tone, float ahead) {
