@@ -118,3 +118,13 @@ From `out/work/filmclock.csv`. Sun height and compass direction in degrees. The 
 | 69 | 117.5 | 58.5 | 1.5 | 226 | the whole field | |
 | 73 | 124.3 | 59.9 | 0 | 226 | the sun touches the horizon | |
 | end | 127.0 | 60 | -4.7 | 226 | afterglow, the last frame | |
+
+## What version 1 left behind
+
+The code of version 1 is still in the repository and most of it is good: the plant, the soil, the field, the rain, the frost, the lens. Version 2 keeps it and changes how it is driven.
+
+- Version 1 was six scenes with hard cuts, each with its own weather, sky and far land, and many things were switched by the scene: `config.segments`, `config.keys`, `config.worlds`, `segmentById`, `segmentStart`, `worldOf`, `src/director/growthline.ts`, `src/director/registry.ts`, `src/director/inputs.ts`, everything under `src/worlds/` and `src/units/`. All of that is dead. The version 1 scene times (rain from 8 to 20 seconds, night from 20, frost from 30, bloom from 40, field from 52) mean nothing now. When your work is done, this prints nothing for your folders: `rg -n "segmentById|segmentStart|config\.segments|config\.keys|config\.worlds|worldOf|growthline|director/registry|director/inputs|worlds/|units/" src/<your folder>`
+- What replaces them: the plant's clock `tau` for everything that grows (`shared.uTime`, and the marks in `config.growth`: the frost hold stands at tau 12, the storm hold at 28.3, the bud at 43.5, the flower is open at 51, the crane starts at 52), and the dials for everything the weather does. The instant of the frame being drawn is `now`, and the close of its shutter `later`, both exported by `src/v2/now.ts`: `film.ts` sets them before it calls anything, so any module may read `now.dials.rain`, `now.night`, `now.sun`.
+- Version 1 hid changes behind its cuts: a set of clods swapped for another, grass that appeared, a field that jumped in age. There is no cut to hide behind now. Nothing may pop: whatever changes does so over time, or where the lens cannot see it.
+- Version 1 knew where the sun was in each scene and some code leans on that (a fixed sun direction, a fixed side the light comes from). The sun now crosses the whole sky fifteen times. Nothing may assume where it is.
+- What version 1's critics said, in their words, is in `scorecards/round-026/SUMMARY.md`. Read the part about your subject: those defects are yours to remove.
