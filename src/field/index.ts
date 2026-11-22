@@ -7,14 +7,14 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import { FarField } from './far.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, hangAt, kindTime, lagAt, lateAt, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
+import { PLACE, behindAt, budTurn, clearBud, clearLow, earlyAt, earlyCode, farVariants, fieldAge, fieldPlaces, frontM, gapTone, gapsAt, hangAt, kindTime, lagAt, lateAt, lateLeafCode, leafShort, leafSpin, nearVariants, nightAt, NIGHT_LOW, opensEarly, ownCode, ownOf, plantAhead, shareOf, sizeAt, squatAt, standsClear, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
 
-interface Group { head: { value: THREE.Vector4 }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
@@ -25,7 +25,11 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   const grow = { value: 0 }
   const axis = { value: new THREE.Vector3(0, 0, 1) }
   for (const m of plant.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: head, uHeadGrow: grow, uHeadAxis: axis })
-  return { head, axis, grow, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
+  // The leaves carry their own numbers late in the bloom, so they read how far those have come, and the head's place, from uniforms of their own.
+  const leafHead = { value: new THREE.Vector4(0, 0, 0, 0) }
+  const leafOwn = { value: 0 }
+  for (const part of plant.parts) if (part.name === 'leaves') for (const m of part.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: leafHead, uEarly: leafOwn })
+  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, seen, still: leavesApart(plant, places.length / PLACE), count: places.length / PLACE, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -73,6 +77,10 @@ export class Field {
       const h = headAt(clock, open)
       g.head.value.set(h.center.x, h.center.y, h.center.z, h.radius + rayLength(0, clock) + 0.03)
       g.axis.value.set(h.axis.x, h.axis.y, h.axis.z)
+      const late = lateAt(timeOpen)
+      g.leafHead.value.copy(g.head.value)
+      if (late > 0 && g.head.value.w > 0) g.leafHead.value.w = Math.max(g.head.value.w * (1 - late), 1e-4)
+      g.leafOwn.value = Math.max(earlyAt(timeOpen), late)
       // A head opens to nearly the size of the plant's own, however short its stalk.
       g.grow.value = headOpen(clock)
       usePlant(0)
@@ -147,7 +155,19 @@ export class Field {
           still[n + 5] += before * own.leanZ
         }
         if (g.bare && this.gaps > 0) seen[n + 6] = still[n + 6] = all[i + 6] + this.gaps * (gapTone(all[i + 7]) - all[i + 6])
-        seen[n + 7] = still[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.4 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own)
+        seen[n + 7] = before > 0 ? earlyCode(own, clear ? own.bud + night * (clearBud(all[i + 7]) - own.bud) : own.bud, (clear ? own.leaf + night * (1.4 - own.leaf) : own.leaf) + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own)
+        still[n + 7] = late > 0 ? lateLeafCode(all[i + 7]) : seen[n + 7]
+        const spin = leafSpin(all[i + 7])
+        if (spin !== 0) {
+          const c = Math.cos(spin)
+          const s = Math.sin(spin)
+          const lx = still[n + 4]
+          const lz = still[n + 5]
+          still[n + 2] += spin
+          still[n + 4] = c * lx - s * lz
+          still[n + 5] = c * lz + s * lx
+        }
+        if (late > 0 && !g.bare) still[n + 3] *= 1 - late * leafShort(all[i + 7])
         n += PLACE
       }
       g.seen.needsUpdate = true
