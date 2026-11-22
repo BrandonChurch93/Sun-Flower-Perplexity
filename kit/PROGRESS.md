@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 00:18 UTC · Round 19 dawn: jury complete (14 of 20, passes), round 17 R4 answer (5); clip parts: builders stay in turns
-- Last status: 54 · 2026-11-22 00:04 UTC · Phase 4 · unit night · round 21
+- Last push: 2026-11-22 00:22 UTC · Status 55 (dawn pairs of round 19); round 20: the R4 answer saved word for word and ticked, keys of rounds 17 and 20 copied; round 19: summary
+- Last status: 55 · 2026-11-22 00:21 UTC · Phase 4 · unit dawn · round 19
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 00:21 UTC · status 55 · Phase 4 · unit dawn · round 19 · `status-1.jpg`: Dawn 1.5 s, final tier. Approved left, the judged frame of round 19 right; `status-2.jpg`: Dawn 6.5 s, final tier. Approved left, the judged frame of round 19 right
 - 2026-11-22 00:04 UTC · status 54 · Phase 4 · unit night · round 21 · `status-1.jpg`: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; `status-2.jpg`: Night 26.0 s, final tier. Approved left, the judged frame of round 21 right
 - 2026-11-21 23:46 UTC · status 53 · Phase 4 · unit frost · round 18 · `status-1.jpg`: Frost 36.0 s, final tier. Approved left, the judged frame of round 18 right; `status-2.jpg`: Field 58.5 s, final tier. Approved left, the judged frame of round 17 right
 - 2026-11-21 23:19 UTC · status 52 · Phase 4 · unit night · round 16 · `status-1.jpg`: Night 26.0 s. Approved left, the line's head right: darker rows, hills at full height (review tier, a builder's render); `status-2.jpg`: Dawn 1.5 s. Approved left, the line's head right: the hook, the hull and the soil (review tier, a builder's render); `status-3.jpg`: Field far edge, a trial that is not in the film. Top: approved, the line. Bottom: the trial at 58.5 s and at 60 s (review tier); `status-4.jpg`: Night leaves, a trial that was declined. Approved left, blades seen edge on right: narrower than the approved, so it stays out (review tier)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 20:39 UTC · status 46 · Phase 4 · unit field · round 12 · `status-1.jpg`: Field 58.5 s · approved left, the judged commit right (review tier); `status-2.jpg`: Night 26.0 s · approved left, the working line right: the green glow is gone, leaves stand to the sides (review tier); `status-3.jpg`: Frost 36.0 s · approved left, the working line right (review tier); `status-4.jpg`: Dawn 1.5 s · approved left, the working line right (review tier)
 - 2026-11-21 20:14 UTC · status 45 · Phase 4 · unit rain · round 10 · `status-1.jpg`: Rain 14.0 s · approved left, the working line right with the camera nearer and lower (review tier); `status-2.jpg`: Dawn 6.5 s · approved left, the working line right: matt soil, a cooler sky up high (review tier); `status-3.jpg`: Night 26.0 s, the plant · approved left, a builder's still right: upper leaves small, pointed, turned to the sides (review tier, crop); `status-4.jpg`: Frost 36.0 s, the bud · approved left, a builder's still right (review tier, crop)
 - 2026-11-21 19:41 UTC · status 44 · Phase 4 · unit night · round 11 · `status-1.jpg`: Night 26.0 s, the crop · top the approved image, middle ours now, bottom ours with the low mist starting 9 m out (a tested request, not merged yet); `status-2.jpg`: Frost 36.0 s · approved left, ours right with the first fog fixes; `status-3.jpg`: Dawn 6.5 s · approved left, ours right with the far mist; `status-4.jpg`: Field 58.5 s, frozen for its second round · approved left, ours right (review tier)
-- 2026-11-21 19:10 UTC · status 43 · Phase 4 · unit dawn · round 9 · `status-1.jpg`: Dawn 1.5 s · approved left, round 9 judged frame right; `status-2.jpg`: Dawn 6.5 s · approved left, round 9 judged frame right; `status-3.jpg`: Rain 14.0 s · approved left, round 10 judged frame right; `status-4.jpg`: Field 58.5 s after its fix pass · approved left, ours right (review tier, the sky's builder's VM, before the last three merges)
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 7.89 h |
+| 4 | 8.50 h | 8.03 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 23.35 h |
+| Whole build | 30.00 h | 23.49 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1172,7 +1172,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] R1 answer: `reviewer_231`, Claude family, fresh, the four files of `R1` only, asked 23:53:09, answered by 23:54 UTC. **Score 3, not a pass**: 3 severe, 4 major, 1 minor. Saved word for word in `scorecards/round-020/R1.json`. Severe: whole plant ("different plant structure: a has a compact bushy crown of many broad leaves on short petioles with a curved, slender stem; b has a tall, straight, thick stem with fewer, sparser, droopier leaves arranged in widely spaced pairs and a narrow pointed apex reaching near the top frame edge. A viewer would not call them the same plant"); field behind the plant (left and right midground) ("a has dense rows of seedling plants filling the midground on both sides, glistening wet; b has mostly bare dark soil with a few sparse grass tufts and blurred tall plants only near the horizon"); foreground soil and water channel ("a has very dark, wet, clumpy tilled soil with specular highlights and a broad puddle with splashing droplets catching light at bottom center; b's soil is a smoother, lighter, dry-looking matte surface and the water is a narrow winding stream with no splashes"). Major, by place: backlight / leaf edges (set-A-02 regions 1-3); horizon / far background (set-A-03 region 5); sky (set-A-03 region 6); overall grade. Minor, by place: depth of field in midground.
 - [x] R2 jury answers: jurors `reviewer_234` to `reviewer_238`, sent 23:53:13 to 23:53:43 UTC, the last answered by 23:56 UTC, none had to be replaced. One image, five jurors each, one from each of five families (GPT, Gemini, Claude, GLM, Grok), each a fresh agent with one image and the kit's question and nothing else. Judged frame 420 (14.0 s, `set-B-02.png`): 2 of 5 (a); by family GPT (e) 67, Gemini (e) 92, Claude (a) 50, GLM (e) 78, Grok (a) 76. Controls: 3 of 5 (a), the votes collected in round 10 and reused as the kit orders. R2 passes (2 of 5 against the controls' 3 of 5; the judged share 0.40 is no lower than 0.60 minus 0.2, exactly on the edge). What the jurors who did not answer (a) name, in their words and in part: GPT (e): "The scattered grass tufts look like repeated low-poly meshes"; Gemini (e): "the low-poly procedural 3D meshes and real-time rasterization artifacts" and "most notably the flat, untextured polygonal grass blades clipping abruptly into the terrain mesh alongside stair-stepped aliased polygon silhouettes on the serrated leaves and screen-space post-processing blur/grain"; GLM (e): "The angular, sparsely instanced grass tufts look like low-poly real-time props". `scorecards/round-020/R2-JURORS.md` holds all answers word for word, the tally is in `R2.json`, the key in `KEY.json`.
 - [x] R3 answer: `reviewer_232`, GPT family, fresh, the three files of `R3` only, asked 23:53:10, answered by 23:54 UTC. **Score 6, not a pass**: 4 major. Saved word for word in `scorecards/round-020/R3.json`. Major, by place: rain across the sky and field, especially the left half and the skyline; crops 7–8, large grass tuft at the left and smaller tufts behind it; crop 6, where the main stem meets the soil; crops 3–4, front and backlit leaf margins.
-- [ ] R4 answer
+- [x] R4 answer: `reviewer_233`, Gemini family, fresh, the four files of `R4` only, asked 23:53:12, answered at 00:21 UTC, 28 minutes later and inside the 45 minutes a critic has (`time.agentWaitMinutes`), so it was not replaced. **Score 9, with `pass: true` from this critic**: no severe, no major, 3 minor. Saved word for word in `scorecards/round-020/R4.json`. Minor, by place: grass clump to the right of the sprout in dawn frames f0234 to f0239 ("tiny backlit dewdrop specular highlights on the thin grass blades pop and reverse brightness across consecutive frames"); rim-lit trichome hairs along the right stem edge, lower-left petiole, and right bud leaf underside across f0528 to f0539 ("one-pixel-wide hairs alias against pixel centers as the stem sways, causing slight frame-to-frame brightness shimmer when zoomed in or measured"); top border of native-size tiles f0528 to f0529 and f0531 to f0539 ("the fixed native-size crop window clips the tip of the upper-left apical leaf in eleven of the twelve frames"). This one critic's 9 does not pass the round: R1 gave 3 and R3 gave 6, each with severe or major issues open. The first minor issue is about frames 234 to 239, which are the last six frames of `dawn` before the cut at 8.0 s and stand in this pack because it shows the cut; it goes to the open items of `dawn`. The third is about the pack (a fixed crop window of the twelve consecutive frames cuts the tip of the top leaf); the harness chooses that window as the kit orders and the rule is not touched.
 - [ ] Fixes
 - [ ] Summary, status, push
 
@@ -1331,6 +1331,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 00:11 UTC · Round 19 dawn: pack, measures, R3 (two critics) and R4 answers, 14 of 20 jurors
 - 2026-11-22 00:12 UTC · Round 19 dawn: R1 answer (4), 17 of 20 jurors
 - 2026-11-22 00:18 UTC · Round 19 dawn: jury complete (14 of 20, passes), round 17 R4 answer (5); clip parts: builders stay in turns
+- 2026-11-22 00:22 UTC · Status 55 (dawn pairs of round 19); round 20: the R4 answer saved word for word and ticked, keys of rounds 17 and 20 copied; round 19: summary
 
 ## Session log
 
@@ -1449,4 +1450,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Frost 36.0 s, final tier. Approved left, the judged frame of round 18 right; Field 58.5 s, final tier. Approved left, the judged frame of round 17 right.
 - Status 54, 2026-11-22 00:04 UTC, Phase 4 · unit night · round 21. Third and last rounds on 47d93fd, none a pass so far. Night: match 5, surface 4, motion 5, jury 3 of 5 (on the edge), sharpness now green. Frost: 5, 4, 6, jury 4 of 5, its best. Rain: 3 and 6, jury 2 of 5 (on the edge), motion critic pending. Field: 4 and 7, jury 1 of 5 fails, motion critic pending. Dawn's pack is still rendering. Next: Close each round as its last answer arrives, write every open issue under Open items, mark the units finished at their round limit, then join the clips the builders are rendering and go to Phase 5. Time used: 23.2 h of 30 h.
   Pictures: Rain 14.0 s, final tier. Approved left, the judged frame of round 20 right; Night 26.0 s, final tier. Approved left, the judged frame of round 21 right.
+- Status 55, 2026-11-22 00:21 UTC, Phase 4 · unit dawn · round 19. Round 19 (dawn, third and last round) is judged on 47d93fd: match 4, surface 7, motion 7, the jury passes (14 of 20 votes against the controls' 5 of 10), measures green. Rounds 18 (frost: 5, 4, 6, jury passes) and 21 (night: 5, 4, 5, jury passes on the edge) are closed at the round limit. Round 17 (field) has every answer: 4, 7, 5, jury fails. 11 of 48 clip parts are in. Next: Close rounds 19 and 17 and, when its motion critic answers, 20 (rain). Take the clip parts as they arrive, cut the five clips, make the comparison images, then the Phase 4 gate. Time used: 23.5 h of 30 h.
+  Pictures: Dawn 1.5 s, final tier. Approved left, the judged frame of round 19 right; Dawn 6.5 s, final tier. Approved left, the judged frame of round 19 right.
 
