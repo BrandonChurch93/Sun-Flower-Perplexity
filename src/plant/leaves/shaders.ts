@@ -1,6 +1,10 @@
+import { config } from '../../config.ts'
 import { tissueGlsl } from '../surface/index.ts'
 
 export const LEAVES = 24
+
+// The field's world: there the rows stand in the open under a low sun and are seen leaf by leaf.
+const FIELD_FROM = (config.segments.find((s) => s.id === 'field')?.start ?? 1e9).toFixed(3)
 
 export const bladeVertex = /* glsl */ `
 in vec3 position;
@@ -101,6 +105,50 @@ void main() {
   t.wax = top ? 0.3 : 0.12;
   t.sheen = top ? 0.6 : 0.85;
   t.occlusion = 1.0;
+  if (uTime >= ${FIELD_FROM}) {
+    // Every leaf of every plant is its own: its tone, its gloss, how far it is rolled and how far its tip hangs.
+    float own = fract(sin(vLeaf.x * 12.9898 + vPlantTone * 78.233 + vLeaf.z * 37.719) * 43758.5453);
+    float other = fract(own * 17.31 + 0.37);
+    // The lower leaves are the older ones: duller and yellower.
+    float old = (1.0 - smoothstep(0.1, 0.6, vLeaf.x / ${(LEAVES - 1).toFixed(1)})) * (0.35 + 0.65 * other);
+    float x = vUv.x;
+    float y = clamp(vUv.y, 0.0, 1.0);
+    // The edge is toothed and the blade ends in a point drawn out past its shoulders.
+    float bay = serration(vUv, vKey, vec4(vCut.x, 0.11, vCut.zw)) + 0.1 * smoothstep(0.0, 0.14, 0.14 - y) + 0.16 * smoothstep(0.72, 1.0, y) * (0.5 + 0.5 * sin(9.0 * y + 6.28 * own));
+    // The blade is cupped along its midrib, quilted between its side veins, rolled under at the margin, and its tip hangs.
+    vec3 px = dFdx(vWorld);
+    vec3 py = dFdy(vWorld);
+    vec2 ux = dFdx(vUv);
+    vec2 uy = dFdy(vUv);
+    float det = ux.x * uy.y - ux.y * uy.x;
+    vec3 across = (px * uy.y - py * ux.y) * sign(det);
+    vec3 along = (py * ux.x - px * uy.x) * sign(det);
+    if (dot(across, across) > 0.0 && dot(along, along) > 0.0) {
+      across = normalize(across);
+      along = normalize(along);
+      float side = top ? 1.0 : -1.0;
+      float roll = (0.5 + 0.9 * own) * x * abs(x) - 0.35 * sign(x) * rib;
+      float quilt = 0.3 * (1.0 - rib) * sin(y * (15.0 + 9.0 * other) - abs(x) * 6.0 + 6.28 * own);
+      float hang = (0.35 + 0.9 * other) * smoothstep(0.4, 1.0, y) - 0.25 * (1.0 - smoothstep(0.0, 0.35, y));
+      vec3 bent = normalize(face + side * (across * roll + along * (hang + quilt)));
+      t.normal = bent;
+      t.face = normalize(mix(face, bent, 0.5));
+    }
+    float tone = mix(0.6, 1.4, own);
+    float sideVein = smoothstep(0.75, 1.0, sin(y * 26.0 - abs(x) * 9.0 + 6.28 * other)) * (1.0 - rib) * smoothstep(0.05, 0.3, abs(x));
+    t.albedo *= tone * mix(0.8, 1.12, smoothstep(0.0, 0.8, y)) * (1.0 + 0.5 * rib + 0.3 * sideVein);
+    t.albedo = mix(t.albedo, vec3(0.13, 0.12, 0.03) * tone, 0.6 * old);
+    t.through *= mix(0.55, 1.35, other) * (1.0 - 0.45 * sideVein);
+    t.through = mix(t.through, vec3(0.15, 0.13, 0.012) * mix(0.3, 1.2, smoothstep(0.2, 0.8, y)), 0.6 * old);
+    t.wax *= mix(0.2, 2.0, other) * (1.0 - 0.7 * old);
+    t.rough = mix(t.rough, 0.96, 0.6 * old);
+    t.sheen *= mix(0.5, 1.3, own);
+    // The base of a blade stands in the shade of the leaf above it.
+    t.occlusion = mix(0.55, 1.0, smoothstep(0.0, 0.45, y + 0.2 * abs(x)));
+    outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+    if (abs(x) > 1.0 - bay) discard;
+    return;
+  }
   outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
 }
 #else
