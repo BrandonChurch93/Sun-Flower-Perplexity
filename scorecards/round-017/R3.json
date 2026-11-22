@@ -1,0 +1,28 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crops 10 and 11, the horizontal strip just beyond the last visible sunflower heads",
+      "what": "The densely textured flower field gives way along a conspicuously straight boundary to a nearly featureless dark strip. The break makes the distant landscape read as a separate flat layer.",
+      "fix": "Carry progressively smaller and lower-contrast plant and ground detail into the distance, stagger the far edge of the planting, and blend the transition with distance-dependent haze."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4, the large front-facing leaves on the right-hand foreground stem",
+      "what": "Broad bright and dark bands stand in for vein detail on the leaf faces. The small veins and surface texture look smeared even though the rim and adjacent stem hairs are sharply defined, giving the leaves a molded appearance.",
+      "fix": "Add fine branching vein relief and irregular leaf microtexture, and break up the broad repeated bands with natural changes in curvature and roughness."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 9, across the middle depth of the sunflower field",
+      "what": "Identical-looking dark disks with similar pointed petal rings recur across the field, especially among the front-facing heads, making the planting read as instances of a small asset set.",
+      "fix": "Vary disk diameter and shape, petal count, overlap, curl, gaps, and flowering stage independently of head orientation."
+    }
+  ]
+}

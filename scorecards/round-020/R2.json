@@ -1,0 +1,81 @@
+{
+  "critic": "R2",
+  "round": 20,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 5,
+    "a": 3,
+    "share": 0.6
+  },
+  "controlFromRound": 10,
+  "judged": {
+    "votes": 5,
+    "a": 2,
+    "share": 0.4
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-02.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 420,
+      "key": "rain",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "a"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_234",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 67,
+      "answer": "e, 67/100. The scattered grass tufts look like repeated low-poly meshes."
+    },
+    {
+      "juror": "reviewer_235",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92, the low-poly procedural 3D meshes and real-time rasterization artifacts—most notably the flat, untextured polygonal grass blades clipping abruptly into the terrain mesh alongside stair-stepped aliased polygon silhouettes on the serrated leaves and screen-space post-processing blur/grain."
+    },
+    {
+      "juror": "reviewer_236",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 50,
+      "answer": "My answer is (a), with 50 out of 100 confidence. It looks like a polished, cinematic CG render: the rim-lit fuzzy stem, the rain streaks with shallow depth of field, the wet soil and the reflective rivulet. The lighting and grade feel like a film or high-end cinematic shot. Two things keep my confidence down. The leaf shapes are fairly simple and flat, and the background plants are low-detail. Those point to a skilled portfolio render, so (d) is my second choice."
+    },
+    {
+      "juror": "reviewer_237",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 78,
+      "answer": "e, 78/100. The angular, sparsely instanced grass tufts look like low-poly real-time props."
+    },
+    {
+      "juror": "reviewer_238",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76, cinematic production polish: fine backlit trichomes, volumetric rain, and controlled rim lighting that read as a finished film or AAA cinematic rather than a photograph, web demo, or amateur piece."
+    }
+  ]
+}

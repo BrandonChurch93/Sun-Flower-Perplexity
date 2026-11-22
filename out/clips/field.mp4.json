@@ -1,0 +1,159 @@
+{
+  "kind": "clip",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "format": "16x9",
+  "tier": "review",
+  "assets": "full",
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T01:10:19.611Z",
+  "frames": [
+    1560,
+    1799
+  ],
+  "unit": "field",
+  "bitrateMbps": 20,
+  "m1": {
+    "checked": 240,
+    "failed": []
+  },
+  "m1Details": {},
+  "parts": [
+    {
+      "file": "chunk-field-16x9-review-full-1560-1589.mp4",
+      "frames": [
+        1560,
+        1589
+      ],
+      "at": "2026-11-22T00:40:59.894Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1590-1619.mp4",
+      "frames": [
+        1590,
+        1619
+      ],
+      "at": "2026-11-22T00:39:57.272Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1620-1649.mp4",
+      "frames": [
+        1620,
+        1649
+      ],
+      "at": "2026-11-22T00:45:10.866Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1650-1679.mp4",
+      "frames": [
+        1650,
+        1679
+      ],
+      "at": "2026-11-22T00:44:19.311Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "ef750ff7-41d1-4168-87f4-49b52cb5953e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1680-1709.mp4",
+      "frames": [
+        1680,
+        1709
+      ],
+      "at": "2026-11-22T00:53:47.407Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "4b3e1392-af3f-458b-87ee-01d6128b0bf9",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1710-1739.mp4",
+      "frames": [
+        1710,
+        1739
+      ],
+      "at": "2026-11-22T01:05:18.646Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "cc6b4bb0-335b-4bcb-ab47-eb3b3ecf657e",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1740-1769.mp4",
+      "frames": [
+        1740,
+        1769
+      ],
+      "at": "2026-11-22T01:04:00.604Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "492cd81d-8a30-4b9a-8fcc-c82ea91e9144",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-field-16x9-review-full-1770-1799.mp4",
+      "frames": [
+        1770,
+        1799
+      ],
+      "at": "2026-11-22T01:09:20.884Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "756fba97-33a0-4c1e-b308-fca8e4bc85bb",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    }
+  ],
+  "chunk": "chunk-field-16x9-review-full.mp4"
+}

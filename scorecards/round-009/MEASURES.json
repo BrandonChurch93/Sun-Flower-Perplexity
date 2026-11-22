@@ -1,0 +1,152 @@
+{
+  "unit": "dawn",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": true
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "key": null,
+      "why": "the first frame",
+      "m1": {
+        "frame": 0,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.5899476273007848,
+          "y": 0.7556157670661601,
+          "depthM": 0.14684463813091145,
+          "cocPx": 4.649875164031982
+        }
+      },
+      "m2": {
+        "frame": 0,
+        "pixels": 2073600,
+        "textured": 98395,
+        "soft": 0,
+        "texturedOutsideSharpZone": 1326103,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": null
+    },
+    {
+      "frame": 45,
+      "key": "dawn-sprout",
+      "why": "the key dawn-sprout",
+      "m1": {
+        "frame": 45,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.6442935684007522,
+          "y": 0.24101534934850183,
+          "depthM": 0.15858346134164455,
+          "cocPx": 0.36277300119400024
+        }
+      },
+      "m2": {
+        "frame": 45,
+        "pixels": 2073600,
+        "textured": 144651,
+        "soft": 0,
+        "texturedOutsideSharpZone": 1136448,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 1.1106689656770024,
+        "frameEnergy": 13.75266338978348,
+        "approvedEnergy": 12.382324360166683,
+        "sharpPixels": 183688,
+        "region": {
+          "left": 873,
+          "top": 529,
+          "width": 671,
+          "height": 274
+        }
+      }
+    },
+    {
+      "frame": 60,
+      "key": null,
+      "why": "the frame at film.hookSeconds",
+      "m1": {
+        "frame": 60,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.6345258233805592,
+          "y": 0.2246357875455584,
+          "depthM": 0.16556913562379483,
+          "cocPx": 0.355010986328125
+        }
+      },
+      "m2": {
+        "frame": 60,
+        "pixels": 2073600,
+        "textured": 135417,
+        "soft": 0,
+        "texturedOutsideSharpZone": 1147931,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": null
+    },
+    {
+      "frame": 195,
+      "key": "dawn-seedling",
+      "why": "the key dawn-seedling",
+      "m1": {
+        "frame": 195,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.606747750486106,
+          "y": 0.42002223097568825,
+          "depthM": 0.2897527309274191,
+          "cocPx": 0.42275887727737427
+        }
+      },
+      "m2": {
+        "frame": 195,
+        "pixels": 2073600,
+        "textured": 79562,
+        "soft": 0,
+        "texturedOutsideSharpZone": 1192121,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 1.340218986720536,
+        "frameEnergy": 15.351231411973123,
+        "approvedEnergy": 11.454270954284114,
+        "sharpPixels": 131634,
+        "region": {
+          "left": 861,
+          "top": 621,
+          "width": 588,
+          "height": 224
+        }
+      }
+    }
+  ]
+}

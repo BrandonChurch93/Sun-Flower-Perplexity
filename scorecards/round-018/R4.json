@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "leaves on the right side of the stem, f1117 (37.2 s) to f1145 (38.2 s)",
+      "what": "The leaf layout changes completely between these tiles. At 37.2 s there are two large, round, frosted leaves hanging right of the stem. At 38.2 s the stem carries smaller, sparse, green-rimmed leaves at other heights, and none of the earlier leaves can be followed into the new ones. In the playing video this will probably read as the leaves reshaping, not unfolding along their own paths.",
+      "fix": "Keep leaf identity continuous across 37–38 s. Each leaf should keep its attachment point and shape and only grow, turn or leave the frame, with no regenerated layout."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "whole frame, f1117 (37.2 s) to f1172 (39.1 s)",
+      "what": "The camera's direction and speed change. The stem drifts left in frame from 30 s to about 37 s, then moves right again by 38–40 s. Between 37.2 s and 38.2 s the plant also suddenly gets larger in frame (a thicker stem and a bigger bud), which reads as a jump in push or lens, not one smooth move with mass.",
+      "fix": "Use one continuous camera path for the whole segment: a steady push and rise with eased acceleration, no reversal of the sideways drift, and no step in scale."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "background field and horizon, f1145 (38.2 s) to f1199 (40.0 s)",
+      "what": "The background changes in the middle of the unit, not at the cut. The dense, low, leafy frosted field becomes sparse tall stalks with heads, a hard distant hill line appears, and the fog thins sharply. The frost on the hero leaves also gives way to a yellow-green rim light. Only the cut is allowed to change the world, and this drift reads as a second scene, not fog lifting.",
+      "fix": "Keep the same field plants and fog density through to 40 s. If the fog is to lift, thin it gradually across the full 10 s and keep the far field geometry fixed."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-04.png",
+      "where": "lower left leaf and the bud, f0899 to f0900",
+      "what": "Stem, upper leaves, neighbouring plant and horizon line up well across the cut, which happens cleanly in one frame. Two things differ slightly when the edges are overlaid: the inner contour of the lower left leaf, and the bud's outline and spines, which read pale and whitish at night against a dark spiky silhouette in frost.",
+      "fix": "Lock the lower left leaf and bud geometry exactly across the cut. Change only lighting and surface, such as frost and moonlight, not shape."
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-04.png",
+      "where": "night sky star field, f0894 to f0899",
+      "what": "Frame-to-frame change in the night sky is about ten times that of the frost sky, with a static camera in this stretch. The faint stars and grain flicker slightly between consecutive frames, while the bright stars hold.",
+      "fix": "Hold the faint stars steady between frames and use temporally coherent grain."
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "critic": "R2",
+  "round": 14,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 10,
+    "a": 5,
+    "share": 0.5
+  },
+  "controlFromRound": 9,
+  "judged": {
+    "votes": 20,
+    "a": 13,
+    "share": 0.65
+  },
+  "pass": true,
+  "perImage": {
+    "set-B-02.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 60,
+      "key": null,
+      "letters": [
+        "a",
+        "e",
+        "d",
+        "e",
+        "a"
+      ]
+    },
+    "set-B-03.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 45,
+      "key": "dawn-sprout",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "a"
+      ]
+    },
+    "set-B-04.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 195,
+      "key": "dawn-seedling",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "d"
+      ]
+    },
+    "set-B-05.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 0,
+      "key": null,
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "a"
+      ]
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_187",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76, the carefully controlled sunrise rim lighting that picks out the seedling’s tiny translucent hairs."
+    },
+    {
+      "juror": "reviewer_188",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88 — The most decisive detail is the visibly faceted, angular polygon geometry of the displaced soil mesh right in the sharp focal plane where the smooth cylindrical stem intersects it, pointing to a real-time 3D render rather than a photograph or film-grade offline VFX."
+    },
+    {
+      "juror": "reviewer_189",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55. The deciding cue is that it is clearly a CG render rather than a photo. The striped seed shell is too clean, the soil is chunky and procedural-looking, and the bokeh and sun glow look like stock render effects. It reads as a polished hobbyist 3D piece (Blender or ArtStation style, sized for Behance), not a top-budget film frame or a real documentary shot."
+    },
+    {
+      "juror": "reviewer_190",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72/100. The split seed coat’s angular, faceted silhouette looks like a low-poly 3D mesh."
+    },
+    {
+      "juror": "reviewer_191",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 72,
+      "answer": "a, 72, Uniform particle-groom hairs and a scalloped synthetic seed coat in a path-traced 16:9 cinematic frame, with no photo grain or real-time aliasing."
+    },
+    {
+      "juror": "reviewer_192",
+      "family": "GPT",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 87,
+      "answer": "a, 87, the precise sunset rim lighting that picks out the tiny hairs on the sprout."
+    },
+    {
+      "juror": "reviewer_193",
+      "family": "Gemini",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88, the visibly procedural real-time 3D geometry and shaders—especially the faceted noise-displaced soil mesh, smooth Bezier-tube stem with sparse instanced hairs, and wavy procedural stripes on the seed hull."
+    },
+    {
+      "juror": "reviewer_194",
+      "family": "Claude",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 55,
+      "answer": "(a), confidence 55. What most influenced me: it has a polished cinematic look, with shallow depth of field, a backlit sunrise, subsurface glow in the stem, fine hairs and falling soil. That reads like a high-end CG nature or cinematic shot. Two things argue against it: the soil looks somewhat uniform and CG-like, and the 1400px Behance-style framing hints at a skilled hobbyist render, which would be (d)."
+    },
+    {
+      "juror": "reviewer_195",
+      "family": "GLM",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84/100. The finely controlled sunset rim light picking out individual hairs on the seedling is the strongest cinematic cue."
+    },
+    {
+      "juror": "reviewer_196",
+      "family": "Grok",
+      "image": "set-B-03.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76, suspended soil flecks frozen sharp with no motion blur, plus cinematic rim-lit subsurface scattering that reads as high-end VFX rather than a camera capture"
+    },
+    {
+      "juror": "reviewer_197",
+      "family": "GPT",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 72,
+      "answer": "a, 72/100: The finely controlled sunrise rim light on the seedling gives the shot a cinematic macro look."
+    },
+    {
+      "juror": "reviewer_198",
+      "family": "Gemini",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e), confidence: 92. The one thing that most influenced my answer is the real-time procedural 3D geometry, where a smooth cylindrical stem, instanced sphere droplets, and flat ribbon grass blades intersect directly with a single noise-displaced ground mesh under screen-space depth of field."
+    },
+    {
+      "juror": "reviewer_199",
+      "family": "Claude",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 45,
+      "answer": "(a), confidence 45. The main factor was the cinematic offline-render look: a backlit sunset with a low sun, shallow depth of field with bokeh, rim-lit dew drops and detailed soil. It reads as a polished CG \"nature\" shot. The leaves are too smooth and the drops too evenly spaced for a real photo or a stock photo, and the lighting and depth of field are more refined than a typical real-time web demo would show."
+    },
+    {
+      "juror": "reviewer_200",
+      "family": "GLM",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 73,
+      "answer": "a, 73/100. The precisely controlled sunrise rim lighting around the seedling gives it the look of a cinematic macro shot."
+    },
+    {
+      "juror": "reviewer_201",
+      "family": "Grok",
+      "image": "set-B-04.png",
+      "control": false,
+      "letter": "d",
+      "confidence": 68,
+      "answer": "d, 68, shader-smooth plastic seedling with non-refracting decorative dew and no camera noise — synthetic and idealized, not a film, cinematic, or nature-doc frame, nor a photo, catalog plate, or real-time demo."
+    },
+    {
+      "juror": "reviewer_202",
+      "family": "GPT",
+      "image": "set-B-05.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78/100. The ground-level macro focus, which isolates a razor-thin strip of sunset-lit soil, is the strongest cinematic cue."
+    },
+    {
+      "juror": "reviewer_203",
+      "family": "Gemini",
+      "image": "set-B-05.png",
+      "control": false,
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e\nConfidence: 92\nMost influential factor: In the narrow in-focus band of the foreground soil, the rocks show raw single-pixel rasterization aliasing on specular rim edges alongside coarse heightmap vertex displacement with stretched UV textures across triangles, paired with screen-space depth-of-field blur discontinuities—classic artifacts of a real-time WebGL/Three.js shader pipeline rather than photography, offline cinema/AAA rendering, or diffusion generation."
+    },
+    {
+      "juror": "reviewer_204",
+      "family": "Claude",
+      "image": "set-B-05.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, confidence 55. The main factor was the cinematic look: very shallow depth of field with heavy bokeh, a warm backlit sunrise, a teal-orange grade and a wide frame. The soil clumps also look like a high-end offline CG render, the kind you'd see in a film or game cinematic. Stock photography, my second choice, is the main alternative."
+    },
+    {
+      "juror": "reviewer_205",
+      "family": "GLM",
+      "image": "set-B-05.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 71,
+      "answer": "a, 71/100. The shallow macro focus isolates a thin strip of rim-lit soil against a soft sunrise, making it read like a deliberate cinematic establishing shot."
+    },
+    {
+      "juror": "reviewer_206",
+      "family": "Grok",
+      "image": "set-B-05.png",
+      "control": false,
+      "letter": "a",
+      "confidence": 78,
+      "answer": "(a) 78. The 16:9 ground-level macro of ordinary rock, with a filmic teal-orange grade and optical shallow depth of field, reads as a cinema or AAA cinematic frame rather than a web demo, catalog plate, or stock still."
+    }
+  ]
+}

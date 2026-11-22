@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-10.png",
+      "where": "both cotyledons and the stem of the central seedling",
+      "what": "the cotyledons read as thick, smooth, uniform olive-green plastic spoons with no epidermal texture and almost no light passing through them against the sun, mounted on a dead-straight, uniform-width cylindrical stem",
+      "fix": "add cellular surface micro-relief, subtle venation and color variation, stronger warm subsurface scattering through backlit leaves, and slight organic taper and curvature to the stem"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 1 and crop 3, central emerging leaf bud and cotyledon junction",
+      "what": "the emerging true leaf is a flat diamond-shaped card with knife-sharp straight upper edges, painted-on dark symmetrical vein lines, a flat-capped stem junction, and thick rigid spike hairs that poke through the base of the right cotyledon",
+      "fix": "give the young leaf three-dimensional curl, lamina thickness, raised translucent veins, an organic petiole transition, and fine curved hairs that do not intersect neighboring leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 1, crop 3, and crop 4, dew on the cotyledon surfaces and rims",
+      "what": "dew on the cotyledon faces and rims renders as isolated 1-to-4-pixel clipped pure-white jagged specks and stair-stepped rim pixels rather than rounded refractive water droplets",
+      "fix": "model resolved, variably sized water droplets with wetting contact angles, smooth internal refraction, and filtered highlights free of pixel fireflies"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2 and crop 5, split seed hull on the left and adjacent in-focus soil clods",
+      "what": "the striped seed hull sits inside the sharp focal zone on a crisp dirt clod yet looks blurry and low-resolution with stair-stepped rim aliasing and no dirt or moisture, while nearby in-focus soil clods show hard angular polygonal facets with glossy plastic-like highlights",
+      "fix": "match the seed hull texture resolution and focal sharpness to the sharp zone, weather and seat it into damp soil with contact shadow, and replace faceted glossy clods with granular, porous soil displacement"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-11.png",
+      "where": "crop 2, crop 4, and crop 5, backlit stem edges and stem base in the soil",
+      "what": "hairs along both backlit stem edges collapse into a jagged 1-pixel-wide bright stipple fringe, and the bright green stem plunges into the soil gap without a root-collar transition, clinging soil grains, or contact shadow darkening",
+      "fix": "render fine, anti-aliased translucent stem hairs and add contact ambient occlusion, dampness, and adhered soil particles where the stem meets the soil"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-10.png",
+      "where": "left and right grass tufts and the dew drops along their blades",
+      "what": "the grass blades are stiff repeated ribbons with uniform painted-on pale stripes, lined with evenly spaced spherical bead droplets including a perfect sphere balanced on the upper-right blade tip without gravity sag or wetting meniscus",
+      "fix": "vary grass blade geometry, rib relief, and color, and distribute droplets irregularly with realistic surface-tension contact shapes and gravity-pulled tip drops"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-12.png",
+      "where": "crop 9, radial sun streaks and the distant right horizon",
+      "what": "the right horizon is a ruler-straight featureless flat band reading like a flat backdrop, and narrow symmetrical starburst spokes radiate from the sun only downward across the ground band while vanishing in the sky above the horizon",
+      "fix": "break up the flat horizon with subtle distant terrain and atmospheric haze, and use physically consistent full-aperture optical bloom and glare around the sun"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-11.png",
+      "where": "crop 2 and crop 5, out-of-focus mid-ground soil behind the stem",
+      "what": "small gritty speckled bokeh clusters appear in the out-of-focus soil highlights behind the stem and right clod",
+      "fix": "increase depth-of-field sampling and clamp sub-pixel specular spikes in the mid-ground soil before defocus"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-12.png",
+      "where": "crop 8 and crop 10, blurred skyline and sky gradient",
+      "what": "fine high-frequency render grain is visible when inspecting the out-of-focus hill silhouette and sky gradients past delivery size",
+      "fix": "apply gentle chroma-preserving denoising or higher sample counts in the out-of-focus background and sky"
+    }
+  ]
+}

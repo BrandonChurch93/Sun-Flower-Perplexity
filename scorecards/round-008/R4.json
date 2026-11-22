@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 9,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "minor",
+      "file": "set-D-02.png",
+      "where": "upper fog layer across f0914 to f0925 (and 30.0 s to 36.3 s in set-D-01.png)",
+      "what": "the morning fog above the field renders as an almost uniform smooth depth gradient rather than textured mist wisps, so lateral fog drift is barely perceptible until the thinner ground mist appears near 37.2 s",
+      "fix": "add subtle low-contrast volumetric density variation to the fog layer that drifts gently across the frame"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-04.png",
+      "where": "horizon line across the cut from f0899 (29.97 s) to f0900 (30.00 s)",
+      "what": "although the underlying hill ridge stays at the exact same pixel height when contrast-stretched, dense fog in f0900 completely hides the crisp night horizon from f0899 so horizon alignment cannot be read visually across the cut",
+      "fix": "retain a faint trace of the distant ridge silhouette through the morning fog at 30.00 s so the horizon match reads slightly across the cut"
+    }
+  ]
+}

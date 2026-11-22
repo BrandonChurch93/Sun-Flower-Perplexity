@@ -63,7 +63,7 @@ export interface LensLook {
 const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowSun: 0, bloomWide: 0.1, lowFlare: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
 
 const table: Record<string, Partial<LensLook>> = {
-  dawn: { veil: 1.4, veilTint: [1.1, 0.72, 0.45], flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
+  dawn: { grain: 1.35, star: 0.025, veil: 1.4, veilTint: [1.1, 0.72, 0.45], flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
   rain: { flare: 0, halation: 0.2 },
   night: { veil: 0, flare: 0, halation: 0.2, skyHold: 1 },
   frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
@@ -74,12 +74,43 @@ const table: Record<string, Partial<LensLook>> = {
 const FIELD_FROM_S = 52
 const FIELD_FULL_S = 54
 const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
+const fieldBlack: readonly [number, number, number] = [0.5, 0.6, 0.5]
+// The field's grade: softer, less saturated, its shade neutral and a little lifted.
+const fieldGrade: WorldDef['grade'] = { exposure: 0.78, contrast: 1.22, white: 9, saturation: 0.98, gain: [1.06, 1, 0.91], lift: [0.0024, 0.0048, 0.0038], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 }
+
+function fieldShare(def: WorldDef, timeS: number): number {
+  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return 0
+  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
+  return t * t * (3 - 2 * t)
+}
+
+const blend = (a: number, b: number, w: number): number => a + (b - a) * w
+const blend3 = (a: readonly [number, number, number], b: readonly [number, number, number], w: number): [number, number, number] => [blend(a[0], b[0], w), blend(a[1], b[1], w), blend(a[2], b[2], w)]
+
+export function gradeOf(def: WorldDef, timeS: number): WorldDef['grade'] {
+  const w = fieldShare(def, timeS)
+  if (w === 0) return def.grade
+  const a = def.grade
+  const b = fieldGrade
+  return {
+    exposure: blend(a.exposure, b.exposure, w),
+    contrast: blend(a.contrast, b.contrast, w),
+    white: blend(a.white, b.white, w),
+    saturation: blend(a.saturation, b.saturation, w),
+    gain: blend3(a.gain, b.gain, w),
+    lift: blend3(a.lift, b.lift, w),
+    bloom: blend(a.bloom, b.bloom, w),
+    bloomKnee: blend(a.bloomKnee, b.bloomKnee, w),
+    vignette: blend(a.vignette, b.vignette, w),
+    grain: blend(a.grain, b.grain, w),
+  }
+}
 
 export function lensLook(def: WorldDef, timeS = 0): LensLook {
   const look = { ...fallback, ...(table[def.id] ?? {}) }
-  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return look
-  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
-  const w = t * t * (3 - 2 * t)
+  const w = fieldShare(def, timeS)
+  if (w === 0) return look
   for (const key of Object.keys(overField) as (keyof typeof overField)[]) look[key] += (overField[key] - look[key]) * w
+  look.black = blend3(look.black, fieldBlack, w)
   return look
 }

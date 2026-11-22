@@ -1,0 +1,21 @@
+{
+  "critic": "R6",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-F-01.png",
+      "where": "full frame, foreground soil",
+      "what": "With the sound off and no caption, the first frame is a dark field and a bright sun. Nothing says a seed is about to sprout, so it would not stop a scroll.",
+      "fix": "Open on the sprout already breaking the soil, large enough to read at 400px, so the event is obvious in the first frame."
+    },
+    {
+      "severity": "major",
+      "file": "set-F-02.png",
+      "where": "lower center of the soil mound",
+      "what": "The first change is a small pale bump. At this size it is easy to miss against the sun, so the first quarter-second still does not read as germination.",
+      "fix": "Make the emerging hook bigger and higher-contrast, nearer the center, so the motion reads before 0.3s."
+    }
+  ]
+}
