@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 03:28 UTC · Phase 5: the husk's fall over twelve frames is read, looked at and taken
+- Last push: 2026-11-22 03:37 UTC · Phase 5: the last three fixes of round 22 and the packs of the record round are merged; engine 7733fb920a361fcd, 129 of 129 tests
 - Last status: 66 · 2026-11-22 03:13 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 1.51 h |
+| 5 | 3.00 h | 1.66 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 26.47 h |
+| Whole build | 30.00 h | 26.62 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -785,6 +785,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 03:20 UTC. A tools job for Phase 6 went to `harness_builder` at 03:20 UTC (brief `out/work/briefs/p6-packs.json`, report by 04:15): `npm run pack` has packs for phases 2 to 5 only, and the record round needs the six units' R1, R3 and R4 packs and the whole film's R5, R6, R7, R4 and R2 packs under one round number, with one key, `--list`, `--no-render` and `--only`; nothing reworded, phases 2 to 5 unchanged, tools only. So `harness_builder` renders nothing in the final build of Phase 5: its three film parts go to `bud_builder` (five parts) and `skin_builder` (three), eleven renderers and one tools job, twelve agents. Fallback if the tool is late: each unit's pack is built as in Phase 4 on a builder's machine and the film's as in Phase 5.
 - 2026-11-22 · Phase 5 · 03:24 UTC. `modes_builder`'s shadow job read and looked at (pictures in `out/work/scratch/p5/shadow/`, records: engine `b5d48490dc31aba8`, `final`, `16x9`, 48 samples, frame check clean). Proven by the pictures for frame 780: on main the nearest blade carries a dark stepped line along its ridge, with the map's grid moved by part of a texel per sample that line is all but gone at `final` (726 pixels of the crop change, by up to 30 levels, all on the ridge; a faint row of small steps stays in its middle). Not so for frame 1515: the blocky yellow patches on the neighbour's backlit blade are the same with and without the shift at `final` (largest change 2 levels), so they are the shape of the shadow thrown by the plant's own blades, not texels; that issue stays open. TAKEN: `04a9059` on `agent/probe-determinism` (two files: `src/core/shadow.ts`, `src/director/film.ts`; map size and radius unchanged; the offset comes from the sample's number alone, sample 0 gets none, so `draft` is byte identical: frames 60 and 195 hash the same on both sides). It is a shared change, so every judged frame is rendered again at `final` in the final build and looked at beside the kept ones. It merges after the early run of the machine checks ends in the main checkout.
 - 2026-11-22 · Phase 5 · 03:28 UTC. `stem_builder`'s husk job read and looked at (sheets before and after of frames 102 to 125 in `out/work/scratch/p5/stem/`, records: engine `4e441a9a398cb77e`, `review`, `preview`, 8 samples). Before: the husk sits on the tips to frame 108, is a smear at 109 and 110 and lies on the soil at 111, a pop in two frames (R6's severe issue). After: it slides up off the tips at 110 to 113, tips over and tumbles to the left through 114 to 117, falls through 118 to 121 and lies still from 122 after one small rock; the seed leaves ease open instead of springing. TAKEN: `e0c44a6` on `agent/seedling` (two files: `src/plant/growth.ts`, `src/plant/seedling/index.ts`; the builder's hashes of frames 45, 60 and 195 are the same before and after, and the final build renders them again). Still wrong and written as open: for three frames (110 to 113) the husk stands above the tips with a gap and hardly moves, a small hover; at 118 to 120 it is soft with motion blur; whether its far half clears the right leaf tip at 114 to 115 is not proven; no bounce in height on landing. The husk's size (1.0 riding, 1.3 at rest, grown during the tumble) stays as it is: the riding size is held by the approved sprout image and the resting size by the approved seedling image, so one size is contested, not chosen.
+- 2026-11-22 · Phase 5 · 03:33 UTC. `harness_builder`'s tools job read (report of 03:33 UTC, files in `out/work/scratch/p6/`; the diff read: eight files, all under `tools/` and `tests/`, nothing under `src/`, `config/` or `kit/`). `npm run -s pack -- --phase 6 --round N` builds the six units' R1, R3 and R4 packs by the Phase 4 code and the whole film's R5, R6, R7, R4 and R2 packs by the Phase 5 code, each under `out/work/packs/round-NNN/<sub>/<critic>/`, with one key `out/work/packs/keys/round-NNN.json`; `--list` names what is missing, `--no-render` cannot open a render session, `--only` takes NAME, NAME:CRITIC or CRITIC. No rubric, manifest sentence or jury question is reworded (the author's proof: the Phase 5 list is the same before and after, 32 lines, and a Phase 4 unit pack and a Phase 5 pack are byte for byte the same as their Phase 6 sub packs). The film's R2 holds the ten judged frames and no controls, as in round 22: the kit reuses a control's votes. Today's list for a record round: 49 files, 37 commands, 304 frames, 4.1 h of one machine; the sixteen `final` stills and the seven film and cut sheets among them are rendered by the final build of Phase 5 anyway. TAKEN: `de40261` on `agent/harness`, merged with the last three fixes. Not proven by the author, so watched when used: R7's sub pack, a pack that splits in two, and the `final` tier.
 
 ## Notes from Brandon
 
@@ -1576,6 +1577,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 03:20 UTC · Phase 5: the Phase 6 pack job goes to the tools owner; the final build's parts are dealt to eleven renderers
 - 2026-11-22 03:24 UTC · Phase 5: the shadow map's grid shift is read, looked at and taken; frame 1515's patches stay open
 - 2026-11-22 03:28 UTC · Phase 5: the husk's fall over twelve frames is read, looked at and taken
+- 2026-11-22 03:37 UTC · Phase 5: the last three fixes of round 22 and the packs of the record round are merged; engine 7733fb920a361fcd, 129 of 129 tests
 
 ## Session log
 
