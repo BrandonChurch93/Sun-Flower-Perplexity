@@ -11,6 +11,9 @@ const LEAVE_TO_S = 58
 // As the lens leaves the close view the cloud has no level top: it thins with height and toward its faces, between these seconds.
 const OPEN_FROM_S = 52
 const OPEN_TO_S = 52.6
+// As the lens cranes away the specks are fewer and coarser, each a soft dot wide enough to hold in the picture, and the ones far out of focus are gone: eased in between these seconds.
+const COARSE_FROM_S = 53.5
+const COARSE_TO_S = 55
 
 // Each speck is a grain of pollen or dust at a real place, drawn as a point with the light its real size would send to the lens. The lens samples spread it into its disc.
 const vertex = /* glsl */ `
@@ -26,6 +29,7 @@ uniform float uSamples;
 uniform float uWidth;
 uniform float uStay;
 uniform float uOpen;
+uniform float uCoarse;
 out vec3 vColor;
 out float vSize;
 flat out vec3 vAt;
@@ -45,16 +49,17 @@ void main() {
   float d = length(world - uCamPos);
   vec3 v = (world - uCamPos) / d;
   float toSun = saturate(dot(v, uSunDir));
-  float sizeM = mix(0.0007, 0.004, aSeed.x * aSeed.x);
+  float sizeM = mix(mix(0.0007, 0.0018, uCoarse), mix(0.004, 0.0056, uCoarse), aSeed.x * aSeed.x);
   float angle = sizeM / d;
   // Out of focus, one lens sample carries its share of the speck's disc: the point is drawn that wide so the samples close into the disc.
   float coc = min(uCocScale * abs(1.0 / max(-view.z, 1e-4) - 1.0 / uFocusM), 2048.0);
   float need = max(angle / uPixelAngle, 2.4 * coc / sqrt(uSamples));
-  float px = clamp(need, 1.0, 64.0);
+  float px = clamp(need, mix(1.0, 3.4 * uWidth / 960.0, uCoarse), 64.0);
   float flux = (angle * angle) / (px * px * uPixelAngle * uPixelAngle);
   float lit = smoothstep(0.9, 1.3, world.y) * (1.0 - smoothstep(mix(2.1, 1.9, uOpen), mix(2.5, 3.3, uOpen), world.y));
-  float behind = smoothstep(0.88, 0.97, toSun) * (1.0 - smoothstep(mix(0.06, 0.02, uOpen), mix(0.1, 0.26, uOpen), v.y));
-  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(0.003, 0.006, coc / uWidth)) * uStay;
+  float thin = 1.0 - smoothstep(0.0, 0.3, v.y);
+  float behind = smoothstep(0.88, 0.97, toSun) * mix(1.0 - smoothstep(0.06, 0.1, v.y), smoothstep(0.0, 0.12, thin - 0.9 * aSeed.w), uOpen);
+  float amount = 2.0 * uSunColor.r * (0.9 * pow(toSun, 3.0) + 10.0 * pow(toSun, 40.0)) * flux * lit * behind * edge.x * edge.y * edge.z * smoothstep(0.25, 0.6, d) * (1.0 - smoothstep(2.6, 3.6, d)) * (1.0 - smoothstep(mix(0.003, 0.0012, uCoarse), mix(0.006, 0.003, uCoarse), coc / uWidth)) * smoothstep(0.0, 0.08, mix(1.08, 0.2, uCoarse) - aSeed.y) * uStay;
   vColor = vec3(1.0, 0.5, 0.14) * min(amount, ${PEAK.toFixed(2)} * max(1.0, 3.1416 * coc * coc / (px * px)));
   vSize = px;
   vAt = world;
@@ -94,6 +99,7 @@ export function makeAir(): Air {
     uWidth: { value: 1920 },
     uStay: { value: 1 },
     uOpen: { value: 0 },
+    uCoarse: { value: 0 },
     uToward: { value: new THREE.Vector2(windToward.x, windToward.z) },
   }
   const meshes = CLOUDS.map((cloud, c) => {
@@ -133,6 +139,8 @@ export function makeAir(): Air {
       uniforms.uStay.value = 1 - gone * gone * (3 - 2 * gone)
       const open = Math.min(1, Math.max(0, (time - OPEN_FROM_S) / (OPEN_TO_S - OPEN_FROM_S)))
       uniforms.uOpen.value = open * open * (3 - 2 * open)
+      const coarse = Math.min(1, Math.max(0, (time - COARSE_FROM_S) / (COARSE_TO_S - COARSE_FROM_S)))
+      uniforms.uCoarse.value = coarse * coarse * (3 - 2 * coarse)
     },
   }
 }
