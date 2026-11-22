@@ -33,16 +33,8 @@ export const heaveAt = (time: number): number => {
   const v = 1 - Math.min(1, Math.max(0, (time + heave.leadS) / (heave.pushS + heave.leadS)))
   return heave.push * (1 - v * v) + (1 - heave.push) * step(-heave.restLeadS, emergence.riseS, time)
 }
-// The one crack the seed opens over itself in the dawn. It runs toward the lens and a little toward the sun (turn, as a slope), so the lens looks along it and the sun skims its left lip: this long each way from its middle, which lies aheadM toward the lens, this far open to each side at the film's first frame and when it is fully open after openS, cut this deep, winding by windM. The sun reaches lipM into its left lip.
-export const crack = { halfLenM: 0.024, aheadM: 0.006, turn: 0.07, fromM: 0.003, toM: 0.0058, openS: 0.6, depthM: 0.004, windM: 0.0012, lipM: 0.006 }
-export const crackAt = (x: number, z: number, time: number): number => {
-  if (time >= segmentById('rain').start) return 0
-  const s = x * laneDir.x + z * laneDir.z
-  const d = x * laneDir.z - z * laneDir.x + crack.turn * s - crack.windM * (Math.sin(s * 310) + 0.4 * Math.sin(s * 890))
-  const v = 1 - Math.min(1, Math.max(0, time / crack.openS))
-  const half = (crack.fromM + (crack.toM - crack.fromM) * (1 - v * v)) * (1 - step(0.35 * crack.halfLenM, crack.halfLenM, Math.abs(s - crack.aheadM)))
-  return half <= 0 ? 0 : 1 - step(0.5 * half, half + 0.0005, Math.abs(d))
-}
+// The one cleft the seed opens over itself as the film starts, in the loose crumbs only: the land under them does not move. It runs toward the lens and a little toward the sun (turn, as a slope), so the lens looks along it and the sun skims its left lip: this long each way from its middle, which lies aheadM toward the lens, the crumbs this far aside to each lip at the first frame and at openS, winding by windM. The sun reaches lipM into its left lip. The crumbs within footM of the stem (fully out at three times that) fall back in from footS, the others one by one from fillS, and at shutS the cleft is gone.
+export const crack = { halfLenM: 0.024, aheadM: 0.006, turn: 0.07, fromM: 0.003, toM: 0.0058, openS: 0.27, windM: 0.0012, lipM: 0.006, footM: 0.004, footS: 0.3, fillS: 0.5, shutS: 1.3, fallS: 0.2 }
 // The hole the stem leaves: it opens over these seconds to this radius and depth, and the dome that stood there before is this high. Inside flatM the bare soil carries no relief of the map, only the break. Toward the dawn lens and toward its sun the plates lift this much less, so the hole is seen and lit.
 export const hole = { fromS: 0.1, toS: 1.5, radiusM: 0.0085, depthM: 0.0035, domeM: 0.002, flatM: 0.02, wayOpen: 0.7 }
 
@@ -113,12 +105,12 @@ export function soilHeightAt(x: number, z: number, time: number): number {
   const across = Math.abs(x * laneDir.z - z * laneDir.x)
   const way = Math.max(step(0.002, 0.012, along) * (1 - step(0.012, 0.03, across)), step(0.004, 0.016, x * sunWayDir.x + z * sunWayDir.z))
   const plate = (0.5 + 0.5 * hash11(id + 3)) * reach * (1 - 0.75 * gap) * (1 - hole.wayOpen * way)
-  return -crack.depthM * crackAt(x, z, time) + e.liftM * rise * (plate - 0.6 * crackIn * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r)) + heap
+  return e.liftM * rise * (plate - 0.6 * crackIn * plate) + hole.domeM * (1 - open) * (1 - step(0.003, 0.008, r)) - hole.depthM * open * (1 - step(0.25 * hole.radiusM, hole.radiusM, r)) + heap
 }
 
 export const crackShape = /* glsl */ `uniform vec4 uCrack;
 uniform vec4 uCrackCut;
-uniform vec2 uCrackWay;
+uniform vec4 uCrackWay;
 float crackLine(vec2 p) {
   float s = dot(p, uLane);
   return p.x * uLane.y - p.y * uLane.x + uCrackWay.y * s - uCrackCut.y * (sin(s * 310.0) + 0.4 * sin(s * 890.0));
@@ -131,8 +123,12 @@ float crackOpen() {
   float v = 1.0 - clamp(uTime / max(uCrack.w, 1e-4), 0.0, 1.0);
   return uCrack.y + (uCrack.z - uCrack.y) * (1.0 - v * v);
 }
+float crackFill(vec2 p, float seed) {
+  float from = mix(uCrackWay.z, uCrackWay.w + (uCrackCut.z - uCrackWay.w - ${crack.fallS}) * seed, smoothstep(uCrackCut.x, 3.0 * uCrackCut.x, length(p)));
+  return smoothstep(from, from + ${crack.fallS}, uTime);
+}
 float cracked(vec2 p) {
-  float h = crackOpen() * crackSpan(p);
+  float h = crackOpen() * crackSpan(p) * (1.0 - crackFill(p, 0.6));
   return h <= 0.0 ? 0.0 : 1.0 - smoothstep(0.5 * h, h + 0.0005, abs(crackLine(p)));
 }`
 
@@ -226,7 +222,7 @@ vec2 emerge(vec2 p) {
   float plate = (0.5 + 0.5 * hash11(id + 3.0)) * reach * (1.0 - 0.75 * gap) * (1.0 - uDome.z * way);
   float h = uEmerge.y * rise * (plate - 0.6 * crack * plate) + uDome.x * (1.0 - open) * (1.0 - smoothstep(0.003, 0.008, r)) - uHole.w * open * (1.0 - smoothstep(0.25 * uHole.z, uHole.z, r));
   float cut = cracked(p);
-  return vec2(h - uCrackCut.x * cut, max(max(crack, 0.5 * gap * gap * rise), cut));
+  return vec2(h, max(max(crack, 0.5 * gap * gap * rise), cut));
 }
 float collar(vec2 p) {
   float k = smoothstep(uFurrowTime.x, uFurrowTime.y, uTime) * (1.0 - smoothstep(uFurrowKept.x - ${MATT_EASE_S.toFixed(1)}, uFurrowKept.x, uTime));

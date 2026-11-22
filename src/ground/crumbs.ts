@@ -349,7 +349,7 @@ void main() {
   float span = crackSpan(c);
   if (span > 0.0) {
     float d = crackLine(c);
-    float edge = span * (crackOpen() + 0.6 * aCenter.w);
+    float edge = span * (crackOpen() + 0.6 * aCenter.w) * (1.0 - crackFill(c, hash11(own + 13.0)));
     c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(0.012, 0.03, abs(d))));
   }
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
@@ -440,7 +440,7 @@ void main() {
   float span = crackSpan(p);
   if (span > 0.0) {
     float d = -crackLine(p) - crackOpen() * span;
-    float lip = span * (1.0 - smoothstep(0.0, uCrackCut.w, d)) * step(-0.001, d) * smoothstep(-0.3, 0.4, dot(ball.xz, vec2(uLane.y, -uLane.x)));
+    float lip = span * (1.0 - smoothstep(uCrackWay.w, uCrackCut.z, uTime)) * (1.0 - smoothstep(0.0, uCrackCut.w, d)) * step(-0.001, d) * smoothstep(-0.3, 0.4, dot(ball.xz, vec2(uLane.y, -uLane.x)));
     lit = max(lit, lip * foot * smoothstep(-0.002, 0.004, vWorld.y));
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
   }
