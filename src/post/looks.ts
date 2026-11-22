@@ -74,12 +74,43 @@ const table: Record<string, Partial<LensLook>> = {
 const FIELD_FROM_S = 52
 const FIELD_FULL_S = 54
 const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
+const fieldBlack: readonly [number, number, number] = [0.5, 0.6, 0.5]
+// The field's grade: softer, less saturated, its shade neutral and a little lifted.
+const fieldGrade: WorldDef['grade'] = { exposure: 0.78, contrast: 1.22, white: 9, saturation: 0.98, gain: [1.06, 1, 0.91], lift: [0.0024, 0.0048, 0.0038], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 }
+
+function fieldShare(def: WorldDef, timeS: number): number {
+  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return 0
+  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
+  return t * t * (3 - 2 * t)
+}
+
+const blend = (a: number, b: number, w: number): number => a + (b - a) * w
+const blend3 = (a: readonly [number, number, number], b: readonly [number, number, number], w: number): [number, number, number] => [blend(a[0], b[0], w), blend(a[1], b[1], w), blend(a[2], b[2], w)]
+
+export function gradeOf(def: WorldDef, timeS: number): WorldDef['grade'] {
+  const w = fieldShare(def, timeS)
+  if (w === 0) return def.grade
+  const a = def.grade
+  const b = fieldGrade
+  return {
+    exposure: blend(a.exposure, b.exposure, w),
+    contrast: blend(a.contrast, b.contrast, w),
+    white: blend(a.white, b.white, w),
+    saturation: blend(a.saturation, b.saturation, w),
+    gain: blend3(a.gain, b.gain, w),
+    lift: blend3(a.lift, b.lift, w),
+    bloom: blend(a.bloom, b.bloom, w),
+    bloomKnee: blend(a.bloomKnee, b.bloomKnee, w),
+    vignette: blend(a.vignette, b.vignette, w),
+    grain: blend(a.grain, b.grain, w),
+  }
+}
 
 export function lensLook(def: WorldDef, timeS = 0): LensLook {
   const look = { ...fallback, ...(table[def.id] ?? {}) }
-  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return look
-  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
-  const w = t * t * (3 - 2 * t)
+  const w = fieldShare(def, timeS)
+  if (w === 0) return look
   for (const key of Object.keys(overField) as (keyof typeof overField)[]) look[key] += (overField[key] - look[key]) * w
+  look.black = blend3(look.black, fieldBlack, w)
   return look
 }

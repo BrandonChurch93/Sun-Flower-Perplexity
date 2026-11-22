@@ -6,7 +6,7 @@ import type { WorldDef } from '../core/world.ts'
 import { fillFragment, maxFillPx, nearFragment, reachFragment } from './fill.ts'
 import { brightFragment, downFragment, flareFragment, levelGain, upFragment } from './glare.ts'
 import { gradeFragment } from './grade.ts'
-import { lensLook } from './looks.ts'
+import { gradeOf, lensLook } from './looks.ts'
 import { sunReadFragment, type SunInFrame } from './sun.ts'
 
 type Mode = 0 | 1 | 2 | 3
@@ -210,11 +210,11 @@ export class Post {
   }
 
   // The light the glass scatters: a pyramid of ever wider blurs of what is bright, summed with a share for each width.
-  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, def: WorldDef, veil: number, halation: number, core: number, tint: readonly number[]): THREE.Texture {
+  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, grade: WorldDef['grade'], veil: number, halation: number, core: number, tint: readonly number[]): THREE.Texture {
     const b = this.bright.uniforms
     b.tFrame.value = source
-    b.uExposure.value = def.grade.exposure
-    b.uKnee.value = def.grade.bloomKnee
+    b.uExposure.value = grade.exposure
+    b.uKnee.value = grade.bloomKnee
     this.bright.render(renderer, this.down[0])
     const levels = this.down.length
     for (let i = 1; i < levels; i++) {
@@ -247,11 +247,12 @@ export class Post {
     let source = frame
     if (mode === 0) {
       const look = lensLook(def, frameIndex / config.film.fps)
+      const grade = gradeOf(def, frameIndex / config.film.fps)
       const airSoft = sun ? (look.air * this.fillA.height) / 1080 : 0
       // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
       const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
       source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0, look.specks, look.skyHold, airSoft, sun ? sun.y - 0.25 : 2)
-      const bloom = this.scatter(renderer, source, def, look.veil, look.halation, look.core, look.veilTint)
+      const bloom = this.scatter(renderer, source, grade, look.veil, look.halation, look.core, look.veilTint)
       const flare = sun ? look.flare * sun.weight : 0
       const target = this.flareTarget as THREE.WebGLRenderTarget
       if (flare > 0 && sun) {
@@ -264,15 +265,15 @@ export class Post {
         f.uGhost.value = 0.09
         this.flare.render(renderer, target)
       }
-      const tone = toneConstants(def.grade.contrast, def.grade.white)
+      const tone = toneConstants(grade.contrast, grade.white)
       g.tBloom.value = bloom
       g.tFlare.value = target.texture
-      g.uBloom.value = def.grade.bloom
+      g.uBloom.value = grade.bloom
       g.uFlare.value = flare
-      g.uExposure.value = def.grade.exposure
-      g.uGain.value.fromArray(def.grade.gain)
-      g.uLift.value.fromArray(def.grade.lift)
-      g.uContrast.value = def.grade.contrast
+      g.uExposure.value = grade.exposure
+      g.uGain.value.fromArray(grade.gain)
+      g.uLift.value.fromArray(grade.lift)
+      g.uContrast.value = grade.contrast
       g.uToneM.value = tone.m
       g.uToneNorm.value = tone.norm
       g.uKeep.value = look.keep
@@ -313,9 +314,9 @@ export class Post {
       g.uFarFill.value = sun ? Math.min(sun.farCircle * scale, maxFillPx) : 1
       if (sun) g.uSunAt.value.set(sun.x, sun.y)
       g.uStarLen.value = 0.2 * this.fillA.width
-      g.uSaturation.value = def.grade.saturation
-      g.uVignette.value = def.grade.vignette
-      g.uGrain.value = def.grade.grain * look.grain
+      g.uSaturation.value = grade.saturation
+      g.uVignette.value = grade.vignette
+      g.uGrain.value = grade.grain * look.grain
       g.uAirSoft.value = airSoft
       g.uSpokes.value = look.spokes
     }
