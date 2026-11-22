@@ -1,0 +1,31 @@
+QA item 5 · the plant alone across each cut · engine 96146165ee8a578d · preview (960 x 540), draft, the `plant` view
+For each pair of neighbouring frames: how far the outline of the plant moves, in pixels of the 960 x 540 picture (mean, 95th percentile, largest), and how many outline pixels move by more than 1.5 pixels.
+cut 1 at frame 240: the plant covers 23141, 23082, 23089, 23094 pixels in frames 238 to 241
+    whole plant  238 to 239: mean 0.31, p95 1.0, largest 2.0, 1 over 1.5 px · 239 to 240 (ACROSS THE CUT): mean 0.41, p95 1.0, largest 5.0, 48 over 1.5 px · 240 to 241: mean 0.43, p95 1.0, largest 4.1, 89 over 1.5 px
+    top third    238 to 239: mean 0.38, p95 1.0, largest 2.0, 1 over 1.5 px · 239 to 240 (ACROSS THE CUT): mean 0.51, p95 1.4, largest 5.0, 48 over 1.5 px · 240 to 241: mean 0.60, p95 2.0, largest 4.1, 89 over 1.5 px
+    middle third 238 to 239: mean 0.30, p95 1.0, largest 1.0, 0 over 1.5 px · 239 to 240 (ACROSS THE CUT): mean 0.33, p95 1.0, largest 1.0, 0 over 1.5 px · 240 to 241: mean 0.28, p95 1.0, largest 1.0, 0 over 1.5 px
+    lowest third 238 to 239: mean 0.23, p95 1.0, largest 1.4, 0 over 1.5 px · 239 to 240 (ACROSS THE CUT): mean 0.31, p95 1.0, largest 1.4, 0 over 1.5 px · 240 to 241: mean 0.27, p95 1.0, largest 1.4, 0 over 1.5 px
+    wrote plant-cut-1.jpg (the outline of frame 239 in red, of frame 240 in cyan, white where they agree; the plant's box at twice its size)
+cut 2 at frame 600: the plant covers 109607, 109209, 107020, 106811 pixels in frames 598 to 601
+    whole plant  598 to 599: mean 1.07, p95 2.2, largest 6.0, 1401 over 1.5 px · 599 to 600 (ACROSS THE CUT): mean 1.14, p95 2.2, largest 9.1, 1566 over 1.5 px · 600 to 601: mean 1.02, p95 2.0, largest 4.5, 1225 over 1.5 px
+    top third    598 to 599: mean 0.98, p95 2.8, largest 5.1, 338 over 1.5 px · 599 to 600 (ACROSS THE CUT): mean 0.96, p95 2.2, largest 6.4, 285 over 1.5 px · 600 to 601: mean 0.88, p95 2.0, largest 4.5, 254 over 1.5 px
+    middle third 598 to 599: mean 1.10, p95 2.0, largest 3.0, 329 over 1.5 px · 599 to 600 (ACROSS THE CUT): mean 1.16, p95 2.8, largest 9.1, 356 over 1.5 px · 600 to 601: mean 0.96, p95 2.0, largest 2.8, 245 over 1.5 px
+    lowest third 598 to 599: mean 1.11, p95 2.2, largest 6.0, 734 over 1.5 px · 599 to 600 (ACROSS THE CUT): mean 1.24, p95 2.8, largest 5.4, 925 over 1.5 px · 600 to 601: mean 1.13, p95 2.0, largest 3.0, 726 over 1.5 px
+    wrote plant-cut-2.jpg (the outline of frame 599 in red, of frame 600 in cyan, white where they agree; the plant's box at twice its size)
+cut 3 at frame 900: the plant covers 41311, 41410, 41683, 41865 pixels in frames 898 to 901
+    whole plant  898 to 899: mean 0.93, p95 2.2, largest 13.0, 942 over 1.5 px · 899 to 900 (ACROSS THE CUT): mean 1.18, p95 2.8, largest 88.1, 1235 over 1.5 px · 900 to 901: mean 0.86, p95 2.2, largest 18.0, 703 over 1.5 px
+    top third    898 to 899: mean 0.58, p95 1.4, largest 3.2, 47 over 1.5 px · 899 to 900 (ACROSS THE CUT): mean 0.71, p95 2.0, largest 4.5, 137 over 1.5 px · 900 to 901: mean 0.60, p95 1.4, largest 5.0, 37 over 1.5 px
+    middle third 898 to 899: mean 0.95, p95 2.0, largest 5.7, 323 over 1.5 px · 899 to 900 (ACROSS THE CUT): mean 1.03, p95 2.2, largest 5.0, 484 over 1.5 px · 900 to 901: mean 0.85, p95 2.0, largest 3.2, 225 over 1.5 px
+    lowest third 898 to 899: mean 1.51, p95 3.0, largest 13.0, 572 over 1.5 px · 899 to 900 (ACROSS THE CUT): mean 2.39, p95 4.0, largest 88.1, 614 over 1.5 px · 900 to 901: mean 1.42, p95 3.0, largest 18.0, 441 over 1.5 px
+    wrote plant-cut-3.jpg (the outline of frame 899 in red, of frame 900 in cyan, white where they agree; the plant's box at twice its size)
+cut 4 at frame 1200: the plant covers 71007, 71007, 71589, 71698 pixels in frames 1198 to 1201
+    whole plant  1198 to 1199: mean 0.67, p95 2.0, largest 3.6, 472 over 1.5 px · 1199 to 1200 (ACROSS THE CUT): mean 1.05, p95 2.2, largest 24.4, 1000 over 1.5 px · 1200 to 1201: mean 0.67, p95 1.4, largest 10.0, 143 over 1.5 px
+    top third    1198 to 1199: mean 0.32, p95 1.0, largest 3.2, 10 over 1.5 px · 1199 to 1200 (ACROSS THE CUT): mean 0.56, p95 1.4, largest 7.0, 44 over 1.5 px · 1200 to 1201: mean 0.76, p95 1.4, largest 10.0, 61 over 1.5 px
+    middle third 1198 to 1199: mean 0.87, p95 2.0, largest 3.0, 266 over 1.5 px · 1199 to 1200 (ACROSS THE CUT): mean 1.12, p95 2.8, largest 13.0, 455 over 1.5 px · 1200 to 1201: mean 0.59, p95 1.0, largest 5.0, 46 over 1.5 px
+    lowest third 1198 to 1199: mean 0.84, p95 2.0, largest 3.6, 196 over 1.5 px · 1199 to 1200 (ACROSS THE CUT): mean 1.49, p95 3.2, largest 24.4, 501 over 1.5 px · 1200 to 1201: mean 0.67, p95 1.0, largest 4.0, 36 over 1.5 px
+    wrote plant-cut-4.jpg (the outline of frame 1199 in red, of frame 1200 in cyan, white where they agree; the plant's box at twice its size)
+In short, the whole plant, across the cut against the larger of its two neighbours:
+    cut 1: mean 0.41 px against 0.43 px (0.9 times), p95 1.0 px against 1.0 px, largest 5.0 px
+    cut 2: mean 1.14 px against 1.07 px (1.1 times), p95 2.2 px against 2.2 px, largest 9.1 px
+    cut 3: mean 1.18 px against 0.93 px (1.3 times), p95 2.8 px against 2.2 px, largest 88.1 px
+    cut 4: mean 1.05 px against 0.67 px (1.6 times), p95 2.2 px against 2.0 px, largest 24.4 px
