@@ -1,0 +1,56 @@
+{
+  "critic": "R3",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1 and crop 4, the bracts round the bud and the leaf edges under it",
+      "what": "the backlight rim is a thin, even, bright white line of the same width and brightness along every bract edge, including edges facing away from the sun; it reads as a drawn outline or edge halo, not light through hairs",
+      "fix": "drive the rim from actual hair geometry and the sun direction: vary width and brightness, break it into separate glinting hairs, and let edges facing away from the sun fall dark"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crop 7, the near neighbor leaves at the left edge (also crop 7 in set-C-06.png)",
+      "what": "the front-facing leaves are one flat blue-teal with almost no vein, blade or surface detail and straight hard edges; they read as flat cut-out cards and their blue cast does not match the warm green of the rest of the scene",
+      "fix": "add vein relief, blade curl and leaf thickness, warm the shadow green toward the scene's key light, and add some sky-lit sheen and subsurface variation"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 11 and crop 9, the bract tips behind the petals at upper right of the head",
+      "what": "the same uniform white rim outline runs round the green bract tips, giving them a cut-out, haloed look against the sky",
+      "fix": "soften and break up the rim into individual hairs, and reduce it where the bract is not edge-on to the sun"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 1, the strap-like inner bracts in the center of the bud",
+      "what": "the inner green straps are very similar in width, shape and shading, giving a slightly repeated, instanced look",
+      "fix": "vary length, width, twist and color of each inner bract"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-05.png",
+      "where": "crop 2 and crop 4, the ray petals",
+      "what": "the petals have an even, slightly waxy sheen and similar fold shapes; little tip damage, curl variety or color variation",
+      "fix": "add per-petal hue and saturation variation, small tears and dried tips, and vary the folds"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-06.png",
+      "where": "crop 10, the floating motes round the sun",
+      "what": "the bokeh pollen discs are all nearly the same size and softness and spread fairly evenly; they look like a particle layer laid on top",
+      "fix": "vary disc size with depth, cluster them more, and let some pass behind leaves"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-03.png",
+      "where": "crop 11, the upper dark sky",
+      "what": "the smooth gray-blue sky gradient is very clean with faint low-frequency steps; it lacks cloud structure",
+      "fix": "add some fine cloud texture and dither the gradient to rule out banding after compression"
+    }
+  ]
+}

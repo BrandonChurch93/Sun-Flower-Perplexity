@@ -1,0 +1,35 @@
+{
+  "critic": "R7",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "encoded column, rows 2 and 3, especially the field behind the central sunflower",
+      "what": "Fine stems and petal edges merge into patchy clumps. The foreground flower still reads, but the field loses distinct texture at native size.",
+      "fix": "Shift the 5 Mbit/s bit budget toward the field reveal using scene-aware two-pass allocation and a slower encoding preset."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-04.png",
+      "where": "encoded column, rain against the clouds and over the far ground",
+      "what": "Thin, continuous rain streaks become uneven, broken dashes, and the cloud and horizon haze develops coarse patches.",
+      "fix": "Give the storm shot more bits within the average budget and use a slower preset to preserve the rain streaks."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-08.png",
+      "where": "encoded column, golden haze below the sun in row 1 and blue sky above the horizon in row 3",
+      "what": "Smooth tonal transitions break into faint bands and flat patches at native size, beyond the expected loss of fine grain.",
+      "fix": "Keep the sky and glow at higher precision through grading, then test subtle dithering and stronger gradient protection in the delivery encode."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-06.png",
+      "where": "encoded column, dark blue sky above the growing tip in rows 1 and 2",
+      "what": "A number of discrete faint stars disappear or merge into diffuse mottling while the brightest stars remain.",
+      "fix": "Allocate more bits to the night shot and test a detail-preserving encoder tune against the native-size star field."
+    }
+  ]
+}

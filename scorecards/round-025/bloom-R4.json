@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 8,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "f1199 to f1200 (39.97 to 40.00 s), distant ridge and field silhouettes on either side of the stem",
+      "what": "The main plant holds its framing and the weather changes in one frame, but the ridge contour and upright field silhouettes do not register across the cut.",
+      "fix": "Carry the same terrain and field geometry through the cut and swap only the weather, lighting, and surface state at f1200."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "f1331 to f1342 (44.37 to 44.73 s), backlit bract rims on the center-right of the bud and the lower-left leaf edge",
+      "what": "The fine rim detail breaks into jagged, bright specks whose brightness and continuity change between nearby frames, even on bracts that barely move.",
+      "fix": "Keep the hairs fixed to the deforming surfaces and increase sampling and subpixel filtering on the rim-lit edges until individual hairs remain coherent across frames."
+    }
+  ]
+}

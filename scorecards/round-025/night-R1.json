@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5 (the far background at the skyline) and full horizon in set-A-01-b.png",
+      "what": "the distant skyline is a sharp, hard-edged cutout of jagged rocky peaks instead of soft, out-of-focus rounded tree-covered hills",
+      "fix": "replace the jagged sharp peaks across both left and right horizons with rounded tree-lined hills blurred by shallow depth of field to match -a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "low ground mist between the field and the distant hills",
+      "what": "the bright billowing mist weaving around the midfield stalks on the left is reduced to a dim flat gradient behind dark foreground leaves, and the soft atmospheric haze above the field on the right (set-A-03.png region 5) is missing",
+      "fix": "restore luminous layered ground mist wrapping around the neighboring stalks on the left and carry a soft blue-grey misty haze across the right basin to separate the field from the dark treeline"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 4 (the near neighbor at the edge of the frame) and lower field in set-A-01-b.png",
+      "what": "neighboring plants are dark, murky matte silhouettes with flat umbrella-like tops on thin straight sticks and large drooping leaves, lacking compact spiky buds, silvery rim light, and dew bokeh highlights",
+      "fix": "shape the neighbors with fuller upright buds and smaller upper leaves, and add crisp left-side rim lighting and soft out-of-focus dew specular highlights standing out against the mist"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "hero plant posture, stem thickness, and leaf arrangement",
+      "what": "the hero plant has a ramrod-straight thin bare stem pole, stiff sideways leaves with regular scalloped teeth, and a huge blotchy leaf blocking the lower-left stem, reading as a stiff CG model rather than the plant in -a",
+      "fix": "give the stem a thicker, gently curving organic form with three-dimensional phyllotaxis including cupped leaves crossing in front of the stem and arching lower petioles that leave the rim-lit lower stem visible"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1 (the head or bud)",
+      "what": "the bud is too small and narrow with a few tall spiky white-fringed bracts sticking straight up on a smooth, hairless upper stem neck",
+      "fix": "build a wider, fuller rounded bud of dense overlapping curved bracts nestled into softly backlit furry upper petioles and upper-stem fuzz"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2 (the stem and its hairs)",
+      "what": "the stem lacks smooth cylindrical rim-light wrap on its left face and instead has harsh, clumpy bright-white spiky hair fringes equally bright on both the lit left and shadowed right edges, while the large lower leaf has patchy green blotches instead of wet dew highlights",
+      "fix": "wrap soft creamy rim light onto the left side of the stem, render finer translucent hairs that glow strongly on the left rim and stay faint on the right shadow edge, and replace the blotchy green leaf patches with deep shadow and wet dew speculars"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3 (a leaf seen from the front) and hero leaves",
+      "what": "there is no cupped front-facing leaf with a bright dewy rim, and the leaves look dry and matte with excessive green subsurface translucency outlining dark vein grids instead of deep blacks and glossy wet upper surfaces",
+      "fix": "add a front-facing cupped leaf with finely serrated rim-lit lobes, deepen unlit leaf faces to rich dark shadow, reduce backlit green translucency, and add wet surface sheen and small glistening dewdrops along lit leaf edges"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6 (the sky)",
+      "what": "stars are tiny, pin-sharp 1-2 pixel dots mixed with fine grainy stipple instead of soft shallow-depth-of-field bokeh discs, losing star brightness and blue and warm-amber color saturation",
+      "fix": "apply subtle lens defocus to the starfield so brighter stars form soft 3-6 pixel bokeh discs with higher peak brightness and richer blue and gold hues, and clean up fine pinpoint sky stippling"
+    }
+  ]
+}

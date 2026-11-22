@@ -1,0 +1,49 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "hero sunflower head and the tall budded plant to its left, f1560 to f1799",
+      "what": "neither plant visibly grows over the 8 s. The head is fully open and unchanged from first to last tile, the bud on the left plant keeps the same droop, and no leaf unfolds. The only change is the camera pulling back and rising, so this reads as a reveal shot, not a time-lapse",
+      "fix": "drive real growth through the segment: let the bud lift and begin to open, petals unfurl along their own arcs, and new leaves unroll on the stem while the camera pulls back"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "whole plant across f1641 to f1652, the stretch said to change fastest",
+      "what": "between consecutive frames the plant barely changes and the frame differences come almost entirely from the camera move and parallax. The head is close to rigid, so the plant looks posed and is not growing in time-lapse",
+      "fix": "in the fastest stretch, add visible per-frame unfolding, plus small independent leaf and head sway so the plant is alive but not jittery"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-03.png",
+      "where": "stem under the flower head, and the back edges of the dark leaves to the right of the head",
+      "what": "the backlit rim is a hard 1 to 2 px bright outline with stair steps. On the stem it is a row of beads whose pattern changes from frame to frame, f1646 to f1649, so the stem hairs crawl rather than holding steady",
+      "fix": "render the rim light as soft, temporally stable translucency with anti-aliased edges, and keep each stem hair fixed in place from frame to frame"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "petal outlines around the disc, especially upper left and lower right",
+      "what": "petal edges are slightly aliased and stair-stepped, and their outlines change a little between frames, which gives a faint edge shimmer",
+      "fix": "raise the edge anti-aliasing and the temporal stability on petal silhouettes"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-01.png",
+      "where": "airborne pollen or dust motes, f1582 to f1625",
+      "what": "the dense backlit motes are strong in the early tiles and then gone by f1647, with no sign that they drift out of frame",
+      "fix": "let the motes thin out gradually and drift out of the light, not drop away"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-03.png",
+      "where": "out-of-focus background sunflowers along the top of the crop",
+      "what": "background sharpness eases down over the 12 frames, with small frame-to-frame changes in the background texture. It is close to steady, but it hints at a slow focus drift away from the head",
+      "fix": "hold focus steadily on the hero head, or pull focus once on purpose, and stabilise the background blur"
+    }
+  ]
+}

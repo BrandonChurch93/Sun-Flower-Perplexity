@@ -1,0 +1,84 @@
+{
+  "critic": "R3",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "rain streaks across the whole frame",
+      "what": "rain sits flat on top of the picture as uniform, ruler-straight white lines at a single angle with matching sharpness over both the foreground and the blurred skyline, ending in sharp points along the left soil ridge",
+      "fix": "place rain in 3D space with distance-dependent depth-of-field blur, varied streak lengths and opacity, atmospheric mist, and surface impact splashes"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "water channel in the lower-center furrow",
+      "what": "the puddle surface has regular, metallic sinusoidal ripples and clips into the black soil banks as a flat plane with no wet shoreline transition",
+      "fix": "render muddy refractive water with finer rain-driven ripples, darkened wet banks, and a soft meniscus where water meets soil"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, top of the main stem between the upper leaves",
+      "what": "the stem terminates in a blunt, flat-cut smooth green cylinder with no apical bud or growing shoot tip",
+      "fix": "model a tight cluster of folded nascent leaves and hairy bud scales closing over the stem apex"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 3, 4, and 5, undersides of the leaves",
+      "what": "veins on the leaf undersides are thick black lines painted onto a flat surface instead of raised, paler vascular ribs",
+      "fix": "displace primary and secondary veins on the undersides as raised lighter-green ridges with fine hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 4, backlit leaves and lower cotyledons",
+      "what": "no light passes through thin leaf blades against the bright sky; upper leaf surfaces look blotchy and waxy, and the two lower cotyledons read as opaque black rubber paddles with a painted green centerline",
+      "fix": "add subsurface scattering and thin-walled translucency to leaves and cotyledons, and break up the waxy specular response with micro-roughness"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 2, 4, and 6, hairs on the stem, petioles, and leaf margins",
+      "what": "plant hairs are thick, stiff, bright-white straight cones clumped in spiky tufts at nodes and leaf tips, turning into a pixelated white stippled halo along the lower stem edges",
+      "fix": "replace thick cone spikes with much finer, slightly curved translucent trichomes of varied length and density"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, water drops on the lower stem and crop 4, droplets near the right leaf tip",
+      "what": "water drops on the lower stem look like flat matte pale-green ovals stuck to the cylinder, while droplets on the right leaf read as hard metallic beads",
+      "fix": "render clear refractive droplets with sky reflections, curved contact menisci, and thin wet films on surrounding plant tissue"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 6, base of the stem at the soil and air above the left puddle edge",
+      "what": "the straight cylindrical stem clips directly into the soil with no root collar or contact shadow, and noisy grey stippled splash artifacts hover in mid-air to the left of the stem",
+      "fix": "add a slight basal flare, displaced soil collar, and ambient occlusion where the stem enters the dirt, and clean up unconverged splash particle noise"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crops 7, 8, and 9, grass tufts in the foreground and midground rows",
+      "what": "grass blades are knife-sharp, flat V-shaped cards in a single smooth green that clip straight into the mud and repeat as identical clumps along the midground field",
+      "fix": "give grass blades thickness, natural arch, ribbing, wet highlights, grounded bases, and varied clump shapes across the field"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "crops 7 and 8, foreground soil mound and transition to the field behind",
+      "what": "the foreground-left mound looks like glossy stretched plastic dotted with smooth black pebbles and drops abruptly along a horizontal seam into a flat, featureless black field plane",
+      "fix": "extend granular, micro-displaced wet soil continuously across the foreground mound into the midground rows without a sharp detail boundary"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crop 1, sunlit inner margins of the two uppermost leaves",
+      "what": "the straight leaf edges show stair-stepped pixel aliasing against the sky",
+      "fix": "give the leaf margins slight thickness, subtle curl, and cleaner edge anti-aliasing"
+    }
+  ]
+}

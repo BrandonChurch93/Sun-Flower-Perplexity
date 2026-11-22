@@ -1,0 +1,14 @@
+{
+  "critic": "R6",
+  "score": 8,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-F-01.png",
+      "where": "center foreground, just above the soil",
+      "what": "At phone size, the small green tip blends into the soil while the bright sunrise draws the eye. The seedling is not immediately recognizable, though its rapid rise makes the action clear within half a second.",
+      "fix": "Start a few frames later or give the emerging tip a brighter rim so the first frame has a clear focal point without losing the growth reveal."
+    }
+  ]
+}

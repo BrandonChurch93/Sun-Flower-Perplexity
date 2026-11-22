@@ -1,0 +1,63 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 2, the stem and its hairs (and adjacent mid-stem leaves)",
+      "what": "the stem is dead straight and lacks the bright warm-white backlit rim of long crisp hairs along its right side, while the leaves have flat chalky grey mottling instead of raised 3D spiky hoarfrost crystals and warm green backlit translucency",
+      "fix": "add long, bright backlit white-gold trichome hairs along the right edge of the stem and petioles with a gentle natural stem curve, replace the flat leaf mottling with crisp 3D rime ice needles on leaf margins and upper surfaces, and add warm green subsurface translucency to the backlit leaves"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5, the field behind the plant (and lower half of set-A-01-b.png)",
+      "what": "the background field has lifted milky grey-teal blacks and incoherent pale blotchy shapes on thin dark sticks instead of rich dark forest-green sunflower leaves with frosted upper edges and deep near-black shadow pockets",
+      "fix": "deepen the shadow blacks and local contrast across the lower field and replace the pale blotchy haze shapes with recognizable out-of-focus dark green heart-shaped sunflower leaves with pale frosted rims and warm-lit stems"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6, the far background at the skyline (and right skyline of set-A-01-b.png)",
+      "what": "the background flower heads are wide, flat, dark saucer-shaped silhouettes on thin spindly stems rather than compact, rounded closed green buds with natural drooping leaves, and on the right they rise much too high into the haze beneath the sun",
+      "fix": "reshape the background heads into compact rounded unopened green sunflower buds on sturdier leafy stems with natural optical blur, and lower the right-side skyline plants to leave open misty sky under the sun"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "hero plant full-frame silhouette and lower foliage",
+      "what": "the hero plant is shifted rightward, has a long bare stem neck beneath the bud, and is missing the broad frosted lower-center and lower-right leaves, making it look noticeably skinnier and sparser than the plant in set-A-01-a.png",
+      "fix": "shift the hero plant slightly left to match the target framing, close the bare neck gap by bringing the upper collar leaves up directly beneath the bud, and add full, broad frosted heart-shaped leaves along the lower stem to the bottom edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1, the head or bud",
+      "what": "the bud is a crowded tuft of narrow, uniform dark upright spikes lacking the visible lighter yellow-green inward-curving central dome, distinct spiky frost crystal clusters on the bract tips, and warm directional sun rim on the right side",
+      "fix": "form a rounded central crown of lighter green inward-folding bracts framed by fewer, broader outer phyllaries with deep shadow separation, add crisp frost crystal clusters on the bract tips, and add warm sunlight rim highlights on the right side"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3, a leaf seen from the front",
+      "what": "the upper collar leaves sit below an exposed stem neck rather than snugly under the bud, lack the thick bright spiky hoarfrost crust along their upper edges (especially on the sun-facing right leaf) and tiny hanging frost droplets at the left tip, and read as flat waxy grey-green",
+      "fix": "raise the collar leaves to attach directly beneath the bud base, build up a bright backlit crust of spiky white frost needles along the upper leaf rims with fine droplets at the left tip, and enrich the green leaf tone"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, the sun and the sky round it",
+      "what": "the sun is positioned higher and further right with a roughly twice-larger blown-out bright core, and a dark blurry background flower head intrudes at the bottom edge of the crop",
+      "fix": "move the sun slightly down and left to match set-A-01-a.png, tighten and soften the bright solar core so it is smaller and less blown out, and remove the intruding background flower silhouette below the sun"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-03.png",
+      "where": "region 7, right side of the sky",
+      "what": "the sky toward the right of the crop is slightly cooler blue-grey with marginally less warm rosy solar falloff than in set-A-01-a.png because the sun sits further right",
+      "fix": "extend a subtle warm rosy-grey falloff slightly further left across the mid-upper sky once the sun position is corrected"
+    }
+  ]
+}

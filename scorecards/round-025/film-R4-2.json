@@ -1,0 +1,63 @@
+{
+  "critic": "R4",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-13.png",
+      "where": "f1542 (51.4 s) to f1593 (53.1 s) to f1645 (54.8 s)",
+      "what": "the camera speed jumps. Through 0-51 s the hero plant holds roughly the same framing, with a slow push. Then in 3.4 s the hero head shrinks to about a quarter of its size and the horizon climbs from mid-frame to the top 10%. That is a sudden pull-back and rise, not one continuous move with mass",
+      "fix": "start the pull-back earlier and ease into it so speed ramps smoothly over several seconds, or slow the end move so it matches the pace of the rest of the film"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-11.png",
+      "where": "whole pack",
+      "what": "the pack is incomplete. Only three evenly spread contact sheets were supplied. There is no sheet of consecutive frames from the fastest-changing stretch (bloom 44-50 s) and none across any of the cuts (dawn/rain ~7.5 s, rain/night ~19.5 s, night/frost ~30 s, frost/bloom ~40 s, bloom/field ~52 s). So pops, jitter, focus hunting, flicker, rain landing and the one-frame cut changes cannot be verified",
+      "fix": "supply review-tier sheets of consecutive 1/30 s frames across 46-49 s and across each cut"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-12.png",
+      "where": "f0565 (18.8 s, set-D-11) to f0617 (20.6 s), and f0874 (29.1 s) to f0925 (30.8 s)",
+      "what": "the plant does not line up across the cuts. Rain f0565 has a slim stem with about ten small, evenly spaced leaves. Night f0617 has a few huge broad leaves low on the stem. Night f0874 has a bud and sparse upright leaves, while frost f0925 has long drooping pointed leaves. The leaf count, size and arrangement change between eras instead of only the world changing",
+      "fix": "carry one plant model and pose through each cut so the leaf layout matches exactly at the cut frame"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "f1593 (53.1 s), left foreground stalk and the airborne particles",
+      "what": "a tall leafy stalk suddenly dominates the left third of the frame, and dense pollen/dust particles fill the sky. Neither appears at 51.4 s, and the particles are gone again by 54.8 s, so they likely pop in and out",
+      "fix": "bring the foreground stalk in through parallax from the existing frame edge, and fade the particle density in and out over several seconds, or keep it constant"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-12.png",
+      "where": "f0617-f0874, hero plant leaves",
+      "what": "between the 1.7 s samples the leaves re-arrange instead of unfolding along their own paths. The large low leaves of f0617 vanish by f0771, and a bud appears on top by f0822 without a visible growing tip at f0771. This suggests morphing rather than growth",
+      "fix": "keep existing leaves persistent, with continuous paths, and grow new leaves and the bud from the apex"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "f1748 and f1799 (58-60 s), ground around the hero plants",
+      "what": "the hero plants stand in a flat, dark, blurred patch with stray bright straw-coloured blotches (f1748 lower centre, f1799 lower right). It reads like a composited plate, and the near ground lacks the detail of the field behind",
+      "fix": "extend the field geometry and lighting up to the camera, and remove the blotches"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-11.png",
+      "where": "f0360-f0514, rain-water rivulet",
+      "what": "the rivulet jumps between the centre, the left and a small puddle across samples, and this does not track cleanly with the camera move",
+      "fix": "lock the rivulet to the ground plane so it moves only by parallax"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-12.png",
+      "where": "f0925-f1182, fog over the background rows",
+      "what": "the fog band and the far rows look nearly identical from sample to sample until a hill line suddenly appears at f1182. There may be frozen fog followed by a reveal",
+      "fix": "give the fog continuous drift and thin it gradually"
+    }
+  ]
+}

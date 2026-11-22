@@ -1,0 +1,56 @@
+{
+  "critic": "R1",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 5, sun, cloud opening and flare",
+      "what": "The sun sits visibly higher and reads as a small isolated white disk under thin horizontal clouds. Its amber light spreads across the field in a broad, even wash, instead of blowing out a larger opening in a broken cloud bank and sending a soft, irregular plume of light down into the field.",
+      "fix": "Lower the sun to the target height, wrap it in the broken cloud opening, and widen its soft bloom while concentrating the illuminated haze below and around it."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 7, far tree line and right-hand sky",
+      "what": "The layered wooded ridges have become a nearly flat dark strip with a few isolated bumps, and the textured ceiling of cloud has become a smooth blue-gray gradient with thin horizontal streaks. The dark strip makes an abrupt boundary with the flowers.",
+      "fix": "Restore irregular, overlapping silhouettes of wooded ridges with softer, lighter distant layers, and bring back the low mottled blue-gray cloud bank and its broken warm edges."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03.png",
+      "where": "region 6, middle and distant sunflower field",
+      "what": "The field reads as broad smooth olive leaves and repeated bright rings, with an abrupt band of small blooms in the distance. The target has darker, cooler gaps, a more finely varied mix of heads and stems, and a gradual loss of contrast and detail toward the horizon.",
+      "fix": "Break up the head size, shape and orientation, reduce the broad olive leaf faces, restore fine warm rim detail against cool deep shadows, and soften and lower the contrast of distant rows progressively."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 1, main sunflower head",
+      "what": "The main head's silhouette is noticeably smaller and narrower, with sparse angular petals and a more exposed disk. The target has a fuller left-facing fan of overlapping amber petals, with warm light catching their thin tips and edges.",
+      "fix": "Enlarge the head to the target silhouette, especially on the left, and build a fuller layered petal fan with fine warm edge highlights around the darker disk."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 2, main stem and branching petioles",
+      "what": "The main stem reads as a smooth straight rod with a hard continuous highlight. The fine backlit hairs and the slim, curved, individually rim-lit leaf stalks seen in the target are much less legible.",
+      "fix": "Break up the straight highlight with fine backlit fuzz and give the petioles softer, tapering curves edged with narrow warm light."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 3, front-facing and lower leaves on the main plant",
+      "what": "The main plant has broad hanging leaves that merge into a heavy mass near its base, with large yellow-green highlight patches and smoother surfaces. The target has smaller, more separated curled leaves, darker cooler faces, delicate texture and light mostly at the edges.",
+      "fix": "Reduce the leaf area, open up the gaps around the lower stem, and favor fine veins, curls and thin amber rims over broad yellow-green face lighting."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 4, exposed foreground grass around and to the right of the main plant",
+      "what": "The exposed ground looks like a coarse mat of similarly legible grass blades, with a wide rusty bare-looking patch on the right. The target is a finer, darker bed of grass with a narrow, broken streak of amber-lit tips.",
+      "fix": "Match the finer grass, sink most of it into cool dark tones, and confine the warm highlight to scattered grass tips along the narrow target streak."
+    }
+  ]
+}

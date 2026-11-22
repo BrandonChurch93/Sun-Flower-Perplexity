@@ -1,0 +1,119 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "upper-left sky, sun, and left horizon (region 5)",
+      "what": "the sun sits lower on a flat ridge, the sky above it is a smooth grey-taupe gradient missing all upward crepuscular sunbeams and cloud texture, and dense orange ground fog replaces the rolling hazy hills",
+      "fix": "raise the sun slightly over rolling wooded hills, restore warm cloud structure and radial sunbeams extending upward into the upper-left sky, and dial back the heavy orange fog below the horizon"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "upper-left sky, sun, and left horizon (region 5)",
+      "what": "the sun sits on a flattened horizon without upward radial sunrays or upper-left cloud texture, and a thick uniform orange haze covers the left field where rolling hills and crisp sunbeams appear in -a",
+      "fix": "restore the rolling left hills, raise the sun slightly with distinct upward and downward crepuscular rays, add warm cloud texture above the sun, and reduce the orange lower haze"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "left-edge neighbor plant and mid-air dust (region 4)",
+      "what": "the foreground neighbor leaves are too sharp, bulky, and shaded cold slate-cyan instead of softly defocused warm olive-green with golden rim highlights, and large bright orange bokeh orbs float across the left air in place of tiny sparse dust glints",
+      "fix": "soften focus on the left neighbor foliage, shift its shadows and midtones to warm dark olive with bright golden rim light, and replace the large orange bokeh circles with tiny, sparse, sharp backlit specks"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "left-edge neighbor plant and mid-air dust (region 4)",
+      "what": "the left foreground foliage is overly sharp and graded cold blue-cyan without warm specular rims, accompanied by large artificial orange bokeh orbs floating in front of the field",
+      "fix": "increase optical defocus on the left neighbor plant, warm its grade to olive-green with golden rim highlights, and shrink and thin out the airborne particles to subtle fine glints"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "background sunflower field (regions 4 and 6)",
+      "what": "out-of-focus background sunflowers face forward with bright yellow petals and black bullseye centers as if front-lit, contradicting the strong backlighting in -a where heads are dark silhouettes rimmed with golden halos and stalks catch bright vertical glints",
+      "fix": "orient and light background flowers for true backlighting with dark shaded centers, warm golden rim halos, creamy optical bokeh, and bright vertical specular highlights on stems"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-04-b.png",
+      "where": "hero flower head (region 1)",
+      "what": "the flower head is larger and sits lower over the stem leaves, shaded right-side petals splay wide instead of tucking compactly in dark warm shadow, and the central disc is wider and flatter with uniform CG bumps lacking -a's recessed dark olive core and warm golden-brown inner ring",
+      "fix": "scale the flower head slightly smaller and raise it to match -a's stem clearance, tuck and darken the right-side petals around visible green phyllaries, and give the disc a recessed dark olive center ringed by warm golden-brown florets"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "region 1 · the head or bud",
+      "what": "the bud is turned further into left profile hiding much of the spiral inner face, an oversized skirt of bracts droops below the bud base, and shaded right-side bracts carry chalky white edge outlines instead of deep natural shadow",
+      "fix": "rotate the bud slightly toward camera to expose more of the tight spiral center, trim and lift the lower bracts to match -a, and remove the bright white outlining on the shadowed right-side bracts"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 2 and 3 · the stem, hairs, and front-facing leaves",
+      "what": "drooping bracts hide the upper stem and arched right petiole junction, leaves have jagged saw-tooth edges and patchy neon-green blotches inside cool dark shadow rather than even warm olive translucency and a weathered curled right tip, and stem hairs form a uniform fuzzy band",
+      "fix": "expose the upper stem and clean Y-junction of the petioles, replace blotchy neon leaf spots and jagged edges with smooth warm olive subsurface scattering and a dark curled right leaf tip, and vary stem hair length with crisp individual backlit hairs"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 5 · upper-left neighbor leaf over the sun",
+      "what": "the backlit leaf shows high-contrast mottled yellow-green blotches and dark patches instead of -a's soft, even olive-green translucency and crisp rim highlight",
+      "fix": "even out the leaf's subsurface scattering to a warm, softly defocused olive-green with a clean golden rim where the sun clips the edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 6 · the field behind the plant",
+      "what": "the background field lacks the dark-centered golden-rimmed flower bokeh (including the prominent backlit head left of the stem in set-A-01-a.png) and misses the bright vertical specular sun glints on stalks, showing dim sideways yellow blurs instead",
+      "fix": "restore dark-centered rim-lit flower heads in creamy optical bokeh on both sides of the stem and add warm specular highlights along vertical background stalks"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 7 · the far background at the skyline",
+      "what": "the distant treeline is a lower, flatter, crushed-black band missing -a's irregular rounded tree crowns and slight atmospheric lift, beneath a cooler, smoother horizon glow",
+      "fix": "give the skyline varied, rounded tree-crown silhouettes with subtle atmospheric haze in the blacks and warm the low horizon sky band toward golden-peach"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03.png",
+      "where": "region 8 · the sky",
+      "what": "the dark teal clouds are overly smooth and completely lack -a's natural photographic film grain, while the upper bract tips have coarse, overly bright white hair fringes",
+      "fix": "add fine photographic film grain and cloud micro-contrast across the sky and frame, and soften and thin the white fuzz on the upper bract tips"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05.png",
+      "where": "regions 2 and 3 · the stem, hairs, and front-facing leaves",
+      "what": "low-hanging petals cover the open stem gap and arched left petiole, both leaves show jagged edges and patchy chartreuse spots in cool dark shadow instead of warm even translucency and a weathered curled right tip, and underside bracts have bright white rim lines",
+      "fix": "restore stem clearance above the lower-left petiole, smooth leaf translucency to warm backlit olive-green with natural venation and a dark curled right leaf tip, and tone down the white rim lines under the shaded bracts"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-06.png",
+      "where": "region 5 · upper-left neighbor leaf over the sun",
+      "what": "the overhanging neighbor leaf breaks into blotchy, high-contrast yellow-green mottling instead of uniform soft olive translucency",
+      "fix": "smooth the leaf's backlit translucency to soft warm olive-green with a clean golden edge highlight"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-06.png",
+      "where": "region 7 · the far background at the skyline",
+      "what": "the treeline silhouette is flatter, lower, and darker than -a's rounded tree crowns, and the bright sky band above it is smoother and cooler",
+      "fix": "restore organic tree-crown height variation with slight atmospheric lift in the darks and warm the horizon cloud band"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-06.png",
+      "where": "region 8 · the sky",
+      "what": "the upper-right sky is smooth and grainless compared with -a's textured, film-grained storm clouds, and the upper bract tips behind the petals carry harsh white fuzz outlines",
+      "fix": "add matching photographic film grain and subtle cloud granulation across the sky, and soften the bright white edge fuzz on the upper bracts"
+    }
+  ]
+}
