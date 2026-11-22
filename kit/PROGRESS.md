@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 07:51 UTC · Round 24: fix batch merged (fourteen pieces), Status 80
-- Last status: 80 · 2026-11-22 07:49 UTC · Phase 6
+- Last push: 2026-11-22 08:18 UTC · Status 81: round 24's merged build rendered and looked at; packs for R4, R5, R6 built
+- Last status: 81 · 2026-11-22 08:18 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 08:18 UTC · status 81 · Phase 6 · `status-1.jpg`: Frames 0, 15 and 30: round 23 on the left, round 24 on the right; `status-2.jpg`: Frame 1755, the last judged frame: round 23 on the left, round 24 on the right; `status-3.jpg`: Frames 1409 to 1420 of the bloom, the rays closing as one fan; `status-4.jpg`: The film's last third on one sheet
 - 2026-11-22 07:49 UTC · status 80 · Phase 6 · `status-1.jpg`: End frame 1755 on the merged batch, preview: one open face in front, the companion a bud; `status-2.jpg`: Frames 0 to 15, the mound at twice the size: a pale arch in the cleft from the first frame; `status-3.jpg`: Rays opening, 1404 to 1464: main above, rays in turn below; `status-4.jpg`: The end before and after: the companion keeps a bud
 - 2026-11-22 07:20 UTC · status 79 · Phase 6 · `status-1.jpg`: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet); `status-2.jpg`: Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet); `status-3.jpg`: Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet); `status-4.jpg`: Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet)
 - 2026-11-22 06:57 UTC · status 78 · Phase 6 · `status-1.jpg`: Cut 4, frames 1199 and 1200: as now (top), variant A (middle), variant B (bottom, kept): the same leaves stand on both sides of the cut; `status-2.jpg`: Why A is dropped and what B costs: A swings a leaf across the sun at frames 1265 to 1290 (top); in B small leaf tips enter the frost at 37 to 38 s (bottom); `status-3.jpg`: The gust at frames 1680, 1700 and 1720: before above, after below. It reads in motion more than on stills; the two front plants get their own leaf motion next; `status-4.jpg`: Frame 3 of the opening, before left, after right: the crumbs' points a little wider and dimmer, a small gain against the blinking highlights
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 05:16 UTC · status 72 · Phase 6 · `status-1.jpg`: The first half second as it stands, frames 0, 8 and 15: the base of polish round 1; `status-2.jpg`: Night rows at frames 600, 617 and 668: before above, after below; `status-3.jpg`: The hero's leaves through the night, numbered at their nodes, frames 617, 668 and 771; `status-4.jpg`: Frame 1755 at twice the size: the row plant beside the hero, on a bare stalk
 - 2026-11-22 04:56 UTC · status 71 · Phase 5 · `status-1.jpg`: Whole film 1 of 3, dawn and rain; `status-2.jpg`: Whole film 2 of 3, night and frost; `status-3.jpg`: Whole film 3 of 3, bloom and field; `status-4.jpg`: Bloom hero, frame 1515, beside the approved image
 - 2026-11-22 04:31 UTC · status 70 · Phase 5 · `status-1.jpg`: Frame 1350, the opening head at twice size: the build that failed the focus check left, the corrected build right; `status-2.jpg`: Frame 1350 from the corrected build, final tier; `status-3.jpg`: Frame 1515 from the corrected build, final tier; `status-4.jpg`: Frame 0 from the corrected build, final tier
-- 2026-11-22 04:09 UTC · status 69 · Phase 5 · `status-1.jpg`: Whole film sheet 1 of 3, final build; `status-2.jpg`: Whole film sheet 2 of 3; `status-3.jpg`: Whole film sheet 3 of 3; `status-4.jpg`: The four cuts, frame before, frame after, and both laid over each other
 
 ## Clock
 
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 2.89 h |
-| Whole build | 30.00 h | 30.96 h |
+| 6 | 4.00 h | 3.37 h |
+| Whole build | 30.00 h | 31.44 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 0.96 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 1.44 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1816,6 +1816,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 06:57 UTC · Status 78: continuation 1 runs; round 24 second pass, cut 4 held (variant B) and the field's gust looked at; night stars and frame 1755 pieces out
 - 2026-11-22 07:21 UTC · Status 79: round 24 second and third passes looked at, not merged yet
 - 2026-11-22 07:51 UTC · Round 24: fix batch merged (fourteen pieces), Status 80
+- 2026-11-22 08:18 UTC · Status 81: round 24's merged build rendered and looked at; packs for R4, R5, R6 built
 
 ## Session log
 
@@ -1986,4 +1987,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet); Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet); Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet); Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet).
 - Status 80, 2026-11-22 07:49 UTC, Phase 6. Polish round 2, the last round: the fix batch is merged. Fourteen pieces are in: the cut into the field, bracts kept behind the rays, the field plants moving, the pullback at one rate, softer dawn highlights, fuller leaves at the end, rain that lands, the husk at rest with a pale arch showing at frame 0, crumbs that stay put, finer bract hairs, the foot of the field, steadier stars, one open face at the end, and rays that open in turn round the rim. The row shading of the far leaves failed its shimmer check three times and stays out. Next: Build the merged film, run the machine checks and measures, render the judged frames at final across the agents, then the last critics: R4, R5, R6, R7 and the jury on 420, 780 and 1755. Then the freeze and the record round. Time used: 1.0 h of 10 h.
   Pictures: End frame 1755 on the merged batch, preview: one open face in front, the companion a bud; Frames 0 to 15, the mound at twice the size: a pale arch in the cleft from the first frame; Rays opening, 1404 to 1464: main above, rays in turn below; The end before and after: the companion keeps a bud.
+- Status 81, 2026-11-22 08:18 UTC, Phase 6. Round 24 (polish round 2 of 2): the fix batch of fourteen pieces is merged (build 5506686, engine a4c82933ba906236) and every picture the judging needs is rendered from it and looked at, against round 23's finals. Frame 0 now shows a pale arch in the cleft and the arch stands higher at frames 8, 15 and 23; the last frame shows one open face with its companion bud; in the run from frame 1409 the rays close as one fan with no X; no ray cuts a bract any more (0 of 64 and 0 of 55 frames by the crossing test), rays still pass through rays on the meshes. The machine gate has passed G1 to G12 so far; the packs for R4 (two halves), R5 and R6 are built and the jury of fifteen is planned. Next: The gate ends, the measures run, then the jury on frames 420, 780 and 1755 and the critics R4, R5, R6 and R7 on the whole film; their answers close round 24, the last polish round, and the Phase 6 floor starts with the freeze. Time used: 1.4 h of 10 h.
+  Pictures: Frames 0, 15 and 30: round 23 on the left, round 24 on the right; Frame 1755, the last judged frame: round 23 on the left, round 24 on the right; Frames 1409 to 1420 of the bloom, the rays closing as one fan; The film's last third on one sheet.
 

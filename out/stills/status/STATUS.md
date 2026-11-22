@@ -1,12 +1,12 @@
-# Status 80
+# Status 81
 
-2026-11-22 07:49 UTC
+2026-11-22 08:18 UTC
 
-- Status 80 · Phase 6. Polish round 2, the last round: the fix batch is merged. Fourteen pieces are in: the cut into the field, bracts kept behind the rays, the field plants moving, the pullback at one rate, softer dawn highlights, fuller leaves at the end, rain that lands, the husk at rest with a pale arch showing at frame 0, crumbs that stay put, finer bract hairs, the foot of the field, steadier stars, one open face at the end, and rays that open in turn round the rim. The row shading of the far leaves failed its shimmer check three times and stays out.
-- Next: Build the merged film, run the machine checks and measures, render the judged frames at final across the agents, then the last critics: R4, R5, R6, R7 and the jury on 420, 780 and 1755. Then the freeze and the record round. Time used: 1.0 h of 10 h.
+- Status 81 · Phase 6. Round 24 (polish round 2 of 2): the fix batch of fourteen pieces is merged (build 5506686, engine a4c82933ba906236) and every picture the judging needs is rendered from it and looked at, against round 23's finals. Frame 0 now shows a pale arch in the cleft and the arch stands higher at frames 8, 15 and 23; the last frame shows one open face with its companion bud; in the run from frame 1409 the rays close as one fan with no X; no ray cuts a bract any more (0 of 64 and 0 of 55 frames by the crossing test), rays still pass through rays on the meshes. The machine gate has passed G1 to G12 so far; the packs for R4 (two halves), R5 and R6 are built and the jury of fifteen is planned.
+- Next: The gate ends, the measures run, then the jury on frames 420, 780 and 1755 and the critics R4, R5, R6 and R7 on the whole film; their answers close round 24, the last polish round, and the Phase 6 floor starts with the freeze. Time used: 1.4 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: End frame 1755 on the merged batch, preview: one open face in front, the companion a bud
-- `status-2.jpg`: Frames 0 to 15, the mound at twice the size: a pale arch in the cleft from the first frame
-- `status-3.jpg`: Rays opening, 1404 to 1464: main above, rays in turn below
-- `status-4.jpg`: The end before and after: the companion keeps a bud
+- `status-1.jpg`: Frames 0, 15 and 30: round 23 on the left, round 24 on the right
+- `status-2.jpg`: Frame 1755, the last judged frame: round 23 on the left, round 24 on the right
+- `status-3.jpg`: Frames 1409 to 1420 of the bloom, the rays closing as one fan
+- `status-4.jpg`: The film's last third on one sheet
