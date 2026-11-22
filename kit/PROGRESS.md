@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:46 UTC · Round 22: the jury is in (29 of 50 overall; fails on frames 420, 780, 1755)
+- Last push: 2026-11-22 02:56 UTC · Phase 5: render budget measured again, the husk's pop found and sent out, golden hour pass read
 - Last status: 64 · 2026-11-22 02:37 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 0.93 h |
+| 5 | 3.00 h | 1.03 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 25.89 h |
+| Whole build | 30.00 h | 25.99 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -170,6 +170,40 @@ Checked against the npm registry and each project's own release notes on 2026-11
 ## Render budget
 
 Seconds per sample and per frame at each format and tier, the time for one judged still at the `final` tier, the time for the whole film at each tier, and the texture memory. Measured in Phases 0, 2, 3 and 5.
+
+### Phase 5 whole film (six real worlds, the judged build of round 22)
+
+Measured 2026-11-22 02:17 to 02:52 UTC on `harness_builder`'s VM (4 cores, 7 GB, software WebGL2), with no other render and no other job beside it as the builder reports, on a second worktree at `4676c5d` (engine `305e9520118781cf`, the build round 22 judges; the record carries the same hash). The run took 34 min 58 s and ended with exit 0. Its files are in `out/work/budget/phase5/`. One sample is one full render of the scene. A frame costs a fixed part (building the plant, the lens and grade stage) plus its samples. Against Phase 3 a sample in 16x9 costs 1.9 times as much (5.458 s against 2.848 s): the five real worlds, the ground and the crop are in every frame now.
+
+| Format | Size | Seconds per sample | Fixed seconds per frame | Frame at `draft` (1) | Frame at `review` (8) | Frame at `final` (48) | Start-up | First frame extra |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 16x9 | 1920 x 1080 | 5.458 (4.441 to 7.338) | 1.26 | 6.6 s | 44.3 s | 259.3 s | 8.5 s | 8.0 s |
+| preview | 960 x 540 | 2.946 (2.055 to 3.764) | 0.42 | 3.3 s | 23.7 s | 140.2 s | 7.1 s | 7.4 s |
+| uhd | 3840 x 2160 | 13.939 (9.470 to 19.731) | 4.20 | 17.9 s | 113.8 s | 661.6 s | 7.0 s | 8.2 s |
+
+| Whole film (1800 frames) | `draft` | `review` | `final` |
+| --- | --- | --- | --- |
+| 16x9, one VM | 3.3 h | 22.1 h | 129.7 h |
+| preview, one VM | 1.7 h | 11.9 h | 70.1 h |
+| uhd, one VM | 9.0 h | 56.9 h | 330.8 h |
+
+| Per unit in 16x9 | Frames | `draft` | `review` | `final` |
+| --- | --- | --- | --- | --- |
+| dawn | 240 | 34 min | 4.0 h | 23.6 h |
+| rain | 360 | 40 min | 4.5 h | 26.3 h |
+| night | 300 | 28 min | 3.1 h | 17.9 h |
+| frost | 300 | 30 min | 3.2 h | 18.4 h |
+| bloom | 360 | 40 min | 4.3 h | 25.0 h |
+| field | 240 | 28 min | 3.1 h | 18.4 h |
+
+- One judged still at the `final` tier in 16x9: 353 s from the per sample numbers, 346 s measured, plus 17 s to start. It fits in `sandbox.chunkBudgetMinutes` (7 min).
+- The whole film at `final` in 16x9 with the units split across sandbox agents ends when the longest unit ends: about 26.3 h on a VM of this speed.
+- Texture memory, as the loader counts it with mipmaps: `full` 512.7 MB of 2400 MB, `web` 133.4 MB of 800 MB. Render targets on top of that: 16x9 about 141 MB, preview about 35 MB, uhd about 563 MB.
+
+What this means for the steps ahead, written 2026-11-22 02:53 UTC:
+
+- The preview film at `draft` in the preview format (step 8 of Phase 5): 3.3 s a frame, 1.7 h on one VM, so it is split into 26 parts of at most 75 frames (about 4.5 min a part with its start-up) across twelve builders' VMs.
+- The film in `formats.master` (step 5 of Phase 6): `review` would take 22.1 h on one VM and 3.1 to 4.5 h a unit, which does not fit in `sandbox.previewFilmMaxHours` (1.5 h) even with the units split; `draft` takes 28 to 40 min a unit and fits. So the master render is at `draft`, one chunk per unit.
 
 ### Phase 3 look lock (real plant, golden world, real field; five worlds still stand-ins)
 
@@ -735,6 +769,10 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 02:35 UTC. `disc_builder`'s head start came in (`1ec0f16` on `agent/night-world`, only `src/worlds/night/sky.ts` and `layers.ts`, tests 125 of 125 by its count) and was read by its pictures (`out/work/scratch/p5/disc-head/`: the night sheet before and after, cut sheets 2 and 3 after; records name engine `305e9520118781cf` and the night's unit hash `104ce1a4b84575bd`): the hills and the mist bank stand in one tone and shape on all twelve frames from 600 to 899, the plant lines up across both cuts, the hills are there on frame 600 and gone on frame 900. Merged into main as `adaf813`; `tsc` clean. Still there and not the night's: small crop silhouettes against the mist at the left horizon in the first and last seconds of the night.
 - 2026-11-22 · Phase 5 · 02:34 UTC. Fix pass of round 22 prepared while the last jurors answer; R5 7, R4 8, R6 6 and R7 6 are in. Worst first by owner, briefs in `out/work/briefs/p5-fix-*.md`, reports due 03:20 UTC: `ground_builder` the first frames at phone size (R6 severe and major, inside the settled opening); `field_builder` the ridge that may not move, one plant standing clear at the end (R5 major), then heads that read as copies (jury on frame 1755); `lens_builder` the rain streaks under the encoder (R7, two majors); `golden_builder`, added to its head start, the specks under the encoder (R7 major); `hair_builder` the rim hairs that blink at frames 1641 to 1652; `leaf_builder` the leaf outlines that jurors on four frames read as polygons; `petal_builder` the folded rays at frame 1350 and rays that stand still in the wind. Not taken on in this pass, kept open: R5's two majors on the night (the rows behind against the rain's, the hero's lower leaves as the lens turns) and its major on the hero's leaf mass at 58.5 s; they need the plant or the camera, which no 90 minute pass can change safely.
 - 2026-11-22 · Phase 5 · 02:38 UTC. The cuts judge's one issue (the pack does not show the fastest growth at frame cadence) is answered inside the fix pass by a check, not by a new pack: `bud_builder` renders runs of twelve consecutive frames through the hook's emergence, the husk's release and the rays' release (three runs, with native crops of the head) and lists every pop, pass-through and stall it sees; the Builder reads the sheets too. The pack for this critic stays the one `kit/` defines.
+- 2026-11-22 · Phase 5 · 02:47 UTC. After a compaction at about 02:38 UTC (the first re-read logged since 02:07 UTC): read again from disk `kit/PROGRESS.md` (Status, Latest pictures, Render budget, Running agents, round 22), `kit/addenda/README.md` (no addenda), `AGENTS.md` (the floor, count limits, the clock, the budget report, waits, stop conditions, showing the work), the R5, R6, R7, pass bar, issues, rounds and record round sections of `kit/07-QUALITY-BAR.md`, and Phase 5 and Phase 6 of `kit/08-BUILD-ORDER.md`. Where the build stands by those: round 22 is judged in full (R5 7, R6 6, R7 6, R4 8, R2 fails on three frames), so it ends at its limit and not by a pass; its one fix pass runs until 04:04 UTC at the latest; the clock prints `extra rounds: yes` only until 26.0 h, which is before the fix pass can end, so there will be no second whole film round and no polish round in Phase 6; then step 8 and the Phase 5 gate, then Phase 6 from its step 2 until the clock prints `budget report: due` at 30.0 h.
+- 2026-11-22 · Phase 5 · 02:53 UTC. Step 6, the render budget measured again: `harness_builder` ran `npm run budget` on the judged build `4676c5d` (engine `305e9520118781cf`) from 02:17:32 to 02:52:30 UTC, exit 0, 34 min 58 s against the 23 min written for it (inside twice that); the record's hash is the judged build's. The files are in `out/work/budget/phase5/` and the tables are the new block at the top of "Render budget". A sample costs 1.9 times what it did in Phase 3 (16x9: 5.458 s, a `final` frame 259 s, one judged still 346 s measured and inside the 7 minutes; preview `draft` 3.3 s a frame; texture memory `full` 512.7 MB of 2400 MB, `web` 133.4 MB of 800 MB). Decided from it: the preview film of step 8 goes out as 26 parts of at most 75 frames across twelve builders, and the master render of Phase 6 is at `draft`, because `review` does not fit in `sandbox.previewFilmMaxHours` even with the units split.
+- 2026-11-22 · Phase 5 · 02:55 UTC. The cuts judge's major (the pack shows no fastest growth at frame cadence) checked by pictures: `bud_builder` rendered sheets of twelve consecutive frames from main (engine `305e9520118781cf`, records read) and looked at every tile. Frames 3 to 14, the hook breaking the soil: even steps, no stall and no jump, but no crumb moves while the hook comes up through the soil (kept open, the ground's). Frames 102 to 113, the husk letting go: a real pop. I looked at the sheet myself (`out/work/scratch/p5/bud/closer-dawn-f0102-to-f0113.jpg`): the husk is on the tip in frame 109, a faint smeared double in the air in 110 and lying on the soil in 111, identical in 111 to 113 and drawn about a quarter longer than on the tip; the seed leaves snap upright in the same two frames. In the code the fall is the last 16 percent of `huskDrop` (3.2 to 3.7 s), under three frames. Sent to `stem_builder` at 02:54 UTC (brief `out/work/briefs/p5-fix-stem.json`, report due 03:30 UTC): the release as one motion of 10 to 14 frames with a settle, the seed leaves easing upright, one husk size, the rest place as it is now so that frames 45, 60 and 195 do not move. The three bloom run sheets follow from `bud_builder`.
+- 2026-11-22 · Phase 5 · 02:55 UTC. `golden_builder`'s fix pass report read by its pictures (`out/work/scratch/p5/golden/`; commit `2b0e74a` on `agent/golden`, only `src/worlds/golden/air.ts`, `sky.ts`, `layers.ts`; records: engine `305e9520118781cf` unchanged, bloom unit `aeb58a7536b43d7c`, field unit `0c1077e580cfb3b4`; it reports frames 1350 and 1515 byte identical, which I check on the final stills after the merge). Better and taken: the specks have no level top at 52.7 and 53.4 s, and the haze under the field's sun is a softer, wider plume in place of the hard fan. Not better and sent back at 02:55 UTC (`out/work/briefs/p5-fix-golden-2.json`, report due 03:25 UTC): the sun's sink (6 px, the sun sits half behind the ridge and is dimmer, while the approved sun stands clear above its tree line, so it moves away from the approved image) comes out; the coarse specks from 53.5 s stand as about 30 pale dots all over the sky at 56 s, so they are to stay under about 4 degrees above the horizon and be about a third as many. Open and not the golden world's: the ridge stands about 40 px higher in the frame against the sun than the approved tree line (camera tilt or the far land); no broken lit cloud banks in front of the sun.
 
 ## Notes from Brandon
 
@@ -1038,6 +1076,8 @@ State at 01:50 UTC (12 running of 12, the limit). Rendering for the whole film r
 State at 02:07 UTC (8 running of 12 allowed). Round 22's renders, third send of 01:53 UTC for the eight still builders (`2fb6538`, with the frame check) and second send of 01:49 UTC for the other three (`41f10a3`); both commits build engine `305e9520118781cf`. Done and idle, their files taken in after each record was read: `field_builder` (finals 420 and 780), `disc_builder` (1515 and 1755), `golden_builder` (whole film sheets 1 to 3), `leaf_builder` in its last minutes (1080 and 1350). Still in their turns: `skin_builder` (0 in; 8, then the night stress), `lens_builder` (15 in; 23, then the field stress), `stem_builder` (30 in; 38), `petal_builder` (45 in; 53), `ground_builder` (60 in; 195), `hair_builder` (cut sheets 1 and 2 in; 3 and 4, then the eight stills each side of the cuts), `bud_builder` (the dawn stress in; the rain stress). `harness_builder` reported at 01:59 UTC and is idle: the film packs build for R5, R6, R4 and R2 at the `draft` tier and for R7 on the night set only; R7 for dawn, rain and field and the fallback of the fixed crop boxes are unproven until the real sets arrive. Idle: `modes_builder`, `export_builder`. No reviewer is running; `reviewer_01` to `reviewer_262` are used and closed.
 
 State at 02:35 UTC (9 running of 12 allowed). Round 22's critics and jury: `reviewer_263` (R4, GPT family), `reviewer_264` (R5, Claude family), `reviewer_265` (R6, Grok family) and `reviewer_266` (R7, Gemini family) were spawned at 02:24 UTC with their packs only and have all answered (02:25 to 02:30 UTC); the fifty jurors `reviewer_267` to `reviewer_316`, one judged frame each, five families a frame, were spawned 02:24 to 02:30 UTC as places came free under the limit, and 49 have answered; `reviewer_298` (frame 1080, Gemini family) is still out. Builders in their turns on the fix pass of round 22, briefs `out/work/briefs/p5-fix-*.md` sent 02:34 UTC, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder`, `petal_builder`, and `golden_builder` (head start of 02:13 UTC plus the addition). `harness_builder` runs the render budget of the judged build since 02:17 UTC, due 02:40 UTC. Idle: `disc_builder` (its head start merged as `adaf813`), `skin_builder`, `stem_builder`, `bud_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
+
+State at 02:56 UTC (9 running of 12 allowed). All fifty jurors of round 22 have answered (`reviewer_298` at 02:45 UTC), none replaced. `harness_builder`'s render budget is in (02:17 to 02:52 UTC, exit 0) and it is idle. In their turns on the fix pass of round 22, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder` (pushed `08b2907` at 02:46 UTC, report not in yet), `petal_builder`, and `bud_builder` (its dawn run sheets are in; the three bloom run sheets follow, due 03:15 UTC). `golden_builder` reported at 02:53 UTC (`2b0e74a`) and was sent back at 02:55 UTC for a short second pass, due 03:25 UTC. `stem_builder` was started at 02:54 UTC on the husk's pop, due 03:30 UTC. Idle: `disc_builder`, `skin_builder`, `harness_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
 
 ## Rounds
 
@@ -1499,6 +1539,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:37 UTC · Status 64: round 22 answered (7, 8, 6, 6; jury fails on rain, night, field), fix pass open
 - 2026-11-22 02:38 UTC · Fix pass of round 22: jobs at 02:38, the cuts judge's check
 - 2026-11-22 02:46 UTC · Round 22: the jury is in (29 of 50 overall; fails on frames 420, 780, 1755)
+- 2026-11-22 02:56 UTC · Phase 5: render budget measured again, the husk's pop found and sent out, golden hour pass read
 
 ## Session log
 
