@@ -38,6 +38,8 @@ const DEW_SHARE = 0.05
 // A damp hair is drawn at least this wide and this long on the screen, and that much fainter: the same light, spread, so it is a soft stroke and never a row of single lit pixels.
 const SOFT_HALF_PX = 0.75
 const SOFT_LONG_PX = 3
+// A dry hair too thin for a ribbon is a soft stroke this wide, with the light of its true width: a faint whole line, never a row of lit dots.
+const FINE_HALF_PX = 0.6
 // Wet hairs gather into tufts: this many rows of them from the first hair of a coat to its last, and they lean this hard toward their tuft.
 const TUFT_BANDS = 350
 const TUFT_LEAN = 1.1
@@ -93,6 +95,7 @@ const float DEW_OF_HAIR = 0.3;
 const float DEW_FACE = 0.0;
 const float SOFT_HALF_PX = ${SOFT_HALF_PX.toFixed(2)};
 const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
+const float FINE_HALF_PX = ${FINE_HALF_PX.toFixed(2)};
 const float TUFT_BANDS = ${(TUFT_BANDS * 2 * Math.PI).toFixed(2)};
 const float TUFT_LEAN = ${TUFT_LEAN.toFixed(2)};
 const float WET_BACK = 0.3;
@@ -265,7 +268,12 @@ Strand strandAt(float t) {
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
   vWorld = s.world;
   // The shadow map cannot tell a hair from the body it grows on, a millimeter away, and would darken the foot of every hair on an outline. It is asked farther out, where it can tell what else is in the way; the body's own shade is the term below.
-  vLitAt = s.world + plantDirection(hairStand) * (SHADE_OUT_M * plantSize());
+#ifdef SOFT
+  float litOut = mix(SHADE_OUT_M, min(SHADE_OUT_M, 2.0 * hairRoot.w), (SOFT_HALF_PX - uHairLeast) / (SOFT_HALF_PX - FINE_HALF_PX));
+#else
+  float litOut = SHADE_OUT_M;
+#endif
+  vLitAt = s.world + plantDirection(hairStand) * (litOut * plantSize());
   vDepth = s.depth;
   // A hair grows out of a body. One that points away from the sun stands in that body's shade, closer than the shadow map can tell, and one that points away from the eye is behind it.
   vec3 out3 = plantDirection(hairStand);
@@ -325,6 +333,9 @@ const ribbonVertex = /* glsl */ `
 out float vAcross;
 out float vHalf;
 out float vShare;
+#ifdef SOFT
+uniform float uHairLeast;
+#endif
 ${strand}
 void main() {
   readHair(gl_VertexID / 10);
@@ -336,11 +347,13 @@ void main() {
   vec3 at = s.world;
 #ifdef SOFT
   bool spread = true;
+  float least = uHairLeast;
 #else
   bool spread = max(uPlantDew, uPlantWet) > 0.0;
+  float least = SOFT_HALF_PX;
 #endif
   if (spread) {
-    float soft = max(halfPx, SOFT_HALF_PX);
+    float soft = max(halfPx, least);
     float stretch = clamp(SOFT_LONG_PX / max(hairLong, 1e-3), 1.0, 6.0);
     share *= halfPx / (soft * stretch);
     halfPx = soft;
@@ -531,7 +544,8 @@ export class HairSet {
   private readonly ribbonsSharp = new THREE.BufferGeometry()
   private readonly ribbonsSoft = new THREE.BufferGeometry()
   private readonly lineFade = { value: 1 }
-  private readonly softFade = { value: 0 }
+  private readonly softFade = { value: SOFT_LIGHT }
+  private readonly softLeast = { value: FINE_HALF_PX }
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
   private readonly pickTexture: THREE.DataTexture
@@ -578,7 +592,7 @@ export class HairSet {
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
     const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture } }
     const make = (label: string, vertex: string, define: string, sharp = false, fade?: { value: number }, soft = ''): Surface =>
-      makePartSurface(options, { name: label, vertex: `${soft}${vertex}`, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: fade ? { ...own, uHairFade: fade } : own })
+      makePartSurface(options, { name: label, vertex: `${soft}${vertex}`, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: fade ? { ...own, uHairFade: fade, uHairLeast: this.softLeast } : own })
     this.surface = make(name, lineVertex, '#define FADE 1\n', false, this.lineFade)
     const close = make(`${name} close`, ribbonVertex, '#define RIBBON 1\n')
     const line = (geometry: THREE.BufferGeometry, surface: Surface): THREE.Mesh => {
@@ -766,7 +780,7 @@ export class HairSet {
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     this.lineFade.value = 1 - wide
-    this.softFade.value = SOFT_LIGHT * wide
+    this.softLeast.value = FINE_HALF_PX + (SOFT_HALF_PX - FINE_HALF_PX) * wide
     const geometry = ribbon ? this.ribbons : this.lines
     const sharp = ribbon ? this.ribbonsSharp : this.linesSharp
     // A clear hair adds its light to what is behind it. Rimed, it covers it.
@@ -778,7 +792,7 @@ export class HairSet {
     material.blendSrcAlpha = rimed ? THREE.ZeroFactor : THREE.OneFactor
     if (soft) {
       const far = this.softRange(camera, object)
-      this.ribbonsSoft.setDrawRange(far.start, wide > 0 ? far.count : 0)
+      this.ribbonsSoft.setDrawRange(far.start, far.count)
       return
     }
     const m = object.matrixWorld.elements
@@ -788,7 +802,7 @@ export class HairSet {
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
     const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
     const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
-    if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4 || (!ribbon && wide >= 1)) {
+    if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4 || (!ribbon && !rimed)) {
       geometry.setDrawRange(0, 0)
       sharp.setDrawRange(0, 0)
       return
