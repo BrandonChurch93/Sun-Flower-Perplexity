@@ -5,7 +5,7 @@ import { leafBroadening, leafCount, leafElevation, leafLateGrowth, leafLength, u
 
 const start = config.segments[config.segments.length - 1].start
 const first = Math.round(start * config.film.fps)
-const last = Math.round(config.film.durationSeconds * config.film.fps)
+const last = Math.round(config.growth.seconds * config.film.fps)
 const timeOf = (f: number): number => f / config.film.fps
 const plants = [0, 1, 7]
 

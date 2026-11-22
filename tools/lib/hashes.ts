@@ -56,9 +56,13 @@ export function computeHashes(): Hashes {
 }
 
 export function approvedFiles(): string[] {
-  const dir = path.join(ROOT, 'references', 'approved')
-  if (!fs.existsSync(dir)) return []
-  return fs.readdirSync(dir).filter((n) => /\.(png|jpg|jpeg|webp)$/i.test(n)).map((n) => `references/approved/${n}`)
+  const out: string[] = []
+  for (const folder of ['references/approved', 'references/v2/keys']) {
+    const dir = path.join(ROOT, ...folder.split('/'))
+    if (!fs.existsSync(dir)) continue
+    for (const n of fs.readdirSync(dir)) if (/\.(png|jpg|jpeg|webp)$/i.test(n)) out.push(`${folder}/${n}`)
+  }
+  return out
 }
 
 export function versions(): Record<string, string> {

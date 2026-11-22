@@ -1,5 +1,5 @@
 import { config, segmentStart } from '../config.ts'
-import { segmentById } from '../director/timeline.ts'
+import { segmentById } from '../director/growthline.ts'
 import { world as dawn } from '../worlds/dawn/index.ts'
 import { grassCover, stemFoot, turfCover } from './cover.ts'
 import { cropLight } from './light.ts'

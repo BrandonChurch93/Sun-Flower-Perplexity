@@ -4,7 +4,7 @@ import { Monotone, clamp, smoothstep } from '../../../core/curves.ts'
 import { RAY_FIRST } from '../../growth.ts'
 
 const [bloom0, bloom1] = config.plant.stages.bloom
-const end = config.film.durationSeconds
+const end = config.growth.seconds
 
 // The outermost floret stands at this share of the head's radius.
 export const RIM_SHARE = 0.93

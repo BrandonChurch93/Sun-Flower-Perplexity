@@ -52,8 +52,8 @@ describe('config validation', () => {
   })
 
   it('fails when the last segment does not end at the film length', () => {
-    expect(broken((c) => (c.segments[c.segments.length - 1].end -= 1))).toThrow(/does not end at film\.durationSeconds/)
-    expect(broken((c) => (c.film.durationSeconds += 1))).toThrow(/does not end at film\.durationSeconds/)
+    expect(broken((c) => (c.segments[c.segments.length - 1].end -= 1))).toThrow(/does not end at growth\.seconds/)
+    expect(broken((c) => (c.growth.seconds += 1))).toThrow(/does not end at growth\.seconds/)
   })
 
   it('fails when a key lies outside the segment of its unit', () => {

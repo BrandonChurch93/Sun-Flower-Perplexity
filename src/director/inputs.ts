@@ -3,7 +3,7 @@ import { lerp, smootherstep } from '../core/curves.ts'
 import { sunDirection, type WorldDef } from '../core/world.ts'
 import type { PlantInputs } from '../plant/growth.ts'
 import { worldOf } from './registry.ts'
-import { cuts, segments } from './timeline.ts'
+import { cuts, segments } from './growthline.ts'
 
 export function plantInputsFor(def: WorldDef): PlantInputs {
   const s = sunDirection(def)

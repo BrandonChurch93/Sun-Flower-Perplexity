@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { config, timeOf } from '../src/config.ts'
 import { plantInputsAt } from '../src/director/inputs.ts'
-import { cuts } from '../src/director/timeline.ts'
+import { cuts } from '../src/director/growthline.ts'
 import { usePlant } from '../src/plant/growth.ts'
 import { headAt, stemLength } from '../src/plant/model.ts'
 import { STEM_LEAN, STEM_SWING, sway } from '../src/plant/wind.ts'

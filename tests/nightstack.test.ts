@@ -4,7 +4,7 @@ import { heightAt, leafAge, leafCount, leafStemFraction, usePlant } from '../src
 
 const fps = config.film.fps
 const bloom = Math.round(config.segments.find((s) => s.id === 'bloom')!.start * fps)
-const last = Math.round(config.film.durationSeconds * fps)
+const last = Math.round(config.growth.seconds * fps)
 const night = config.keys.find((key) => key.id === 'night')!.time
 const plants = [0, 1, 7]
 const jointAt = (i: number, t: number): number => leafStemFraction(i, t) * heightAt(t)

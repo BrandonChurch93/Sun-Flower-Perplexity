@@ -1,24 +1,27 @@
-import { config, frameCount, frameOf, type Segment } from '../config.ts'
+import { config, frameCount, frameOf } from '../config.ts'
+import { barTime } from '../v2/clock.ts'
 
-export interface TimedSegment extends Segment { firstFrame: number; lastFrame: number; frames: number }
+export interface TimedSegment { id: string; name: string; world: string; kind: string; fromBar: number; toBar: number; start: number; end: number; firstFrame: number; lastFrame: number; frames: number }
 export interface Cut { index: number; frame: number; time: number; fromSegment: string; toSegment: string; fromWorld: string; toWorld: string }
 export interface TimedKey { id: string; unit: string; time: number; frame: number; image: string; settled: string[] }
 export interface JudgedFrame { frame: number; unit: string; key: string | null; why: string }
 
-export const segments: TimedSegment[] = config.segments.map((s) => {
-  const firstFrame = frameOf(s.start)
-  const lastFrame = frameOf(s.end) - 1
-  return { ...s, firstFrame, lastFrame, frames: lastFrame - firstFrame + 1 }
+// The film is one place with no cut in it. Its stretches are sections of the track, and each starts on the frame that holds its bar line.
+const WORLD = 'place'
+const starts = config.sections.map((s, i) => (i === 0 ? 0 : Math.floor(barTime(s.fromBar) * config.film.fps + 1e-6)))
+
+export const segments: TimedSegment[] = config.sections.map((s, i) => {
+  const firstFrame = starts[i]
+  const lastFrame = i + 1 < starts.length ? starts[i + 1] - 1 : frameCount - 1
+  return { id: s.id, name: s.name, world: WORLD, kind: s.kind, fromBar: s.fromBar, toBar: s.toBar, start: firstFrame / config.film.fps, end: (lastFrame + 1) / config.film.fps, firstFrame, lastFrame, frames: lastFrame - firstFrame + 1 }
 })
 
 export const cuts: Cut[] = []
-for (let i = 1; i < segments.length; i++) {
-  const a = segments[i - 1]
-  const b = segments[i]
-  if (a.world !== b.world) cuts.push({ index: cuts.length + 1, frame: b.firstFrame, time: b.start, fromSegment: a.id, toSegment: b.id, fromWorld: a.world, toWorld: b.world })
-}
 
-export const keys: TimedKey[] = config.keys.map((k) => ({ id: k.id, unit: k.unit, time: k.time, frame: frameOf(k.time), image: k.image, settled: k.settled ?? [] }))
+export const keys: TimedKey[] = config.looks.map((l) => {
+  const frame = l.seconds !== undefined ? frameOf(l.seconds) : Math.floor(barTime(l.bar ?? 1, l.beat ?? 1) * config.film.fps + 1e-6)
+  return { id: l.id, unit: l.section, time: frame / config.film.fps, frame, image: l.image, settled: [] }
+})
 
 export function clampFrame(frame: number): number {
   return Math.min(frameCount - 1, Math.max(0, Math.round(frame)))
@@ -32,23 +35,20 @@ export function segmentAt(frame: number): TimedSegment {
 
 export function segmentById(id: string): TimedSegment {
   const s = segments.find((x) => x.id === id)
-  if (!s) throw new Error(`unknown unit "${id}"`)
+  if (!s) throw new Error(`unknown section "${id}"`)
   return s
 }
 
-export function worldAt(frame: number): string {
-  return segmentAt(frame).world
+export function worldAt(_frame: number): string {
+  return WORLD
 }
 
-export function lastCutBefore(frame: number): Cut | null {
-  let found: Cut | null = null
-  for (const c of cuts) if (c.frame <= frame) found = c
-  return found
+export function lastCutBefore(_frame: number): Cut | null {
+  return null
 }
 
-export function worldStartTime(frame: number): number {
-  const cut = lastCutBefore(frame)
-  return cut ? cut.time : 0
+export function worldStartTime(_frame: number): number {
+  return 0
 }
 
 export function judgedFrames(): JudgedFrame[] {
@@ -64,7 +64,8 @@ export function judgedFrames(): JudgedFrame[] {
   }
   add(0, null, 'the first frame')
   add(frameOf(config.film.hookSeconds), null, 'the frame at film.hookSeconds')
-  for (const k of keys) add(k.frame, k.id, `the key ${k.id}`)
+  for (const k of keys) add(k.frame, k.id, `the look ${k.id}`)
+  add(frameCount - 1, null, 'the last frame')
   return out.sort((a, b) => a.frame - b.frame)
 }
 

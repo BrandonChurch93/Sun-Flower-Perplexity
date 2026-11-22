@@ -182,7 +182,7 @@ const elevationCurve = new Monotone([
   [tiltStart, 90],
   [turnStart, 34],
   [turnEnd, 9],
-  [config.film.durationSeconds, 5],
+  [config.growth.seconds, 5],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
 const EARLY_TURN = 6 * RAD
@@ -456,7 +456,7 @@ export function leafStemFraction(i: number, time: number): number {
 const LATE_START = config.segments[config.segments.length - 1].start
 export function leafLateGrowth(i: number, time: number, lag = 0): number {
   // A time past the film's end asks what a leaf was planned to be: the parts size their grids by it.
-  if (time <= LATE_START || time > config.film.durationSeconds) return 0
+  if (time <= LATE_START || time > config.growth.seconds) return 0
   const rank = i / (leafCount - 1)
   const start = LATE_START + lag + 3.2 * (0.6 * (variant === 0 ? 1 - rank : rank) + 0.4 * rnd(13, i))
   return smoothstep(start, start + 2.5, time)
@@ -482,7 +482,7 @@ export function leafLength(i: number, time: number): number {
   const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))
   const hold = heldLeaf(i)
   const held = hold?.lengthScale === undefined ? length : length * lerp(1, hold.lengthScale, holdAt(time))
-  return time <= LATE_START || time > config.film.durationSeconds ? held : held * (1 + (0.3 + 0.3 * Math.sin(Math.PI * rank)) * lateShare() * leafLateGrowth(i, time))
+  return time <= LATE_START || time > config.growth.seconds ? held : held * (1 + (0.3 + 0.3 * Math.sin(Math.PI * rank)) * lateShare() * leafLateGrowth(i, time))
 }
 
 // Leaves open upward, settle outward and hang when the light is gone.

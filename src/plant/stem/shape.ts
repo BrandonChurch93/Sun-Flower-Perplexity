@@ -5,7 +5,7 @@ import { heightAt, leafAge, leafCount, leafStemFraction, seedLeafFraction, stemR
 import type { Pose } from '../skeleton.ts'
 
 const TAU = Math.PI * 2
-const END = config.film.durationSeconds
+const END = config.growth.seconds
 
 // The tissue of the stem is named by where it ends up, in meters from the foot at the last frame.
 // Anchors: the foot, the middle of the stretch below the seed leaves, the seed-leaf joint, every leaf node, the top.

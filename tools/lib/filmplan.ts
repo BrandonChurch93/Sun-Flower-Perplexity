@@ -19,6 +19,13 @@ export function juryFrames(): number[] {
   return judgedFrames().map((j) => j.frame)
 }
 
+// A pack larger than one message allows goes to as many fresh critics as it needs, in equal shares.
+export function sharesOf(files: number): number[] {
+  const most = config.critics.maxFilesPerMessage
+  const packs = Math.max(1, Math.ceil(files / most))
+  return Array.from({ length: packs }, (_, i) => Math.floor(files / packs) + (i < files % packs ? 1 : 0))
+}
+
 export function fileCounts(): Record<string, number> {
   return {
     R5: FILM_SHEETS + Math.ceil(keys.length / KEYS_PER_FILE),
