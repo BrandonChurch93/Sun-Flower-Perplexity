@@ -5,7 +5,7 @@ import sharp from 'sharp'
 import { config } from '../src/config.ts'
 import { cuts, keys } from '../src/director/timeline.ts'
 import { isTier } from '../src/core/tiers.ts'
-import { num, parseArgs } from './lib/args.ts'
+import { flag, num, parseArgs } from './lib/args.ts'
 import { machine } from './lib/browser.ts'
 import { comparePair } from './compare.ts'
 import { computeHashes } from './lib/hashes.ts'
@@ -13,10 +13,11 @@ import { canvas, longEdge, rel, strip, type Placed } from './lib/layout.ts'
 import { isMain } from './lib/main.ts'
 import { ROOT, WORK } from './lib/paths.ts'
 import { asPng, pixelsOnly } from './lib/packimage.ts'
+import { filmNeeds, filmPacks, needLines } from './filmpacks.ts'
 import { unitPacks } from './unitpacks.ts'
 import { cutSheet, filmSheets, type SheetOptions } from './sheet.ts'
 
-export interface PackContext { phase: number; round: number; unit: string | null; tier?: string; only?: string[] }
+export interface PackContext { phase: number; round: number; unit: string | null; tier?: string; only?: string[]; list?: boolean; noRender?: boolean }
 export interface PackFile { image: Buffer; meaning: Record<string, unknown>; name?: string; suffix?: string }
 export interface Pack { critic: string; files: PackFile[]; manifest: (names: string[]) => string[]; manifestName?: string }
 
@@ -99,18 +100,26 @@ const PHASES: Record<number, ((context: PackContext) => Promise<Pack | Pack[]>)[
   2: [blockoutPack],
   3: [unitPacks],
   4: [unitPacks],
+  5: [filmPacks],
 }
 
 export async function buildPacks(context: PackContext): Promise<string[]> {
   const builders = PHASES[context.phase]
   if (!builders) throw new Error(`the packs of phase ${context.phase} are not built yet; phases with packs: ${Object.keys(PHASES).join(', ')}`)
+  if (context.list || context.noRender) {
+    if (!builders.includes(filmPacks)) throw new Error('--list and --no-render are for the packs of the whole film round (phase 5)')
+    if (context.list) {
+      for (const line of needLines(filmNeeds(context))) console.log(`pack · ${line}`)
+      return []
+    }
+  }
   const round = roundName(context.round)
   const hashes = computeHashes()
   let commit = 'unknown'
   try {
     commit = execSync('git rev-parse HEAD', { cwd: ROOT, encoding: 'utf8' }).trim()
   } catch {}
-  const perUnit = builders.includes(unitPacks)
+  const perUnit = builders.includes(unitPacks) || builders.includes(filmPacks)
   const tier = context.tier ?? 'final'
   const test = perUnit && tier !== 'final'
   if (test) console.log(`pack · TEST PACK · judged stills at the ${tier} tier, not final · DO NOT SEND THIS PACK TO A CRITIC`)
@@ -149,5 +158,5 @@ if (isMain(import.meta.url)) {
   const args = parseArgs()
   const tier = typeof args.tier === 'string' ? args.tier : undefined
   if (tier !== undefined && !isTier(tier)) throw new Error(`unknown tier "${tier}"`)
-  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null, tier, only: typeof args.only === 'string' ? args.only.split(',').map((c) => c.trim().toUpperCase()) : undefined })
+  await buildPacks({ phase: num(args, 'phase'), round: num(args, 'round'), unit: typeof args.unit === 'string' ? args.unit : null, tier, only: typeof args.only === 'string' ? args.only.split(',').map((c) => c.trim().toUpperCase()) : undefined, list: flag(args, 'list'), noRender: flag(args, 'no-render') })
 }
