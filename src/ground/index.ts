@@ -74,6 +74,7 @@ export class Ground {
       uCrack: { value: new THREE.Vector4(crack.halfLenM, crack.fromM, crack.toM, crack.openS) },
       uCrackCut: { value: new THREE.Vector4(crack.footM, crack.windM, crack.shutS, crack.lipM) },
       uCrackWay: { value: new THREE.Vector4(crack.aheadM, crack.turn, crack.footS, crack.fillS) },
+      uCrackBay: { value: new THREE.Vector4(crack.bayM, crack.bayLenM, crack.bayFromS, crack.bayToS) },
       uDome: { value: new THREE.Vector3(hole.domeM, hole.flatM, hole.wayOpen) },
       uSunWay: { value: new THREE.Vector2(sunWayDir.x, sunWayDir.z) },
       uFurrow: { value: new THREE.Vector4(furrow.leftM, furrow.slope, furrow.fromM, furrow.toM) },

@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
-import { crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+import { crack, crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
 export { laneDir }
 
@@ -349,8 +349,9 @@ void main() {
   float span = crackSpan(c);
   if (span > 0.0) {
     float d = crackLine(c);
-    float edge = span * (crackOpen() + 0.6 * aCenter.w) * (1.0 - crackFill(c, hash11(own + 13.0)));
-    c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(0.012, 0.03, abs(d))));
+    float bay = crackBay(c, d);
+    float edge = span * (crackOpen() + uCrackBay.x * bay + 0.6 * aCenter.w) * (1.0 - crackFill(c, hash11(own + 13.0), bay));
+    c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(${crack.reachM} + uCrackBay.x * bay, ${2.5 * crack.reachM} + 2.0 * uCrackBay.x * bay, abs(d))));
   }
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
@@ -439,7 +440,7 @@ void main() {
   float dawn = dawnOnly() * uDew;
   float span = crackSpan(p);
   if (span > 0.0) {
-    float d = -crackLine(p) - crackOpen() * span;
+    float d = -crackLine(p) - (crackOpen() + uCrackBay.x * crackBay(p, -1.0)) * span;
     float lip = span * (1.0 - smoothstep(uCrackWay.w, uCrackCut.z, uTime)) * (1.0 - smoothstep(0.0, uCrackCut.w, d)) * step(-0.001, d) * smoothstep(-0.3, 0.4, dot(ball.xz, vec2(uLane.y, -uLane.x)));
     lit = max(lit, lip * foot * smoothstep(-0.002, 0.004, vWorld.y));
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
