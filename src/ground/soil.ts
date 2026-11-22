@@ -289,13 +289,16 @@ vec3 proud(float heightM, float dew) {
   return mix(vec3(1.0), mix(vec3(0.85), mix(vec3(2.1, 1.65, 1.8), vec3(1.6, 1.35, 1.5), dew), smoothstep(-0.002, 0.012, heightM)), 1.0 - smoothstep(0.1, 0.45, uSunDir.y));
 }
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
-float grains(vec3 world, float share) {
-  float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 3.0, 0.0005));
+float grainsAt(vec3 world, float share, float px) {
+  float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * px, 0.0005));
   vec3 a = world * exp2(-floor(l));
   vec3 b = a * 0.5;
   float fine = step(1.0 - share, hash31(floor(a))) * smoothstep(0.42, 0.15, length(fract(a) - 0.5));
   float coarse = step(1.0 - share, hash31(floor(b))) * smoothstep(0.42, 0.15, length(fract(b) - 0.5));
   return mix(fine, coarse, fract(l));
+}
+float grains(vec3 world, float share) {
+  return grainsAt(world, share, 3.0);
 }
 float sparkle(vec3 world, vec3 v, vec3 n) {
   float skim = 1.0 - max(dot(n, v), 0.0);

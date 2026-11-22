@@ -389,8 +389,10 @@ const vec2 CREST = vec2(0.55, 1.4);
 const float CREST_TOP = 0.7;
 // How much of the sun the crack's left lip takes where it turns to the gap.
 const float CRACK_LIP = 0.8;
-// The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, and how bright it is.
-const vec2 DEW_GLINT = vec2(0.1, 0.5);
+// The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, how bright it is, and how many pixels a grain spans at the least, so that no point lives inside one pixel.
+const vec3 DEW_GLINT = vec3(0.1, 0.3, 6.0);
+// In the dawn the gloss widens by this much of the normal's spread across one pixel.
+const float SPREAD = 0.5;
 ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
@@ -448,10 +450,12 @@ void main() {
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
+  float power = mix(24.0, 160.0, uWet);
+  float held = mix(power, power / (1.0 + power * SPREAD * (dot(dFdx(n), dFdx(n)) + dot(dFdy(n), dFdy(n)))), dawn);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), held) * (held / power) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
-  color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
+  color += uSunColor * (grainsAt(vWorld + 0.37, DEW_GLINT.x, DEW_GLINT.z) * DEW_GLINT.y * dawn * lit);
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
