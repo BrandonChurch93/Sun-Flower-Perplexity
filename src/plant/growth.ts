@@ -275,14 +275,25 @@ const rayRise = (span: [number, number, number], at: number): number => {
   return lerp(smootherstep(span[0], span[1], time), smoothstep(span[0], span[1], time), span[2])
 }
 
+// A ray that has not begun to lift by `RAY_HELD` waits its turn: the lift runs on round the rim from where the front stands then, on both sides, to the point across from `RAY_FIRST`, each ray a little after the one before it and none faster than the rays of the front. The last is open when the last was open before. What `raySpan` gives such a ray still times its cup and its flattening. The neighbors in the field, far off, keep their own starts.
+const RAY_TURN_FROM = 84 * RAD
+function rayTurn(k: number): [number, number, number] {
+  const span = raySpan(k)
+  if (variant !== 0 || span[0] <= RAY_HELD + 0.01) return span
+  const away = Math.acos(Math.cos((k / rayCount) * TAU - RAY_FIRST))
+  const along = Math.min(1, Math.max(0, (away - RAY_TURN_FROM) / (Math.PI - RAY_TURN_FROM)))
+  const start = RAY_HELD + 0.13 + 1.15 * along + 0.04 * rnd(41, k)
+  return [start, start + lerp(RAY_SECONDS, 3.59, along), 1]
+}
+
 export function rayOpen(k: number, time: number): number {
-  return rayRise(raySpan(k), time)
+  return rayRise(rayTurn(k), time)
 }
 
 // A ray lies folded in over the face until it opens. It arrives cupped forward and flattens over the seconds that follow.
 export function rayAngle(k: number, time: number): number {
   const span = raySpan(k)
-  const open = rayRise(span, time)
+  const open = rayOpen(k, time)
   const lift = lerp(-68, 84 + 12 * (rnd(42, k) - 0.5), open)
   const held = rayRise(span, RAY_HELD)
   if (open <= held) return lift * RAD
