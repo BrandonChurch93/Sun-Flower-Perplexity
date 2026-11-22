@@ -14,7 +14,7 @@ import { regionsOf } from './lib/regions.ts'
 import type { Pack, PackContext, PackFile } from './pack.ts'
 import { cutSheet, cutSheetPlan, filmSheetPlans, filmSheets, frameLabel, sheetReady, type SheetOptions, type SheetPlan } from './sheet.ts'
 import { stillPath } from './still.ts'
-import { stress, stressFiles, stressReady } from './stress.ts'
+import { stress, stressFiles, stressRange, stressReady } from './stress.ts'
 import { packsOf, type Group } from './unitpacks.ts'
 
 const master = config.formats.master
@@ -38,18 +38,33 @@ const source = (file: string): string => path.relative(ROOT, file)
 const seconds = (frame: number, digits = 2): string => `${timeOf(frame).toFixed(digits)} s`
 const wanted = (context: PackContext, critic: string): boolean => !context.only || context.only.includes(critic)
 
-export interface Need { what: 'still' | 'sheet' | 'stress'; label: string; tier: string; format: string; file: string; have: boolean; stills?: string }
+export interface Need { what: 'still' | 'sheet' | 'stress'; label: string; tier: string; format: string; file: string; have: boolean; stills?: string; frames: number[]; make: string }
 
-function stillHave(frame: number, tier: string, format: string, checked: boolean): boolean {
+export const stillCommand = (frames: number[], tier: string, format: string, check: boolean): string => `npm run -s still -- --frames ${frames.join(',')} --tier ${tier} --format ${format} --no-look${check ? ' --check' : ''}`
+export const sheetCommand = (which: string, o: SheetOptions): string => `npm run -s sheet -- ${which} --tier ${o.tier} --format ${o.format}`
+
+export function stillHave(frame: number, tier: string, format: string, checked: boolean): boolean {
   const record = readRecord(stillPath({ frame, tier, format, assets: ASSETS, diag: 'beauty' }))
   return matches(record, computeHashes(), { kind: 'still', format, tier, assets: ASSETS, diag: 'beauty', units: [segmentAt(frame).id] }) && (!checked || record?.check !== undefined)
 }
 
-function sheetPlans(context: PackContext): SheetPlan[] {
+function sheetPlans(context: PackContext): { plan: SheetPlan; make: string }[] {
   const SHEETS = sheetsOf(context)
-  const film = wanted(context, 'R5') || wanted(context, 'R4') ? filmSheetPlans(SHEETS) : []
-  const across = wanted(context, 'R4') ? cuts.map((c) => cutSheetPlan(c.index, SHEETS)) : []
+  const film = wanted(context, 'R5') || wanted(context, 'R4') ? filmSheetPlans(SHEETS).map((plan) => ({ plan, make: sheetCommand('--film', SHEETS) })) : []
+  const across = wanted(context, 'R4') ? cuts.map((c) => ({ plan: cutSheetPlan(c.index, SHEETS), make: sheetCommand(`--cut ${c.index}`, SHEETS) })) : []
   return [...across, ...film]
+}
+
+export function stillNeed(frame: number, tier: string): Need {
+  const have = stillHave(frame, tier, master.id, true)
+  return { what: 'still', label: `frame ${frame}`, tier, format: master.id, file: stillPath({ frame, tier, format: master.id, assets: ASSETS, diag: 'beauty' }), have, frames: have ? [] : [frame], make: stillCommand([frame], tier, master.id, true) }
+}
+
+export function sheetNeed(plan: SheetPlan, o: SheetOptions, make: string, file = plan.file, ready?: boolean): Need {
+  const have = ready ?? sheetReady({ ...plan, file }, o)
+  const lacking = have ? [] : plan.frames.filter((f) => !stillHave(f, o.tier, o.format, false))
+  const held = plan.frames.length - lacking.length
+  return { what: 'sheet', label: `frames ${plan.frames[0]} to ${plan.frames[plan.frames.length - 1]}`, tier: o.tier, format: o.format, file, have: have || lacking.length === 0, ...(have ? {} : { stills: `the sheet is not made; ${held} of ${plan.frames.length} of its stills are here` }), frames: lacking, make }
 }
 
 function stillFrames(context: PackContext): number[] {
@@ -63,19 +78,18 @@ function stillFrames(context: PackContext): number[] {
 export function filmNeeds(context: PackContext): Need[] {
   const tier = context.tier ?? 'final'
   const out: Need[] = []
-  for (const frame of stillFrames(context)) out.push({ what: 'still', label: `frame ${frame}`, tier, format: master.id, file: stillPath({ frame, tier, format: master.id, assets: ASSETS, diag: 'beauty' }), have: stillHave(frame, tier, master.id, true) })
+  for (const frame of stillFrames(context)) out.push(stillNeed(frame, tier))
   const SHEETS = sheetsOf(context)
-  for (const plan of sheetPlans(context)) {
-    const have = sheetReady(plan, SHEETS)
-    const held = plan.frames.filter((f) => stillHave(f, SHEETS.tier, SHEETS.format, false)).length
-    out.push({ what: 'sheet', label: `frames ${plan.frames[0]} to ${plan.frames[plan.frames.length - 1]}`, tier: SHEETS.tier, format: SHEETS.format, file: plan.file, have: have || held === plan.frames.length, ...(have ? {} : { stills: `the sheet is not made; ${held} of ${plan.frames.length} of its stills are here` }) })
-  }
+  for (const { plan, make } of sheetPlans(context)) out.push(sheetNeed(plan, SHEETS, make))
   if (wanted(context, 'R7')) {
     for (const unit of config.quality.stress.units) {
       const files = stressFiles(unit)
       const ready = stressReady(unit)
-      out.push({ what: 'stress', label: `unit ${unit} frame ${files.frame} before encoding`, tier: config.quality.stress.tier, format: master.id, file: files.source, have: ready.source })
-      out.push({ what: 'stress', label: `unit ${unit} frame ${files.frame} after encoding at ${low} Mbit/s`, tier: config.quality.stress.tier, format: master.id, file: files.after, have: ready.after })
+      const [first, last] = stressRange(unit)
+      const frames = ready.source && ready.after ? [] : Array.from({ length: last - first + 1 }, (_, i) => first + i)
+      const make = `npm run -s stress -- --unit ${unit}`
+      out.push({ what: 'stress', label: `unit ${unit} frame ${files.frame} before encoding`, tier: config.quality.stress.tier, format: master.id, file: files.source, have: ready.source, frames, make })
+      out.push({ what: 'stress', label: `unit ${unit} frame ${files.frame} after encoding at ${low} Mbit/s`, tier: config.quality.stress.tier, format: master.id, file: files.after, have: ready.after, frames, make })
     }
   }
   return out
