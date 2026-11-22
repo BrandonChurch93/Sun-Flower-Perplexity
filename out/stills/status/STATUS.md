@@ -1,12 +1,12 @@
-# Status 86
+# Status 87
 
-2026-11-22 10:21 UTC
+2026-11-22 10:44 UTC
 
-- Status 86 · Phase 6. QA gauntlet pass 1 of 2: 29 of the 33 items have their evidence and pass; the gate is all 15 green (13 machine checks, D2, D3); item 20 fails (config values copied as plain numbers in src/), its fix is being made in a side worktree and changes no number; items 23 to 25 (export page, subfolder, autopilot and live) are being captured now.
-- Next: write the 33 lines under QA results, merge the item 20 fix once stills prove no pixel changed, then step 13: proof, memory test, final stills, record round run 2 of 2 and all 26 film parts on the fixed build, then gauntlet pass 2 and BUILD COMPLETE. Time used: 3.5 h of 10 h.
+- Status 87 · Phase 6. QA gauntlet pass 1 is written: 31 of 33 items pass, items 20 (values copied from config into src) and 25 (autopilot evidence) fail. The item 20 fix is merged (engine 96146165ee8a578d): 18 frames rendered from both builds are the same by pixel hash, and the first nine final stills from the builders are byte for byte those of round 25. Step 13 runs: proof and memory test on this VM, all 55 pack files and 26 film parts with the 12 builders.
+- Next: Take in the pack files, run measure, compare and keep, run record round 26 (24 critics, 50 jurors, run 2 of 2), join the film again, publish, then gauntlet pass 2 with a new autopilot capture. Time used: 3.9 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: QA item 1: frames 0 and 5, no fade in, the hook already moving
-- `status-2.jpg`: QA item 4: both sides of each of the four cuts, each wholly its own world
-- `status-3.jpg`: QA item 23: the export page before it starts, this machine's check frame beside the kept still
-- `status-4.jpg`: QA item 24: frame 1515 drawn from the build served under a subfolder path
+- `status-1.jpg`: QA item 23, the export page while it runs: frames done, elapsed, remaining
+- `status-2.jpg`: QA items 24 and 25, live scrubbed to three times (top) and autopilot (bottom); the autopilot pictures came back late, so item 25 fails on evidence
+- `status-3.jpg`: QA item 3, the plant's height over the film, never falling
+- `status-4.jpg`: Frame 1755 at the final tier from the fixed build, byte for byte the picture of the frozen build

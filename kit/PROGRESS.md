@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 10:43 UTC · QA pass 1 written (31 pass, items 20 and 25 fail), evidence in scorecards/qa/pass-1, decisions 733 to 736
-- Last status: 86 · 2026-11-22 10:21 UTC · Phase 6
+- Last push: 2026-11-22 10:45 UTC · Status 87: QA pass 1 written, item 20 fix merged (engine 96146165ee8a578d, no pixel changed), step 13 running
+- Last status: 87 · 2026-11-22 10:44 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 10:44 UTC · status 87 · Phase 6 · `status-1.jpg`: QA item 23, the export page while it runs: frames done, elapsed, remaining; `status-2.jpg`: QA items 24 and 25, live scrubbed to three times (top) and autopilot (bottom); the autopilot pictures came back late, so item 25 fails on evidence; `status-3.jpg`: QA item 3, the plant's height over the film, never falling; `status-4.jpg`: Frame 1755 at the final tier from the fixed build, byte for byte the picture of the frozen build
 - 2026-11-22 10:21 UTC · status 86 · Phase 6 · `status-1.jpg`: QA item 1: frames 0 and 5, no fade in, the hook already moving; `status-2.jpg`: QA item 4: both sides of each of the four cuts, each wholly its own world; `status-3.jpg`: QA item 23: the export page before it starts, this machine's check frame beside the kept still; `status-4.jpg`: QA item 24: frame 1515 drawn from the build served under a subfolder path
 - 2026-11-22 10:03 UTC · status 85 · Phase 6 · `status-1.jpg`: Film sheet 1 of 3, final build (0 to 20 s); `status-2.jpg`: Film sheet 2 of 3 (20 to 40 s); `status-3.jpg`: Film sheet 3 of 3 (40 to 60 s); `status-4.jpg`: QA item 13: stand-in view of the ten judged frames, no flag colour anywhere
 - 2026-11-22 09:38 UTC · status 84 · Phase 6 · `status-1.jpg`: Rain, the frozen build: twelve frames across 8 to 20 s; `status-2.jpg`: Frost, the frozen build: twelve frames across 30 to 40 s; `status-3.jpg`: Frame 0, final tier: the jury failed it (1 of 5); `status-4.jpg`: Frame 1755, final tier: the jury failed it (2 of 5)
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 06:57 UTC · status 78 · Phase 6 · `status-1.jpg`: Cut 4, frames 1199 and 1200: as now (top), variant A (middle), variant B (bottom, kept): the same leaves stand on both sides of the cut; `status-2.jpg`: Why A is dropped and what B costs: A swings a leaf across the sun at frames 1265 to 1290 (top); in B small leaf tips enter the frost at 37 to 38 s (bottom); `status-3.jpg`: The gust at frames 1680, 1700 and 1720: before above, after below. It reads in motion more than on stills; the two front plants get their own leaf motion next; `status-4.jpg`: Frame 3 of the opening, before left, after right: the crumbs' points a little wider and dimmer, a small gain against the blinking highlights
 - 2026-11-22 06:42 UTC · status 77 · Phase 6 · `status-1.jpg`: Cut 4 as it stands, frames 1199 and 1200: the bud holds, the sun and the land change with the world, and the leaf at the left edge is in motion through the cut; `status-2.jpg`: The pullback at frames 1593 (top) and 1645 (bottom), before left, a trial with an even rate right (not merged); `status-3.jpg`: Frame 1398, before left, after right: rays in lanes, first pass. The crossing at the lower left of the disc is still there; `status-4.jpg`: Frame 1755, before above, after below: the rows get a sway. The still holds; the motion is not proven yet
 - 2026-11-22 06:27 UTC · status 76 · Phase 6 · `status-1.jpg`: Bloom hero: approved image against the build, frame 1515; `status-2.jpg`: Field: approved image against the build, frame 1755; `status-3.jpg`: Cut 4, frost to bloom: the cut two critics fault (the land and the sun change sides); `status-4.jpg`: Frames 0 to 11 at frame cadence: the cleft, the hook, and the crumbs whose highlights blink
-- 2026-11-22 06:21 UTC · status 75 · Phase 6 · `status-1.jpg`: Frame 420 at the final tier: rain, wet hairs in tufts, wider streaks (the jury now passes it); `status-2.jpg`: Frame 780 at the final tier: night, the rows lower than the hero (the jury now passes it); `status-3.jpg`: Frame 1755 at the final tier: the field (the jury fails it, 1 of 5); `status-4.jpg`: Whole film sheet 3 of 3: bloom and field on the merged build
 
 ## Clock
 
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 5.79 h |
-| Whole build | 30.00 h | 33.86 h |
+| 6 | 4.00 h | 5.81 h |
+| Whole build | 30.00 h | 33.88 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 3.86 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 3.88 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -2128,6 +2128,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 10:04 UTC · Status 85: QA gauntlet pass 1 under way, item 20 found failing, decision logged
 - 2026-11-22 10:22 UTC · Status 86: QA pass 1, gate all green, item 20 fix under way, pages being captured
 - 2026-11-22 10:43 UTC · QA pass 1 written (31 pass, items 20 and 25 fail), evidence in scorecards/qa/pass-1, decisions 733 to 736
+- 2026-11-22 10:45 UTC · Status 87: QA pass 1 written, item 20 fix merged (engine 96146165ee8a578d, no pixel changed), step 13 running
 
 ## Session log
 
@@ -2310,4 +2311,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Film sheet 1 of 3, final build (0 to 20 s); Film sheet 2 of 3 (20 to 40 s); Film sheet 3 of 3 (40 to 60 s); QA item 13: stand-in view of the ten judged frames, no flag colour anywhere.
 - Status 86, 2026-11-22 10:21 UTC, Phase 6. QA gauntlet pass 1 of 2: 29 of the 33 items have their evidence and pass; the gate is all 15 green (13 machine checks, D2, D3); item 20 fails (config values copied as plain numbers in src/), its fix is being made in a side worktree and changes no number; items 23 to 25 (export page, subfolder, autopilot and live) are being captured now. Next: write the 33 lines under QA results, merge the item 20 fix once stills prove no pixel changed, then step 13: proof, memory test, final stills, record round run 2 of 2 and all 26 film parts on the fixed build, then gauntlet pass 2 and BUILD COMPLETE. Time used: 3.5 h of 10 h.
   Pictures: QA item 1: frames 0 and 5, no fade in, the hook already moving; QA item 4: both sides of each of the four cuts, each wholly its own world; QA item 23: the export page before it starts, this machine's check frame beside the kept still; QA item 24: frame 1515 drawn from the build served under a subfolder path.
+- Status 87, 2026-11-22 10:44 UTC, Phase 6. QA gauntlet pass 1 is written: 31 of 33 items pass, items 20 (values copied from config into src) and 25 (autopilot evidence) fail. The item 20 fix is merged (engine 96146165ee8a578d): 18 frames rendered from both builds are the same by pixel hash, and the first nine final stills from the builders are byte for byte those of round 25. Step 13 runs: proof and memory test on this VM, all 55 pack files and 26 film parts with the 12 builders. Next: Take in the pack files, run measure, compare and keep, run record round 26 (24 critics, 50 jurors, run 2 of 2), join the film again, publish, then gauntlet pass 2 with a new autopilot capture. Time used: 3.9 h of 10 h.
+  Pictures: QA item 23, the export page while it runs: frames done, elapsed, remaining; QA items 24 and 25, live scrubbed to three times (top) and autopilot (bottom); the autopilot pictures came back late, so item 25 fails on evidence; QA item 3, the plant's height over the film, never falling; Frame 1755 at the final tier from the fixed build, byte for byte the picture of the frozen build.
 
