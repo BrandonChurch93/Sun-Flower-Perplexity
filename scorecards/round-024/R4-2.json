@@ -1,0 +1,21 @@
+{
+  "critic": "R4",
+  "score": 8,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-12.png",
+      "where": "night-to-frost boundary, f0874 to f0925 (29.1–30.8 s); the other world changes are likewise only sparsely sampled",
+      "what": "No consecutive cut coverage is supplied. The 51-frame gap cannot show whether the plant, grass, and horizon register on the actual cut or the world changes in exactly one frame.",
+      "fix": "Supply review-tier or higher consecutive frames bracketing each actual cut, with the last outgoing and first incoming frame clearly labeled."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-13.png",
+      "where": "rapid bud opening and petal release, f1285 to f1491 (42.8–49.7 s)",
+      "what": "The sampled poses read as a plausible bloom, but there is no consecutive fast-growth sheet. Frames roughly 1.7 seconds apart cannot distinguish continuous unfolding from a pop or intersection, or reveal brief jitter, focus hunting, or shimmer.",
+      "fix": "Supply a review-tier or higher strip of consecutive 30 fps frames through the fastest growth stretch, with the entire growing tip visible."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-05.png",
+      "where": "f0599 to f0600, left skyline and field behind the stem at the 20.00 s cut",
+      "what": "The stem registers, but the low rain skyline jumps upward into a different left-side ridge and the field boundary shifts with it. The cut reads as a background jump as well as a change in weather and light.",
+      "fix": "Keep the distant ridge and foreground grass layout registered in the same camera framing on both sides of the cut, then change the lighting, rain and mist in one frame."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "f0000–f0011, soil clods at the base of the emerging hook and beside the seed coat",
+      "what": "The hook and seed coat rise between the same intact clods without a visible contact response, so the seedling looks like it is coming through a rigid opening.",
+      "fix": "Have the advancing hook lift or roll a few adjacent crumbs and let the loose grains settle as the seed coat clears the surface."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-04.png",
+      "where": "f0290–f0301, rain around the upper leaves and growing tip",
+      "what": "The passing streaks are clear, but the wet leaf surfaces do not show a corresponding sequence of strikes, beading or runoff. The rain looks separate from the plant.",
+      "fix": "Show occasional drops terminating on the leaf surfaces, then beading, kicking off a fine splash or running toward the leaf edges."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-02.png",
+      "where": "f0120–f0131, right cotyledon and detached seed coat",
+      "what": "The right cotyledon opens mostly as a stiff blade rotating at the stem, and the detached seed coat reaches the ground with little visible change in pitch or recoil.",
+      "fix": "Give the cotyledon a base-to-tip uncurl and add a small tumble and settling response to the seed coat on contact."
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "supplied motion-review pack, across the unit",
+      "what": "The delivered set has consecutive growth and cut sheets but no whole-segment contact sheet, so the intervening camera, focus and motion continuity cannot be checked.",
+      "fix": "Include a review-tier or higher overview contact sheet spanning the whole segment in addition to the consecutive-frame sheets."
+    }
+  ]
+}

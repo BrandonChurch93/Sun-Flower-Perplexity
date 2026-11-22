@@ -1,0 +1,28 @@
+{
+  "critic": "R6",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-F-01.png",
+      "where": "bottom-center soil mound",
+      "what": "at 0.00 s the pale stem arch is barely peeking out flush with dark rim-lit dirt clods, so at 400 px phone width it is unclear what is happening in the first frame and it reads as an empty sunrise landscape",
+      "fix": "start frame 0 with the hooked sprout and striped seed hull already visibly breaching the mound or frame tighter on the emerging seed"
+    },
+    {
+      "severity": "severe",
+      "file": "set-F-09.png",
+      "where": "central seedling hook across 1.50 s to 2.00 s (set-F-07.png through set-F-09.png)",
+      "what": "after rising briskly during the first second, the seedling decelerates to a near standstill for the final 0.5 s while the seed hull, grass, and camera remain static, stalling momentum inside the 2-second hook",
+      "fix": "sustain motion through 2.00 s by beginning to uncurl the stem arch or crack open the seed hull, paired with subtle camera movement"
+    },
+    {
+      "severity": "major",
+      "file": "set-F-06.png",
+      "where": "striped seed hull at center against midground soil",
+      "what": "the dark striped seed head hangs below the horizon line against dark brown out-of-focus dirt while the bright sun flare pulls attention to empty space on the right, weakening subject contrast at phone size",
+      "fix": "lower the camera angle or raise the sprout higher so both the stem arch and striped seed hull silhouette cleanly against the bright sky above the horizon"
+    }
+  ]
+}

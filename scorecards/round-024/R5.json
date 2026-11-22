@@ -1,0 +1,56 @@
+{
+  "critic": "R5",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-E-03.png",
+      "where": "field section, f1645 54.8 s through f1799 60.0 s (also set-E-05.png f1755 58.5 s)",
+      "what": "The hero's identity breaks. Once the camera pulls back, a second tall plant with a closed bud (the left foreground plant from the bloom shots) stands beside the open flower at the same scale. In the last frames the two read as a pair, and a viewer can't tell which one is the plant we have followed. The hero also ends small, dim and in shadow on bare grass in front of the field, not part of it, so the release feels like losing the plant instead of it joining the field.",
+      "fix": "Keep the hero as the only foreground plant: move or remove the budded neighbour, keep the hero lit and centred as the camera pulls back, and let the field visibly surround it at its scale."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "cut from rain f0565 18.8 s (set-E-01.png) to night f0617 20.6 s",
+      "what": "The place changes at the cut. In rain the plant stands in open soil with short grass and a rivulet. Two seconds later at night it is surrounded by a dense crop of large-leaved plants, and the camera now sits higher with no soil in frame, so it reads as a different location instead of the same spot later.",
+      "fix": "At night keep some ground and the rivulet or soil line in frame, and bring the surrounding crop in gradually: sparse at night, denser at frost, full at bloom."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-03.png",
+      "where": "cut from bloom f1542 51.4 s to field f1593 53.1 s and on",
+      "what": "The bloom-to-field cut lands weakly. The light, haze and colour are almost the same as bloom, but the sun jumps from the frame's left edge to the centre horizon. The cut reads as a camera move with a lighting error, not a new world.",
+      "fix": "Either keep the sun position continuous, or make the field's light clearly different, for example a higher, clearer, brighter open-sky release, so the cut reads as intentional."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "frost section f0925 30.8 s to f1182 39.4 s (set-E-05.png f1080 36.0 s)",
+      "what": "Frost reads as grey fog. No frost crystals, rime or white edges are visible on the leaves or bud, so the world is hard to tell apart from a hazy morning.",
+      "fix": "Add visible rime on the leaf edges, bud bracts and stem hairs, and a cold sparkle, so the frost world is unmistakable."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-02.png",
+      "where": "hero foliage between night f0874 29.1 s and frost f0925 30.8 s",
+      "what": "The leaves change character across the cut. At night they are broad and serrated; in frost they are long, narrow and drooping, with a different count and arrangement. The plant looks swapped, not just older.",
+      "fix": "Keep the leaf shape, size and the positions of the lower leaves consistent across the cut. Show age through a thicker stem and a bigger bud only."
+    },
+    {
+      "severity": "minor",
+      "file": "set-E-03.png",
+      "where": "left foreground leaves, bloom f1234 41.1 s onward",
+      "what": "A large out-of-focus neighbour plant appears at the left edge at the bloom cut with no presence in the frost frames, which slightly changes the framing.",
+      "fix": "Introduce the neighbour softly at the frame edge in the late frost frames, or drop it."
+    },
+    {
+      "severity": "minor",
+      "file": "set-E-01.png",
+      "where": "horizon across dawn, rain and night",
+      "what": "The distant horizon changes shape between worlds: flat misty field at dawn, low hills in rain, a different ridge at night. Measured side by side, the place drifts.",
+      "fix": "Lock one horizon silhouette and change only the light and weather over it."
+    }
+  ]
+}
