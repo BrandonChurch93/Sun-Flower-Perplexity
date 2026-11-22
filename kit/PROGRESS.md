@@ -10,11 +10,11 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Current round: 24 · Phase 6 · polish round 2 of 2 (an extra round) · base `5abb284` (engine `eb23778849521a72`) · started 06:29 UTC · its fix batch is out to seven builders. Round 23 (polish round 1) closed 06:28 UTC, not at a pass
 - Blocked: no
 - Budget: running
-- Continuations: 0
+- Continuations: 1
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:45 UTC · Round 24: golden_builder's report and second pass; review page published 06:45 UTC
+- Last push: 2026-11-22 06:52 UTC · Continuation 1 started at 06:52 UTC by Brandon's note; the clock has 10 more hours, round 24 carries on
 - Last status: 77 · 2026-11-22 06:42 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,8 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 1.77 h |
-| Whole build | 30.00 h | 29.84 h |
+| 6 | 4.00 h | 1.93 h |
+| Whole build | 30.00 h | 30.00 h |
+
+- Continuation 1, started 2026-11-22T06:52:03Z: 0.00 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -819,7 +821,8 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 06:31 UTC. After a compaction at about 06:29 UTC: read again from disk `kit/PROGRESS.md` (Status, Clock, Phases, Units, Running jobs, Running agents, round 23 and the new round 24) and `kit/addenda/README.md` (there are no addenda), and the budget report's rules in `AGENTS.md` and its block in `kit/08-BUILD-ORDER.md`. State found: main at `e67a2eb`, its source equal to `5abb284`, type check clean; the clock at 29.64 h of 30.00 h; round 24's seven briefs out since 06:29:34 UTC with no box ticked.
 - 2026-11-22 · Phase 6 · 06:37 UTC. Brandon wrote in the thread at 06:35 UTC: "Please output a link to the review page so I can take a look. Don't stop working, please keep going till finished". Decision: the link was answered at once, and the note is applied to the one stop in sight, the budget report due at about 06:52 UTC: the build will not end its task there. At `budget report: due` the kit's own continuation is started (`npm run clock -- --continue 1`, 10 more hours on the clock, "Budget" stays `running`) and the work carries on where it stands, with no agent stopped. Logged word for word under "Notes from Brandon". Round 24 therefore carries on past 06:51 UTC: its builders will be told that their reports are still due at 06:47 UTC and that the round does not stop at the clock.
 - 2026-11-22 · Phase 6 · 06:43 UTC. Round 24, first reports read and their pictures looked at (06:34 to 06:42 UTC; the round's block has each). Decision: nothing is merged on the first pass. The lanes leave the rays' X in place; the rows' sway and the even pullback are not seen in motion; cut 4 and the bracts were measured, and both cures lie in files of other owners. Since Brandon's note lets the round run, a second pass went to ten builders at 06:42 UTC with reports due 07:25 UTC, and with three one-round exceptions to the folders: `bud_builder` may edit the one line `holdAt` in `src/plant/growth.ts`, `disc_builder` the bracts' fold and `hair_builder` the hair code in `src/plant/head/bud/`. Plan for the continuation's hours, so the floor is safe: the fix batch is merged by about 07:45 UTC, judged by about 09:00 UTC, then the freeze; the floor work of Phase 6 (stills, the record round, the film, the proofs, the QA gauntlet) is given at least five hours.
-- 2026-11-22 · Phase 6 · 06:45 UTC. Published at 06:45 UTC with the review page made new (status 77 and Brandon's note; visibility Organization), so the page Brandon asked for is current. `golden_builder` reported at 06:44 UTC: the opening's blink is the same at the `final` tier (42.6 percent against 42.4 at `review`), so it is no sampling fault but the ground's one pixel grain; `ground_builder` already has that cure in its second pass. `golden_builder` got its second pass at 06:46 UTC (the dew dot at the lower left, with a one-round exception for the bead's light in `src/ground/grass.ts`; its sun core proven in motion), report due 07:25 UTC. Twelve builders are in turns for round 24 now, the limit; no reviewer runs.
+- 2026-11-22 · Phase 6 · 06:45 UTC. Published at 06:45 UTC with the review page made new (status 77 and Brandon's note; visibility Organization), so the page Brandon asked for is current. `golden_builder` reported at 06:44 UTC: the opening's blink is the same at the `final` tier (42.6 percent against 42.4 at `review`), so it is no sampling fault but the ground's one pixel grain; `ground_builder` already has that cure in its second pass. `golden_builder` got its second pass at 06:46 UTC (the dew dot at the lower left, with a one-round exception for the bead's light in `src/ground/grass.ts`; its sun core proven in motion), report due 07:25 UTC. Eleven builders are in turns for round 24 now, of 12 allowed; no reviewer runs.
+- 2026-11-22 · Phase 6 · 06:52 UTC. Continuation 1. At 06:51:56 UTC the clock printed `budget report: due` (30.00 h used of 30.00 h allowed, Phase 6 at 1.93 h of its 4.00 h box). By Brandon's note of 06:35 UTC ("Don't stop working, please keep going till finished") the task does not end with a budget report: `npm run clock -- --continue 1` was run at 06:52:03 UTC (new box for Phase 6: 10.00 h), "Continuations" is 1, "Budget" stays `running`, no agent or job was stopped, and round 24 carries on from where it stood (second pass out, no box ticked). No `BUDGET REPORT` block is posted; "Last report block" stays empty. The clock now reads: continuation 1, 0.00 h of 10.00 h, `extra rounds: yes`. Every clock rule applies to these hours as before, and the plan logged at 06:43 UTC keeps the floor inside them.
 
 ## Notes from Brandon
 
@@ -1757,6 +1760,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 06:37 UTC · Note from Brandon (06:35 UTC): do not stop, keep going till finished; applied to the budget stop, continuation 1 starts when it comes due
 - 2026-11-22 06:43 UTC · Status 77: Brandon's note applied; round 24's first reports looked at, second pass out to ten builders
 - 2026-11-22 06:45 UTC · Round 24: golden_builder's report and second pass; review page published 06:45 UTC
+- 2026-11-22 06:52 UTC · Continuation 1 started at 06:52 UTC by Brandon's note; the clock has 10 more hours, round 24 carries on
 
 ## Session log
 
