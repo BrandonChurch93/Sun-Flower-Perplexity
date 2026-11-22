@@ -3,6 +3,7 @@ import { config, frameCount, timeOf } from '../src/config.ts'
 import { cuts, segmentAt, segmentById } from '../src/director/timeline.ts'
 import { formatById, isTier } from '../src/core/tiers.ts'
 import { parseArgs, flag, num, str } from './lib/args.ts'
+import { FILM_SHEETS } from './lib/filmplan.ts'
 import { computeHashes } from './lib/hashes.ts'
 import { canvas, composedRecord, cropped, ensureDir, longEdge, pad4, rel, sameFrames, scaled, strip, type Placed } from './lib/layout.ts'
 import { addLook } from './lib/looks.ts'
@@ -75,23 +76,39 @@ export function unitSheet(id: string, o: SheetOptions): Promise<Sheet> {
   return makeSheet(path.join(dir, `unit-${id}-${o.format}-${o.tier}.jpg`), frames, `Unit ${id}: ${per} frames across its segment (frames ${s.firstFrame} to ${s.lastFrame})`, o)
 }
 
-export async function filmSheets(o: SheetOptions): Promise<Sheet[]> {
-  const count = 3
-  const all = spread(0, frameCount - 1, count * per)
-  const out: Sheet[] = []
-  for (let i = 0; i < count; i++) {
+export interface SheetPlan { file: string; frames: number[]; caption: string }
+
+export function filmSheetPlans(o: SheetOptions): SheetPlan[] {
+  const all = spread(0, frameCount - 1, FILM_SHEETS * per)
+  return Array.from({ length: FILM_SHEETS }, (_, i) => {
     const frames = all.slice(i * per, (i + 1) * per)
-    out.push(await makeSheet(path.join(dir, `film-${i + 1}-${o.format}-${o.tier}.jpg`), frames, `Whole film sheet ${i + 1} of ${count} (frames ${frames[0]} to ${frames[frames.length - 1]})`, o))
-  }
-  return out
+    return { file: path.join(dir, `film-${i + 1}-${o.format}-${o.tier}.jpg`), frames, caption: `Whole film sheet ${i + 1} of ${FILM_SHEETS} (frames ${frames[0]} to ${frames[frames.length - 1]})` }
+  })
 }
 
-export function cutSheet(index: number, o: SheetOptions): Promise<Sheet> {
+export function cutSheetPlan(index: number, o: SheetOptions): SheetPlan {
   const cut = cuts.find((c) => c.index === index)
   if (!cut) throw new Error(`there is no cut ${index}; the film has cuts 1 to ${cuts.length}`)
   const half = Math.floor(per / 2)
   const frames = Array.from({ length: per }, (_, i) => cut.frame - half + i)
-  return makeSheet(path.join(dir, `cut-${index}-${o.format}-${o.tier}.jpg`), frames, `Cut ${index} (${cut.fromSegment} to ${cut.toSegment}): frames ${frames[0]} to ${frames[frames.length - 1]}, the cut falls on frame ${cut.frame}`, o)
+  return { file: path.join(dir, `cut-${index}-${o.format}-${o.tier}.jpg`), frames, caption: `Cut ${index} (${cut.fromSegment} to ${cut.toSegment}): frames ${frames[0]} to ${frames[frames.length - 1]}, the cut falls on frame ${cut.frame}` }
+}
+
+export function sheetReady(plan: SheetPlan, o: SheetOptions): boolean {
+  const existing = readRecord(plan.file)
+  const units = [...new Set(plan.frames.map((f) => segmentAt(f).id))]
+  return matches(existing, computeHashes(), { kind: 'sheet', format: o.format, tier: o.tier, assets: o.assets, diag: 'beauty', units }) && sameFrames(existing?.frames, plan.frames)
+}
+
+export async function filmSheets(o: SheetOptions): Promise<Sheet[]> {
+  const out: Sheet[] = []
+  for (const plan of filmSheetPlans(o)) out.push(await makeSheet(plan.file, plan.frames, plan.caption, o))
+  return out
+}
+
+export function cutSheet(index: number, o: SheetOptions): Promise<Sheet> {
+  const plan = cutSheetPlan(index, o)
+  return makeSheet(plan.file, plan.frames, plan.caption, o)
 }
 
 export function runSheet(unit: string, first: number, o: SheetOptions): Promise<Sheet> {
