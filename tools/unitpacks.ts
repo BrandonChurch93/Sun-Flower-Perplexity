@@ -8,7 +8,8 @@ import { at, ROOT } from './lib/paths.ts'
 import { asPng, atMasterSize, wholeImage, wholeSize } from './lib/packimage.ts'
 import { fastestRun, regionsOf, type Absent, type Region } from './lib/regions.ts'
 import type { Pack, PackContext, PackFile } from './pack.ts'
-import { cutSheet, detailSheet, detailSize, runSheet, unitSheet, type SheetOptions } from './sheet.ts'
+import { sheetCommand, sheetNeed, stillCommand, stillNeed, type Need } from './filmpacks.ts'
+import { cutSheet, cutSheetPlan, detailSheet, detailSheetFile, detailSize, runSheet, runSheetPlan, unitSheet, unitSheetPlan, type SheetOptions } from './sheet.ts'
 
 const master = config.formats.master
 const most = config.critics.maxFilesPerMessage
@@ -203,6 +204,25 @@ async function juryPacks(context: PackContext, unit: string, tier: string): Prom
   entries.sort((a, b) => order(a.id).localeCompare(order(b.id)))
   const groups: Group[] = entries.map((e) => ({ files: [e.file], lines: (names) => [`${names[0]}: one image, ${wholeSize.width} x ${wholeSize.height}.`] }))
   return packsOf('R2', 'B', groups, ['Each file is one image. Each call receives one file and the question, and nothing else. This list is not sent with it.', ''])
+}
+
+export function unitNeeds(unit: string, tier: string, critics: string[]): Need[] {
+  const out: Need[] = []
+  const frames = new Set<number>()
+  if (critics.includes('R1')) for (const key of keys.filter((k) => k.unit === unit)) frames.add(key.frame)
+  if (critics.includes('R2') || critics.includes('R3')) for (const judged of judgedFrames().filter((j) => j.unit === unit)) frames.add(judged.frame)
+  for (const frame of [...frames].sort((a, b) => a - b)) out.push(stillNeed(frame, tier))
+  if (!critics.includes('R4')) return out
+  const o: SheetOptions = { tier: SHEET_TIER, format: config.formats.preview.id, assets: ASSETS, look: false }
+  const big: SheetOptions = { ...o, format: master.id }
+  out.push(sheetNeed(unitSheetPlan(unit, o), o, sheetCommand(`--unit ${unit}`, o)))
+  const run = runSheetPlan(unit, fastestRun(unit, config.critics.contactSheetFrames).first, big)
+  const make = stillCommand(run.frames, big.tier, big.format, false)
+  out.push(sheetNeed(run, big, make))
+  out.push(sheetNeed(run, big, make, detailSheetFile(unit, run.frames[0], big)))
+  const cut = cuts.find((c) => c.toSegment === unit)
+  if (cut) out.push(sheetNeed(cutSheetPlan(cut.index, o), o, sheetCommand(`--cut ${cut.index}`, o)))
+  return out
 }
 
 export async function unitPacks(context: PackContext): Promise<Pack[]> {

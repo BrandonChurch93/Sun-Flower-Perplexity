@@ -71,9 +71,8 @@ async function makeSheet(file: string, frames: number[], caption: string, o: She
 const dir = path.join(WORK, 'sheets')
 
 export function unitSheet(id: string, o: SheetOptions): Promise<Sheet> {
-  const s = segmentById(id)
-  const frames = spread(s.firstFrame, s.lastFrame, per)
-  return makeSheet(path.join(dir, `unit-${id}-${o.format}-${o.tier}.jpg`), frames, `Unit ${id}: ${per} frames across its segment (frames ${s.firstFrame} to ${s.lastFrame})`, o)
+  const plan = unitSheetPlan(id, o)
+  return makeSheet(plan.file, plan.frames, plan.caption, o)
 }
 
 export interface SheetPlan { file: string; frames: number[]; caption: string }
@@ -111,14 +110,29 @@ export function cutSheet(index: number, o: SheetOptions): Promise<Sheet> {
   return makeSheet(plan.file, plan.frames, plan.caption, o)
 }
 
-export function runSheet(unit: string, first: number, o: SheetOptions): Promise<Sheet> {
+export function unitSheetPlan(id: string, o: SheetOptions): SheetPlan {
+  const s = segmentById(id)
+  const frames = spread(s.firstFrame, s.lastFrame, per)
+  return { file: path.join(dir, `unit-${id}-${o.format}-${o.tier}.jpg`), frames, caption: `Unit ${id}: ${per} frames across its segment (frames ${s.firstFrame} to ${s.lastFrame})` }
+}
+
+export function runSheetPlan(unit: string, first: number, o: SheetOptions): SheetPlan {
   const frames = Array.from({ length: per }, (_, i) => first + i)
-  return makeSheet(path.join(dir, `run-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`), frames, `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}`, o)
+  return { file: path.join(dir, `run-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`), frames, caption: `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}` }
+}
+
+export function detailSheetFile(unit: string, first: number, o: SheetOptions): string {
+  return path.join(dir, `detail-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`)
+}
+
+export function runSheet(unit: string, first: number, o: SheetOptions): Promise<Sheet> {
+  const plan = runSheetPlan(unit, first, o)
+  return makeSheet(plan.file, plan.frames, plan.caption, o)
 }
 
 export async function detailSheet(unit: string, first: number, box: { left: number; top: number }, o: SheetOptions): Promise<Sheet> {
   const frames = Array.from({ length: per }, (_, i) => first + i)
-  const file = path.join(dir, `detail-${unit}-f${pad4(first)}-${o.format}-${o.tier}.jpg`)
+  const file = detailSheetFile(unit, first, o)
   const caption = `Unit ${unit}: consecutive frames ${frames[0]} to ${frames[frames.length - 1]}, native size crops`
   const hashes = computeHashes()
   const w = Math.floor((longEdge - (COLS + 1) * GAP) / COLS)
