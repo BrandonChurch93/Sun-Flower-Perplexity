@@ -48,9 +48,9 @@
     }
   },
   "judged": {
-    "votes": 49,
-    "a": 28,
-    "share": 0.5714285714285714
+    "votes": 50,
+    "a": 29,
+    "share": 0.58
   },
   "passOverall": true,
   "passEveryFrame": false,
@@ -207,14 +207,14 @@
       "unit": "frost",
       "letters": [
         "a",
-        null,
+        "a",
         "a",
         "a",
         "b"
       ],
-      "votes": 4,
-      "a": 3,
-      "share": 0.75,
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
       "controlShare": 0.4,
       "controlVotes": 5,
       "controlA": 2,
@@ -641,9 +641,9 @@
       "control": false,
       "frame": 1080,
       "unit": "frost",
-      "letter": null,
-      "confidence": null,
-      "answer": null
+      "letter": "a",
+      "confidence": 85,
+      "answer": "a, 85 — The AAA cinematic 3D rendering pipeline: dense sub-pixel stem hairs and marginal frost geometry paired with clean multi-sampled depth of field over simplified low-LOD background foliage instances, finished in 16:9 widescreen with filmic tonemapping and calibrated monochromatic film grain."
     },
     {
       "juror": "reviewer_299",

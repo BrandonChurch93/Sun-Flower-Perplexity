@@ -1,0 +1,688 @@
+{
+  "round": 22,
+  "phase": 5,
+  "unit": null,
+  "tier": "final",
+  "test": false,
+  "commit": "4cb770646d46504e19daab2c7cc779c5ed9b621a",
+  "engineHash": "305e9520118781cf",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "9b15161ed47d967d",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
+    "cores": 2,
+    "ramMb": 7958
+  },
+  "critics": {
+    "R5": {
+      "set-E-01.png": {
+        "what": "whole film contact sheet 1 of 3",
+        "frames": [
+          0,
+          51,
+          103,
+          154,
+          206,
+          257,
+          308,
+          360,
+          411,
+          463,
+          514,
+          565
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-1-preview-review.jpg"
+      },
+      "set-E-02.png": {
+        "what": "whole film contact sheet 2 of 3",
+        "frames": [
+          617,
+          668,
+          720,
+          771,
+          822,
+          874,
+          925,
+          977,
+          1028,
+          1079,
+          1131,
+          1182
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-2-preview-review.jpg"
+      },
+      "set-E-03.png": {
+        "what": "whole film contact sheet 3 of 3",
+        "frames": [
+          1234,
+          1285,
+          1336,
+          1388,
+          1439,
+          1491,
+          1542,
+          1593,
+          1645,
+          1696,
+          1748,
+          1799
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-3-preview-review.jpg"
+      },
+      "set-E-04.png": {
+        "what": "key frames 1 to 4 of 8, in film order",
+        "tier": "final",
+        "keys": [
+          {
+            "key": "dawn-sprout",
+            "frame": 45,
+            "time": 1.5,
+            "source": "out/work/stills/f0045-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "dawn-seedling",
+            "frame": 195,
+            "time": 6.5,
+            "source": "out/work/stills/f0195-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "rain",
+            "frame": 420,
+            "time": 14,
+            "source": "out/work/stills/f0420-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "night",
+            "frame": 780,
+            "time": 26,
+            "source": "out/work/stills/f0780-16x9-final-full-beauty.png"
+          }
+        ]
+      },
+      "set-E-05.png": {
+        "what": "key frames 5 to 8 of 8, in film order",
+        "tier": "final",
+        "keys": [
+          {
+            "key": "frost",
+            "frame": 1080,
+            "time": 36,
+            "source": "out/work/stills/f1080-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "bloom-opening",
+            "frame": 1350,
+            "time": 45,
+            "source": "out/work/stills/f1350-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "bloom-hero",
+            "frame": 1515,
+            "time": 50.5,
+            "source": "out/work/stills/f1515-16x9-final-full-beauty.png"
+          },
+          {
+            "key": "field",
+            "frame": 1755,
+            "time": 58.5,
+            "source": "out/work/stills/f1755-16x9-final-full-beauty.png"
+          }
+        ]
+      }
+    },
+    "R6": {
+      "set-F-01.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 0,
+        "time": 0,
+        "tier": "final",
+        "source": "out/work/stills/f0000-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-02.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 8,
+        "time": 0.26666666666666666,
+        "tier": "final",
+        "source": "out/work/stills/f0008-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-03.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 15,
+        "time": 0.5,
+        "tier": "final",
+        "source": "out/work/stills/f0015-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-04.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 23,
+        "time": 0.7666666666666667,
+        "tier": "final",
+        "source": "out/work/stills/f0023-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-05.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 30,
+        "time": 1,
+        "tier": "final",
+        "source": "out/work/stills/f0030-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-06.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 38,
+        "time": 1.2666666666666666,
+        "tier": "final",
+        "source": "out/work/stills/f0038-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-07.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 45,
+        "time": 1.5,
+        "tier": "final",
+        "source": "out/work/stills/f0045-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-08.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 53,
+        "time": 1.7666666666666666,
+        "tier": "final",
+        "source": "out/work/stills/f0053-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      },
+      "set-F-09.png": {
+        "what": "a frame of the opening, at the width of a phone preview",
+        "frame": 60,
+        "time": 2,
+        "tier": "final",
+        "source": "out/work/stills/f0060-16x9-final-full-beauty.png",
+        "size": {
+          "width": 400,
+          "height": 225
+        }
+      }
+    },
+    "R7": {
+      "set-G-01.png": {
+        "what": "one frame before encoding (left) and the same frame taken from the encode (right), both made smaller",
+        "unit": "dawn",
+        "frame": 119,
+        "time": 3.966666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/dawn-source.png",
+        "after": "out/work/stress/dawn-5mbps.png"
+      },
+      "set-G-02.png": {
+        "what": "native size crops of that frame before encoding (left) and after (right), the same box in both",
+        "unit": "dawn",
+        "frame": 119,
+        "time": 3.966666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/dawn-source.png",
+        "after": "out/work/stress/dawn-5mbps.png",
+        "places": [
+          {
+            "place": 1,
+            "label": "the sky",
+            "left": 232,
+            "top": 0,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 2,
+            "label": "the plant round its growing tip",
+            "left": 815,
+            "top": 256,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 3,
+            "label": "the far ground",
+            "left": 0,
+            "top": 96,
+            "width": 688,
+            "height": 434
+          }
+        ]
+      },
+      "set-G-03.png": {
+        "what": "one frame before encoding (left) and the same frame taken from the encode (right), both made smaller",
+        "unit": "rain",
+        "frame": 419,
+        "time": 13.966666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/rain-source.png",
+        "after": "out/work/stress/rain-5mbps.png"
+      },
+      "set-G-04.png": {
+        "what": "native size crops of that frame before encoding (left) and after (right), the same box in both",
+        "unit": "rain",
+        "frame": 419,
+        "time": 13.966666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/rain-source.png",
+        "after": "out/work/stress/rain-5mbps.png",
+        "places": [
+          {
+            "place": 1,
+            "label": "the sky",
+            "left": 616,
+            "top": 0,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 2,
+            "label": "the plant round its growing tip",
+            "left": 840,
+            "top": 2,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 3,
+            "label": "the far ground",
+            "left": 0,
+            "top": 309,
+            "width": 688,
+            "height": 434
+          }
+        ]
+      },
+      "set-G-05.png": {
+        "what": "one frame before encoding (left) and the same frame taken from the encode (right), both made smaller",
+        "unit": "night",
+        "frame": 749,
+        "time": 24.966666666666665,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/night-source.png",
+        "after": "out/work/stress/night-5mbps.png"
+      },
+      "set-G-06.png": {
+        "what": "native size crops of that frame before encoding (left) and after (right), the same box in both",
+        "unit": "night",
+        "frame": 749,
+        "time": 24.966666666666665,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/night-source.png",
+        "after": "out/work/stress/night-5mbps.png",
+        "places": [
+          {
+            "place": 1,
+            "label": "the sky",
+            "left": 616,
+            "top": 0,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 2,
+            "label": "the plant round its growing tip",
+            "left": 762,
+            "top": 129,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 3,
+            "label": "the far ground",
+            "left": 1232,
+            "top": 632,
+            "width": 688,
+            "height": 434
+          }
+        ]
+      },
+      "set-G-07.png": {
+        "what": "one frame before encoding (left) and the same frame taken from the encode (right), both made smaller",
+        "unit": "field",
+        "frame": 1679,
+        "time": 55.96666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/field-source.png",
+        "after": "out/work/stress/field-5mbps.png"
+      },
+      "set-G-08.png": {
+        "what": "native size crops of that frame before encoding (left) and after (right), the same box in both",
+        "unit": "field",
+        "frame": 1679,
+        "time": 55.96666666666667,
+        "tier": "review",
+        "bitrateMbps": 5,
+        "before": "out/work/stress/field-source.png",
+        "after": "out/work/stress/field-5mbps.png",
+        "places": [
+          {
+            "place": 1,
+            "label": "the sky",
+            "left": 0,
+            "top": 0,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 2,
+            "label": "the plant round its growing tip",
+            "left": 640,
+            "top": 321,
+            "width": 688,
+            "height": 434
+          },
+          {
+            "place": 3,
+            "label": "the far ground",
+            "left": 1232,
+            "top": 0,
+            "width": 688,
+            "height": 434
+          }
+        ]
+      }
+    },
+    "R4": {
+      "set-D-01.png": {
+        "what": "consecutive frames across cut 1 (dawn to rain, the cut falls on frame 240)",
+        "frames": [
+          234,
+          235,
+          236,
+          237,
+          238,
+          239,
+          240,
+          241,
+          242,
+          243,
+          244,
+          245
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-1-preview-review.jpg"
+      },
+      "set-D-02.png": {
+        "what": "consecutive frames across cut 2 (rain to night, the cut falls on frame 600)",
+        "frames": [
+          594,
+          595,
+          596,
+          597,
+          598,
+          599,
+          600,
+          601,
+          602,
+          603,
+          604,
+          605
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-2-preview-review.jpg"
+      },
+      "set-D-03.png": {
+        "what": "consecutive frames across cut 3 (night to frost, the cut falls on frame 900)",
+        "frames": [
+          894,
+          895,
+          896,
+          897,
+          898,
+          899,
+          900,
+          901,
+          902,
+          903,
+          904,
+          905
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-3-preview-review.jpg"
+      },
+      "set-D-04.png": {
+        "what": "consecutive frames across cut 4 (frost to bloom, the cut falls on frame 1200)",
+        "frames": [
+          1194,
+          1195,
+          1196,
+          1197,
+          1198,
+          1199,
+          1200,
+          1201,
+          1202,
+          1203,
+          1204,
+          1205
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/cut-4-preview-review.jpg"
+      },
+      "set-D-05.png": {
+        "what": "whole film contact sheet 1 of 3",
+        "frames": [
+          0,
+          51,
+          103,
+          154,
+          206,
+          257,
+          308,
+          360,
+          411,
+          463,
+          514,
+          565
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-1-preview-review.jpg"
+      },
+      "set-D-06.png": {
+        "what": "whole film contact sheet 2 of 3",
+        "frames": [
+          617,
+          668,
+          720,
+          771,
+          822,
+          874,
+          925,
+          977,
+          1028,
+          1079,
+          1131,
+          1182
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-2-preview-review.jpg"
+      },
+      "set-D-07.png": {
+        "what": "whole film contact sheet 3 of 3",
+        "frames": [
+          1234,
+          1285,
+          1336,
+          1388,
+          1439,
+          1491,
+          1542,
+          1593,
+          1645,
+          1696,
+          1748,
+          1799
+        ],
+        "tier": "review",
+        "source": "out/work/sheets/film-3-preview-review.jpg"
+      }
+    },
+    "R2": {
+      "set-B-01.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 60,
+        "key": null,
+        "tier": "final",
+        "source": "out/work/stills/f0060-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-02.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1755,
+        "key": "field",
+        "tier": "final",
+        "source": "out/work/stills/f1755-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-03.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 780,
+        "key": "night",
+        "tier": "final",
+        "source": "out/work/stills/f0780-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-04.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 420,
+        "key": "rain",
+        "tier": "final",
+        "source": "out/work/stills/f0420-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-05.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 0,
+        "key": null,
+        "tier": "final",
+        "source": "out/work/stills/f0000-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-06.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1515,
+        "key": "bloom-hero",
+        "tier": "final",
+        "source": "out/work/stills/f1515-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-07.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1080,
+        "key": "frost",
+        "tier": "final",
+        "source": "out/work/stills/f1080-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-08.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 195,
+        "key": "dawn-seedling",
+        "tier": "final",
+        "source": "out/work/stills/f0195-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-09.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 1350,
+        "key": "bloom-opening",
+        "tier": "final",
+        "source": "out/work/stills/f1350-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      },
+      "set-B-10.png": {
+        "controls": false,
+        "what": "judged frame",
+        "frame": 45,
+        "key": "dawn-sprout",
+        "tier": "final",
+        "source": "out/work/stills/f0045-16x9-final-full-beauty.png",
+        "size": {
+          "width": 1400,
+          "height": 788
+        }
+      }
+    }
+  }
+}

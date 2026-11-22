@@ -57,7 +57,7 @@ Every file is a judged frame; which frame is in `KEY.json`. The controls' votes 
 ## set-B-07.png
 
 - `reviewer_297` (GPT): a, 68, the soft sunrise through layered fog gives the foreground bud distinctly cinematic depth.
-- `reviewer_298` (Gemini): (no answer)
+- `reviewer_298` (Gemini): a, 85 — The AAA cinematic 3D rendering pipeline: dense sub-pixel stem hairs and marginal frost geometry paired with clean multi-sampled depth of field over simplified low-LOD background foliage instances, finished in 16:9 widescreen with filmic tonemapping and calibrated monochromatic film grain.
 - `reviewer_299` (Claude): (a), confidence 50. What swayed me most: it's a 16:9 frame with polished, cinematic lighting. There's layered volumetric fog, a soft backlit sun and a shallow depth of field. The rim-lit fuzz on the leaves and stem looks evenly rendered rather than photographed. Together these read as a high-end CG or film-quality frame, though a stock photo (b) is the main alternative.
 - `reviewer_300` (GLM): a, 77/100. The frost-sharp foreground falling off into layered, backlit fog looks like a deliberately lit cinematic shot.
 - `reviewer_301` (Grok): (b) 76. The one thing: it is a real photograph — irregular trichomes, optical bokeh, sensor-like noise, no render or AI tells — framed as a generic unlabeled commercial plant-in-fog still, which is stock rather than a catalog plate, a film frame, or a demo.
