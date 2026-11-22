@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 01:11 UTC · Status 59: rain finished and published. field finished at its round limit on 47d93fd: clip and comparison image kept
-- Last status: 59 · 2026-11-22 01:11 UTC · Phase 4 · unit rain
+- Last push: 2026-11-22 01:14 UTC · Status 60: field finished and published; four of six units finished
+- Last status: 60 · 2026-11-22 01:14 UTC · Phase 4 · unit field
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 01:14 UTC · status 60 · Phase 4 · unit field · `status-1.jpg`: Field key, frame 1755: approved image (left) beside the film at the final tier (right); `status-2.jpg`: Field clip, frame 1575 (52.5 s), the crane begins; `status-3.jpg`: Field clip, frame 1665 (55.5 s); `status-4.jpg`: Field clip, frame 1785 (59.5 s)
 - 2026-11-22 01:11 UTC · status 59 · Phase 4 · unit rain · `status-1.jpg`: Rain key, frame 420: approved image (left) beside the film at the final tier (right); `status-2.jpg`: Rain clip, frame 270 (9.0 s), one second after the cut; `status-3.jpg`: Rain clip, frame 549 (18.3 s); `status-4.jpg`: Rain clip, frame 585 (19.5 s)
 - 2026-11-22 01:04 UTC · status 58 · Phase 4 · unit rain · `status-1.jpg`: Rain, frame 585 (19.5 s), from the clip part 570 to 599; `status-2.jpg`: Night, frame 615 (20.5 s), from the clip part 600 to 629; `status-3.jpg`: Frost, frame 1005 (33.5 s), from the clip part 990 to 1019; `status-4.jpg`: Field, frame 1695 (56.5 s), from the clip part 1680 to 1709
 - 2026-11-22 00:44 UTC · status 57 · Phase 4 · unit dawn · `status-1.jpg`: Dawn 1.5 s: approved left, the judged frame right, with crops at native size; `status-2.jpg`: Dawn 6.5 s: approved left, the judged frame right, with crops at native size; `status-3.jpg`: Dawn 5.0 s, from the clip: the seed leaves open; `status-4.jpg`: Dawn 7.97 s, from the clip: the last frame before the cut to rain
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-21 23:01 UTC · status 51 · Phase 4 · unit night · round 16 · `status-1.jpg`: Rain 14.0 s. Approved left, the working line right: blades now hang and overlap on the left (review tier, a builder's render); `status-2.jpg`: Night 26.0 s. Approved left, the working line right: closer framing as the kit sets it, leaves still lit across their faces (review tier); `status-3.jpg`: Frost 36.0 s. Approved left, the working line right: thin hanging leaves, little rime on them yet (review tier); `status-4.jpg`: Field 58.5 s. Approved left, the working line right: no fan over the sun, a bare strip under the hills, two plants in front (review tier)
 - 2026-11-21 22:34 UTC · status 50 · Phase 4 · unit dawn · round 14 · `status-1.jpg`: Dawn 6.5 s. Approved left, the working line right: the hull now stands beside the stem (review tier); `status-2.jpg`: Night 26.0 s, the bud. Approved, the line before, the line now: a wider crown, no ring of bright points (review tier, crop); `status-3.jpg`: Frost 36.0 s, the bud. Approved, the line before, the line now: rounder, no needle tips, wider rime (review tier, crop); `status-4.jpg`: Night 26.0 s. Approved left, the working line right at f/11 with the new bud; the wooded hills are still to come (review tier)
 - 2026-11-21 22:07 UTC · status 49 · Phase 4 · unit rain · round 15 · `status-1.jpg`: Rain, frame 420. Approved left, ours right: thin dense streaks, a dark shelf of cloud, a warm opening behind the stem; `status-2.jpg`: Frost, frame 1080. Approved left, ours right: the halo tighter and amber, the near fog thinner; `status-3.jpg`: Dawn, frame 195. Approved, before, after: the tree line now crosses the frame and the sun sits in a gap; `status-4.jpg`: Night, frame 780 at f/8, f/11 and f/16, whole frame above and a crop below. The film now uses f/11
-- 2026-11-21 21:45 UTC · status 48 · Phase 4 · unit night · round 16 · `status-1.jpg`: Night 26.0 s · approved left, the working line right: new sky, the youngest leaves under the bud, singles in the crop (review tier); `status-2.jpg`: Frost 36.0 s · approved left, the working line right: claws on the bud, a first fog sheet (review tier); `status-3.jpg`: Rain 14.0 s, the far land · approved left, a builder's still right: the land follows the approved line (review tier, crop); `status-4.jpg`: Dawn 6.5 s, the skyline · approved on top, a builder's still below: a tree line across the frame (a tested request, not merged yet)
 
 ## Clock
 
@@ -46,10 +46,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.05 h |
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
-| 4 | 8.50 h | 8.86 h |
+| 4 | 8.50 h | 8.91 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 24.33 h |
+| Whole build | 30.00 h | 24.38 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1391,6 +1391,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 01:04 UTC · Status 58: clip parts 29 of 48; current unit line updated
 - 2026-11-22 01:09 UTC · rain finished at its round limit on 47d93fd: clip, comparison image, M1 open item
 - 2026-11-22 01:11 UTC · Status 59: rain finished and published. field finished at its round limit on 47d93fd: clip and comparison image kept
+- 2026-11-22 01:14 UTC · Status 60: field finished and published; four of six units finished
 
 ## Session log
 
@@ -1519,4 +1520,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Rain, frame 585 (19.5 s), from the clip part 570 to 599; Night, frame 615 (20.5 s), from the clip part 600 to 629; Frost, frame 1005 (33.5 s), from the clip part 990 to 1019; Field, frame 1695 (56.5 s), from the clip part 1680 to 1709.
 - Status 59, 2026-11-22 01:11 UTC, Phase 4 · unit rain. Rain is finished at its round limit on 47d93fd (round 20: match 3, surface 6, motion 9, jury passes on the edge). Its clip is joined from 12 parts, checked across every seam and kept with the comparison image; 13 frames of it (303 to 315) fail the tip sharpness measure and are logged as an open item. Published. Next: Field is joined and checked and is marked finished next; frost and night follow as their parts land (35 of 48 parts in), then the Phase 4 gate. Time used: 24.3 h of 30 h.
   Pictures: Rain key, frame 420: approved image (left) beside the film at the final tier (right); Rain clip, frame 270 (9.0 s), one second after the cut; Rain clip, frame 549 (18.3 s); Rain clip, frame 585 (19.5 s).
+- Status 60, 2026-11-22 01:14 UTC, Phase 4 · unit field. Field is finished at its round limit on 47d93fd, not as a pass (round 17: match 4, surface 7, motion 5, jury fails with 1 of 5 against the controls' 4 of 5). Its clip is joined from 8 parts with no step at any seam and no frame failing the tip measure; clip and comparison image are kept and published. Four of six units are finished. Next: Frost (6 of 10 parts in) and night (2 of 10) as their parts land, then the Phase 4 gate. For Phase 5: the field's grade and sun against the approved image, and the camera's smoothing pass. Time used: 24.4 h of 30 h.
+  Pictures: Field key, frame 1755: approved image (left) beside the film at the final tier (right); Field clip, frame 1575 (52.5 s), the crane begins; Field clip, frame 1665 (55.5 s); Field clip, frame 1785 (59.5 s).
 
