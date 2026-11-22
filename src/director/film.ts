@@ -245,7 +245,7 @@ export class Film {
       shared.uCamPos.value.copy(camera.position)
       shared.uFocusM.value = pose.focusM
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
-      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span)
+      if (lit) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span, s.index)
       else this.shadow.off()
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)
