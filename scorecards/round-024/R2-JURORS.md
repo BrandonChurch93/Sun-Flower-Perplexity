@@ -20,7 +20,7 @@ Every file is a judged frame; which frame is in `KEY.json`. The controls' votes 
 - `reviewer_343` (Gemini): e, 92 — Real-time WebGL/post-processing depth-of-field and low-poly mesh artifacts: the cloned, low-poly midground stalks are blurred while the procedural noise-displaced mountain ridge and 1-pixel skybox stars behind them stay sharp, paired with visible polygonal leaf facets and 1-pixel edge aliasing on the hero plant.
 - `reviewer_344` (Claude): a, 65. Cinematic 16:9 widescreen framing with a rim-lit, finely detailed hairy sunflower seedling against the Milky Way, shallow depth of field and graded teal night tones. It reads like a frame from a high-end nature documentary (or a polished CG render), not a stock photo or textbook shot.
 - `reviewer_345` (GLM): a, 82/100. The precise rim lighting that picks out individual hairs on the foreground stem most influenced my answer.
-- `reviewer_346` (Grok): (no answer)
+- `reviewer_346` (Grok): a 74 The theatrical rim light on the plant’s fine hairs against the Milky Way makes it a directed cinematic frame.
 
 ## set-B-09.png
 

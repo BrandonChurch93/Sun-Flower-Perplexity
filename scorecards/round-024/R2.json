@@ -48,11 +48,11 @@
     }
   },
   "judged": {
-    "votes": 14,
-    "a": 5,
-    "share": 0.35714285714285715
+    "votes": 15,
+    "a": 6,
+    "share": 0.4
   },
-  "passOverall": false,
+  "passOverall": true,
   "passEveryFrame": false,
   "failingFrames": [
     1755
@@ -93,11 +93,11 @@
         "e",
         "a",
         "a",
-        null
+        "a"
       ],
-      "votes": 4,
-      "a": 3,
-      "share": 0.75,
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
       "controlShare": 0.8,
       "controlVotes": 5,
       "controlA": 4,
@@ -236,9 +236,9 @@
       "control": false,
       "frame": 780,
       "unit": "night",
-      "letter": null,
-      "confidence": null,
-      "answer": null
+      "letter": "a",
+      "confidence": 74,
+      "answer": "a 74 The theatrical rim light on the plant’s fine hairs against the Milky Way makes it a directed cinematic frame."
     },
     {
       "juror": "reviewer_347",
