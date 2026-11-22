@@ -46,6 +46,7 @@ const FOOT_SHUT = 0.05
 const FOOT_OPEN = -0.06
 // The feet stand at uneven depths behind the rim, so the row of them is no straight line.
 const FOOT_STAGGER = 0.03
+const RAY_LANE = 0.1
 const ROOT_DROP = 0.65
 // The tip of a shut strap curls down over the eye.
 const TIP_TUCK = 0.35
@@ -494,13 +495,15 @@ export function create(options: PartOptions): PlantPart | null {
       const midX = rimmed ? cx[(nv - 1) / 2] : (cx[0] + cx[nv - 1]) * 0.5
       const midY = rimmed ? cy[(nv - 1) / 2] : (cy[0] + cy[nv - 1]) * 0.5
       const tipShare = smooth(0.8, 1, u)
+      // Each ray has its own lane while it unfolds and after: the front rank rides above the rear one from just past its claw to past its middle, so two neighbors lie one over the other and do not cut through each other. Claw and tip stay where they were.
+      const layer = m < 0 ? (1 - ray.rank) * RAY_LANE * full * smooth(0.1, 0.4, open) * smooth(0, 0.05, u) * (1 - smooth(0.3, 0.7, u)) : 0
       // The blade of a lifting ray floats forward off the rim, but its claw stays rooted there: no gap opens under its foot for the bracts behind to show through.
       const root = i === 0 && m < 0 ? ROOT_DROP * lifted * (1 - lifted) * full : 0
       const rumple = ray.crumple * full * (1 + 2.2 * fresh) * Math.min(1, halfWidth / (0.004 * (full / 0.07)))
       for (let j = 0; j < nv; j++) {
         const v = vs[j]
         let x = (cx[j] - midX) * (v < 0 ? left : right)
-        let y = cy[j] - midY
+        let y = cy[j] - midY + layer
         const edge = Math.abs(v) * v * v
         y += scale * ray.wave * full * grown * (0.35 + 0.65 * u) * edge * Math.sin(ray.waveFreq * u + ray.wavePhase + (v > 0 ? 1.9 : 0)) * (0.5 + 0.5 * flat)
         y += rumple * (0.6 * Math.sin(v * 7.3 + u * 2.1 + ray.seed * 40) * Math.sin(u * 5.2 + ray.seed * 17) + 0.4 * Math.sin(v * 12.1 - u * 3.4 + ray.seed * 71)) * smooth(0, 0.15, u)
