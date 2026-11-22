@@ -38,6 +38,8 @@ const DEW_SHARE = 0.05
 // A damp hair is drawn at least this wide and this long on the screen, and that much fainter: the same light, spread, so it is a soft stroke and never a row of single lit pixels.
 const SOFT_HALF_PX = 0.75
 const SOFT_LONG_PX = 3
+// A soft stroke loses none of its light to the pixel grid as a line does. This holds the rim at the light it had as lines.
+const SOFT_LIGHT = 0.85
 // A wet hair long enough may carry a drop: six in a hundred do.
 const DROP_FROM_M = 0.0005
 const DROP_SHARE = 0.06
@@ -312,7 +314,12 @@ void main() {
   float halfPx = 0.5 * s.width / s.pixel;
   float share = s.share;
   vec3 at = s.world;
-  if (max(uPlantDew, uPlantWet) > 0.0) {
+#ifdef SOFT
+  bool spread = true;
+#else
+  bool spread = max(uPlantDew, uPlantWet) > 0.0;
+#endif
+  if (spread) {
     float soft = max(halfPx, SOFT_HALF_PX);
     float stretch = clamp(SOFT_LONG_PX / max(hairLong, 1e-3), 1.0, 6.0);
     share *= halfPx / (soft * stretch);
@@ -461,12 +468,18 @@ in float vShare;
 #else
 in float vCover;
 #endif
+#ifdef FADE
+uniform float uHairFade;
+#endif
 void main() {
 #ifdef RIBBON
   float x = abs(vAcross);
   float cover = max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * vShare;
 #else
   float cover = vCover;
+#endif
+#ifdef FADE
+  cover *= uHairFade;
 #endif
   float sun = plantSun(vLitAt, uSunDir);
   vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
@@ -496,6 +509,9 @@ export class HairSet {
   private readonly ribbons = new THREE.BufferGeometry()
   private readonly linesSharp = new THREE.BufferGeometry()
   private readonly ribbonsSharp = new THREE.BufferGeometry()
+  private readonly ribbonsSoft = new THREE.BufferGeometry()
+  private readonly lineFade = { value: 1 }
+  private readonly softFade = { value: 0 }
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
   private readonly pickTexture: THREE.DataTexture
@@ -541,9 +557,9 @@ export class HairSet {
     this.lines.setIndex(new THREE.BufferAttribute(lineIndex, 1))
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
     const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture } }
-    const make = (label: string, vertex: string, define: string, sharp = false): Surface =>
-      makePartSurface(options, { name: label, vertex, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: own })
-    this.surface = make(name, lineVertex, '')
+    const make = (label: string, vertex: string, define: string, sharp = false, fade?: { value: number }, soft = ''): Surface =>
+      makePartSurface(options, { name: label, vertex: `${soft}${vertex}`, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: fade ? { ...own, uHairFade: fade } : own })
+    this.surface = make(name, lineVertex, '#define FADE 1\n', false, this.lineFade)
     const close = make(`${name} close`, ribbonVertex, '#define RIBBON 1\n')
     const line = (geometry: THREE.BufferGeometry, surface: Surface): THREE.Mesh => {
       const mesh = new THREE.LineSegments(geometry, surface.main)
@@ -562,6 +578,11 @@ export class HairSet {
     near.renderOrder = HAIR_ORDER + 1
     farSharp.renderOrder = HAIR_ORDER + 2
     nearSharp.renderOrder = HAIR_ORDER + 2
+    // In the wide shot a hair under a pixel wide is a soft stroke a pixel and a half wide with the same light, so it holds still as the camera moves.
+    this.ribbonsSoft.setIndex(this.ribbons.getIndex())
+    const soft = partMesh(this.ribbonsSoft, make(`${name} far soft`, ribbonVertex, '#define RIBBON 1\n#define FADE 1\n', false, this.softFade, '#define SOFT 1\n'))
+    soft.renderOrder = HAIR_ORDER
+    soft.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, soft, false, true)
     far.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, far, false)
     near.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, near, true)
     const most = Math.min(count, MOST_PICKS)
@@ -585,7 +606,7 @@ export class HairSet {
     const barbsSharp = extra(`${name} barbs and beads blur circle`, '#define BLUR_CIRCLE 1\n', true)
     barbs.renderOrder = HAIR_ORDER + 3
     barbsSharp.renderOrder = HAIR_ORDER + 4
-    this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp]
+    this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp, soft]
   }
 
   // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
@@ -607,7 +628,7 @@ export class HairSet {
     const at = this.at
     const perM = (camera.projectionMatrix.elements[5] * height) / 2
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
-    // In the wide shot a hair is a fraction of a pixel wide and a coat of them would sum to one even line. There a few stand for the many, each bright enough to show as a bristle.
+    // In the wide shot a hair is a fraction of a pixel wide. There each is drawn long enough to stand off the outline, and where they crowd all of them dim alike instead of some going out.
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     let n = 0
@@ -633,7 +654,9 @@ export class HairSet {
       const near = Math.min(1, Math.max(0, (length * scale - STRAND_FROM_PX) / STRAND_FROM_PX))
       const brief = near + (1 - near) * wide
       const fine = Math.min(1, (this.widthM * thick * scale) / (STRAND_PX + (WIDE_STRAND_PX - STRAND_PX) * wide))
-      const part = (1 - brief * (1 - fine)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
+      // In the wide shot none is left out for being fine: every hair is a faint soft stroke and the coat sums to an even line that holds still.
+      const thin = fine + (1 - fine) * wide
+      const part = (1 - brief * (1 - thin)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
       if (part < 1) {
         const keep = part * (1 + THIN_EASE)
         const h = (own * 151.37 + 0.11) % 1
@@ -687,7 +710,8 @@ export class HairSet {
       if (cover <= limit) continue
       const keep = limit / cover
       const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
-      out[k * 16 + 11] *= Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
+      const some = Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
+      out[k * 16 + 11] *= some + (0.85 * keep - some) * wide
     }
     // Rime grows barbs and beads on the long hairs that show.
     let picked = 0
@@ -716,9 +740,13 @@ export class HairSet {
     this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
 
-  private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean): void {
+  private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft = false): void {
     // The samples of one frame differ by the width of the lens. A camera farther than that from where the hairs were gathered is another view.
     if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
+    const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
+    const wide = ease * ease * (3 - 2 * ease)
+    this.lineFade.value = 1 - wide
+    this.softFade.value = SOFT_LIGHT * wide
     const geometry = ribbon ? this.ribbons : this.lines
     const sharp = ribbon ? this.ribbonsSharp : this.linesSharp
     // A clear hair adds its light to what is behind it. Rimed, it covers it.
@@ -728,6 +756,11 @@ export class HairSet {
     material.blendDst = rimed ? THREE.OneMinusSrcAlphaFactor : THREE.OneFactor
     material.blendEquationAlpha = rimed ? THREE.AddEquation : THREE.MinEquation
     material.blendSrcAlpha = rimed ? THREE.ZeroFactor : THREE.OneFactor
+    if (soft) {
+      const far = this.softRange(camera, object)
+      this.ribbonsSoft.setDrawRange(far.start, wide > 0 ? far.count : 0)
+      return
+    }
     const m = object.matrixWorld.elements
     const size = Math.hypot(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
@@ -735,7 +768,7 @@ export class HairSet {
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
     const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
     const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
-    if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4) {
+    if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4 || (!ribbon && wide >= 1)) {
       geometry.setDrawRange(0, 0)
       sharp.setDrawRange(0, 0)
       return
@@ -747,6 +780,17 @@ export class HairSet {
     } else if (lengthPx < 5) geometry.setDrawRange(0, this.kept * 2)
     else geometry.setDrawRange(this.count * 2, this.kept * 4)
     sharp.setDrawRange(geometry.drawRange.start, rimed ? geometry.drawRange.count : 0)
+  }
+
+  private softRange(camera: THREE.Camera, object: THREE.Object3D): { start: number; count: number } {
+    const m = object.matrixWorld.elements
+    const size = Math.hypot(m[0], m[1], m[2])
+    const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
+    const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
+    const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
+    if (this.kept === 0 || close || shared.uDiag.value >= 4 || stateUniforms.uPlantFrost.value > 0.5) return { start: 0, count: 0 }
+    return this.longest / pixel < 12 ? { start: 0, count: this.kept * 12 } : { start: this.count * 12, count: this.kept * 24 }
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.
