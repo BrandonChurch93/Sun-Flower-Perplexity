@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 06:01 UTC · Round 23: the hook critic's answer saved word for word (score 7, not a pass)
+- Last push: 2026-11-22 06:01 UTC · Round 23: the story critic's answer saved word for word (score 8, not a pass)
 - Last status: 74 · 2026-11-22 06:00 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -48,8 +48,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 1.06 h |
-| Whole build | 30.00 h | 29.14 h |
+| 6 | 4.00 h | 1.09 h |
+| Whole build | 30.00 h | 29.17 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1480,7 +1480,7 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [ ] Measures
 - [ ] Pack
 - [x] R6 answer: `reviewer_332`, Claude family, fresh, the nine files of `R6` only, asked 06:00:10, answered by 06:01 UTC. **Score 7, not a pass**: 3 major, 2 minor. Saved word for word in `scorecards/round-023/R6.json`. Major, by place: centre soil mound; upper right sun and lower left bokeh; emerging sprout, centre. Minor, by place: seed tip in the soil hollow; sprout stem to frame 9.
-- [ ] R5 answer
+- [x] R5 answer: `reviewer_333`, GPT family, fresh, the five files of `R5` only, asked 06:01:34, answered by 06:02 UTC. **Score 8, not a pass**: 1 severe, 1 major. Saved word for word in `scorecards/round-023/R5.json`. Severe: 39.4 s to 41.1 s, frost-to-bloom cut (preceding frame on set-E-02.png) ("The sun jumps from upper right to the left horizon, the ridge is reframed, and a large foreground leaf enters from the left. The bud carries across, but the cut reads like a new camera setup rather than the same spot warming up"). Major, by place: 58.5 s, two sunflowers in the foreground of the field reveal.
 - [ ] R2 jury answers
 - [ ] R7 answer
 - [ ] R4 answer
@@ -1681,6 +1681,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 05:44 UTC · Polish round 1: the fix batch merged on 5abb284 (ten pieces), each looked at before and after; Status 73
 - 2026-11-22 06:00 UTC · Polish round 1: sixteen judged stills of 5abb284 at the final tier, the jury started, Status 74
 - 2026-11-22 06:01 UTC · Round 23: the hook critic's answer saved word for word (score 7, not a pass)
+- 2026-11-22 06:01 UTC · Round 23: the story critic's answer saved word for word (score 8, not a pass)
 
 ## Session log
 

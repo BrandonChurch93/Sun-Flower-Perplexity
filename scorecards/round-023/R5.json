@@ -1,0 +1,21 @@
+{
+  "critic": "R5",
+  "score": 8,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-E-03.png",
+      "where": "39.4 s to 41.1 s, frost-to-bloom cut (preceding frame on set-E-02.png)",
+      "what": "The sun jumps from upper right to the left horizon, the ridge is reframed, and a large foreground leaf enters from the left. The bud carries across, but the cut reads like a new camera setup rather than the same spot warming up.",
+      "fix": "Keep a recognizable ridge feature and the bud's screen position aligned across the cut. Let the fog and light change without also resetting the foreground and horizon."
+    },
+    {
+      "severity": "major",
+      "file": "set-E-05.png",
+      "where": "58.5 s, two sunflowers in the foreground of the field reveal",
+      "what": "The original bloom is still traceable as the shorter flower on the right, but the taller flower beside it catches the light and competes for the final focal point. The field feels like a release, but the film's original subject is less clear in the wide frame.",
+      "fix": "Keep the original flower as the visual anchor during the pullback, and let the taller neighbor emerge without overtaking it in contrast or framing."
+    }
+  ]
+}
