@@ -1,0 +1,21 @@
+{
+  "schema": "beat-sync/cues 1",
+  "fps": 60,
+  "scenes": [
+    {
+      "id": 1,
+      "name": "Opening",
+      "cues": [
+        { "at_s": 0.0, "do": "First frame", "expect": "none" },
+        { "at": "1.1", "do": "Cut to the subject. Title in", "expect": "kick" },
+        { "at": "1.2", "do": "Second title line in", "expect": "snare" },
+        { "at": "2.2+", "do": "Accent on the off beat kick", "expect": "kick" },
+        { "at": "5.1", "do": "Lights out where the drums drop out", "expect": "quiet" }
+      ],
+      "captions": [
+        { "in": "1.1", "out": "2.1", "text": "Title" },
+        { "in": "1.2", "out": "2.1", "text": "Second line", "with": "second line of the block" }
+      ]
+    }
+  ]
+}
