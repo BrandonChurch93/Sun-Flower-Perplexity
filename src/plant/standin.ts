@@ -22,6 +22,7 @@ import {
   leafLength,
   leafSeed,
   leafStemFraction,
+  measureStem,
   plantVariant,
   rayAngle,
   rayCount,
@@ -558,6 +559,7 @@ export function stemLength(time: number, inputs: PlantInputs): number {
   const still = inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
   let length = 0
   if (target > 0) {
+    measureStem(true)
     let l0 = target
     let f0 = place(time, still, l0, scratch, null) - target
     let l1 = Math.max(1e-7, (l0 * target) / (f0 + target))
@@ -572,6 +574,7 @@ export function stemLength(time: number, inputs: PlantInputs): number {
       f1 = place(time, still, l1, scratch, null) - target
     }
     length = l1
+    measureStem(false)
   }
   solved.push({ variant, time, leanX: inputs.leanX, leanZ: inputs.leanZ, lift: inputs.lift, length })
   if (solved.length > KEEP) solved.shift()
