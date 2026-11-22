@@ -1,12 +1,12 @@
-# Status 79
+# Status 80
 
-2026-11-22 07:20 UTC
+2026-11-22 07:49 UTC
 
-- Status 79 · Phase 6. Round 24, the last polish round: the second and third passes of the fix batch are in and looked at. Not merged yet. Taken so far: cut 4 (the companion's leaves held), bracts ahead of the rays, the field's gust, lean and far band of heads, the pull back on one curve to the last frame, dawn's first frame highlights, the end's leaves moving, rain landing behind the plant, the husk coming to rest, the bud's hair dots, the field's foot. Still out: the rays' order of opening, the first frame's pale dome with the new cleft, the night's stars at 16x9, the companion's face at the end, shimmer of the row leaves.
-- Next: Close the fix batch by about 08:00 UTC, look at the merged frames, then the machine checks, the measures and fresh critics on the merged build. Time used: 0.5 h of 10 h.
+- Status 80 · Phase 6. Polish round 2, the last round: the fix batch is merged. Fourteen pieces are in: the cut into the field, bracts kept behind the rays, the field plants moving, the pullback at one rate, softer dawn highlights, fuller leaves at the end, rain that lands, the husk at rest with a pale arch showing at frame 0, crumbs that stay put, finer bract hairs, the foot of the field, steadier stars, one open face at the end, and rays that open in turn round the rim. The row shading of the far leaves failed its shimmer check three times and stays out.
+- Next: Build the merged film, run the machine checks and measures, render the judged frames at final across the agents, then the last critics: R4, R5, R6, R7 and the jury on 420, 780 and 1755. Then the freeze and the record round. Time used: 1.0 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Field at 58.5 s, before above, after below: the far rows become a band of open heads (not merged yet)
-- `status-2.jpg`: Bud at 40.6 s, six frames in a row, before above, after below: the lit dots on the dark bracts are gone (not merged yet)
-- `status-3.jpg`: Field's foot at 58.5 s, before above, after below: uneven turf in place of pale tufts (not merged yet)
-- `status-4.jpg`: Opening, frames 0, 8 and 15: a pale dome in the cleft on the first frame (trial, not merged yet)
+- `status-1.jpg`: End frame 1755 on the merged batch, preview: one open face in front, the companion a bud
+- `status-2.jpg`: Frames 0 to 15, the mound at twice the size: a pale arch in the cleft from the first frame
+- `status-3.jpg`: Rays opening, 1404 to 1464: main above, rays in turn below
+- `status-4.jpg`: The end before and after: the companion keeps a bud
