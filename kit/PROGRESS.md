@@ -14,8 +14,8 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 10:04 UTC · Status 85: QA gauntlet pass 1 under way, item 20 found failing, decision logged
-- Last status: 85 · 2026-11-22 10:03 UTC · Phase 6
+- Last push: 2026-11-22 10:22 UTC · Status 86: QA pass 1, gate all green, item 20 fix under way, pages being captured
+- Last status: 86 · 2026-11-22 10:21 UTC · Phase 6
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
 
@@ -23,6 +23,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-22 10:21 UTC · status 86 · Phase 6 · `status-1.jpg`: QA item 1: frames 0 and 5, no fade in, the hook already moving; `status-2.jpg`: QA item 4: both sides of each of the four cuts, each wholly its own world; `status-3.jpg`: QA item 23: the export page before it starts, this machine's check frame beside the kept still; `status-4.jpg`: QA item 24: frame 1515 drawn from the build served under a subfolder path
 - 2026-11-22 10:03 UTC · status 85 · Phase 6 · `status-1.jpg`: Film sheet 1 of 3, final build (0 to 20 s); `status-2.jpg`: Film sheet 2 of 3 (20 to 40 s); `status-3.jpg`: Film sheet 3 of 3 (40 to 60 s); `status-4.jpg`: QA item 13: stand-in view of the ten judged frames, no flag colour anywhere
 - 2026-11-22 09:38 UTC · status 84 · Phase 6 · `status-1.jpg`: Rain, the frozen build: twelve frames across 8 to 20 s; `status-2.jpg`: Frost, the frozen build: twelve frames across 30 to 40 s; `status-3.jpg`: Frame 0, final tier: the jury failed it (1 of 5); `status-4.jpg`: Frame 1755, final tier: the jury failed it (2 of 5)
 - 2026-11-22 09:13 UTC · status 83 · Phase 6 · `status-1.jpg`: Dawn, the frozen build: twelve frames across 0 to 8 s; `status-2.jpg`: Night, the frozen build: twelve frames across 20 to 30 s; `status-3.jpg`: Bloom, the frozen build: twelve frames across 40 to 52 s; `status-4.jpg`: Field, the frozen build: twelve frames across 52 to 60 s
@@ -34,7 +35,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-22 06:42 UTC · status 77 · Phase 6 · `status-1.jpg`: Cut 4 as it stands, frames 1199 and 1200: the bud holds, the sun and the land change with the world, and the leaf at the left edge is in motion through the cut; `status-2.jpg`: The pullback at frames 1593 (top) and 1645 (bottom), before left, a trial with an even rate right (not merged); `status-3.jpg`: Frame 1398, before left, after right: rays in lanes, first pass. The crossing at the lower left of the disc is still there; `status-4.jpg`: Frame 1755, before above, after below: the rows get a sway. The still holds; the motion is not proven yet
 - 2026-11-22 06:27 UTC · status 76 · Phase 6 · `status-1.jpg`: Bloom hero: approved image against the build, frame 1515; `status-2.jpg`: Field: approved image against the build, frame 1755; `status-3.jpg`: Cut 4, frost to bloom: the cut two critics fault (the land and the sun change sides); `status-4.jpg`: Frames 0 to 11 at frame cadence: the cleft, the hook, and the crumbs whose highlights blink
 - 2026-11-22 06:21 UTC · status 75 · Phase 6 · `status-1.jpg`: Frame 420 at the final tier: rain, wet hairs in tufts, wider streaks (the jury now passes it); `status-2.jpg`: Frame 780 at the final tier: night, the rows lower than the hero (the jury now passes it); `status-3.jpg`: Frame 1755 at the final tier: the field (the jury fails it, 1 of 5); `status-4.jpg`: Whole film sheet 3 of 3: bloom and field on the merged build
-- 2026-11-22 06:00 UTC · status 74 · Phase 6 · `status-1.jpg`: Frame 0 at the final tier: the cleft over the seed in the first frame; `status-2.jpg`: Frame 15 at the final tier: the hook is up after half a second; `status-3.jpg`: Whole film sheet 1 of 3: dawn and rain on the merged build; `status-4.jpg`: Whole film sheet 2 of 3: night and frost on the merged build
 
 ## Clock
 
@@ -48,10 +48,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
 | 5 | 3.00 h | 3.12 h |
-| 6 | 4.00 h | 5.11 h |
-| Whole build | 30.00 h | 33.18 h |
+| 6 | 4.00 h | 5.42 h |
+| Whole build | 30.00 h | 33.50 h |
 
-- Continuation 1, started 2026-11-22T06:52:03Z: 3.18 h used of 10.00 h. New boxes: 6: 10.00 h.
+- Continuation 1, started 2026-11-22T06:52:03Z: 3.49 h used of 10.00 h. New boxes: 6: 10.00 h.
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -846,6 +846,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 6 · 09:56 UTC. Step 11: `npm run review` built the review page into `dist/` (4 status pictures, 2 films, 6 clips, 31 comparison images and sheets, site 244.2 MB; `dist/build.json` carries the frozen build's engine hash `a4c82933ba906236`) and the final build was published at 09:57 UTC: https://sunflower-film.pplx.app, visibility Organization. It will be published once more after the QA gauntlet, so that the review page carries the last report.
 - 2026-11-22 · Phase 6 · 10:04 UTC. The thread's history was compacted again about 10:01. Read again as the rule says: "Status", "Notes from Brandon", the round 25 block and "Final scores" in this file, `kit/addenda/README.md` (no addenda), `kit/09-QA-GAUNTLET.md` and Phase 6 of `kit/08-BUILD-ORDER.md`. Nothing was lost: the QA render script (`out/work/scratch/qa/run-renders.sh`, started 09:56:49) kept running, and the item 20 findings were written down before the compaction.
 - 2026-11-22 · Phase 6 · 10:04 UTC. QA item 20 fails in gauntlet pass 1, and the decision is to fix it in the one fix batch after pass 1 has found every failure. The item: "`src/` takes frame rate, duration, formats, tiers, worlds, segments, keys, thresholds and names only from `src/config.ts`". The search (`scorecards/qa/search-config-values.txt`, and the reads of 09:58 to 10:06) found literal copies of config values in `src/`: the master and preview sizes (1920, 1080, 960, 540 and one `16 / 9`) in `worlds/rain/index.ts`, `worlds/night/sky.ts`, `worlds/golden/air.ts`, `post/grade.ts`, `post/post.ts`, `ground/puddles/crowns.ts`, `plant/surface/wet/index.ts` and `capture/export.module.css`; segment starts (8, 20, 30, 40, 52 s) as named constants or inline in `worlds/rain/layers.ts`, `plant/seedling`, `plant/stem`, `field/layout.ts`, `plant/head/petals`, `post/looks.ts`, `plant/hairs`, `worlds/golden/air.ts`, `worlds/golden/sky.ts`, `worlds/golden/layers.ts`, `plant/surface/index.ts`, `plant/growth.ts`, `plant/leaves`; and key times (1.5, 6.5, 26, 36 s) in `worlds/dawn/sky.ts`, `worlds/dawn/layers.ts`, `worlds/night/sky.ts`, `director/rig.ts`, `plant/seedling`. A number that the builder chose for an event of its own (a ramp from 15 to 21 s, the flash at 17.2 s) is not a kit number and stays; a number that is a segment's edge or a key's time and is meant as that edge is a copy and goes. Why wait: `quality.gauntletMaxPasses` is 2 and `quality.recordRoundMaxRuns` is 2, so there is one fix batch and one more record round, and every failure must be in that batch. How it will be fixed: each copy is replaced by the value read through `src/config.ts` (in shaders by a template that prints the same text), so no pixel may change; proof is the unit tests, the determinism check and an exact comparison of stills before and after. Then step 13 in full.
+- 2026-11-22 · Phase 6 · 10:13 UTC. Kit state read again after a compaction (Status, Notes from Brandon, round 25, "Final scores", `kit/addenda/README.md`: no addenda). Nothing changes course: Brandon's note of 06:35 still governs (keep going until finished, continuation 1). State: QA gauntlet pass 1 of 2; the gate of item 18 runs since 10:06 and nothing is edited, built or rendered in the main checkout until it ends; the fix for item 20 (config values copied as literals in `src/`) is prepared in the worktree `sf-fix` (branch `qa-item20`) as edits and type checks only. Order after the gate: read its output, finish items 23 to 25, write "QA results", one fix batch, step 13 (run 2 of 2 of the record round), pass 2, step 14.
 
 ## Notes from Brandon
 
@@ -2084,6 +2085,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 09:51 UTC · Steps 5 to 9: master film joined, clips and preview film kept, proof and memory test pass, CUES and SHOTS from the frozen build
 - 2026-11-22 09:56 UTC · README, the review page and the publish of the final build (steps 10 and 11)
 - 2026-11-22 10:04 UTC · Status 85: QA gauntlet pass 1 under way, item 20 found failing, decision logged
+- 2026-11-22 10:22 UTC · Status 86: QA pass 1, gate all green, item 20 fix under way, pages being captured
 
 ## Session log
 
@@ -2264,4 +2266,6 @@ One entry per task: when it started, the prompt it was started with, what it did
   Pictures: Rain, the frozen build: twelve frames across 8 to 20 s; Frost, the frozen build: twelve frames across 30 to 40 s; Frame 0, final tier: the jury failed it (1 of 5); Frame 1755, final tier: the jury failed it (2 of 5).
 - Status 85, 2026-11-22 10:03 UTC, Phase 6. Delivery steps 5 to 11 are done on the frozen build: master film joined, six clips and the preview film cut and kept, memory test and export proof passed, cut sheets and README final, review page rebuilt and the app republished. The QA gauntlet (33 items) runs, pass 1 of 2. So far: item 13 passes (stand-in view of all ten judged frames shows no flag colour, no stand-in declared), item 19 passes (frame 0 from a clean clone has the same hash as the working copy), items 7 and 8 pass (camera never stops or jumps, the plant never shrinks or holds still), item 21 passes. Item 20 fails: some config numbers (frame sizes, segment and key times) are copied as literals in src instead of read from config. Next: Finish pass 1 and collect every failure, then one fix batch (item 20 values read from config, pixels unchanged), then step 13: proof, judged stills, the record round again (run 2 of 2), film parts, clips, preview, review page, publish, and gauntlet pass 2. Time used: 3.2 h of 10 h.
   Pictures: Film sheet 1 of 3, final build (0 to 20 s); Film sheet 2 of 3 (20 to 40 s); Film sheet 3 of 3 (40 to 60 s); QA item 13: stand-in view of the ten judged frames, no flag colour anywhere.
+- Status 86, 2026-11-22 10:21 UTC, Phase 6. QA gauntlet pass 1 of 2: 29 of the 33 items have their evidence and pass; the gate is all 15 green (13 machine checks, D2, D3); item 20 fails (config values copied as plain numbers in src/), its fix is being made in a side worktree and changes no number; items 23 to 25 (export page, subfolder, autopilot and live) are being captured now. Next: write the 33 lines under QA results, merge the item 20 fix once stills prove no pixel changed, then step 13: proof, memory test, final stills, record round run 2 of 2 and all 26 film parts on the fixed build, then gauntlet pass 2 and BUILD COMPLETE. Time used: 3.5 h of 10 h.
+  Pictures: QA item 1: frames 0 and 5, no fade in, the hook already moving; QA item 4: both sides of each of the four cuts, each wholly its own world; QA item 23: the export page before it starts, this machine's check frame beside the kept still; QA item 24: frame 1515 drawn from the build served under a subfolder path.
 

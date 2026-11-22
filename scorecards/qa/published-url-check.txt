@@ -1,0 +1,7 @@
+QA item 25. The published URL from the harness, 2026-11-22 10:21 UTC:
+$ curl -s -o body -w "%{http_code}" -L https://sunflower-film.pplx.app/
+401
+{"error":"auth_required","site_id":"547457d5-7066-4871-b762-1715efa50d06"}
+$ curl -s -o /dev/null -w "%{http_code}" "https://sunflower-film.pplx.app/?mode=autopilot"
+401
+The site's visibility is Organization, so a request without a signed-in session gets 401 auth_required. The harness has no session. As the item allows, the same dist/ is served locally for items 24 and 25.
