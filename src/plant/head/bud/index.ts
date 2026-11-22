@@ -34,8 +34,8 @@ const DOWN_WIDTH_M = 0.00016
 const DOWN_SHUT = 0.15
 // Each bract is rolled a little about its midrib so one margin lies over its neighbor's, like a roof tile.
 const ROLL = 0.16
-// A bract stands cupped round the face until the rays in front of it have opened, and folds back this many seconds after them, outermost series first. growth.ts has no sectors for bracts.
-const FOLD_LAG = [0.2, 0.3, 0.4]
+// A bract peels back ahead of the rays in front of it, this many seconds before them, outermost series first, so no ray has to push it. growth.ts has no sectors for bracts.
+const FOLD_LEAD = [0.6, 0.5, 0.4]
 // Three series, outermost first: where the foot sits (1 is the widest ring, over 1 is on the shoulder), how the bract stands round the shut rays and how far it folds back behind the open ones, in radians from the head's axis.
 const FEET = [0.5, 0.78, 1]
 const HUG = [0.39, 0.31, 0.23]
@@ -51,7 +51,7 @@ const COLLAR_LATE = 3
 // The outer series stands out round the whole bud as a crown, so it waits far less than the two that cover the body.
 const LATE_SHARE = [0.25, 1, 1]
 // The rest of the way back follows the bract's own rays, this many seconds after them.
-const BACK_LAG = 1.3
+const BACK_LAG = [1.5, 1.6, 1.7]
 // On the side away from the first rays the folded bracts stay spread behind the rays by this share and do not lie back on the stem.
 const FOLD_STAY = 0.65
 const FLARE = [0.25, 0.25, 0.5]
@@ -64,7 +64,7 @@ const SHUT = [0.3, 0.9, 1.7]
 // A folded bract curls back on itself toward its point by up to this much, in radians.
 const HOOK = 1.5
 const FOLD_SLOW = 0.3
-const FOLD = [2.7, 2.78, 2.86]
+const FOLD = [2.7, 2.86, 2.86]
 // A bract on the under side of the head folds straight back and curls up this much more, in radians, so it does not hang under the head.
 const LOW_HOOK = 0.6
 // and swings sideways round the head by up to this much as it folds, so it passes beside the head, not under it.
@@ -550,9 +550,9 @@ export function create(options: PartOptions): PlantPart | null {
       for (let m = -1; m <= 2; m++) {
         const ray = (((Math.floor(at) + m) % rayCount) + rayCount) % rayCount
         behind = Math.max(behind, lerp(-1.9, rayAngle(ray, time) + RAY_CLEAR, smoothstep(0.002, 0.03, rayLength(ray, time))))
-        opened += (rayOpen(ray, time - FOLD_LAG[k.series]) + rayOpen(ray, time - FOLD_LAG[k.series] - FOLD_SLOW)) / 8
+        opened += (rayOpen(ray, time + FOLD_LEAD[k.series]) + rayOpen(ray, time + FOLD_LEAD[k.series] - FOLD_SLOW)) / 8
         rayLong = Math.max(rayLong, rayLength(ray, time))
-        passed += rayOpen(ray, time - FOLD_LAG[k.series] - BACK_LAG) / 4
+        passed += rayOpen(ray, time - BACK_LAG[k.series]) / 4
         low = Math.min(low, rayOpen(ray, time))
         grown = Math.max(grown, rayLength(ray, time) / rayLength(ray, 1e3))
       }
