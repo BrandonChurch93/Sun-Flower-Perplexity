@@ -155,7 +155,7 @@ void main() {
   float turn = atan(v.x * uSunDir.z - v.z * uSunDir.x, v.x * uSunDir.x + v.z * uSunDir.z);
   float low = v.y + 0.024 * (valueNoise(vec2(turn * 7.0 + uLayer * 3.1, uLayer * 1.7)) - 0.5);
   float thick = exp(-max(vWorld.y, 0.0) / uScaleM) * (1.0 - smoothstep(0.6, 1.0, vInfo.y / vInfo.z)) * mix(1.0 - smoothstep(-0.008, 0.001, v.y), max(1.0 - smoothstep(-0.055, -0.004, low), 0.1 * (1.0 - smoothstep(0.0, 0.05, v.y))), uLate);
-  outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (0.45 * exp(-theta / 0.06) + 0.42 * exp(-theta * theta / 0.08) + 0.2 * uWide * exp(-theta / 0.8))), 0.0);
+  outColor = vec4(uGlow * vec3(1.0, 0.64, 0.5) * (uShare * thick * bank * (mix(0.45 * exp(-theta / 0.06), 0.34 * exp(-theta / 0.13) * (0.55 + 0.9 * valueNoise(vec2(turn * 11.0 + uLayer * 2.3, v.y * 40.0 + uLayer * 4.1))), uLate) + 0.42 * exp(-theta * theta / 0.08) + 0.2 * uWide * exp(-theta / 0.8))), 0.0);
 }
 `
 
