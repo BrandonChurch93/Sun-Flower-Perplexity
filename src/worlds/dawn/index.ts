@@ -1,4 +1,5 @@
 import type { WorldSettings, WorldStageMaker } from '../../core/world.ts'
+import { shared } from '../../core/shading.ts'
 import { makeMist, type MistSettings } from '../../weather/mist/index.ts'
 import { SKYLINE_DAWN_SUN_DEG } from '../../weather/skyline.ts'
 import { world as golden } from '../golden/index.ts'
@@ -78,6 +79,14 @@ const bankHeightAt = (time: number): number => {
   return bank.heightM + (BANK_LOW_M - bank.heightM) * t * t * (3 - 2 * t)
 }
 
+// At the film's start a gap in the low cloud lets the warm glow round the rising sun down onto the ground; the gap closes slowly and is shut just before the sprout key.
+const GLOW_GONE_AT_S = 1.44
+const GLOW_ON_GROUND: [number, number, number] = [0.48, 0.27, 0.13]
+const glowAt = (time: number): number => {
+  const t = Math.min(1, Math.max(0, time / GLOW_GONE_AT_S))
+  return 1 - t * t * (3 - 2 * t)
+}
+
 export const stage: WorldStageMaker = (def) => {
   const sky = new DawnSky(def, SKY_GAIN)
   const far = makeFarLayers(golden.sun.azimuthDeg, AIR_COOL, AIR_WARM, AIR_PER_M)
@@ -101,6 +110,15 @@ export const stage: WorldStageMaker = (def) => {
       banks.sample(time)
       over.sample(time)
       banks.settle(bankHeightAt(time))
+      const glow = glowAt(time)
+      if (glow > 0) {
+        shared.uSkyZenith.value.x += GLOW_ON_GROUND[0] * glow
+        shared.uSkyZenith.value.y += GLOW_ON_GROUND[1] * glow
+        shared.uSkyZenith.value.z += GLOW_ON_GROUND[2] * glow
+        shared.uSkyHorizon.value.x += GLOW_ON_GROUND[0] * glow
+        shared.uSkyHorizon.value.y += GLOW_ON_GROUND[1] * glow
+        shared.uSkyHorizon.value.z += GLOW_ON_GROUND[2] * glow
+      }
     },
     sky(renderer, target, camera, _pixelX, _pixelY, across) {
       sky.render(renderer, target, camera, across)
