@@ -1,0 +1,59 @@
+{
+  "unit": "frost",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": true
+  },
+  "frames": [
+    {
+      "frame": 1080,
+      "key": "frost",
+      "why": "the key frost",
+      "m1": {
+        "frame": 1080,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.5350830873713244,
+          "y": 0.29305150684200065,
+          "depthM": 0.7185962404215956,
+          "cocPx": 0.5517129302024841
+        }
+      },
+      "m2": {
+        "frame": 1080,
+        "pixels": 2073600,
+        "textured": 70368,
+        "soft": 0,
+        "texturedOutsideSharpZone": 62874,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 1.0444821861928384,
+        "frameEnergy": 14.922890241805014,
+        "approvedEnergy": 14.28735735187528,
+        "sharpPixels": 123069,
+        "region": {
+          "left": 897,
+          "top": 229,
+          "width": 313,
+          "height": 393
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "unit": "night",
+  "tier": "final",
+  "format": "16x9",
+  "assets": "full",
+  "thresholds": {
+    "focusCocPx": 1.5,
+    "minTexelsPerPixel": 1,
+    "maxSoftPixelFraction": 0.02,
+    "minSharpnessRatio": 0.8,
+    "tipMarginFraction": 0.05
+  },
+  "pass": {
+    "m1": true,
+    "m2": true,
+    "m3": true
+  },
+  "frames": [
+    {
+      "frame": 780,
+      "key": "night",
+      "why": "the key night",
+      "m1": {
+        "frame": 780,
+        "pass": true,
+        "reasons": [],
+        "invalid": 0,
+        "tip": {
+          "x": 0.5760684125937905,
+          "y": 0.3078385366342331,
+          "depthM": 1.0153339913151018,
+          "cocPx": 0.1524377316236496
+        }
+      },
+      "m2": {
+        "frame": 780,
+        "pixels": 2073600,
+        "textured": 141893,
+        "soft": 0,
+        "texturedOutsideSharpZone": 25190,
+        "softShare": 0,
+        "pass": true
+      },
+      "m3": {
+        "pass": true,
+        "ratio": 0.8280259963214982,
+        "frameEnergy": 11.189917472141357,
+        "approvedEnergy": 13.513968790656953,
+        "sharpPixels": 155993,
+        "region": {
+          "left": 865,
+          "top": 397,
+          "width": 391,
+          "height": 399
+        }
+      }
+    }
+  ]
+}
