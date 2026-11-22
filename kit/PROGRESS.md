@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 03:08 UTC · Phase 5: round 22 fix pass, hairs, rain and dawn ground merged (engine 8a88363765553132); readings logged
+- Last push: 2026-11-22 03:10 UTC · Phase 5: round 22 fix pass, state at 03:10, early run of the machine checks started
 - Last status: 65 · 2026-11-22 02:56 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 1.12 h |
+| 5 | 3.00 h | 1.33 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 26.08 h |
+| Whole build | 30.00 h | 26.29 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -872,6 +872,11 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
 
+Running (03:10 UTC, 2026-11-22):
+
+- The fix pass of round 22 · opened 02:34 UTC, ends by 04:04 UTC at the latest · seven reports are in and read, six code changes merged (petals, golden air, finer blades, hairs, rain, dawn ground; engine `8a88363765553132`). Still out: `stem_builder` (the husk's pop, due 03:30 UTC), `field_builder` (the far rise from frame 1200, due 03:30 UTC), `modes_builder` (shadow texel steps, due 03:35 UTC). After the last merge: the final build of the phase (twenty stills at `final`, the film and cut sheets, the preview film in 26 parts), the machine checks and the measures.
+- The machine checks of Phase 5, an early run on the six merges (`npm run gate -- --phase 5 --machine`) · the Builder's VM, main checkout at `62d0c84` · started 03:10 UTC · expected 26 min (the run of 02:00 UTC took 26 min) · log `out/work/scratch/gate-p5-0310.log`. No merge and no build in the main checkout until it ends; it runs again on the final build.
+
 Running (02:57 UTC, 2026-11-22):
 
 - The fix pass of round 22 · opened 02:34 UTC, ends by 04:04 UTC at the latest · as in the block below, with two changes: `golden_builder` reported `2b0e74a` at 02:53 UTC and is on a short second pass since 02:55 UTC (the sun's sink out, the coarse specks kept low and fewer), due 03:25 UTC; `stem_builder` since 02:54 UTC on the husk's pop at 3.6 s, due 03:30 UTC. The other reports are due 03:20 UTC.
@@ -1091,6 +1096,8 @@ State at 02:07 UTC (8 running of 12 allowed). Round 22's renders, third send of 
 State at 02:35 UTC (9 running of 12 allowed). Round 22's critics and jury: `reviewer_263` (R4, GPT family), `reviewer_264` (R5, Claude family), `reviewer_265` (R6, Grok family) and `reviewer_266` (R7, Gemini family) were spawned at 02:24 UTC with their packs only and have all answered (02:25 to 02:30 UTC); the fifty jurors `reviewer_267` to `reviewer_316`, one judged frame each, five families a frame, were spawned 02:24 to 02:30 UTC as places came free under the limit, and 49 have answered; `reviewer_298` (frame 1080, Gemini family) is still out. Builders in their turns on the fix pass of round 22, briefs `out/work/briefs/p5-fix-*.md` sent 02:34 UTC, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder`, `petal_builder`, and `golden_builder` (head start of 02:13 UTC plus the addition). `harness_builder` runs the render budget of the judged build since 02:17 UTC, due 02:40 UTC. Idle: `disc_builder` (its head start merged as `adaf813`), `skin_builder`, `stem_builder`, `bud_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
 
 State at 02:56 UTC (9 running of 12 allowed). All fifty jurors of round 22 have answered (`reviewer_298` at 02:45 UTC), none replaced. `harness_builder`'s render budget is in (02:17 to 02:52 UTC, exit 0) and it is idle. In their turns on the fix pass of round 22, reports due 03:20 UTC: `field_builder`, `ground_builder`, `lens_builder`, `hair_builder`, `leaf_builder` (pushed `08b2907` at 02:46 UTC, report not in yet), `petal_builder`, and `bud_builder` (its dawn run sheets are in; the three bloom run sheets follow, due 03:15 UTC). `golden_builder` reported at 02:53 UTC (`2b0e74a`) and was sent back at 02:55 UTC for a short second pass, due 03:25 UTC. `stem_builder` was started at 02:54 UTC on the husk's pop, due 03:30 UTC. Idle: `disc_builder`, `skin_builder`, `harness_builder`, `modes_builder`, `export_builder`. `reviewer_01` to `reviewer_316` are used and never used again.
+
+State at 03:10 UTC (3 running of 12 allowed). Reports of the fix pass of round 22 read, their turns ended: `petal_builder` (02:59 UTC, `3b11fdb`), `golden_builder` (03:00 UTC, `f9c85b1`), `leaf_builder` (03:02 UTC, `08b2907`), `ground_builder` (03:03 UTC, `5681c16`), `hair_builder` (03:05 UTC, `5772154`), `lens_builder` (03:05 UTC, `e7ccd80`), `bud_builder` (03:06 UTC, no code); all six code changes are merged (main `62d0c84`, engine `8a88363765553132`). In their turns: `stem_builder` (since 02:54 UTC, the husk's pop, due 03:30 UTC), `modes_builder` (since 03:05 UTC, the shadow map's texel steps, due 03:35 UTC), `field_builder` (reported `7e410c0` at 03:04 UTC, sent back at 03:06 UTC so the far rise stands from frame 1200, due 03:30 UTC). Idle: `disc_builder`, `skin_builder`, `harness_builder`, `export_builder` and the seven named first. `reviewer_01` to `reviewer_316` are used and never used again.
 
 ## Rounds
 
@@ -1557,6 +1564,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:59 UTC · Phase 5: round 22 fix pass, petal report read; jobs and status line
 - 2026-11-22 03:04 UTC · Phase 5: round 22 fix pass, petals, golden air and finer blades merged (engine 9acef799334c8e85)
 - 2026-11-22 03:08 UTC · Phase 5: round 22 fix pass, hairs, rain and dawn ground merged (engine 8a88363765553132); readings logged
+- 2026-11-22 03:10 UTC · Phase 5: round 22 fix pass, state at 03:10, early run of the machine checks started
 
 ## Session log
 
