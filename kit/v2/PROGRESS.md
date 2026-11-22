@@ -29,12 +29,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 0.40 h |
+| 2 | 3.50 h | 0.59 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.78 h |
+| Whole build | 30.00 h | 1.97 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -61,16 +61,16 @@ One owner per folder. An agent works in its own clone and pushes `agent/<folder>
 | Module | Folder | Owner | State |
 | --- | --- | --- | --- |
 | Film clock, look, camera, integration | `src/v2/`, `src/core/`, `src/director/film.ts` | Builder | scaffold drawn |
-| Sky | `src/sky/` (trials in `src/sky-a`, `src/sky-b`, `src/sky-c`) | three competing agents | not started |
-| Place | `src/place/` | agent | not started |
-| Ground | `src/ground/` | agent | not started |
-| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | agent | not started |
-| Frost | `src/weather/frost/`, `src/weather/fog/`, `src/weather/mist/`, `src/plant/surface/frost/` | agent | not started |
-| Plant | `src/plant/` | agent | not started |
-| Field | `src/field/` | agent | not started |
-| Post | `src/post/` | agent | not started |
-| Player | `src/director/{live,autopilot,modes,menu}.ts`, `src/main.ts`, `src/capture/` | agent | not started |
-| Checks | `tools/` | agent | not started |
+| Sky | `src/sky/` (trials in `src/sky-a`, `src/sky-b`, `src/sky-c`) | three competing agents | first passes pushed |
+| Place | `src/place/` | `place_builder` | started |
+| Ground | `src/ground/` without `puddles/` | `soil_v2_builder` | started |
+| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `rain_builder` | started |
+| Frost | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `frost_builder` | started |
+| Plant | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `plant_builder` | started |
+| Field | `src/field/` | `rows_v2_builder` | started |
+| Post | `src/post/` | `optics_v2_builder` | started |
+| Player | `src/director/{live,autopilot,modes,menu}.ts`, `src/main.ts`, `index.html`, `src/capture/` | `player_builder` | started |
+| Checks | `tools/checks/` | `checks_builder` | started |
 
 ## Render budget
 
@@ -96,6 +96,9 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-22 23:30 UTC. The sky is built three times by three agents of different model families from one brief, and judged on the same bench (`npm run bench`); the winner moves to `src/sky/`.
 - 2026-11-22 23:30 UTC. The frame rate drops of version 1 came from programs built and textures sent to the graphics card at the first frame of each scene. Version 2 has a loading step that draws the film's own moments once (`Film.warm`) and a counter (`src/v2/counter.ts`) that fails the build if anything is made after loading.
 - 2026-11-22 23:45 UTC. Version 2 reuses the 30 hour box of the kit with the same phase boxes. Its clock started at 22:00 UTC on 22 November, when message 6 arrived.
+- 2026-11-22 23:55 UTC. The moon stands 13 degrees up at azimuth 168 so that it is inside the film's frame in the nights. When the light is not the sun the lens gets no sun to blur, so stars stay sharp.
+- 2026-11-22 23:57 UTC. Nine more agents started, one per folder, from the briefs in `kit/v2/briefs/`: the far land, the ground, the plant, the rain, the frost, the field, the lens, the player and the checks. With the three skies that is twelve at once, the limit of `AGENTS.md`. Three of them carry new task names (`soil_v2_builder`, `rows_v2_builder`, `optics_v2_builder`) because version 1's agents still hold the old ones.
+- 2026-11-22 23:57 UTC. The lightning's light on the soil and the plant is the Builder's, in `src/v2/look.ts`; the even fog is the Builder's and the shaped mist is the frost agent's; the companion plant stays; the numbers of the seedling's emergence stay in `src/ground/soil.ts`.
 
 ## Notes from Brandon
 
@@ -119,6 +122,15 @@ None.
 | `sky_a_builder` | `src/sky-a/` | `agent/sky-a`, looks `agent/sky-a-looks` | Claude | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
 | `sky_b_builder` | `src/sky-b/` | `agent/sky-b`, looks `agent/sky-b-looks` | GPT | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running, bench proven in its sandbox |
 | `sky_c_builder` | `src/sky-c/` | `agent/sky-c`, looks `agent/sky-c-looks` | Gemini | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `place_builder` | `src/place/` | `agent/place`, looks `agent/place-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 120 min | running |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground`, looks `agent/ground-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, and `src/v2/inputs.ts` | `agent/plant`, looks `agent/plant-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain`, looks `agent/rain-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost`, looks `agent/frost-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `rows_v2_builder` | `src/field/` | `agent/field`, looks `agent/field-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `optics_v2_builder` | `src/post/` | `agent/post`, looks `agent/post-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/` | `agent/player`, looks `agent/player-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `checks_builder` | `tools/checks/` | `agent/checks`, looks `agent/checks-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 120 min | running |
 
 ## Rounds
 
