@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
-import { dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+import { crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
 export { laneDir }
 
@@ -346,6 +346,12 @@ void main() {
   ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
   normal = normal * cos(angle) + cross(axis, normal) * sin(angle) + axis * dot(axis, normal) * (1.0 - cos(angle));
   c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * mix(0.002, 0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r)), first8));
+  float span = crackSpan(c);
+  if (span > 0.0) {
+    float d = crackLine(c);
+    float edge = span * (crackOpen() + 0.6 * aCenter.w);
+    c += vec2(uLane.y, -uLane.x) * ((sign(d) * sqrt(d * d + edge * edge) - d) * (1.0 - smoothstep(0.012, 0.03, abs(d))));
+  }
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
@@ -371,7 +377,9 @@ uniform float uWet;
 uniform float uFrost;
 uniform float uDew;
 uniform vec2 uToward;
+uniform vec2 uLane;
 ${groundStates}
+${crackShape}
 ${cropLight}
 const mat2 TURN_K = mat2(0.616, 0.788, -0.788, 0.616);
 const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
@@ -379,6 +387,8 @@ const vec3 DEW_FILL = vec3(${dewFill.join(', ')});
 // At dawn the sun skims over each lump's crest: its rough upper side toward the sun takes the light this far round, at this strength.
 const vec2 CREST = vec2(0.55, 1.4);
 const float CREST_TOP = 0.7;
+// How much of the sun the crack's left lip takes where it turns to the gap.
+const float CRACK_LIP = 0.8;
 // The dew on a lit crest throws the sun back in small hard points: the share of the grains that carry a drop, and how bright it is.
 const vec2 DEW_GLINT = vec2(0.1, 0.5);
 ${beadLook}
@@ -427,6 +437,13 @@ void main() {
   vec3 ball = normalize(vBall);
   float crest = saturate((dot(ball, uSunDir) + CREST.x + CREST_TOP * max(ball.y, 0.0)) / (1.0 + CREST.x)) * smoothstep(0.4, 0.8, dD.a) * (0.45 + grit.a);
   float dawn = dawnOnly() * uDew;
+  float span = crackSpan(p);
+  if (span > 0.0) {
+    float d = -crackLine(p) - crackOpen() * span;
+    float lip = span * (1.0 - smoothstep(0.0, uCrackCut.w, d)) * step(-0.001, d) * smoothstep(-0.3, 0.4, dot(ball.xz, vec2(uLane.y, -uLane.x)));
+    lit = max(lit, lip * foot * smoothstep(-0.002, 0.004, vWorld.y));
+    sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
+  }
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
