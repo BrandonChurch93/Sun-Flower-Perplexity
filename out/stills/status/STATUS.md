@@ -1,12 +1,12 @@
-# Status 60
+# Status 61
 
-2026-11-22 01:14 UTC
+2026-11-22 01:33 UTC
 
-- Status 60 · Phase 4 · unit field. Field is finished at its round limit on 47d93fd, not as a pass (round 17: match 4, surface 7, motion 5, jury fails with 1 of 5 against the controls' 4 of 5). Its clip is joined from 8 parts with no step at any seam and no frame failing the tip measure; clip and comparison image are kept and published. Four of six units are finished.
-- Next: Frost (6 of 10 parts in) and night (2 of 10) as their parts land, then the Phase 4 gate. For Phase 5: the field's grade and sun against the approved image, and the camera's smoothing pass. Time used: 24.4 h of 30 h.
+- Status 61 · Phase 4 · unit frost. Night and frost are finished at their round limits on 47d93fd, so all six units are. Both clips are joined from ten parts of 30 frames rendered on the builders' machines: 300 frames each, no frame failed the black frame check, and no join between parts shows. Round 21 (night) and round 18 (frost) left 9 entries each under Open items.
+- Next: The Phase 4 gate on this machine (about 25 minutes), then Phase 5: the camera pass over the bloom, the field and rain grades, and the first whole film round. Time used: 24.7 h of 30 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Field key, frame 1755: approved image (left) beside the film at the final tier (right)
-- `status-2.jpg`: Field clip, frame 1575 (52.5 s), the crane begins
-- `status-3.jpg`: Field clip, frame 1665 (55.5 s)
-- `status-4.jpg`: Field clip, frame 1785 (59.5 s)
+- `status-1.jpg`: Night, approved image beside the film's frame 780
+- `status-2.jpg`: Frost, approved image beside the film's frame 1080
+- `status-3.jpg`: Night clip, frame 750 (25.0 s)
+- `status-4.jpg`: Frost clip, frame 1050 (35.0 s)
