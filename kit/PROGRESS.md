@@ -6,7 +6,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 
 - Build: in progress
 - Current phase: 5 · The whole film
-- Current unit: none (the whole film). All six units are `finished`; the Phase 4 gate closed at 01:47 UTC. Main `4676c5d` (engine `305e9520118781cf`) holds the camera pass and the field and rain grades; round 22, the first whole film round, judges it. Its sixteen `final` stills, seven sheets and the dawn stress set are in from the builders' machines; three stress sets and the machine checks are still running. Three builders have a head start on open items the whole film's judges will see again (the night's hills, the field's far edge, the field's sun and specks).
+- Current unit: none (the whole film). All six units are `finished`; the Phase 4 gate closed at 01:47 UTC. Round 22, the first whole film round, judged main `4676c5d` (engine `305e9520118781cf`) and is answered in full: R5 7, R6 6, R7 6, R4 8, R2 fails on frames 420, 780 and 1755; it ends at its limit. Its one fix pass runs since 02:34 UTC and ends by 04:04 UTC; the night's far land is merged (`adaf813`), nine builders are on the rest. Then step 8 (the preview film) and the Phase 5 gate.
 - Current round: 22 · the whole film · floor round · judges `4676c5d` (engine `305e9520118781cf`) · started 02:03 UTC
 - Blocked: no
 - Budget: running
@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:56 UTC · Status 65: round 22 judged in full, budget measured, husk pop out for a fix, golden hour pass read
+- Last push: 2026-11-22 02:59 UTC · Phase 5: round 22 fix pass, petal report read; jobs and status line
 - Last status: 65 · 2026-11-22 02:56 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -773,6 +773,7 @@ One line each: the date, the phase, the decision and why.
 - 2026-11-22 · Phase 5 · 02:53 UTC. Step 6, the render budget measured again: `harness_builder` ran `npm run budget` on the judged build `4676c5d` (engine `305e9520118781cf`) from 02:17:32 to 02:52:30 UTC, exit 0, 34 min 58 s against the 23 min written for it (inside twice that); the record's hash is the judged build's. The files are in `out/work/budget/phase5/` and the tables are the new block at the top of "Render budget". A sample costs 1.9 times what it did in Phase 3 (16x9: 5.458 s, a `final` frame 259 s, one judged still 346 s measured and inside the 7 minutes; preview `draft` 3.3 s a frame; texture memory `full` 512.7 MB of 2400 MB, `web` 133.4 MB of 800 MB). Decided from it: the preview film of step 8 goes out as 26 parts of at most 75 frames across twelve builders, and the master render of Phase 6 is at `draft`, because `review` does not fit in `sandbox.previewFilmMaxHours` even with the units split.
 - 2026-11-22 · Phase 5 · 02:55 UTC. The cuts judge's major (the pack shows no fastest growth at frame cadence) checked by pictures: `bud_builder` rendered sheets of twelve consecutive frames from main (engine `305e9520118781cf`, records read) and looked at every tile. Frames 3 to 14, the hook breaking the soil: even steps, no stall and no jump, but no crumb moves while the hook comes up through the soil (kept open, the ground's). Frames 102 to 113, the husk letting go: a real pop. I looked at the sheet myself (`out/work/scratch/p5/bud/closer-dawn-f0102-to-f0113.jpg`): the husk is on the tip in frame 109, a faint smeared double in the air in 110 and lying on the soil in 111, identical in 111 to 113 and drawn about a quarter longer than on the tip; the seed leaves snap upright in the same two frames. In the code the fall is the last 16 percent of `huskDrop` (3.2 to 3.7 s), under three frames. Sent to `stem_builder` at 02:54 UTC (brief `out/work/briefs/p5-fix-stem.json`, report due 03:30 UTC): the release as one motion of 10 to 14 frames with a settle, the seed leaves easing upright, one husk size, the rest place as it is now so that frames 45, 60 and 195 do not move. The three bloom run sheets follow from `bud_builder`.
 - 2026-11-22 · Phase 5 · 02:55 UTC. `golden_builder`'s fix pass report read by its pictures (`out/work/scratch/p5/golden/`; commit `2b0e74a` on `agent/golden`, only `src/worlds/golden/air.ts`, `sky.ts`, `layers.ts`; records: engine `305e9520118781cf` unchanged, bloom unit `aeb58a7536b43d7c`, field unit `0c1077e580cfb3b4`; it reports frames 1350 and 1515 byte identical, which I check on the final stills after the merge). Better and taken: the specks have no level top at 52.7 and 53.4 s, and the haze under the field's sun is a softer, wider plume in place of the hard fan. Not better and sent back at 02:55 UTC (`out/work/briefs/p5-fix-golden-2.json`, report due 03:25 UTC): the sun's sink (6 px, the sun sits half behind the ridge and is dimmer, while the approved sun stands clear above its tree line, so it moves away from the approved image) comes out; the coarse specks from 53.5 s stand as about 30 pale dots all over the sky at 56 s, so they are to stay under about 4 degrees above the horizon and be about a third as many. Open and not the golden world's: the ridge stands about 40 px higher in the frame against the sun than the approved tree line (camera tilt or the far land); no broken lit cloud banks in front of the sun.
+- 2026-11-22 · Phase 5 · 03:00 UTC. Fix pass of round 22, `petal_builder` read (`3b11fdb` on `agent/petals`, one file, `src/plant/head/petals/index.ts`; records read: engine `3c5ecfa26d3a000b`, pictures in `out/work/scratch/p5/petal/`). Taken: at frame 1350 the two layers of shut straps stand apart at the foot so a strap no longer cuts through its neighbour (my look at the 2x pair: the straps overlap where they crossed, a modest gain, nothing worse; 2.1% of the frame moves, all on the head); open rays answer gusts from 52 s (the strip of frames 1641 to 1652 shows the outline changing a little from frame to frame). Frame 1515 measured by me: 36 pixels of 518,400 differ by more than 2 levels, largest 8, none on the hero. Left open and written down: the head does not nod on its neck (pose comes from `src/plant/skeleton.ts`), the far rows' rays stay still (`src/field/far.ts`), 152 crossing triangle pairs remain between half open rays at 45.0 s. Merged with the others after 03:15.
 
 ## Notes from Brandon
 
@@ -864,6 +865,12 @@ One entry per issue left open by a limit: the unit, the frame, the critic and it
 ## Running jobs
 
 One entry per long job while it runs: the command, the frame range, the log file, the VM, when it started and the time the render budget says it should take.
+
+Running (02:57 UTC, 2026-11-22):
+
+- The fix pass of round 22 · opened 02:34 UTC, ends by 04:04 UTC at the latest · as in the block below, with two changes: `golden_builder` reported `2b0e74a` at 02:53 UTC and is on a short second pass since 02:55 UTC (the sun's sink out, the coarse specks kept low and fewer), due 03:25 UTC; `stem_builder` since 02:54 UTC on the husk's pop at 3.6 s, due 03:30 UTC. The other reports are due 03:20 UTC.
+- Done: the render budget of the judged build · `harness_builder`'s VM · 02:17:32 to 02:52:30 UTC, exit 0, 34 min 58 s against 23 min written (inside twice that) · files in `out/work/budget/phase5/`, tables under "Render budget".
+- Nothing renders on the Builder's VM.
 
 Running (02:38 UTC, 2026-11-22):
 
@@ -1541,6 +1548,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:46 UTC · Round 22: the jury is in (29 of 50 overall; fails on frames 420, 780, 1755)
 - 2026-11-22 02:56 UTC · Phase 5: render budget measured again, the husk's pop found and sent out, golden hour pass read
 - 2026-11-22 02:56 UTC · Status 65: round 22 judged in full, budget measured, husk pop out for a fix, golden hour pass read
+- 2026-11-22 02:59 UTC · Phase 5: round 22 fix pass, petal report read; jobs and status line
 
 ## Session log
 
