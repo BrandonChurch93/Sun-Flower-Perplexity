@@ -52,6 +52,12 @@ const FAINTEST = 0.0147
 const BRIGHTEST = 12
 const SLOPE = 1.3
 const IN_RIVER = 6
+// A star is never narrower than the pixel grid can carry: about 1.6 pixels across at half its peak, in the format being drawn.
+// Narrower, its peak jumps as it drifts across the borders of the pixels. Its light is the same, spread wider.
+const NARROWEST_PX = 0.68
+// A star fainter than this stands so little above the sky that an encode keeps it in one place and loses it in the next.
+// The faintest are lifted to it, so the field is as full after the encode as before.
+const FAINTEST_SEEN = FAINTEST * 2
 
 const glowFragment = /* glsl */ `${glslCommon}
 ${ridgeGlsl}
@@ -155,7 +161,7 @@ void main() {
   int li;
   float ridge = ridgeAt(w, lu, li);
   vec3 v = uView * w;
-  float sigma = aLight.a * uWidth / 1920.0;
+  float sigma = max(aLight.a * uWidth / 1920.0, ${NARROWEST_PX});
   float size = ceil(6.0 * sigma) + 2.0;
   float air = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) / (uFogFalloff * max(w.y, 1e-4));
   float dim = exp(-air) * exp(-0.12 / max(w.y, 0.01)) * smoothstep(0.0, 0.02, w.y);
@@ -217,7 +223,7 @@ function catalogue(forward: THREE.Vector3, right: THREE.Vector3, up: THREE.Vecto
     const glow = glowAt(u, v)
     if (keep > 0.07 + 6 * glow) continue
     // In the river only the stars that outshine it are seen.
-    const flux = drawn * (1 + IN_RIVER * glow)
+    const flux = Math.max(drawn, FAINTEST_SEEN) * (1 + IN_RIVER * glow)
     d.copy(forward).addScaledVector(right, ((u - 0.5) * GLOW_COVER) / MAP_SCALE_X).addScaledVector(up, ((0.5 - v) * GLOW_COVER) / MAP_SCALE_Y).normalize()
     position[n * 3] = d.x
     position[n * 3 + 1] = d.y
