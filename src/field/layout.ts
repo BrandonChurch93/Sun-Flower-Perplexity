@@ -75,7 +75,7 @@ export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
 // At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
 // In the rain the seedlings stand a little short of their age: their tops stay about the height of the lens, so the far land shows over them.
-export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 25, time) - 0.27 * ramp(27, 35.5, time) + 0.04 * ramp(8, 12.5, time) * (1 - ramp(15, 19, time))
+export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 20.5, time) - 0.27 * ramp(27, 35.5, time) + 0.04 * ramp(8, 12.5, time) * (1 - ramp(15, 19, time))
 // In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
 export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(28, 34, time)) + 0.1 * ramp(8, 12.5, time) * (1 - ramp(15, 19, time))
 // In the rain the young rows are broad: each plant spreads its leaves over the open ground before the rows close and the leaves hang.
