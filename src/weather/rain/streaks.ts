@@ -14,6 +14,7 @@ uniform float uSamples;
 uniform float uGain;
 uniform float uKeep;
 uniform vec4 uBand;
+uniform float uLeast;
 out vec2 vEnds;
 out float vAcross;
 out float vAlong;
@@ -35,7 +36,7 @@ void main() {
   float pixelM = depth * uPixelAngle;
   float coc = min(uCocScale * abs(1.0 / depth - 1.0 / uFocusM), 2048.0);
   // Out of focus, one lens sample carries its share of the blur circle: the strip is drawn that wide so the samples close into it.
-  float halfPx = max(max(r / pixelM, 0.6), 1.2 * coc / sqrt(uSamples));
+  float halfPx = max(max(r / pixelM, uLeast), 1.2 * coc / sqrt(uSamples));
   float halfM = halfPx * pixelM;
   float lengthM = distance(aOpen.xyz, aClose.xyz);
   mid.xy += across * (position.x * halfM) + along * ((2.0 * position.y - 1.0) * halfM);
@@ -52,7 +53,7 @@ void main() {
   float crowd = r < 0.0004 ? pow(mix(uKeep, 1.0, nearFocus), -0.6) : (1.0 - 0.93 * smoothstep(1.1, 1.5, depth / uFocusM)) * (0.07 + 0.93 * smoothstep(0.5, 0.8, depth / uFocusM));
   vShare = min(1.0, uGain * catchLight * crowd * mix(1.0, 0.05, smoothstep(0.0003, 0.0007, r)) * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM)));
   vSeed = aClose.w;
-  float least = max(0.6, 1.2 * coc / sqrt(uSamples)) / halfPx;
+  float least = max(uLeast, 1.2 * coc / sqrt(uSamples)) / halfPx;
   vSeen = min(1.0, max(0.09, least * least));
   vWorld = (inverse(viewMatrix) * vec4(mid, 1.0)).xyz;
   gl_Position = projectionMatrix * vec4(mid, 1.0);
@@ -81,7 +82,8 @@ void main() {
   float seen = 1.0 - vSeen;
   // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
   vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));
-  float body = (1.0 - u) * mix(1.5, 0.12, seen);
+  // The edge of a strip falls off twice as gently as its middle, so a line one or two pixels wide has no step for the encoder to ring on; the factor keeps its light.
+  float body = 1.25 * (1.0 - u) * (1.0 - u) * mix(1.5, 0.12, seen);
   // Seen from above, a drop shows the dark land behind it and little of the band.
   float rise = normalize(vWorld - uCamPos).y;
   float level = smoothstep(-0.12, 0.0, rise);
@@ -102,12 +104,16 @@ const SOFT_NEAR = 0.85
 const SOFT_REACH = 1.21
 const SOFT_KEEP = 0.6
 // The air holds more of the finest rain than marks the puddles.
-const FINE_IN_AIR = 3.5
+const FINE_IN_AIR = 2.8
 const SLOWEST_M_PER_S = 0.5
 // The wind carries a light drop farther than a heavy one, and gusts carry each a little differently, so no two fall at one angle. Every path still ends at its own landing.
 const CARRY_SPREAD = 0.32
 const CARRY_BY_WEIGHT = 0.22
-const CROSS_SPREAD = 0.05
+const CROSS_SPREAD = 0.09
+// A gust leans the drops that land near each other at about the same time the same way, so the rain falls in loose sheets and not at one angle.
+const GUST_LEAN = 0.2
+// No strip is drawn finer than this half width in pixels: a finer line is a stair of single pixels.
+const LEAST_HALF_PX = 1
 
 function smooth(from: number, to: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - from) / (to - from)))
@@ -137,7 +143,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const uniforms = {
     uPixelAngle: { value: 0.001 },
     uSamples: { value: 1 },
-    uGain: { value: 14 },
+    uGain: { value: 17 },
+    uLeast: { value: LEAST_HALF_PX },
     uKeep: { value: SOFT_KEEP },
     uBand: { value: new THREE.Vector4(SOFT_NEAR, FINE_NEAR, FINE_REACH, SOFT_REACH) },
     uLight: { value: new THREE.Vector3().fromArray(light) },
@@ -204,7 +211,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
               const gust = ((drop.id >>> 10) & 1023) / 511.5 - 1
               const cross = (((drop.id >>> 20) & 1023) / 511.5 - 1) * CROSS_SPREAD * down
               const weight = Math.min(1, Math.max(0, (drop.speed - 4) / 4.9))
-              const carry = 1 + CARRY_SPREAD * gust + (s < RAIN_SERIES ? CARRY_BY_WEIGHT * (1 - 2 * weight) : 0)
+              const sheet = Math.sin(drop.x * 2.3 + drop.z * 1.7 + drop.time * 1.9)
+              const carry = 1 + CARRY_SPREAD * gust + GUST_LEAN * sheet + (s < RAIN_SERIES ? CARRY_BY_WEIGHT * (1 - 2 * weight) : 0)
               const dx = fallDir[0] * carry + crossX * cross
               const dz = fallDir[2] * carry + crossZ * cross
               const o = n * 4
