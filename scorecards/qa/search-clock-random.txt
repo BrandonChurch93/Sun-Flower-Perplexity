@@ -1,17 +1,17 @@
-QA item 21. Search of src/ on commit 30cde16, 2026-11-22 04:09 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md.
+QA item 21. Search of src/ on commit 3416300, 2026-11-22 09:57 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md.
 
 == rg -n '(Math\.random|Date\.now|performance\.now|new Date\()' src
 src/capture/export.ts:384:      const t0 = performance.now()
 src/capture/export.ts:386:      secondsPerSample = (performance.now() - t0) / 1000 / samplesOf('review')
 src/capture/export.ts:442:    const started = performance.now()
 src/capture/export.ts:443:    const seconds = () => (performance.now() - started) / 1000
-src/director/live.ts:205:    restAt = performance.now() + REST_MS
-src/director/live.ts:227:        playOrigin = performance.now()
-src/director/live.ts:239:      playOrigin = performance.now()
-src/director/live.ts:331:          const due = playFrom + Math.floor(((performance.now() - playOrigin) / 1000) * fps)
-src/director/live.ts:355:          const wait = restAt - performance.now()
 src/director/autopilot.ts:49:    let origin = performance.now()
 src/director/autopilot.ts:53:      const before = performance.now()
 src/director/autopilot.ts:55:      origin += performance.now() - before
 src/director/autopilot.ts:56:      let due = first + Math.floor(((performance.now() - origin) / 1000) * fps)
 src/director/autopilot.ts:62:        origin = performance.now()
+src/director/live.ts:205:    restAt = performance.now() + REST_MS
+src/director/live.ts:227:        playOrigin = performance.now()
+src/director/live.ts:239:      playOrigin = performance.now()
+src/director/live.ts:331:          const due = playFrom + Math.floor(((performance.now() - playOrigin) / 1000) * fps)
+src/director/live.ts:355:          const wait = restAt - performance.now()

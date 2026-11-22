@@ -1,12 +1,12 @@
-# Status 84
+# Status 85
 
-2026-11-22 09:38 UTC
+2026-11-22 10:03 UTC
 
-- Status 84 · Phase 6. The record round (round 25) is closed and its scores are the film's final scores. All 24 critics and all 50 jurors answered. No unit and not the film reaches the bar: R1 lowest 4, R3 lowest 3 (rain), R4 lowest 4 (dawn), R5 7, R6 8, R7 7. The jury passes eight of the ten judged frames and fails frames 0 and 1755. Measures and machine checks are green. All 133 severe and major issues are logged as open items; nothing is fixed after a record round. All 26 parts of the master film are in, and the export proof passed.
-- Next: Cut the six clips and the preview film from the master parts, finish the memory test, write the cue sheet and the README, publish, then run the 33 items of the QA gauntlet and close the build. Time used: 2.8 h of 10 h.
+- Status 85 · Phase 6. Delivery steps 5 to 11 are done on the frozen build: master film joined, six clips and the preview film cut and kept, memory test and export proof passed, cut sheets and README final, review page rebuilt and the app republished. The QA gauntlet (33 items) runs, pass 1 of 2. So far: item 13 passes (stand-in view of all ten judged frames shows no flag colour, no stand-in declared), item 19 passes (frame 0 from a clean clone has the same hash as the working copy), items 7 and 8 pass (camera never stops or jumps, the plant never shrinks or holds still), item 21 passes. Item 20 fails: some config numbers (frame sizes, segment and key times) are copied as literals in src instead of read from config.
+- Next: Finish pass 1 and collect every failure, then one fix batch (item 20 values read from config, pixels unchanged), then step 13: proof, judged stills, the record round again (run 2 of 2), film parts, clips, preview, review page, publish, and gauntlet pass 2. Time used: 3.2 h of 10 h.
 - Review page: https://sunflower-film.pplx.app/review.html
 
-- `status-1.jpg`: Rain, the frozen build: twelve frames across 8 to 20 s
-- `status-2.jpg`: Frost, the frozen build: twelve frames across 30 to 40 s
-- `status-3.jpg`: Frame 0, final tier: the jury failed it (1 of 5)
-- `status-4.jpg`: Frame 1755, final tier: the jury failed it (2 of 5)
+- `status-1.jpg`: Film sheet 1 of 3, final build (0 to 20 s)
+- `status-2.jpg`: Film sheet 2 of 3 (20 to 40 s)
+- `status-3.jpg`: Film sheet 3 of 3 (40 to 60 s)
+- `status-4.jpg`: QA item 13: stand-in view of the ten judged frames, no flag colour anywhere
