@@ -52,9 +52,9 @@ function parts<T>(items: T[][], limit: number): T[][][] {
 const named = (critic: string, count: number, part: number): string => (count > 1 ? `${critic}-${part + 1}` : critic)
 const splitNote = (count: number, part: number): string[] => (count > 1 ? [`This is part ${part + 1} of ${count}. The parts hold different pictures of the same kind and are judged the same way, each on its own.`, ''] : [])
 
-interface Group { files: PackFile[]; lines: (names: string[]) => string[]; after?: (names: string[]) => string[] }
+export interface Group { files: PackFile[]; lines: (names: string[]) => string[]; after?: (names: string[]) => string[] }
 
-function packsOf(critic: string, letter: string, groups: Group[], head: string[], tail: string[] = []): Pack[] {
+export function packsOf(critic: string, letter: string, groups: Group[], head: string[], tail: string[] = []): Pack[] {
   const split = parts(groups.map((g) => g.files), most)
   let next = 0
   let number = 1

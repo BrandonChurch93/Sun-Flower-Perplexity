@@ -1,0 +1,416 @@
+{
+  "kind": "clip",
+  "engineHash": "b9de284219d214c9",
+  "unitHashes": {
+    "dawn": "609ff98b65fa38e3",
+    "rain": "cdb9bfbbb4e44942",
+    "night": "dd84d117aab66acc",
+    "frost": "8162048fd525a7c9",
+    "bloom": "d9662b45d5344491",
+    "field": "c229e6a6f41a2960"
+  },
+  "format": "16x9",
+  "tier": "review",
+  "assets": "full",
+  "diag": "beauty",
+  "browser": "147.0.7727.15",
+  "machine": {
+    "host": "space-sandbox",
+    "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+    "cores": 4,
+    "ramMb": 7957
+  },
+  "standIns": [],
+  "at": "2026-11-22T01:07:51.798Z",
+  "frames": [
+    240,
+    599
+  ],
+  "unit": "rain",
+  "bitrateMbps": 20,
+  "m1": {
+    "checked": 360,
+    "failed": [
+      303,
+      304,
+      305,
+      306,
+      307,
+      308,
+      309,
+      310,
+      311,
+      312,
+      313,
+      314,
+      315
+    ]
+  },
+  "m1Details": {
+    "303": {
+      "frame": 303,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.50 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.615748606265957,
+        "y": 0.26999506162954023,
+        "depthM": 0.4772231382708777,
+        "cocPx": 1.5041093826293945
+      }
+    },
+    "304": {
+      "frame": 304,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.57 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6148935902674875,
+        "y": 0.2684780617126422,
+        "depthM": 0.4793785149998352,
+        "cocPx": 1.566293716430664
+      }
+    },
+    "305": {
+      "frame": 305,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.63 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6140289354918631,
+        "y": 0.26666307325126704,
+        "depthM": 0.48152230875717394,
+        "cocPx": 1.625868320465088
+      }
+    },
+    "306": {
+      "frame": 306,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.68 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6131574597719687,
+        "y": 0.2645502869172226,
+        "depthM": 0.48365389589451835,
+        "cocPx": 1.6804792881011963
+      }
+    },
+    "307": {
+      "frame": 307,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.74 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6122820447451238,
+        "y": 0.2621317494004274,
+        "depthM": 0.48577271734549893,
+        "cocPx": 1.743079662322998
+      }
+    },
+    "308": {
+      "frame": 308,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.81 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6114057032494624,
+        "y": 0.25942469353161335,
+        "depthM": 0.48787802844912226,
+        "cocPx": 1.814884901046753
+      }
+    },
+    "309": {
+      "frame": 309,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.90 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6105315943553723,
+        "y": 0.25643388338969964,
+        "depthM": 0.48996918309511733,
+        "cocPx": 1.896073818206787
+      }
+    },
+    "310": {
+      "frame": 310,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 1.98 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6096630080073968,
+        "y": 0.25316496091228013,
+        "depthM": 0.492045540716733,
+        "cocPx": 1.98136568069458
+      }
+    },
+    "311": {
+      "frame": 311,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 2.11 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6088033688060384,
+        "y": 0.24962433591009053,
+        "depthM": 0.4941064724966551,
+        "cocPx": 2.113178253173828
+      }
+    },
+    "312": {
+      "frame": 312,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 2.22 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6079713446313371,
+        "y": 0.2470770627624519,
+        "depthM": 0.4961416806495169,
+        "cocPx": 2.222114324569702
+      }
+    },
+    "313": {
+      "frame": 313,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 2.38 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6071733123240597,
+        "y": 0.24524557089808013,
+        "depthM": 0.4981530848720087,
+        "cocPx": 2.3806369304656982
+      }
+    },
+    "314": {
+      "frame": 314,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 2.51 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6064039965338068,
+        "y": 0.24325253510017164,
+        "depthM": 0.5001472642353836,
+        "cocPx": 2.510934829711914
+      }
+    },
+    "315": {
+      "frame": 315,
+      "pass": false,
+      "reasons": [
+        "the blur circle at the tip is 2.67 px, not under 1.5"
+      ],
+      "invalid": 0,
+      "tip": {
+        "x": 0.6056667035334654,
+        "y": 0.24108115235488442,
+        "depthM": 0.5021241753808856,
+        "cocPx": 2.670677423477173
+      }
+    }
+  },
+  "parts": [
+    {
+      "file": "chunk-rain-16x9-review-full-240-269.mp4",
+      "frames": [
+        240,
+        269
+      ],
+      "at": "2026-11-22T00:43:17.217Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-270-299.mp4",
+      "frames": [
+        270,
+        299
+      ],
+      "at": "2026-11-22T00:40:32.363Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "7d76ff88-5bd2-466e-978b-d12f9a568a85",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-300-329.mp4",
+      "frames": [
+        300,
+        329
+      ],
+      "at": "2026-11-22T00:38:21.115Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-330-359.mp4",
+      "frames": [
+        330,
+        359
+      ],
+      "at": "2026-11-22T00:37:55.984Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-360-389.mp4",
+      "frames": [
+        360,
+        389
+      ],
+      "at": "2026-11-22T00:35:03.171Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-390-419.mp4",
+      "frames": [
+        390,
+        419
+      ],
+      "at": "2026-11-22T00:38:07.896Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "e48ab70b-221d-458d-bb61-52e1962c8881",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-420-449.mp4",
+      "frames": [
+        420,
+        449
+      ],
+      "at": "2026-11-22T01:04:30.366Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "921984ac-1b2a-475b-beb5-2be0dde63fb0",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-450-479.mp4",
+      "frames": [
+        450,
+        479
+      ],
+      "at": "2026-11-22T01:06:40.187Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "c292866e-d9d0-41bd-9f6c-d8077b7af53b",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-480-509.mp4",
+      "frames": [
+        480,
+        509
+      ],
+      "at": "2026-11-22T01:03:47.705Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "7d76ff88-5bd2-466e-978b-d12f9a568a85",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-510-539.mp4",
+      "frames": [
+        510,
+        539
+      ],
+      "at": "2026-11-22T01:00:02.824Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "3e37d97e-f214-4eec-9116-dedac9e45245",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-540-569.mp4",
+      "frames": [
+        540,
+        569
+      ],
+      "at": "2026-11-22T00:58:39.367Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "3f297daa-b4b3-4695-a448-03e835c10f6d",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    },
+    {
+      "file": "chunk-rain-16x9-review-full-570-599.mp4",
+      "frames": [
+        570,
+        599
+      ],
+      "at": "2026-11-22T00:55:48.853Z",
+      "machine": {
+        "host": "space-sandbox",
+        "boot": "223bfa0e-c109-4a62-89cc-866a195e2eb7",
+        "cores": 4,
+        "ramMb": 7957
+      },
+      "browser": "147.0.7727.15"
+    }
+  ],
+  "chunk": "chunk-rain-16x9-review-full.mp4"
+}
