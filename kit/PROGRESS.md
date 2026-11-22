@@ -14,7 +14,7 @@ The Builder's memory. Read this first in every task. Update it before every comm
 - Extensions: 0
 - Extension step: none
 - App URL: https://sunflower-film.pplx.app
-- Last push: 2026-11-22 02:23 UTC · Round 22: pack built, 39 images in five folders
+- Last push: 2026-11-22 02:25 UTC · Round 22: R5 scores 7 and R4 scores 8, both saved word for word
 - Last status: 63 · 2026-11-22 02:13 UTC · Phase 5
 
 "Build" is one of `not started`, `in progress`, `complete` or `extension N in progress`. "Budget" is one of `running` or `reported`. `AGENTS.md` says what each means.
@@ -47,9 +47,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 4.92 h |
 | 3 | 9.00 h | 9.42 h |
 | 4 | 8.50 h | 9.49 h |
-| 5 | 3.00 h | 0.53 h |
+| 5 | 3.00 h | 0.59 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 25.49 h |
+| Whole build | 30.00 h | 25.55 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -1306,10 +1306,10 @@ One entry per round, written and pushed when the round starts: number, phase, un
 - [x] Machine checks (`npm run gate -- --phase 5 --machine`): 01:54:23 to 02:20:37 UTC on the Builder's VM in the main checkout at the judged commit `4676c5d` (the build inside the run printed the judged engine `305e9520118781cf`), log `out/work/scratch/gate5.log`, exit 0. All thirteen green: G1 (build clean, no type errors), G2 (125 of 125 tests), G3 (determinism: pass, 3 frames, 16x9, `review`), G4 (stills 1920 x 1080, 960 x 540, 3840 x 2160; 267 stills on disk match their format; frame count 1800), G5 (no interface element in capture or autopilot; the export proof frames clean), G6 (config valid, all 10 judged frames on the list), G7 (the master fits X), G8 (20 generated files have recipes), G9 (611 tracked files, 390 MB, the largest 28.9 MB; no secret; 8 approved files match the manifest), G10 (nothing required beyond the Phase 0 record), G11 (texture memory: web 133 MB of 800, full 513 MB of 2400), G12 (the camera across the four cuts: worst ratio 1.00 at each, the limit is 1.5), G13 (all six units finished, 0 stand-ins).
 - [ ] Measures
 - [x] Pack (`npm run -s pack -- --phase 5 --round 22 --no-render`): built on the Builder's VM, 02:21:50 to 02:22:25 UTC, 0.4 min, exit 0, from the 31 files the list asks for (`--list`: 31 needed, 31 have): sixteen `final` stills in 16x9 (frames 0, 8, 15, 23, 30, 38, 45, 53, 60, 195, 420, 780, 1080, 1350, 1515, 1755), the three whole film sheets and the four cut sheets at `review` in the preview format, and the frame before encoding and after encoding at 5 Mbit/s of the dawn, rain, night and field stress sets. All of them were rendered between 01:49 and 02:21 UTC on the builders' 4 core machines from `2fb6538` or `41f10a3`, which build the judged engine; each was taken in only after its record named engine `305e9520118781cf`, and a `final` still only with its frame check (invalid 0 on all sixteen). Folders `out/work/packs/round-022/`: `R5` 5 images (three film sheets, two grids of the eight key frames), `R6` 9 (frame 0 and eight more across the first two seconds, 400 px wide), `R7` 8 (per stress unit one pair side by side and one grid of native-size crops), `R4` 7 (four cut sheets, three film sheets), `R2` 10 (the ten judged frames; the controls' votes are those of the unit rounds). The key `out/work/packs/keys/round-022.json` names commit `4cb7706` (the judged `4676c5d` plus the two commits that wrote this round into `kit/PROGRESS.md`), engine `305e9520118781cf`, tier `final`. Checked by the Builder before any critic got a file: every image is at most 1400 px on its long edge and carries no metadata; looked at `R7/set-G-02.png` and `set-G-08.png` (the crop grids of dawn and field, the two the pack tool had not been proven on) and `R5/set-E-05.png`. Seen in the pack and left for the critics: the faintest stars thin out after encoding in the night's crops, pale specks stand large in the field's sky crop at 56.0 s, and a bare dark strip lies between the last heads and the tree line there.
-- [ ] R5 answer
+- [x] R5 answer: `reviewer_264`, Claude family, fresh, the five files of `R5` only, asked 02:24:10, answered by 02:25 UTC. **Score 7, not a pass**: 4 major, 3 minor. Saved word for word in `scorecards/round-022/R5.json`. Major, by place: f1593 to f1799 (field), foreground plants; 58.5 s frame, hero plant; f0617 to f0874 (night), background; f0617 vs f0668 vs f0771, lower leaves of the hero. Minor, by place: f0308 to f0360 (rain), foreground soil; f0206 to f0257 (dawn to rain), horizon; f1542 to f1593 (bloom to field cut).
 - [ ] R6 answer
 - [ ] R7 answer
-- [ ] R4 answer
+- [x] R4 answer: `reviewer_263`, GPT family, fresh, the seven files of `R4` only, asked 02:24:08, answered by 02:25 UTC. **Score 8, not a pass**: 1 major. Saved word for word in `scorecards/round-022/R4.json`. Major, by place: Review pack: fastest growth intervals, including early emergence and petal release around 44.5–48.0 s. Note by the Builder: the issue is about what the pack shows, not a defect seen in the film. The pack is the one `kit/` defines for this critic in Phase 5 (the four cut sheets of consecutive frames and the three film sheets); the fastest growth of each unit at frame cadence was in the unit rounds' `R4` packs (rounds 7 to 21, twelve consecutive frames each, whole and cropped). It is not declined and stays open; the fix pass checks the two stretches it names by consecutive frames.
 - [ ] R2 jury answers
 - [ ] Fixes
 - [ ] Summary, status, push
@@ -1477,6 +1477,7 @@ One line per push: the date, the commit and what it carried. A failed push is lo
 - 2026-11-22 02:13 UTC · Status 63: round 22's renders in, every cut lines up, a head start for three builders
 - 2026-11-22 02:21 UTC · Round 22: machine checks, all 13 green on 4676c5d
 - 2026-11-22 02:23 UTC · Round 22: pack built, 39 images in five folders
+- 2026-11-22 02:25 UTC · Round 22: R5 scores 7 and R4 scores 8, both saved word for word
 
 ## Session log
 
