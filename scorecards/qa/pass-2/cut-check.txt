@@ -1,0 +1,23 @@
+QA item 28, pass 2 of 2 · cut/SHOTS.md and cut/CUES.md against config/showcase.json (segments, keys) · 2026-11-22 13:42:56 UTC on commit 7228775 (config/ unchanged since the freeze, cut/ unchanged since 812cdda)
+SHOTS dawn matches · | `dawn` | 0 to 8 s | 0 to 239 |
+SHOTS rain matches · | `rain` | 8 to 20 s | 240 to 599 |
+SHOTS night matches · | `night` | 20 to 30 s | 600 to 899 |
+SHOTS frost matches · | `frost` | 30 to 40 s | 900 to 1199 |
+SHOTS bloom matches · | `bloom` | 40 to 52 s | 1200 to 1559 |
+SHOTS field matches · | `field` | 52 to 60 s | 1560 to 1799 |
+CUES dawn to rain matches · | `dawn` to `rain` | 00:08:00 | 8.0 | 240 |
+CUES rain to night matches · | `rain` to `night` | 00:20:00 | 20.0 | 600 |
+CUES night to frost matches · | `night` to `frost` | 00:30:00 | 30.0 | 900 |
+CUES frost to bloom matches · | `frost` to `bloom` | 00:40:00 | 40.0 | 1200 |
+CUES bloom to field same world, no cut expected
+SHOTS key dawn-sprout matches · at 1.5 s, frame 45 in the section of dawn
+SHOTS key dawn-seedling matches · at 6.5 s, frame 195 in the section of dawn
+SHOTS key rain matches · at 14 s, frame 420 in the section of rain
+SHOTS key night matches · at 26 s, frame 780 in the section of night
+SHOTS key frost matches · at 36 s, frame 1080 in the section of frost
+SHOTS key bloom-opening matches · at 45 s, frame 1350 in the section of bloom
+SHOTS key bloom-hero matches · at 50.5 s, frame 1515 in the section of bloom
+SHOTS key field matches · at 58.5 s, frame 1755 in the section of field
+fps 30 frames 1800 ALL MATCH
+
+shots.txt and head.txt beside this file hold the camera and plant numbers that state() gives on the corrected build (13:23 UTC). Both are the same, byte for byte, as pass 1's. The ends of the `field` row of the table in cut/SHOTS.md were read against them: 1.02 to 5.81 m from the plant (shots.txt: 1.020 m at frame 1560, 5.814 m at frame 1799), eye 1.70 to 3.13 m (1.701, 3.131), plant 1.83 to 1.85 m (1.834, 1.850).

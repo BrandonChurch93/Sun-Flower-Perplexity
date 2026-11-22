@@ -1,4 +1,4 @@
-QA item 20. Searches of src/ (all but src/config.ts) on commit ac1b083, 2026-11-22 12:37 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md.
+QA item 20. Searches of src/ (all but src/config.ts) on commit ac1b083, 2026-11-22 12:37 UTC. The output is word for word; the reading of every hit is under "QA results" in kit/PROGRESS.md. (Pass 2: the reading is in search-config-values-reading.md beside this file; line 20 of pass 2 names it.)
 
 == 1. Format sizes: rg -n '\b(1920|1080|3840|2160|960|540)(\.0)?\b' src --glob '!src/config.ts'
 src/worlds/rain/layers.ts:27:  float right = 180.0 - mod(degrees(atan(position.x, position.z)) - uSunDeg + 540.0, 360.0);

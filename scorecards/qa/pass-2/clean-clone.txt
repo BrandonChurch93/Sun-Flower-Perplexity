@@ -1,0 +1,23 @@
+QA item 19, pass 2 of 2 · a clean clone on the same machine builds and renders frame 0 identically · 2026-11-22
+
+The working copy (main, source of the merge f3eae56, engine 96146165ee8a578d):
+  12:55 UTC  npm run -s still -- --frames 0 --tier draft --format preview --fresh
+             still · frame 0 (dawn) · preview · draft · full · beauty · 18.1 s · out/work/stills/f0000-preview-draft-full-beauty.png
+             record: engineHash 96146165ee8a578d, format preview, tier draft, 1 sample, at 2026-11-22T12:55:50.466Z, standIns []
+
+The clean clone (/tmp/qa-clone, on the same machine):
+  13:08 UTC  git clone --depth 1 https://github.com/BrandonChurch93/Sun-Flower-Perplexity /tmp/qa-clone   ("clone at 6843dc7", 0 changed files)
+             npm ci ; npm run -s build   ("built · engine 96146165ee8a578d")
+  13:08 UTC  first try of the still: no file was written. Every render session first asks for sandbox.minFreeDiskGb (3 GB) of free disk
+             (ensureDisk in tools/lib/render.ts); with the 1,012 MB clone on the disk 2.98 GiB were free, and a fresh clone has no old output
+             of its own to delete, so the session stopped. The script's sha256 line then compared the working copy's file with a file left
+             from pass 1, which is not evidence; that file was deleted at 13:11 UTC. The npm download cache (413 MB) and the scratch output
+             of three old worktrees (130 MB) were removed; nothing of the main checkout was removed. 3,539 MB were free after.
+  13:20 UTC  second try, in the same clone (still at 6843dc7, 0 changed files): npm run -s still -- --frames 0 --tier draft --format preview
+             still · frame 0 (dawn) · preview · draft · full · beauty · 18.0 s · out/work/stills/f0000-preview-draft-full-beauty.png
+             record: engineHash 96146165ee8a578d, format preview, tier draft, 1 sample, at 2026-11-22T13:20:48.809Z, standIns []
+
+sha256 of the two PNG files (974,929 bytes each):
+  cffb81f65db9e29216640b649dde756b64b62394dda9242e80a911c8e46ebeb4  working copy, rendered 12:55:50 UTC
+  cffb81f65db9e29216640b649dde756b64b62394dda9242e80a911c8e46ebeb4  clean clone of 6843dc7, rendered 13:20:48 UTC
+The same. Commits after 6843dc7 change files under kit/ and scorecards/ only: git diff --stat f3eae56 HEAD -- src public config is empty.
