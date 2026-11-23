@@ -1,6 +1,6 @@
 // The script cost of the film's hardest stretches as one table: opens the built page, waits until the film is ready, sets every frame of each stretch with every draw call left out, and prints one row for each owner.
 // npm run build, then: npx tsx src/player/steps.ts --name today
-// Saved runs side by side: npx tsx src/player/steps.ts --beside today,one-laying,keys-apart
+// Saved runs side by side: npx tsx src/player/steps.ts --beside today,one-laying,keys-apart. A saved run again: --show today
 // Run it alone on the machine: anything else that works at the same time shows as script time.
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -33,14 +33,14 @@ function table(saved: Saved): string {
   const lines = [
     `# Script alone, ${saved.name}`,
     '',
-    `Commit ${saved.commit}, ${saved.size}, ${saved.at}. Ready after ${saved.readySeconds.toFixed(1)} s.`,
+    `Commit ${saved.commit}. ${saved.size} ${saved.at}. Ready after ${saved.readySeconds.toFixed(1)} s.`,
     ...saved.machine,
     `Every frame of a stretch is set in a row with every draw call left out. The quieter of ${saved.passes} ${saved.passes === 1 ? 'pass' : 'passes'} is shown. A frame of the film is ${FRAME_MS.toFixed(1)} ms.`,
   ]
   for (const s of saved.stretches) {
     const r = quiet(s)
     lines.push('', `## Frames ${s.from} to ${s.to}`, '', '| owner | mean ms | worst ms | at frame | MB sent a frame | most MB | at frame |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |')
-    for (const c of rowsOf(r)) lines.push(`| ${c.owner} | ${n1(c.meanMs)} | ${n1(c.worstMs)} | ${c.worstAtFrame} | ${mb(c.meanBytes)} | ${mb(c.worstBytes)} | ${c.worstBytesAtFrame} |`)
+    for (const c of rowsOf(r)) lines.push(`| ${c.owner} | ${n1(c.meanMs)} | ${n1(c.worstMs)} | ${c.worstAtFrame} | ${mb(c.meanBytes)} | ${mb(c.worstBytes)} | ${c.worstBytesAtFrame < 0 ? '' : c.worstBytesAtFrame} |`)
     lines.push('', `Over ${FRAME_MS.toFixed(1)} ms of script: ${r.overFrame} of ${r.frames} frames. Made on the graphics card: ${r.made === 0 ? 'nothing' : `${r.made} things`}. Not in the sums, pictures kept for later frames and really drawn: ${n1(r.drawnMs.mean)} ms a frame, the most ${n1(r.drawnMs.worst)} ms.`)
     lines.push(`Script mean of each pass: ${s.passes.map((p) => n1(p.script.meanMs)).join(', ')} ms; worst of each pass: ${s.passes.map((p) => `${n1(p.script.worstMs)} at ${p.script.worstAtFrame}`).join(', ')}.`)
   }
@@ -49,7 +49,7 @@ function table(saved: Saved): string {
 
 function beside(names: string[]): string {
   const runs = names.map((n) => JSON.parse(fs.readFileSync(out(`${n}.json`), 'utf8')) as Saved)
-  const lines = ['# Script alone, side by side', '', ...runs.map((r) => `${r.name}: commit ${r.commit}, ${r.size}, ${r.at}`), '', 'Each cell: mean ms / worst ms / MB sent a frame.']
+  const lines = ['# Script alone, side by side', '', ...runs.map((r) => `${r.name}: commit ${r.commit}. ${r.size} ${r.at}`), '', 'Each cell: mean ms / worst ms / MB sent a frame.']
   for (const s of runs[0].stretches) {
     lines.push('', `## Frames ${s.from} to ${s.to}`, '', `| owner | ${runs.map((r) => r.name).join(' | ')} |`, `| --- | ${runs.map(() => '---:').join(' | ')} |`)
     const reports = runs.map((r) => {
@@ -76,6 +76,12 @@ if (together) {
   const text = beside(together.split(','))
   fs.writeFileSync(out(`beside-${together.split(',').join('-')}.md`), `${text}\n`)
   console.log(text)
+  process.exit(0)
+}
+
+const again = arg('show', '')
+if (again) {
+  console.log(table(JSON.parse(fs.readFileSync(out(`${again}.json`), 'utf8')) as Saved))
   process.exit(0)
 }
 

@@ -296,7 +296,7 @@ export function reportText(report: Report, machine: string[] = []): string {
   const held = f.drawn === 0 ? `${rate}: nothing measured` : report.holds ? `${rate} held: YES` : `${rate} held: NO`
   const runs = report.skippedRuns
   const named = runs.slice(0, SHOWN_RUNS).map((r) => (r.from === r.to ? `${r.from}` : `${r.from} to ${r.to}`))
-  const stretches = report.stretches.map((w) => `  frames ${w.from} to ${w.to}: ${w.shown} of ${w.due} shown, ${w.skipped} skipped, longest gap ${w.longestGapMs.toFixed(0)} ms, frame time mean ${w.drawMs.toFixed(1)} ms, script mean ${w.scriptMs.toFixed(1)} ms and worst ${w.worstScriptMs.toFixed(1)} ms at frame ${w.worstScriptAtFrame}, ${w.writeMb.toFixed(2)} MB written a frame${w.parts.length ? ` (${w.parts.map(([name, v]) => `${name} ${v.toFixed(1)}`).join(', ')})` : ''}`)
+  const stretches = report.stretches.map((w) => w.shown === 0 ? `  frames ${w.from} to ${w.to}: none of ${w.due} shown, ${w.skipped} skipped` : `  frames ${w.from} to ${w.to}: ${w.shown} of ${w.due} shown, ${w.skipped} skipped, longest gap ${w.longestGapMs.toFixed(0)} ms, frame time mean ${w.drawMs.toFixed(1)} ms, script mean ${w.scriptMs.toFixed(1)} ms and worst ${w.worstScriptMs.toFixed(1)} ms at frame ${w.worstScriptAtFrame}, ${w.writeMb.toFixed(2)} MB written a frame${w.parts.length ? ` (${w.parts.map(([name, v]) => `${name} ${v.toFixed(1)}`).join(', ')})` : ''}`)
   return [
     first,
     `${config.name}, pacing report, ${report.at}`,
@@ -312,7 +312,7 @@ export function reportText(report: Report, machine: string[] = []): string {
     `shown frame to shown frame: mean ${report.gapMs.mean} ms, 99th ${report.gapMs.p99} ms, longest ${report.gapMs.longest} ms at ${report.gapMs.longestAtFilm} s, ${report.gaps.length} over ${GAP_MS} ms`,
     `written into storage that exists: mean ${report.writes.mbMean.toFixed(2)} MB a frame in ${report.writes.mean.toFixed(0)} writes, worst ${report.writes.mbLargest.toFixed(2)} MB at frame ${report.writes.mbLargestAtFrame}, ${report.writes.mbTotal.toFixed(0)} MB in all`,
     `made after loading: ${things === null ? 'not counted' : things}${report.madeAtFilm.length ? `, first at ${report.madeAtFilm[0]} s` : ''}`,
-    `script by owner, ms a frame:${owners.length ? '' : ' not measured'}`,
+    `script by the film's own laps, ms a frame (shadow and scene hold the renderer's walk and what the owners do inside it; the table of the script alone splits those by owner):${owners.length ? '' : ' not measured'}`,
     ...owners,
     `skipped: ${f.skipped === 0 ? 'none' : `${f.skipped} ${f.skipped === 1 ? 'frame' : 'frames'} in ${runs.length} ${runs.length === 1 ? 'run' : 'runs'}, frames ${named.join(', ')}${runs.length > SHOWN_RUNS ? `, and ${runs.length - SHOWN_RUNS} more runs in the file` : ''}`}`,
     `the ${stretches.length === 1 ? 'worst second' : `${stretches.length} worst seconds`} of film:`,

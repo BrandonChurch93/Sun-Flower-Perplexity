@@ -84,6 +84,12 @@
   font-weight: 600;
 }
 
+.pace {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
 .screen[data-failed='yes'] .state {
   color: #e8a08c;
   font-weight: 400;

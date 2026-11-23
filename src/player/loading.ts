@@ -26,7 +26,17 @@ export interface LoadingLog {
 
 const FREEZE_MS = 250
 const frames = warmFrames()
-const warming = `Warming the film, 1 of ${frames.length}`
+// How far into the film a moment is, as a person reads it on a player.
+const filmTime = (frame: number): string => {
+  const seconds = Math.floor(frame / config.film.fps)
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+const took = (ms: number): string => {
+  const seconds = Math.round(ms / 1000)
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
+}
+const momentText = (index: number): string => `Warming the film, ${index + 1} of ${frames.length}: the picture at ${filmTime(frames[index])}`
+const warming = momentText(0)
 const building = (name: string | undefined): string => (name ? `Building the ${name}` : 'Building the scene')
 
 declare global {
@@ -63,6 +73,9 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   warmBar.append(warmFill)
   const state = make('p', css.state, building(film.steps()[0]))
   state.dataset.role = 'loading-now'
+  // Nothing here has a time limit: a slow machine takes longer and still gets there. The line says how long it has been and how long the last step took.
+  const pace = make('p', css.pace, 'Just started')
+  pace.dataset.role = 'loading-pace'
   const pulse = make('div', css.pulse)
   pulse.setAttribute('aria-hidden', 'true')
   pulse.append(make('i', css.runner))
@@ -73,7 +86,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     item.append(make('span', css.num, String(i + 1)), make('span', undefined, text), make('span', css.stepState, i === 0 ? 'Loading' : 'Next'))
     steps.append(item)
   }
-  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state, pulse)
+  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state, pace, pulse)
   root.append(box)
   host.append(root)
 
@@ -109,8 +122,19 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     if (watching) requestAnimationFrame(watch)
   }
   requestAnimationFrame(watch)
+  let opened = performance.now()
+  let stepAt = opened
+  let lastStep = ''
+  const paceText = (): string => `${took(performance.now() - opened)} so far${lastStep ? `, ${lastStep}` : ''}. No step has a time limit.`
+  const stepped = (what: string): void => {
+    const now = performance.now()
+    lastStep = `${what} took ${took(now - stepAt)}`
+    stepAt = now
+    pace.textContent = paceText()
+  }
   const timer = window.setInterval(() => {
     if (!sceneDone) sceneCount.textContent = sceneText()
+    pace.textContent = paceText()
   }, 100)
   const finishScene = () => {
     if (sceneDone) return
@@ -137,6 +161,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       sceneFill.style.setProperty('--at', String(done / of))
       state.textContent = next === null ? warming : building(next)
       sceneCount.textContent = sceneText()
+      stepped(`the ${what}`)
     }),
   )
   loaded.then(finishScene, () => undefined)
@@ -154,12 +179,17 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       } else log.steps.push({ atMs: Math.round(performance.now()), what: 'every shape drawn once' })
       warmCount.textContent = `${Math.min(done, moments)} of ${moments}`
       warmFill.style.setProperty('--at', String(done / of))
-      state.textContent = next === 'moment' ? `Warming the film, ${done + 1} of ${moments}` : next === null ? 'Ready' : 'One last pass over the whole scene'
+      state.textContent = next === 'moment' ? momentText(done) : next === null ? 'Ready' : 'One last pass over the whole scene'
+      if (done > 0) stepped(done <= moments ? `the picture at ${filmTime(frames[done - 1])}` : 'the last pass')
     },
     again(text) {
       warmCount.textContent = 'waiting'
       warmFill.style.setProperty('--at', '0')
       state.textContent = text
+      lastStep = ''
+      opened = performance.now()
+      stepAt = opened
+      pace.textContent = paceText()
       delete root.dataset.failed
       root.hidden = false
     },
@@ -177,7 +207,8 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       watching = false
       observer?.disconnect()
       root.dataset.failed = 'yes'
-      state.textContent = text
+      state.textContent = /context was lost/.test(text) ? `${text}. The browser took the graphics card away from the page. Reload the page to try again.` : text
+      pace.textContent = `Stopped after ${took(performance.now() - opened)}${lastStep ? `, ${lastStep}` : ''}.`
       root.hidden = false
     },
   }

@@ -191,7 +191,7 @@ export interface Measuring {
   readonly finished: Promise<Measured>
 }
 
-// The pacing report: the film from `first` to `last` once against the audio clock with the sound off, then the same frames set in a row with nothing drawn.
+// The pacing report: the film from `first` to `last` once against the audio clock with the sound off, then the same frames set in a row with every draw call left out.
 // `say` is told what runs now. A run that is stopped gives what it has measured until then.
 export function measure(deck: Deck, clock: FilmClock, first: number, last: number, say: (text: string) => void): Measuring {
   const fps = config.film.fps
