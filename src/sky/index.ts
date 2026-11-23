@@ -184,6 +184,7 @@ class FieldSky implements Sky {
       uSolarDeck: { value: 0 },
       uEnding: { value: 0 },
       uPhotoMix: { value: 0 },
+      uFinaleDusk: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
@@ -450,6 +451,7 @@ class FieldSky implements Sky {
     v.uEnding.value = ending
     const finale = sunsetAmount(now.bar)
     v.uPhotoMix.value = finale
+    v.uFinaleDusk.value = u.uFinaleDusk.value
     const darkDeck = smoothstep(0.42, 0.84, d.overcast) * (1 - d.flash) * (1 - tear)
     v.uMarchFilter.value = (view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast)
       + 0.46 * darkDeck
@@ -467,7 +469,7 @@ class FieldSky implements Sky {
     if (finale > 0) {
       // Radiance before grade, not a display swatch. Decouple it from
       // the dim horizon so the glass receives a real over-white source.
-      const dusk = sunsetDuskAt(e)
+      const dusk = v.uFinaleDusk.value
       const brilliancy = lerp(2.8, 1.60, dusk) * visibleDisk
       disc.set(
         lerp(disc.x, brilliancy, finale),

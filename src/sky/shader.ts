@@ -665,6 +665,7 @@ uniform float uBreak;
 uniform float uSolarDeck;
 uniform float uEnding;
 uniform float uPhotoMix;
+uniform float uFinaleDusk;
 uniform float uMarchFilter;
 uniform vec3 uSunFace;
 uniform vec3 uMoon;
