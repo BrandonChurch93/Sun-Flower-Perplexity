@@ -12,6 +12,8 @@ const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const SIDES = 96
 // All the sheets of dawn mist together cover a quarter of what stands behind them at most.
 export const DAWN_DEPTH = -Math.log(0.75)
+// How much of its glow round the sun the fog has while the disc is still on the horizon.
+const SUN_UNDER = 0.3
 
 export const DRIFT = { x: windWay.x * DRIFT_M_PER_S, z: windWay.z * DRIFT_M_PER_S }
 
@@ -69,7 +71,8 @@ void main() {
   float run = abs(x) > 1e-3 ? reach * (exp(min(x - lift, 0.0)) - exp(-lift)) / x : reach * exp(-lift);
   float depth = uAir.z * amount * run / across;
   // Above a few degrees the sky is the sky's own, a little paler for the thin air that stands over the banks.
-  float high = uHigh.x * (exp(-max(v.y, 0.0) / uHigh.y) * (1.0 - smoothstep(0.06, 0.13, v.y)) + 0.5 * (1.0 - smoothstep(0.1, 0.45, v.y)));
+  // The top of the farthest bank is not an edge: the air thins over the first degree above it.
+  float high = uHigh.x * (3.0 * exp(-max(v.y, 0.0) / 0.014) + exp(-max(v.y, 0.0) / uHigh.y) * (1.0 - smoothstep(0.06, 0.13, v.y)) + 0.5 * (1.0 - smoothstep(0.1, 0.45, v.y)));
   float alpha = (1.0 - exp(-depth) * (1.0 - high)) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y));
   // Dawn mist is a breath over the soil: it never hides what stands on the horizon and ends a degree and a half above it.
   alpha = mix(alpha, (1.0 - exp(-uDawn.y * (1.0 - exp(-depth / uDawn.y)))) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y)) * (1.0 - smoothstep(0.008, 0.026, v.y)), uDawn.x);
@@ -185,7 +188,8 @@ export function airAt(m: Moment, out: Air): Air {
 
 function lit(m: Moment, out: Air): Air {
   const d = m.dials
-  out.glow = smoothstep(-9, -1, m.sunElevationDeg)
+  // Fog throws the sun forward once the disc itself stands clear of the horizon. Before that the sky does the glowing.
+  out.glow = smoothstep(-9, -1, m.sunElevationDeg) * lerp(1, lerp(SUN_UNDER, 1, smoothstep(0.4, 2.4, m.sunElevationDeg)), 1 - out.dawn)
   out.shafts = m.lightKind === 'sun' ? smoothstep(0.25, 0.5, d.sunThrough) * (1 - smoothstep(0.8, 1, d.sunThrough)) * clamp(d.fog * 2) : 0
   return out
 }

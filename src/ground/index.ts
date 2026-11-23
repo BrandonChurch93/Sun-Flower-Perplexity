@@ -58,6 +58,7 @@ export class Ground {
       uWet: { value: 0 },
       uFrost: { value: 0 },
       uDew: { value: 0 },
+      uMelt: { value: 0 },
       uCover: { value: 0 },
       uCast: { value: 0 },
       uFine: { value: 1 },
@@ -196,6 +197,7 @@ export class Ground {
     u.uWet.value = state.wet
     u.uFrost.value = state.frost
     u.uDew.value = state.dew ?? 0
+    u.uMelt.value = state.dew ?? 0
     const flat = Math.hypot(now.sun.x, now.sun.z)
     const low = 1 - smoothstep(0.1, 0.45, now.sun.y)
     ;(u.uLowSun.value as THREE.Vector3).set(now.sun.x / Math.max(flat, 1e-5), now.sun.z / Math.max(flat, 1e-5), low * (1 - now.night))
