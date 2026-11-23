@@ -600,9 +600,9 @@ export function create(options: PartOptions): PlantPart {
   // The bristles of the stalks and the roots of the ice round them are one list.
   const bristles = crystals ? createBristles(options, rimeLeaves * STALK_ROOTS, 'stalk bristles') : null
   if (crystals) {
-    // Where each crystal stands along its blade: on the edge from just over 0 at the base to 1 at the tip, on the face or a vein from -1 at the base to -2 at the tip, and -3 round the stalk.
+    // Where each crystal stands along its blade: on the edge from just over 0 at the base to 1 at the tip, on the face from -1 at the base to -2 at the tip, -3 round the stalk, and on the ridge of a vein from -4 at the base to -5 at the tip.
     const place = crystals.place()
-    for (let li = 0, q = 0; li < rimeLeaves; li++) for (let i = 0; i < RIME_EACH; i++, q++) place[q] = rimeKind[q] === 2 ? -3 : rimeKind[q] === 1 ? -1 - Math.max(0, rimeA[q]) / (leaves[li].nu - 1) : Math.max(rimeA[q] / (leaves[li].nu - 1), 0.001)
+    for (let li = 0, q = 0; li < rimeLeaves; li++) for (let i = 0; i < RIME_EACH; i++, q++) place[q] = rimeKind[q] === 2 ? -3 : rimeKind[q] === 1 ? -4 - Math.max(0, rimeA[q]) / (leaves[li].nu - 1) : Math.max(rimeA[q] / (leaves[li].nu - 1), 0.001)
     for (let h = 0; h < plan.length; h++) {
       const hair = plan[h]
       if (hair.kind === 0) place.fill(Math.max(hair.a / (leaves[hair.leaf].nu - 1), 0.001), crystalAt[h], crystalAt[h] + FRINGE)
