@@ -1,0 +1,28 @@
+{
+  "critic": "R5",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-E-03.png",
+      "where": "between the night tile at 51.9 s and the day tile at 53.6 s",
+      "what": "the locked camera cuts wider in the same green field, the plant shrinks, and a second plant enters, about two seconds before the rain, so the cut has no new world to land on",
+      "fix": "hold the locked frame through this growth, or widen only as the rain world arrives"
+    },
+    {
+      "severity": "severe",
+      "file": "set-E-09.png",
+      "where": "the flower head at 98.6 s",
+      "what": "the opening is split for about two seconds: yellow petals on the left, green bracts cutting across the disk on the right, still lopsided at 100.1 s",
+      "fix": "open the head all the way around so the peak is one flower, not a half-morphed head"
+    },
+    {
+      "severity": "major",
+      "file": "set-E-09.png",
+      "where": "the field behind the head, from 98.6 s to 103.7 s",
+      "what": "the background goes from dark green foliage to a full yellow bloom with no buds in between, so the place pops rather than ages with the plant",
+      "fix": "let the neighboring heads open with the hero so the field is the same field flowering"
+    }
+  ]
+}

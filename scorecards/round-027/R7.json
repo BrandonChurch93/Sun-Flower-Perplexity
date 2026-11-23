@@ -1,0 +1,35 @@
+{
+  "critic": "R7",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-G-02.png",
+      "where": "place 1, the dark cloud gradient and the star cluster on the right",
+      "what": "The encoded gradient breaks into flat, blocky patches, and several faint but distinct stars are gone.",
+      "fix": "Give the night shot more of the available bit budget and protect the star highlights. Test subtle gradient dithering against the same 5 Mbit/s encode."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-10.png",
+      "where": "places 1 and 2, the foreground foliage and the dense middle-distance sunflower rows",
+      "what": "Fine stems and leaf edges merge into smeared dark patches, while small sunflower heads lose their distinct petal outlines.",
+      "fix": "Allocate more bits to the wide field shot and suppress expendable background grain before encoding so the stem and petal edges retain definition."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-06.png",
+      "where": "places 1 and 2, around the top leaves and across the bright cloud band",
+      "what": "Many of the thinner rain streaks break into soft flecks or disappear, and leaf veins smear into broader green patches.",
+      "fix": "Prioritize the rain shot in the bitrate allocation. If needed, reduce background grain and make fewer rain streaks slightly more distinct before re-encoding."
+    },
+    {
+      "severity": "major",
+      "file": "set-G-10.png",
+      "where": "place 3, the blue-to-gray transition above the violet cloud",
+      "what": "The encoded sky shows visible tonal steps where the source gradient is smooth.",
+      "fix": "Keep the sky gradient in higher precision through compositing and test low-amplitude dithering and lower quantization for the sky at the target bitrate."
+    }
+  ]
+}
