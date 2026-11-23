@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { remember } from './programs.ts'
 
 export const DIAG = { beauty: 0, ungraded: 1, plant: 2, backlight: 3, texels: 4, depth: 5, focus: 6, standins: 7 } as const
 export type DiagName = keyof typeof DIAG
@@ -249,7 +250,7 @@ export function makeSurface(o: SurfaceOptions): Surface {
   }
   const cast = o.castShadow ?? !(o.transparent ?? false)
   const depth = cast
-    ? new THREE.RawShaderMaterial({
+    ? remember(new THREE.RawShaderMaterial({
         name: `${o.name} depth`,
         glslVersion: THREE.GLSL3,
         vertexShader: `${glslHead}#define DEPTH_PASS 1\n${glslVertex}${glslCommon}\n${o.vertex}`,
@@ -257,7 +258,7 @@ export function makeSurface(o: SurfaceOptions): Surface {
         uniforms,
         side: THREE.DoubleSide,
         colorWrite: false,
-      })
+      }))
     : null
-  return { main, depth }
+  return { main: remember(main), depth }
 }

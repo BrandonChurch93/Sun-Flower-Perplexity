@@ -40,7 +40,7 @@ function table(saved: Saved): string {
   for (const s of saved.stretches) {
     const r = quiet(s)
     lines.push('', `## Frames ${s.from} to ${s.to}`, '', '| owner | mean ms | worst ms | at frame | MB sent a frame | most MB | at frame |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |')
-    for (const c of rowsOf(r)) lines.push(`| ${c.owner} | ${n1(c.meanMs)} | ${n1(c.worstMs)} | ${c.worstAtFrame} | ${mb(c.meanBytes)} | ${mb(c.worstBytes)} | ${c.worstBytesAtFrame < 0 ? '' : c.worstBytesAtFrame} |`)
+    for (const c of rowsOf(r)) lines.push(`| ${c.owner} | ${n1(c.meanMs)} | ${n1(c.worstMs)} | ${c.worstAtFrame < 0 ? '' : c.worstAtFrame} | ${mb(c.meanBytes)} | ${mb(c.worstBytes)} | ${c.worstBytesAtFrame < 0 ? '' : c.worstBytesAtFrame} |`)
     lines.push('', `Over ${FRAME_MS.toFixed(1)} ms of script: ${overText(r)}. Made on the graphics card: ${r.made === 0 ? 'nothing' : `${r.made} things`}. Not in the sums, pictures kept for later frames and really drawn: ${n1(r.drawnMs.mean)} ms a frame, the most ${n1(r.drawnMs.worst)} ms.`)
     lines.push(`Script mean of each pass: ${s.passes.map((p) => n1(p.script.meanMs)).join(', ')} ms; worst of each pass: ${s.passes.map((p) => `${n1(p.script.worstMs)} at ${p.script.worstAtFrame}`).join(', ')}.`)
   }
