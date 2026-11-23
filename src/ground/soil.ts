@@ -718,7 +718,7 @@ void main() {
   color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.6 * soaked * edged * mix(0.3, 1.0, seen)) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under);
   vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
   float toSun = pow(saturate(dot(normalize(-v.xz), uLowSun.xy)), 160.0) * uLowSun.z;
-  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.6 * crust);
+  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.45 * crust);
   float sunSide = smoothstep(-0.1, 0.5, dot(normalize(p + vec2(1e-5, 0.0)), uLowSun.xy)) * (1.0 - smoothstep(1.2, 2.0, r));
   color += warmGlint() * (0.8 * crust * sunSide * uLowSun.z * (0.3 + 0.7 * lit) * grains(vWorld + 5.3, 0.07));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime * (1.0 + 5.0 * toSun);
