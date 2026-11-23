@@ -31,7 +31,7 @@
       ]
     },
     {
-      "id": "seedling", "frame": 257, "judged": true,
+      "id": "seedling", "frame": 236, "judged": true,
       "key": "references/approved/dawn-seedling.png", "control": "references/approved/dawn-seedling.png", "controlVotes": "round 9",
       "spots": [
         { "label": "the seed leaves", "x": 0.60, "y": 0.34 },
