@@ -1,4 +1,5 @@
 import { combine, streamSeed } from '../../core/random.ts'
+import { barAt, rainAtBar } from '../../v2/clock.ts'
 
 // Every raindrop of the film, in closed form. The ground plane y = 0 is cut into square cells; each cell owns a few series of drops,
 // and each series lands one drop per period at a fresh place inside the cell. The streaks in the air and every landing read from here.
@@ -22,7 +23,10 @@ export const RAIN_CELL_M = 0.25
 export const RAIN_SERIES = 24
 export const RAIN_FINE_SERIES = 620
 
-const SLANT_DEG = 15
+const SLANT_DEG = 9
+// The tangent of the slant in still air, and what the strongest gust adds to it.
+export const SLANT_CALM = Math.tan((6 * Math.PI) / 180)
+export const SLANT_GUST = Math.tan((20 * Math.PI) / 180) - SLANT_CALM
 // The level bearing the rain leans toward: to the left of the frame at the rain's key, as in the approved image.
 const LEAN_TOWARD_DEG = -80.5
 const PERIOD_MIN_S = 0.9
@@ -36,15 +40,18 @@ const UNIT = 1 / 4294967296
 
 const slant = (SLANT_DEG * Math.PI) / 180
 const lean = (LEAN_TOWARD_DEG * Math.PI) / 180
+export const LEAN_X = Math.sin(lean)
+export const LEAN_Z = Math.cos(lean)
 
 // The direction every drop travels in: down, with a slant.
 export const fallDir: readonly [number, number, number] = [Math.sin(lean) * Math.sin(slant), -Math.cos(slant), Math.cos(lean) * Math.sin(slant)]
 
-// How hard it rains, 0.55 to 1: slow swells with a burst now and then. A drop exists when its rank is under this at its landing.
+// How hard it rains at a film second, 0 to 1: the rain dial, with slow swells in it. A drop exists when its rank is under this at its landing.
 export function rainStrength(time: number): number {
+  const rain = rainAtBar(barAt(time))
+  if (rain <= 0) return 0
   const swell = 0.5 + 0.5 * Math.sin(time * 0.83 + 1.3 + 0.9 * Math.sin(time * 0.37))
-  const burst = Math.max(0, Math.sin(time * 0.52 + 0.4)) ** 6
-  return 0.55 + 0.45 * Math.min(1, 0.55 * swell + 0.75 * burst + 0.2)
+  return rain * rain * (0.7 + 0.3 * swell)
 }
 
 function seriesSeed(i: number, j: number, s: number): number {
