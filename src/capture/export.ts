@@ -422,7 +422,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       refuse(line)
       return
     }
-    codecCheck.set('ok', `${picked.label}, at ${size}. ${sound ? `Sound as ${sound.label}.` : 'This browser cannot encode sound, so the file is made without it.'}`)
+    codecCheck.set('ok', `${picked.label}, at ${size}. ${sound ? `Sound as ${sound.label}.${sound.container === 'opus' ? ' This browser has no AAC encoder. Opus plays in browsers and may not play in QuickTime.' : ''}` : 'This browser cannot encode sound, so the file is made without it.'}`)
 
     assetCheck.set('busy', `Loading the ${assetSet} asset set.`)
     try {
