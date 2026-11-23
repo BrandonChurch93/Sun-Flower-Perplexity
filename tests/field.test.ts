@@ -2,10 +2,10 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
 import { hash01, streamSeed } from '../src/core/random.ts'
-import { PLACE, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, shareOf, sizeOf, statureAt, toward } from '../src/field/layout.ts'
+import { ALL_OPEN_T, FIRST_RAY_T, OPENS, PLACE, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, shareOf, sizeOf, statureAt, toward } from '../src/field/layout.ts'
 import { ROOM_M, bySeen, filmLens, frameOf, needed } from '../src/field/seen.ts'
 import { heightAt } from '../src/plant/growth.ts'
-import { barTime, tauAtBar } from '../src/v2/clock.ts'
+import { barTime, tauAt, tauAtBar } from '../src/v2/clock.ts'
 import { rigAtFilm } from '../src/v2/rig.ts'
 import { WIND_TOWARD_DEG, gustAt, windWay } from '../src/v2/wind.ts'
 
@@ -88,7 +88,7 @@ describe('the neighbors grow on the clock of the plant', () => {
     { tier: 'pictures' as const, count: farVariants.length },
   ]
 
-  it('no clock runs backward, each kind is a little ahead or behind, and one is still in bud at the end', () => {
+  it('no clock runs backward, each kind is a little ahead or behind, and every kind has the age of the plant at the end', () => {
     for (const { tier, count } of tiers) {
       for (let k = 0; k < count; k++) {
         let before = kindTime(0, k, tier)
@@ -100,15 +100,60 @@ describe('the neighbors grow on the clock of the plant', () => {
           before = at
         }
         expect(kindTime(0, k, tier)).toBeCloseTo(0, 6)
+        expect(kindTime(growth.seconds, k, tier)).toBeCloseTo(growth.seconds, 6)
       }
     }
-    // One kind of the near rows is still in bud at the end; every other kind has caught up with the plant.
-    const last = Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.seconds, k, 'near'))
-    expect(last.filter((at) => at < growth.open).length).toBe(1)
-    expect(last.filter((at) => Math.abs(at - growth.seconds) < 1e-6).length).toBe(nearVariants.length - 1)
     const apart = new Set(Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.frostHold, k, 'near').toFixed(2)))
     expect(apart.size).toBeGreaterThan(3)
     expect(fieldAge(growth.frostHold)).toBeLessThan(growth.frostHold)
+  })
+
+  it('open after the plant, as a second wave: no yellow before bar 58.33, most by bar 61, all by bar 63, no two kinds on one frame', () => {
+    const frames = Math.round(config.film.durationSeconds * 30)
+    const firsts: number[] = []
+    const opens: number[] = []
+    let total = 0
+    let openAt61 = 0
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        expect(kindTime(tauAtBar(58.33), k, tier), `${tier} ${k}`).toBeLessThan(FIRST_RAY_T)
+        expect(kindTime(tauAtBar(63), k, tier), `${tier} ${k}`).toBeGreaterThanOrEqual(ALL_OPEN_T)
+        let first = -1
+        let open = -1
+        let before = kindTime(tauAt(0), k, tier)
+        for (let f = 1; f < frames; f++) {
+          const at = kindTime(tauAt(f / 30), k, tier)
+          expect(at).toBeGreaterThanOrEqual(before)
+          expect(at - before, `${tier} ${k} frame ${f}`).toBeLessThan(0.12)
+          if (first < 0 && at >= FIRST_RAY_T) first = f
+          if (open < 0 && at >= ALL_OPEN_T) open = f
+          before = at
+        }
+        expect(open - first, `${tier} ${k}`).toBeGreaterThanOrEqual(40)
+        firsts.push(first)
+        opens.push(open)
+        total++
+        if (kindTime(tauAtBar(61), k, tier) >= ALL_OPEN_T) openAt61++
+      }
+    }
+    expect(new Set(firsts).size).toBe(firsts.length)
+    expect(new Set(opens).size).toBe(opens.length)
+    expect(openAt61 / total).toBeGreaterThan(0.75)
+    // The plant's own rays are out before the first of the field's.
+    expect(tauAt(Math.min(...firsts) / 30)).toBeGreaterThan(FIRST_RAY_T + 2.5)
+  })
+
+  it('has no step where a bud fills, opens, and ages: the clock of a kind is one unbroken line', () => {
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        for (const bar of OPENS[tier][k]) {
+          const at = tauAtBar(bar)
+          for (let d = -0.002; d <= 0.002; d += 0.00001) expect(Math.abs(kindTime(at + d + 0.00001, k, tier) - kindTime(at + d, k, tier)), `${tier} ${k} bar ${bar}`).toBeLessThan(0.002)
+        }
+        const bud = growth.bud
+        expect(Math.abs(kindTime(bud + 1e-7, k, tier) - kindTime(bud - 1e-7, k, tier))).toBeLessThan(1e-5)
+      }
+    }
   })
 
   it('go their own ways as the heads open, by degrees', () => {
