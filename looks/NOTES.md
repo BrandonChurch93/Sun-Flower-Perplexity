@@ -1,9 +1,12 @@
 # Looks of place
 
-2026-11-23 07:18 UTC, at commit a05a093c of agent/place.
+2026-11-23 08:36 UTC, at commit d47f2803 of agent/place.
 
-- `01-bar-61-on-v2-2966ba1-after-the-haze-shaping.jpg`: bar 61 on v2 2966ba1 after the haze shaping
-- `02-bar-67-on-v2-2966ba1-after-the-haze-shaping.jpg`: bar 67 on v2 2966ba1 after the haze shaping
-- `03-bar-73-on-v2-2966ba1-after-the-haze-shaping.jpg`: bar 73 on v2 2966ba1 after the haze shaping
-- `04-bar-73-the-land-s-foot-three-times.jpg`: bar 73 the land's foot three times
-- `05-bar-67-the-land-s-foot-three-times.jpg`: bar 67 the land's foot three times
+- `01-bar-73-left-half-before-above-after-below.jpg`: Bar 73 left half, before above, after below
+- `02-bar-73-right-half-before-above-after-below.jpg`: Bar 73 right half, before above, after below
+- `03-bar-74-4-left-half-before-above-after-below.jpg`: Bar 74.4 left half, before above, after below
+- `04-bar-71-left-half-before-above-after-below.jpg`: Bar 71 left half, before above, after below
+- `05-bar-69-right-half-before-above-after-below.jpg`: Bar 69 right half, before above, after below
+- `06-bar-67-right-half-before-above-after-below.jpg`: Bar 67 right half, before above, after below
+- `07-bar-44-left-half-before-above-after-below.jpg`: Bar 44 left half, before above, after below
+- `08-the-sun-on-the-sill-at-bars-73-and-74-4-before-l.jpg`: The sun on the sill at bars 73 and 74.4, before left, after right
