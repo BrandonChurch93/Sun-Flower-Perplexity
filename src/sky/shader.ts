@@ -38,6 +38,7 @@ uniform float uCoolDay;
 uniform float uFinale;
 uniform float uFinaleDusk;
 uniform vec3 uMist;
+uniform float uFrostDawn;
 uniform int uSteps;
 uniform int uLightSteps;
 in vec2 vUv;
@@ -602,7 +603,7 @@ void main() {
   fairGlow = max(fairGlow, (0.58 * uGolden + 0.52 * uDawn) * (1.0 - st));
   vec3 warmSun = mix(uCloudLight, vec3(uCloudLight.r, uCloudLight.r * 0.69, uCloudLight.r * 0.39), 0.47);
   result += warmSun * fairGlow * (0.064 * exp(-angle * 104.0) + 0.045 * exp(-angle * 1420.0)) * (0.19 + 0.81 * through) * (1.0 - uFirstBlue) * (1.0 - uFinale);
-  float frost = smoothstep(0.07, 0.87, uWeather.w);
+  float frost = smoothstep(0.07, 0.87, uWeather.w) * uFrostDawn;
   if (frost > 0.0) {
     float high = smoothstep(-0.01, 0.30, d.y);
     float toward = exp(-angle * 31.0);
