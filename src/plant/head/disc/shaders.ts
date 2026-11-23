@@ -1,4 +1,4 @@
-import { RIM_SHARE, RING_SHARE, RIPE_FROM, SHOWN_FROM } from './opening.ts'
+import { RIM_SHARE, RING_SHARE, RIPE_FROM, RIPENS_S, SHOWN_FROM } from './opening.ts'
 import { floretMain } from '../../look/disc.ts'
 
 // The head's frame at both ends of the shutter, and the floor of the head as `floorAt` in the skeleton gives it.
@@ -58,6 +58,7 @@ out vec4 vMore;
 out vec4 vKind;
 out float vUnder;
 out vec4 vRays;
+out vec4 vRing;
 
 void main() {
   float rho = aFloret.x;
@@ -70,7 +71,8 @@ void main() {
   float h1 = fract(aSeed.x * 17.31 + aSeed.w * 5.71);
   float h2 = fract(aSeed.w * 23.17 + aSeed.x * 3.13);
   float h3 = fract(aSeed.y * 1.618 + aSeed.x * 9.73);
-  float ripe = smoothstep(0.0, 1.0, (f.time - RIPE_FROM - 1.9 * (1.0 - rho / RIM_SHARE) - 0.8 * h3) / 2.0);
+  // Each floret ripens ahead of its own opening, so the young green draws in toward the middle ahead of the ring.
+  float ripe = smoothstep(0.0, 1.0, (f.time - aFloret.z + ${(RIPENS_S[0] + RIPENS_S[1]).toFixed(2)} + 0.8 * h3) / ${RIPENS_S[0].toFixed(2)});
   float lump = h2 * sqrt(h2);
   float edge = smoothstep(0.85, 0.915, rho);
   // Under the feet of the rays the florets stay shut and low. The line wanders, so the ring of open florets has no clean circle for an outline.
@@ -82,7 +84,7 @@ void main() {
   float open = smoothstep(0.0, 1.0, phase) * (1.0 - under);
   float lobes = smoothstep(0.1, 0.75, phase) * (1.0 - under);
   float rise = smoothstep(0.2, 1.05, phase) * (1.0 - under);
-  float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 2.0) * (1.0 - under);
+  float style = smoothstep(0.0, 1.0, (f.time - aFloret.z - aFloret.w - 0.2) / 1.2) * (1.0 - under);
   // Over florets that are still far from opening the scales lie inward across their neighbors, a thatch of fine green points.
   float late = smoothstep(RIPE_FROM, RIPE_FROM + 4.0, f.time);
   float over = smoothstep(1.0, 9.5, aFloret.z - f.time) * (1.0 - edge) * (1.0 - smoothstep(SHOWN_FROM, SHOWN_FROM + 4.0, f.time));
@@ -219,6 +221,8 @@ void main() {
   float sunSide = dot(outW, inPlane) / max(length(inPlane), 1e-4);
   float beside = exp(-max(0.89 - rho, 0.0) / 0.12);
   vRays = vec4(normalize(outW * 0.95 + axW * 0.3), beside * smoothstep(0.0, 1.0, sunSide) * (1.0 - uCover) * smoothstep(0.0, 0.35, -dot(axW, uSunDir)));
+  // The same on every piece of a floret: how far open it is, how full of pollen its anthers stand, how spent it is, and its own clock in lengths of its opening (below 0 still shut).
+  vRing = vec4(open, rise * (1.0 - style), style, clamp(phase, -8.0, 8.0));
   vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
@@ -235,6 +239,7 @@ in vec4 vMore;
 in vec4 vKind;
 in float vUnder;
 in vec4 vRays;
+in vec4 vRing;
 
 ${floretMain}
 `
@@ -277,7 +282,7 @@ void main() {
   float arms = sin(vDome.y * 21.0 + rho * 38.0) * sin(vDome.y * 13.0 - rho * 46.0);
   float centre = 1.0 - smoothstep(0.15, 0.65, rho);
   vec3 closed = mix(vec3(0.115, 0.045, 0.006), vec3(0.065, 0.08, 0.011), centre);
-  closed = mix(closed, vec3(0.17, 0.24, 0.065), uYoung);
+  closed = mix(closed, vec3(0.17, 0.24, 0.065), max(uYoung, 1.0 - smoothstep(uFront.x - 0.3, uFront.x - 0.08, rho)));
   vec3 opening = vec3(0.17, 0.06, 0.007);
   vec3 flower = vec3(0.26, 0.1, 0.011);
   vec3 albedo = mix(closed, opening, smoothstep(uFront.x - 0.06, uFront.x + 0.06, rho));
