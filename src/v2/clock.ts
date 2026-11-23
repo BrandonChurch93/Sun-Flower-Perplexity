@@ -62,11 +62,29 @@ export function trapezoid(x: number, rampIn: number, rampOut: number): number {
   return p / area
 }
 
-// The sun's height through a day: it lingers low at both ends and runs fast across the top.
+// The sun's height through a day: it lingers low at both ends and runs fast across the top. It crosses the horizon at one speed,
+// so dusk and dawn dim and brighten evenly, and it runs fast across midnight as it does across noon.
+const LOW_DAY = 0.35
+const LOW_NIGHT = (LOW_DAY * NOON_DEG * (1 - DAY)) / (DAY * -MIDNIGHT_DEG)
 export function sunElevationOfPhase(phase: number): number {
-  if (phase >= DAY) return MIDNIGHT_DEG * Math.sin((Math.PI * (phase - DAY)) / (1 - DAY))
+  if (phase >= DAY) {
+    const s = Math.sin((Math.PI * (phase - DAY)) / (1 - DAY))
+    return MIDNIGHT_DEG * (LOW_NIGHT * s + (1 - LOW_NIGHT) * s * s)
+  }
   const s = Math.sin((Math.PI * phase) / DAY)
-  return NOON_DEG * (0.35 * s + 0.65 * s * s)
+  return NOON_DEG * (LOW_DAY * s + (1 - LOW_DAY) * s * s)
+}
+
+// How long after sunset, in days, the sun stands `degrees` under the horizon.
+function sinceSunset(degrees: number): number {
+  let lo = DAY
+  let hi = DAY + (1 - DAY) / 2
+  for (let i = 0; i < 48; i++) {
+    const mid = 0.5 * (lo + hi)
+    if (sunElevationOfPhase(mid) > -degrees) lo = mid
+    else hi = mid
+  }
+  return 0.5 * (lo + hi) - DAY
 }
 
 // The phase of the day at which the sun stands `degrees` high, before noon or after it.
@@ -96,8 +114,8 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-// How long after sunset, in days, the sun stands 5 degrees under the horizon: the film opens and closes there.
-const DUSK = ((1 - DAY) * Math.asin(5 / -MIDNIGHT_DEG)) / Math.PI
+// The film opens and closes with the sun 5 degrees under the horizon.
+const DUSK = sinceSunset(5)
 const W_END = W_LAST + DUSK
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
 const LEAD_RATE = DUSK / (1 - B0)
