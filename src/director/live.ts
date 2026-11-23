@@ -6,7 +6,7 @@ import type { Loading } from '../player/loading.ts'
 import { GAP_MS, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
-import { readTrack, type Track } from '../player/track.ts'
+import { readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
 import type { Film } from './film.ts'
@@ -53,6 +53,8 @@ function between(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value))
 }
 
+const REVIEW_KEYS = new Set([' ', 'ArrowLeft', 'ArrowRight', '[', ']'])
+
 function clockText(seconds: number): string {
   const m = Math.floor(seconds / 60)
   return `${m}:${(seconds - m * 60).toFixed(2).padStart(5, '0')}`
@@ -79,6 +81,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   const fps = config.film.fps
   const lastFrame = frameCount - 1
   const tier: TierId = options.tier
+  const review = options.mode === 'review'
 
   let frame = options.frame
   const view = { az: options.az, el: options.el, dolly: options.dolly }
@@ -236,12 +239,12 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   host.append(bar)
 
   function current(): Options {
-    return { ...options, mode: 'live', frame, diag, quality: quality === 'high' && !options.quality ? null : quality, av, marks, az: clampAzimuth(view.az), el: clampElevation(view.el), dolly: clampDolly(view.dolly), hold: false, loop: false }
+    return { ...options, mode: review ? 'review' : 'live', frame, diag, quality: quality === 'high' && !options.quality ? null : quality, av, marks, az: clampAzimuth(view.az), el: clampElevation(view.el), dolly: clampDolly(view.dolly), hold: false, loop: false }
   }
 
   function linkTo(mode: MenuMode): string {
     const now = current()
-    return `${location.pathname}${writeOptions(mode === 'live' ? now : optionsFor(mode, now))}`
+    return `${location.pathname}${writeOptions(mode === 'live' ? now : optionsFor(mode, { ...now, mode: 'live' }))}`
   }
 
   let urlTimer = 0
@@ -514,7 +517,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         note.textContent = `${file.name} could not be read as sound. Nothing changed.`
         return
       }
-      note.textContent = ''
+      note.textContent = review ? trackLine(next) : ''
       state.track = { name: next.name, sha256: next.sha256, matches: next.matches }
       desk.track(track)
     } catch (error) {
@@ -557,7 +560,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     if (pointers.size === 0) delete canvas.dataset.drag
   }
   canvas.addEventListener('pointerdown', (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
+    if (review || (event.pointerType === 'mouse' && event.button !== 0)) return
     if (activity !== 'ready' && activity !== 'playing') return
     try {
       canvas.setPointerCapture(event.pointerId)
@@ -594,6 +597,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   canvas.addEventListener(
     'wheel',
     (event) => {
+      if (review) return
       event.preventDefault()
       const pixels = event.deltaMode === 1 ? event.deltaY * LINE_PX : event.deltaY
       view.dolly = between(view.dolly * Math.exp(pixels * WHEEL_PER_PX), VIEW.dollyMin, VIEW.dollyMax)
@@ -632,6 +636,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       return
     }
     if (typing) return
+    if (review && !REVIEW_KEYS.has(event.key)) return
     switch (event.key) {
       case 'm':
       case 'M':
@@ -685,6 +690,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   })
 
   desk.track(null)
+  if (review) note.textContent = 'Space plays and pauses. Drop the track on the page to hear it.'
   fit()
   loading?.done()
   become('ready', 'Ready')

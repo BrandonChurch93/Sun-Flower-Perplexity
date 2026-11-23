@@ -321,3 +321,110 @@
   outline: 2px solid #e2b23a;
   outline-offset: 2px;
 }
+
+.step {
+  margin: 0 0 12px;
+  padding-top: 10px;
+  border-top: 1px solid #2b2820;
+}
+
+.stepHead {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 8px;
+}
+
+.num {
+  display: inline-grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #5a5443;
+  border-radius: 50%;
+  color: #a59f90;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  place-items: center;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stepState {
+  margin-left: auto;
+  color: #a59f90;
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.step[data-state='now'] .num {
+  border-color: #e2b23a;
+  background: #e2b23a;
+  color: #14130f;
+  font-weight: 600;
+}
+
+.step[data-state='now'] .stepState {
+  color: #e2b23a;
+}
+
+.step[data-state='done'] .num {
+  border-color: #8fb573;
+  color: #8fb573;
+}
+
+.step[data-state='done'] .stepState {
+  color: #8fb573;
+}
+
+.step[data-state='warn'] .num {
+  border-color: #e8a08c;
+  color: #e8a08c;
+}
+
+.step[data-state='warn'] .stepState {
+  color: #e8a08c;
+}
+
+.step .button + .small {
+  margin-top: 6px;
+}
+
+.step .small + .button,
+.step .advice + .button {
+  margin-top: 10px;
+}
+
+.more {
+  margin: 0 0 12px;
+  padding-top: 10px;
+  border-top: 1px solid #2b2820;
+}
+
+.summary {
+  color: #a59f90;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.summary:focus-visible {
+  outline: 2px solid #e2b23a;
+  outline-offset: 2px;
+}
+
+.more[open] .summary {
+  margin-bottom: 10px;
+}
+
+.more .check,
+.more .number {
+  margin-top: 8px;
+}
+
+:global(html[data-review]) .panel {
+  display: none;
+}

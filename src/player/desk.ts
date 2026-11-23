@@ -56,6 +56,23 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     panel.append(wrap)
     return wrap
   }
+  type StepState = 'wait' | 'now' | 'done' | 'warn'
+  interface Step { body: HTMLElement; set(state: StepState, text: string): void }
+  const step = (number: number, title: string): Step => {
+    const wrap = make('div', css.step)
+    const top = make('div', css.stepHead)
+    const chip = make('span', css.stepState)
+    top.append(make('span', css.num, String(number)), make('h2', css.stepTitle, title), chip)
+    wrap.append(top)
+    panel.append(wrap)
+    return {
+      body: wrap,
+      set(state, text) {
+        wrap.dataset.state = state
+        chip.textContent = text
+      },
+    }
+  }
   const button = (text: string, key: string | null, primary = false): HTMLButtonElement => {
     const b = make('button', css.button)
     b.type = 'button'
@@ -65,18 +82,24 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     return b
   }
 
-  const trackGroup = group('Track')
+  const loadStep = step(1, 'Load the film')
+  loadStep.set('done', 'Done')
+  const pictureText = make('p', css.small)
+  loadStep.body.append(pictureText)
+
+  const trackStep = step(2, 'Drop the track')
+  trackStep.set('now', 'Waiting for the file')
   const drop = make('div', css.drop)
   const choose = button('Choose the track', null)
   const input = make('input', css.file)
   input.type = 'file'
   input.accept = 'audio/*,.mp3,.wav,.flac,.m4a,.ogg'
   input.setAttribute('aria-label', 'Track file')
-  const dropHint = make('span', css.hint, 'or drop it on the page')
+  const dropHint = make('span', css.hint, 'or drop it anywhere on the page')
   drop.append(choose, dropHint, input)
   const trackText = make('p', css.text)
-  const trackHash = make('p', css.small)
-  trackGroup.append(drop, trackText, trackHash)
+  const trackSize = make('p', css.small)
+  trackStep.body.append(drop, trackText, trackSize)
   choose.addEventListener('click', () => input.click())
   input.addEventListener('change', () => {
     const file = fileOf(input.files)
@@ -84,30 +107,23 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     input.value = ''
   })
 
-  const recordGroup = group('Record')
-  const record = button('Record', 'R', true)
-  record.addEventListener('click', () => actions.record())
-  const recordText = make('p', css.small, `Full screen. ${SETTLE_SECONDS + LEAD_SECONDS} seconds of dark, the film, ${TAIL_SECONDS} seconds of dark. Esc stops it.`)
-  const row = make('div', css.row)
-  const marksLabel = make('label', css.check)
-  const marks = make('input')
-  marks.type = 'checkbox'
-  marks.checked = start.marks
-  marks.addEventListener('change', () => actions.marks(marks.checked))
-  marksLabel.append(marks, make('span', undefined, 'Sync marks'))
-  const avLabel = make('label', css.number)
-  const av = make('input', css.input)
-  av.type = 'number'
-  av.step = '1'
-  av.value = String(start.av)
-  av.addEventListener('change', () => actions.av(Number(av.value)))
-  avLabel.append(make('span', undefined, 'Picture later by'), av, make('span', undefined, 'ms'))
-  row.append(marksLabel, avLabel)
-  recordGroup.append(record, recordText, row)
-
-  const checkGroup = group('Before recording')
+  const goStep = step(3, 'Check, then record')
+  goStep.set('wait', 'Not checked yet')
   const check = button('Check this machine', 'C')
   check.addEventListener('click', () => actions.check())
+  const checkText = make('p', css.small, 'Ten seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
+  const adviceText = make('p', css.advice)
+  adviceText.hidden = true
+  const tryLow = button('Check at low quality', null)
+  tryLow.hidden = true
+  tryLow.addEventListener('click', () => actions.checkLow())
+  const record = button('Record', 'R', true)
+  record.addEventListener('click', () => actions.record())
+  const recordText = make('p', css.small, `Start the screen recorder first, then press Record. The page goes full screen: ${SETTLE_SECONDS + LEAD_SECONDS} seconds of dark, the film, ${TAIL_SECONDS} seconds of dark. Esc stops it.`)
+  goStep.body.append(check, checkText, adviceText, tryLow, record, recordText)
+
+  const more = make('details', css.more)
+  more.append(make('summary', css.summary, 'More settings'))
   const qualityRow = make('div', css.row)
   qualityRow.setAttribute('role', 'radiogroup')
   qualityRow.setAttribute('aria-label', 'Quality')
@@ -127,13 +143,22 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     qualities.set(q, radio)
     qualityRow.append(label)
   }
-  const pictureText = make('p', css.small)
-  const adviceText = make('p', css.advice)
-  adviceText.hidden = true
-  const tryLow = button('Check at low quality', null)
-  tryLow.hidden = true
-  tryLow.addEventListener('click', () => actions.checkLow())
-  checkGroup.append(check, qualityRow, pictureText, adviceText, tryLow)
+  const marksLabel = make('label', css.check)
+  const marks = make('input')
+  marks.type = 'checkbox'
+  marks.checked = start.marks
+  marks.addEventListener('change', () => actions.marks(marks.checked))
+  marksLabel.append(marks, make('span', undefined, 'Test take: a white flash and a beep in the dark before and after the film'))
+  const avLabel = make('label', css.number)
+  const av = make('input', css.input)
+  av.type = 'number'
+  av.step = '1'
+  av.value = String(start.av)
+  av.addEventListener('change', () => actions.av(Number(av.value)))
+  avLabel.append(make('span', undefined, 'Show the picture later by'), av, make('span', undefined, 'ms'))
+  more.append(qualityRow, marksLabel, avLabel)
+  if (start.marks || start.av !== 0 || start.quality !== 'high') more.open = true
+  panel.append(more)
 
   const reportGroup = group('Report')
   const reportBody = make('div', css.report)
@@ -174,6 +199,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   })
 
   let url = ''
+  let checkedAt: string | null = null
   const line = (name: string, value: string): HTMLElement => {
     const p = make('p', css.fact)
     p.append(make('span', css.label, name), make('span', css.value, value))
@@ -187,14 +213,20 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     track(track, reading) {
       trackText.textContent = reading ?? trackLine(track)
       trackText.dataset.state = reading ? 'reading' : !track ? 'none' : track.matches ? 'match' : 'other'
-      trackHash.textContent = track && !reading ? `${track.megabytes.toFixed(1)} MB, SHA-256 ${track.sha256.slice(0, 16)}` : ''
+      trackSize.textContent = track && !reading ? `${track.megabytes.toFixed(1)} MB, kept in this page only` : ''
       choose.firstElementChild!.textContent = track ? 'Choose another file' : 'Choose the track'
+      if (reading) trackStep.set('now', 'Reading')
+      else if (!track) trackStep.set('now', 'Waiting for the file')
+      else if (track.matches) trackStep.set('done', 'Done')
+      else trackStep.set('warn', 'Another file')
+      if (track && !reading && goStep.body.dataset.state === 'wait') goStep.set('now', 'Not checked yet')
     },
     picture(text) {
       pictureText.textContent = text
     },
     quality(quality) {
       for (const [q, radio] of qualities) radio.checked = q === quality
+      if (quality !== checkedAt) goStep.set('now', `Not checked at ${quality} quality`)
     },
     report(report, advice) {
       if (url) URL.revokeObjectURL(url)
@@ -217,7 +249,12 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       const top = make('div', css.top)
       top.append(make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`), link)
       reportBody.append(top)
-      if (!advice) reportBody.append(make('p', css.verdict, report.verdict))
+      reportBody.append(make('p', css.verdict, report.verdict))
+      if (report.kind === 'check' && report.complete) {
+        checkedAt = report.quality
+        if (report.holds) goStep.set('done', 'Checked: ready to record')
+        else goStep.set('warn', 'Checked: does not keep up')
+      }
       reportBody.append(
         line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped`),
         line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),

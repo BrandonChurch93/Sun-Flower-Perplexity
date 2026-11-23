@@ -5,8 +5,9 @@ import type { Quality } from '../v2/api.ts'
 import { views, type ViewName } from '../v2/shots.ts'
 import { clampFrame, segments } from './timeline.ts'
 
-export type Mode = 'live' | 'autopilot' | 'capture' | 'export'
-const MODES: Mode[] = ['live', 'autopilot', 'capture', 'export']
+// `review` is the player without its desk: the film, the timeline, play and pause.
+export type Mode = 'live' | 'review' | 'autopilot' | 'capture' | 'export'
+const MODES: Mode[] = ['live', 'review', 'autopilot', 'capture', 'export']
 
 export const VIEW = { azimuthStepDeg: 0.1, elevationMinDeg: -20, elevationMaxDeg: 60, dollyMin: 0.25, dollyMax: 6 }
 export const AV_MAX_MS = 2000

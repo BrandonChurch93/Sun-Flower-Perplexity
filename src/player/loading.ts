@@ -28,11 +28,11 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const size = make('p', css.size, `${film.format.width} x ${film.format.height}, ${config.film.fps} frames a second`)
   const sceneLine = make('p', css.line)
   const sceneName = make('span', css.what, 'Scene')
+  const sceneFill = make('i', css.fill)
   const sceneCount = make('span', css.count, 'starting')
   sceneLine.append(sceneName, sceneCount)
   const sceneBar = make('div', css.bar)
-  sceneBar.dataset.state = 'busy'
-  sceneBar.append(make('i', css.fill))
+  sceneBar.append(sceneFill)
   const warmLine = make('p', css.line)
   const warmName = make('span', css.what, 'Moments drawn once')
   const warmCount = make('span', css.count, 'waiting')
@@ -41,7 +41,14 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const warmFill = make('i', css.fill)
   warmBar.append(warmFill)
   const state = make('p', css.state, 'Loading')
-  box.append(title, size, sceneLine, sceneBar, warmLine, warmBar, state)
+  const steps = make('ol', css.steps)
+  for (const [i, text] of ['Load the film', 'Drop the track', 'Check, then record'].entries()) {
+    const item = make('li', css.step)
+    item.dataset.state = i === 0 ? 'now' : 'wait'
+    item.append(make('span', css.num, String(i + 1)), make('span', undefined, text), make('span', css.stepState, i === 0 ? 'Loading' : 'Next'))
+    steps.append(item)
+  }
+  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state)
   root.append(box)
   host.append(root)
 
@@ -61,9 +68,10 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     observer = new PerformanceObserver((list) => seen(list.getEntries()))
     observer.observe({ type: 'resource', buffered: true })
   } catch {}
+  let part = ''
   const sceneText = (): string => {
     const made = madeSoFar()
-    return `${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
+    return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
   }
   const timer = window.setInterval(() => {
     if (!sceneDone) sceneCount.textContent = sceneText()
@@ -73,9 +81,14 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     sceneDone = true
     if (observer) seen(observer.takeRecords())
     sceneCount.textContent = `${sceneText()}, ${film.textureMb().toFixed(0)} MB on the graphics card`
-    sceneBar.dataset.state = 'done'
+    sceneFill.style.setProperty('--at', '1')
   }
-  void film.load().then(finishScene, () => undefined)
+  void film
+    .load((done, of, what) => {
+      part = done < of ? `Part ${done} of ${of}, ${what}. ` : ''
+      sceneFill.style.setProperty('--at', String(done / of))
+    })
+    .then(finishScene, () => undefined)
 
   return {
     step(done, of) {
@@ -102,7 +115,6 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       window.clearInterval(timer)
       observer?.disconnect()
       root.dataset.failed = 'yes'
-      sceneBar.dataset.state = 'done'
       state.textContent = text
       root.hidden = false
     },

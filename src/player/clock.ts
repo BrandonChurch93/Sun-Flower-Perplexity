@@ -37,25 +37,104 @@ function silence(): ArrayBuffer {
 
 export interface ClockOptions { avMs: number; marks: boolean }
 
-// The film's clock: the audio clock of the page, with the track on it when one was picked.
-// Without `marks` the blip of the sync mark is set to 0 Hz, which is silence: the lead and the tail stay dark and quiet.
-export function makeClock(track: ArrayBuffer | null, options: ClockOptions): Promise<FilmClock> {
-  return createFilmClock({
-    arrayBuffer: track ? track.slice(0) : silence(),
+// The sound ends with the film: the track fades out over the last part of the dark tail and stops.
+export const FADE_SECONDS = 0.5
+const CUT_SECONDS = 0.03
+const BLIP_HZ = 1000
+
+export const markSeconds = (): [number, number] => [-LEAD_SECONDS + MARK_AT_SECONDS, config.film.durationSeconds + TAIL_SECONDS - MARK_AT_SECONDS]
+
+interface Voice { stop(): void }
+
+// The track from `offset` seconds in, starting at `at` on the audio clock, with the film's zero at `zero`. It is silent from the end of the tail on, whatever the file holds after it.
+function voice(ctx: AudioContext, buffer: AudioBuffer, at: number, offset: number, zero: number): Voice {
+  const end = zero + config.film.durationSeconds + TAIL_SECONDS
+  const source = ctx.createBufferSource()
+  const gain = ctx.createGain()
+  source.buffer = buffer
+  source.connect(gain).connect(ctx.destination)
+  gain.gain.setValueAtTime(1, Math.max(at, end - FADE_SECONDS))
+  gain.gain.linearRampToValueAtTime(0, end)
+  source.start(at, Math.max(0, offset))
+  source.stop(end)
+  let live = true
+  return {
+    stop() {
+      if (!live) return
+      live = false
+      const now = ctx.currentTime
+      try {
+        gain.gain.cancelScheduledValues(now)
+        gain.gain.setTargetAtTime(0, now, CUT_SECONDS / 3)
+        source.stop(now + CUT_SECONDS)
+      } catch {}
+    },
+  }
+}
+
+function blip(ctx: AudioContext, when: number): void {
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.frequency.value = BLIP_HZ
+  gain.gain.setValueAtTime(0, when)
+  gain.gain.linearRampToValueAtTime(0.6, when + 0.001)
+  gain.gain.exponentialRampToValueAtTime(0.0006, when + 0.04)
+  osc.connect(gain).connect(ctx.destination)
+  osc.start(when)
+  osc.stop(when + 0.05)
+}
+
+// The film's clock: the audio clock of the page, kept by `sync-mark.js`, with the track on it when one was picked.
+// The clock itself runs on silence. The track goes through a fader of its own so that it ends with the film, and the blips sound only with `marks`.
+export async function makeClock(track: ArrayBuffer | null, options: ClockOptions): Promise<FilmClock> {
+  const inner = await createFilmClock({
+    arrayBuffer: silence(),
     duration: config.film.durationSeconds,
     lead: LEAD_SECONDS,
     tail: TAIL_SECONDS,
     markAt: MARK_AT_SECONDS,
     markHoldMs: MARK_HOLD_SECONDS * 1000,
     avMs: options.avMs,
-    blipHz: options.marks ? 1000 : 0,
+    blipHz: 0,
   })
+  const { ctx } = inner
+  let sound: AudioBuffer | null = null
+  if (track) {
+    try {
+      sound = await ctx.decodeAudioData(track.slice(0))
+    } catch (error) {
+      await ctx.close().catch(() => undefined)
+      throw error
+    }
+  }
+  let playing: Voice | null = null
+  return {
+    ...inner,
+    buffer: sound ?? inner.buffer,
+    async start() {
+      playing?.stop()
+      playing = null
+      await inner.start()
+      let now = ctx.currentTime
+      let zero = now - inner.time() + options.avMs / 1000
+      while (ctx.currentTime !== now) {
+        now = ctx.currentTime
+        zero = now - inner.time() + options.avMs / 1000
+      }
+      if (sound) playing = voice(ctx, sound, zero, 0, zero)
+      if (options.marks) for (const m of markSeconds()) blip(ctx, zero + m)
+    },
+    stop() {
+      inner.stop()
+      playing?.stop()
+      playing = null
+    },
+  }
 }
 
 // Whether the white flash of a sync mark is on at this second of the film's clock. The same moments the blips of the clock sound at.
 export function markAt(seconds: number): boolean {
-  const head = -LEAD_SECONDS + MARK_AT_SECONDS
-  const tail = config.film.durationSeconds + TAIL_SECONDS - MARK_AT_SECONDS
+  const [head, tail] = markSeconds()
   return (seconds >= head && seconds < head + MARK_HOLD_SECONDS) || (seconds >= tail && seconds < tail + MARK_HOLD_SECONDS)
 }
 
@@ -66,25 +145,14 @@ export interface Run {
 
 // Plays from any film second on the same audio clock, with the track when there is one and `sound` is on. For looking, not for recording.
 export async function runFrom(clock: FilmClock, seconds: number, sound: boolean, avMs: number): Promise<Run> {
-  const { ctx, buffer } = clock
+  const { ctx } = clock
   await ctx.resume()
   const at = ctx.currentTime + START_AHEAD
   const zero = at - seconds
-  let source: AudioBufferSourceNode | null = null
-  if (sound && seconds < buffer.duration) {
-    source = ctx.createBufferSource()
-    source.buffer = buffer
-    source.connect(ctx.destination)
-    source.start(at, Math.max(0, seconds))
-  }
+  const playing = sound && seconds < Math.min(clock.buffer.duration, config.film.durationSeconds) ? voice(ctx, clock.buffer, at, seconds, zero) : null
   return {
     time: () => ctx.currentTime - zero + avMs / 1000,
-    stop() {
-      try {
-        source?.stop()
-      } catch {}
-      source = null
-    },
+    stop: () => playing?.stop(),
   }
 }
 
