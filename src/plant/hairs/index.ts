@@ -16,14 +16,15 @@ const ROW = 512
 const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
-// While the plant's clock stands its hairs are chosen for a view in steps: the lens this far along a scale of doublings, this many degrees round the plant, and the skin's frost and wet in sixteenths. So what is chosen depends on the frame alone and is sent again only when a step is crossed.
+// While the plant's clock stands its hairs are chosen for a view in steps: the lens this far along a scale of doublings and this many degrees round the plant. So what is chosen depends on the frame alone and is sent again only when a step is crossed; frost, dew and rain send nothing.
 const STEPS_PER_DOUBLING = 8
 const STEP_DEG = 4
-const STATE_STEPS = 16
 // In the wide shot a hair thinner than this many pixels is one of many in a pixel: that share of them is laid and stands for the rest.
 const FAR_FROM_PX = 1 / 3
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
+// How closely a hair stands among others is kept with it on a scale of doublings, this many steps to one, so the dimming follows the frost where the hair is drawn and nothing is gathered again for it.
+const CROWD_STEPS = 32
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
 const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
@@ -104,6 +105,10 @@ const float SOFT_LONG_PX = ${SOFT_LONG_PX.toFixed(1)};
 const float FINE_HALF_PX = ${FINE_HALF_PX.toFixed(2)};
 const float TUFT_BANDS = ${(TUFT_BANDS * 2 * Math.PI).toFixed(2)};
 const float TUFT_LEAN = ${TUFT_LEAN.toFixed(2)};
+const float CROWD_COVER = ${CROWD_COVER.toFixed(2)};
+const float CROWD_STEPS = ${CROWD_STEPS.toFixed(1)};
+const float WIDE_FROM_S = ${WIDE_FROM_S.toFixed(2)};
+const float WIDE_FULL_S = ${WIDE_FULL_S.toFixed(2)};
 const float WET_BACK = 0.3;
 const float WET_THROUGH = 6.0;
 const float DEW_GLOW = 0.2;
@@ -163,6 +168,12 @@ void readHair(int k) {
   hairStand = hairDir;
   hairOwn = b.w;
   hairShare = c.w;
+  // Where hairs crowd all of them dim alike instead of burning. Rime is matt and does not burn: a crust of it may stand as close as it grows.
+  float crowd = exp2(floor(d.w) / CROWD_STEPS) / (1.0 + 15.0 * uPlantFrost);
+  if (crowd > 1.0) {
+    float some = saturate((1.0 - crowd * fract(b.w * 97.13 + 0.37)) / 0.3);
+    hairShare *= mix(some, 0.85 / crowd, smoothstep(WIDE_FROM_S, WIDE_FULL_S, uTime));
+  }
   float h1 = fract(hairOwn * 13.37 + 0.21);
   float h2 = fract(hairOwn * 47.13 + 0.67);
   float h4 = fract(hairOwn * 233.31 + 0.09);
@@ -224,7 +235,7 @@ void readHair(int k) {
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
     // Rain gathers wet hairs into tufts. The tufts belong to the tissue: a hair knows its place by its number in the coat, which runs from the foot up, and by the way it points round the stem. It leans toward the nearest tuft so neighbors meet in a point; a tuft is long, and between tufts the hairs are short and some are beaten flat and do not show.
     float rain = smoothstep(0.3, 0.9, uPlantWet);
-    vec2 tq = vec2(d.w * TUFT_BANDS, atan(hairStand.z, hairStand.x));
+    vec2 tq = vec2(fract(d.w) * TUFT_BANDS, atan(hairStand.z, hairStand.x));
     float t0 = tuftField(tq);
     float rise = (tuftField(tq + vec2(0.2, 0.0)) - t0) * 5.0;
     float round = (tuftField(tq + vec2(0.0, 0.04)) - t0) * 5.0;
@@ -411,13 +422,14 @@ vec3 ballLight(vec2 d, vec3 right, vec3 up, vec3 world, float sun, float frozen,
 // What rime, dew and rain add to a hair. Rime: two side barbs of ice and two frozen beads, one near the tip and a smaller one below it. Dew: a bead at the tip. Rain: a drop below it.
 const extraVertex = /* glsl */ `
 uniform sampler2D uPicks;
+uniform int uPickFrom;
 out vec2 vAt;
 out vec3 vShape;
 out vec3 vRight;
 out vec3 vUp;
 ${strand}
 void main() {
-  int p = gl_VertexID / 16;
+  int p = gl_VertexID / 16 + uPickFrom;
   int j = gl_VertexID % 16;
   int piece = j >> 2;
   float sx = float(j & 1) * 2.0 - 1.0;
@@ -563,7 +575,7 @@ void main() {
 `
 
 // Fine hairs. Far from the lens each is a line a pixel wide that adds its true share of light; close to it each is a thin ribbon turned to the camera. The part that wears them gives each hair its root and its direction at both ends of the shutter.
-const KEYS = 11
+const KEYS = 6
 
 // A length on a scale of doublings, at its nearest step.
 function stepped(v: number): number {
@@ -586,6 +598,9 @@ export class HairSet {
   private readonly softLeast = { value: FINE_HALF_PX }
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
+  private readonly pickFrom = { value: 0 }
+  // How many hairs of the list wear rime, and how many carry a drop only, a drop and dew, and dew only.
+  private readonly picked = new Int32Array(4)
   private readonly pickTexture: THREE.DataTexture
   private readonly data: Float32Array
   private readonly texture: THREE.DataTexture
@@ -670,7 +685,7 @@ export class HairSet {
     far.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, far, false)
     near.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, near, true)
     const most = Math.min(count, MOST_PICKS)
-    this.picks = new Float32Array(2048 * Math.max(1, Math.ceil(most / 2048)))
+    this.picks = new Float32Array(2048 * Math.max(1, Math.ceil((2 * most) / 2048)))
     this.pickTexture = new THREE.DataTexture(this.picks, 2048, this.picks.length / 2048, THREE.RedFormat, THREE.FloatType)
     this.pickTexture.colorSpace = THREE.NoColorSpace
     this.pickTexture.minFilter = THREE.NearestFilter
@@ -683,7 +698,7 @@ export class HairSet {
       extraIndex.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
     }
     this.extras.setIndex(new THREE.BufferAttribute(extraIndex, 1))
-    const extraUniforms = { ...own, uPicks: { value: this.pickTexture } }
+    const extraUniforms = { ...own, uPicks: { value: this.pickTexture }, uPickFrom: this.pickFrom }
     const extra = (label: string, define: string, sharp: boolean): THREE.Mesh =>
       partMesh(this.extras, makePartSurface(options, { name: label, vertex: extraVertex, fragment: `${define}${extraFragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: sharp, castShadow: false, uniforms: extraUniforms }))
     const barbs = extra(`${name} barbs and beads`, '', false)
@@ -714,9 +729,8 @@ export class HairSet {
     crowd.fill(0)
     const at = this.at
     const perM = stepped ? key[3] : (camera.projectionMatrix.elements[5] * height) / 2
-    const frost = stepped ? key[6] : stateUniforms.uPlantFrost.value
-    const wetness = stepped ? key[7] : stateUniforms.uPlantWet.value
-    const thick = (1 + (RIME_M / this.widthM) * frost) * (1 + 2 * wetness)
+    // For the stepped view hairs are left out as if each were as thick as rime or rain ever makes it, so the same hairs stand for the coat whatever the frost and the rain do meanwhile.
+    const thick = stepped ? Math.max(1 + RIME_M / this.widthM, 3) : (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     // The stepped view: from the stepped place of the lens toward the foot of the plant.
     const ex = key[0]
     const ey = key[1]
@@ -829,13 +843,11 @@ export class HairSet {
       out[q + 12] = fold ? (1 - Math.abs(by)) * (bx >= 0 ? 1 : -1) : bx
       out[q + 13] = fold ? (1 - Math.abs(bx)) * (by >= 0 ? 1 : -1) : by
       out[q + 14] = keyed ? (second ? Math.max(rb[o + 3], least) : 0) : stands
-      out[q + 15] = i / this.count
+      out[q + 15] = Math.min(i / this.count, 0.9999)
       n++
       if (w < nearest) nearest = w
       if (long > longest) longest = long
     }
-    // Rime is matt and does not burn: a crust of it may stand as close as it grows.
-    const limit = CROWD_COVER * (1 + 15 * frost)
     for (let k = 0; k < n; k++) {
       const px = at[k * 2]
       const py = at[k * 2 + 1]
@@ -845,32 +857,39 @@ export class HairSet {
       const gy = py - cy
       const c = cy * cols + cx
       const cover = (crowd[c] * (1 - gx) + crowd[c + 1] * gx) * (1 - gy) + (crowd[c + cols] * (1 - gx) + crowd[c + cols + 1] * gx) * gy
-      if (cover <= limit) continue
-      const keep = limit / cover
-      const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
-      const some = Math.min(1, Math.max(0, (keep - h) / (0.3 * keep)))
-      out[k * 16 + 11] *= some + (0.85 * keep - some) * wide
+      if (cover > CROWD_COVER) out[k * 16 + 15] += Math.min(255, Math.round(CROWD_STEPS * Math.log2(cover / CROWD_COVER)))
     }
-    // Rime grows barbs and beads on the long hairs that show.
-    let picked = 0
-    const rimed = stateUniforms.uPlantFrost.value > 0.5
-    const wet = rimed ? 0 : stateUniforms.uPlantWet.value
-    const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - wet) > 0
-    if (rimed || dewy || wet > 0) {
-      const most = this.extras.getIndex()!.count / 24
-      const from = rimed ? EXTRA_FROM_M : DEW_FROM_M
-      const share = rimed ? EXTRA_SHARE : DEW_SHARE
-      for (let k = 0; k < n && picked < most; k++) {
+    // Rime grows barbs and beads on the long hairs that show, dew sets a bead on some and rain hangs a drop on a few. Both lists are kept, the rimed first and then the damp in three runs (a drop only, a drop and dew, dew only), and the state of the plant chooses which run is drawn.
+    const room = this.extras.getIndex()!.count / 24
+    const picks = this.picks
+    const picked = this.picked.fill(0)
+    const worn = stepped || stateUniforms.uPlantFrost.value > 0.5 || stateUniforms.uPlantWet.value > 0 || stateUniforms.uPlantDew.value > 0
+    for (let pass = 0; worn && pass < 2; pass++) {
+      let rime = 0
+      let damp = 0
+      let drops = room
+      let both = room + picked[1]
+      let dews = both + picked[2]
+      for (let k = 0; k < n; k++) {
         const q = k * 16
-        if (out[q + 11] <= 0) continue
         const long = Math.max(out[q + 3], out[q + 14]) * size
-        const drop = wet > 0 && long >= DROP_FROM_M && (out[q + 7] * 71.93 + 0.5) % 1 < DROP_SHARE
-        if (!drop && (!(rimed || dewy) || long < from || (out[q + 7] * 211.31 + 0.77) % 1 > share)) continue
-        this.picks[picked++] = k
+        const turn = (out[q + 7] * 211.31 + 0.77) % 1
+        if (long >= EXTRA_FROM_M && turn <= EXTRA_SHARE && rime < room) {
+          if (pass) picks[rime] = k
+          rime++
+        }
+        const drop = long >= DROP_FROM_M && (out[q + 7] * 71.93 + 0.5) % 1 < DROP_SHARE
+        const dew = long >= DEW_FROM_M && turn <= DEW_SHARE
+        if ((!drop && !dew) || damp >= room) continue
+        damp++
+        if (!pass) picked[drop ? (dew ? 2 : 1) : 3]++
+        else if (!dew) picks[drops++] = k
+        else if (drop) picks[both++] = k
+        else picks[dews++] = k
       }
-      this.pickTexture.needsUpdate = true
+      picked[0] = rime
     }
-    this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : picked * 24)
+    if (worn) this.pickTexture.needsUpdate = true
     // Only the rows that hold hairs are sent, and nothing when there were none before and are none now.
     if (n > 0 || this.kept > 0 || !this.sent) {
       const rows = this.sent ? Math.max(1, Math.ceil(n / ROW)) : this.rows
@@ -910,11 +929,6 @@ export class HairSet {
       key[3] = stepped((camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2)
       key[4] = stepped(shared.uFocusM.value)
       key[5] = stepped(shared.uCocScale.value)
-      key[6] = Math.round(stateUniforms.uPlantFrost.value * STATE_STEPS) / STATE_STEPS
-      key[7] = Math.round(stateUniforms.uPlantWet.value * STATE_STEPS) / STATE_STEPS
-      key[8] = stateUniforms.uPlantFrost.value > 0.5 ? 1 : 0
-      key[9] = stateUniforms.uPlantWet.value > 0 ? 1 : 0
-      key[10] = stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0 ? 1 : 0
       let other = this.stale
       for (let k = 0; k < KEYS; k++) if (key[k] !== this.keyWas[k]) other = true
       if (other) {
@@ -933,6 +947,11 @@ export class HairSet {
     const sharp = ribbon ? this.ribbonsSharp : this.linesSharp
     // A clear hair adds its light to what is behind it. With frost on it, it covers its rimed share of it.
     const rimed = stateUniforms.uPlantFrost.value > 0.5
+    const rained = !rimed && stateUniforms.uPlantWet.value > 0
+    const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0
+    const picked = this.picked
+    this.pickFrom.value = rimed ? 0 : this.extras.getIndex()!.count / 24 + (rained ? 0 : picked[1])
+    this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : 24 * (rimed ? picked[0] : (rained ? picked[1] : 0) + (rained || dewy ? picked[2] : 0) + (dewy ? picked[3] : 0)))
     const iced = stateUniforms.uPlantFrost.value > 0
     const material = (object as THREE.Mesh).material as THREE.Material
     material.blendSrc = THREE.OneFactor
