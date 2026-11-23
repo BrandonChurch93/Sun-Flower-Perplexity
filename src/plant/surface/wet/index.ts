@@ -95,8 +95,9 @@ float thawRadius(float full, float front) {
 // Where a bead of the thaw stands and how wide, in the plant's own space. Two neighbours that grow until they touch run together: one takes the other.
 vec4 thawBead(vec4 form, vec4 gather, float across) {
   float kind = floor(gather.w + 1e-3);
-  float front = thawFront((fract(gather.w + 1e-3) - 1e-3) / 0.4);
   float edge = step(0.95, abs(across));
+  // The bank of ice at a margin outlasts the front, and the bead under it waits as long.
+  float front = thawFront((fract(gather.w + 1e-3) - 1e-3) / 0.4) - FROST_EDGE_LASTS * edge;
   float rib = 1.0 - step(0.05, abs(across));
   float full = mix(mix(mix(0.00022, 0.0007, form.w * form.w * form.w), mix(0.00022, 0.0008, form.w * form.w * form.w), rib), mix(0.00022, 0.001, form.w * form.w * form.w), edge);
   if (kind < ${THAW_RUNS}.0) return vec4(form.xyz, thawRadius(full, front));
@@ -222,7 +223,7 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
     if (real > ${THAW_FROM_GLSL}) {
       // The dew of the thaw is the water of the ice: it stands where the ice has gone, and round on the hairs as the beads beside it.
       beadThaw = 1.0;
-      r = thawRadius(r, thawFront(fract(kGather.w) / 0.4));
+      r = thawRadius(r, thawFront(fract(kGather.w) / 0.4) - FROST_EDGE_LASTS * max(step(0.95, abs(across)), kGather.w > 0.5 ? dry : 0.0));
     }
   }
   r *= scale;
