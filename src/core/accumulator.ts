@@ -19,6 +19,7 @@ export class Accumulator {
   private targets: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget]
   private current = 0
   private empty = true
+  private made = false
   private readonly pass: FullscreenPass
 
   constructor(width: number, height: number) {
@@ -43,6 +44,7 @@ export class Accumulator {
   setSize(width: number, height: number): void {
     for (const t of this.targets) t.setSize(width, height)
     this.empty = true
+    this.made = false
   }
 
   reset(): void {
@@ -50,6 +52,10 @@ export class Accumulator {
   }
 
   add(renderer: THREE.WebGLRenderer, sample: THREE.Texture, weight: number): void {
+    if (!this.made) {
+      for (const t of this.targets) renderer.initRenderTarget(t)
+      this.made = true
+    }
     const next = 1 - this.current
     const u = this.pass.uniforms
     u.tPrev.value = this.targets[this.current].texture
