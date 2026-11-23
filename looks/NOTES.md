@@ -1,7 +1,8 @@
 # Looks of checks
 
-2026-11-23 13:13 UTC, at commit 64041cb1 of agent/checks.
+2026-11-23 14:05 UTC, at commit fe42576b of agent/checks.
 
-numbers on the faulty tree ce7e0b5: frame 1479, 16 pixels marked (3 over the limit in a sample, 13 sparks); on v2 with 043d0d0 none
+numbers every 24th frame on 35bd33b: wild pixels in the flower's disc (3192, 3072, 3216, 3000) and on the companion (1992); a rim of mild sparks on leaf edges
 
-- `01-frame-1479-on-ce7e0b5-the-bad-pixels-in-magenta.jpg`: frame 1479 on ce7e0b5 the bad pixels in magenta
+- `01-wild-pixels-marked-magenta-crop-beside-frame-319.jpg`: wild pixels marked magenta, crop beside frame: 3192, 1992, 3072, 3216, 3000
+- `02-mild-sparks-marked-magenta-1248-216-288-264-360.jpg`: mild sparks marked magenta: 1248, 216, 288, 264, 360
