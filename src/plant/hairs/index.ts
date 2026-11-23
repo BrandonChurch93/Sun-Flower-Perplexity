@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 import { norm } from '../norm.ts'
+import { held } from '../../v2/held.ts'
 
 // `real` turns true once this folder holds the plant's hairs at their real quality.
 export const real = true
@@ -576,6 +577,29 @@ void main() {
 
 // Fine hairs. Far from the lens each is a line a pixel wide that adds its true share of light; close to it each is a thin ribbon turned to the camera. The part that wears them gives each hair its root and its direction at both ends of the shutter.
 const KEYS = 6
+const SIGNS = 16
+
+// What was gathered for one view: the hairs that stand for the coat and the hairs that carry ice or water, in textures of their own.
+interface Gathered {
+  texture: THREE.DataTexture
+  pickTexture: THREE.DataTexture
+  // How many hairs of the list wear rime, and how many carry a drop only, a drop and dew, and dew only.
+  picked: Int32Array
+  kept: number
+  nearest: number
+  longest: number
+  sign: Float64Array
+}
+
+function hairTexture(data: Float32Array, width: number, format: THREE.PixelFormat): THREE.DataTexture {
+  const texture = new THREE.DataTexture(data, width, data.length / (width * (format === THREE.RedFormat ? 1 : 4)), format, THREE.FloatType)
+  texture.colorSpace = THREE.NoColorSpace
+  texture.minFilter = THREE.NearestFilter
+  texture.magFilter = THREE.NearestFilter
+  texture.generateMipmaps = false
+  texture.needsUpdate = true
+  return texture
+}
 
 // A length on a scale of doublings, at its nearest step.
 function stepped(v: number): number {
@@ -599,23 +623,27 @@ export class HairSet {
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
   private readonly pickFrom = { value: 0 }
-  // How many hairs of the list wear rime, and how many carry a drop only, a drop and dew, and dew only.
-  private readonly picked = new Int32Array(4)
-  private readonly pickTexture: THREE.DataTexture
   private readonly data: Float32Array
-  private readonly texture: THREE.DataTexture
+  private readonly main: Gathered
+  // While the plant's clock stands each shot has one lens, and what was gathered for it is kept: a cut only changes which textures are read.
+  private readonly lenses: (Gathered | null)[] = []
+  private now: Gathered
+  private readonly hairsAt: { value: THREE.DataTexture }
+  private readonly picksAt: { value: THREE.DataTexture }
+  private readonly sign = new Float64Array(SIGNS)
+  private laid = 0
+  private signed = -1
+  private shape = 0
   private shown: number
   private stale = true
   private sent = false
+  private mainKept = 0
   private readonly key = new Float64Array(KEYS)
   private readonly keyWas = new Float64Array(KEYS).fill(NaN)
   private readonly stands: { held: number }
   private readonly keyed: { value: number }
   private readonly rows: number
   private readonly views = new Map<number, Float32Array>()
-  private kept = 0
-  private nearest = 1
-  private longest = 0
   private readonly eye = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
   private readonly at: Float32Array
@@ -631,15 +659,11 @@ export class HairSet {
     this.at = new Float32Array(count * 2)
     const rows = Math.max(1, Math.ceil(count / ROW))
     this.data = new Float32Array(ROW * 4 * rows * 4)
-    this.texture = new THREE.DataTexture(this.data, ROW * 4, rows, THREE.RGBAFormat, THREE.FloatType)
-    this.texture.colorSpace = THREE.NoColorSpace
-    this.texture.minFilter = THREE.NearestFilter
-    this.texture.magFilter = THREE.NearestFilter
-    this.texture.generateMipmaps = false
-    this.texture.needsUpdate = true
-    this.texture.onUpdate = () => {
+    const texture = hairTexture(this.data, ROW * 4, THREE.RGBAFormat)
+    texture.onUpdate = () => {
       this.sent = true
     }
+    this.hairsAt = { value: texture }
     this.rows = rows
     // The vertices carry nothing: a vertex knows its hair and its place on it from its number.
     const lineIndex = new Uint32Array(count * 6)
@@ -655,7 +679,7 @@ export class HairSet {
     }
     this.lines.setIndex(new THREE.BufferAttribute(lineIndex, 1))
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
-    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: { value: this.texture } }
+    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: this.hairsAt }
     const make = (label: string, vertex: string, define: string, sharp = false, fade?: { value: number }, soft = ''): Surface =>
       makePartSurface(options, { name: label, vertex: `${soft}${vertex}`, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: fade ? { ...own, uHairFade: fade, uHairLeast: this.softLeast } : own })
     this.surface = make(name, lineVertex, '#define FADE 1\n', false, this.lineFade)
@@ -686,19 +710,16 @@ export class HairSet {
     near.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, near, true)
     const most = Math.min(count, MOST_PICKS)
     this.picks = new Float32Array(2048 * Math.max(1, Math.ceil((2 * most) / 2048)))
-    this.pickTexture = new THREE.DataTexture(this.picks, 2048, this.picks.length / 2048, THREE.RedFormat, THREE.FloatType)
-    this.pickTexture.colorSpace = THREE.NoColorSpace
-    this.pickTexture.minFilter = THREE.NearestFilter
-    this.pickTexture.magFilter = THREE.NearestFilter
-    this.pickTexture.generateMipmaps = false
-    this.pickTexture.needsUpdate = true
+    this.picksAt = { value: hairTexture(this.picks, 2048, THREE.RedFormat) }
+    this.main = { texture, pickTexture: this.picksAt.value, picked: new Int32Array(4), kept: 0, nearest: 1, longest: 0, sign: new Float64Array(SIGNS).fill(NaN) }
+    this.now = this.main
     const extraIndex = new Uint32Array(most * 24)
     for (let k = 0; k < most * 4; k++) {
       const v = k * 4
       extraIndex.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
     }
     this.extras.setIndex(new THREE.BufferAttribute(extraIndex, 1))
-    const extraUniforms = { ...own, uPicks: { value: this.pickTexture }, uPickFrom: this.pickFrom }
+    const extraUniforms = { ...own, uPicks: this.picksAt, uPickFrom: this.pickFrom }
     const extra = (label: string, define: string, sharp: boolean): THREE.Mesh =>
       partMesh(this.extras, makePartSurface(options, { name: label, vertex: extraVertex, fragment: `${define}${extraFragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: sharp, castShadow: false, uniforms: extraUniforms }))
     const barbs = extra(`${name} barbs and beads`, '', false)
@@ -709,7 +730,9 @@ export class HairSet {
   }
 
   // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them. While the plant's clock stands the view is the stepped one, in which nothing is outside the picture.
-  private gather(camera: THREE.Camera, object: THREE.Object3D, stepped: boolean): void {
+  private gather(camera: THREE.Camera, object: THREE.Object3D, view: 0 | 1 | 2): void {
+    const stepped = view > 0
+    const lens = view === 2
     const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
     const m = object.matrixWorld.elements
     const size = norm(m[0], m[1], m[2])
@@ -717,8 +740,8 @@ export class HairSet {
     const [la, lb] = this.leans
     const out = this.data
     const key = this.key
-    const cocScale = stepped ? key[5] : shared.uCocScale.value
-    const focus = stepped ? key[4] : shared.uFocusM.value
+    const cocScale = lens ? held.cocScale : stepped ? key[5] : shared.uCocScale.value
+    const focus = lens ? held.focusM : stepped ? key[4] : shared.uFocusM.value
     const height = shared.uSize.value.y
     const width = shared.uSize.value.x
     const cols = (stepped ? 2 : 1) * (Math.ceil(width / CROWD_CELL_PX) + 1)
@@ -728,25 +751,24 @@ export class HairSet {
     const crowd = this.crowd
     crowd.fill(0)
     const at = this.at
-    const perM = stepped ? key[3] : (camera.projectionMatrix.elements[5] * height) / 2
+    const perM = lens ? held.perTan : stepped ? key[3] : (camera.projectionMatrix.elements[5] * height) / 2
     // For the stepped view hairs are left out as if each were as thick as rime or rain ever makes it, so the same hairs stand for the coat whatever the frost and the rain do meanwhile.
     const thick = stepped ? Math.max(1 + RIME_M / this.widthM, 3) : (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
-    // The stepped view: from the stepped place of the lens toward the foot of the plant.
-    const ex = key[0]
-    const ey = key[1]
-    const ez = key[2]
-    let fx = m[12] - ex
-    let fy = m[13] - ey
-    let fz = m[14] - ez
+    // The stepped view looks from the stepped place of the lens toward the foot of the plant, which stands low in it. A held lens looks where the shot looks.
+    const ex = lens ? held.eye.x : key[0]
+    const ey = lens ? held.eye.y : key[1]
+    const ez = lens ? held.eye.z : key[2]
+    let fx = lens ? held.forward.x : m[12] - ex
+    let fy = lens ? held.forward.y : m[13] - ey
+    let fz = lens ? held.forward.z : m[14] - ez
     const fl = norm(fx, fy, fz) || 1
     fx /= fl
     fy /= fl
     fz /= fl
-    let sx = -fz
-    let sz = fx
-    const sl = Math.hypot(sx, sz) || 1
-    sx /= sl
-    sz /= sl
+    const sl = Math.hypot(fx, fz)
+    const sx = sl > 1e-6 ? -fz / sl : 1
+    const sz = sl > 1e-6 ? fx / sl : 0
+    const low = lens ? 0.5 : 0.3
     const ux = -sz * fy
     const uy = sz * fx - sx * fz
     const uz = sx * fy
@@ -782,7 +804,7 @@ export class HairSet {
         if (w < long) continue
         const deep = Math.max(rx * fx + ry * fy + rz * fz, 0.2 * w)
         px = Math.min(cols - 1.001, Math.max(0, 0.5 * cols + ((rx * sx + rz * sz) / deep) * perCell))
-        py = Math.min(rows - 1.001, Math.max(0, 0.3 * rows + ((rx * ux + ry * uy + rz * uz) / deep) * perCell))
+        py = Math.min(rows - 1.001, Math.max(0, low * rows + ((rx * ux + ry * uy + rz * uz) / deep) * perCell))
       } else {
         w = e[3] * x + e[7] * y + e[11] * z + e[15]
         if (w < long) continue
@@ -862,13 +884,14 @@ export class HairSet {
     // Rime grows barbs and beads on the long hairs that show, dew sets a bead on some and rain hangs a drop on a few. Both lists are kept, the rimed first and then the damp in three runs (a drop only, a drop and dew, dew only), and the state of the plant chooses which run is drawn.
     const room = this.extras.getIndex()!.count / 24
     const picks = this.picks
-    const picked = this.picked.fill(0)
+    const to = lens ? this.lensSet(n) : this.main
+    const picked = to.picked.fill(0)
     const worn = stepped || stateUniforms.uPlantFrost.value > 0.5 || stateUniforms.uPlantWet.value > 0 || stateUniforms.uPlantDew.value > 0
     for (let pass = 0; worn && pass < 2; pass++) {
       let rime = 0
       let damp = 0
-      let drops = room
-      let both = room + picked[1]
+      let drops = picked[0]
+      let both = drops + picked[1]
       let dews = both + picked[2]
       for (let k = 0; k < n; k++) {
         const q = k * 16
@@ -889,29 +912,83 @@ export class HairSet {
       }
       picked[0] = rime
     }
-    if (worn) this.pickTexture.needsUpdate = true
+    to.kept = n
+    to.nearest = nearest
+    to.longest = longest
+    if (lens) {
+      const hairs = to.texture.image.data as Float32Array
+      hairs.set(out.subarray(0, Math.min(hairs.length, Math.max(1, n) * 16)))
+      to.texture.needsUpdate = true
+      const list = to.pickTexture.image.data as Float32Array
+      list.set(picks.subarray(0, Math.min(list.length, picked[0] + picked[1] + picked[2] + picked[3])))
+      to.pickTexture.needsUpdate = true
+      return
+    }
+    if (worn) to.pickTexture.needsUpdate = true
     // Only the rows that hold hairs are sent, and nothing when there were none before and are none now.
-    if (n > 0 || this.kept > 0 || !this.sent) {
+    if (n > 0 || this.sent === false || this.mainKept > 0) {
       const rows = this.sent ? Math.max(1, Math.ceil(n / ROW)) : this.rows
       let view = this.views.get(rows)
       if (!view) {
         view = rows === this.rows ? this.data : this.data.subarray(0, rows * ROW * 16)
         this.views.set(rows, view)
       }
-      const image = this.texture.image as { data: Float32Array; height: number }
+      const image = to.texture.image as { data: Float32Array; height: number }
       image.data = view
       image.height = rows
-      this.texture.needsUpdate = true
+      to.texture.needsUpdate = true
     }
-    this.kept = n
-    this.nearest = nearest
-    this.longest = longest
+    this.mainKept = n
     this.stale = false
   }
 
+  // The textures a held lens keeps. They are as large as its hairs need, and made again only when a later gathering needs more.
+  private lensSet(hairs: number): Gathered {
+    const rows = Math.max(1, Math.ceil(hairs / ROW))
+    const picks = 2048 * Math.max(1, Math.ceil(Math.min(2 * (this.extras.getIndex()!.count / 24), 2 * hairs) / 2048))
+    let set = this.lenses[held.lens] ?? null
+    if (set && ((set.texture.image.data as Float32Array).length < rows * ROW * 16 || (set.pickTexture.image.data as Float32Array).length < picks)) {
+      set.texture.dispose()
+      set.pickTexture.dispose()
+      set = null
+    }
+    set ??= { texture: hairTexture(new Float32Array(rows * ROW * 16), ROW * 4, THREE.RGBAFormat), pickTexture: hairTexture(new Float32Array(picks), 2048, THREE.RedFormat), picked: new Int32Array(4), kept: 0, nearest: 1, longest: 0, sign: new Float64Array(SIGNS).fill(NaN) }
+    this.lenses[held.lens] = set
+    return set
+  }
+
   private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft = false): void {
-    // A plant that is laid again on every frame has its hairs gathered for that frame's lens. One whose clock stands keeps what was gathered for the stepped view until a step is crossed.
-    if (this.stands.held >= 1) {
+    // A plant that is laid again on every frame has its hairs gathered for that frame's lens. One whose clock stands in a hold of the film keeps what was gathered for the lens of the shot, and reads nothing of the camera. One that stands otherwise keeps what was gathered for the stepped view until a step is crossed.
+    if (this.stands.held >= 1 && held.lens >= 0) {
+      if (this.signed !== this.laid) {
+        this.signed = this.laid
+        this.shape = this.shapeSum(object)
+      }
+      const sign = this.sign
+      sign[0] = held.eye.x
+      sign[1] = held.eye.y
+      sign[2] = held.eye.z
+      sign[3] = held.forward.x
+      sign[4] = held.forward.y
+      sign[5] = held.forward.z
+      sign[6] = held.perTan
+      sign[7] = held.focusM
+      sign[8] = held.cocScale
+      sign[9] = shared.uSize.value.x
+      sign[10] = shared.uSize.value.y
+      sign[11] = this.shown
+      sign[12] = this.keyed.value
+      sign[13] = this.shape
+      let set = this.lenses[held.lens] ?? null
+      let same = set !== null
+      for (let k = 0; set && k < SIGNS; k++) if (sign[k] !== set.sign[k]) same = false
+      if (!same) {
+        this.gather(camera, object, 2)
+        set = this.lenses[held.lens] as Gathered
+        set.sign.set(sign)
+      }
+      this.now = set as Gathered
+    } else if (this.stands.held >= 1) {
       const key = this.key
       const m = object.matrixWorld.elements
       const eye = this.eye.setFromMatrixPosition(camera.matrixWorld)
@@ -933,12 +1010,21 @@ export class HairSet {
       for (let k = 0; k < KEYS; k++) if (key[k] !== this.keyWas[k]) other = true
       if (other) {
         this.keyWas.set(key)
-        this.gather(camera, object, true)
+        this.gather(camera, object, 1)
       }
-    } else if (this.stale) {
-      this.keyWas.fill(NaN)
-      this.gather(camera, object, false)
+      this.now = this.main
+    } else {
+      if (this.stale) {
+        this.keyWas.fill(NaN)
+        this.gather(camera, object, 0)
+      }
+      this.now = this.main
     }
+    const now = this.now
+    this.hairsAt.value = now.texture
+    this.picksAt.value = now.pickTexture
+    // A pixel at the nearest hair, in meters.
+    const pixel = now.nearest / (this.stands.held >= 1 && held.lens >= 0 ? held.perTan : (camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2)
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     this.lineFade.value = 1 - wide
@@ -949,8 +1035,8 @@ export class HairSet {
     const rimed = stateUniforms.uPlantFrost.value > 0.5
     const rained = !rimed && stateUniforms.uPlantWet.value > 0
     const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0
-    const picked = this.picked
-    this.pickFrom.value = rimed ? 0 : this.extras.getIndex()!.count / 24 + (rained ? 0 : picked[1])
+    const picked = now.picked
+    this.pickFrom.value = rimed ? 0 : picked[0] + (rained ? 0 : picked[1])
     this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : 24 * (rimed ? picked[0] : (rained ? picked[1] : 0) + (rained || dewy ? picked[2] : 0) + (dewy ? picked[3] : 0)))
     const iced = stateUniforms.uPlantFrost.value > 0
     const material = (object as THREE.Mesh).material as THREE.Material
@@ -959,40 +1045,52 @@ export class HairSet {
     material.blendEquationAlpha = iced ? THREE.AddEquation : THREE.MinEquation
     material.blendSrcAlpha = iced ? THREE.ZeroFactor : THREE.OneFactor
     if (soft) {
-      const far = this.softRange(camera, object)
+      const far = this.softRange(pixel, object)
       this.ribbonsSoft.setDrawRange(far.start, far.count)
       return
     }
     const m = object.matrixWorld.elements
     const size = norm(m[0], m[1], m[2])
-    const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
     const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
-    const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
-    if (this.kept === 0 || close !== ribbon || shared.uDiag.value >= 4 || (!ribbon && !rimed)) {
+    const close = damp || (Math.min(this.widthM * size, now.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
+    if (now.kept === 0 || close !== ribbon || shared.uDiag.value >= 4 || (!ribbon && !rimed)) {
       geometry.setDrawRange(0, 0)
       sharp.setDrawRange(0, 0)
       return
     }
-    const lengthPx = this.longest / pixel
+    const lengthPx = now.longest / pixel
     if (ribbon) {
-      if (lengthPx < 12) geometry.setDrawRange(0, this.kept * 12)
-      else geometry.setDrawRange(this.count * 12, this.kept * 24)
-    } else if (lengthPx < 5) geometry.setDrawRange(0, this.kept * 2)
-    else geometry.setDrawRange(this.count * 2, this.kept * 4)
+      if (lengthPx < 12) geometry.setDrawRange(0, now.kept * 12)
+      else geometry.setDrawRange(this.count * 12, now.kept * 24)
+    } else if (lengthPx < 5) geometry.setDrawRange(0, now.kept * 2)
+    else geometry.setDrawRange(this.count * 2, now.kept * 4)
     sharp.setDrawRange(geometry.drawRange.start, iced ? geometry.drawRange.count : 0)
   }
 
-  private softRange(camera: THREE.Camera, object: THREE.Object3D): { start: number; count: number } {
+  private softRange(pixel: number, object: THREE.Object3D): { start: number; count: number } {
+    const now = this.now
     const m = object.matrixWorld.elements
     const size = norm(m[0], m[1], m[2])
-    const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0
-    const close = damp || (Math.min(this.widthM * size, this.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
-    if (this.kept === 0 || close || shared.uDiag.value >= 4 || stateUniforms.uPlantFrost.value > 0.5) return { start: 0, count: 0 }
-    return this.longest / pixel < 12 ? { start: 0, count: this.kept * 12 } : { start: this.count * 12, count: this.kept * 24 }
+    const close = damp || (Math.min(this.widthM * size, now.longest / 5) * thick * 1.5) / pixel > RIBBON_FROM_PX
+    if (now.kept === 0 || close || shared.uDiag.value >= 4 || stateUniforms.uPlantFrost.value > 0.5) return { start: 0, count: 0 }
+    return now.longest / pixel < 12 ? { start: 0, count: now.kept * 12 } : { start: this.count * 12, count: now.kept * 24 }
+  }
+
+  // A number that changes when the laid hairs do: of some of them, where they stand and how long they are, in both slots, and where the plant stands.
+  private shapeSum(object: THREE.Object3D): number {
+    const m = object.matrixWorld.elements
+    const [ra, rb] = this.roots
+    let sum = m[0] + 3 * m[12] + 5 * m[13] + 7 * m[14]
+    const step = Math.max(1, Math.floor(this.shown / 64))
+    for (let i = 0; i < this.shown; i += step) {
+      const o = i * 4
+      sum += ra[o] + 2 * ra[o + 1] + 3 * ra[o + 2] + 5 * ra[o + 3] + 7 * rb[o] + 11 * rb[o + 1] + 13 * rb[o + 2] + 17 * rb[o + 3]
+    }
+    return sum
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.
@@ -1009,6 +1107,7 @@ export class HairSet {
   finish(shown = this.count): void {
     this.shown = Math.max(0, Math.min(shown, this.count))
     this.stale = true
+    this.laid++
   }
 }
 
