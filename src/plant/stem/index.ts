@@ -239,6 +239,16 @@ export function create(options: PartOptions): PlantPart {
   const nodeR = new Float64Array(NODES)
   const actA = new Float64Array(NODES)
   const actAmp = new Float64Array(NODES)
+  const actNode = new Int32Array(NODES)
+  // What does not change with the height is worked out once: the ring's own circle, and for a fill how far each cushion reaches round the stem.
+  const round = new Float64Array(NODES * row)
+  const ribRow = new Float64Array(row)
+  const sideCos = new Float64Array(row)
+  const sideSin = new Float64Array(row)
+  for (let side = 0; side <= sides; side++) {
+    sideCos[side] = Math.cos((side / sides) * TAU)
+    sideSin[side] = Math.sin((side / sides) * TAU)
+  }
 
   function fill(slot: 0 | 1, pose: Pose): void {
     if (slot === 1 && !positionB) return
@@ -297,6 +307,13 @@ export function create(options: PartOptions): PlantPart {
           nodeR[nodes] = Math.max(1e-5, stemRadius(time, length > 0 ? anchors.s[SEED_ANCHOR] / length : 0) * grown)
           nodes++
         }
+      }
+    }
+
+    for (let k = 0; k < nodes; k++) {
+      for (let side = 0; side <= sides; side++) {
+        const d = wrapAngle((side / sides) * TAU - nodeA[k]) / 0.52
+        round[k * row + side] = Math.exp(-d * d)
       }
     }
 
@@ -369,6 +386,7 @@ export function create(options: PartOptions): PlantPart {
         const under = e / (1.8 * rn)
         const along = e >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(e / (5 * rn))
         actA[active] = nodeA[k]
+        actNode[active] = k * row
         actAmp[active] = (0.6 * nodeAmp[k] * along) / BUMP_MAX
         active++
         const wide = d / (2.2 * rn)
@@ -405,7 +423,25 @@ export function create(options: PartOptions): PlantPart {
       const flared = hasHead * smoothstep(0.972, 0.996, u)
       const ribbed = full ? smoothstep(0.0028, 0.0085, whole) * (1 - flared) * scale : 0
       const ribHeight = RIB_HEIGHT * Math.min(whole, 0.02) * ribbed
-      if (full) ribsAt(ribs, label)
+      if (full) {
+        ribsAt(ribs, label)
+        // Each rib is asked only where it stands, in the order they are listed.
+        ribRow.fill(0)
+        for (let k = 0; k < ribs.count; k++) {
+          const from = Math.floor(((ribs.now[k] - ribs.half[k]) / TAU) * sides) - 1
+          const to = Math.min(Math.ceil(((ribs.now[k] + ribs.half[k]) / TAU) * sides) + 1, from + sides - 1)
+          for (let q = from; q <= to; q++) {
+            const side = ((q % sides) + sides) % sides
+            let d = (side / sides) * TAU - ribs.now[k]
+            d -= TAU * Math.round(d / TAU)
+            const x = d / ribs.half[k]
+            if (x > -1 && x < 1) {
+              const w = 1 - x * x
+              ribRow[side] += ribs.tall[k] * w * w
+            }
+          }
+        }
+      }
       const swell = swellAt(s + off)
       if (j >= below && j < below + main) {
         ringR[j - below] = whole
@@ -430,14 +466,11 @@ export function create(options: PartOptions): PlantPart {
       const bald = (1 - smoothstep(anchors.s[SEED_ANCHOR] - 2 * whole, anchors.s[SEED_ANCHOR], s)) * (1 - pale * smoothstep(0.3, 0.55, u)) * (1 - 0.9 * pale * (1 - smoothstep(0.001, 0.007, s + off))) * (1 - smoothstep(0.004, 0.009, rFoot))
       for (let side = 0; side <= sides; side++) {
         const a = (side / sides) * TAU
-        const c = Math.cos(a)
-        const e = Math.sin(a)
-        const rib = full ? ribProfile(ribs, side === sides ? 0 : a) : 0
+        const c = sideCos[side]
+        const e = sideSin[side]
+        const rib = full ? ribRow[side === sides ? 0 : side] - 0.45 * ribs.mean : 0
         let keep = 1
-        for (let k = 0; k < active; k++) {
-          const d = wrapAngle(a - actA[k]) / 0.52
-          keep *= 1 - Math.min(0.96, actAmp[k] * Math.exp(-d * d))
-        }
+        for (let k = 0; k < active; k++) keep *= 1 - Math.min(0.96, actAmp[k] * round[actNode[k] + side])
         const radius = r0 * (1 + swell + BUMP_MAX * (1 - keep)) + ribHeight * rib
         const nx = n.rx * c + n.bx * e
         const ny = n.ry * c + n.by * e

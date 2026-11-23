@@ -466,7 +466,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     ready = true
     start.disabled = false
     describe()
-    say('Ready. Choose the format, the range and the quality, then start.')
+    say(kept > 0 && kept < total() ? `Ready. Frames ${first} to ${first + kept - 1} are kept from a stopped export: Start goes on from frame ${first + kept}.` : 'Ready. Choose the format, the range and the quality, then start.')
     if (auto) void run()
   }
 
