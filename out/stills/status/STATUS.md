@@ -1,12 +1,12 @@
-# Status 02
+# Status 03
 
-2026-11-23 00:35 UTC
+2026-11-23 00:51 UTC
 
-- Status 02 · Phase 2. The film camera now runs on the new clock: it creeps in during the frost hold and stands back and low for the storm. Rain and frost only show while the plant stands still. The first sky candidate reports complete (not yet judged). The checks found the quick nights flicker, which I am fixing next.
-- Next: Lengthen the quick nights to two beats with a smooth dusk, merge the plant's frost fix, send the new camera to all twelve agents, then judge the three skies blind. Time used: 2.6 h of 30 h.
+- Status 03 · Phase 2. All twelve builders got their first round of notes. Every quick night is now two beats long and never fully dark, so the day to night changes read as a pulse instead of a flicker. Two more sky candidates sent first sheets: A has a full atmosphere but unlit clouds, C has thin sparse clouds; B (shown last time) leads so far. The plant is merged; one shared wind now drives everything that bends.
+- Next: Bring the three sky candidates onto one bench and compare them in the film's own frames, tune the light against the leading sky, then merge the ground, rain, frost and field as they report. Time used: 2.9 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet)
-- `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky
-- `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C)
-- `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
+- `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise
+- `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back)
+- `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points
+- `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure

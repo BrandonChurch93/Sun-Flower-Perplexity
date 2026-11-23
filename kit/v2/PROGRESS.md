@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: none yet
-- Last status: 02 · 2026-11-23 00:35 UTC · Phase 2
+- Last status: 03 · 2026-11-23 00:51 UTC · Phase 2
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 00:51 UTC · status 03 · Phase 2 · `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure
 - 2026-11-23 00:35 UTC · status 02 · Phase 2 · `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky; `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
 - 2026-11-22 23:44 UTC · status 01 · Phase 2 · `status-1.jpg`: The scaffold at sixteen moments of the film, with a flat stand-in sky and no plant yet. The light is not tuned: this shows the plumbing, not the look; `status-2.jpg`: The nine new reference pictures the build aims at
 
@@ -30,12 +31,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 1.20 h |
+| 2 | 3.50 h | 1.47 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 2.59 h |
+| Whole build | 30.00 h | 2.85 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -100,6 +101,17 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-22 23:55 UTC. The moon stands 13 degrees up at azimuth 168 so that it is inside the film's frame in the nights. When the light is not the sun the lens gets no sun to blur, so stars stay sharp.
 - 2026-11-22 23:57 UTC. Nine more agents started, one per folder, from the briefs in `kit/v2/briefs/`: the far land, the ground, the plant, the rain, the frost, the field, the lens, the player and the checks. With the three skies that is twelve at once, the limit of `AGENTS.md`. Three of them carry new task names (`soil_v2_builder`, `rows_v2_builder`, `optics_v2_builder`) because version 1's agents still hold the old ones.
 - 2026-11-22 23:57 UTC. The lightning's light on the soil and the plant is the Builder's, in `src/v2/look.ts`; the even fog is the Builder's and the shaped mist is the frost agent's; the companion plant stays; the numbers of the seedling's emergence stay in `src/ground/soil.ts`.
+- 2026-11-23 00:05 UTC. The film camera is one function of the film second (`src/v2/rig.ts`): it creeps in 5 cm through the frost hold, stands 2.45 to 2.10 m back and 0.27 to 0.30 m up for the storm so that both lightning strikes and the break are in frame, keeps headroom over the growing plant, and cranes from bar 69 to 75. The fixed bench views follow it.
+- 2026-11-23 00:10 UTC. A hold begins on the frame that holds its bar line. The checks found frames 849 and 1672 still growing; fixed in the clock.
+- 2026-11-23 00:12 UTC. The frost melts inside its hold (full to bar 22.5, 0.15 at bar 25, gone at 25.4) so that the thaw is seen in close up and the time lapse restarts on a bare plant. The rain ends with a tail after the break (0.45 at bar 41, gone at 41.8) so that the last rain falls through the sunlight.
+- 2026-11-23 00:15 UTC. A world at rest for proofs (`setStill`): no weather, no wind, one sun, clouds that stand; the frame, the film second and the plant's clock run on.
+- 2026-11-23 00:30 UTC. The quick nights are longer than the plan said. The plan gave the later nights about half a second; the checks drew sunset, night and sunrise inside that half second and it read as a flicker. Now every night of the film lasts 0.83 to 0.97 s: in the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line, and it goes 14 degrees under and no deeper, so a glow stays on the horizon. The sun is more than 6 degrees down for 9.2 s of the film in all and never for longer than 0.70 s at a time, so the plant is never seen growing through a long night.
+- 2026-11-23 00:38 UTC. The plant is merged into `v2` (`6067371`): it runs on its own clock and takes the day, the air and the cold as inputs.
+- 2026-11-23 00:42 UTC. One wind for everything that bends (`src/v2/wind.ts`, taken word for word from the field agent's work): toward azimuth 42, the way the clouds travel, with one gust front on the film second.
+- 2026-11-23 00:46 UTC. The companion is 0.7 of the plant's height until 29 on the plant's clock (it was 0.86), rising to 1.131 by 42: the storm references show a hero that towers over its neighbour.
+- 2026-11-23 00:46 UTC. The neighbours of the field are to stay at 35 to 45 percent of the hero through the climb and the storm and below the camera's eye level through the ascent, so that the far land and every sunrise are seen over them; full size at the bloom.
+- 2026-11-23 00:46 UTC. `kit/v2/briefs/CHANGES.md` is the one place where agents read what changed on `v2` after their brief. The ground agent pushes to `agent/ground-v2` (the name `agent/ground` is version 1's). The player agent also owns `src/player/`, `tests/modes.test.ts` and `tests/player*.test.ts`. The field agent's change to `tests/field.test.ts` is accepted.
+- 2026-11-23 00:50 UTC. Sky candidate A reported (`agent/sky-a` at `b03c5f0`): the atmosphere, disc, stars and moon are there, the clouds are dark unlit masses and the storm is flat. Sent back with six points. Candidate B reported complete at `337380f` and is sent a second round for the new nights and its smooth storm. Candidate C has not reported.
 
 ## Notes from Brandon
 
@@ -120,12 +132,12 @@ None.
 
 | Agent | Folder | Branch | Family | Started | Limit | State |
 | --- | --- | --- | --- | --- | --- | --- |
-| `sky_a_builder` | `src/sky-a/` | `agent/sky-a`, looks `agent/sky-a-looks` | Claude | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `sky_b_builder` | `src/sky-b/` | `agent/sky-b`, looks `agent/sky-b-looks` | GPT | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running, bench proven in its sandbox |
+| `sky_a_builder` | `src/sky-a/` | `agent/sky-a`, looks `agent/sky-a-looks` | Claude | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | reported at `b03c5f0`, sent back with six points 00:52 UTC |
+| `sky_b_builder` | `src/sky-b/` | `agent/sky-b`, looks `agent/sky-b-looks` | GPT | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | reported at `337380f`, second round sent 00:52 UTC |
 | `sky_c_builder` | `src/sky-c/` | `agent/sky-c`, looks `agent/sky-c-looks` | Gemini | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
 | `place_builder` | `src/place/` | `agent/place`, looks `agent/place-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 120 min | running |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground`, looks `agent/ground-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, and `src/v2/inputs.ts` | `agent/plant`, looks `agent/plant-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2`, looks `agent/ground-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
+| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, and `src/v2/inputs.ts` | `agent/plant`, looks `agent/plant-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | merged at `f05ace8`, second round sent 00:52 UTC |
 | `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain`, looks `agent/rain-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
 | `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost`, looks `agent/frost-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
 | `rows_v2_builder` | `src/field/` | `agent/field`, looks `agent/field-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
@@ -148,4 +160,6 @@ None yet.
   Pictures: The scaffold at sixteen moments of the film, with a flat stand-in sky and no plant yet. The light is not tuned: this shows the plumbing, not the look; The nine new reference pictures the build aims at.
 - Status 02, 2026-11-23 00:35 UTC, Phase 2. The film camera now runs on the new clock: it creeps in during the frost hold and stands back and low for the storm. Rain and frost only show while the plant stands still. The first sky candidate reports complete (not yet judged). The checks found the quick nights flicker, which I am fixing next. Next: Lengthen the quick nights to two beats with a smooth dusk, merge the plant's frost fix, send the new camera to all twelve agents, then judge the three skies blind. Time used: 2.6 h of 30 h.
   Pictures: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); Film camera, bars 13 to 28: the frost hold with the stand-in sky; Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); Found by the checks: sunset to night to sunrise inside half a second reads as a flicker.
+- Status 03, 2026-11-23 00:51 UTC, Phase 2. All twelve builders got their first round of notes. Every quick night is now two beats long and never fully dark, so the day to night changes read as a pulse instead of a flicker. Two more sky candidates sent first sheets: A has a full atmosphere but unlit clouds, C has thin sparse clouds; B (shown last time) leads so far. The plant is merged; one shared wind now drives everything that bends. Next: Bring the three sky candidates onto one bench and compare them in the film's own frames, tune the light against the leading sky, then merge the ground, rain, frost and field as they report. Time used: 2.9 h of 30 h.
+  Pictures: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure.
 
