@@ -1,9 +1,13 @@
 # Looks of ground
 
-2026-11-23 00:03 UTC, at commit b2e774e of agent/ground.
+2026-11-23 00:39 UTC, at commit 98d7d43 of agent/ground.
 
-Before any change: what exists today, whole scene, film camera, 960 wide draft. The soil disc reaches 9.7 km from the plant (36 rings from 1 m, each 1.3 times the last), so it runs under the far plane at 6 km: the place agent's land can start anywhere inside that. The near, displaced ground is the 1 m disc round the plant and its relief fades out between 0.55 and 0.95 m.
+Work in progress after 40 minutes: clods are now real relief with their own shadows, hoar frost sits on the upper edges, wet soil mirrors the sky, answers the flash and blazes under the sun at the break. The storm pictures marked tilted use a test camera pitched 4 degrees down (not committed), because the film camera at the storm shows only a thin strip of ground. Known: flash too white, wet clods too smooth, opening soil too dark.
 
-- `01-all-sixteen-moments-today-wrong-frame-0-is-a-bla.jpg`: all sixteen moments today. Wrong: frame 0 is a black band with no crumb readable and a hard flat horizon; the frost is a pale paint coat on smooth swells with no dark hollows and no sparkle; noon soil is a flat tan carpet; the storm camera shows no ground at all; the soil has no shadows of its own without the plant
-- `02-frame-0-today-soil-reads-as-a-black-band-no-crum.jpg`: frame 0 today: soil reads as a black band, no crumbs, no dew, the hook cap already out. Target is keys/open.png
-- `03-frost-hold-today-frost-is-a-flat-turquoise-coat-.jpg`: frost hold today: frost is a flat turquoise coat on smooth blobs, stones read as white pebbles, no crystals, no dark hollows
+- `01-frost-hold-35-s-film-camera.jpg`: frost hold 35 s film camera
+- `02-storm-59-s-tilted-test-camera.jpg`: storm 59 s tilted test camera
+- `03-flash-62-6-s-tilted-test-camera.jpg`: flash 62.6 s tilted test camera
+- `04-break-69-9-s-tilted-test-camera.jpg`: break 69.9 s tilted test camera
+- `05-break-69-9-s-film-camera.jpg`: break 69.9 s film camera
+- `06-frame-0-film-camera.jpg`: frame 0 film camera
+- `07-first-light-1-3-s-film-camera.jpg`: first light 1.3 s film camera
