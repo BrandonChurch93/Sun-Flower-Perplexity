@@ -24,7 +24,8 @@ vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3
   vec2 p = g - cell - middle;
   float spin = 6.2832 * hash21(cell + 257.0);
   p = vec2(p.x * cos(spin) - p.y * sin(spin), p.x * sin(spin) + p.y * cos(spin)) * vec2(1.0, 0.6 + 0.8 * hash21(cell + 311.0));
-  float grain = 1.0 - smoothstep(r - 0.5 * reach, r + 0.5 * reach, mix(length(p), 1.25 * max(abs(p.x), abs(p.y)), 0.7));
+  // No two grains are as thick: one alone on a bare skin is a faint fleck, not a white tile.
+  float grain = (1.0 - smoothstep(r - 0.5 * reach - 0.3 * r, r + 0.5 * reach, mix(length(p), 1.25 * max(abs(p.x), abs(p.y)), 0.35))) * (0.25 + 0.75 * hash21(cell + 401.0) * hash21(cell + 433.0));
   vec3 facet = normalize(N + 1.6 * (vec3(hash21(cell + 151.0), hash21(cell + 193.0), hash21(cell + 229.0)) - 0.5));
   float flash = saturate(dot(facet, normalize(uSunDir + view)));
   flash *= flash;
@@ -68,11 +69,12 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float banks = smoothstep(0.5, 0.85, 0.6 * bank + 0.4 * fine + 0.35 * gather + 0.12 * up);
   float veil = 0.02 + 0.08 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen) + 0.22 * banks * (0.55 + 0.45 * fine);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
-  float chance = 0.9 * thick;
-  float least = 0.1;
-  float most = 0.2 + 0.2 * thick;
+  // Fewer than one grain to a cell, or the cells show as a lattice of dots.
+  float chance = 0.6 * thick;
+  float least = 0.05;
+  float most = 0.12 + 0.16 * thick;
   vec2 dust = frostGrain(g, reach, chance, least, most, N, view);
-  float mean = chance * 2.6 * (least * least + least * most + most * most) / 3.0;
+  float mean = 0.44 * chance * 2.6 * (least * least + least * most + most * most) / 3.0;
 
   float wide = FROST_GRAIN_M / FROST_BEAD_M;
   // Frozen beads stand where the dew stood: along edges, tips and veins, not on an open face.
