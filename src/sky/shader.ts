@@ -38,6 +38,7 @@ uniform float uCoolDay;
 uniform float uFinale;
 uniform float uFinaleDusk;
 uniform vec3 uMist;
+uniform float uFrostDawn;
 uniform int uSteps;
 uniform int uLightSteps;
 in vec2 vUv;
@@ -602,7 +603,7 @@ void main() {
   fairGlow = max(fairGlow, (0.58 * uGolden + 0.52 * uDawn) * (1.0 - st));
   vec3 warmSun = mix(uCloudLight, vec3(uCloudLight.r, uCloudLight.r * 0.69, uCloudLight.r * 0.39), 0.47);
   result += warmSun * fairGlow * (0.064 * exp(-angle * 104.0) + 0.045 * exp(-angle * 1420.0)) * (0.19 + 0.81 * through) * (1.0 - uFirstBlue) * (1.0 - uFinale);
-  float frost = smoothstep(0.07, 0.87, uWeather.w);
+  float frost = smoothstep(0.07, 0.87, uWeather.w) * uFrostDawn;
   if (frost > 0.0) {
     float high = smoothstep(-0.01, 0.30, d.y);
     float toward = exp(-angle * 31.0);
@@ -677,7 +678,7 @@ vec4 skyLookup(vec3 d, float blur) {
 
 ${nightGlsl}
 
-vec3 frostSunAt(vec2 xy, float blur, float squash, float sr) {
+vec3 frostSunAt(vec2 xy, float blur, float squash, float sr, out vec3 source) {
   float opening = uFrostPhoto.y;
   float radius2 = dot(xy, xy);
   // Airborne scatter is radiance against the mist, not the faint tail
@@ -690,12 +691,19 @@ vec3 frostSunAt(vec2 xy, float blur, float squash, float sr) {
   // Below the veil is the true 0.53-degree disc. Soften its limb with
   // thinning mist; the lens's sampled glow remains separate.
   float r = length(xy / vec2(1.0, squash));
+  float radial = r / sr;
   float edge = uPixelAngle * 0.56 + mix(0.0040, 0.00045, opening);
   float disc = (1.0 - smoothstep(sr - edge, sr + edge, r))
-    * (0.78 + 0.22 * sqrt(max(0.0, 1.0 - (r / sr) * (r / sr))));
+    * (0.78 + 0.22 * sqrt(max(0.0, 1.0 - radial * radial)));
   vec3 pale = vec3(1.045, 1.0, 0.94) * mix(9.4, 0.27, smoothstep(0.0, 0.38, opening)) * soft;
   vec3 warm = vec3(1.34, 0.90, 0.52) * (1.16 * opening) * halo;
   vec3 core = vec3(1.045, 1.0, 0.90) * (8.5 * opening) * disc;
+  // Give the transmitted photosphere its own HDR radiance and keep the
+  // bright centre inside the same soft 0.53-degree limb.
+  vec3 hot = vec3(1.045, 1.0, 0.97) * 21.0 * smoothstep(0.06, 0.70, opening)
+    * disc * exp(-3.4 * radial * radial);
+  float forward = 0.88 * exp(-radius2 / (0.027 * 0.027)) + 0.27 * exp(-radius2 / (0.071 * 0.071));
+  source = hot + uFrostPhoto.z * vec3(1.46, 0.84, 0.42) * opening * forward;
   return uFrostPhoto.z * (pale + warm + core);
 }
 
@@ -728,9 +736,27 @@ vec3 sunAt(vec3 d, float blur) {
   float rr = dot(p, p);
   float photo = disk * limb + 0.034 * exp(-rr / 4.7) + 0.086 * uFinaleDusk * exp(-rr / 33.0);
   float glow = mix(mix(mix(disk * limb, 0.30 * mist, frost), photo, uPhotoMix), 0.003 * broken, diffuse);
+  float latePhoto = uPhotoMix * smoothstep(0.60, 0.93, uFinaleDusk);
   float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
   if (uFrostPhoto.x > 0.0) {
-    vec3 sun = mix(uDisc * energy * glow, frostSunAt(xy, blur, squash, sr), uFrostPhoto.x);
+    vec3 source;
+    vec3 sun = mix(uDisc * energy * glow, frostSunAt(xy, blur, squash, sr, source), uFrostPhoto.x);
+    // The mist image already accounts for the low, dense air. Let the
+    // brighter narrow source survive a transmitting haze ray without
+    // opening an opaque ray or bypassing the storm's deck extinction.
+    float thinPath = pow(visible, 0.20) * smoothstep(0.00004, 0.00065, visible);
+    float sourcePath = mix(thinPath, visible, uSolarDeck);
+    return (sun * visible + source * (uFrostPhoto.x * sourcePath))
+      * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
+  }
+  if (latePhoto > 0.0) {
+    // The last low sun keeps its amber limb; only the inner photosphere
+    // is hot enough to drive the glass. The aerosol spreads several
+    // degrees, but stays in the sky behind the ridge.
+    float radius2 = dot(xy, xy);
+    float emberHalo = 0.78 * exp(-radius2 / (0.018 * 0.018)) + 0.22 * exp(-radius2 / (0.053 * 0.053));
+    vec3 ember = vec3(4.4, 1.24, 0.19) * disk * exp(-3.2 * rr) + vec3(0.24, 0.05, 0.010) * emberHalo;
+    vec3 sun = uDisc * energy * glow + uDisc.r * latePhoto * (1.0 - diffuse) * (ember * energy);
     return sun * visible * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
   }
   return uDisc * visible * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
@@ -765,6 +791,13 @@ void main() {
   // fill, not direct light. This does not change the foreground veil.
   float thickClose = uFrostPhoto.x * (1.0 - smoothstep(0.0, 0.29, uFrostPhoto.y));
   sky.rgb *= mix(vec3(1.0), vec3(0.69, 0.75, 0.84), thickClose * smoothstep(-0.012, 0.016, d.y));
+  // The frost close-up keeps its cool air beyond the warm scattering
+  // lobe; no tint on the shared ground veil or the wide frost shot.
+  float thinClose = uFrostPhoto.x * smoothstep(0.06, 0.49, uFrostPhoto.y);
+  if (thinClose > 0.0) {
+    float away = 1.0 - exp(-420.0 * (1.0 - dot(d, uSunFace)));
+    sky.rgb *= mix(vec3(1.0), vec3(0.43, 0.58, 0.79), thinClose * away * smoothstep(0.012, 0.042, d.y));
+  }
   float stellarBlur = min(blur, 0.52 * uPixelAngle);
   float cloudTransmission = textureLod(tSky, where(d), 0.0).a;
   float stellarTransmission = cloudTransmission * smoothstep(0.08, 0.78, cloudTransmission);

@@ -584,6 +584,7 @@ export function create(options: PartOptions): PlantPart {
         hair.b = r(6) * SIDES * 0.9999
       }
       plan.push(hair)
+      if (hair.kind === 1) hairs.onFace(h)
       crystalAt.push(crystalSlots)
       // On a tooth's point one spike of ice, and along the margin a close fringe of low tufts: four to each hair.
       const s = Math.max(0, leaf.sig[Math.round(hair.a)])

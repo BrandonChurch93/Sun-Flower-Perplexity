@@ -52,6 +52,12 @@ function coolDay(e: number, over: number, fog: number, evening: number, burst: n
   return smoothstep(-0.65, 1.7, e) * (1 - smoothstep(13, 21, e)) * (1 - evening) * (1 - over) * (1 - fog) * (1 - burst)
 }
 
+function frostDawnAt(phase: number, elevation: number): number {
+  const dawn = smoothstep(0.84, 0.89, phase) * (1 - smoothstep(-2.5, 1.62, elevation))
+  const morning = (1 - smoothstep(0.05, 0.09, phase)) * (1 - smoothstep(-2.5, 1.62, elevation))
+  return 1 - Math.max(dawn, morning)
+}
+
 function openingAt(bar: number): number {
   return 1 - smoothstep(0.84, 1.27, bar)
 }
@@ -166,6 +172,7 @@ class FieldSky implements Sky {
       uFinale: { value: 0 },
       uFinaleDusk: { value: 0 },
       uMist: { value: new THREE.Vector3() },
+      uFrostDawn: { value: 1 },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
     })
@@ -406,6 +413,9 @@ class FieldSky implements Sky {
     u.uFinale.value = sunsetAmount(now.bar)
     u.uFinaleDusk.value = sunsetDuskAt(e)
     u.uMist.value.set(mistLevel * FROST[0], mistLevel * FROST[1], mistLevel * FROST[2])
+    // Let the horizon light first; the frost does not fill the dome with
+    // sunward radiance while the sun is still deep below the horizon.
+    u.uFrostDawn.value = d.fog > 0.07 ? frostDawnAt(now.phase, e) : 1
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
     u.uEvolve.value = 0.5 * (now.cloud.evolve + later.cloud.evolve)
