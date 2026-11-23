@@ -11,6 +11,7 @@ import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
 import { ANCHORS, Anchors, COLLAR_M, SEED_ANCHOR, STURDY, collarAt, youngGirth, TOP_M, finalRadius, fixedLabels, makeRibs, ribProfile, ribsAt, wrapAngle } from './shape.ts'
 import { fragment, vertex } from './skin.ts'
+import { createCrystals } from '../../weather/frost/index.ts'
 
 const TAU = Math.PI * 2
 const CELLS = 512
@@ -28,6 +29,9 @@ const FROST_FROM_S = 30
 const BLOOM_FROM_S = 40
 const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
+// Where ice can root on the stem: this many places, evenly from the foot to the tip as it stands, each this long at most.
+const RIME_ROOTS = 1600
+const RIME_M = 0.003
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number[]; sprout: boolean; down: boolean }
@@ -132,6 +136,16 @@ export function create(options: PartOptions): PlantPart {
     return c
   }
   const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009), sproutCoat(shape.sprout, 100)].filter((c): c is Coat => c !== null)
+
+  const crystals = createCrystals(options, shape.full && options.variant === 0 ? RIME_ROOTS : 0, 'stem crystals')
+  const rimeOwn = new Float32Array((crystals ? crystals.count : 0) * 5)
+  if (crystals) {
+    crystals.place().fill(-2)
+    for (let i = 0; i < crystals.count; i++) {
+      const a = ((i * 0.618034 + 0.3 * hash01(seed, 302, i)) % 1) * TAU
+      rimeOwn.set([(i + hash01(seed, 301, i)) / crystals.count, a, Math.cos(a), Math.sin(a), hash01(seed, 303, i)], i * 5)
+    }
+  }
 
   // Dew and rain stand on the stem in beads, each at its own height and side; in the rain they run down to the soil and soak away.
   const dew = shape.beads ? createBeads(options, shape.beads, 'stem dew') : null
@@ -482,6 +496,36 @@ export function create(options: PartOptions): PlantPart {
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
       }
     }
+    if (crystals && stateUniforms.uPlantFrost.value > 0) {
+      const root = crystals.root(slot)
+      const lean = crystals.lean(slot)
+      const top = ringS[main - 1]
+      for (let i = 0, j = 0; i < crystals.count; i++) {
+        const w = i * 5
+        const o = i * 4
+        const s = 0.002 + rimeOwn[w] * (top - 0.002)
+        while (j < main - 2 && ringS[j + 1] <= s) j++
+        const fr = clamp((s - ringS[j]) / Math.max(1e-9, ringS[j + 1] - ringS[j]))
+        const col = (rimeOwn[w + 1] / TAU) * sides
+        const c0 = Math.min(sides - 1, Math.floor(col))
+        const fc = col - c0
+        const radius = lerp(lerp(grid[j * row + c0], grid[j * row + c0 + 1], fc), lerp(grid[(j + 1) * row + c0], grid[(j + 1) * row + c0 + 1], fc), fr)
+        const p = j * 12
+        const ca = rimeOwn[w + 2]
+        const sa = rimeOwn[w + 3]
+        const ox = lerp(ringAt[p + 3], ringAt[p + 15], fr) * ca + lerp(ringAt[p + 6], ringAt[p + 18], fr) * sa
+        const oy = lerp(ringAt[p + 4], ringAt[p + 16], fr) * ca + lerp(ringAt[p + 7], ringAt[p + 19], fr) * sa
+        const oz = lerp(ringAt[p + 5], ringAt[p + 17], fr) * ca + lerp(ringAt[p + 8], ringAt[p + 20], fr) * sa
+        root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
+        root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
+        root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
+        root[o + 3] = top > 0.004 ? RIME_M : 0
+        lean[o] = ox
+        lean[o + 1] = oy
+        lean[o + 2] = oz
+        lean[o + 3] = rimeOwn[w + 4]
+      }
+    }
     if (dew) {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
@@ -539,7 +583,7 @@ export function create(options: PartOptions): PlantPart {
 
   return {
     name: 'stem',
-    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes), ...(dew ? dew.meshes : [])],
+    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes), ...(dew ? dew.meshes : []), ...(crystals ? crystals.meshes : [])],
     casters: [{ mesh, surface }],
     async load(assets: Assets) {
       if (options.places) return
@@ -555,6 +599,7 @@ export function create(options: PartOptions): PlantPart {
       led.fill(false)
       for (const c of coats) c.set.finish(Math.max(c.drawn[0], c.drawn[1]))
       if (dew) dew.finish(Math.max(dewDrawn[0], dewDrawn[1]))
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystals.count : 0)
       settle(0)
     },
     settle,

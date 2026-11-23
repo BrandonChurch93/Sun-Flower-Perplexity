@@ -5,7 +5,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
+import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -16,7 +16,8 @@ import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/ra
 import { flutter, gust, restless, squall, windToward } from '../wind.ts'
 import { VEIN_PAD, VEIN_SEED, leafMaps } from './maps.ts'
 import { LEAVES, bladeDepth, bladeFragment, bladeVertex, stalkFragment, stalkVertex } from './shaders.ts'
-import { SETS, bayAt, sweepAt, toothPoint, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
+import { SETS, bayAt, sweepAt, toothPoint, veinAt, veinField, veinsOf, widthAt, type Vein } from './shape.ts'
+import { barAt, END, frostAtBar, tauAtBar } from '../../v2/clock.ts'
 
 // The stalk is the first third of a leaf's whole reach: it rises from the stem and arches over, and the blade hangs from its end.
 const REACH = 1.25
@@ -42,6 +43,19 @@ const STOUT_S = 36
 const FPS = config.film.fps
 // The share of the plain margin hairs that carry a spike of ice: most spikes sit on the teeth.
 const SPIKES = 0.1
+// Where ice can root on a leaf that lives through the frost, beside its hairs: at even steps along each cut edge, along the midrib and three side veins of each half, and round the stalk.
+const EDGE = 120
+const VEIN_ROOTS = 60
+const STALK_ROOTS = 200
+const RIME_VEINS = [1, 2, 3]
+const RIME_EACH = 2 * EDGE + VEIN_ROOTS * (1 + 2 * RIME_VEINS.length) + STALK_ROOTS
+const RIME_M = 0.003
+// The plant's clock when the last frost of the film is gone.
+const FROST_ENDS_S = ((): number => {
+  let last = -1
+  for (let b = 1; b <= barAt(END); b += 0.05) if (frostAtBar(b) > 0) last = Math.max(last, tauAtBar(b))
+  return last
+})()
 const CROWN_ANGLE = 0.72
 const SIDE_ANGLE = 0.6
 // The young blade's sides are curved, not drawn straight to the tip, and its fine teeth are cut in the skin.
@@ -469,7 +483,65 @@ export function create(options: PartOptions): PlantPart {
   const hairs: HairSet | null = hero ? createHairs(options, hairCount, 'leaf hairs', undefined, 0.00003) : null
   const plan: Hair[] = []
   const crystalAt: number[] = []
-  let crystalSlots = 0
+  // The roots of the ice come first in the set, leaf by leaf: 0 an edge, 1 a vein, 2 the stalk. `a` is the row and `b` the column in the blade's grid or the stalk's, and on an edge `b` is how deep the bay is cut there.
+  const rimeLeaves = hero && options.variant === 0 ? leaves.filter((leaf) => leafBirth(leaf.i) < FROST_ENDS_S).length : 0
+  const rimeSlots = rimeLeaves * RIME_EACH
+  const rimeKind = new Uint8Array(rimeSlots)
+  const rimeSide = new Uint8Array(rimeSlots)
+  const rimeA = new Float32Array(rimeSlots)
+  const rimeB = new Float32Array(rimeSlots)
+  const rimeOwn = new Float32Array(rimeSlots)
+  for (let li = 0, q = 0; li < rimeLeaves; li++) {
+    const leaf = leaves[li]
+    const r = (k: number, i: number) => hash01(seed, 7000 + li * 16 + k, i)
+    for (let side = 0; side < 2; side++) {
+      const sd = combine(seed, leaf.i * 2 + side)
+      for (let i = 0; i < EDGE; i++, q++) {
+        rimeSide[q] = side
+        rimeA[q] = Math.min(((i + r(side, i)) / EDGE) * (leaf.nu - 1), leaf.nu - 1.001)
+        rimeB[q] = leaf.hem ? bayAt(Math.max(0, leaf.sig[Math.round(rimeA[q])]), sd, leaf.teeth, toothKey(sd)) : 0
+        rimeOwn[q] = r(2 + side, i)
+      }
+    }
+    const rowAt = (s: number): number => {
+      let a = 0
+      while (a < leaf.nu - 2 && leaf.sig[a + 1] <= s) a++
+      const low = Math.max(0, leaf.sig[a])
+      return Math.min(a + clamp((s - low) / Math.max(1e-6, leaf.sig[a + 1] - low)), leaf.nu - 1.001)
+    }
+    const colAt = (w: number): number => {
+      let c = 0
+      while (c < HERO_COLS.length - 2 && HERO_COLS[c + 1] <= w) c++
+      return 1 + c + clamp((w - HERO_COLS[c]) / (HERO_COLS[c + 1] - HERO_COLS[c]))
+    }
+    for (let i = 0; i < VEIN_ROOTS; i++, q++) {
+      rimeKind[q] = 1
+      rimeA[q] = rowAt(0.02 + ((i + r(4, i)) / VEIN_ROOTS) * 0.95)
+      rimeB[q] = colAt(0)
+      rimeOwn[q] = r(5, i)
+    }
+    for (let side = 0; side < 2; side++) {
+      const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
+      for (let n = 0; n < RIME_VEINS.length; n++) {
+        for (let i = 0; i < VEIN_ROOTS; i++, q++) {
+          const w = 0.05 + ((i + r(6 + side * 3 + n, i)) / VEIN_ROOTS) * 0.8
+          const s = veinAt(veins[RIME_VEINS[n]], w)
+          rimeKind[q] = 1
+          // Past the tip the vein has run out: no root.
+          rimeA[q] = s < 0.97 ? rowAt(s) : -1
+          rimeB[q] = colAt(side === 0 ? -w : w)
+          rimeOwn[q] = r(12, side * 3 * VEIN_ROOTS + n * VEIN_ROOTS + i)
+        }
+      }
+    }
+    for (let i = 0; i < STALK_ROOTS; i++, q++) {
+      rimeKind[q] = 2
+      rimeA[q] = 1 + ((i + r(13, i)) / STALK_ROOTS) * (RINGS_STALK - 1)
+      rimeB[q] = ((i * 0.618034 + 0.3 * r(14, i)) % 1) * SIDES * 0.9999
+      rimeOwn[q] = r(15, i)
+    }
+  }
+  let crystalSlots = rimeSlots
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
   if (hairs) {
@@ -519,6 +591,7 @@ export function create(options: PartOptions): PlantPart {
   if (crystals) {
     // Where each crystal stands along its leaf's edge, from just over 0 at the base to 1 at the tip. A grain of the face stands on no edge.
     const place = crystals.place()
+    for (let li = 0, q = 0; li < rimeLeaves; li++) for (let i = 0; i < RIME_EACH; i++, q++) place[q] = rimeKind[q] === 0 ? Math.max(rimeA[q] / (leaves[li].nu - 1), 0.001) : -rimeKind[q]
     for (let h = 0; h < plan.length; h++) {
       const hair = plan[h]
       if (hair.kind === 0) place.fill(Math.max(hair.a / (leaves[hair.leaf].nu - 1), 0.001), crystalAt[h], crystalAt[h] + FRINGE)
@@ -1160,6 +1233,101 @@ export function create(options: PartOptions): PlantPart {
     }
   }
 
+  const fillRime = (slot: 0 | 1, pose: Pose): void => {
+    if (!crystals || !tubeSlots || rimeSlots === 0) return
+    const cr = crystals.root(slot)
+    const cl = crystals.lean(slot)
+    const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+    const out = slots[slot]
+    const tube = tubeSlots[slot]
+    for (let li = 0, q = 0; li < rimeLeaves; li++) {
+      const leaf = leaves[li]
+      const size = lengthAt(leaf.i, pose.time)
+      const long = size <= 0 ? 0 : RIME_M * clamp(size / 0.07, 0.35, 1)
+      const nv = leaf.nv
+      for (let i = 0; i < RIME_EACH; i++, q++) {
+        const o = q * 4
+        let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, sx = 0, sy = 0, sz = 0
+        let stands = long > 0 && rimeA[q] >= 0
+        if (stands && rimeKind[q] === 2) {
+          const ring = Math.min(RINGS - 2, Math.floor(rimeA[q]))
+          const t = rimeA[q] - ring
+          const side = Math.floor(rimeB[q])
+          const round = rimeB[q] - side
+          const v0 = (leaf.tube + ring * (SIDES + 1) + side) * 3
+          const v1 = v0 + (SIDES + 1) * 3
+          const far = (leaf.tube + ring * (SIDES + 1) + ((side + SIDES / 2) % SIDES)) * 3
+          const x0 = tube[v0] + (tube[v0 + 3] - tube[v0]) * round
+          const y0 = tube[v0 + 1] + (tube[v0 + 4] - tube[v0 + 1]) * round
+          const z0 = tube[v0 + 2] + (tube[v0 + 5] - tube[v0 + 2]) * round
+          px = x0 + (tube[v1] + (tube[v1 + 3] - tube[v1]) * round - x0) * t
+          py = y0 + (tube[v1 + 1] + (tube[v1 + 4] - tube[v1 + 1]) * round - y0) * t
+          pz = z0 + (tube[v1 + 2] + (tube[v1 + 5] - tube[v1 + 2]) * round - z0) * t
+          dx = x0 - (tube[far] + (tube[far + 3] - tube[far]) * round)
+          dy = y0 - (tube[far + 1] + (tube[far + 4] - tube[far + 1]) * round)
+          dz = z0 - (tube[far + 2] + (tube[far + 5] - tube[far + 2]) * round)
+          sx = tube[v1] - tube[v0]
+          sy = tube[v1 + 1] - tube[v0 + 1]
+          sz = tube[v1 + 2] - tube[v0 + 2]
+        } else if (stands) {
+          const a = Math.floor(rimeA[q])
+          const t = rimeA[q] - a
+          let b = Math.floor(rimeB[q])
+          let tb = rimeB[q] - b
+          const edge = rimeKind[q] === 0
+          const left = rimeSide[q] === 0
+          if (edge) {
+            const reach = 1 - rimeB[q] * depthNow[leaf.i]
+            let k = 0
+            while (k < 4 && Math.abs(HERO_COLS[k + 1]) > reach) k++
+            const share = clamp((reach - Math.abs(HERO_COLS[k])) / (Math.abs(HERO_COLS[k + 1]) - Math.abs(HERO_COLS[k])))
+            b = left ? 1 + k : nv - 3 - k
+            tb = left ? share : 1 - share
+          }
+          const v00 = (leaf.base + a * nv + b) * 3
+          const v10 = v00 + nv * 3
+          px = out[v00] + (out[v00 + 3] - out[v00]) * tb
+          py = out[v00 + 1] + (out[v00 + 4] - out[v00 + 1]) * tb
+          pz = out[v00 + 2] + (out[v00 + 5] - out[v00 + 2]) * tb
+          px += (out[v10] + (out[v10 + 3] - out[v10]) * tb - px) * t
+          py += (out[v10 + 1] + (out[v10 + 4] - out[v10 + 1]) * tb - py) * t
+          pz += (out[v10 + 2] + (out[v10 + 5] - out[v10 + 2]) * tb - pz) * t
+          sx = out[v10] - out[v00]
+          sy = out[v10 + 1] - out[v00 + 1]
+          sz = out[v10 + 2] - out[v00 + 2]
+          if (edge) {
+            const way = left ? -1 : 1
+            dx = (out[v00 + 3] - out[v00]) * way
+            dy = (out[v00 + 4] - out[v00 + 1]) * way
+            dz = (out[v00 + 5] - out[v00 + 2]) * way
+          } else {
+            const n = v00 + (tb > 0.5 ? 3 : 0) + (t > 0.5 ? nv * 3 : 0)
+            dx = normals[n]
+            dy = normals[n + 1]
+            dz = normals[n + 2]
+          }
+        }
+        const dl = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        const sl = Math.sqrt(sx * sx + sy * sy + sz * sz)
+        stands = stands && dl > 0
+        cr[o] = px
+        cr[o + 1] = py
+        cr[o + 2] = pz
+        cr[o + 3] = stands ? long : 0
+        cl[o] = stands ? dx / dl : 0
+        cl[o + 1] = stands ? dy / dl : 1
+        cl[o + 2] = stands ? dz / dl : 0
+        cl[o + 3] = rimeOwn[q]
+        if (run) {
+          const w = q * 3
+          run[w] = sl > 0 ? sx / sl : 0
+          run[w + 1] = sl > 0 ? sy / sl : 0
+          run[w + 2] = sl > 0 ? sz / sl : 0
+        }
+      }
+    }
+  }
+
   const meshes = [mesh]
   const casters = [{ mesh, surface }]
   if (tubeMesh && tubeSurface) {
@@ -1214,6 +1382,7 @@ export function create(options: PartOptions): PlantPart {
       }
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
+      if (stateUniforms.uPlantFrost.value > 0) fillRime(slot, pose)
       // The water lies on the blade of each slot, so it rides with the blade between the two.
       fillBeads(slot, pose)
     },
