@@ -304,7 +304,7 @@ export async function run(args: Args): Promise<void> {
   }
   const hitches = judged.flatMap((j) => j.hitches).sort((a, b) => b.ms - a.ms)
   if (judged.length) {
-    findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} hitches, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
+    findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} ${hitches.length === 1 ? 'hitch' : 'hitches'}, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
     if (hitches.length) console.log(`script · every hitch, the dearest first\n${table(['frame', 'bar', 'ms', 'median around', 'times', 'its parts over 1 ms'], hitches.map((h) => [h.frame, barText(secondsOf(h.frame)).slice(4), h.ms.toFixed(1), h.around.toFixed(1), (h.ms / Math.max(0.1, h.around)).toFixed(1), h.parts]))}\n`)
   }
   const behind = judged.flatMap((j) => j.behind)
