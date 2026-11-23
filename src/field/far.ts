@@ -32,9 +32,6 @@ const GAP_FAR = 0.35
 const GAP_MEAN = 0.5
 // The radius of a head with its rays, in meters.
 const HEAD_R_M = 0.15
-// A clear head keeps its light to this distance and loses it past there by this length, as the air comes to lie on it.
-const HEAD_NEAR_M = 90
-const HEAD_FADE_M = 60
 // A head in the air stands out of the crop round it by this power of what the air leaves of it.
 const HEAD_AIR = 3
 // The rays of a head that stands clear, over the colour of the heads in the pictures.
@@ -252,7 +249,8 @@ float headsAt(vec2 f, float headPx, out float tone) {
     sum += w * d;
     tone += w * hash21(c + 13.0);
   }
-  return sum;
+  // Skimming the crop the eye meets head behind head in one pixel: they are an even share of it, and no one of them stands out.
+  return sum / (max(across.x, 1.0) * max(across.y, 1.0));
 }
 void main() {
   float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
@@ -326,7 +324,7 @@ void main() {
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share * 0.4 * closed);
     // A head that stands clear is the colour of its rays, as the heads of the pictures before it are.
-    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * exp(-max(gone - ${HEAD_NEAR_M.toFixed(1)}, 0.0) / ${HEAD_FADE_M.toFixed(1)}) * pow(1.0 - farAirOn(vWorld), ${HEAD_AIR.toFixed(1)}));
+    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * pow(1.0 - farAirOn(vWorld), ${HEAD_AIR.toFixed(1)}));
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
     color = farAir(color, vWorld);
