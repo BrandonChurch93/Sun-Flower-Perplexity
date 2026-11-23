@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 30 · 2026-11-23 13:42 UTC · Phase 4
+- Last status: 31 · 2026-11-23 14:08 UTC · Phase 4
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 14:08 UTC · status 31 · Phase 4 · `status-1.jpg`: Frame 60. The sprout with the merged leaf look; `status-2.jpg`: Frame 951. Wide frost hold, the last frame before the first cut; `status-3.jpg`: Frame 1106. Frost close shot, the right leaf now cool grey; `status-4.jpg`: Frame 2156. Dusk after the storm, the leaves no longer outshine the sky
 - 2026-11-23 13:42 UTC · status 30 · Phase 4 · `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976; `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208; `status-3.jpg`: The tip shot at 1106, 1920 wide, draft; `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009
 - 2026-11-23 13:13 UTC · status 29 · Phase 4 · `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down; `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
 - 2026-11-23 12:50 UTC · status 28 · Phase 4 · `status-1.jpg`: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); `status-2.jpg`: Frost, the tip of the shoot at 1106 against the sun in the mist; `status-3.jpg`: Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; `status-4.jpg`: First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27)
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 10:20 UTC · status 22 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it; `status-2.jpg`: Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next; `status-3.jpg`: Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand
 - 2026-11-23 10:02 UTC · status 21 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds on the blade. The leaf still sits too high and drifts out, the framing is next; `status-2.jpg`: Frames 1054 and 1208 on the left, their reference pictures on the right: the gap that is left to close; `status-3.jpg`: Second close shot, frame 1106, against the sun. The pale dome on the stalk and the weak sun are with their owners; `status-4.jpg`: The bud opening, bars 57 to 61, from the head owner's bench (its third pass is on mine now)
 - 2026-11-23 09:32 UTC · status 20 · Phase 3 · `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now; `status-3.jpg`: Frame 1054 beside its reference picture; `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
-- 2026-11-23 09:04 UTC · status 19 · Phase 3 · `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835); `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8; `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262); `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)
 
 ## Clock
 
@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 1.43 h |
+| 4 | 8.50 h | 1.71 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 15.87 h |
+| Whole build | 30.00 h | 16.14 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -359,4 +359,6 @@ None yet.
   Pictures: Storm hold at frame 1830, 1920, with the key light down; Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; Loading screen while this machine is timed (player owner's page, software rendering).
 - Status 30, 2026-11-23 13:42 UTC, Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil. Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
   Pictures: The bloom close, first watch part, every sixth frame 2862 to 2976; Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208; The tip shot at 1106, 1920 wide, draft; After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009.
+- Status 31, 2026-11-23 14:08 UTC, Phase 4. On v2 b9c889d, merged and proven (204 tests, 16 frames drawn and seen): the lens no longer takes a broken pixel for a light; the wide frost hold shows frost on the whole plant before the first cut; the frosted ground throws a cool light up into the close shots; a low sun behind the last storm cloud no longer lights the leaves lemon yellow (leaf p90 at 2150, 2156, 2160 from 148, 144, 102 down to 98, 86, 68 of 255, MEASURED). The checks read every 24th frame of the film: no pixel without a number, but wild pixels in the flower's disc on four frames, now first on the head owner's list. Six of twelve watch parts read. Next: The other six watch parts, then the first whole film at 640 by 360 on the music; the disc's wild pixels; live play cost on the merged tree (five spans being measured now); the pose of the storm leaves; then the whole film at 1920. Time used: 16.1 h of 30 h.
+  Pictures: Frame 60. The sprout with the merged leaf look; Frame 951. Wide frost hold, the last frame before the first cut; Frame 1106. Frost close shot, the right leaf now cool grey; Frame 2156. Dusk after the storm, the leaves no longer outshine the sky.
 
