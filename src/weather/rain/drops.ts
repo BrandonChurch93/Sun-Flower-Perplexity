@@ -1,4 +1,5 @@
 import { combine, streamSeed } from '../../core/random.ts'
+import { smoothstep } from '../../core/curves.ts'
 import { barAt, rainAtBar } from '../../v2/clock.ts'
 
 // Every raindrop of the film, in closed form. The ground plane y = 0 is cut into square cells; each cell owns a few series of drops,
@@ -46,9 +47,20 @@ export const LEAN_Z = Math.cos(lean)
 // The direction every drop travels in: down, with a slant.
 export const fallDir: readonly [number, number, number] = [Math.sin(lean) * Math.sin(slant), -Math.cos(slant), Math.cos(lean) * Math.sin(slant)]
 
-// How hard it rains at a film second, 0 to 1: the rain dial, with slow swells in it. A drop exists when its rank is under this at its landing.
+// Stand-ins until the rain dial itself does it: the shower comes as a few heavy drops before the curtain closes, and its last rain still falls when the sun comes through at bar 41.
+const FIRST_DROPS = 0.3
+const LAST_RAIN = 0.45
+
+// The rain at a film second, 0 to 1: the dial, held back at its start and drawn out at its end.
+export function rainAt(time: number): number {
+  const b = barAt(time)
+  const arrive = FIRST_DROPS * smoothstep(33, 33.6, b) + (1 - FIRST_DROPS) * smoothstep(33.6, 34, b)
+  return Math.max(Math.min(rainAtBar(b), arrive), LAST_RAIN * smoothstep(39.5, 40.5, b) * (1 - smoothstep(41, 42.25, b)))
+}
+
+// How hard it rains at a film second, 0 to 1, with slow swells in it. A drop exists when its rank is under this at its landing.
 export function rainStrength(time: number): number {
-  const rain = rainAtBar(barAt(time))
+  const rain = rainAt(time)
   if (rain <= 0) return 0
   const swell = 0.5 + 0.5 * Math.sin(time * 0.83 + 1.3 + 0.9 * Math.sin(time * 0.37))
   return rain * rain * (0.7 + 0.3 * swell)

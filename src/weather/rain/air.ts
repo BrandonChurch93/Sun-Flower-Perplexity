@@ -97,7 +97,7 @@ void main() {
   // No two drops catch the sky alike: most are dim and a few flare.
   float catchLight = mix(0.14, 2.6, pow(fract(drop.seed * 13.7 + 0.31), 4.0));
   float range = smoothstep(uRange.x, uRange.y, depth) * (1.0 - smoothstep(uRange.z, uRange.w, depth));
-  float cover = min(0.85, uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there;
+  float cover = min(0.6, uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there * mix(0.3, 1.0, smoothstep(0.8, 2.0, depth));
   // With several samples each draws the drop where it is at its own instant, over as much of the path as keeps the frame's sum equal to the one streak.
   float share = uSamples > 1.5 ? clamp(max(1.0 / uSamples, cover), 0.0, 1.0) : 1.0;
   float middle = uSamples > 1.5 ? uShutter : 0.5;
@@ -156,13 +156,17 @@ void main() {
   if (cover < 0.003) discard;
   vec3 ray = normalize(vWorld - uCamPos);
   // A drop is a lens: it shows the brightest of the sky all round it, so it glints against the dark deck and is lost against the bright gap.
-  vec3 light = 1.25 * uSkyHorizonSun + 0.6 * uSkyHorizon + 0.15 * uSkyZenith;
+  vec3 light = (1.25 * uSkyHorizonSun + 0.6 * uSkyHorizon + 0.15 * uSkyZenith) * (1.0 - 0.6 * uSpark);
   float toSun = saturate(dot(ray, uSunDir));
   float t2 = toSun * toSun;
   float t8 = t2 * t2 * t2 * t2;
   float t32 = t8 * t8 * t8 * t8;
-  float glint = pow(fract(vSeed * 71.3 + 0.17), 5.0);
-  light += uSunColor * (0.05 + 0.9 * t8 + 5.0 * t32 + uSpark * glint * (2.0 + 22.0 * t8));
+  float glint = pow(fract(vSeed * 71.3 + 0.17), 3.0);
+  // Backlit, a drop throws the sun forward through itself: the low sun's colour, deepened by the water's own path.
+  vec3 gold = uSunColor * uSunColor / max(max(uSunColor.r, uSunColor.g), max(uSunColor.b, 1e-4));
+  // The drop swings as it falls and throws the sun at the lens for an instant of its path: a spark, not a line.
+  float flare = exp(-pow((vWhen - 0.2 - 0.6 * fract(vSeed * 9.1)) / 0.09, 2.0));
+  light += uSunColor * (0.05 + 0.9 * t8 + 5.0 * t32) + gold * uSpark * (0.5 * t8 + flare * (0.6 + 9.0 * glint) * (1.0 + 12.0 * t8));
   // Lightning is over in a thousandth of a second: it shows each drop where it hung, not the path it fell.
   float toFlash = 0.35 + 0.65 * saturate(dot(ray, uFlashAt));
   float hung = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 5.3)) / 0.07, 2.0));
