@@ -183,6 +183,10 @@ export class Air {
       for (let c = 0; c < 3; c++) this.cloudTable[s * 3 + c] = SUN * trans[c]
       const dusk = smoothstep(-13.8, -2.3, e)
       const remnant = smoothstep(-0.8, -8.6, e)
+      const deepNight = smoothstep(-7.5, -11.8, e)
+      const rimRed = lerp(0.034, 0.0058, deepNight)
+      const rimGreen = lerp(0.018, 0.0077, deepNight)
+      const rimBlue = lerp(0.031, 0.0134, deepNight)
       const high = smoothstep(-1.2, 19, e)
       const scatterUnit = 1 + 2.82 * smoothstep(7, 56, e)
       for (let y = 0; y < SKY_Y; y++) {
@@ -220,15 +224,16 @@ export class Air {
           const nightRise = 1 + 1.35 * Math.exp(-mu * 12)
           const after = dusk * (1 - high)
           const blue = after * Math.exp(-mu * 2.9) * (0.66 + 0.34 * Math.cos(az / 2) ** 2)
-          const dawn = after * Math.exp(-mu * (13.9 + 3.75 * Math.max(0, -e))) * Math.exp(-az * az * (1.5 + 0.64 * Math.max(-e, 0)))
+          const dawn = after * (1 - 0.89 * deepNight) * Math.exp(-mu * (13.9 + 3.75 * Math.max(0, -e)))
+            * Math.exp(-az * az * (1.5 + 0.64 * Math.max(-e, 0)))
           const belt = after * Math.exp(-(((mu - Math.max(0.045, 0.108 - 0.012 * e)) / 0.065) ** 2)) * Math.sin(az / 2) ** 5
-          // The low, lingering part of twilight is advected by the same azimuth
-          // as the sunlight. It survives the darkest night without lifting the zenith.
+          // The low glow follows the sun around the horizon. It survives
+          // midnight as a faint, cool trace rather than a raised lilac band.
           const rim = remnant * Math.exp(-mu * 27) * (0.09 + 0.91 * Math.exp(-az * az * 8.5))
           const corrective: RGB = [
-            0.67 * dawn + 0.085 * belt + 0.012 * blue + 0.034 * rim,
-            0.192 * dawn + 0.034 * belt + 0.059 * blue + 0.018 * rim,
-            0.078 * dawn + 0.057 * belt + 0.159 * blue + 0.031 * rim,
+            0.67 * dawn + 0.085 * belt + 0.012 * blue + rimRed * rim,
+            0.192 * dawn + 0.034 * belt + 0.059 * blue + rimGreen * rim,
+            0.078 * dawn + 0.057 * belt + 0.159 * blue + rimBlue * rim,
           ]
           for (let c = 0; c < 3; c++) {
             this.sky[i + c] = radiance[c] * SUN * CAL[c] * scatterUnit + AIRGLOW[c] * nightRise + corrective[c]
@@ -275,9 +280,9 @@ export class Air {
     this.skyAt(e, 0.055, Math.PI * 0.7, this.tap)
     const value = lum(this.tap)
     const level = 0.033 + value * 0.13
-    out[0] = level * 0.41
-    out[1] = level * 0.86
-    out[2] = level * 0.97
+    out[0] = level * 0.43
+    out[1] = level * 0.82
+    out[2] = level * 1.08
     return out
   }
 }

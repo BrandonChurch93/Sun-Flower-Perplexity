@@ -64,7 +64,7 @@ export function squall(time: number, x: number, z: number): number {
   return (0.2 + 0.8 * push) * (0.8 + 0.2 * quick) + 0.1 * push * Math.sin(time * 7.3 + 2 * quick)
 }
 
-const cell = (n: number, seed: number): number => {
+export const cell = (n: number, seed: number): number => {
   let h = (Math.imul(n | 0, 0x9e3779b1) ^ Math.imul((seed * 65536) | 0, 0x85ebca6b)) >>> 0
   h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0
   h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0

@@ -36,7 +36,7 @@ out vec3 vUp;
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
 const float MATT = 0.15;
-const float THROUGH = 0.55;
+const float THROUGH = 4.0;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
@@ -44,6 +44,13 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 // Of the crystals that melt, the share whose water is seen as a bead, and of those the share that take the water of their neighbors, grow heavy and fall.
 const float BEAD_SHARE = 0.34;
 const float HEAVY_SHARE = 0.07;
+// A very few of the heavy ones are drops large enough to watch: one swells at the edge of a leaf, lets go and is gone.
+const float DROP_SHARE = 0.0012;
+// Where the wearer says how far along its edge a crystal stands, the drops fall from the tips only, and of the crystals at a tip this share.
+const float TIP_FROM = 0.93;
+// Half the fall of a second, in meters: slower than a stone, so the eye can follow a drop past the leaves.
+const float FALL = 1.7;
+const float TIP_DROP_SHARE = 0.012;
 // And the share that stay where they formed, as the dew of the morning: many fine and a few big.
 const float STAY_SHARE = 0.45;
 const float BIG_SHARE = 0.08;
@@ -166,16 +173,19 @@ void main() {
   float pick = hash(own, 19.0) / BEAD_SHARE;
   if (needle == 4 && melt > 0.0 && pick < 1.0 && a.w > 0.0) {
     bool heavy = pick < HEAVY_SHARE;
+    bool drop = c.w == 0.0 ? pick < DROP_SHARE : c.w > TIP_FROM && pick < TIP_DROP_SHARE;
     bool stays = pick > 1.0 - STAY_SHARE;
     float h21 = hash(own, 21.0);
     float fed = smoothstep(turn6 + 0.2, turn6 + 0.45, thaw);
     float lets = 0.3 + 0.6 * turn6 + 0.1 * hash(own, 20.0);
-    float fallen = heavy && thaw > lets ? (thaw - lets) * THAW_S + uShutter * ${SHUTTER_SECONDS.toFixed(6)} : 0.0;
-    float radius = heavy ? (0.00055 + 0.0004 * h21) * (0.55 + 0.45 * fed) : stays ? (hash(own, 25.0) < BIG_SHARE ? 0.0005 + 0.0004 * h21 : 0.00014 + 0.0002 * h21) : (0.0002 + 0.00028 * h21) * (1.0 - fed);
+    float fallen = drop && thaw > lets ? (thaw - lets) * THAW_S + uShutter * ${SHUTTER_SECONDS.toFixed(6)} : 0.0;
+    float radius = heavy ? (drop ? (0.0015 + 0.0005 * h21) * (0.4 + 0.6 * smoothstep(lets - 0.2, lets, thaw)) : (0.00055 + 0.0004 * h21) * (0.55 + 0.45 * fed)) : stays ? (hash(own, 25.0) < BIG_SHARE ? 0.0005 + 0.0004 * h21 : 0.00014 + 0.0002 * h21) : (0.0002 + 0.00028 * h21) * (1.0 - fed);
     // A wearer that goes on wearing its set in the dew keeps the beads that stay. One that puts the set away with the frost loses them as the frost goes.
+    // Water runs to the tip of a leaf: the beads are larger there.
+    radius *= 1.0 + 0.8 * smoothstep(0.6, 1.0, c.w);
     radius *= plantSize() * melt * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
     float hangs = heavy ? smoothstep(lets - 0.2, lets, thaw) : 0.0;
-    vec3 center = root - vec3(0.0, radius * (0.7 + 0.9 * hangs) + 4.905 * fallen * fallen, 0.0);
+    vec3 center = root - vec3(0.0, radius * (0.7 + 0.9 * hangs) + FALL * fallen * fallen, 0.0);
     if (center.y < 0.0) radius = 0.0;
     toEye = normalize(uCamPos - center);
     depth = -(viewMatrix * vec4(center, 1.0)).z;
@@ -233,6 +243,7 @@ export class CrystalSet {
   readonly meshes: THREE.Mesh[]
   private readonly roots: [Float32Array, Float32Array]
   private readonly leans: [Float32Array, Float32Array]
+  private readonly places: Float32Array
   private readonly geometry = new THREE.BufferGeometry()
   private readonly data: Float32Array
   private readonly texture: THREE.DataTexture
@@ -248,6 +259,7 @@ export class CrystalSet {
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.leans = [new Float32Array(count * 4), new Float32Array(count * 4)]
+    this.places = new Float32Array(count)
     const rows = Math.max(1, Math.ceil(count / ROW))
     this.data = new Float32Array(ROW * 4 * rows * 4)
     this.dirty = new Uint16Array(rows * 2)
@@ -280,6 +292,7 @@ export class CrystalSet {
     const [la, lb] = this.leans
     const out = this.data
     const dirty = this.dirty
+    const places = this.places
     let rows = 0
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
@@ -299,6 +312,7 @@ export class CrystalSet {
         scratch[8] = la[o] / la2
         scratch[9] = la[o + 1] / la2
         scratch[10] = la[o + 2] / la2
+        scratch[11] = places[i]
         scratch[12] = lb[o] / lb2
         scratch[13] = lb[o + 1] / lb2
         scratch[14] = lb[o + 2] / lb2
@@ -358,6 +372,11 @@ export class CrystalSet {
   // Four numbers a crystal: the direction it stands in, and a number from 0 to 1 that is its own.
   lean(slot: 0 | 1): Float32Array {
     return this.leans[slot]
+  }
+
+  // One number a crystal that never changes: where it stands along the edge it grows on, from just over 0 at the base to 1 at the tip. Below 0 it stands on no edge, and 0 says it is not known.
+  place(): Float32Array {
+    return this.places
   }
 
   // How many of the crystals are drawn. Call once a frame after both slots are filled.

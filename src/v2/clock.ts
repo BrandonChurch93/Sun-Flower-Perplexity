@@ -11,7 +11,7 @@ export const BAR = (60 / M.bpm) * BEATS
 export const END = config.film.durationSeconds
 // The share of a day with the sun up, and the sun's height at noon in degrees.
 export const DAY = 0.86
-export const NOON_DEG = 62
+export const NOON_DEG = 40
 export const MIDNIGHT_DEG = -14
 
 export function barTime(bar: number, beat = 1): number {
@@ -64,7 +64,7 @@ export function trapezoid(x: number, rampIn: number, rampOut: number): number {
 
 // The sun's height through a day: it lingers low at both ends and runs fast across the top. It crosses the horizon at one speed,
 // so dusk and dawn dim and brighten evenly, and it runs fast across midnight as it does across noon.
-const LOW_DAY = 0.35
+const LOW_DAY = 0.5425
 const LOW_NIGHT = (LOW_DAY * NOON_DEG * (1 - DAY)) / (DAY * -MIDNIGHT_DEG)
 export function sunElevationOfPhase(phase: number): number {
   if (phase >= DAY) {

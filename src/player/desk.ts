@@ -256,11 +256,11 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
         else goStep.set('warn', 'Checked: does not keep up')
       }
       reportBody.append(
-        line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped`),
+        line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped, ${f.late} shown late`),
         line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
         line('Between frames', `longest ${ms(report.gapMs.longest)} at ${at(report.gapMs.longestAtFilm)}, 99th percentile ${ms(report.gapMs.p99)}, mean ${ms(report.gapMs.mean)}`),
         line('Picture behind sound', `when chosen mean ${ms(report.pickedMs.mean)}, largest ${ms(report.pickedMs.largest)}. When drawn mean ${ms(report.behindMs.mean)}, largest ${ms(report.behindMs.largest)} at ${at(report.behindMs.largestAtFilm)}`),
-        line('Drawing a frame', `mean ${ms(report.drawMs.mean)}, 99th percentile ${ms(report.drawMs.p99)}. Of that the page's own work mean ${ms(report.scriptMs.mean)}, longest ${ms(report.scriptMs.longest)}`),
+        line('Drawing a frame', `mean ${ms(report.drawMs.mean)}, 99th percentile ${ms(report.drawMs.p99)}. Of that the page's own work mean ${ms(report.scriptMs.mean)}, longest ${ms(report.scriptMs.longest)}, and the wait for the picture mean ${ms(report.cardMs.mean)}`),
         line('Graphics card', `${report.madeAtFilm.length ? `made something new in ${report.madeAtFilm.length} ${report.madeAtFilm.length === 1 ? 'frame' : 'frames'}, first at ${at(report.madeAtFilm[0])}` : 'nothing new made'}. A frame writes ${report.writes.mean.toFixed(0)} times into storage that exists, ${report.writes.mbMean.toFixed(1)} MB`),
       )
       const gaps = report.gaps

@@ -6,7 +6,7 @@ import { config } from '../../../config.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { headOpen, rayAngle, rayCount, rayLength, rayOpen, realOf } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { rayFrameAt, type Pose } from '../../skeleton.ts'
 import { flutter, gust } from '../../wind.ts'
 import { fragment, vertex } from './skin.ts'
@@ -302,7 +302,7 @@ export function create(options: PartOptions): PlantPart | null {
   const cy = new Float64Array(nv)
   const frame = { ox: 0, oy: 0, oz: 0, mx: 0, my: 0, mz: 0, wx: 0, wy: 0, wz: 0, nx: 0, ny: 0, nz: 0 }
 
-  const layRay = (out: Float32Array, k: number, pose: Pose, slot: 0 | 1): void => {
+  const layRay = (out: Float32Array, k: number, pose: Pose, _slot: 0 | 1): void => {
     const ray = rays[k]
     const base = k * per
     const time = pose.time
@@ -513,7 +513,7 @@ export function create(options: PartOptions): PlantPart | null {
         out[at] = px + wx * x + nx * y + tx * reach - h.ax * root
         out[at + 1] = py + wy * x + ny * y + ty * reach - h.ay * root
         out[at + 2] = pz + wz * x + nz * y + tz * reach - h.az * root
-        if (slot === 0) {
+        if (filling.lead) {
           const st = (base + i * nv + j) * 4
           state[st] = fresh
           state[st + 1] = flat
@@ -625,7 +625,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 1 && !positionB) return
       const out = slots[slot]
       for (let k = 0; k < total; k++) layRay(out, k, pose, slot)
-      if (slot === 0) layNormals(out)
+      if (filling.lead) layNormals(out)
       if (hairs && where) layHairs(hairs, where, out, slot, pose.time)
     },
     absent: (time) => rayLength(0, time) <= 0,

@@ -31,7 +31,7 @@ void main() {
 #ifdef PLANT_FIELD
   vec3 local = position;
 #else
-  vec3 local = mix(position, positionB, uShutter);
+  vec3 local = mix(position, positionB, plantBlend());
   vMark = aMark;
   vPlane = aPlane;
 #endif
@@ -235,7 +235,7 @@ out vec3 vNormal;
 out vec2 vUv;
 out float vDepth;
 void main() {
-  vec4 world = vec4(plantWorld(mix(position, positionB, uShutter)), 1.0);
+  vec4 world = vec4(plantWorld(mix(position, positionB, plantBlend())), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vNormal = plantDirection(normal);

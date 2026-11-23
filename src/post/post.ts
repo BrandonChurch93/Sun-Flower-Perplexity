@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { smoothstep } from '../core/curves.ts'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
@@ -74,6 +75,7 @@ export class Post {
   private held = false
   // For the bench: `nolens` in the list of what is shown leaves the glass out (bloom, the sun in the lens, shafts), so a frame can be seen with and without it.
   private readonly bare = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nolens')
+  private readonly unfilled = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nofill')
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
@@ -127,6 +129,9 @@ export class Post {
     uVignette: { value: 0 },
     uGrain: { value: 0 },
     uSeed: { value: 0 },
+    uDrift: { value: 0 },
+    uTight: { value: 0 },
+    uHorizon: { value: 0 },
     uMode: { value: 0 },
   })
 
@@ -293,6 +298,7 @@ export class Post {
     const g = this.grade.uniforms
     g.uMode.value = mode
     g.uSeed.value = seed
+    g.uDrift.value = seed / 30
     let source = frame
     if (mode === 0) {
       const width = this.fillA.width
@@ -304,6 +310,7 @@ export class Post {
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
       source = this.fillGaps(renderer, frame, scale, samples, farCircle, low)
+      if (this.unfilled) source = frame
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
       const bloom = this.scatter(renderer, source, grade, skyLevel)
@@ -324,7 +331,7 @@ export class Post {
         this.sunRead.render(renderer, this.sunTarget)
       }
       const cast = light * look.shafts > 0 || !this.warmed
-      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, look.fan) : (this.shaftA as THREE.WebGLRenderTarget).texture
+      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, smoothstep(0, 0.3, look.fan)) : (this.shaftA as THREE.WebGLRenderTarget).texture
       const tone = toneConstants(grade.contrast, grade.white)
       g.tBloom.value = bloom
       g.tShafts.value = shafts
@@ -358,6 +365,8 @@ export class Post {
       g.uVeilSun.value = look.veilSun
       g.uMist.value = look.mist
       g.uWarm.value = look.warm
+      g.uTight.value = look.tight
+      g.uHorizon.value = at.horizon ?? 0
       g.tRaw.value = frame
       g.uFar.value = farCircle
       g.uShafts.value = cast ? look.shafts : 0
