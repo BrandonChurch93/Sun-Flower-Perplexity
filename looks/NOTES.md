@@ -1,10 +1,8 @@
 # Looks of plant
 
-2026-11-23 07:42 UTC, at commit 588c6ed1 of agent/plant.
+2026-11-23 07:49 UTC, at commit a5081faa of agent/plant.
 
-Bristles as shapes (588c6ed): the stem and the stalks now wear 3200 and 1600 true bristles at the close lens, one list with the ice's roots. Still wrong: they are thin beside the reference's furred halo until the frost owner sleeves each; leaf edge still a paper cut (A2), apex unchanged (A3).
+B1 first state (ce382ef): the disc opens in rings; each floret ripens ahead of its own opening, the middle stays green.
 
-- `01-frame-1106-shot-tip-draft-bristles-stand-along-t.jpg`: frame 1106 shot tip, draft: bristles stand along the stem's outline, lit against the sun; the white stars are the ice's present crystals on the same roots
-- `02-frame-1106-review-tier-three-times-enlarged-crop.jpg`: frame 1106 review tier, three times enlarged crop of the stem: each bristle a tapering spike, 15 to 25 px long here; still too sparse and too fine beside the reference
-- `03-frame-1003-shot-margin-draft-stem-out-of-focus-a.jpg`: frame 1003 shot margin, draft: stem out of focus at left wears the bristles; edge of leaf 5 unchanged
-- `04-frame-1208-shot-thaw-draft-no-stem-in-view-leaf-.jpg`: frame 1208 shot thaw, draft: no stem in view, leaf 0 unchanged
+- `01-bars-59-61-65-at-the-film-s-lens-draft-bar-59-sh.jpg`: bars 59, 61, 65 at the film's lens, draft: bar 59 shut with a green middle and an ochre rim, bar 61 a dark ring of open florets outside a green middle, bar 65 the ring wider and the middle still green. Still wrong: the pollen fringe is not yet a bright gold ring (skin), rays and bracts unchanged
+- `02-sheet-of-bars-59-60-61-63-65.jpg`: sheet of bars 59, 60, 61, 63, 65
