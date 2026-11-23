@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { config, keyTime, segmentStart } from '../../config.ts'
+import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
@@ -28,11 +28,10 @@ const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
-const RAIN_FROM_S = segmentStart('rain')
 const DEW_FACE = 0.28
 const DEW_EDGE = 0.2
 const CRUMBS_SINK_S = 9
-const CRUMBS_KEY_S = keyTime('dawn-sprout')
+const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
 const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
@@ -583,7 +582,7 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
       const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length
