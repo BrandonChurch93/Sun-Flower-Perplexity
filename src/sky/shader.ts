@@ -252,6 +252,7 @@ void main() {
   // one low lobe as a flat ceiling. The stretched fields are in cloud km.
   float stacked = 0.0;
   float seamLight = 0.0;
+  float lowBank = 0.0;
   if (st > 0.01) {
     vec2 a = rotateCloud(d.xz * min(72.0, foot(1.39, d)) - uTravel);
     vec2 b = rotateCloud(d.xz * min(96.0, foot(2.34, d)) - uTravel * 1.12);
@@ -266,6 +267,11 @@ void main() {
     stacked = apronBody * outer * (0.83 + 0.17 * ridge.b) + upperBody * 0.62 * upper;
     seamLight = exp(-squared((d.y - apronTop + 0.021) * 31.0)) * outer * (0.34 + 0.66 * upper)
       + 0.31 * exp(-squared((d.y - scallopedBase - 0.027) * 35.0)) * (1.0 - outer) * upper;
+    vec4 mass = f(vec3(a.x * 0.017 + 0.62, 0.41 + 0.025 * uEvolve, a.y * 0.039 + 0.37));
+    float fold = smoothstep(0.30, 0.62, 0.80 * mass.r + 0.20 * apron.g);
+    float underside = 0.061 + 0.082 * fold + 0.051 * (apron.r - 0.35) + 0.032 * (ridge.b - 0.45);
+    lowBank = (0.26 + 0.74 * fold) * smoothstep(underside, underside + 0.055, d.y);
+    seamLight += (0.21 + 0.64 * apron.g) * exp(-squared((d.y - underside - 0.013) * 31.0));
   }
   vec3 sky = thinClouds(d, air, mu);
   if (uLate > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uLate);
@@ -276,9 +282,14 @@ void main() {
   float start = foot(base, d);
   float stop = min(foot(base + dep, d), mix(133.0, 119.0, st));
   float span = stop - start;
-  float dt = 1.0 / float(uSteps);
   float flashDot = max(0.0, 1.0 - dot(d, uFlash));
   bool strike = uEffects.z > 0.0004 && flashDot < 0.065;
+  // Refine the integration only round a strong stroke. At ten degrees up,
+  // a normal cloud step crosses the lit layer in too few samples and its
+  // edge shows a succession of nearly horizontal march contours.
+  float flashDetail = smoothstep(0.008, 0.48, uEffects.z) * (1.0 - smoothstep(0.024, 0.062, flashDot));
+  int steps = uSteps + int(floor(1.42 * float(uSteps) * flashDetail + 0.5));
+  float dt = 1.0 / float(steps);
   vec3 source = vec3(0.0);
   vec3 strikeSide = vec3(0.0);
   vec3 strikeUp = vec3(0.0);
@@ -316,8 +327,8 @@ void main() {
     float sideDistance = (dot(d, sunSide) - 0.102) * 11.0;
     float roseLight = sunBreak * exp(-lowerDistance * lowerDistance - sideDistance * sideDistance)
       * smoothstep(0.17, 0.60, 0.55 * belly.r + 0.45 * pocket.g);
-    for (int i = 0; i < 60; i++) {
-      if (i >= uSteps || through < 0.009) break;
+    for (int i = 0; i < 146; i++) {
+      if (i >= steps || through < 0.009) break;
       float dither = fract(jitter + float(i) * 0.61803399);
       float offset = mix(0.13 + 0.73 * region, 0.04 + 0.92 * dither, mix(0.70, 0.96, st));
       offset = mix(offset, 0.36 + 0.28 * dither, (strike ? 0.87 : 0.0) * smoothstep(0.17, 0.65, uEffects.z));
@@ -345,8 +356,8 @@ void main() {
       float bellyShade = 0.068 + (3.60 * rollDepth * rollDepth + 0.26 * hanging + 0.10 * top) * buried;
       bellyShade *= (0.53 + 0.88 * froth) * (0.69 + 0.59 * well);
       vec3 enclosed = uDeck * bellyShade * (0.76 + 0.64 * sheltered) * ceilingLight;
-      enclosed *= 1.0 - 0.69 * clamp(stacked, 0.0, 1.0) * (1.0 - 0.48 * sunBreak);
-      enclosed += uDeck * seamLight * (0.54 + 1.48 * rollDepth * froth) * (1.0 - 0.66 * sunBreak);
+      enclosed *= 1.0 - (0.57 * clamp(stacked, 0.0, 1.0) + 0.32 * lowBank) * (1.0 - 0.64 * sunBreak);
+      enclosed += uDeck * seamLight * (0.61 + 1.70 * rollDepth * froth) * (1.0 - 0.72 * sunBreak);
       enclosed *= mix(vec3(1.0), vec3(0.70, 0.91, 1.09), sunBreak);
       vec3 beforeSun = highHint * (0.49 + 0.97 * top) * (0.61 + 0.91 * vein) * occlusion;
       vec3 daylight = (uUpper * vec3(0.086, 0.13, 0.193) + ambientGrey * 0.036 + 0.026 * uLower) * (0.51 + 0.60 * vein) * (0.49 + 0.51 * occlusion);
@@ -441,6 +452,10 @@ void main() {
     vec3 curtain = uDeck * (0.43 + 1.15 * veil.g);
     result = mix(result, curtain, rain);
   }
+  // Foreground cloud opacity attenuates the lit air behind the bank as
+  // well as the cloud's own light. Preserve the separate lightning spill.
+  float bankMask = st * (1.0 - 0.90 * sunBreak) * (1.0 - 0.82 * uEffects.z);
+  result *= 1.0 - bankMask * (0.24 * lowBank + 0.16 * clamp(stacked, 0.0, 1.0));
   if (sunBreak > 0.0) {
     float nearSun = 0.048 * exp(-angle * 1880.0) + 0.19 * exp(-angle * 13300.0);
     result += uCloudLight * vec3(1.11, 0.84, 0.61) * sunBreak * nearSun * through * through;
