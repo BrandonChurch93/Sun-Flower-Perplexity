@@ -1,10 +1,12 @@
 # Looks of place
 
-2026-11-23 00:29 UTC, at commit 3f94c7c of agent/place.
+2026-11-23 00:50 UTC, at commit 25bfcff of agent/place.
 
-- `01-15-crane-everything-after-trees.jpg`: 15 crane, everything, after trees
-- `02-16-crane-everything.jpg`: 16 crane, everything
-- `03-08-wide-everything.jpg`: 08 wide, everything
-- `04-wide-view-land-strip-of-shots-01-02-05-06-07-10-.jpg`: wide view, land strip of shots 01 02 05 06 07 10 11 12 13, twice the size
-- `05-low-view-same-shots.jpg`: low view, same shots
-- `06-02-low.jpg`: 02 low
+- `01-15-field-crane-everything.jpg`: 15 field, crane, everything
+- `02-16-last-crane-everything.jpg`: 16 last, crane, everything
+- `03-08-lapse-wide-everything.jpg`: 08 lapse, wide, everything
+- `04-13-evening-everything.jpg`: 13 evening, everything
+- `05-horizon-strips-wide-view-shots-01-02-05-06-07-10.jpg`: horizon strips, wide view, shots 01 02 05 06 07 10 11 12 13
+- `06-horizon-strips-low-view-same-shots.jpg`: horizon strips, low view, same shots
+- `07-07-frost-wide-sky-ground-place.jpg`: 07 frost, wide, sky ground place
+- `08-10-storm-wide-sky-ground-place.jpg`: 10 storm, wide, sky ground place
