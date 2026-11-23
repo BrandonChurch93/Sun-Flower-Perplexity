@@ -15,6 +15,8 @@ const FAR_STRIPS = 5
 const CLOSE_FROM_PX = 6
 const TEXELS = 6
 const scratch = new Float32Array(TEXELS * 4)
+// In the thaw the last of a set that melts is gone at this much frost: from there it is neither drawn nor sent, though its wearer moves again.
+const GONE_AT = 0.15
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
@@ -63,19 +65,26 @@ const float POINT_CIRCLE_MOST = 80.0;
 const float FILL_M = 0.0011;
 // The frost at which the growth that only a close lens sees begins.
 const float LATE_FROM = 0.7;
-// A bristle's sleeve of rime, in meters across at full size.
-const float SLEEVE_M = 0.00034;
+// A bristle's sleeve of rime, in meters across on a bristle a millimeter and a half long: no more than twice the bristle, so it stays a needle. The spurs that stand out of it, in meters long.
+const float SLEEVE_M = 0.00012;
+const float SPUR_M = 0.00028;
 const float SKY = 1.6;
 // How far outside the picture a root may stand and its crystal still reach into it, with the blur of the lens.
 const float OUTSIDE_M = 0.012;
 // Seen close most of the fringe is grey ice against the bright air: the share of the sky's light a blade gives back there, and the few crystals in which the low sun stands.
 const float SKY_CLOSE = 1.1;
+// A rimed bristle in shade is a mid grey blue: it is thin, and the stalk behind it shows through.
+const float SLEEVE_SKY = 0.65;
 const float LIT_SHARE = 0.28;
 const float LIT_LEAST = 0.12;
 // Along an edge the ice stands in tufts with gaps between them: this many radians of them from the stalk to the tip.
 const float TUFTS = 56.0;
 // No crystal is longer than this, seen close.
 const float CLOSE_MOST_M = 0.0026;
+// The blades of a cluster on a margin, seen close: the shortest and the longest in meters, and the sun through those on the sun's side of the blade against the sky's light on the rest.
+const float FAN_LEAST_M = 0.001;
+const float FAN_MOST_M = 0.0025;
+const float FAN_THROUGH = 0.5;
 // On a face and on the ridge of a vein the crystals are short: no longer than this, seen close.
 const float FACE_MOST_M = 0.0009;
 // Of the crystals, the share that carry side blades.
@@ -84,6 +93,7 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 // Of the crystals that melt, the share whose water is seen as a small bead, and of those the share that stay where they formed, as the fine dew of the morning.
 const float BEAD_SHARE = 0.34;
 const float STAY_SHARE = 0.45;
+const float GONE_AT = ${GONE_AT.toFixed(2)};
 const float NEEDLE_PX = 0.7;
 const float NEEDLE_LEAST = 0.2;
 const float TUFT_MOST_M = 0.0034;
@@ -142,11 +152,12 @@ void main() {
   float thawing = uMelts * smoothstep(0.0, 0.15, uPlantDew);
   float thaw = thawing * (1.0 - uPlantFrost);
   float born = 0.45 * hash(own, 24.0);
-  size *= mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost, 1.0, thawing);
+  float timed = mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost, 1.0, thawing);
   // What only a close lens sees comes last: over the last third of the freeze a crystal lengthens by half, its side blades come out and small crystals rise between the large.
   float late = mix(saturate((uPlantFrost - LATE_FROM) / (1.0 - LATE_FROM)), 1.0, max(thawing, 1.0 - uMelts));
-  size *= mix(1.0, 0.667 + 0.333 * late, close);
-  if (fill) size *= smoothstep(0.0, 0.3, 1.4 * late - hash(own, 26.0));
+  timed *= mix(1.0, 0.667 + 0.333 * late, close);
+  if (fill) timed *= smoothstep(0.0, 0.3, 1.4 * late - hash(own, 26.0));
+  size *= timed;
   // The wearer's roots move with the air, so the tufts are told by how far along the edge a crystal stands, which does not.
   float tuft = c.w == 0.0 || bristle ? hash(own, 33.0) : 0.5 + 0.5 * sin(along * TUFTS + 1.7 * sin(along * 0.3 * TUFTS + 0.9)) * sin(along * 0.55 * TUFTS + 1.1 * sin(along * 0.2 * TUFTS + 2.3));
   if (!bristle) {
@@ -156,6 +167,12 @@ void main() {
     if (c.w < -0.5) size = mix(size, min(size, FACE_MOST_M * plantSize() * (0.3 + 0.7 * hash(own, 34.0))), close);
   }
   bool lies = c.w < -0.5 && !bristle;
+  // Seen close the fringe of a margin is closed and crunchy: at every root a cluster of short thick blades, fanned from one foot. The long spikes stay as they are.
+  float cluster = c.w > 0.0 && !spike ? close : 0.0;
+  float h28 = hash(own, 28.0);
+  // Where the close lens first sees them they stand at half their length already, every one of them, and lengthen from there.
+  float risen = mix(uMelts > 0.5 ? smoothstep(0.0, 0.6, uPlantFrost) : uPlantFrost, 1.0, thawing) * (0.7 + 0.3 * late) * (fill ? 0.6 + 0.4 * smoothstep(0.0, 0.3, 1.4 * late - hash(own, 26.0)) : 1.0);
+  size = mix(size, (FAN_LEAST_M + (FAN_MOST_M - FAN_LEAST_M) * h28 * h28) * (0.65 + 0.5 * tuft) * plantSize() * risen, cluster);
   vec3 stretch6 = a.xyz * (6.2832 / THAW_PATCH_M);
   float patch6 = smoothstep(0.2, 0.8, 0.5 + 0.25 * (sin(stretch6.x + 1.9 * sin(stretch6.z * 0.57 + 1.1)) + sin(stretch6.y * 0.79 + 1.4 * sin(stretch6.x * 0.43 + 0.7))));
   // The water's owner and the ice agree on one front that runs down a blade from its tip: ahead of it ice only, behind it the ice is a bead that gives way to the water. Each crystal is that bead by the time the front reaches it, the sun's side and the thin patches soonest.
@@ -195,8 +212,20 @@ void main() {
     reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.6 + 0.4 * hash(own, 15.0 + n)) : 0.0;
     wide = (spike ? 0.075 : 0.09) * size;
   }
+  // The blades of a cluster lie in one plane, each cluster's turned its own way about the way it grows.
+  float blades = 3.0 + floor(3.99 * hash(own, 36.0));
+  float tilt = 1.8 * (hash(own, 37.0) - 0.5);
+  vec3 fanned = plane * cos(tilt) + cross(grow, plane) * sin(tilt);
+  float spread = 0.9 + 0.9 * hash(own, 38.0);
+  if (cluster > 0.0 && !feather) {
+    float open = (n / (blades - 1.0) - 0.5) * spread + 0.3 * (hash(own, 14.0 + n) - 0.5);
+    axis = normalize(mix(axis, grow * cos(open) + fanned * sin(open) + cross(grow, fanned) * (0.3 * (hash(own, 12.0 + n) - 0.5)), cluster));
+    reach = mix(reach, n < blades ? size * (0.5 + 0.5 * hash(own, 15.0 + n)) * (1.0 - 0.3 * abs(open)) : 0.0, cluster);
+  }
   // A melting blade keeps its water: as it shortens it thickens into a stub.
   wide = max(wide, (needle == 0 ? 0.0002 : 0.00015) * plantSize()) * (1.0 - 0.35 * close) * (1.0 + 2.5 * melt * close) * (lies ? 1.0 - 0.55 * close : 1.0);
+  if (cluster > 0.0) wide = mix(wide, clamp(0.17 * reach, 0.00015 * plantSize(), 0.0004 * plantSize()) * (1.0 + 1.5 * melt), cluster);
+  if (cluster > 0.0 && !feather) kind = 4.0 * step(0.5, cluster);
   if (strip > 4 && strip < 13) {
     // Side blades leave the spine at 60 degrees, a pair at a time from the root to the tip, each pair shorter than the last.
     int blade = strip - 5;
@@ -207,17 +236,26 @@ void main() {
     reach = size * sided * (0.34 - 0.06 * pair) * (0.55 + 0.6 * hash(own, 50.0 + float(blade))) * close * smoothstep(0.08 + 0.2 * pair, 0.33 + 0.2 * pair, late) * (1.0 - smoothstep(0.0, 0.5, melt));
     wide = 0.075 * size;
     kind = 1.0;
+    if (cluster > 0.0 && !feather) {
+      // The sixth blade of a cluster.
+      float open = 0.5 * spread + 0.3 * (hb - 0.5);
+      foot = root;
+      axis = normalize(grow * cos(open) + fanned * sin(open) + cross(grow, fanned) * (0.3 * (hb - 0.5)));
+      reach = blade == 0 && blades > 5.5 ? size * (0.5 + 0.5 * hb) * (1.0 - 0.3 * abs(open)) * cluster : 0.0;
+      wide = clamp(0.17 * reach, 0.00015 * plantSize(), 0.0004 * plantSize()) * (1.0 + 1.5 * melt);
+      kind = 4.0;
+    }
     if (bristle) {
       // Rime on a bristle is rough: short spurs stand out of the sleeve all round it.
       float round = 6.2832 * hb;
       foot = root + grow * (size * fract(hb * 7.31 + 0.11 * float(blade)));
       axis = normalize(grow * (1.6 * hash(own, 52.0 + float(blade)) - 0.8) + e1 * cos(round) + e2 * sin(round));
-      reach = SLEEVE_M * plantSize() * (0.3 + 0.8 * hash(own, 50.0 + float(blade)) * hash(own, 51.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
-      wide = 0.9 * SLEEVE_M * plantSize();
+      reach = hb < 0.5 ? 0.0 : SPUR_M * plantSize() * (0.3 + 0.8 * hash(own, 50.0 + float(blade)) * hash(own, 51.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
+      wide = 0.15 * SPUR_M * plantSize();
     }
   }
   if (bristle) {
-    if (strip == 0) wide = min(SLEEVE_M * plantSize() * (0.7 + 0.6 * hash(own, 27.0)), 0.12 * size) * (0.6 + 0.4 * late);
+    if (strip == 0) wide = SLEEVE_M * plantSize() * (0.7 + 0.6 * hash(own, 27.0)) * clamp(size / (0.0015 * plantSize()), 0.5, 1.3) * (0.6 + 0.4 * late);
     else if (strip < 5) reach = 0.0;
     if (strip == 0) kind = 3.0;
   }
@@ -227,6 +265,8 @@ void main() {
   float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept)) * (fill || bristle || ridge ? close : 1.0);
   // Between two tufts the edge is all but bare.
   if (!bristle) stays *= mix(1.0, smoothstep(-0.08, 0.1, tuft + 0.3 * (hash(own, 32.0) - 0.5)) * (lies ? 0.55 : 1.0), close);
+  // No stretch of a margin is bare of clusters.
+  stays = mix(stays, 1.0, cluster);
   wide /= thin;
 
   vec3 here = foot + axis * (reach * end);
@@ -255,10 +295,10 @@ void main() {
   float held = min(1.0, THROUGH_HELD / max(dot(uSunColor, vec3(0.2126, 0.7152, 0.0722)), 1e-4));
   // Seen close a blade has a ridge down its middle and a face to either side of it, and each face meets the sun at its own angle.
   vec3 turned = cross(axis, facet) * (0.7 * close);
-  vLight = vec4(0.1 + 0.9 * abs(dot(normalize(facet + turned), uSunDir)), 0.1 + 0.9 * abs(dot(normalize(facet - turned), uSunDir)), THROUGH * behind * held * mix(1.0, mix(LIT_LEAST, 1.0, smoothstep(1.0 - LIT_SHARE - 0.12, 1.0 - LIT_SHARE + 0.12, hash(own, 31.0))) * (0.35 + 0.65 * hash(own, 30.0 + float(strip))), close), GLINT * glint);
+  vLight = vec4(0.1 + 0.9 * abs(dot(normalize(facet + turned), uSunDir)), 0.1 + 0.9 * abs(dot(normalize(facet - turned), uSunDir)), max(THROUGH * behind * held * mix(1.0, bristle ? 1.0 : mix(LIT_LEAST, 1.0, smoothstep(1.0 - LIT_SHARE - 0.12, 1.0 - LIT_SHARE + 0.12, hash(own, 31.0))) * (0.35 + 0.65 * hash(own, 30.0 + float(strip))), close), FAN_THROUGH * held * cluster * smoothstep(0.35, 0.7, sunward) * (0.6 + 0.4 * hash(own, 30.0 + float(strip)))), GLINT * glint);
   vMore = vec4(kind, close, fract(own * 13.7 + 0.37 * float(strip)), clear);
   vAt = vec2(end, melt);
-  vSky = ICE * ICE_SHADE * (mix(SKY, SKY_CLOSE, close) * clear * (0.75 + 0.5 * hash(own, 17.0 + n)));
+  vSky = ICE * ICE_SHADE * (mix(SKY, SKY_CLOSE * (bristle ? SLEEVE_SKY : 1.0), close) * clear * (0.75 + 0.5 * hash(own, 17.0 + n)));
   vWorld = world;
   vLitAt = root + grow * (0.004 * plantSize());
   vDepth = depth;
@@ -302,7 +342,7 @@ void main() {
     float thawed = saturate((thaw - front) / 0.2);
     float radius = stays ? 0.00007 + 0.00022 * h21 * h21 : (0.00014 + 0.00011 * h21) * (1.0 - thawed);
     // A wearer that goes on wearing its set in the dew keeps the beads that stay. One that puts the set away with the frost loses them as the frost goes.
-    radius *= plantSize() * melt * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
+    radius *= plantSize() * melt * (uDewToo > 0.5 ? 1.0 : smoothstep(GONE_AT, GONE_AT + 0.15, uPlantFrost)) * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
     vec3 center = root - vec3(0.0, 0.7 * radius, 0.0);
     if (center.y < 0.0) radius = 0.0;
     toEye = normalize(uCamPos - center);
@@ -354,11 +394,14 @@ void main() {
   // Seen close a needle is a blade: slim at the root, widest a quarter of the way up and drawn to a point.
   float form = (vMore.x > 0.5 ? smoothstep(0.0, 0.25, u) : 0.4 + 0.6 * smoothstep(0.0, 0.25, u)) * pow(max(1.0 - u, 0.0), 0.65) * 1.3;
   // Its edge is not straight: it grew in steps, and each step left a barb.
-  float melt = vMore.x > 1.5 ? 0.0 : vAt.y;
+  float melt = vMore.x > 1.5 && vMore.x < 2.5 ? 0.0 : vAt.y;
   float barb = fract(u * (5.0 + 6.0 * vMore.z) + vMore.z);
   form *= mix(0.5 + 0.5 * (1.0 - barb) * (1.0 - barb) + 0.5 * step(0.8, u), 1.0, melt);
   // A bristle's sleeve is as thick at its tip as at its root, and knobbed all the way.
-  if (vMore.x > 2.5) form = (0.55 + 0.45 * (1.0 - barb)) * smoothstep(1.0, 0.93, u) * (0.75 + 0.5 * fract(sin(floor(u * 23.0) + vMore.z * 71.0) * 437.5));
+  if (vMore.x > 2.5 && vMore.x < 3.5) form = (0.55 + 0.45 * (1.0 - barb)) * smoothstep(1.0, 0.93, u) * (0.75 + 0.5 * fract(sin(floor(u * 23.0) + vMore.z * 71.0) * 437.5));
+  // A blade of a cluster is widest at its foot and drawn to a point.
+  bool fan = vMore.x > 3.5;
+  if (fan) form = (0.3 + 0.7 * pow(max(1.0 - u, 0.0), 0.8)) * smoothstep(1.0, 0.9, u) * (0.82 + 0.18 * (1.0 - barb));
   // Thawing it rounds off: the point goes first and the end is a drop.
   form = mix(form, 1.1 * sqrt(max(1.0 - u * u, 0.0)), smoothstep(0.0, 0.6, melt));
   float hw = vHalf * mix(1.0, min(form, 1.0), close);
@@ -366,7 +409,7 @@ void main() {
   float r = max(vBall.y, 0.5);
   if (vBall.z > 0.5) cover = saturate(r - length(vec2(vAcross, vBall.x)) + 0.5) * (vBall.y * vBall.y / (r * r));
   float star = 0.0;
-  if (vMore.x > 1.5) {
+  if (vMore.x > 1.5 && vMore.x < 2.5) {
     star = exp(-dot(vAt, vAt) / 0.8) + 0.3 * (exp(-1.4 * abs(vAt.x) - vAt.y * vAt.y / 16.0) + exp(-1.4 * abs(vAt.y) - vAt.x * vAt.x / 16.0));
     // It fades to nothing inside its card, however bright it is.
     float inside = 1.0 - smoothstep(0.4, 1.0, length(vAt) / POINT_PX);
@@ -378,7 +421,7 @@ void main() {
   outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
 #else
   float sun = plantSun(vLitAt, uSunDir);
-  if (vMore.x > 1.5) {
+  if (vMore.x > 1.5 && vMore.x < 2.5) {
     if (star * vLight.w < 1e-4) discard;
     // The sun in a face of clear ice is white to pale gold.
     vec3 gold = mix(vec3(dot(uSunColor, vec3(0.2126, 0.7152, 0.0722))), uSunColor, mix(0.06, 0.25 + 0.5 * vMore.z, vMore.w));
@@ -391,7 +434,7 @@ void main() {
   float face = saturate(vAcross + 0.5);
   float rib = fract(sin((floor(u * (3.0 + 5.0 * vMore.z)) + 1.0) * (vMore.z * 91.7 + 13.1)) * 4375.85);
   float gain = mix(1.0, 0.45 + 1.1 * rib, close);
-  cover *= mix(1.0, (0.3 + 0.7 * rim) * (0.3 + 0.7 * smoothstep(0.03, 0.3, u)), close * (1.0 - vBall.z));
+  cover *= mix(1.0, fan ? 0.75 + 0.25 * rim : (0.3 + 0.7 * rim) * (0.3 + 0.7 * smoothstep(0.03, 0.3, u)), close * (1.0 - vBall.z));
   // And it goes glassy from the tip down: clear ice with a bright edge, no longer white.
   float glassy = (1.0 - vBall.z) * smoothstep(1.0 - 1.5 * melt, 1.3 - 1.5 * melt, u);
   cover *= 1.0 - 0.75 * glassy * (1.0 - rim);
@@ -421,7 +464,7 @@ export class CrystalSet {
   private stale = true
   private kept = 0
 
-  constructor(options: PartOptions, readonly count: number, name: string, melts = true, private readonly dewToo = false) {
+  constructor(options: PartOptions, readonly count: number, name: string, private readonly melts = true, private readonly dewToo = false) {
     if (options.places) throw new Error('crystals are worn by the plant, the companion and the ground only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -529,7 +572,8 @@ export class CrystalSet {
 
   private choose(camera: THREE.Camera): void {
     const worn = stateUniforms.uPlantFrost.value > 0 || (this.dewToo && stateUniforms.uPlantDew.value > 0)
-    if (!worn || shared.uDiag.value >= 4) {
+    const gone = this.melts && !this.dewToo && stateUniforms.uPlantDew.value >= 0.15 && stateUniforms.uPlantFrost.value <= GONE_AT
+    if (!worn || gone || shared.uDiag.value >= 4) {
       this.geometry.instanceCount = 0
       return
     }
