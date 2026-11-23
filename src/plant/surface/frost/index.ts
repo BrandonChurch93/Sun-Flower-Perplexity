@@ -36,6 +36,9 @@ float frostShut = FROST_SHUT_LEAST;
 #define FROST_SHUT frostShut
 // Far from the lens the coat runs ahead of the cold: at this much frost the whole plant wears it.
 const float FROST_FAR_WHOLE = 0.8;
+// Seen from afar the front is no band of one width: its depth swings from tooth to tooth over this length, and it runs in along the veins ahead of the fields between them.
+const float FROST_TOOTH_M = 0.02;
+const float FROST_VEIN_AHEAD = 0.95;
 // The coat a close lens sees. The cells of its two sizes of crystal and of the two sizes of grain under them, in meters; how high a crystal stands, for its shadow; the share of the crystals that are plates and not tufts of needles.
 const float FROST_FORM_FINE_M = 0.001;
 const float FROST_FINE_M = 0.0005;
@@ -296,6 +299,9 @@ vec4 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float
 
 // How far along its blade the skin being shaded lies, 0 at the stalk and 1 at the tip. A wearer that knows sets it before it shades; under 0 it is not known.
 float frostAlong = -1.0;
+// How far from the midrib toward the margin it lies, 0 to 1, and how near a main vein, 0 in the middle of a field to 1 on the ridge. A wearer that knows sets them with frostAlong.
+float frostAcross = -1.0;
+float frostVein = 0.0;
 // The tint of the flash at the skin last shaded, against the sun's own color.
 vec3 frostSpark = vec3(1.0);
 // The share of the sky's light that the upper faces of the crystals standing there take, over what the skin under them takes.
@@ -362,7 +368,16 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   frostShut = mix(FROST_SHUT_LEAST, mix(FROST_SHUT_FAR * ahead / max(uPlantFrost, 1e-4), FROST_SHUT_SHADE * shaded, close), 1.0 - going);
   frostShut = max(frostShut, FROST_SHUT_LEAST);
   float front = mix(1.2 - 2.0 * mix(ahead, uPlantFrost, close), -0.8, going) - FROST_CLOSE_AHEAD * close;
-  float come = smoothstep(front, front + 0.3, ragged);
+  // Once the far coat is whole, and under a close lens, the front is as it was.
+  float wild = (1.0 - close) * (1.0 - going) * (1.0 - smoothstep(0.34, 0.6, uPlantFrost));
+  float reached = ragged;
+  if (wild > 0.0) {
+    float tooth = smoothstep(0.2, 0.8, valueNoise(round * (1.0 / FROST_TOOTH_M) + 71.0));
+    float outward = frostAcross >= 0.0 ? max(frostAcross, frostAlong * frostAlong) : 0.5;
+    float veined = FROST_VEIN_AHEAD * saturate(frostVein) * (0.45 + 0.55 * outward) * (0.7 + 0.3 * tooth);
+    reached = mix(ragged, ragged + max(gather * (0.45 + 0.55 * tooth), veined) - gather, wild);
+  }
+  float come = smoothstep(front, front + 0.3, reached);
   // It goes first where the sun is on it and where it is thin, and the thick fringe is the last ice on the leaf.
   float turn = 0.5 * (1.0 - dot(N, uSunDir)) * 0.5 + 0.3 * bank + 0.25 * smoothstep(0.3, 0.9, ragged);
   float thaw = frostThaw();
