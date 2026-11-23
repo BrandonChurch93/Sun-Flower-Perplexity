@@ -26,6 +26,8 @@ export interface ChecksPage {
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
   // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames.
   fault(kind: string, a: number, b: number): void
+  // Which pixels of the last frame the scene drew into, row by row from the top: '1' where something was drawn, '0' where the frame was left empty.
+  covered(): string
 }
 
 declare global {
@@ -65,6 +67,15 @@ let cutFrom = -1
 let madeAt = -1
 let dice = false
 let memory = false
+let moon = 1
+// The night's key light, written by the film into its look on every frame, comes out `moon` times as strong: the fault of a moon brighter than the dusk.
+const key = film.look.sun as { color: number[] }
+key.color = new Proxy(key.color, {
+  set(target, name, value) {
+    target[name as unknown as number] = typeof value === 'number' && now.lightKind === 'moon' ? value * moon : value
+    return true
+  },
+})
 let drawnBefore = 0
 const kept = new Map<string, Float32Array>()
 
@@ -84,17 +95,15 @@ let owners: Map<object, string> | null = null
 function ownersOf(): Map<object, string> {
   const out = new Map<object, string>()
   const seen = new Set<object>()
-  // A part's own things are named by the part: each part is walked first, and stops at what belongs to the whole film.
-  const shared = new Set<unknown>([film, film.scene, film.stage, film.view])
-  const queue: [unknown, string][] = film.parts.map((p): [unknown, string] => [p.part, `film.parts[${p.name}]`])
-  let whole = false
-  for (let i = 0; (i < queue.length || !whole) && seen.size < 600000; i++) {
-    if (i === queue.length) {
-      whole = true
-      queue.push([film, 'film'])
-    }
+  // A thing is named by who owns it: the plant, the companion, the ground, the field and each part are walked first, one after the other, each stopping at what belongs to the whole film or to another of them. The film's own lists come last.
+  const owning: [unknown, string][] = [[film.plant, 'film.plant'], [film.companion, 'film.companion'], [film.ground, 'film.ground'], [film.field, 'film.field'], ...film.parts.map((p): [unknown, string] => [p.part, `film.parts[${p.name}]`]), [film, 'film']]
+  const shared = new Set<unknown>([film.scene, film.stage, film.view, ...owning.map(([v]) => v)])
+  const queue: [unknown, string][] = []
+  for (let i = 0, next = 0; (i < queue.length || next < owning.length) && seen.size < 600000; i++) {
+    const root = i === queue.length
+    if (root) queue.push(owning[next++])
     const [v, p] = queue[i]
-    if (!v || typeof v !== 'object' || seen.has(v) || (!whole && shared.has(v))) continue
+    if (!v || typeof v !== 'object' || seen.has(v) || (!root && next < owning.length && shared.has(v))) continue
     seen.add(v)
     if (ArrayBuffer.isView(v)) {
       out.set(v, p)
@@ -175,12 +184,25 @@ window.checks = {
     const values = (x.length / 4) * 3
     return { values, differing, largest, mean: sum / values }
   },
+  covered() {
+    const { width, height, renderer, accumulator } = film.stage
+    const pixels = new Float32Array(width * height * 4)
+    renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
+    const rows: string[] = []
+    for (let y = height - 1; y >= 0; y--) {
+      let row = ''
+      for (let x = 0; x < width; x++) row += pixels[4 * (y * width + x) + 3] > 0.5 ? '1' : '0'
+      rows.push(row)
+    }
+    return rows.join('')
+  },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
     else if (kind === 'dice') dice = true
     else if (kind === 'memory') memory = true
     else if (kind === 'grow') grow = { from: a, to: b, rate: 0.05 }
+    else if (kind === 'moon') moon = a
     else throw new Error(`unknown fault "${kind}"`)
   },
 }
