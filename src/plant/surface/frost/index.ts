@@ -7,7 +7,7 @@ const float FROST_FLASH = 5.0;
 const vec3 FROST_COLD = vec3(0.45, 1.2, 0.5);
 // The share of the sun that the rime on the down of a round body sends on, on the sun's side.
 const float FROST_SIDE = 0.12;
-const float FROST_DOWN = 0.03;
+const float FROST_DOWN = 0.3;
 const float FROST_MATT = 0.8;
 const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes.
@@ -64,12 +64,15 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float fringe = smoothstep(0.76, 0.98, ragged) * mix(0.6, 0.15 + 0.85 * fine * fine, seen);
   // The sugar: grains that stand apart on the face, thin in the middle of it, with the green between them.
   float thick = saturate(0.36 + 0.3 * up * up + 0.6 * gather + 0.45 * (bank * bank - 0.3));
-  float veil = 0.012 + 0.05 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen);
+  // The dusting: about a third of the upper face is pale at full frost. A thin veil all over, and banks of rime that lie thicker along the veins and the margin.
+  float banks = smoothstep(0.5, 0.85, 0.6 * bank + 0.4 * fine + 0.35 * gather + 0.12 * up);
+  float veil = 0.02 + 0.08 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen) + 0.22 * banks * (0.55 + 0.45 * fine);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
   float chance = 0.9 * thick;
-  float most = 0.13 + 0.15 * thick;
-  vec2 dust = frostGrain(g, reach, chance, 0.06, most, N, view);
-  float mean = chance * 2.6 * (0.06 * 0.06 + 0.06 * most + most * most) / 3.0;
+  float least = 0.1;
+  float most = 0.2 + 0.2 * thick;
+  vec2 dust = frostGrain(g, reach, chance, least, most, N, view);
+  float mean = chance * 2.6 * (least * least + least * most + most * most) / 3.0;
 
   float wide = FROST_GRAIN_M / FROST_BEAD_M;
   // Frozen beads stand where the dew stood: along edges, tips and veins, not on an open face.
