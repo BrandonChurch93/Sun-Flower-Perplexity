@@ -381,8 +381,10 @@ float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
 }
 // Hoar frost melts first where the sun lies on it: what is left of it on a face that takes this much sun.
+// uMelt is how far the morning has turned the frost to water. While it forms nothing is lost; once it runs, the white goes ahead of the dial and holds out longest in the shade.
+uniform float uMelt;
 float frostKept(float frost, float sunny) {
-  float from = 0.7 * sunny;
+  float from = 0.7 * sunny + uMelt * (0.5 + 0.3 * sunny);
   return smoothstep(from, from + 0.3, frost);
 }
 const vec3 FROST_WHITE = vec3(0.6, 0.62, 0.66);
@@ -412,9 +414,9 @@ vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit, float lying)
 float underFlash(float soaked) {
   return 1.0 - 0.8 * uAir.y * soaked;
 }
-// Frozen soil is darker and greyer than the same soil thawed.
+// Frozen soil is darker and greyer than the same soil thawed, and less so as the frost runs to water.
 vec3 frozen(vec3 albedo, float frost) {
-  return mix(albedo, dot(albedo, vec3(0.3, 0.6, 0.1)) * vec3(0.5, 0.74, 0.9), 0.9 * smoothstep(0.0, 0.3, frost));
+  return mix(albedo, dot(albedo, vec3(0.3, 0.6, 0.1)) * vec3(0.5, 0.74, 0.9), 0.9 * smoothstep(0.0, 0.3, frost) * (1.0 - 0.6 * uMelt));
 }
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
