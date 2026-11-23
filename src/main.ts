@@ -62,6 +62,7 @@ function start(): void {
         else if (options.mode === 'autopilot') startAutopilot(film, options, host)
         else {
           try {
+            await loading?.programs()
             await film.warm(options.tier, loading?.step)
             startLive(film, options, host, loading)
           } catch (error) {
