@@ -1,8 +1,8 @@
 # Looks of plant
 
-2026-11-23 02:10 UTC, at commit 3f90c74 of agent/plant.
+2026-11-23 02:40 UTC, at commit 647fc55 of agent/plant.
 
-Report sheets on the merged film, sky-b, all parts, film view, draft size
+Pure hold frames, far hairs by share, greener light through blades, less sky sheen in shade
 
-- `01-bars-9-21-29-29-35-47-53-57-61-69-still-wrong-bl.jpg`: Bars 9, 21, 29.29, 35, 47, 53, 57, 61, 69. Still wrong: blades in shade read blue grey from the sky fill (bars 29.29, 57, 61), lit blades at bar 53 are still quite yellow, the companion at bar 35 is a uniformly smaller copy
-- `02-exposure-check-at-bars-0-48-1-25-3-37-02-41-25-7.jpg`: Exposure check at bars 0.48, 1.25, 3, 37.02, 41.25, 73.5: the plant is neither black nor burnt. Still wrong: under the flash at 37.02 the blades are a vivid green, at 73.5 the plant is small and dim in the dusk
+- `01-bars-47-50-42-53-57-beside-the-approved-bloom-he.jpg`: Bars 47, 50.42, 53, 57 beside the approved bloom hero: lit blades are a deep green, shaded blades dark green. Still wrong: the lit green is more saturated than the reference and has little gold on the rims, shaded blades at lower left of bar 57 still lean blue
+- `02-bars-21-36-61-65-69-73-on-the-merged-film-after-.jpg`: Bars 21, 36, 61, 65, 69, 73 on the merged film after the hair changes. Still wrong: at bars 69 and 73 the plant is small and its rim of hairs is faint
