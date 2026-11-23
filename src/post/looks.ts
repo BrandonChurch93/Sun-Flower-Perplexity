@@ -1,7 +1,9 @@
 import { clamp, smoothstep } from '../core/curves.ts'
 import { shared } from '../core/shading.ts'
 import type { RGB, WorldDef } from '../core/world.ts'
+import { config } from '../config.ts'
 import type { Moment } from '../v2/api.ts'
+import { barAt, burstAtBar } from '../v2/clock.ts'
 import { weightsAt, type LookWeights } from '../v2/look.ts'
 import { outside, type SunInFrame } from './sun.ts'
 
@@ -109,7 +111,10 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   out.veilSun = edge * edge
   // The shafts stand in the frame only with the sun: they open over the first tenth of a frame height inside the edge and are gone at it.
   const near = sun ? smoothstep(0, 0.1, Math.min(sun.x * aspect, (1 - sun.x) * aspect, sun.y, 1 - sun.y)) : 0
-  out.shafts = near * clamp(Math.max(Math.pow(d.burst, 0.7), 0.6 * d.fog, 0.7 * low * (0.3 + 0.7 * d.evening)))
+  // The beams come up behind the tear: over the six frames after it opens, never ahead of the dial, and they leave with it.
+  let risen = 0
+  for (let i = 0; i < 6; i++) risen += burstAtBar(barAt(now.t - i / config.film.fps)) / 6
+  out.shafts = near * clamp(Math.max(Math.pow(Math.min(d.burst, risen), 0.7), 0.6 * d.fog, 0.7 * low * (0.3 + 0.7 * d.evening)))
   out.fan = d.burst
   out.cap = 0.7 * d.flash
   return out

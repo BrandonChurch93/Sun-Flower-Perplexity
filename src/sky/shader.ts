@@ -17,6 +17,7 @@ uniform vec3 uFlash;
 uniform vec4 uWeather;
 uniform vec4 uEffects;
 uniform float uTearAttack;
+uniform float uLunarMeter;
 uniform vec2 uTravel;
 uniform vec2 uSmear;
 uniform float uEvolve;
@@ -104,8 +105,14 @@ float toGap(vec3 p, vec3 d, float rough) {
   float ordinary = exp(-phi / (mix(0.00228, 0.0044, uGolden) * widthNoise));
   if (uEffects.w < 0.001 || phi > 0.10) return ordinary;
   ordinary = mix(ordinary, exp(-phi / 0.00105), uEffects.w);
-  float torn = riftAperture(p, d, rough, uEffects.w);
-  return max(ordinary, torn * smoothstep(0.0, 0.67, uEffects.w));
+  float torn = riftAperture(p, d, rough, uEffects.w) * smoothstep(0.0, 0.67, uEffects.w);
+  // As the burst falls, the held opening is a slit through several
+  // translucent layers, not a circular hole around the sun. The round
+  // component becomes a low, wide penumbra that cannot clear the deck.
+  float settled = smoothstep(0.915, 0.952, uWeather.z) * (1.0 - smoothstep(0.70, 0.91, uEffects.w));
+  float penumbra = exp(-phi / (0.00185 * widthNoise));
+  float porous = 0.23 * penumbra + (0.87 - 0.23 * penumbra) * torn;
+  return mix(max(ordinary, torn), porous, settled);
 }
 
 float profile(vec4 field, float tv, float storm) {
@@ -612,7 +619,13 @@ void main() {
     vec3 mist = uWetDome * (0.32 + 0.85 * exp(-16.0 * up)) * (0.96 + 0.04 * through);
     result = mix(result, mist, uWetHaze);
   }
-  outColor = vec4(result, clamp(mix(through * sheetTransmission, 1.0, uFirstBlue * 0.93), 0.0, 1.0));
+  float transmission = clamp(mix(through * sheetTransmission, 1.0, uFirstBlue * 0.93), 0.0, 1.0);
+  if (uLunarMeter > 0.5) {
+    float wash = 1.0 - smoothstep(0.015, 0.093, dot(result, vec3(0.21, 0.72, 0.07)));
+    outColor = vec4(transmission * wash, 0.0, 0.0, 1.0);
+  } else {
+    outColor = vec4(result, transmission);
+  }
 }
 `
 
@@ -639,6 +652,7 @@ uniform vec3 uSunFace;
 uniform vec3 uMoon;
 uniform vec3 uDisc;
 uniform vec3 uMoonDisc;
+uniform float uLunarVisibility;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
@@ -704,7 +718,9 @@ vec3 moonAt(vec3 d, vec3 air, float blur, float visible) {
   float detail = 0.75 + 0.25 * valueNoise(xy * 5.1 + 0.52);
   float glow = 0.0084 * exp(-(1.0 - n) * 127.0) + 0.035 * exp(-(1.0 - n) * 1760.0);
   float wash = 1.0 - smoothstep(0.015, 0.093, dot(air, vec3(0.21, 0.72, 0.07)));
-  return uMoonDisc * visible * wash * (phase * detail * edge * (0.0054 * 0.0054 / (r * r)) + glow);
+  float local = visible * wash;
+  float disc = uLunarVisibility < 0.0 ? local : uLunarVisibility;
+  return uMoonDisc * (disc * phase * detail * edge * (0.0054 * 0.0054 / (r * r)) + local * glow);
 }
 
 void main() {

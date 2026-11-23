@@ -1,12 +1,15 @@
 import * as THREE from 'three'
-import { config } from '../config.ts'
+import { config, frameCount } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import { lerp, smoothstep } from '../core/curves.ts'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared } from '../core/shading.ts'
 import type { RGB } from '../core/world.ts'
 import type { Moment, Quality, Sky, SkyLight, View } from '../v2/api.ts'
+import { blankMoment, momentAt, shutterSeconds } from '../v2/now.ts'
+import { rigAtFilm } from '../v2/rig.ts'
 import { Air } from './air.ts'
+import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
@@ -109,6 +112,7 @@ class FieldSky implements Sky {
   private readonly cloudSun = rgb()
   private readonly deck = rgb()
   private readonly moon = rgb()
+  private readonly lunarVisibility = new Float32Array(frameCount).fill(-1)
 
   async load(renderer: THREE.WebGLRenderer, _assets: Assets): Promise<void> {
     this.air = new Air()
@@ -136,6 +140,7 @@ class FieldSky implements Sky {
       uWeather: { value: new THREE.Vector4(0.2, 0.0, 1.0, 0.0) },
       uEffects: { value: new THREE.Vector4() },
       uTearAttack: { value: 0 },
+      uLunarMeter: { value: 0 },
       uTravel: { value: new THREE.Vector2() },
       uSmear: { value: new THREE.Vector2() },
       uEvolve: { value: 0 },
@@ -180,6 +185,7 @@ class FieldSky implements Sky {
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
       uDisc: { value: new THREE.Vector3() },
       uMoonDisc: { value: new THREE.Vector3() },
+      uLunarVisibility: { value: -1 },
     })
     const old = renderer.getRenderTarget()
     renderer.initTexture(this.air.texture)
@@ -189,6 +195,7 @@ class FieldSky implements Sky {
     renderer.initRenderTarget(this.primer)
     renderer.setRenderTarget(old)
     this.prime(renderer)
+    this.bakeLunarVisibility(renderer)
   }
 
   // Both programs, the screen triangle and the atlas mip chains already
@@ -203,6 +210,52 @@ class FieldSky implements Sky {
     for (const quality of qualities) this.cloud.render(renderer, this.maps[quality])
     this.display.render(renderer, this.primer)
     renderer.setRenderTarget(old)
+  }
+
+  private bakeLunarVisibility(renderer: THREE.WebGLRenderer): void {
+    // This readback is solely a photographic mask for the small disc.
+    // The scene's light and exposure never refer to it or to any GPU data.
+    const old = renderer.getRenderTarget()
+    const size = 5
+    const sample = new THREE.WebGLRenderTarget(size, size, { depthBuffer: false, stencilBuffer: false })
+    const bytes = new Uint8Array(size * size * 4)
+    const now = blankMoment()
+    const later = blankMoment()
+    const light: SkyLight = { direct: rgb(), horizon: rgb(), horizonSun: rgb(), zenith: rgb() }
+    const fps = config.film.fps
+    const elevation = new Float32Array(frameCount)
+    const raw = new Float32Array(frameCount)
+    const right = new THREE.Vector3().crossVectors(now.moon, new THREE.Vector3(0, 1, 0)).normalize()
+    const up = new THREE.Vector3().crossVectors(right, now.moon)
+    this.bore.setFromMatrix4(this.basis.makeBasis(right, up, now.moon))
+    this.extent.set(0.008, 0.008)
+    for (let f = 0; f < frameCount; f++) elevation[f] = momentAt(f / fps, now).sunElevationDeg
+    const u = this.cloud.uniforms
+    u.uLunarMeter.value = 1
+    try {
+      for (const [first, last] of quickMoonFrames(elevation, fps)) {
+        for (let f = Math.max(0, first - MOON_SHUTTER); f <= Math.min(frameCount - 1, last + MOON_SHUTTER); f++) {
+          momentAt(f / fps, now)
+          momentAt(f / fps + shutterSeconds, later)
+          this.setCloud(now, later, rigAtFilm(now.t).heightM, this.light(now, light), (now.sunElevationDeg + later.sunElevationDeg) * 0.5, levels.film)
+          this.cloud.render(renderer, sample)
+          renderer.readRenderTargetPixels(sample, 0, 0, size, size, bytes)
+          let total = 0
+          let count = 0
+          for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+            if ((x - 2) ** 2 + (y - 2) ** 2 > 4) continue
+            total += bytes[4 * (y * size + x)]
+            count++
+          }
+          raw[f] = total / (255 * count)
+        }
+        lunarShutter(raw, this.lunarVisibility, first, last)
+      }
+    } finally {
+      u.uLunarMeter.value = 0
+      renderer.setRenderTarget(old)
+      sample.dispose()
+    }
   }
 
   light(m: Moment, out: SkyLight): SkyLight {
@@ -271,22 +324,12 @@ class FieldSky implements Sky {
     return out
   }
 
-  prepare(renderer: THREE.WebGLRenderer, now: Moment, later: Moment, view: View): void {
-    const old = renderer.getRenderTarget()
-    const pose = view.pose
-    const e = (now.sunElevationDeg + later.sunElevationDeg) * 0.5
+  private setCloud(now: Moment, later: Moment, eyeM: number, light: SkyLight, e: number, level: typeof levels.film): void {
     const d = now.dials
     const wetHaze = wetHazeAt(d.wet, e)
     const moonClarity = 1 - 0.76 * wetHaze
     const tear = tearAt(d.overcast, d.sunThrough, d.burst)
-    const target = this.maps[view.quality]
-    const level = levels[view.quality]
     this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize()
-    this.bore.setFromMatrix4(this.basis.makeBasis(pose.right, pose.up, pose.forward))
-    this.project.copy(this.bore).transpose()
-    const tanX = config.camera.gateWidthMm / (2 * pose.focalMm)
-    const tanY = tanX * view.height / view.width
-    this.extent.set(Math.max(tanX * 1.23, tanX + 0.12), Math.max(tanY * 1.23, tanY + 0.12))
     this.air.skyAt(e, 1, Math.PI * 0.5, this.upper)
     this.air.skyAt(e, 0.03, Math.PI * 0.67, this.lower)
     this.air.skyAt(e, 0.027, 0, this.mist)
@@ -295,13 +338,12 @@ class FieldSky implements Sky {
     this.air.sunAt(e, this.cloudSun, true)
     this.air.moonAt(e, this.moon)
     this.air.deckAt(e, this.deck)
-    const night = smoothstep(-2.6, -12.6, e)
     const ending = d.evening * (1 - smoothstep(0.4, 2.7, e))
     const dawn = (1 - smoothstep(0.22, 0.68, d.lapse)) * (1 - d.evening) * (1 - d.overcast) * (1 - d.fog)
       * smoothstep(-3.2, 0.7, e) * (1 - smoothstep(2.9, 10.5, e))
     const u = this.cloud.uniforms
     u.uElevation.value = e
-    u.uEyeKm.value = 0.001 * pose.position.y
+    u.uEyeKm.value = 0.001 * eyeM
     u.uRayLight.value.copy(this.sun)
     u.uRayLight.value.y = Math.max(-0.024, this.sun.y)
     u.uRayLight.value.normalize()
@@ -326,7 +368,7 @@ class FieldSky implements Sky {
     if (wetHaze > 0) {
       const b = wetBlueAt(e)
       const tint = u.uWetDome.value.set(wetColour(b, 0), wetColour(b, 1), wetColour(b, 2))
-      tint.multiplyScalar(diffuse(view.light) / (Y[0] * tint.x + Y[1] * tint.y + Y[2] * tint.z))
+      tint.multiplyScalar(diffuse(light) / (Y[0] * tint.x + Y[1] * tint.y + Y[2] * tint.z))
     }
     u.uDawn.value = dawn
     u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
@@ -340,8 +382,28 @@ class FieldSky implements Sky {
     u.uRealSky.value = 0.5 * (now.t + later.t)
     u.uSteps.value = level.steps
     u.uLightSteps.value = level.light
+  }
+
+  prepare(renderer: THREE.WebGLRenderer, now: Moment, later: Moment, view: View): void {
+    const old = renderer.getRenderTarget()
+    const pose = view.pose
+    const e = (now.sunElevationDeg + later.sunElevationDeg) * 0.5
+    const d = now.dials
+    const moonClarity = 1 - 0.76 * wetHazeAt(d.wet, e)
+    const tear = tearAt(d.overcast, d.sunThrough, d.burst)
+    const target = this.maps[view.quality]
+    const level = levels[view.quality]
+    this.bore.setFromMatrix4(this.basis.makeBasis(pose.right, pose.up, pose.forward))
+    this.project.copy(this.bore).transpose()
+    const tanX = config.camera.gateWidthMm / (2 * pose.focalMm)
+    const tanY = tanX * view.height / view.width
+    this.extent.set(Math.max(tanX * 1.23, tanX + 0.12), Math.max(tanY * 1.23, tanY + 0.12))
+    this.setCloud(now, later, pose.position.y, view.light, e, level)
     this.cloud.render(renderer, target)
     renderer.setRenderTarget(old)
+    const u = this.cloud.uniforms
+    const night = smoothstep(-2.6, -12.6, e)
+    const ending = d.evening * (1 - smoothstep(0.4, 2.7, e))
     const v = this.display.uniforms
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
@@ -366,10 +428,11 @@ class FieldSky implements Sky {
     v.uSunFace.value.normalize()
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3 * moonClarity)
+    v.uLunarVisibility.value = this.lunarVisibility[now.frame] ?? -1
     const visibleDisk = smoothstep(0, 0.025, d.sunThrough)
     const glancing = ending * smoothstep(-0.79, -0.23, e) * (1 - smoothstep(0.2, 1.4, e))
     const disc = v.uDisc.value.fromArray(this.groundSun).multiplyScalar(49 * (1 - 0.44 * d.fog) * visibleDisk)
-    const peach = (0.35 * dawn + 0.40 * d.evening + 0.58 * d.fog) * disc.x
+    const peach = (0.35 * u.uDawn.value + 0.40 * d.evening + 0.58 * d.fog) * disc.x
     disc.y += peach * 0.44 + 4.2 * glancing
     disc.z += peach * 0.18 + 0.70 * glancing
     disc.x += 13.5 * glancing
