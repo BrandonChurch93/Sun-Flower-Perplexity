@@ -122,8 +122,8 @@ function ownAt(own: number[], k: number, t: number): number {
 }
 
 // How far a storm's gust throws a leaf, in radians: up or down by how it points to the wind, and round its stalk.
-const THROW_UP = 0.34
-const THROW_ROUND = 0.3
+const THROW_UP = 0.5
+const THROW_ROUND = 0.42
 // How far a leaf twitches from frame to frame in the fastest time lapse, in radians, and how much of that its tip adds.
 const TWITCH = 0.03
 const TWITCH_TIP = 0.05

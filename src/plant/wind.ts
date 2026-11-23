@@ -42,9 +42,10 @@ export const windToward = TOWARD
 // A storm's gusts at a place, 0 to about 1: each one rises fast, holds unevenly and lets go slower, and no two are alike.
 export function squall(time: number, x: number, z: number): number {
   const t = time - (x * TOWARD.x + z * TOWARD.z) / 6
-  const slow = 0.5 + 0.5 * Math.sin(t * 1.05 + 1.9 * Math.sin(t * 0.31 + 0.7) + 0.4)
+  const slow = 0.5 + 0.5 * Math.sin(t * 1.9 + 1.2 * Math.sin(t * 0.53 + 0.7) + 1.7)
   const quick = 0.5 + 0.5 * Math.sin(t * 2.7 + 1.3 * Math.sin(t * 0.83 + 2.1))
-  const push = slow * slow * (0.65 + 0.35 * quick)
+  // Between two gusts the storm still leans on everything.
+  const push = (0.22 + 0.78 * slow * slow) * (0.65 + 0.35 * quick)
   return push + 0.12 * slow * Math.sin(t * 7.3 + 2 * quick)
 }
 

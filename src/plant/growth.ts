@@ -61,7 +61,7 @@ const rnd = (i: number, j = 0): number => hash01(seedNow, i, j)
 const TAU = Math.PI * 2
 const FPS = config.film.fps
 // How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
-const GUST_LEAN = 0.2
+const GUST_LEAN = 0.3
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
 // How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.

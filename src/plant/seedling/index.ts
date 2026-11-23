@@ -23,7 +23,7 @@ const REST_SIDE = unit(1, 0, 0.12)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
-const CRUMB_MAX_M = 0.0006
+const CRUMB_MAX_M = 0.00095
 const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
@@ -99,7 +99,7 @@ function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
   if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0, beads: 0 }
   if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3, beads: 36 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 100 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 24, huskCrumbs: 16, beads: 100 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
