@@ -1,5 +1,7 @@
 # Looks of leaf-look
 
-2026-11-23 05:45 UTC, at commit 7bdd6fb of agent/leaf-look.
+2026-11-23 06:11 UTC, at commit 6a32ddc of agent/leaf-look.
 
-- `01-bar-29-7-frame-1502-before-v2-961048f-after-7bdd.jpg`: bar 29.7 (frame 1502): before v2 961048f, after 7bdd6fb, the key. Greener, no teal, ribs pale green; still too dark, glow weak (waits on constant uGlow), stem not mine yet
+- `01-scratch-t5-t6-key-at-29-7.jpg`: scratch t5 t6 key at 29.7
+- `02-41-25-t6-halfthin-v2-and-69.jpg`: 41.25 t6 halfthin v2 and 69
+- `03-69-and-73-t6-vs-t7.jpg`: 69 and 73 t6 vs t7
