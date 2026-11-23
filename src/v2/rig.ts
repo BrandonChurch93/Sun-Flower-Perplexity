@@ -47,6 +47,20 @@ const FROST = { from: 16.5, to: 26, back: 31.5, closer: 0.09, turnDeg: 2.4, rise
 // The storm hold: the lens stands low and a body's length back, so the whole young plant, the wet soil and the sky are in the frame, and creeps in.
 const STORM = { in: 28.5, from: 33, to: 41, out: 46.5 }
 const STORM_F_NUMBER = 5.6
+// The bloom: the lens closes on the bud over the two bars before it opens, gives way as the head opens toward it, and hands the frame to the crane from bar 65.
+const BLOOM = { from: 55, by: 57, until: 65, gone: 66.8, topY: 0.125, fNumber: 5.6 }
+// Lens to the stem's axis, in meters, while it is close.
+const bloomReach = new Monotone([
+  [55, 0.5],
+  [57, 0.5],
+  [58, 0.56],
+  [59, 0.67],
+  [60, 0.71],
+  [61, 0.73],
+  [63, 0.76],
+  [65, 0.8],
+  [67, 0.84],
+])
 // The top of the stem never comes nearer to the top of the frame than this, as a fraction of its height: the youngest leaves stand around it.
 const HEADROOM = { least: 0.05, soft: 0.02, from: 0.2, until: 0.3 }
 // The crane stays lower and nearer than the path it was drawn on: from just over the tops the field closes into one sea of heads and the plant stands large against it.
@@ -146,6 +160,14 @@ export function rigAtFilm(seconds: number): Rig {
     rig.fNumber = lerp(rig.fNumber, STORM_F_NUMBER, w)
     // Between the two cameras the aim follows the top of the plant and the horizon in equal parts, so the tilt changes direction once and not twice.
     rig.aimHeightM = 0.5 * (aimForTop(rig, topM, y) + aimForHorizon(rig, horizon))
+  }
+
+  const close = smootherstep(BLOOM.from, BLOOM.by, b) * (1 - smoothstep(BLOOM.until, BLOOM.gone, b))
+  if (close > 0) {
+    const y = topOf(rig, topM)
+    rig.distanceM = lerp(rig.distanceM, bloomReach.at(b), close)
+    rig.aimHeightM = aimForTop(rig, topM, lerp(y, BLOOM.topY, close))
+    rig.fNumber = lerp(rig.fNumber, BLOOM.fNumber, close)
   }
 
   const y = topOf(rig, topM)

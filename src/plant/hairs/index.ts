@@ -142,15 +142,24 @@ vec3 hairPoint(float t) {
   return hairRoot.xyz + (hairDir * t + hairBend * (t * t)) * hairRoot.w;
 }
 
-// Four texels a hair: its root and length, its root at the close of the shutter and its own number, its direction and how many hairs it stands for, its direction at the close.
+// A direction kept in two numbers.
+vec3 hairWay(vec2 e) {
+  vec3 v = vec3(e, 1.0 - abs(e.x) - abs(e.y));
+  float t = max(-v.z, 0.0);
+  v.xy += vec2(v.x >= 0.0 ? -t : t, v.y >= 0.0 ? -t : t);
+  return normalize(v);
+}
+
+// Four texels a hair: its root and length in the first slot, its root in the second and its own number, its direction and how many hairs it stands for, its direction in the second slot in two numbers with its length there and its place among the hairs.
 void readHair(int k) {
   ivec2 at = ivec2((k & 511) * 4, k >> 9);
   vec4 a = texelFetch(uHairs, at, 0);
   vec4 b = texelFetch(uHairs, at + ivec2(1, 0), 0);
   vec4 c = texelFetch(uHairs, at + ivec2(2, 0), 0);
   vec4 d = texelFetch(uHairs, at + ivec2(3, 0), 0);
-  hairRoot = vec4(mix(a.xyz, b.xyz, plantBlend()), a.w);
-  hairDir = normalize(mix(c.xyz, d.xyz, plantBlend()));
+  float laid = mix(a.w, d.z, plantLead());
+  hairRoot = vec4(mix(a.xyz, b.xyz, plantBlend()), laid);
+  hairDir = normalize(mix(c.xyz, hairWay(d.xy), plantBlend()));
   hairStand = hairDir;
   hairOwn = b.w;
   hairShare = c.w;
@@ -201,7 +210,7 @@ void readHair(int k) {
     float d2 = fract(hairOwn * 271.93 + 0.11);
     float d3 = fract(hairOwn * 331.71 + 0.59);
     // Down under dew or rain shows at its full length, each strand outlined by the water on it; dry, only its felted foot does.
-    float downy = smoothstep(0.0003, 0.0004, a.w) * (1.0 - coat) * step(0.0001, uHairWidth);
+    float downy = smoothstep(0.0003, 0.0004, laid) * (1.0 - coat) * step(0.0001, uHairWidth);
     float longer = mix(1.0, 1.4 + 2.4 * d1, downy * damp);
     hairRoot.w *= mix(1.0, mix(0.5 + 0.9 * d1 * d1, 0.3 + 0.6 * d1 * d1, coat), (1.0 - downy) * damp) * longer;
     hairDir = normalize(hairDir + (e1 * cos(6.2832 * d2) + e2 * sin(6.2832 * d2)) * (0.7 * damp * d3));
@@ -586,6 +595,7 @@ export class HairSet {
   private readonly key = new Float64Array(KEYS)
   private readonly keyWas = new Float64Array(KEYS).fill(NaN)
   private readonly stands: { held: number }
+  private readonly keyed: { value: number }
   private readonly rows: number
   private readonly views = new Map<number, Float32Array>()
   private kept = 0
@@ -600,6 +610,7 @@ export class HairSet {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
     this.stands = options.stands ?? { held: 0 }
+    this.keyed = (options.own?.uOwnKeys as { value: number } | undefined) ?? { value: 0 }
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.leans = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.at = new Float32Array(count * 2)
@@ -732,13 +743,19 @@ export class HairSet {
     let n = 0
     let nearest = Infinity
     let longest = 0
+    // When both slots are keys a hair is as long as the mix of them says, and it is kept when it has a length in either.
+    const keyed = this.keyed.value > 0
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
-      const length = ra[o + 3]
+      const here = ra[o + 3] > 0
+      const there = keyed ? rb[o + 3] > 0 : here
+      const length = keyed ? Math.max(ra[o + 3], rb[o + 3]) : ra[o + 3]
       if (!(length > 0)) continue
-      const x = ra[o]
-      const y = ra[o + 1]
-      const z = ra[o + 2]
+      // A hair that has no size in one slot has no place there either: it stays where the other has it.
+      const from = here ? ra : rb
+      const x = from[o]
+      const y = from[o + 1]
+      const z = from[o + 2]
       const long = length * size
       let w: number
       let px: number
@@ -782,10 +799,16 @@ export class HairSet {
         share = s / (keep <= 1 ? keep * (1 - 0.5 * THIN_EASE) : whole + 0.5 * (1 - whole) * (1 + (keep - 1) / (THIN_EASE * keep)))
       }
       // A hair there is drawn long enough to stand off the outline, with the light of its true length and a little more.
-      const stands = Math.max(length, (wide * WIDE_LONG_PX * (0.6 + 0.8 * ((own * 59.31 + 0.19) % 1))) / scale)
+      const least = (wide * WIDE_LONG_PX * (0.6 + 0.8 * ((own * 59.31 + 0.19) % 1))) / scale
+      const stands = Math.max(length, least)
       share *= (length / stands) * (1 + (WIDE_GAIN - 1) * wide * (1 - fine))
-      const la2 = norm(la[o], la[o + 1], la[o + 2]) || 1
-      const lb2 = norm(lb[o], lb[o + 1], lb[o + 2]) || 1
+      const wa = here ? la : lb
+      const wb = !keyed || there ? lb : la
+      const la2 = norm(wa[o], wa[o + 1], wa[o + 2]) || 1
+      const lb2 = Math.abs(wb[o]) + Math.abs(wb[o + 1]) + Math.abs(wb[o + 2]) || 1
+      const bx = wb[o] / lb2
+      const by = wb[o + 1] / lb2
+      const fold = wb[o + 2] < 0
       const q = n * 16
       at[n * 2] = px
       at[n * 2 + 1] = py
@@ -793,20 +816,19 @@ export class HairSet {
       out[q] = x
       out[q + 1] = y
       out[q + 2] = z
-      out[q + 3] = stands
-      // A hair that has no size in the second slot has no place there either: it stays where the first has it.
-      const there = rb[o + 3] > 0
-      out[q + 4] = there ? rb[o] : x
-      out[q + 5] = there ? rb[o + 1] : y
-      out[q + 6] = there ? rb[o + 2] : z
+      out[q + 3] = keyed ? (here ? Math.max(ra[o + 3], least) : 0) : stands
+      const second = rb[o + 3] > 0
+      out[q + 4] = second ? rb[o] : x
+      out[q + 5] = second ? rb[o + 1] : y
+      out[q + 6] = second ? rb[o + 2] : z
       out[q + 7] = own
-      out[q + 8] = la[o] / la2
-      out[q + 9] = la[o + 1] / la2
-      out[q + 10] = la[o + 2] / la2
+      out[q + 8] = wa[o] / la2
+      out[q + 9] = wa[o + 1] / la2
+      out[q + 10] = wa[o + 2] / la2
       out[q + 11] = share
-      out[q + 12] = lb[o] / lb2
-      out[q + 13] = lb[o + 1] / lb2
-      out[q + 14] = lb[o + 2] / lb2
+      out[q + 12] = fold ? (1 - Math.abs(by)) * (bx >= 0 ? 1 : -1) : bx
+      out[q + 13] = fold ? (1 - Math.abs(bx)) * (by >= 0 ? 1 : -1) : by
+      out[q + 14] = keyed ? (second ? Math.max(rb[o + 3], least) : 0) : stands
       out[q + 15] = i / this.count
       n++
       if (w < nearest) nearest = w
@@ -841,8 +863,9 @@ export class HairSet {
       for (let k = 0; k < n && picked < most; k++) {
         const q = k * 16
         if (out[q + 11] <= 0) continue
-        const drop = wet > 0 && out[q + 3] * size >= DROP_FROM_M && (out[q + 7] * 71.93 + 0.5) % 1 < DROP_SHARE
-        if (!drop && (!(rimed || dewy) || out[q + 3] * size < from || (out[q + 7] * 211.31 + 0.77) % 1 > share)) continue
+        const long = Math.max(out[q + 3], out[q + 14]) * size
+        const drop = wet > 0 && long >= DROP_FROM_M && (out[q + 7] * 71.93 + 0.5) % 1 < DROP_SHARE
+        if (!drop && (!(rimed || dewy) || long < from || (out[q + 7] * 211.31 + 0.77) % 1 > share)) continue
         this.picks[picked++] = k
       }
       this.pickTexture.needsUpdate = true
