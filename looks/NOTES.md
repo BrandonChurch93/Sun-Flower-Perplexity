@@ -1,9 +1,9 @@
 # Looks of sky-b
 
-2026-11-23 09:00 UTC, at commit 84d908e of agent/sky-b.
+2026-11-23 09:51 UTC, at commit e30af4b of agent/sky-b.
 
-Sky B post-storm starlight at 84d908e. These preview draws use the shared v2 scene and DECK_GOES = 42 in the render worktree only; no clock changes are in the sky commit. The finale and cloud transition proof remains at 9d795d3.
+Compared with bf55bd1 at 320 × 180, one sample. Night 8 five-frame lunar dip 24.93 to 0.21. Dawn 5 maximum frame-mean step 13.24 to 9.56; isolation identifies the thin edge as the separate fog/mist draws. All six required guard frames have zero differing RGB pixels.
 
-- `01-first-post-storm-night-seven-anchors-from-dusk-t.jpg`: First post-storm night, seven anchors from dusk to dawn
-- `02-the-storm-hold-the-two-break-frames-and-the-next.jpg`: The storm hold, the two break frames, and the next night
-- `03-f2173-first-post-storm-night-full-preview-resolu.jpg`: F2173 first post-storm night, full preview resolution
+- `01-night-8-moon-at-matched-frames.jpg`: Night 8 moon at matched frames
+- `02-dawn-5-before-and-after-at-matched-frames.jpg`: Dawn 5 before and after at matched frames
+- `03-dawn-5-separated-sky-and-weather-controls.jpg`: Dawn 5 separated sky and weather controls
