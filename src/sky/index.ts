@@ -26,6 +26,8 @@ const Y = [0.2126, 0.7152, 0.0722] as const
 const LOW_COOL = [0.67, 1.08, 1.46] as const
 const OPEN_DOME = [0.014, 0.058, 0.108] as const
 const LAST_DOME = [0.012, 0.047, 0.083] as const
+const EVENING_DOME = [0.61, 1.04, 1.64] as const
+const EVENING_GLOW = [0.24, 0.056, 0.011] as const
 
 function coolDay(e: number, over: number, fog: number, evening: number, burst: number): number {
   return smoothstep(-0.65, 1.7, e) * (1 - smoothstep(13, 21, e)) * (1 - evening) * (1 - over) * (1 - fog) * (1 - burst)
@@ -37,6 +39,16 @@ function openingAt(bar: number): number {
 
 function finaleAt(bar: number): number {
   return smoothstep(70.55, 71.75, bar)
+}
+
+// Replace the cumulus only for the last time-lapse dusk and the late crane.
+// Phase rejects the mornings inside the first bar range.
+function eveningStreaksAt(m: Moment, elevation: number): number {
+  const b = m.bar
+  const short = smoothstep(53, 53.22, b) * (1 - smoothstep(56.85, 57, b))
+    * smoothstep(0.60, 0.76, m.phase) * smoothstep(-12, -6.5, elevation)
+  const long = smoothstep(65, 65.35, b) * (1 - smoothstep(75, 75.25, b))
+  return Math.max(short, long) * (1 - smoothstep(8, 17, elevation)) * (1 - smoothstep(0.10, 0.27, m.dials.overcast))
 }
 
 // Under a remaining deck, high sun transmission means a local opening
@@ -109,6 +121,7 @@ class FieldSky implements Sky {
       uRealSky: { value: 0 },
       uGolden: { value: 0 },
       uLate: { value: 0 },
+      uStreaks: { value: 0 },
       uDawn: { value: 0 },
       uOpening: { value: 0 },
       uFirstBlue: { value: 0 },
@@ -150,9 +163,14 @@ class FieldSky implements Sky {
     for (const quality of qualities) renderer.initRenderTarget(this.maps[quality])
     renderer.initRenderTarget(this.primer)
     renderer.setRenderTarget(old)
+    this.prime(renderer)
   }
 
-  warm(renderer: THREE.WebGLRenderer): void {
+  // Both programs, the screen triangle and the atlas mip chains already
+  // exist when load resolves, even for a caller that skips film warm-up.
+  warm(_renderer: THREE.WebGLRenderer): void {}
+
+  private prime(renderer: THREE.WebGLRenderer): void {
     const old = renderer.getRenderTarget()
     const u = this.cloud.uniforms
     u.uSteps.value = 3
@@ -173,7 +191,8 @@ class FieldSky implements Sky {
     this.air.deckAt(e, this.deck)
     const over = d.overcast
     const blend = smoothstep(0.40, 1, over)
-    const fair = 0.21 * d.cover * (1 - blend)
+    const sheets = eveningStreaksAt(m, e)
+    const fair = 0.21 * d.cover * (1 - blend) * (1 - 0.82 * sheets)
     const cold = smoothstep(0.25, 0.84, d.fog)
     const burst = tearAt(over, d.sunThrough, d.burst)
     const lunar = m.moon.y * 0.018
@@ -181,6 +200,9 @@ class FieldSky implements Sky {
     const lowCool = coolDay(e, over, d.fog, d.evening, burst)
     const first = openingAt(m.bar)
     const last = finaleAt(m.bar)
+    const sheetCool = sheets * (1 - last)
+    const reflected = sheetCool * (1 - smoothstep(-3.1, -0.20, e))
+      * Math.exp(-((0.027 * 37) ** 2) - 21 * (1 - Math.cos(Math.asin(0.027) - e * RAD)))
     const zLum = Y[0] * out.zenith[0] + Y[1] * out.zenith[1] + Y[2] * out.zenith[2]
     const hLum = Y[0] * out.horizon[0] + Y[1] * out.horizon[1] + Y[2] * out.horizon[2]
     for (let c = 0; c < 3; c++) {
@@ -197,6 +219,9 @@ class FieldSky implements Sky {
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), mistLevel * (c === 0 ? 1.39 : c === 1 ? 1.19 : 1.07), cold * 0.76)
       out.zenith[c] = lerp(out.zenith[c], zLum * LOW_COOL[c] * 1.12, 0.54 * lowCool)
       out.horizon[c] = lerp(out.horizon[c], hLum * LOW_COOL[c] * 1.16, 0.65 * lowCool)
+      out.zenith[c] = lerp(out.zenith[c], zLum * EVENING_DOME[c], 0.57 * sheetCool)
+      out.horizon[c] = lerp(out.horizon[c], hLum * EVENING_DOME[c], 0.20 * sheetCool)
+      out.horizonSun[c] += EVENING_GLOW[c] * reflected
       out.zenith[c] = lerp(lerp(out.zenith[c], OPEN_DOME[c] * 0.56, first), LAST_DOME[c] * 0.69, last)
       out.horizon[c] = lerp(lerp(out.horizon[c], OPEN_DOME[c] * 1.7, first), LAST_DOME[c] * 1.8, last)
       out.horizonSun[c] = lerp(out.horizonSun[c], OPEN_DOME[c] * (c === 0 ? 3.0 : 1.95), 0.75 * first)
@@ -250,6 +275,7 @@ class FieldSky implements Sky {
     u.uEffects.value.set(d.evening, d.rain, d.flash, tear)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
+    u.uStreaks.value = eveningStreaksAt(now, e)
     u.uDawn.value = dawn
     u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
     u.uFirstBlue.value = openingAt(now.bar)
@@ -268,7 +294,11 @@ class FieldSky implements Sky {
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
     v.uElevation.value = e
-    v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e)))
+    // Stars need clear air as well as a hole in the cloud. Residual storm
+    // moisture lingers after the rain dial falls, and dims point sources
+    // and the galaxy without relaxing the cloud transmission mask.
+    const starClarity = 1 - 0.985 * smoothstep(0.24, 0.45, d.wet)
+    v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e))) * starClarity
     v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
     v.uRainFog.value = d.rain * d.overcast
