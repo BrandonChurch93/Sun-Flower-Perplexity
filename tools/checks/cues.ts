@@ -5,6 +5,7 @@ import { config } from '../../src/config.ts'
 import type { Args } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { shutterSeconds } from '../../src/v2/now.ts'
+import { SUN } from '../../src/v2/clock.ts'
 import { barAt, barTime, clockOf, crossing, FPS, FRAME, FRAMES, hitFrame, holds, nearestBar, secondsOf, type Clock } from './lib/film.ts'
 import { meantCuts, sameCuts } from './lib/meant.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
@@ -16,6 +17,8 @@ const MAP = at(config.music.map)
 export interface Events {
   sunrises: number[]
   sunsets: number[]
+  // When the sun last falls through the height the film gives it on the bar line that opens its last section (SUN.last of src/v2/clock.ts): its lower edge on the far ridge.
+  lastSet: number | null
   // The first frame of each stretch of lightning.
   strikes: number[]
   // The first and the last frame on which the plant's clock has the value it has in the middle of each hold.
@@ -34,11 +37,13 @@ export function eventsOf(film: Clock): Events {
   let rainFrom = -1
   let burstFrom = -1
   let bloomFrom = -1
+  let lastSet: number | null = null
   let before = film.at(0)
   for (let f = 1; f < FRAMES; f++) {
     const now = film.at(secondsOf(f))
     if (before.sunElevationDeg < 0 && now.sunElevationDeg >= 0) sunrises.push(crossing(elevation, secondsOf(f - 1), secondsOf(f)))
     if (before.sunElevationDeg >= 0 && now.sunElevationDeg < 0) sunsets.push(crossing(elevation, secondsOf(f - 1), secondsOf(f)))
+    if (before.sunElevationDeg >= SUN.last && now.sunElevationDeg < SUN.last) lastSet = crossing((s) => elevation(s) - SUN.last, secondsOf(f - 1), secondsOf(f))
     if (before.flash < 0.02 && now.flash >= 0.02) strikes.push(f)
     if (rainFrom < 0 && now.rain > 0) rainFrom = f
     if (burstFrom < 0 && now.burst > 0) burstFrom = f
@@ -56,7 +61,7 @@ export function eventsOf(film: Clock): Events {
     while (last < FRAMES - 1 && rests(last + 1)) last++
     return { id: h.id, first, last }
   })
-  return { sunrises, sunsets, strikes, still, rainFrom, burstFrom, bloomFrom }
+  return { sunrises, sunsets, lastSet, strikes, still, rainFrom, burstFrom, bloomFrom }
 }
 
 const onLine = (seconds: number, bar: number): boolean => Math.abs(seconds - barTime(bar)) <= FRAME + 1e-9
@@ -97,7 +102,8 @@ function kindOf(c: Compiled): string | null {
   if (/hold/.test(text)) return 'hold-in'
   if (/break/.test(text)) return 'break'
   if (/rain/.test(text)) return 'rain'
-  if (/bloom|petal/.test(text)) return 'bloom'
+  // The bloom is what a cue does, not what it is filed under: "bloom-move-in" is a move of the camera.
+  if (/bloom|petal/.test(c.do.toLowerCase())) return 'bloom'
   if (/\bcuts?\b/.test(text)) return 'cut'
   return null
 }
@@ -118,10 +124,12 @@ export async function run(args: Args): Promise<void> {
   findings.push({ ok: offLine === 0 && e.sunrises.length > 0, what: `${e.sunrises.length} sunrises, at bars ${e.sunrises.map(nearestBar).join(', ')}: ${offLine === 0 ? 'each crosses the horizon within one frame of its bar line' : `${offLine} of them miss their bar line by more than a frame`}, the worst by ${ms(Math.max(...e.sunrises.map((s) => Math.abs(s - barTime(nearestBar(s))))))}` })
 
   const last = config.sections[config.sections.length - 1]
-  const finalSet = e.sunsets[e.sunsets.length - 1]
-  const setOk = finalSet !== undefined && onLine(finalSet, last.fromBar)
-  if (finalSet !== undefined) note(setOk, 'the last sunset', last.fromBar, finalSet, `The sun must touch the horizon on the bar line that opens "${last.name}"`)
-  findings.push({ ok: setOk, what: setOk ? `the last sunset crosses the horizon ${ms(finalSet - barTime(last.fromBar))} from bar ${last.fromBar}, where "${last.name}" opens` : `the last sunset is not on bar ${last.fromBar}, where "${last.name}" opens` })
+  // The last sun does not go under the horizon: it sets behind the far ridge. The film says how high the sun stands when its lower edge is on the ridge (SUN.last), and that height must be reached on the bar line.
+  // This holds the time. Whether the edge sits on the ridge in the picture is for the eye.
+  const finalSet = e.lastSet
+  const setOk = finalSet !== null && onLine(finalSet, last.fromBar)
+  if (finalSet !== null) note(setOk, 'the last sunset', last.fromBar, finalSet, `The sun must come down to ${SUN.last} degrees, its lower edge on the far ridge, on the bar line that opens "${last.name}"`)
+  findings.push({ ok: setOk, what: setOk && finalSet !== null ? `the last sunset: the sun comes down to ${SUN.last} degrees (its lower edge on the far ridge, SUN.last of src/v2/clock.ts) ${ms(finalSet - barTime(last.fromBar))} from bar ${last.fromBar}, where "${last.name}" opens; it stands at ${film.at(secondsOf(FRAMES - 1)).sunElevationDeg.toFixed(2)} degrees on the last frame` : `the last sunset is not on bar ${last.fromBar}, where "${last.name}" opens` })
 
   for (const h of holds) {
     const s = e.still.find((x) => x.id === h.id) as Events['still'][number]
@@ -157,7 +165,7 @@ export async function run(args: Args): Promise<void> {
       const kind = kindOf(c)
       let ok = true
       if (kind === 'sunrise') ok = e.sunrises.some((s) => Math.abs(s - c.t) <= FRAME + 1e-9)
-      else if (kind === 'sunset') ok = e.sunsets.some((s) => Math.abs(s - c.t) <= FRAME + 1e-9)
+      else if (kind === 'sunset') ok = [...e.sunsets, ...(e.lastSet === null ? [] : [e.lastSet])].some((s) => Math.abs(s - c.t) <= FRAME + 1e-9)
       else if (kind === 'strike') ok = e.strikes.includes(c.frame)
       else if (kind === 'hold-in') ok = e.still.some((s) => s.first === c.frame)
       else if (kind === 'hold-out') ok = e.still.some((s) => s.last === c.frame - 1)

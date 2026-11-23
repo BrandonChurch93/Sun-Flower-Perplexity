@@ -44,6 +44,8 @@ export async function run(args: Args): Promise<void> {
     }
     const closes = filmClock.at(secondsOf(t.last)).sunElevationDeg < 0
     for (const [side, from, to] of (closes ? [['dusk', t.first, t.last]] : [['dusk', t.first, midnight], ['dawn', midnight, t.last]]) as ['dusk' | 'dawn', number, number][]) {
+      // A film that opens in the night has no first dusk.
+      if (to <= from) continue
       const steps: { frame: number; mean: number; change: number }[] = []
       let before: Small | null = null
       let missing = 0
@@ -97,7 +99,7 @@ export async function run(args: Args): Promise<void> {
   const older = olderFilm(run)
   if (older) findings.push({ ok: true, expected: true, what: older })
   const rows = sides.map((s) => (s.frames === 0 || s.missing > 0
-    ? [s.night, s.side, `${s.from} to ${s.to}`, `${s.missing} not drawn`, '', '', '', '', '', '', '']
+    ? [s.night, s.side, `${s.from} to ${s.to}`, `${s.missing} not drawn`, '', '', '', '', '', '', '', '']
     : [s.night, s.side, `${s.from} to ${s.to}`, s.meanStep.toFixed(2), s.worstStep.toFixed(1), s.worstStepAt, s.worstStep > limit ? 'OVER' : 'ok', s.medianChange.toFixed(2), s.change.toFixed(2), s.worstChange.toFixed(1), s.worstChangeAt, s.stands.join(' ')]))
   const head = ['night', 'side', 'frames', 'mean step of the mean', 'worst', 'into frame', `limit ${limit}`, 'picture change, median', 'mean', 'worst', 'into frame', 'frames that stand out']
   const result = finish({ check: 'nights', name: 'nights.list', sentence: SENTENCE, subject: 'every dusk and every dawn of the film, frame to frame', broken: null, complete: waiting === 0 && !older, findings, table: { head, rows }, data: { limit, sides } })
