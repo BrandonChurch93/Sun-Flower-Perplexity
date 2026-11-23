@@ -13,6 +13,7 @@ import { bitrateFor, encodeFrames, probe, probeLine } from './lib/video.ts'
 // One part of the film: frames --from to --to, drawn by several pages at once and encoded so that parts join without a seam.
 //   npm run part -- --from 0 --to 317 --sky sky-b
 //   npm run part -- --from 0 --to 317 --sky sky-b --format 16x9 --tier draft --jobs 3
+//   npm run part -- --from 0 --to 317 --size 640x360        a smaller picture for a first watch of the motion
 // A part that stops carries on where it stopped: frames already on disk from the same build are kept.
 
 const args = parseArgs()
@@ -25,7 +26,11 @@ if (!isTier(tier)) throw new Error(`unknown tier "${tier}"`)
 const sky = str(args, 'sky', 'sky')
 const jobs = Math.max(1, Math.round(num(args, 'jobs', Math.max(1, os.cpus().length - 1))))
 
-const dir = path.join(WORK, 'parts', `${format}-${tier}`)
+const size = typeof args.size === 'string' ? args.size : ''
+const sized = /^(\d+)x(\d+)$/.exec(size)
+if (size && !sized) throw new Error(`--size wants a width and a height, as in 640x360, not "${size}"`)
+const extra = new URLSearchParams(sized ? { sky, w: sized[1], h: sized[2] } : { sky }).toString()
+const dir = path.join(WORK, 'parts', `${sized ? size : format}-${tier}`)
 const frames = path.join(dir, 'frames')
 fs.mkdirSync(frames, { recursive: true })
 const name = `part-${String(from).padStart(5, '0')}-${String(to).padStart(5, '0')}`
@@ -36,7 +41,7 @@ const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding:
 const release = await takeRenderSlot('part')
 const sessions: Session[] = []
 try {
-  const first = await openSession({ format, extra: new URLSearchParams({ sky }).toString(), what: 'part', slot: false })
+  const first = await openSession({ format, extra, what: 'part', slot: false })
   sessions.push(first)
   const info = await first.info()
   const drawn = await first.page.evaluate(() => window.showcase.sky())
@@ -48,8 +53,8 @@ try {
     for (const f of fs.readdirSync(frames)) fs.rmSync(path.join(frames, f), { force: true })
     fs.writeFileSync(stamp, `${now}\n`)
   }
-  for (let i = 1; i < jobs; i++) sessions.push(await openSession({ format, extra: new URLSearchParams({ sky }).toString(), what: 'part', slot: false }))
-  console.log(`part · frames ${from} to ${to} · ${format} · ${tier} · sky ${sky} · ${jobs} pages · engine ${info.engineHash} · commit ${commit}`)
+  for (let i = 1; i < jobs; i++) sessions.push(await openSession({ format, extra, what: 'part', slot: false }))
+  console.log(`part · frames ${from} to ${to} · ${sized ? size : format} · ${tier} · sky ${sky} · ${jobs} pages · engine ${info.engineHash} · commit ${commit}`)
 
   const todo: number[] = []
   for (let f = from; f <= to; f++) if (!fs.existsSync(fileOf(f))) todo.push(f)
