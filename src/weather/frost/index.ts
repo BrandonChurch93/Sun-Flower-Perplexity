@@ -155,6 +155,7 @@ void main() {
     size = mix(size, most * (1.0 - exp(-size / most)), close);
     if (c.w < -0.5) size = mix(size, min(size, FACE_MOST_M * plantSize() * (0.3 + 0.7 * hash(own, 34.0))), close);
   }
+  bool lies = c.w < -0.5 && !bristle;
   vec3 stretch6 = a.xyz * (6.2832 / THAW_PATCH_M);
   float patch6 = smoothstep(0.2, 0.8, 0.5 + 0.25 * (sin(stretch6.x + 1.9 * sin(stretch6.z * 0.57 + 1.1)) + sin(stretch6.y * 0.79 + 1.4 * sin(stretch6.x * 0.43 + 0.7))));
   // The water's owner and the ice agree on one front that runs down a blade from its tip: ahead of it ice only, behind it the ice is a bead that gives way to the water. Each crystal is that bead by the time the front reaches it, the sun's side and the thin patches soonest.
@@ -195,7 +196,7 @@ void main() {
     wide = (spike ? 0.075 : 0.09) * size;
   }
   // A melting blade keeps its water: as it shortens it thickens into a stub.
-  wide = max(wide, (needle == 0 ? 0.0002 : 0.00015) * plantSize()) * (1.0 - 0.35 * close) * (1.0 + 2.5 * melt * close);
+  wide = max(wide, (needle == 0 ? 0.0002 : 0.00015) * plantSize()) * (1.0 - 0.35 * close) * (1.0 + 2.5 * melt * close) * (lies ? 1.0 - 0.55 * close : 1.0);
   if (strip > 4 && strip < 13) {
     // Side blades leave the spine at 60 degrees, a pair at a time from the root to the tip, each pair shorter than the last.
     int blade = strip - 5;
@@ -216,7 +217,7 @@ void main() {
     }
   }
   if (bristle) {
-    if (strip == 0) wide = SLEEVE_M * plantSize() * (0.7 + 0.6 * hash(own, 27.0)) * (0.6 + 0.4 * late);
+    if (strip == 0) wide = min(SLEEVE_M * plantSize() * (0.7 + 0.6 * hash(own, 27.0)), 0.12 * size) * (0.6 + 0.4 * late);
     else if (strip < 5) reach = 0.0;
     if (strip == 0) kind = 3.0;
   }
@@ -225,7 +226,7 @@ void main() {
   float kept = fill || bristle ? 1.0 : thin * mix(spike ? SPIKE_LEAST : PATCH_LEAST, spike ? SPIKE_MOST : PATCH_MOST, lush);
   float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept)) * (fill || bristle || ridge ? close : 1.0);
   // Between two tufts the edge is all but bare.
-  if (!bristle) stays *= mix(1.0, smoothstep(-0.08, 0.1, tuft + 0.3 * (hash(own, 32.0) - 0.5)), close);
+  if (!bristle) stays *= mix(1.0, smoothstep(-0.08, 0.1, tuft + 0.3 * (hash(own, 32.0) - 0.5)) * (lies ? 0.55 : 1.0), close);
   wide /= thin;
 
   vec3 here = foot + axis * (reach * end);
