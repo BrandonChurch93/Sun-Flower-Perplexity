@@ -1,12 +1,11 @@
-# Status 20
+# Status 22
 
-2026-11-23 09:32 UTC
+2026-11-23 10:20 UTC
 
-- Status 20 · Phase 3. Frost, ground and rain merged. A close shot can now be sharp over a range of depths: the first frost close shot holds the whole leaf sharp at film size, so the crystals read. Plant found the cause of a small stutter of the head at the bloom and is curing it.
-- Next: The same treatment for the second and third frost shots, the head owner's rays and disc, then the whole film pass. Time used: 11.5 h of 30 h.
+- Status 22 · Phase 3. Each of the three frost close shots now has a grade of its own, and the first is reframed so the whole leaf sits in the middle of the picture. In the second the sky falls to a steel blue behind the lit fringe and the sun has a hot core through the mist. In the third the ground is darker behind the lit blade. The drop in the third shot now falls at real speed. Measured: 32 test files, 186 tests pass, among them a new one that proves the grades touch no frame outside the close shots.
+- Next: Break up the comb of hairs on the stalk and give the stem a slender end, grain in the frost banks, keep the green between the banks on the first leaf, take the frost off the ground as it thaws, then the blockout of the whole film. Time used: 12.3 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf
-- `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now
-- `status-3.jpg`: Frame 1054 beside its reference picture
-- `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
+- `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it
+- `status-2.jpg`: Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next
+- `status-3.jpg`: Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand

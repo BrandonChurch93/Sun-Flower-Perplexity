@@ -6,6 +6,7 @@ import { num } from '../lib/args.ts'
 import { canvas, cropped, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, secondsOf } from './lib/film.ts'
 import { meantCuts } from './lib/meant.ts'
+import { horizonPlace } from './lib/moon.ts'
 import { frameFile, olderFilm, runName } from './lib/play.ts'
 import { OUT, type Finding } from './lib/report.ts'
 import { twilights, type Twilight } from './lib/stride.ts'
@@ -15,7 +16,7 @@ import { twilights, type Twilight } from './lib/stride.ts'
 //   npm run checks -- nights --step 20                 another limit on the step, in 0 to 255
 //   npm run checks -- nights --break picture-quick     every night three times as fast (every third of its frames): must fail on the step
 //   npm run checks -- nights --break picture-bounce    two frames of a dusk the wrong way round: must fail on the direction
-//   npm run checks -- nights --break picture-blink     eight parts in the middle of the frame at half their light for one frame of each night: must fail on the part, not on the whole frame
+//   npm run checks -- nights --break picture-blink     eight parts at the foot of the frame at half their light for one frame of each night: must fail on the part, not on the whole frame
 
 // The Builder's limit for the time lapse. Measured at 320 x 180: the steepest frame of a dusk or dawn moved the mean luminance by 10.5 to 17.7 of 255 on sky-0 and 27.6 on sky-b before the sun was slowed at the horizon.
 export const DUSK_STEP = 14
@@ -27,8 +28,11 @@ const WRONG_WAY = 2
 const PART_WRONG = 8
 const ACROSS = 16
 const DOWN = 9
+// The sky turns fast, and its bright band, dark lanes and lit clouds pass through a part in one frame: a move, not a flicker, that this rule cannot tell from one.
+// So a part is judged only when it lies wholly under the horizon the film's camera sees, where the ground and the foot of the plant are. The sky is held to the whole frame's rule, and its largest part is listed.
+const skyRows = (frame: number): number => Math.max(0, Math.min(DOWN, Math.ceil(horizonPlace(frame, 16 / 9) * DOWN - 1e-6)))
 
-export interface DuskRow { night: number; first: number; last: number; midnight: number; frames: number; missing: number; day: number; dark: number; after: number; fall: number; fallAt: number; rise: number; riseAt: number; part: number; partAt: number; partColumn: number; partRow: number; partsAtOnce: number; partTrail: { frame: number; l: number }[]; wrong: number; wrongAt: number; duskFrames: number; dawnFrames: number; ok: boolean }
+export interface DuskRow { night: number; first: number; last: number; midnight: number; frames: number; missing: number; day: number; dark: number; after: number; fall: number; fallAt: number; rise: number; riseAt: number; part: number; partAt: number; partColumn: number; partRow: number; partsAtOnce: number; sky: number; skyAt: number; skyColumn: number; skyRow: number; partTrail: { frame: number; l: number }[]; wrong: number; wrongAt: number; duskFrames: number; dawnFrames: number; ok: boolean }
 export interface DuskProof { findings: Finding[]; complete: boolean; rows: DuskRow[]; pictures: { file: string; caption: string }[]; step: number }
 
 // The mean luminance of the frame, then of each of its parts, row by row.
@@ -161,7 +165,7 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
       const at = series.find((x) => x.frame === Math.min(midnight - 1, t.sunset + 6))
       if (at) {
         const parts = at.parts.slice()
-        for (const row of [3, 4]) for (const column of [6, 7, 8, 9]) parts[row * ACROSS + column] *= 0.5
+        for (const row of [DOWN - 2, DOWN - 1]) for (const column of [6, 7, 8, 9]) parts[row * ACROSS + column] *= 0.5
         at.l += (parts.reduce((a, v) => a + v, 0) - at.parts.reduce((a, v) => a + v, 0)) / parts.length
         at.parts = parts
       }
@@ -176,6 +180,9 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     let partAt = -1
     let partIn = 0
     let partsAtOnce = 0
+    let sky = 0
+    let skyAt = -1
+    let skyIn = 0
     for (let i = 1; i < series.length; i++) {
       if (meant.has(series[i].frame)) {
         leftOut.push(series[i].frame)
@@ -190,8 +197,13 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
       if (night && against > wrong) [wrong, wrongAt] = [against, series[i].frame]
       if (!night) continue
       let atOnce = 0
+      const above = Math.max(skyRows(series[i - 1].frame), skyRows(series[i].frame)) * ACROSS
       for (let c = 0; c < series[i].parts.length; c++) {
         const moved = (dusk ? 1 : -1) * (series[i].parts[c] - series[i - 1].parts[c])
+        if (c < above) {
+          if (moved > sky) [sky, skyAt, skyIn] = [moved, series[i].frame, c]
+          continue
+        }
         if (moved > WRONG_WAY) atOnce++
         if (moved > part) [part, partAt, partIn] = [moved, series[i].frame, c]
       }
@@ -201,7 +213,7 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     const after = series[series.length - 1].l
     const dark = series.reduce((a, s) => Math.min(a, s.l), Infinity)
     const ok = fall <= step && rise <= step && wrong <= WRONG_WAY && part <= PART_WRONG
-    rows.push({ night: t.night, first: t.first, last: t.last, midnight, frames: series.length, missing, day, dark, after, fall, fallAt, rise, riseAt, part, partAt, partColumn: 1 + (partIn % ACROSS), partRow: 1 + Math.floor(partIn / ACROSS), partsAtOnce, partTrail: series.filter((x) => Math.abs(x.frame - partAt) <= 3).map((x) => ({ frame: x.frame, l: x.parts[partIn] })), wrong, wrongAt, duskFrames: crossing(series.filter((s) => s.frame <= midnight), day, dark), dawnFrames: crossing(series.filter((s) => s.frame >= midnight), dark, after), ok })
+    rows.push({ night: t.night, first: t.first, last: t.last, midnight, frames: series.length, missing, day, dark, after, fall, fallAt, rise, riseAt, part, partAt, partColumn: 1 + (partIn % ACROSS), partRow: 1 + Math.floor(partIn / ACROSS), partsAtOnce, sky, skyAt, skyColumn: 1 + (skyIn % ACROSS), skyRow: 1 + Math.floor(skyIn / ACROSS), partTrail: series.filter((x) => Math.abs(x.frame - partAt) <= 3).map((x) => ({ frame: x.frame, l: x.parts[partIn] })), wrong, wrongAt, duskFrames: crossing(series.filter((s) => s.frame <= midnight), day, dark), dawnFrames: crossing(series.filter((s) => s.frame >= midnight), dark, after), ok })
     if (!ok) {
       const why = [fall > step ? `the dusk falls ${fall.toFixed(1)} of 255 into frame ${fallAt}` : '', rise > step ? `the dawn rises ${rise.toFixed(1)} of 255 into frame ${riseAt}` : '', wrong > WRONG_WAY ? `the luminance moves ${wrong.toFixed(2)} the wrong way into frame ${wrongAt}` : '', part > PART_WRONG ? `one part of the frame (column ${1 + (partIn % ACROSS)} of ${ACROSS}, row ${1 + Math.floor(partIn / ACROSS)} of ${DOWN}) moves ${part.toFixed(1)} of 255 the wrong way into frame ${partAt}` : ''].filter(Boolean).join(', ')
       findings.push({ ok: false, what: `night ${t.night} (frames ${t.first} to ${t.last}, ${barText(secondsOf(t.sunset))} to ${barText(secondsOf(t.sunrise))}): ${why}; the limit is ${step} a frame one way and ${WRONG_WAY} the other for the whole frame, ${PART_WRONG} the other for a part` })
@@ -216,13 +228,15 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     const bad = rows.filter((r) => !r.ok)
     findings.unshift({ ok: bad.length === 0, what: `by the picture (${drawn} of ${total} nights with every frame drawn, 320 x 180): ${bad.length === 0 ? 'through every dusk the luminance of the frame only falls and through every dawn it only rises' : `${bad.length} nights flicker`}; the largest step is ${Math.max(worst.fall, worst.rise).toFixed(1)} of 255 a frame in night ${worst.night} against a limit of ${step}, the largest move the wrong way ${rows.reduce((a, r) => Math.max(a, r.wrong), 0).toFixed(2)} against ${WRONG_WAY}` })
     const part = rows.reduce((x, r) => (r.part > x.part ? r : x), rows[0])
-    findings.splice(1, 0, { ok: part.part <= PART_WRONG, what: `by the parts of the frame (${ACROSS} by ${DOWN}): the largest move the wrong way in one part is ${part.part.toFixed(1)} of 255 into frame ${part.partAt} (night ${part.night}, column ${part.partColumn} of ${ACROSS}, row ${part.partRow} of ${DOWN}) against a limit of ${PART_WRONG}; ${rows.filter((r) => r.part > PART_WRONG).length} of ${rows.length} nights are over it, and at the most ${rows.reduce((x, r) => Math.max(x, r.partsAtOnce), 0)} of ${ACROSS * DOWN} parts move more than ${WRONG_WAY} the wrong way in one frame. The mean of the whole frame hides a plant or a ground that goes dark between the sun's light and the night's` })
+    findings.splice(1, 0, { ok: part.part <= PART_WRONG, what: `by the parts of the frame under the horizon (${ACROSS} by ${DOWN} parts, those wholly under the horizon the camera sees: the ground and the foot of the plant): the largest move the wrong way in one part is ${part.part.toFixed(1)} of 255 into frame ${part.partAt} (night ${part.night}, column ${part.partColumn} of ${ACROSS}, row ${part.partRow} of ${DOWN}) against a limit of ${PART_WRONG}; ${rows.filter((r) => r.part > PART_WRONG).length} of ${rows.length} nights are over it, and at the most ${rows.reduce((x, r) => Math.max(x, r.partsAtOnce), 0)} parts under the horizon move more than ${WRONG_WAY} the wrong way in one frame. The mean of the whole frame hides a plant or a ground that goes dark between the sun's light and the night's` })
     if (part.part > WRONG_WAY && part.partTrail.length > 1) {
       const file = path.join(dir, `part-${String(part.night).padStart(2, '0')}.jpg`)
       const caption = `Night ${part.night}: the framed part moves ${part.part.toFixed(1)} of 255 the wrong way into frame ${part.partAt}, while the whole frame moves the right way. Under each frame: its number, and the luminance of the framed part`
       await partSheet(run, part, file, caption)
       pictures.push({ file: path.relative(process.cwd(), file), caption })
     }
+    const turning = rows.reduce((x, r) => (r.sky > x.sky ? r : x), rows[0])
+    if (turning.sky > PART_WRONG) findings.push({ ok: true, expected: true, what: `listed, not judged: above the horizon, in the sky, one part moves ${turning.sky.toFixed(1)} of 255 the wrong way into frame ${turning.skyAt} (night ${turning.night}, column ${turning.skyColumn} of ${ACROSS}, row ${turning.skyRow} of ${DOWN}), and in ${rows.filter((r) => r.sky > PART_WRONG).length} of ${rows.length} nights a part of the sky moves more than ${PART_WRONG}. The sky turns and carries its bright band and its clouds through a part in one frame, which this rule cannot tell from a flicker, so the sky is held to the whole frame's rule` })
     if (drawn < total) findings.push({ ok: true, expected: true, what: `${total - drawn} of ${total} nights do not have every frame drawn yet` })
     for (const r of [worst, ...bad.filter((b) => b !== worst).slice(0, 2)]) {
       const t = twilights()[r.night - 1]

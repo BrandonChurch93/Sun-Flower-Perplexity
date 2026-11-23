@@ -97,7 +97,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `cues --break cut-late` | the first cut the film means listed one frame after its downbeat |
 | `nights --break picture-quick` | every dusk and dawn three times as fast |
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
-| `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
+| `nights --break picture-blink` | eight parts at the foot of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
 | `nights --break moon-blink` | the moon's disc at the level of the sky round it for the one frame where it stands highest in each night |
 | `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
 | `nights --plant --break plant-wet --night 9` | the moon steps up to 2.4 times as strong half way from the handover to midnight in the wet dusk of night 9, when the dusk's own fall no longer hides it: over the limit for a wet plant |

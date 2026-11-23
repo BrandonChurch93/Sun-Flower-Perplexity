@@ -1,6 +1,7 @@
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import type { RGB, WorldDef } from '../core/world.ts'
 import type { Moment, SkyLight } from './api.ts'
+import { closeShotAt } from './cuts.ts'
 
 type Grade = WorldDef['grade']
 
@@ -101,9 +102,10 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   w.night /= total
 
   const el = now.sunElevationDeg
+  const shot = closeShotAt(now.t)?.look
   const dusk = lerp(1, along(LAST, el), d.evening * (1 - d.lapse))
   const dim = Math.pow(dusk, LAST_LIGHT)
-  const level = (w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night) * dusk
+  const level = (w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night) * dusk * (shot?.level ?? 1)
   // What the meter reads: the open sky away from the sun, with a share of the sky near it and of the sun itself.
   const meter = 0.5 * lum(sky.band ?? sky.horizon) + 0.2 * lum(sky.horizonSun) + 0.3 * lum(sky.zenith) + 0.02 * lum(sky.direct) * Math.max(now.light.y, 0) * (now.lightKind === 'sun' ? d.sunThrough : 0)
   const exposure = level / Math.max(meter, 1e-5)
@@ -111,7 +113,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   const closed = d.overcast * (1 - d.sunThrough)
   const open = d.sunThrough * (1 - UNDER_DECK * d.overcast)
   const through = Math.max(open, FILL_STORM.key * closed)
-  const key = (now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)) * dim
+  const key = (now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)) * dim * (shot?.key ?? 1)
   const flash = d.flash
   out.sun.azimuthDeg = (Math.atan2(now.light.x, now.light.z) * 180) / Math.PI
   out.sun.elevationDeg = (Math.asin(clamp(now.light.y, -1, 1)) * 180) / Math.PI
@@ -131,8 +133,9 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   out.sun.lift = 1
 
   const day = w.day + w.warm + w.night
-  const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * (1 + FLASH.fill * flash) * dim
-  const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * (1 + FLASH.fill * flash) * dim
+  const fill = (1 + FLASH.fill * flash) * dim * (shot?.fill ?? 1)
+  const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * fill
+  const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * fill
   const warmth = FILL_WARMTH * smoothstep(-4, 0.5, el)
   for (let i = 0; i < 3; i++) round[i] = lerp(sky.horizon[i], sky.horizonSun[i], warmth)
   const roundLum = Math.max(lum(round), 1e-6)
@@ -164,15 +167,15 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   }
 
   const g = out.grade
-  g.contrast = mix((x) => x.contrast)
+  g.contrast = mix((x) => x.contrast) * (shot?.contrast ?? 1)
   g.white = mix((x) => x.white)
-  g.saturation = mix((x) => x.saturation)
-  g.bloom = mix((x) => x.bloom)
+  g.saturation = mix((x) => x.saturation) * (shot?.saturation ?? 1)
+  g.bloom = mix((x) => x.bloom) * (shot?.bloom ?? 1)
   g.bloomKnee = mix((x) => x.bloomKnee)
-  g.vignette = mix((x) => x.vignette)
+  g.vignette = mix((x) => x.vignette) * (shot?.vignette ?? 1)
   g.grain = mix((x) => x.grain)
   for (let i = 0; i < 3; i++) {
-    g.gain[i] = mix((x) => x.gain[i])
+    g.gain[i] = mix((x) => x.gain[i]) * (shot?.gain?.[i] ?? 1)
     g.lift[i] = mix((x) => x.lift[i])
   }
   g.exposure = exposure
