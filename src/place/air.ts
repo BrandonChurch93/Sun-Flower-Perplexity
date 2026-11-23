@@ -27,6 +27,7 @@ export const airUniforms = {
   uMistTopM: { value: 12 },
   // The share of the shared ground fog that the land away from the field takes.
   uFogShare: { value: 1 },
+  uFogNear: { value: 0 },
   // How much the light shines through leaves toward the lens: all of it for the sun, little for the moon.
   uThrough: { value: 1 },
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
@@ -42,6 +43,7 @@ uniform float uAirRain;
 uniform float uMist;
 uniform float uMistTopM;
 uniform float uFogShare;
+uniform float uFogNear;
 uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
@@ -71,7 +73,12 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
   vec3 aired = throughAir(color, worldPos);
   // The lens takes a blur circle within a third of a percent of the circle of infinity for sky and leaves it sharp: the land stays just short of that.
   vec4 done = finish(aired, worldPos, min(viewDepth, uFocusM / 0.0036), -1.0);
-  if (uDiag == 0) done.rgb = mix(aired, done.rgb, mix(1.0, uFogShare, smoothstep(80.0, 320.0, length(worldPos.xz))));
+  if (uDiag == 0) {
+    float r = length(worldPos.xz);
+    // Where the field ends the land takes the ground fog in gradually, so no line of fog stands at the field's far edge.
+    float near = mix(smoothstep(250.0, 800.0, r), 1.0, uFogNear);
+    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)));
+  }
   return done;
 }
 `
