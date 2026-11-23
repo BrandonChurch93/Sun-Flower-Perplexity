@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { lerp } from '../../core/curves.ts'
 import type { Moment, Part, View } from '../../v2/api.ts'
-import { airAt, blankAir, makeSheet, sheetsFor, type Sheet } from '../mist/veil.ts'
+import { blankAir, fogAt, makeSheet, sheetsFor, type Sheet } from '../mist/veil.ts'
 
 // The fog banks: the white that lies in the low ground beyond the seedlings, from where the veils of ground mist end to the far land. They stand round the plant and do not follow the lens.
 const MOST = 8
@@ -22,7 +22,7 @@ class Banks implements Part {
   }
 
   prepare(now: Moment, _later: Moment, view: View): void {
-    const air = airAt(now, this.air)
+    const air = fogAt(now, this.air)
     const on = air.amount > 0.002
     const count = on ? sheetsFor(view.quality, MOST) : 0
     for (let i = 0; i < MOST; i++) this.sheets[i].mesh.visible = i < count
