@@ -40,9 +40,6 @@ const TAP_AZ = [0, 0, 1, Math.cos(Math.PI * 0.79)] as const
 const TAPS = ['zenith', 'horizon', 'horizonSun', 'band'] as const
 const STRIDE = TAPS.length * 3
 
-// Structural until the shared API grows its optional band field.
-export type SkyWithBand = SkyLight & { band?: RGB }
-
 export class SunsetMeter {
   private readonly levels = new Float32Array((METER_STEPS + 1) * STRIDE)
 

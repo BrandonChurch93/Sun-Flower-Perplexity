@@ -13,7 +13,7 @@ import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
-import { afterSunset, sunsetAmount, SunsetMeter, type SkyWithBand } from './sunset.ts'
+import { afterSunset, sunsetAmount, SunsetMeter } from './sunset.ts'
 
 const levels = {
   film: { width: 832, height: 512, steps: 60, light: 6 },
@@ -44,7 +44,7 @@ const WET_NORM = 0.5 * WET_HORIZON + 0.2 * WET_SUNWARD + 0.3 * WET_ZENITH
 const wetHazeAt = (wet: number, e: number): number =>
   0.95 * smoothstep(0.25, 0.38, wet) * (1 - smoothstep(-0.9, 5.8, e))
 const wetBlueAt = (e: number): number => 1 - smoothstep(-11, -3, e)
-const diffuse = (light: SkyWithBand): number =>
+const diffuse = (light: SkyLight): number =>
   (0.5 * luminance(light.band ?? light.horizon) + 0.2 * luminance(light.horizonSun) + 0.3 * luminance(light.zenith)) / WET_NORM
 const wetColour = (b: number, c: number): number => lerp(WET_SLATE[c], WET_BLUE[c], b)
 
@@ -263,7 +263,7 @@ class FieldSky implements Sky {
     }
   }
 
-  light(m: Moment, out: SkyWithBand): SkyWithBand {
+  light(m: Moment, out: SkyLight): SkyLight {
     const e = m.sunElevationDeg
     const d = m.dials
     const wetHaze = wetHazeAt(d.wet, e)
