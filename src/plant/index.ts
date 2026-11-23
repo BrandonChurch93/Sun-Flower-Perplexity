@@ -1,10 +1,9 @@
 import * as THREE from 'three'
-import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
-import { allUnits, declareStandIn } from '../core/standins.ts'
+import { declareStandIn } from '../core/standins.ts'
 import type { Surface } from '../core/shading.ts'
 import type { Caster } from '../core/shadow.ts'
-import { bodyRadius, headOpen, huskSize, leafCount, leafLength, paleness, rayCount, rayLength, seedLeafLength, usePlant, type Place, type PlantInputs } from './growth.ts'
+import { headOpen, paleness, usePlant, type Place, type PlantInputs } from './growth.ts'
 import { real as hairsReal } from './hairs/index.ts'
 import { create as createBud } from './head/bud/index.ts'
 import { create as createDisc } from './head/disc/index.ts'
@@ -126,33 +125,14 @@ const DETAIL: Record<PartDetail, Detail> = { hero: HERO, near: NEAR, far: FAR }
 const bit = (part: number) => 1 << part
 const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk) | bit(PART.body) | bit(PART.bract) | bit(PART.ray)
 
-// Which units a piece of the plant is in: every unit with a moment at which the piece has a size.
-function unitsWith(size: (time: number) => number): string[] {
-  return config.segments
-    .filter((s) => {
-      for (let t = s.start; t <= s.end; t += 0.25) if (size(Math.min(t, s.end - 1e-6)) > 0) return true
-      return false
-    })
-    .map((s) => s.id)
-}
-
-const anyLeaf = (time: number) => {
-  for (let i = 0; i < leafCount; i++) if (leafLength(i, time) > 0) return 1
-  return 0
-}
-const anyRay = (time: number) => {
-  for (let k = 0; k < rayCount; k++) if (rayLength(k, time) > 0) return 1
-  return 0
-}
-
-// The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of and the units it is in.
-const SLOTS: { name: string; make: PartMaker; pieces: number; units: () => string[] }[] = [
-  { name: 'stem', make: createStem, pieces: bit(PART.stem), units: allUnits },
-  { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), units: () => unitsWith(anyLeaf) },
-  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), units: () => unitsWith((time) => Math.max(seedLeafLength(time), huskSize(time))) },
-  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), units: () => unitsWith(bodyRadius) },
-  { name: 'disc', make: createDisc, pieces: 0, units: () => unitsWith(headOpen) },
-  { name: 'petals', make: createPetals, pieces: bit(PART.ray), units: () => unitsWith(anyRay) },
+// The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of.
+const SLOTS: { name: string; make: PartMaker; pieces: number }[] = [
+  { name: 'stem', make: createStem, pieces: bit(PART.stem) },
+  { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf) },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk) },
+  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract) },
+  { name: 'disc', make: createDisc, pieces: 0 },
+  { name: 'petals', make: createPetals, pieces: bit(PART.ray) },
 ]
 
 export interface PlantOptions {
@@ -195,7 +175,7 @@ export class Plant {
       if (part) {
         this.parts.push(part)
         hide |= slot.pieces
-      } else declareStandIn(`${who} ${slot.name}`, slot.units())
+      } else declareStandIn(`${who} ${slot.name}`)
     }
     if (!hairsReal) declareStandIn('plant hairs')
     if (!surfaceReal) declareStandIn('plant surface')
