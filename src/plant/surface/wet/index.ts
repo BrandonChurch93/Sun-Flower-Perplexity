@@ -11,7 +11,7 @@ export const real = true
 export const BEAD_ORDER = 19
 
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
-const beadUniforms = { uBeadRain: { value: 0 }, uBeadDrop: { value: new THREE.Vector4(0, 0, 0, 0) }, uBeadSamples: { value: 1 }, ...wetUniforms }
+const beadUniforms = { uBeadRain: { value: 0 }, uBeadDrop: { value: new THREE.Vector4(0, 0, 0, 0) }, ...wetUniforms }
 
 const G = 9.81
 const SIT = 0.4
@@ -126,7 +126,6 @@ uniform vec4 uBeadWetTint;
 uniform float uBeadPaths;
 uniform float uBeadKeys;
 uniform vec4 uBeadDrop;
-uniform float uBeadSamples;
 uniform vec4 uBeadTip;
 ${KEYED}
 float beadThaw;
@@ -246,7 +245,11 @@ out float vSpark;
 
 // The one drop at the tip of the thawing blade, and the one that fell from it: a ball under the tip, a pear as it fills, a neck in its last tenth, round again as it falls.
 void dropVertex() {
-  bool fell = kGather.w > ${THAW_FELL}.0;
+  // The drop that fell is drawn by the sheet that carries the bursts.
+  if (kGather.w > ${THAW_FELL}.0) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   // The shutter never stands open across the moment the drop lets go.
   vec4 dials = uBeadDrop.z < uBeadDrop.x - 0.3 ? uBeadDrop.xyxy : uBeadDrop;
   vec2 dial = mix(dials.xy, dials.zw, uShutter);
@@ -256,33 +259,22 @@ void dropVertex() {
   float front = thawFront(1.0);
   float r;
   float neck = 0.0;
-  float drawn = 1.0;
-  vec3 middle;
-  // What the full drop was as it let go: its neck drawn out to this many of its radius.
+  // What the full drop is as it lets go: its neck drawn out to this many of its radius.
   const float DRAWN = 2.0;
-  if (fell) {
-    // At one sample the falling drop is drawn as its path over the shutter, by the sheet that carries the bursts.
-    r = after >= 0.0 && uBeadSamples > 1.5 ? 0.93 * full : 0.0;
-    // It leaves drawn out and rounds up in the first centimeter.
-    drawn = 1.0 + 0.55 * exp(-dial.y / 0.003);
-    r *= pow(drawn, -1.0 / 3.0);
-    middle = tip - vec3(0.0, full * DRAWN + dial.y, 0.0);
-  } else {
-    float want = full * pow(dial.x, 1.0 / 3.0);
-    float small = min(want, 0.00025);
-    // The water gathers under the tip while the last ice there goes: the drop swells with the thaw and not all at once.
-    float t = saturate((front - 0.12) / 0.3);
-    r = small * pow(saturate(front / 0.2), 0.7) + (want - small) * t * t * (3.0 - 2.0 * t);
-    neck = after < 0.0 ? smoothstep(0.9, 1.0, dial.x) : 0.0;
-    // What is left at the tip springs back and comes to rest.
-    float spring = after < 0.0 ? 0.0 : 0.6 * exp(-after / 0.07) * cos(55.0 * after);
-    middle = tip - vec3(0.0, r * (mix(1.0, DRAWN, neck * neck) + spring), 0.0);
-  }
-  float top = fell ? r : r * mix(0.55, 0.42, neck);
+  float want = full * pow(dial.x, 1.0 / 3.0);
+  float small = min(want, 0.00025);
+  // The water gathers under the tip while the last ice there goes: the drop swells with the thaw and not all at once.
+  float t = saturate((front - 0.12) / 0.3);
+  r = small * pow(saturate(front / 0.2), 0.7) + (want - small) * t * t * (3.0 - 2.0 * t);
+  neck = after < 0.0 ? smoothstep(0.9, 1.0, dial.x) : 0.0;
+  // What is left at the tip springs back and comes to rest.
+  float spring = after < 0.0 ? 0.0 : 0.6 * exp(-after / 0.07) * cos(55.0 * after);
+  vec3 middle = tip - vec3(0.0, r * (mix(1.0, DRAWN, neck * neck) + spring), 0.0);
+  float top = r * mix(0.55, 0.42, neck);
   float waist = r * mix(0.7, 0.05, neck);
-  vec3 hold = fell ? middle : tip;
-  float high = hold.y + top * drawn;
-  float low = middle.y - r * drawn;
+  vec3 hold = tip;
+  float high = hold.y + top;
+  float low = middle.y - r;
   vec3 center = vec3(middle.x, 0.5 * (high + low), middle.z);
   vec3 toEye = normalize(uCamPos - center);
   vec3 side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye) + vec3(1e-6, 0.0, 0.0));
@@ -293,7 +285,7 @@ void dropVertex() {
   vMiddle = middle;
   vBase = hold;
   vUp = vec3(neck, 1.0, 0.0);
-  vDown = vec3(r * mix(0.5, 0.3, neck), drawn, fell ? 1.0 : 0.0);
+  vDown = vec3(r * mix(0.5, 0.3, neck), 0.0, 0.0);
   vTint = aTint;
   vShape = vec3(r, top, waist);
   vHang = 1.0;
@@ -439,7 +431,6 @@ float roundCone(vec3 p, vec3 b, float r1, float r2) {
 
 // How far a place is from the skin of the one drop, in its own radius, from its middle: the ball, and the water that holds it to the tip.
 float dropField(vec3 q) {
-  if (vDown.z > 0.5) return length(q * vec3(1.0, 1.0 / vDown.y, 1.0)) - 1.0;
   float ball = length(q) - 1.0;
   vec3 top = (vBase - vMiddle) / vShape.x;
   // As the neck draws out the water at the tip ends in a thread over the top of the ball.
@@ -626,7 +617,6 @@ uniform float uBeadKeys;
 uniform float uPlantWet;
 uniform float uPlantDew;
 uniform vec4 uBeadDrop;
-uniform float uBeadSamples;
 ${KEYED}
 ${THAW}
 out vec2 vAt;
@@ -642,7 +632,7 @@ void main() {
   vec4 kGather = keyed(aGather, aGatherB);
   vStreak = vec3(0.0);
   if (kGather.w > ${THAW_FELL}.0) {
-    // The drop that fell, at one sample: its path over the time the shutter stands open, drawn as one streak.
+    // The drop that fell: its path over the time the shutter stands open, drawn as one streak whatever the number of samples, so that nothing of it strobes.
     vec4 dials = uBeadDrop.z < uBeadDrop.x - 0.3 ? uBeadDrop.xyxy : uBeadDrop;
     float full = ${DROP_R_GLSL} * plantSize() * min(1.0, kFormUp.w / 0.195);
     float r = 0.93 * full;
@@ -661,7 +651,7 @@ void main() {
     vAge = (to - from) / max(r, 1e-6);
     vSeed = -2.0;
     vStreak = vec3(from / max(r, 1e-6), 2.0 * r * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(-view.z, 1e-4), -view.z);
-    bool on = uBeadSamples < 1.5 && uReal >= ${DROP_GOES_GLSL} && uReal > ${THAW_FROM_GLSL} && to > from && r > 0.0 && center.y - reach > 0.0;
+    bool on = uReal >= ${DROP_GOES_GLSL} && uReal > ${THAW_FROM_GLSL} && to > from && r > 0.0 && center.y - reach > 0.0;
     gl_Position = on ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
@@ -819,15 +809,14 @@ const streaks: THREE.InstancedBufferGeometry[] = []
 
 // Called by the rain once a frame with how hard it falls and how far the moon has taken over from the sun: the bursts on the blades follow the rain and are not drawn when none falls.
 // With them, for the thaw: the film second, how much dew stands, and the one drop as the shutter opens and as it closes (how full it hangs, how far the one that let go has fallen).
-export function rainOnBeads(rain: number, moon = 0, second = 0, dew = 0, drop = 0, fall = 0, dropLater = drop, fallLater = fall, samples = 1): void {
+export function rainOnBeads(rain: number, moon = 0, second = 0, dew = 0, drop = 0, fall = 0, dropLater = drop, fallLater = fall): void {
   beadUniforms.uBeadRain.value = rain
-  beadUniforms.uBeadSamples.value = samples
   beadUniforms.uBeadDrop.value.set(drop, fall, dropLater, fallLater)
   wetUniforms.uWetMoon.value = moon
   // In the thaw the same quads carry the light the beads gather, on the one set that has beads of the thaw.
   const thaw = dew > 0 && second > THAW_FROM_S && second < RAIN_FROM_S
   for (const g of bursts) g.instanceCount = (rain > 0 || (thaw && g.userData.thaw > 0)) && g.userData.paths.value > 0 ? g.userData.count : 0
-  for (const g of streaks) g.instanceCount = thaw && samples < 1.5 && fallLater > fall && g.userData.paths.value > 0 ? g.userData.count : 0
+  for (const g of streaks) g.instanceCount = thaw && fallLater > fall && g.userData.paths.value > 0 ? g.userData.count : 0
 }
 
 // Small clear beads. The part that wears them gives each bead its seat on the skin at both ends of the shutter, as it gives a hair its root.
