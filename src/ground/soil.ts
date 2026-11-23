@@ -255,6 +255,7 @@ export const dewShade = [0.6, 0.54, 1.18]
 // Water stands below waterLevel, in meters from the mean ground, and that level climbs as the ground gets wetter. Frost takes the high open soil first.
 export const waterLevelsM = [-0.03, -0.0075]
 export const groundStates = /* glsl */ `
+vec3 unit(vec3 a) { return dot(a, a) > 1e-12 ? normalize(a) : vec3(0.0, 1.0, 0.0); }
 uniform vec2 uWater;
 uniform float uCast;
 // Where the true sun stands over the horizon, as a direction on the ground, and how low it is: 1 at the horizon, 0 from 27 degrees up and in the night. It follows the sun under the horizon, so nothing steps when the light changes hands.

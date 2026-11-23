@@ -279,7 +279,7 @@ ${groundStates}
 ${cropLight}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
-  vec3 n = normalize(vNormal);
+  vec3 n = unit(vNormal);
   n *= sign(dot(n, v) + 1e-6);
   float t = saturate(vAlong.x);
   float weed = step(2.0, vTuft.z);
