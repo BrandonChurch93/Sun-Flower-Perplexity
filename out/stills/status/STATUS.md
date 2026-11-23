@@ -1,12 +1,12 @@
-# Status 38
+# Status 43
 
-2026-11-23 16:57 UTC
+2026-11-23 18:39 UTC
 
-- Status 38 · Phase 4. The head's rays are back in their approved shapes and merged. Two faults found by watching film parts: the tear in the storm deck snapped from a wide gap to a small hole in one frame (cured by the sky owner, merged), and the far ridge flickered between two heights in the time lapse (cause proven in the lens pass, cure with its owner). The beams under the tear now stay at the sun. Cue sheet lint: 47 cues, 0 mismatches.
-- Next: Merge the ridge cure, then freeze the look and draw the whole film at 1920 x 1080 on twelve machines. Time used: 19.0 h of 30 h.
+- Status 43 · Phase 5. Twenty of 36 chunks of the 1920 film are in (2,070 of 3,810 frames), all on the frozen build and all read: nothing to cure. The frost close shots are in at full size and show what message 7 asked for, the rime lit from behind and the thaw starting at a leaf tip. The round's asking tool is written and tested, and its eight target pictures for the jury are ready. One thing found at native size: the clouds carry a fine stipple where the sky is near focus (2.7 levels in the grey clouds of the climb against 0.8 in clear sky); it is logged as an open item for the critics to weigh, because a cure would mean drawing the film a second time.
+- Next: Take in the other 16 chunks (the last due about 19:27 UTC), start the proofs when the first machine is free, ask the jury on the target pictures in the free slots, then join the film with the track and run the record round once. Time used: 20.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The bloom at bar 61 with the head's rays restored
-- `status-2.jpg`: Bar 41 after the cure, the tear closes slowly (frames 2082 to 2100)
-- `status-3.jpg`: Far ridge flicker, top 2902, middle 2903 before, bottom 2903 with the cure
-- `status-4.jpg`: Beams under the tear before and after, frames 2086 to 2089
+- `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun
+- `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip
+- `status-3.jpg`: Frame 2630: the bud on the last days of the climb
+- `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
