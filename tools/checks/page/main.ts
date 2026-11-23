@@ -11,6 +11,7 @@ import { views, type ViewName } from '../../../src/v2/shots.ts'
 // It can also break the film on purpose, so that each check can be shown to fail.
 
 export interface Drawn { frame: number; seconds: number; made: Made; png: string | null }
+export interface Numbers { none: number; over: number; most: number; where: number[] }
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
   ready: Promise<void>
@@ -26,7 +27,8 @@ export interface ChecksPage {
   differ(a: string, b: string): FloatDiff
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
   // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames,
-  // 'moon' makes the night's key `a` times as strong from frame `b` on, 'slow' makes the field's turn last `a` ms longer in frame `b` or, with b under 0, in every frame.
+  // 'moon' makes the night's key `a` times as strong from frame `b` on, 'slow' makes the field's turn last `a` ms longer in frame `b` or, with b under 0, in every frame,
+  // 'number' gives the key light no number in frame `a`, 'bright' makes it ten million times as strong in frame `a`.
   fault(kind: string, a: number, b: number): void
   // Which pixels of the last frame the scene drew into, row by row from the top: '1' where the scene's own numbers, before the lens and the grain, hold any light, '0' where the frame was left empty.
   covered(): string
@@ -35,6 +37,10 @@ export interface ChecksPage {
   cost(): Record<string, number>
   // The lens the film holds for the frame last drawn (-1 where the plant grows), and the numbers each coat of hairs last chose its hairs by: a coat sends its hairs again when one of them changes.
   lens(): { held: number; signs: { owner: string; numbers: number[] }[] }
+  // The frame last drawn as it is handed to the lens, in the scene's own numbers: how many pixels hold no number, how many hold one over `limit`, the largest number that is in order, and where the bad pixels are (x, then y from the top).
+  numbers(limit: number): Numbers
+  // Draws only the named parts of the scene from the next frame on (plant, companion, field, ground, sky and each part's name); none named draws them all.
+  only(names: string[]): void
 }
 
 declare global {
@@ -76,6 +82,8 @@ let dice = false
 let memory = false
 let moon = 1
 let moonFrom = 0
+let lostAt = -1
+let brightAt = -1
 // How long a frame spends inside renderer.render: all of it, the part that draws the scene into the frame, and the part that draws the shadow map. It is time and no pixel.
 const drawMs = { draw: 0, drawScene: 0, drawShadow: 0 }
 let timed = false
@@ -114,7 +122,8 @@ film.field.show = (on: boolean): void => {
 const key = film.look.sun as { color: number[] }
 key.color = new Proxy(key.color, {
   set(target, name, value) {
-    target[name as unknown as number] = typeof value === 'number' && now.lightKind === 'moon' && now.frame >= moonFrom ? value * moon : value
+    const strong = typeof value === 'number' && now.lightKind === 'moon' && now.frame >= moonFrom ? value * moon : value
+    target[name as unknown as number] = typeof value === 'number' && now.frame === lostAt ? NaN : typeof strong === 'number' && now.frame === brightAt ? strong * 1e7 : strong
     return true
   },
 })
@@ -283,6 +292,32 @@ window.checks = {
     signed ??= [...owners].filter(([v, p]) => v instanceof Float64Array && /\.(sign|key)$/.test(p) && !/lenses/.test(p)) as [Float64Array, string][]
     return { held: held.lens, signs: signed.map(([v, p]) => ({ owner: p, numbers: Array.from(v) })) }
   },
+  numbers(limit) {
+    const { width, height, renderer, accumulator } = film.stage
+    const pixels = new Float32Array(width * height * 4)
+    renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
+    const out: Numbers = { none: 0, over: 0, most: 0, where: [] }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const p = 4 * (y * width + x)
+        const r = Math.abs(pixels[p])
+        const g = Math.abs(pixels[p + 1])
+        const b = Math.abs(pixels[p + 2])
+        const lost = Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(pixels[p + 3])
+        const high = !lost && (r > limit || g > limit || b > limit)
+        if (lost) out.none++
+        else if (high) out.over++
+        else out.most = Math.max(out.most, r, g, b)
+        if ((lost || high) && out.where.length < 8000) out.where.push(x, height - 1 - y)
+      }
+    }
+    return out
+  },
+  only(names) {
+    const set = (film as unknown as { only: Set<string> }).only
+    set.clear()
+    for (const n of names) set.add(n)
+  },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
@@ -297,6 +332,8 @@ window.checks = {
       moon = a
       moonFrom = b
     }
+    else if (kind === 'number') lostAt = a
+    else if (kind === 'bright') brightAt = a
     else if (kind === 'slow') {
       slowMs = a
       slowAt = b

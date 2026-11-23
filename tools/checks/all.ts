@@ -19,6 +19,7 @@ export async function run(args: Args): Promise<void> {
     ['cues', [], 'cues'],
     ['cuts', [], 'cuts'],
     ['made', [], 'made'],
+    ['numbers', [], 'numbers'],
     ['pure', draw ? pass : ['--search'], draw ? 'pure' : 'pure.search'],
     ['script', draw ? [] : ['--table'], 'script'],
   ]

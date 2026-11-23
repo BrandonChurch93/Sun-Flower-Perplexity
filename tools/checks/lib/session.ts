@@ -9,7 +9,7 @@ import { computeHashes } from '../../lib/hashes.ts'
 import { recorder } from './recorder.ts'
 import { tracer } from './tracer.ts'
 import { at } from '../../lib/paths.ts'
-import type { ChecksPage, Drawn, FloatDiff } from '../page/main.ts'
+import type { ChecksPage, Drawn, FloatDiff, Numbers } from '../page/main.ts'
 import type { Made } from '../../../src/v2/counter.ts'
 import { OUT } from './report.ts'
 
@@ -94,6 +94,8 @@ export interface Session {
   covered(): Promise<string>
   cost(): Promise<Record<string, number>>
   lens(): Promise<{ held: number; signs: { owner: string; numbers: number[] }[] }>
+  numbers(limit: number): Promise<Numbers>
+  only(names: string[]): Promise<void>
   close(): Promise<void>
 }
 
@@ -149,6 +151,8 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       covered: () => page.evaluate(() => window.checks.covered()),
       cost: () => page.evaluate(() => window.checks.cost()),
       lens: () => page.evaluate(() => window.checks.lens()),
+      numbers: (limit) => page.evaluate((l) => window.checks.numbers(l), limit),
+      only: (names) => page.evaluate((n) => window.checks.only(n), names),
       fault: (kind, a = 0, b = 0) => page.evaluate(([k, x, y]) => window.checks.fault(k as string, x as number, y as number), [kind, a, b] as const),
       async close() {
         await theBrowser.close().catch(() => undefined)
