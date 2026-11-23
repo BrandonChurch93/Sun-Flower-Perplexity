@@ -18,6 +18,7 @@ import { openSession, type Session } from './lib/render.ts'
 //   npm run bench -- --sky sky-a --clip 73,85 --view wide   a clip of film seconds 73 to 85 from one camera
 //   npm run bench -- --sky sky-a --only all --bars 17,21,25 --name frost   the film's own camera at those bars, on one sheet
 //   npm run bench -- --only all --frames 1368-1376,1400,0-1260:15 --name dawn   the film camera at those frames (a-b:n is every nth)
+//   npm run bench -- --cost --warm --frames 2612-2624      the page's script time by part for frames drawn in a row, after the film's own warming, with what was made in each
 //   npm run bench -- --sky sky-a --count                 plays 200 frames across the film and says what the graphics card was asked to make after loading
 //   npm run bench -- --sky sky-0 --only ground,plant,field --still --view wide --shots 07   the world at rest: no weather, no wind, one fixed sun
 
@@ -63,13 +64,13 @@ try {
   if (flag(args, 'still')) await session.page.evaluate(() => window.showcase.setStill(true))
   const info = await session.info()
   console.log(`bench · sky ${sky} · ${format} · ${tier} · ${only || 'everything'} · textures ${info.textureMb.toFixed(0)} MB · loaded in ${session.startSeconds.toFixed(1)} s`)
+  const kinds = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays'] as const
   if (flag(args, 'count')) {
     const frames = Array.from({ length: 200 }, (_, i) => Math.round((i * (frameCount - 1)) / 199))
     await session.page.evaluate((t) => window.showcase.warm(t), tier)
     const before = await session.page.evaluate(() => window.showcase.made())
     let slowest = 0
     let total = 0
-    const kinds = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays'] as const
     const at: { frame: number; made: Partial<Made> }[] = []
     let last = before
     for (const f of frames) {
@@ -100,12 +101,19 @@ try {
       const step = Math.max(1, Number(stride ?? 1))
       return Array.from({ length: Math.floor(((b ?? a) - a) / step) + 1 }, (_, i) => a + i * step)
     }) : [900, 901, 902, 1400, 1401, 1402, 1900, 1901, 1902, 2100, 2101, 2102, 2700, 2701, 2702, 3100, 3101, 3102, 3500, 3501, 3502]
+    if (flag(args, 'warm')) await session.page.evaluate((t) => window.showcase.warm(t), tier)
     await session.page.evaluate(() => window.showcase.cost())
-    const rows: { frame: number; cost: Record<string, number> }[] = []
+    let last = await session.page.evaluate(() => window.showcase.made())
+    const rows: { frame: number; cost: Record<string, number>; made?: Partial<Made> }[] = []
     for (const f of frames) {
       await session.page.evaluate(([n, t]) => window.showcase.renderFrame(n as number, t as string), [f, tier] as const)
       const cost = await session.page.evaluate(() => window.showcase.cost())
-      rows.push({ frame: f, cost })
+      const now = await session.page.evaluate(() => window.showcase.made())
+      const here: Partial<Made> = {}
+      for (const k of kinds) if (now[k] !== last[k]) here[k] = now[k] - last[k]
+      last = now
+      if (Object.keys(here).length) console.log(`cost · frame ${f} made ${JSON.stringify(here)}`)
+      rows.push({ frame: f, cost, ...(Object.keys(here).length ? { made: here } : {}) })
       const parts = Object.entries(cost).filter(([k, v]) => k !== 'script' && k !== 'wait' && v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(', ')
       console.log(`cost · frame ${f} · script ${cost.script.toFixed(1)} ms · ${parts} · wait ${(cost.wait / 1000).toFixed(1)} s`)
     }

@@ -17,6 +17,7 @@ export interface MenuActions {
   jump(frame: number): void
   diag(name: DiagName): void
   go(mode: MenuMode): void
+  pacing(): string | null
 }
 
 export interface Menu {
@@ -108,6 +109,39 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
     modeLinks.set(m, a)
     modes.append(a)
   }
+
+  const run = group('Last run', 1)
+  const copy = make('button', css.chip, 'Copy the pacing report')
+  copy.type = 'button'
+  copy.dataset.role = 'copy-pacing'
+  const copied = make('p', css.note, 'After a run, this copies its numbers as text.')
+  copied.dataset.role = 'copy-pacing-line'
+  copied.setAttribute('role', 'status')
+  const text = make('textarea', css.report)
+  text.readOnly = true
+  text.hidden = true
+  text.rows = 6
+  text.dataset.role = 'pacing-text'
+  text.setAttribute('aria-label', 'The pacing report')
+  copy.addEventListener('click', () => {
+    const report = actions.pacing()
+    if (report === null) {
+      copied.textContent = 'No run yet. Play, check or record once, then copy.'
+      return
+    }
+    text.value = report
+    const shown = () => {
+      text.hidden = false
+      text.focus()
+      text.select()
+      copied.textContent = 'The browser did not allow the copy. The report is selected below: copy it by hand.'
+    }
+    if (!navigator.clipboard) return shown()
+    navigator.clipboard.writeText(report).then(() => {
+      copied.textContent = 'Copied. Paste it into a message.'
+    }, shown)
+  })
+  run.append(copy, copied, text)
 
   const fields = make('div', css.fields)
   panel.append(fields)
