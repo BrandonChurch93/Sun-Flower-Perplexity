@@ -89,6 +89,44 @@
   font-weight: 400;
 }
 
+.pulse {
+  position: relative;
+  height: 2px;
+  margin: 10px 0 0;
+  overflow: hidden;
+  border-radius: 1px;
+  background: #2b2820;
+}
+
+.runner {
+  position: absolute;
+  inset: 0;
+  width: 25%;
+  background: #e2b23a;
+  will-change: transform;
+  animation: run 1.4s linear infinite;
+}
+
+.screen[data-failed='yes'] .pulse {
+  display: none;
+}
+
+@keyframes run {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runner {
+    animation: none;
+    transform: translateX(150%);
+  }
+}
+
 @keyframes travel {
   from {
     left: -30%;

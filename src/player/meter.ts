@@ -25,7 +25,7 @@ const FRAME_MS = 1000 / config.film.fps
 const r1 = (v: number): number => Math.round(v * 10) / 10
 const mean = (a: number[]): number => (a.length ? a.reduce((p, q) => p + q, 0) / a.length : 0)
 const p99 = (a: number[]): number => (a.length ? [...a].sort((p, q) => p - q)[Math.min(a.length - 1, Math.floor(0.99 * a.length))] : 0)
-const things = (m: Made): number => m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads
+const things = (m: Made): number => m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.vertexArrays + m.uploads
 
 const served = await serve(at('dist'))
 const browser = await launch(['--autoplay-policy=no-user-gesture-required'])
@@ -96,7 +96,7 @@ for (const [first, last] of ranges) {
       rows.push(
         ...(await page.evaluate(async ([a, b, start]) => {
           const rows: { frame: number; scriptMs: number; cardMs: number; made: number; parts: Record<string, number>; jump: boolean }[] = []
-          const sum = (m: ReturnType<typeof window.showcase.made>): number => m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads
+          const sum = (m: ReturnType<typeof window.showcase.made>): number => m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.vertexArrays + m.uploads
           const tier = window.showcase.info().tier
           for (let f = a; f <= b; f++) {
             const before = sum(window.showcase.made())

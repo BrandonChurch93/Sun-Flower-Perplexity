@@ -1,9 +1,11 @@
 import { config } from '../config.ts'
-import type { Film } from '../director/film.ts'
+import { warmFrames, type Film } from '../director/film.ts'
 import { madeSoFar } from '../v2/counter.ts'
 import css from './loading.module.css'
 
 export interface Loading {
+  // The scene's own loading. It starts once the screen has been painted, so the page never sits blank while the first part is built.
+  loaded: Promise<void>
   // One of the film's own moments was drawn: `done` of `of`.
   step(done: number, of: number): void
   // Shows the screen again for a second preparation, at another quality.
@@ -22,6 +24,10 @@ export interface LoadingLog {
 }
 
 const FREEZE_MS = 250
+// The parts of the scene in the order the film builds them, so the screen can name a part before its work starts.
+const ORDER = ['ground', 'plant', 'companion', 'field', 'sky', 'field', 'puddles', 'place', 'fog', 'frost', 'mist', 'rain']
+const warming = `Warming the film, 1 of ${warmFrames().length}`
+const building = (name: string | undefined): string => (name ? `Building the ${name}` : 'Building the scene')
 
 declare global {
   interface Window { loadingLog?: LoadingLog }
@@ -55,7 +61,11 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const warmBar = make('div', css.bar)
   const warmFill = make('i', css.fill)
   warmBar.append(warmFill)
-  const state = make('p', css.state, 'Loading')
+  const state = make('p', css.state, building(ORDER[0]))
+  state.dataset.role = 'loading-now'
+  const pulse = make('div', css.pulse)
+  pulse.setAttribute('aria-hidden', 'true')
+  pulse.append(make('i', css.runner))
   const steps = make('ol', css.steps)
   for (const [i, text] of ['Load the film', 'Drop the track', 'Check, then record'].entries()) {
     const item = make('li', css.step)
@@ -63,7 +73,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     item.append(make('span', css.num, String(i + 1)), make('span', undefined, text), make('span', css.stepState, i === 0 ? 'Loading' : 'Next'))
     steps.append(item)
   }
-  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state)
+  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state, pulse)
   root.append(box)
   host.append(root)
 
@@ -108,22 +118,37 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     if (observer) seen(observer.takeRecords())
     sceneCount.textContent = `${sceneText()}, ${film.textureMb().toFixed(0)} MB on the graphics card`
     sceneFill.style.setProperty('--at', '1')
+    if (state.textContent?.startsWith('Building')) state.textContent = warming
   }
-  void film
-    .load((done, of, what) => {
+  const painted = new Promise<void>((resolve) => {
+    let open = true
+    const go = (): void => {
+      if (!open) return
+      open = false
+      resolve()
+    }
+    window.setTimeout(go, 200)
+    requestAnimationFrame(() => requestAnimationFrame(go))
+  })
+  const loaded = painted.then(() =>
+    film.load((done, of, what) => {
       part = done < of ? `Part ${done} of ${of}, ${what}. ` : ''
       log.steps.push({ atMs: Math.round(performance.now()), what: `part ${done} of ${of}, ${what}` })
       sceneFill.style.setProperty('--at', String(done / of))
-    })
-    .then(finishScene, () => undefined)
+      state.textContent = done >= of ? warming : building(ORDER[done - 1] === what ? ORDER[done] : undefined)
+      sceneCount.textContent = sceneText()
+    }),
+  )
+  loaded.then(finishScene, () => undefined)
 
   return {
+    loaded,
     step(done, of) {
       finishScene()
       log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${of}`, scriptMs: Math.round(film.cost.script ?? 0) })
       warmCount.textContent = `${done} of ${of}`
       warmFill.style.setProperty('--at', String(done / of))
-      state.textContent = done >= of ? 'Ready' : 'Getting ready'
+      state.textContent = done >= of ? 'Ready' : `Warming the film, ${done + 1} of ${of}`
     },
     again(text) {
       warmCount.textContent = 'waiting'
