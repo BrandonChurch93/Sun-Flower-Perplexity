@@ -204,7 +204,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean, exposure: number, pure: THREE.Texture | null): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean, exposure: number, pure: THREE.Texture | null, smooth: boolean): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0 || !this.warmed) {
       const n = this.near.uniforms
@@ -225,8 +225,8 @@ export class Post {
     const discScale = samples === 1 ? 0.5 : 0.55 / Math.sqrt(samples)
     r.uDiscScale.value = discScale
     r.uGrow.value = samples > 1 ? 1 : 0
-    // The film's own tiers draw a shot that is sharp over a range through the middle of the lens on every sample and tell this pass one sample: such a frame has edge pixels that are part thing and part ground.
-    const mixed = samples === 1 && (pure !== null || this.quality === 'film') ? 1 : 0
+    // The film's own tiers draw a shot that is sharp over a range through the middle of the lens on every sample and tell this pass one sample: such a frame has edge pixels that are part thing and part ground. So has a frame of one sample drawn at several places in each pixel.
+    const mixed = samples === 1 && (pure !== null || smooth || this.quality === 'film') ? 1 : 0
     r.uMixed.value = mixed
     r.tPure.value = pure ?? frame
     r.uPure.value = pure ? 1 : 0
@@ -350,7 +350,8 @@ export class Post {
 
   // The frame before lens and grade stays in the accumulator. `sun` is where the sun sits in the picture and how wide infinity blurs; without it the glass sees no sun and the sky is filled like everything else.
   // `pure` is one of the pictures the frame was summed from, where they were all drawn through one place on the lens: it tells whose circle a shared edge pixel has.
-  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null, pure: THREE.Texture | null = null): void {
+  // `smooth` says the one sample of the frame was drawn at several places in each pixel.
+  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null, pure: THREE.Texture | null = null, smooth = false): void {
     const mode = MODES[diag]
     const seed = this.held ? 0 : frameIndex
     const g = this.grade.uniforms
@@ -367,7 +368,7 @@ export class Post {
       const grade = def.grade
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
-      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low, grade.exposure, pure)
+      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low, grade.exposure, pure, smooth)
       if (this.unfilled) source = frame
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
