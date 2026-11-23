@@ -6,8 +6,8 @@ import css from './loading.module.css'
 export interface Loading {
   // The scene's own loading. It starts once the screen has been painted, so the page never sits blank while the first part is built.
   loaded: Promise<void>
-  // One of the film's own moments was drawn: `done` of `of`.
-  step(done: number, of: number): void
+  // A step of the film's warming is done: `done` of `of`. `next` is what runs now: a moment of the film, or the last pass over every shape.
+  step(done: number, of: number, next: 'moment' | 'every shape' | null): void
   // Shows the screen again for a second preparation, at another quality.
   again(title: string): void
   done(): void
@@ -18,7 +18,8 @@ export interface Loading {
 // Only for measuring: no pixel depends on it.
 export interface LoadingLog {
   // `scriptMs` is the page's own work in drawing a moment, apart from the graphics card.
-  steps: { atMs: number; what: string; scriptMs?: number }[]
+  // `cost` is the film's own table of that moment, milliseconds by part, `wait` the graphics card.
+  steps: { atMs: number; what: string; scriptMs?: number; cost?: Record<string, number> }[]
   freezes: { fromMs: number; ms: number }[]
   readyMs: number | null
 }
@@ -141,12 +142,18 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
 
   return {
     loaded,
-    step(done, of) {
+    step(done, of, next) {
       finishScene()
-      log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${of}`, scriptMs: Math.round(film.cost.script ?? 0) })
-      warmCount.textContent = `${done} of ${of}`
+      const moments = of - 1
+      if (done === 0) log.steps.push({ atMs: Math.round(performance.now()), what: 'parts warmed' })
+      else if (done <= moments) {
+        const cost: Record<string, number> = {}
+        for (const [key, ms] of Object.entries(film.cost)) cost[key] = Math.round(ms * 10) / 10
+        log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${moments}`, scriptMs: Math.round(film.cost.script ?? 0), cost })
+      } else log.steps.push({ atMs: Math.round(performance.now()), what: 'every shape drawn once' })
+      warmCount.textContent = `${Math.min(done, moments)} of ${moments}`
       warmFill.style.setProperty('--at', String(done / of))
-      state.textContent = done >= of ? 'One last pass over the whole scene' : `Warming the film, ${done + 1} of ${of}`
+      state.textContent = next === 'moment' ? `Warming the film, ${done + 1} of ${moments}` : next === null ? 'Ready' : 'One last pass over the whole scene'
     },
     again(text) {
       warmCount.textContent = 'waiting'

@@ -60,12 +60,17 @@ uniform float uLandWet;
 uniform float uLandFrost;
 uniform vec3 uLandCrop;
 
-// The sky that lies behind the land in the direction of a point.
-vec3 skyBehind(vec3 dir) {
+// How far a direction leans toward the bearing of the sun.
+float sunward(vec3 dir) {
   vec2 h = normalize(dir.xz + vec2(1e-6));
   vec2 s = normalize(uTrueSun.xz + vec2(1e-6));
+  return pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun;
+}
+
+// The sky that lies behind the land in the direction of a point.
+vec3 skyBehind(vec3 dir) {
   // At dusk the air before the high land lies in that land's shadow: the sky lights it from above, not the sun from behind.
-  float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun * (1.0 - 0.9 * uDusk);
+  float toSun = sunward(dir) * (1.0 - 0.9 * uDusk);
   float up = saturate(dir.y / (length(dir) * mix(0.07, 0.03, uVeil)));
   vec3 clear = mix(mix(uAirHorizon, uAirZenith, max(mix(0.6, 1.0, uVeil) * up, uDusk)), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
@@ -90,13 +95,18 @@ vec3 throughAir(vec3 color, vec3 worldPos) {
   return mix(color, skyBehind(v), f);
 }
 
-// The evening's mist lies on the low land to the south west and stands as high as the fog on the field at its foot. Its top rises and falls from bank to bank, sinks to the ground to either side, and thins out upward.
-float eveningMist(vec3 worldPos) {
+// The haze of a clear day and the evening's mist lie on the low land to the south west, as high as the fog on the field at their foot. Their top rises and falls from bank to bank and sinks to the ground to either side, and they come and go in wisps over the far crop. x is how much of the ground fog a point keeps, y how far up into the thinning top it stands.
+vec2 lowHaze(vec3 worldPos) {
   vec2 p = worldPos.xz;
-  float side = smoothstep(0.866, 0.9945, dot(normalize(p + vec2(1e-6)), vec2(-0.5446, -0.8387)));
+  float r = length(p);
+  float side = smoothstep(0.866, 0.9945, dot(p / max(r, 1.0), vec2(-0.5446, -0.8387)));
   float bank = 0.5 + 0.5 * sin(p.x * 0.0046 + 1.9 * sin(p.y * 0.0027 + 0.6));
+  float wisp = 0.5 + 0.5 * sin(p.x * 0.011 - p.y * 0.017 + 2.3 * sin(p.y * 0.006 + 1.1));
   float top = mix(5.0, 16.0, bank) * (0.2 + 0.8 * side);
-  return max(exp(-max(worldPos.y - 1.5, 0.0) / top), 1.0 - smoothstep(290.0, 700.0, length(p)));
+  // By day the high land keeps most of the thin air the ground fog lays before it. At dusk it stands clear of it.
+  float fall = mix(0.6 * (1.0 - uDusk), 1.0, exp(-max(worldPos.y - 1.5, 0.0) / top));
+  float past = smoothstep(290.0, 520.0, r);
+  return vec2(max(fall, 1.0 - smoothstep(290.0, 700.0, r)) * mix(1.0, (0.4 + 0.6 * side) * mix(0.55, 1.0, wisp), past), (1.0 - fall) * past);
 }
 
 // The land's last step: its own air, then the shared ground fog and the blur circle. Away from the field the land takes only a share of the ground fog.
@@ -109,7 +119,16 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
     // The field's far crop stands in the ground fog to its end, and the land past it takes the same.
     float near = mix(smoothstep(150.0, 290.0, r), 1.0, uFogNear);
     float high = 1.0 - exp(-max(worldPos.y, 0.0) / 30.0);
-    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * mix(1.0 - uFogLow * high, eveningMist(worldPos), uDusk));
+    // What the ground fog adds, and how much of what lies behind it it leaves.
+    vec3 glow = applyFog(vec3(0.0), worldPos);
+    float kept = applyFog(vec3(1.0), worldPos).g - glow.g;
+    float thick = max(uVeil, uAirRain);
+    vec2 haze = lowHaze(worldPos);
+    float share = near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * mix(haze.x, 1.0 - uFogLow * high, thick);
+    // Where the haze thins out upward the sky shows through it.
+    vec3 v = worldPos - uCamPos;
+    glow = mix(glow, (1.0 - kept) * mix(uAirHorizon, uSkyHorizonSun, sunward(v)), 0.7 * haze.y * (1.0 - thick));
+    done.rgb = aired * (1.0 - share * (1.0 - kept)) + share * glow;
   }
   return done;
 }

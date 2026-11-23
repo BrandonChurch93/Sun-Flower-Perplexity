@@ -25,7 +25,7 @@ const MOON_FAULT = 2.4
 const DIAL = 0.02
 const WET_RISE = 1.5
 const WET_HIGH = 2
-// The fault for the wet limit: the moon steps up in the middle of a wet dusk, on the first wet frame after the handover of the night named here.
+// The fault for the wet limit: the moon steps up in the middle of a wet dusk, half way from the handover to midnight, when the dusk's own light has gone, in the night named here.
 const WET_FAULT_NIGHT = 9
 
 export interface PlantFrame { frame: number; mean: number; high: number; share: number }
@@ -240,7 +240,7 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
     if (broken === 'plant-wet') {
       const n = all.find((x) => x.night === WET_FAULT_NIGHT)
       let at = -1
-      if (n) for (let f = n.dusk + 2; f < n.midnight && at < 0; f++) if (dialsOf(f).wet && dialsOf(f - 1).wet) at = f
+      if (n) for (let f = Math.round((n.dusk + n.midnight) / 2); f < n.midnight && at < 0; f++) if (dialsOf(f).wet && dialsOf(f - 1).wet) at = f
       if (at < 0) throw new Error(`night ${WET_FAULT_NIGHT} has no wet frame after the handover of its dusk to break`)
       console.log(`nights · plant alone · the moon is ${MOON_FAULT} times as strong from frame ${at} on`)
       await session.fault('moon', MOON_FAULT, at)

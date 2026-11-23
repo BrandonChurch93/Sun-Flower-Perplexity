@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 15 · 2026-11-23 06:59 UTC · Phase 3
+- Last status: 16 · 2026-11-23 07:42 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 07:42 UTC · status 16 · Phase 3 · `status-1.jpg`: Frost close shot 1 on bar 19, a leaf edge in the mist. Fringe dense now. The angle changes next: the sun hides behind the left leaf and the right half is empty; `status-2.jpg`: Frost close shot 2 on bar 21, the tip as the sun comes through; `status-3.jpg`: Frost close shot 3 on bar 23, the thaw. The leaf face is still bare; `status-4.jpg`: The end with its new look, bars 69 and 73. The sun is still a pale dot at the left third of the ridge
 - 2026-11-23 06:59 UTC · status 15 · Phase 3 · `status-1.jpg`: Targets for the three frost close shots, new reference pictures: a leaf edge with the dim sun in the mist, the tip as the sun comes through, the thaw; `status-2.jpg`: The same three shots in the film now, from the cut cameras, draft quality. The framing is set, the ice is not at the target yet; `status-3.jpg`: The camera in close for the bloom: bars 57, 58.5 and 61, draft quality; `status-4.jpg`: Bars 55 to 67 on one sheet: in toward the bud, the bloom, back out to the field
 - 2026-11-23 06:14 UTC · status 14 · Phase 3 · `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5; `status-2.jpg`: Bar 67: the pull back begins; `status-3.jpg`: Bar 73: the sun touches the ridge
 - 2026-11-23 05:33 UTC · status 13 · Phase 3 · `status-1.jpg`: The break at the boom of bar 41, frames 2081 to 2090, with the lens merged (draft tier, drawn here); `status-2.jpg`: The end of a quick night, frames 2174 to 2184: the moon fades once and does not come back (draft tier, drawn here); `status-3.jpg`: The end of the film at bars 67, 69, 71 and 73 with the new far crop (draft tier, drawn here); `status-4.jpg`: The held tear after the storm at bars 42.19 and 42.33, and two days at bars 29.7 and 43.75 (draft tier, drawn here)
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 02:38 UTC · status 07 · Phase 2 · `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier); `status-2.jpg`: Sky candidate A in the jury's ten film frames; `status-3.jpg`: Sky candidate C in the jury's ten film frames; `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
 - 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
 - 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
-- 2026-11-23 01:17 UTC · status 04 · Phase 2 · `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
 
 ## Clock
 
@@ -41,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 3.74 h |
+| 3 | 9.00 h | 4.45 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 9.00 h |
+| Whole build | 30.00 h | 9.71 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -161,6 +161,12 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 04:36 UTC. Limits of the script check: sum 16 ms mean and 25 worst; plant and companion 5; field 3; rain and puddles 2; scene 6; shadow pass 3; others 1. Wet plant frames may rise by 1.5 of 255 a frame in the mean, 2 at the 90th percentile.
 - 2026-11-23 04:40 UTC. The pair at the end keeps its heights for now (`heightRatio` 1.131): the companion's leaf at the upper left of the two bloom frames is part of the approved pictures. The shorter companion with its leaf holds set again comes after the field's processor work.
 - 2026-11-23 04:40 UTC. The place paints its near sunflower strips in the field's far colour from bar 57 to the end, so no line shows where the field's wedge ends. The crop's tops take the full low sun late in the bloom.
+- 2026-11-23 07:15 UTC. The three close lenses of the frost section are stopped down: `margin` 100 mm at f/16, `tip` 100 mm at f/32, `thaw` 85 mm at f/32, so that more than one edge is sharp and the crystals keep their form. Owners of glints read the blur circle from the pose each frame.
+- 2026-11-23 07:20 UTC. MEASURED, the cost of the four cuts (draft tier, this machine, 28 frames round frames 952, 1055, 1157 and 1260): nothing is made after loading; script time on the cut frames is 18.0, 16.6 and 18.4 ms against 4.5 to 15.7 on their neighbours. `out/work/bench/sky/cost-cutcost.json`.
+- 2026-11-23 07:25 UTC. MEASURED, script time while the plant grows right after the last cut (frames 1260 to 1263): 55 to 111 ms a frame, the field 34 to 37 and the plant 30 to 44, against a budget of 16. This is the top technical risk and the order of work for the plant and the field: keys while growing, part by part.
+- 2026-11-23 07:28 UTC. Merged into `v2`: sky B `8896ad1`, place `a05a093`, plant `8a84e63`, frost `3920aaa`, field `ff78018`, checks `bcd1e27`, player `3255dbd`, ground `b933019`, rain `4aac1bc`, leaf look `45c9be2` (its later near reach is held back until it no longer warms the wide shot at bar 29). Correction: the earlier merge whose message names field `c69d11a` took `e538c7e`.
+- 2026-11-23 07:38 UTC. The end: the sun's lower edge stands on the far ridge on bar 73 (1.1 degrees up, the ridge is three quarters of a degree high there) and its last sliver goes a quarter of a second before the film closes (0.42 degrees). The picture goes down with the sun over the last bars (`LAST`, `LAST_LIGHT` in `src/v2/look.ts`). MEASURED on the Builder's frame of bar 73: the sun's disc is six pixels wide at the draft size and lands at 250, 208, 155 against a sky band of 248, 168, 135, so it does not read as the sun yet. With sky B and the lens.
+- 2026-11-23 07:40 UTC. Sky B's cloud fix is merged (`ff8d044`): one cloud field from day into night, the shapes no longer swap at dusk. STATED by sky B: the steps at frames 620 to 623 in the sky crop fall from 19.0, 17.0, 16.9 to 13.8, 12.9, 11.3 of 255. The price is a more closed night sky; the cover dial at night is the Builder's to lower.
 
 ## Notes from Brandon
 
@@ -178,6 +184,9 @@ In the order they cost the film (from the second watch beside the keys, 04:39 UT
 - Night 9: a part step of 55 at frame 2177 (a cloud over the bright Milky Way after the storm). With sky B.
 - Loading: 96 s on this machine with stretches of 5 to 10 s unpainted. With the player and the Builder.
 - The Builder's own: long shadows of the pair at bars 69 to 75, the frost hold and the night level under the new sky, the flash as a cold rim.
+- The frost close shots (07:30 UTC): leaf faces dark and bare inside the fringe, chips that read as cut paper, a fringe too thick and bright; `margin` shows the leaf edge on with the sun hidden behind the left leaf and an empty right half. With frost, leaf look and the Builder's cameras.
+- The sun at the end does not read as the sun (a pale dot of six pixels). With sky B and the lens.
+- The night under the one cloud field is too closed for the Milky Way. With the Builder's cover dial.
 - The first whole film in parts with the music (private) has not been drawn yet.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
@@ -251,4 +260,6 @@ None yet.
   Pictures: The last stretch on the lower crane, bars 67 to 74.5; Bar 67: the pull back begins; Bar 73: the sun touches the ridge.
 - Status 15, 2026-11-23 06:59 UTC, Phase 3. Your new notes are in the film: three close shots inside the frost hold, cut hard on bars 19, 21, 23 and 25 (the only cuts in the film), and one unbroken move in toward the bud from bar 55 that holds on the bloom and backs out into the final reveal. The three frost angles were picked from 30 test angles; five new reference pictures made. Next: Bring the ice up to the reference pictures at this distance (crystals with form, a closed fringe, glints that open into soft discs, the thaw with one falling drop), then the end look and the first whole pass of the film. Time used: 9.0 h of 30 h.
   Pictures: Targets for the three frost close shots, new reference pictures: a leaf edge with the dim sun in the mist, the tip as the sun comes through, the thaw; The same three shots in the film now, from the cut cameras, draft quality. The framing is set, the ice is not at the target yet; The camera in close for the bloom: bars 57, 58.5 and 61, draft quality; Bars 55 to 67 on one sheet: in toward the bud, the bloom, back out to the field.
+- Status 16, 2026-11-23 07:42 UTC, Phase 3. Ten branches of work are merged and tested (178 tests pass). The three frost close shots now use a smaller lens opening, so the ice fringe is dense and mostly sharp. The clouds now carry on from day into night without swapping shape at dusk. The end of the film has a new look: the sun stands on the far ridge on bar 73 and its last sliver goes just before the last frame. MEASURED: nothing is made at the four cuts, and script time on the cut frames is 17 to 18 ms. Not good yet, said plainly: the leaf faces are dark and bare inside the fringe, the ice chips read as cut paper, the fringe is too thick and bright, the first close shot hides the sun behind a leaf, and the sun at the end is a pale dot. MEASURED: script time is 55 to 111 ms a frame while the plant grows right after the last cut, against a budget of 16; that is the top risk for smooth play. Next: Bring script time down while the plant grows (the plant and the field first). New camera angles for the first frost shot so the sun stands clear with needles across it. Ice that looks like ice: glints as soft discs, sugar on the leaf faces, thinner fringe. A sun that reads as the sun at the end. More Milky Way in the short nights. Time used: 9.7 h of 30 h.
+  Pictures: Frost close shot 1 on bar 19, a leaf edge in the mist. Fringe dense now. The angle changes next: the sun hides behind the left leaf and the right half is empty; Frost close shot 2 on bar 21, the tip as the sun comes through; Frost close shot 3 on bar 23, the thaw. The leaf face is still bare; The end with its new look, bars 69 and 73. The sun is still a pale dot at the left third of the ridge.
 
