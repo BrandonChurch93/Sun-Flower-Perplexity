@@ -459,10 +459,13 @@ void main() {
 }
 `
 
-// A clear hair adds its light to what is behind it and a rimed one covers it, and the two cannot be mixed. So the coat thins to nothing as the frost dial passes its middle and comes back the other way: nothing is ever swapped in one frame.
+// Far from the lens a clear hair and a rimed one are drawn in two forms, so that coat thins to nothing as the frost dial passes its middle and comes back in the other form. Barbs and beads of ice grow from the middle of the dial to its top and melt the same way, and the dew comes below it.
 const turn = /* glsl */ `
 float rimeTurn() {
   return smoothstep(0.0, 0.1, abs(uPlantFrost - 0.5));
+}
+float iceTurn() {
+  return uPlantFrost > 0.5 ? smoothstep(0.5, 1.0, uPlantFrost) : smoothstep(0.5, 0.4, uPlantFrost);
 }
 `
 
@@ -483,7 +486,7 @@ void main() {
   float cover;
   vec3 color;
   float sun = plantSun(vLitAt, uSunDir);
-  float turn = rimeTurn();
+  float turn = iceTurn();
   if (vShape.x < 0.5) {
     float x = abs(vAt.x);
     cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z) * turn;
@@ -528,20 +531,22 @@ void main() {
   float cover = vCover;
 #endif
 #ifdef FADE
-  cover *= uHairFade;
+  cover *= uHairFade * rimeTurn();
 #endif
-  cover *= rimeTurn();
   float sun = plantSun(vLitAt, uSunDir);
   vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
-  if (uPlantFrost > 0.5) {
+  vec3 color = light * cover;
+  // With frost on it a hair is part clear and part rime: its light is added by the clear share and what is behind is covered by the rimed share, so the coat follows the dial.
+  if (uPlantFrost > 0.0) {
 #ifdef BLUR_CIRCLE
-    outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
+    float seen = dot(color, vec3(0.3, 0.6, 0.1)) * (1.0 - uPlantFrost) / 0.002 + cover * uPlantFrost / 0.2;
+    outColor = vec4(0.0, 0.0, 0.0, seen > 1.0 ? cocOf(vDepth) : 4096.0);
 #else
-    outColor = vec4(finish(light, vWorld, vDepth, -1.0).rgb, saturate(cover));
+    float solid = saturate(cover);
+    outColor = vec4(mix(color, finish(light, vWorld, vDepth, -1.0).rgb * solid, uPlantFrost), uPlantFrost * solid);
 #endif
     return;
   }
-  vec3 color = light * cover;
   // Light is added to what is behind, as a clear fiber does. The blur circle is the smaller of the hair's own and the one behind it, and only where the hair shows, so the lens does not smear a sharp bright hair into a soft background.
   float shows = dot(color, vec3(0.3, 0.6, 0.1));
   outColor = vec4(color, shows > 0.002 ? cocOf(vDepth) : 4096.0);
@@ -901,13 +906,14 @@ export class HairSet {
     this.softLeast.value = FINE_HALF_PX + (SOFT_HALF_PX - FINE_HALF_PX) * wide
     const geometry = ribbon ? this.ribbons : this.lines
     const sharp = ribbon ? this.ribbonsSharp : this.linesSharp
-    // A clear hair adds its light to what is behind it. Rimed, it covers it.
+    // A clear hair adds its light to what is behind it. With frost on it, it covers its rimed share of it.
     const rimed = stateUniforms.uPlantFrost.value > 0.5
+    const iced = stateUniforms.uPlantFrost.value > 0
     const material = (object as THREE.Mesh).material as THREE.Material
-    material.blendSrc = rimed ? THREE.SrcAlphaFactor : THREE.OneFactor
-    material.blendDst = rimed ? THREE.OneMinusSrcAlphaFactor : THREE.OneFactor
-    material.blendEquationAlpha = rimed ? THREE.AddEquation : THREE.MinEquation
-    material.blendSrcAlpha = rimed ? THREE.ZeroFactor : THREE.OneFactor
+    material.blendSrc = THREE.OneFactor
+    material.blendDst = iced ? THREE.OneMinusSrcAlphaFactor : THREE.OneFactor
+    material.blendEquationAlpha = iced ? THREE.AddEquation : THREE.MinEquation
+    material.blendSrcAlpha = iced ? THREE.ZeroFactor : THREE.OneFactor
     if (soft) {
       const far = this.softRange(camera, object)
       this.ribbonsSoft.setDrawRange(far.start, far.count)
@@ -931,7 +937,7 @@ export class HairSet {
       else geometry.setDrawRange(this.count * 12, this.kept * 24)
     } else if (lengthPx < 5) geometry.setDrawRange(0, this.kept * 2)
     else geometry.setDrawRange(this.count * 2, this.kept * 4)
-    sharp.setDrawRange(geometry.drawRange.start, rimed ? geometry.drawRange.count : 0)
+    sharp.setDrawRange(geometry.drawRange.start, iced ? geometry.drawRange.count : 0)
   }
 
   private softRange(camera: THREE.Camera, object: THREE.Object3D): { start: number; count: number } {

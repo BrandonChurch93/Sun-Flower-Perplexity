@@ -90,8 +90,14 @@ void main() {
   // The sun's own light is many times the sky's. What the mist throws on is a share of the mist's own brightness, in the sun's color: it glows and never burns out.
   vec3 warm = min(max(uSkyHorizonSun - uAirHorizon, vec3(0.0)), air);
   vec3 sun = uAirSun / max(dot(uAirSun, vec3(0.2126, 0.7152, 0.0722)), 1.0) * dot(air, vec3(0.2126, 0.7152, 0.0722));
-  // Mist between the eye and the sun throws the sun forward: it is brightest in front of it.
-  vec3 color = air + ((warm + 0.9 * sun) * (uLook.y * wide) + sun * (uLook.w * (0.6 * (1.0 - smoothstep(0.012, 0.04, theta)) + exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
+  // Mist between the eye and the sun throws the sun forward, and reddens it on the way: a warm bloom that lies in the low mist under the sun, widest along the horizon and falling off with the angle. The lens adds its own small glow tight round the disc, so there is none of that here.
+  float paleness = dot(air, vec3(0.2126, 0.7152, 0.0722));
+  vec3 peach = sun * vec3(1.3, 0.93, 0.6) + 0.5 * warm;
+  peach *= paleness / max(dot(peach, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+  float aside = acos(clamp(dot(normalize(v.xz + vec2(1e-6)), normalize(uGlowDir.xz + vec2(1e-6))), -1.0, 1.0));
+  float lying = exp(-max(v.y, 0.0) / 0.07);
+  float bloom = uLook.y * wide * (0.25 + 0.7 * lying) + uLook.w * (0.9 * exp(-theta / 0.16) + 1.3 * exp(-aside / 0.35) * lying);
+  vec3 color = air + peach * (bloom * max(shafts, 0.0));
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);
   // So thin a mist takes the color of the sky that stands behind it.

@@ -1,7 +1,7 @@
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import type { PlantInputs } from '../plant/growth.ts'
 import type { Dials, Moment } from './api.ts'
-import { DAY, barAt, coldAtBar, coverAtBar, hitTime, overcastAtBar, worldAt } from './clock.ts'
+import { DAY, barAt, coldAtBar, coverAtBar, hitTime, overcastAtBar, tauAt, worldAt } from './clock.ts'
 import { blankMoment, momentAt } from './now.ts'
 import { sunAzimuthAt, sunElevationAt } from './sun.ts'
 
@@ -47,6 +47,9 @@ const mean = (lags: number[], seconds: number): number => {
 
 // The two holds, where the plant's clock stands, in film seconds, and how long before and after them the air is handed over.
 const HOLDS = [[hitTime(17), hitTime(25)], [hitTime(33), hitTime(41)]]
+
+// The plant's clock where it stands in the rain.
+export const RAIN_STANDS = tauAt(HOLDS[1][0])
 const HAND_S = 1
 
 function heldAt(seconds: number): number {

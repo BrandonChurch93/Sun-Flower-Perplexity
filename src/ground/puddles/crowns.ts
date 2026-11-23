@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { basin } from './basin.ts'
 import { config } from '../../config.ts'
 import { skyMirror } from './mirror.ts'
+import { LEAN_X, LEAN_Z } from '../../weather/rain/drops.ts'
 
 // Half the master frame's height in pixels, as shader text: a crown is sized by how large it stands in the finished frame.
 const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
@@ -58,12 +59,14 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
   float ragged = 0.2 + 1.3 * lot * lot;
   float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
-  float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
+  // The drop comes in on the wind, so its crown stands tallest and tips over on the side the wind blows to.
+  float way = ${Math.atan2(LEAN_Z, LEAN_X).toFixed(4)} + 1.2 * (fract(seed * 29.0) - 0.5);
+  float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - way);
   float finger = bump * ragged * v * v * v;
   float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.35, onWater) * v + mix(0.6, 1.0, onWater) * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
   float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (mix(0.8, 0.6, onWater) + foot + mix(0.2, 0.5, onWater) * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.9, onWater) * finger);
-  vec2 over = vec2(cos(TAU * fract(seed * 29.0)), sin(TAU * fract(seed * 29.0))) * 0.5 * y * onWater;
+  vec2 over = vec2(cos(way), sin(way)) * 0.5 * y * mix(0.4, 1.0, onWater);
   return vec3(cos(th) * r + over.x, y, sin(th) * r + over.y);
 }
 

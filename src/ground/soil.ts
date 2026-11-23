@@ -299,8 +299,10 @@ float grains(vec3 world, float share) {
   float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 3.0, 0.0005));
   vec3 a = world * exp2(-floor(l));
   vec3 b = a * 0.5;
-  float fine = step(1.0 - share, hash31(floor(a))) * smoothstep(0.42, 0.15, length(fract(a) - 0.5));
-  float coarse = step(1.0 - share, hash31(floor(b))) * smoothstep(0.42, 0.15, length(fract(b) - 0.5));
+  float ha = hash31(floor(a));
+  float hb = hash31(floor(b));
+  float fine = step(1.0 - share, ha) * smoothstep(0.42, 0.15, length(fract(a) - 0.5 - 0.3 * (fract(ha * vec3(13.7, 57.3, 91.1)) - 0.5)));
+  float coarse = step(1.0 - share, hb) * smoothstep(0.42, 0.15, length(fract(b) - 0.5 - 0.3 * (fract(hb * vec3(13.7, 57.3, 91.1)) - 0.5)));
   return mix(fine, coarse, fract(l));
 }
 float sparkle(vec3 world, vec3 v, vec3 n) {
@@ -313,9 +315,9 @@ vec3 skyImage(vec3 d) {
 }
 // Before the sun is up, dewy soil is a dark mirror of the dusk above it: this is all that tells one crumb from the next.
 uniform float uDusk;
-vec3 duskSheen(vec3 v, vec3 n) {
+vec3 duskSheen(vec3 world, vec3 v, vec3 n) {
   float skim = 1.0 - saturate(dot(n, v));
-  return skyImage(reflect(-v, n)) * (uDusk * uDew * (0.02 + 0.17 * skim * skim) * smoothstep(-0.2, 0.3, n.y));
+  return skyImage(reflect(-v, n)) * (uDusk * uDew * (0.02 + 0.17 * skim * skim) * smoothstep(-0.2, 0.3, n.y) * (0.25 + 2.5 * grains(world + 0.3, 0.12)));
 }
 // Before sunrise and after sunset the glow on the horizon is the only light with a direction: faces turned to it take its colour, edges seen against it rim, and dew points throw it at the lens.
 vec3 afterglow() {
@@ -330,7 +332,7 @@ vec3 duskGlow(vec3 world, vec3 v, vec3 n, vec3 albedo, float edge) {
   float rim = smoothstep(-0.2, 0.5, dot(n, l)) * skim * skim * skim * saturate(0.4 - dot(v, l)) * edge;
   float points = grains(world + 0.53, 0.05) * pow(saturate(dot(reflect(-v, n), l)), 16.0) * uDew;
   float round = exp(-dot(world.xz, world.xz) / 0.05);
-  return afterglow() * (albedo * (mix(0.3, 0.03, uDew) * lying + 0.8 * facing * round) + (0.25 * rim + 1.2 * points) * round);
+  return afterglow() * (albedo * (mix(0.3, 0.03, uDew) * lying + 0.55 * facing * round * edge) + (0.25 * rim + 1.2 * points) * round);
 }
 // Wet grains each mirror the bright sky low over the horizon.
 vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
@@ -373,7 +375,7 @@ float frostKept(float frost, float sunny) {
   float from = 0.7 * sunny;
   return smoothstep(from, from + 0.3, frost);
 }
-const vec3 FROST_WHITE = vec3(0.58, 0.62, 0.69);
+const vec3 FROST_WHITE = vec3(0.6, 0.62, 0.66);
 // The lightning's light on the ground at its full strength, and how many times brighter the wet soil throws the sun back when it bursts through the deck.
 const vec3 FLASH_LIGHT = vec3(1.6, 1.9, 2.6);
 const float BURST_BLAZE = 3.0;
@@ -399,19 +401,24 @@ vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit, float lying)
 float underFlash(float soaked) {
   return 1.0 - 0.8 * uAir.y * soaked;
 }
+// The low sun's own warm light as single frost crystals throw it at the lens, at a strength that does not depend on how bright the sky draws its glow.
+vec3 warmGlint() {
+  float most = max(max(uSkyHorizonSun.r, uSkyHorizonSun.g), max(uSkyHorizonSun.b, 1e-3));
+  return uSkyHorizonSun * (min(most, 1.6) / most) * vec3(1.15, 0.95, 0.7);
+}
 // Frozen soil is darker and greyer than the same soil thawed.
 vec3 frozen(vec3 albedo, float frost) {
   return mix(albedo, dot(albedo, vec3(0.3, 0.6, 0.1)) * vec3(0.62, 0.7, 0.84), 0.8 * smoothstep(0.0, 0.3, frost));
 }
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
-  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.2, 0.95, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
+  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.38, 1.0, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
 }
 // Under the crystals the soil itself is dusted pale wherever it lies open to the sky, thinner than the hoar and gone sooner as the frost dial falls.
 float dusted(vec3 world, float lies, float frost, float sunny) {
   float pixel = sqrt(length(dFdx(world)) * length(dFdy(world)));
   float fine = mix(0.6 * valueNoise(world.xz * 610.0 + world.y * 300.0) + 0.4 * valueNoise(world.zx * 1700.0), 0.5, smoothstep(0.0004, 0.002, pixel));
-  return 0.46 * smoothstep(0.25, 0.9, frost) * frostKept(frost, sunny) * smoothstep(0.04, 0.4, lies) * (0.45 + 1.1 * fine * fine);
+  return 0.2 * smoothstep(0.25, 0.9, frost) * frostKept(frost, sunny) * smoothstep(0.04, 0.4, lies) * (0.45 + 1.1 * fine * fine);
 }
 // The crystals each face their own way, and one that throws the sun at the lens flares and dies as the light or the lens moves.
 float frostSpark(vec3 world, vec3 n, vec3 v, vec3 l) {
@@ -574,6 +581,8 @@ void main() {
   float stand = 1.0;
   float top = 0.0;
 #endif
+  float grazing = 1.0 - smoothstep(0.02, 0.2, normalize(uCamPos - vWorld).y);
+  pool *= 1.0 - grazing * (1.0 - 0.3 * smoothstep(0.35, 0.6, valueNoise(p * 19.0 + 9.0)));
   vec2 uvL = clodUv(p);
   vec4 lumpy = texture(tClods, uvL);
   float lodPix = log2(max(max(length(dFdx(uvL)), length(dFdy(uvL))) * uClods.z / uClods.x, 1.0));
@@ -632,7 +641,7 @@ void main() {
 #endif
   float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
   float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
-  float lies = saturate(sits + 0.32 * hollow * smoothstep(0.08, 0.45, mix(h, lumpy.a, stand)) * (1.0 - 0.7 * under) * (1.0 - pool)) * (1.0 - 0.4 * saturate(2.0 * dot(n.xz, uLowSun.xy)));
+  float lies = saturate(sits + 0.22 * hollow * smoothstep(0.08, 0.45, mix(h, lumpy.a, stand)) * (1.0 - 0.7 * under) * (1.0 - pool)) * (1.0 - 0.4 * saturate(2.0 * dot(n.xz, uLowSun.xy)));
   float rime = max(rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8)), dusted(vWorld, lies, uFrost, lit * saturate(ndl * 1.8)));
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
@@ -652,15 +661,20 @@ void main() {
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
-  color += duskSheen(v, n) * open * (1.0 - thatch);
+  color += duskSheen(vWorld, v, n) * open * (1.0 - thatch) * mix(0.3, 1.0, stand);
   color += duskGlow(vWorld, v, n, albedo, 0.6 * crest * stand) * (0.3 + 0.7 * open) * (1.0 - 0.6 * under);
   float soaked = max(smoothstep(0.1, 0.8, uWet), pool);
   vec3 film = normalize(vec3(sleek.x, 1.0, sleek.y));
   color *= 1.0 - 0.72 * soaked * (1.0 - pool);
-  float lying = max(pool, stand * (1.0 - smoothstep(0.1, 0.4, lumpy.a)));
-  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5)), soaked, lit, lying) * mix(0.4, 1.0, stand) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.3 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
-  color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
-  color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
+  float seen = smoothstep(0.02, 0.2, v.y);
+  float lying = max(pool, stand * (1.0 - smoothstep(0.1, 0.4, lumpy.a)) * seen);
+  float edged = smoothstep(0.06, 0.4, length(n.xz - film.xz)) * (1.0 - lying);
+  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.6 * soaked * edged * mix(0.3, 1.0, seen)) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
+  vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
+  float toSun = pow(saturate(dot(normalize(-v.xz), uLowSun.xy)), 160.0) * uLowSun.z;
+  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime * (1.0 + 5.0 * toSun);
+  color += warmGlint() * (toSun * smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.4) * 2.0 * grains(vWorld + 1.7, 0.1) * (0.3 + 0.7 * crest) * hollow * (1.0 - thatch));
   outColor = finish(color, vWorld, vDepth, density);
 }
 `

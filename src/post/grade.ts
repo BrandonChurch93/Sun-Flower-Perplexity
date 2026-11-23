@@ -31,6 +31,10 @@ uniform float uShaftLevel;
 uniform float uBloomCap;
 uniform float uHaze;
 uniform float uVeilSun;
+uniform float uMist;
+uniform float uWarm;
+uniform sampler2D tRaw;
+uniform float uFar;
 uniform float uShafts;
 uniform float uSaturation;
 uniform float uVignette;
@@ -91,21 +95,31 @@ vec3 sunGlare(vec2 px) {
   float core = 1.0 / ((1.0 + q) * (1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
   float glow = (0.07 + 0.07 * uHaze) * exp(-r / wide) + (0.012 + 0.02 * uHaze) * exp(-r / 0.16);
+  glow += uMist * (0.3 * exp(-r / 0.03) + 0.07 * exp(-r / 0.09)) + uWarm * (0.1 * exp(-r / 0.045) + 0.03 * exp(-r / 0.2));
   float veil = uVeilSun * (0.003 + 0.006 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
   vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
-  vec3 glass = mix(uSunLight, vec3(peak), 0.5) * (uSunHot * core * seen.a) + air * ((glow + veil) * seen.r);
+  vec3 glass = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm) * (uSunHot * core * seen.a) + air * ((glow + veil) * seen.r);
+  // Under a deck that has just torn the sun is the tear itself, ragged and already in the sky's picture: the glass adds no disc and no veil of its own there, only the beams.
+  glass *= 1.0 - smoothstep(0.0, 0.35, uFan);
   float open = texture(tShafts, vUv).r;
-  float here = mix(mix(0.14, 0.75, uFan), 1.0, texture(tOpen, vUv).a);
-  float ra = length(away);
-  // The beams: the air is never even, so the light stands in it in uneven bands that all point at the sun. Under a deck that has just torn the lit air is below the tear.
-  float turn = atan(away.y, away.x);
-  float bands = 0.5 * band(turn, 13.0, 3.0) + 0.5 * band(turn, 31.0, 11.0);
-  float beams = mix(1.0, mix(0.06, 1.0, smoothstep(0.36, 0.6, bands)), smoothstep(0.03, 0.2, ra));
-  float under = mix(1.0, smoothstep(-0.15, 0.6, -away.y / max(ra, 1e-4)), uFan);
-  float reach = 0.4 * exp(-ra / 0.14) + 0.6 * exp(-ra / 0.55);
-  float standing = reach * open * mix(sqrt(open), 1.0, uFan) * here * beams * under * smoothstep(0.015, 0.12, ra);
-  float lit = uShafts * mix(0.8, 1.45, uFan) * standing;
-  return glass + mix(uSunLight / peak, uSunAir, 0.4) * (uShaftLevel * lit / (1.0 + mix(1.2, 1.7, uFan) * lit));
+  // Under a deck that has just torn the beams start where the tear is brightest, and they stand in the air behind the plant: what is in focus in front of them takes almost none.
+  vec2 off = away - uFan * texelFetch(tSun, ivec2(1, 0), 0).xy;
+  float back = uFar > 0.5 ? smoothstep(0.1, 0.5, texelFetch(tRaw, ivec2(px), 0).a / uFar) : 1.0;
+  float here = mix(mix(0.14 + 0.3 * uWarm * back, 1.0, texture(tOpen, vUv).a), mix(0.1, 1.0, back), uFan);
+  float ra = length(off);
+  // The beams: the air is never even, so the light stands in it in uneven bands that all point at the sun. Under the tear they are few, with dark air between them.
+  float turn = atan(off.y, off.x);
+  float fine = smoothstep(0.36, 0.6, 0.5 * band(turn, 13.0, 3.0) + 0.5 * band(turn, 31.0, 11.0));
+  float few = smoothstep(0.42, 0.62, 0.6 * band(turn, 37.0, 5.0) + 0.4 * band(turn, 79.0, 7.0));
+  float beams = mix(1.0, mix(mix(0.06, 1.0, fine), few, uFan), smoothstep(0.03, 0.2, ra));
+  float under = mix(1.0, smoothstep(0.35, 0.85, -off.y / max(ra, 1e-4)), min(1.0, 3.0 * uFan));
+  float reach = mix(0.4 * exp(-ra / 0.14) + 0.6 * exp(-ra / 0.55), 0.35 * exp(-ra / 0.18) + 0.65 * exp(-ra / 0.6), uFan);
+  float standing = reach * mix(open * sqrt(open), mix(0.6, 1.0, open), uFan) * here * beams * under * smoothstep(0.015, 0.12, ra);
+  float lit = uShafts * mix(0.8 + 1.6 * uWarm, 0.5, uFan) * standing;
+  // The beams under the tear carry the sun's own colour, deepened: the air between them is the storm's and stays cold.
+  vec3 own = uSunLight / peak;
+  vec3 tint = mix(mix(own, uSunAir, 0.4), own * own, uFan);
+  return glass + tint * (uShaftLevel * lit / (1.0 + 1.2 * lit));
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));

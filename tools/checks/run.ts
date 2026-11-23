@@ -19,6 +19,7 @@ const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'write
 // What each check needs and what it costs, measured on four cores without a graphics card, four pages drawing at once.
 const HELP: [string, string, string, string][] = [
   ['nights', 'no night longer than 1.2 s, by the clock; no step or flicker through a dusk or dawn, by the picture', 'nothing; the picture part reads the frames of play', '3 s'],
+  ['nights --plant', 'the plant alone does not get brighter from the handover to the moon toward midnight', 'draws about 140 frames itself at 640 x 360 with the plant alone', '7 to 9 min'],
   ['holds', 'nothing grows in the two holds, by the clock and by the picture', 'draws 20 frames itself at 640 x 360 (--no-pictures: none)', '3 s by the clock, 4 to 6 min with the pictures'],
   ['cues', 'sunrises, holds and lightning sit on the bar lines of config/music/cues.json', 'nothing', '3 s'],
   ['play', 'draws the film small and notes what each frame made', 'a browser; --sky, --from, --to, --stride 6', '25 to 30 min a page for a third of a round of stride 6; 3 pages side by side'],

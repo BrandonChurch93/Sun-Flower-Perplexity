@@ -66,17 +66,22 @@ void main() {
 export const SHAFT_TAPS = 6
 export const shaftFragment = /* glsl */ `
 uniform sampler2D tSource;
+uniform sampler2D tSun;
 uniform vec2 uSun;
 uniform float uRatio;
+uniform float uAspect;
+uniform float uFan;
 uniform int uAlpha;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 void main() {
-  vec2 d = vUv - uSun;
+  vec2 hole = texelFetch(tSun, ivec2(1, 0), 0).xy;
+  vec2 from = uSun + uFan * vec2(hole.x, hole.y * uAspect);
+  vec2 d = vUv - from;
   float sum = 0.0;
   float k = 1.0;
   for (int i = 0; i < ${SHAFT_TAPS}; i++) {
-    vec4 s = texture(tSource, uSun + d * k);
+    vec4 s = texture(tSource, from + d * k);
     sum += uAlpha == 1 ? s.a : s.r;
     k *= uRatio;
   }

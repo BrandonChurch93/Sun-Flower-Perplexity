@@ -1,12 +1,12 @@
-# Status 07
+# Status 09
 
-2026-11-23 02:38 UTC
+2026-11-23 03:47 UTC
 
-- Status 07 · Phase 2. Every builder's second round is merged and the whole film draws as one picture again. The opening is clear (the fog banks are gone), the soil carries hoar in the frost hold, the storm has soft streaks and a puddle, and the break of bar 41 comes up over five frames instead of one. The three sky candidates were drawn in the same twenty frames and went to three blind critics: the first verdict is in (B first, A second, C third), two are pending. The counter for bytes written per frame overcounted textures and is corrected.
-- Next: Take the other two verdicts and move the winning sky to its place, then draw the whole film in parts and join it under the music for the first full watch. Time used: 4.6 h of 30 h.
+- Status 09 · Phase 3. First whole watch read against the nine keys. The deck now stays over the break and the sun lights through its tear, the frost hold has a lower sun, the crane ends closer, the film ends 3 degrees after sunset. A new counter measures the page's own time in a frame by part: 70 to 210 ms where the plant grows against a budget of 33 ms, so growth moves into the shaders next.
+- Next: round notes to every owner from the watch, the processor work in plant, field and rain, the new night sky wired in, then the whole film in parts. Time used: 5.8 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier)
-- `status-2.jpg`: Sky candidate A in the jury's ten film frames
-- `status-3.jpg`: Sky candidate C in the jury's ten film frames
-- `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
+- `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain)
+- `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain)
+- `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft)
+- `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)

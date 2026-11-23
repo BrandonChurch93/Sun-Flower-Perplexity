@@ -80,14 +80,19 @@ export const kindTime = (time: number, index: number, tier: Tier): number =>
 const SETTLED_T = 45
 const KNEE = 12
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
-export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_T) / Math.max(heightAt(time), 0.001)))
+// After the bud the lead is given up more slowly than the neighbors still grow, so none of them gets shorter while it goes.
+const SETTLE_SLOW = 0.5
+const SETTLE_FROM_T = BUD_T - 0.4
+export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_T) / Math.max(heightAt(time <= SETTLE_FROM_T ? time : SETTLE_FROM_T + (time - SETTLE_FROM_T) * SETTLE_SLOW), 0.001)))
 // The plant towers over a young field. As seedlings the rows are its size; through the climb and the storm they stand at two fifths of it,
 // and on the way up to the bud they stay under the lens that rises with the plant. By the bud they have their full size.
 // Each pair is a mark of the plant's clock and the share of its full height the tallest neighbor stands at.
 const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.43], [20, 0.405], [29.2, 0.405], [30.03, 0.41], [31.19, 0.5], [32.35, 0.62], [33.5, 0.72], [34.66, 0.76], [38.14, 0.8], [41.6, 0.84], [BUD_T, 1]]
 // While the field is low its plants are nearly of a height: how much of each one's own size shows, as a power of it.
-// It comes back no faster than the field grows, so no neighbor ever gets shorter.
-const EVEN: [number, number][] = [[9, 1], [12, 0.12], [29.2, 0.12], [34.66, 0.6], [41.6, 0.86], [BUD_T, 1]]
+const EVEN_LOW = 0.12
+const EVEN_FROM_T = 29.2
+const SHARE_LOW = 0.05
+const EVEN: [number, number][] = [[9, 1], [12, EVEN_LOW], [EVEN_FROM_T, EVEN_LOW]]
 // A curve through the marks that never turns back between two of them.
 function curve(marks: [number, number][]): (time: number) => number {
   const n = marks.length
@@ -120,12 +125,15 @@ function curve(marks: [number, number][]): (time: number) => number {
   }
 }
 export const standAt = curve(STAND)
-export const evenAt = curve(EVEN)
+const evenEarly = curve(EVEN)
+// Past the storm it is tied to how tall the field stands, so a neighbor cannot get shorter while the rest catch up.
+export const evenAt = (time: number): number =>
+  time <= EVEN_FROM_T ? evenEarly(time) : time >= BUD_T ? 1 : EVEN_LOW + (1 - EVEN_LOW) * Math.min(1, Math.max(0, Math.log(standAt(time) / standAt(EVEN_FROM_T)) / Math.log(1 / standAt(EVEN_FROM_T))))
 // The rows nearest the plant are the tallest of the young field: by how much the far ones are shorter.
 export const farShortAt = (time: number): number => 0.05 * ramp(9, 14, time) * (1 - ramp(36, BUD_T, time))
 // What a neighbor's size is multiplied by: `share` is its height as a share of the plant's, `reach` how far from the plant it stands.
 export const standOf = (share: number, reach: number, stand: number, even: number, farShort: number): number =>
-  stand * Math.pow(Math.max(share, 0.05), even - 1) * (1 - farShort * step(2, 9, reach))
+  stand * Math.pow(Math.max(share, SHARE_LOW), even - 1) * (1 - farShort * step(2, 9, reach))
 // Before the bloom the rows are uneven: the plants in poorer ground are well behind, and catch up as the buds fill.
 export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - ramp(35, 40, time))
 export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
@@ -259,7 +267,9 @@ export function statureAt(time: number, into: Stature = { ahead: 1, lag: 0, unev
 }
 // `kindTall` is the height of the neighbor's kind at its own clock, `reach` how far from the plant it stands.
 export function sizeOf(s: Stature, size: number, tone: number, own: Own, kindTall: number, reach: number): number {
-  const full = sizeAt(size, youngOf(tone, s.lag), s.ahead) * (1 + s.uneven * (own.tall - 1)) * (1 + s.behind * (own.young - 1))
+  // A kind on a slower clock keeps its lead by its own height, not the plant's: so its lead never goes faster than it grows.
+  const ahead = Math.max(s.ahead, Math.min(4, heightAt(SETTLED_T) / Math.max(kindTall, 0.001)))
+  const full = sizeAt(size, youngOf(tone, s.lag), ahead) * (1 + s.uneven * (own.tall - 1)) * (1 + s.behind * (own.young - 1))
   return s.young ? full * standOf((full * kindTall) / s.plantTall, reach, s.stand, s.even, s.farShort) : full
 }
 const BEHIND = 0.22
