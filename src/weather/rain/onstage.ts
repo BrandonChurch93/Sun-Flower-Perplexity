@@ -50,7 +50,7 @@ class Rain implements Part {
   prepare(now: Moment, later: Moment, view: View): void {
     const rain = now.dials.rain
     const on = rain > 0
-    rainOnBeads(rain, now.lightKind === 'moon' ? 1 : Math.min(1, Math.max(0, (-now.sunElevationDeg - 2) / 3)))
+    rainOnBeads(rain, now.lightKind === 'moon' ? 1 : Math.min(1, Math.max(0, (-now.sunElevationDeg - 2) / 3)), now.t, now.dials.dew, now.dials.drop, now.dials.dropFall, later.dials.drop, later.dials.dropFall)
     const quality = QUALITY[view.quality]
     this.veil.show(on, quality)
     for (const layer of this.layers) layer.place(view.pose.position, view.pose.forward, quality, view.samples, on)
