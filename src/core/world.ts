@@ -81,4 +81,5 @@ export function applyWorld(def: WorldDef): void {
   shared.uFogDensity.value = def.fog.density
   shared.uFogFalloff.value = def.fog.falloff
   shared.uSkyEven.value = def.sky.even ?? Math.min(1, Math.max(0, 26 * def.fog.density - 0.15))
+  shared.uWorldExposure.value = def.grade.exposure
 }
