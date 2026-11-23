@@ -1,8 +1,12 @@
 # Looks of sky-c
 
-2026-11-23 01:23 UTC, at commit f28bf27 of agent/sky-c.
+2026-11-23 01:55 UTC, at commit a1f5343 of agent/sky-c.
 
-- `01-film-12bars.jpg`: film-12bars
-- `02-shots-08-16.jpg`: shots-08-16
-- `03-fast-night-11bars.jpg`: fast-night-11bars
-- `04-storm-film.jpg`: storm-film
+- `01-sheet-16x9-review.jpg`: sheet-16x9-review
+- `02-sheet-low-quality.jpg`: sheet-low-quality
+- `03-film-view-sheet.jpg`: film-view-sheet
+- `04-night-11bars.jpg`: night-11bars
+- `05-best-08-lapse.jpg`: best-08-lapse
+- `06-best-12-break.jpg`: best-12-break
+- `07-best-15-field.jpg`: best-15-field
+- `08-best-16-last.jpg`: best-16-last
