@@ -28,6 +28,8 @@ export interface PartOptions {
   place?: { glsl: string; uniforms: Record<string, { value: unknown }> }
   // The head: the air carries it whole on the stem's tip, where a leaf also flutters by itself.
   rigid?: boolean
+  // The part is drawn from keys while it grows, so it may keep a spare shape to lay the next key in, a share a frame.
+  ahead?: boolean
 }
 
 // One organ of the plant at its real quality. It owns its meshes and fills them for the two ends of the shutter.
@@ -45,6 +47,12 @@ export interface PlantPart {
   absent?(time: number): boolean
   // Sets what the part keeps once for a moment and not for each vertex, as the mix of what its two slots were filled with: the share is the second slot's.
   settle?(share: number): void
+  // True for a part that keeps a spare shape and can lay it a share at a time, before the frame that needs it.
+  readonly spare?: boolean
+  // Lays the shape at `pose` into the spare shape from the share `from` of the work up to the share `to`, 0 to 1. The shares of one shape are laid in order, under what the shape's own moment sets.
+  ahead?(pose: Pose, from: number, to: number): void
+  // Moves the spare shape into a slot, as fill would have laid it there.
+  take?(slot: 0 | 1): void
 }
 
 export type PartMaker = (options: PartOptions) => PlantPart | null

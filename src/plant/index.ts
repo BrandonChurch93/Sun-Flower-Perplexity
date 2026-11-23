@@ -269,7 +269,8 @@ function keyAt(frame: number, out: FilmKey): FilmKey {
 }
 const newFilmKey = (): FilmKey => ({ frame: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, real: 0, wet: 0, frost: 0, dew: 0 })
 // What a part plays the film from: its turn, the two keys round the frame, and its own mix of its two slots.
-interface Play { turn: Turn; film: [FilmKey, FilmKey]; mix: THREE.Vector2 }
+// `next` is the key after those two and `ahead` how much of it lies in the part's spare shape: the key it is, 0 for none, and the share of it laid.
+interface Play { turn: Turn; film: [FilmKey, FilmKey]; mix: THREE.Vector2; next: FilmKey; ahead: { of: number; done: number }; spread: boolean }
 // How far a leaf twitches from frame to frame in the fastest time lapse, in radians.
 const TWITCH = 0.05
 const TAU = 2 * Math.PI
@@ -353,14 +354,14 @@ export class Plant {
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     const turned = this.variant === 0 ? 0 : 1
-    this.plays.set(null, { turn: turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value })
+    this.plays.set(null, { turn: turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
     for (const slot of SLOTS) {
       // Each part mixes its two slots by its own share, since each is laid on its own turn.
       const mix = new THREE.Vector2(0, 1)
-      const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid })
+      const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid, ahead: keyed[slot.name] })
       if (part) {
         this.parts.push(part)
-        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix })
+        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: keyed[slot.name] && part.spare === true })
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
     }
@@ -558,36 +559,74 @@ export class Plant {
     this.surface.main.uniforms.uBloom.value = headOpen(time)
   }
 
-  // Lays one slot of one part, or of the stand-in when the part is null, as the plant is at `key`, and notes under `id` what the slot now holds.
-  private layOne(part: PlantPart | null, slot: 0 | 1, key: FilmKey, id: number): void {
-    const real = shared.uReal.value
-    const wet = stateUniforms.uPlantWet.value
-    const frost = stateUniforms.uPlantFrost.value
-    const dew = stateUniforms.uPlantDew.value
-    const heldWas = filling.held
+  // What a shape is laid under: the film second, the state of the skin and the standing clock of its own key, in place of the frame's. `leave` puts the frame's back.
+  private readonly frameOwn = { real: 0, wet: 0, frost: 0, dew: 0, held: 0 }
+  private enter(key: FilmKey): void {
+    const own = this.frameOwn
+    own.real = shared.uReal.value
+    own.wet = stateUniforms.uPlantWet.value
+    own.frost = stateUniforms.uPlantFrost.value
+    own.dew = stateUniforms.uPlantDew.value
+    own.held = filling.held
     shared.uReal.value = key.real
     stateUniforms.uPlantWet.value = key.wet
     stateUniforms.uPlantFrost.value = key.frost
     stateUniforms.uPlantDew.value = key.dew
     filling.held = 1
     filling.lead = true
+  }
+  private leave(): void {
+    const own = this.frameOwn
+    shared.uReal.value = own.real
+    stateUniforms.uPlantWet.value = own.wet
+    stateUniforms.uPlantFrost.value = own.frost
+    stateUniforms.uPlantDew.value = own.dew
+    filling.held = own.held
+  }
+
+  // Lays one slot of one part, or of the stand-in when the part is null, as the plant is at `key`, and notes under `id` what the slot now holds. A part whose spare shape holds that key, whole or in part, lays the rest of it there and takes it.
+  private layOne(part: PlantPart | null, slot: 0 | 1, key: FilmKey, id: number): void {
+    this.enter(key)
     if (part === null) {
       const to = slot === 0 ? this.a : (this.b as THREE.BufferAttribute)
       buildStandIn(key.time, key.inputs, to.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
       to.needsUpdate = true
       this.n.needsUpdate = true
     } else {
-      part.fill(slot, poseAt(key.time, key.inputs))
+      const play = this.plays.get(part) as Play
+      if (play.ahead.of === id && part.ahead && part.take) {
+        if (play.ahead.done < 1) part.ahead(poseAt(key.time, key.inputs), play.ahead.done, 1)
+        part.take(slot)
+        play.ahead.of = 0
+      } else part.fill(slot, poseAt(key.time, key.inputs))
       part.finish(key.time, key.inputs)
     }
     const held = this.holds.get(part) as Int32Array
     held[slot] = id
     held[2] = id
-    shared.uReal.value = real
-    stateUniforms.uPlantWet.value = wet
-    stateUniforms.uPlantFrost.value = frost
-    stateUniforms.uPlantDew.value = dew
-    filling.held = heldWas
+    this.leave()
+  }
+
+  // Lays this frame's share of the key after the two round the frame into the part's spare shape, over the last frames before it is needed, so no frame lays a whole key.
+  private layAhead(part: PlantPart, play: Play, k: number, frame: number): void {
+    const t = play.turn
+    if (!play.spread || !part.ahead || k + 2 >= t.at.length) return
+    const due = t.at[k + 1]
+    const over = Math.min(due - t.at[k], KEY_EVERY)
+    if (frame < due - over) return
+    const key = keyAt(t.of[k + 2], play.next)
+    if (part.absent?.(key.time) === true) return
+    const id = -2 - key.frame
+    if (play.ahead.of !== id) {
+      play.ahead.of = id
+      play.ahead.done = 0
+    }
+    const upTo = Math.min(1, (frame - (due - over) + 1) / over)
+    if (play.ahead.done >= upTo) return
+    this.enter(key)
+    part.ahead(poseAt(key.time, key.inputs), play.ahead.done, upTo)
+    this.leave()
+    play.ahead.done = upTo
   }
 
   // Sets one part's mix for a frame of the film from the two keys of its own turn round the frame, and lays the key it lacks. Gives the share of the part's second slot.
@@ -629,7 +668,10 @@ export class Plant {
       }
       this.own.uOwnTip.value.copy(this.tips[0]).lerp(this.tips[1], share)
       if (this.hide === ALL) return share
-    } else if (!this.showPart(part, part.absent?.(first.time) === true && part.absent(second.time) === true)) return share
+    } else if (!this.showPart(part, part.absent?.(first.time) === true && part.absent(second.time) === true)) {
+      this.layAhead(part, play, k, frame)
+      return share
+    }
     const held = this.holds.get(part) as Int32Array
     // A film key is named by its frame, below the names the low layer gives.
     const a = -2 - first.frame
@@ -637,6 +679,7 @@ export class Plant {
     if (held[slot] !== a) this.layOne(part, slot, first, a)
     // What a part keeps once and not for each slot comes from the later key, so that one is laid last.
     if (held[other] !== b || held[2] !== b) this.layOne(part, other, second, b)
+    if (part) this.layAhead(part, play, k, frame)
     part?.settle?.(share)
     return share
   }
