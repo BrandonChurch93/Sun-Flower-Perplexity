@@ -44,7 +44,7 @@ const share = new Monotone(
 
 // The frost hold: the plant stands still and the lens creeps in and a little to the left, in real time, with the top of the plant held where it was. What it gained is given back in the climb.
 const FROST = { from: 16.5, to: 26, back: 31.5, closer: 0.09, turnDeg: 2.4, riseM: 0.006 }
-// The storm hold: the lens stands back and low so the whole plant, the wet soil and the sky are in the frame, and creeps in.
+// The storm hold: the lens stands low and a body's length back, so the whole young plant, the wet soil and the sky are in the frame, and creeps in.
 const STORM = { in: 28.5, from: 33, to: 41, out: 46.5 }
 const STORM_F_NUMBER = 5.6
 // The top of the stem never comes nearer to the top of the frame than this, as a fraction of its height: the youngest leaves stand around it.
@@ -101,8 +101,8 @@ function stormWeight(b: number): number {
 // The storm's own camera. It is a line in bars, so the creep of the hold is already under way when the lens arrives and still going when it leaves.
 function stormRig(b: number): RigPath {
   const u = (b - STORM.from) / (STORM.to - STORM.from)
-  const r: RigPath = { distanceM: 2.45 - 0.35 * u, heightM: 0.27 + 0.03 * u, aimHeightM: 0.42, frameX: 0.6 - 0.015 * u, azimuthRad: (7.5 + 2 * u) * RAD, focalMm: 38 }
-  r.aimHeightM = aimForHorizon(r, 0.614 + 0.016 * u)
+  const r: RigPath = { distanceM: 1.66 - 0.18 * u, heightM: 0.27 + 0.03 * u, aimHeightM: 0.42, frameX: 0.6 - 0.015 * u, azimuthRad: (7.5 + 2 * u) * RAD, focalMm: 38 }
+  r.aimHeightM = aimForHorizon(r, 0.505 + 0.019 * u)
   return r
 }
 

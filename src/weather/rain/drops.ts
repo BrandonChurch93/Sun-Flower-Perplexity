@@ -24,10 +24,11 @@ export const RAIN_CELL_M = 0.25
 export const RAIN_SERIES = 24
 export const RAIN_FINE_SERIES = 620
 
-const SLANT_DEG = 9
-// The tangent of the slant in still air, and what the strongest gust adds to it.
+const SLANT_DEG = 25
+// The tangent of the slant in still air, what the storm's wind adds to it and what the front of a gust adds to that: 22 to 28 degrees in the storm.
 export const SLANT_CALM = Math.tan((6 * Math.PI) / 180)
-export const SLANT_GUST = Math.tan((20 * Math.PI) / 180) - SLANT_CALM
+export const SLANT_WIND = Math.tan((22 * Math.PI) / 180) - SLANT_CALM
+export const SLANT_GUST = Math.tan((28 * Math.PI) / 180) - Math.tan((22 * Math.PI) / 180)
 // The rain leans the way the wind goes.
 const LEAN_TOWARD_DEG = WIND_TOWARD_DEG
 const PERIOD_MIN_S = 0.9

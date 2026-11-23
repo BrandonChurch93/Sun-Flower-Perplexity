@@ -72,8 +72,8 @@ function tabled(table: Float64Array, seconds: number): number {
 
 // Where the lightning sits: inside the film's frame in the storm hold, left of the plant and high, then right of it.
 const FLASHES: { from: number; azimuthDeg: number; elevationDeg: number }[] = [
-  { from: hitTime(33), azimuthDeg: 202.5, elevationDeg: 14.5 },
-  { from: hitTime(37), azimuthDeg: 178.5, elevationDeg: 14 },
+  { from: hitTime(33), azimuthDeg: 205, elevationDeg: 10.5 },
+  { from: hitTime(37), azimuthDeg: 180, elevationDeg: 10.5 },
 ]
 
 function blankDials(): Dials {

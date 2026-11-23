@@ -99,19 +99,19 @@ From `out/work/filmclock.csv`. Sun height and compass direction in degrees. The 
 | 21 | 35.2 | 12 | 5.5 | 178 | the sun stands in the mist | the same |
 | 23 | 38.6 | 12 | 6.7 | 179 | the sun clears the mist; the frost has been melting since bar 22.5 | fog 0.57, sunThrough 0.54, frost 0.91 |
 | 25 | 42.0 | 12 | 9 | 179 | the thaw: the hold ends, the days start | fog 0.35, frost 0.15 (gone at bar 25.4), dew 1, wet 0.45 |
-| 26 | 43.7 | 13.8 | 42 | 193 | full time lapse, a day every 2 bars | lapse 1 |
-| 26.5, 28.5, 30.5 | 44.6, 48.0, 51.4 | 15 to 24 | 0 | 200 to 202 | sunsets on beat 3, then a night of two beats | |
-| 27, 29, 31 | 45.5, 48.9, 52.3 | 16 to 25 | 0 | 178 to 180 | sunrises | cover 0.2 to 0.42 |
-| 32 | 54.0 | 27.3 | 56 | 194 | the storm front races in | cover 0.68, overcast 0.23, wind 0.26 |
-| 32.5 | 54.9 | 28.1 | 30 | 198 | the deck closes | cover 0.92, overcast 0.77, sunThrough 0.13 |
-| 33 | 55.7 | 28.3 | 16 | 200 | STORM HOLD begins: lightning | cover 1, overcast 1, sunThrough 0, flash 1, wind 0.54 |
-| 34 | 57.5 | 28.3 | 15.4 | 200 | the rain is down: it rose smoothly from the lightning at bar 33 | rain 1, wet 0.26, puddle 0.1 |
-| 36 | 60.9 | 28.3 | 14.3 | 200 | everything wet, the puddle full | wet 1, puddle 0.93 |
-| 37 | 62.6 | 28.3 | 13.7 | 200 | lightning again | flash 0.82 |
-| 40 | 67.7 | 28.3 | 12 | 200 | the rain thins from bar 39.5 | rain 0.85, then 0.74 at bar 40.25 |
-| 41 | 69.5 | 28.3 | 11.5 | 201 | THE BREAK: the sun tears through the last rain | burst 1, sunThrough 0.41, cover 0.91, overcast 0.74, rain 0.45 (0.18 at bar 41.4, 0 at 41.8) |
-| 42 | 71.2 | 28.9 | 9.3 | 201 | the deck is gone, the days start | burst 0.41, cover 0.4, wet 0.8 |
-| 42.5 | 72.0 | 29.4 | -2 | 203 | the first sunset after the storm, a night of 0.9 s | wet 0.62, puddle 0.69 |
+| 26 | 43.7 | 13.2 | 42 | 193 | full time lapse, a day every 2 bars | lapse 1 |
+| 26.5, 28.5, 30.5 | 44.6, 48.0, 51.4 | 14 to 20.1 | 0 | 200 to 202 | sunsets on beat 3, then a night of two beats | |
+| 27, 29, 31 | 45.5, 48.9, 52.3 | 14.8 to 20.8 | 0 | 178 to 180 | sunrises | cover 0.2 to 0.42 |
+| 32 | 54.0 | 22.3 | 56 | 194 | the storm front races in | cover 0.68, overcast 0.23, wind 0.26 |
+| 32.5 | 54.9 | 22.8 | 30 | 198 | the deck closes | cover 0.92, overcast 0.77, sunThrough 0.13 |
+| 33 | 55.7 | 23 | 16 | 200 | STORM HOLD begins: lightning | cover 1, overcast 1, sunThrough 0, flash 1, wind 0.54 |
+| 34 | 57.5 | 23 | 15.4 | 200 | the rain is down: it rose smoothly from the lightning at bar 33 | rain 1, wet 0.26, puddle 0.1 |
+| 36 | 60.9 | 23 | 14.3 | 200 | everything wet, the puddle full | wet 1, puddle 0.93 |
+| 37 | 62.6 | 23 | 13.7 | 200 | lightning again | flash 0.82 |
+| 40 | 67.7 | 23 | 12 | 200 | the rain thins from bar 39.5 | rain 0.85, then 0.74 at bar 40.25 |
+| 41 | 69.5 | 23 | 11.5 | 201 | THE BREAK: the sun tears through the last rain | burst 1, sunThrough 0.41, cover 0.91, overcast 0.74, rain 0.45 (0.18 at bar 41.4, 0 at 41.8) |
+| 42 | 71.2 | 23.8 | 9.3 | 201 | the deck is gone, the days start | burst 0.41, cover 0.4, wet 0.8 |
+| 42.5 | 72.0 | 24.6 | -2 | 203 | the first sunset after the storm, a night of 0.9 s | wet 0.62, puddle 0.69 |
 | 43 to 55, odd | 72.9 to 93.5 | 30 to 43.4 | 0 | 181 to 187 | seven sunrises, a day every 2 bars; sunsets at 44.5 to 54.5 | lapse 1, cover 0.2 to 0.37 |
 | 56 | 95.2 | 43.5 | 52 | 212 | the last day slows down | evening 0.5 |
 | 57 | 96.9 | 43.5 | 8 | 223 | THE BLOOM begins, low gold sun ahead | evening 1, lapse 0.02 |
@@ -126,7 +126,7 @@ From `out/work/filmclock.csv`. Sun height and compass direction in degrees. The 
 The code of version 1 is still in the repository and most of it is good: the plant, the soil, the field, the rain, the frost, the lens. Version 2 keeps it and changes how it is driven.
 
 - Version 1 was six scenes with hard cuts, each with its own weather, sky and far land, and many things were switched by the scene: `config.segments`, `config.keys`, `config.worlds`, `segmentById`, `segmentStart`, `worldOf`, `src/director/growthline.ts`, `src/director/registry.ts`, `src/director/inputs.ts`, everything under `src/worlds/` and `src/units/`. All of that is dead. The version 1 scene times (rain from 8 to 20 seconds, night from 20, frost from 30, bloom from 40, field from 52) mean nothing now. When your work is done, this prints nothing for your folders: `rg -n "segmentById|segmentStart|config\.segments|config\.keys|config\.worlds|worldOf|growthline|director/registry|director/inputs|worlds/|units/" src/<your folder>`
-- What replaces them: the plant's clock `tau` for everything that grows (`shared.uTime`, and the marks in `config.growth`: the frost hold stands at tau 12, the storm hold at 28.3, the bud at 43.5, the flower is open at 51, the crane starts at 52), and the dials for everything the weather does. The instant of the frame being drawn is `now`, and the close of its shutter `later`, both exported by `src/v2/now.ts`: `film.ts` sets them before it calls anything, so any module may read `now.dials.rain`, `now.night`, `now.sun`.
+- What replaces them: the plant's clock `tau` for everything that grows (`shared.uTime`, and the marks in `config.growth`: the frost hold stands at tau 12, the storm hold at 23, the bud at 43.5, the flower is open at 51, the crane starts at 52), and the dials for everything the weather does. The instant of the frame being drawn is `now`, and the close of its shutter `later`, both exported by `src/v2/now.ts`: `film.ts` sets them before it calls anything, so any module may read `now.dials.rain`, `now.night`, `now.sun`.
 - Version 1 hid changes behind its cuts: a set of clods swapped for another, grass that appeared, a field that jumped in age. There is no cut to hide behind now. Nothing may pop: whatever changes does so over time, or where the lens cannot see it.
 - Version 1 knew where the sun was in each scene and some code leans on that (a fixed sun direction, a fixed side the light comes from). The sun now crosses the whole sky fifteen times. Nothing may assume where it is.
 - What version 1's critics said, in their words, is in `scorecards/round-026/SUMMARY.md`. Read the part about your subject: those defects are yours to remove.
