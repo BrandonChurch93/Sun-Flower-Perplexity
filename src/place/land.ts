@@ -118,7 +118,7 @@ export function inCrop(x: number, z: number): boolean {
 }
 
 // The bare land, without its woods.
-function bare(x: number, z: number, out: LandAt): LandAt {
+function bare(x: number, z: number, out: LandAt, own = false): LandAt {
   const r = Math.hypot(x, z)
   const az = (Math.atan2(x, z) / RAD + 360) % 360
   const crest = crestDeg(az)
@@ -144,7 +144,7 @@ function bare(x: number, z: number, out: LandAt): LandAt {
     hill = Math.max(hill, top * body)
   }
   hill *= 0.7 + 0.6 * fbm2(x / 640, z / 640, 50, 4)
-  const sill = sillAt(az)
+  const sill = own ? 0 : sillAt(az)
   const line = sill > 0 ? sillLineM(r, az) : 0
   const bank = line * smooth(SILL.fromM, SILL.onM, r) * (1 - smooth(SILL.toM, SILL.goneM, r))
   out.hill = hill + (Math.max(hill, bank) - hill) * sill
@@ -210,6 +210,15 @@ export function landHill(x: number, z: number): number {
 // The soil a tree or a hedge stands on.
 export function soilAt(x: number, z: number): number {
   return bare(x, z, scratch).height
+}
+
+// The ground as it lay before the sill was cut into the ridge: what grows where is decided on it, so the sill moves no tree elsewhere.
+export function ownSoilAt(x: number, z: number): number {
+  return bare(x, z, scratch, true).height
+}
+
+export function ownHillAt(x: number, z: number): number {
+  return bare(x, z, scratch, true).hill
 }
 
 // The fields: long strips, cut across into fields, in a gently bent frame. The shader draws the same cut from the same numbers.
