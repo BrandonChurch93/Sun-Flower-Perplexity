@@ -8,7 +8,7 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
-import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
+import { Shaped, leanBy, leavesApart, placeTurned, send, shapeInputs, turnBy } from './turn.ts'
 import { PLACE, thinOrder, statureAt, sizeOf, standOf, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
@@ -20,7 +20,7 @@ const THIN_M = [12, 30]
 const THIN_TO: Record<Quality, number> = { film: 1, high: 1, low: 0.3 }
 const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11 }
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; sent: Float32Array; sentStill: Float32Array; shaped: Shaped; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
@@ -47,7 +47,7 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
     spin[i] = leafSpin(id)
     order[i] = thinOrder(id)
   }
-  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, own, face, order, spin, seen, still: leavesApart(plant, count), count, index, tier: detail }
+  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, own, face, order, sent: new Float32Array(places.length).fill(Number.NaN), sentStill: new Float32Array(places.length).fill(Number.NaN), shaped: new Shaped(), spin, seen, still: leavesApart(plant, count), count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -104,11 +104,13 @@ export class Field {
     this.leafWind = Math.max(open.wind, now.dials.wind)
     // The neighbors are swayed here, one by one, on the film second: the swell a shape takes on the plant's clock would stand still in a hold.
     fieldUniforms.uPlantWind.value = 0
-    const still = { ...open, wind: 0, calm: 0 }
-    const stillClose = { ...close, wind: 0, calm: 0 }
+    const still = shapeInputs(open)
+    const stillClose = shapeInputs(close)
+    const felt = JSON.stringify([still, stillClose])
     for (const g of this.groups) {
       const clock = kindTime(timeOpen, g.index, g.tier)
-      g.plant.prepare(clock, kindTime(timeClose, g.index, g.tier), still, stillClose)
+      const clockClose = kindTime(timeClose, g.index, g.tier)
+      if (g.shaped.again(clock, clockClose, felt)) g.plant.prepare(clock, clockClose, still, stillClose)
       usePlant(g.plant.variant, null)
       const h = headAt(clock, still)
       g.head.value.set(h.center.x, h.center.y, h.center.z, h.radius + rayLength(0, clock) + 0.03)
@@ -144,7 +146,7 @@ export class Field {
     fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(tall * CANOPY, 0.7, 1.25)
     // The leaves in the gaps come up as the crop closes over them.
     this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
-    this.far.prepare(timeOpen, timeClose, still, stillClose, eyeHeightM, canopy, low)
+    this.far.prepare(timeOpen, timeClose, still, stillClose, felt, eyeHeightM, canopy, low)
   }
 
   show(on: boolean): void {
@@ -233,8 +235,8 @@ export class Field {
         if (late > 0 && !g.bare) still[n + 3] *= 1 - late * leafShort(id)
         n += PLACE
       }
-      g.seen.needsUpdate = true
-      g.still.needsUpdate = true
+      send(g.seen, g.sent, n)
+      send(g.still, g.sentStill, n)
       g.plant.show(n / PLACE)
       if (g.bare) for (const part of g.plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
       total += n / PLACE
