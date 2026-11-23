@@ -106,9 +106,9 @@ const float TISSUE_SHADE_SKY = 0.4;
 // The share by which a blade passes more of the sun once the evening has come.
 const float TISSUE_LATE = 0.75;
 
-// A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun.
+// A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun. Where the look says it, the look is heard: it knows the hour the two lights do not show.
 float tissueClearSun() {
-  return smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
+  return uKeyClear >= 0.0 ? uKeyClear : smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
 }
 
 // A low, clear, warm sun: the high sky goes out behind the haze and the low sun is all the light a leaf has. By the light alone, at every sunrise and sunset; the cold moon is never an evening.

@@ -356,3 +356,12 @@ The looks as they stand: `margin` key 1.3, fill 1.35, contrast 1.06, bloom 1.6, 
 `margin`: eye and aim moved together across the picture (8 mm right and 7.5 mm up at the cut in, 18 mm right and 7.5 mm up at the cut out), so the whole leaf sits in the middle and no longer leaves by the right edge. The angle, the push in (210 to 185 mm) and the focus range are as they were. New values in `src/v2/cuts.ts`.
 
 `thaw`: `DROP_PULL` is 9.81 (`src/v2/clock.ts`). The hold runs in real time, so the drop that lets go on frame 1235 is a streak for two frames and gone; the rain owner draws its path over the open shutter.
+
+### 26. The look tells the skin how clear the key stands
+
+New shared uniform `uKeyClear` (`src/core/shading.ts`, set in `applyWorld` from `def.sun.clear`, written by `lookAt`). It is the number the plant's skin used to work out for itself from the colour of the key: 0 when the key is nothing or flat, 1 when it stands clear. A world that does not set it sends -1 and the skin falls back to its own formula, so version 1 and every test world are as they were.
+
+Why: in the time lapse the sun hands over to the moon between 5 and 9 degrees under the horizon and the key is nothing for those frames. The skin read that as an overcast sky and let its sky fill jump from 25 to 100 percent for three frames at every dusk and dawn (frames 209 to 211, and so on through every night). The look now bridges that handover in fast time lapse only: frames 206 to 213 read 1, 1, 1, 0.914, 0.866, 0.866, 0.930, 1 where they read 1, 1, 1, 0.338, 0, 0, 0.511, 1. 137 frames of the film change, all of them twilight in fast time lapse; every other frame is the same number as before (`tests/key-clear.test.ts`).
+
+What it means for owners: the leaf look owner keeps the one line in `tissueClearSun()` of `src/plant/surface/index.ts` (`uKeyClear >= 0.0 ? uKeyClear : <the old formula>`) when merging. Anyone who needs to know whether the key is clear reads `uKeyClear` and treats a negative value as unknown; nobody works it out from the key's colour again.
+

@@ -19,6 +19,8 @@ const JET_ENDS = 2
 const PLANT_CLEAR_M = [0.02, 0.06]
 // Nor within the first of these distances of the lens, where a bead is only a smear across the glass.
 const LENS_CLEAR_M = [0.15, 0.3]
+// The least half width a flying bead is drawn at, in pixels of the finished frame.
+const SPRAY_LEAST_PX = 0.8
 
 export const crownVertex = /* glsl */ `
 in vec3 position;
@@ -136,8 +138,13 @@ void main() {
     float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under, over))) - base;
     if (flown > 0.0 && center.y < floorM - radius) return;
     vec3 shape = grit ? position * (0.7 + 0.6 * vec3(ha, hb, hc)) : position;
-    vTop = smoothstep(0.5, 1.4, radius * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z));
-    at = center + shape * radius;
+    float px = radius * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z);
+    // A bead of spray finer than the frame's grain is drawn at the grain's size and fainter, so the spray over the soil stays a haze of points and does not drop out.
+    float drawn = grit ? px : max(px, ${SPRAY_LEAST_PX.toFixed(2)});
+    vTop = grit ? smoothstep(0.5, 1.4, px) : saturate(px / ${SPRAY_LEAST_PX.toFixed(2)});
+    // Drawn out over its share of the shutter a bead is as much fainter as it is longer: one sample and many then show the same.
+    vTop *= drawn / (drawn + 0.5 * length(going) * uStands * step(1e-6, flown) * px / max(radius, 1e-7));
+    at = center + shape * radius * drawn / max(px, 1e-4);
     n = normalize(position);
   }
   vec4 world = vec4(drop.x + at.x, base + at.y, drop.y + at.z, 1.0);

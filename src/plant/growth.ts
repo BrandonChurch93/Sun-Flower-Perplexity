@@ -135,7 +135,20 @@ export function stemRadius(time: number, u: number): number {
   // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
   const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(LEAFY_S, STOUT_S, time) * (1 - smoothstep(36.5, 40.3, time))
   const slim = 0.18 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
-  return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u))
+  const base = stemBaseRadius(time)
+  return base * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u)) * shootTip(time, u, base * (1 - taper) * (1 - slim))
+}
+
+// While the plant has true leaves and no bud, its stem does not end as a cut pipe: the last stretch, 2.6 times as long as the stem is thick there, narrows to the growing point between the youngest leaves. The stem fills out again over the four seconds in which the wrapped bud comes out of its end.
+const TIP_END = 0.35
+const TIP_REACH = 2.6
+const TIP_OF_HEIGHT = 0.78
+function shootTip(time: number, u: number, top: number): number {
+  const on = smoothstep(leafBirth(0), leafBirth(0) + 2, time) * (1 - smoothstep(SET_S, SET_S + 4, time))
+  if (on <= 0) return 1
+  const reach = (TIP_REACH * top) / Math.max(TIP_OF_HEIGHT * heightAt(time), 1e-6)
+  const under = Math.min(1, (1 - u) / reach)
+  return 1 - on * (1 - TIP_END) * (1 - under) * (1 - under)
 }
 
 // How much of the stem is still under the soil, in meters. The arch is as large under the ground as over it: it comes up through the soil in three heaves, held and let go, and does not grow from a small arch into a large one.
