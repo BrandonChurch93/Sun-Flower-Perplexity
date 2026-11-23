@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 3.99 h |
+| 4 | 8.50 h | 4.04 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 18.42 h |
+| Whole build | 30.00 h | 18.48 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
