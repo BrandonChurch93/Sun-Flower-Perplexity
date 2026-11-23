@@ -159,7 +159,7 @@ in float vMud;
 in float vFlute;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.06, 0.04, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0, 1.0), smoothstep(-0.06, 0.04, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
