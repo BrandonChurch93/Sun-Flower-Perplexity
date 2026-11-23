@@ -1,5 +1,8 @@
 # Looks of ground
 
-2026-11-23 09:16 UTC, at commit 7d7e46f7 of agent/ground.
+2026-11-23 09:42 UTC, at commit 36eb6489 of agent/ground.
 
-- `01-7d7e46f-on-v2-b304501-frame-1262-far-rows-all-pa.jpg`: 7d7e46f on v2 b304501, frame 1262 far rows: all parts, ground with field, field alone, ground alone. Every bright point on the far rows is there with the field alone and gone with the ground alone
+- `01-36eb648-on-v2-bf55bd1-1920-frame-1003-all-parts.jpg`: 36eb648 on v2 bf55bd1, 1920, frame 1003 all parts
+- `02-36eb648-1920-frame-1003-ground-alone.jpg`: 36eb648 1920, frame 1003 ground alone
+- `03-36eb648-1920-frame-1106-all-parts.jpg`: 36eb648 1920, frame 1106 all parts
+- `04-36eb648-1920-frame-1106-ground-alone-the-chain-o.jpg`: 36eb648 1920, frame 1106 ground alone: the chain of equal gold discs on the far band is not here
