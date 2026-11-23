@@ -32,12 +32,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 1.91 h |
+| 2 | 3.50 h | 2.05 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 3.29 h |
+| Whole build | 30.00 h | 3.43 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -117,6 +117,10 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 00:56 UTC. The cue sheet is written in bars and beats (`config/music/cues.json`, table in `kit/v2/CUES.md`): 43 cues, none off the map. The film is written down in words in `kit/v2/FILM.md`. The slow sunsets of the first sixteen bars fall up to a tenth of a second before a beat and carry no cue.
 - 2026-11-23 01:03 UTC. The look sets how bright the light lands on the plant and the sky gives its colour (`src/v2/look.ts`). With the sky's own levels a low sun was a weak lamp beside its sky and the storm had no key at all: the plant stood as a cut-out. Now the key has a level on screen by the sun's height, a closed deck still gives a soft key from its bright gap, lightning swings the key to the strike, and the fill follows the sun's height.
 - 2026-11-23 01:08 UTC. The place, the ground, the field, the plant, the rain, the frost and the lens are merged into `v2` as they stand after their first round of notes, so that every part is judged in one picture from now on. The frame's quality is passed to the ground, the field and the lens.
+- 2026-11-23 01:13 UTC. A hold ends on the frame that holds its bar line. The checks found both holds ending one frame late; the clock now lets go at the hit of bars 25 and 41, and the last still frames are 1259 and 2082.
+- 2026-11-23 01:15 UTC. Two kinds of light. Surfaces (the soil, the plant, the field, the far land) are lit by the look, which sets a level on screen. What floats in the air or mirrors the sky (rain, mist, fog, the puddle, the lens glare) reads the sky's own light through `uAirSun`, `uAirZenith`, `uAirHorizon` and `uSkyHorizonSun`. Meeting for the first time, the rain, the mist and the lens came out washed because they read the look's raised key. The rule is in `kit/v2/briefs/CHANGES.md` and was sent to every owner.
+- 2026-11-23 01:22 UTC. One exception to one owner per folder: the Builder renamed a scalar in `src/place/` (`uAirToSun`) because its name clashed with the new shared light of the air and the film did not compile with every part on. The place agent was told.
+- 2026-11-23 01:26 UTC. The blue hour lights the soil. Before sunrise the fill from the dome is raised and the glow near the sun colours it only once the sun is close, so the opening frame reads as soil and a hook under a pink sky, not a black band.
 
 ## Notes from Brandon
 
