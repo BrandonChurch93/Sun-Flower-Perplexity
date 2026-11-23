@@ -46,6 +46,8 @@ A window that is measured is kept in `out/work/checks/script/film/` until the fi
 
 The numbers are wall time on this machine, so the check has to run alone: another page drawing or a build beside it makes every number larger. It says so in its first line, counts the browsers that are already drawing when a run begins, marks what it measures beside them "not alone" and is then not complete.
 
+Besides the level it names every hitch: a frame over 25 ms that is also over three times the median of the sixteen frames around it, with its parts. That is the stutter a viewer sees whatever the level, and the rule is the one of `tools/costs.ts`.
+
 The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070-2110) hold the frames where a hold starts or ends, the worst frames found so far (860, 1260, 1665, 2083, where the boom of the music lands). They are measured whole in every run, whatever `--window` or `--frames` says, and printed first.
 
 ## The whole film in one go
