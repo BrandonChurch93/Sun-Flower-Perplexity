@@ -75,9 +75,10 @@ export async function run(args: Args): Promise<void> {
         }
         row.changed = [...said].sort((a, b) => b[1] - a[1]).map(([what, n]) => `${what} (${n} coats)`)
       }
+      if (row.watched.length) console.log(`writes · frame ${f} writes ${(row.watched.reduce((a, w) => a + w.bytes, 0) / MB).toFixed(2)} MB into ${[...new Set(row.watched.map((w) => w.part))].join(', ')} · lens ${row.lensBefore} to ${row.lens} · ${row.changed.slice(0, 4).join(', ') || 'nothing of the sign differs'}`)
+      else if (row.unnamed > 0.1 * MB) console.log(`writes · frame ${f} writes ${(row.unnamed / MB).toFixed(2)} MB into textures without a name`)
       before = lens
       rows.push(row)
-      if (row.watched.length) console.log(`writes · frame ${f} writes ${(row.watched.reduce((a, w) => a + w.bytes, 0) / MB).toFixed(2)} MB into ${[...new Set(row.watched.map((w) => w.part))].join(', ')}`)
       if (rows.length % 20 === 0) fs.writeFileSync(progress, `frame ${f} · ${rows.length} of ${to - from + 1} · ${rows.filter((r) => r.watched.length).length} frames write into ${watch.join(', ')} so far\n`)
     }
   } finally {
