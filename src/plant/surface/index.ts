@@ -419,6 +419,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * frostSpark * (FROST_FLASH * flash);
+  color += skyFront * open * FROST_RIME * (frost * frostSky);
   // Which side of the outline the sun is on, as the eye sees it.
   float vl = dot(view, L);
   float side = smoothstep(0.0, 0.6, (fdl - fv * vl) / max(sqrt(max(1.0 - vl * vl, 0.0)), 0.05));
