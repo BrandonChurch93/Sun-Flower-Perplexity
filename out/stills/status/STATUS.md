@@ -1,12 +1,12 @@
-# Status 30
+# Status 32
 
-2026-11-23 13:42 UTC
+2026-11-23 14:33 UTC
 
-- Status 30 · Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil.
-- Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
+- Status 32 · Phase 4. Three more merges are proven on the film tree (checks, plant, ground): type check, 204 tests and seven bench frames, three of them pixel identical to before. Two more watch parts are read, the buds of the ascent and the bloom with its pull back: no jump and no notch in either. Play cost is measured again on the merged tree: the bloom fell from about 140 ms of script a frame to 56 to 66 ms, the frost close shots to 25 ms, the break to 33 ms. A frame has 33 ms, so the bloom is still over. The older leaves open up after the frost (ruling logged), their owner is on it.
+- Next: Read the five parts that are still drawing (ground, the frost cuts, the first evenings, the first rain, the climb), join the whole film at 640 x 360 with the track, then the cures: bloom cost, the hairs' rim at 3600, the disc's wild pixels, and whether anything is made after loading in the last shot. Time used: 16.6 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976
-- `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208
-- `status-3.jpg`: The tip shot at 1106, 1920 wide, draft
-- `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009
+- `status-1.jpg`: Storm hold on the merged tree, frame 1830
+- `status-2.jpg`: The break, frame 2090
+- `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360
+- `status-4.jpg`: The field at the end of the pull back, frame 3492
