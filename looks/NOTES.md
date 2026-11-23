@@ -1,9 +1,9 @@
 # Looks of place
 
-2026-11-23 06:36 UTC, at commit 9201145d of agent/place.
+2026-11-23 06:56 UTC, at commit 0144b682 of agent/place.
 
-- `01-sky-b-bars-73-and-74-5-at-three-times-before-abo.jpg`: Sky B, bars 73 and 74.5 at three times, before above after below: the ridge takes the dome's light
-- `02-sky-b-bar-73-after.jpg`: Sky B bar 73 after
-- `03-sky-b-bar-74-5-after.jpg`: Sky B bar 74.5 after
-- `04-key-above-bars-73-and-74-5-below-layers-of-the-r.jpg`: Key above, bars 73 and 74.5 below: layers of the ridge
-- `05-nightfalls-at-bars-28-5-28-6-44-5-44-6-before-ab.jpg`: Nightfalls at bars 28.5, 28.6, 44.5, 44.6, before above after below
+- `01-mist-under-the-ridge-bar-28-5-at-three-times-lef.jpg`: Mist under the ridge, bar 28.5 at three times, left middle right, before above after below
+- `02-mist-under-the-ridge-bar-44-5-at-three-times-bef.jpg`: Mist under the ridge, bar 44.5 at three times, before above after below
+- `03-mist-under-the-ridge-bar-73-at-three-times-befor.jpg`: Mist under the ridge, bar 73 at three times, before above after below
+- `04-bar-73-after.jpg`: Bar 73 after
+- `05-bar-44-5-after.jpg`: Bar 44.5 after
