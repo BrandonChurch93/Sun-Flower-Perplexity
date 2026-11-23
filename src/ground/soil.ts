@@ -456,12 +456,12 @@ float sparks(vec2 p, vec3 hv, float sharp, float circle, float amount) {
   }
   return lit;
 }
-// The sun as a face of ice or a bead of water throws it at the lens: paler than the sun on soil, and held under about 20 times white on the screen.
-// The lens' exposure is not known here. The light from the zenith lands at about a fifth of white whenever there is frost, and is the measure.
+// The sun as a face of ice or a bead of water throws it at the lens: paler than the sun on soil, and never over GLINT_WHITE times white on the screen in focus.
+const float GLINT_WHITE = 18.0;
 vec3 glintSun() {
   vec3 pale = mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.65);
   float most = max(max(pale.r, pale.g), max(pale.b, 1e-4));
-  return pale * min(SPARK, 90.0 * dot(uSkyZenith, vec3(0.3, 0.6, 0.1)) / most);
+  return pale * min(SPARK, GLINT_WHITE / (most * max(uWorldExposure, 1e-3)));
 }
 // How bright one such face is in focus, and more by the area of the circle the lens opens it into, so the disc it becomes is as bright whatever its size.
 vec3 sparkLight(float depth) {

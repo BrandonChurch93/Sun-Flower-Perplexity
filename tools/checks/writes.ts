@@ -25,7 +25,7 @@ const mb = (bytes: number): string => (bytes / MB).toFixed(bytes < 0.1 * MB ? 3 
 export interface Place { name: string; frame: number; rows: WriteRow[]; drawSeconds: number }
 
 // The path from the film to an array, cut into the object that owns it and the part of it that is written.
-function owned(owner: string): { object: string; part: string } {
+export function owned(owner: string): { object: string; part: string } {
   const s = owner.replace(/^film\./, '').replace(/\.array$/, '').replace(/\.children\[/g, '[').replace(/\.parts\[([^\]]+)\]\.meshes\[/g, ' $1 [')
   const uniform = /^(.*?)\.(?:material\.)?uniforms\.(\w+)\.value\b/.exec(s)
   if (uniform) return { object: uniform[1], part: uniform[2] }
@@ -157,6 +157,8 @@ async function another(root: string, seconds: number[], tier: string, format: st
 }
 
 export async function run(args: Args): Promise<void> {
+  // --from and --to: a stretch of frames in a row, judged against the rule of the holds and the cuts (holdwrites.ts).
+  if (args.from !== undefined || args.to !== undefined) return (await import('./holdwrites.ts')).run(args)
   const tier = str(args, 'tier', 'draft')
   const root = str(args, 'root', '')
   let places: Place[] = []
