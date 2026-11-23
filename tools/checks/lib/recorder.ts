@@ -39,9 +39,12 @@ export function recorder(): void {
     const h = a[sizeAt + 1] as number
     const d = deep ? (a[sizeAt + 2] as number) : 1
     const sized = typeof w === 'number' && typeof h === 'number'
-    const bytes = v ? v.byteLength : sized ? w * h * d * 4 : 0
+    // A write of a part of a texture is given the whole array and a rectangle: what goes to the card is the rectangle.
+    const format = a[a.indexOf(v ?? last) - 2] as number
+    const channels = format === gl.RED || format === gl.RED_INTEGER || format === gl.DEPTH_COMPONENT || format === gl.ALPHA || format === gl.LUMINANCE ? 1 : format === gl.RG || format === gl.RG_INTEGER || format === gl.LUMINANCE_ALPHA ? 2 : format === gl.RGB || format === gl.RGB_INTEGER ? 3 : 4
+    const bytes = v ? (sized ? Math.min(v.byteLength, w * h * d * channels * each(v)) : v.byteLength) : sized ? w * h * d * 4 : 0
     const src = v ?? (last && typeof last === 'object' ? (last as object) : null)
-    return { kind, bytes, whole: bytes, label: sized ? `a texture of ${w} x ${h}${deep ? ` x ${d}` : ''}` : 'a texture from an image', src, into: gl.getParameter(deep ? gl.TEXTURE_BINDING_3D : gl.TEXTURE_BINDING_2D) as object | null }
+    return { kind, bytes, whole: v ? v.byteLength : bytes, label: sized ? `a texture of ${w} x ${h}${deep ? ` x ${d}` : ''}` : 'a texture from an image', src, into: gl.getParameter(deep ? gl.TEXTURE_BINDING_3D : gl.TEXTURE_BINDING_2D) as object | null }
   }
   wrap('texSubImage2D', pixels('texture', 4, false))
   wrap('texSubImage3D', pixels('texture', 5, true))
