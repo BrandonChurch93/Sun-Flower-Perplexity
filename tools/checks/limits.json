@@ -1,0 +1,16 @@
+{
+  "script": {
+    "note": "Milliseconds of the page's own script time in a frame, on this machine, frames drawn in a row. The first frame of a window comes after a jump and is not counted.",
+    "meanMs": 16,
+    "worstMs": 25,
+    "shares": [
+      { "name": "plant and companion", "parts": ["plant", "companion"], "meanMs": 5 },
+      { "name": "field", "parts": ["field"], "meanMs": 3 },
+      { "name": "rain and puddles", "parts": ["rain", "puddles"], "meanMs": 2 },
+      { "name": "scene", "parts": ["scene"], "meanMs": 6 }
+    ],
+    "everyOtherPartMeanMs": 1,
+    "windows": ["0-40", "380-420", "840-880", "1000-1020", "1250-1290", "1390-1430", "1660-1700", "1890-1910", "2070-2110", "2590-2630", "3040-3080", "3490-3530", "3770-3809"],
+    "allEvery": 127
+  }
+}
