@@ -1,9 +1,9 @@
 # Looks of plant
 
-2026-11-23 03:23 UTC, at commit 3b3bc70 of agent/plant.
+2026-11-23 04:25 UTC, at commit 52efeeb of agent/plant.
 
-3b3bc70: storm hold at the young plant; leaf beads on paths; low blades stand out
+Key shapes, first stage (52efeeb): the two holds play from two keys and lay nothing; keys while growing are built and measured but off until normals and skin numbers are kept per key
 
-- `01-storm-hold-bar-35-before-left-now-middle-the-sto.jpg`: Storm hold bar 35: before (left), now (middle), the storm key (right). Now: darker wet green, veins readable, lowest blades lifted off the puddle. Still wrong: the low blades still hang too steeply and show their whole face like hanging sheets; no cold rim of my own along the edges
-- `02-storm-hold-and-round-it-after-the-change-bars-35.jpg`: Storm hold and round it after the change: bars 35, 37.5, 38.5, 39, 40.9, 41.05, 31, 45. Still wrong: at bar 31 the blades lean blue grey
-- `03-leaf-beads-on-the-rain-s-paths-bars-37-5-38-5-40.jpg`: Leaf beads on the rain's paths, bars 37.5, 38.5, 40.9, 41.05, enlarged twice (drawn before the low blades were lifted). Too small in a draft frame to judge the running; stem beads still stand still in the hold
+- `01-bars-20-24-5-35-40-9-the-holds-drawn-from-two-ke.jpg`: Bars 20, 24.5, 35, 40.9 (the holds, drawn from two keys), 61 and 29.7 (old path) on 52efeeb. Still wrong: storm leaves read as sheets, midday leaves flat teal
+- `02-bar-61-left-v2-9b02991-right-with-keys-on-everyw.jpg`: Bar 61, left v2 9b02991, right with keys on everywhere (not what is pushed): the head and the companion's leaf stand elsewhere because the wind is now the shader's and not the laid one; right must get the head's nod
+- `03-bar-29-7-left-v2-9b02991-right-keys-on-everywher.jpg`: Bar 29.7, left v2 9b02991, right keys on everywhere, last the difference times 4: leaves sit a little differently (time lapse restlessness now in the shader)
