@@ -37,6 +37,10 @@ const vec3 ICE = vec3(0.93, 0.96, 1.0);
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
 const float MATT = 0.15;
 const float THROUGH = 1.8;
+// The light through the needles is the low sun's in the mist: it does not grow as the sun comes through.
+const float THROUGH_HELD = 1.2;
+// The thaw takes the needles a stretch of an edge at a time.
+const float THAW_PATCH_M = 0.022;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
@@ -89,6 +93,7 @@ void main() {
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, plantBlend())));
   bool spike = chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74);
   float h5 = hash(own, 5.0);
+  float sunward = 0.5 + 0.5 * dot(grow, uSunDir);
   grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 1.8 : 2.2));
   // Frost does not lie evenly: it stands thick on one stretch of an edge and thin on the next, most of it short and a little of it long.
   vec3 where = a.xyz * (6.2832 / PATCH_M);
@@ -99,10 +104,12 @@ void main() {
   float thaw = thawing * (1.0 - uPlantFrost);
   float born = 0.45 * hash(own, 24.0);
   size *= mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost, 1.0, thawing);
-  // A crystal the sun reaches goes first, and so does one high on the plant.
-  float sunward = 0.5 + 0.5 * dot(grow, uSunDir);
-  float turn6 = 0.42 * hash(own, 6.0) + 0.26 * (1.0 - sunward) + 0.1 * (1.0 - saturate(root.y / max(uPlantHeight, 0.05)));
-  float melt = smoothstep(turn6, turn6 + 0.2, thaw);
+  // The needles go in patches, the sun's side and the tips of the leaves first. Where the wearer does not say how far along its edge a crystal stands, far from the stem is the tip.
+  vec3 stretch6 = a.xyz * (6.2832 / THAW_PATCH_M);
+  float patch6 = smoothstep(0.2, 0.8, 0.5 + 0.25 * (sin(stretch6.x + 1.9 * sin(stretch6.z * 0.57 + 1.1)) + sin(stretch6.y * 0.79 + 1.4 * sin(stretch6.x * 0.43 + 0.7))));
+  float tip = c.w > 0.0 ? c.w : saturate(length(a.xz) / (0.4 * max(uPlantHeight, 0.05)));
+  float turn6 = 0.03 + 0.7 * pow(saturate(0.46 * patch6 + 0.24 * (1.0 - sunward) + 0.22 * (1.0 - tip) + 0.08 * hash(own, 6.0)), 0.6);
+  float melt = smoothstep(turn6, turn6 + 0.12, thaw);
   size *= 1.0 - 0.85 * melt;
 
   vec3 ref = abs(grow.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -161,7 +168,8 @@ void main() {
   float glint = pow(abs(dot(facet, mirror)), GLINT_SHARP);
   float behind = pow(saturate(-dot(toEye, uSunDir)), 3.0);
   float clear = 1.0 - 0.7 * melt;
-  vSun = uSunColor * (ICE * (MATT * (0.1 + 0.9 * abs(dot(facet, uSunDir))) + THROUGH * behind) * clear + GLINT * glint);
+  float held = min(1.0, THROUGH_HELD / max(dot(uSunColor, vec3(0.2126, 0.7152, 0.0722)), 1e-4));
+  vSun = uSunColor * (ICE * (MATT * (0.1 + 0.9 * abs(dot(facet, uSunDir))) + THROUGH * behind * held) * clear + GLINT * glint);
   vSky = ICE * ICE_SHADE * (SKY * clear * (0.75 + 0.5 * hash(own, 17.0 + n)));
   vWorld = world;
   vLitAt = root + grow * (0.004 * plantSize());

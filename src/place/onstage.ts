@@ -31,12 +31,12 @@ const CROP_AMONG: Knot[] = [
 ]
 const CROP_OVER: Knot[] = [
   ...CROP_YOUNG,
-  [60, 0.1835, 0.07773, 0.004658],
-  [67, 0.1835, 0.07773, 0.004658],
-  [69, 0.2011, 0.1069, 0.007809],
-  [71, 0.2033, 0.1087, 0.01004],
-  [73, 0.2217, 0.104, 0.01332],
-  [74.5, 0.2431, 0.09077, 0.01455],
+  [60, 0.1845, 0.0783, 0.002096],
+  [67, 0.1845, 0.0783, 0.002096],
+  [69, 0.186, 0.1033, 0.006511],
+  [71, 0.1898, 0.1042, 0.008675],
+  [73, 0.2405, 0.1075, 0.01215],
+  [74.5, 0.3034, 0.08611, 0.0124],
 ]
 // The lens's height over the tops, in heights of the tops, between which the far crop turns from its side to its heads.
 const OVER = { from: -0.06, to: 0.09 }
@@ -59,7 +59,7 @@ function cropAt(bar: number, tau: number, eyeM: number, out: THREE.Vector3): voi
   out.set(among[1] + (over[1] - among[1]) * k, among[2] + (over[2] - among[2]) * k, among[3] + (over[3] - among[3]) * k)
 }
 // Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
-const AIR = { clear: 0.00006, lowSun: -0.00003, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
+const AIR = { clear: 0.00006, lowSun: -0.00003, dusk: 0.00002, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
 const MIST = { perM: 0.001, topM: 12 }
 // Stand-in. The shared ground fog in rain is so dense that everything beyond 150 m becomes the fog color, hills and all. Away from the field the land takes this share of it until the shared fog is thinner.
@@ -79,7 +79,8 @@ class Place implements Part {
     const d = now.dials
     for (const o of this.objects) o.visible = true
     const low = 1 - smoothstep(4, 24, now.sunElevationDeg)
-    airUniforms.uAir.value = AIR.clear + AIR.lowSun * low + AIR.overcast * d.overcast + AIR.fog * d.fog * d.fog + AIR.rain * d.rain
+    const dusk = (1 - smoothstep(0.3, 1.5, now.sunElevationDeg)) * smoothstep(0.5, 0.8, now.phase) * (1 - smoothstep(0.89, 0.93, now.phase))
+    airUniforms.uAir.value = AIR.clear + AIR.lowSun * low + AIR.dusk * dusk + AIR.overcast * d.overcast + AIR.fog * d.fog * d.fog + AIR.rain * d.rain
     airUniforms.uAirToSun.value = clamp(1 - 0.5 * d.overcast) * (1 - 0.6 * d.fog)
     airUniforms.uAirRain.value = d.rain
     airUniforms.uMist.value = MIST.perM * d.fog * d.fog
@@ -88,6 +89,7 @@ class Place implements Part {
     airUniforms.uFogNear.value = clamp(1.25 * d.fog + d.rain)
     airUniforms.uFogLow.value = 0.9 * clamp(d.fog)
     airUniforms.uVeil.value = clamp(d.fog)
+    airUniforms.uDusk.value = dusk
     airUniforms.uThrough.value = 0.12 + 0.88 * smoothstep(-5, -1, now.sunElevationDeg)
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet

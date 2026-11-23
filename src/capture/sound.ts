@@ -30,6 +30,8 @@ export interface SoundCheck { ms: number; match: number; pass: boolean; mendedMs
 export const SOUND_PASS_MS = 10
 const SEARCH_MS = 120
 const WINDOW_SECONDS = 1
+// The shortest file the check can measure: the window and the search on both sides of it.
+export const SOUND_NEEDS_SECONDS = 1.5
 const MEND_FROM_MS = 0.5
 const HEARD = 0.2
 

@@ -49,8 +49,18 @@ const STORM = { in: 28.5, from: 33, to: 41, out: 46.5 }
 const STORM_F_NUMBER = 5.6
 // The top of the stem never comes nearer to the top of the frame than this, as a fraction of its height: the youngest leaves stand around it.
 const HEADROOM = { least: 0.05, soft: 0.02, from: 0.2, until: 0.3 }
-// The crane goes on rising and tips up toward the afterglow after the field has come into view.
-const CRANE = { from: 69, to: 75, riseM: 0.3, backM: 0.2, aimM: 0.6 }
+// The crane stays lower and nearer than the path it was drawn on: from just over the tops the field closes into one sea of heads and the plant stands large against it.
+// The horizon is held near a third from the top, the pair a little right of the middle with the sun on the left third, and the lens goes on rising, slowly, into the dusk.
+const CRANE = { overM: 1.9, rise: 0.5, kneeM: 0.25, pastM: 4.2, back: 0.4, kneeBackM: 0.3, from: 69, to: 75, riseM: 0.1, backM: 0.1, holdFrom: 66, holdBy: 67.5, frameX: 0.57, asideFrom: 66.5, asideBy: 70.5 }
+const craneHorizon = new Monotone([
+  [67, 0.287],
+  [69, 0.275],
+  [71, 0.285],
+  [73, 0.3],
+  [75, 0.31],
+])
+// `x` as it is up to `from`, and past it only `share` of the way on, bending over `knee` with no corner.
+const eased = (x: number, from: number, share: number, knee: number): number => (x <= from ? x : from + share * (x - from) + (1 - share) * knee * (1 - Math.exp(-(x - from) / knee)))
 
 const panOf = (d: number, rise: number, at: number, focalMm: number): number => {
   const t = ((at - 0.5) * GATE) / focalMm
@@ -142,11 +152,13 @@ export function rigAtFilm(seconds: number): Rig {
   const room = 1 - smoothstep(HEADROOM.from, HEADROOM.until, y)
   if (room > 0) rig.aimHeightM = aimForTop(rig, topM, lerp(y, 0.5 * (y + HEADROOM.least + Math.sqrt((y - HEADROOM.least) * (y - HEADROOM.least) + HEADROOM.soft * HEADROOM.soft)), room))
 
-  const up = smoothstep(CRANE.from, CRANE.to, b)
-  if (up > 0) {
-    rig.heightM += CRANE.riseM * up
-    rig.distanceM += CRANE.backM * up
-    rig.aimHeightM += CRANE.aimM * up
+  const held = smoothstep(CRANE.holdFrom, CRANE.holdBy, b)
+  if (held > 0) {
+    const up = smoothstep(CRANE.from, CRANE.to, b)
+    rig.heightM = eased(rig.heightM, CRANE.overM, CRANE.rise, CRANE.kneeM) + CRANE.riseM * up
+    rig.distanceM = eased(rig.distanceM, CRANE.pastM, CRANE.back, CRANE.kneeBackM) + CRANE.backM * up
+    rig.frameX = lerp(rig.frameX, CRANE.frameX, smoothstep(CRANE.asideFrom, CRANE.asideBy, b))
+    rig.aimHeightM = lerp(rig.aimHeightM, aimForHorizon(rig, craneHorizon.at(Math.max(b, 67))), held)
   }
   return rig
 }

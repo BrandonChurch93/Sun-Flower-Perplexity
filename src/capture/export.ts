@@ -7,7 +7,7 @@ import type { Options } from '../director/modes.ts'
 import { clampFrame, keys, segments } from '../director/timeline.ts'
 import { EXPORT_NOTE, fileOf, readTrack, trackLine, type Track } from '../player/track.ts'
 import css from './export.module.css'
-import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
+import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_NEEDS_SECONDS, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
 import { describe as describeBytes, Store, storeId, undescribe, type StoredChunk } from './store.ts'
 
 declare const __ENGINE_HASH__: string
@@ -236,6 +236,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     wrapField(label, input, `export-${role}`)
     return input
   }
+  const drawnTimes = (n: number): string => (n === 1 ? 'drawn once' : `drawn ${n} times and blended`)
   const spans = (a: number, b: number) => `${(a / fps).toFixed(0)} to ${((b + 1) / fps).toFixed(0)} s`
   const rangeOf = (): string => {
     if (first === 0 && last === frameCount - 1) return 'film'
@@ -250,7 +251,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   const rangeSelect = field('range', 'Range', rangeChoices, rangeOf())
   const firstInput = numberField('first', 'First frame', first)
   const lastInput = numberField('last', 'Last frame', last)
-  const tierSelect = field('tier', 'Quality tier', tierIds.map((id) => ({ value: id, text: `${capital(id)} · ${samplesOf(id)} ${samplesOf(id) === 1 ? 'sample' : 'samples'}` })), tier)
+  const tierSelect = field('tier', 'Quality', tierIds.map((id) => ({ value: id, text: `${capital(id)} · each frame ${drawnTimes(samplesOf(id))}` })), tier)
   const summary = make('p', css.summary)
   settings.append(make('h2', css.heading, 'Settings'), fields, summary)
 
@@ -275,10 +276,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     }
   }
   const codecCheck = checkRow('Video encoder')
-  const assetCheck = checkRow('Asset set')
+  const assetCheck = checkRow('Textures')
   const testCheck = checkRow('Test frame')
   const keptCheck = checkRow('Stopped export')
-  const offer = make('button', css.minor, `Use the web asset set instead`)
+  const offer = make('button', css.minor, 'Use the smaller set instead')
   offer.type = 'button'
   offer.dataset.role = 'use-web'
   offer.hidden = true
@@ -357,7 +358,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
 
   const describe = () => {
     const n = total()
-    const parts = [`${n} ${n === 1 ? 'frame' : 'frames'} at ${fps} frames a second`, `${samplesOf(tier)} ${samplesOf(tier) === 1 ? 'sample' : 'samples'} a frame`, `${config.export.bitrateMbps} Mbit a second`, wantsSound() ? `with the track as ${sound?.label}` : 'without sound', `saved as ${fileName()}`]
+    const parts = [`${n} ${n === 1 ? 'frame' : 'frames'} at ${fps} frames a second`, `each ${drawnTimes(samplesOf(tier))}`, `${config.export.bitrateMbps} Mbit a second`, wantsSound() ? `with the track as ${sound?.label}` : 'without sound', `saved as ${fileName()}`]
     if (secondsPerSample > 0) parts.push(`${about(secondsPerSample * samplesOf(tier) * (n - kept))} on this machine, a guess from one test frame`)
     summary.textContent = `${parts.join(' · ')}.`
   }
@@ -427,22 +428,22 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     }
     codecCheck.set('ok', `${picked.label}, ${picked.codec}, at ${size}, ${config.export.bitrateMbps} Mbit a second, ${fps} frames a second, a key frame every second. ${sound ? `Sound: ${sound.label}, ${sound.kbps} kbit a second, ${SOUND_RATE / 1000} kHz stereo.${sound.container === 'opus' ? ' This browser has no AAC encoder. Opus plays in browsers and may not play in QuickTime.' : ''}` : 'This browser cannot encode sound, so the file is made without it.'}`)
 
-    assetCheck.set('busy', `Loading the ${assetSet} asset set.`)
+    assetCheck.set('busy', `Loading the ${assetSet} set of textures.`)
     try {
       await film.setAssets(assetSet)
     } catch (error) {
       if (mine !== turn) return
       const other = assetSet === 'full'
-      const line = `This machine could not load the ${assetSet} asset set (${words(error)}).${other ? ' The web set is smaller and can be used instead.' : ''}`
+      const line = `This machine could not load the ${assetSet} set of textures (${words(error)}).${other ? ' There is a smaller set that can be used instead.' : ''}`
       assetCheck.set('fail', line)
       offer.hidden = !other
       refuse(line)
       return
     }
     if (mine !== turn) return
-    assetCheck.set('ok', `The ${assetSet} set is loaded, ${film.textureMb().toFixed(0)} MB of textures.`)
+    assetCheck.set('ok', `The ${assetSet} set of textures is loaded, ${film.textureMb().toFixed(0)} MB.`)
 
-    testCheck.set('busy', `Drawing frame ${test.frame} at the review tier.`)
+    testCheck.set('busy', `Drawing one frame of the film, frame ${test.frame}, to see how long it takes.`)
     try {
       await film.setFormat(format)
       const t0 = performance.now()
@@ -456,14 +457,14 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       return
     }
     if (mine !== turn) return
-    testCheck.set('ok', `Frame ${test.frame} was drawn in ${(secondsPerSample * samplesOf('review')).toFixed(1)} s at the review tier. It is in the preview.`)
+    testCheck.set('ok', `Frame ${test.frame} of the film took ${(secondsPerSample * samplesOf('review')).toFixed(1)} s to draw, ${drawnTimes(samplesOf('review'))}. It is in the preview.`)
     previewNote.textContent = `The film canvas, showing frame ${test.frame}. Only this picture goes into the file.`
     await lookForKept()
     if (mine !== turn) return
     ready = true
     start.disabled = false
     describe()
-    say('Ready. Choose the format, the range and the tier, then start.')
+    say('Ready. Choose the format, the range and the quality, then start.')
     if (auto) void run()
   }
 
@@ -651,7 +652,9 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         const mended = made.mendedMs !== 0 ? ` The encoder had moved the sound by ${made.mendedMs.toFixed(1)} ms. It was encoded again, moved back.` : ''
         soundLine.textContent = soundCheck
           ? `Sound against the track: ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms. ${soundCheck.pass ? 'PASS' : 'FAIL'}: ${soundCheck.pass ? 'within' : 'more than'} ${SOUND_PASS_MS} ms.${mended}`
-          : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
+          : n / fps < SOUND_NEEDS_SECONDS
+            ? `Sound against the track: not measured. The file is shorter than ${SOUND_NEEDS_SECONDS} seconds, too short to measure.`
+            : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
         soundLine.dataset.pass = soundCheck ? (soundCheck.pass ? 'yes' : 'no') : 'unknown'
         soundLine.hidden = false
       } else muxer.finalize()
@@ -714,7 +717,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     withLabel.hidden = !can
     withSound.checked = can
     if (track && !sound) trackText.textContent += ' This browser cannot encode sound, so the file is made without it.'
-    else if (track) trackText.textContent += ` It goes into the file as ${sound?.label}, its second zero on frame 0 of the film.`
+    else if (track) trackText.textContent += ` It goes into the file as ${sound?.label}, its start on the first frame of the film.`
     describe()
   }
 

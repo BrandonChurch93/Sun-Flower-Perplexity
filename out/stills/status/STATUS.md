@@ -1,12 +1,11 @@
-# Status 13
+# Status 14
 
-2026-11-23 05:33 UTC
+2026-11-23 06:14 UTC
 
-- Status 13 · Phase 3. The lens is merged with the beams of the break rising with the tear over six frames (measured here: closed at frame 2082, tear at 2083, whole fan by 2087). The moon no longer blinks at the end of the quick nights (measured here on frames 2174 to 2184: the disc fades once into the dawn). The far crop at the end of the film now reaches the foot of the ridge with no line. The count now names the frame where something was made after loading, and one part still makes one vertex array (being found). The text that paints the plant's skin moved to its own folder and a new owner has started on the day look of the leaves, the largest gap to the key pictures. Two of twelve parts of the first whole watch are drawn.
-- Next: The day look of the leaves, the plant's script time while it grows, the glow of the last sunset (the lens puts it 8 pixels under the drawn disc), the thaw of the frost (its fringe still reads as an outline at bars 23 and 24), then the first whole watch joined from parts. Time used: 7.6 h of 30 h.
+- Status 14 · Phase 3. The crane now ends lower and nearer, so the pair stands larger against the field, the horizon sits a third from the top and the sun on the left third. The far field is one sea of heads to the mist (the ruled line, the yellow dashes and the holes are gone). The lens glow sits on the drawn sun. The one shape that was still made in play (frame 3350) is mended: frames 3331 to 3351 make nothing after loading. The plant's bud and constant glow, the place's two tables and the field's hold fix are merged; 175 tests pass.
+- Next: Your note is in the plan: frost close ups on hard cuts at bars 19, 21 and 23 (each lands on a chord, back to the wide on 25), and the lens closes in on the opening head from bar 55 and pulls out on 65. Reference pictures for those shots come first. Also in work: the last sunset (narrow orange band, red disc, darker land), the leaf look, the plant's cost while growing. Time used: 8.2 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The break at the boom of bar 41, frames 2081 to 2090, with the lens merged (draft tier, drawn here)
-- `status-2.jpg`: The end of a quick night, frames 2174 to 2184: the moon fades once and does not come back (draft tier, drawn here)
-- `status-3.jpg`: The end of the film at bars 67, 69, 71 and 73 with the new far crop (draft tier, drawn here)
-- `status-4.jpg`: The held tear after the storm at bars 42.19 and 42.33, and two days at bars 29.7 and 43.75 (draft tier, drawn here)
+- `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5
+- `status-2.jpg`: Bar 67: the pull back begins
+- `status-3.jpg`: Bar 73: the sun touches the ridge
