@@ -71,8 +71,10 @@ void main() {
   float toSun = saturate(dot(ray, uSunDir));
   float t2 = toSun * toSun;
   light += uAirSun * (0.002 + 0.01 * t2 + 0.05 * t2 * t2 * t2 * t2 * (0.5 + uSpark));
-  // The far rain shows the strike only round the strike.
-  light += uFlash * (0.12 * pow(saturate(dot(ray, uFlashAt)), 24.0));
+  // A strike stands behind the rain: every sheet between it and the lens glows, the heavy shafts most, and most of all round the strike.
+  float toward = saturate(dot(ray, uFlashAt));
+  float t4 = toward * toward * toward * toward;
+  light += uFlash * ((0.03 + 0.1 * t4 + 0.12 * t4 * t4 * t4 * t4 * t4 * t4) * mix(0.5, 1.6, shaft));
   outColor = vec4(light, cover);
 }
 `

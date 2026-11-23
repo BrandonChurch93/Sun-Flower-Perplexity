@@ -13,10 +13,11 @@ import { openSession, type SessionOptions } from './lib/session.ts'
 const SENTENCE = 'any frame can be drawn alone, in any order, and gives the same pixels'
 const COUNT = 12
 
-// Twelve frames spread over the film are drawn in order, then six others, then the twelve again backwards, then once more on a fresh page in a third order.
+// Twelve frames spread over the film are drawn in order, then six others, then the twelve again backwards, then once more in a third order on a fresh page that has warmed as the film does before it plays.
 //   npm run checks -- pure                      960 x 540, one sample
 //   npm run checks -- pure --tier review        with the eight samples of the export
 //   npm run checks -- pure --frames 159,1429,2699,3651     these frames in place of the twelve
+//   npm run checks -- pure --no-warm            the fresh page does not warm either
 //   npm run checks -- pure --search             the search of src/ alone, which draws nothing
 //   npm run checks -- pure --break dice         a film whose camera turns by a throw of Math.random: must fail
 //   npm run checks -- pure --break memory       a film whose camera turns by how many frames were drawn before: must fail
@@ -40,6 +41,8 @@ export async function run(args: Args): Promise<void> {
     const frames = typeof args.frames === 'string' ? args.frames.split(',').map(Number) : Array.from({ length: COUNT }, (_, i) => Math.round(((i + 0.5) * FRAMES) / COUNT))
     const between = frames.slice(0, Math.min(6, frames.length - 1)).map((f, i) => Math.round(0.5 * (f + frames[i + 1])))
     const third = frames.map((_, i) => frames[(i * 5 + 3) % frames.length])
+    // The first page draws with no warming, the fresh one after the film's own: what the warming leaves behind may not change a pixel either.
+    const warmed = !flag(args, 'no-warm')
     const dir = path.join(OUT, 'pure', broken ? `broken-${broken}` : 'film')
     fs.rmSync(dir, { recursive: true, force: true })
     fs.mkdirSync(dir, { recursive: true })
@@ -71,14 +74,19 @@ export async function run(args: Args): Promise<void> {
     const two = await openSession(options)
     try {
       if (broken) await two.fault(broken)
-      fresh = await pass(third, 'a fresh page, a third order', true, two)
+      if (warmed) {
+        const t0 = Date.now()
+        await two.warm(tier)
+        say(`pure · the fresh page warmed as the film does before it plays, in ${((Date.now() - t0) / 1000).toFixed(0)} s`)
+      }
+      fresh = await pass(third, warmed ? 'a fresh page after the film\'s warming, a third order' : 'a fresh page, a third order', true, two)
     } finally {
       await two.close()
     }
     let differing = 0
     for (const f of frames) {
       const a = first.get(f) as { raw: Raw; png: Buffer }
-      const tests: [string, { raw: Raw; png: Buffer }][] = [['drawn again backwards, other frames in between', second.get(f) as { raw: Raw; png: Buffer }], ['drawn on a fresh page in a third order', fresh.get(f) as { raw: Raw; png: Buffer }]]
+      const tests: [string, { raw: Raw; png: Buffer }][] = [['drawn again backwards, other frames in between', second.get(f) as { raw: Raw; png: Buffer }], [warmed ? 'drawn on a fresh page after the film\'s warming, in a third order' : 'drawn on a fresh page in a third order', fresh.get(f) as { raw: Raw; png: Buffer }]]
       for (const [what, b] of tests) {
         const same = Buffer.compare(a.raw.data, b.raw.data) === 0
         const d = compare(a.raw, b.raw)
@@ -100,7 +108,7 @@ export async function run(args: Args): Promise<void> {
         }
       }
     }
-    findings.push({ ok: differing === 0, what: differing === 0 ? `${frames.length} frames (${frames.join(', ')}) at ${options.width} x ${options.height}, ${tier}: each gives the same bytes when drawn again backwards after ${between.length} other frames, and on a fresh page in a third order. ${2 * frames.length} comparisons, 0 differ` : `${differing} of ${2 * frames.length} comparisons differ: a frame's pixels depend on something other than the film second` })
+    findings.push({ ok: differing === 0, what: differing === 0 ? `${frames.length} frames (${frames.join(', ')}) at ${options.width} x ${options.height}, ${tier}: each gives the same bytes when drawn again backwards after ${between.length} other frames, and on a fresh page ${warmed ? 'after the film\'s warming (the first page draws without it) ' : ''}in a third order. ${2 * frames.length} comparisons, 0 differ` : `${differing} of ${2 * frames.length} comparisons differ: a frame's pixels depend on something other than the film second` })
   }
   finish({
     check: 'pure',

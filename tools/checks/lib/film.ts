@@ -109,6 +109,8 @@ export const broken: Record<string, (film: Clock) => Clock> = {
       return seconds > from && seconds <= barTime(h.toBar) ? { ...i, tau: i.tau + 0.4 * (seconds - from) } : i
     },
   }),
+  // The film's own clock, with its first meant cut listed one frame late: cues reads the list, not the clock.
+  'cut-late': (film) => ({ name: 'a film whose first cut lands one frame after its downbeat', at: (seconds) => film.at(seconds) }),
 }
 
 export function clockOf(name: string | null): Clock {

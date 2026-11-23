@@ -30,6 +30,8 @@ export interface PlayerState {
   sky: string
   // Plays the frames from `first` to `last` against the clock, without a track unless one is loaded, and gives the run's report.
   range(first: number, last: number): Promise<Report | null>
+  // Draws every frame from `first` to `last` in order through the same loop, one at each animation frame, with no clock to keep. Only for measuring what a frame costs.
+  every(first: number, last: number): Promise<Report | null>
 }
 
 declare global {
@@ -109,7 +111,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every }
   window.player = state
   window.showcase.pacing = () => playing?.soFar() ?? state.report
 
@@ -457,6 +459,43 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       until = lastFrame
     }
     return state.report
+  }
+
+  async function every(first: number, last: number): Promise<Report | null> {
+    if (activity !== 'ready' || dead) return null
+    const from = Math.max(0, Math.min(lastFrame, Math.round(first)))
+    const to = Math.max(from, Math.min(lastFrame, Math.round(last)))
+    become('playing', 'Playing')
+    try {
+      const clock = await clockFor()
+      await drawing
+      applyView()
+      const facts = deck.facts('play', clock.ctx)
+      let next = from
+      const run = play({
+        film,
+        tier,
+        plan: filmPlan(from, to),
+        raw: true,
+        time: () => (next + 0.5) / fps,
+        facts: (stepMs) => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } }),
+        tick(_seconds, cue) {
+          if (!cue) return
+          performance.mark(`frame ${cue.frame}`)
+          next = cue.frame + 1
+          frame = cue.frame
+          syncBar()
+        },
+      })
+      const report = await run.finished
+      state.shown = frame
+      return report
+    } catch (error) {
+      fail(error)
+      return null
+    } finally {
+      become('ready', 'Ready')
+    }
   }
 
   function togglePlay(): void {
