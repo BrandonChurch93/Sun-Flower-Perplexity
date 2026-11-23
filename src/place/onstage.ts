@@ -29,7 +29,7 @@ class Place implements Part {
     for (const o of this.objects) o.visible = true
     const low = 1 - smoothstep(4, 24, now.sunElevationDeg)
     airUniforms.uAir.value = AIR.clear + AIR.lowSun * low + AIR.overcast * d.overcast + AIR.fog * d.fog * d.fog + AIR.rain * d.rain
-    airUniforms.uAirSun.value = clamp(1 - 0.5 * d.overcast) * (1 - 0.6 * d.fog)
+    airUniforms.uAirToSun.value = clamp(1 - 0.5 * d.overcast) * (1 - 0.6 * d.fog)
     airUniforms.uAirRain.value = d.rain
     airUniforms.uMist.value = MIST.perM * d.fog * d.fog
     airUniforms.uMistTopM.value = MIST.topM
