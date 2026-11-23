@@ -10,6 +10,8 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
 export interface SheetContent {
   verdict: string
   holds: boolean
+  // What will be felt, in one line: the frames that took longer than one frame of time.
+  felt: string
   // The whole report as plain text: this is what Copy takes.
   text: string
   file: { name: string; blob: Blob }
@@ -40,12 +42,14 @@ export function createSheet(host: HTMLElement): Sheet {
   close.type = 'button'
   head.append(make('h1', css.title, 'Pacing report'), copy, save, close)
   const verdict = make('p', css.verdict)
+  const felt = make('p', css.felt)
+  felt.dataset.role = 'sheet-felt'
   const hint = make('p', css.hint, 'Copy the report and paste it into a message. It holds everything below.')
   hint.setAttribute('role', 'status')
   const text = make('pre', css.text)
   text.tabIndex = 0
   text.dataset.role = 'sheet-text'
-  box.append(head, verdict, hint, text)
+  box.append(head, verdict, felt, hint, text)
   root.append(box)
   host.append(root)
 
@@ -89,6 +93,7 @@ export function createSheet(host: HTMLElement): Sheet {
       save.download = content.file.name
       verdict.textContent = content.verdict
       verdict.dataset.holds = content.holds ? 'yes' : 'no'
+      felt.textContent = content.felt
       hint.textContent = 'Copy the report and paste it into a message. It holds everything below.'
       text.textContent = content.text
       text.scrollTop = 0

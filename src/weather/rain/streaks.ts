@@ -37,7 +37,7 @@ void main() {
   vec2 along = runLength > 1e-7 ? run / runLength : vec2(0.0, -1.0);
   vec2 across = vec2(-along.y, along.x);
   float pixelM = depth * uPixelAngle;
-  float coc = min(uCocScale * abs(1.0 / depth - 1.0 / uFocusM), 2048.0);
+  float coc = cocOf(depth);
   // Out of focus, one lens sample carries its share of the blur circle: the strip is drawn that wide so the samples close into it.
   float halfPx = max(max(r / pixelM, uLeast), 1.2 * coc / sqrt(uSamples));
   float halfM = halfPx * pixelM;
