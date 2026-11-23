@@ -277,8 +277,8 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
   float along = az - drift;
   float lit = smoothstep(-12.0, -5.5, uElevation) * (1.0 - smoothstep(6.0, 17.0, uElevation));
   vec3 red = vec3(0.32, 0.083, 0.037) * lit * (0.35 + 0.65 * exp(-15.0 * theta));
-  vec3 edgeSun = mix(vec3(0.25, 0.061, 0.009), vec3(0.143, 0.032, 0.038), uFinaleDusk);
-  red = mix(red, edgeSun * (0.25 + 0.75 * exp(-9.0 * theta)), uFinale);
+  vec3 edgeSun = mix(vec3(0.135, 0.079, 0.039), vec3(0.158, 0.032, 0.018), uFinaleDusk);
+  red = mix(red, edgeSun * (0.10 + 0.90 * exp(-24.0 * theta)), uFinale);
   float clearGap = 1.0 - 0.80 * uFinale * exp(-1840.0 * max(0.0, 1.0 - dot(d, LAST_GAP)));
   vec3 outAir = air;
   float transmission = 1.0;
@@ -665,6 +665,7 @@ uniform float uBreak;
 uniform float uSolarDeck;
 uniform float uEnding;
 uniform float uPhotoMix;
+uniform float uFinaleDusk;
 uniform float uMarchFilter;
 uniform vec3 uSunFace;
 uniform vec3 uMoon;
@@ -723,7 +724,7 @@ vec3 sunAt(vec3 d, float blur) {
   vec3 h = normalize(vec3(uSunFace.z, 0.0, -uSunFace.x) + vec3(1e-7));
   vec3 v = cross(uSunFace, h);
   vec2 xy = vec2(dot(d, h), dot(d, v));
-  float squash = mix(0.65 - 0.15 * uEnding, 1.0, smoothstep(0.06, 3.8, uElevation));
+  float squash = mix(mix(0.65 - 0.15 * uEnding, 1.0, smoothstep(0.06, 3.8, uElevation)), 0.93, uPhotoMix);
   float frost = smoothstep(0.15, 0.92, uFrostFog);
   float fogBlur = frost * (0.0085 + 0.011 * frost);
   vec2 r = sqrt(vec2(sr * sr, sr * sr * squash * squash) + blur * blur + fogBlur * fogBlur);
@@ -740,7 +741,10 @@ vec3 sunAt(vec3 d, float blur) {
   float mist = exp(-0.89 * dot(p, p));
   // A held deck still diffuses the photosphere after the lens fan falls.
   float diffuse = max(rupture, 0.997 * uSolarDeck * smoothstep(0.07, 0.65, uBreak));
-  float photo = disk * limb + 0.19 * exp(-dot(p, p) / 3.6);
+  // A brilliant narrow core and a surrounding halo, both behind terrain.
+  // Do not let the much stronger photosphere turn the halo into extra disc.
+  float rr = dot(p, p);
+  float photo = disk * limb + 0.034 * exp(-rr / 4.7) + 0.086 * uFinaleDusk * exp(-rr / 33.0);
   float glow = mix(mix(mix(disk * limb, 0.30 * mist, frost), photo, uPhotoMix), 0.003 * broken, diffuse);
   float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
   if (uFrostPhoto.x > 0.0) {

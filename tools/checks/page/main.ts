@@ -29,7 +29,8 @@ export interface ChecksPage {
   fault(kind: string, a: number, b: number): void
   // Which pixels of the last frame the scene drew into, row by row from the top: '1' where the scene's own numbers, before the lens and the grain, hold any light, '0' where the frame was left empty.
   covered(): string
-  // Where the page's own time went in the last frame drawn, in milliseconds by part: the film's own laps (film.cost). The first call hands the film its clock.
+  // Where the page's own time went in the last frame drawn, in milliseconds by part: the film's own laps (film.cost), and beside them the time inside renderer.render
+  // (draw), with the scene's and the shadow map's share of it. The first call hands the film its clock and starts that timer.
   cost(): Record<string, number>
 }
 
@@ -72,6 +73,29 @@ let dice = false
 let memory = false
 let moon = 1
 let moonFrom = 0
+// How long a frame spends inside renderer.render: all of it, the part that draws the scene into the frame, and the part that draws the shadow map. It is time and no pixel.
+const drawMs = { draw: 0, drawScene: 0, drawShadow: 0 }
+let timed = false
+function timeDraws(): void {
+  if (timed) return
+  timed = true
+  const { renderer } = film.stage
+  const inner = renderer.render.bind(renderer)
+  let depth = 0
+  renderer.render = (scene, camera) => {
+    const outer = depth++ === 0
+    const t = performance.now()
+    try {
+      inner(scene, camera)
+    } finally {
+      depth--
+    }
+    if (!outer) return
+    const ms = performance.now() - t
+    drawMs.draw += ms
+    if (scene === film.scene) drawMs[renderer.getRenderTarget() === film.stage.sample ? 'drawScene' : 'drawShadow'] += ms
+  }
+}
 let slowMs = 0
 let slowAt = -1
 // The fault of a part that takes too long: the field's turn in a frame lasts `slowMs` longer, in every frame or in one. It is time and no pixel.
@@ -185,6 +209,7 @@ window.checks = {
     if (memory) film.view.azimuthDeg = 0.05 * drawnBefore
     drawnBefore++
     const before = madeSoFar()
+    drawMs.draw = drawMs.drawScene = drawMs.drawShadow = 0
     const t0 = performance.now()
     await film.renderFrame(frame, tier as TierId)
     const seconds = (performance.now() - t0) / 1000
@@ -238,7 +263,8 @@ window.checks = {
   },
   cost() {
     if (!film.clock) film.clock = () => performance.now()
-    return { ...film.cost }
+    timeDraws()
+    return { ...film.cost, ...drawMs }
   },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a

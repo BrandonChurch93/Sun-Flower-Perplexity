@@ -41,3 +41,20 @@ export function readLines(run: string): Map<number, Line> {
   }
   return out
 }
+
+// Lets another check that draws the film in a row keep its frames where `play` keeps them, so that one drawing serves both. Frames of another film or size are thrown away first, as `play` does.
+export function keeper(run: string, stamp: Stamp): (frame: number, seconds: number, made: Made, png: Buffer) => void {
+  const dir = playDir(run)
+  const old = readStamp(run)
+  if (old && JSON.stringify(old) !== JSON.stringify(stamp)) fs.rmSync(dir, { recursive: true, force: true })
+  fs.mkdirSync(framesDir(run), { recursive: true })
+  fs.writeFileSync(path.join(dir, 'stamp.json'), JSON.stringify(stamp, null, 2) + '\n')
+  const session = `${process.pid}-${Date.now()}`
+  const log = path.join(dir, `log-${session}.jsonl`)
+  let nth = 0
+  return (frame, seconds, made, png) => {
+    fs.writeFileSync(frameFile(run, frame), png)
+    const line: Line = { frame, seconds, made, session, nth: nth++ }
+    fs.appendFileSync(log, JSON.stringify(line) + '\n')
+  }
+}
