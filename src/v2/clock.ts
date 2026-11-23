@@ -310,8 +310,10 @@ export function puddleAtBar(b: number): number {
   return 1 - smooth((b - 41) / 4)
 }
 
+// The burst comes up over four frames with its middle on the bar line, so the lens does not step and the hit still reads on the beat.
 export function burstAtBar(b: number): number {
-  return b < BREAK ? 0 : 1 - smooth((b - BREAK) / 1.8)
+  const rise = smooth((b - BREAK + 0.04) / 0.08)
+  return b < BREAK ? rise : rise * (1 - smooth((b - BREAK) / 1.8))
 }
 
 export function eveningAtBar(b: number): number {
@@ -337,8 +339,8 @@ export function coverAtBar(b: number): number {
 export function sunThroughAtBar(b: number): number {
   const mist = 1 - 0.8 * smooth((fogAtBar(b) - 0.3) / 0.5)
   let storm = 1
-  if (b >= 31.8 && b < BREAK) storm = 1 - smooth((b - 31.8) / 0.9)
-  else if (b >= BREAK) storm = lerp(0.9, 1, smooth((b - BREAK) / 2)) * smooth((b - BREAK) / 0.1 + 0.35)
+  if (b >= 31.8 && b < BREAK - 0.04) storm = 1 - smooth((b - 31.8) / 0.9)
+  else if (b >= BREAK - 0.04) storm = lerp(0.9, 1, smooth((b - BREAK) / 2)) * smooth((b - BREAK + 0.04) / 0.1)
   return clamp(mist * storm)
 }
 

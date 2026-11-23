@@ -99,7 +99,10 @@ export class Film {
     this.companion.place(companionMatrix())
     this.only = new Set(options.only ?? [])
     this.quality = options.quality ?? null
-    if (options.still) setStill(true)
+    if (options.still) {
+      setStill(true)
+      this.post.setStill(true)
+    }
     this.view.fixed = options.view && options.view !== 'film' ? views[options.view] : null
     const names = skyNames()
     this.skyName = options.sky && names.includes(options.sky) ? options.sky : names.includes('sky') ? 'sky' : names[0]
@@ -119,6 +122,7 @@ export class Film {
 
   setStill(on: boolean): void {
     setStill(on)
+    this.post.setStill(on)
   }
 
   shows(name: string): boolean {
