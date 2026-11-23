@@ -182,6 +182,27 @@ export class Film {
       onStep?.(i + 1, frames.length)
       await paint()
     }
+    this.everyShape(renderer)
+  }
+
+  // Draws every mesh once with its own material and every caster once into the shadow map, whatever the lens and the sun can see.
+  // The graphics card keeps one record for each pair of a shape and a program and makes it at their first draw; a tuft of grass the sun's map first takes in at second 111 would make it there.
+  private everyShape(renderer: THREE.WebGLRenderer): void {
+    const was: { object: THREE.Object3D; visible: boolean; culled: boolean }[] = []
+    this.scene.traverse((object) => {
+      was.push({ object, visible: object.visible, culled: object.frustumCulled })
+      object.visible = true
+      object.frustumCulled = false
+    })
+    this.shadow.render(renderer, this.scene, this.bothCasters, this.sun, 1, 0, 0, this.center, 1, 1, 0)
+    renderer.setRenderTarget(this.stage.sample)
+    renderer.render(this.scene, this.camera)
+    renderer.setRenderTarget(null)
+    for (const w of was) {
+      w.object.visible = w.visible
+      w.object.frustumCulled = w.culled
+    }
+    this.shadow.off()
   }
 
   async setFormat(format: Format): Promise<void> {
