@@ -41,7 +41,9 @@ const FILL_WARMTH = 0.25
 const FILL_COLOUR = 0.65
 const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
-const FLASH = { key: 5, fill: 1.6, color: [0.86, 0.94, 1.22] as RGB }
+const FLASH = { key: 2.4, fill: 1.2, color: [0.86, 0.94, 1.22] as RGB }
+// A sun that comes through a tear in a deck lights from behind and the lens holds the sky: this much of it is lost on the plant under a full deck.
+const UNDER_DECK = 0.6
 // The redder the sun, the less a green leaf has to give back: the key keeps at least this much green and blue beside its red.
 const KEY_FLOOR = { green: 0.45, blue: 0.14 }
 
@@ -101,7 +103,8 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
 
   const el = now.sunElevationDeg
   const closed = d.overcast * (1 - d.sunThrough)
-  const through = Math.max(d.sunThrough, FILL_STORM.key * closed)
+  const open = d.sunThrough * (1 - UNDER_DECK * d.overcast)
+  const through = Math.max(open, FILL_STORM.key * closed)
   const key = now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
   const flash = d.flash
   out.sun.azimuthDeg = (Math.atan2(now.light.x, now.light.z) * 180) / Math.PI
@@ -136,7 +139,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   out.sky.ambient = 1
   // The air keeps the sky's own light, so that rain, mist and the glass sit in the sky's picture whatever the look does to the plant.
   const air = out.air as NonNullable<WorldDef['air']>
-  const shows = now.lightKind === 'sun' ? d.sunThrough * smoothstep(-1, 0.6, el) : smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
+  const shows = now.lightKind === 'sun' ? open * smoothstep(-1, 0.6, el) : smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
   for (let i = 0; i < 3; i++) {
     air.sun[i] = sky.direct[i] * shows
     air.zenith[i] = sky.zenith[i]

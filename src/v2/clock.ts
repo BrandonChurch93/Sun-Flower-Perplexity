@@ -260,12 +260,16 @@ export function fogAtBar(b: number): number {
 const BREAK = hitBar(41)
 const RAIN_FROM = hitBar(33)
 
+// The deck stays over the break: the sun comes through a tear in it and sets under it, and the night takes the deck away.
+const DECK_GOES = 42.3
+
 export function overcastAtBar(b: number): number {
   if (b < 31.6) return 0
   if (b < 32.9) return smooth((b - 31.6) / 1.3)
   if (b < 40) return 1
   if (b < BREAK) return lerp(1, 0.74, smooth((b - 40) / (BREAK - 40)))
-  return 0.74 * (1 - smooth((b - BREAK) / 0.7))
+  if (b < DECK_GOES) return lerp(0.74, 0.58, smooth((b - BREAK) / (DECK_GOES - BREAK)))
+  return 0.58 * (1 - smooth((b - DECK_GOES) / 0.62))
 }
 
 const RAIN_FULL = hitBar(34)
