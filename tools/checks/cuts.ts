@@ -117,7 +117,8 @@ export async function run(args: Args): Promise<void> {
     const all = steps.map((s) => s.blur)
     findings.push({ ok: true, what: `the blurred picture moves ${median(all).toFixed(3)} of 255 a frame at the median and ${Math.max(...all).toFixed(2)} at the most; the largest ratio to its neighbours outside the lightning is ${Math.max(...steps.filter((s) => !s.lightning).map((s) => s.ratio)).toFixed(1)}` })
     // Lightning is meant to jump. Where the dial jumps and the picture does not, the lightning does not show.
-    for (const f of [...flashes].sort((a, b) => a - b)) {
+    // Seen every few frames only, a flash can fall between two frames: whether the lightning shows is said from every frame alone.
+    for (const f of every > 1 ? [] : [...flashes].sort((a, b) => a - b)) {
       const s = steps.find((x) => x.frame === f)
       if (!s) continue
       let rising = false

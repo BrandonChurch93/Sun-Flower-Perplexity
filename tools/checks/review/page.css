@@ -25,7 +25,7 @@ p { margin: 0 0 0.75rem; max-width: 80ch; }
 a { color: var(--text); }
 .quiet { color: var(--quiet); font-size: 0.875rem; }
 .mono, td, th { font-family: var(--mono); font-size: 0.8125rem; }
-.top { position: sticky; top: 0; z-index: 5; background: rgba(16, 17, 18, 0.94); border-bottom: 1px solid var(--line); padding: 0.75rem 1.5rem; }
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 0.75rem 1.5rem; }
 .top-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .top p { margin: 0.125rem 0 0.5rem; max-width: none; }
 nav { display: flex; gap: 1rem; font-size: 0.875rem; }
