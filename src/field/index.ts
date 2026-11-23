@@ -79,6 +79,7 @@ export class Field {
   private rimed = 0
   // How many shapes the last frame laid.
   laid = 0
+  private played = false
   private rise = 0
   private ahead = 1
   private lag = 0
@@ -142,11 +143,13 @@ export class Field {
     this.rimed = Math.max(THREE.MathUtils.smoothstep(frost, RIME_FROM, RIME_FULL), melt)
     // The film played as it is written is played from keys. Any other moment is laid as it comes.
     const played = keysOn && now.tau === timeOpen
+    this.played = played
     this.laid = 0
     for (const g of this.groups) {
       const clock = kindTime(timeOpen, g.index, g.tier)
       if (played) {
-        g.keyed.set(now.t)
+        g.keyed.set(now.t, clock)
+        g.keyed.twitch((still.lapse ?? 0) * (1 - (open.held ?? 0)), open.cold ?? 0, now.frame, now.t, heightAt(clock))
         g.shaped.forget()
         this.laid += g.keyed.laid
         g.head.value.copy(g.keyed.head)
@@ -243,7 +246,7 @@ export class Field {
     const full = heightAt(SETTLED_T)
     for (const g of this.groups) {
       const clock = kindTime(this.time, g.index, g.tier)
-      const kindTall = heightAt(clock)
+      const kindTall = this.played ? g.keyed.tall : heightAt(clock)
       g.kind.uFieldKind.value.set(clock, kindTall, opensEarly(g.index, g.tier) ? 1 : 0, Math.atan2(g.axis.value.x, g.axis.value.z))
       g.kind.uFieldDraw.value.set(Math.max(s.ahead, Math.min(4, full / Math.max(kindTall, 0.001))), g.bare ? this.rise * UNDER_SIZE : 1, g.bare ? UNDER_REACH_M[this.quality] : 1000, g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1)
     }

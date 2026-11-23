@@ -510,7 +510,7 @@ export class FarField {
       const clock = kindTime(timeOpen, i, 'pictures')
       const keyed = this.keyed[i]
       if (played) {
-        keyed.set(now.t)
+        keyed.set(now.t, clock)
         this.shaped[i].forget()
         this.laid += keyed.laid
         this.local[i] = Math.atan2(keyed.axis.x, keyed.axis.z)
