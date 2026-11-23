@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, SUNRISE_DEG, SUNSET_DEG, fieldEdge, fieldHash, fromFields, landHill, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, fieldEdge, fieldHash, fromFields, gateAt, landHill, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -139,8 +139,6 @@ export const atlasMegabytes = (COLS * CELL * ROWS * CELL * 4 * 1.34) / 1048576
 
 interface Tree { x: number; y: number; z: number; w: number; h: number; variant: number; flip: number; phase: number; tint: [number, number, number] }
 
-const bell = (x: number): number => Math.exp(-x * x)
-const off = (azDeg: number, centerDeg: number): number => ((azDeg - centerDeg + 540) % 360) - 180
 
 // The bearings the lens can look along through the film, with a margin.
 const SEEN = { fromDeg: 128, toDeg: 282 }
@@ -160,8 +158,7 @@ function plant(): Tree[] {
   const room = (x: number, z: number, soil: number): number => {
     const r = Math.hypot(x, z)
     const az = (Math.atan2(x, z) / RAD + 360) % 360
-    const gate = Math.max(bell(off(az, SUNRISE_DEG) / 8), bell(off(az, SUNSET_DEG) / 5.5))
-    const capDeg = 3.2 - 2.7 * gate
+    const capDeg = 3.2 - 2.45 * gateAt(az)
     return r * Math.tan(capDeg * RAD) - Math.max(0, soil)
   }
   const seen = (x: number, z: number): boolean => {
@@ -331,8 +328,7 @@ void main() {
   // Leaves let the low sun through: the crown's thin edge glows when the sun stands behind it.
   vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * thin);
   vec3 color = albedo * (uSunColor * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open + flashLight(n));
-  color = throughAir(color, vWorld);
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  outColor = landFinish(color, vWorld, vDepth);
 }
 `
 

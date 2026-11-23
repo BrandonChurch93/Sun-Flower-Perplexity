@@ -257,8 +257,7 @@ void main() {
   // A standing crop and a wood let the low sun through toward the lens.
   float through = pow(saturate(dot(-v, uSunDir)), 3.0) * (0.25 * standing + 0.3 * wood * (1.0 - bump * c0)) * (1.0 - smoothstep(0.25, 0.6, uSunDir.y));
   vec3 color = albedo * (uSunColor * (ndl * shade + through) + skyAmbient(n) * nook + flashLight(n));
-  color = throughAir(color, vWorld);
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  outColor = landFinish(color, vWorld, vDepth);
 }
 `
 

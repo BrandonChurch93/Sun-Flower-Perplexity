@@ -46,28 +46,30 @@ function fbm2(x: number, z: number, salt: number, octaves: number): number {
 
 const bell = (x: number): number => Math.exp(-x * x)
 
-function off(azDeg: number, centerDeg: number): number {
-  return ((azDeg - centerDeg + 540) % 360) - 180
+// Where the sun comes up and where it goes down on the last day. The hills fall to a saddle at both.
+
+// How high the hills may stand above the horizon, in degrees seen from the plant, bearing by bearing. The sun comes up between 175 and 187 over the days of the film and goes down between 198 and 226: a wide flat saddle for the mornings, a long ridge that falls to a second saddle for the evenings, the last one lowest.
+const CREST: [number, number][] = [
+  [100, 1.5], [128, 1.7], [150, 2.0], [162, 1.7], [169, 1.05], [174, 0.24], [188, 0.24], [194, 0.8], [201, 0.95], [210, 0.8], [218, 0.42], [223, 0.12], [228.5, 0.12], [235, 0.9], [244, 1.7], [255, 2.0], [275, 1.7], [300, 1.5], [460, 1.5],
+]
+
+export function crestDeg(azDeg: number): number {
+  const az = azDeg < 100 ? azDeg + 360 : azDeg
+  for (let i = 1; i < CREST.length; i++) {
+    if (az <= CREST[i][0]) return CREST[i - 1][1] + (CREST[i][1] - CREST[i - 1][1]) * smooth(CREST[i - 1][0], CREST[i][0], az)
+  }
+  return 1.5
 }
 
-// Where the sun comes up and where it goes down on the last day. The hills fall to a saddle at both.
-export const SUNRISE_DEG = 181
-export const SUNSET_DEG = 226
-
-// How high the hills may stand above the horizon at a bearing, in degrees seen from the plant.
-export function crestDeg(azDeg: number): number {
-  const rise = bell(off(azDeg, SUNRISE_DEG) / 13)
-  const set = bell(off(azDeg, SUNSET_DEG) / 9)
-  const between = bell(off(azDeg, 204) / 14)
-  const left = bell(off(azDeg, 252) / 15)
-  const right = bell(off(azDeg, 157) / 11)
-  return 1.5 * (1 - 0.8 * rise) * (1 - 0.82 * set) * (1 - 0.3 * between) + 0.5 * left + 0.5 * right
+// One in the two saddles the sun uses, nothing where the hills stand.
+export function gateAt(azDeg: number): number {
+  return 1 - smooth(0.26, 0.8, crestDeg(azDeg))
 }
 
 const RANGES = [
-  { radiusM: 2350, widthM: 520, share: 0.7, cells: 13, salt: 100 },
-  { radiusM: 3550, widthM: 660, share: 0.9, cells: 10, salt: 200 },
-  { radiusM: 5000, widthM: 740, share: 1.0, cells: 8, salt: 300 },
+  { radiusM: 2350, widthM: 520, share: 0.7, floorDeg: 0, cells: 13, salt: 100 },
+  { radiusM: 3550, widthM: 660, share: 0.9, floorDeg: 0.24, cells: 10, salt: 200 },
+  { radiusM: 5000, widthM: 740, share: 1.0, floorDeg: 0.42, cells: 8, salt: 300 },
 ]
 
 export interface LandAt { height: number; wood: number; hill: number }
@@ -89,12 +91,14 @@ function bare(x: number, z: number, out: LandAt): LandAt {
     const turn = (az / 360) * range.cells
     const shape = 0.3 + 1.1 * (0.62 * ring(turn, range.cells, range.salt) + 0.38 * ring(turn * 2.7, Math.round(range.cells * 2.7), range.salt + 1))
     const radius = range.radiusM * (1 + 0.1 * (ring(turn * 0.6, Math.max(2, Math.round(range.cells * 0.6)), range.salt + 2) - 0.5))
-    const top = radius * Math.tan(crest * range.share * shape * RAD)
+    // The far ranges never sink to nothing: in the saddles they stay as low pale shapes behind the open land.
+    const least = range.floorDeg * (0.45 + 0.7 * ring(turn * 5.3, Math.round(range.cells * 5.3), range.salt + 3) + 0.5 * ring(turn * 13.7, Math.round(range.cells * 13.7), range.salt + 4))
+    const top = radius * Math.tan(Math.max(crest * range.share * shape, least) * RAD)
     const across = (wr - radius) / range.widthM
     const body = across < 0 ? bell(across * 1.15) : bell(across * 1.5)
     hill = Math.max(hill, top * body)
   }
-  hill *= 0.82 + 0.36 * fbm2(x / 760, z / 760, 50, 3)
+  hill *= 0.7 + 0.6 * fbm2(x / 640, z / 640, 50, 4)
   out.hill = hill
   out.height = verge + basin + roll * (1 - 0.6 * smooth(10, 60, hill)) + hill
   out.wood = 0
@@ -116,7 +120,7 @@ export function woodAt(x: number, z: number, hill: number): number {
   const patch = fbm2(x / 640, z / 640, 60, 3)
   const onHill = smooth(14, 42, hill) * smooth(0.3, 0.5, patch + 0.25 * smooth(40, 120, hill))
   const az = (Math.atan2(x, z) / RAD + 360) % 360
-  const clear = 1 - 0.85 * Math.max(bell(off(az, SUNRISE_DEG) / 7), bell(off(az, SUNSET_DEG) / 5))
+  const clear = 1 - 0.9 * gateAt(az)
   const copse = smooth(0.66, 0.72, fbm2(x / 330, z / 330, 70, 2)) * smooth(520, 800, r) * clear
   return Math.max(onHill, copse)
 }
@@ -130,7 +134,9 @@ export function landAt(x: number, z: number, out: LandAt = scratch): LandAt {
   bare(x, z, out)
   out.wood = woodAt(x, z, out.hill)
   const crowns = 0.56 + 0.44 * noise2(x / 12, z / 12, 80) + 0.16 * (noise2(x / 4.6, z / 4.6, 81) - 0.5)
-  out.height += CANOPY_M * smooth(0.4, 0.6, out.wood) * crowns
+  // Far off a wood is a soft swell on the ridge, not a step.
+  const far = smooth(2600, 4600, Math.hypot(x, z))
+  out.height += CANOPY_M * (1 - 0.5 * far) * smooth(0.4 - 0.25 * far, 0.6 + 0.3 * far, out.wood) * (crowns + (1 - crowns) * far)
   return out
 }
 
