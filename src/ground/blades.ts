@@ -261,7 +261,7 @@ void main() {
   albedo = mix(albedo, albedo * vec3(1.3, 1.22, 1.05), 0.6 * rib);
   albedo = mix(albedo, vec3(0.2, 0.17, 0.07), smoothstep(0.88, 1.0, t) * step(0.6, vAlong.z));
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.1, 0.7, t));
+  albedo = mix(frozen(albedo, uFrost), FROST_WHITE * 1.15, smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.7) * 0.7 * smoothstep(0.1, 0.7, t));
   float deep = mix(0.35, 1.0, smoothstep(0.0, 0.3, t));
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
   float ndl = dot(n, uSunDir);

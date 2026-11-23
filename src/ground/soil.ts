@@ -1,5 +1,6 @@
 import { config } from '../config.ts'
 import { sunAzimuthAt } from '../v2/sun.ts'
+import { clodClearM, clodGlsl, clodSlopeMost } from './clods.ts'
 import { grassCover, stemFoot, turfCover } from './cover.ts'
 import { cropLight } from './light.ts'
 
@@ -156,13 +157,13 @@ float soilLod(vec2 p) {
 float lane(vec2 p) {
   float along = dot(p, uLane);
   float across = abs(p.x * uLane.y - p.y * uLane.x);
-  return (1.0 - smoothstep(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * smoothstep(0.0, 0.03, along);
+  return (1.0 - smoothstep(0.012 + 0.1 * along, 0.03 + 0.22 * along, across)) * smoothstep(0.0, 0.03, along) * (1.0 - smoothstep(0.35, 0.7, along));
 }
 uniform vec2 uSunWay;
 float sunWay(vec2 p) {
   float along = dot(p, uSunWay);
   float across = abs(p.x * uSunWay.y - p.y * uSunWay.x);
-  return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along);
+  return (1.0 - smoothstep(0.02 + 0.15 * along, 0.05 + 0.35 * along, across)) * smoothstep(0.01, 0.05, along) * (1.0 - smoothstep(0.45, 0.9, along));
 }
 uniform vec4 uFurrow;
 uniform vec4 uFurrowAxes;
@@ -224,12 +225,21 @@ float collar(vec2 p) {
   float reach = ${collar.reachM} * (1.0 + 0.25 * sin(a * 3.0 + 1.3) + 0.15 * sin(a * 7.0 + 4.0));
   return k * ${collar.heightM} * exp(-dot(p, p) / (reach * reach));
 }
+${clodGlsl}
+uniform float uClodLod;
+// Where the clods stand: not on the stem's own ground, low along the way to the first lens and the first sun, and worn down in the furrow's bed.
+float clodStand(vec2 p) {
+  float r = length(p);
+  return smoothstep(${clodClearM[0]}, ${clodClearM[1]}, r) * (1.0 - 0.6 * lane(p) * (1.0 - smoothstep(0.2, 0.45, r))) * (1.0 - 0.85 * sunWay(p) * (1.0 - smoothstep(0.3, 0.7, r)));
+}
 float soilHeight(vec2 p, float lod) {
   float fine = textureLod(tData, p * uTiles.x, lod).a - 0.55;
   float mid = textureLod(tData, TURN_M * p * uRelief.z * 3.7 + vec2(0.71, 0.33), lod + 1.9).a - 0.55;
   float clod = clodShape(textureLod(tData, TURN_C * p * uRelief.z + vec2(0.5, 0.2), max(lod - 1.6, 0.0)).a);
   float foot = 1.0 - smoothstep(uDome.y, uDome.y * 1.7, length(p));
-  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + furrow(p) * nearFade(p) + collar(p);
+  float dug = furrow(p);
+  float lumps = clodRise(p, max(lod + uClodLod, 0.0)) * clodStand(p) * (1.0 - 0.7 * saturate(-dug / uFurrowShape.x));
+  return (fine * uRelief.x + mid * uRelief.x * 0.3 + clod * uRelief.y + lumps) * nearFade(p) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p)) * (1.0 - foot) + emerge(p).x + dug * nearFade(p) + collar(p);
 }
 `
 
@@ -332,6 +342,57 @@ float selfShade() {
 float frosted(float h, float under) {
   return smoothstep(0.45, 0.8, h) * (1.0 - 0.7 * under);
 }
+// Hoar frost melts first where the sun lies on it: what is left of it on a face that takes this much sun.
+float frostKept(float frost, float sunny) {
+  float from = 0.7 * sunny;
+  return smoothstep(from, from + 0.3, frost);
+}
+const vec3 FROST_WHITE = vec3(0.7, 0.73, 0.78);
+// Frozen soil is darker and greyer than the same soil thawed.
+vec3 frozen(vec3 albedo, float frost) {
+  return mix(albedo, dot(albedo, vec3(0.3, 0.6, 0.1)) * vec3(0.62, 0.7, 0.84), 0.8 * smoothstep(0.0, 0.3, frost));
+}
+// The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
+float rimed(vec3 world, float sits, float frost, float sunny) {
+  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.2, 0.62, sits * (0.5 + 1.0 * grains(world + 3.1, 0.6)));
+}
+// The crystals each face their own way, and one that throws the sun at the lens flares and dies as the light or the lens moves.
+float frostSpark(vec3 world, vec3 n, vec3 v, vec3 l) {
+  float size = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 2.6, 0.0004));
+  float whole = floor(size);
+  vec3 hv = normalize(v + l);
+  float lit = 0.0;
+  for (int k = 0; k < 2; k++) {
+    float scale = exp2(-(whole + float(k)));
+    vec3 cell = floor(world * scale);
+    vec3 own = vec3(hash31(cell), hash31(cell + 17.3), hash31(cell + 41.7));
+    vec3 facet = normalize(n + 1.3 * (own - 0.5));
+    float glint = pow(max(dot(facet, hv), 0.0), 220.0) * smoothstep(0.5, 0.15, length(fract(world * scale) - 0.5));
+    glint *= 0.6 + 0.4 * sin(uReal * (2.0 + 6.0 * own.y) + own.z * 40.0);
+    lit += glint * (k == 0 ? 1.0 - fract(size) : fract(size));
+  }
+  return lit;
+}
+`
+// The shadows the clods throw on each other and on the soil between them, found by walking toward the light over the clod map.
+// uMarch is the number of steps and how much longer each is than the last.
+export const clodShadow = /* glsl */ `
+uniform vec2 uMarch;
+float clodShade(vec2 p, float h0, float stand, float lodPix) {
+  float along = length(uSunDir.xz);
+  if (stand <= 0.02 || along < 0.02) return 1.0;
+  vec2 dir = uSunDir.xz / along;
+  float rise = uSunDir.y / along / (uClods.y * stand);
+  float s = 0.0035;
+  float shade = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (float(i) >= uMarch.x) break;
+    float hq = textureLod(tClods, clodUv(p + dir * s), max(lodPix, log2(s * 0.28 * uClods.z))).a;
+    shade = max(shade, smoothstep(0.0, 0.05, hq - h0 - s * rise));
+    s *= uMarch.y;
+  }
+  return 1.0 - shade * smoothstep(0.02, 0.2, stand);
+}
 `
 
 export const soilVertex = /* glsl */ `
@@ -372,11 +433,16 @@ uniform vec2 uScales;
 uniform vec3 uMeanInv;
 ${soilHeight}
 ${groundStates}
+${clodShadow}
 ${cropLight}
 ${grassCover}
 ${turfCover}
 
 const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
+// The lightning's light on the ground at its full strength, and how many times brighter the wet soil throws the sun back when it bursts through the deck.
+const vec3 FLASH_LIGHT = vec3(1.6, 1.9, 2.6);
+const float BURST_BLAZE = 3.0;
+uniform vec3 uFlashAt;
 const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
@@ -424,6 +490,8 @@ void main() {
   albedo *= 1.0 - 0.35 * broken.y;
   vec2 boxed = abs(vec2(dot(p, uRight), -dot(p, uToward)) - uWaterBox.xy);
   float pool = pooled(vWorld.y, uWet) * fade * smoothstep(0.92, 1.0, max(boxed.x, boxed.y) / uWaterBox.z);
+  float top = fade * smoothstep(0.45, 0.8, lump);
+  float stand = clodStand(p) * (1.0 - 0.7 * saturate(-furrow(p) / uFurrowShape.x)) * (1.0 - 0.4 * lane(p)) * (1.0 - 0.85 * sunWay(p));
 #else
   vec2 uvB = TURN_B * p * (uTiles.x * 0.73) + vec2(0.37, 0.61);
   vec4 cB = texture(tColor, uvB);
@@ -449,7 +517,15 @@ void main() {
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
   albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
   float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.34) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
+  float stand = 1.0;
+  float top = 0.0;
 #endif
+  vec2 uvL = clodUv(p);
+  vec4 lumpy = texture(tClods, uvL);
+  float lodPix = log2(max(max(length(dFdx(uvL)), length(dFdy(uvL))) * uClods.z / uClods.x, 1.0));
+  tilt -= ((lumpy.rg * 2.0 - 1.0) * ${clodSlopeMost.toFixed(1)}) * TURN_L * stand;
+  float hollow = mix(1.0, smoothstep(-0.1, 0.7, lumpy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, lumpy.a)), stand);
+  float crest = mix(smoothstep(0.45, 0.8, h), smoothstep(0.3, 0.75, lumpy.a) * smoothstep(0.4, 0.8, lumpy.b), stand * (1.0 - smoothstep(0.0, 3.0, lodPix)));
 
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
@@ -465,21 +541,20 @@ void main() {
   albedo = dampened(albedo, damp);
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(vec3(0.03, 0.045, 0.016), vec3(0.045, 0.052, 0.036), field) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * frosted(h, under));
   albedo *= 1.0 - 0.45 * pool;
 
   float low = 1.0 - smoothstep(0.05, 0.5, uSunDir.y);
   float ndl = max(dot(n, uSunDir), 0.0);
-  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, d);
+  float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, d) * clodShade(p, lumpy.a + 0.03, stand, lodPix);
   vec4 sc = uShadowMatrix * vec4(vWorld, 1.0);
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
   lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
-  float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt);
+  float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt) * hollow;
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.55 * broken.y);
 #endif
-  float dull = soilMatt();
+  float dull = soilMatt() * (1.0 - uWet);
   float atFoot = footShade(p, dull);
   open *= atFoot;
   lit *= atFoot;
@@ -500,12 +575,19 @@ void main() {
 #ifdef NEAR
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
+  float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
+  float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.9 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
+  float rime = rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8));
+  float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
+  albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
+  albedo = mix(albedo, FROST_WHITE, 0.94 * rime);
+  open = mix(open, max(open, 0.85), rime);
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
-  float gloss = sheen(uWet, uDew) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(1.0, 0.3, dull);
+  float gloss = sheen(max(uWet, 0.8 * thaw), uDew) * (1.0 - rime) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(1.0, 0.3, dull) * (1.0 + BURST_BLAZE * uAir.z * uWet);
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
   color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under) * mix(1.0, 0.45, dull);
   color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
@@ -514,6 +596,14 @@ void main() {
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
+  float soaked = max(uWet * uWet, pool);
+  vec3 back = reflect(-v, n);
+  color += uSunColor * (grains(vWorld + 0.37, 0.22) * soaked * pow(saturate(dot(back, uSunDir)), 10.0) * lit * (0.6 + BURST_BLAZE * uAir.z)) * hollow * (1.0 - thatch);
+  color += skyAmbient(back) * (soaked * (0.04 + 0.5 * graze) * hollow * (1.0 - pool) * (1.0 - thatch) * (1.0 - 0.8 * under));
+  vec3 hf = normalize(v + uFlashAt);
+  color += FLASH_LIGHT * uAir.y * hollow * (albedo * (0.25 + 0.75 * saturate(dot(n, uFlashAt))) + soaked * (2.5 * pow(max(dot(n, hf), 0.0), 50.0) + 0.3 * graze));
+  color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, density);
 }
 `

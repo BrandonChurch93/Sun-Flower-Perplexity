@@ -2,15 +2,17 @@ import * as THREE from 'three'
 import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { Caster } from '../core/shadow.ts'
+import type { Quality } from '../v2/api.ts'
 import { endStandIn } from '../core/standins.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { smoothstep } from '../core/curves.ts'
 import { now } from '../v2/now.ts'
 import { companionPlace, right, toward } from '../field/layout.ts'
 import { beadSizes, bladeFragment, bladeVertex, blades, clumps, clumpsDawn } from './blades.ts'
+import { clodHeightM, clodPixels, clodTileM } from './clods.ts'
 import { grassCover, grassTimes } from './cover.ts'
 import { clodScatter, crumbFragment, crumbScatter, crumbVertex, fineReachM, grainScatter, laneDir, lumpScatter, massScatter, scatter } from './crumbs.ts'
-import { nearGeometry, nearGrowth, nearRadiusM, soilGeometry } from './geometry.ts'
+import { coarseGrowth, nearGeometry, nearGrowth, reliefRadiusM, soilGeometry } from './geometry.ts'
 import { fieldTufts, grassFragment, grassVertex, tufts } from './grass.ts'
 import { fieldLight } from './light.ts'
 import { litterPixels } from './litter.ts'
@@ -18,6 +20,11 @@ import { rippleBox } from './puddles/basin.ts'
 import { clodReliefM, clodScale, crack, detailScale, emergence, furrow, furrowShare, groundStates, hole, litterTileM, ridgeHeightM, soilFragment, soilHeight, soilMean, soilMeanLuma, soilClock, soilReliefM, soilTileM, soilVertex, sunWayDir, waterLevelsM } from './soil.ts'
 
 const WIDE = 8.3
+// The steps of the walk toward the light that finds the clods' shadows, for each quality, and how far the walk goes.
+const MARCH: Record<Quality, number> = { film: 14, high: 10, low: 5 }
+const MARCH_REACH = 150
+const reach = (steps: number): number => Math.pow(MARCH_REACH, 1 / (steps - 1))
+const CLOD_MAP = 1024
 const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
 
 export interface GroundState { wet: number; frost: number; dew?: number }
@@ -36,6 +43,9 @@ export class Ground {
   static readonly glsl = { height: soilHeight, states: groundStates, cover: grassCover }
   private readonly cast: Caster[] = []
   private readonly uniforms: Record<string, THREE.IUniform>
+  private readonly fineNear: THREE.Mesh
+  private readonly coarseNear: THREE.Mesh
+  private quality: Quality = 'high'
 
   constructor() {
     endStandIn('ground')
@@ -59,7 +69,12 @@ export class Ground {
       uWaterBox: { value: new THREE.Vector3(rippleBox.acrossM, rippleBox.awayM, rippleBox.halfM) },
       uTiles: { value: new THREE.Vector3(1 / soilTileM, 1 / (soilTileM * WIDE), 1 / soilMeanLuma) },
       uLitter: { value: 1 / litterTileM },
-      uNear: { value: new THREE.Vector4(0.55 * nearRadiusM, 0.95 * nearRadiusM, nearGrowth - 1, 1) },
+      uNear: { value: new THREE.Vector4(0.72 * reliefRadiusM, 0.97 * reliefRadiusM, nearGrowth - 1, 1) },
+      tClods: { value: null },
+      uClods: { value: new THREE.Vector4(1 / clodTileM, clodHeightM, 1, 0.5) },
+      uClodLod: { value: 0 },
+      uMarch: { value: new THREE.Vector2(MARCH.high, reach(MARCH.high)) },
+      uFlashAt: { value: new THREE.Vector3(0, 1, 0) },
       uRelief: { value: new THREE.Vector4(soilReliefM, clodReliefM, 1 / (soilTileM * clodScale), 1 / soilReliefM) },
       uGrassTimes: { value: new THREE.Vector4(grassTimes.firstS, grassTimes.lastS, grassTimes.growS, grassTimes.laneS) },
       uEmerge: { value: new THREE.Vector4(emergence.riseS, emergence.liftM, emergence.radiusM, emergence.cracks) },
@@ -107,7 +122,12 @@ export class Ground {
       if (casts) this.cast.push({ mesh, surface })
     }
     add(new THREE.Mesh(soilGeometry()), this.surface, false)
-    add(new THREE.Mesh(nearGeometry()), this.near, true)
+    this.fineNear = new THREE.Mesh(nearGeometry())
+    this.coarseNear = new THREE.Mesh(nearGeometry(true))
+    add(this.fineNear, this.near, true)
+    add(this.coarseNear, this.near, true)
+    const asked = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('quality')
+    this.setQuality(asked === 'film' || asked === 'low' ? asked : 'high')
     add(scatter('ground crumbs', crumbScatter), this.loose, true)
     add(scatter('ground clods', clodScatter), this.loose, true)
     add(close(scatter('ground lumps', lumpScatter)), this.fine, true)
@@ -131,6 +151,16 @@ export class Ground {
   show(visible: boolean): void {
     this.mesh.visible = visible
     for (const c of this.cast) c.mesh.visible = visible
+    this.fineNear.visible = visible && this.quality !== 'low'
+    this.coarseNear.visible = visible && this.quality === 'low'
+  }
+
+  // What the low quality saves: a near ground of a quarter of the triangles, and half the steps of the walk that finds the clods' shadows.
+  setQuality(quality: Quality): void {
+    this.quality = quality
+    ;(this.uniforms.uMarch.value as THREE.Vector2).set(MARCH[quality], reach(MARCH[quality]))
+    ;(this.uniforms.uNear.value as THREE.Vector4).z = (quality === 'low' ? coarseGrowth : nearGrowth) - 1
+    this.show(this.mesh.visible)
   }
 
   async load(assets: Assets): Promise<void> {
@@ -144,8 +174,12 @@ export class Ground {
     ])
     u.tColor.value = color
     u.tData.value = data
+    const clods = clodPixels(CLOD_MAP)
+    u.tClods.value = assets.data('ground/clods', 'ground', clods.pixels, CLOD_MAP, CLOD_MAP, { repeat: true, anisotropy: 1 })
+    ;(u.uClods.value as THREE.Vector4).set(1 / clodTileM, clodHeightM, CLOD_MAP / clodTileM, clods.mean)
     u.uColorSize.value.set(width, width)
     u.uNear.value.w = soilTileM / (width / 2)
+    u.uClodLod.value = Math.log2((u.uNear.value.w * CLOD_MAP) / clodTileM)
   }
 
   // `cover` is how much of the ground under the field its leaves shade, from 0 to 1.
@@ -157,6 +191,7 @@ export class Ground {
     const flat = Math.hypot(now.sun.x, now.sun.z)
     const low = 1 - smoothstep(0.1, 0.45, now.sun.y)
     ;(u.uLowSun.value as THREE.Vector3).set(now.sun.x / Math.max(flat, 1e-5), now.sun.z / Math.max(flat, 1e-5), low * (1 - now.night))
+    ;(u.uFlashAt.value as THREE.Vector3).copy(now.flashAt)
     ;(u.uAir.value as THREE.Vector4).set(now.dials.wind, now.dials.flash, now.dials.burst, now.dials.cold)
     u.uCover.value = cover
     u.uCrop.value.set(config.field.plantAheadOfRowM, cover * CROP_HEIGHT_M, cover)

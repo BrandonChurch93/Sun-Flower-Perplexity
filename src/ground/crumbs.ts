@@ -136,7 +136,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const low = s.frontM === undefined ? s.maxM : s.maxM + (s.frontM - s.maxM) * front
     const sunward = x * sunWayDir.x + z * sunWayDir.z
     const aside = Math.abs(x * sunWayDir.z - z * sunWayDir.x)
-    const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
+    const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && sunward < 0.7 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
     const husk = Math.min(1, Math.max(0, Math.hypot(x - huskRest.x, z - huskRest.z) / (HUSK_REACH * huskLengthM) - 1))
     const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low, lit, LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * husk)
     const e = spin()
@@ -418,7 +418,6 @@ void main() {
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
   float damp = saturate(uWet + 0.3 * uDew) * mix(1.0, 0.6, vSeed.z);
   albedo = dampened(albedo, damp);
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
   float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a) * (1.0 - 0.5 * pore);
@@ -440,6 +439,9 @@ void main() {
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
   }
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
+  float rime = rimed(vWorld, saturate(0.55 * smoothstep(0.0, 0.7, n.y) + 0.6 * smoothstep(0.1, 0.8, ball.y)) * smoothstep(0.3, 0.62, dD.a), uFrost, lit * sunOn) * (1.0 - vSeed.z);
+  albedo = mix(frozen(albedo, uFrost), FROST_WHITE, 0.94 * rime);
+  open = mix(open, max(open, 0.85), rime);
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
@@ -447,6 +449,8 @@ void main() {
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
   color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
+  color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
