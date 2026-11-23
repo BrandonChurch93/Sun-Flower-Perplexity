@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 4.04 h |
+| 4 | 8.50 h | 4.31 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 18.48 h |
+| Whole build | 30.00 h | 18.75 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -273,6 +273,10 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 16:22 UTC. The wilt is cured (plant `6a35666d`, merged as `2c57addc`): the hero's open pose holds to the end of the film and a blade gives half its firmness over frames 2520 to 2900. Rulings: the night hang of about 15 degrees stays (a real time lapse shows it, the leaves are dark then); blade 21, the staged hanging leaf, stays; the companion stays as staged. The bloom changes with it: at 3112 a leaf now meets the lowest rays, where `bloom-close.png` has one. Drawn here at 2620, 2700, 2800, 2900, 2990, 3112, 3440, 3600.
 - 2026-11-23 16:24 UTC. Player `46af9406` (the panel's foot line) and checks `0c71b0a4` (`worked`) merged; `v2` at `8e330a8a`. The field owner's cost in the bloom (mean 1.47 ms, 8 of 127 frames over 3 ms, worst 4.3) is accepted as measured.
 - 2026-11-23 16:29 UTC. Phase 5 is planned on twelve machines, eleven owners' and this one, each with a range of about equal cost in three chunks (the plant owner stays on keys apart, the checks owner runs the proofs on the frozen hash): 0 to 289 ground, 290 to 561 night sky, 562 to 985 frost, 986 to 1303 leaf look, 1304 to 1678 hairs, 1679 to 2040 rain, 2041 to 2350 lens, 2351 to 2777 sky, 2778 to 3107 head, 3108 to 3414 field, 3415 to 3625 player, 3626 to 3809 here. From the costs at 640 x 360 times three (the storm and the bloom agree with the two 1920 measures) the film is about 30 machine hours, so about two and a half to three hours.
+- 2026-11-23 16:34 UTC. Cue lint on the cue sheet against the track map (`tools/beat/cues.py`): 47 cues, 0 mismatches, 0 warnings; the `cues` check passes (15 sunrises on their bar lines within a frame, the last sunset on bar 73, both holds exact, the frost cuts 952, 1055, 1157, 1260 on the downbeats of bars 19, 21, 23, 25).
+- 2026-11-23 16:38 UTC. Four watch parts read on `795c7d1c` (640 x 360). 60 to 200: clean motion, sprout to open seed leaves. 836 to 960: the frost comes in from the leaf rims from 879, no pop, cut 952 clean. 2900 to 3012: the bloom opens with no pop; the lone glint at 2968 is a bract hair. 2040 to 2130: the tear on bar 41 is a wide ragged gap on 2083 to 2086 that snaps to a small round hole on 2087 (found by the lens owner, seen here). Ruling: the step of light on 2083 is meant, the snap is not; the sky owner lets the wide gap close slowly (`5642e1e`), the lens owner keeps the beams' starting point at the sun (`689386b1`: rain drops had pulled it away once the tear was small).
+- 2026-11-23 16:42 UTC. The head's second try is merged (`470281a`): the ray shapes of `fe91b96` are back, with more front to back room between ranks and the tip tooth cured. Drawn at 2990, 3009, 3072, 3112, 3216, 3440, 3600: rays lie like shingles, none seen through another or the disc; only heads differ from the frames before.
+- 2026-11-23 16:56 UTC. A flicker found by a new reader of one frame outliers (`out/work/tmp/blips.py`): in the time lapse the far ridge's blurred edge sits at one of two heights from frame to frame (4.9 rows of 540 at 2902 to 2904; about 40 percent of frames in the opening at 640; none in the frost hold). Cause as read from the code: the lens pass holds the pure sky only where the circle in the frame's alpha is within 0.0002 of the circle of infinity, and the frame stores that circle as a half float, good to 0.00024 to 0.00049, so the sky is held on some frames and not on others whenever the focus moves. Sent to the lens owner with the proof asked for; a local test with the limit at 0.0006 is drawing. The freeze waits for this cure.
 
 ## Notes from Brandon
 
