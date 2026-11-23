@@ -1,10 +1,9 @@
 # Looks of rain
 
-2026-11-23 00:57 UTC, at commit 2ad3483 of agent/rain.
+2026-11-23 01:15 UTC, at commit 2ad3483 of agent/rain.
 
-- `01-storm-bar-37-5-the-film-s-new-camera-the-puddle-.jpg`: storm bar 37.5 the film's new camera, the puddle now in frame
-- `02-break-bar-41-25-film-camera-last-rain-as-gold-li.jpg`: break bar 41.25 film camera, last rain as gold lines, puddle takes the glare
-- `03-flash-bar-37-02-from-the-puddle-view.jpg`: flash bar 37.02 from the puddle view
-- `04-break-from-the-puddle-view.jpg`: break from the puddle view
-- `05-clip-62-to-65-s-old-camera-1-sample.mp4`: clip 62 to 65 s old camera, 1 sample
-- `06-clip-67-5-to-71-5-s-old-camera-1-sample.mp4`: clip 67.5 to 71.5 s old camera, 1 sample
+- `01-film-view-bars-33-5-35-37-02-39-41-25-41-6-at-8-.jpg`: film view bars 33.5 35 37.02 39 41.25 41.6 at 8 samples
+- `02-storm-bar-35.jpg`: storm bar 35
+- `03-flash-bar-37-02.jpg`: flash bar 37.02
+- `04-break-bar-41-25.jpg`: break bar 41.25
+- `05-puddle-view-bar-37.jpg`: puddle view bar 37
