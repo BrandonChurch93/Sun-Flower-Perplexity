@@ -44,7 +44,7 @@ const FILL_HIGH: Knots = [[-14, 0.095], [-10, 0.105], [-6, 0.14], [-3, 0.15], [0
 const FILL_WARMTH = 0.25
 // How much of the dome's own colour the fill from above keeps: at full strength a shaded leaf reads blue grey under a clear sky.
 const FILL_COLOUR: Knots = [[8, 0.45], [30, 0.2]]
-const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
+const FILL_STORM = { low: 0.8, high: 0.24, key: 0.15 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
 const FLASH = { key: 2.4, fill: 1.2, color: [0.86, 0.94, 1.22] as RGB }
 // A sun that comes through a tear in a deck lights from behind and the lens holds the sky: this much of it is lost on the plant under a full deck.

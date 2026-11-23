@@ -2,8 +2,10 @@ import { config } from '../config.ts'
 import type { Made } from '../v2/counter.ts'
 
 export const GAP_MS = 50
+// A run nearly holds the rate when it skips no more than this share of its frames.
+const NEARLY_SKIPPED = 0.002
 
-export type RunKind = 'recording' | 'check' | 'play' | 'measure'
+export type RunKind = 'recording' | 'check' | 'play' | 'measure' | 'timing'
 
 export interface Shown {
   frame: number
@@ -94,6 +96,8 @@ export interface Report extends RunFacts {
   writes: { mean: number; largest: number; mbMean: number; mbLargest: number; mbLargestAtFrame: number; mbTotal: number }
   madeAtFilm: number[]
   holds: boolean
+  // A few frames skipped at most and no long gap: the eye does not see it.
+  nearly: boolean
   verdict: string
   shown: Shown[]
 }
@@ -198,7 +202,7 @@ export class Pacing {
     }
     const madeSomething = made !== null && made.programs + made.shaders + made.textures + made.buffers + made.framebuffers + made.renderbuffers + made.vertexArrays + made.uploads > 0
     const holds = complete && drawn > 0 && skipped === 0 && longest <= GAP_MS && !madeSomething
-    const nearly = complete && drawn > 0 && skipped <= Math.ceil(due * 0.002) && longest <= 2 * GAP_MS
+    const nearly = complete && drawn > 0 && skipped <= Math.ceil(due * NEARLY_SKIPPED) && longest <= 2 * GAP_MS
     const film = drawn ? shown[drawn - 1].due - shown[0].due : 0
     const rate = `${config.film.fps} frames a second`
     const were = (n: number): string => (n === 1 ? 'was' : 'were')
@@ -209,7 +213,7 @@ export class Pacing {
     else if (complete && skipped === 0 && longest <= GAP_MS) verdict = `This machine held ${rate}: every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
     else if (skipped === 0) verdict = `This machine nearly held ${rate}: every frame was drawn, but ${all.length} ${all.length === 1 ? 'gap was' : 'gaps were'} longer than ${GAP_MS} ms, the longest ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
     else if (nearly) verdict = `This machine nearly held ${rate}: ${skipped} of ${due} frames ${were(skipped)} skipped, and the longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
-    else verdict = `This machine did not hold ${rate}: ${drawn} of ${due} frames ${were(drawn)} drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
+    else verdict = `This machine did not hold ${rate}: ${drawn} of ${due} frames ${were(drawn)} drawn and ${skipped} skipped. Every frame was chosen from the clock, so no time was lost.`
     if (madeSomething) verdict += ' The graphics card was asked to make something during the run, which is a defect of the film.'
     return {
       ...facts,
@@ -241,6 +245,7 @@ export class Pacing {
       },
       madeAtFilm: shown.filter((s) => s.made > 0).map((s) => s.film),
       holds,
+      nearly: holds || nearly,
       verdict,
       shown,
     }
@@ -350,7 +355,7 @@ export function reportText(report: Report, machine: string[] = []): string {
     `run: ${report.kind}, ${report.format}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
     ...machine,
     `frames: ${f.due} due, ${f.drawn} shown, ${f.skipped} skipped, ${f.late} shown late`,
-    `time: ${report.seconds.film.toFixed(3)} s of film in ${report.seconds.audio.toFixed(3)} s of the audio clock`,
+    `time: ${report.seconds.film.toFixed(3)} s of film in ${report.seconds.audio.toFixed(3)} s of ${clockName(report)}`,
     `frame time: mean ${report.drawMs.mean} ms, 99th ${report.drawMs.p99} ms, worst ${report.drawMs.longest} ms at frame ${report.drawMs.longestAtFrame}`,
     `  of it script: mean ${report.scriptMs.mean} ms, 99th ${report.scriptMs.p99} ms, worst ${report.scriptMs.longest} ms at frame ${report.scriptMs.longestAtFrame}`,
     `  of it the wait for the picture: mean ${report.cardMs.mean} ms, 99th ${report.cardMs.p99} ms, worst ${report.cardMs.longest} ms`,
@@ -372,4 +377,41 @@ export function reportFile(report: Report): Blob {
 
 export function reportName(report: Report): string {
   return `${config.slug}-${report.kind}-${report.at.replace(/[:.]/g, '-')}.json`
+}
+
+// The page's own work on the frames of the timing, set in a row with nothing drawn: how many of them took longer than one frame of time.
+export interface ScriptAlone { frames: number; over: number; meanMs: number; worstMs: number }
+
+// What the timing at the end of loading found at one quality. `script` is there when the quality did not hold and the script was then timed alone.
+export interface Timed { quality: string; held: boolean; due: number; shown: number; skipped: number; longestGapMs: number; slow: number; script: ScriptAlone | null }
+
+// The script is what is slow when it alone is over the frame on more frames than a run that nearly holds may skip. A lower quality draws less and computes the same, so it cures nothing then.
+export const scriptBound = (t: Timed): boolean => !t.held && t.script !== null && t.script.over > Math.ceil(t.script.frames * NEARLY_SKIPPED)
+
+const aloneText = (a: ScriptAlone): string => `the script alone, nothing drawn, took ${a.meanMs.toFixed(1)} ms a frame, ${a.worstMs.toFixed(0)} at worst, and longer than one frame of time on ${a.over} of ${a.frames} frames`
+
+export const timedText = (t: Timed): string => `${t.quality} ${t.held ? 'held' : 'did not hold'} ${config.film.fps} frames a second (${t.shown} of ${t.due} frames shown, longest gap ${t.longestGapMs.toFixed(0)} ms, ${t.slow} slow${t.script ? `; ${aloneText(t.script)}` : ''})`
+
+// The timing at loading runs on the page's clock, since no sound may start before a click. Every other run is on the audio clock.
+export const clockName = (report: Report): string => (report.kind === 'timing' ? "the page's clock" : 'the audio clock')
+
+// What the desk says after a run: one plain sentence, the numbers behind it, and a last line on what can still be done.
+export interface Advised { text: string; numbers: string; last: string }
+
+export const advisedText = (a: Advised): string => [a.text, a.numbers, a.last].filter((part) => part !== '').join(' ')
+
+// What the timing at the end of loading says, and the quality the film now plays at. `found` holds the qualities in the order they were timed.
+export function timedAdvice(found: Timed[], seconds: number): Advised {
+  const last = found[found.length - 1]
+  const rate = `${config.film.fps} frames a second`
+  const lost = (t: Timed): string => `${t.skipped} of ${t.due} frames skipped, the longest gap ${t.longestGapMs.toFixed(0)} ms`
+  const still = 'You can still play it here: it stays with the music and skips frames.'
+  const live = 'This machine cannot play the film live yet, and the export gives the same film with your track, every frame of it.'
+  if (!last) return { text: '', numbers: '', last: '' }
+  if (found.length === 1 && last.held) return { text: `Record at ${last.quality} quality.`, numbers: `Timed at loading: this machine held ${rate} at ${last.quality} quality over ${seconds} seconds of the film's hardest parts.`, last: '' }
+  if (scriptBound(last) && last.script) return { text: live, numbers: `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}), and the page's own work alone, with nothing drawn, took longer than one frame of time on ${last.script.over} of the same ${last.script.frames} frames. A lower quality would not change that, so the film stays at ${last.quality} quality.`, last: still }
+  if (found.length === 1) return { text: live, numbers: `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}).`, last: still }
+  const first = found[0]
+  if (last.held) return { text: `This machine plays the film live at ${last.quality} quality. Record at ${last.quality} quality.`, numbers: `Timed at loading: ${first.quality} quality did not hold ${rate} (${lost(first)}) and it was the picture that was slow. ${last.quality === 'low' ? 'Low' : 'High'} quality held (${lost(last)}), and the film now plays at it.`, last: '' }
+  return { text: live, numbers: `Timed at loading: neither quality held ${rate} (${first.quality}: ${lost(first)}; ${last.quality}: ${lost(last)}), and it was the picture that was slow. The film now plays at ${last.quality} quality.`, last: still }
 }

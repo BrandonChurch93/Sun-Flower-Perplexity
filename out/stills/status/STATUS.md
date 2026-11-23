@@ -1,12 +1,12 @@
-# Status 27
+# Status 30
 
-2026-11-23 12:25 UTC
+2026-11-23 13:42 UTC
 
-- Status 27 · Phase 3. Edges and thin hairs are now smooth in live play and in draft pictures: at high quality every pixel is drawn at four places. Under the moon the leaves pass a dim teal instead of day green. Found and cured a fault that drew bright discs on the neighbours in the time lapse. The first part of the whole watch is in (frames 636 to 953). All in v2 043d0d0, 199 tests pass.
-- Next: The other eleven parts of the first whole watch with the music, the plant's cost in live play (the script takes 71 ms a frame in the mean on this machine, the budget is 16), the frost coat on the bare centre of the leaf. Time used: 14.4 h of 30 h.
+- Status 30 · Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil.
+- Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost close shot, frame 952 at full size: four samples a pixel, the hairs are smooth
-- `status-2.jpg`: Storm hold, frame 2000 (bar 39)
-- `status-3.jpg`: Time lapse, frames 1452 and 1479: under the moon the leaves pass a dim teal, and a second later it is full day
-- `status-4.jpg`: The opening, frames 60 and 258
+- `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976
+- `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208
+- `status-3.jpg`: The tip shot at 1106, 1920 wide, draft
+- `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009

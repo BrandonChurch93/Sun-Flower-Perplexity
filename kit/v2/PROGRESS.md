@@ -5,20 +5,23 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 ## Status
 
 - Build: in progress
-- Current phase: 3 · Look lock
+- Current phase: 4 · Full build
 - Current unit: none (the whole film)
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
-- Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 27 · 2026-11-23 12:25 UTC · Phase 3
+- Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
+- Last status: 30 · 2026-11-23 13:42 UTC · Phase 4
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 13:42 UTC · status 30 · Phase 4 · `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976; `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208; `status-3.jpg`: The tip shot at 1106, 1920 wide, draft; `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009
+- 2026-11-23 13:13 UTC · status 29 · Phase 4 · `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down; `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
+- 2026-11-23 12:50 UTC · status 28 · Phase 4 · `status-1.jpg`: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); `status-2.jpg`: Frost, the tip of the shoot at 1106 against the sun in the mist; `status-3.jpg`: Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; `status-4.jpg`: First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27)
 - 2026-11-23 12:25 UTC · status 27 · Phase 3 · `status-1.jpg`: Frost close shot, frame 952 at full size: four samples a pixel, the hairs are smooth; `status-2.jpg`: Storm hold, frame 2000 (bar 39); `status-3.jpg`: Time lapse, frames 1452 and 1479: under the moon the leaves pass a dim teal, and a second later it is full day; `status-4.jpg`: The opening, frames 60 and 258
 - 2026-11-23 11:54 UTC · status 26 · Phase 3 · `status-1.jpg`: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; `status-2.jpg`: Frost close shot, frame 1106 (bar 22): the tip against the low sun; `status-3.jpg`: Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; `status-4.jpg`: Storm hold, frame 1830 (bar 36): one puddle in the furrow
 - 2026-11-23 11:28 UTC · status 25 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost is there at the cut and grows. Sparks where a crystal mirrors the sun; `status-2.jpg`: The margin at full size, frame 1054: fans of needles on the edge, rime in chains on the veins. The plates on the blade are still too grey; `status-3.jpg`: Second and third close shots, frames 1106 and 1208: the tip against the sun, then the thaw with the drop about to let go; `status-4.jpg`: Guards, frames 1240, 940 and 1466: the thaw's last frame, the wide frame before the first cut, the climb after it
@@ -28,9 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 10:02 UTC · status 21 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds on the blade. The leaf still sits too high and drifts out, the framing is next; `status-2.jpg`: Frames 1054 and 1208 on the left, their reference pictures on the right: the gap that is left to close; `status-3.jpg`: Second close shot, frame 1106, against the sun. The pale dome on the stalk and the weak sun are with their owners; `status-4.jpg`: The bud opening, bars 57 to 61, from the head owner's bench (its third pass is on mine now)
 - 2026-11-23 09:32 UTC · status 20 · Phase 3 · `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now; `status-3.jpg`: Frame 1054 beside its reference picture; `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
 - 2026-11-23 09:04 UTC · status 19 · Phase 3 · `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835); `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8; `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262); `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)
-- 2026-11-23 08:34 UTC · status 18 · Phase 3 · `status-1.jpg`: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106); `status-2.jpg`: Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940; `status-3.jpg`: Bar 73 in the film (left) beside the key picture for the last shot (right); `status-4.jpg`: Bloom close up into the pull back, frames 3190 to 3497, draft size
-- 2026-11-23 08:13 UTC · status 17 · Phase 3 · `status-1.jpg`: Frost close shot 1: the old angle left, the new angle right (draft). The camera now looks down on the upper face of a leaf; `status-2.jpg`: Frost close shots 2 and 3 with the newest work merged (draft): the tip as the sun comes through, with ice on every stem hair, and the thaw with water beads and the drop just before it falls; `status-3.jpg`: Six nights of the time lapse with thinner cloud at night: stars show through wider gaps (draft); `status-4.jpg`: The end at bar 71, bar 73 and the last frame, beside the reference (draft): a red orange sun under a deep blue sky
-- 2026-11-23 07:42 UTC · status 16 · Phase 3 · `status-1.jpg`: Frost close shot 1 on bar 19, a leaf edge in the mist. Fringe dense now. The angle changes next: the sun hides behind the left leaf and the right half is empty; `status-2.jpg`: Frost close shot 2 on bar 21, the tip as the sun comes through; `status-3.jpg`: Frost close shot 3 on bar 23, the thaw. The leaf face is still bare; `status-4.jpg`: The end with its new look, bars 69 and 73. The sun is still a pale dot at the left third of the ridge
 
 ## Clock
 
@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 0.00 h |
+| 4 | 8.50 h | 1.27 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 14.43 h |
+| Whole build | 30.00 h | 15.70 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -56,8 +56,8 @@ Continuations and extensions are listed under this table with their own hours.
 | 0 · Foundation | done | film clock on the track, sun, dials, sections and looks in the config; 144 of 144 tests | `00f5b62` |
 | 1 · References | done | nine picks for the seven new states under `references/v2/keys/`, approved by the Builder as Brandon's message 6 allows | `268c4b4` |
 | 2 · Sky and blockout | done | every part merged on one draw path under the chosen sky; three blind critics unanimous for sky candidate B; dusk and dawn measured inside the limits; 168 of 168 tests. The first whole film in parts is drawn in phase 3, on the chosen sky | `81e961b` |
-| 3 · Look lock | in progress | | |
-| 4 · Full build | not started | | |
+| 3 · Look lock | done | closed at the end of its box (9.2 h of 9.0). Every look of `config/showcase.json` is drawn through the film camera on one tree and judged by the Builder beside its key at 1920: open, sprout, seedling, frost with its three close shots, climb, storm, flash, break, late, bloom opening, bloom hero, field, last. Brandon's message 7 is in the film: hard cuts on bars 19, 21, 23 and 25 to three close shots, one move in for the bloom and the pull back into the field. 199 of 199 tests. No critics yet, they judge in phase 6. The look work that is left is listed under Open items and goes on in phase 4 | `043d0d0` |
+| 4 · Full build | in progress | | |
 | 5 · Whole film | not started | | |
 | 6 · Proof and deliver | not started | | |
 
@@ -67,25 +67,44 @@ Version 2 has no cuts and no units. The film is one take in eight sections of th
 
 ## Modules and owners
 
-One owner per folder. An agent works in its own clone and pushes `agent/<folder>` and `agent/<folder>-looks`.
+One owner per folder. An agent works in its own clone and pushes `agent/<name>` and `agent/<name>-looks`. The last column is the newest hash of the branch that is merged into `v2`.
 
-| Module | Folder | Owner | State |
+| Module | Folder | Owner | Merged at |
 | --- | --- | --- | --- |
-| Film clock, look, camera, integration | `src/v2/`, `src/core/`, `src/director/film.ts` | Builder | scaffold drawn |
-| Sky | `src/sky/` (trials in `src/sky-a`, `src/sky-b`, `src/sky-c`) | three competing agents | first passes pushed |
-| Place | `src/place/` | `place_builder` | started |
-| Ground | `src/ground/` without `puddles/` | `soil_v2_builder` | started |
-| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `rain_builder` | started |
-| Frost | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `frost_builder` | started |
-| Plant | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `plant_builder` | started |
-| Field | `src/field/` | `rows_v2_builder` | started |
-| Post | `src/post/` | `optics_v2_builder` | started |
-| Player | `src/director/{live,autopilot,modes,menu}.ts`, `src/main.ts`, `index.html`, `src/capture/` | `player_builder` | started |
-| Checks | `tools/checks/` | `checks_builder` | started |
+| Film clock, look, cameras, cuts, integration | `src/v2/` without `inputs.ts`, `src/core/`, `src/director/film.ts`, `src/director/companion.ts`, `config/`, `tools/` outside `checks/`, tests | Builder | |
+| Sky | `src/sky/` without `night/` | `sky_b_builder` | `0f043ba` |
+| Night sky | `src/sky/night/` | `sky_a_builder` | `6319d39` |
+| Place | `src/place/` | none at work (settled at `2d54054`) | `2d54054` |
+| Ground | `src/ground/` without `puddles/` | `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | woken 13:03: draws 3498 to 3809, and the soaked soil in the storm |
+| Plant | `src/plant/` without `look/`, `head/`, `hairs/`, `stem/`, the top level of `surface/` and `surface/{wet,frost,dew}/`; `src/v2/inputs.ts` | `plant_builder` | plant (see Modules) | `agent/plant` | keys apart in the time lapse, the twitch in the shader; `0e210b2` (only the leaves that exist) to report; the storm droop halved |
+| Stem and hairs | `src/plant/hairs/`, `src/plant/stem/` | `place_builder` | `e41a947` |
+| Flower head | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | idle since 12:26, nothing pushed since `418b46f`; the rays at 3009, then the frames call |
+| Leaf look | the rest of `src/plant/look/`, `src/plant/surface/index.ts` | `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | the opening beside its keys, the storm leaves on the lowered key |
+| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `rain_builder` | rain (see Modules) | `agent/rain` | drawing 0 to 317, then 318 to 635; `remember` on the ripples |
+| Frost | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `frost_builder` | frost (see Modules) | `agent/frost` | `2535db9` merged; the dark quadrilaterals at 1054, the tip at 1106 and 1130, the count, the wide hold at 900 |
+| Field | `src/field/` | `rows_v2_builder` | `6002fda` |
+| Lens and grade | `src/post/` | `optics_v2_builder` | `src/post/` | `agent/post` | counts at both qualities, then part 1272 to 1589, the test for a missing number, the tuft rule, `remember` |
+| Player | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `player_builder` | player (see Modules) | `agent/player` | the export end to end at 1920, then the desk text, `low` proven |
+| Checks | `tools/checks/` | `checks_builder` | `tools/checks/` | `agent/checks` | owners on 1266 to 1300 and 2120 to 2160, then `numbers` over every 24th frame, then the five spans again |
 
 ## Render budget
 
-Not measured yet.
+MEASURED, time to draw a frame (software rendering, no graphics card in any sandbox):
+
+- Preview (960 x 540), draft tier: 6 to 7 s a frame on a builder's machine, about 17 s on the Builder's. The whole film is twelve parts of about 318 frames, 30 to 36 minutes each on a builder's machine.
+- 1920 x 1080, draft tier with four samples a pixel: 36 to 37 s a frame in the frost close shots, 48 s in the storm hold, 58 s at the bloom, on the Builder's machine.
+- Review and final tiers at 1920 on the current tree: not measured yet.
+
+MEASURED, the page's own time in a frame in live play (script alone, 1920 x 1080, software rendering, the player owner's table; a frame is 33.3 ms, the budget is 16 in the mean and 25 in the worst frame):
+
+| Frames | Before one laying a frame (`f0dd054`) | With it (`8791884`) |
+| --- | --- | --- |
+| 1255 to 1290 | 38.0 mean, plant 32.1 | 33.3 mean, plant 27.5 |
+| 2078 to 2110 | 93.6 mean, plant 67.8, companion 17.7 | 62.4 mean, plant 43.7, companion 11.1 |
+| 2906 to 3020 | 138 mean, plant 99.1, companion 30.9 | 87.8 mean, plant 62.1, companion 18.1 |
+| The whole film | 70.7 mean, 261 worst at 3653; 2,174 of 3,810 frames over 33.3 ms, every frame from 2083 on | not measured yet |
+
+Nothing is made on the graphics card after loading on any measured range. Brandon's card and processor are UNKNOWN, so what these numbers are on his machine is UNKNOWN.
 
 ## Judged frames
 
@@ -179,26 +198,48 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 10:40 UTC. Merged on the Builder's bench on top of `db87a14`: ground `201ed25` (the white leaves the ground with the dew dial), plant `be9384a` (the stem narrows to a growing point, the dome at 1106 is gone), frost `f661dc3` (grains one can count, white ridges on the veins, `frostGone`), hairs `8d414d7`, post `dcf7095`, rain `be03190`. MEASURED: tsc clean; 33 files, 189 tests pass. Seen at 1920 on 940, 952, 1054, 1106, 1208, 1240: the stem ends naturally between the youngest leaves; the drop hangs at the tip of the backlit blade and the ground behind it is dark; the band of frost along the margin of the first close shot is a flat plate with a straight inner edge and the veins are lines of one width, both sent back to the frost owner with the frames; the comb of yellow needles on the stalk at 1106 sent back to the stem and hairs owner.
 - 2026-11-23 10:40 UTC. The flicker at every dusk and dawn of the time lapse is cured (CHANGES item 26). Cause, STATED by the plant owner and reproduced: the key is nothing while the sun hands over to the moon, so the plant's skin took the sky for overcast and its sky fill jumped from 25 to 100 percent for three frames. Decision: the look tells the skin how clear the key stands (`uKeyClear`), and bridges the handover in fast time lapse only. MEASURED with the real sky: frames 206 to 213 read 1, 1, 1, 0.914, 0.866, 0.866, 0.930, 1 against 1, 1, 1, 0.338, 0, 0, 0.511, 1; 137 frames change, all twilight in fast time lapse (`tests/key-clear.test.ts`). MEASURED on frames 204 to 214 at preview size: the whole frame mean falls 65.4, 63.5, 63.0, 59.7, 57.4, 54.9, 46.7, 40.3, 34.5, 27.9, 23.1 of 255 without a bump; the lower 45 percent of the frame moves by at most 2.2 a frame.
 
+- 2026-11-23 11:55 UTC. Standing decisions of the last look round, written for the owners in `kit/v2/briefs/CHANGES.md` items 27 to 30: the frost level `LEVEL.frost` is 0.52; the drop lets go on frame 1235; a seek may cost what it costs; the break at frame 2084 is a wanted hit of light; the lens keeps its hold on a lone bright pixel; the glow on sparks and on bead crescents stays; the bristles pass the color (0.9, 0.93, 0.84); the bead seats (0.2 MB) stay; the 1.52 MB at frame 1260 is not chased; the sun's wink in the last bars is an eclipse by the ridge and stays; the twitch of the time lapse may be another throw of the dice if it is pure per frame, of the same size and character, and does not jump at a handover.
+- 2026-11-23 12:08 UTC. At the `high` quality a frame of one sample is drawn into a second target with four samples a pixel (`stage.smooth`, the lens owner's patch, `2862cde`). MEASURED on the Builder's frames at 1920: the hairs at 952 are continuous, the bloom at 3112 is clean, the draw time is unchanged within the spread. `low` does not use it. What it costs on a real card is UNKNOWN (116 MB at 1920, STATED by the lens owner).
+- 2026-11-23 12:08 UTC. Wet skin does not pass less light: the leaf look owner's question is answered no, the beads and the drop carry the wet in the back lit shots.
+- 2026-11-23 12:22 UTC. One exception to one owner per folder: the Builder added one line to `src/plant/surface/index.ts` (`043d0d0`). MEASURED: `ce7e0b5` drew bright discs on the tops of the neighbours in the time lapse (frames 1452 and 1479); the field drawn alone with and without leaf look `a2cd4c6` showed the change as the cause (what a blade passes was raised to a power without being held at nothing or more). Twelve trees were about to draw from the tip. The owner was told and keeps the file.
+- 2026-11-23 12:24 UTC. The first whole watch is drawn in twelve parts of about 318 frames by the owners that have a free machine, on a detached `origin/v2`, and joined here with `--mixed`: parts from different trees are allowed in a blockout, and the join says so. The ground owner was stopped to keep twelve agents at work.
+- 2026-11-23 12:27 UTC. Phase 3 is closed at the end of its box and phase 4 begins. The look work that is left goes on beside the cost work; the critics judge the film in phase 6 at the level that will be recorded.
+- 2026-11-23 12:27 UTC. The timing at loading (player owner): 20 seconds of the three hardest stretches at the level the film will play at; held means no frame skipped and no gap over 50 ms, or at most 2 of 600 skipped with no gap over 100 ms. When the script alone is over a frame, falling to `low` cures nothing: the desk then says so in one sentence and points to the export, and still lets him play.
+- 2026-11-23 13:00 UTC. Every program is asked for at once at loading (`src/core/programs.ts`, `Film.warm`): the film's scene and every material drawn outside it (`remember`) are compiled before the first warm frame, and the loading waits for them. MEASURED here on software rendering: 90 programs linked in the first 2 seconds of loading, 2 later in the warm (the lens owner's discs and the rain owner's ripples, asked to be wrapped), none after frames 100, 952, 1800, 3112 and 3600. This sandbox has no `KHR_parallel_shader_compile`, so whether the page stays alive during the build on his card is UNKNOWN.
+- 2026-11-23 13:00 UTC. Merged: frost `2535db9` (a thin coat over the whole blade, plates, sparks in three sizes), leaf look `2eee04c` (the stem's thinness held at nothing or more at its source, the cause of the bright discs of `ce7e0b5`), checks `022d702`, player `c8061a9` (the timing at loading says which half is slow). MEASURED: tsc clean; 36 files, 204 tests pass; frames 952, 1054, 1452, 1830 drawn and seen.
+- 2026-11-23 13:00 UTC. Rulings to the lens owner. A tuft of crossing soft hairs keeps its own mean circle instead of the edge guess (the patch of noise at 952). A channel that is not a number or is infinite is taken as nothing at the lens's first read and at the bloom's read. No ceiling in the lens: it cannot tell a fault from a glint, the only honest ceiling is the brightest light's own radiance, and a lower one would dim the frost's sparks; the alarm goes into the checks instead.
+- 2026-11-23 13:07 UTC. The storm's key light comes down: `FILL_STORM.key` 0.24 to 0.15 (the key at bar 36.07 from 0.99 to 0.62). MEASURED at frame 1830, 1920, draft, green mask over the hero, leaf luminance p10 / p50 / p90 / p99: 27 / 46 / 84 / 107 before, 26 / 44 / 74 / 93 after; rain key 31 / 49 / 75 / 98, storm key 21 / 35 / 54 / 76. The rest of the way belongs to the leaf look owner (what a storm leaf passes) and the ground owner (near soil in the storm reads 36 where the keys read 17 to 18; brief sent).
+- 2026-11-23 13:07 UTC. `smooth: false` on the film draws a `high` frame of one sample at one place in each pixel, for the checks that read script time and megabytes only; the checks that prove what is recorded keep the default.
+- 2026-11-23 13:07 UTC. The ground owner draws 3498 to 3809 for the first watch beside its soil work, the lens owner draws 1272 to 1589 only: its counts ran long and would have put the watch back by an hour.
+- 2026-11-23 13:20 UTC. The storm's onset is drawn and judged fine as it is: the cover closes over 1642 to 1666, the first flash is on bar 33 at 1672, the hold stands to 2083. Kept.
+- 2026-11-23 13:20 UTC. The one frame notch at the handovers of sun and moon is closed without a change. MEASURED on the drawn part 636 to 953: the frame's mean falls from 86 to 35 over 817 to 830, holds nine frames and rises, with no notch. The checks' limit goes from 2 to 5 of 255.
+- 2026-11-23 13:20 UTC. Wild pixels, the true cause (MEASURED by the checks owner): a value handed from the vertex shader is extrapolated on an edge pixel when a frame is drawn at four places a pixel, so a number that is in range at every corner can leave it there. The cure is at each source (CHANGES item 31): hold every such value to its range before a power, a root, a division or a normalize. `npm run checks -- numbers` fails on a missing number, on a value over its limit, and on a spark that the same frame at one place a pixel does not hold.
+- 2026-11-23 13:25 UTC. Each part of the watch is read on arrival three ways: sheets of every sixth frame, the jumps and notches of the frame's mean, and bright compact spots that live one frame (`out/work/tmp/watchpart.sh`). Spots that have a twin within 28 pixels on the frames beside them are counted as moving things (stars at night, rain) and not as sparks.
+- 2026-11-23 13:30 UTC. The frost in the wide hold breaks the far coat's three numbers. He asked to take in the flower with the frost on it, and the cut at 952 went from a plain green plant to a leaf under heavy rime. Wanted at 930 to 951: the plant as in the key, leaves dark teal grey with at least half of each upper face pale, pale margins, the passed sun closed; at 900 margins and veins clearly pale. The soil does not move. With the frost owner.
+- 2026-11-23 13:30 UTC. The tip shot's right leaf goes from brown olive to the key's cool teal grey with a fine pale grain; the warm light stays on the rimed margins and hairs only. The frost owner may let the pale crossing light run before the thaw on the close coat and close the blade to 0.9 there; 952, 1054, 1157 and 1208 are the bound. `FROST_SHUT` 0.75 stays.
+- 2026-11-23 13:30 UTC. The grey sheet on the near soil in the storm is the rain owner's spray bank, not the soil (MEASURED by the ground owner: the left box reads 35.8 with it and 21.8 without, the keys 17.5 and 18.3). The spray stays as the far veil and leaves the near soil alone. The soil alone gets fewer, sharper glints and a little more of the dim sky on the clod bodies, with the storm's wetness only.
+- 2026-11-23 13:35 UTC. The hero leads, the field follows. In the first watch the field behind was wholly gold by 2958 to 2964 while the hero was half open. The first yellow of the film is the hero's own rays; the field opens from 2975 to 3112 as a second wave and is about 85 percent open on bar 61, where the pull back begins. With the field owner.
+- 2026-11-23 13:35 UTC. Merged: frost `a0e6995` (the dark quadrilaterals at 1054 gone, a shaded face reads as rime, `FROST_SHUT` 0.75), player `2d5d993` (the export encodes the track before the first frame and says which kind is in the file; the desk advice in three parts; a live line during the program build). MEASURED: tsc clean, 204 tests pass, frames 900, 952, 1054, 1106, 1157, 1208 drawn and seen.
+
 ## Notes from Brandon
 
 `kit/v2/NOTES-FROM-BRANDON.md`, word for word.
 
 ## Open items
 
-In the order they cost the film (from the second watch beside the keys, 04:39 UTC, `v2` at `12f8c44`):
+In the order they cost the film (13:20 UTC, `v2` at `a637ece`):
 
-- The processor: STATED by the checks, script time 83.8 ms in the mean against 16 while the plant grows, 12 of 13 windows fail; the frost hold passes at 5.9 ms. With the plant (key shapes, pop at frame 2472), the field (lists into the shader, keys for its kinds), the Builder (shadow pass 1.7 to 2.7 ms against 3, the first warmed moment 5.1 s in one piece).
-- Full day: leaves teal and matte, weak back light, clouds grainy at the draft tier. With the plant after the processor work, and sky B.
-- Frost: the blade is bare green inside its fringe. With frost.
-- The end: a pale straight band under the ridge (the place paints it), the pair's leaves too bright, the heights of the pair (later, with the field).
-- The opening's foreground is close to black. With the ground and the Builder.
-- Night 9: a part step of 55 at frame 2177 (a cloud over the bright Milky Way after the storm). With sky B.
-- Loading: 96 s on this machine with stretches of 5 to 10 s unpainted. With the player and the Builder.
-- The Builder's own: long shadows of the pair at bars 69 to 75, the frost hold and the night level under the new sky, the flash as a cold rim.
-- The frost close shots (07:30 UTC): leaf faces dark and bare inside the fringe, chips that read as cut paper, a fringe too thick and bright; `margin` shows the leaf edge on with the sun hidden behind the left leaf and an empty right half. With frost, leaf look and the Builder's cameras.
-- The sun at the end does not read as the sun (a pale dot of six pixels). With sky B and the lens.
-- The night under the one cloud field is too closed for the Milky Way. With the Builder's cover dial.
-- The first whole film in parts with the music (private) has not been drawn yet.
+- Live play. The script takes two to five times a frame's time from the end of the storm hold on (table under Render budget). In work: the plant laid only at keys in the time lapse, with the twitch drawn by the shader (plant owner); hair roots laid once and hairs cut by their size on screen (stem and hairs owner, built, not pushed); bud and petals on the same frames call (head owner, built, parked until the hairs' hash); `uCrystals` not written beside the hold (frost owner). Targets: plant and companion together 10 ms in the mean, 16 worst, 2 MB a frame. The export page gives the same film with his track whatever live play does.
+- The first whole watch with the music (private), at 640 x 360 because four samples a pixel doubled a draft frame here. In and scaled down: 636 to 953 (on `1a4ee27`), 1590 to 1907 (on `699f0d2`). Drawing: 2544 to 2861 then 954 to 1271 (night sky owner), 1908 to 2225 then 2226 to 2543 (sky owner), 2862 to 3179 then 3180 to 3497 (field owner), 0 to 317 then 318 to 635 (rain owner), 1272 to 1589 (lens owner, after its counts), 3498 to 3809 (ground owner). All due about 14:30. Each part is read on arrival with `out/work/tmp/watchpart.sh` (sheets of every sixth frame, jumps and notches of the frame's mean, one frame bright blobs); the two in show only the wanted events (the cut at 952, the flashes at 1672 and 1877, rain streaks).
+- Frost close shots: a thin even coat on the bare olive centre of the leaf at 952 and 1054, more large plates and fewer, larger sparks in three sizes, a whiter upper third of the stalk at 1157 and 1208, the fog at 838 to 880, a flicker strip of 1040 to 1054, the melt. With the frost owner.
+- Closed: the notch one frame wide on the plant at every handover of sun and moon. MEASURED on the drawn part 636 to 953: the frame's mean falls 86 to 35 over frames 817 to 830, holds for nine frames and rises again, with no notch; a step of 2 to 4 of 255 inside a ramp of 4 a frame cannot be seen at 30 frames a second. The checks' limit goes to 5.
+- Bloom: at 3009 the short rays on the right lie flat like slivers, and the rays are a little bright and lemon beside the key. With the head owner, pictures first.
+- The storm beside its keys at 1830 and 2000: the near soil on the left reads 36 where the keys read 17 to 18 (ground owner, brief sent 13:03); the leaves hang too far (plant owner, asked 13:10) and pass too much light (leaf look owner: p90 74 and p99 93 after the key cut, target 62 and 85). The opening (frames 60, 120, 240) beside its keys: sprout stem pale with a soft blush, matt husk, seed leaves a quarter lighter and sage (leaf look owner, in work).
+- Rain: the storm hold is inside its limit (0.90 ms mean, 3.4 worst, nothing made in 108 frames, MEASURED by the rain owner). Open: clips of 1877 and of the break, the count, `remember` on the ripples' material.
+- Loading on a real card: every program is now asked for at once and waited for (`src/core/programs.ts`). Whether the page stays alive during the build on his card is UNKNOWN: this sandbox has no parallel compile. Two materials still build later in the warm (the lens's discs, the rain's ripples; their owners wrap them).
+- Wild pixels. The fault of `ce7e0b5` was a large number made on an edge pixel at four places a pixel, not a missing number (MEASURED by the checks owner). `npm run checks -- numbers` now fails on a missing number, a value over the limit, or a spark that the same frame at one place a pixel does not hold. Every owner of a fragment shader audits its own (CHANGES item 31). The lens takes a missing or infinite number as nothing (lens owner, in work) and gets no ceiling. Open: `numbers` over every 24th frame of the film.
+- To judge in the whole watch: three faint discs at one height on the rows at 1262 (`FEW` in `src/field/rime.ts`); whether the plant shows its frost in the wide hold 852 to 948; the hair rim in the storm, which reads hot at 1920. Looked at and let stand: the white hair tips on young leaves at 770 to 779 hold still from frame to frame.
+- The loading timing that picks the quality level is merged (`c8061a9`): when the script alone is over a frame at `high`, the desk says so and points to the export. Open with the player owner: the desk text in two weights, a switch to `low` proven to make nothing in play, the export end to end at 1920.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
 ## Running jobs
@@ -207,23 +248,23 @@ None.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Twelve at work, the limit. All know `v2` stands at `961048f` (pushed 05:40 UTC). Reports are due between 06:00 and 06:15.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Twelve at work, the limit; the head owner is idle since 12:26 and is woken when a drawing agent can be parked. All know `v2` at `d5cf2e9` or later.
 
-| Agent | Folder | Branch | State at 05:41 UTC 23 Nov |
+| Agent | Folder | Branch | State at 13:20 UTC 23 Nov |
 | --- | --- | --- | --- |
-| `sky_b_builder` | `src/sky/` | `agent/sky-b` | merged at `c2f7058` (moon fix, held tear); now `face()` so the lens follows the drawn sun, and the last sunset frames |
-| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | merged at `806c873`; drawing frames 1590 to 1907 of the first whole watch |
-| `sky_c_builder` | none (draws only) | `agent/sky-c` | standing by, not at work |
-| `place_builder` | `src/place/` | `agent/place` | merged at `ec553cd` (far crop by a table, three woods); waits for the field's carpet, then one refit; the step of the table at bars 65 to 67 |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | merged at `4e31f56` (clods from 3 m out, rime); the far end in motion, the mauve line, rime toward the key |
-| `plant_builder` | `src/plant/` without `look/`, the top level of `surface/` and `surface/{wet,frost,dew}/`; `src/v2/inputs.ts` | `agent/plant` | merged at `2e3c47e`; the processor order (per slot normals, keys, hairs, spread), husk, bud sleeve |
-| `leaf_look_builder` | `src/plant/look/`, `src/plant/surface/index.ts` | `agent/leaf-look` | started 05:25; the day look of the leaves against `climb-fair.png` |
-| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `7491505`; finder of the one vertex array made after loading |
-| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `365fa33` (near veils in tongues); the thaw's fringe in patches, separate tongues |
-| `rows_v2_builder` | `src/field/`, `tests/field.test.ts` | `agent/field` | merged at `2296d61` (instance count by frame); the carpet's rim line, then the reshape's script time |
-| `optics_v2_builder` | `src/post/` | `agent/post` | merged at `167a815` (beams rise with the tear); clips, count, the last sunset with the lens on and off |
-| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | not merged since `bc51ddc`; export with a picked track, resume, the pacing report; round 6 under way |
-| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `f73208e`; `script` on five windows (all fail while growing, three hitches), the film round running |
+| `sky_b_builder` | `src/sky/` | `agent/sky-b` | part 1590 to 1907 sent; drawing 1908 to 2225, then 2226 to 2543 |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | part 636 to 953 sent; drawing 2544 to 2861, then 954 to 1271 |
+| `rows_v2_builder` | `src/field/` | `agent/field` | drawing 2862 to 3179, then 3180 to 3497 and 3498 to 3809 |
+| `plant_builder` | plant (see Modules) | `agent/plant` | keys apart in the time lapse, the twitch in the shader |
+| `place_builder` | `src/plant/hairs/`, `src/plant/stem/` | `agent/hairs` | roots laid once and the cut by size built; the top of the shoot at 1106, then count, made, push |
+| `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | a turn ended on a model timeout at 12:26 and was started again; the rays at 3009, then the frames call |
+| `frost_builder` | frost (see Modules) | `agent/frost` | the coat on the bare centre, plates, sparks, `uCrystals` |
+| `rain_builder` | rain (see Modules) | `agent/rain` | cost in the storm hold, two clips, the count |
+| `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | where a blade's passed light goes under nothing; the opening and the storm beside their keys |
+| `optics_v2_builder` | `src/post/` | `agent/post` | the count with the second target, the noise at the foot of one hair at 952, the cost of the second target |
+| `player_builder` | player (see Modules) | `agent/player` | the timing at loading, the export end to end at 1920 |
+| `checks_builder` | `tools/checks/` | `agent/checks` | five spans after one laying, owners on 1266 to 1300 and 2120 to 2160, a check for pixels without a number |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | idle, stopped to keep twelve at work |
 
 ## Rounds
 
@@ -232,6 +273,7 @@ None yet.
 ## Push log
 
 - 2026-11-23 03:57 UTC. `e5958d2` to `v2` (the brief of 04:00, rime's arrival). Earlier pushes of this branch are in `git log origin/v2`.
+- 2026-11-23 12:26 UTC. `210e25d` to `v2` (Status 27 on `043d0d0`). Every push in between is in `git log origin/v2`, one with each status.
 
 ## Session log
 
@@ -300,4 +342,11 @@ None yet.
   Pictures: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; Frost close shot, frame 1106 (bar 22): the tip against the low sun; Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; Storm hold, frame 1830 (bar 36): one puddle in the furrow.
 - Status 27, 2026-11-23 12:25 UTC, Phase 3. Edges and thin hairs are now smooth in live play and in draft pictures: at high quality every pixel is drawn at four places. Under the moon the leaves pass a dim teal instead of day green. Found and cured a fault that drew bright discs on the neighbours in the time lapse. The first part of the whole watch is in (frames 636 to 953). All in v2 043d0d0, 199 tests pass. Next: The other eleven parts of the first whole watch with the music, the plant's cost in live play (the script takes 71 ms a frame in the mean on this machine, the budget is 16), the frost coat on the bare centre of the leaf. Time used: 14.4 h of 30 h.
   Pictures: Frost close shot, frame 952 at full size: four samples a pixel, the hairs are smooth; Storm hold, frame 2000 (bar 39); Time lapse, frames 1452 and 1479: under the moon the leaves pass a dim teal, and a second later it is full day; The opening, frames 60 and 258.
+- 2026-11-23 10:41 to 12:27 UTC. Statuses 24 to 27. Merged, proved on the Builder's frames and pushed: frost `9a23a4f` (crystals in three sizes, fans on the margin, rime in chains on the veins), hairs `e41a947`, night sky `6319d39` (the Milky Way holds through a night, `tests/starhold.test.ts`), the lens `7e8c28c` and `c72633b` (a soft star on each spark, thin things taken for sharp or soft by what they stand on), head `418b46f` (pass 4, rays of unequal length), rain `033a6e5` (one puddle in the furrow), player `7187cb0` (the pacing report on one button), plant `0443d32` (one laying a frame), leaf look `a2cd4c6` with the Builder's one line (`043d0d0`). Four samples a pixel at the `high` quality (`2862cde`). Phase 3 closed; the first two parts of the whole watch are in.
+- Status 28, 2026-11-23 12:50 UTC, Phase 4. Phase 3 is closed and phase 4 is open. The frost close shots were reworked by the frost owner: a thin coat over the whole blade, plates, sparks in three sizes, a whiter melt. The bright discs on the neighbours were traced to their source, the stem's thinness going under zero at the collar, and cured there too. First whole watch: 2 of 12 parts are in and read as one film; the other ten are being drawn at 640 x 360, because four samples a pixel doubled the cost of a draft frame. Loading: every program is now asked for at once instead of at its first draw, being measured. Next: Merge the frost and the stem cure. Storm: the key light down, the soaked soil darker (ground owner), leaves deeper and held out more. Opening: the sprout's stem and husk beside their keys. The first whole watch with the music at about 14:15. The cost cures for live play from the plant, hairs and head owners. Time used: 14.8 h of 30 h.
+  Pictures: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); Frost, the tip of the shoot at 1106 against the sun in the mist; Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27).
+- Status 29, 2026-11-23 13:13 UTC, Phase 4. Merged and proven here: the reworked frost, the cure of the bright discs at its source, and the player's timing at loading, which now tells a slow picture from slow page work before it picks a quality. Every program is asked of the graphics card at once at loading; measured here, none is built after loading at five checked frames. The storm's key light is down: leaf highlights at 1830 fell from 84 to 74 (storm key 54, rain key 75). The storm's onset was drawn frame by frame after that change and holds, with the first flash on bar 33. Next: The soaked soil in the storm is twice as light as the keys on the left: with the ground owner. The storm leaves hang too far and pass too much light: with the plant and leaf look owners. First whole watch with the music: 2 of 12 parts in, 10 drawing, all due about 14:30. Live play cost: the plant, hairs and head owners' cures, then a new measure of the five hardest spans. Time used: 15.2 h of 30 h.
+  Pictures: Storm hold at frame 1830, 1920, with the key light down; Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; Loading screen while this machine is timed (player owner's page, software rendering).
+- Status 30, 2026-11-23 13:42 UTC, Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil. Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
+  Pictures: The bloom close, first watch part, every sixth frame 2862 to 2976; Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208; The tip shot at 1106, 1920 wide, draft; After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009.
 

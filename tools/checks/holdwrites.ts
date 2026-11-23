@@ -39,7 +39,7 @@ export async function run(args: Args): Promise<void> {
   const cuts = new Set(meantCuts())
   const holdOf = (f: number): (typeof holds)[number] | null => holds.find((h) => f >= h.first && f <= h.last) ?? null
   const rows: Row[] = []
-  const session = await openSession({ record: true, sky: typeof args.sky === 'string' ? args.sky : undefined })
+  const session = await openSession({ record: true, plain: true, sky: typeof args.sky === 'string' ? args.sky : undefined })
   try {
     const t0 = Date.now()
     if (broken) await session.fault('grow', secondsOf(from + 2), secondsOf(to))
