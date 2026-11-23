@@ -3,7 +3,7 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { GAP_MS, type Report, type RunFacts } from '../player/pacing.ts'
+import type { Report, RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
 import { readTrack, trackLine, type Track } from '../player/track.ts'
@@ -62,14 +62,11 @@ function clockText(seconds: number): string {
 
 // What the check says about this machine at this quality, and whether the lower quality is worth a try.
 export function advise(report: Report, quality: Quality): Advice {
-  const fps = config.film.fps
-  const f = report.frames
-  if (!report.complete) return { text: 'The check was stopped before its end.', tryLow: false }
-  const at = `at ${report.format} and ${quality} quality`
-  if (report.holds) return { text: `This machine holds ${fps} frames a second ${at}. Record at ${quality}.`, tryLow: false }
-  if (f.skipped === 0) return { text: `This machine drew every frame ${at}, with a longest gap of ${report.gapMs.longest.toFixed(0)} ms where ${GAP_MS} is the limit. It nearly holds ${fps} frames a second.`, tryLow: quality !== 'low' }
-  if (quality !== 'low') return { text: `This machine does not hold ${fps} frames a second ${at}: ${f.skipped} of ${f.due} frames ${f.skipped === 1 ? 'was' : 'were'} skipped. Try low.`, tryLow: true }
-  return { text: `This machine does not hold ${fps} frames a second at ${report.format} and low quality either: ${f.skipped} of ${f.due} frames ${f.skipped === 1 ? 'was' : 'were'} skipped. A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.`, tryLow: false }
+  if (!report.complete) return { text: 'The check was stopped before its end. Run it again.', tryLow: false }
+  if (report.holds) return { text: `Record at ${quality} quality.`, tryLow: false }
+  if (quality !== 'low') return { text: report.frames.skipped === 0 ? 'It nearly keeps up. Try low quality.' : 'Try low quality.', tryLow: true }
+  if (report.frames.skipped === 0) return { text: 'It nearly keeps up at low quality. Record, and look at the report after it.', tryLow: false }
+  return { text: 'A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.', tryLow: false }
 }
 
 export function startLive(film: Film, options: Options, host: HTMLElement, loading: Loading | null): void {

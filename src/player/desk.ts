@@ -232,6 +232,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       if (url) URL.revokeObjectURL(url)
       url = ''
       adviceText.hidden = !advice
+      checkText.hidden = !!advice
       adviceText.textContent = advice?.text ?? ''
       tryLow.hidden = !advice?.tryLow
       reportBody.replaceChildren()

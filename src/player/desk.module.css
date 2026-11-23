@@ -428,3 +428,11 @@
 :global(html[data-review]) .panel {
   display: none;
 }
+
+.step .button + .button {
+  margin-top: 10px;
+}
+
+.step .small[hidden] {
+  display: none;
+}
