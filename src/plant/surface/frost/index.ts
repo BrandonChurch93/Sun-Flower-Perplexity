@@ -29,7 +29,7 @@ const float FROST_DOWN = 0.3;
 const float FROST_MATT = 0.8;
 const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes.
-const float FROST_SHUT = 0.4;
+const float FROST_SHUT = 0.75;
 // The coat a close lens sees. The cells of its two sizes of crystal and of the two sizes of grain under them, in meters; how high a crystal stands, for its shadow; the share of the crystals that are plates and not tufts of needles.
 const float FROST_FORM_FINE_M = 0.001;
 const float FROST_FINE_M = 0.0005;
@@ -57,7 +57,7 @@ const float FROST_FACE_SUN = 0.09;
 const float FROST_SKY_SHARE = 0.2;
 const float FROST_SKY_UP = 0.5;
 const float FROST_SKY_THAW = 0.8;
-const float FROST_SKY_SHADE = 4.0;
+const float FROST_SKY_SHADE = 7.0;
 const vec3 FROST_SKY_SPARK = vec3(0.88, 0.95, 1.12);
 const float FROST_FOOT = 0.3;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
@@ -253,8 +253,8 @@ vec4 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float
   float least = 1.0 - smoothstep(0.7, 1.4, px / FROST_MOTE_M);
   float mean = 0.3 * local * (0.6 + 0.8 * packed);
   float grains = max(max(mix(mean, one.x * one.y, told), mix(mean, two.x * two.y, fine)), mix(0.6 * mean, three.x * three.y, least));
-  // Of the sugar only the largest grains flash: a spark is two pixels and more.
-  float spark = FROST_GRIT_FLASH * one.z * told;
+  // Of the sugar only the largest grains flash: a spark is two pixels and more. Seen along the face the grains hide each other, and only the crystals that stand above them flash.
+  float spark = FROST_GRIT_FLASH * one.z * told * smoothstep(0.1, 0.45, abs(dot(N, view)));
   // On the sugar lie the crystals a lens tells apart: grains with flat faces, a third to half a millimeter across, wherever the coat has any body, and plates and stubby blades of a millimeter where it is thick. Each shades the sugar at its foot.
   float far = 1.0 - smoothstep(0.25, 0.7, px / FROST_CHIP_M);
   // Under the grains lies a bloom of rime too fine to tell, thin enough for the green to show through: no skin a coat has reached reads as bare.
@@ -330,6 +330,10 @@ float frostLeft(vec2 at, float gather, vec3 N) {
 // 'at' is in meters on the skin. 'gather' is where frost grows first: 0 in the middle of a face to 1 at an edge, a tip or the ridge of a vein.
 // 'world' is the place in the world, for the true size of a pixel on the skin; 'near' is 0 for a caller that cannot say it.
 vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world, float near) {
+  // On a pixel the skin only partly covers, what the skin hands down is carried on past its edge.
+  gather = saturate(gather);
+  sheen = saturate(sheen);
+  rim = saturate(rim);
   float up = saturate(F.y);
   // Round a stalk the place on the skin runs one way only: the way the skin faces breaks the rings that would give.
   vec2 round = at + 0.003 * vec2(N.x + N.y, N.z - N.y);
@@ -380,7 +384,7 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   vec3 wy = dFdy(world);
   if (close > 0.0) {
     // A close lens tells the coat apart. It hides most of the skin at an edge and along a vein and a third of it in the middle of a field, in banks, so the veins read through it as lines of thicker grain.
-    float level = 0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20));
+    float level = clamp(0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20)), -6.0, 6.0);
     // Where the close lens first sees it the leaf is frosted already. Over the last third of the freeze the coat thickens, its crystals grow and its front creeps in from the edge and the veins over the green that is left.
     float came = mix(saturate((uPlantFrost - 0.7) / 0.3), 1.0, smoothstep(0.0, 0.15, uPlantDew));
     float late = mix(FROST_COAT_FIRST, 1.0, came);
