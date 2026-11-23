@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 28 · 2026-11-23 12:50 UTC · Phase 4
+- Last status: 29 · 2026-11-23 13:13 UTC · Phase 4
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 13:13 UTC · status 29 · Phase 4 · `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down; `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
 - 2026-11-23 12:50 UTC · status 28 · Phase 4 · `status-1.jpg`: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); `status-2.jpg`: Frost, the tip of the shoot at 1106 against the sun in the mist; `status-3.jpg`: Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; `status-4.jpg`: First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27)
 - 2026-11-23 12:25 UTC · status 27 · Phase 3 · `status-1.jpg`: Frost close shot, frame 952 at full size: four samples a pixel, the hairs are smooth; `status-2.jpg`: Storm hold, frame 2000 (bar 39); `status-3.jpg`: Time lapse, frames 1452 and 1479: under the moon the leaves pass a dim teal, and a second later it is full day; `status-4.jpg`: The opening, frames 60 and 258
 - 2026-11-23 11:54 UTC · status 26 · Phase 3 · `status-1.jpg`: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; `status-2.jpg`: Frost close shot, frame 1106 (bar 22): the tip against the low sun; `status-3.jpg`: Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; `status-4.jpg`: Storm hold, frame 1830 (bar 36): one puddle in the furrow
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 09:32 UTC · status 20 · Phase 3 · `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now; `status-3.jpg`: Frame 1054 beside its reference picture; `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
 - 2026-11-23 09:04 UTC · status 19 · Phase 3 · `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835); `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8; `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262); `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)
 - 2026-11-23 08:34 UTC · status 18 · Phase 3 · `status-1.jpg`: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106); `status-2.jpg`: Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940; `status-3.jpg`: Bar 73 in the film (left) beside the key picture for the last shot (right); `status-4.jpg`: Bloom close up into the pull back, frames 3190 to 3497, draft size
-- 2026-11-23 08:13 UTC · status 17 · Phase 3 · `status-1.jpg`: Frost close shot 1: the old angle left, the new angle right (draft). The camera now looks down on the upper face of a leaf; `status-2.jpg`: Frost close shots 2 and 3 with the newest work merged (draft): the tip as the sun comes through, with ice on every stem hair, and the thaw with water beads and the drop just before it falls; `status-3.jpg`: Six nights of the time lapse with thinner cloud at night: stars show through wider gaps (draft); `status-4.jpg`: The end at bar 71, bar 73 and the last frame, beside the reference (draft): a red orange sun under a deep blue sky
 
 ## Clock
 
@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 0.45 h |
+| 4 | 8.50 h | 0.79 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 14.88 h |
+| Whole build | 30.00 h | 15.22 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -336,4 +336,6 @@ None yet.
 - 2026-11-23 10:41 to 12:27 UTC. Statuses 24 to 27. Merged, proved on the Builder's frames and pushed: frost `9a23a4f` (crystals in three sizes, fans on the margin, rime in chains on the veins), hairs `e41a947`, night sky `6319d39` (the Milky Way holds through a night, `tests/starhold.test.ts`), the lens `7e8c28c` and `c72633b` (a soft star on each spark, thin things taken for sharp or soft by what they stand on), head `418b46f` (pass 4, rays of unequal length), rain `033a6e5` (one puddle in the furrow), player `7187cb0` (the pacing report on one button), plant `0443d32` (one laying a frame), leaf look `a2cd4c6` with the Builder's one line (`043d0d0`). Four samples a pixel at the `high` quality (`2862cde`). Phase 3 closed; the first two parts of the whole watch are in.
 - Status 28, 2026-11-23 12:50 UTC, Phase 4. Phase 3 is closed and phase 4 is open. The frost close shots were reworked by the frost owner: a thin coat over the whole blade, plates, sparks in three sizes, a whiter melt. The bright discs on the neighbours were traced to their source, the stem's thinness going under zero at the collar, and cured there too. First whole watch: 2 of 12 parts are in and read as one film; the other ten are being drawn at 640 x 360, because four samples a pixel doubled the cost of a draft frame. Loading: every program is now asked for at once instead of at its first draw, being measured. Next: Merge the frost and the stem cure. Storm: the key light down, the soaked soil darker (ground owner), leaves deeper and held out more. Opening: the sprout's stem and husk beside their keys. The first whole watch with the music at about 14:15. The cost cures for live play from the plant, hairs and head owners. Time used: 14.8 h of 30 h.
   Pictures: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); Frost, the tip of the shoot at 1106 against the sun in the mist; Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27).
+- Status 29, 2026-11-23 13:13 UTC, Phase 4. Merged and proven here: the reworked frost, the cure of the bright discs at its source, and the player's timing at loading, which now tells a slow picture from slow page work before it picks a quality. Every program is asked of the graphics card at once at loading; measured here, none is built after loading at five checked frames. The storm's key light is down: leaf highlights at 1830 fell from 84 to 74 (storm key 54, rain key 75). The storm's onset was drawn frame by frame after that change and holds, with the first flash on bar 33. Next: The soaked soil in the storm is twice as light as the keys on the left: with the ground owner. The storm leaves hang too far and pass too much light: with the plant and leaf look owners. First whole watch with the music: 2 of 12 parts in, 10 drawing, all due about 14:30. Live play cost: the plant, hairs and head owners' cures, then a new measure of the five hardest spans. Time used: 15.2 h of 30 h.
+  Pictures: Storm hold at frame 1830, 1920, with the key light down; Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; Loading screen while this machine is timed (player owner's page, software rendering).
 
