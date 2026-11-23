@@ -7,6 +7,18 @@ export const sunsetAmount = (bar: number): number => smoothstep(65, 67, bar)
 // mathematical horizon. Deep evening is lit by that lower sun.
 export const sunsetDuskAt = (elevation: number): number => 1 - smoothstep(0.95, 2.04, elevation)
 
+export function sunsetPhotoAt(dusk: number, transmission: number, out: RGB): RGB {
+  // The low air takes green and blue out of the photosphere, while its
+  // red channel stays over white. This is radiance for the lens, not a
+  // display swatch; the diffuse air has its own angular colours.
+  const ember = smoothstep(0.56, 0.94, dusk)
+  const red = lerp(2.8, 1.60, dusk) * transmission
+  out[0] = red
+  out[1] = red * lerp(lerp(0.80, 0.15, dusk), 0.038, ember)
+  out[2] = red * lerp(lerp(0.42, 0.019, dusk), 0.002, ember)
+  return out
+}
+
 // Let skylight, the thin aerosol layer and its higher rose seam have
 // different scales. The light taps sample exactly this same angular model.
 const DEEP = [0.010, 0.026, 0.038] as const

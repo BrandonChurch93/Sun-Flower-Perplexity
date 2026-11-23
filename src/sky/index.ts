@@ -13,7 +13,7 @@ import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
-import { sunsetAmount, sunsetDuskAt, SunsetMeter } from './sunset.ts'
+import { sunsetAmount, sunsetDuskAt, SunsetMeter, sunsetPhotoAt } from './sunset.ts'
 
 const levels = {
   film: { width: 832, height: 512, steps: 60, light: 6 },
@@ -110,6 +110,7 @@ class FieldSky implements Sky {
   private readonly mist = rgb()
   private readonly groundSun = rgb()
   private readonly cloudSun = rgb()
+  private readonly sunsetPhoto = rgb()
   private readonly deck = rgb()
   private readonly moon = rgb()
   private readonly lunarVisibility = new Float32Array(frameCount).fill(-1)
@@ -469,12 +470,11 @@ class FieldSky implements Sky {
     if (finale > 0) {
       // Radiance before grade, not a display swatch. Decouple it from
       // the dim horizon so the glass receives a real over-white source.
-      const dusk = v.uFinaleDusk.value
-      const brilliancy = lerp(2.8, 1.60, dusk) * visibleDisk
+      const photo = sunsetPhotoAt(v.uFinaleDusk.value, visibleDisk, this.sunsetPhoto)
       disc.set(
-        lerp(disc.x, brilliancy, finale),
-        lerp(disc.y, brilliancy * lerp(0.80, 0.15, dusk), finale),
-        lerp(disc.z, brilliancy * lerp(0.42, 0.019, dusk), finale),
+        lerp(disc.x, photo[0], finale),
+        lerp(disc.y, photo[1], finale),
+        lerp(disc.z, photo[2], finale),
       )
     }
     this.stellar.setFromMatrix4(this.turn.makeRotationAxis(north, -now.starTurn - 0.18))
