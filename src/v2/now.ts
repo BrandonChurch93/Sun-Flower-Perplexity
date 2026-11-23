@@ -25,6 +25,7 @@ import {
 } from './clock.ts'
 import { direction, moonDirection, sunAzimuthAt, sunElevationAt } from './sun.ts'
 import { windWay } from './wind.ts'
+import { plantFeels } from './inputs.ts'
 
 const FPS = config.film.fps
 export const shutterSeconds = config.film.shutterDegrees / 360 / FPS
@@ -132,6 +133,7 @@ let still = false
 
 export function setStill(on: boolean): void {
   still = on
+  plantFeels.nothing = on
 }
 
 function rest(out: Moment): Moment {
