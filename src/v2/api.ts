@@ -84,6 +84,8 @@ export interface SkyLight {
   // The sky just above the horizon, away from the sun and toward it.
   horizon: RGB
   horizonSun: RGB
+  // The sky on the horizon itself away from the sun, inside the warm band of a sunset: what a meter pointed there reads. Where the sky gives none, `horizon` stands in.
+  band?: RGB
 }
 
 export interface View {

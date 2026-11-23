@@ -23,7 +23,7 @@ import { tauAt } from '../v2/clock.ts'
 import { plantInputsOf } from '../v2/inputs.ts'
 import { blankLook, lookAt } from '../v2/look.ts'
 import { blankMoment, later, momentAt, now, setNow, setStill, shutterSeconds } from '../v2/now.ts'
-import { closeAt, closeFrames } from '../v2/cuts.ts'
+import { closeAt, closeFrames, cutFrames } from '../v2/cuts.ts'
 import { fixedPose, rigAtFilm } from '../v2/rig.ts'
 import { views, type FixedView, type ViewName } from '../v2/shots.ts'
 import { companionInView, companionMatrix, companionRatio } from './companion.ts'
@@ -172,18 +172,24 @@ export class Film {
   }
 
   // Draws the film's own moments once, so every program is built, every texture is with the graphics card and every buffer exists before the film starts.
-  async warm(tier: TierId = 'draft', onStep?: (done: number, of: number) => void): Promise<void> {
+  // `onStep` is told how many of the steps are done and what the next one is: a moment of the film, or the pass over every shape that ends the warming (null after it).
+  async warm(tier: TierId = 'draft', onStep?: (done: number, of: number, next: 'moment' | 'every shape' | null) => void): Promise<void> {
     await this.load()
     const { renderer } = this.stage
     this.sky?.warm(renderer)
     for (const { part } of this.parts) part.warm?.(renderer)
     const frames = warmFrames()
+    const of = frames.length + 1
+    onStep?.(0, of, 'moment')
+    await paint()
     for (let i = 0; i < frames.length; i++) {
       await this.renderFrame(frames[i], tier)
-      onStep?.(i + 1, frames.length)
+      onStep?.(i + 1, of, i + 1 < frames.length ? 'moment' : 'every shape')
       await paint()
     }
     this.everyShape(renderer)
+    onStep?.(of, of, null)
+    await paint()
   }
 
   // Draws every mesh once with its own material and every caster once into the shadow map, whatever the lens and the sun can see.
@@ -204,6 +210,7 @@ export class Film {
       w.object.frustumCulled = w.culled
     }
     this.shadow.off()
+    this.stage.finish()
   }
 
   async setFormat(format: Format): Promise<void> {
@@ -506,12 +513,13 @@ export class Film {
   }
 }
 
-// The frames drawn before the film starts: every look of the film and the turns between them.
+// The frames drawn before the film starts: every look of the film and the turns between them, one frame of each close shot and the first frame of every shot.
 export function warmFrames(): number[] {
   const fps = config.film.fps
   const frames = new Set<number>()
   for (const s of [0, 2, 7.2, 12, 28.5, 30.5, 42.2, 49.5, 56.0, 57.5, 62.6, 63.2, 69.5, 70.2, 80, 97, 99, 104, 118, 126]) frames.add(clampFrame(Math.round(s * fps)))
   for (const f of closeFrames) frames.add(f)
+  for (const f of cutFrames) frames.add(f)
   return [...frames].sort((a, b) => a - b)
 }
 

@@ -33,6 +33,7 @@ uniform float uHaze;
 uniform float uVeilSun;
 uniform float uMist;
 uniform float uWarm;
+uniform float uEvening;
 uniform sampler2D tRaw;
 uniform float uFar;
 uniform float uShafts;
@@ -102,14 +103,34 @@ vec3 sunGlare(vec2 px) {
   vec2 away = (px - uSunAt * uSize) / uSize.x;
   vec2 d = away - seen.gb;
   float r = length(d);
-  float q = r * r / (uSunCore * uSunCore);
+  vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
+  // The glow and the core are the disc's own light in the glass: they take the colour the sky drew the disc in and its level, as far as the disc shows, and a dull disc keeps its core to itself. Round a sun veiled by mist the glass keeps a tight glow at full strength; the wide one is the fog's own.
+  vec3 hot = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm);
+  vec4 face = texelFetch(tSun, ivec2(2, 0), 0);
+  float top = max(face.r, max(face.g, face.b));
+  float dull = 1.0;
+  if (top > 0.0) {
+    air = face.rgb * (peak / top);
+    hot = air;
+    // In the evenings the sky draws a low sun a few times over white and no more: there a disc four times over white has the whole glass.
+    dull = min(1.0, top * uExposure / mix(5.66 * peak * uSunHot, 4.0, uEvening));
+  } else if (uFar > 0.0) {
+    dull = 0.0;
+  }
+  float size = uSunCore * (1.0 + 0.8 * uWarm * dull);
+  float q = r * r / (size * size);
   float core = 1.0 / ((1.0 + q) * (1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
   float glow = (0.07 + 0.07 * uHaze) * exp(-r / wide) + (0.012 + 0.02 * uHaze) * (1.0 - uTight) * exp(-r / 0.16);
-  glow += uMist * (0.3 * exp(-r / 0.03) + 0.07 * exp(-r / 0.09)) + uWarm * (0.16 * exp(-r / 0.035));
+  glow += uWarm * (0.16 * exp(-r / 0.035));
+  float fogged = uMist * 0.3 * exp(-r / 0.03);
   float veil = uVeilSun * (1.0 - uTight) * (0.003 + 0.006 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
-  vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
-  vec3 glass = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm) * (uSunHot * core * seen.a) + air * ((glow + veil) * seen.r);
+  vec3 glass = hot * (uSunHot * core * min(seen.a, 2.0 * face.a) * dull) + air * (((glow + veil) * dull + fogged) * seen.r);
+  // A sun going down behind the far land is in the air behind it: as its lower edge comes to the land the glass draws less and less in front of that land, and nothing once they touch.
+  float circle = texture(tRaw, vUv).a;
+  float ridge = uFar > 0.0 ? smoothstep(0.0006, 0.0012, abs(circle / uFar - 1.0)) * smoothstep(0.8, 0.95, circle / uFar) : 0.0;
+  float clear = texelFetch(tSun, ivec2(3, 0), 0).r;
+  glass *= 1.0 - ridge * (1.0 - clear * clear * (3.0 - 2.0 * clear));
   // Under a deck that has just torn the sun is the tear itself, ragged and already in the sky's picture: the glass adds no disc and no veil of its own there, only the beams.
   glass *= 1.0 - smoothstep(0.0, 0.35, uFan);
   float open = texture(tShafts, vUv).r;

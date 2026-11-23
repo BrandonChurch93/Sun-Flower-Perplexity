@@ -56,6 +56,12 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
   return reliefTilt(n, world, dFdx(height), dFdy(height), strength);
 }
 
+// The share kept of a relief or a grain whose period, in the part's own coordinates 'at', is 'period': one finer than about two pixels would print the screen's blocks of two by two, and goes, smoothly, at every distance.
+float reliefKeep(vec2 at, vec2 period) {
+  vec2 px = period / max(fwidth(at), vec2(1e-9));
+  return smoothstep(2.0, 4.0, min(px.x, px.y));
+}
+
 // Half the reach of one pixel in a part's own coordinates. A height differenced from one such step back to one ahead fades by itself where it is finer than a pixel.
 vec2 reliefReach(vec2 at) {
   vec2 ax = dFdx(at);
@@ -208,7 +214,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float flash = 0.0;
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
-    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink);
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink, world);
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }

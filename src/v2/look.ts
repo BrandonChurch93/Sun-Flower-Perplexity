@@ -14,6 +14,10 @@ const NIGHT: Grade = { exposure: 1, contrast: 1.4, white: 5, saturation: 0.92, g
 // How bright the open sky lands on the screen in each kind of light, before the curve: the camera's exposure follows the light as a time-lapse camera does, and gives way in the dark.
 const LEVEL = { day: 0.38, warm: 0.42, storm: 0.26, frost: 0.52, night: 0.05 }
 
+// The last evening is watched in real time: the lens stays as it was set for the bloom, and the picture goes down with the sun. By how high the sun stands: the share of the level that is left, and how much of that fall the light on the plant and the field follows.
+const LAST: Knots = [[-3, 0.3], [0, 0.357], [1.1, 0.476], [2.04, 0.874], [3, 1]]
+const LAST_LIGHT = 0.7
+
 const SOIL: RGB = [0.2, 0.15, 0.1]
 const lum = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
@@ -96,16 +100,18 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   w.frost /= total
   w.night /= total
 
-  const level = w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night
+  const el = now.sunElevationDeg
+  const dusk = lerp(1, along(LAST, el), d.evening * (1 - d.lapse))
+  const dim = Math.pow(dusk, LAST_LIGHT)
+  const level = (w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night) * dusk
   // What the meter reads: the open sky away from the sun, with a share of the sky near it and of the sun itself.
-  const meter = 0.5 * lum(sky.horizon) + 0.2 * lum(sky.horizonSun) + 0.3 * lum(sky.zenith) + 0.02 * lum(sky.direct) * Math.max(now.light.y, 0) * (now.lightKind === 'sun' ? d.sunThrough : 0)
+  const meter = 0.5 * lum(sky.band ?? sky.horizon) + 0.2 * lum(sky.horizonSun) + 0.3 * lum(sky.zenith) + 0.02 * lum(sky.direct) * Math.max(now.light.y, 0) * (now.lightKind === 'sun' ? d.sunThrough : 0)
   const exposure = level / Math.max(meter, 1e-5)
 
-  const el = now.sunElevationDeg
   const closed = d.overcast * (1 - d.sunThrough)
   const open = d.sunThrough * (1 - UNDER_DECK * d.overcast)
   const through = Math.max(open, FILL_STORM.key * closed)
-  const key = now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
+  const key = (now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)) * dim
   const flash = d.flash
   out.sun.azimuthDeg = (Math.atan2(now.light.x, now.light.z) * 180) / Math.PI
   out.sun.elevationDeg = (Math.asin(clamp(now.light.y, -1, 1)) * 180) / Math.PI
@@ -125,8 +131,8 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   out.sun.lift = 1
 
   const day = w.day + w.warm + w.night
-  const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * (1 + FLASH.fill * flash)
-  const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * (1 + FLASH.fill * flash)
+  const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * (1 + FLASH.fill * flash) * dim
+  const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * (1 + FLASH.fill * flash) * dim
   const warmth = FILL_WARMTH * smoothstep(-4, 0.5, el)
   for (let i = 0; i < 3; i++) round[i] = lerp(sky.horizon[i], sky.horizonSun[i], warmth)
   const roundLum = Math.max(lum(round), 1e-6)

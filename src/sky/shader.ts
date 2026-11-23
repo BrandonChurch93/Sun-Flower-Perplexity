@@ -44,6 +44,12 @@ layout(location = 0) out vec4 outColor;
 
 const float CURVE = 1.0 / 12742.0;
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
+// Fixed directions in the world, not lighting inputs. The two quiet
+// horizon openings and the torn front do not follow the moving sun.
+const vec3 EAST_GAP = vec3(0.05233085, 0.01396218, -0.99853219);
+const vec3 WEST_GAP = vec3(-0.68961360, 0.08541692, -0.71912241);
+const vec3 STORM_GAP = vec3(-0.33540278, 0.19902586, -0.92081143);
+const vec3 LAST_GAP = vec3(-0.72330648, 0.00785390, -0.69048247);
 
 float sat(float a) { return clamp(a, 0.0, 1.0); }
 float squared(float x) { return x * x; }
@@ -71,15 +77,13 @@ vec4 weatherField(vec3 p, float h) {
   vec2 w = rotateCloud(p.xz - uTravel + vec2(0.28, 0.12) * h);
   float shape = uWeather.y;
   float towers = smoothstep(0.16, 0.38, uWeather.x);
-  float dark = (1.0 - smoothstep(-13.0, -5.0, uElevation)) * (1.0 - shape);
-  vec2 field = w * vec2(mix(0.074 - 0.017 * towers, 0.045, shape), mix(0.089 - 0.019 * towers, 0.081, shape))
-    * mix(vec2(1.0), vec2(0.48, 1.57), dark);
+  vec2 field = w * vec2(mix(0.074 - 0.017 * towers, 0.045, shape), mix(0.089 - 0.019 * towers, 0.081, shape));
   return f(vec3(field.x + 0.37, 0.13 * h + 0.055 * uEvolve, field.y + 0.68));
 }
 
 float riftAperture(vec3 p, vec3 d, float rough, float tear) {
-  vec3 h = normalize(vec3(uSun.z, 0.0, -uSun.x) + vec3(1e-7));
-  vec3 v = cross(uSun, h);
+  vec3 h = normalize(vec3(STORM_GAP.z, 0.0, -STORM_GAP.x));
+  vec3 v = cross(STORM_GAP, h);
   vec2 q = vec2(dot(d, h), dot(d, v));
   // Storm layers break at different heights. Shear the opening through the
   // volume instead of cutting the same silhouette at every depth.
@@ -101,11 +105,21 @@ float riftAperture(vec3 p, vec3 d, float rough, float tear) {
 }
 
 float toGap(vec3 p, vec3 d, float rough) {
-  float phi = max(0.0, 1.0 - dot(d, uSun));
   // Small, interrupted gaps in fair cloud: the transparent part widens and
   // wanders with depth without carving the same circle through every layer.
   float widthNoise = mix(0.76, 1.28, smoothstep(0.33, 0.69, rough));
-  float ordinary = exp(-phi / (mix(0.00228, 0.0044, uGolden) * widthNoise));
+  float fair = 0.0;
+  if (uWeather.y < 0.999) {
+    fair = exp(-max(0.0, 1.0 - dot(d, EAST_GAP)) / (0.00228 * widthNoise));
+    if (uEffects.x > 0.0) {
+      float west = uEffects.x * exp(-max(0.0, 1.0 - dot(d, WEST_GAP)) / (0.0044 * widthNoise));
+      fair = max(fair, west);
+    }
+  }
+  if (uWeather.y <= 0.0 && uEffects.w < 0.001) return fair;
+  float phi = max(0.0, 1.0 - dot(d, STORM_GAP));
+  float front = exp(-phi / (0.00228 * widthNoise));
+  float ordinary = mix(fair, front, uWeather.y);
   if (uEffects.w < 0.001 || phi > 0.10) return ordinary;
   ordinary = mix(ordinary, exp(-phi / 0.00105), uEffects.w);
   float torn = riftAperture(p, d, rough, uEffects.w) * smoothstep(0.0, 0.67, uEffects.w);
@@ -137,8 +151,7 @@ float scaffold(vec3 p, vec3 eyeRay, float base, float depth, out vec4 shape, out
   shape = weatherField(p, h);
   floorWeight = profile(shape, tv, st);
   float synoptic = mix(shape.r, 0.72 * shape.r + 0.28 * shape.g, st);
-  float nightThinning = 0.118 * (1.0 - smoothstep(-13.0, -4.5, uElevation)) * (1.0 - st);
-  float cutoff = mix(0.629 - 0.35 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x + nightThinning, 0.273 - 0.09 * uWeather.x, st);
+  float cutoff = mix(0.629 - 0.35 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x, 0.273 - 0.09 * uWeather.x, st);
   cutoff += 0.063 * smoothstep(0.16, 0.28, uWeather.x) * (1.0 - st);
   cutoff += 0.26 * uFinale * (1.0 - st);
   gap = toGap(p, eyeRay, 0.38 * shape.g + 0.62 * shape.b);
@@ -179,9 +192,9 @@ float densityAt(vec3 p, vec3 d, float t, float base, float dep, out float gap, o
   float body = max(0.0, sc - bite + (small - 0.48) * (0.52 + 1.05 * uWeather.y) * nearCloud * contrast) * profileWeight;
   float softWindow = gap * 0.84;
   float tornWindow = smoothstep(0.31, 0.80, gap);
-  float sunFilter = mix(1.0, 0.009 + 0.99 * squared(1.0 - uWeather.z), mix(softWindow, tornWindow, uEffects.w));
+  float windowTransmission = mix(1.0, 0.009 + 0.99 * squared(1.0 - uWeather.z), mix(softWindow, tornWindow, uEffects.w));
   float fog = 1.0 - 0.87 * smoothstep(0.14, 0.85, uWeather.w);
-  return (body + 1.35 * body * body) * sunFilter * fog * mix(6.2, 3.7, uWeather.y);
+  return (body + 1.35 * body * body) * windowTransmission * fog * mix(6.2, 3.7, uWeather.y);
 }
 
 float shadowAt(vec3 p, vec3 d, float base, float dep) {
@@ -203,16 +216,14 @@ float shadowAt(vec3 p, vec3 d, float base, float dep) {
 
 vec3 thinClouds(vec3 d, vec3 air, float mu) {
   float st = uWeather.y;
-  float fairEvening = smoothstep(0.010, 0.045, uSun.y) * (1.0 - smoothstep(0.058, 0.20, uSun.y));
-  fairEvening *= (1.0 - smoothstep(0.22, 0.35, uWeather.x)) * smoothstep(0.23, 0.44, -uSun.x);
-  float weather = (0.09 + 0.75 * uEffects.x + 0.26 * uWeather.x + 0.43 * fairEvening) * (1.0 - st) * (1.0 - uWeather.w) * (1.0 - uFinale);
+  float weather = (0.09 + 0.75 * uEffects.x + 0.26 * uWeather.x) * (1.0 - st) * (1.0 - uWeather.w) * (1.0 - uFinale);
   if (weather < 0.013 || d.y < 0.006) return air;
   float t = foot(6.2, d);
   vec2 p = rotateCloud(d.xz * t - uTravel * 1.32);
   vec4 a = f(vec3(0.029 * p.x + 0.17, 0.073 * uEvolve + 0.42, 0.12 * p.y));
   vec4 b = f(vec3(0.092 * p.x + 0.55, 0.067 * uEvolve, 0.26 * p.y + 0.72));
   float shape = 0.67 * a.r + 0.23 * a.g + 0.1 * a.b;
-  float coverage = (weather * 0.84) * smoothstep(0.48 - 0.085 * uEffects.x - 0.062 * fairEvening, 0.74, shape - 0.16 * (1.0 - b.b));
+  float coverage = (weather * 0.84) * smoothstep(0.48 - 0.085 * uEffects.x, 0.74, shape - 0.16 * (1.0 - b.b));
   coverage *= 1.0 - exp(-17.0 * max(d.y, 0.0));
   float lighting = smoothstep(-11.0, 3.0, uElevation);
   float warm = 1.0 - smoothstep(2.0, 22.0, uElevation);
@@ -266,9 +277,9 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
   float along = az - drift;
   float lit = smoothstep(-12.0, -5.5, uElevation) * (1.0 - smoothstep(6.0, 17.0, uElevation));
   vec3 red = vec3(0.32, 0.083, 0.037) * lit * (0.35 + 0.65 * exp(-15.0 * theta));
-  vec3 edgeSun = mix(vec3(0.25, 0.061, 0.009), vec3(0.143, 0.032, 0.038), uFinaleDusk);
-  red = mix(red, edgeSun * (0.25 + 0.75 * exp(-9.0 * theta)), uFinale);
-  float clearDisk = 1.0 - 0.80 * exp(-1840.0 * theta) * smoothstep(-1.0, 0.0, uElevation);
+  vec3 edgeSun = mix(vec3(0.135, 0.079, 0.039), vec3(0.158, 0.032, 0.018), uFinaleDusk);
+  red = mix(red, edgeSun * (0.10 + 0.90 * exp(-24.0 * theta)), uFinale);
+  float clearGap = 1.0 - 0.80 * uFinale * exp(-1840.0 * max(0.0, 1.0 - dot(d, LAST_GAP)));
   vec3 outAir = air;
   float transmission = 1.0;
   for (int i = 0; i < 5; i++) {
@@ -290,7 +301,7 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
     float y = (d.y - level) / width;
     if (abs(y) > 2.2) continue;
     float wisp = f(vec3(1.46 * along + 0.77 * k, 0.11 + 0.057 * y, 0.43 + 0.19 * k + 0.024 * uEvolve)).g;
-    float mass = (0.21 + 0.79 * clumps) * run * clearDisk * (1.0 - smoothstep(limit - 0.019, limit, d.y));
+    float mass = (0.21 + 0.79 * clumps) * run * clearGap * (1.0 - smoothstep(limit - 0.019, limit, d.y));
     mass = min(1.0, mass * (1.0 + 0.48 * uFinale));
     if (sideBank) mass *= 0.93 * uSideBanks;
     float ragged = 0.66 * (wisp - 0.5) + 0.32 * (ribs.g - 0.5);
@@ -380,7 +391,7 @@ void main() {
   vec3 sky = air;
   if (uStreaks < 0.999) {
     sky = thinClouds(d, air, mu);
-    if (uLate > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uLate);
+    if (uFinale > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uFinale);
   }
   float sheetTransmission = 1.0;
   if (uStreaks > 0.001) {
@@ -391,8 +402,7 @@ void main() {
   float through = 1.0;
   vec3 radiation = vec3(0.0);
   float base = mix(1.38, 0.86, st);
-  float dark = (1.0 - smoothstep(-13.0, -5.0, uElevation)) * (1.0 - st);
-  float dep = mix((1.52 + 1.49 * smoothstep(0.13, 0.40, uWeather.x)) * (1.0 - 0.25 * uLate) * mix(1.0, 0.36, dark), 3.55, st);
+  float dep = mix(1.52 + 1.49 * smoothstep(0.13, 0.40, uWeather.x), 3.55, st);
   float start = foot(base, d);
   float stop = min(foot(base + dep, d), mix(133.0, 119.0, st));
   float span = stop - start;
@@ -583,7 +593,7 @@ void main() {
   float bankMask = st * (1.0 - 0.90 * sunBreak) * (1.0 - 0.82 * uEffects.z);
   result *= 1.0 - bankMask * ((0.25 + 0.12 * (1.0 - riftLight)) * lowBank + 0.16 * clamp(stacked, 0.0, 1.0));
   float openPaths = 0.0;
-  if (uTearAttack > 0.0 && angle < 0.045 && span > 0.0) {
+  if (uTearAttack > 0.0 && 1.0 - dot(d, STORM_GAP) < 0.045 && span > 0.0) {
     // Resolve partially open paths in parallel with the obscured volume.
     // Both banks must open along this ray to show the hot core behind them.
     vec3 low = d * (start + 0.26 * span);
@@ -649,11 +659,13 @@ uniform float uElevation;
 uniform float uNight;
 uniform float uLunarNight;
 uniform float uFrostFog;
+uniform vec3 uFrostPhoto;
 uniform float uRainFog;
 uniform float uBreak;
 uniform float uSolarDeck;
 uniform float uEnding;
 uniform float uPhotoMix;
+uniform float uFinaleDusk;
 uniform float uMarchFilter;
 uniform vec3 uSunFace;
 uniform vec3 uMoon;
@@ -683,6 +695,28 @@ vec4 skyLookup(vec3 d, float blur) {
 
 ${nightGlsl}
 
+vec3 frostSunAt(vec2 xy, float blur, float squash, float sr) {
+  float opening = uFrostPhoto.y;
+  float radius2 = dot(xy, xy);
+  // Airborne scatter is radiance against the mist, not the faint tail
+  // obtained by spreading a flux-conserving image of the photosphere.
+  float haze = mix(0.016, 0.013, opening);
+  float soft = 0.82 * exp(-radius2 / (haze * haze + 0.13 * blur * blur))
+    + 0.18 * exp(-radius2 / (0.035 * 0.035 + 0.38 * blur * blur));
+  float gold = mix(0.023, 0.012, opening);
+  float halo = exp(-radius2 / (gold * gold));
+  // Below the veil is the true 0.53-degree disc. Soften its limb with
+  // thinning mist; the lens's sampled glow remains separate.
+  float r = length(xy / vec2(1.0, squash));
+  float edge = uPixelAngle * 0.56 + mix(0.0040, 0.00045, opening);
+  float disc = (1.0 - smoothstep(sr - edge, sr + edge, r))
+    * (0.78 + 0.22 * sqrt(max(0.0, 1.0 - (r / sr) * (r / sr))));
+  vec3 pale = vec3(1.045, 1.0, 0.94) * mix(9.4, 0.27, smoothstep(0.0, 0.38, opening)) * soft;
+  vec3 warm = vec3(1.34, 0.90, 0.52) * (1.16 * opening) * halo;
+  vec3 core = vec3(1.045, 1.0, 0.90) * (8.5 * opening) * disc;
+  return uFrostPhoto.z * (pale + warm + core);
+}
+
 vec3 sunAt(vec3 d, float blur) {
   float mu = dot(d, uSunFace);
   if (mu < 0.949) return vec3(0.0);
@@ -690,7 +724,7 @@ vec3 sunAt(vec3 d, float blur) {
   vec3 h = normalize(vec3(uSunFace.z, 0.0, -uSunFace.x) + vec3(1e-7));
   vec3 v = cross(uSunFace, h);
   vec2 xy = vec2(dot(d, h), dot(d, v));
-  float squash = mix(0.65 - 0.15 * uEnding, 1.0, smoothstep(0.06, 3.8, uElevation));
+  float squash = mix(mix(0.65 - 0.15 * uEnding, 1.0, smoothstep(0.06, 3.8, uElevation)), 0.93, uPhotoMix);
   float frost = smoothstep(0.15, 0.92, uFrostFog);
   float fogBlur = frost * (0.0085 + 0.011 * frost);
   vec2 r = sqrt(vec2(sr * sr, sr * sr * squash * squash) + blur * blur + fogBlur * fogBlur);
@@ -707,9 +741,16 @@ vec3 sunAt(vec3 d, float blur) {
   float mist = exp(-0.89 * dot(p, p));
   // A held deck still diffuses the photosphere after the lens fan falls.
   float diffuse = max(rupture, 0.997 * uSolarDeck * smoothstep(0.07, 0.65, uBreak));
-  float photo = disk * limb + 0.19 * exp(-dot(p, p) / 3.6);
+  // A brilliant narrow core and a surrounding halo, both behind terrain.
+  // Do not let the much stronger photosphere turn the halo into extra disc.
+  float rr = dot(p, p);
+  float photo = disk * limb + 0.034 * exp(-rr / 4.7) + 0.086 * uFinaleDusk * exp(-rr / 33.0);
   float glow = mix(mix(mix(disk * limb, 0.30 * mist, frost), photo, uPhotoMix), 0.003 * broken, diffuse);
   float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
+  if (uFrostPhoto.x > 0.0) {
+    vec3 sun = mix(uDisc * energy * glow, frostSunAt(xy, blur, squash, sr), uFrostPhoto.x);
+    return sun * visible * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
+  }
   return uDisc * visible * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
 }
 
@@ -738,6 +779,10 @@ void main() {
   float coc = min(uCocScale / uFocusM, 2048.0);
   float blur = 0.5 * coc * uPixelAngle;
   vec4 sky = skyLookup(d, blur);
+  // At highest fog the diffuse air around the soft disc is the cooler
+  // fill, not direct light. This does not change the foreground veil.
+  float thickClose = uFrostPhoto.x * (1.0 - smoothstep(0.0, 0.29, uFrostPhoto.y));
+  sky.rgb *= mix(vec3(1.0), vec3(0.69, 0.75, 0.84), thickClose * smoothstep(-0.012, 0.016, d.y));
   float stellarBlur = min(blur, 0.52 * uPixelAngle);
   float cloudTransmission = textureLod(tSky, where(d), 0.0).a;
   float stellarTransmission = cloudTransmission * smoothstep(0.08, 0.78, cloudTransmission);
