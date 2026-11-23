@@ -27,7 +27,7 @@ export interface Menu {
 }
 
 const MODE_NAMES: Record<MenuMode, string> = { live: 'Player', autopilot: 'Hands free', export: 'Export' }
-const DIAG_NAMES: Record<DiagName, string> = { beauty: 'Beauty', ungraded: 'Ungraded', plant: 'Plant alone', backlight: 'Backlight', texels: 'Texels', depth: 'Depth', focus: 'Focus', standins: 'Stand-ins' }
+const DIAG_NAMES: Record<DiagName, string> = { beauty: 'The film', ungraded: 'Before the colour grade', plant: 'Plant alone', backlight: 'Backlight', texels: 'Texture detail', depth: 'Depth', focus: 'Focus', standins: 'Stand-ins' }
 const HELP: [string, string][] = [
   ['Space', 'play'],
   ['R', 'record'],
@@ -85,9 +85,10 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
   }
 
   const lookButtons: { frame: number; node: HTMLButtonElement }[] = []
-  const looks = group('Looks', 3)
+  const looks = group('Moments', 3)
   for (const k of keys) {
-    const b = make('button', css.chip, k.id)
+    const said = k.id.replace(/-/g, ' ')
+    const b = make('button', css.chip, said.charAt(0).toUpperCase() + said.slice(1))
     b.type = 'button'
     b.title = `${k.time.toFixed(2)} s`
     b.addEventListener('click', () => actions.jump(k.frame))
@@ -155,7 +156,7 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
   diagSelect.addEventListener('change', () => {
     if (isDiag(diagSelect.value)) actions.diag(diagSelect.value)
   })
-  wrap.append(make('span', css.label, 'Diagnostic'), diagSelect)
+  wrap.append(make('span', css.label, 'Picture shows'), diagSelect)
   fields.append(wrap)
 
   const help = make('p', css.help)

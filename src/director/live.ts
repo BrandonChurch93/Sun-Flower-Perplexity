@@ -419,6 +419,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         time: run.time,
         facts: (stepMs) => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } }),
         tick(_seconds, cue) {
+          if (performance.now() - stirred > IDLE_MS) idle(true)
           applyView()
           if (cue && cue.frame !== frame) {
             frame = cue.frame
@@ -642,11 +643,13 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   playButton.addEventListener('click', togglePlay)
 
   let idleTimer = 0
+  let stirred = performance.now()
   function idle(on: boolean): void {
     if (on) host.dataset.idle = 'yes'
     else delete host.dataset.idle
   }
   function stir(): void {
+    stirred = performance.now()
     idle(false)
     window.clearTimeout(idleTimer)
     idleTimer = window.setTimeout(() => {

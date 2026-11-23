@@ -36,6 +36,8 @@ In the browser, on your own machine: open https://sunflower-film.pplx.app?mode=e
 
 The tier sets the samples drawn for each frame: `draft` 1, `review` 8, `final` 48. More samples mean smoother motion blur, focus blur and edges, and a longer wait. The film and the clips in this repo were rendered at `draft` in 1920 by 1080, which is what fitted the build's render time; an export at `review` or `final` on a machine with a graphics card looks cleaner.
 
+A check for the export page only: `&soundlate=37` feeds the sound encoder 37 ms early, as an encoder that delays the sound would. The page must find it, encode the sound again and print 0.0 ms against the track. It is not in the menu and no film is made with it.
+
 From this repo, with Node, npm and ffmpeg installed (the versions the build used are under "Workspace record" in `kit/PROGRESS.md`):
 
 ```

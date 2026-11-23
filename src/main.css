@@ -78,6 +78,10 @@ html[data-run='recording'] * {
   cursor: none !important;
 }
 
+body:has(#ui[data-idle='yes']) #film {
+  cursor: none;
+}
+
 html[data-bare] #ui,
 html[data-bare] #note,
 html[data-run] #ui,
