@@ -59,7 +59,8 @@ vec3 farAir(vec3 color, vec3 world) {
   float land = 1.0 - exp(-d * uAir - mist);
   float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
   float last = ${END_AIR.toFixed(2)} * smoothstep(${END_AIR_FROM_M.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, length(world.xz));
-  return mix(color, behind, max(land, max(own, last)));
+  // Near, the crop has the air its neighbors have. The land's own air comes in toward the far end, where the crop meets the land.
+  return mix(color, behind, max(land * smoothstep(100.0, 290.0, length(world.xz)), max(own, last)));
 }
 `
 
@@ -269,10 +270,12 @@ void main() {
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
-    float share = mix(0.03, 0.12, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    float share = mix(0.04, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
     float disc = headsAt(f, tone);
-    vec3 gold = vHead * vec3(1.25, 1.0, 0.55);
+    // The pictures give the head with its dark disc and the leaves round it: the petals alone are brighter, and brighter still with the low sun behind them.
+    float into = smoothstep(0.2, 0.9, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
+    vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share);
     color = mix(color, gold * (0.9 + 0.6 * tone), uOpen * disc);
     // The rows, as far as the eye can part them: the tops in light and the dark between.
