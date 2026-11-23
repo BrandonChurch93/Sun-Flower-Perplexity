@@ -1,11 +1,10 @@
 import * as THREE from 'three'
 import type { Format, TierId } from '../../../src/config.ts'
 import { Film } from '../../../src/director/film.ts'
-import type { Dials, Moment, Quality } from '../../../src/v2/api.ts'
+import type { Moment, Quality } from '../../../src/v2/api.ts'
 import { installCounter, madeSince, madeSoFar, type Made } from '../../../src/v2/counter.ts'
 import { later, now } from '../../../src/v2/now.ts'
 import { views, type ViewName } from '../../../src/v2/shots.ts'
-import { direction } from '../../../src/v2/sun.ts'
 
 // The film itself, driven by the checks: the same Film, the same draw path, at any size, with a counter read on every frame.
 // It can also break the film on purpose, so that each check can be shown to fail.
@@ -19,7 +18,7 @@ export interface ChecksPage {
   made(): Made
   draw(frame: number, tier: string, png: boolean): Promise<Drawn>
   setView(name: string): void
-  // Wind at rest, no weather, the sun and the clouds standing where they are told: what is left can only change with the clocks.
+  // The film's own switch for the world at rest: no weather, no wind, one fixed sun. What is left can only change with the clocks.
   still(on: boolean): void
   // Keeps the frame on the canvas as it was before the lens and the grade, in the scene's linear numbers.
   keep(name: string): void
@@ -44,44 +43,10 @@ installCounter()
 const film = new Film(canvas, format, 'full', { sky: q.get('sky') ?? undefined, only, view, quality })
 const ready = film.load()
 
-const REST: Dials = { cover: 0, overcast: 0, sunThrough: 1, fog: 0, cold: 0, frost: 0, dew: 0, rain: 0, wet: 0, puddle: 0, flash: 0, burst: 0, wind: 0, lapse: 0, evening: 0 }
-const STILL_SUN = { azimuthDeg: 60, elevationDeg: 50 }
-let stillOn = false
 let grow: { from: number; to: number; rate: number } | null = null
 
-// The film writes the instant of each frame into `now` and `later`. A pinned field keeps what the check gave it, whatever is written.
-function pin<T extends object, K extends keyof T>(target: T, key: K, pinned: () => T[K] | undefined): void {
-  let raw = target[key]
-  Object.defineProperty(target, key, {
-    configurable: true,
-    enumerable: true,
-    get: () => {
-      const p = pinned()
-      return p === undefined ? raw : p
-    },
-    set: (v: T[K]) => {
-      raw = v
-    },
-  })
-}
-
-function pinVector(v: THREE.Vector3, pinned: THREE.Vector3): void {
-  const set = v.set.bind(v)
-  const copy = v.copy.bind(v)
-  v.set = (x: number, y: number, z: number) => (stillOn ? set(pinned.x, pinned.y, pinned.z) : set(x, y, z))
-  v.copy = (o: THREE.Vector3) => (stillOn ? set(pinned.x, pinned.y, pinned.z) : copy(o))
-}
-
+// The film writes the instant of each frame into `now` and `later`. For the fault that grows in a hold, the plant's clock read from them runs on.
 function rig(m: Moment): void {
-  const sun = direction(STILL_SUN.azimuthDeg, STILL_SUN.elevationDeg, new THREE.Vector3())
-  for (const key of Object.keys(REST) as (keyof Dials)[]) pin(m.dials, key, () => (stillOn ? REST[key] : undefined))
-  pin(m, 'sunElevationDeg', () => (stillOn ? STILL_SUN.elevationDeg : undefined))
-  pin(m, 'sunAzimuthDeg', () => (stillOn ? STILL_SUN.azimuthDeg : undefined))
-  pin(m, 'night', () => (stillOn ? 0 : undefined))
-  pin(m, 'lightKind', () => (stillOn ? 'sun' : undefined))
-  for (const key of ['shiftX', 'shiftZ', 'evolve', 'speedX', 'speedZ'] as const) pin(m.cloud, key, () => (stillOn ? 0 : undefined))
-  pinVector(m.sun, sun)
-  pinVector(m.light, sun)
   let tau = m.tau
   Object.defineProperty(m, 'tau', {
     configurable: true,
@@ -135,7 +100,7 @@ window.checks = {
     film.view.fixed = name === 'film' ? null : views[name as Exclude<ViewName, 'film'>]
   },
   still(on) {
-    stillOn = on
+    film.setStill(on)
   },
   keep(name) {
     const { width, height, renderer, accumulator } = film.stage
