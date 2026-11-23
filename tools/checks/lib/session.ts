@@ -103,6 +103,7 @@ export interface Session {
   sparks(times: number, reach: number, fail: number): Promise<Sparks>
   spot(x: number, y: number, r: number, fail: number): Promise<Spot>
   only(names: string[]): Promise<void>
+  pin(share: number | null): Promise<number>
   worked(): Promise<Worked>
   loop(work: number): Promise<number>
   loopAt(work: number, call: number): Promise<void>
@@ -172,6 +173,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       sparks: (times, reach, fail) => page.evaluate(([t, r, f]) => window.checks.sparks(t, r, f), [times, reach, fail] as const),
       spot: (x, y, r, fail) => page.evaluate(([a, b, c, d]) => window.checks.spot(a, b, c, d), [x, y, r, fail] as const),
       only: (names) => page.evaluate((n) => window.checks.only(n), names),
+      pin: (share) => page.evaluate((s) => window.checks.pin(s), share),
       worked: () => page.evaluate(() => window.checks.worked()),
       loop: (work) => page.evaluate((w) => window.checks.loop(w), work),
       loopAt: (work, call) => page.evaluate(([w, c]) => window.checks.loopAt(w, c), [work, call] as const),

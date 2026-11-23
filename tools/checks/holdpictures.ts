@@ -5,7 +5,7 @@ import { flag, num } from '../lib/args.ts'
 import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
 import { cutFrames } from '../../src/v2/cuts.ts'
 import { barText, filmClock, holds, secondsOf } from './lib/film.ts'
-import { OUT, type Finding } from './lib/report.ts'
+import { OUT, table, type Finding } from './lib/report.ts'
 import { openSession } from './lib/session.ts'
 
 export interface PictureProof { findings: Finding[]; complete: boolean; pictures: { file: string; caption: string }[]; data: unknown }
@@ -14,15 +14,20 @@ const PARTS = 'ground,plant,companion,field'
 const VIEWS = ['wide', 'low']
 // How far after the hold the control frame is taken. The plant grows again there, so the picture must have changed: a proof that could not see growth would pass this too.
 const CONTROL_FRAMES = 45
-// Two frames are the same when no number differs by more than this. The picture is kept in half floats, and one step of a half float between 0.5 and 1 is 0.000488:
-// a number that lands on the other side of a step is not growth. The count and the largest difference are printed whatever they are.
-const SAME = 0.001
-// The control has to differ by far more than that, or the proof could not tell growth from a step of the number format.
+// A pair of frames of one shot is the same when no more than MOST_NUMBERS of its numbers differ and none by more than MOST_BY.
+// Not zero, for a reason that was measured: in flat light the blend between the hold's two keys runs with the frame number. The two keys hold the same plant,
+// but the second slot of a hair's direction is packed in two floats and comes back up to 1.1e-7 off the first, so the blend nudges one hair's edge by 1e-7
+// and it can cross a rounding step of the rasterizer: a few pixels on that edge change, nothing grows. Growth moves tens of thousands of numbers (the controls).
+const MOST_NUMBERS = 16
+const MOST_BY = 0.005
+// The control has to differ in over this many times as many numbers and by over this many times as much, or the proof could not tell growth from an edge that flips.
 const CONTROL_TIMES = 100
-// At most this many pairs of a hold are drawn again one part at a time to name who carries a difference.
-const NAMED_MOST = 3
+// The share of its second slot every part is pinned to for the second reading of each pair: with the blend out of the way the pair has to be exact.
+const PIN = 0
+// At most this many pairs of a hold and camera that break the rule are drawn again one part at a time to name who carries the difference.
+const NAMED_MOST = 1
 
-interface Pair { hold: string; view: string; span: number; a: number; b: number; differing: number; values: number; largest: number; control: boolean; parts?: { part: string; differing: number; largest: number }[] }
+interface Pair { hold: string; view: string; span: number; a: number; b: number; differing: number; values: number; largest: number; control: boolean; pinned?: { differing: number; largest: number }; parts?: { part: string; differing: number; largest: number }[] }
 
 // A hold split where the picture cuts: [first, last] of each stretch that stands in one shot.
 export function shotSpans(first: number, last: number, cuts: number[]): [number, number][] {
@@ -31,6 +36,8 @@ export function shotSpans(first: number, last: number, cuts: number[]): [number,
   return starts.map((from, i) => [from, i + 1 < starts.length ? starts[i + 1] - 1 : last])
 }
 
+const same = (p: Pair): boolean => p.differing <= MOST_NUMBERS && p.largest <= MOST_BY
+const size = (v: number): string => (v === 0 ? '0' : v.toPrecision(3))
 const told = (p: Pair): string => `frame ${p.a} against ${p.b} from ${p.view} (${barText(secondsOf(p.a))} against ${barText(secondsOf(p.b))}): ${p.differing} of ${p.values} numbers differ, the largest by ${p.largest === 0 ? '0' : p.largest.toPrecision(3)}${p.parts ? `; drawn one part at a time: ${p.parts.map((q) => `${q.part} ${q.differing}${q.differing ? ` (largest ${q.largest.toPrecision(3)})` : ''}`).join(', ')}` : ''}`
 
 // The proof by the picture. Frames of a hold are drawn in flat light: wind at rest, no weather, no sky, the sun and the camera standing still.
@@ -38,6 +45,7 @@ const told = (p: Pair): string => `frame ${p.a} against ${p.b} from ${p.view} ($
 // Only frames that stand in the same shot are compared: the light of a close shot (its level, key and fill, src/v2/look.ts) follows the cut even in the world at rest,
 // so a frame before a cut and a frame after it are lit differently with nothing grown. Each hold is split at the film's cuts (src/v2/cuts.ts) and of every stretch the first, middle and last frame are drawn.
 // They are read before the lens and the grain, in the scene's own floating point numbers.
+// Each pair is read twice: as the film blends its two keys, against the rule above, and with that blend pinned, where it has to be exact.
 //   npm run checks -- holds --no-pictures              the proof by the clock alone
 //   npm run checks -- holds --break picture-grows      a film whose plant grows on through the frost hold while its clock reads still: must fail
 export async function pictureProof(args: Args, broken: string | null): Promise<PictureProof> {
@@ -52,6 +60,7 @@ export async function pictureProof(args: Args, broken: string | null): Promise<P
   const pairs: Pair[] = []
   const findings: Finding[] = []
   const pictures: { file: string; caption: string }[] = []
+  let pinnedBlends = 0
   const spansOf = new Map(holds.map((h) => [h.name, shotSpans(h.first, h.last, cutFrames)]))
   try {
     await session.still(true)
@@ -103,8 +112,25 @@ export async function pictureProof(args: Args, broken: string | null): Promise<P
         const sheet = path.join(dir, `${h.name.toLowerCase()}-${view}.jpg`)
         await canvas(wide, bar + 2 + 2 * gap + rows.length * rowTall, parts).jpeg({ quality: 90 }).toFile(sheet)
         pictures.push({ file: sheet, caption: `${h.name} hold from the ${view} camera in flat light: one row a shot with its first, middle and last frame, and one frame after the hold` })
-        // Who carries a difference inside a shot: the two frames drawn again with one part at a time.
-        const named = mine.filter((p) => !p.control && p.differing > 0).slice(0, NAMED_MOST)
+        // The same pairs once more with the blend between the two keys pinned: what is left of a difference then is not the blend's rounding.
+        const pins = await session.pin(PIN)
+        for (const f of rows.flat()) {
+          await session.draw(f, 'draft', false)
+          await session.keep(`pinned ${f}`)
+        }
+        await session.pin(null)
+        for (const p of mine) {
+          if (p.control) continue
+          const d = await session.differ(`pinned ${p.a}`, `pinned ${p.b}`)
+          p.pinned = { differing: d.differing, largest: d.largest }
+        }
+        pinnedBlends = pins
+        for (const p of mine) {
+          console.log(`holds · ${h.name} · ${view} · ${p.a} against ${p.b}${p.control ? ' (the control)' : ''}: ${p.differing} of ${p.values} numbers differ, the largest by ${size(p.largest)}${p.control ? '' : same(p) ? ' · the same by the rule' : ' · NOT the same by the rule'}`)
+          if (p.pinned) console.log(`holds · ${h.name} · ${view} · ${p.a} against ${p.b}, the blend pinned: ${p.pinned.differing} of ${p.values} numbers differ, the largest by ${size(p.pinned.largest)}${p.pinned.differing === 0 ? ' · exact' : ' · NOT exact'}`)
+        }
+        // Who carries a difference that breaks the rule: the two frames drawn again with one part at a time.
+        const named = mine.filter((p) => !p.control && !same(p)).slice(0, NAMED_MOST)
         for (const p of named) {
           p.parts = []
           for (const part of PARTS.split(',')) {
@@ -124,29 +150,43 @@ export async function pictureProof(args: Args, broken: string | null): Promise<P
   } finally {
     await session.close()
   }
+  const everyControl = pairs.filter((p) => p.control)
+  const leastNumbers = Math.min(...everyControl.map((p) => p.differing))
+  const leastBy = Math.min(...everyControl.map((p) => p.largest))
+  const rule = `A pair is the same when no more than ${MOST_NUMBERS} of its numbers differ and none by more than ${MOST_BY}: a hair's edge can flip by one rounding step of the rasterizer, and ${CONTROL_FRAMES} frames of growth move ${leastNumbers} numbers or more by up to ${size(leastBy)} or more (the controls)`
+  console.log(`\n${table(['hold', 'camera', 'shot', 'frames', 'numbers that differ', 'of', 'largest', 'by the rule', 'pinned: differ', 'pinned: largest'], pairs.map((p) => [p.hold, p.view, p.control ? 'control' : p.span + 1, `${p.a} against ${p.b}`, p.differing, p.values, size(p.largest), p.control ? '' : same(p) ? 'the same' : 'NOT the same', p.pinned ? p.pinned.differing : '', p.pinned ? size(p.pinned.largest) : '']))}\n`)
+  console.log(`holds · the rule · ${rule}`)
   for (const h of holds) {
     const spans = spansOf.get(h.name) as [number, number][]
     const mine = pairs.filter((p) => p.hold === h.name)
     const inside = mine.filter((p) => !p.control)
-    const moved = inside.filter((p) => p.largest > SAME || Number.isNaN(p.largest))
-    const stepped = inside.filter((p) => p.differing > 0 && !moved.includes(p))
+    const moved = inside.filter((p) => !same(p))
+    const stepped = inside.filter((p) => p.differing > 0 && same(p))
+    const loose = inside.filter((p) => !p.pinned || p.pinned.differing !== 0)
     const controls = mine.filter((p) => p.control)
-    const blind = controls.filter((p) => !(p.largest > CONTROL_TIMES * SAME))
+    const blind = controls.filter((p) => !(p.differing > CONTROL_TIMES * MOST_NUMBERS && p.largest > CONTROL_TIMES * MOST_BY))
     const tauStep = filmClock.at(secondsOf(h.last + CONTROL_FRAMES)).tau - filmClock.at(secondsOf(h.last)).tau
     const shots = `${spans.length === 1 ? 'one shot' : `${spans.length} shots, split at the cuts`}: ${spans.map(([a, b]) => `${a} to ${b}`).join(', ')}`
     const why = spans.length > 1 ? '. Frames of different shots are not compared: the light of a close shot follows the cut even in the world at rest' : ''
     findings.push({
       ok: moved.length === 0,
       what: moved.length === 0
-        ? `${h.name} by the picture (${width} x ${height}, ${PARTS}, cameras ${VIEWS.join(' and ')}; ${shots}): in every shot the first, middle and last frame are the same, no number of ${inside[0].values} differs by more than ${SAME} in any of ${inside.length} pairs${why}. ${stepped.length === 0 ? 'No number differs at all' : `Under that: ${stepped.map(told).join('; ')}`}`
-        : `${h.name} by the picture (${shots}; the same means no number differs by more than ${SAME}): ${moved.map(told).join('; ')}${stepped.length ? `. Under ${SAME}: ${stepped.map(told).join('; ')}` : ''}`,
+        ? `${h.name} by the picture (${width} x ${height}, ${PARTS}, cameras ${VIEWS.join(' and ')}; ${shots}): in every shot the first, middle and last frame are the same in all ${inside.length} pairs${why}. ${rule}. ${stepped.length === 0 ? 'No number differs at all' : `What differs inside the rule: ${stepped.map(told).join('; ')}`}`
+        : `${h.name} by the picture (${shots}): ${moved.length} of ${inside.length} pairs are not the same: ${moved.map(told).join('; ')}${stepped.length ? `. Inside the rule: ${stepped.map(told).join('; ')}` : ''}. ${rule}`,
+    })
+    const pinnedHow = `with the blend between the hold's two keys pinned (every part of the plant and its companion drawn with ${PIN} of its second slot, ${pinnedBlends} blends, set from the check's page)`
+    findings.push({
+      ok: loose.length === 0,
+      what: loose.length === 0
+        ? `${h.name}, ${pinnedHow}: all ${inside.length} pairs are exact, 0 of ${inside[0].values} numbers differ. ${moved.length ? 'That does not clear the pairs above: a pinned picture cannot see growth between two keys' : stepped.length ? 'So the numbers that differ with the blend running are the rounding of the blend and nothing else' : 'The blend running or pinned, nothing differs'}`
+        : `${h.name}, ${pinnedHow}: ${loose.length} of ${inside.length} pairs are not exact: ${loose.map((p) => `frame ${p.a} against ${p.b} from ${p.view}: ${p.pinned ? `${p.pinned.differing} of ${p.values} numbers differ, the largest by ${size(p.pinned.largest)}` : 'not read'}`).join('; ')}. Something other than the rounding of the blend changes the picture inside the hold`,
     })
     findings.push({
       ok: blind.length === 0,
       what: blind.length === 0
-        ? `${h.name}, the control: ${CONTROL_FRAMES} frames after the hold the plant's clock has moved ${tauStep.toFixed(3)} and ${controls.map((p) => `${p.differing} numbers differ from ${p.view}, the largest by ${p.largest.toPrecision(3)}`).join(', ')}, over ${CONTROL_TIMES} times what counts as the same, so this proof does see growth`
-        : `${h.name}, the control: ${CONTROL_FRAMES} frames after the hold the plant's clock has moved ${tauStep.toFixed(3)} and the picture has not changed by more than ${CONTROL_TIMES * SAME} from ${blind.map((p) => `${p.view} (${p.differing} numbers, the largest by ${p.largest === 0 ? '0' : p.largest.toPrecision(3)})`).join(' and ')}: this proof cannot see growth there`,
+        ? `${h.name}, the control: ${CONTROL_FRAMES} frames after the hold the plant's clock has moved ${tauStep.toFixed(3)} and ${controls.map((p) => `${p.differing} numbers differ from ${p.view}, the largest by ${size(p.largest)}`).join(', ')}: over ${CONTROL_TIMES} times as many and by over ${CONTROL_TIMES} times as much as the rule lets pass, so this proof does see growth`
+        : `${h.name}, the control: ${CONTROL_FRAMES} frames after the hold the plant's clock has moved ${tauStep.toFixed(3)} and the picture has not changed in over ${CONTROL_TIMES * MOST_NUMBERS} numbers and by over ${CONTROL_TIMES * MOST_BY} from ${blind.map((p) => `${p.view} (${p.differing} numbers, the largest by ${size(p.largest)})`).join(' and ')}: this proof cannot see growth there`,
     })
   }
-  return { findings, complete: true, pictures, data: { width, height, parts: PARTS, views: VIEWS, same: SAME, spans: Object.fromEntries(spansOf), pairs } }
+  return { findings, complete: true, pictures, data: { width, height, parts: PARTS, views: VIEWS, rule: { mostNumbers: MOST_NUMBERS, mostBy: MOST_BY, controlTimes: CONTROL_TIMES, pinnedTo: PIN, pinnedBlends }, spans: Object.fromEntries(spansOf), pairs } }
 }

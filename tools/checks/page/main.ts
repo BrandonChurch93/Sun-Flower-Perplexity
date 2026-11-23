@@ -65,6 +65,9 @@ export interface ChecksPage {
   spot(x: number, y: number, r: number, fail: number): Spot
   // Draws only the named parts of the scene from the next frame on (plant, companion, field, ground, sky and each part's name); none named draws them all.
   only(names: string[]): void
+  // Pins the blend between the two keys the plant and its companion are drawn from: every part shows `share` of its second slot whatever the frame, and null gives the blend back to the film.
+  // In a hold the two keys are one shape, so a pinned picture can only change when a key itself changes. Returns how many blends were pinned.
+  pin(share: number | null): number
   // Only on a page opened with work=1: what the frames since the last call asked of three.js and of the card, and starts the next count.
   worked(): Worked
   // The same fixed script, run now and timed, or run inside the n-th draw call of the next frame.
@@ -589,6 +592,18 @@ window.checks = {
     const set = (film as unknown as { only: Set<string> }).only
     set.clear()
     for (const n of names) set.add(n)
+  },
+  pin(share) {
+    let n = 0
+    for (const plant of [film.plant, film.companion]) {
+      for (const play of (plant as unknown as { plays: Map<unknown, { mix: THREE.Vector2 }> }).plays.values()) {
+        const mix = play.mix
+        if (share === null) Reflect.deleteProperty(mix, 'set')
+        else mix.set = (_x: number, y: number) => THREE.Vector2.prototype.set.call(mix, share, y)
+        n++
+      }
+    }
+    return n
   },
   worked() {
     if (!working) throw new Error('open the page with work=1')
