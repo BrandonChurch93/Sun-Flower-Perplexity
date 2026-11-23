@@ -1,8 +1,5 @@
 # Looks of sky-a
 
-2026-11-23 03:46 UTC, at commit 806c873 of agent/sky-a.
+2026-11-23 03:57 UTC, at commit bf11e59 of agent/sky-a.
 
-- `01-night-film-before-after.jpg`: night film before after
-- `02-night-wide-before-after.jpg`: night wide before after
-- `03-night-three-frames-2379-to-2381-full-size-crops.jpg`: night three frames 2379 to 2381 full size crops
-- `04-night-frame-2379-16x9.jpg`: night frame 2379 16x9
+- `01-night-work-in-progress-bars-46-82-28-82-8-7-draf.jpg`: night work in progress bars 46.82 28.82 8.7 draft beside reference
