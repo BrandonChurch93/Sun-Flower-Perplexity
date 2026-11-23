@@ -26,6 +26,8 @@ uniform vec3 uSunLight;
 uniform vec3 uSunAir;
 uniform float uSunCore;
 uniform float uSunHot;
+uniform float uFan;
+uniform float uBloomCap;
 uniform float uHaze;
 uniform float uVeilSun;
 uniform float uShafts;
@@ -70,6 +72,13 @@ vec3 tone(vec3 c) {
 // What a sun in the frame does to the glass and to the air, in the sun's own light as the air has coloured it.
 // In the glass, over everything: a small hot core, a soft glow that widens with the haze, and a veil over the whole frame. All three follow how much of the disc shows and sit where the showing part sits, so a sun half behind a leaf blooms from the leaf's edge and wraps it.
 // In the air: the light that stands between the lens and the far land, cut by whatever stands dark against the sky on the way to the sun.
+float band(float turn, float n, float seed) {
+  float x = (turn / 6.2831853 + 0.5) * n;
+  float i = floor(x);
+  float f = x - i;
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(hash31(vec3(mod(i, n), seed, 0.5)), hash31(vec3(mod(i + 1.0, n), seed, 0.5)), f);
+}
 vec3 sunGlare(vec2 px) {
   float peak = max(uSunLight.r, max(uSunLight.g, uSunLight.b));
   if (peak <= 0.0) return vec3(0.0);
@@ -80,15 +89,21 @@ vec3 sunGlare(vec2 px) {
   float q = r * r / (uSunCore * uSunCore);
   float core = 1.0 / ((1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
-  float glow = exp(-r / wide) + 0.1 / (1.0 + r * r / 0.012);
-  float veil = 0.35 + 0.65 * exp(-r / 0.5);
-  vec3 air = mix(uSunLight, peak * uSunAir, 0.5);
-  vec3 glass = mix(uSunLight, vec3(peak), 0.7) * (uSunHot * core) + air * ((0.22 + 0.4 * uHaze) * glow) + air * (uVeilSun * (0.004 + 0.012 * uHaze) * veil);
+  float glow = (0.22 + 0.4 * uHaze) * exp(-r / wide) + (0.03 + 0.3 * uHaze) * exp(-r / 0.16);
+  float veil = uVeilSun * (0.004 + 0.016 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
+  vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
+  vec3 glass = mix(uSunLight, vec3(peak), 0.7) * (uSunHot * core) + air * (glow + veil);
   float open = texture(tShafts, vUv).r;
-  float here = mix(0.35, 1.0, texture(tOpen, vUv).a);
+  float here = mix(0.3, 1.0, texture(tOpen, vUv).a);
   float ra = length(away);
-  float standing = (0.45 * exp(-ra / 0.12) + 0.55 * exp(-ra / 0.45)) * open * sqrt(open) * here;
-  return glass * seen.r + air * (uShafts * 0.2 * standing);
+  // The beams: the air is never even, so the light stands in it in uneven bands that all point at the sun. Under a deck that has just torn the lit air is below the tear.
+  float turn = atan(away.y, away.x);
+  float bands = 0.5 * band(turn, 13.0, 3.0) + 0.5 * band(turn, 31.0, 11.0);
+  float beams = mix(1.0, mix(0.06, 1.0, smoothstep(0.36, 0.6, bands)), smoothstep(0.03, 0.2, ra));
+  float under = mix(1.0, smoothstep(-0.15, 0.6, -away.y / max(ra, 1e-4)), uFan);
+  float reach = 0.4 * exp(-ra / 0.14) + 0.6 * exp(-ra / 0.55);
+  float standing = reach * open * sqrt(open) * here * beams * under;
+  return glass * seen.r + mix(uSunLight, peak * uSunAir, 0.2) * (uShafts * 0.62 * standing);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
@@ -114,7 +129,8 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  c += texture(tBloom, vUv).rgb * uBloom + sunGlare(gl_FragCoord.xy);
+  vec3 scattered = texture(tBloom, vUv).rgb * uBloom;
+  c += scattered / (1.0 + uBloomCap * dot(scattered, vec3(0.2126, 0.7152, 0.0722))) + sunGlare(gl_FragCoord.xy);
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
   float aspect = uSize.x / uSize.y;

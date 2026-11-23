@@ -72,6 +72,7 @@ export class Post {
   private shaftB: THREE.WebGLRenderTarget | null = null
   private nearTarget: THREE.WebGLRenderTarget | null = null
   private quality: Quality | null = null
+  private held = false
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
@@ -111,6 +112,8 @@ export class Post {
     uSunAir: { value: new THREE.Vector3(1, 1, 1) },
     uSunCore: { value: 0.01 },
     uSunHot: { value: 0 },
+    uFan: { value: 0 },
+    uBloomCap: { value: 0 },
     uHaze: { value: 0 },
     uVeilSun: { value: 0 },
     uShafts: { value: 0 },
@@ -160,6 +163,11 @@ export class Post {
   // `film` and `high` draw everything. `low` is for a weak graphics card: the out of focus fill takes two rounds in place of three and the shafts two in place of three.
   setQuality(quality: Quality | null): void {
     this.quality = quality
+  }
+
+  // For the proofs of a world at rest: the grain and the stipple of the fill stop following the frame, so nothing of the lens changes from frame to frame.
+  setStill(on: boolean): void {
+    this.held = on
   }
 
   bytes(): number {
@@ -271,9 +279,10 @@ export class Post {
   // The frame before lens and grade stays in the accumulator. `sun` is where the sun sits in the picture and how wide infinity blurs; without it the glass sees no sun and the sky is filled like everything else.
   render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null): void {
     const mode = MODES[diag]
+    const seed = this.held ? 0 : frameIndex
     const g = this.grade.uniforms
     g.uMode.value = mode
-    g.uSeed.value = frameIndex
+    g.uSeed.value = seed
     let source = frame
     if (mode === 0) {
       const width = this.fillA.width
@@ -284,7 +293,7 @@ export class Post {
       const grade = def.grade
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
-      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, farCircle, low)
+      source = this.fillGaps(renderer, frame, seed, scale, samples, farCircle, low)
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
       const bloom = this.scatter(renderer, source, grade, skyLevel)
@@ -333,6 +342,8 @@ export class Post {
       g.uSunCore.value = 1.5 * blurred
       g.uSunHot.value = (14 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
+      g.uFan.value = look.fan
+      g.uBloomCap.value = look.cap
       g.uVeilSun.value = look.veilSun
       g.uShafts.value = cast ? look.shafts : 0
       g.uSaturation.value = grade.saturation

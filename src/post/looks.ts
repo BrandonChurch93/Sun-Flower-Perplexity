@@ -52,6 +52,10 @@ export interface LensLook extends Stock {
   glare: number
   veilSun: number
   shafts: number
+  // How far the shafts lean to the air under the sun: 1 under a deck that has just torn.
+  fan: number
+  // How hard the scattered light is held under white: only the lightning asks for it.
+  cap: number
 }
 
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
@@ -60,7 +64,7 @@ const kinds: [keyof LookWeights, Stock][] = [['day', DAY], ['warm', WARM], ['sto
 const scalars = ['veil', 'core', 'halation', 'keep', 'punch', 'pale', 'greens', 'knee', 'top', 'whiten', 'grain', 'specks'] as const
 
 export function blankLens(): LensLook {
-  return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, glare: 0, veilSun: 0, shafts: 0 }
+  return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, glare: 0, veilSun: 0, shafts: 0, fan: 0, cap: 0 }
 }
 
 // The lens of one instant: the stock from the kinds of light, the sun from the frame's own light and from where it stands.
@@ -94,7 +98,11 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   const edge = 1 - smoothstep(0, 0.6, out01)
   out.glare = 1
   out.veilSun = edge * edge
-  out.shafts = edge * out.haze
+  // The shafts stand in the frame only with the sun: they are gone a sixth of a frame height past the edge.
+  const near = 1 - smoothstep(0, 0.16, out01)
+  out.shafts = near * clamp(Math.max(d.burst, 0.6 * d.fog, 0.45 * low * (0.3 + 0.7 * d.evening)))
+  out.fan = d.burst
+  out.cap = 0.7 * d.flash
   return out
 }
 
