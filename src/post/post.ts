@@ -113,6 +113,7 @@ export class Post {
     uSunCore: { value: 0.01 },
     uSunHot: { value: 0 },
     uFan: { value: 0 },
+    uShaftLevel: { value: 0 },
     uBloomCap: { value: 0 },
     uHaze: { value: 0 },
     uVeilSun: { value: 0 },
@@ -343,6 +344,8 @@ export class Post {
       g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
       g.uFan.value = look.fan
+      // Under a deck that has just torn the sun itself is still thin, and the beams carry the light of the gap: the level between the two.
+      g.uShaftLevel.value = Math.sqrt(Math.max(look.sun[0], look.sun[1], look.sun[2]) * look.glare * skyLevel)
       g.uBloomCap.value = look.cap
       g.uVeilSun.value = look.veilSun
       g.uShafts.value = cast ? look.shafts : 0
