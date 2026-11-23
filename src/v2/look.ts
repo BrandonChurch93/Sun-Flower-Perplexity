@@ -35,7 +35,7 @@ const FILL_HIGH: Knots = [[-14, 0.045], [-10, 0.06], [-6, 0.14], [-3, 0.15], [0,
 const FILL_WARMTH = 0.25
 const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
-const FLASH = { key: 7, fill: 2.5, color: [0.86, 0.94, 1.22] as RGB }
+const FLASH = { key: 5, fill: 1.6, color: [0.86, 0.94, 1.22] as RGB }
 // The redder the sun, the less a green leaf has to give back: the key keeps at least this much green and blue beside its red.
 const KEY_FLOOR = { green: 0.45, blue: 0.14 }
 
@@ -136,7 +136,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   out.sky.even = clamp(Math.max(d.fog, 0.8 * d.overcast, 0.6 * now.night))
 
   const thick = d.fog * d.fog
-  out.fog.density = 0.0016 + 0.0115 * thick + 0.03 * d.rain
+  out.fog.density = 0.0016 + 0.0115 * thick + 0.012 * d.rain
   out.fog.falloff = lerp(lerp(0.6, 1.7, clamp(d.fog * 1.25)), 0.25, d.rain)
   const veil = lerp(0.42, 0.72, clamp(d.fog))
   for (let i = 0; i < 3; i++) {
