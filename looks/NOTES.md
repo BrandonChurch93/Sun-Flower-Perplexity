@@ -1,8 +1,8 @@
 # Looks of plant
 
-2026-11-23 11:12 UTC, at commit 96c45aec of agent/plant.
+2026-11-23 11:27 UTC, at commit 6c3d1a1c of agent/plant.
 
-One laying a frame, first try through the keyed path. Left today, middle one laying a frame, right the difference times four. Not on in the film: the air of the keyed path is drawn by the shader and stands off the film's air by a millimeter on the hero and by far more on the companion's leaf at the left edge. Being rebuilt so that each frame's laying carries the film's own air.
+One laying a frame with the film's own air in every laying: today's film left, one laying middle, difference times four right
 
-- `01-3000-today-one-laying-difference-the-companion-s.jpg`: 3000 today, one laying, difference: the companion's leaf at the left edge and the hero's lower leaf stand elsewhere
-- `02-2300-today-one-laying-difference-the-leaves-twit.jpg`: 2300 today, one laying, difference: the leaves twitch differently in the time lapse
+- `01-frame-3000-two-layings-a-frame-left-and-one-midd.jpg`: Frame 3000, two layings a frame (left) and one (middle), difference times four (right): the outline stands where it stood, what differs is under a pixel of texture at the middle of the shutter. Not yet on in the film
+- `02-frame-1265-the-same-three-what-differs-is-the-gl.jpg`: Frame 1265, the same three: what differs is the glints of single drops. Not yet on in the film
