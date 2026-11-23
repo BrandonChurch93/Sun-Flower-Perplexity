@@ -166,7 +166,7 @@ export class Post {
     this.quality = quality
   }
 
-  // For the proofs of a world at rest: the grain and the stipple of the fill stop following the frame, so nothing of the lens changes from frame to frame.
+  // For the proofs of a world at rest: the grain stops following the frame, so nothing of the lens changes from frame to frame.
   setStill(on: boolean): void {
     this.held = on
   }
@@ -178,7 +178,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number, low: boolean): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0 || !this.warmed) {
       const n = this.near.uniforms
@@ -214,7 +214,8 @@ export class Post {
       u.tFrame.value = from.texture
       u.uSpread.value = rounds[i].spread
       u.uEdge.value = rounds[i].edge
-      u.uSeed.value = frameIndex + 0.25 * i
+      // The stipple of the fill is a fixed pattern: one that followed the frame made far things a little sharper in some frames than in others.
+      u.uSeed.value = 0.25 * i
       rounds[i].pass.render(renderer, to)
       const swap = from
       from = to
@@ -294,7 +295,7 @@ export class Post {
       const grade = def.grade
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
-      source = this.fillGaps(renderer, frame, seed, scale, samples, farCircle, low)
+      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low)
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
       const bloom = this.scatter(renderer, source, grade, skyLevel)
