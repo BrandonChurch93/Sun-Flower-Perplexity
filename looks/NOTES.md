@@ -1,7 +1,8 @@
 # Looks of player
 
-2026-11-23 09:03 UTC, at commit 02cb1bce of agent/player.
+2026-11-23 10:23 UTC, at commit 2d95c366 of agent/player.
 
-Round 8, live player, every frame 940 to 1272 through the four cuts in a warmed page, software rendering on shared cores
+Round 8 on v2 2d95c36, live player through the cuts and the bloom, software rendering on shared cores
 
-- `01-frame-time-script-time-megabytes-written-and-thi.jpg`: Frame time, script time, megabytes written and things made for every frame 940 to 1272 at 480 x 270. Nothing made in 333 frames. The spikes at 992, 1026 and 1075 fall on my own test and build runs. Not real speed.
+- `01-every-frame-through-each-of-the-four-cuts-at-480.jpg`: Every frame through each of the four cuts at 480 x 270 on 2d95c36. Nothing made in 72 frames, nothing written inside the hold, growth and its 10 MB a frame start on 1260. Not real speed.
+- `02-every-fourth-frame-2900-to-3330-at-480-x-270-on-.jpg`: Every fourth frame 2900 to 3330 at 480 x 270 on 2d95c36. Nothing made in 108 frames. 16 to 18 MB written a frame. Not real speed.
