@@ -84,10 +84,17 @@ let owners: Map<object, string> | null = null
 function ownersOf(): Map<object, string> {
   const out = new Map<object, string>()
   const seen = new Set<object>()
-  const queue: [unknown, string][] = [[film, 'film']]
-  for (let i = 0; i < queue.length && seen.size < 600000; i++) {
+  // A part's own things are named by the part: each part is walked first, and stops at what belongs to the whole film.
+  const shared = new Set<unknown>([film, film.scene, film.stage, film.view])
+  const queue: [unknown, string][] = film.parts.map((p): [unknown, string] => [p.part, `film.parts[${p.name}]`])
+  let whole = false
+  for (let i = 0; (i < queue.length || !whole) && seen.size < 600000; i++) {
+    if (i === queue.length) {
+      whole = true
+      queue.push([film, 'film'])
+    }
     const [v, p] = queue[i]
-    if (!v || typeof v !== 'object' || seen.has(v)) continue
+    if (!v || typeof v !== 'object' || seen.has(v) || (!whole && shared.has(v))) continue
     seen.add(v)
     if (ArrayBuffer.isView(v)) {
       out.set(v, p)
