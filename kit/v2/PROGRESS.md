@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: none yet
-- Last status: 05 · 2026-11-23 01:41 UTC · Phase 2
+- Last status: 06 · 2026-11-23 02:11 UTC · Phase 2
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
 - 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
 - 2026-11-23 01:17 UTC · status 04 · Phase 2 · `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
 - 2026-11-23 00:51 UTC · status 03 · Phase 2 · `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure
@@ -33,12 +34,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 2.31 h |
+| 2 | 3.50 h | 2.80 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 3.69 h |
+| Whole build | 30.00 h | 4.19 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -175,4 +176,6 @@ None yet.
   Pictures: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm.
 - Status 05, 2026-11-23 01:41 UTC, Phase 2. The washed frames are fixed in the storm: rain, the puddle and the lens glare now take their light from the sky itself, so the storm is dark again with the plant lit and the lightning frame reads. The opening frame shows soil and the first hook instead of a black band. Drawing bar 61 three ways gave the same picture to the last pixel, so a frame depends only on its number there. The frost hold is still washed; its owner is switching the mist over now. Next: Get the frost hold right, take the second reports of sky candidates A and C, judge the three skies blind, then merge the player and the checks and run the film against the music. Time used: 3.7 h of 30 h.
   Pictures: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; The lightning frame at bar 37 (draft tier, one sample a pixel); The open flower at bar 61 (draft tier); Opening frame: reference left, the film right.
+- Status 06, 2026-11-23 02:11 UTC, Phase 2. All parts merged again. Dusk and dawn no longer step: the largest change from one frame to the next fell from 28 to 10 of 255 (measured). The frost hold now shows a pale sun in grey mist. Found and sent back: fog banks standing in the opening. Next: Sky jury on the merged film, the opening without fog banks, then the first whole film in parts with the music. Time used: 4.2 h of 30 h.
+  Pictures: The merged film at sixteen moments, sky B; A sunset of the time lapse, thirteen frames in a row; Frost hold beside its reference key.
 

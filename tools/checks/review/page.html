@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower: the checks and the film</title>
+<style>/*STYLE*/</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1 id="title"></h1>
+    <nav aria-label="Parts of this page">
+      <a href="#film">Film</a><a href="#looks">Looks</a><a href="#sections">Sections</a><a href="#checks">Checks</a>
+    </nav>
+  </div>
+  <p id="stamp" class="quiet"></p>
+  <div id="chips" class="chips"></div>
+</header>
+<main>
+  <section id="film" aria-labelledby="film-h">
+    <h2 id="film-h">The whole film</h2>
+    <p id="film-note" class="quiet"></p>
+    <div class="player">
+      <video id="video" playsinline muted preload="metadata"></video>
+      <div class="transport">
+        <button id="play" type="button" aria-label="Play or pause">Play</button>
+        <button id="back" type="button" aria-label="One frame back">-1</button>
+        <button id="forward" type="button" aria-label="One frame on">+1</button>
+        <output id="readout" class="mono" aria-live="off"></output>
+      </div>
+      <div class="timeline-wrap">
+        <svg id="timeline" role="slider" tabindex="0" aria-label="Place in the film, in bars" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></svg>
+      </div>
+      <div class="track">
+        <label class="pick" for="audio-file">Play the track in step: pick it from your disk</label>
+        <input id="audio-file" type="file" accept="audio/*">
+        <span id="audio-note" class="quiet">The page holds no audio. The file you pick stays in this tab and is sent nowhere.</span>
+        <audio id="audio" preload="auto"></audio>
+      </div>
+      <p class="quiet keys">Space plays and pauses. Left and right step one frame, with Shift one bar. Click or drag the timeline to move.</p>
+    </div>
+  </section>
+  <section id="looks" aria-labelledby="looks-h">
+    <h2 id="looks-h">The looks, each beside its reference</h2>
+    <p class="quiet">Left is the film's own frame at the moment the look is due. Right is the reference it is judged against. Click a frame to go there in the film.</p>
+    <div id="look-list"></div>
+  </section>
+  <section id="sections" aria-labelledby="sections-h">
+    <h2 id="sections-h">The sections</h2>
+    <div id="section-list" class="grid"></div>
+  </section>
+  <section id="checks" aria-labelledby="checks-h">
+    <h2 id="checks-h">The checks</h2>
+    <p class="quiet">Each check stands for one sentence of Brandon's. Under each result is the same check run on a film broken on purpose: there it has to fail.</p>
+    <div id="check-list"></div>
+  </section>
+  <section id="missing" aria-labelledby="missing-h" hidden>
+    <h2 id="missing-h">Not built yet</h2>
+    <ul id="missing-list"></ul>
+  </section>
+</main>
+<script id="data" type="application/json">/*DATA*/</script>
+<script>/*SCRIPT*/</script>
+</body>
+</html>

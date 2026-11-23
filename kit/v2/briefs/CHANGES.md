@@ -41,3 +41,19 @@ Newest first. Merge with `git fetch origin v2 && git merge FETCH_HEAD` (never re
 - Tests may take up to a minute each (`testTimeout` in `vite.config.ts`), so a machine that is drawing beside them does not fail them.
 - MEASURED on the merged film: bar 61 drawn after fifteen other bars, alone, and after bar 29.29 gives the same picture to the last pixel.
 - A quad whose `position` has two components must set `mesh.frustumCulled = false` (three.js cannot make its bounding sphere and prints an error on every load).
+
+## 23 Nov, 02:05 UTC: dusk and dawn without a step
+
+Found by the checks and by the place: at every sunset of the fast time lapse the picture fell 28 of 255 in one frame (frame 1339), because the sun ran three times faster under the horizon than above it and the key went out inside one frame. MEASURED after the change, frames 1334 to 1346 and 1356 to 1368 with everything on: the largest step from one frame to the next is 9.6 of 255.
+
+1. The sun crosses the horizon at one speed (`sunElevationOfPhase` in `src/v2/clock.ts`). In a night of the time lapse it now stands at about -0.8, -1.8, -3.2, -4.7, -6.3, -7.8, -9.4 degrees on the frames after sunset (was -2.1, -4.0, -5.7, -7.3), and the same going up before sunrise. Sunset and sunrise stay on their beats, and the sun still goes no deeper than 14 degrees.
+2. `now.lightKind` is `'sun'` until the sun stands 5 degrees under the horizon and `'moon'` from there. `'none'` is gone. Under the horizon the key is the glow the sun leaves in the sky: it comes from the sun's azimuth, 0.6 to 5 degrees up, it is soft (up to 20 degrees wide), it has the colour of the sky toward the sun, and it falls from 1.7 at the horizon to 0.5 at -2.5 degrees and to nothing at -5, where the moon's key starts from nothing.
+3. So nothing may jump with `lightKind`. Use it to choose a direction or a colour that is multiplied by the key (`uSunColor`, zero at the change), never as a switch for a strength of your own. These lines still jump at the change and belong to their owners:
+   - `src/place/onstage.ts`: `uThrough = now.lightKind === 'sun' ? 1 : 0.12`
+   - `src/field/index.ts`: `uMoon = now.lightKind === 'sun' ? 0 : now.night` (0.37 at the change)
+   - `src/field/far.ts`: `uThrough = now.lightKind === 'sun' ? 1 - now.night : 0`
+   - `src/sky-a/index.ts`: `halo`; `src/sky-c/atmosphere.ts` line 368
+   Make each a smooth function of `now.sunElevationDeg` (for instance `smoothstep(-5, -1, el)` for what belongs to the sun and `smoothstep(5, 9, -el)` for what belongs to the moon).
+4. Frames 1372 and 1373 (the sun gone for two frames after a sunrise) are not a fault: the rising sun passes behind the top leaf of the plant. MEASURED on a crop of frames 1370 to 1375.
+5. `npm run bench -- --frames 1334-1346,1400 --name dusk --cols 7` draws the film's own camera at frames by number.
+6. `npm run part` and `npm run join` draw a range of frames with several pages and join the parts to one film (used for the blockout; the music goes only into a private copy).

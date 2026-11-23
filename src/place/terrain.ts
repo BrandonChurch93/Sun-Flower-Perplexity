@@ -148,8 +148,8 @@ void main() {
 const CROPS = [
   [0.06, 0.095, 0.03],
   [0.036, 0.078, 0.022],
-  [0.3, 0.24, 0.11],
-  [0.21, 0.185, 0.1],
+  [0.125, 0.108, 0.058],
+  [0.105, 0.096, 0.056],
   [0.115, 0.085, 0.058],
   [0.045, 0.07, 0.022],
   [0.1, 0.14, 0.045],
@@ -255,10 +255,12 @@ void main() {
   albedo = mix(albedo, vec3(0.72, 0.78, 0.84), rime);
 
   float ndl = max(dot(n, uSunDir), 0.0);
+  // A crop at grazing light shades itself: a slope toward a low sun does not flare.
+  ndl = min(ndl, mix(max(uSunDir.y, 0.0) + 0.05, 1.0, max(wood, smoothstep(0.06, 0.35, uSunDir.y))));
   float shade = mix(1.0, smoothstep(0.3, 0.8, c0), low * wood * bump);
   // A standing crop and a wood let the low sun through toward the lens.
   float through = uThrough * pow(saturate(dot(-v, uSunDir)), 3.0) * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * (1.0 - smoothstep(0.25, 0.6, uSunDir.y));
-  vec3 color = albedo * (uSunColor * (ndl * shade + through) + skyAmbient(n) * nook + flashLight(n));
+  vec3 color = albedo * (uSunColor * (ndl * shade + through) + skyAmbient(n) * nook);
   outColor = landFinish(color, vWorld, vDepth);
 }
 `

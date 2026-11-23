@@ -27,7 +27,7 @@ export interface Dials {
   evening: number
 }
 
-export type LightKind = 'sun' | 'moon' | 'none'
+export type LightKind = 'sun' | 'moon'
 
 export interface CloudDrift {
   // How far the cloud field has travelled, in kilometres at the cloud base.
