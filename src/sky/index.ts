@@ -60,14 +60,13 @@ function lastLightAt(elevation: number, evening: number): number {
   return evening * (1 - smoothstep(0.4, 2.7, elevation))
 }
 
-// Replace the cumulus only for the last time-lapse dusk and the late crane.
-// Phase rejects the mornings inside the first bar range.
-function eveningStreaksAt(m: Moment, elevation: number): number {
+// The high sheets enter gradually over the last lapse and take over on
+// the crane. They stay in the air through dusk, night, and dawn.
+function eveningStreaksAt(m: Moment): number {
   const b = m.bar
-  const short = smoothstep(53, 53.22, b) * (1 - smoothstep(56.85, 57, b))
-    * smoothstep(0.60, 0.76, m.phase) * smoothstep(-12, -6.5, elevation)
+  const short = 0.64 * smoothstep(53, 54.1, b) * (1 - smoothstep(55.7, 57, b))
   const long = smoothstep(65, 65.35, b) * (1 - smoothstep(75, 75.25, b))
-  return Math.max(short, long) * (1 - smoothstep(8, 17, elevation)) * (1 - smoothstep(0.10, 0.27, m.dials.overcast))
+  return Math.max(short, long) * (1 - smoothstep(0.10, 0.27, m.dials.overcast))
 }
 
 // Under a remaining deck, high sun transmission means a local opening
@@ -277,7 +276,7 @@ class FieldSky implements Sky {
     this.air.deckAt(e, this.deck)
     const over = d.overcast
     const blend = smoothstep(0.40, 1, over)
-    const sheets = eveningStreaksAt(m, e)
+    const sheets = eveningStreaksAt(m)
     const fair = 0.21 * d.cover * (1 - blend) * (1 - 0.82 * sheets)
     const cold = smoothstep(0.25, 0.84, d.fog)
     const burst = tearAt(over, d.sunThrough, d.burst)
@@ -376,14 +375,14 @@ class FieldSky implements Sky {
     u.uLower.value.fromArray(this.lower)
     u.uDeck.value.fromArray(this.deck)
     u.uFlash.value.copy(now.flashAt)
-    // The sun clears a local tear before the rest of the front moves off.
+    // The dials open a local tear before the rest of the front moves off.
     const deckShape = d.overcast + 0.81 * tear * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, tear)
     u.uTearAttack.value = tearAttack(d.sunThrough, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
-    u.uStreaks.value = eveningStreaksAt(now, e)
+    u.uStreaks.value = eveningStreaksAt(now)
     u.uSideBanks.value = smoothstep(66.35, 67, now.bar) * (1 - smoothstep(71, 71.85, now.bar))
     u.uWetHaze.value = wetHaze
     if (wetHaze > 0) {
