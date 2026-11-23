@@ -311,3 +311,30 @@ The three close lenses are stopped down: `margin` f/16, `tip` f/32, `thaw` f/32,
 `src/v2/held.ts`. While the plant's clock stands, every frame belongs to one of five held lenses: the film's own camera in the frost hold (frames 849 to 951 and frame 1260), `margin` (952 to 1054), `tip` (1055 to 1156), `thaw` (1157 to 1259), and the storm hold (1672 to 2083). `heldLensAt(frame)` gives the number, -1 where the plant grows; `heldFrames[i]` lists the frames of each.
 
 Before anything is drawn the film sets `held`: `lens` (the number, or -1), `eye` and `forward` (world), `perTan` (pixels for a tangent of one), `focusM`, `cocScale` (the same units as `shared.uCocScale`). They are the pose of that shot which shows the plant largest (greatest focal length over focus distance among its frames), and are the same on every frame of the shot. What is thinned or chosen by the lens while the plant stands is thinned once for each held lens from these numbers, kept, and switched on the cut: a cut frame writes nothing. On the bench, with a camera of its own, the numbers are that camera's: choose again when they differ from the ones a set was made for.
+
+### 19. The bloom lens and a head owner
+
+The bloom's push in is shot at 35 mm and f/2.8 from bar 57 to bar 65 (it was f/5.6) and closes to f/5.6 by bar 67, so the field behind the head is soft while the head opens. The head turns to face the lens (a facing offset of 12 degrees in the plant's inputs; it moves nothing before about frame 2690). The flower head has an owner of its own: `src/plant/head/` and `src/plant/look/{bud,disc,ray}.ts`, branch `agent/head`, brief `kit/v2/briefs/head.md`.
+
+### 20. A stem and hairs owner
+
+`src/plant/hairs/` and `src/plant/stem/` have an owner of their own, branch `agent/hairs`, brief `kit/v2/briefs/hairs.md`. The plant owner keeps the rest of `src/plant/` outside `look/`, `head/`, `hairs/` and `stem/`.
+
+### 21. The deck, the nights, and one test tolerance
+
+The storm's cloud deck is gone by bar 42.6 (`DECK_GOES` in `src/v2/clock.ts`), so the first night after the storm shows stars. The nights clear by a table (`NIGHT_CLEAR`: 0.5 as a rule, night 1 0.6, night 3 0.65, night 10 0.6). The sky hides its stars by the overcast. `tests/plant.test.ts` line 55 allows `7e-3`.
+
+### 22. One rule for the blur circle, and a focus range
+
+Nobody writes a formula for the blur circle any more. In a shader call `cocOf(viewDepth)`: it is in the common chunk now, so vertex shaders have it too. In script call `blurPx(cocScale, focusM, focusNearM, depthM)` from `src/core/lens.ts`.
+
+A pose may carry `focusNearM` (`CameraPose`): everything from that depth to `focusM` is sharp and the blur grows from those two ends, as in a macro picture put together from several focus distances. The shaders get it as the shared uniform `uFocusNear` beside `uFocusM`; `held` has `focusNearM` beside `focusM`. Where it is not set the two are equal and every result is what it was, bit for bit. `focusM` is the far end, so anything written for far things (the sun's far circle, far rows, rain in the air) is unchanged.
+
+The three frost close shots use it (`sharp` in `src/v2/cuts.ts`, metres before and behind the point the lens looks at): `margin` f/11, sharp from 26 mm before to 57 mm behind; `tip` f/22, 46 mm before to 40 mm behind; `thaw` f/22, 35 mm before to 40 mm behind. The whole leaf in frame is sharp at 1920 and the ground behind is blurred about as before. This replaces the stops of item 17.
+
+Tier rule: such a shot cannot be made by moving the eye over the lens opening, so every sample is drawn through the middle of the lens (pixel jitter and shutter stay) and the lens pass is told one sample, at every tier. In these shots the review and final tiers get their blur the way live play does.
+
+Judge the close shots at 1920 and 100 percent (`npm run bench -- --only all --frames 1003,1106,1208 --format master --tier draft`), not in the reduced frame.
+
+Also new: the shared uniform `uWorldExposure`, the exposure of the grade at this moment (`def.grade.exposure`), set in `applyWorld`, for glints that must be capped in times white.
+
