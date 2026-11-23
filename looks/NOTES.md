@@ -1,8 +1,12 @@
 # Looks of player
 
-2026-11-23 00:22 UTC, at commit d996d49 of agent/player.
+2026-11-23 00:36 UTC, at commit 72f488e of agent/player.
 
-Second sheet, work in progress. The page now loads behind a loading screen (files fetched and textures made are counted live, then the 19 warm moments), then says Ready and shows frame 0 without starting. Drawn at 960 x 540 and fitted here for speed in the sandbox: the default is 1920 x 1080.
+Headless run with a 440 Hz test tone as the track, preview format shown to fit a 1920 x 1080 window, software renderer. Nearly every frame is skipped here, each frame drawn was chosen within 33 ms of the audio clock.
 
-- `01-loading-the-scene-step.jpg`: loading, the scene step
-- `02-ready-frame-0-nothing-playing.jpg`: ready, frame 0, nothing playing
+- `01-track-picked-not-the-film-s-track.jpg`: track picked, not the film's track
+- `02-check-result.jpg`: check result
+- `03-recording-mode-mid-film-nothing-but-the-film.jpg`: recording mode mid film, nothing but the film
+- `04-report-after-the-recording.jpg`: report after the recording
+- `05-scrubbing-with-the-menu-open.jpg`: scrubbing with the menu open
+- `06-export-page-with-a-track-hash-stubbed-to-match.jpg`: export page with a track (hash stubbed to match)
