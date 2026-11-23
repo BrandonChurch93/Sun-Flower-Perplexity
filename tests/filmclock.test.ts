@@ -64,6 +64,23 @@ describe('the film clock', () => {
     expect(longest / fps).toBeLessThanOrEqual(0.8)
   })
 
+  it('lets the sun down for two beats in the fast time lapse and for under a second every night', () => {
+    const nights: [number, number][] = []
+    let from = -1
+    for (let f = 1; f < frameCount; f++) {
+      const before = elevation((f - 1) / fps)
+      const here = elevation(f / fps)
+      if (before >= 0 && here < 0) from = f
+      if (before < 0 && here >= 0 && from > 0) nights.push([from, f])
+    }
+    expect(nights.length).toBe(14)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeGreaterThan(0.8)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeLessThan(1)
+    const fast = nights.map(([a]) => barAt(a / fps)).filter((b) => (b > 26 && b < 31) || b > 44)
+    expect(fast.length).toBe(9)
+    for (const b of fast) expect(Math.abs(b - Math.floor(b) - 0.5) * BAR).toBeLessThan(1.5 / fps)
+  })
+
   it('holds the sun where the film needs it', () => {
     expect(elevation(barTime(25))).toBeCloseTo(SUN.frostEnd, 3)
     expect(elevation(barTime(33))).toBeCloseTo(SUN.stormFrom, 3)

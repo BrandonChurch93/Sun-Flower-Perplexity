@@ -1,9 +1,8 @@
 // The ray florets: 34 strips round the rim of the head, folded shut in the bud and unfurled by `rayOpen`.
 import * as THREE from 'three'
-import { segmentStart } from '../../../config.ts'
 import type { Assets } from '../../../core/assets.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { headOpen, rayAngle, rayCount, rayLength, rayOpen } from '../../growth.ts'
+import { headOpen, rayAngle, rayCount, rayLength, rayOpen, realOf } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { rayFrameAt, type Pose } from '../../skeleton.ts'
@@ -54,7 +53,7 @@ const TIP_TUCK = 0.35
 const GAP_COMB = 0.5
 const GAP_REACH = 0.16
 // After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
-const LATE_FROM_S = segmentStart('field')
+const LATE_FROM_S = 52
 // A neighbor's clock runs up to 1.5 s ahead of the plant's. From this second of its own clock a ray also draws out long and narrow.
 const DRAWN_FROM_S = 53.55
 // The late whorl: rays of the hero head that come out between the others after the bloom, each from its own foot, shorter than the first.
@@ -385,7 +384,8 @@ export function create(options: PartOptions): PlantPart | null {
     let nx = frame.nx
     let ny = frame.ny
     let nz = frame.nz
-    const wind = pose.inputs.wind * flutter(time, ray.seed)
+    const real = realOf(pose.inputs, time)
+    const wind = pose.inputs.wind * flutter(real, ray.seed)
     // In open air the light parts feel more than the steady wind the stem follows, and an open ray answers that surplus: it lifts and rolls toward its tip, harder in a gust, each ray as limp or as stiff as it is and in its own time. In air no livelier than the steady wind this is nothing.
     const surplus = (pose.inputs.wind - Math.min(pose.inputs.calm ?? pose.inputs.wind, pose.inputs.wind)) * smooth(0.8, 1, open)
     let flap = 0
@@ -393,11 +393,11 @@ export function create(options: PartOptions): PlantPart | null {
     let wag = 0
     if (surplus > 0) {
       const limp = surplus * (0.55 + 0.9 * hash01(seed, 91, k))
-      const blow = gust(time, frame.ox, frame.oz)
+      const blow = gust(real, frame.ox, frame.oz)
       const hard = 0.6 + 0.4 * blow
-      flap = limp * (FLAP * hard * flutter(time, ray.seed * 0.83 + 0.09) + FLAP_GUST * blow)
-      roll = limp * ROLL * hard * flutter(time - 0.07, ray.seed * 0.41 + 0.37)
-      wag = limp * WAG * flutter(time - 0.13, ray.seed * 0.67 + 0.21)
+      flap = limp * (FLAP * hard * flutter(real, ray.seed * 0.83 + 0.09) + FLAP_GUST * blow)
+      roll = limp * ROLL * hard * flutter(real - 0.07, ray.seed * 0.41 + 0.37)
+      wag = limp * WAG * flutter(real - 0.13, ray.seed * 0.67 + 0.21)
     }
     const wide = ray.width * full * Math.pow(grown, 0.75) * 0.5 * (options.detail === 'far' ? 1.5 : 1) * (1 + ray.lateWide * longer - ray.lateSlim * drawn) * Math.pow(scale, 0.75)
     const fresh = 1 - smooth(0.02, 0.45, open)
