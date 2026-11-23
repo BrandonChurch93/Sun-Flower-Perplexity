@@ -1,8 +1,9 @@
 # Looks of frost
 
-2026-11-23 06:33 UTC, at commit 967a3331 of agent/frost.
+2026-11-23 07:17 UTC, at commit 3920aaac of agent/frost.
 
-- `01-macro-0-14-m-100-mm-bar-21-leaf-tip.jpg`: macro 0.14 m 100 mm bar 21 leaf tip
-- `02-macro-leaf-margin.jpg`: macro leaf margin
-- `03-macro-leaf-face-from-above.jpg`: macro leaf face from above
-- `04-macro-cotyledon-and-stem.jpg`: macro cotyledon and stem
+- `01-frame-1003-margin-ours-left-reference-right-revi.jpg`: frame 1003 margin ours left reference right review tier 3920aaa
+- `02-frame-1106-tip-ours-left-reference-right-review-.jpg`: frame 1106 tip ours left reference right review tier 3920aaa
+- `03-frame-1003-crop-one-to-one.jpg`: frame 1003 crop one to one
+- `04-frame-1106-crop-one-to-one.jpg`: frame 1106 crop one to one
+- `05-frames-1003-1106-1208-and-wide-940-draft.jpg`: frames 1003 1106 1208 and wide 940 draft
