@@ -226,6 +226,8 @@ export function blownOf(id: number, x: number, z: number, seconds: number, wind:
 // Full plants to here, simpler ones to the next, pictures of plants to the last row, where the field ends on a straight edge.
 // A carpet closes the tops over the last rows.
 export const fieldNearM = 12
+// The size the tops of the crop stand at: the light and the sky a neighbor keeps are counted down from there.
+export const CANOPY_SIZE = 0.65
 export const fieldFarM = 40
 export const fieldPicturesM = 66
 const NEAR_BAND_M = 4

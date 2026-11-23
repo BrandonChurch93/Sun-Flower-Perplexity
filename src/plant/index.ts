@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { Assets } from '../core/assets.ts'
 import { declareStandIn } from '../core/standins.ts'
-import type { Surface } from '../core/shading.ts'
+import { shared, type Surface } from '../core/shading.ts'
 import type { Caster } from '../core/shadow.ts'
 import { headOpen, paleness, usePlant, type Place, type PlantInputs } from './growth.ts'
 import { real as hairsReal } from './hairs/index.ts'
@@ -9,7 +9,7 @@ import { create as createBud } from './head/bud/index.ts'
 import { create as createDisc } from './head/disc/index.ts'
 import { create as createPetals } from './head/petals/index.ts'
 import { create as createLeaves } from './leaves/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartMaker, type PartOptions, type PlantPart } from './part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartDetail, type PartMaker, type PartOptions, type PlantPart } from './part.ts'
 import { create as createSeedling } from './seedling/index.ts'
 import { poseAt } from './skeleton.ts'
 import { HERO, PART, buildStandIn, plantNumbers, standInTopology, tipAt, vertexCountOf, type Detail } from './standin.ts'
@@ -145,6 +145,35 @@ export interface PlantOptions {
   at?: Place
 }
 
+const SIGNED_EACH = 11
+const SIGNED = 2 + 2 * SIGNED_EACH + 3
+
+// The inputs the shape is filled from: the air of a plant whose clock stands is taken out of them.
+function stilled(inputs: PlantInputs): PlantInputs {
+  const held = inputs.held ?? 0
+  if (held <= 0) return inputs
+  const free = 1 - held
+  const less = (v: number | undefined): number | undefined => (v === undefined ? undefined : v * free)
+  return { ...inputs, wind: inputs.wind * free, calm: less(inputs.calm), gust: less(inputs.gust), rain: less(inputs.rain), lapse: less(inputs.lapse) }
+}
+
+// Every number of the inputs a shape depends on. The film second counts only while something runs on it.
+function sign(inputs: PlantInputs, out: Float64Array, at: number): void {
+  const held = inputs.held ?? 0
+  const runs = inputs.wind > 0 || (inputs.gust ?? 0) > 0 || (inputs.lapse ?? 0) > 0 || (held < 1 && ((inputs.rain ?? 0) > 0 || (inputs.cold ?? 0) > 0))
+  out[at] = inputs.leanX
+  out[at + 1] = inputs.leanZ
+  out[at + 2] = inputs.lift
+  out[at + 3] = inputs.liftLow ?? -1
+  out[at + 4] = inputs.wind
+  out[at + 5] = inputs.calm ?? -1
+  out[at + 6] = inputs.lapse ?? -1
+  out[at + 7] = inputs.cold ?? -1
+  out[at + 8] = inputs.rain ?? -1
+  out[at + 9] = inputs.gust ?? -1
+  out[at + 10] = runs ? (inputs.real ?? -1) : held
+}
+
 export class Plant {
   readonly variant: number
   readonly detail: PartDetail
@@ -160,6 +189,11 @@ export class Plant {
   private readonly n: THREE.BufferAttribute
   private readonly hide: number
   private on = true
+  private readonly stands = { held: 0 }
+  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) } }
+  // What the shape was last filled from: while none of it changes, the shape stands as it is with the graphics card.
+  private readonly filled = new Float64Array(SIGNED).fill(NaN)
+  private readonly asked = new Float64Array(SIGNED)
   private readonly live: PlantPart[] = []
   private readonly drawn = new Set<PlantPart>()
   private readonly away = new Set<PlantPart>()
@@ -171,7 +205,7 @@ export class Plant {
     this.detail = o.detail ?? 'hero'
     const places = o.places ?? null
     this.at = places ? null : (o.at ?? { x: 0, z: 0 })
-    const options: PartOptions = { detail: this.detail, variant: this.variant, places }
+    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own, stands: this.stands }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     for (const slot of SLOTS) {
@@ -230,8 +264,39 @@ export class Plant {
     for (const part of this.away) for (const m of part.meshes) m.visible = false
   }
 
-  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs): void {
+  prepare(timeOpen: number, timeClose: number, feltOpen: PlantInputs, feltClose: PlantInputs): void {
     usePlant(this.variant, this.at)
+    // While the plant's clock stands the air moves it where it is drawn, so the shape is filled for still air and stays as it is.
+    const open = stilled(feltOpen)
+    const close = stilled(feltClose)
+    const held = feltOpen.held ?? 0
+    this.own.uOwnAir.value.set(held * Math.min(feltOpen.calm ?? feltOpen.wind, feltOpen.wind), held * feltOpen.wind, held * (feltOpen.gust ?? 0), held * (feltOpen.rain ?? 0))
+    if (held > 0) tipAt(timeOpen, { ...open, steady: false }, this.own.uOwnTip.value)
+    const asked = this.asked
+    asked[0] = timeOpen
+    asked[1] = timeClose
+    sign(open, asked, 2)
+    sign(close, asked, 2 + SIGNED_EACH)
+    filling.held = held
+    this.stands.held = Math.min(held, feltClose.held ?? 0)
+    asked[SIGNED - 3] = stateUniforms.uPlantFrost.value
+    asked[SIGNED - 2] = wetFelt()
+    asked[SIGNED - 1] = stateUniforms.uPlantDew.value
+    let same = true
+    for (let i = 0; i < SIGNED; i++) if (asked[i] !== this.filled[i]) same = false
+    // Only a plant whose clock stands is left as it is: any other is laid for this frame, so a frame never depends on the one drawn before it.
+    if (same && this.stands.held >= 1) {
+      usePlant(0)
+      return
+    }
+    this.filled.set(asked)
+    // What is laid while the clock stands is laid as of the instant it stopped and for the wet in steps, so it is the same whichever frame of the hold it is laid on.
+    const realNow = shared.uReal.value
+    const wetNow = stateUniforms.uPlantWet.value
+    if (this.stands.held >= 1 && feltOpen.stood !== undefined) {
+      shared.uReal.value = feltOpen.stood
+      stateUniforms.uPlantWet.value = wetFelt()
+    }
     if (this.hide !== ALL) {
       buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
       if (this.b) buildStandIn(timeClose, close, this.b.array as Float32Array, null, this.shape, this.hide)
@@ -259,6 +324,8 @@ export class Plant {
       for (const part of live) part.fill(1, second)
       for (const part of live) part.finish(timeOpen, open)
     }
+    shared.uReal.value = realNow
+    stateUniforms.uPlantWet.value = wetNow
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)
     this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)

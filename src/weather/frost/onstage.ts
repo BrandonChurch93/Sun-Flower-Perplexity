@@ -42,7 +42,9 @@ void main() {
   float turn = sin(t * (0.3 + 0.5 * fract(own * 7.13)) + 40.0 * own);
   float flash = pow(turn * turn, 24.0);
   float against = pow(saturate(dot(-toEye, uSunDir)), 4.0);
-  vec3 light = (uSkyZenith + uSkyHorizon) * 1.5 + uSunColor * (1.0 + 4.0 * against + 28.0 * flash);
+  // The sun's own light is many times the sky's: a grain is a soft point, never a spark that burns out.
+  vec3 sun = uAirSun * (3.0 / max(dot(uAirSun, vec3(0.2126, 0.7152, 0.0722)), 3.0));
+  vec3 light = (uAirZenith + uAirHorizon) * 1.5 + sun * (1.0 + 4.0 * against + 28.0 * flash);
   vLight = light * (uCold * seen * grainPx * grainPx / (radius * radius));
   vAt = side;
   view.xy += side * (radius * pixel);

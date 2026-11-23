@@ -6,15 +6,22 @@ import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
+import { airUniforms } from '../place/air.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
-import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
-const PICTURE_SIZE = 0.72
+const PICTURE_UNDER = 0.94
+// How much of its light a far leaf keeps when nothing but the sky lights it.
+const UNLIT = 0.3
+// How much of the sky behind it the far crop takes by 220 m, how much at its very end, and from where that comes in.
+const FAR_AIR = 0.2
+const END_AIR = 0.5
+const END_AIR_FROM_M = 170
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -33,6 +40,28 @@ const PICTURE_HEADS = [1.05, 0.95, 1.1, 0.9, 1.0, 1.15, 0.95, 1.05]
 const EARLY_CODE = earlyCode({ turn: 0, tall: 1, head: 1, nod: 0, low: 0, young: 1, stalk: 1, leaf: 1.1, droop: 0.2, bud: 1.4, leanX: 0, leanZ: 0 })
 // The carpet comes in under the last of the real plants, so there is crop under every picture.
 const CARPET_FROM_M = fieldFarM - 8
+
+// Far off the crop goes by degrees into the sky behind the land, through the same air as the land past it, and at its far end all the way: it ends in no line.
+const farAirGlsl = /* glsl */ `
+uniform float uAir;
+uniform float uAirToSun;
+uniform float uAirRain;
+uniform float uMist;
+uniform float uMistTopM;
+uniform vec3 uTrueSun;
+vec3 farAir(vec3 color, vec3 world) {
+  vec3 v = world - uCamPos;
+  float d = length(v);
+  float toSun = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uTrueSun.xz + vec2(1e-6)))), 6.0) * uAirToSun;
+  vec3 behind = mix(mix(uAirHorizon, uSkyHorizonSun, toSun), uFogColor + uFogSunTint * toSun, uAirRain);
+  float k = v.y / uMistTopM;
+  float mist = uMist * exp(-max(uCamPos.y, 0.0) / uMistTopM) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
+  float land = 1.0 - exp(-d * uAir - mist);
+  float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
+  float last = ${END_AIR.toFixed(2)} * smoothstep(${END_AIR_FROM_M.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, length(world.xz));
+  return mix(color, behind, max(land, max(own, last)));
+}
+`
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -92,6 +121,7 @@ in vec3 vWorld;
 in float vDepth;
 in float vTone;
 uniform sampler2D uAtlas;
+${farAirGlsl}
 void main() {
   vec4 t = texture(uAtlas, vUv);
   float cover = 1.0 - t.a;
@@ -101,11 +131,13 @@ void main() {
   // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
   float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
   color.gb *= mix(vec2(1.0), vec2(${RAY_DEEP[0].toFixed(2)}, ${RAY_DEEP[1].toFixed(2)}), ray);
+  // With no sun or moon on it the crop is dark between its heads, as the real rows before it are.
+  color *= mix(mix(${UNLIT.toFixed(2)}, 1.0, ray), 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
     return;
   }
-  outColor = finish(color * vTone, vWorld, vDepth, -1.0);
+  outColor = finish(farAir(color * vTone, vWorld), vWorld, vDepth, -1.0);
 }
 `
 
@@ -159,6 +191,7 @@ uniform float uWind;
 uniform vec4 uWedge;
 uniform vec2 uEnd;
 ${gustGlsl}
+${farAirGlsl}
 // The heads of the far crop. Near, one disc to a plant. Farther off a plant is smaller than a pixel and the eye sees the heads that stand clear,
 // one to every few plants: the cells double in size as they shrink on the screen, each way on its own, and one size fades into the next.
 float headsAt(vec2 f, out float tone) {
@@ -223,11 +256,16 @@ void main() {
     if (lost > 0.0 && island < lost * 1.15 - 0.05) discard;
     float grain = valueNoise(vec2(across, along) * 1.7);
     float patchy = 0.6 * valueNoise(at * 0.028) + 0.4 * valueNoise(at * 0.0093 + 5.0);
-    color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * mix(0.5, grain, fine)) * (0.74 + 0.52 * patchy);
+    // Past the last picture the crop keeps their look: tops in the light, one plant wide, over the dark between them, as far as the eye can part them.
+    vec2 clumps = vec2(across * 2.2, along * 0.12);
+    float parted = clamp(1.0 - 0.7 * max(fwidth(clumps.x), fwidth(clumps.y)), 0.0, 1.0);
+    float tops = mix(0.42, smoothstep(0.25, 0.8, valueNoise(clumps + 7.0)), parted);
+    color = mix(vMid * 0.32, vTop * 0.72, mix(tops, 0.3 + 0.55 * grain, fine)) * (0.74 + 0.52 * patchy);
+    color *= mix(${UNLIT.toFixed(2)}, 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
-    float share = mix(0.06, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    float share = mix(0.03, 0.12, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
     float disc = headsAt(f, tone);
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55);
@@ -238,6 +276,7 @@ void main() {
     color *= 1.0 + 0.22 * fine * (row - 0.5);
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
+    color = farAir(color, vWorld);
   }
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
@@ -336,6 +375,12 @@ export class FarField {
     uLag: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
+    uAir: airUniforms.uAir,
+    uAirToSun: airUniforms.uAirToSun,
+    uAirRain: airUniforms.uAirRain,
+    uMist: airUniforms.uMist,
+    uMistTopM: airUniforms.uMistTopM,
+    uTrueSun: airUniforms.uTrueSun,
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -415,7 +460,7 @@ export class FarField {
     this.uniforms.uStand.value = stand
     this.uniforms.uLag.value = lagAt(timeOpen)
     // Moonlight does not glow green through a leaf; the sun does.
-    this.uniforms.uThrough.value = now.lightKind === 'sun' ? 1 - now.night : 0
+    this.uniforms.uThrough.value = (1 - now.night) * THREE.MathUtils.smoothstep(now.sunElevationDeg, -5, 0)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
@@ -495,8 +540,8 @@ export class FarField {
     shared.uCocScale.value = 0
     shared.uShadowOn.value = 0
     fieldUniforms.uPlantWind.value = 0
-    // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as a neighbor of middle height is.
-    fieldUniforms.uCanopy.value = keep.canopy / PICTURE_SIZE
+    // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as the last real rows before them are, a little under the tops.
+    fieldUniforms.uCanopy.value = keep.canopy / (CANOPY_SIZE * PICTURE_UNDER)
     fieldUniforms.uEdge.value.z = -1000
     renderer.setRenderTarget(this.atlas)
     renderer.setClearColor(0x000000, 1)

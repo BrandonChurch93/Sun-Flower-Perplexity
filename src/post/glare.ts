@@ -12,7 +12,7 @@ vec4 bright(vec3 c) {
   float soft = clamp(l - uKnee * 0.5, 0.0, uKnee);
   float over = max(l - uKnee, soft * soft / (2.0 * uKnee + 1e-4));
   float kept = over / (1.0 + over / 800.0);
-  float open = smoothstep(0.4, 1.1, dot(c, vec3(0.2126, 0.7152, 0.0722)) / uSkyLevel);
+  float open = smoothstep(0.18, 0.6, dot(c, vec3(0.2126, 0.7152, 0.0722)) / uSkyLevel);
   return vec4(c * (kept / max(l, 1e-4)), open);
 }
 void main() {

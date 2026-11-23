@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { lerp } from '../../core/curves.ts'
 import type { Moment, Part, View } from '../../v2/api.ts'
-import { airAt, blankAir, makeSheet, sheetsFor, type Sheet } from '../mist/veil.ts'
+import { blankAir, fogAt, makeSheet, sheetsFor, type Sheet } from '../mist/veil.ts'
 
 // The fog banks: the white that lies in the low ground beyond the seedlings, from where the veils of ground mist end to the far land. They stand round the plant and do not follow the lens.
 const MOST = 8
@@ -22,7 +22,7 @@ class Banks implements Part {
   }
 
   prepare(now: Moment, _later: Moment, view: View): void {
-    const air = airAt(now, this.air)
+    const air = fogAt(now, this.air)
     const on = air.amount > 0.002
     const count = on ? sheetsFor(view.quality, MOST) : 0
     for (let i = 0; i < MOST; i++) this.sheets[i].mesh.visible = i < count
@@ -37,10 +37,10 @@ class Banks implements Part {
       const height = (0.14 + 0.017 * r) * lerp(1, 1.9, air.lifted)
       const last = i === count - 1
       s.place.set(r, last ? r * 0.6 : height * 6, -1, 0)
-      s.high.set(last ? air.amount * lerp(1, 0.4, air.lifted) : 0, 0.3)
+      s.high.set(last ? 0.45 * air.amount * lerp(1, 0.4, air.lifted) : 0, 0.06)
       s.center.set(0, 0)
       s.air.set(r * (Math.exp(step) - 1), height, lerp(0.6, 0.16, far) * air.amount * lerp(1, 0.75, air.lifted), lerp(5, 40, far))
-      s.look.set(lerp(0.6, 0.35, far), air.glow, last ? 0 : air.shafts, (last ? 16 * air.amount : 0.2) * air.glow)
+      s.look.set(lerp(0.6, 0.35, far), air.glow, last ? 0 : air.shafts, (last ? 2 * air.amount : 0.3) * air.glow)
       s.mesh.renderOrder = ORDER + (count - i) * 0.1
     }
   }

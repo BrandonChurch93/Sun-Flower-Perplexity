@@ -310,6 +310,7 @@ void main() {
   float warm = saturate((uSunColor.r / max(uSunColor.b, 1e-4) - 1.0) / 0.2);
   vec3 through = albedo * mix(vec3(2.6, 1.25, 0.45) * warm + vec3(1.1, 1.3, 0.9) * (1.0 - warm), vec3(1.7, 2.1, 2.2), vField.x) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
+  color += albedo * afterglow() * ((1.0 - uDew) * 0.35 * deep);
   color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;

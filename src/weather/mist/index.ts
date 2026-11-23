@@ -92,7 +92,7 @@ void main() {
   float alpha = (1.0 - exp(-depth)) * smoothstep(0.15, 0.6, length(ray.xz) / uRadiusM);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float glow = 0.02 + uForward * (exp(-pow(theta / uLobe, 3.0)) + 2.0 * exp(-theta / 0.1));
-  vec3 color = uLit * uSunColor * glow + uShade * skyAmbient(vec3(0.0, 1.0, 0.0));
+  vec3 color = uLit * uAirSun * glow + uShade * 0.5 * (uAirZenith + uAirHorizon);
   outColor = vec4(color, alpha);
 }
 `

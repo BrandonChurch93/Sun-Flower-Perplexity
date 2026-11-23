@@ -82,6 +82,7 @@ class FieldSky implements Sky {
       uEvolve: { value: 0 },
       uEyeKm: { value: 0.001 },
       uRealSky: { value: 0 },
+      uGolden: { value: 0 },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
     })
@@ -194,6 +195,7 @@ class FieldSky implements Sky {
     const deckShape = d.overcast + 0.48 * d.burst * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, d.burst)
+    u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
     u.uEvolve.value = 0.5 * (now.cloud.evolve + later.cloud.evolve)

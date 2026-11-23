@@ -41,3 +41,37 @@ Newest first. Merge with `git fetch origin v2 && git merge FETCH_HEAD` (never re
 - Tests may take up to a minute each (`testTimeout` in `vite.config.ts`), so a machine that is drawing beside them does not fail them.
 - MEASURED on the merged film: bar 61 drawn after fifteen other bars, alone, and after bar 29.29 gives the same picture to the last pixel.
 - A quad whose `position` has two components must set `mesh.frustumCulled = false` (three.js cannot make its bounding sphere and prints an error on every load).
+
+## 23 Nov, 02:05 UTC: dusk and dawn without a step
+
+Found by the checks and by the place: at every sunset of the fast time lapse the picture fell 28 of 255 in one frame (frame 1339), because the sun ran three times faster under the horizon than above it and the key went out inside one frame. MEASURED after the change, frames 1334 to 1346 and 1356 to 1368 with everything on: the largest step from one frame to the next is 9.6 of 255.
+
+1. The sun crosses the horizon at one speed (`sunElevationOfPhase` in `src/v2/clock.ts`). In a night of the time lapse it now stands at about -0.8, -1.8, -3.2, -4.7, -6.3, -7.8, -9.4 degrees on the frames after sunset (was -2.1, -4.0, -5.7, -7.3), and the same going up before sunrise. Sunset and sunrise stay on their beats, and the sun still goes no deeper than 14 degrees.
+2. `now.lightKind` is `'sun'` until the sun stands 5 degrees under the horizon and `'moon'` from there. `'none'` is gone. Under the horizon the key is the glow the sun leaves in the sky: it comes from the sun's azimuth, 0.6 to 5 degrees up, it is soft (up to 20 degrees wide), it has the colour of the sky toward the sun, and it falls from 1.7 at the horizon to 0.5 at -2.5 degrees and to nothing at -5, where the moon's key starts from nothing.
+3. So nothing may jump with `lightKind`. Use it to choose a direction or a colour that is multiplied by the key (`uSunColor`, zero at the change), never as a switch for a strength of your own. These lines still jump at the change and belong to their owners:
+   - `src/place/onstage.ts`: `uThrough = now.lightKind === 'sun' ? 1 : 0.12`
+   - `src/field/index.ts`: `uMoon = now.lightKind === 'sun' ? 0 : now.night` (0.37 at the change)
+   - `src/field/far.ts`: `uThrough = now.lightKind === 'sun' ? 1 - now.night : 0`
+   - `src/sky-a/index.ts`: `halo`; `src/sky-c/atmosphere.ts` line 368
+   Make each a smooth function of `now.sunElevationDeg` (for instance `smoothstep(-5, -1, el)` for what belongs to the sun and `smoothstep(5, 9, -el)` for what belongs to the moon).
+4. Frames 1372 and 1373 (the sun gone for two frames after a sunrise) are not a fault: the rising sun passes behind the top leaf of the plant. MEASURED on a crop of frames 1370 to 1375.
+5. `npm run bench -- --frames 1334-1346,1400 --name dusk --cols 7` draws the film's own camera at frames by number.
+6. `npm run part` and `npm run join` draw a range of frames with several pages and join the parts to one film (used for the blockout; the music goes only into a private copy).
+
+## 23 Nov, 02:35 UTC: `v2` at `a86df3b`, every part merged again
+
+- On `v2` now: sky A `7242e56`, sky B `c465921`, sky C `a1f5343`, the plant `3f90c74`, the place `f1fa53c`, rain `847f914`, frost `254b12b`, the field `24bc322`, the lens `502c966`, the ground `f08c2d4`, the player `f8997f7`, the checks `a152556`. Merge it before your next sheet. 162 tests pass.
+- The break of bar 41 no longer steps in one frame. `dials.burst` and `now.sunThrough` come up over frames 2082 to 2086 with the middle on the hit (burst 0.16, 0.50, 0.84, 1.00; through 0.10, 0.32, 0.58, 0.80, 0.90). Anything that rode the old step should be looked at once more at frames 2080 to 2090.
+- The counter (`src/v2/counter.ts`) now adds only the part of an array that is written, and `Made` has four more numbers: `bufferUpdates`, `bufferUpdateBytes`, `textureUpdates`, `textureUpdateBytes`. Bytes reported before today 02:30 UTC for a texture written in rows were too high by far.
+- `Film.setStill` now reaches the lens, so the grain holds still under the still switch.
+- A gust ends where it starts (`gustAt` and `gustGlsl` in `src/v2/wind.ts`): the front lets go to zero before the next one strikes.
+- The fill takes a third less of the dome's colour (`FILL_COLOUR` 0.65 in `src/v2/look.ts`).
+- The place's own rules run with the tests (`tests/place.test.ts`).
+- The sky is being judged blind today. Until the result, draw with `--sky sky-b`.
+
+## 23 Nov, 03:00 UTC: the sky is chosen
+
+- The film's sky is `src/sky/`. It was candidate B: three blind critics, each given the same twenty frames of every candidate and the twelve reference pictures, all ranked it first by a clear gap. `src/sky-b/` is gone (moved, its owner stays its owner). Leave `--sky` out from now on, or write `--sky sky`. Sky A and sky C stay in the tree for reading until the cleanup and are not drawn.
+- On `v2` now as well: the plant `647fc55`, the player `419905c`, the checks `87ce628`. 168 tests pass.
+- The moon. On screen and before the curve the moon's key is 0.55 (was 1.3) and cold, and the fill at midnight is 0.17 at the horizon and 0.095 overhead (was 0.08 and 0.045). Found by the checks: with the moon behind the plant the leaves glowed yellow green at midnight, brighter than at dusk, and blinked dark on the frame where the sun's light hands over to the moon's. Measured on the night of bar 28.5 after the change: the plant dims from 29.6 of 255 at the handover to 23.2 at midnight, no part of the frame moves more than 5.4 the wrong way in a frame (was 18.9), the frame's mean steps 13.1 at the most.
+- `createFilmClock` in `tools/beat/sync-mark.js` takes `blips` (default true).

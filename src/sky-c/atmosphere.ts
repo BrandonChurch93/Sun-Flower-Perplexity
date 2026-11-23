@@ -10,17 +10,17 @@ export const R_OBS = R_BOTTOM + 0.02
 
 export const BETA_R: RGB = [0.005802, 0.013558, 0.0331]
 export const H_RAYLEIGH = 8.0
-export const BETA_M_SCA: RGB = [0.0155, 0.0155, 0.0155]
-export const BETA_M_EXT: RGB = [0.0182, 0.0182, 0.0182]
+export const BETA_M_SCA: RGB = [0.0082, 0.0082, 0.0082]
+export const BETA_M_EXT: RGB = [0.0098, 0.0098, 0.0098]
 export const H_MIE = 1.2
 export const BETA_O3: RGB = [0.00145, 0.0041, 0.00017]
 export const GROUND_ALBEDO: RGB = [0.11, 0.09, 0.065]
 
 export const SUN_IRRADIANCE: RGB = [9.9, 9.82, 9.6]
-export const SKY_RADIANCE_SCALE: RGB = [2.72, 2.76, 2.86]
+export const SKY_RADIANCE_SCALE: RGB = [2.85, 2.88, 2.98]
 export const MOON_DIRECT: RGB = [0.19, 0.2, 0.23]
-export const NIGHT_ZENITH: RGB = [0.0014, 0.0028, 0.0068]
-export const NIGHT_HORIZON: RGB = [0.0026, 0.0048, 0.0102]
+export const NIGHT_ZENITH: RGB = [0.0016, 0.0032, 0.0076]
+export const NIGHT_HORIZON: RGB = [0.0034, 0.0058, 0.0122]
 
 export const TRANS_W = 256
 export const TRANS_H = 64
@@ -301,12 +301,13 @@ export function buildAtmosphereTables(renderer: THREE.WebGLRenderer): Atmosphere
     const el = elDeg * RAD
     const sy = Math.sin(el)
     const sx = Math.cos(el)
-    const nightW = smoothstep(-2, -13, elDeg)
-    // Hulburt ozone-filtered second-order twilight blue keeps blue hour cobalt rather than pink
-    const twiBlue = smoothstep(1.5, -3.5, elDeg) * smoothstep(-12.5, -5.0, elDeg)
-    const twiZen: RGB = [0.022, 0.068, 0.195]
-    const twiHor: RGB = [0.038, 0.095, 0.235]
-    const twiSun: RGB = [0.165, 0.098, 0.115]
+    const nightW = smoothstep(-2.0, -12.0, elDeg)
+    const twiBlue = smoothstep(1.8, -3.2, elDeg) * smoothstep(-13.5, -5.2, elDeg)
+    const nightHorGlow = smoothstep(-3.0, -9.5, elDeg)
+    const twiZen: RGB = [0.018, 0.056, 0.175]
+    const twiHor: RGB = [0.032, 0.086, 0.218]
+    const twiSun: RGB = [0.185, 0.096, 0.092]
+    const allNightGlow: RGB = [0.0095, 0.0078, 0.0115]
 
     integrateSkyRay(0, 1, 0, sx, sy, 0, tmp)
     for (let c = 0; c < 3; c++) zenithTable[i * 3 + c] = tmp[c] + twiZen[c] * twiBlue + NIGHT_ZENITH[c] * nightW
@@ -315,7 +316,9 @@ export function buildAtmosphereTables(renderer: THREE.WebGLRenderer): Atmosphere
     for (let c = 0; c < 3; c++) horizonTable[i * 3 + c] = tmp[c] + twiHor[c] * twiBlue + NIGHT_HORIZON[c] * nightW
 
     integrateSkyRay(cosH, sinH, 0, sx, sy, 0, tmp)
-    for (let c = 0; c < 3; c++) horizonSunTable[i * 3 + c] = tmp[c] + twiSun[c] * twiBlue + NIGHT_HORIZON[c] * nightW
+    for (let c = 0; c < 3; c++) {
+      horizonSunTable[i * 3 + c] = tmp[c] + twiSun[c] * twiBlue + (NIGHT_HORIZON[c] + allNightGlow[c] * nightHorGlow) * nightW
+    }
 
     const refractedEl = elDeg + 0.35 * Math.exp(-Math.max(0, elDeg + 1.5) * 0.4)
     const muDir = Math.sin(refractedEl * RAD)

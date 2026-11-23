@@ -10,7 +10,6 @@ export const CRYSTAL_ORDER = 18
 
 const ROW = 512
 const NEEDLES = 5
-const REGATHER_M = 0.03
 const scratch = new Float32Array(16)
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 
@@ -165,7 +164,7 @@ void main() {
   vUp = vec3(0.0);
   // The water of a melted crystal draws back into a bead where the crystal stood. The small beads run into the heavy ones, and a heavy one hangs, lets go and falls.
   float pick = hash(own, 19.0) / BEAD_SHARE;
-  if (needle == 4 && melt > 0.0 && pick < 1.0) {
+  if (needle == 4 && melt > 0.0 && pick < 1.0 && a.w > 0.0) {
     bool heavy = pick < HEAVY_SHARE;
     bool stays = pick > 1.0 - STAY_SHARE;
     float h21 = hash(own, 21.0);
@@ -237,12 +236,12 @@ export class CrystalSet {
   private readonly geometry = new THREE.BufferGeometry()
   private readonly data: Float32Array
   private readonly texture: THREE.DataTexture
+  // For each row of the texture, the first crystal that changed and one past the last.
+  private readonly dirty: Uint16Array
+  private sent = false
   private shown: number
   private stale = true
   private kept = 0
-  private readonly eye = new THREE.Vector3()
-  private readonly seen = new THREE.Vector3()
-  private readonly clip = new THREE.Matrix4()
 
   constructor(options: PartOptions, readonly count: number, name: string, melts = true, private readonly dewToo = false) {
     if (options.places) throw new Error('crystals are worn by the plant, the companion and the ground only')
@@ -251,6 +250,7 @@ export class CrystalSet {
     this.leans = [new Float32Array(count * 4), new Float32Array(count * 4)]
     const rows = Math.max(1, Math.ceil(count / ROW))
     this.data = new Float32Array(ROW * 4 * rows * 4)
+    this.dirty = new Uint16Array(rows * 2)
     this.texture = new THREE.DataTexture(this.data, ROW * 4, rows, THREE.RGBAFormat, THREE.FloatType)
     this.texture.colorSpace = THREE.NoColorSpace
     this.texture.minFilter = THREE.NearestFilter
@@ -270,78 +270,82 @@ export class CrystalSet {
     const kept = partMesh(this.geometry, sharp)
     drawn.renderOrder = CRYSTAL_ORDER
     kept.renderOrder = CRYSTAL_ORDER + 1
-    drawn.onBeforeRender = (_renderer, _scene, camera) => this.choose(camera, drawn)
+    drawn.onBeforeRender = () => this.choose()
     this.meshes = [drawn, kept]
   }
 
-  private gather(camera: THREE.Camera, object: THREE.Object3D): void {
-    const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
-    const m = object.matrixWorld.elements
-    const size = Math.hypot(m[0], m[1], m[2])
+  // Each crystal keeps its own place in the texture whatever the lens sees, so a plant that stands still sends nothing: what is already on the graphics card is not sent again.
+  private gather(): void {
     const [ra, rb] = this.roots
     const [la, lb] = this.leans
     const out = this.data
-    const cocScale = shared.uCocScale.value
-    const focus = shared.uFocusM.value
-    const height = shared.uSize.value.y
-    let n = 0
-    let changed = false
+    const dirty = this.dirty
+    let rows = 0
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
+      const q = i * 16
       const length = ra[o + 3]
-      if (!(length > 0)) continue
-      const x = ra[o]
-      const y = ra[o + 1]
-      const z = ra[o + 2]
-      const w = e[3] * x + e[7] * y + e[11] * z + e[15]
-      const long = length * size * 2
-      if (w < long) continue
-      const coc = cocScale * Math.abs(1 / w - 1 / focus)
-      const reach = w * (1.04 + (2 * coc) / height) + long * 4
-      if (Math.abs(e[0] * x + e[4] * y + e[8] * z + e[12]) > reach || Math.abs(e[1] * x + e[5] * y + e[9] * z + e[13]) > reach) continue
-      const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
-      const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
-      const q = n * 16
-      scratch[0] = x
-      scratch[1] = y
-      scratch[2] = z
-      scratch[3] = length
-      scratch[4] = rb[o]
-      scratch[5] = rb[o + 1]
-      scratch[6] = rb[o + 2]
-      scratch[7] = la[o + 3]
-      scratch[8] = la[o] / la2
-      scratch[9] = la[o + 1] / la2
-      scratch[10] = la[o + 2] / la2
-      scratch[12] = lb[o] / lb2
-      scratch[13] = lb[o + 1] / lb2
-      scratch[14] = lb[o + 2] / lb2
+      if (length > 0) {
+        const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
+        const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
+        scratch[0] = ra[o]
+        scratch[1] = ra[o + 1]
+        scratch[2] = ra[o + 2]
+        scratch[3] = length
+        scratch[4] = rb[o]
+        scratch[5] = rb[o + 1]
+        scratch[6] = rb[o + 2]
+        scratch[7] = la[o + 3]
+        scratch[8] = la[o] / la2
+        scratch[9] = la[o + 1] / la2
+        scratch[10] = la[o + 2] / la2
+        scratch[12] = lb[o] / lb2
+        scratch[13] = lb[o + 1] / lb2
+        scratch[14] = lb[o + 2] / lb2
+      } else scratch.fill(0)
+      let changed = false
       for (let c = 0; c < 16; c++) {
         if (out[q + c] !== scratch[c]) {
           out[q + c] = scratch[c]
           changed = true
         }
       }
-      n++
+      if (changed) {
+        const row = (i >> 9) * 2
+        const col = i & 511
+        if (dirty[row + 1] === 0) {
+          dirty[row] = col
+          rows++
+        }
+        dirty[row + 1] = col + 1
+      }
     }
-    // In a hold nothing on the plant moves: what is already on the graphics card is not sent again.
-    if (changed) this.texture.needsUpdate = true
-    this.kept = n
+    if (rows > 0) {
+      // Only the crystals that moved are sent, a stretch to a row: a leaf that turns in the hold costs its own crystals and no more.
+      const all = dirty.length / 2
+      if (this.sent && rows * 2 < all) {
+        if (this.texture.updateRanges.length > all) this.texture.clearUpdateRanges()
+        else for (let r = 0; r < all; r++) if (dirty[r * 2 + 1] > 0) this.texture.addUpdateRange((r * ROW + dirty[r * 2]) * 16, (dirty[r * 2 + 1] - dirty[r * 2]) * 16)
+      } else this.texture.clearUpdateRanges()
+      dirty.fill(0)
+      this.sent = true
+      this.texture.needsUpdate = true
+    }
+    this.kept = this.shown
     this.stale = false
-    this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
 
-  private choose(camera: THREE.Camera, object: THREE.Object3D): void {
+  private choose(): void {
     const worn = stateUniforms.uPlantFrost.value > 0 || (this.dewToo && stateUniforms.uPlantDew.value > 0)
     if (!worn || shared.uDiag.value >= 4) {
       this.geometry.setDrawRange(0, 0)
       return
     }
-    if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
+    if (this.stale) this.gather()
     this.geometry.setDrawRange(0, this.kept * NEEDLES * 6)
   }
 
-  // How many crystals are in the picture, as last gathered.
+  // How many crystals are drawn, as last gathered.
   get inView(): number {
     return this.kept
   }

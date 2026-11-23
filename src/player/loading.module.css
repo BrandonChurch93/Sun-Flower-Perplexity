@@ -1,0 +1,158 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  background: #0d0f0e;
+  color: #ece7db;
+  font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+.box {
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 48px));
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.size {
+  margin: 4px 0 28px;
+  color: #a59f90;
+}
+
+.line {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 6px;
+}
+
+.what {
+  flex: none;
+}
+
+.count {
+  color: #a59f90;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.bar {
+  position: relative;
+  height: 4px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #2b2820;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(var(--at, 0));
+  transform-origin: left center;
+  background: #e2b23a;
+}
+
+.bar[data-state='busy'] .fill {
+  right: auto;
+  width: 30%;
+  transform: none;
+  animation: travel 1.2s linear infinite;
+}
+
+.bar[data-state='done'] .fill {
+  transform: none;
+}
+
+.state {
+  margin: 10px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.screen[data-failed='yes'] .state {
+  color: #e8a08c;
+  font-weight: 400;
+}
+
+@keyframes travel {
+  from {
+    left: -30%;
+  }
+
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar[data-state='busy'] .fill {
+    left: 35%;
+    animation: none;
+  }
+}
+
+.steps {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #a59f90;
+}
+
+.step[data-state='now'] {
+  color: #ece7db;
+}
+
+.num {
+  display: inline-grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #5a5443;
+  border-radius: 50%;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  place-items: center;
+}
+
+.step[data-state='now'] .num {
+  border-color: #e2b23a;
+  background: #e2b23a;
+  color: #14130f;
+  font-weight: 600;
+}
+
+.stepState {
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+.step[data-state='now'] .stepState {
+  color: #e2b23a;
+}
+
+:global(html[data-review]) .steps {
+  display: none;
+}

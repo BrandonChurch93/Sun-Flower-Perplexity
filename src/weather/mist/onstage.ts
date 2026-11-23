@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import type { Moment, Part, View } from '../../v2/api.ts'
-import { airAt, blankAir, makeSheet, sheetsFor, type Sheet } from './veil.ts'
+import { airAt, blankAir, DAWN_DEPTH, makeSheet, sheetsFor, type Sheet } from './veil.ts'
 
 // Thin veils close to the soil, from just before the lens to where the fog banks take over. The sheets stand round the lens, and one of them stands just behind the plant, so what is drawn before the plant is the mist behind it and nothing else.
 const MOST = 12
@@ -53,7 +53,8 @@ class GroundMist implements Part {
       s.center.set(eye.x, eye.z)
       // The air just before the lens is clear: the veils lie out on the soil, beyond the plant.
       s.air.set(slab, height, perM * smoothstep(NEAR_M, CLEAR_TO_M, r), BANK_M)
-      s.look.set(0.85, air.glow, air.shafts, 0.05 * air.glow)
+      s.look.set(0.85, air.glow, air.shafts, 0.1 * air.glow)
+      s.dawn.set(air.dawn, DAWN_DEPTH / count)
       s.mesh.renderOrder = i >= nearest ? ORDER_BEHIND + (count - i) * 0.1 : ORDER_BEFORE + (count - i) * 0.1
     }
   }

@@ -408,8 +408,8 @@ export function create(options: PartOptions): PlantPart {
     uDetailSize: { value: new THREE.Vector2(1, 1) },
     uVeinPad: { value: VEIN_PAD },
     // The neighbor's blades stand between the lens and the sun, where the approved frames keep them a deep green.
-    uGlow: { value: options.variant === 0 ? 1 : 0.1 },
-    uWarm: { value: options.variant === 0 ? 0 : 0.7 },
+    uGlow: { value: options.places ? 0.1 : 1 },
+    uWarm: { value: options.places ? 0.7 : 0 },
     uFresh: { value: 0 },
   }
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
@@ -588,6 +588,7 @@ export function create(options: PartOptions): PlantPart {
     const inputs = pose.inputs
     const real = realOf(inputs, time)
     const lapse = inputs.lapse ?? 0
+    const stands = inputs.held ?? 0
     const chill = inputs.cold ?? 0
     // Frost in a leaf stiffens it: the air moves it less.
     const wind = inputs.wind * (1 - 0.8 * chill)
@@ -723,7 +724,7 @@ export function create(options: PartOptions): PlantPart {
     const rise = set * clamp(Math.min(leaf.rise, ceiling) - Math.asin(clamp(frame.my, -1, 1)), 0, 1.1)
     const rain = hero && size > 0.02 ? (inputs.rain ?? 0) : 0
     const mid = 0.62 * total
-    const dip = rain > 0 ? rain * dipAt(real, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
+    const dip = rain > 0 && stands < 1 ? (1 - stands) * rain * dipAt(real, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
     // Under the heaviest bursts every leaf is pressed down a little.
     const press = rain > 0 ? 0.07 * rain * smoothstep(0.82, 1, rainStrength(real - 0.12)) : 0
     // Water lies on every blade for as long as it rains: they hang lower, and lift again when it stops.
@@ -738,7 +739,7 @@ export function create(options: PartOptions): PlantPart {
     const trail = wind * 0.08 * flutter(real - 0.18, leaf.seed * 0.73 + 0.11) * live + twitch * TWITCH_TIP * caughtTip
     const sway = wind * 0.075 * flutter(real - 0.07, leaf.seed * 0.41 + 0.37) * live + twitch * 0.6 * TWITCH * caughtTip
     // The cold is a faint tremble at most.
-    const shiver = chill > 0 ? chill * (0.006 * flutter(real * 2.6, leaf.seed * 0.29 + 0.5) + 0.011 * Math.sin(real * (0.8 + 0.5 * leaf.seed) + 6.2832 * leaf.seed)) : 0
+    const shiver = chill > 0 && stands < 1 ? (1 - stands) * chill * (0.006 * flutter(real * 2.6, leaf.seed * 0.29 + 0.5) + 0.011 * Math.sin(real * (0.8 + 0.5 * leaf.seed) + 6.2832 * leaf.seed)) : 0
 
     // The stalk leads, the blade trails it and the tip comes last.
     const air = hero ? live * clamp(3 * Math.min(inputs.calm ?? inputs.wind, inputs.wind)) * (1 - chill) : 0
@@ -1121,7 +1122,7 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
+      if (slot === 0) uniforms.uGlow.value = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
       if (slot === 0) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)

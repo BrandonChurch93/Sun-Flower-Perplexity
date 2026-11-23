@@ -439,19 +439,21 @@ void main() {
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
   }
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
-  float rime = rimed(vWorld, saturate(0.55 * smoothstep(0.0, 0.7, n.y) + 0.6 * smoothstep(0.1, 0.8, ball.y)) * smoothstep(0.3, 0.62, dD.a), uFrost, lit * sunOn) * (1.0 - vSeed.z);
+  float sits = saturate(0.55 * smoothstep(0.0, 0.7, n.y) + 0.6 * smoothstep(0.1, 0.8, ball.y)) * smoothstep(0.3, 0.62, dD.a);
+  float rime = max(rimed(vWorld, sits, uFrost, lit * sunOn), dusted(vWorld, sits, uFrost, lit * sunOn)) * (1.0 - vSeed.z);
   albedo = mix(frozen(albedo, uFrost), FROST_WHITE, 0.8 * rime);
   open = mix(open, max(open, 0.85), rime);
-  vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
+  vec3 color = albedo * (uSunColor * sunOn * lit * underFlash(uWet) + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * underFlash(1.0) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
   color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
   color += duskSheen(v, n) * (0.3 + 0.7 * open);
-  color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit) * (0.3 + 0.7 * open);
-  color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.2 + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += duskGlow(vWorld, v, ball, albedo, 1.0) * (0.3 + 0.7 * open);
+  color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit, 0.0) * (0.3 + 0.7 * open);
+  color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.2 + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }

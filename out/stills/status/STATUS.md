@@ -1,12 +1,12 @@
-# Status 05
+# Status 07
 
-2026-11-23 01:41 UTC
+2026-11-23 02:38 UTC
 
-- Status 05 · Phase 2. The washed frames are fixed in the storm: rain, the puddle and the lens glare now take their light from the sky itself, so the storm is dark again with the plant lit and the lightning frame reads. The opening frame shows soil and the first hook instead of a black band. Drawing bar 61 three ways gave the same picture to the last pixel, so a frame depends only on its number there. The frost hold is still washed; its owner is switching the mist over now.
-- Next: Get the frost hold right, take the second reports of sky candidates A and C, judge the three skies blind, then merge the player and the checks and run the film against the music. Time used: 3.7 h of 30 h.
+- Status 07 · Phase 2. Every builder's second round is merged and the whole film draws as one picture again. The opening is clear (the fog banks are gone), the soil carries hoar in the frost hold, the storm has soft streaks and a puddle, and the break of bar 41 comes up over five frames instead of one. The three sky candidates were drawn in the same twenty frames and went to three blind critics: the first verdict is in (B first, A second, C third), two are pending. The counter for bytes written per frame overcounted textures and is corrected.
+- Next: Take the other two verdicts and move the winning sky to its place, then draw the whole film in parts and join it under the music for the first full watch. Time used: 4.6 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed
-- `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel)
-- `status-3.jpg`: The open flower at bar 61 (draft tier)
-- `status-4.jpg`: Opening frame: reference left, the film right
+- `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier)
+- `status-2.jpg`: Sky candidate A in the jury's ten film frames
+- `status-3.jpg`: Sky candidate C in the jury's ten film frames
+- `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
