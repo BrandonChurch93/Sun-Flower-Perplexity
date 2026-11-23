@@ -33,7 +33,6 @@ const float FROST_SHUT_LEAST = 0.75;
 const float FROST_SHUT_FAR = 0.9;
 const float FROST_SHUT_SHADE = 0.9;
 float frostShut = FROST_SHUT_LEAST;
-#define FROST_SHUT frostShut
 // Far from the lens the coat runs ahead of the cold: at this much frost the whole plant wears it.
 const float FROST_FAR_WHOLE = 0.8;
 // Seen from afar the front is no band of one width: its depth swings from tooth to tooth over this length, and it runs in along the veins ahead of the fields between them.
