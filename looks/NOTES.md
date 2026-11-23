@@ -1,11 +1,11 @@
 # Looks of sky-b
 
-2026-11-23 06:20 UTC, at commit 113d962 of agent/sky-b.
+2026-11-23 07:38 UTC, at commit ff8d044 of agent/sky-b.
 
-960 x 540 all-parts draft, sky at 113d962 versus the matched lower-crane base fcc4c7e. The proposed contact sheet and sweep use a diagnostic .20 warm target with the old glass on; the 4x disc controls switch the old glass off. The early comparison uses the unmodified look and all seven pairs are byte-identical.
-
-- `01-lower-crane-before-reference-and-bars-71-73-74-5.jpg`: Lower crane before: reference and bars 71, 73, 74.5
-- `02-lower-crane-with-sunset-sky-eight-marks-beside-t.jpg`: Lower crane with sunset sky: eight marks beside the key
-- `03-extinguished-disc-at-five-times-4x-lens-off-vers.jpg`: Extinguished disc at five times, 4x lens off versus disc muted
-- `04-ridge-frames-3660-through-3809-every-tenth-and-e.jpg`: Ridge frames 3660 through 3809 every tenth and endpoint
-- `05-earlier-bars-5-13-29-75-45-53-57-61-pixel-identi.jpg`: Earlier bars 5, 13, 29.75, 45, 53, 57, 61 pixel-identical
+- `01-every-frame-410-to-432-before-and-after.jpg`: Every frame 410 to 432, before and after
+- `02-every-frame-612-to-632-before-and-after.jpg`: Every frame 612 to 632, before and after
+- `03-cloud-outlines-against-the-milky-way-414-to-420.jpg`: Cloud outlines against the Milky Way, 414 to 420
+- `04-dusk-and-dawn-samples-at-other-quick-nights.jpg`: Dusk and dawn samples at other quick nights
+- `05-daylight-pairs-at-bars-5-13-29-44-and-61.jpg`: Daylight pairs at bars 5 13 29 44 and 61
+- `06-frost-photo-draft-against-references.jpg`: Frost photo draft against references
+- `07-frost-photo-review-against-references.jpg`: Frost photo review against references
