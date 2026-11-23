@@ -3,7 +3,6 @@ import { fieldUniforms, makePartSurface, partMesh, stateUniforms, type PartOptio
 import { shared, type Surface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
 import { ball } from '../../plant/hairs/index.ts'
-import { config } from '../../config.ts'
 
 // Crystals are see-through at their edges and are drawn after the bodies they grow on and before the hairs (20).
 export const CRYSTAL_ORDER = 18
@@ -11,12 +10,13 @@ export const CRYSTAL_ORDER = 18
 const ROW = 512
 const NEEDLES = 5
 const REGATHER_M = 0.03
-const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
+const fract = (x: number): number => x - Math.floor(x)
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
 uniform sampler2D uCrystals;
 uniform float uPlantFrost;
+uniform float uPlantDew;
 uniform float uPlantHeight;
 uniform float uMelts;
 out vec3 vWorld;
@@ -39,17 +39,19 @@ const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
-const float MELT_FROM_S = 38.0;
-const float MELT_SHARE = 0.12;
-const float DROP_SHARE = 0.007;
+// Of the crystals that melt, the share whose water is seen as a bead, and of those the share that take the water of their neighbors, grow heavy and fall.
+const float BEAD_SHARE = 0.34;
+const float HEAVY_SHARE = 0.16;
+// The film seconds one whole thaw takes, for the fall of a drop.
+const float THAW_S = 4.5;
 const float NEEDLE_PX = 0.7;
 const float NEEDLE_LEAST = 0.2;
-const float TUFT_MOST_M = 0.0022;
+const float TUFT_MOST_M = 0.0034;
 const float SPIKE_MOST_M = 0.0022;
 const float SPIKE_LEAST = 0.3;
 const float SPIKE_MOST = 0.8;
 const float PATCH_M = 0.035;
-const float PATCH_LEAST = 0.12;
+const float PATCH_LEAST = 0.4;
 const float PATCH_MOST = 1.0;
 
 float hash(float own, float n) {
@@ -79,14 +81,18 @@ void main() {
   // Frost does not lie evenly: it stands thick on one stretch of an edge and thin on the next, most of it short and a little of it long.
   vec3 where = a.xyz * (6.2832 / PATCH_M);
   float lush = saturate(0.5 + 0.9 * sin(where.x + 1.7 * sin(where.z * 0.61 + 0.4)) * sin(where.y * 0.83 + 1.3 * sin(where.x * 0.47 + 2.1)));
-  float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.15 + 0.5 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.3 + hash(own, 23.0) * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize() * uPlantFrost;
-  // Late in the frost the crystals high on the plant start to give way: a few of them shrink and go clear.
-  float high = uMelts * smoothstep(0.55, 0.75, root.y / max(uPlantHeight, 0.05));
-  float turn6 = hash(own, 6.0) / MELT_SHARE;
-  float from = MELT_FROM_S + 2.5 * turn6;
-  float now = uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
-  float melt = high * step(turn6, 1.0) * smoothstep(from, from + 1.5, now);
-  size *= 1.0 - 0.75 * melt;
+  float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.3 + 0.8 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.3 + hash(own, 23.0) * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize();
+  // The dew comes up with the thaw and never with the freeze, so it tells the two apart. Freezing, each crystal starts at its own moment and grows. Thawing, the frost dial falls slowly and then all at once.
+  bool thawing = uMelts > 0.5 && uPlantDew > 0.0;
+  float gone = 1.0 - uPlantFrost;
+  float thaw = thawing ? (gone < 0.4 ? gone * 1.875 : 0.75 + (gone - 0.4) * 0.4167) : 0.0;
+  float born = 0.45 * hash(own, 24.0);
+  size *= thawing ? 1.0 : uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost;
+  // A crystal the sun reaches goes first, and so does one high on the plant.
+  float sunward = 0.5 + 0.5 * dot(grow, uSunDir);
+  float turn6 = 0.42 * hash(own, 6.0) + 0.26 * (1.0 - sunward) + 0.1 * (1.0 - saturate(root.y / max(uPlantHeight, 0.05)));
+  float melt = smoothstep(turn6, turn6 + 0.2, thaw);
+  size *= 1.0 - 0.85 * melt;
 
   vec3 ref = abs(grow.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 e1 = normalize(cross(grow, ref));
@@ -113,10 +119,10 @@ void main() {
     reach = n < many ? size * (needle == 0 ? 1.0 : spike ? 0.25 + 0.35 * hash(own, 15.0 + n) : 0.6 + 0.4 * hash(own, 15.0 + n)) : 0.0;
     wide = (spike ? 0.075 : 0.09) * size;
   }
-  wide = max(wide, (needle == 0 ? 0.00014 : 0.0001) * plantSize());
+  wide = max(wide, (needle == 0 ? 0.0002 : 0.00015) * plantSize());
   // A needle thinner than a pixel cannot be seen as a needle, and a row of them is a white band. There one crystal in a few is drawn, as wide as those it stands for together.
   float rootPx = -(viewMatrix * vec4(root, 1.0)).z * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  float thin = clamp(max((spike && !feather ? 0.075 : 0.09) * size, 0.00014 * plantSize()) / (NEEDLE_PX * rootPx), NEEDLE_LEAST, 1.0);
+  float thin = clamp(max((spike && !feather ? 0.075 : 0.09) * size, 0.0002 * plantSize()) / (NEEDLE_PX * rootPx), NEEDLE_LEAST, 1.0);
   float kept = thin * mix(spike ? SPIKE_LEAST : PATCH_LEAST, spike ? SPIKE_MOST : PATCH_MOST, lush);
   float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept));
   wide /= thin;
@@ -134,7 +140,7 @@ void main() {
   float halfPx = 0.5 * wide * (1.0 - 0.92 * end) / pixel;
   vAcross = side * (halfPx + 0.75);
   vHalf = halfPx;
-  vFade = (reach > 0.0 ? stays : 0.0) / stretch * (1.0 - 0.5 * melt);
+  vFade = (reach > 0.0 ? stays : 0.0) / stretch * (1.0 - melt);
   vec3 world = here + across * (vAcross * pixel);
 
   float face = 6.2832 * hash(own, 16.0 + n);
@@ -143,7 +149,7 @@ void main() {
   vec3 mirror = normalize(toEye + uSunDir);
   float glint = pow(abs(dot(facet, mirror)), GLINT_SHARP);
   float behind = pow(saturate(-dot(toEye, uSunDir)), 3.0);
-  float clear = 1.0 - 0.6 * melt;
+  float clear = 1.0 - 0.7 * melt;
   vSun = uSunColor * (ICE * (MATT * (0.1 + 0.9 * abs(dot(facet, uSunDir))) + THROUGH * behind) * clear + GLINT * glint);
   vSky = ICE * ICE_SHADE * (SKY * clear * (0.75 + 0.5 * hash(own, 17.0 + n)));
   vWorld = world;
@@ -152,12 +158,16 @@ void main() {
   vBall = vec3(0.0);
   vRight = vec3(0.0);
   vUp = vec3(0.0);
-  // The water of a melted crystal gathers under it as a drop, hangs, and falls.
-  if (needle == 4 && high > 0.0 && turn6 < 1.0 && hash(own, 19.0) < DROP_SHARE) {
-    float falls = from + 1.5 + 0.3 * hash(own, 20.0);
-    float fallen = max(now - falls, 0.0);
-    float radius = (0.0005 + 0.0004 * hash(own, 21.0)) * plantSize() * smoothstep(from + 0.5, falls, now);
-    vec3 center = root - vec3(0.0, radius + 4.905 * fallen * fallen, 0.0);
+  // The water of a melted crystal draws back into a bead where the crystal stood. The small beads run into the heavy ones, and a heavy one hangs, lets go and falls.
+  float pick = hash(own, 19.0) / BEAD_SHARE;
+  if (needle == 4 && melt > 0.0 && pick < 1.0) {
+    bool heavy = pick < HEAVY_SHARE;
+    float fed = smoothstep(turn6 + 0.2, turn6 + 0.45, thaw);
+    float lets = turn6 + 0.5 + 0.12 * hash(own, 20.0);
+    float fallen = heavy ? max(thaw - lets, 0.0) * THAW_S : 0.0;
+    float radius = (heavy ? (0.00055 + 0.0004 * hash(own, 21.0)) * (0.55 + 0.45 * fed) : (0.0002 + 0.00028 * hash(own, 21.0)) * (1.0 - fed)) * plantSize() * melt * smoothstep(0.0, 0.15, uPlantFrost);
+    float hangs = heavy ? smoothstep(lets - 0.2, lets, thaw) : 0.0;
+    vec3 center = root - vec3(0.0, radius * (0.7 + 0.9 * hangs) + 4.905 * fallen * fallen, 0.0);
     if (center.y < 0.0) radius = 0.0;
     toEye = normalize(uCamPos - center);
     depth = -(viewMatrix * vec4(center, 1.0)).z;
@@ -265,10 +275,20 @@ export class CrystalSet {
     const cocScale = shared.uCocScale.value
     const focus = shared.uFocusM.value
     const height = shared.uSize.value.y
+    // A wearer that has not yet said how long its ice is gets a fringe from here: most of the margin bare or short, a little of it long, and a spike where the wearer asks for one.
+    let said = false
+    for (let i = 0; i < this.shown && !said; i++) said = ra[i * 4 + 3] > 0
     let n = 0
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
-      const length = ra[o + 3]
+      let length = ra[o + 3]
+      if (!said) {
+        const kind = la[o + 3]
+        const h1 = fract(Math.sin(i * 12.9898 + 1.3) * 43758.5453)
+        const h2 = fract(Math.sin(i * 78.233 + 2.1) * 24634.6345)
+        const run = 0.5 + 0.5 * Math.sin(ra[o] * 410 + 1.7 * Math.sin(ra[o + 2] * 290)) * Math.sin(ra[o + 1] * 370 + 0.9)
+        length = kind >= 2 ? 0.0028 : kind >= 1 ? (h2 > 0.62 || run < 0.3 * h1 + 0.16 ? 0 : (0.002 + 0.0016 * h1) * (0.6 + 2.2 * run * run)) : 0.0006 + 0.001 * h1
+      }
       if (!(length > 0)) continue
       const x = ra[o]
       const y = ra[o + 1]
