@@ -37,7 +37,8 @@
     "part": "tsx tools/part.ts",
     "join": "tsx tools/join.ts",
     "costs": "tsx tools/costs.ts",
-    "round": "tsx tools/round.ts"
+    "round": "tsx tools/round.ts",
+    "site": "npm run build && tsx tools/site.ts"
   },
   "dependencies": {
     "gsap": "3.15.1",
