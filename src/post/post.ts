@@ -93,7 +93,7 @@ export class Post {
   private readonly join = new FullscreenPass(joinFragment, { tFill: { value: null }, tDiscs: { value: null }, tRaw: { value: null }, uMixed: { value: 0 }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 } })
   private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 }, uSkyLevel: { value: 1 } })
   private readonly downPass = new FullscreenPass(downFragment, { tSource: { value: null }, uTexel: { value: new THREE.Vector2() } })
-  private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) } })
+  private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) }, tWide: { value: null }, uSmall: { value: 0 } })
   private readonly shaft = new FullscreenPass(shaftFragment, { tSource: { value: null }, tSun: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.5) }, uRatio: { value: 1 }, uAspect: { value: 1 }, uFan: { value: 0 }, uAlpha: { value: 0 } })
   private readonly grade = new FullscreenPass(gradeFragment, {
     ...shared,
@@ -314,6 +314,8 @@ export class Post {
       if (i === this.up.length - 1) u.uSourceGain.value.fromArray(levelGain(levels - 1, levels, look.veil, look.halation, look.core))
       else u.uSourceGain.value.set(1, 1, 1)
       u.uBaseGain.value.fromArray(levelGain(i, levels, look.veil, look.halation, look.core))
+      u.tWide.value = this.down[i + 1].texture
+      u.uSmall.value = i < 2 ? look.sparks : 0
       this.upPass.render(renderer, this.up[i])
       from = this.up[i]
     }

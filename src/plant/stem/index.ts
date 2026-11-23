@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { heightAt, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
+import { heightAt, leafAge, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
 import { createBristles } from '../bristles/index.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
@@ -30,9 +30,19 @@ const FROST_FROM_S = 30
 const BLOOM_FROM_S = 40
 const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
-// Where ice can root on the stem: this many places, evenly from the foot to the tip as it stands, each this long at most.
+// Where a bristle stands on the stem, and ice on it: this many places, evenly from the foot to the tip as it stands. Most are short, one in six is long.
 const RIME_ROOTS = 3200
-const RIME_M = [0.001, 0.0025]
+const BRISTLE_M = [0.0005, 0.0012]
+const BRISTLE_LONG_M = [0.0014, 0.0022]
+const BRISTLE_LONG_SHARE = 1 / 6
+// Until it carries a head the stalk ends in a shoot that runs out to a point over this many of its own radii. The tissue packed in it wears the finest hairs of the plant, lying toward the point as on a bud.
+const TIP_TALL = 2.4
+const TIP_HAIRS = 384
+const TIP_HAIR_M = [0.0003, 0.0008]
+const TIP_WIDTH_M = 0.00003
+const TIP_LEAN = 2
+const TIP_BELOW = 0.6
+const tipGirth = (q: number): number => (1 - q) ** 0.8 * (1 + 0.5 * q)
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number[]; sprout: boolean; down: boolean }
@@ -138,15 +148,23 @@ export function create(options: PartOptions): PlantPart {
   }
   const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009), sproutCoat(shape.sprout, 100)].filter((c): c is Coat => c !== null)
 
+  const tipSet = cap > 0 ? createHairs(options, options.variant === 0 ? TIP_HAIRS : TIP_HAIRS / 4, 'stem tip', undefined, TIP_WIDTH_M) : null
+  const tipOwn = new Float32Array((tipSet ? tipSet.count : 0) * 5)
+  const tipDrawn = [0, 0]
+  for (let i = 0; tipSet && i < tipSet.count; i++) {
+    const a = ((i * 0.618034 + 0.2 * hash01(seed, 111, i)) % 1) * TAU
+    tipOwn.set([(0.9 + TIP_BELOW) * ((i + hash01(seed, 110, i)) / tipSet.count) ** 1.2 - TIP_BELOW, Math.cos(a), Math.sin(a), hash01(seed, 112, i), a], i * 5)
+  }
+
   const crystals = createCrystals(options, shape.full && options.variant === 0 ? RIME_ROOTS : 0, 'stem crystals')
   // The bristles of the young stem and the roots of the ice on it are one list: the ice sleeves each bristle.
   const bristles = createBristles(options, crystals ? crystals.count : 0, 'stem bristles')
-  const rimeOwn = new Float32Array((crystals ? crystals.count : 0) * 7)
+  const rimeOwn = new Float32Array((crystals ? crystals.count : 0) * 8)
   if (crystals) {
     crystals.place().fill(-3)
     for (let i = 0; i < crystals.count; i++) {
       const a = ((i * 0.618034 + 0.3 * hash01(seed, 302, i)) % 1) * TAU
-      rimeOwn.set([(i + hash01(seed, 301, i)) / crystals.count, a, Math.cos(a), Math.sin(a), hash01(seed, 303, i), 0.1 + 0.35 * hash01(seed, 304, i), 0.5 * (hash01(seed, 305, i) - 0.5)], i * 7)
+      rimeOwn.set([(i + hash01(seed, 301, i)) / crystals.count, a, Math.cos(a), Math.sin(a), hash01(seed, 303, i), 0.15 + 0.55 * hash01(seed, 304, i), hash01(seed, 305, i) - 0.5, hash01(seed, 306, i)], i * 8)
     }
   }
 
@@ -172,7 +190,8 @@ export function create(options: PartOptions): PlantPart {
   const ringR = new Float32Array(main)
   const ringAt = new Float32Array(main * 12)
   const ringNeck = new Float32Array(main)
-  const grid = new Float32Array(main * row)
+  const grid = new Float32Array((main + cap) * row)
+  const capOff = new Float32Array(cap + 1)
   const nodeS = new Float64Array(NODES)
   const nodeA = new Float64Array(NODES)
   const nodeAmp = new Float64Array(NODES)
@@ -202,6 +221,7 @@ export function create(options: PartOptions): PlantPart {
     const pale = paleness(time)
     const flareTo = NECK_FLARE * headR
     const grounded = 1 - smoothstep(36.5, BLOOM_FROM_S, time)
+    const young = smoothstep(0, 2, leafAge(0, time))
 
     const base = (u: number, s: number): number => {
       let r = stemRadius(time, u) * grown * (1 + 0.17 * Math.exp(-s / (0.004 + 1.2 * rFoot))) * youngGirth(time, u)
@@ -301,8 +321,9 @@ export function create(options: PartOptions): PlantPart {
         const k = j - below - main + 1
         const turn = (k / cap) * (Math.PI / 2)
         const deep = JOINT_OVERLAP_M * Math.min(1, k / (cap - 1))
-        off = lerp(0.9 * rEnd * Math.sin(turn), deep, hasHead)
-        scale = lerp(Math.cos(turn), k < cap ? 1 + (0.8 * slopeEnd * deep) / Math.max(rEnd, 1e-6) : 0, hasHead)
+        off = lerp(rEnd * lerp(0.9 * Math.sin(turn), (TIP_TALL * k) / cap, young), deep, hasHead)
+        scale = lerp(lerp(Math.cos(turn), tipGirth(k / cap), young), k < cap ? 1 + (0.8 * slopeEnd * deep) / Math.max(rEnd, 1e-6) : 0, hasHead)
+        capOff[k] = off
         s = length
       }
       const u = length > 0 ? s / length : 0
@@ -377,7 +398,7 @@ export function create(options: PartOptions): PlantPart {
         out[at * 3] = cx + nx * radius
         out[at * 3 + 1] = cy + ny * radius
         out[at * 3 + 2] = cz + nz * radius
-        if (j >= below && j < below + main) grid[(j - below) * row + side] = radius
+        if (j >= below) grid[(j - below) * row + side] = radius
         if (!first) continue
         const sun = 0.5 + 0.5 * Math.cos(a - sunSide)
         coords[at * 3] = side / sides
@@ -499,6 +520,49 @@ export function create(options: PartOptions): PlantPart {
         lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
       }
     }
+    if (tipSet) {
+      const root = tipSet.root(slot)
+      const lean = tipSet.lean(slot)
+      const risen = length > 0 ? (1 - hasHead) * young : 0
+      const p = (main - 1) * 12
+      tipDrawn[slot] = risen > 0 ? tipSet.count : 0
+      for (let i = 0; i < tipSet.count; i++) {
+        const o = i * 4
+        const w = i * 5
+        const up = cap * Math.max(0, tipOwn[w])
+        const k0 = Math.min(cap - 1, Math.floor(up))
+        const fr = up - k0
+        const col = (tipOwn[w + 4] / TAU) * sides
+        const c0 = Math.min(sides - 1, Math.floor(col))
+        const fc = col - c0
+        const g = (main - 1 + k0) * row + c0
+        const low = lerp(grid[g], grid[g + 1], fc)
+        const high = lerp(grid[g + row], grid[g + row + 1], fc)
+        const slope = clamp((high - low) / Math.max(1e-9, capOff[k0 + 1] - capOff[k0]), -1.5, 1.5)
+        let radius = lerp(low, high, fr)
+        let rise = lerp(capOff[k0], capOff[k0 + 1], fr)
+        if (tipOwn[w] < 0) {
+          rise = tipOwn[w] * capOff[cap]
+          let j = main - 2
+          while (j > 0 && ringS[j] > length + rise) j--
+          const fj = clamp((length + rise - ringS[j]) / Math.max(1e-9, ringS[j + 1] - ringS[j]))
+          radius = lerp(lerp(grid[j * row + c0], grid[j * row + c0 + 1], fc), lerp(grid[(j + 1) * row + c0], grid[(j + 1) * row + c0 + 1], fc), fj)
+        }
+        const ox = ringAt[p + 3] * tipOwn[w + 1] + ringAt[p + 6] * tipOwn[w + 2]
+        const oy = ringAt[p + 4] * tipOwn[w + 1] + ringAt[p + 7] * tipOwn[w + 2]
+        const oz = ringAt[p + 5] * tipOwn[w + 1] + ringAt[p + 8] * tipOwn[w + 2]
+        root[o] = ringAt[p] + ringAt[p + 9] * rise + ox * radius
+        root[o + 1] = ringAt[p + 1] + ringAt[p + 10] * rise + oy * radius
+        root[o + 2] = ringAt[p + 2] + ringAt[p + 11] * rise + oz * radius
+        const q = tipOwn[w + 3]
+        root[o + 3] = risen * lerp(TIP_HAIR_M[0], TIP_HAIR_M[1], q)
+        const along = TIP_LEAN * (0.6 + 0.8 * q) - slope
+        lean[o] = ox + ringAt[p + 9] * along
+        lean[o + 1] = oy + ringAt[p + 10] * along
+        lean[o + 2] = oz + ringAt[p + 11] * along
+        lean[o + 3] = q
+      }
+    }
     if (crystals && stateUniforms.uPlantFrost.value > 0) {
       const root = crystals.root(slot)
       const lean = crystals.lean(slot)
@@ -507,7 +571,7 @@ export function create(options: PartOptions): PlantPart {
       const way = bristles ? bristles.lean(slot) : null
       const top = ringS[main - 1]
       for (let i = 0, j = 0, node = 0; i < crystals.count; i++) {
-        const w = i * 7
+        const w = i * 8
         const o = i * 4
         const s = 0.002 + rimeOwn[w] * (top - 0.002)
         while (j < main - 2 && ringS[j + 1] <= s) j++
@@ -525,7 +589,7 @@ export function create(options: PartOptions): PlantPart {
         const ux = lerp(ringAt[p + 9], ringAt[p + 21], fr)
         const uy = lerp(ringAt[p + 10], ringAt[p + 22], fr)
         const uz = lerp(ringAt[p + 11], ringAt[p + 23], fr)
-        // A bristle stands out and a little up, each at its own tilt, and the longest stand where the leaves leave the stem.
+        // A bristle stands out and up the stem, each at its own tilt and turn, and more of the long ones stand where the leaves leave the stem.
         const up = rimeOwn[w + 5]
         const round = rimeOwn[w + 6]
         let dx = ox + ux * up + (uy * oz - uz * oy) * round
@@ -539,7 +603,8 @@ export function create(options: PartOptions): PlantPart {
         const near = 1 - smoothstep(0.0015, 0.007, Math.min(Math.abs(s - S[node]), Math.abs(S[Math.min(S.length - 1, node + 1)] - s)))
         const above = smoothstep(S[SEED_ANCHOR] - 0.004, S[SEED_ANCHOR] + 0.002, s)
         const q = rimeOwn[w + 4]
-        const long = top > 0.004 ? lerp(RIME_M[0], RIME_M[1], Math.max(q * q, near * (0.45 + 0.55 * q))) * lerp(0.45, 1, above) : 0
+        const tall = clamp((BRISTLE_LONG_SHARE * (1 + near) - rimeOwn[w + 7]) / 0.04)
+        const long = top > 0.004 ? lerp(lerp(BRISTLE_M[0], BRISTLE_M[1], q), lerp(BRISTLE_LONG_M[0], BRISTLE_LONG_M[1], q), tall) * lerp(0.45, 1, above) : 0
         root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
@@ -622,7 +687,7 @@ export function create(options: PartOptions): PlantPart {
 
   return {
     name: 'stem',
-    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes), ...(dew ? dew.meshes : []), ...(crystals ? crystals.meshes : []), ...(bristles ? bristles.meshes : [])],
+    meshes: [mesh, ...coats.flatMap((c) => c.set.meshes), ...(tipSet ? tipSet.meshes : []), ...(dew ? dew.meshes : []), ...(crystals ? crystals.meshes : []), ...(bristles ? bristles.meshes : [])],
     casters: [{ mesh, surface }],
     async load(assets: Assets) {
       if (options.places) return
@@ -637,6 +702,7 @@ export function create(options: PartOptions): PlantPart {
       filled.fill(false)
       led.fill(false)
       for (const c of coats) c.set.finish(Math.max(c.drawn[0], c.drawn[1]))
+      tipSet?.finish(Math.max(tipDrawn[0], tipDrawn[1]))
       if (dew) dew.finish(Math.max(dewDrawn[0], dewDrawn[1]))
       crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystals.count : 0)
       bristles?.finish(stateUniforms.uPlantFrost.value > 0 ? bristles.count : 0)
