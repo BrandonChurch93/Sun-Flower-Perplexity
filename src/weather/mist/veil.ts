@@ -7,7 +7,7 @@ import { windWay } from '../../v2/wind.ts'
 import { unitRing } from '../fog/ring.ts'
 
 // The mist and the fog banks are one body of air: a layer that lies on the ground, thins upward, stands in banks and drifts. It is drawn as upright sheets, each standing for the slab of air between it and the next one out.
-const DRIFT_M_PER_S = 0.07
+const DRIFT_M_PER_S = 0.22
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const SIDES = 96
 // All the sheets of dawn mist together cover a quarter of what stands behind them at most.

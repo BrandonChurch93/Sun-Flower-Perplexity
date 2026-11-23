@@ -122,6 +122,7 @@ class FieldSky implements Sky {
       uGolden: { value: 0 },
       uLate: { value: 0 },
       uStreaks: { value: 0 },
+      uSideBanks: { value: 0 },
       uDawn: { value: 0 },
       uOpening: { value: 0 },
       uFirstBlue: { value: 0 },
@@ -276,6 +277,7 @@ class FieldSky implements Sky {
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
     u.uStreaks.value = eveningStreaksAt(now, e)
+    u.uSideBanks.value = smoothstep(66.35, 67, now.bar) * (1 - smoothstep(71, 71.85, now.bar))
     u.uDawn.value = dawn
     u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
     u.uFirstBlue.value = openingAt(now.bar)
