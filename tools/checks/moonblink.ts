@@ -12,6 +12,7 @@ import { nightsOf } from './nights.ts'
 // The moon may not blink. In every night that ends in a sunrise, between the first and the last frame at which the moon's disc stands at half its peak,
 // its level may not fall and come back by more than a set amount inside any five frames. Read from the frames that `play` drew.
 // The level is the disc less the sky in a ring round it, so the dusk fading or a veil that lifts disc and sky alike is not the disc's own change.
+// A fall counts when the disc falls and its level falls: a sky that flickers behind a steady disc is the sky's fault and fails by the parts of the frame, not here.
 // What goes between the lens and the disc alone, a cloud's edge, takes the disc out of the picture and counts: the ring's level beside each fail says which it was.
 //   npm run checks -- nights --break moon-blink     the disc at the level of its ring for one frame at midnight of each night: must fail
 
@@ -58,12 +59,14 @@ export async function moonLevel(file: string, frame: number): Promise<MoonFrame 
 }
 
 // The largest fall and return inside `INSIDE` frames: how far the lowest frame between two others lies under the lower of the two.
-export function blinkOf(levels: number[]): { dip: number; at: number; before: number; after: number } {
+// It is a blink only when the disc itself falls and comes back and falls against the sky round it as well, so the smaller of the two falls is the one that counts:
+// a cloud that darkens disc and sky alike moves the disc and not its level, a sky that brightens behind a steady disc moves the level and not the disc.
+export function blinkOf(levels: number[], discs: number[] = levels): { dip: number; at: number; before: number; after: number } {
   let best = { dip: 0, at: -1, before: -1, after: -1 }
   for (let i = 0; i < levels.length; i++) {
     for (let k = i + 2; k < levels.length && k - i < INSIDE; k++) {
       for (let j = i + 1; j < k; j++) {
-        const dip = Math.min(levels[i], levels[k]) - levels[j]
+        const dip = Math.min(Math.min(levels[i], levels[k]) - levels[j], Math.min(discs[i], discs[k]) - discs[j])
         if (dip > best.dip) best = { dip, at: j, before: i, after: k }
       }
     }
@@ -139,7 +142,7 @@ export async function moonProof(broken: string | null): Promise<MoonProof> {
       to = i
     }
     const judged = seen ? trail.slice(from, to + 1) : []
-    const blink = blinkOf(judged.map(level))
+    const blink = blinkOf(judged.map(level), judged.map((m) => m.disc))
     const ok = blink.dip <= BLINK
     const at = blink.at >= 0 ? judged[blink.at] : null
     rows.push({
@@ -155,12 +158,21 @@ export async function moonProof(broken: string | null): Promise<MoonProof> {
   else {
     const bad = seenRows.filter((r) => !r.ok)
     const worst = seenRows.reduce((a, r) => (r.dip > a.dip ? r : a), seenRows[0])
-    const said = (r: MoonRow): string => {
-      const of = (frame: number): string => (r.trail.find((x) => x.frame === frame)!.disc - r.trail.find((x) => x.frame === frame)!.ring).toFixed(0)
-      return `${of(r.before)} at frame ${r.before}, ${of(r.dipAt)} at ${r.dipAt}, ${of(r.after)} at ${r.after}`
+    const said = (r: MoonRow, before = r.before, at = r.dipAt, after = r.after): string => {
+      const of = (frame: number): string => {
+        const m = r.trail.find((x) => x.frame === frame)!
+        return `${(m.disc - m.ring).toFixed(0)} (disc ${m.disc.toFixed(0)}, sky ${m.ring.toFixed(0)})`
+      }
+      return `${of(before)} at frame ${before}, ${of(at)} at ${at}, ${of(after)} at ${after}`
     }
-    findings.push({ ok: bad.length === 0, what: `the moon (${seenRows.length} of ${nights.length} nights with its disc in the frame, the disc less the sky in a ring round it): ${bad.length === 0 ? 'it blinks in none' : `it blinks in ${bad.length}`}; between the first and the last frame at half its peak its level falls and comes back inside ${INSIDE} frames by at the most ${worst.dip.toFixed(1)} of 255${worst.dipAt >= 0 ? ` (night ${worst.night}: ${said(worst)})` : ''} against a limit of ${BLINK}` })
+    findings.push({ ok: bad.length === 0, what: `the moon (${seenRows.length} of ${nights.length} nights with its disc in the frame, the disc less the sky in a ring round it): ${bad.length === 0 ? 'it blinks in none' : `it blinks in ${bad.length}`}; between the first and the last frame at half its peak the disc and its level fall and come back inside ${INSIDE} frames by at the most ${worst.dip.toFixed(1)} of 255${worst.dipAt >= 0 ? ` (night ${worst.night}: ${said(worst)})` : ''} against a limit of ${BLINK}` })
     for (const r of bad.slice(0, 6)) findings.push({ ok: false, what: `night ${r.night} (${barText(secondsOf(r.dipAt))}): the moon's disc falls and comes back by ${r.dip.toFixed(1)} of 255 inside ${INSIDE} frames: ${said(r)}; the sky round it ${Math.abs(r.ringMoved) < 3 ? 'stays as it is' : `moves ${r.ringMoved.toFixed(1)}`} at frame ${r.dipAt}, so ${Math.abs(r.ringMoved) < 3 ? 'it is the disc alone' : 'something crosses disc and sky'}; judged from frame ${r.from} to ${r.to}, peak ${r.peak.toFixed(0)} at frame ${r.peakAt}` })
+    // Where the level falls and the disc does not, the sky moved behind a steady moon. That is listed, and the parts of the frame judge the sky.
+    for (const r of seenRows) {
+      const judged = r.trail.filter((x) => x.frame >= r.from && x.frame <= r.to)
+      const alone = blinkOf(judged.map((m) => m.disc - m.ring))
+      if (r.ok && alone.dip > BLINK) findings.push({ ok: true, expected: true, what: `listed, not the moon's blink: in night ${r.night} the disc less its sky falls and comes back by ${alone.dip.toFixed(1)} of 255 (${said(r, judged[alone.before].frame, judged[alone.at].frame, judged[alone.after].frame)}) while the disc itself falls by ${Math.max(0, Math.min(judged[alone.before].disc, judged[alone.after].disc) - judged[alone.at].disc).toFixed(1)}: the sky behind it changes, which the parts of the frame judge` })
+    }
     const unseen = rows.filter((r) => !r.seen)
     if (unseen.length) findings.push({ ok: true, expected: true, what: `the moon is not judged in ${unseen.length} nights (${unseen.map((r) => `night ${r.night}: ${r.inFrame === 0 ? 'out of the frame' : `at the most ${r.peak.toFixed(0)} over its ring`}`).join('; ')})` })
     for (const r of bad.length ? bad.slice(0, 2) : worst.dipAt >= 0 ? [worst] : []) {
