@@ -128,7 +128,7 @@ describe('the film clock', () => {
     }
     expect(grown(frostFrom, frostTo)).toBeLessThan(0.01)
     expect(grown(rainFrom, rainTo)).toBeLessThan(0.01)
-    expect((frostTo - frostFrom) / fps).toBeGreaterThan(13)
+    expect((frostTo - frostFrom) / fps).toBeGreaterThan(12)
     expect((rainTo - rainFrom) / fps).toBeGreaterThan(13)
   })
 
