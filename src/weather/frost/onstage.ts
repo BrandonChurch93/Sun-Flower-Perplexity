@@ -34,7 +34,7 @@ void main() {
   float depth = -view.z;
   float pixel = depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
   float grainPx = (0.00016 + 0.00028 * own * own) / max(pixel, 1e-6);
-  float radius = 0.5 * min(uCocScale * abs(1.0 / max(depth, 1e-4) - 1.0 / uFocusM), 2048.0) + grainPx + 0.75;
+  float radius = 0.5 * cocOf(depth) + grainPx + 0.75;
   // A circle too wide is a grain too near the glass to be seen at all.
   float seen = border.x * border.y * border.z * smoothstep(0.16, 0.3, depth) * (1.0 - smoothstep(0.006, 0.016, radius / uSize.y));
   vec3 toEye = normalize(uCamPos - world);

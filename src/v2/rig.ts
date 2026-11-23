@@ -193,5 +193,5 @@ export function fixedPose(v: FixedView): CameraPose {
   const right = new THREE.Vector3(-Math.cos(heading), 0, Math.sin(heading))
   const forward = level.clone().multiplyScalar(Math.cos(pitch)).setY(Math.sin(pitch))
   const up = new THREE.Vector3().crossVectors(right, forward).normalize()
-  return { position: new THREE.Vector3(v.distanceM * Math.sin(az), v.heightM, v.distanceM * Math.cos(az)), forward, right, up, focalMm: v.focalMm, focusM: v.focusM, fNumber: v.fNumber }
+  return { position: new THREE.Vector3(v.distanceM * Math.sin(az), v.heightM, v.distanceM * Math.cos(az)), forward, right, up, focalMm: v.focalMm, focusM: v.focusM, fNumber: v.fNumber, focusNearM: v.focusNearM }
 }
