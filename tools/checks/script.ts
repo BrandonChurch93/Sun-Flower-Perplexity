@@ -18,6 +18,7 @@ const SENTENCE = "whenever there's a scene change we have a huge frame rate drop
 // The time the graphics card, or here the processor in its place, takes to draw is not in the number.
 //   npm run checks -- script                      the windows of tools/checks/limits.json that are not measured yet on this film, then the table of all of them
 //   npm run checks -- script --window 2070-2110   one window, or several with commas
+//   npm run checks -- script --window 1250-1290,3000-3010 --just   those windows alone, without the windows every run measures first
 //   npm run checks -- script --all                the whole film, in windows drawn one after the other without a jump
 //   npm run checks -- script --frames 8           only the first 8 counted frames of each window: a quick look, never a whole verdict
 //   npm run checks -- script --again              measures again what is already measured
@@ -270,6 +271,8 @@ export async function run(args: Args): Promise<void> {
   // A cut the film means must cost nothing: a window round each is measured whole in every run too, unless one of the windows above already holds it with room on both sides.
   const cutFrames = meantCuts()
   for (const c of cutFrames) if (!first.some(([a, b]) => a + AROUND <= c && c + AROUND <= b)) first.push([Math.max(0, c - CUT_ROOM), Math.min(FRAMES - 1, c + CUT_ROOM)])
+  // --just measures the windows named and nothing else: a quick answer on a film that changes every few minutes.
+  if (flag(args, 'just')) first.length = 0
   const isFirst = ([a, b]: [number, number]): boolean => first.some(([x, y]) => x === a && y === b)
   const rest: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]).filter(([x, y]) => y >= num(args, 'from', 0) && x <= num(args, 'to', FRAMES - 1)) : limits.windows.map(span)
   const spans: [number, number][] = [...first, ...rest.filter((w) => !isFirst(w))]
