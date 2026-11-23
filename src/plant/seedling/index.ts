@@ -397,6 +397,11 @@ export function create(options: PartOptions): PlantPart | null {
 
   const filled = [false, false]
   const led = [false, false]
+  // The crumbs lie under the soil from CRUMBS_GONE_S on and are one shape from then, whatever the clock: a slot that holds it is not laid again.
+  const crumbsLaid = [false, false]
+  const crumbsLed = [false, false]
+  const sunkShape = [false, false]
+  const sunkNormals = [false, false]
 
   function fill(slot: 0 | 1, pose: Pose): void {
     const first = filling.lead
@@ -707,6 +712,14 @@ export function create(options: PartOptions): PlantPart | null {
     }
 
     if (!crumbs) return
+    const sunk = time >= CRUMBS_GONE_S
+    if (sunk && sunkShape[slot] && (!first || sunkNormals[of])) return
+    sunkShape[slot] = sunk
+    crumbsLaid[slot] = true
+    if (first) {
+      sunkNormals[of] = sunk
+      crumbsLed[of] = true
+    }
     const foot = stemAt(pose, 0)
     const fx = foot.x
     const fz = foot.z
@@ -757,7 +770,7 @@ export function create(options: PartOptions): PlantPart | null {
       }
       // It lets go, falls and lies where it lands; the rain takes it into the ground.
       const gone = clamp((time - c.from) / c.fall)
-      const landY = soilHeightAt(fx + c.landX, fz + c.landZ, time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
+      const landY = soilHeightAt(fx + c.landX, fz + c.landZ, sunk ? CRUMBS_GONE_S : time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
       x = lerp(x, fx + c.landX, gone)
       z = lerp(z, fz + c.landZ, gone)
       y = lerp(y, landY, gone * gone)
@@ -795,15 +808,24 @@ export function create(options: PartOptions): PlantPart | null {
     fill,
     absent: (time) => time >= CRUMBS_GONE_S && seedLeafLength(time) <= 0 && huskSize(time) <= 0,
     finish() {
-      for (const g of crumbs ? [...groups, crumbs] : groups) {
+      for (const g of groups) {
         for (let k = 0; k < 2; k++) {
           const shape = g.shapes[k]
           if (filled[k] && shape) shape.needsUpdate = true
           if (led[k] && g.carried[k]) for (const a of g.carried[k]) a.needsUpdate = true
         }
       }
+      if (crumbs) {
+        for (let k = 0; k < 2; k++) {
+          const shape = crumbs.shapes[k]
+          if (crumbsLaid[k] && shape) shape.needsUpdate = true
+          if (crumbsLed[k] && crumbs.carried[k]) for (const a of crumbs.carried[k]) a.needsUpdate = true
+        }
+      }
       filled.fill(false)
       led.fill(false)
+      crumbsLaid.fill(false)
+      crumbsLed.fill(false)
       if (beads) beads.finish()
       crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystals.count : 0)
     },

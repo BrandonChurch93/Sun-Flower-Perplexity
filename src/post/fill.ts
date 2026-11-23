@@ -52,10 +52,24 @@ void main() {
         // One of the pictures alone has no shared pixels: the least circle it holds round here is the thing's own.
         for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) thing = min(thing, texelFetch(tPure, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
       } else {
-        // Without such a picture: away from the widest circle lies the thing itself. Where it goes on for two pixels at one circle that circle is its own, and where it does not the thing is thinner than the pixel and is taken for sharp.
+        // Without such a picture: away from the widest circle lies the thing itself. Where it goes on for two pixels at one circle that circle is its own.
         float o1 = texelFetch(tFrame, clamp(p - way, ivec2(0), top), 0).a;
         float o2 = texelFetch(tFrame, clamp(p - 2 * way, ivec2(0), top), 0).a;
-        thing = abs(o1 - o2) <= 0.1 * o1 + 0.25 && o1 <= 1.1 * c.a + 0.25 ? min(c.a, o1) : 0.0;
+        if (abs(o1 - o2) <= 0.1 * o1 + 0.25 && o1 <= 1.1 * c.a + 0.25) thing = min(c.a, o1);
+        else {
+          // Where it does not, the thing is thinner than the pixel. The least circle round here is the most its own can be, and what it would be if the thing filled at least half of a pixel is the least. A hair stands on a body: with a sharp one close by it is taken for sharp, and without one for as soft as the least circle says.
+          float least = c.a;
+          for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) least = min(least, texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+          float body = least;
+          for (int k = 0; k < 8; k++) {
+            vec2 d = vec2(cos(0.7853982 * float(k)), sin(0.7853982 * float(k)));
+            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(5.0 * d)), ivec2(0), top), 0).a);
+            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(9.0 * d)), ivec2(0), top), 0).a);
+            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(14.0 * d)), ivec2(0), top), 0).a);
+          }
+          float sharp = 1.0 - smoothstep(1.0, 2.5, body * uRadiusScale);
+          thing = mix(least, clamp(2.0 * least - most, 0.0, least), sharp);
+        }
       }
       a = mix(a, thing, smoothstep(0.08, 0.2, dip));
     }
