@@ -171,6 +171,7 @@ class FieldSky implements Sky {
       uGolden: { value: 0 },
       uLate: { value: 0 },
       uStreaks: { value: 0 },
+      uThinContrast: { value: 1 },
       uEndDeck: { value: 0 },
       uSideBanks: { value: 0 },
       uWetHaze: { value: 0 },
@@ -452,10 +453,13 @@ class FieldSky implements Sky {
     const tanX = config.camera.gateWidthMm / (2 * pose.focalMm)
     const tanY = tanX * view.height / view.width
     this.extent.set(Math.max(tanX * 1.23, tanX + 0.12), Math.max(tanY * 1.23, tanY + 0.12))
+    const fairDetail = view.quality === 'film' ? 0 : smoothstep(4, 8, e) * (1 - smoothstep(0, 0.22, d.overcast))
+      * (1 - smoothstep(0, 0.20, d.fog)) * (1 - smoothstep(60.5, 60.95, now.bar))
+    const u = this.cloud.uniforms
     this.setCloud(now, later, pose.position.y, view.light, e, level)
+    u.uThinContrast.value = 1 - 0.65 * fairDetail
     this.cloud.render(renderer, target)
     renderer.setRenderTarget(old)
-    const u = this.cloud.uniforms
     const night = smoothstep(-2.6, -12.6, e)
     const ending = lastLightAt(e, d.evening)
     const v = this.display.uniforms
@@ -483,8 +487,9 @@ class FieldSky implements Sky {
     v.uPhotoMix.value = finale
     v.uFinaleDusk.value = u.uFinaleDusk.value
     const darkDeck = smoothstep(0.42, 0.84, d.overcast) * (1 - d.flash) * (1 - tear)
+    const flashFilter = view.quality === 'film' ? 0 : 0.70 * smoothstep(0.17, 0.65, d.flash)
     v.uMarchFilter.value = (view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast)
-      + 0.46 * darkDeck
+      + 0.46 * darkDeck + 0.68 * fairDetail + flashFilter
     this.face(now, later, v.uSunFace.value)
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3 * moonClarity)

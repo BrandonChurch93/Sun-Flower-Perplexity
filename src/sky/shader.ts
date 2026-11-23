@@ -28,6 +28,7 @@ uniform float uRealSky;
 uniform float uGolden;
 uniform float uLate;
 uniform float uStreaks;
+uniform float uThinContrast;
 uniform float uEndDeck;
 uniform float uSideBanks;
 uniform float uWetHaze;
@@ -237,6 +238,7 @@ vec3 thinClouds(vec3 d, vec3 air, float mu) {
   vec3 tint = mix(vec3(1.0, 0.95, 0.9), vec3(1.0, 0.37, 0.27), warm);
   vec3 light = ambient + tint * uCloudLight * (0.016 + 0.055 * pow(sat(mu), 33.0)) * (0.30 + 0.70 * b.r);
   light = mix(light, dot(light, LUMA) * vec3(0.81, 1.07, 1.31), uCoolDay * (1.0 - smoothstep(0.906, 0.988, mu)));
+  light = mix(air, light, uThinContrast);
   return mix(air, light, coverage);
 }
 
