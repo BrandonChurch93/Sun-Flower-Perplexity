@@ -1,5 +1,6 @@
 # Looks of rain
 
-2026-11-23 09:28 UTC, at commit 7a1277f6 of agent/rain.
+2026-11-23 09:46 UTC, at commit be031905 of agent/rain.
 
-- `01-wide-shot-1262-on-7a1277f6-above-as-is-below-wit.jpg`: wide shot 1262 on 7a1277f6, above as is, below with every bead set of the rain's switched off: the chains on the edges and the dots on the stem stay
+- `01-storm-1830-lower-left-soil-landings-before-above.jpg`: storm 1830 lower left, soil landings, before above and now below (draft)
+- `02-storm-1830-lower-left-1-sample-above-and-8-sampl.jpg`: storm 1830 lower left, 1 sample above and 8 samples below
