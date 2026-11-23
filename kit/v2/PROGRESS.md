@@ -14,12 +14,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Review preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 53 · 2026-11-23 22:09 UTC · Phase 6
+- Last status: 54 · 2026-11-23 22:26 UTC · Phase 6
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 22:26 UTC · status 54 · Phase 6 · `status-1.jpg`: Opening: the prompt being typed; `status-2.jpg`: Opening: reasoning menu, Standard to Max; `status-3.jpg`: Opening: the build screen before the cut to the film; `status-4.jpg`: Card clip, frame 2941 at the export tier
 - 2026-11-23 22:09 UTC · status 53 · Phase 6 · `status-1.jpg`: The card still, film frame 2905 at the final tier; `status-2.jpg`: Card clip, frame 3050 at the final tier; `status-3.jpg`: Prompt intro, the effort menu with Max about to be chosen; `status-4.jpg`: Prompt intro, the three build steps
 - 2026-11-23 21:42 UTC · status 52 · Phase 6 · `status-1.jpg`: Card clip candidates: the still at frame 2905, the first opening frame, and two possible last frames (from the film); `status-2.jpg`: Frame 2907 at three tiers, crops at full size: the film at 1 sample, 8 samples, and the export tier at 48; `status-3.jpg`: Frame 2907 at the export tier, 48 samples a frame: the clip is being drawn at this tier
 - 2026-11-23 21:13 UTC · status 51 · Phase 6 · `status-1.jpg`: Frost close shot, the leaf from above (frame 952), at the export look, 48 samples a frame; `status-2.jpg`: Frost close shot, the lowest leaf (frame 1157), at the export look, 48 samples a frame; `status-3.jpg`: Rain at frame 1877: the film, the export look before the cure, the export look with the cure; `status-4.jpg`: Holds proof, the frost hold from the low camera: first, middle and last frame of each shot, and a control 45 frames after the hold
@@ -31,7 +32,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 19:30 UTC · status 45 · Phase 5 · `status-1.jpg`: Frost at first light, frame 940; `status-2.jpg`: The thaw, frame 1234; `status-3.jpg`: The storm, frame 2000 (new part); `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
 - 2026-11-23 19:06 UTC · status 44 · Phase 5 · `status-1.jpg`: Dawn over the seedling, frame 238 (new part); `status-2.jpg`: Storm flash, frame 1877; `status-3.jpg`: The open flower, frame 2957; `status-4.jpg`: Dusk over the field, frame 3755
 - 2026-11-23 18:39 UTC · status 43 · Phase 5 · `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun; `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip; `status-3.jpg`: Frame 2630: the bud on the last days of the climb; `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
-- 2026-11-23 18:21 UTC · status 42 · Phase 5 · `status-1.jpg`: Frame 3112 of the 1920 film: the open flower at bar 61; `status-2.jpg`: Frame 3523 of the 1920 film: the field at bar 69; `status-3.jpg`: The key picture for late (left) and frame 2780 of the film: the closed bud at dusk; `status-4.jpg`: The last dusk over the field, frames 3688 to 3748, every eighth
 
 ## Clock
 
@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 1.77 h |
-| Whole build | 30.00 h | 24.16 h |
+| 6 | 4.00 h | 2.05 h |
+| Whole build | 30.00 h | 24.44 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -518,4 +518,6 @@ None yet.
   Pictures: Card clip candidates: the still at frame 2905, the first opening frame, and two possible last frames (from the film); Frame 2907 at three tiers, crops at full size: the film at 1 sample, 8 samples, and the export tier at 48; Frame 2907 at the export tier, 48 samples a frame: the clip is being drawn at this tier.
 - Status 53, 2026-11-23 22:09 UTC, Phase 6. Brandon signed off the film and asked for four more things; all four are in work. The card still is drawn at the final tier (film frame 2905, the closed bud against the low sun). The card clip runs from that exact frame for 6.9 s (208 frames, 2905 to 3112) and is being drawn at the final tier by twelve machines; 12 of 208 are in, each checked on arrival (right build, 48 samples, 1920 x 1080; one frame drawn on two machines came back the same to the pixel). The prompt intro is drawn with the typing skill: 18.2 s, 547 frames, every check of the skill passes; the prompt is typed, the effort chip is opened and set from Standard to Max, Send is pressed, then three build steps run. Sounds from his ElevenLabs are being fitted; the first mix (one key sound a letter) was judged too mechanical by a listening model and is being redone with a natural typing take. The keys apart timing pass is pushed as a side branch (agent/plant-keys-apart at c28ce9af), offered, not merged. Next: Join the intro to the approved film without touching one film frame (one copy with sounds, one silent), build the landing page that plays the film for Vercel, encode the still and the clip when the frames are in (about 01:45 UTC), then the wrap. Time used: 24.2 h of 30 h.
   Pictures: The card still, film frame 2905 at the final tier; Card clip, frame 3050 at the final tier; Prompt intro, the effort menu with Max about to be chosen; Prompt intro, the three build steps.
+- Status 54, 2026-11-23 22:26 UTC, Phase 6. The second version of the film is made twice and attached: one with typing and click sounds in the opening, one with a silent opening. The film part is the signed off watch copy bit for bit (all 3,810 frames decode the same) and the track starts on the film's first frame (0 samples off, MEASURED). Card frames at the export tier: 35 of 208 in. Next: The site for Vercel (landing page plays the film), then the card still and clip when the frames are in (about 01:15 UTC), then the wrap. Time used: 24.4 h of 30 h.
+  Pictures: Opening: the prompt being typed; Opening: reasoning menu, Standard to Max; Opening: the build screen before the cut to the film; Card clip, frame 2941 at the export tier.
 
