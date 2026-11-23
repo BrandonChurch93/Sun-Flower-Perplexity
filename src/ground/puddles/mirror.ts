@@ -22,7 +22,7 @@ vec3 skyMirror(vec3 d, float blur, float sun) {
   float peak = max(max(uAirSun.r, uAirSun.g), max(uAirSun.b, 1e-4));
   sky += uAirSun * uAirSun / peak * (sun * path * exp(aim / (0.02 * tight)) * 0.5 * uBlaze);
   float lit = dot(d, uMirrorFlashAt) - 1.0;
-  sky += uMirrorFlash * (0.1 + 1.6 * exp(lit / 0.1) + 3.0 * exp(lit / 0.012));
+  sky += uMirrorFlash * (0.1 + 0.8 * exp(lit / 0.1) + 1.2 * exp(lit / 0.012));
   return sky;
 }
 // How much of the sky along a ray from p the plant stands in front of: its stem, and the leaves round it.
