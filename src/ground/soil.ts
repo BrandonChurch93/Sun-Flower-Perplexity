@@ -246,7 +246,9 @@ float soilHeight(vec2 p, float lod) {
 
 // With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
 export const dampFill = [1, 1.12, 1.1]
-export const dayEarth = [0.24, 0.23, 0.25]
+export const dayEarth = [0.16, 0.16, 0.16]
+export const humus = [0.9, 1.04, 1.45]
+export const cropFar = [0.05, 0.04, 0.012]
 export const dawnSky = [0.85, 0.78, 0.66]
 export const dewShade = [0.6, 0.54, 1.18]
 // The states of the ground, shared with whatever lies on it: where water stands and where frost settles.
@@ -267,8 +269,10 @@ float pooled(float heightM, float wet) {
 }
 uniform float uDay;
 const vec3 DAY_EARTH = vec3(${dayEarth.join(', ')});
+const vec3 HUMUS = vec3(${humus.join(', ')});
+const vec3 CROP_FAR = vec3(${cropFar.join(', ')});
 vec3 dampened(vec3 base, float damp) {
-  vec3 albedo = base * mix(vec3(1.0), DAY_EARTH, max(uDay, 0.7 * smoothstep(${soilClock.crust[0].toFixed(1)}, ${soilClock.crust[1].toFixed(1)}, uTime)) * (1.0 - smoothstep(0.1, 0.8, damp)));
+  vec3 albedo = base * HUMUS * mix(vec3(1.0), DAY_EARTH, max(uDay, 0.7 * smoothstep(${soilClock.crust[0].toFixed(1)}, ${soilClock.crust[1].toFixed(1)}, uTime)) * (1.0 - smoothstep(0.1, 0.8, damp)));
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   return mix(albedo, mix(albedo, vec3(luma) * vec3(0.85, 1.1, 1.0), 0.9) * mix(0.3, 0.07, damp * damp * damp * damp), damp);
 }
@@ -293,7 +297,7 @@ float sheen(float wet, float dew) {
 uniform float uBlueHour;
 vec3 groundAmbient(vec3 n) {
   float away = saturate(0.6 - dot(n.xz, uLowSun.xy)) * uLowSun.z;
-  return mix(mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.8, 0.8 * uBlueHour), skyAmbient(vec3(0.0, 1.0, 0.0)) * mix(vec3(0.9, 1.45, 0.9), vec3(0.66, 1.1, 1.32), uAir.w) * 1.3, 0.95 * away);
+  return mix(mix(skyAmbient(n), skyAmbient(vec3(0.0, 1.0, 0.0)) * vec3(1.1, 1.5, 2.1), 0.8 * uBlueHour), skyAmbient(vec3(0.0, 1.0, 0.0)) * mix(vec3(0.9, 1.45, 0.9), vec3(0.66, 1.1, 1.32), uAir.w) * 1.3, 0.95 * away);
 }
 // Under a low sun, soil standing proud of the ground is open to the whole bright sky, and what lies low between the lumps sees little of it.
 uniform float uDusk;
@@ -608,6 +612,9 @@ void main() {
     foot = 1.0 - 0.6 * field * exp(-near * near / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
   }
   albedo = dampened(albedo, damp);
+#ifndef NEAR
+  albedo = mix(albedo, CROP_FAR, uCover * smoothstep(110.0, 200.0, r + 50.0 * (valueNoise(p * 0.02) - 0.5)));
+#endif
   float luma = dot(albedo, vec3(0.3, 0.6, 0.1));
   albedo = mix(albedo, mix(vec3(0.03, 0.045, 0.016), vec3(0.045, 0.052, 0.036), field) * (0.5 + 3.0 * luma * uTiles.z * 0.33), 0.92 * thatch);
   albedo *= 1.0 - 0.45 * pool;
@@ -619,6 +626,9 @@ void main() {
   float mapped = uCast * uShadowOn * smoothstep(0.0, 0.04, min(min(sc.x, sc.y), min(1.0 - sc.x, 1.0 - sc.y)));
   lit *= mix(1.0, smoothstep(0.38, 0.72, h), low * (1.0 - mapped));
   lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
+  float sunny = uDay * (1.0 - smoothstep(0.1, 0.8, uWet));
+  lit *= mix(1.0, smoothstep(0.3, 0.58, h) * mix(1.0, smoothstep(0.06, 0.38, lumpy.a), stand * (1.0 - smoothstep(0.0, 3.0, lodPix))), 0.9 * sunny);
+  albedo *= 1.0 + 0.45 * crest * sunny;
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt) * hollow;
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.3 * broken.y);
@@ -645,14 +655,15 @@ void main() {
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
   float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
-  float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
+  float brow = pow(1.0 - saturate(dot(n, normalize(uCamPos - vWorld))), 2.0) * smoothstep(0.0, 0.5, n.y) * mix(0.3, 1.0, stand);
+  float sits = saturate(0.6 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) + 0.7 * brow - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
   float lies = saturate(sits + 0.22 * hollow * smoothstep(0.08, 0.45, mix(h, lumpy.a, stand)) * (1.0 - 0.7 * under) * (1.0 - pool)) * (1.0 - 0.4 * saturate(2.0 * dot(n.xz, uLowSun.xy)));
   float rime = max(rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8)), dusted(vWorld, lies, uFrost, lit * saturate(ndl * 1.8)));
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
   albedo = mix(albedo, FROST_WHITE, 0.85 * rime);
   open = mix(open, max(open, 0.85), rime);
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) * (1.0 - 0.8 * uDusk * uDew) * underFlash(smoothstep(0.1, 0.8, uWet)) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew));
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) * (1.0 - 0.8 * uDusk * uDew) * underFlash(smoothstep(0.1, 0.8, uWet)) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew * (1.0 - uBlueHour)));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);

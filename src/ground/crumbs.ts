@@ -444,7 +444,7 @@ void main() {
   float rime = max(rimed(vWorld, sits, uFrost, lit * sunOn), dusted(vWorld, sits, uFrost, lit * sunOn)) * (1.0 - vSeed.z);
   albedo = mix(frozen(albedo, uFrost), FROST_WHITE, 0.8 * rime);
   open = mix(open, max(open, 0.85), rime);
-  vec3 color = albedo * (uSunColor * sunOn * lit * underFlash(uWet) + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
+  vec3 color = albedo * (uSunColor * sunOn * lit * underFlash(uWet) + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn * (1.0 - uBlueHour)));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
   color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * underFlash(1.0) * gloss * glare(v, hv) * lit * selfShade() * mix(0.3, 1.0, uWet) * mix(1.0, 0.68, uDew) * mix(1.0, 0.3, dull);
