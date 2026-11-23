@@ -18,6 +18,7 @@ const OBJECTS = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', '
 // A program, and the program a vertex array is made under, is named by its uniforms too: the file of src/ that holds the most of them wrote the shader.
 //   npm run checks -- made --trace --from 300 --to 640            after the film's own warming, frames in a row
 //   npm run checks -- made --trace --from 3106 --to 3108 --width 1920 --height 1080    at the film's own size: a set chosen by the picture's size shows only there
+//   npm run checks -- made --trace --spans 100-130,847-850                        several spans after one warming
 //   npm run checks -- made --trace --from 318 --to 640 --cold     with no warming, as a runner that skips it starts: the first frame makes the film and is listed apart
 //   npm run checks -- made --trace --cold --break made --at 302 --from 300 --to 304    a texture and a program made by the checks' own page at frame 302: must fail and name tools/checks/page/main.ts
 
@@ -66,7 +67,13 @@ export async function run(args: Args): Promise<void> {
   const cold = flag(args, 'cold')
   const broken = typeof args.break === 'string' ? args.break : null
   const tier = str(args, 'tier', 'draft')
-  const name = `made.trace-${from}-${to}${cold ? '.cold' : ''}`
+  const spans: [number, number][] = typeof args.spans === 'string' ? args.spans.split(',').map((x) => x.split('-').map(Number) as [number, number]) : [[from, to]]
+  if (spans.some(([a, b]) => !Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < a || b >= FRAMES)) throw new Error('--spans is written first-last,first-last, as in 100-130,848-850')
+  if (cold && spans.length > 1) throw new Error('a cold start is one span')
+  const list = spans.flatMap(([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i))
+  const jumps = new Set(spans.slice(1).map(([a]) => a))
+  const spansText = spans.map(([a, b]) => `${a} to ${b}`).join(', ')
+  const name = spans.length > 4 ? `made.trace-${spans.length}-spans-${spans[0][0]}-${spans[spans.length - 1][1]}` : spans.length > 1 ? `made.trace-${spans.map(([a, b]) => `${a}-${b}`).join('.')}` : `made.trace-${from}-${to}${cold ? '.cold' : ''}`
   if (broken && broken !== 'made') throw new Error('made --trace can break the film with --break made --at <frame>')
   const progress = path.join(OUT, `${name}.progress.txt`)
   const session = await openSession({ trace: true, sky: typeof args.sky === 'string' ? args.sky : undefined, width: num(args, 'width', 320), height: num(args, 'height', 180) })
@@ -111,8 +118,8 @@ export async function run(args: Args): Promise<void> {
     const t0 = Date.now()
     if (broken) await session.fault(broken, num(args, 'at'))
     if (!cold) await session.warm(tier)
-    console.log(`made · traced · ${session.info.width} x ${session.info.height} · ${tier} · sky ${session.info.sky} · frames ${from} to ${to} in a row, ${cold ? 'cold: no warming' : `after the film's own warming (${((Date.now() - t0) / 1000).toFixed(0)} s)`} · loaded in ${session.startSeconds.toFixed(1)} s`)
-    for (let f = from; f <= to; f++) {
+    console.log(`made · traced · ${session.info.width} x ${session.info.height} · ${tier} · sky ${session.info.sky} · frames ${spansText} in a row, ${cold ? 'cold: no warming' : `after the film's own warming (${((Date.now() - t0) / 1000).toFixed(0)} s)`} · loaded in ${session.startSeconds.toFixed(1)} s`)
+    for (const f of list) {
       await session.page.evaluate(startTracing)
       const d = await session.draw(f, tier, false)
       const made = await session.page.evaluate(stopTracing)
@@ -125,7 +132,7 @@ export async function run(args: Args): Promise<void> {
         things.push(...read(f, made))
         console.log(`made · traced · frame ${f} made ${made.map((m) => m.kind).join(', ') || JSON.stringify(count)}`)
       }
-      if (drawn % 20 === 0) fs.writeFileSync(progress, `frame ${f} · ${drawn} of ${to - from + 1} · ${things.length} things made so far\n`)
+      if (drawn % 20 === 0) fs.writeFileSync(progress, `frame ${f} · ${drawn} of ${list.length} · ${things.length} things made so far\n`)
     }
   } finally {
     await session.close()
@@ -136,8 +143,8 @@ export async function run(args: Args): Promise<void> {
   findings.push({
     ok: things.length === 0 && counted.size === 0,
     what: things.length === 0 && counted.size === 0
-      ? `${judged} frames (${cold ? from + 1 : from} to ${to}) drawn in a row ${cold ? `after a cold start at frame ${from}, with no warming` : "after the film's own warming"}: nothing was made on the graphics card`
-      : `${judged} frames (${cold ? from + 1 : from} to ${to}) drawn in a row ${cold ? `after a cold start at frame ${from}, with no warming` : "after the film's own warming"}: ${things.length} things were made on ${frames.length} frames (${frames.slice(0, 12).join(', ')}${frames.length > 12 ? ', ...' : ''})`,
+      ? `${judged} frames (${cold ? `${from + 1} to ${to}` : spansText}) drawn in a row ${cold ? `after a cold start at frame ${from}, with no warming` : "after the film's own warming"}: nothing was made on the graphics card`
+      : `${judged} frames (${cold ? `${from + 1} to ${to}` : spansText}) drawn in a row ${cold ? `after a cold start at frame ${from}, with no warming` : "after the film's own warming"}: ${things.length} things were made on ${frames.length} frames (${frames.slice(0, 12).join(', ')}${frames.length > 12 ? ', ...' : ''})`,
   })
   if (cold) {
     const kinds = new Map<string, number>()
@@ -155,7 +162,7 @@ export async function run(args: Args): Promise<void> {
       else groups.set(key, { n: 1, t })
     }
     for (const { n, t } of groups.values()) {
-      findings.push({ ok: false, what: `frame ${f} (${barText(secondsOf(f))}): ${n} ${t.kind}${n === 1 ? '' : 's'}${t.what ? ` (${t.what})` : ''}, made from ${t.by.map(said).join(' < ') || 'a place the map does not name'}${t.shader ? `; its shader is written in ${t.shader}` : ''}. Owner: ${t.folder}` })
+      findings.push({ ok: false, what: `frame ${f} (${barText(secondsOf(f))}${jumps.has(f) ? ', the first frame after a jump of this run, which the film played in a row does not make' : ''}): ${n} ${t.kind}${n === 1 ? '' : 's'}${t.what ? ` (${t.what})` : ''}, made from ${t.by.map(said).join(' < ') || 'a place the map does not name'}${t.shader ? `; its shader is written in ${t.shader}` : ''}. Owner: ${t.folder}` })
     }
     if (mine.length === 0) findings.push({ ok: false, what: `frame ${f}: the film's own count says ${JSON.stringify(counted.get(f))} and no call that makes an object was seen` })
   }

@@ -12,7 +12,7 @@ const VIEWS: [string, number, number, string][] = [
 ]
 
 // Pictures of the review page as a person sees it, part by part, with the film stopped a little way into the storm.
-export async function shots(): Promise<string[]> {
+export async function shots(site: string): Promise<string[]> {
   const browser = await launch()
   const out: string[] = []
   try {
@@ -20,7 +20,7 @@ export async function shots(): Promise<string[]> {
       const page = await openPage(browser, width, height)
       const errors: string[] = []
       page.on('pageerror', (e) => errors.push(String(e)))
-      await page.goto(pathToFileURL(path.join(OUT, 'review', 'index.html')).href)
+      await page.goto(pathToFileURL(path.join(site, 'index.html')).href)
       await page.evaluate(async (to) => {
         const v = document.querySelector('video') as HTMLVideoElement
         if (v.getAttribute('src')) {

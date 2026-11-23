@@ -39,7 +39,7 @@ const HELP: [string, string, string, string][] = [
   ['film', 'the whole film in one go: nights by the picture, cuts and made in one table, a row a night and a row a day', 'draws about 1,430 frames at 320 x 180 on 3 pages (--pages, --stride 1 for every frame, --no-draw)', '80 to 100 min'],
   ['all', 'every check that does not draw, then what the drawn ones have so far', 'nothing', '1 min'],
   ['proof', 'every check on a film broken on purpose: each has to fail', 'nothing for the clock breaks; reads the last run of the drawn ones', '30 s'],
-  ['review', 'builds the review page from what is in out/', 'what the checks wrote; --shot takes pictures of the page', '10 s, 40 s with --shot'],
+  ['review', 'builds the review page from what is in out/', 'what the checks wrote; --film file.mp4 --looks-from dir --live path --out dir for the film drawn at its own size; --shot takes pictures of the page', '10 s, 40 s with --shot, 3 to 8 min with --film'],
 ]
 
 const name = process.argv[2]

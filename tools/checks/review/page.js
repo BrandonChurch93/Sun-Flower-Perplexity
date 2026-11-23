@@ -123,6 +123,12 @@ function toggle() {
   if (video.paused) video.play()
   else video.pause()
 }
+if (D.live) {
+  const a = el('a', 'live', 'Play the film live')
+  a.href = D.live
+  document.querySelector('.top nav').append(a)
+  $('film-note').after(el('p', 'quiet', 'The film on this page is a recording. Played live, it is drawn by your own machine as it plays, so how smoothly it runs is that machine\'s.'))
+}
 if (D.film) {
   video.src = D.film.file
   $('film-note').textContent = D.film.note
@@ -294,6 +300,15 @@ for (const c of D.checks) {
     if (k.table) inside.push(tableOf(k.table))
     inside.push(picturesOf(k))
     const d = fold(`The same on ${k.subject}: ${w2}`, ...inside)
+    d.querySelector('summary').classList.add(c2)
+    box.append(d)
+  }
+  for (const k of c.more || []) {
+    const [w2, c2] = verdictOf(k)
+    const inside = [el('p', 'quiet mono', `${k.subject} · ${k.at.replace('T', ' ').slice(0, 16)} UTC`), findingsOf(k)]
+    if (k.table && k.table.rows.length) inside.push(tableOf(k.table))
+    inside.push(picturesOf(k))
+    const d = fold(`Another run, ${k.run}: ${w2}`, ...inside)
     d.querySelector('summary').classList.add(c2)
     box.append(d)
   }
