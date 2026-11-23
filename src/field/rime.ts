@@ -15,6 +15,11 @@ const WIDEST = 0.1
 const FULL_M = 2.6
 // The share of the places on a blade that carry a facet large enough to be seen, near the lens.
 const SHARE = 0.35
+// A neighbor that stands small in the frame, far off or before a wide lens, seldom has a facet that finds the lens: this share of them do, each with a strength of its own
+// down to the weakest, and none brighter than one that stands large. How large a neighbor stands is counted in heights of the frame to a meter.
+const SMALL = [0.9, 1.8]
+const FEW = 0.35
+const WEAKEST = 0.3
 // The most a pixel may hold: a brighter point is spread over more pixels.
 const MOST = 16000
 
@@ -46,10 +51,14 @@ void main() {
   float d = length(ray);
   float k = uFogFalloff * ray.y;
   float thick = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * d * (abs(k) > 1e-4 ? (1.0 - exp(-k)) / k : 1.0);
+  float away = 1.0 - smoothstep(${SMALL[0].toFixed(2)}, ${SMALL[1].toFixed(2)}, 0.5 * projectionMatrix[1][1] / max(depth, 1e-4));
   float keep = ${SHARE.toFixed(3)} * far;
+  float plant = hash11(0.731 * aVary.w + 0.19);
+  float few = mix(1.0, ${FEW.toFixed(3)}, away);
+  float carried = smoothstep(0.0, 0.3 * few, few - plant) * mix(1.0, ${WEAKEST.toFixed(3)} + ${(1 - WEAKEST).toFixed(3)} * hash11(plant + 9.0), away);
   float facet = smoothstep(0.0, 0.25 * keep, keep - hash11(own + 7.0));
   float held = min(coc, ${WIDEST.toFixed(3)} * uSize.y);
-  float sum = ${LEVEL.toFixed(3)} * (0.4 + 0.6 * hash11(own + 6.0)) * lit * behind * 0.785 * held * held * far * exp(-thick) * there * facet;
+  float sum = ${LEVEL.toFixed(3)} * (0.4 + 0.6 * hash11(own + 6.0)) * lit * behind * 0.785 * held * held * far * exp(-thick) * there * facet * carried;
   vec3 light = uSunColor * sum;
   // What a pixel may hold is bounded: a brighter point takes more pixels, and its sum stays.
   float wide = clamp(sqrt(max(light.r, max(light.g, light.b)) / ${MOST.toFixed(1)}), 1.0, 4.0);
