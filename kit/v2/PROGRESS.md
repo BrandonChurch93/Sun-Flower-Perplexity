@@ -14,12 +14,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Review preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 54 · 2026-11-23 22:26 UTC · Phase 6
+- Last status: 55 · 2026-11-23 22:43 UTC · Phase 6
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 22:43 UTC · status 55 · Phase 6 · `status-1.jpg`: The page at 1920 x 1080: the film starts by itself, muted; `status-2.jpg`: A phone upright and on its side: it gets the 720p file; `status-3.jpg`: Open the live version leads to the app that draws the film live; `status-4.jpg`: Card frame 2957 at the export tier: the rays are opening
 - 2026-11-23 22:26 UTC · status 54 · Phase 6 · `status-1.jpg`: Opening: the prompt being typed; `status-2.jpg`: Opening: reasoning menu, Standard to Max; `status-3.jpg`: Opening: the build screen before the cut to the film; `status-4.jpg`: Card clip, frame 2941 at the export tier
 - 2026-11-23 22:09 UTC · status 53 · Phase 6 · `status-1.jpg`: The card still, film frame 2905 at the final tier; `status-2.jpg`: Card clip, frame 3050 at the final tier; `status-3.jpg`: Prompt intro, the effort menu with Max about to be chosen; `status-4.jpg`: Prompt intro, the three build steps
 - 2026-11-23 21:42 UTC · status 52 · Phase 6 · `status-1.jpg`: Card clip candidates: the still at frame 2905, the first opening frame, and two possible last frames (from the film); `status-2.jpg`: Frame 2907 at three tiers, crops at full size: the film at 1 sample, 8 samples, and the export tier at 48; `status-3.jpg`: Frame 2907 at the export tier, 48 samples a frame: the clip is being drawn at this tier
@@ -31,7 +32,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 19:49 UTC · status 46 · Phase 5 · `status-1.jpg`: The sprout at 2.0 s, from the joined film; `status-2.jpg`: Frost against the sun at 35.2 s, the cut on bar 21; `status-3.jpg`: The flower nearly open at 101.7 s, from the last part taken in; `status-4.jpg`: The field at 117.4 s, the pull back
 - 2026-11-23 19:30 UTC · status 45 · Phase 5 · `status-1.jpg`: Frost at first light, frame 940; `status-2.jpg`: The thaw, frame 1234; `status-3.jpg`: The storm, frame 2000 (new part); `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
 - 2026-11-23 19:06 UTC · status 44 · Phase 5 · `status-1.jpg`: Dawn over the seedling, frame 238 (new part); `status-2.jpg`: Storm flash, frame 1877; `status-3.jpg`: The open flower, frame 2957; `status-4.jpg`: Dusk over the field, frame 3755
-- 2026-11-23 18:39 UTC · status 43 · Phase 5 · `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun; `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip; `status-3.jpg`: Frame 2630: the bud on the last days of the climb; `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
 
 ## Clock
 
@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 2.05 h |
-| Whole build | 30.00 h | 24.44 h |
+| 6 | 4.00 h | 2.33 h |
+| Whole build | 30.00 h | 24.72 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -520,4 +520,6 @@ None yet.
   Pictures: The card still, film frame 2905 at the final tier; Card clip, frame 3050 at the final tier; Prompt intro, the effort menu with Max about to be chosen; Prompt intro, the three build steps.
 - Status 54, 2026-11-23 22:26 UTC, Phase 6. The second version of the film is made twice and attached: one with typing and click sounds in the opening, one with a silent opening. The film part is the signed off watch copy bit for bit (all 3,810 frames decode the same) and the track starts on the film's first frame (0 samples off, MEASURED). Card frames at the export tier: 35 of 208 in. Next: The site for Vercel (landing page plays the film), then the card still and clip when the frames are in (about 01:15 UTC), then the wrap. Time used: 24.4 h of 30 h.
   Pictures: Opening: the prompt being typed; Opening: reasoning menu, Standard to Max; Opening: the build screen before the cut to the film; Card clip, frame 2941 at the export tier.
+- Status 55, 2026-11-23 22:43 UTC, Phase 6. The site for Vercel is committed and pushed: the page plays the film by itself, muted, and links to the live version. A fresh clone builds it with npm ci and npm run site under Node 26.13.1, 24.22.3 and 22.23.5 (MEASURED); the three builds match the one I checked in the browser byte for byte, apart from the build time stamp. Card frames at the export tier: 46 of 208 in, none bad. Next: Rewrite the README for version 2, rebuild the review page, merge the rain cure, write round 27's wrap, tag v1 and open the pull request into main. The card still and clip are encoded when all 208 frames are in, about 01:15 UTC. Time used: 24.7 h of 30 h.
+  Pictures: The page at 1920 x 1080: the film starts by itself, muted; A phone upright and on its side: it gets the 720p file; Open the live version leads to the app that draws the film live; Card frame 2957 at the export tier: the rays are opening.
 
