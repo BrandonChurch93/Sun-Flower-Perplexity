@@ -23,6 +23,7 @@ import {
   leafSeed,
   leafStemFraction,
   measureStem,
+  REST,
   plantVariant,
   rayAngle,
   rayCount,
@@ -550,13 +551,13 @@ const solved: Solved[] = []
 const KEEP = 32
 const scratch = new Float32Array(standInVertexCount * 3)
 
-// The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment.
+// The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment, in still air.
+// With `steady` inputs that is the plant at rest, and what it feels bends it and never stretches it: the length is the plant clock's alone.
 export function stemLength(time: number, inputs: PlantInputs): number {
   const variant = plantVariant()
-  for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === inputs.leanX && s.leanZ === inputs.leanZ && s.lift === inputs.lift) return s.length
+  const still = inputs.steady ? REST : inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
+  for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === still.leanX && s.leanZ === still.leanZ && s.lift === still.lift) return s.length
   const target = heightAt(time)
-  // The stem is as long as it takes to stand that tall in still air. The wind then bends it and never stretches it.
-  const still = inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
   let length = 0
   if (target > 0) {
     measureStem(true)
@@ -576,7 +577,7 @@ export function stemLength(time: number, inputs: PlantInputs): number {
     length = l1
     measureStem(false)
   }
-  solved.push({ variant, time, leanX: inputs.leanX, leanZ: inputs.leanZ, lift: inputs.lift, length })
+  solved.push({ variant, time, leanX: still.leanX, leanZ: still.leanZ, lift: still.lift, length })
   if (solved.length > KEEP) solved.shift()
   return length
 }
@@ -601,9 +602,10 @@ export const FLOOR_RIM = 0.5
 export const FLOOR_DOME = 0.22
 
 // The growing tip: the top of the arch, then the end of the stem, then the bud, then the middle of the open face. From the bud on it lies inside the head.
+// With `steady` inputs the lens holds the plant as it stands at rest: what the sun, the wind and the cold do to it is seen against a frame that does not chase it.
 export function tipAt(time: number, inputs: PlantInputs, out: Vec3): Vec3 {
   const length = stemLength(time, inputs)
-  layStem(time, inputs)
+  layStem(time, inputs.steady ? REST : inputs)
   const n = stemNode(archShare(time), length)
   const x = n.x
   const y = n.y
@@ -653,7 +655,7 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
 const UNDER_HEAD_M = 0.2
 export function carrierAt<T extends Vec3>(time: number, inputs: PlantInputs, held: Vec3, out: T): T {
   const length = stemLength(time, inputs)
-  layStem(time, inputs)
+  layStem(time, inputs.steady ? REST : inputs)
   const share = smoothstep(0, 0.02, layHead(time, length).radius)
   const n = stemNode(archShare(time) * (1 - Math.min(0.5, UNDER_HEAD_M / Math.max(length, 1e-6))), length)
   out.x = lerp(held.x, n.x, share)

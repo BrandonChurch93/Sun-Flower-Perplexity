@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { segmentStart } from '../../config.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 
@@ -22,7 +21,7 @@ const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
 const STRAND_PX = 0.06
 const STRAND_FROM_PX = 2
-const WIDE_FROM_S = segmentStart('field')
+const WIDE_FROM_S = 52
 const WIDE_FULL_S = 53.5
 const WIDE_STRAND_PX = 0.15
 const WIDE_GAIN = 2
@@ -454,6 +453,13 @@ void main() {
 }
 `
 
+// A clear hair adds its light to what is behind it and a rimed one covers it, and the two cannot be mixed. So the coat thins to nothing as the frost dial passes its middle and comes back the other way: nothing is ever swapped in one frame.
+const turn = /* glsl */ `
+float rimeTurn() {
+  return smoothstep(0.0, 0.1, abs(uPlantFrost - 0.5));
+}
+`
+
 const extraFragment = /* glsl */ `
 in vec3 vWorld;
 in vec3 vLitAt;
@@ -466,17 +472,19 @@ in vec3 vShape;
 in vec3 vRight;
 in vec3 vUp;
 ${ball}
+${turn}
 void main() {
   float cover;
   vec3 color;
   float sun = plantSun(vLitAt, uSunDir);
+  float turn = rimeTurn();
   if (vShape.x < 0.5) {
     float x = abs(vAt.x);
-    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z);
+    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z) * turn;
     color = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   } else {
     float r = max(vShape.y, 0.5);
-    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z;
+    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z * turn;
     color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost, vShape.y);
   }
 #ifdef BLUR_CIRCLE
@@ -505,6 +513,7 @@ in float vCover;
 #ifdef FADE
 uniform float uHairFade;
 #endif
+${turn}
 void main() {
 #ifdef RIBBON
   float x = abs(vAcross);
@@ -515,6 +524,7 @@ void main() {
 #ifdef FADE
   cover *= uHairFade;
 #endif
+  cover *= rimeTurn();
   float sun = plantSun(vLitAt, uSunDir);
   vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   if (uPlantFrost > 0.5) {
