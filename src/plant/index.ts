@@ -586,16 +586,18 @@ export class Plant {
     this.surface.main.uniforms.uBloom.value = headOpen(time)
   }
 
-  // What a shape is laid under: the film second, the state of the skin and the standing clock of its own key, in place of the frame's. `leave` puts the frame's back.
-  private readonly frameOwn = { real: 0, wet: 0, frost: 0, dew: 0, held: 0 }
+  // What a shape is laid under: the film second, the plant's clock, the state of the skin and the standing clock of its own key, in place of the frame's. `leave` puts the frame's back.
+  private readonly frameOwn = { real: 0, time: 0, wet: 0, frost: 0, dew: 0, held: 0 }
   private enter(key: FilmKey): void {
     const own = this.frameOwn
     own.real = shared.uReal.value
+    own.time = shared.uTime.value
     own.wet = stateUniforms.uPlantWet.value
     own.frost = stateUniforms.uPlantFrost.value
     own.dew = stateUniforms.uPlantDew.value
     own.held = filling.held
     shared.uReal.value = key.real
+    shared.uTime.value = key.time
     stateUniforms.uPlantWet.value = key.wet
     stateUniforms.uPlantFrost.value = key.frost
     stateUniforms.uPlantDew.value = key.dew
@@ -605,6 +607,7 @@ export class Plant {
   private leave(): void {
     const own = this.frameOwn
     shared.uReal.value = own.real
+    shared.uTime.value = own.time
     stateUniforms.uPlantWet.value = own.wet
     stateUniforms.uPlantFrost.value = own.frost
     stateUniforms.uPlantDew.value = own.dew
