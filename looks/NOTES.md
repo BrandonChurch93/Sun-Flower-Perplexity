@@ -1,9 +1,9 @@
 # Looks of frost
 
-2026-11-23 04:59 UTC, at commit bdd3646 of agent/frost.
+2026-11-23 05:31 UTC, at commit 365fa33 of agent/frost.
 
-- `01-bar-21-review-tier-before-and-after.jpg`: bar 21 review tier, before and after
-- `02-bar-21-review-tier-plant-at-twice-size-before-an.jpg`: bar 21 review tier, plant at twice size, before and after
-- `03-cotyledon-at-three-times-before-and-after.jpg`: cotyledon at three times, before and after
-- `04-mist-drift-bars-19-to-22-every-third-frame.mp4`: mist drift, bars 19 to 22, every third frame
-- `05-mist-band-at-five-moments-of-bars-19-to-22-contr.jpg`: mist band at five moments of bars 19 to 22, contrast stretched
+- `01-bars-19-to-22-mist-without-the-plant-tongues.mp4`: bars 19 to 22, mist without the plant, tongues
+- `02-bars-19-to-22-all-parts-tongues.mp4`: bars 19 to 22, all parts, tongues
+- `03-mist-band-at-five-moments-with-tongues-contrast-.jpg`: mist band at five moments with tongues, contrast stretched
+- `04-thaw-at-bars-23-and-24-review-tier.jpg`: thaw at bars 23 and 24, review tier
+- `05-thaw-at-bars-23-and-24-review-tier-plant-at-twic.jpg`: thaw at bars 23 and 24, review tier, plant at twice size
