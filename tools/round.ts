@@ -10,7 +10,7 @@ import { at, WORK } from './lib/paths.ts'
 import { encodeAgain } from './lib/video.ts'
 
 interface Spot { label: string; x: number; y: number }
-interface Shot { id: string; frame: number; judged: boolean; key: string; control?: string; controlVotes?: string; spots: Spot[]; absent?: string; settled?: string[] }
+interface Shot { id: string; frame: number; judged: boolean; key?: string; control?: string; controlVotes?: string; spots: Spot[]; absent?: string; settled?: string[] }
 interface Run { first: number; what: string; x?: number; y?: number; round?: string }
 interface Plan {
   round: number
@@ -129,7 +129,8 @@ function spread<T>(list: T[], groups: number): T[][] {
 }
 
 async function match(): Promise<void> {
-  const groups = spread(plan.shots, Math.ceil(plan.shots.length / 3))
+  const paired = plan.shots.filter((s) => s.key)
+  const groups = spread(paired, Math.ceil(paired.length / 3))
   for (let g = 0; g < groups.length; g++) {
     const group = groups.length > 1 ? `R1-${g + 1}` : 'R1'
     delete key[group]
@@ -141,9 +142,10 @@ async function match(): Promise<void> {
       const gridName = `set-A-${pad2(n + 1)}.png`
       n += 2
       const frame = frameFile(shot.frame)
-      await save(group, `${pair}-a.png`, await wholeImage(at(shot.key)))
+      const target = at(shot.key as string)
+      await save(group, `${pair}-a.png`, await wholeImage(target))
       await save(group, `${pair}-b.png`, await wholeImage(frame))
-      const a = await atMasterSize(at(shot.key))
+      const a = await atMasterSize(target)
       const spots = shot.spots.slice(0, 6)
       const tiles: { input: Buffer; label: string }[] = []
       for (let i = 0; i < spots.length; i++) {
@@ -286,7 +288,7 @@ async function whole(): Promise<void> {
   }
   const tw = 688
   const th = 387
-  for (const four of chunks(plan.shots, 4)) {
+  for (const four of chunks(plan.shots.filter((s) => s.judged), 4)) {
     const name = `set-E-${pad2(n++)}.png`
     const tiles: { input: Buffer; label: string }[] = []
     for (const shot of four) tiles.push({ input: await scaled(frameFile(shot.frame), tw, th), label: `frame ${shot.frame} · ${secs(shot.frame, 1)}` })

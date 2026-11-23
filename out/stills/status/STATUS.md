@@ -1,12 +1,12 @@
-# Status 41
+# Status 42
 
-2026-11-23 18:03 UTC
+2026-11-23 18:21 UTC
 
-- Status 41 · Phase 5. The film is being drawn once at 1920 x 1080 on the frozen build by twelve machines. Nine of 36 chunks are in (920 of 3,810 frames), every one on the right engine, the right size and the right frame count. Each chunk is read by eye and by three detectors: no black frame, no tear, no lone spark that stays. The flags that came up are the fast sunsets, the meant cut on 1055, the meant tear on 2083, rain streaks and the leaf twitch of the time lapse. The record round tool is written and type checks; its packs wait for the joined film.
-- Next: Take in the remaining 27 chunks (the last is due about 19:40 UTC), join the film with the track for a private watch copy, build the record round's packs from lossless frames, start the proofs on the frozen build when the first machine is free. Time used: 20.1 h of 30 h.
+- Status 42 · Phase 5. Fourteen of 36 chunks of the 1920 film are in (1,406 of 3,810 frames), all on the frozen build, each read by eye and by the three detectors: nothing to cure so far. The record round is ready to run: its plan and its tool are in the repo and a layout test built the packs for three of its critics. One finding on the way: the picture for the late key shows dusk, but the film has afternoon on that key's bar; the dusk with the closed bud is one day earlier (frame 2780), so the round pairs the picture with that frame and still puts both frames before the jurors. Three ranges were moved to machines that end early.
+- Next: Take in the other 22 chunks (the last is now due about 19:27 UTC in place of 19:45), start the proofs on the first free machine, join the film with the track for a private watch, then run the record round once. Time used: 20.4 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frame 60 of the 1920 film, the sprout
-- `status-2.jpg`: Frame 1055, the hard cut to the frosted tip
-- `status-3.jpg`: Frame 1775, the storm hold
-- `status-4.jpg`: Frame 3440, the crane over the field
+- `status-1.jpg`: Frame 3112 of the 1920 film: the open flower at bar 61
+- `status-2.jpg`: Frame 3523 of the 1920 film: the field at bar 69
+- `status-3.jpg`: The key picture for late (left) and frame 2780 of the film: the closed bud at dusk
+- `status-4.jpg`: The last dusk over the field, frames 3688 to 3748, every eighth
