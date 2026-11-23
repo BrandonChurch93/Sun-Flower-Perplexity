@@ -348,6 +348,25 @@ float frostKept(float frost, float sunny) {
   return smoothstep(from, from + 0.3, frost);
 }
 const vec3 FROST_WHITE = vec3(0.7, 0.73, 0.78);
+// The lightning's light on the ground at its full strength, and how many times brighter the wet soil throws the sun back when it bursts through the deck.
+const vec3 FLASH_LIGHT = vec3(1.6, 1.9, 2.6);
+const float BURST_BLAZE = 3.0;
+uniform vec3 uFlashAt;
+// What the film of water on a soaked face adds: the sky it mirrors, the sun thrown at the lens, and the lightning.
+vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit) {
+  vec3 r = reflect(-v, n);
+  float fres = 0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0);
+  vec3 sky = skyAmbient(r) * (0.8 * fres * smoothstep(-0.05, 0.2, r.y));
+  vec3 hs = normalize(v + uSunDir);
+  float off = 1.0 - saturate(dot(n, hs));
+  vec3 sun = (uSunColor + 2.0 * uAir.z * uSkyHorizonSun) * ((2.0 * exp(-off / 0.006) + 0.1 * exp(-off / 0.1) + 2.5 * grains(world + 0.37, 0.5 * exp(-off / 0.1))) * max(lit, 0.6 * uAir.z) * (1.0 + BURST_BLAZE * uAir.z));
+  vec3 hf = normalize(v + uFlashAt);
+  vec3 flash = FLASH_LIGHT * (uAir.y * (0.8 * pow(saturate(dot(n, hf)), 30.0) + 0.16 * fres));
+  return (sky + sun + flash) * soaked;
+}
+vec3 flashOn(vec3 albedo, vec3 n) {
+  return FLASH_LIGHT * albedo * (uAir.y * (0.25 + 0.75 * saturate(dot(n, uFlashAt))));
+}
 // Frozen soil is darker and greyer than the same soil thawed.
 vec3 frozen(vec3 albedo, float frost) {
   return mix(albedo, dot(albedo, vec3(0.3, 0.6, 0.1)) * vec3(0.62, 0.7, 0.84), 0.8 * smoothstep(0.0, 0.3, frost));
@@ -439,10 +458,6 @@ ${grassCover}
 ${turfCover}
 
 const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
-// The lightning's light on the ground at its full strength, and how many times brighter the wet soil throws the sun back when it bursts through the deck.
-const vec3 FLASH_LIGHT = vec3(1.6, 1.9, 2.6);
-const float BURST_BLAZE = 3.0;
-uniform vec3 uFlashAt;
 const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
@@ -523,6 +538,7 @@ void main() {
   vec2 uvL = clodUv(p);
   vec4 lumpy = texture(tClods, uvL);
   float lodPix = log2(max(max(length(dFdx(uvL)), length(dFdy(uvL))) * uClods.z / uClods.x, 1.0));
+  vec2 sleek = 0.3 * tilt - ((textureLod(tClods, uvL, lodPix + 1.5).rg * 2.0 - 1.0) * ${(0.8 * clodSlopeMost).toFixed(1)}) * TURN_L * stand;
   tilt -= ((lumpy.rg * 2.0 - 1.0) * ${clodSlopeMost.toFixed(1)}) * TURN_L * stand;
   float hollow = mix(1.0, smoothstep(-0.1, 0.7, lumpy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, lumpy.a)), stand);
   float crest = mix(smoothstep(0.45, 0.8, h), smoothstep(0.3, 0.75, lumpy.a) * smoothstep(0.4, 0.8, lumpy.b), stand * (1.0 - smoothstep(0.0, 3.0, lodPix)));
@@ -596,12 +612,9 @@ void main() {
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
-  float soaked = max(uWet * uWet, pool);
-  vec3 back = reflect(-v, n);
-  color += uSunColor * (grains(vWorld + 0.37, 0.22) * soaked * pow(saturate(dot(back, uSunDir)), 10.0) * lit * (0.6 + BURST_BLAZE * uAir.z)) * hollow * (1.0 - thatch);
-  color += skyAmbient(back) * (soaked * (0.04 + 0.5 * graze) * hollow * (1.0 - pool) * (1.0 - thatch) * (1.0 - 0.8 * under));
-  vec3 hf = normalize(v + uFlashAt);
-  color += FLASH_LIGHT * uAir.y * hollow * (albedo * (0.25 + 0.75 * saturate(dot(n, uFlashAt))) + soaked * (2.5 * pow(max(dot(n, hf), 0.0), 50.0) + 0.3 * graze));
+  float soaked = max(smoothstep(0.1, 0.8, uWet), pool);
+  vec3 film = normalize(vec3(sleek.x, 1.0, sleek.y));
+  color += (wetAnswer(vWorld, v, film, max(soaked, 0.3 * uDew), lit) * (1.0 - pool) + flashOn(albedo, n)) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
   color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, density);

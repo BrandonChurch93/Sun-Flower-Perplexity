@@ -175,7 +175,7 @@ export class Ground {
     u.tColor.value = color
     u.tData.value = data
     const clods = clodPixels(CLOD_MAP)
-    u.tClods.value = assets.data('ground/clods', 'ground', clods.pixels, CLOD_MAP, CLOD_MAP, { repeat: true, anisotropy: 1 })
+    u.tClods.value = assets.data('ground/clods', 'ground', clods.pixels, CLOD_MAP, CLOD_MAP, { color: false, repeat: true, anisotropy: 4 })
     ;(u.uClods.value as THREE.Vector4).set(1 / clodTileM, clodHeightM, CLOD_MAP / clodTileM, clods.mean)
     u.uColorSize.value.set(width, width)
     u.uNear.value.w = soilTileM / (width / 2)

@@ -2,7 +2,7 @@ import { toward } from '../field/layout.ts'
 
 // Grass and weeds come up through the film. At dawn a few small ones stand on bare soil, by the last shot the ground in front of the crop is grass.
 // The tufts are born between the first and the last of these seconds of film, each takes the third to grow, and none is born in the dawn camera's way before the fourth.
-export const grassTimes = { firstS: 9, lastS: 37, growS: 12, laneS: 16 }
+export const grassTimes = { firstS: 9, lastS: 46, growS: 12, laneS: 16 }
 const smooth = (a: number, b: number, v: number): number => {
   const t = Math.min(1, Math.max(0, (v - a) / (b - a)))
   return t * t * (3 - 2 * t)

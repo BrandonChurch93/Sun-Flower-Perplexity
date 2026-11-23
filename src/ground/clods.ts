@@ -12,9 +12,9 @@ export const clodClearM = [0.045, 0.13]
 
 interface Sizes { cells: number; share: number; stands: number; edge: number }
 const SIZES: Sizes[] = [
-  { cells: 17, share: 1, stands: 0.64, edge: 0.4 },
-  { cells: 41, share: 0.4, stands: 0.55, edge: 0.45 },
-  { cells: 113, share: 0.13, stands: 0.6, edge: 0.5 },
+  { cells: 13, share: 1, stands: 0.5, edge: 0.45 },
+  { cells: 37, share: 0.5, stands: 0.5, edge: 0.45 },
+  { cells: 113, share: 0.2, stands: 0.6, edge: 0.5 },
 ]
 
 const rnd = (cell: number, cells: number, size: number, k: number): number => hash32((SEED ^ Math.imul(cell + 1, 0x9e3779b1) ^ Math.imul(cells, 0x85ebca6b) ^ Math.imul(size + 7, 0xc2b2ae35) ^ Math.imul(k + 1, 0x27d4eb2f)) >>> 0) / 4294967296
