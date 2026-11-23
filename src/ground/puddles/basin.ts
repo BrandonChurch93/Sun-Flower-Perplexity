@@ -20,14 +20,14 @@ ${course}
 uniform vec2 uWater;
 uniform float uWet;
 // The furrow gathers the water: the dips of the ground more than a foot from its course drain into it and hold none.
-// Beyond the square the soil shows its own standing water in its dips, at its own level: toward the edge of the square the dips fill to that level, so the two meet with no line between them.
+// Beyond the square the soil shows its own standing water in its dips, at its own level: at the rim of the square the dips fill to that level, so the two meet with no line between them.
 float drained(vec2 p) {
   float a = dot(p, uFurrowAxes.xy);
   float d = -dot(p, uFurrowAxes.zw);
   float dc = clamp(d, uFurrow.z, uFurrow.w);
   float held = 0.03 * smoothstep(0.13, 0.33, length(vec2(a + uFurrow.x - uFurrow.y * dc, d - dc)));
   vec2 q = abs(boxPlace(p));
-  return mix(held, min(held, max(uLevel.x - mix(uWater.x, uWater.y, uWet), 0.0)), smoothstep(0.4, 0.92, max(q.x, q.y)));
+  return mix(held, min(held, max(uLevel.x - mix(uWater.x, uWater.y, uWet), 0.0)), smoothstep(0.8, 0.94, max(q.x, q.y)));
 }
 float waterDepthOver(float height, vec2 p) {
   return uLevel.x - height - drained(p);
