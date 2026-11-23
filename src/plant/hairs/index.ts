@@ -37,7 +37,7 @@ const WIDE_GAIN = 2
 const WIDE_LONG_PX = 3
 const CROWD_CELL_PX = 8
 // How thick the rime on a hair is, in meters, whatever the hair.
-const RIME_M = 0.00014
+const RIME_M = 0.00008
 const MOST_PICKS = 24000
 const EXTRA_FROM_M = 0.002
 const EXTRA_SHARE = 0.4
@@ -215,9 +215,9 @@ void readHair(int k) {
   if (uPlantFrost > 0.0) {
     hairRoot.w *= mix(1.0, mix(1.3 + 0.4 * h2, 0.35 + 0.95 * h2 * h2, coat), uPlantFrost);
     float skew = 6.2832 * fract(hairOwn * 173.31 + 0.21);
-    hairDir = normalize(hairDir + (e1 * cos(skew) + e2 * sin(skew)) * (uPlantFrost * (0.25 + 0.75 * sqrt(fract(hairOwn * 61.17 + 0.83)))));
-    // The ice on a hair is never wider than a seventh of the hair is long.
-    hairRime = uPlantFrost * min(RIME_M * (0.6 + 0.8 * h4), hairRoot.w / 7.0) / uHairWidth * hairSlim;
+    hairDir = normalize(hairDir + (e1 * cos(skew) + e2 * sin(skew)) * (uPlantFrost * (0.1 + 0.3 * sqrt(fract(hairOwn * 61.17 + 0.83)))));
+    // The ice on a hair is never wider than a fourteenth of the hair is long.
+    hairRime = uPlantFrost * min(RIME_M * (0.6 + 0.8 * h4), hairRoot.w / 14.0) / uHairWidth * hairSlim;
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
     // Rime grows on a hair, not on the felt a strand of down stands for.
