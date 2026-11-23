@@ -256,8 +256,8 @@ void main() {
     return;
   }
   n *= sign(dot(n, v) + 1e-6);
-  float t = vAlong.x;
-  float a = abs(vAlong.y);
+  float t = saturate(vAlong.x);
+  float a = min(abs(vAlong.y), 1.0);
   float rib = 1.0 - smoothstep(0.0, 0.16, a);
   float edge = smoothstep(0.8, 1.0, a);
   vec3 albedo = mix(vec3(0.035, 0.06, 0.02), mix(vec3(0.07, 0.125, 0.035), vec3(0.1, 0.15, 0.045), vAlong.z), smoothstep(0.0, 0.5, t));

@@ -305,10 +305,12 @@ uniform float uMirror;
 vec3 proud(float heightM, float dew) {
   return mix(vec3(1.0), mix(vec3(0.85), mix(mix(vec3(2.1, 1.65, 1.8), vec3(1.6, 1.35, 1.5), dew), vec3(0.95, 1.05, 1.3), uDusk), smoothstep(-0.002, 0.012, heightM)), uLowSun.z);
 }
+// On a pixel that a surface covers only in part its look is worked out at the pixel's middle, beside the surface. This is the step from there to a place the surface does cover (nothing inside a surface), so that no grain and no face of ice lights that lies beside it.
+vec3 onFace = vec3(0.0);
 // Moist grains along a rim throw the sun at the lens when it stands behind them. A grain is half a millimeter across, and from far off about three pixels, so damp soil keeps its glints at any distance.
 float grains(vec3 world, float share) {
   float l = log2(max(sqrt(length(dFdx(world)) * length(dFdy(world))) * 3.0, 0.0005));
-  vec3 a = world * exp2(-floor(l));
+  vec3 a = (world + onFace) * exp2(-floor(l));
   vec3 b = a * 0.5;
   float ha = hash31(floor(a));
   float hb = hash31(floor(b));
@@ -451,7 +453,7 @@ float sparks(vec2 p, vec3 hv, float sharp, float circle, float amount) {
   float lit = 0.0;
   for (int k = 0; k < 2; k++) {
     float cellM = exp2(whole + float(k));
-    vec2 q = p / cellM;
+    vec2 q = (p + onFace.xz) / cellM;
     vec2 cell = floor(q);
     float share = k == 0 ? 1.0 - fract(size) : fract(size);
     float a = hash31(vec3(cell, whole + float(k)));
@@ -508,6 +510,7 @@ export const soilVertex = /* glsl */ `
 in vec3 position;
 out vec3 vWorld;
 out float vDepth;
+centroid out vec3 vHere;
 #ifdef NEAR
 ${soilHeight}
 #endif
@@ -519,6 +522,7 @@ void main() {
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
+  vHere = world.xyz;
   gl_Position = projectionMatrix * view;
 }
 `
@@ -526,6 +530,7 @@ void main() {
 export const soilFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
+centroid in vec3 vHere;
 uniform sampler2D tColor;
 uniform sampler2D tLitter;
 uniform vec2 uColorSize;
@@ -556,6 +561,7 @@ const float HEAVY = 0.4;
 const vec3 HEAVY_MEAN = vec3(0.45, 0.07, 0.5);
 
 void main() {
+  onFace = vHere - vWorld;
   vec2 p = vWorld.xz;
   float r = length(p);
   float d = -dot(p, uToward);
