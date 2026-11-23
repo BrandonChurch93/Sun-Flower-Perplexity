@@ -395,7 +395,7 @@ export class Film {
       if (pause) await breathe()
     }
     // The lens pass needs the blur circle of the sky in every frame that shows it, so the sky it gets already blurred is not blurred again. The sun itself counts only while it is the light.
-    const sunAt = skyOn ? sunInFrame(this.poseAt(seconds + 0.5 * shutterSeconds), this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize(), config.camera.gateWidthMm, stage.width, stage.height) : null
+    const sunAt = skyOn ? sunInFrame(this.poseAt(seconds + 0.5 * shutterSeconds), sky.face ? sky.face(now, later, this.sun) : this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize(), config.camera.gateWidthMm, stage.width, stage.height) : null
     if (sunAt && now.lightKind !== 'sun') sunAt.weight = 0
     this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
     this.lap('post')

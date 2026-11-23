@@ -212,10 +212,6 @@ float cropAt(vec2 p, float px) {
   return smoothstep(-soft, soft, inside) * smoothstep(-soft, soft, end);
 }
 
-const float HEADS_FROM = 0.3;
-const float HEADS_MORE = 0.3;
-const vec3 HEAD = vec3(0.3, 0.18, 0.03);
-
 float crowns(vec2 p) {
   return 0.62 * valueNoise(p / 7.5) + 0.38 * valueNoise(p / 2.9 + 11.0);
 }
@@ -241,9 +237,8 @@ void main() {
   float crop = max(home ? 1.0 : 0.0, wide);
   float headland = (1.0 - crop) * (1.0 - smoothstep(86.0, 104.0, r));
   albedo = mix(albedo, vec3(0.05, 0.066, 0.03), headland);
-  // In bloom the far crop is seen from the side, heads over leaves.
-  float heads = uLandBloom * (HEADS_FROM + HEADS_MORE * valueNoise(p / 17.0 + 2.0));
-  albedo = mix(albedo, mix(vec3(0.03, 0.052, 0.018) * (0.85 + 0.3 * mix(tone, 0.5, wide)), HEAD, heads), crop);
+  // Toward the ridge the crop is seen flatter, its shaded sides more than its lit tops: it darkens with distance.
+  albedo = mix(albedo, uLandCrop * (0.85 + 0.3 * mix(tone, 0.5, wide)) * mix(1.0, 0.5, smoothstep(320.0, 1500.0, r)), crop);
   float tilled = kind == 4 ? (1.0 - headland) * (1.0 - crop) : 0.0;
   float standing = max(crop, (kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0);
   float mottle = 0.55 * valueNoise(p / 37.0 + 3.0) + 0.3 * valueNoise(p / 9.0 + 7.0) + 0.15 * valueNoise(p / 2.3);
@@ -280,7 +275,11 @@ void main() {
   ndl = min(ndl, mix(max(uSunDir.y, 0.0) + 0.05, 1.0, max(wood * nearLand, smoothstep(0.06, 0.35, uSunDir.y))));
   float shade = mix(1.0, smoothstep(0.3, 0.8, c0), low * wood * bump);
   // A standing crop and a wood let the low sun through toward the lens.
-  float through = uThrough * pow(saturate(dot(-v, uSunDir)), 3.0) * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * (1.0 - smoothstep(300.0, 1400.0, dist));
+  float lobe = pow(saturate(dot(-v, uSunDir)), 3.0);
+  float farOff = 1.0 - smoothstep(300.0, 1400.0, dist);
+  // The sunflowers stand upright: a low sun lights their sides wherever the lens looks, and most toward itself.
+  float upright = (0.12 + 0.22 * lobe) * (0.4 + 0.6 * farOff);
+  float through = uThrough * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * mix(lobe * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * farOff, upright, crop * (1.0 - wood));
   vec3 color = albedo * (uSunColor * sunOnLand(vWorld) * (ndl * shade + through) + skyAmbient(n) * nook);
   outColor = landFinish(color, vWorld, vDepth);
 }
