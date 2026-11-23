@@ -295,9 +295,9 @@ const WEST = { baseM: 13, slope: 1.8 }
 const EAST = { baseM: 10, slope: 1.05 }
 export const fieldWest = (depth: number): number => WEST.baseM + WEST.slope * depth
 export const fieldEast = (depth: number): number => EAST.baseM + EAST.slope * depth
-// Past the last row of plants the tops go on as pictures, ever fewer, and as one carpet that thins out and ends nowhere in particular.
+// Past the last row of plants the tops go on as pictures, ever fewer, and as one carpet that stands whole to where the land takes over and frays only in its last rows.
 export const fieldThinM = 112
-export const fieldEndM: [number, number] = [150, 290]
+export const fieldEndM: [number, number] = [272, 290]
 
 export function companionPlace(): { x: number; z: number } {
   const c = config.field.companion

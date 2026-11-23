@@ -11,7 +11,7 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
-import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldThinM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
@@ -31,6 +31,10 @@ const GAP_DEEP = 0.9
 const GAP_FAR = 0.35
 const GAP_MEAN = 0.5
 // The rays of a head that stands clear, over the colour of the heads in the pictures.
+// The radius of a head with its rays, in meters.
+const HEAD_R_M = 0.15
+// How much of a clear head is left at the far end of the carpet, where the air lies on it.
+const HEAD_FAR = 0.3
 const HEAD_RAYS = [3.5, 3.3, 1.2]
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
@@ -211,9 +215,12 @@ ${gustGlsl}
 ${farAirGlsl}
 // The heads of the far crop. Near, one disc to a plant. Farther off a plant is smaller than a pixel and the eye sees the heads that stand clear,
 // one to every few plants: the cells double in size as they shrink on the screen, each way on its own, and one size fades into the next.
-float headsAt(vec2 f, out float tone) {
+float headsAt(vec2 f, float headPx, out float tone) {
   vec2 across = max(fwidth(f), vec2(1e-5));
-  vec2 seen = max(vec2(abs(dFdx(f.x)), abs(dFdy(f.y))), vec2(1e-5));
+  vec2 fx = dFdx(f);
+  vec2 fy = dFdy(f);
+  float det = fx.x * fy.y - fx.y * fy.x;
+  float inv = 1.0 / (abs(det) > 1e-10 ? det : 1e-10);
   vec2 lod = max(log2(across * 2.4), vec2(0.0));
   vec2 lo = floor(lod);
   vec2 t = smoothstep(0.4, 1.0, lod - lo);
@@ -226,10 +233,15 @@ float headsAt(vec2 f, out float tone) {
     vec2 c = floor(g) + size * 31.0;
     vec2 o = fract(g) - 0.5 - 0.3 * (vec2(hash21(c + 3.0), hash21(c + 9.0)) - 0.5);
     float first = 1.0 - step(1.5, size.x * size.y);
-    // A head stands upright: far off it is as wide on the screen as it is high, however flat its place on the ground is seen.
-    o.x *= mix(clamp(size.x * seen.y / (size.y * seen.x), 1.0, 8.0), ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)}, first);
+    // A head stands upright: it is a round dot on the screen, however flat and however askew its place on the ground is seen,
+    // as large as a head is at that distance or as its place leaves room for, and fainter once it is smaller than a pixel.
+    vec2 a = vec2(fy.y, -fx.y) * (size.x * inv);
+    vec2 b = vec2(-fy.x, fx.x) * (size.y * inv);
+    vec2 s = a * o.x + b * o.y;
+    float room = abs(a.x * b.y - a.y * b.x) / (2.0 * max(length(a), length(b)));
+    float r = min(headPx, 0.75 * room);
     float w = mix(1.0 - t.x, t.x, up.x) * mix(1.0 - t.y, t.y, up.y);
-    float d = (1.0 - smoothstep(0.2, 0.42, length(o))) * step(hash21(c + 5.0), mix(0.55, 0.8, first));
+    float d = (1.0 - smoothstep(0.5 * r, r, length(s))) * min(1.0, r * r / 0.4) * step(hash21(c + 5.0), mix(0.55, 0.8, first));
     sum += w * d;
     tone += w * hash21(c + 13.0);
   }
@@ -268,13 +280,12 @@ void main() {
     float along = -dot(at, uToward);
     float across = at.x * uToward.y - at.y * uToward.x;
     vec2 cell = floor(vec2(across / ${config.field.rowSpacingM.toFixed(3)}, along / ${config.field.plantSpacingM.toFixed(3)}));
-    // Near, the carpet comes in plant by plant. Far off a plant is smaller than a pixel, and the field breaks up in tongues and islands
-    // of crop that thin out toward the far land and along its sides: there is no line where it ends.
+    // Near, the carpet comes in plant by plant. Its last rows and its sides fray in tongues, so no ruled line lies where the land takes over.
     float fine = clamp(1.0 - 0.6 * fwidth(along / ${config.field.plantSpacingM.toFixed(3)}), 0.0, 1.0);
     // The rows run away from the plant: the eye parts them as long as one is wider than a pixel or two.
     float lined = clamp(1.6 - 2.2 * fwidth(across / ${config.field.rowSpacingM.toFixed(3)}), 0.0, 1.0);
     float gone = length(vWorld.xz);
-    float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / (30.0 + 0.5 * along);
+    float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / (6.0 + 0.08 * along);
     float lost = max(smoothstep(uEnd.x, uEnd.y, gone), 1.0 - smoothstep(0.0, 1.0, inside));
     float island = 0.6 * valueNoise(vWorld.xz * vec2(0.021, 0.017) + 3.7) + 0.4 * valueNoise(vWorld.xz * 0.067 + 11.0);
     // Where a plant is too small to come in on its own the carpet closes over one row before the next, a few plants at a time, so no line lies across the rows.
@@ -302,13 +313,13 @@ void main() {
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
     float share = mix(0.04, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
-    float disc = headsAt(f, tone);
+    float disc = headsAt(f, ${HEAD_R_M.toFixed(2)} / max(length(dFdx(vWorld.xz)), 1e-5), tone);
     // The pictures give the head with its dark disc and the leaves round it: the petals alone are brighter, and brighter still with the low sun behind them.
     float into = smoothstep(0.2, 0.9, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share * 0.4 * closed);
     // A head that stands clear is the colour of its rays, as the heads of the pictures before it are.
-    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc);
+    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * mix(1.0, ${HEAD_FAR.toFixed(2)}, smoothstep(${fieldThinM.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, gone)));
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
     color = farAir(color, vWorld);
