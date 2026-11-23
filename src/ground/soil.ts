@@ -581,6 +581,8 @@ void main() {
   float stand = 1.0;
   float top = 0.0;
 #endif
+  float grazing = 1.0 - smoothstep(0.02, 0.2, normalize(uCamPos - vWorld).y);
+  pool *= 1.0 - grazing * (1.0 - 0.3 * smoothstep(0.35, 0.6, valueNoise(p * 19.0 + 9.0)));
   vec2 uvL = clodUv(p);
   vec4 lumpy = texture(tClods, uvL);
   float lodPix = log2(max(max(length(dFdx(uvL)), length(dFdy(uvL))) * uClods.z / uClods.x, 1.0));
