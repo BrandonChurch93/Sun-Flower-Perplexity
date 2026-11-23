@@ -215,6 +215,9 @@ export class Film {
       shared.uSkyZenith.value.set(1, 1, 1)
       shared.uSkyHorizon.value.set(1, 1, 1)
       shared.uGroundBounce.value.set(1, 1, 1)
+      shared.uAirSun.value.set(0, 0, 0)
+      shared.uAirZenith.value.set(1, 1, 1)
+      shared.uAirHorizon.value.set(1, 1, 1)
       shared.uFogDensity.value = 0
       this.sun.set(0, 1, 0)
       return false
@@ -224,12 +227,17 @@ export class Film {
       shared.uSkyZenith.value.set(0.12, 0.12, 0.12)
       shared.uSkyHorizon.value.set(0.12, 0.12, 0.12)
       shared.uGroundBounce.value.set(0.12, 0.12, 0.12)
+      shared.uAirSun.value.set(5, 5, 5)
+      shared.uAirZenith.value.set(0.12, 0.12, 0.12)
+      shared.uAirHorizon.value.set(0.12, 0.12, 0.12)
       shared.uFogDensity.value = 0
       this.sun.set(pose.forward.x, 0, pose.forward.z).normalize().multiplyScalar(Math.cos(0.35)).setY(Math.sin(0.35))
       return true
     }
     applyWorld(def)
-    this.sun.copy(now.light).lerp(later.light, shutter).normalize()
+    this.sun.copy(now.light).lerp(later.light, shutter)
+    if (now.dials.flash > 0) this.sun.lerp(now.flashAt, now.dials.flash)
+    this.sun.normalize()
     return now.lightKind !== 'none' && this.sun.y > 0.005 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 1e-4
   }
 
@@ -254,6 +262,9 @@ export class Film {
     shared.uWorldTime.value = now.world
     shared.uDiag.value = DIAG[this.diag]
     shared.uSkyHorizonSun.value.fromArray(this.skyLight.horizonSun)
+    const quality: Quality = this.quality ?? (count > 1 ? 'film' : 'high')
+    this.ground.setQuality(quality)
+    this.post.setQuality(quality)
     this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(tau)))
     this.ground.show(!alone && this.shows('ground'))
     stateUniforms.uPlantWet.value = def.ground.plantWet ?? def.ground.wet
@@ -286,10 +297,9 @@ export class Film {
     const fieldOn = !alone && this.shows('field')
     if (fieldOn) {
       this.field.prepare(tau, tauClose, inputs, inputsClose, heightM)
-      this.field.look(first, tanX, stage.width / stage.height)
+      this.field.look(first, tanX, stage.width / stage.height, quality)
     }
     this.field.show(fieldOn)
-    const quality: Quality = this.quality ?? (count > 1 ? 'film' : 'high')
     const view: View = { pose: first, width: stage.width, height: stage.height, quality, samples: count, light: this.skyLight }
     for (const { name, part } of this.parts) {
       if (alone || !this.shows(name)) {

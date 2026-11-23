@@ -1,3 +1,4 @@
+import { norm } from './norm.ts'
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import {
   archShare,
@@ -165,7 +166,7 @@ export function layStem(time: number, inputs: PlantInputs): void {
     px -= dir.x * along
     py -= dir.y * along
     pz -= dir.z * along
-    const l = Math.hypot(px, py, pz) || 1
+    const l = norm(px, py, pz) || 1
     px /= l
     py /= l
     pz /= l
@@ -196,7 +197,7 @@ export function stemNode(u: number, length: number): Node {
   let ax = lerp(tx[i], tx[i + 1], k)
   let ay = lerp(ty[i], ty[i + 1], k)
   let az = lerp(tz[i], tz[i + 1], k)
-  let l = Math.hypot(ax, ay, az) || 1
+  let l = norm(ax, ay, az) || 1
   ax /= l
   ay /= l
   az /= l
@@ -207,7 +208,7 @@ export function stemNode(u: number, length: number): Node {
   qx -= ax * along
   qy -= ay * along
   qz -= az * along
-  l = Math.hypot(qx, qy, qz) || 1
+  l = norm(qx, qy, qz) || 1
   node.tx = ax
   node.ty = ay
   node.tz = az
@@ -311,7 +312,7 @@ export function gridNormals(pos: Float32Array, nor: Float32Array, base: number, 
       let x = uy * vz - uz * vy
       let y = uz * vx - ux * vz
       let z = ux * vy - uy * vx
-      const l = Math.hypot(x, y, z)
+      const l = norm(x, y, z)
       if (l > 1e-14) {
         x /= l
         y /= l
@@ -353,7 +354,7 @@ export function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: num
         let nx = ax * h * across + ox * w * along
         let ny = ay * h * across + oy * w * along
         let nz = az * h * across + oz * w * along
-        const l = Math.hypot(nx, ny, nz) || 1
+        const l = norm(nx, ny, nz) || 1
         nx /= l
         ny /= l
         nz /= l
@@ -383,7 +384,7 @@ export function layHead(time: number, length: number): Head {
   let px = end.rx - head.ax * along
   let py = end.ry - head.ay * along
   let pz = end.rz - head.az * along
-  const l = Math.hypot(px, py, pz) || 1
+  const l = norm(px, py, pz) || 1
   px /= l
   py /= l
   pz /= l
@@ -499,14 +500,14 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     let ax = lerp(end.tx, 0.94, k)
     let ay = lerp(end.ty, 0.04, k)
     let az = lerp(end.tz, 0.34, k)
-    const l = Math.hypot(ax, ay, az) || 1
+    const l = norm(ax, ay, az) || 1
     ax /= l
     ay /= l
     az /= l
     let px = end.bx - ax * (end.bx * ax + end.by * ay + end.bz * az)
     let py = end.by - ay * (end.bx * ax + end.by * ay + end.bz * az)
     let pz = end.bz - az * (end.bx * ax + end.by * ay + end.bz * az)
-    const pl = Math.hypot(px, py, pz) || 1
+    const pl = norm(px, py, pz) || 1
     px /= pl
     py /= pl
     pz /= pl
@@ -630,7 +631,7 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
   let dx = out.x - eye.x
   let dy = out.y - eye.y
   let dz = out.z - eye.z
-  const far = Math.hypot(dx, dy, dz)
+  const far = norm(dx, dy, dz)
   if (!(far > 1e-9)) return out
   dx /= far
   dy /= far
