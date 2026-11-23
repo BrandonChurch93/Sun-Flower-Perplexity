@@ -5,6 +5,7 @@ import { REQUIRED_EXTENSIONS } from '../core/stage.ts'
 import { standIns, type StandIn } from '../core/standins.ts'
 import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
 import type { Film, FrameCheck, FrameState, TexelCheck } from '../director/film.ts'
+import type { Report } from '../player/pacing.ts'
 import { madeSoFar, type Made } from '../v2/counter.ts'
 import { views, type ViewName } from '../v2/shots.ts'
 
@@ -45,6 +46,8 @@ export interface Showcase {
   setStill(on: boolean): void
   sky(): string
   cost(): Record<string, number>
+  // The pacing of the run that is playing, or of the last one: every frame shown with its script time, its gap and whether it was late.
+  pacing(): Report | null
 }
 
 declare global {
@@ -93,6 +96,7 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
     },
     setStill: (on) => film.setStill(on),
     sky: () => film.skyName,
+    pacing: () => null,
     cost: () => {
       if (!film.clock) film.clock = () => performance.now()
       return { ...film.cost }

@@ -12,6 +12,21 @@ export interface Loading {
   fail(text: string): void
 }
 
+// What loading did and when, on the page's clock in milliseconds: every step, and every stretch longer than FREEZE_MS in which the page could not paint a frame.
+// Only for measuring: no pixel depends on it.
+export interface LoadingLog {
+  // `scriptMs` is the page's own work in drawing a moment, apart from the graphics card.
+  steps: { atMs: number; what: string; scriptMs?: number }[]
+  freezes: { fromMs: number; ms: number }[]
+  readyMs: number | null
+}
+
+const FREEZE_MS = 250
+
+declare global {
+  interface Window { loadingLog?: LoadingLog }
+}
+
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
   if (className) node.className = className
@@ -69,10 +84,21 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     observer.observe({ type: 'resource', buffered: true })
   } catch {}
   let part = ''
+  const log: LoadingLog = { steps: [], freezes: [], readyMs: null }
+  window.loadingLog = log
+  if (!film.clock) film.clock = () => performance.now()
+  let beat = performance.now()
   const sceneText = (): string => {
     const made = madeSoFar()
     return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
   }
+  let watching = true
+  const watch = (now: number) => {
+    if (now - beat > FREEZE_MS) log.freezes.push({ fromMs: Math.round(beat), ms: Math.round(now - beat) })
+    beat = now
+    if (watching) requestAnimationFrame(watch)
+  }
+  requestAnimationFrame(watch)
   const timer = window.setInterval(() => {
     if (!sceneDone) sceneCount.textContent = sceneText()
   }, 100)
@@ -86,6 +112,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   void film
     .load((done, of, what) => {
       part = done < of ? `Part ${done} of ${of}, ${what}. ` : ''
+      log.steps.push({ atMs: Math.round(performance.now()), what: `part ${done} of ${of}, ${what}` })
       sceneFill.style.setProperty('--at', String(done / of))
     })
     .then(finishScene, () => undefined)
@@ -93,6 +120,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   return {
     step(done, of) {
       finishScene()
+      log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${of}`, scriptMs: Math.round(film.cost.script ?? 0) })
       warmCount.textContent = `${done} of ${of}`
       warmFill.style.setProperty('--at', String(done / of))
       state.textContent = done >= of ? 'Ready' : 'Getting ready'
@@ -106,6 +134,8 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     },
     done() {
       window.clearInterval(timer)
+      watching = false
+      log.readyMs = Math.round(performance.now())
       observer?.disconnect()
       finishScene()
       state.textContent = 'Ready'
@@ -113,6 +143,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     },
     fail(text) {
       window.clearInterval(timer)
+      watching = false
       observer?.disconnect()
       root.dataset.failed = 'yes'
       state.textContent = text

@@ -37,7 +37,7 @@ function run(frames: number, drawMs: number, refreshMs: number): Pacing {
 describe('the pacing report', () => {
   it('calls a run clean when every frame is drawn in step', () => {
     const report = run(300, 4, 1000 / 60).report(facts, 300, true, null)
-    expect(report.frames).toEqual({ due: 300, drawn: 300, skipped: 0 })
+    expect(report.frames).toEqual({ due: 300, drawn: 300, skipped: 0, late: 0 })
     expect(report.gaps).toEqual([])
     expect(report.holds).toBe(true)
     expect(report.gapMs.longest).toBeLessThan(GAP_MS)
@@ -70,10 +70,22 @@ describe('the pacing report', () => {
     const pacing = new Pacing()
     pacing.present(0, 0, 0, 0.004, 9, 16.7, 9000)
     const report = pacing.report(facts, 300, true, null)
-    expect(report.frames).toEqual({ due: 300, drawn: 1, skipped: 299 })
+    expect(report.frames).toEqual({ due: 300, drawn: 1, skipped: 299, late: 1 })
     expect(report.gaps).toEqual([{ frame: 0, film: 0, gapMs: 10000, skipped: 299, atEnd: true }])
     expect(report.gapMs.longest).toBe(10000)
     expect(report.holds).toBe(false)
+  })
+
+  it('keeps the script time of every frame apart from the wait for the picture, and counts the frames shown late', () => {
+    const pacing = new Pacing()
+    pacing.present(0, 0, 0, 0, 0.02, 0, 20, undefined, { plant: 6, field: 2, script: 8, wait: 12 })
+    pacing.present(3, 3, 3 / fps, 3 / fps, 3 / fps + 0.09, 100, 90, undefined, { plant: 30, field: 10, script: 40, wait: 50 })
+    const report = pacing.report(facts, 4, false, null)
+    expect(report.shown.map((s) => [s.scriptMs, s.cardMs, s.late])).toEqual([[8, 12, false], [40, 50, true]])
+    expect(report.frames).toEqual({ due: 4, drawn: 2, skipped: 2, late: 1 })
+    expect(report.scriptMs).toEqual({ mean: 24, p99: 40, longest: 40, longestAtFilm: 0.1 })
+    expect(report.cardMs.longest).toBe(50)
+    expect(report.partsMs).toEqual({ plant: 18, field: 6 })
   })
 
   it('says where a stopped run stopped', () => {
