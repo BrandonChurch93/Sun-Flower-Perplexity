@@ -3,6 +3,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { barText, FRAMES, secondsOf } from './lib/film.ts'
 import { readLines, readStamp, runName } from './lib/play.ts'
+import { strideFrames } from './lib/stride.ts'
 import { finish, type Finding } from './lib/report.ts'
 
 const SENTENCE = "whenever there's a scene change we have a huge frame rate drop ... we need to make sure that doesn't happen"
@@ -42,8 +43,9 @@ export async function run(args: Args): Promise<void> {
       rows.push([f, secondsOf(f).toFixed(3), barText(secondsOf(f)).slice(4), what, `${(line.made.uploadBytes / 1048576).toFixed(2)} MB`, line.nth === 0 ? 'first frame drawn after warming' : `frame ${line.nth + 1} of its run`])
     }
   }
-  const wanted = to - from + 1
-  const complete = have === wanted
+  const stride = num(args, 'stride', 0)
+  const wanted = stride > 0 ? strideFrames(stride, from, to).length : to - from + 1
+  const complete = have >= wanted
   if (have === 0) findings.push({ ok: false, what: `no frame of "${run}" has been drawn yet: run "npm run checks -- play" first` })
   else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer or renderbuffer was created and nothing was given new storage on any of them` })
   else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}` })

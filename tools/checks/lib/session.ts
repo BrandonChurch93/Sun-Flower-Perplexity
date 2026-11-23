@@ -6,6 +6,7 @@ import type { Browser, Page } from 'playwright-core'
 import { build } from 'vite'
 import { launch, openPage } from '../../lib/browser.ts'
 import { computeHashes } from '../../lib/hashes.ts'
+import { recorder } from './recorder.ts'
 import { at } from '../../lib/paths.ts'
 import type { ChecksPage, Drawn, FloatDiff } from '../page/main.ts'
 import type { Made } from '../../../src/v2/counter.ts'
@@ -71,7 +72,7 @@ function serve(): Promise<{ url: string; close: () => Promise<void> }> {
   })
 }
 
-export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string }
+export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean }
 
 export interface Session {
   page: Page
@@ -102,6 +103,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
     page.on('console', (m) => {
       if (m.type() === 'error') errors.push(m.text())
     })
+    if (options.record) await page.addInitScript(recorder)
     const query = new URLSearchParams({ w: String(options.width ?? 320), h: String(options.height ?? 180) })
     if (options.sky) query.set('sky', options.sky)
     if (options.only) query.set('only', options.only)

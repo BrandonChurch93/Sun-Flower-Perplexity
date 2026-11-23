@@ -7,6 +7,7 @@ import { barText, filmClock, FLASH_STEP, FRAMES, lightningFrames, secondsOf } fr
 import { frameFile, playDir, readLines, readStamp, runName } from './lib/play.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 import { mad, small, type Small } from './lib/steps.ts'
+import { ranker } from './lib/stride.ts'
 
 const SENTENCE = "It goes from day to night in the sky repeatedly while it's actually growing, no more hard cuts."
 
@@ -92,8 +93,15 @@ export async function run(args: Args): Promise<void> {
   // Seen every few frames only, a fast dusk looks like a cut. Such a place is a suspect, and the frames between decide.
   const CUT = every > 1 ? 'SUSPECT' : 'HARD CUT'
   const findings: Finding[] = []
-  const wanted = Math.floor(to / every) - Math.ceil(Math.max(1, from) / every) + 1
-  const complete = steps.length === wanted
+  // In a review round only the frames of the stride are drawn: the steps to judge one by one are those between two of them that follow each other.
+  const stride = num(args, 'stride', 0)
+  const round = stride > 0 && every === 1 ? ranker(stride) : null
+  let wanted = Math.floor(to / every) - Math.ceil(Math.max(1, from) / every) + 1
+  if (round) {
+    wanted = 0
+    for (let f = Math.max(1, from); f <= to; f++) if (round(f) < 3 && round(f - 1) < 3) wanted++
+  }
+  const complete = steps.length >= wanted
   const cuts = steps.filter((s) => s.cut)
   const largest = [...steps].sort((a, b) => b.blur - a.blur).slice(0, 10)
   const dir = path.join(OUT, 'cuts', every > 1 ? `${run}-every-${every}` : run)

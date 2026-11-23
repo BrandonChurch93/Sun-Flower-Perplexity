@@ -80,6 +80,25 @@ export const broken: Record<string, (film: Clock) => Clock> = {
       return { ...film.at(seconds), flash: film.at(seconds - 2 * FRAME).flash }
     },
   }),
+  // The frost hold lets go one frame early: its last frame already grows.
+  'hold-early': (film) => ({
+    name: 'a film whose frost hold ends one frame early',
+    at(seconds) {
+      const i = film.at(seconds)
+      const from = secondsOf(holds[0].last)
+      return seconds >= from - 1e-9 ? { ...i, tau: i.tau + 1e-4 * Math.min(seconds - from + 0.25 * FRAME, 2 * FRAME) } : i
+    },
+  }),
+  // The frost hold lets go one frame late: the frame after the one that holds its closing bar line still stands.
+  'hold-late': (film) => ({
+    name: 'a film whose frost hold ends one frame late',
+    at(seconds) {
+      const h = holds[0]
+      const from = secondsOf(h.last + 1)
+      if (seconds < from - 1e-9) return film.at(seconds)
+      return seconds < from + 2 * FRAME - 1e-9 ? { ...film.at(seconds), tau: film.at(secondsOf(h.first + 2)).tau } : film.at(seconds)
+    },
+  }),
   // The frost hold lets go half a bar early.
   'hold-short': (film) => ({
     name: 'a film whose frost hold ends half a bar early',

@@ -79,6 +79,46 @@ function lateMesh(): THREE.Mesh {
   return mesh
 }
 
+// Whose array is this: the path from the film to it, through the film's own objects.
+let owners: Map<object, string> | null = null
+function ownersOf(): Map<object, string> {
+  const out = new Map<object, string>()
+  const seen = new Set<object>()
+  const queue: [unknown, string][] = [[film, 'film']]
+  for (let i = 0; i < queue.length && seen.size < 600000; i++) {
+    const [v, p] = queue[i]
+    if (!v || typeof v !== 'object' || seen.has(v)) continue
+    seen.add(v)
+    if (ArrayBuffer.isView(v)) {
+      out.set(v, p)
+      if (!out.has(v.buffer)) out.set(v.buffer, p)
+      continue
+    }
+    if (v instanceof ArrayBuffer || v instanceof Node || v instanceof WebGL2RenderingContext) continue
+    if (Array.isArray(v)) {
+      if (typeof v[0] === 'number') continue
+      v.forEach((x, n) => queue.push([x, `${p}[${(x as { name?: string } | null)?.name || n}]`]))
+      continue
+    }
+    if (v instanceof Map) {
+      for (const [k, x] of v) queue.push([x, `${p}.${typeof k === 'string' ? k : 'entry'}`])
+      continue
+    }
+    if (v instanceof Set) {
+      for (const x of v) queue.push([x, `${p}.entry`])
+      continue
+    }
+    // The film's own names come before the scene's list of children, so that a mesh is called by its owner.
+    const keys = v === film ? [...Object.keys(v).filter((k) => k !== 'scene'), 'scene'] : Object.keys(v)
+    for (const key of keys) if (key !== 'parent') queue.push([(v as Record<string, unknown>)[key], `${p}.${key}`])
+  }
+  return out
+}
+;(window as unknown as { __owner: (src: object) => string | null }).__owner = (src) => {
+  owners ??= ownersOf()
+  return owners.get(src) ?? (ArrayBuffer.isView(src) ? (owners.get(src.buffer) ?? null) : null)
+}
+
 window.checks = {
   ready,
   info: () => ({ sky: film.skyName, width: film.stage.width, height: film.stage.height, textureMb: film.textureMb(), parts: film.parts.map((p) => p.name) }),

@@ -1,7 +1,8 @@
 import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { barText, clockOf, crossing, FRAME, FRAMES, holds, secondsOf } from './lib/film.ts'
-import { finish, type Finding } from './lib/report.ts'
+import { duskProof } from './dusks.ts'
+import { finish, table, type Finding } from './lib/report.ts'
 
 // "we shouldn't have a super long night stage either because it looks weird that the sunflower is growing at night"
 const SENTENCE = "we shouldn't have a super long night stage either because it looks weird that the sunflower is growing at night"
@@ -41,7 +42,7 @@ export function nightsOf(film: ReturnType<typeof clockOf>): Night[] {
 
 export async function run(args: Args): Promise<void> {
   const broken = typeof args.break === 'string' ? args.break : null
-  const film = clockOf(broken)
+  const film = clockOf(broken && !broken.startsWith('picture-') ? broken : null)
   const limit = num(args, 'limit', 1.2)
   const nights = nightsOf(film)
   const findings: Finding[] = []
@@ -68,14 +69,23 @@ export async function run(args: Args): Promise<void> {
   const longestDark = nights.reduce((a, n) => Math.max(a, n.darkSeconds), 0)
   findings.unshift({ ok: longest <= limit && judged.length > 0, what: `${judged.length} nights between a sunset and a sunrise outside the holds, the longest ${longest.toFixed(3)} s against a limit of ${limit} s` })
   findings.push({ ok: true, what: `the sun is under the horizon for ${total.toFixed(2)} s of ${secondsOf(FRAMES).toFixed(0)} in all, and more than ${-DARK_DEG} degrees under for ${dark.toFixed(2)} s, never longer than ${longestDark.toFixed(2)} s at a time` })
+  const proof = broken && !broken.startsWith('picture-') ? null : await duskProof(args, broken)
+  if (proof) {
+    findings.push(...proof.findings)
+    if (proof.rows.length) {
+      const f1 = (x: number): string => x.toFixed(1)
+      console.log(table(['night', 'frames', 'midnight', 'before', 'darkest', 'after', 'largest fall', 'into', 'largest rise', 'into', 'wrong way', 'dusk frames', 'dawn frames', 'verdict'], proof.rows.map((r) => [r.night, `${r.first} to ${r.last}`, r.midnight, f1(r.day), f1(r.dark), f1(r.after), f1(r.fall), r.fallAt, f1(r.rise), r.riseAt, r.wrong.toFixed(2), r.duskFrames, r.dawnFrames, r.ok ? 'ok' : 'FAIL'])) + '\n')
+    }
+  }
   finish({
     check: 'nights',
     sentence: SENTENCE,
-    subject: film.name,
+    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : film.name,
     broken,
-    complete: true,
+    complete: proof ? proof.complete : true,
+    pictures: proof?.pictures,
     findings,
     table: { head: ['night', 'sunset s', 'bar', 'sunrise s', 'bar', 'length s', 'deepest deg', `under ${DARK_DEG} deg s`, 'plant clock moved', 'where', 'verdict'], rows },
-    data: { limit, nights },
+    data: { limit, nights, step: proof?.step, dusks: proof?.rows },
   })
 }

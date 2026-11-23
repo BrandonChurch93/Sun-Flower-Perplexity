@@ -8,12 +8,13 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- cuts              no hard cut anywhere in the film
 //   npm run checks -- made              nothing is made on the graphics card after loading
 //   npm run checks -- pure              any frame drawn twice gives the same pixels, and no clock or dice in src
+//   npm run checks -- writes            what one frame writes into buffers and textures that exist, and whose they are
 //   npm run checks -- all               every check that does not draw, then what the drawn ones have so far
 //   npm run checks -- proof             every check run on a film broken on purpose: each has to fail
 //   npm run checks -- review            builds the review page from what is in out/
 // --break <name> puts a film broken on purpose in the film's place, to show that the check fails. tools/checks/README.md lists them.
 
-const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'all', 'proof', 'review'] as const
+const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'writes', 'all', 'proof', 'review'] as const
 const name = process.argv[2]
 if (!name || !(NAMES as readonly string[]).includes(name)) {
   console.error(`npm run checks -- <${NAMES.join(' | ')}> [options]`)

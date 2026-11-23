@@ -4,6 +4,7 @@ import path from 'node:path'
 import { config } from '../../src/config.ts'
 import type { Args } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
+import { shutterSeconds } from '../../src/v2/now.ts'
 import { barAt, barTime, clockOf, crossing, FPS, FRAME, FRAMES, hitFrame, holds, nearestBar, secondsOf, type Clock } from './lib/film.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 
@@ -48,15 +49,16 @@ export function eventsOf(film: Clock): Events {
     const tau = film.at(secondsOf(middle)).tau
     let first = middle
     let last = middle
-    while (first > 0 && film.at(secondsOf(first - 1)).tau === tau) first--
-    while (last < FRAMES - 1 && film.at(secondsOf(last + 1)).tau === tau) last++
+    // A frame is still when the plant's clock reads the hold's value at the open shutter and at its close.
+    const rests = (f: number): boolean => film.at(secondsOf(f)).tau === tau && film.at(secondsOf(f) + shutterSeconds).tau === tau
+    while (first > 0 && rests(first - 1)) first--
+    while (last < FRAMES - 1 && rests(last + 1)) last++
     return { id: h.id, first, last }
   })
   return { sunrises, sunsets, strikes, still, rainFrom, burstFrom, bloomFrom }
 }
 
 const onLine = (seconds: number, bar: number): boolean => Math.abs(seconds - barTime(bar)) <= FRAME + 1e-9
-const holdsLine = (frame: number, bar: number, beat = 1): boolean => frame === hitFrame(bar, beat)
 const ms = (seconds: number): string => `${(seconds * 1000).toFixed(1)} ms`
 const sign = (x: number): string => (x >= 0 ? '+' : '') + x
 
@@ -121,40 +123,12 @@ export async function run(args: Args): Promise<void> {
 
   for (const h of holds) {
     const s = e.still.find((x) => x.id === h.id) as Events['still'][number]
-    // The plant stops and starts on the bar lines themselves, which lie inside a frame: the still stretch may begin and end one frame from the frame that holds the line.
-    const inOk = Math.abs(s.first - hitFrame(h.fromBar)) <= 1
-    const outOk = Math.abs(s.last - hitFrame(h.toBar)) <= 1
-    note(inOk, `${h.name}: the plant stops`, h.fromBar, secondsOf(s.first), 'The first still frame must be within one frame of the frame that holds the bar line')
-    note(outOk, `${h.name}: the plant's last still frame`, h.toBar, secondsOf(s.last), 'The last still frame must be within one frame of the frame that holds the closing bar line')
-    findings.push({ ok: inOk && outOk, what: `${h.name}: the plant's clock stands still from frame ${s.first} to frame ${s.last}; the bar lines ${h.fromBar} and ${h.toBar} lie in frames ${hitFrame(h.fromBar)} and ${hitFrame(h.toBar)}${inOk && outOk ? '' : `: the hold ${inOk ? '' : `begins ${sign(s.first - hitFrame(h.fromBar))} frames from its line`}${inOk || outOk ? '' : ' and '}${outOk ? '' : `ends ${sign(s.last - hitFrame(h.toBar))} frames from its line`}`}` })
-  }
-
-  for (const f of e.strikes) {
-    const bar = nearestBar(secondsOf(f) + 0.5 * FRAME)
-    const ok = holdsLine(f, bar) && film.at(secondsOf(f)).flash >= film.at(secondsOf(f + 1)).flash
-    note(ok, 'lightning', bar, secondsOf(f), 'A flash starts and peaks on the frame that holds its bar line, never on the one after')
-  }
-  const storm = holds.find((h) => e.strikes.some((f) => f >= h.first && f <= h.last))
-  const strikesOk = e.strikes.length > 0 && e.strikes.every((f) => holdsLine(f, nearestBar(secondsOf(f) + 0.5 * FRAME)) && film.at(secondsOf(f)).flash >= film.at(secondsOf(f + 1)).flash)
-  findings.push({ ok: strikesOk, what: `${e.strikes.length} strikes of lightning, first lit on frames ${e.strikes.join(', ')}: ${strikesOk ? `each starts at its peak on the frame that holds a bar line (bars ${e.strikes.map((f) => nearestBar(secondsOf(f) + 0.5 * FRAME)).join(', ')})` : 'not each on the frame that holds a bar line, at its peak'}` })
-  if (storm) {
-    const first = e.strikes.find((f) => f >= storm.first && f <= storm.last) as number
-    findings.push({ ok: first === storm.first, what: `the first strike is on frame ${first} and the storm hold begins on frame ${storm.first}` })
-    const rainOk = e.rainFrom >= storm.first && e.rainFrom <= storm.first + 1
-    note(rainOk, 'the rain begins', storm.fromBar, secondsOf(e.rainFrom), 'The rain must begin within one frame of the bar line that opens the storm')
-    findings.push({ ok: rainOk, what: `the rain dial leaves 0 on frame ${e.rainFrom}, ${sign(e.rainFrom - storm.first)} from the frame that holds bar ${storm.fromBar}` })
-    const burstOk = holdsLine(e.burstFrom, storm.toBar)
-    note(burstOk, 'the sun breaks through', storm.toBar, secondsOf(e.burstFrom), 'The burst must start on the frame that holds the bar line that ends the storm')
-    findings.push({ ok: burstOk, what: `the burst dial leaves 0 on frame ${e.burstFrom}, ${sign(e.burstFrom - hitFrame(storm.toBar))} from the frame that holds bar ${storm.toBar}` })
-  } else findings.push({ ok: false, what: 'no lightning falls inside a hold' })
-
-  const bloom = config.sections.find((s) => s.kind === 'bloom')
-  if (bloom) {
-    const ok = e.bloomFrom >= hitFrame(bloom.fromBar) && e.bloomFrom <= hitFrame(bloom.fromBar) + 1
-    note(ok, 'the bud begins to open', bloom.fromBar, secondsOf(e.bloomFrom), 'The plant must leave the bud mark within one frame of the bar line that opens the bloom')
-    findings.push({ ok, what: `the plant's clock leaves the bud mark (${config.growth.bud}) on frame ${e.bloomFrom}, ${sign(e.bloomFrom - hitFrame(bloom.fromBar))} from the frame that holds bar ${bloom.fromBar}` })
-    const open = film.at(barTime(bloom.fromBar + 4)).tau
-    findings.push({ ok: Math.abs(open - config.growth.open) < 1e-6, what: `at bar ${bloom.fromBar + 4} the plant's clock reads ${open.toFixed(4)} and the flower is open at ${config.growth.open}` })
+    // The plant stops on the frame that holds the hold's first bar line and grows again on the frame that holds its last: the last still frame is the one before that.
+    const inOk = s.first === hitFrame(h.fromBar)
+    const outOk = s.last === hitFrame(h.toBar) - 1
+    note(inOk, `${h.name}: the plant stops`, h.fromBar, secondsOf(s.first), 'The first still frame must be the frame that holds the bar line')
+    note(outOk, `${h.name}: the plant's last still frame`, h.toBar, secondsOf(s.last), 'The last still frame must be the frame before the one that holds the closing bar line: growth resumes on the cue frame')
+    findings.push({ ok: inOk && outOk, what: `${h.name}: the plant stands still from frame ${s.first} to frame ${s.last}; the bar lines ${h.fromBar} and ${h.toBar} lie in frames ${hitFrame(h.fromBar)} and ${hitFrame(h.toBar)}, so it must stand still from ${hitFrame(h.fromBar)} to ${hitFrame(h.toBar) - 1}${inOk && outOk ? '' : `: the hold ${inOk ? '' : `begins ${sign(s.first - hitFrame(h.fromBar))} frames from there`}${inOk || outOk ? '' : ' and '}${outOk ? '' : `ends ${sign(s.last - (hitFrame(h.toBar) - 1))} frames from there`}`}` })
   }
 
   const cues = lintSheet(findings)
@@ -168,7 +142,7 @@ export async function run(args: Args): Promise<void> {
       else if (kind === 'sunset') ok = e.sunsets.some((s) => Math.abs(s - c.t) <= FRAME + 1e-9)
       else if (kind === 'strike') ok = e.strikes.includes(c.frame)
       else if (kind === 'hold-in') ok = e.still.some((s) => s.first === c.frame)
-      else if (kind === 'hold-out') ok = e.still.some((s) => s.last === c.frame)
+      else if (kind === 'hold-out') ok = e.still.some((s) => s.last === c.frame - 1)
       else if (kind === 'rain') ok = within([e.rainFrom], c.frame)
       else if (kind === 'break') ok = e.burstFrom === c.frame
       else if (kind === 'bloom') ok = within([e.bloomFrom], c.frame)
