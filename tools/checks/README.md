@@ -79,6 +79,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `cues --break hold-short` | the frost hold ends half a bar early |
 | `cues --break hold-early` | the frost hold ends one frame early |
 | `cues --break hold-late` | the frost hold ends one frame late |
+| `cues --break cut-late` | the first cut the film means listed one frame after its downbeat |
 | `nights --break picture-quick` | every dusk and dawn three times as fast |
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
@@ -89,7 +90,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
-| `cuts --break cut --from 984 --to 1016 --meant 1001` | the same broken film with a cut listed one frame beside its jump: the listed frame is left out and the jump at 1000 is still a hard cut. With `--meant 1000` it is left out, and said so |
+| `cuts --break cut --from 984 --to 1016 --meant 1001` | the same broken film with a cut listed one frame beside its jump: the listed frame is left out and the jump at 1000 is still a hard cut. With `--meant 1000` it is left out, and said so. With `--meant 990` the list names a frame where the film does not cut: that fails too |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
 | `play --break first-draw --at 900 --from 890 --to 910`, then `made --break first-draw --from 890 --to 910` | a mesh is drawn for the first time at frame 900, its geometry and material already drawn on others: only a vertex array is made |
 | `pure --break dice --frames 159,1429,2699,3651` | the camera turns by a throw of `Math.random` |
@@ -123,7 +124,9 @@ The moon may not blink. `nights` works out where the film's camera puts the moon
 
 The film may cut hard on the frames the Builder lists in `tools/checks/limits.json` under `cuts`, and nowhere else. The list is not read from the film, so the film cannot excuse a cut of its own. Exactly those frames are left out, each printed with what was measured there:
 
-- `cuts` does not judge the step into a listed frame and does not count it among the steps round its neighbours. It prints how far the edges moved there, and says so when the picture does not cut where the list says it does.
+- `cuts` does not judge the step into a listed frame and does not count it among the steps round its neighbours. It prints how far the edges moved there.
 - `nights` does not judge the step into a listed frame by the step of the frame's mean nor by its direction.
+- `cuts` fails when the film does not cut on a listed frame: a list the film does not follow hides nothing, and a cut one frame beside a listed one is a hard cut.
+- `cues` holds each listed frame to the frame that holds a downbeat (`hitFrame` of a whole bar), and a cue of the sheet that says cut to a listed frame. `cues --break cut-late` lists the first cut one frame late and must fail.
 - `play --stride 6` and `film` draw every frame within 12 of a listed frame, as round every cue.
 - `script` measures a window of 10 frames either side of each listed frame whole in every run, and fails when the cut's own frame is a long frame or makes anything: a cut must cost nothing. The hitch rule leaves no frame out.

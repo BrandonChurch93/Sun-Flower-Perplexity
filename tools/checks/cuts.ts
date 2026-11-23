@@ -149,7 +149,7 @@ export async function run(args: Args): Promise<void> {
       if (!s) findings.push({ ok: true, expected: true, what: `left out: frame ${f} (${barText(secondsOf(f))}) is listed as a cut the film means (tools/checks/limits.json); the step into it is not measured yet` })
       else {
         const cutsThere = s.move > CUT_MOVE && s.times > CUT_RATIO
-        findings.push({ ok: true, expected: true, what: `left out: the step into frame ${f} (${barText(secondsOf(f))}) is a cut the film means (tools/checks/limits.json) and is not judged: the edges of the ${s.half} half move ${s.move.toFixed(2)} of 1, ${s.times.toFixed(1)} times the steps round it${cutsThere ? '' : '. By the rule that is no cut: the picture does not cut where the list says it does'}` })
+        findings.push({ ok: cutsThere, expected: cutsThere, what: `left out: the step into frame ${f} (${barText(secondsOf(f))}) is a cut the film means (tools/checks/limits.json) and is not judged: the edges of the ${s.half} half move ${s.move.toFixed(2)} of 1, ${s.times.toFixed(1)} times the steps round it${cutsThere ? '' : '. By the rule that is no cut: the film does not cut where the list says it does'}` })
       }
     }
     const calm = steps.filter((s) => !s.lightning && !s.meant)

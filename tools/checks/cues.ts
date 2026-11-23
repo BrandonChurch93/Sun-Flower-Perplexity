@@ -6,6 +6,7 @@ import type { Args } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { shutterSeconds } from '../../src/v2/now.ts'
 import { barAt, barTime, clockOf, crossing, FPS, FRAME, FRAMES, hitFrame, holds, nearestBar, secondsOf, type Clock } from './lib/film.ts'
+import { meantCuts } from './lib/meant.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 
 const SENTENCE = 'time up the impactful moments of the video with the audio clip'
@@ -86,7 +87,7 @@ function lintSheet(findings: Finding[]): Compiled[] | null {
   return compiled.cues
 }
 
-// A cue says what it is by its id, or by a word in what it does: sunrise, sunset, lightning or flash, hold in or begins, hold out or ends, rain, break, bloom.
+// A cue says what it is by its id, or by a word in what it does: sunrise, sunset, lightning or flash, hold in or begins, hold out or ends, rain, break, bloom, cut.
 function kindOf(c: Compiled): string | null {
   const text = `${c.id ?? ''} ${c.do}`.toLowerCase()
   if (/sunrise|first light/.test(text)) return 'sunrise'
@@ -97,6 +98,7 @@ function kindOf(c: Compiled): string | null {
   if (/break/.test(text)) return 'break'
   if (/rain/.test(text)) return 'rain'
   if (/bloom|petal/.test(text)) return 'bloom'
+  if (/\bcuts?\b/.test(text)) return 'cut'
   return null
 }
 
@@ -131,6 +133,21 @@ export async function run(args: Args): Promise<void> {
     findings.push({ ok: inOk && outOk, what: `${h.name}: the plant stands still from frame ${s.first} to frame ${s.last}; the bar lines ${h.fromBar} and ${h.toBar} lie in frames ${hitFrame(h.fromBar)} and ${hitFrame(h.toBar)}, so it must stand still from ${hitFrame(h.fromBar)} to ${hitFrame(h.toBar) - 1}${inOk && outOk ? '' : `: the hold ${inOk ? '' : `begins ${sign(s.first - hitFrame(h.fromBar))} frames from there`}${inOk || outOk ? '' : ' and '}${outOk ? '' : `ends ${sign(s.last - (hitFrame(h.toBar) - 1))} frames from there`}`}` })
   }
 
+  // A cut the film means lands on the frame that holds a downbeat. --meant 952,1055 puts another list in place of the Builder's for one run.
+  //   npm run checks -- cues --break cut-late    the first listed cut one frame late: must fail
+  const cutFrames = typeof args.meant === 'string' || typeof args.meant === 'number' ? String(args.meant).split(',').map(Number) : meantCuts()
+  // Broken on purpose: the first cut one frame late, or a cut one frame after the frost hold's third bar line where none is listed yet.
+  if (broken === 'cut-late') cutFrames[0] = (cutFrames[0] ?? hitFrame(holds[0].fromBar + 2)) + 1
+  for (const f of cutFrames) {
+    const bar = nearestBar(secondsOf(f) + 0.5 * FRAME)
+    const ok = f === hitFrame(bar)
+    note(ok, 'a cut the film means', bar, secondsOf(f), `The cut must land on frame ${hitFrame(bar)}, the frame that holds the downbeat`)
+  }
+  if (cutFrames.length) {
+    const off = cutFrames.filter((f) => f !== hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME)))
+    findings.push({ ok: off.length === 0, what: `${cutFrames.length === 1 ? '1 cut' : `${cutFrames.length} cuts`} the film means (tools/checks/limits.json), at ${cutFrames.length === 1 ? 'frame' : 'frames'} ${cutFrames.join(', ')}: ${off.length === 0 ? `each is the frame that holds a downbeat, of bars ${cutFrames.map((f) => nearestBar(secondsOf(f) + 0.5 * FRAME)).join(', ')}` : `${off.map((f) => `frame ${f} is ${sign(f - hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME)))} from frame ${hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME))}, which holds the downbeat of bar ${nearestBar(secondsOf(f) + 0.5 * FRAME)}`).join('; ')}`}` })
+  }
+
   const cues = lintSheet(findings)
   if (cues) {
     const within = (frames: number[], frame: number): boolean => frames.some((f) => Math.abs(f - frame) <= 1)
@@ -146,20 +163,22 @@ export async function run(args: Args): Promise<void> {
       else if (kind === 'rain') ok = within([e.rainFrom], c.frame)
       else if (kind === 'break') ok = e.burstFrom === c.frame
       else if (kind === 'bloom') ok = within([e.bloomFrom], c.frame)
+      else if (kind === 'cut') ok = cutFrames.includes(c.frame)
       else {
         unread++
       }
       rows.push([`cue ${c.at}: ${c.do.slice(0, 44)}`, barAt(c.t).toFixed(2), c.t.toFixed(3), kind ? '' : '-', c.frame, '', kind ? (ok ? 'the film does it there' : 'FAIL') : 'listed'])
-      if (kind && !ok) findings.push({ ok: false, what: `cue at ${c.at} (${c.t.toFixed(3)} s, frame ${c.frame}) "${c.do}": the film has no ${kind} there` })
+      if (kind && !ok) findings.push({ ok: false, what: `cue at ${c.at} (${c.t.toFixed(3)} s, frame ${c.frame}) "${c.do}": ${kind === 'cut' ? 'no cut is listed on that frame in tools/checks/limits.json' : `the film has no ${kind} there`}` })
     }
     const read = cues.length - unread
-    findings.push({ ok: true, what: `${read} of the ${cues.length} cues of the sheet are of a kind this check can find in the film (sunrise, sunset, lightning, hold in, hold out, rain, break, bloom); ${unread} are listed and not checked` })
+    findings.push({ ok: true, what: `${read} of the ${cues.length} cues of the sheet are of a kind this check can find in the film (sunrise, sunset, lightning, hold in, hold out, rain, break, bloom, cut); ${unread} are listed and not checked` })
   }
 
   finish({
     check: 'cues',
     sentence: SENTENCE,
     subject: film.name,
+    name: args.meant !== undefined ? `cues.meant-${String(args.meant).replace(/,/g, '-')}` : undefined,
     broken,
     complete: true,
     findings,

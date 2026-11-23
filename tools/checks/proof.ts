@@ -17,6 +17,7 @@ const QUICK: [string, string, string[]][] = [
   ['cues', 'hold-short', []],
   ['cues', 'hold-early', []],
   ['cues', 'hold-late', []],
+  ['cues', 'cut-late', []],
   ['nights', 'picture-quick', []],
   ['nights', 'picture-bounce', []],
   ['nights', 'picture-blink', []],
