@@ -53,7 +53,8 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
 }
 
 function cardName(gl: WebGL2RenderingContext): string {
-  const name: unknown = gl.getParameter(gl.RENDERER)
+  const told = gl.getExtension('WEBGL_debug_renderer_info')
+  const name: unknown = gl.getParameter(told ? told.UNMASKED_RENDERER_WEBGL : gl.RENDERER)
   return typeof name === 'string' && name ? name : 'not told'
 }
 
