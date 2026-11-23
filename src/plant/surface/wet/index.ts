@@ -740,9 +740,10 @@ void main() {
     float last = clamp(y + h, from, to);
     float share = (last - first) / max(vAge, 1e-5);
 #ifdef BLUR_CIRCLE
-    if (share < 0.06) discard;
-    // What stands behind shows through the streak, and at its own blur it would be drawn sharp there: the streak is left a little soft, as the path of a thing in motion is.
-    outColor = vec4(0.0, 0.0, 0.0, cocOf(vStreak.z) + 0.2 * saturate(0.5 * vAge) * vStreak.y * uSize.y / ${(2 * Number(MASTER_HALF_HEIGHT_PX)).toFixed(1)});
+    if (share < 0.003) discard;
+    // What stands behind shows through the streak and keeps its own blur where the streak is thin. Where it is dense it is as sharp as the path of a thing in motion is.
+    float dense = cocOf(vStreak.z) + 0.2 * saturate(0.5 * vAge) * vStreak.y * uSize.y / ${(2 * Number(MASTER_HALF_HEIGHT_PX)).toFixed(1)};
+    outColor = vec4(0.0, 0.0, 0.0, mix(cocOf(1e4), dense, smoothstep(0.05, 0.4, share)));
     return;
 #endif
     if (share < 0.003) discard;
@@ -774,6 +775,14 @@ void main() {
     float dwell = min(1.0, 3.5 / max(0.5 * vStreak.y * vAge, 1e-4)) * smoothstep(from - 0.08, from + 0.08, along) * (1.0 - smoothstep(to - 0.08, to + 0.08, along));
     float sun = max(sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 2.5), 0.45);
     vec3 line = uSunColor * (50.0 * sun * exp(-aside * aside / 4.0) * dwell);
+    // So is the sun mirrored on its skin, on the side toward the sun.
+    vec3 facing = normalize(uSunDir - ray);
+    float turned = max(dot(facing, -ray), 0.05);
+    float lobe = 1.0 / sqrt(4.0 * clamp(0.015 * vStreak.y * vStreak.y, 24.0, 400.0));
+    float wide = max(lobe * turned, 1.5 / vStreak.y);
+    float beside = (x - dot(facing, side)) / wide;
+    float under = y + dot(facing, rise);
+    line += uSunColor * (24.0 * sun * (lobe * turned / wide) * exp(-0.5 * beside * beside) * min(1.0, 2.5 * lobe / max(vAge, 1e-4)) * smoothstep(from - 0.08, from + 0.08, under) * (1.0 - smoothstep(to - 0.08, to + 0.08, under)));
     outColor = vec4(applyFog(seen + line / share, vWorld), saturate(share));
     return;
   }
