@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { stream } from '../core/random.ts'
 import { right, toward } from '../field/layout.ts'
-import { grassMask, grassTimes, patchy, patchyCover, stemFoot, turfCover } from './cover.ts'
+import { grassMask, grassTimes, patchy, pioneersGo, patchyCover, stemFoot, turfCover } from './cover.ts'
 import { lane } from './crumbs.ts'
 import { cropLight, fieldGate } from './light.ts'
 import { groundStates, soilClock, soilHeight, sunWayDir } from './soil.ts'
+import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TUFTS = 14000
 const BLADES = 7
@@ -201,13 +202,17 @@ out vec4 vTuft;
 out vec3 vField;
 uniform vec4 uGrassTimes;
 uniform vec4 uAir;
+${gustGlsl}
+const float GONE_FROM = ${pioneersGo[0].toFixed(1)};
+const float GONE_BY = ${pioneersGo[1].toFixed(1)};
+const vec2 WIND_WAY = vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)});
 const float CRUST_S = ${soilClock.crust[1].toFixed(1)};
 ${soilHeight}
 ${fieldGate}
 ${turfCover}
 ${patchyCover}
 void main() {
-  float grown = smoothstep(aTuft.x, aTuft.x + uGrassTimes.z, uTime);
+  float grown = smoothstep(aTuft.x, aTuft.x + uGrassTimes.z, uTime) * (1.0 - step(aTuft.x, -50.0) * smoothstep(GONE_FROM, GONE_BY, uTime));
   mat4 place = modelMatrix * instanceMatrix;
   vec2 c = place[3].xz;
   float tall = length(place[1].xyz);
@@ -247,10 +252,8 @@ void main() {
   vec4 world = place * vec4(local, 1.0);
   world.y += soilHeight(c, soilLod(c));
   float bend = aAlong.x * aAlong.x * tall;
-  float own = (aTuft.w + aAlong.y) * 6.2832;
   vec2 sway = vec2(sin(uReal * 1.7 + aTuft.w * 6.28 + aAlong.y * 2.0), cos(uReal * 1.3 + aTuft.w * 4.1));
-  vec2 gust = vec2(sin(uReal * 3.3 + own * 3.0) + 0.6 * sin(uReal * 5.9 + own * 7.0), cos(uReal * 2.7 + own * 5.0) + 0.6 * cos(uReal * 4.9 + own * 11.0));
-  world.xz += (sway + early * 1.3 * gust) * 0.035 * bend * mix(0.6, 2.2, uAir.x);
+  world.xz += (0.45 * sway + WIND_WAY * (0.5 + 2.4 * gustAt(c, uReal))) * 0.035 * bend * uAir.x;
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;

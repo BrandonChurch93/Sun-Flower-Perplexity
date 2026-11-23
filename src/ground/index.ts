@@ -29,6 +29,9 @@ const CROP_HEIGHT_M = 0.9 * Math.max(...config.plant.heightM.map((k) => k[1]))
 
 export interface GroundState { wet: number; frost: number; dew?: number }
 
+// The ground's own uniforms, for whatever lies on it and is drawn by someone else.
+export const groundShared: Record<string, THREE.IUniform> = {}
+
 export class Ground {
   // The soil beyond the near ground, the near ground itself, the loose soil on it, the grass, and the single blades close to the plant.
   readonly surface: Surface
@@ -102,6 +105,7 @@ export class Ground {
       uMeanInv: { value: new THREE.Vector3(1 / soilMean[0], 1 / soilMean[1], 1 / soilMean[2]) },
     }
     this.surface = makeSurface({ name: 'soil', vertex: soilVertex, fragment: soilFragment, castShadow: false, uniforms: this.uniforms })
+    Object.assign(groundShared, this.uniforms)
     this.near = makeSurface({ name: 'soil near', vertex: `#define NEAR\n${soilVertex}`, fragment: `#define NEAR\n${soilFragment}`, castShadow: true, uniforms: this.uniforms })
     this.grass = makeSurface({ name: 'grass', vertex: grassVertex, fragment: grassFragment, side: THREE.DoubleSide, castShadow: true, uniforms: this.uniforms })
     this.loose = makeSurface({ name: 'soil crumbs', vertex: crumbVertex, fragment: crumbFragment, castShadow: true, uniforms: this.uniforms })

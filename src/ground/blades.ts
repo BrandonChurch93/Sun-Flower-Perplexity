@@ -4,6 +4,8 @@ import { stream } from '../core/random.ts'
 import { beadLook } from './crumbs.ts'
 import { cropLight } from './light.ts'
 import { groundStates, soilHeight } from './soil.ts'
+import { gustGlsl, windWay } from '../v2/wind.ts'
+import { pioneersGo } from './cover.ts'
 
 // The grass close to the plant, where the dawn lens sees single blades: each blade is a folded ribbon with a mid line, and carries beads of dew that are small balls of their own.
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame. Where beadsSeen is given, only that many of each blade's beads are made.
@@ -30,7 +32,6 @@ export const clumpsDawn: Clump[] = [
 
 const ROWS = 16
 // Every blade also moves in the air on its own.
-const GUST = '1.3'
 const FOLD = 0.35
 const DROOP_BEADS = 12
 
@@ -193,6 +194,10 @@ in vec4 aRoot;
 in vec4 aCenter;
 in vec4 aAlong;
 uniform vec4 uAir;
+${gustGlsl}
+const float GONE_FROM = ${pioneersGo[0].toFixed(1)};
+const float GONE_BY = ${pioneersGo[1].toFixed(1)};
+const vec2 WIND_WAY = vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)});
 uniform float uDew;
 uniform float uWet;
 out vec3 vWorld;
@@ -202,7 +207,7 @@ out vec4 vAlong;
 out float vKind;
 ${soilHeight}
 void main() {
-  float grown = smoothstep(aRoot.w, aRoot.w + aAlong.w, uTime);
+  float grown = smoothstep(aRoot.w, aRoot.w + aAlong.w, uTime) * (1.0 - smoothstep(GONE_FROM, GONE_BY, uTime));
   float bead = step(1.5, aCenter.w);
   float held = mix(1.0, smoothstep(0.85, 1.0, grown) * smoothstep(0.0, 0.4, uDew) * (1.0 - smoothstep(0.4, 0.8, uWet)), bead);
   vAlong = aAlong;
@@ -219,10 +224,8 @@ void main() {
   vec2 c = (modelMatrix * vec4(aRoot.xyz, 1.0)).xz;
   world.y += soilHeight(c, soilLod(c)) - 0.001;
   float t = aAlong.x;
-  float own = aAlong.z * 6.2832;
   vec2 sway = vec2(sin(uReal * 1.7 + aRoot.x * 190.0), cos(uReal * 1.3 + aRoot.z * 170.0));
-  vec2 gust = vec2(sin(uReal * 3.3 + own * 3.0) + 0.6 * sin(uReal * 5.9 + own * 7.0), cos(uReal * 2.7 + own * 5.0) + 0.6 * cos(uReal * 4.9 + own * 11.0));
-  world.xz += (sway + ${GUST} * gust) * mix(0.6, 2.2, uAir.x) * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
+  world.xz += (0.45 * sway + WIND_WAY * (0.5 + 2.4 * gustAt(c, uReal))) * uAir.x * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
