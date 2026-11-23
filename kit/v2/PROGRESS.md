@@ -187,22 +187,23 @@ None.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Round 4 notes went out between 03:52 and 04:00 UTC with the pair pictures; all know `v2` stands at `e5958d2`; reports are due 04:35, heartbeats 04:20.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Twelve at work, the limit. All know `v2` stands at `961048f` (pushed 05:40 UTC). Reports are due between 06:00 and 06:15.
 
-| Agent | Folder | Branch | State at 04:00 UTC 23 Nov |
+| Agent | Folder | Branch | State at 05:41 UTC 23 Nov |
 | --- | --- | --- | --- |
-| `sky_b_builder` | `src/sky/` | `agent/sky-b` | merged at `b7f7517`; wiring the night; low sun murk, opening, end, deck, strike, break frames, stars behind clouds |
-| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | merged at `806c873`; dust lane, clean points |
-| `sky_c_builder` | none (draws only) | `agent/sky-c` | clips of the storm's two ends delivered; standing by |
-| `place_builder` | `src/place/` | `agent/place` | ridge and hills against the keys; report due 04:05 |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | merged at `4480f36`; dark midday soil, ridges turned with the field, opening caps, frost rime, moon glints |
-| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `agent/plant` | merged at `3b3bc70`; key shapes first, then frame 0, storm leaves, light through blades |
-| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `27c822c`; puddles' script time first, then the puddle as water, beads, bursts |
-| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `5fcf1f2`; the hold as events on bars, rim light, the melt |
-| `rows_v2_builder` | `src/field/` | `agent/field` | merged at `25cc992`; rows turned, storm stature, far crop, script time; report due 04:25 |
-| `optics_v2_builder` | `src/post/` | `agent/post` | merged at `0e6bd9b`; beams, compact glow, stars, flash |
-| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | merged at `6700678`; one cost counter, pacing meter, loading freezes |
-| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `b59de7d`; the `script` check, whole film nights and made |
+| `sky_b_builder` | `src/sky/` | `agent/sky-b` | merged at `c2f7058` (moon fix, held tear); now `face()` so the lens follows the drawn sun, and the last sunset frames |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | merged at `806c873`; drawing frames 1590 to 1907 of the first whole watch |
+| `sky_c_builder` | none (draws only) | `agent/sky-c` | standing by, not at work |
+| `place_builder` | `src/place/` | `agent/place` | merged at `ec553cd` (far crop by a table, three woods); waits for the field's carpet, then one refit; the step of the table at bars 65 to 67 |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | merged at `4e31f56` (clods from 3 m out, rime); the far end in motion, the mauve line, rime toward the key |
+| `plant_builder` | `src/plant/` without `look/`, the top level of `surface/` and `surface/{wet,frost,dew}/`; `src/v2/inputs.ts` | `agent/plant` | merged at `2e3c47e`; the processor order (per slot normals, keys, hairs, spread), husk, bud sleeve |
+| `leaf_look_builder` | `src/plant/look/`, `src/plant/surface/index.ts` | `agent/leaf-look` | started 05:25; the day look of the leaves against `climb-fair.png` |
+| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `7491505`; finder of the one vertex array made after loading |
+| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `365fa33` (near veils in tongues); the thaw's fringe in patches, separate tongues |
+| `rows_v2_builder` | `src/field/`, `tests/field.test.ts` | `agent/field` | merged at `2296d61` (instance count by frame); the carpet's rim line, then the reshape's script time |
+| `optics_v2_builder` | `src/post/` | `agent/post` | merged at `167a815` (beams rise with the tear); clips, count, the last sunset with the lens on and off |
+| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | not merged since `bc51ddc`; export with a picked track, resume, the pacing report; round 6 under way |
+| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `f73208e`; `script` on five windows (all fail while growing, three hitches), the film round running |
 
 ## Rounds
 

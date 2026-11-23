@@ -1,5 +1,8 @@
 import { config } from '../config.ts'
 
+// Where the export page leaves one line about its last file, for the pacing report of the player.
+export const EXPORT_NOTE = `${config.slug}.export.last`
+
 export interface Track {
   name: string
   megabytes: number
