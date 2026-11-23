@@ -29,7 +29,7 @@ export async function run(args: Args): Promise<void> {
   const watch = str(args, 'watch', 'uHairs,uPicks').split(',')
   const broken = typeof args.break === 'string' ? args.break : null
   if (broken && broken !== 'grow') throw new Error('writes --from can break the film with --break grow: the plant grows inside the hold')
-  const name = `writes.hold-${from}-${to}${broken ? `.broken-${broken}` : ''}`
+  const name = broken ? `writes.broken-${broken}` : `writes.hold-${from}-${to}`
   const progress = path.join(OUT, `${name}.progress.txt`)
   const cuts = new Set(meantCuts())
   const holdOf = (f: number): (typeof holds)[number] | null => holds.find((h) => f >= h.first && f <= h.last) ?? null
