@@ -182,6 +182,7 @@ export class Air {
       this.transmission(2.1, muSun, trans)
       for (let c = 0; c < 3; c++) this.cloudTable[s * 3 + c] = SUN * trans[c]
       const dusk = smoothstep(-13.8, -2.3, e)
+      const remnant = smoothstep(-0.8, -8.6, e)
       const high = smoothstep(-1.2, 19, e)
       const scatterUnit = 1 + 2.82 * smoothstep(7, 56, e)
       for (let y = 0; y < SKY_Y; y++) {
@@ -221,7 +222,14 @@ export class Air {
           const blue = after * Math.exp(-mu * 2.9) * (0.66 + 0.34 * Math.cos(az / 2) ** 2)
           const dawn = after * Math.exp(-mu * (13.9 + 3.75 * Math.max(0, -e))) * Math.exp(-az * az * (1.5 + 0.64 * Math.max(-e, 0)))
           const belt = after * Math.exp(-(((mu - Math.max(0.045, 0.108 - 0.012 * e)) / 0.065) ** 2)) * Math.sin(az / 2) ** 5
-          const corrective: RGB = [0.67 * dawn + 0.085 * belt + 0.012 * blue, 0.192 * dawn + 0.034 * belt + 0.059 * blue, 0.078 * dawn + 0.057 * belt + 0.159 * blue]
+          // The low, lingering part of twilight is advected by the same azimuth
+          // as the sunlight. It survives the darkest night without lifting the zenith.
+          const rim = remnant * Math.exp(-mu * 27) * (0.09 + 0.91 * Math.exp(-az * az * 8.5))
+          const corrective: RGB = [
+            0.67 * dawn + 0.085 * belt + 0.012 * blue + 0.034 * rim,
+            0.192 * dawn + 0.034 * belt + 0.059 * blue + 0.018 * rim,
+            0.078 * dawn + 0.057 * belt + 0.159 * blue + 0.031 * rim,
+          ]
           for (let c = 0; c < 3; c++) {
             this.sky[i + c] = radiance[c] * SUN * CAL[c] * scatterUnit + AIRGLOW[c] * nightRise + corrective[c]
           }
@@ -256,7 +264,7 @@ export class Air {
   }
 
   moonAt(e: number, out: RGB): RGB {
-    const f = smoothstep(-5, -12, e)
+    const f = smoothstep(-3.3, -12.4, e)
     out[0] = f * 0.19
     out[1] = f * 0.20
     out[2] = f * 0.23
