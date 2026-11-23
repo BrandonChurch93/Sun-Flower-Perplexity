@@ -56,6 +56,7 @@ uniform vec2 uTrack;
 uniform float uAspect;
 uniform float uPatch;
 uniform float uDisc;
+uniform float uRim;
 uniform float uFar;
 layout(location = 0) out vec4 outColor;
 float openAt(vec2 uv) {
@@ -63,6 +64,19 @@ float openAt(vec2 uv) {
   return uFar > 0.0 ? 1.0 - smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) : 0.0;
 }
 void main() {
+  if (gl_FragCoord.x > 3.0) {
+    // The fourth column: how far the disc stands clear of the far land under it, from 0 with its lower edge on the land to 1 three and a half of its radii above. Only land near infinity counts: a leaf under the sun is in the glass with it.
+    float clear = 0.0;
+    for (int i = 0; i < 16; i++) {
+      float k = (float(i) + 0.5) / 16.0;
+      vec2 p = uSunAt + vec2((fract(float(i) * 0.618034) - 0.5) * uRim, -(1.0 + 3.5 * k) * uRim * uAspect);
+      float a = texture(tRaw, clamp(p, 0.002, 0.998)).a;
+      float land = uFar > 0.0 ? smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) * smoothstep(0.8, 0.95, a / uFar) : 0.0;
+      clear += 1.0 - land;
+    }
+    outColor = vec4(clear / 16.0);
+    return;
+  }
   if (gl_FragCoord.x > 2.0) {
     // The third column: the colour of the disc as the sky drew it, where it shows, and the share of it that shows.
     vec3 face = vec3(0.0);
