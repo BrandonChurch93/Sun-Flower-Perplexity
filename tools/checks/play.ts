@@ -19,6 +19,7 @@ import { ranker } from './lib/stride.ts'
 //   npm run checks -- play --stride 6              a review round: every frame of each dusk, night and dawn, then every sixth frame, then every frame within 12 of a bar line with a cue, and no more
 //   npm run checks -- play --break cut --at 1000 --from 984 --to 1016      a film whose camera jumps at frame 1000
 //   npm run checks -- play --break made --at 900 --from 890 --to 910       a film that builds a texture and a program at frame 900
+//   npm run checks -- play --break first-draw --at 900 --from 890 --to 910 a film that draws a mesh for the first time at frame 900: only a vertex array is made
 // A frame that is already there is not drawn again. A change of the film or of the size throws the old frames away.
 
 const SEAM = 6
@@ -44,7 +45,7 @@ export async function coarseSteps(run: string, every: number, from: number, to: 
 
 export async function run(args: Args): Promise<void> {
   const broken = typeof args.break === 'string' ? args.break : null
-  if (broken && !['cut', 'made'].includes(broken)) throw new Error('play can break the film with --break cut or --break made, with --at <frame>')
+  if (broken && !['cut', 'made', 'first-draw'].includes(broken)) throw new Error('play can break the film with --break cut, --break made or --break first-draw, with --at <frame>')
   const run = runName(broken)
   const from = Math.max(0, num(args, 'from', 0))
   const to = Math.min(FRAMES - 1, num(args, 'to', FRAMES - 1))
