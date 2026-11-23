@@ -16,6 +16,7 @@ uniform vec3 uDeck;
 uniform vec3 uFlash;
 uniform vec4 uWeather;
 uniform vec4 uEffects;
+uniform float uTearAttack;
 uniform vec2 uTravel;
 uniform vec2 uSmear;
 uniform float uEvolve;
@@ -72,25 +73,18 @@ vec4 weatherField(vec3 p, float h) {
   return f(vec3(field.x + 0.37, 0.13 * h + 0.055 * uEvolve, field.y + 0.68));
 }
 
-float toGap(vec3 p, vec3 d, float rough) {
-  float phi = max(0.0, 1.0 - dot(d, uSun));
-  // Small, interrupted gaps in fair cloud: the transparent part widens and
-  // wanders with depth without carving the same circle through every layer.
-  float widthNoise = mix(0.76, 1.28, smoothstep(0.33, 0.69, rough));
-  float ordinary = exp(-phi / (mix(0.00228, 0.0044, uGolden) * widthNoise));
-  if (uEffects.w < 0.001 || phi > 0.10) return ordinary;
-  ordinary = mix(ordinary, exp(-phi / 0.00105), uEffects.w);
+float riftAperture(vec3 p, vec3 d, float rough, float tear) {
   vec3 h = normalize(vec3(uSun.z, 0.0, -uSun.x) + vec3(1e-7));
   vec3 v = cross(uSun, h);
   vec2 q = vec2(dot(d, h), dot(d, v));
   // Storm layers break at different heights. Shear the opening through the
   // volume instead of cutting the same silhouette at every depth.
   float level = heightAt(p);
-  q += vec2(0.031, -0.018) * clamp(level - 2.0, -1.0, 2.0) * uEffects.w;
+  q += vec2(0.031, -0.018) * clamp(level - 2.0, -1.0, 2.0) * tear;
   vec2 seam = vec2(0.91 * q.x + 0.41 * q.y, -0.41 * q.x + 0.91 * q.y);
-  float width = 0.047 + 0.028 * uEffects.w;
+  float width = 0.047 + 0.028 * tear;
   float crag = sin(49.0 * seam.x + 12.0 * seam.y) * sin(19.0 * seam.y + 2.4 * level);
-  float lip = sin(31.0 * seam.x + 42.0 * seam.y + 0.82 * level) * (0.023 * uEffects.w);
+  float lip = sin(31.0 * seam.x + 42.0 * seam.y + 0.82 * level) * (0.023 * tear);
   float notch = (rough - 0.48) * min(1.0, 5.0 * length(q));
   float wavering = 0.011 * sin(86.0 * seam.x - 7.0 * seam.y + level)
     + 0.020 * sin(41.0 * seam.x - 9.0 * seam.y - level * 1.9);
@@ -99,7 +93,18 @@ float toGap(vec3 p, vec3 d, float rough) {
   float outline = slashed + pow(tail, 1.9);
   outline += min(1.0, 13.0 * length(q)) * (0.44 * crag + 4.4 * notch);
   outline += (0.17 + 0.27 * smoothstep(0.03, 0.20, abs(seam.x))) * sin(137.0 * seam.x + 23.0 * seam.y + 3.2 * level);
-  float torn = 1.0 - smoothstep(0.27, 1.30, outline);
+  return 1.0 - smoothstep(0.27, 1.30, outline);
+}
+
+float toGap(vec3 p, vec3 d, float rough) {
+  float phi = max(0.0, 1.0 - dot(d, uSun));
+  // Small, interrupted gaps in fair cloud: the transparent part widens and
+  // wanders with depth without carving the same circle through every layer.
+  float widthNoise = mix(0.76, 1.28, smoothstep(0.33, 0.69, rough));
+  float ordinary = exp(-phi / (mix(0.00228, 0.0044, uGolden) * widthNoise));
+  if (uEffects.w < 0.001 || phi > 0.10) return ordinary;
+  ordinary = mix(ordinary, exp(-phi / 0.00105), uEffects.w);
+  float torn = riftAperture(p, d, rough, uEffects.w);
   return max(ordinary, torn * smoothstep(0.0, 0.67, uEffects.w));
 }
 
@@ -564,9 +569,27 @@ void main() {
   // well as the cloud's own light. Preserve the separate lightning spill.
   float bankMask = st * (1.0 - 0.90 * sunBreak) * (1.0 - 0.82 * uEffects.z);
   result *= 1.0 - bankMask * ((0.25 + 0.12 * (1.0 - riftLight)) * lowBank + 0.16 * clamp(stacked, 0.0, 1.0));
+  float openPaths = 0.0;
+  if (uTearAttack > 0.0 && angle < 0.045 && span > 0.0) {
+    // Resolve partially open paths in parallel with the obscured volume.
+    // Both banks must open along this ray to show the hot core behind them.
+    vec3 low = d * (start + 0.26 * span);
+    vec3 high = d * (start + 0.59 * span);
+    vec4 a = weatherField(low, heightAt(low));
+    vec4 b = weatherField(high, heightAt(high));
+    float scale = 0.77 + 0.23 * sunBreak;
+    float edge = riftAperture(low, d, 0.38 * a.g + 0.62 * a.b, scale)
+      * riftAperture(high, d, 0.38 * b.g + 0.62 * b.b, scale);
+    openPaths = uTearAttack * smoothstep(0.06, 0.88, edge);
+    result = mix(result, coolWindow, openPaths);
+    float rim = smoothstep(0.03, 0.42, edge) * (1.0 - smoothstep(0.44, 0.89, edge));
+    rim *= (1.0 - through) * (0.33 + 0.67 * smoothstep(0.26, 0.76, 0.63 * a.g + 0.37 * b.b));
+    result += uCloudLight * vec3(0.12, 0.082, 0.049) * uTearAttack * rim * exp(-angle * 29.0);
+  }
   if (sunBreak > 0.0) {
     float nearSun = 0.048 * exp(-angle * 1880.0) + 0.19 * exp(-angle * 13300.0);
-    result += uCloudLight * vec3(1.11, 0.84, 0.61) * sunBreak * nearSun * through * through;
+    float hotPaths = mix(sunBreak * through * through, 1.0, openPaths);
+    result += uCloudLight * vec3(1.11, 0.84, 0.61) * nearSun * hotPaths;
   }
   // Forward scatter is wider than the photosphere and survives in torn
   // wisps around it, rather than painting a pale dot onto opaque cloud.
