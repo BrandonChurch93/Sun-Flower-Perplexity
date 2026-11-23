@@ -5,7 +5,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | command | the sentence it stands for | draws | time on four cores without a graphics card |
 | --- | --- | --- | --- |
 | `npm run checks -- nights` | day and night pass while it grows, and no night lasts or flickers | reads `play` for the dusks | 5 s |
-| `npm run checks -- holds` | in the frost and the storm the flower does not grow | 20 frames | 4 to 6 min |
+| `npm run checks -- holds` | in the frost and the storm the flower does not grow. By the clock: the plant's clock reads one value on every frame of each hold. By the picture: each hold is split at the film's cuts (`src/v2/cuts.ts`; the frost has four shots, the storm one) and the first, middle and last frame of every shot are drawn in flat light and compared, first against middle and middle against last. Only frames of one shot are compared, because the light of a close shot follows the cut even in the world at rest. Two frames are the same when no number differs by more than 0.001 (one step of the picture's half float between 0.5 and 1 is 0.000488); the count and the largest difference are printed whatever they are, and a pair that differs at all is drawn again one part at a time to name who carries it. The control, 45 frames after each hold, has to differ by over 100 times that | 34 frames at 640 x 360, more when something differs | 6 to 9 min |
 | `npm run checks -- cues` | everything lands on the music: each sunrise and sunset, each stroke of lightning, both holds, the rain, the bloom and each listed cut on its bar line. The last sun does not go under the horizon in the film: it sets behind the far ridge, so the last sunset is the moment the sun comes down to `SUN.last` of `src/v2/clock.ts`, its lower edge on the ridge | no | 1 s |
 | `npm run checks -- play --stride 6` | draws the film small for `nights`, `cuts` and `made` | 1,432 frames | about 1 hour in three runs side by side |
 | `npm run checks -- play` | the same, every frame | 3,810 frames | 2 to 3 hours |
@@ -84,6 +84,8 @@ The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070
 ## The holds, to the frame
 
 A hold begins on the frame that holds its first bar line and growth resumes on the frame that holds its last, so the last still frame is the one before it: Frost 849 to 1259, Storm 1672 to 2082. A frame is still when the plant's clock reads the hold's value at the open shutter and at its close. `holds` and `cues` fail a hold that is a frame short or a frame long.
+
+The picture proof compares frames of one shot only. The frost hold is cut three times (952, 1055, 1157), so it is four shots: 849 to 951, 952 to 1054, 1055 to 1156, 1157 to 1259. The storm hold is one shot. Across a cut the picture changes with nothing grown: the light of a close shot follows the cut even in the world at rest (`lookAt` in `src/v2/look.ts` takes the look of the close shot that holds the film second). `holds --break picture-grows` must still fail, and the control must still differ by over 100 times the 0.001 that counts as the same.
 
 ## Breaking the film on purpose
 
