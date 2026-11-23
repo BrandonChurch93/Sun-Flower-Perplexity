@@ -1,9 +1,10 @@
 # Looks of frost
 
-2026-11-23 07:17 UTC, at commit 3920aaac of agent/frost.
+2026-11-23 07:47 UTC, at commit 1391eaf5 of agent/frost.
 
-- `01-frame-1003-margin-ours-left-reference-right-revi.jpg`: frame 1003 margin ours left reference right review tier 3920aaa
-- `02-frame-1106-tip-ours-left-reference-right-review-.jpg`: frame 1106 tip ours left reference right review tier 3920aaa
-- `03-frame-1003-crop-one-to-one.jpg`: frame 1003 crop one to one
-- `04-frame-1106-crop-one-to-one.jpg`: frame 1106 crop one to one
-- `05-frames-1003-1106-1208-and-wide-940-draft.jpg`: frames 1003 1106 1208 and wide 940 draft
+- `01-h2-margin-1003-draft-ours-left-key-right.jpg`: h2 margin 1003 draft, ours left, key right
+- `02-h2-tip-1106-draft-ours-left-key-right.jpg`: h2 tip 1106 draft, ours left, key right
+- `03-h2-thaw-1157-draft-ours-left-key-right.jpg`: h2 thaw 1157 draft, ours left, key right
+- `04-h2-thaw-1208-draft-ours-left-key-right.jpg`: h2 thaw 1208 draft, ours left, key right
+- `05-h2-wide-940-1054-1157-1262.jpg`: h2 wide 940 1054 1157 1262
+- `06-h2-difference-of-940-against-v2-times-8-black-is.jpg`: h2 difference of 940 against v2 times 8 (black is identical)
