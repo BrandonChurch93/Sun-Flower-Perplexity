@@ -1,9 +1,15 @@
 # Looks of place
 
-2026-11-23 06:56 UTC, at commit 0144b682 of agent/place.
+2026-11-23 07:11 UTC, at commit 8dd513fa of agent/place.
 
-- `01-mist-under-the-ridge-bar-28-5-at-three-times-lef.jpg`: Mist under the ridge, bar 28.5 at three times, left middle right, before above after below
-- `02-mist-under-the-ridge-bar-44-5-at-three-times-bef.jpg`: Mist under the ridge, bar 44.5 at three times, before above after below
-- `03-mist-under-the-ridge-bar-73-at-three-times-befor.jpg`: Mist under the ridge, bar 73 at three times, before above after below
-- `04-bar-73-after.jpg`: Bar 73 after
-- `05-bar-44-5-after.jpg`: Bar 44.5 after
+- `01-haze-at-the-foot-of-the-land-bar-29-at-three-tim.jpg`: Haze at the foot of the land, bar 29, at three times, before above after below
+- `02-bar-44-before-and-after.jpg`: Bar 44 before and after
+- `03-bar-44-5-before-and-after.jpg`: Bar 44.5 before and after
+- `04-bar-61-before-and-after.jpg`: Bar 61 before and after
+- `05-bar-67-before-and-after.jpg`: Bar 67 before and after
+- `06-bar-73-before-and-after.jpg`: Bar 73 before and after
+- `07-bar-29-after.jpg`: Bar 29 after
+- `08-bar-44-after.jpg`: Bar 44 after
+- `09-bar-61-after.jpg`: Bar 61 after
+- `10-bar-67-after.jpg`: Bar 67 after
+- `11-bar-73-after.jpg`: Bar 73 after
