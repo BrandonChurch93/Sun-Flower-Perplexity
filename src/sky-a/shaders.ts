@@ -250,7 +250,7 @@ void main() {
     float g = dot(d, uSun);
     float phase = 0.55 * phaseHG(g, 0.55) + 0.12 * phaseHG(g, 0.92) + 0.33 * phaseHG(g, -0.2);
     float phase2 = mix(phaseHG(g, 0.4), phaseHG(g, -0.15), 0.4);
-    float stormDark = mix(1.0, 0.25, uOvercast * (1.0 - uBurst * smoothstep(cos(radians(18.0)), cos(radians(5.0)), g)));
+    float stormDark = mix(1.0, 0.25, uOvercast * (1.0 - 0.8 * uBurst * smoothstep(cos(radians(9.0)), cos(radians(2.0)), g)));
     vec3 flashP = vec3(0.0);
     if (uFlash > 0.0) {
       vec2 fh = sphere(o, uFlashAt, RG + cloudBase + 2.2);

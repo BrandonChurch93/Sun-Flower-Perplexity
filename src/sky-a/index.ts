@@ -282,9 +282,9 @@ class PhysicalSky implements Sky {
     u.uAmbTop.value.set(0.45 * clear.zenith[0] + 0.35 * clear.horizon[0] + 0.2 * clear.horizonSun[0], 0.45 * clear.zenith[1] + 0.35 * clear.horizon[1] + 0.2 * clear.horizonSun[1], 0.45 * clear.zenith[2] + 0.35 * clear.horizon[2] + 0.2 * clear.horizonSun[2])
     const ground = 0.18
     u.uAmbBottom.value.set(
-      ground * (clear.direct[0] * sunY / Math.PI + lit.horizon[0]),
-      ground * (clear.direct[1] * sunY / Math.PI + lit.horizon[1]),
-      ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]),
+      ground * (clear.direct[0] * sunY / Math.PI + lit.horizon[0]) + 0.3 * clear.horizonSun[0] + 0.12 * clear.horizon[0],
+      ground * (clear.direct[1] * sunY / Math.PI + lit.horizon[1]) + 0.3 * clear.horizonSun[1] + 0.12 * clear.horizon[1],
+      ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]) + 0.3 * clear.horizonSun[2] + 0.12 * clear.horizon[2],
     )
     u.uGain.value = g
     u.uUnder.value.fromArray(lit.horizon)
