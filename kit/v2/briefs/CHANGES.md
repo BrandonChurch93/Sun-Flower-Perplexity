@@ -393,3 +393,11 @@ The lens holds a lone bright pixel to twice its brightest neighbour, so the smal
 ### 30. The leaf under the moon
 
 When the key is cold the light through a leaf turns to the key's teal and comes down to about half; the sheen and the edge light stay. Judged against the night key.
+
+### 31. A value from the vertex shader may leave its range on an edge pixel
+
+At the `high` level a frame of one sample is drawn at four places in each pixel. On a pixel that a surface covers only in part, the fragment shader still runs once, at the pixel's middle, even where the surface does not reach the middle: every value handed down from the vertex shader is then carried on past the surface's edge, and can fall below nothing, rise over one, or turn a normal away. MEASURED by the checks owner on `ce7e0b5`: a blade's thinness under nothing went through a power and left values 600 to 40,000 times what stood round them at frames 1452 and 1479, which the lens drew as bright discs; the same frames drawn at one place a pixel were clean.
+
+So in every fragment shader: a value from the vertex shader is held to its honest range before it goes into `pow`, `sqrt`, `log`, `inversesqrt`, `normalize`, a division, or the edge of a `smoothstep`. No `centroid` on a value whose derivative is used. Each owner reads through its own fragment shaders once for this and proves it with `npm run checks -- numbers --frames a,b,c` on three frames of its own at the default quality: no pixel without a number, none over the limit, no spark, and the worst ratio it printed.
+
+The lens takes a channel that is not a number or is infinite as nothing, so on any card the worst such fault is one black pixel. It has no ceiling: a wild value that is still a number is caught by the `numbers` check and by reading the drawn film, not hidden.

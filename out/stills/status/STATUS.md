@@ -1,12 +1,12 @@
-# Status 28
+# Status 29
 
-2026-11-23 12:50 UTC
+2026-11-23 13:13 UTC
 
-- Status 28 · Phase 4. Phase 3 is closed and phase 4 is open. The frost close shots were reworked by the frost owner: a thin coat over the whole blade, plates, sparks in three sizes, a whiter melt. The bright discs on the neighbours were traced to their source, the stem's thinness going under zero at the collar, and cured there too. First whole watch: 2 of 12 parts are in and read as one film; the other ten are being drawn at 640 x 360, because four samples a pixel doubled the cost of a draft frame. Loading: every program is now asked for at once instead of at its first draw, being measured.
-- Next: Merge the frost and the stem cure. Storm: the key light down, the soaked soil darker (ground owner), leaves deeper and held out more. Opening: the sprout's stem and husk beside their keys. The first whole watch with the music at about 14:15. The cost cures for live play from the plant, hairs and head owners. Time used: 14.8 h of 30 h.
+- Status 29 · Phase 4. Merged and proven here: the reworked frost, the cure of the bright discs at its source, and the player's timing at loading, which now tells a slow picture from slow page work before it picks a quality. Every program is asked of the graphics card at once at loading; measured here, none is built after loading at five checked frames. The storm's key light is down: leaf highlights at 1830 fell from 84 to 74 (storm key 54, rain key 75). The storm's onset was drawn frame by frame after that change and holds, with the first flash on bar 33.
+- Next: The soaked soil in the storm is twice as light as the keys on the left: with the ground owner. The storm leaves hang too far and pass too much light: with the plant and leaf look owners. First whole watch with the music: 2 of 12 parts in, 10 drawing, all due about 14:30. Live play cost: the plant, hairs and head owners' cures, then a new measure of the five hardest spans. Time used: 15.2 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next)
-- `status-2.jpg`: Frost, the tip of the shoot at 1106 against the sun in the mist
-- `status-3.jpg`: Thaw at 1208: the melt front, beads, and the drop that lets go on 1235
-- `status-4.jpg`: First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27)
+- `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down
+- `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet
+- `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33
+- `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
