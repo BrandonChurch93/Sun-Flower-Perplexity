@@ -59,12 +59,12 @@ void main() {
     vec3 dark = mix(vec3(0.03, 0.078, 0.04), vec3(0.068, 0.14, 0.058), grain);
     vec3 pale = mix(vec3(0.11, 0.2, 0.066), vec3(0.17, 0.27, 0.078), grain);
     vec3 albedo = mix(dark, pale, saturate(0.35 * toTip + 0.4 * keel + 0.6 * line + 0.12 * rank * (1.0 - toTip) + 0.3 * (blotch - 0.5) + 0.4 * rim - 0.25 * middle));
-    albedo = mix(albedo, pale * 1.15, smoothstep(0.8, 1.0, ax) * 0.75);
-    albedo = mix(albedo, pale * 1.3, 0.6 * smoothstep(0.05, 0.015, ax) * (1.0 - smoothstep(0.75, 0.95, u)));
+    albedo = mix(albedo, pale * 1.25, smoothstep(0.78, 1.0, ax) * 0.82);
+    albedo = mix(albedo, pale * 1.38, 0.65 * smoothstep(0.055, 0.015, ax) * (1.0 - smoothstep(0.75, 0.95, u)));
     albedo *= 0.93 + 0.14 * fine;
-    albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
-    if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
-    else albedo *= vec3(0.6, 0.67, 0.58);
+    albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.65 * smoothstep(0.94, 1.0, u));
+    if (inner) albedo = mix(albedo, vec3(0.085, 0.135, 0.055), 0.68);
+    else albedo *= vec3(0.72, 0.80, 0.68);
     // A grown bract is felted: its hairs grey its green.
     albedo = mix(albedo, vec3(dot(albedo, vec3(0.3, 0.6, 0.1))) * vec3(0.95, 1.08, 0.85), 0.35 * (1.0 - uBudShut));
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
@@ -97,8 +97,8 @@ void main() {
     // Shut, the foot of a bract lies under the points of the row below it.
     t.occlusion *= mix(1.0, mix(mix(0.45, 1.0, smoothstep(0.0, 0.34, u)), mix(0.42, 1.0, smoothstep(0.0, 0.4, u)), uBudEarly), uBudShut);
     float shaded = smoothstep(0.35, 0.9, uBudOpen);
-    t.occlusion *= 1.0 - 0.45 * shaded;
-    t.through *= 1.0 - 0.6 * shaded;
+    t.occlusion *= mix(1.0 - 0.38 * shaded, 0.88, smoothstep(0.55, 0.95, u));
+    t.through *= mix(1.0 - 0.55 * shaded, 0.85, smoothstep(0.55, 0.95, u));
     t.wax = 0.15 + 0.3 * uPlantWet;
     // Rime settles on the points and on a lip the air reaches: where a lip lies tucked under its neighbor there is none.
     float open = smoothstep(0.1, 0.35, u) * (0.75 + 0.25 * smoothstep(-0.25, 0.25, sin(u * 11.0 + seed * 40.0 + step(0.0, x) * 2.1) * sin(u * 5.3 + seed * 17.0 + 1.0) + 0.15));

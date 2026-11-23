@@ -28,14 +28,15 @@ export const floretMain = /* glsl */ `void main() {
 
   if (piece < 0.5) {
     float ridge = (0.42 + 0.58 * around * around) * smoothstep(0.22, 0.74, along);
-    vec3 dark = mix(vec3(0.10, 0.062, 0.016), vec3(0.06, 0.10, 0.028), centre);
-    vec3 pale = mix(vec3(0.24, 0.165, 0.042), vec3(0.24, 0.33, 0.095), centre);
+    vec3 dark = mix(vec3(0.095, 0.058, 0.015), vec3(0.078, 0.105, 0.024), centre);
+    vec3 pale = mix(vec3(0.24, 0.16, 0.038), vec3(0.33, 0.35, 0.068), centre);
     vec3 ochre = vec3(0.25, 0.155, 0.036);
     dark = mix(dark, ochre * 0.55, swell * (1.0 - centre));
     pale = mix(pale, ochre, swell * (1.0 - centre));
-    vec3 closed = mix(dark, pale, ridge) * (1.0 + 0.32 * smoothstep(0.78, 1.0, along));
-    vec3 young = mix(vec3(0.022, 0.044, 0.011), vec3(0.19, 0.28, 0.072), ridge);
-    young = mix(young, vec3(0.33, 0.43, 0.112), smoothstep(0.70, 1.0, along) * (0.52 + 0.35 * vKind.w));
+    vec3 closed = mix(dark, pale, ridge) * (1.0 + 0.28 * smoothstep(0.76, 1.0, along));
+    closed = mix(closed, vec3(0.45, 0.43, 0.082), centre * smoothstep(0.70, 1.0, along) * (0.36 + 0.28 * vKind.w));
+    vec3 young = mix(vec3(0.026, 0.046, 0.011), vec3(0.24, 0.30, 0.065), ridge);
+    young = mix(young, vec3(0.40, 0.44, 0.095), smoothstep(0.70, 1.0, along) * (0.52 + 0.35 * vKind.w));
     closed = mix(young * mix(0.90, 1.04, deep), closed, ripe) * tone;
     vec3 flower = mix(vec3(0.072, 0.036, 0.011), vec3(0.145, 0.078, 0.022), smoothstep(0.26, 0.72, along));
     flower = mix(flower, vec3(0.042, 0.018, 0.005), smoothstep(0.78, 1.0, along) * 0.75);
@@ -73,8 +74,8 @@ export const floretMain = /* glsl */ `void main() {
     t.wax = 0.0;
     t.sheen = 0.28;
   } else {
-    vec3 young = mix(vec3(0.042, 0.082, 0.020), vec3(0.29, 0.40, 0.105), along);
-    vec3 green = mix(vec3(0.11, 0.062, 0.016), mix(vec3(0.08, 0.085, 0.018), mix(vec3(0.20, 0.145, 0.032), vec3(0.16, 0.25, 0.052), centre), along), open);
+    vec3 young = mix(vec3(0.046, 0.082, 0.019), vec3(0.33, 0.40, 0.088), along);
+    vec3 green = mix(vec3(0.11, 0.062, 0.016), mix(vec3(0.085, 0.088, 0.018), mix(vec3(0.20, 0.145, 0.032), vec3(0.25, 0.28, 0.050), centre), along), open);
     vec3 dry = vec3(0.17, 0.095, 0.022);
     vec3 grownUp = mix(green, dry, smoothstep(0.55, 1.0, along) * (1.0 - open));
     t.albedo = mix(young * mix(0.88, 1.02, deep), grownUp, ripe) * (0.88 + 0.24 * around) * tone;

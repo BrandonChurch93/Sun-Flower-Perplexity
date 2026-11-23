@@ -125,7 +125,7 @@ void main() {
   float r = drop.radius;
   float depth = max(-0.5 * (a.z + b.z), 1e-3);
   float pixelM = depth * uPixelAngle;
-  float coc = min(uCocScale * abs(1.0 / depth - 1.0 / uFocusM), 2048.0);
+  float coc = cocOf(depth);
   // Out of focus, one lens sample carries its share of the blur circle: the strip is drawn that wide so the samples close into it.
   float halfPx = max(max(r / pixelM, uLeast), 0.6 * coc / sqrt(uSamples));
   float halfM = halfPx * pixelM;

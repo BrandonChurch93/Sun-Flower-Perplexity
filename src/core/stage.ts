@@ -10,6 +10,8 @@ export class Stage {
   readonly gl: WebGL2RenderingContext
   readonly accumulator: Accumulator
   sample: THREE.WebGLRenderTarget
+  // The same target read at four places in each pixel. A frame made of one sample is drawn into it, since nothing else smooths an edge there. The graphics card holds it only once it has been drawn into.
+  smooth: THREE.WebGLRenderTarget
   width: number
   height: number
   lost = false
@@ -31,7 +33,8 @@ export class Stage {
     this.renderer.autoClear = false
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace
     this.renderer.setClearColor(0x000000, 0)
-    this.sample = Stage.sampleTarget(this.width, this.height)
+    this.sample = Stage.sampleTarget(this.width, this.height, 0)
+    this.smooth = Stage.sampleTarget(this.width, this.height, 4)
     this.accumulator = new Accumulator(this.width, this.height)
     shared.uSize.value.set(this.width, this.height)
     canvas.addEventListener('webglcontextlost', (event) => {
@@ -40,7 +43,7 @@ export class Stage {
     })
   }
 
-  private static sampleTarget(width: number, height: number): THREE.WebGLRenderTarget {
+  private static sampleTarget(width: number, height: number, samples: number): THREE.WebGLRenderTarget {
     const t = new THREE.WebGLRenderTarget(width, height, {
       type: THREE.HalfFloatType,
       format: THREE.RGBAFormat,
@@ -49,6 +52,8 @@ export class Stage {
       depthBuffer: true,
       stencilBuffer: false,
       generateMipmaps: false,
+      samples,
+      resolveDepthBuffer: false,
     })
     t.texture.colorSpace = THREE.NoColorSpace
     return t
@@ -59,6 +64,7 @@ export class Stage {
     this.height = format.height
     this.renderer.setSize(this.width, this.height, false)
     this.sample.setSize(this.width, this.height)
+    this.smooth.setSize(this.width, this.height)
     this.accumulator.setSize(this.width, this.height)
     shared.uSize.value.set(this.width, this.height)
   }
@@ -71,7 +77,12 @@ export class Stage {
     if (this.lost) throw new Error('the WebGL context was lost')
   }
 
+  // Four colours and four depths for each pixel, and the one colour they are joined into.
+  smoothBytes(): number {
+    return this.width * this.height * (4 * (8 + 4) + 8)
+  }
+
   targetBytes(): number {
-    return this.width * this.height * (8 + 4) + this.accumulator.bytes()
+    return this.width * this.height * (8 + 4) + this.smoothBytes() + this.accumulator.bytes()
   }
 }
