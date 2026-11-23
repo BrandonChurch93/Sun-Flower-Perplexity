@@ -57,3 +57,32 @@ Found by the checks and by the place: at every sunset of the fast time lapse the
 4. Frames 1372 and 1373 (the sun gone for two frames after a sunrise) are not a fault: the rising sun passes behind the top leaf of the plant. MEASURED on a crop of frames 1370 to 1375.
 5. `npm run bench -- --frames 1334-1346,1400 --name dusk --cols 7` draws the film's own camera at frames by number.
 6. `npm run part` and `npm run join` draw a range of frames with several pages and join the parts to one film (used for the blockout; the music goes only into a private copy).
+
+## 23 Nov, 02:35 UTC: `v2` at `a86df3b`, every part merged again
+
+- On `v2` now: sky A `7242e56`, sky B `c465921`, sky C `a1f5343`, the plant `3f90c74`, the place `f1fa53c`, rain `847f914`, frost `254b12b`, the field `24bc322`, the lens `502c966`, the ground `f08c2d4`, the player `f8997f7`, the checks `a152556`. Merge it before your next sheet. 162 tests pass.
+- The break of bar 41 no longer steps in one frame. `dials.burst` and `now.sunThrough` come up over frames 2082 to 2086 with the middle on the hit (burst 0.16, 0.50, 0.84, 1.00; through 0.10, 0.32, 0.58, 0.80, 0.90). Anything that rode the old step should be looked at once more at frames 2080 to 2090.
+- The counter (`src/v2/counter.ts`) now adds only the part of an array that is written, and `Made` has four more numbers: `bufferUpdates`, `bufferUpdateBytes`, `textureUpdates`, `textureUpdateBytes`. Bytes reported before today 02:30 UTC for a texture written in rows were too high by far.
+- `Film.setStill` now reaches the lens, so the grain holds still under the still switch.
+- A gust ends where it starts (`gustAt` and `gustGlsl` in `src/v2/wind.ts`): the front lets go to zero before the next one strikes.
+- The fill takes a third less of the dome's colour (`FILL_COLOUR` 0.65 in `src/v2/look.ts`).
+- The place's own rules run with the tests (`tests/place.test.ts`).
+- The sky is being judged blind today. Until the result, draw with `--sky sky-b`.
+
+## 23 Nov, 03:00 UTC: the sky is chosen
+
+- The film's sky is `src/sky/`. It was candidate B: three blind critics, each given the same twenty frames of every candidate and the twelve reference pictures, all ranked it first by a clear gap. `src/sky-b/` is gone (moved, its owner stays its owner). Leave `--sky` out from now on, or write `--sky sky`. Sky A and sky C stay in the tree for reading until the cleanup and are not drawn.
+- On `v2` now as well: the plant `647fc55`, the player `419905c`, the checks `87ce628`. 168 tests pass.
+- The moon. On screen and before the curve the moon's key is 0.55 (was 1.3) and cold, and the fill at midnight is 0.17 at the horizon and 0.095 overhead (was 0.08 and 0.045). Found by the checks: with the moon behind the plant the leaves glowed yellow green at midnight, brighter than at dusk, and blinked dark on the frame where the sun's light hands over to the moon's. Measured on the night of bar 28.5 after the change: the plant dims from 29.6 of 255 at the handover to 23.2 at midnight, no part of the frame moves more than 5.4 the wrong way in a frame (was 18.9), the frame's mean steps 13.1 at the most.
+- `createFilmClock` in `tools/beat/sync-mark.js` takes `blips` (default true).
+
+## 23 Nov, 03:10 UTC: the storm stands at a younger plant, and the lens is closer
+
+Why: beside `references/v2/keys/storm.png` and beside version 1's rain shot the storm was the weakest picture of the film. At 90 cm the plant was a thin pole with small leaves seen from 2.45 m, and none of what is good about it close (blades, hairs, water) could be seen. The keys show a young plant with broad leaves that fills the frame.
+
+- `config.growth.stormHold` is 23 (was 28.3): the plant stands 61 cm tall in the storm (was 90 cm). The climb now runs from 17.5 cm to 61 cm, the ascent from 61 cm to 1.71 m, both at nearly the same speed of the plant's clock (1.4 a bar; before 2.0 and 1.05). Nothing moved on the music: every bar line, hold, night, hit and dial is where it was.
+- The storm camera (bars 33 to 41): 1.66 m back creeping to 1.48 m (was 2.45 to 2.10), 0.27 to 0.30 m above the soil, 38 mm, f/5.6, heading 193 to 194, nearly level (pitch 0.2 to 0.8 degrees, was about 4). In the frame: plant top at 0.12 to 0.13 from the top, its foot at 0.81 to 0.91, the horizon at 0.506 to 0.525 (was 0.615 to 0.632, so there is more ground and less sky than before, and the frame is 1.57 m wide at the plant, creeping to 1.40 m; it was 2.32 to 1.99 m).
+- The lightning sits lower so it stays in the frame: bar 33 at azimuth 205, 10.5 degrees up (in the frame at 0.27 of the width, 0.15 from the top); bar 37 at azimuth 180, 10.5 degrees up (0.75, 0.16). Read `now.flashAt` as before.
+- At the break (bar 41) the sun stands at 0.38 of the width and 0.14 from the top.
+- The table of moments in `COMMON.md` carries the new plant clock for bars 26 to 42.5.
+- For whoever tuned to the old frame: the puddle (it must not grow past about a third of the frame's width: the key has a stream of water running to the lower left), drops and marks near the lens, the relief disc of the soil, the neighbours and the companion in the hold (the companion stands at the left edge now), the rain's far veil.

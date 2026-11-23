@@ -237,7 +237,6 @@ class VolumetricSky implements Sky {
     this.midSun.copy(now.sun).lerp(later.sun, 0.5).normalize()
     const midStarTurn = 0.5 * (now.starTurn + later.starTurn)
 
-    // 1. Update Sky-View LUT
     const svu = this.skyViewPass.uniforms
     svu.uSun.value.copy(this.midSun)
     svu.uMoon.value.copy(now.moon)
@@ -246,7 +245,6 @@ class VolumetricSky implements Sky {
     svu.uSkySteps.value = q === 'film' ? 36 : q === 'high' ? 28 : 20
     this.skyViewPass.render(renderer, this.skyViewTarget)
 
-    // 2. Camera frustum with guard band so lens jitter and blur circles remain inside prepared sky
     const pose = view.pose
     const halfTanX = (0.5 * config.camera.gateWidthMm) / Math.max(8, pose.focalMm)
     const aspect = view.height / Math.max(1, view.width)
@@ -254,7 +252,6 @@ class VolumetricSky implements Sky {
     const prepTanX = halfTanX * 1.14 + 0.11
     const prepTanY = halfTanY * 1.14 + 0.11
 
-    // 3. Render volumetric clouds, cirrus, rain curtains, shafts, and lightning
     const cpu = this.cloudPreparePass.uniforms
     cpu.uPrepForward.value.copy(pose.forward)
     cpu.uPrepRight.value.copy(pose.right)
@@ -267,9 +264,9 @@ class VolumetricSky implements Sky {
 
     const sunHor = Math.max(0, this.midSun.y)
     cpu.uGroundBounceCol.value.set(
-      0.11 * (l.direct[0] * sunHor * d.sunThrough + l.horizon[0] * 0.65),
-      0.095 * (l.direct[1] * sunHor * d.sunThrough + l.horizon[1] * 0.65),
-      0.068 * (l.direct[2] * sunHor * d.sunThrough + l.horizon[2] * 0.65),
+      0.022 * (l.direct[0] * sunHor * d.sunThrough + l.horizon[0] * 0.55),
+      0.024 * (l.direct[1] * sunHor * d.sunThrough + l.horizon[1] * 0.55),
+      0.020 * (l.direct[2] * sunHor * d.sunThrough + l.horizon[2] * 0.55),
     )
 
     cpu.uCloudShiftNow.value.set(now.cloud.shiftX, now.cloud.shiftZ)
@@ -288,17 +285,15 @@ class VolumetricSky implements Sky {
     cpu.uEvening.value = d.evening
     cpu.uNight.value = now.night
 
-    cpu.uMaxSteps.value = q === 'film' ? 64 : q === 'high' ? 48 : 28
+    cpu.uMaxSteps.value = q === 'film' ? 76 : q === 'high' ? 58 : 32
     cpu.uLightSteps.value = q === 'film' ? 6 : q === 'high' ? 5 : 4
     cpu.uShutterTaps.value = q === 'film' ? 3 : q === 'high' ? 2 : 1
     cpu.uShaftSteps.value = q === 'film' ? 10 : q === 'high' ? 8 : 4
 
     this.cloudPreparePass.render(renderer, prepTarget)
 
-    // 4. Build smooth mip chain for lens out-of-focus sky sampling
     this.buildMipChain(renderer, prepTarget)
 
-    // 5. Bind per-frame uniforms for fast per-sample render()
     const sru = this.skyRenderPass.uniforms
     sru.tPrepared.value = prepTarget.texture
     sru.uPrepForward.value.copy(pose.forward)

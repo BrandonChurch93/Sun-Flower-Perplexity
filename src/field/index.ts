@@ -9,10 +9,9 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { Shaped, leanBy, leavesApart, placeTurned, send, shapeInputs, turnBy } from './turn.ts'
-import { PLACE, thinOrder, statureAt, sizeOf, standOf, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
+import { CANOPY_SIZE, PLACE, thinOrder, statureAt, sizeOf, standOf, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
-const CANOPY = 0.72
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
 // At the low quality the simpler plants thin out from here to there, to this share of them, and the leaves in the gaps stop early.
@@ -128,7 +127,7 @@ export class Field {
     this.lag = lagAt(timeOpen)
     const tall = heightAt(fieldAge(timeOpen))
     const st = statureAt(timeOpen, this.stature)
-    const full = tall * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
+    const full = tall * sizeAt(CANOPY_SIZE, youngOf(0.5, this.lag), this.ahead)
     const low = standOf(full / st.plantTall, 9, st.stand, st.even, st.farShort)
     const spread = full * low
     const canopy = spread * (1 - squat)
@@ -136,14 +135,14 @@ export class Field {
     fieldUniforms.uHang.value = hangAt(timeOpen)
     fieldUniforms.uWide.value = wideAt(timeOpen)
     fieldUniforms.uLate.value = lateAt(timeOpen)
-    fieldUniforms.uMoon.value = now.lightKind === 'sun' ? 0 : now.night
+    fieldUniforms.uMoon.value = now.night * THREE.MathUtils.smoothstep(-now.sunElevationDeg, 5, 9)
     fieldUniforms.uDark.value = 0
     fieldUniforms.uEarly.value = earlyAt(timeOpen)
     fieldUniforms.uCanopy.value = canopy
     // How closed the crop is follows how far its leaves reach.
     fieldUniforms.uClosed.value = THREE.MathUtils.smoothstep(spread, 0.2, 0.85)
     // How little sky the crop keeps follows the size it will settle at, so the young crop is open to the sky however tall it stands.
-    fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(tall * CANOPY, 0.7, 1.25)
+    fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(tall * CANOPY_SIZE, 0.7, 1.25)
     // The leaves in the gaps come up as the crop closes over them.
     this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
     this.far.prepare(timeOpen, timeClose, still, stillClose, felt, eyeHeightM, canopy, low)

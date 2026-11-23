@@ -105,3 +105,54 @@
     animation: none;
   }
 }
+
+.steps {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #a59f90;
+}
+
+.step[data-state='now'] {
+  color: #ece7db;
+}
+
+.num {
+  display: inline-grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #5a5443;
+  border-radius: 50%;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  place-items: center;
+}
+
+.step[data-state='now'] .num {
+  border-color: #e2b23a;
+  background: #e2b23a;
+  color: #14130f;
+  font-weight: 600;
+}
+
+.stepState {
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+.step[data-state='now'] .stepState {
+  color: #e2b23a;
+}
+
+:global(html[data-review]) .steps {
+  display: none;
+}

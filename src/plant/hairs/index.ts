@@ -16,7 +16,12 @@ const ROW = 512
 const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
-const REGATHER_M = 0.03
+// While the plant's clock stands its hairs are chosen for a view in steps: the lens this far along a scale of doublings, this many degrees round the plant, and the skin's frost and wet in sixteenths. So what is chosen depends on the frame alone and is sent again only when a step is crossed.
+const STEPS_PER_DOUBLING = 8
+const STEP_DEG = 4
+const STATE_STEPS = 16
+// In the wide shot a hair thinner than this many pixels is one of many in a pixel: that share of them is laid and stands for the rest.
+const FAR_FROM_PX = 1 / 3
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
@@ -544,6 +549,13 @@ void main() {
 `
 
 // Fine hairs. Far from the lens each is a line a pixel wide that adds its true share of light; close to it each is a thin ribbon turned to the camera. The part that wears them gives each hair its root and its direction at both ends of the shutter.
+const KEYS = 11
+
+// A length on a scale of doublings, at its nearest step.
+function stepped(v: number): number {
+  return v > 0 ? 2 ** (Math.round(Math.log2(v) * STEPS_PER_DOUBLING) / STEPS_PER_DOUBLING) : 0
+}
+
 export class HairSet {
   readonly surface: Surface
   // The two forms of the hairs. One of them is drawn in any sample. A part that wears hairs adds all of them to its own meshes.
@@ -566,13 +578,15 @@ export class HairSet {
   private shown: number
   private stale = true
   private sent = false
+  private readonly key = new Float64Array(KEYS)
+  private readonly keyWas = new Float64Array(KEYS).fill(NaN)
+  private readonly stands: { held: number }
   private readonly rows: number
   private readonly views = new Map<number, Float32Array>()
   private kept = 0
   private nearest = 1
   private longest = 0
   private readonly eye = new THREE.Vector3()
-  private readonly seen = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
   private readonly at: Float32Array
   private crowd = new Float32Array(0)
@@ -580,6 +594,7 @@ export class HairSet {
   constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00004) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
     this.shown = count
+    this.stands = options.stands ?? { held: 0 }
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.leans = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.at = new Float32Array(count * 2)
@@ -662,25 +677,50 @@ export class HairSet {
     this.meshes = [far, near, farSharp, nearSharp, barbs, barbsSharp, soft]
   }
 
-  // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them.
-  private gather(camera: THREE.Camera, object: THREE.Object3D): void {
+  // A hair outside the picture is left out, and of the hairs far out of focus a share is left out and the rest stand for them. While the plant's clock stands the view is the stepped one, in which nothing is outside the picture.
+  private gather(camera: THREE.Camera, object: THREE.Object3D, stepped: boolean): void {
     const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
     const m = object.matrixWorld.elements
     const size = norm(m[0], m[1], m[2])
     const [ra, rb] = this.roots
     const [la, lb] = this.leans
     const out = this.data
-    const cocScale = shared.uCocScale.value
-    const focus = shared.uFocusM.value
+    const key = this.key
+    const cocScale = stepped ? key[5] : shared.uCocScale.value
+    const focus = stepped ? key[4] : shared.uFocusM.value
     const height = shared.uSize.value.y
-    const cols = Math.ceil(shared.uSize.value.x / CROWD_CELL_PX) + 1
-    const rows = Math.ceil(height / CROWD_CELL_PX) + 1
-    if (this.crowd.length !== cols * rows) this.crowd = new Float32Array(cols * rows)
+    const width = shared.uSize.value.x
+    const cols = (stepped ? 2 : 1) * (Math.ceil(width / CROWD_CELL_PX) + 1)
+    const rows = (stepped ? 2 : 1) * (Math.ceil(height / CROWD_CELL_PX) + 1)
+    const most = 4 * (Math.ceil(width / CROWD_CELL_PX) + 1) * (Math.ceil(height / CROWD_CELL_PX) + 1)
+    if (this.crowd.length !== most) this.crowd = new Float32Array(most)
     const crowd = this.crowd
     crowd.fill(0)
     const at = this.at
-    const perM = (camera.projectionMatrix.elements[5] * height) / 2
-    const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
+    const perM = stepped ? key[3] : (camera.projectionMatrix.elements[5] * height) / 2
+    const frost = stepped ? key[6] : stateUniforms.uPlantFrost.value
+    const wetness = stepped ? key[7] : stateUniforms.uPlantWet.value
+    const thick = (1 + (RIME_M / this.widthM) * frost) * (1 + 2 * wetness)
+    // The stepped view: from the stepped place of the lens toward the foot of the plant.
+    const ex = key[0]
+    const ey = key[1]
+    const ez = key[2]
+    let fx = m[12] - ex
+    let fy = m[13] - ey
+    let fz = m[14] - ez
+    const fl = norm(fx, fy, fz) || 1
+    fx /= fl
+    fy /= fl
+    fz /= fl
+    let sx = -fz
+    let sz = fx
+    const sl = Math.hypot(sx, sz) || 1
+    sx /= sl
+    sz /= sl
+    const ux = -sz * fy
+    const uy = sz * fx - sx * fz
+    const uz = sx * fy
+    const perCell = perM / CROWD_CELL_PX
     // In the wide shot a hair is a fraction of a pixel wide. There each is drawn long enough to stand off the outline, and where they crowd all of them dim alike instead of some going out.
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
@@ -694,12 +734,30 @@ export class HairSet {
       const x = ra[o]
       const y = ra[o + 1]
       const z = ra[o + 2]
-      const w = e[3] * x + e[7] * y + e[11] * z + e[15]
       const long = length * size
-      if (w < long) continue
+      let w: number
+      let px: number
+      let py: number
+      if (stepped) {
+        const rx = m[0] * x + m[4] * y + m[8] * z + m[12] - ex
+        const ry = m[1] * x + m[5] * y + m[9] * z + m[13] - ey
+        const rz = m[2] * x + m[6] * y + m[10] * z + m[14] - ez
+        w = norm(rx, ry, rz)
+        if (w < long) continue
+        const deep = Math.max(rx * fx + ry * fy + rz * fz, 0.2 * w)
+        px = Math.min(cols - 1.001, Math.max(0, 0.5 * cols + ((rx * sx + rz * sz) / deep) * perCell))
+        py = Math.min(rows - 1.001, Math.max(0, 0.3 * rows + ((rx * ux + ry * uy + rz * uz) / deep) * perCell))
+      } else {
+        w = e[3] * x + e[7] * y + e[11] * z + e[15]
+        if (w < long) continue
+        const cx = e[0] * x + e[4] * y + e[8] * z + e[12]
+        const cy = e[1] * x + e[5] * y + e[9] * z + e[13]
+        const reach = w * (1.04 + (2 * cocScale * Math.abs(1 / w - 1 / focus)) / height) + long * 4
+        if (Math.abs(cx) > reach || Math.abs(cy) > reach) continue
+        px = Math.min(cols - 1.001, Math.max(0, ((cx / w) * 0.5 + 0.5) * (width / CROWD_CELL_PX)))
+        py = Math.min(rows - 1.001, Math.max(0, ((cy / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
+      }
       const coc = cocScale * Math.abs(1 / w - 1 / focus)
-      const reach = w * (1.04 + (2 * coc) / height) + long * 4
-      if (Math.abs(e[0] * x + e[4] * y + e[8] * z + e[12]) > reach || Math.abs(e[1] * x + e[5] * y + e[9] * z + e[13]) > reach) continue
       const own = la[o + 3]
       let share = 1
       const scale = (size * perM) / w
@@ -708,7 +766,7 @@ export class HairSet {
       const brief = near + (1 - near) * wide
       const fine = Math.min(1, (this.widthM * thick * scale) / (STRAND_PX + (WIDE_STRAND_PX - STRAND_PX) * wide))
       // In the wide shot none is left out for being fine: every hair is a faint soft stroke and the coat sums to an even line that holds still.
-      const thin = fine + (1 - fine) * wide
+      const thin = fine + (1 - fine) * wide * Math.min(1, (this.widthM * thick * scale) / FAR_FROM_PX)
       const part = (1 - brief * (1 - thin)) * (coc > THIN_FROM_PX ? Math.max(THIN_FROM_PX / coc, THIN_LEAST) : 1)
       if (part < 1) {
         const keep = part * (1 + THIN_EASE)
@@ -724,8 +782,6 @@ export class HairSet {
       const la2 = norm(la[o], la[o + 1], la[o + 2]) || 1
       const lb2 = norm(lb[o], lb[o + 1], lb[o + 2]) || 1
       const q = n * 16
-      const px = Math.min(cols - 1.001, Math.max(0, (((e[0] * x + e[4] * y + e[8] * z + e[12]) / w) * 0.5 + 0.5) * (shared.uSize.value.x / CROWD_CELL_PX)))
-      const py = Math.min(rows - 1.001, Math.max(0, (((e[1] * x + e[5] * y + e[9] * z + e[13]) / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
       at[n * 2] = px
       at[n * 2 + 1] = py
       crowd[Math.round(py) * cols + Math.round(px)] += (share * this.widthM * scale * Math.min(length * scale, CROWD_CELL_PX)) / (CROWD_CELL_PX * CROWD_CELL_PX)
@@ -750,16 +806,16 @@ export class HairSet {
       if (long > longest) longest = long
     }
     // Rime is matt and does not burn: a crust of it may stand as close as it grows.
-    const limit = CROWD_COVER * (1 + 15 * stateUniforms.uPlantFrost.value)
+    const limit = CROWD_COVER * (1 + 15 * frost)
     for (let k = 0; k < n; k++) {
       const px = at[k * 2]
       const py = at[k * 2 + 1]
       const cx = Math.floor(px)
       const cy = Math.floor(py)
-      const fx = px - cx
-      const fy = py - cy
+      const gx = px - cx
+      const gy = py - cy
       const c = cy * cols + cx
-      const cover = (crowd[c] * (1 - fx) + crowd[c + 1] * fx) * (1 - fy) + (crowd[c + cols] * (1 - fx) + crowd[c + cols + 1] * fx) * fy
+      const cover = (crowd[c] * (1 - gx) + crowd[c + 1] * gx) * (1 - gy) + (crowd[c + cols] * (1 - gx) + crowd[c + cols + 1] * gx) * gy
       if (cover <= limit) continue
       const keep = limit / cover
       const h = (out[k * 16 + 7] * 97.13 + 0.37) % 1
@@ -802,12 +858,43 @@ export class HairSet {
     this.nearest = nearest
     this.longest = longest
     this.stale = false
-    this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
 
   private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft = false): void {
-    // The samples of one frame differ by the width of the lens. A camera farther than that from where the hairs were gathered is another view.
-    if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
+    // A plant that is laid again on every frame has its hairs gathered for that frame's lens. One whose clock stands keeps what was gathered for the stepped view until a step is crossed.
+    if (this.stands.held >= 1) {
+      const key = this.key
+      const m = object.matrixWorld.elements
+      const eye = this.eye.setFromMatrixPosition(camera.matrixWorld)
+      const dx = eye.x - m[12]
+      const dy = eye.y - m[13]
+      const dz = eye.z - m[14]
+      const far = Math.max(norm(dx, dy, dz), 1e-4)
+      const step = (STEP_DEG * Math.PI) / 180
+      const round = Math.round(Math.atan2(dx, dz) / step) * step
+      const high = Math.round(Math.asin(dy / far) / step) * step
+      const reach = stepped(far)
+      key[0] = m[12] + reach * Math.cos(high) * Math.sin(round)
+      key[1] = m[13] + reach * Math.sin(high)
+      key[2] = m[14] + reach * Math.cos(high) * Math.cos(round)
+      key[3] = stepped((camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2)
+      key[4] = stepped(shared.uFocusM.value)
+      key[5] = stepped(shared.uCocScale.value)
+      key[6] = Math.round(stateUniforms.uPlantFrost.value * STATE_STEPS) / STATE_STEPS
+      key[7] = Math.round(stateUniforms.uPlantWet.value * STATE_STEPS) / STATE_STEPS
+      key[8] = stateUniforms.uPlantFrost.value > 0.5 ? 1 : 0
+      key[9] = stateUniforms.uPlantWet.value > 0 ? 1 : 0
+      key[10] = stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0 ? 1 : 0
+      let other = this.stale
+      for (let k = 0; k < KEYS; k++) if (key[k] !== this.keyWas[k]) other = true
+      if (other) {
+        this.keyWas.set(key)
+        this.gather(camera, object, true)
+      }
+    } else if (this.stale) {
+      this.keyWas.fill(NaN)
+      this.gather(camera, object, false)
+    }
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     this.lineFade.value = 1 - wide

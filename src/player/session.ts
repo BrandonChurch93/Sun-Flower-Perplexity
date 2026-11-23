@@ -1,9 +1,9 @@
 import { config, frameCount, type Format, type TierId } from '../config.ts'
 import type { Film } from '../director/film.ts'
 import { keys, segments } from '../director/timeline.ts'
-import { markAt, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
+import { MARK_HOLD_SECONDS, markSeconds, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
 import type { Report, RunFacts } from './pacing.ts'
-import { filmPlan, play, stretchPlan, type Playing } from './play.ts'
+import { filmPlan, play, stretchPlan, type Plan, type Playing } from './play.ts'
 
 const CHECK_SECONDS = 10
 const CHECK_STRETCHES = 3
@@ -46,12 +46,50 @@ export function pictureSize(format: Format, windowWidth: number, windowHeight: n
   return { width: format.width * scale, height: format.height * scale, exact: Math.abs(scale * pixelRatio - 1) < 1e-6 }
 }
 
+const MARK_REFRESHES = 2
+
+// The white flash of the two sync marks, on a loop of its own beside the film's. Each mark goes on at its second of the clock, or at the first refresh after it,
+// and stays for its whole length from then on and for at least two refreshes. The run does not end before the second one has been shown.
+export function flasher(time: () => number, set: (on: boolean) => void): { shown(): boolean; stop(): void } {
+  const marks = markSeconds().map((at) => ({ at, since: NaN, refreshes: 0, over: false }))
+  let on = false
+  let live = true
+  const turn = (): void => {
+    if (!live) return
+    const seconds = time()
+    let next = false
+    for (const m of marks) {
+      if (m.over || seconds < m.at) continue
+      if (m.refreshes === 0) m.since = seconds
+      if (m.refreshes >= MARK_REFRESHES && seconds >= m.since + MARK_HOLD_SECONDS - 1e-9) m.over = true
+      else {
+        m.refreshes++
+        next = true
+      }
+    }
+    if (next !== on) {
+      on = next
+      set(on)
+    }
+    requestAnimationFrame(turn)
+  }
+  requestAnimationFrame(turn)
+  return {
+    shown: () => marks.every((m) => m.over),
+    stop() {
+      live = false
+      if (on) set(false)
+    },
+  }
+}
+
 // Recording mode: full screen, nothing but the film. A dark lead, every frame from the first to the last, a dark tail, and back.
 export function record(deck: Deck, clockReady: Promise<FilmClock>, marks: boolean): Session {
   const { film, root, stage, curtain } = deck
   let stopped = false
   let playing: Playing | null = null
   let lock: WakeLockSentinel | null = null
+  let flash: ReturnType<typeof flasher> | null = null
   const stop = () => {
     stopped = true
     playing?.stop()
@@ -79,28 +117,31 @@ export function record(deck: Deck, clockReady: Promise<FilmClock>, marks: boolea
       const facts = deck.facts('recording', running.ctx)
       if (!stopped) await running.start()
       let dark = true
-      let flash = false
+      const film0 = filmPlan(0, frameCount - 1, TAIL_SECONDS)
+      if (marks && !stopped) {
+        flash = flasher(() => running.time(), (on) => {
+          curtain.dataset.flash = on ? 'yes' : 'no'
+        })
+      }
+      const held = flash
+      const plan: Plan = held ? { ...film0, done: (seconds) => film0.done(seconds) && held.shown() } : film0
       playing = play({
         film,
         tier: deck.tier,
-        plan: filmPlan(0, frameCount - 1, TAIL_SECONDS),
+        plan,
         time: () => running.time(),
         facts: (stepMs) => stepped(facts, stepMs),
-        tick(seconds, cue) {
+        tick(_seconds, cue) {
           if ((cue === null) !== dark) {
             dark = cue === null
             curtain.dataset.on = dark ? 'yes' : 'no'
-          }
-          const mark = marks && markAt(seconds)
-          if (mark !== flash) {
-            flash = mark
-            curtain.dataset.flash = flash ? 'yes' : 'no'
           }
         },
       })
       if (stopped) playing.stop()
       return await playing.finished
     } finally {
+      flash?.stop()
       clock?.stop()
       document.removeEventListener('fullscreenchange', onLeave)
       await lock?.release().catch(() => undefined)

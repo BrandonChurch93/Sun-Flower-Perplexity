@@ -17,7 +17,7 @@ import { openSession, type Session } from './lib/render.ts'
 //   npm run bench -- --sky sky-a --only all              the whole scene
 //   npm run bench -- --sky sky-a --clip 73,85 --view wide   a clip of film seconds 73 to 85 from one camera
 //   npm run bench -- --sky sky-a --only all --bars 17,21,25 --name frost   the film's own camera at those bars, on one sheet
-//   npm run bench -- --sky sky-a --only all --frames 1368-1376,1400 --name dawn   the film's own camera at those frames
+//   npm run bench -- --only all --frames 1368-1376,1400,0-1260:15 --name dawn   the film camera at those frames (a-b:n is every nth)
 //   npm run bench -- --sky sky-a --count                 plays 200 frames across the film and says what the graphics card was asked to make after loading
 //   npm run bench -- --sky sky-0 --only ground,plant,field --still --view wide --shots 07   the world at rest: no weather, no wind, one fixed sun
 
@@ -107,8 +107,10 @@ try {
     const wanted = str(args, 'shots', 'all')
     const atBars = typeof args.bars === 'string' ? args.bars.split(',').map(Number) : null
     const atFrames = typeof args.frames === 'string' ? args.frames.split(',').flatMap((x) => {
-      const [a, b] = x.split('-').map(Number)
-      return Array.from({ length: (b ?? a) - a + 1 }, (_, i) => a + i)
+      const [span, stride] = x.split(':')
+      const [a, b] = span.split('-').map(Number)
+      const step = Math.max(1, Number(stride ?? 1))
+      return Array.from({ length: Math.floor(((b ?? a) - a) / step) + 1 }, (_, i) => a + i * step)
     }) : null
     const list: Shot[] = atFrames ? atFrames.map((f) => ({ id: `frame-${String(f).padStart(5, '0')}`, seconds: f / fps, view: 'film', what: '' })) : atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
       const s = shots.find((x) => x.id === id || x.id.startsWith(`${id}-`) || x.id.slice(3) === id)

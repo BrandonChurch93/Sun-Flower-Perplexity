@@ -30,6 +30,8 @@ in float vSeed;
 in vec3 vWorld;
 uniform float uHaze;
 uniform vec3 uHazeFlash;
+uniform vec3 uHazeFlashAt;
+uniform float uHazeStrike;
 void main() {
   if (uDiag > 1) discard;
   float high = vAt.y * 0.5 + 0.5;
@@ -43,7 +45,11 @@ void main() {
   vec3 ray = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(ray, uSunDir));
   float t4 = toSun * toSun * toSun * toSun;
-  vec3 light = 0.4 * uAirHorizon + 0.25 * uAirZenith + 0.15 * uSkyHorizonSun + uAirSun * (0.006 + 0.1 * t4) + uHazeFlash;
+  // A strike lights the spray on its own side and near at hand, and leaves the rest of it dark over the soil.
+  float toStrike = max(dot(normalize(ray.xz), normalize(uHazeFlashAt.xz + vec2(1e-5))), 0.0);
+  float t2 = toStrike * toStrike;
+  float reach = t2 * t2 * t2 * t2 * mix(1.0, 0.3, smoothstep(1.5, 6.0, distance(uCamPos, vWorld)));
+  vec3 light = (0.4 * uAirHorizon + 0.25 * uAirZenith + 0.15 * uSkyHorizonSun + uAirSun * (0.006 + 0.1 * t4)) * mix(1.0, 0.06 + 0.94 * reach, uHazeStrike) + uHazeFlash * reach;
   outColor = vec4(applyFog(light, vWorld), cover);
 }
 `
@@ -52,6 +58,8 @@ export function hazeGeometry(): THREE.InstancedBufferGeometry {
   const geometry = new THREE.InstancedBufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), 2))
   geometry.setIndex([0, 1, 2, 2, 1, 3])
+  // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
   geometry.instanceCount = BANKS
   return geometry
 }

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import { gustGlsl } from '../../v2/wind.ts'
-import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, fallDir, landingsNear, type Drop } from './drops.ts'
+import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, SLANT_WIND, fallDir, landingsNear, type Drop } from './drops.ts'
 
 // The rain in the air. Every drop is worked out on the graphics card from its own number and the film second: where it is at the open shutter and at the close,
 // and the strip between the two is the streak the exposure leaves. A layer is a box of drops that wraps round the lens, fixed to the world.
@@ -27,7 +27,7 @@ float rnd(uint a, uint b) {
 ${gustGlsl}
 // How far the wind leans the rain, as the tangent of its slant: the gust that bends the field leans the rain as it passes.
 float slantAt(vec2 p, float t) {
-  return ${SLANT_CALM.toFixed(4)} + min(1.0, 1.8 * uWind) * ${SLANT_GUST.toFixed(4)} * gustAt(p, t);
+  return ${SLANT_CALM.toFixed(4)} + min(1.0, 1.8 * uWind) * (${SLANT_WIND.toFixed(4)} + ${SLANT_GUST.toFixed(4)} * gustAt(p, t));
 }
 
 struct Drop {
@@ -58,7 +58,7 @@ Drop dropOf(int index) {
   // The front of a gust carries a sheet of thicker rain with it.
   float sheet = mix(1.0, 0.55 + 0.9 * gustAt(top, started), min(1.0, 1.8 * uWind) * smoothstep(0.5, 1.0, uRain));
   d.there = smoothstep(0.0, 0.04, uRain * sqrt(uRain) * 1.04 * sheet - rank);
-  float carry = mix(1.3, 0.85, d.size) * (1.0 + 0.3 * (rnd(id, 6U) - 0.5));
+  float carry = mix(1.1, 0.95, d.size) * (1.0 + 0.12 * (rnd(id, 6U) - 0.5));
   float slant = slantAt(top, started) * carry;
   vec2 lean = vec2(${LEAN_X.toFixed(5)}, ${LEAN_Z.toFixed(5)});
   vec2 side = vec2(-lean.y, lean.x) * (0.07 * (rnd(id, 7U) - 0.5));
@@ -133,7 +133,7 @@ void main() {
   // No two drops catch the sky alike: most are dim and a few flare.
   float catchLight = mix(0.14, 2.6, pow(fract(drop.seed * 13.7 + 0.31), 4.0));
   float range = smoothstep(uRange.x, uRange.y, depth) * (1.0 - smoothstep(uRange.z, uRange.w, depth));
-  float cover = min(mix(0.6, 0.32, smoothstep(3.0, 8.0, depth)), uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there * mix(0.3, 1.0, smoothstep(0.8, 2.0, depth));
+  float cover = min(mix(0.6, 0.32, smoothstep(3.0, 8.0, depth)), uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there * mix(0.6, 1.0, smoothstep(0.8, 2.0, depth));
   // With several samples each draws the drop where it is at its own instant, over as much of the path as keeps the frame's sum equal to the one streak: twice its own share, so neighbours overlap and the line does not break into dashes.
   float share = uSamples > 1.5 ? clamp(max(2.0 / uSamples, cover), 0.0, 1.0) : 1.0;
   float middle = uSamples > 1.5 ? uShutter : 0.5;
@@ -174,13 +174,15 @@ in float vSeen;
 in vec3 vWorld;
 in float vDepth;
 // The drop swings as it falls, so the line it leaves swells and thins along its length.
-float streak() {
+float streak(float low) {
   float cap = max(0.0, 1.0 - min(vEnds.x, vEnds.y));
   float u = min(1.0, vAcross * vAcross + cap * cap);
   float swing = 0.72 + 0.28 * sin(vWhen * (9.0 + 22.0 * vSeed) + 40.0 * vSeed);
   float core = exp(-3.0 * u / max(vSeen, 0.08));
   float body = (1.0 - u) * (1.0 - u);
-  return saturate(vCover * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
+  // A falling drop shows the sky only while it is flat to the lens: the middle of its path is lit and both ends fade, each drop over its own share. A low sun behind it lights far more of the path.
+  float lit = exp(-pow((vWhen - 0.5) / ((0.16 + 0.2 * fract(vSeed * 3.7)) * (1.0 + 2.5 * low)), 2.0));
+  return saturate(vCover * lit * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
 }
 `
 
@@ -188,10 +190,11 @@ const fragment = /* glsl */ `
 ${shape}
 uniform vec3 uFlash;
 uniform vec3 uFlashAt;
+uniform float uStrike;
 uniform float uSpark;
 void main() {
   if (uDiag > 1) discard;
-  float cover = streak();
+  float cover = streak(uSpark);
   if (cover < 0.003) discard;
   vec3 ray = normalize(vWorld - uCamPos);
   // A drop is a lens: it shows the brightest of the sky all round it, so it glints against the dark deck and is lost against the bright gap.
@@ -207,10 +210,13 @@ void main() {
   // The drop throws the sun at the lens over the middle of its path, brightest where it swings square to it: a lit line, not a spark.
   float flare = exp(-pow((vWhen - 0.25 - 0.5 * fract(vSeed * 9.1)) / 0.45, 2.0));
   light += uAirSun * (0.03 + (0.9 * t8 + 5.0 * t32) * (1.0 - 0.75 * uSpark)) + gold * uSpark * flare * (0.25 + 1.6 * glint) * (1.0 + 4.0 * t8);
-  // Lightning is over in a thousandth of a second: it shows each drop where it hung, not the path it fell.
-  float toFlash = 0.35 + 0.65 * saturate(dot(ray, uFlashAt));
-  float hung = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 5.3)) / 0.06, 2.0));
-  light += uFlash * toFlash * (0.25 + 5.0 * hung);
+  // A strike is several strokes over a few hundredths of a second: it catches each drop as a brighter dash inside its streak, most toward the strike, and never more than two and a half times the storm's own light.
+  float toFlash = 0.3 + 0.7 * saturate(dot(ray, uFlashAt));
+  float dash = exp(-pow((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14, 2.0));
+  vec3 struck = uFlash / max(max(uFlash.r, uFlash.g), max(uFlash.b, 1e-5));
+  light *= mix(vec3(1.0), struck * (1.0 + 1.5 * toFlash * (0.35 + 0.65 * dash)), uStrike);
+  // Close to the lens a drop is a blur that holds back part of the bright sky behind it.
+  light *= mix(0.5, 1.0, smoothstep(0.8, 2.0, vDepth));
   outColor = vec4(applyFog(light, vWorld), cover);
 }
 `
@@ -219,7 +225,7 @@ const sharp = /* glsl */ `
 ${shape}
 void main() {
   if (uDiag > 1) discard;
-  if (streak() < 0.05) discard;
+  if (streak(0.0) < 0.05) discard;
   outColor = vec4(0.0, 0.0, 0.0, cocOf(vDepth));
 }
 `
@@ -248,6 +254,8 @@ export class AirLayer {
   constructor(readonly spec: LayerSpec, lit: Record<string, THREE.IUniform>) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+    this.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
     this.geometry.instanceCount = spec.count[0]
     this.uniforms = {
       ...lit,
@@ -297,6 +305,8 @@ export class HeavyLayer {
   constructor(lit: Record<string, THREE.IUniform>, gain: number) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+    this.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
     this.drop = new THREE.InstancedBufferAttribute(this.data, 4)
     this.drop.setUsage(THREE.DynamicDrawUsage)
     this.geometry.setAttribute('drop', this.drop)

@@ -1,7 +1,8 @@
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import type { PlantInputs } from '../plant/growth.ts'
-import type { Moment } from './api.ts'
-import { DAY, barAt, coldAtBar, coverAtBar, overcastAtBar, worldAt } from './clock.ts'
+import type { Dials, Moment } from './api.ts'
+import { DAY, barAt, coldAtBar, coverAtBar, hitTime, overcastAtBar, worldAt } from './clock.ts'
+import { blankMoment, momentAt } from './now.ts'
 import { sunAzimuthAt, sunElevationAt } from './sun.ts'
 
 const RAD = Math.PI / 180
@@ -44,17 +45,24 @@ const mean = (lags: number[], seconds: number): number => {
   return sum / lags.length
 }
 
-// For a proof that nothing grows in a hold: with this on the plant feels nothing, so two frames of one hold are the same picture.
-export const plantFeels = { nothing: false }
+// The two holds, where the plant's clock stands, in film seconds, and how long before and after them the air is handed over.
+const HOLDS = [[hitTime(17), hitTime(25)], [hitTime(33), hitTime(41)]]
+const HAND_S = 1
 
-// What the plant feels at one instant. It leans after the sun and follows it across the day with a lag, lifts its leaves in the light and lets them hang in the dark and the cold, stiffens in frost, and gives to the wind, the gusts and the drops.
-export function plantInputsOf(m: Moment): PlantInputs {
-  if (plantFeels.nothing) return { leanX: 0, leanZ: 0, lift: 1, wind: 0, real: m.t, steady: true }
-  const d = m.dials
+function heldAt(seconds: number): number {
+  let held = 0
+  for (const [from, to] of HOLDS) held = Math.max(held, smoothstep(from - HAND_S, from, seconds) * (1 - smoothstep(to, to + HAND_S, seconds)))
+  return held
+}
+
+type Feel = { leanX: number; leanZ: number; lift: number; liftLow: number; cold: number }
+
+// Where the plant leans and how it carries its leaves at one film second, under these dials.
+function feel(seconds: number, d: Dials): Feel {
   let leanX = 0
   let leanZ = 0
   for (let k = 0; k < LAGS.length; k++) {
-    const world = worldAt(Math.max(0, m.t - LAGS[k]))
+    const world = worldAt(Math.max(0, seconds - LAGS[k]))
     const elevation = sunElevationAt(world)
     const noon = noonAzimuth(world)
     const azimuth = (noon + SWING * (sunAzimuthAt(world) - noon)) * RAD
@@ -63,21 +71,54 @@ export function plantInputsOf(m: Moment): PlantInputs {
     leanZ += WEIGHTS[k] * Math.cos(azimuth) * reach
   }
   const follow = lerp(1, 0.35, d.overcast) * lerp(1, 0.4, clamp(d.fog * 1.25))
+  return { leanX: leanX * follow, leanZ: leanZ * follow, lift: mean(LIFT_TOP, seconds), liftLow: mean(LIFT_LOW, seconds), cold: d.cold * d.cold * (3 - 2 * d.cold) }
+}
+
+// In a hold the hour hardly moves and nothing grows: the plant keeps the pose of the hold's first instant, the air moves it where it is drawn, and it catches up with the hour as its clock starts again.
+const stood: (Feel | null)[] = HOLDS.map(() => null)
+
+// The film second at which the plant's clock stopped, inside a hold.
+function stoodAt(seconds: number): number | undefined {
+  for (const [from, to] of HOLDS) if (seconds >= from && seconds <= to) return from
+  return undefined
+}
+
+function standing(seconds: number): Feel | null {
+  for (let i = 0; i < HOLDS.length; i++) {
+    const from = HOLDS[i][0]
+    if (seconds > from - HAND_S && seconds < HOLDS[i][1] + HAND_S) return (stood[i] ??= feel(from, momentAt(from, blankMoment()).dials))
+  }
+  return null
+}
+
+// For a proof that nothing grows in a hold: with this on the plant feels nothing, so two frames of one hold are the same picture.
+export const plantFeels = { nothing: false }
+
+// What the plant feels at one instant. It leans after the sun and follows it across the day with a lag, lifts its leaves in the light and lets them hang in the dark and the cold, stiffens in frost, and gives to the wind, the gusts and the drops.
+export function plantInputsOf(m: Moment): PlantInputs {
+  if (plantFeels.nothing) return { leanX: 0, leanZ: 0, lift: 1, wind: 0, real: m.t, steady: true }
+  const d = m.dials
+  const held = heldAt(m.t)
+  const live = feel(m.t, d)
+  const still = held > 0 ? standing(m.t) : null
+  const mix = (a: number, b: number): number => (still ? (held >= 1 ? b : lerp(a, b, held)) : a)
   const air = d.wind * (1 - 0.85 * d.cold)
   const storm = d.overcast * smoothstep(0.25, 0.5, d.wind)
   const calm = air * lerp(1, STORM_AIR, storm)
   return {
-    leanX: leanX * follow,
-    leanZ: leanZ * follow,
-    lift: mean(LIFT_TOP, m.t),
-    liftLow: mean(LIFT_LOW, m.t),
+    leanX: mix(live.leanX, still?.leanX ?? 0),
+    leanZ: mix(live.leanZ, still?.leanZ ?? 0),
+    lift: mix(live.lift, still?.lift ?? 0),
+    liftLow: mix(live.liftLow, still?.liftLow ?? 0),
     wind: calm * lerp(FREE_AIR, RAIN_AIR, d.rain),
     calm,
     real: m.t,
     lapse: d.lapse,
-    cold: d.cold * d.cold * (3 - 2 * d.cold),
+    cold: mix(live.cold, still?.cold ?? 0),
     rain: d.rain,
     gust: storm,
     steady: true,
+    held,
+    stood: stoodAt(m.t),
   }
 }

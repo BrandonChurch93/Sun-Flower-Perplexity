@@ -29,6 +29,10 @@ export interface PlantInputs {
   gust?: number
   // The stem is measured and the lens is aimed on the plant at rest, so the lean and the air move it inside a frame that holds still.
   steady?: boolean
+  // 0 to 1: the plant's clock stands. The air then moves the plant where it is drawn, on the film second, and nothing of its shape is filled again.
+  held?: number
+  // The film second at which the plant's clock stopped, while it stands. Water that sits on the plant is laid as of then.
+  stood?: number
 }
 
 // The film second the air moves by, and the inputs of still air and even light, which the stem is measured in and the lens is aimed by.
@@ -62,7 +66,7 @@ const rnd = (i: number, j = 0): number => hash01(seedNow, i, j)
 const TAU = Math.PI * 2
 const FPS = config.film.fps
 // How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
-const GUST_LEAN = 0.3
+export const GUST_LEAN = 0.3
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
 // How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.

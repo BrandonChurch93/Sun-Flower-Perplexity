@@ -138,13 +138,16 @@ export class Pacing {
     const holds = complete && drawn > 0 && skipped === 0 && longest <= GAP_MS && !madeSomething
     const nearly = complete && drawn > 0 && skipped <= Math.ceil(due * 0.002) && longest <= 2 * GAP_MS
     const film = drawn ? shown[drawn - 1].due - shown[0].due : 0
+    const rate = `${config.film.fps} frames a second`
+    const were = (n: number): string => (n === 1 ? 'was' : 'were')
     let verdict: string
-    if (drawn === 0) verdict = 'No frame was drawn.'
-    else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s. Until then ${drawn} of ${due} frames ${drawn === 1 ? 'was' : 'were'} drawn${skipped ? ` and ${skipped} skipped` : ''}.`
-    else if (holds) verdict = `Clean. Every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
-    else if (skipped === 0) verdict = `Every frame was drawn, with ${all.length} ${all.length === 1 ? 'gap' : 'gaps'} over ${GAP_MS} ms. The longest was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
-    else if (nearly) verdict = `${skipped} of ${due} frames ${skipped === 1 ? 'was' : 'were'} skipped. The longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
-    else verdict = `This machine did not hold ${config.film.fps} frames a second: ${drawn} of ${due} frames ${drawn === 1 ? 'was' : 'were'} drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
+    if (drawn === 0) verdict = 'No frame was drawn, so this run says nothing about the machine.'
+    else if (!complete && skipped === 0 && longest <= GAP_MS) verdict = `This machine held ${rate} until the run was stopped at ${shown[drawn - 1].film.toFixed(2)} s: every one of the ${due} frames until then was drawn.`
+    else if (!complete) verdict = `This machine did not hold ${rate} until the run was stopped at ${shown[drawn - 1].film.toFixed(2)} s: ${drawn} of ${due} frames ${were(drawn)} drawn and ${skipped} skipped, and the longest gap was ${longest.toFixed(0)} ms.`
+    else if (complete && skipped === 0 && longest <= GAP_MS) verdict = `This machine held ${rate}: every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
+    else if (skipped === 0) verdict = `This machine nearly held ${rate}: every frame was drawn, but ${all.length} ${all.length === 1 ? 'gap was' : 'gaps were'} longer than ${GAP_MS} ms, the longest ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
+    else if (nearly) verdict = `This machine nearly held ${rate}: ${skipped} of ${due} frames ${were(skipped)} skipped, and the longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
+    else verdict = `This machine did not hold ${rate}: ${drawn} of ${due} frames ${were(drawn)} drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
     if (madeSomething) verdict += ' The graphics card was asked to make something during the run, which is a defect of the film.'
     return {
       ...facts,

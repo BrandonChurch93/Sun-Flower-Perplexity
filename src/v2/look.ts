@@ -28,12 +28,17 @@ function along(knots: Knots, x: number): number {
 
 // How bright the light lands on what it lights, on the screen and before the curve, by how high the sun stands. The sky gives the colour of the light and the look gives its level: a low sun is a weak lamp beside its own sky, and a camera that held the sky would lose the plant.
 // Under the horizon the key is the glow the sun leaves in the sky: it fades to nothing at 5 degrees, where the moon takes over.
+// The moon is a rim and no more: at the handover the fill alone lights the plant, and nothing the moon lights may stand brighter at midnight than it stood then.
 const KEY: Knots = [[-5, 0], [-4, 0.14], [-2.5, 0.5], [-1, 1.05], [0, 1.7], [1, 2.9], [2.5, 4], [4, 4.2], [10, 4.2], [25, 3.4], [45, 2.9], [90, 2.7]]
-const MOON_KEY = 1.3
-const FILL_LOW: Knots = [[-14, 0.08], [-10, 0.1], [-6, 0.26], [-3, 0.34], [0, 0.42], [5, 0.5], [25, 0.55]]
-const FILL_HIGH: Knots = [[-14, 0.045], [-10, 0.06], [-6, 0.14], [-3, 0.15], [0, 0.15], [5, 0.16], [25, 0.2]]
+const MOON_KEY = 0.55
+// The moon's light as a camera set for daylight sees it beside the blue hour: cold, so that a leaf keeps the colour it had at dusk.
+const MOON_CAST: RGB = [0.5, 0.86, 1.8]
+const FILL_LOW: Knots = [[-14, 0.17], [-10, 0.19], [-6, 0.26], [-3, 0.34], [0, 0.42], [5, 0.5], [25, 0.55]]
+const FILL_HIGH: Knots = [[-14, 0.095], [-10, 0.105], [-6, 0.14], [-3, 0.15], [0, 0.15], [5, 0.16], [25, 0.2]]
 // How much of the sky near the sun colours the fill from the horizon: none in the blue hour, when the glow is a thin band and the dome lights the soil.
 const FILL_WARMTH = 0.25
+// How much of the dome's own colour the fill from above keeps: at full strength a shaded leaf reads blue grey under a clear sky.
+const FILL_COLOUR = 0.65
 const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
 const FLASH = { key: 5, fill: 1.6, color: [0.86, 0.94, 1.22] as RGB }
@@ -106,6 +111,8 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   if (now.lightKind === 'sun') {
     tint[1] = Math.max(tint[1], KEY_FLOOR.green * tint[0])
     tint[2] = Math.max(tint[2], KEY_FLOOR.blue * tint[0])
+  } else {
+    for (let i = 0; i < 3; i++) tint[i] *= MOON_CAST[i]
   }
   const tintLum = Math.max(lum(tint), 1e-6)
   for (let i = 0; i < 3; i++) out.sun.color[i] = ((tint[i] / tintLum) * key * (1 - flash) + FLASH.color[i] * FLASH.key * flash) / exposure
@@ -122,7 +129,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   const roundLum = Math.max(lum(round), 1e-6)
   const zenithLum = Math.max(lum(sky.zenith), 1e-6)
   for (let i = 0; i < 3; i++) {
-    out.sky.zenith[i] = ((sky.zenith[i] / zenithLum) * high) / exposure
+    out.sky.zenith[i] = (lerp(1, sky.zenith[i] / zenithLum, FILL_COLOUR) * high) / exposure
     out.sky.horizon[i] = ((round[i] / roundLum) * low) / exposure
     out.sky.bounce[i] = SOIL[i] * (0.5 * (out.sky.horizon[i] + out.sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
   }
