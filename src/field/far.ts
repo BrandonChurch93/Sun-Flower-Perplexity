@@ -67,8 +67,8 @@ uniform vec3 uTrueSun;
 float farAirOn(vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
-  float k = v.y / uMistTopM;
-  float mist = uMist * exp(-max(uCamPos.y, 0.0) / uMistTopM) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
+  float k = clamp(v.y / max(uMistTopM, 1e-3), -40.0, 40.0);
+  float mist = uMist * exp(-max(uCamPos.y, 0.0) / max(uMistTopM, 1e-3)) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
   float land = 1.0 - exp(-d * uAir - mist);
   float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
   // Near, the crop has the air its neighbors have. The land's own air comes in toward the far end, where the crop meets the land.
@@ -76,7 +76,7 @@ float farAirOn(vec3 world) {
 }
 vec3 farAir(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
-  float toSun = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uTrueSun.xz + vec2(1e-6)))), 6.0) * uAirToSun;
+  float toSun = pow(saturate(0.5 + 0.5 * dot(v.xz, uTrueSun.xz) * inversesqrt(max(dot(v.xz, v.xz) * dot(uTrueSun.xz, uTrueSun.xz), 1e-12))), 6.0) * uAirToSun;
   vec3 behind = mix(mix(uAirHorizon, uSkyHorizonSun, toSun), uFogColor + uFogSunTint * toSun, uAirRain);
   return mix(color, behind, farAirOn(world));
 }
@@ -145,23 +145,26 @@ uniform float uMoon;
 uniform float uCover;
 ${farAirGlsl}
 void main() {
+  // Between the samples of a pixel a value from the corners can leave the range it has on the picture: each is held to it before it is used.
+  float depth = max(vDepth, 0.05);
+  float tone = clamp(vTone, 0.0, 2.0);
   vec4 t = texture(uAtlas, vUv);
-  float cover = 1.0 - t.a;
+  float cover = saturate(1.0 - t.a);
   // Far off a head is a few pixels of a small picture: it is kept on less of its cover, so it does not thin away to nothing.
-  if (cover < mix(0.42, 0.14, smoothstep(40.0, 90.0, vDepth))) discard;
-  vec3 color = t.rgb / cover;
+  if (cover < mix(0.42, 0.14, smoothstep(40.0, 90.0, depth))) discard;
+  vec3 color = max(t.rgb, 0.0) / max(cover, 0.1);
   // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
   float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
   color.gb *= mix(vec2(1.0), vec2(${RAY_DEEP[0].toFixed(2)}, ${RAY_DEEP[1].toFixed(2)}), ray);
   // From over the crop the eye looks down on leaves the low sun only grazes: far off, where no dark shows between the tops, they keep less of its rim than the heads do.
-  color *= mix(vec3(1.0), vec3(${RIM_FAR.map((v) => v.toFixed(2)).join(', ')}), smoothstep(0.6, 0.95, uLate) * (1.0 - uMoon) * uCover * smoothstep(36.0, 60.0, vDepth));
+  color *= mix(vec3(1.0), vec3(${RIM_FAR.map((v) => v.toFixed(2)).join(', ')}), smoothstep(0.6, 0.95, uLate) * (1.0 - uMoon) * uCover * smoothstep(36.0, 60.0, depth));
   // With no sun or moon on it the crop is dark between its heads, as the real rows before it are.
   color *= mix(mix(${UNLIT.toFixed(2)}, 1.0, ray), 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
   if (uDiag == 7) {
-    outColor = vec4(color, cocOf(vDepth));
+    outColor = vec4(color, cocOf(depth));
     return;
   }
-  outColor = finish(farAir(color * vTone, vWorld), vWorld, vDepth, -1.0);
+  outColor = finish(farAir(color * tone, vWorld), vWorld, depth, -1.0);
 }
 `
 
@@ -226,7 +229,7 @@ float headsAt(vec2 f, float headPx, out float tone) {
   vec2 fy = dFdy(f);
   float det = fx.x * fy.y - fx.y * fy.x;
   float inv = 1.0 / (abs(det) > 1e-10 ? det : 1e-10);
-  vec2 lod = max(log2(across * 2.4), vec2(0.0));
+  vec2 lod = clamp(log2(across * 2.4), vec2(0.0), vec2(20.0));
   vec2 lo = floor(lod);
   vec2 t = smoothstep(0.4, 1.0, lod - lo);
   float sum = 0.0;
@@ -243,8 +246,8 @@ float headsAt(vec2 f, float headPx, out float tone) {
     vec2 a = vec2(fy.y, -fx.y) * (size.x * inv);
     vec2 b = vec2(-fy.x, fx.x) * (size.y * inv);
     vec2 s = a * o.x + b * o.y;
-    float room = abs(a.x * b.y - a.y * b.x) / (2.0 * max(length(a), length(b)));
-    float r = min(headPx, 0.75 * room);
+    float room = abs(a.x * b.y - a.y * b.x) / max(2.0 * max(length(a), length(b)), 1e-6);
+    float r = max(min(headPx, 0.75 * room), 1e-5);
     float w = mix(1.0 - t.x, t.x, up.x) * mix(1.0 - t.y, t.y, up.y);
     float d = (1.0 - smoothstep(0.5 * r, r, length(s))) * min(1.0, r * r / 0.4) * step(hash21(c + 5.0), mix(0.55, 0.8, first));
     sum += w * d;
@@ -254,7 +257,15 @@ float headsAt(vec2 f, float headPx, out float tone) {
   return sum / (max(across.x, 1.0) * max(across.y, 1.0));
 }
 void main() {
-  float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
+  // Between the samples of a pixel a value from the corners can leave the range it has on the sheet: each is held to it before it is used.
+  float depth = max(vDepth, 0.05);
+  vec3 top = max(vTop, 0.0);
+  vec3 mid = max(vMid, 0.0);
+  vec3 head = max(vHead, 0.0);
+  vec2 fromEye = vWorld.xz - uCamPos.xz;
+  fromEye = dot(fromEye, fromEye) > 1e-8 ? normalize(fromEye) : vec2(1.0, 0.0);
+  vec2 sunWay = dot(uSunDir.xz, uSunDir.xz) > 1e-8 ? normalize(uSunDir.xz) : vec2(1.0, 0.0);
+  float reach = smoothstep(uStart.x, uStart.x + max(uStart.y, 1e-3), length(vWorld.xz));
   // The wind carries a sheet as far as it carries a neighbor at the sheet's height, so the wave that crosses the rows crosses the sheets too.
   float gust = gustAt(vWorld.xz, uReal);
   float blow = uWind * (${LEAN_STEADY.toFixed(3)} + ${LEAN_GUST.toFixed(3)} * gust);
@@ -274,12 +285,12 @@ void main() {
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
     // From high over the tops the layers are the dark between the plants and nothing else, and then they are gone under the real leaves.
     float low = 1.0 - smoothstep(0.0, 0.5, uAbove);
-    color = vMid * mix(0.3, mix(0.45, 0.95, low), lift);
+    color = mid * mix(0.3, mix(0.45, 0.95, low), lift);
     // Seen from over the tops the upper leaves show the faces they turn to the sky.
     color += vec3(0.045, 0.09, 0.022) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (${LEAF_SKY.toFixed(2)} * lift * lift * low);
     // The low sun comes through the upper leaves of a clump, green, and here and there a leaf catches it whole. Looking into the sun the eye meets the shaded side of every clump.
     float lit = smoothstep(0.6, 0.78, valueNoise(p * 9.0 + 5.0));
-    float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz))));
+    float lee = mix(0.35, 1.0, smoothstep(1.0, 0.6, dot(fromEye, sunWay)));
     color += vec3(0.3, 0.5, 0.04) * uSunColor * ((0.02 + 0.88 * lit) * lee * inside * uLevel * low * uThrough * smoothstep(0.0, 0.1, uSunDir.y));
   } else {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
@@ -291,7 +302,7 @@ void main() {
     // The rows run away from the plant: the eye parts them as long as one is wider than a pixel or two.
     float lined = clamp(1.6 - 2.2 * fwidth(across / ${config.field.rowSpacingM.toFixed(3)}), 0.0, 1.0);
     float gone = length(vWorld.xz);
-    float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / (6.0 + 0.08 * along);
+    float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / max(6.0 + 0.08 * along, 1.0);
     float lost = max(smoothstep(uEnd.x, uEnd.y, gone), 1.0 - smoothstep(0.0, 1.0, inside));
     float island = 0.6 * valueNoise(vWorld.xz * vec2(0.021, 0.017) + 3.7) + 0.4 * valueNoise(vWorld.xz * 0.067 + 11.0);
     // Where a plant is too small to come in on its own the carpet closes over one row before the next, a few plants at a time, so no line lies across the rows.
@@ -312,29 +323,30 @@ void main() {
     float gap = mix(${GAP_MEAN.toFixed(2)}, 1.0 - smoothstep(0.25, 0.8, row), lined) * mix(${GAP_DEEP.toFixed(2)}, ${GAP_FAR.toFixed(2)}, closed);
     float light = mix(tops, 0.3 + 0.55 * grain, fine) * (1.0 - gap);
     // Late in the bloom the low sun rims every top in the pictures. From over the crop the rows hide most of that light: the carpet takes less of it.
-    color = mix(vMid * ${DARK.toFixed(2)}, vTop * 0.72 * mix(vec3(1.0), vec3(${RIM_KEEP.map((v) => v.toFixed(2)).join(', ')}), rim), light) * (0.74 + 0.52 * patchy);
+    color = mix(mid * ${DARK.toFixed(2)}, top * 0.72 * mix(vec3(1.0), vec3(${RIM_KEEP.map((v) => v.toFixed(2)).join(', ')}), rim), light) * (0.74 + 0.52 * patchy);
     color *= mix(${UNLIT.toFixed(2)}, 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.rowSpacingM.toFixed(3)}, along / ${config.field.plantSpacingM.toFixed(3)});
-    float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
+    vec3 look = vWorld - uCamPos;
+    float skim = 1.0 - smoothstep(0.02, 0.3, abs(look.y) * inversesqrt(max(dot(look, look), 1e-8)));
     float share = mix(0.04, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
     float disc = headsAt(f, ${HEAD_R_M.toFixed(2)} / max(length(dFdx(vWorld.xz)), 1e-5), tone);
     // The pictures give the head with its dark disc and the leaves round it: the petals alone are brighter, and brighter still with the low sun behind them.
-    float into = smoothstep(0.2, 0.9, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
-    vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
+    float into = smoothstep(0.2, 0.9, dot(fromEye, sunWay));
+    vec3 gold = head * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share * 0.4 * closed);
     // A head that stands clear is the colour of its rays, as the heads of the pictures before it are.
-    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * pow(1.0 - farAirOn(vWorld), ${HEAD_AIR.toFixed(1)}));
+    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * pow(saturate(1.0 - farAirOn(vWorld)), ${HEAD_AIR.toFixed(1)}));
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
     color = farAir(color, vWorld);
   }
   if (uDiag == 7) {
-    outColor = vec4(color, cocOf(vDepth));
+    outColor = vec4(color, cocOf(depth));
     return;
   }
-  outColor = finish(color, vWorld, vDepth, -1.0);
+  outColor = finish(color, vWorld, depth, -1.0);
 }
 `
 

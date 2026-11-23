@@ -9,7 +9,7 @@ import { computeHashes } from '../../lib/hashes.ts'
 import { recorder } from './recorder.ts'
 import { tracer } from './tracer.ts'
 import { at } from '../../lib/paths.ts'
-import type { ChecksPage, Drawn, FloatDiff, Numbers, Sparks, Spot } from '../page/main.ts'
+import type { ChecksPage, Drawn, FloatDiff, Numbers, Sparks, Spot, Worked } from '../page/main.ts'
 import type { Made } from '../../../src/v2/counter.ts'
 import { OUT } from './report.ts'
 
@@ -76,8 +76,9 @@ function serve(traced: boolean): Promise<{ url: string; close: () => Promise<voi
   })
 }
 
+// `named` serves the page built with its names kept, so that a profile of the script names the film's own functions.
 // `plain` draws a frame of one sample at one place a pixel (the film's `smooth: false`): for the checks that read script time and megabytes, which need the film's work and not its recorded edges. The checks that prove what is recorded leave it out.
-export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean; trace?: boolean; plain?: boolean }
+export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean; trace?: boolean; plain?: boolean; work?: boolean; named?: boolean }
 
 export interface Session {
   page: Page
@@ -102,13 +103,15 @@ export interface Session {
   sparks(times: number, reach: number, fail: number): Promise<Sparks>
   spot(x: number, y: number, r: number, fail: number): Promise<Spot>
   only(names: string[]): Promise<void>
+  worked(): Promise<Worked>
   close(): Promise<void>
 }
 
 export async function openSession(options: SessionOptions = {}): Promise<Session> {
-  const hash = await ensurePage(options.trace === true)
+  const traced = options.trace === true || options.named === true
+  const hash = await ensurePage(traced)
   const started = Date.now()
-  const served = await serve(options.trace === true)
+  const served = await serve(traced)
   let browser: Browser | null = null
   try {
     browser = await launch()
@@ -126,6 +129,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
     if (options.view) query.set('view', options.view)
     if (options.quality) query.set('quality', options.quality)
     if (options.plain) query.set('plain', '1')
+    if (options.work) query.set('work', '1')
     await page.goto(`${served.url}/index.html?${query.toString()}`, { waitUntil: 'load' })
     await page.waitForFunction(() => typeof window.checks === 'object', undefined, { timeout: 60000 })
     try {
@@ -165,6 +169,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       sparks: (times, reach, fail) => page.evaluate(([t, r, f]) => window.checks.sparks(t, r, f), [times, reach, fail] as const),
       spot: (x, y, r, fail) => page.evaluate(([a, b, c, d]) => window.checks.spot(a, b, c, d), [x, y, r, fail] as const),
       only: (names) => page.evaluate((n) => window.checks.only(n), names),
+      worked: () => page.evaluate(() => window.checks.worked()),
       fault: (kind, a = 0, b = 0) => page.evaluate(([k, x, y]) => window.checks.fault(k as string, x as number, y as number), [kind, a, b] as const),
       async close() {
         await theBrowser.close().catch(() => undefined)

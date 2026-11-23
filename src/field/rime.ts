@@ -81,8 +81,9 @@ in float vWide;
 void main() {
   if (uDiag > 1) discard;
   // A tent as wide as the point: whatever pixels it falls on, their sum is the point's light.
-  vec2 at = (gl_PointCoord * 2.0 - 1.0) * (vWide + 0.5) / vWide;
-  outColor = vec4(vLight * max(1.0 - abs(at.x), 0.0) * max(1.0 - abs(at.y), 0.0), 1.0);
+  float wide = clamp(vWide, 1.0, 4.0);
+  vec2 at = (gl_PointCoord * 2.0 - 1.0) * (wide + 0.5) / wide;
+  outColor = vec4(max(vLight, 0.0) * max(1.0 - abs(at.x), 0.0) * max(1.0 - abs(at.y), 0.0), 1.0);
 }
 `
 
