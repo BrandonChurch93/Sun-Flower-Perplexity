@@ -129,15 +129,22 @@ export class Film {
     return this.only.size === 0 || this.only.has(name)
   }
 
-  load(onStep?: (done: number, of: number, what: string) => void): Promise<void> {
+  // The order in which load() builds the film, by the names it reports.
+  steps(): string[] {
+    return ['ground', 'plant', 'companion', 'field', 'sky', ...this.parts.map((p) => p.name)]
+  }
+
+  load(onStep?: (done: number, of: number, what: string, next: string | null) => void): Promise<void> {
     if (!this.loaded) {
       this.loaded = (async () => {
         const { renderer } = this.stage
-        const of = 5 + this.parts.length
+        const order = this.steps()
+        const of = order.length
         let done = 0
-        // After each part the page gets a turn, so the loading screen can paint the step.
+        // After each part the page gets a turn, so the loading screen can paint the step. It is told what comes next, so it can name the step that is running.
         const step = async (what: string): Promise<void> => {
-          onStep?.(++done, of, what)
+          done += 1
+          onStep?.(done, of, what, order[done] ?? null)
           await paint()
         }
         await this.ground.load(this.assets)
@@ -175,6 +182,27 @@ export class Film {
       onStep?.(i + 1, frames.length)
       await paint()
     }
+    this.everyShape(renderer)
+  }
+
+  // Draws every mesh once with its own material and every caster once into the shadow map, whatever the lens and the sun can see.
+  // The graphics card keeps one record for each pair of a shape and a program and makes it at their first draw; a tuft of grass the sun's map first takes in at second 111 would make it there.
+  private everyShape(renderer: THREE.WebGLRenderer): void {
+    const was: { object: THREE.Object3D; visible: boolean; culled: boolean }[] = []
+    this.scene.traverse((object) => {
+      was.push({ object, visible: object.visible, culled: object.frustumCulled })
+      object.visible = true
+      object.frustumCulled = false
+    })
+    this.shadow.render(renderer, this.scene, this.bothCasters, this.sun, 1, 0, 0, this.center, 1, 1, 0)
+    renderer.setRenderTarget(this.stage.sample)
+    renderer.render(this.scene, this.camera)
+    renderer.setRenderTarget(null)
+    for (const w of was) {
+      w.object.visible = w.visible
+      w.object.frustumCulled = w.culled
+    }
+    this.shadow.off()
   }
 
   async setFormat(format: Format): Promise<void> {

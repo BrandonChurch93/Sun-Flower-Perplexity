@@ -1,7 +1,7 @@
 // What a stopped export has already made, kept in the browser's private file system so the next start goes on from there.
 // Frames are kept in closed groups, each starting on a key frame. Only whole groups count.
 export interface StoredChunk { key: boolean; timestamp: number; duration: number; data: Uint8Array }
-export interface StoreMeta { codec: string; description: string | null; frames: number; group: number }
+export interface StoreMeta { codec: string; description: string | null; frames: number; group: number; colour?: VideoColorSpaceInit | null }
 
 const ROOT = 'export'
 const HEAD = 21
