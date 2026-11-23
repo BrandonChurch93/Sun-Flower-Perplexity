@@ -1,9 +1,10 @@
 # Looks of sky-c
 
-2026-11-23 00:15 UTC, at commit 2274385 of agent/sky-c.
+2026-11-23 00:39 UTC, at commit 49dc08b of agent/sky-c.
 
-- `01-sheet-v1-all-16-shots.jpg`: sheet v1 all 16 shots
-- `02-02-first-light-v1.jpg`: 02 first light v1
-- `03-06-night-moon-and-bokeh-stars-v1.jpg`: 06 night moon and bokeh stars v1
-- `04-12-storm-break-v1.jpg`: 12 storm break v1
-- `05-16-afterglow-v1.jpg`: 16 afterglow v1
+- `01-sheet.jpg`: sheet
+- `02-01-open.jpg`: 01 open
+- `03-06-night.jpg`: 06 night
+- `04-08-lapse.jpg`: 08 lapse
+- `05-12-break.jpg`: 12 break
+- `06-16-last.jpg`: 16 last
