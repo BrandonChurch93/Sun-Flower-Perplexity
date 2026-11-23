@@ -23,6 +23,7 @@ export const airUniforms = {
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
+  uLandWind: { value: 0 },
   uFlashDir: { value: new THREE.Vector3(0, 1, 0) },
   uFlash: { value: new THREE.Vector3(0, 0, 0) },
 }

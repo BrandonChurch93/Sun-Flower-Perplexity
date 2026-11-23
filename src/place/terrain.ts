@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt } from './land.ts'
+import { FIELDS, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt, landHill, woodAt } from './land.ts'
 
 const RAD = Math.PI / 180
 const RING_GROWTH = 1.022
@@ -53,11 +53,11 @@ export function terrainGeometry(): THREE.BufferGeometry {
       const d = (k + 1) * cols + c
       const e = (k + 1) * cols + c1
       index[n++] = a
+      index[n++] = e
       index[n++] = b
-      index[n++] = e
       index[n++] = a
-      index[n++] = e
       index[n++] = d
+      index[n++] = e
     }
   }
   for (let k = 0; k < rings.length; k++) {
@@ -97,6 +97,32 @@ export function terrainGeometry(): THREE.BufferGeometry {
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), LAND_TO_M + 400)
   return geometry
 }
+
+// Where the woods are, as a picture of the whole land seen from above, so that their edge is as smooth in the shading as it is on the land.
+const MAP = 768
+const MAP_HALF_M = LAND_TO_M + 50
+
+export function woodMap(): THREE.DataTexture {
+  const data = new Uint8Array(MAP * MAP)
+  for (let j = 0; j < MAP; j++) {
+    for (let i = 0; i < MAP; i++) {
+      const x = ((i + 0.5) / MAP - 0.5) * 2 * MAP_HALF_M
+      const z = ((j + 0.5) / MAP - 0.5) * 2 * MAP_HALF_M
+      const r = Math.hypot(x, z)
+      if (r < 400 || r > LAND_TO_M) continue
+      data[j * MAP + i] = Math.round(255 * woodAt(x, z, landHill(x, z)))
+    }
+  }
+  const texture = new THREE.DataTexture(data, MAP, MAP, THREE.RedFormat, THREE.UnsignedByteType)
+  texture.colorSpace = THREE.NoColorSpace
+  texture.minFilter = THREE.LinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.unpackAlignment = 1
+  texture.needsUpdate = true
+  return texture
+}
+
+export const woodMapMegabytes = (MAP * MAP) / 1048576
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -167,6 +193,7 @@ in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vLand;
 in float vDepth;
+uniform sampler2D tWoods;
 ${airGlsl}
 ${fieldsGlsl}
 
@@ -209,7 +236,7 @@ void main() {
   albedo = mix(albedo, vec3(0.04, 0.058, 0.024) * (0.7 + 0.6 * mottle), baulk * (1.0 - headland));
 
   // Woods.
-  float wood = smoothstep(0.4, 0.6, vLand.x + 0.14 * (valueNoise(p / 19.0) - 0.5));
+  float wood = smoothstep(0.42, 0.58, texture(tWoods, p / ${(2 * MAP_HALF_M).toFixed(1)} + 0.5).r + 0.1 * (valueNoise(p / 19.0) - 0.5));
   float bump = 1.0 - smoothstep(2.5, 12.0, px);
   float c0 = crowns(p);
   vec2 grad = vec2(crowns(p + vec2(0.9, 0.0)) - c0, crowns(p + vec2(0.0, 0.9)) - c0) / 0.9;
@@ -235,11 +262,14 @@ void main() {
 }
 `
 
-export function makeTerrain(): THREE.Mesh {
-  const surface = makeSurface({ name: 'place land', vertex, fragment, uniforms: airUniforms, castShadow: false })
+export interface Terrain { mesh: THREE.Mesh; woods: THREE.DataTexture }
+
+export function makeTerrain(): Terrain {
+  const woods = woodMap()
+  const surface = makeSurface({ name: 'place land', vertex, fragment, uniforms: { ...airUniforms, tWoods: { value: woods } }, castShadow: false })
   const mesh = new THREE.Mesh(terrainGeometry(), surface.main)
   mesh.frustumCulled = false
   mesh.matrixAutoUpdate = false
   mesh.name = 'place land'
-  return mesh
+  return { mesh, woods }
 }

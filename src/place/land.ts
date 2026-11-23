@@ -61,13 +61,13 @@ export function crestDeg(azDeg: number): number {
   const between = bell(off(azDeg, 204) / 14)
   const left = bell(off(azDeg, 252) / 15)
   const right = bell(off(azDeg, 157) / 11)
-  return 1.45 * (1 - 0.86 * rise) * (1 - 0.87 * set) * (1 - 0.34 * between) + 0.75 * left + 0.55 * right
+  return 1.5 * (1 - 0.8 * rise) * (1 - 0.82 * set) * (1 - 0.3 * between) + 0.5 * left + 0.5 * right
 }
 
 const RANGES = [
-  { radiusM: 2350, widthM: 560, share: 0.72, cells: 9, salt: 100 },
-  { radiusM: 3550, widthM: 700, share: 0.88, cells: 7, salt: 200 },
-  { radiusM: 5000, widthM: 760, share: 1.0, cells: 6, salt: 300 },
+  { radiusM: 2350, widthM: 520, share: 0.7, cells: 13, salt: 100 },
+  { radiusM: 3550, widthM: 660, share: 0.9, cells: 10, salt: 200 },
+  { radiusM: 5000, widthM: 740, share: 1.0, cells: 8, salt: 300 },
 ]
 
 export interface LandAt { height: number; wood: number; hill: number }
@@ -87,7 +87,7 @@ function bare(x: number, z: number, out: LandAt): LandAt {
   const wr = Math.hypot(wx, wz)
   for (const range of RANGES) {
     const turn = (az / 360) * range.cells
-    const shape = 0.45 + 0.9 * (0.6 * ring(turn, range.cells, range.salt) + 0.4 * ring(turn * 2.7, Math.round(range.cells * 2.7), range.salt + 1))
+    const shape = 0.3 + 1.1 * (0.62 * ring(turn, range.cells, range.salt) + 0.38 * ring(turn * 2.7, Math.round(range.cells * 2.7), range.salt + 1))
     const radius = range.radiusM * (1 + 0.1 * (ring(turn * 0.6, Math.max(2, Math.round(range.cells * 0.6)), range.salt + 2) - 0.5))
     const top = radius * Math.tan(crest * range.share * shape * RAD)
     const across = (wr - radius) / range.widthM
@@ -129,9 +129,13 @@ const scratch: LandAt = { height: 0, wood: 0, hill: 0 }
 export function landAt(x: number, z: number, out: LandAt = scratch): LandAt {
   bare(x, z, out)
   out.wood = woodAt(x, z, out.hill)
-  const crowns = 0.72 + 0.28 * noise2(x / 11, z / 11, 80) + 0.12 * (noise2(x / 4.3, z / 4.3, 81) - 0.5)
+  const crowns = 0.56 + 0.44 * noise2(x / 12, z / 12, 80) + 0.16 * (noise2(x / 4.6, z / 4.6, 81) - 0.5)
   out.height += CANOPY_M * smooth(0.4, 0.6, out.wood) * crowns
   return out
+}
+
+export function landHill(x: number, z: number): number {
+  return bare(x, z, scratch).hill
 }
 
 // The soil a tree or a hedge stands on.
