@@ -1,12 +1,10 @@
 # Looks of sky-b
 
-2026-11-23 04:32 UTC, at commit 042d621 of agent/sky-b.
+2026-11-23 04:39 UTC, at commit 0efdaba of agent/sky-b.
 
-Round 5 all-layer preview draft: the evening revision is 042d621 with the 6fc2426 night, break and daylight stills labelled separately.
+Round 5: 0efdaba on 12f8c44 for the four 40-degree noon shots and the two extra crane banks; the earlier approved evening and night sheets retain their revision labels.
 
-- `01-six-evening-bars-beside-late-and-last-keys.jpg`: Six evening bars beside late and last keys
-- `02-moon-placement-and-night-horizons-break-and-dayl.jpg`: Moon placement and night horizons, break and daylight
-- `03-bar-54-60-twilight-full-frame.jpg`: Bar 54.60 twilight full frame
-- `04-bar-73-00-sunset-full-frame.jpg`: Bar 73.00 sunset full frame
-- `05-bar-46-82-full-frame.jpg`: Bar 46.82 full frame
-- `06-bar-41-25-full-frame.jpg`: Bar 41.25 full frame
+- `01-forty-degree-noon-and-low-crane-sun-after-v2-mer.jpg`: Forty degree noon and low crane sun after v2 merge
+- `02-two-low-banks-on-either-side-of-the-sun-at-bars-.jpg`: Two low banks on either side of the sun at bars 67 69 71
+- `03-approved-six-evening-bars-beside-late-and-last-k.jpg`: Approved six evening bars beside late and last keys
+- `04-moon-placement-night-horizons-break-and-cumulus.jpg`: Moon placement night horizons break and cumulus
