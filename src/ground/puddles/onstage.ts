@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { groundShared } from '../index.ts'
 import { makeSurface } from '../../core/shading.ts'
 import { right, toward } from '../../field/layout.ts'
 import { heightAt, stemBaseRadius } from '../../plant/growth.ts'
@@ -29,16 +30,6 @@ const FULL_M = 0.008
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const QUALITY = { film: 0, high: 1, low: 2 } as const
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
-
-// A stand-in until the ground hands its uniforms to the parts that lie on it: they are read off the material of the near soil, once, at load.
-function groundUniforms(scene: THREE.Object3D | null): Record<string, THREE.IUniform> | null {
-  let found: Record<string, THREE.IUniform> | null = null
-  scene?.traverse((o) => {
-    const material = (o as THREE.Mesh).material as THREE.ShaderMaterial | undefined
-    if (!found && material && material.name === 'soil near') found = material.uniforms
-  })
-  return found
-}
 
 // The water standing on the ground and everything a drop does where it lands: the mirror in the furrow, the rings and crowns on it, the dark spots and the grit on soil, and the spray that hangs over it all.
 class Puddles implements Part {
@@ -92,8 +83,8 @@ class Puddles implements Part {
   async load(): Promise<void> {
     const haze = makeSurface({ name: 'spray haze', vertex: hazeVertex, fragment: hazeFragment, uniforms: this.lit, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false })
     this.haze.material = haze.main
-    const ground = groundUniforms(this.water.parent)
-    if (!ground) return
+    const ground = groundShared
+    if (!ground.uWater) return
     const ripples = new Ripples(ground, this.level, this.drops)
     const uniforms = { ...ground, ...this.lit, uLevel: this.level, uBox: ripples.uniforms.uBox, uSpan: this.span, uStands: this.stands, uDry: this.dry, tRipple: { value: ripples.target.texture } }
     this.water.material = makeSurface({ name: 'puddle water', vertex: waterVertex, fragment: waterFragment, uniforms, transparent: true, castShadow: false }).main

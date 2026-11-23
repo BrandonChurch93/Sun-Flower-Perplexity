@@ -12,6 +12,42 @@ export const BEAD_ORDER = 19
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
 const beadUniforms = { uBeadLee: { value: 0 } }
 
+const G = 9.81
+const SIT = 0.4
+const RUN = 0.78
+const HANG = 0.93
+// The share of the beads that stay where they formed in the rain: small ones, far more than those large enough to run.
+const STAY = 0.72
+// How far a bead slides in one go, as a share of the part's length.
+const REACH = 0.4
+// The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
+const DEW_MARGIN = 0.4
+const DEW_TIP = 0.035
+
+function own2(own: number, k: number): number {
+  const x = Math.sin(own * k + k * 0.37) * 43758.5453
+  return x - Math.floor(x)
+}
+
+function ease(a: number, b: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t
+}
+
+// The film second the rain starts to fall: the beads of the shower count their lives from it.
+const RAIN_FROM_S = ((): number => {
+  for (let b = 30; b < 60; b += 1 / 64) if (rainAtBar(b) > 0) return barTime(b)
+  return Infinity
+})()
+
+// The part of a frame the shutter stands open, in seconds: a bead that runs is drawn where it is at each end of it.
+const SHUTTER_GLSL = (config.film.shutterDegrees / 360 / config.film.fps).toFixed(6)
+const RAIN_FROM_GLSL = Number.isFinite(RAIN_FROM_S) ? RAIN_FROM_S.toFixed(4) : '1.0e9'
+
 // Half the master frame's height in pixels, as shader text: a bead is judged by how wide it stands in the finished frame.
 const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
 
@@ -21,8 +57,87 @@ in vec4 aSeatA;
 in vec4 aSeatB;
 in vec4 aRestA;
 in vec4 aRestB;
+in vec4 aForm;
+in vec4 aFormUp;
+in vec4 aMid;
+in vec4 aEnd;
+in vec4 aEndUp;
+in vec4 aGather;
 in vec3 aTint;
 uniform float uBeadLee;
+uniform float uBeadPaths;
+uniform float uPlantWet;
+uniform float uPlantDew;
+float own2(float own, float k) {
+  return hash11(own * 61.7 + k);
+}
+// Where a bead is on the path its part laid for it, at a film second, in closed form: the place it touches the skin with its radius, and the skin's normal there with how it hangs.
+void beadOnPath(float real, out vec4 seat, out vec4 rest) {
+  float own = aForm.w;
+  float across = aEnd.w;
+  float since = real - ${RAIN_FROM_GLSL};
+  float margin = 1.0 - 0.6 * across * across;
+  float fine = own2(own, 127.1);
+  vec3 at = aForm.xyz;
+  vec3 up = aFormUp.xyz;
+  float r = 0.0;
+  float hang = 0.0;
+  if (since >= 0.0 && uPlantWet > 0.0) {
+    float wet = sqrt(uPlantWet);
+    if (own2(own, 53.3) < ${STAY}) {
+      // A small bead forms and stays: most are fine, few are not.
+      r = (0.0003 + 0.0023 * fine * fine) * wet * smoothstep(0.0, 1.5, since - 3.0 * own2(own, 311.7)) * margin;
+    } else {
+      // A large one swells where it formed, slides to the end of its path in fits and starts, hangs there and falls: once or twice in a shower.
+      float period = 7.0 + 6.0 * fine;
+      float t = since - 5.0 * own2(own, 311.7) + 3.0;
+      float turn = t / period;
+      float p = fract(turn);
+      float full = (0.0014 + 0.0012 * own2(own + floor(turn) * 0.618, 74.7)) * wet * smoothstep(0.0, 1.5, since) * step(0.0, t);
+      if (p < ${SIT}) {
+        r = full * pow(p / ${SIT}, 1.0 / 3.0) * smoothstep(0.0, 0.06, p);
+      } else if (p < ${RUN}) {
+        float q = (p - ${SIT}) / (${RUN} - ${SIT});
+        float e = saturate(q * q * (1.5 - 0.5 * q) + 0.02 * sin(18.8496 * q));
+        // The path bends through its middle point, so the bead stays on the blade.
+        vec3 bend = 2.0 * aMid.xyz - 0.5 * (aForm.xyz + aEnd.xyz);
+        at = (1.0 - e) * (1.0 - e) * aForm.xyz + 2.0 * e * (1.0 - e) * bend + e * e * aEnd.xyz;
+        up = mix(aFormUp.xyz, aEndUp.xyz, e);
+        r = full * (1.0 + 0.3 * e);
+      } else {
+        float q = min(1.0, (p - ${RUN}) / (${HANG} - ${RUN}));
+        at = aEnd.xyz;
+        up = aEndUp.xyz;
+        if (aMid.w < 0.5) {
+          // One that does not reach the tip spreads into the film where it stops.
+          r = full * 1.3 * (1.0 - q) * (1.0 - q);
+        } else {
+          hang = q * q * (3.0 - 2.0 * q);
+          r = full * (1.3 + 0.1 * q);
+          if (p >= ${HANG}) {
+            float fall = (p - ${HANG}) * period;
+            at.y -= 4.905 * fall * fall;
+            r = full * 1.25;
+          }
+        }
+      }
+    }
+  } else if (uPlantDew > 0.0) {
+    // Dew stays where it formed; through a still night some of a blade's runs together at its margin and one drop hangs from a tip.
+    float dry = 1.0 - min(1.0, 4.0 * uPlantWet);
+    float large = max(0.0, (own - 0.85) / 0.15);
+    float deep = sqrt(uPlantDew);
+    r = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * deep * margin;
+    if (aGather.w > 0.5) {
+      bool tip = aGather.w > 1.5;
+      at = mix(aForm.xyz, aGather.xyz, dry);
+      hang = (tip ? 1.0 : 0.75) * dry;
+      r = mix(r, (tip ? 0.0028 + 0.001 * fine : 0.0016 + 0.0014 * fine) * deep, dry);
+    }
+  }
+  seat = vec4(at, r * aFormUp.w);
+  rest = vec4(up, hang);
+}
 out vec3 vWorld;
 out vec3 vMiddle;
 out vec3 vBase;
@@ -34,20 +149,30 @@ out float vHang;
 out float vDepth;
 out float vWide;
 void main() {
-  vec4 seat = mix(aSeatA, aSeatB, uShutter);
-  vec4 rest = mix(aRestA, aRestB, uShutter);
+  vec4 seatA = aSeatA;
+  vec4 seatB = aSeatB;
+  vec4 restA = aRestA;
+  vec4 restB = aRestB;
+  float lee = uBeadLee;
+  if (uBeadPaths > 0.5) {
+    beadOnPath(uReal, seatA, restA);
+    beadOnPath(uReal + ${SHUTTER_GLSL}, seatB, restB);
+    lee = uReal >= ${RAIN_FROM_GLSL} ? smoothstep(0.0, 0.6, uPlantWet) : 0.0;
+  }
+  vec4 seat = mix(seatA, seatB, uShutter);
+  vec4 rest = mix(restA, restB, uShutter);
   float own = hash11(float(gl_InstanceID) * 0.618 + 0.37);
   float r = seat.w * plantSize();
   vec3 base = plantWorld(seat.xyz);
   vec3 up = plantDirection(normalize(rest.xyz + vec3(0.0, 1e-6, 0.0)));
   float hang = saturate(rest.w);
   // Rain wets the side it comes from: on the side turned from the light the beads are few and fine.
-  r *= mix(1.0, 0.55 + 0.45 * smoothstep(-0.5, 0.3, dot(up, uSunDir)), uBeadLee * (1.0 - hang));
+  r *= mix(1.0, 0.55 + 0.45 * smoothstep(-0.5, 0.3, dot(up, uSunDir)), lee * (1.0 - hang));
   // Water sags down the slope it sits on, a large bead more than a small one, and one that runs draws out behind.
   vec3 fall = vec3(0.0, -1.0, 0.0) + up * up.y;
   float slope = length(fall);
   vec3 down = slope > 1e-3 ? fall / slope : normalize(cross(up, vec3(1.0, 0.0, 0.0)));
-  float run = length(plantWorld(aSeatB.xyz) - plantWorld(aSeatA.xyz)) / max(r, 1e-6);
+  float run = length(plantWorld(seatB.xyz) - plantWorld(seatA.xyz)) / max(r, 1e-6);
   float longM = 1.0 + (1.0 - hang) * ((0.1 + 0.5 * own) * slope * smoothstep(0.0002, 0.0012, r) + min(0.5 * run, 1.2));
   // A bead that sits is a low cap, each to its own height; one that hangs is whole and under its hold.
   float high = mix(mix(0.5, 0.85, hash11(own + 3.1)), 1.0, hang);
@@ -167,6 +292,8 @@ void main() {
 }
 `
 
+const PATH_NAMES = ['aForm', 'aFormUp', 'aMid', 'aEnd', 'aEndUp', 'aGather']
+
 // Small clear beads. The part that wears them gives each bead its seat on the skin at both ends of the shutter, as it gives a hair its root.
 export class BeadSet {
   readonly surface: Surface
@@ -175,6 +302,8 @@ export class BeadSet {
   private readonly seats: [Float32Array, Float32Array]
   private readonly rests: [Float32Array, Float32Array]
   private readonly tints: Float32Array
+  private readonly paths: Float32Array[]
+  private readonly onPaths = { value: 0 }
   private readonly geometry = new THREE.InstancedBufferGeometry()
   private readonly sent: THREE.InstancedBufferAttribute[]
 
@@ -183,18 +312,19 @@ export class BeadSet {
     this.seats = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.rests = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.tints = new Float32Array(count * 3)
+    this.paths = PATH_NAMES.map(() => new Float32Array(count * 4))
     const dynamic = (data: Float32Array, size: number): THREE.InstancedBufferAttribute => {
       const a = new THREE.InstancedBufferAttribute(data, size)
       a.setUsage(THREE.DynamicDrawUsage)
       return a
     }
-    this.sent = [dynamic(this.seats[0], 4), dynamic(this.seats[1], 4), dynamic(this.rests[0], 4), dynamic(this.rests[1], 4), dynamic(this.tints, 3)]
+    this.sent = [dynamic(this.seats[0], 4), dynamic(this.seats[1], 4), dynamic(this.rests[0], 4), dynamic(this.rests[1], 4), dynamic(this.tints, 3), ...this.paths.map((data) => dynamic(data, 4))]
     this.geometry.setAttribute('aCorner', new THREE.BufferAttribute(new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 0, 2, 3])
-    const names = ['aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aTint']
+    const names = ['aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aTint', ...PATH_NAMES]
     names.forEach((n, i) => this.geometry.setAttribute(n, this.sent[i]))
     this.geometry.instanceCount = 0
-    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: beadUniforms })
+    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths } })
     const mesh = partMesh(this.geometry, this.surface)
     mesh.renderOrder = BEAD_ORDER
     this.meshes = [mesh]
@@ -210,6 +340,38 @@ export class BeadSet {
     return this.rests[slot]
   }
 
+  // A bead that is given its path is laid once a fill and runs by itself on the film second, so it runs on in a hold with nothing written. All six are four numbers a bead, in the plant's own space as the skin stands at the fill.
+  // Where the bead forms, and its own number from 0 to 1. The set draws by paths from the first call on.
+  form(): Float32Array {
+    this.onPaths.value = 1
+    return this.paths[0]
+  }
+
+  // The skin's normal where it forms on the side the bead sits, and the part's own scale of its radius: 1 as it comes.
+  formUp(): Float32Array {
+    return this.paths[1]
+  }
+
+  // The skin point half way down its slide, and `reaches` of its plan.
+  mid(): Float32Array {
+    return this.paths[2]
+  }
+
+  // The skin point where its slide ends, and the `across` it formed at: 0 on a stem.
+  end(): Float32Array {
+    return this.paths[3]
+  }
+
+  // The skin's normal where its slide ends.
+  endUp(): Float32Array {
+    return this.paths[4]
+  }
+
+  // The skin point its dew gathers at through a dry night, and `dewKind` of its plan.
+  gather(): Float32Array {
+    return this.paths[5]
+  }
+
   // Three numbers a bead: the color of the skin under it, which is seen through the water.
   tint(): Float32Array {
     return this.tints
@@ -218,7 +380,11 @@ export class BeadSet {
   // How many of the beads are drawn. Called once a frame after both fills.
   finish(shown = this.count): void {
     this.geometry.instanceCount = Math.max(0, Math.min(shown, this.count))
-    for (const a of this.sent) a.needsUpdate = true
+    // Only what the part fills is sent: the paths of a set that runs by itself, the two seats of one that is placed.
+    const paths = this.onPaths.value > 0
+    this.sent.forEach((a, i) => {
+      if (i === 4 || i > 4 === paths) a.needsUpdate = true
+    })
   }
 }
 
@@ -237,37 +403,43 @@ export interface Bead {
   fallM: number
 }
 
-const G = 9.81
-const SIT = 0.4
-const RUN = 0.78
-const HANG = 0.93
-// The share of the beads that stay where they formed in the rain: small ones, far more than those large enough to run.
-const STAY = 0.72
-// How far a bead slides in one go, as a share of the part's length.
-const REACH = 0.4
-// The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
-const DEW_MARGIN = 0.4
-const DEW_TIP = 0.035
-
-function own2(own: number, k: number): number {
-  const x = Math.sin(own * k + k * 0.37) * 43758.5453
-  return x - Math.floor(x)
+export interface BeadPlan {
+  // Half way down its slide and at the end of it, in the part's own two coordinates.
+  midAlong: number
+  midAcross: number
+  endAlong: number
+  endAcross: number
+  // 1 when the slide ends at the tip, where the bead hangs and falls; 0 when it stops short and spreads.
+  reaches: number
+  // Where its dew gathers through a dry night: 0 it stays where it formed, 1 at the margin, 2 hanging from the tip.
+  dewAlong: number
+  dewAcross: number
+  dewKind: number
 }
 
-function ease(a: number, b: number, x: number): number {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
-  return t * t * (3 - 2 * t)
+// The path a bead takes over its part, from where it forms. It holds no time and no dial: when the bead is where on it is worked out as it is drawn.
+export function beadPlan(own: number, along: number, across: number, out: BeadPlan): BeadPlan {
+  const reach = Math.min(1 - along, REACH)
+  out.midAlong = along + 0.5 * reach
+  out.midAcross = across * (1 - 0.85 * Math.SQRT1_2)
+  out.endAlong = along + reach
+  out.endAcross = across * 0.15
+  out.reaches = 1 - along <= REACH ? 1 : 0
+  out.dewAlong = along
+  out.dewAcross = across
+  out.dewKind = 0
+  if (across === 0) return out
+  const where = own2(own, 91.7)
+  if (where < DEW_MARGIN) {
+    out.dewAcross = (across < 0 ? -1 : 1) * (0.82 + 0.15 * own2(own, 17.3))
+    out.dewKind = 1
+  } else if (where > 1 - DEW_TIP && along > 0.45) {
+    out.dewAlong = 1
+    out.dewAcross = 0
+    out.dewKind = 2
+  }
+  return out
 }
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t
-}
-
-// The film second the rain starts to fall: the beads of the shower count their lives from it.
-const RAIN_FROM_S = ((): number => {
-  for (let b = 30; b < 60; b += 1 / 64) if (rainAtBar(b) > 0) return barTime(b)
-  return Infinity
-})()
 
 // Rain: `since` is the time the rain has fallen.
 function rainBead(own: number, along: number, across: number, since: number, wet: number, out: Bead): void {
