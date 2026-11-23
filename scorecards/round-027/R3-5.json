@@ -1,0 +1,42 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crops 2 and 3, the orange strip between the sunflower field and the far ridge",
+      "what": "A nearly featureless orange strip runs along the horizon with a hard, straight cutoff against the densely detailed flowers. The ridge and strip read as flat layers rather than one continuous landscape.",
+      "fix": "Break up the back edge of the flowers with scattered plants and irregular ground cover, carry subdued terrain texture into the strip, and soften the ridge and field together with distance haze."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "crops 3, 4 and 7, the middle-distance heads",
+      "what": "The same pointed ring of yellow rays and dark disc repeats at very similar scales and angles; the thin orange rims break into dense bright speckles toward the back of the field.",
+      "fix": "Vary head size, tilt, petal shape and the amount of exposed disc independently of row placement, and improve antialiasing of fine backlit details at distance."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 2 through 4, the backlit ray surfaces and tips",
+      "what": "Several rays taper to needle points and have the same bundle of long, parallel orange ridges. At native size some bright edges look like thin dotted outlines, making the rays read like ribbed cutouts.",
+      "fix": "Vary the rib spacing and taper within and between rays, round and curl some of the tips, and soften the light along the thinnest edges without removing the backlit translucency."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 5, the sun's perimeter",
+      "what": "The white sun ends at a conspicuously hard circular edge even though the surrounding glow and clouds are soft, so it looks like a disc laid over the sky.",
+      "fix": "Add a small exposure-dependent bloom around the disc and blend its perimeter into the local haze while keeping a brighter core."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 6, the smooth blue sky above the pink cloud",
+      "what": "Fine, even speckling is visible across the open sky at native size rather than following the cloud or the light gradient.",
+      "fix": "Reduce the residual noise in smooth sky areas before final encoding, preserving the faint cloud edge and continuous color gradient."
+    }
+  ]
+}

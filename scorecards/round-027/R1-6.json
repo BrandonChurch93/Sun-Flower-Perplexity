@@ -1,0 +1,70 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole frame, framing and geography",
+      "what": "not the same shot: horizon sits lower (about y 210 vs 195), sun has moved right and down (about x 378, y 178 vs x 285, y 145), a straight open lane now runs from the centre to the horizon, and the strip of open grass in front of the field is gone, so the foreground plant now stands inside the field rather than in front of it on grass",
+      "fix": "match the camera to -a: raise the horizon, put the sun back at upper left behind the treeline, remove the centre lane, and restore the grass strip with the foreground plant standing on it in front of the field edge"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "sun and the air over the field (region 2, region 3)",
+      "what": "-a has a hazy, flaring sun with rays and a warm golden mist hanging over the far field that softens the ridge; -b has a small clean disc, no rays, no mist, and the far field and ridge are crisp with almost no atmospheric depth",
+      "fix": "add a larger blooming sun with soft rays and a warm low haze over the far field, lift and warm the far distance so the ridge fades into the mist"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "middle-distance rows (region 4) and overall grade",
+      "what": "-b's field is lit bright saturated yellow with high-contrast crushed black gaps, while -a is a muted, low-contrast backlit field with dim heads and soft olive greens; -b reads as a clean CG render against -a's filmic grade",
+      "fix": "lower saturation and brightness of the flower heads, lift the blacks between plants, and bring greens toward -a's muted olive"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "sky (region 6) and clouds",
+      "what": "-a has textured, warmly lit thin cloud bands and a grey-teal sky; -b has smeared purple streaks with no edge detail and a flat smooth blue-grey gradient, and the treeline at the horizon is a flat dark band",
+      "fix": "replace the streaks with -a's thin sunlit cloud layer, warm the low sky, and give the distant hills layered, receding tones"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "foreground plant and near plants (region 1, region 5)",
+      "what": "the foreground plant's leaves are oversized, flat and waxy and crowd the lower frame; -a's plant is slender with smaller backlit leaves and visible grass around its base; -b also lacks -a's film grain and fine texture",
+      "fix": "scale the leaves down toward -a's proportions, add translucent rim light, show grass around the base, and add matching film grain"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "the two plants in front and the ground (region 1, region 5)",
+      "what": "in -a the two sunflowers stand on an open grass slope in front of the field, casting long shadows across lit grass; in -b they stand inside the field with no grass in front, no long shadows, and the left plant is now a tall bare stalk with its head higher and further right (about x 675 vs 580)",
+      "fix": "put both plants back on the grass slope at -a's positions and heights, with -a's leafy stems and long raking shadows over the rim-lit grass"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "middle-distance rows (region 4)",
+      "what": "after sunset -a's field is dark, with heads seen as backlit silhouettes; -b lights the field brightly in saturated yellow-orange as if lit from the front, with a centre lane and an orange glow among the plants",
+      "fix": "darken the field to silhouette, keep only faint rim light on the heads, and remove the lane and the inner orange glow"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "glow at the horizon and the far ridge (region 2, region 3)",
+      "what": "-a has a half-set sun under deep red lit cloud bands and soft blue hazy hills; -b has a small sun over a soft pink bloom with no cloud bands, a red-orange ground strip at the horizon, and a flat black treeline",
+      "fix": "restore the red-lit cloud bands above the sun, remove the red ground strip, and make the far hills hazy blue layers"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "upper sky (region 6)",
+      "what": "-a's sky has grain and small dark cloud wisps; -b is a clean smooth gradient with one blurry purple streak",
+      "fix": "add the dark cloud wisps and film grain from -a"
+    }
+  ]
+}

@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 43 · 2026-11-23 18:39 UTC · Phase 5
+- Last status: 44 · 2026-11-23 19:06 UTC · Phase 5
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 19:06 UTC · status 44 · Phase 5 · `status-1.jpg`: Dawn over the seedling, frame 238 (new part); `status-2.jpg`: Storm flash, frame 1877; `status-3.jpg`: The open flower, frame 2957; `status-4.jpg`: Dusk over the field, frame 3755
 - 2026-11-23 18:39 UTC · status 43 · Phase 5 · `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun; `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip; `status-3.jpg`: Frame 2630: the bud on the last days of the climb; `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
 - 2026-11-23 18:21 UTC · status 42 · Phase 5 · `status-1.jpg`: Frame 3112 of the 1920 film: the open flower at bar 61; `status-2.jpg`: Frame 3523 of the 1920 film: the field at bar 69; `status-3.jpg`: The key picture for late (left) and frame 2780 of the film: the closed bud at dusk; `status-4.jpg`: The last dusk over the field, frames 3688 to 3748, every eighth
 - 2026-11-23 18:03 UTC · status 41 · Phase 5 · `status-1.jpg`: Frame 60 of the 1920 film, the sprout; `status-2.jpg`: Frame 1055, the hard cut to the frosted tip; `status-3.jpg`: Frame 1775, the storm hold; `status-4.jpg`: Frame 3440, the crane over the field
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 15:39 UTC · status 35 · Phase 4 · `status-1.jpg`: The storm deck coming in, every sixth frame of 1630 to 1720, with the first flash at 1672 (640 x 360); `status-2.jpg`: The frost front at 885, 888, 891: before above, after below. It now runs in along the veins; `status-3.jpg`: Rain at 2000: before above, after below. The spray is a low mist behind the plant; `status-4.jpg`: Night at 216 with the new beads under the moon
 - 2026-11-23 15:11 UTC · status 34 · Phase 4 · `status-1.jpg`: The whole film, one frame every second bar (640 x 360 watch draft, parts from seven builds); `status-2.jpg`: Bloom on the merged tree, frames 2990, 3030, 3070, 3112: the field opens behind the hero; `status-3.jpg`: Older leaves, before and after: 1640 and 1830; `status-4.jpg`: Crane at 3440 on the merged tree
 - 2026-11-23 14:52 UTC · status 33 · Phase 4 · `status-1.jpg`: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop; `status-2.jpg`: Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241; `status-3.jpg`: Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it; `status-4.jpg`: Older leaves open up through the climb, before and after pairs
-- 2026-11-23 14:33 UTC · status 32 · Phase 4 · `status-1.jpg`: Storm hold on the merged tree, frame 1830; `status-2.jpg`: The break, frame 2090; `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360; `status-4.jpg`: The field at the end of the pull back, frame 3492
 
 ## Clock
 
@@ -43,9 +43,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
-| 5 | 3.00 h | 1.36 h |
+| 5 | 3.00 h | 1.80 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 20.66 h |
+| Whole build | 30.00 h | 21.11 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -445,4 +445,6 @@ None yet.
   Pictures: Frame 3112 of the 1920 film: the open flower at bar 61; Frame 3523 of the 1920 film: the field at bar 69; The key picture for late (left) and frame 2780 of the film: the closed bud at dusk; The last dusk over the field, frames 3688 to 3748, every eighth.
 - Status 43, 2026-11-23 18:39 UTC, Phase 5. Twenty of 36 chunks of the 1920 film are in (2,070 of 3,810 frames), all on the frozen build and all read: nothing to cure. The frost close shots are in at full size and show what message 7 asked for, the rime lit from behind and the thaw starting at a leaf tip. The round's asking tool is written and tested, and its eight target pictures for the jury are ready. One thing found at native size: the clouds carry a fine stipple where the sky is near focus (2.7 levels in the grey clouds of the climb against 0.8 in clear sky); it is logged as an open item for the critics to weigh, because a cure would mean drawing the film a second time. Next: Take in the other 16 chunks (the last due about 19:27 UTC), start the proofs when the first machine is free, ask the jury on the target pictures in the free slots, then join the film with the track and run the record round once. Time used: 20.7 h of 30 h.
   Pictures: Frame 1120 of the 1920 film: the frost close shot against the sun; Frame 1190: the thaw starting at the leaf tip; Frame 2630: the bud on the last days of the climb; Frame 1479 of the 1920 film, lossless: the climb.
+- Status 44, 2026-11-23 19:06 UTC, Phase 5. 29 of 37 parts are in at 1920 x 1080 (2,964 of 3,810 frames), all read, nothing to cure. The record round has begun: three critics are in (final shots against their keys 3, close crops of the final shots 6, the opening at phone size 7; the first film's record scored 3, 5 and 8 on the same seats). Proofs run on two machines on the branch head. Next: Eight parts are still drawing (the last about 19:35 UTC), then the join, the rest of the round and Phase 6. The seedling key is a dawn and its judged frame was a noon, so its pair moves to the dawn frame. Time used: 21.1 h of 30 h.
+  Pictures: Dawn over the seedling, frame 238 (new part); Storm flash, frame 1877; The open flower, frame 2957; Dusk over the field, frame 3755.
 
