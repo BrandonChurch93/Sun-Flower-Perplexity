@@ -63,7 +63,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   } catch {}
   const sceneText = (): string => {
     const made = madeSoFar()
-    return `${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures and ${made.programs} programs made`
+    return `${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
   }
   const timer = window.setInterval(() => {
     if (!sceneDone) sceneCount.textContent = sceneText()

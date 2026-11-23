@@ -78,6 +78,8 @@ html[data-run='recording'] * {
   cursor: none !important;
 }
 
+html[data-bare] #ui,
+html[data-bare] #note,
 html[data-run] #ui,
 html[data-run] #note {
   display: none;

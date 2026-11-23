@@ -36,6 +36,7 @@ const HELP: [string, string][] = [
   ['Drag', 'orbit'],
   ['Wheel', 'zoom'],
   ['0', 'reset'],
+  ['H', 'hide'],
   ['M', 'menu'],
 ]
 

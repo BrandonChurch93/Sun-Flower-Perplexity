@@ -63,10 +63,11 @@ export function advise(report: Report, quality: Quality): Advice {
   const fps = config.film.fps
   const f = report.frames
   if (!report.complete) return { text: 'The check was stopped before its end.', tryLow: false }
-  if (report.holds) return { text: `This machine holds ${fps} frames a second at ${quality} quality. Record at ${quality}.`, tryLow: false }
-  if (f.skipped === 0) return { text: `This machine drew every frame at ${quality} quality, with a longest gap of ${report.gapMs.longest.toFixed(0)} ms where ${GAP_MS} is the limit. It nearly holds ${fps} frames a second.`, tryLow: quality !== 'low' }
-  if (quality !== 'low') return { text: `This machine does not hold ${fps} frames a second at ${quality} quality: ${f.skipped} of ${f.due} frames were skipped. Try low.`, tryLow: true }
-  return { text: `This machine does not hold ${fps} frames a second at low quality either: ${f.skipped} of ${f.due} frames were skipped. A recording stays with the music and skips frames. The picture is never drawn smaller to keep up.`, tryLow: false }
+  const at = `at ${report.format} and ${quality} quality`
+  if (report.holds) return { text: `This machine holds ${fps} frames a second ${at}. Record at ${quality}.`, tryLow: false }
+  if (f.skipped === 0) return { text: `This machine drew every frame ${at}, with a longest gap of ${report.gapMs.longest.toFixed(0)} ms where ${GAP_MS} is the limit. It nearly holds ${fps} frames a second.`, tryLow: quality !== 'low' }
+  if (quality !== 'low') return { text: `This machine does not hold ${fps} frames a second ${at}: ${f.skipped} of ${f.due} frames were skipped. Try low.`, tryLow: true }
+  return { text: `This machine does not hold ${fps} frames a second at ${report.format} and low quality either: ${f.skipped} of ${f.due} frames were skipped. A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.`, tryLow: false }
 }
 
 export function startLive(film: Film, options: Options, host: HTMLElement, loading: Loading | null): void {
@@ -637,7 +638,14 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         menu.toggle()
         break
       case 'Escape':
-        if (menu.open) menu.toggle(false)
+        if (root.dataset.bare) delete root.dataset.bare
+        else if (menu.open) menu.toggle(false)
+        break
+      case 'h':
+      case 'H':
+        event.preventDefault()
+        if (root.dataset.bare) delete root.dataset.bare
+        else root.dataset.bare = 'yes'
         break
       case 'r':
       case 'R':
