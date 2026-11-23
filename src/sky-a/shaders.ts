@@ -33,6 +33,7 @@ uniform vec3 uSun;
 uniform float uGain;
 uniform vec3 uNightZenith;
 uniform vec3 uNightHorizon;
+uniform vec3 uGlow;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
@@ -78,6 +79,8 @@ void main() {
   L *= SOLAR * uGain;
   float up = saturate(mu);
   L += mix(uNightHorizon, uNightZenith, pow(up, 0.5));
+  float toSun = 0.5 + 0.5 * cos(phi);
+  L += uGlow * exp(-max(el, 0.0) / 0.13) * (0.25 + 0.75 * toSun * toSun);
   outColor = vec4(L, 1.0);
 }
 `
@@ -119,6 +122,7 @@ float coverHere;
 float nearSun;
 float deckWeather;
 float deckLumps;
+float farThin = 1.0;
 
 float remap(float v, float a, float b, float c, float d) { return c + (v - a) / (b - a) * (d - c); }
 
@@ -138,24 +142,25 @@ float density(vec3 p, float h, bool detail, vec2 smear) {
   c = mix(c, saturate(remap(w, 0.1, 0.75, 0.45, 1.0)) * saturate(coverHere * 1.4 - 0.2), ov2);
   deckWeather = w;
   vec4 lumps = textureLod(uShape, vec3(xz.x / 3.2, 0.31 + uEvolve * 0.05, xz.y / 3.2), 0.0);
-  deckLumps = lumps.r;
-  float under = ((lumps.r - 0.55) * 1.2 + (w - 0.5) * 0.9) * uOvercast;
+  float fine = textureLod(uShape, vec3(xz.x / 1.1 + 0.4, 0.73 + uEvolve * 0.08, xz.y / 1.1), 0.0).g;
+  deckLumps = saturate(lumps.r * 0.65 + fine * 0.5 - 0.05);
+  float under = ((lumps.r - 0.55) * 1.2 + (fine - 0.5) * 0.5 + (w - 0.5) * 0.9) * uOvercast;
   float hn = (h - cloudBase - under) / (cloudTop - cloudBase);
   if (hn < 0.0 || hn > 1.0) return 0.0;
   float topAt = mix(0.25, 1.0, c * c);
-  float grad = saturate(hn / 0.07) * saturate((topAt - hn) / max(0.45 * topAt, 0.05));
+  float grad = saturate(hn / 0.035) * saturate((topAt - hn) / max(0.6 * topAt, 0.05));
   vec3 q = vec3(xz.x, h - uEvolve * 0.35, xz.y);
-  vec4 s = textureLod(uShape, q / 5.0, 0.0);
+  vec4 s = textureLod(uShape, q / mix(3.2, 5.0, uOvercast), 0.0);
   float fbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
-  float shape = saturate(remap(s.r, fbm - 1.0, 1.0, 0.0, 1.0));
+  float shape = saturate(remap(s.r, (fbm - 1.0) * mix(0.8, 1.0, uOvercast), 1.0, 0.0, 1.0));
   float d = saturate(remap(shape * grad, 1.0 - c, 1.0, 0.0, 1.0)) * c;
-  d *= mix(1.0, 0.3 + 0.7 * smoothstep(0.15, 0.8, w), ov2);
+  d *= mix(1.0, 0.3 + 0.7 * smoothstep(0.15, 0.8, w), ov2) * farThin;
   if (detail && d > 0.0) {
-    vec3 dq = vec3(xz.x, h - uEvolve * 0.9, xz.y) / 0.75;
+    vec3 dq = vec3(xz.x, h - uEvolve * 0.9, xz.y) / 0.5;
     vec4 n = textureLod(uDetail, dq, 0.0);
     float df = n.r * 0.625 + n.g * 0.25 + n.b * 0.125;
     df = mix(df, 1.0 - df, saturate(hn * 4.0));
-    d = saturate(remap(d, df * 0.42 * (1.0 - 0.4 * uOvercast), 1.0, 0.0, 1.0));
+    d = saturate(remap(d, df * mix(0.3, 0.6, hn) * (1.0 - 0.4 * uOvercast), 1.0, 0.0, 1.0));
     d = pow(d, 0.75);
   }
   return d;
@@ -194,13 +199,14 @@ void main() {
   coverHere = mix(coverHere, mix(coverHere, 0.7 + 0.4 * (1.0 - uSunThrough), closing) * (1.0 - open * 0.85), nearSun);
   float rag2 = textureLod(uShape, vec3(d.x * 9.0 + 0.3, d.y * 9.0, d.z * 9.0 + uEvolve * 0.08), 0.0).g;
   float tear = mix(1.6, 9.0, smoothstep(0.0, 0.04, 1.0 - uBurst));
-  coverHere *= 1.0 - uBurst * 0.68 * smoothstep(cos(radians(tear)), cos(radians(tear * 0.13)), toward + ((rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003) * (1.0 - cos(radians(tear))) / 0.0123);
+  float gap = uBurst * smoothstep(cos(radians(tear * 1.5)), cos(radians(tear * 0.2)), toward + ((rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003) * (1.0 - cos(radians(tear))) / 0.0123);
+  coverHere *= 1.0 - 0.3 * gap;
 
   vec3 o = vec3(0.0, RG + CAM_KM, 0.0);
   vec2 hb = sphere(o, d, RG + cloudBase - 0.3);
   vec2 ht = sphere(o, d, RG + cloudTop);
   float t0 = max(hb.y, 0.0);
-  coverHere *= 1.0 - 0.6 * uOvercast * smoothstep(9.0, 30.0, t0 + (rag - 0.5) * 6.0);
+  farThin = (1.0 - 0.9 * uOvercast * smoothstep(10.0, 48.0, t0 + (rag - 0.5) * 10.0)) * (1.0 - 0.85 * gap);
   float t1 = ht.y;
   float span = min(t1 - t0, mix(12.0, 22.0, uOvercast));
   float far = mix(110.0, 70.0, uOvercast);
@@ -222,10 +228,10 @@ void main() {
       if (h > rainTop) break;
       vec2 xz = p.xz - uShift;
       float w = weather(xz + vec2(h * 0.6, 0.0));
-      float col = smoothstep(0.35, 0.75, w);
+      float col = smoothstep(0.42, 0.68, w);
       float streak = textureLod(uShape, vec3(xz.x / 2.5 + h * 0.15, 0.6, xz.y / 2.5), 0.0).g;
-      float sigma = uRain * col * (0.25 + 0.75 * streak) * 0.09 * smoothstep(rainTop, rainTop * 0.6, h);
-      vec3 lit = uUnder * 0.9;
+      float sigma = uRain * col * (0.25 + 0.75 * streak) * 0.035 * smoothstep(rainTop, rainTop * 0.5, h) * smoothstep(2.0, 8.0, t);
+      vec3 lit = uUnder * 0.4;
       float st = exp(-sigma * dtr);
       L += T * lit * (1.0 - st);
       depthSum += T * (1.0 - st) * t;
@@ -258,6 +264,8 @@ void main() {
       vec2 smear = uSmear * shutter;
       float dens = density(p, h, true, smear);
       if (dens <= 0.001) continue;
+      float wHere = deckWeather;
+      float lHere = deckLumps;
       float sigma = dens * sigmaK;
       vec3 sun = sunAt(p);
       float od = 0.0;
@@ -269,15 +277,16 @@ void main() {
         od += density(lp, altitude(lp), false, smear) * ls;
         ls *= 1.9;
       }
-      od *= sigmaK;
+      od += uOvercast * 0.4 * max(cloudTop - altitude(lp), 0.0) / max(uSun.y, 0.15);
+      od *= sigmaK * 0.45;
       float hn = saturate((h - cloudBase) / (cloudTop - cloudBase));
-      float beer = exp(-od) * phase + exp(-od * 0.35) * 0.3 * phase2 + exp(-od * 0.08) * 0.12 / (4.0 * PI);
+      float beer = exp(-od) * phase + exp(-od * 0.25) * 0.55 * phase2 + exp(-od * 0.07) * 0.3 * phaseHG(g, 0.1) + exp(-od * 0.02) * 0.12 / (4.0 * PI);
       float powder = mix(1.0, 1.0 - exp(-sigma * 0.12), 0.7 * (1.0 - saturate(g)));
       vec3 sunPart = sun * uGain * 0.5 * beer * powder * stormDark;
       vec3 moonPart = uMoonLight * (exp(-od) + 0.3 * exp(-od * 0.2)) * 0.08;
       vec3 amb = mix(uAmbBottom, uAmbTop, hn) * mix(0.55, 1.0, hn);
-      amb = mix(amb, vec3(dot(amb, vec3(0.2126, 0.7152, 0.0722))), 0.75 * uOvercast) * mix(1.0, 0.2, uOvercast) * mix(1.0, 0.2 + 1.4 * deckLumps * deckLumps, uOvercast * (1.0 - hn));
-      vec3 above = sun * uGain * max(uSun.y, 0.05) * 0.1 * exp(-max(cloudTop - h, 0.0) * mix(1.6, 0.35, smoothstep(0.1, 0.7, 1.0 - deckWeather))) * uOvercast;
+      amb = mix(amb, vec3(dot(amb, vec3(0.2126, 0.7152, 0.0722))), 0.75 * uOvercast) * mix(1.0, 0.2, uOvercast) * mix(1.0, (0.08 + 2.2 * lHere * lHere * lHere) * mix(0.2, 1.8, smoothstep(0.3, 0.7, wHere)), uOvercast * (1.0 - hn));
+      vec3 above = sun * uGain * max(uSun.y, 0.05) * 0.1 * exp(-max(cloudTop - h, 0.0) * mix(1.6, 0.35, smoothstep(0.1, 0.7, 1.0 - wHere))) * uOvercast;
       vec3 S = albedo * (sunPart + amb + moonPart + above);
       if (uFlash > 0.0) {
         float fd = length(p - flashP);
@@ -317,9 +326,9 @@ void main() {
   if (weightSum > 1e-5) {
     float dist = depthSum / weightSum;
     float hm = 0.5 * cloudBase;
-    vec3 ext = (RAYLEIGH * exp(-hm / RAYLEIGH_H) + MIE_EXTINCT * exp(-hm / MIE_H)) * (0.7 + 1.2 * uRain + 2.0 * uFog);
+    vec3 ext = (RAYLEIGH * exp(-hm / RAYLEIGH_H) + MIE_EXTINCT * exp(-hm / MIE_H)) * (0.7 + 0.5 * uRain + 2.0 * uFog);
     vec3 air = exp(-ext * dist);
-    vec3 haze = mix(sky, uUnder, saturate(uOvercast * uCover * 1.2));
+    vec3 haze = mix(sky, mix(uUnder, sky * 0.85, smoothstep(4.0, 30.0, dist)), saturate(uOvercast * uCover * 1.2));
     L = L * air + haze * (1.0 - T) * (1.0 - air);
   }
   T = saturate((T - 0.01) / 0.99);
@@ -425,7 +434,8 @@ void main() {
   }
   float moonAngle = acos(clamp(dot(d, uMoon), -1.0, 1.0));
   float moonR = 0.0047;
-  float mr = sqrt(moonR * moonR + blur * blur);
+  float mb = min(blur, uPixelAngle * 1.2);
+  float mr = sqrt(moonR * moonR + mb * mb);
   float moonDisc = 1.0 - smoothstep(mr * 0.92, mr * 1.04 + uPixelAngle, moonAngle);
   if (moonDisc > 0.0) {
     vec3 m = d - uMoon * dot(d, uMoon);
@@ -436,7 +446,7 @@ void main() {
     float mare = 0.8 + 0.2 * valueNoise(mq * 2.5 + 3.0);
     color += uMoonColor * moonDisc * shade * mare * (moonR * moonR) / (mr * mr) * airUp;
   }
-  color += uMoonColor * 0.0015 * exp(-moonAngle * 30.0) * above;
+  color += uMoonColor * (0.004 * exp(-moonAngle * 90.0) + 0.0012 * exp(-moonAngle * 18.0)) * above;
 
   vec4 cl = clouds(d, blur);
   float cloudT = cl.a;
@@ -479,6 +489,6 @@ void main() {
   if (uDiag == 4) { outColor = vec4(vec3(0.03), -1.0); return; }
   if (uDiag == 5) color = vec3(1.0e4);
   if (uDiag == 6) color = vec3(grey) * 0.5;
-  outColor = vec4(color, coc);
+  outColor = vec4(color, mix(coc, min(coc, 2.0), (1.0 - smoothstep(mr * 1.2, mr * 2.0, moonAngle)) * cloudT));
 }
 `
