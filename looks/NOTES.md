@@ -1,11 +1,9 @@
 # Looks of player
 
-2026-11-23 06:18 UTC, at commit a6e0322 of agent/player.
+2026-11-23 06:26 UTC, at commit a6e0322 of agent/player.
 
-Round 7 export page at 1280 x 720, before, during and after
+Round 7 follow up on a6e0322, the two mends seen on screen
 
-- `01-export-before.jpg`: Export, before
-- `02-export-running.jpg`: Export, running
-- `03-export-done.jpg`: Export, done
-- `04-export-done-the-whole-page.jpg`: Export, done, the whole page
-- `05-all-hidden-with-h.jpg`: All hidden with H
+- `01-the-end-the-report-scrolled-into-view.jpg`: The end, the report scrolled into view
+- `02-the-end-pacing-text-copied.jpg`: The end, pacing text copied
+- `03-loading-the-last-pass-named.jpg`: Loading, the last pass named
