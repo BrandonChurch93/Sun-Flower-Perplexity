@@ -23,6 +23,7 @@ import { tauAt } from '../v2/clock.ts'
 import { plantInputsOf } from '../v2/inputs.ts'
 import { blankLook, lookAt } from '../v2/look.ts'
 import { blankMoment, later, momentAt, now, setNow, setStill, shutterSeconds } from '../v2/now.ts'
+import { closeAt, closeFrames } from '../v2/cuts.ts'
 import { fixedPose, rigAtFilm } from '../v2/rig.ts'
 import { views, type FixedView, type ViewName } from '../v2/shots.ts'
 import { companionInView, companionMatrix, companionRatio } from './companion.ts'
@@ -228,9 +229,15 @@ export class Film {
     return plantInputsOf(momentAt(seconds, this.at))
   }
 
+  // A camera that does not follow the plant: one chosen for the bench, or the close shot the film has cut to.
+  private fixedAt(seconds: number): FixedView | null {
+    return this.view.fixed ?? closeAt(seconds)
+  }
+
   // The camera at one film second.
   poseAt(seconds: number): CameraPose {
-    if (this.view.fixed) return fixedPose(this.view.fixed)
+    const fixed = this.fixedAt(seconds)
+    if (fixed) return fixedPose(fixed)
     const rig = this.rigOf(seconds)
     const inputs = this.inputsAt(seconds)
     const tau = tauAt(seconds)
@@ -239,7 +246,8 @@ export class Film {
   }
 
   private nearAt(seconds: number): number {
-    return this.view.fixed ? 0.003 + 0.02 * this.view.fixed.distanceM : nearPlane(this.rigOf(seconds))
+    const fixed = this.fixedAt(seconds)
+    return fixed ? 0.003 + 0.02 * fixed.distanceM : nearPlane(this.rigOf(seconds))
   }
 
   worldIdAt(_frameIndex: number): string {
@@ -341,7 +349,7 @@ export class Film {
     if (plantOn) this.plant.prepare(tau, tauClose, inputs, inputsClose)
     this.lap('plant')
     const first = this.poseAt(seconds)
-    const fixed = this.view.fixed
+    const fixed = this.fixedAt(seconds)
     const eye = this.rigOf(seconds)
     const distanceM = fixed ? fixed.distanceM : eye.distanceM
     const heightM = fixed ? fixed.heightM : eye.heightM
@@ -386,7 +394,7 @@ export class Film {
     const place = companionPlace()
     const both = Math.hypot(place.x, place.z) + reach * config.field.companion.heightRatio
     const whole = lerp(reach, both, wide)
-    const depthM = fixed ? Math.max(0.05, -first.position.dot(first.forward)) : this.tip.sub(first.position).dot(first.forward)
+    const depthM = fixed ? Math.max(0.05, Math.min(fixed.focusM, -first.position.dot(first.forward))) : this.tip.sub(first.position).dot(first.forward)
     const seen = 1.25 * depthM * tanX * Math.hypot(1, stage.height / stage.width) + 0.02
     const fit = Math.max(wide, smoothstep(0.75, 1, seen / whole))
     const radius = Math.max(lerp(seen, whole, fit), Math.min(seen, 0.5))
@@ -502,7 +510,8 @@ export class Film {
 export function warmFrames(): number[] {
   const fps = config.film.fps
   const frames = new Set<number>()
-  for (const s of [0, 2, 7.2, 12, 28.5, 35.4, 49.5, 56.0, 57.5, 62.6, 63.2, 69.5, 70.2, 80, 97, 99, 104, 118, 126]) frames.add(clampFrame(Math.round(s * fps)))
+  for (const s of [0, 2, 7.2, 12, 28.5, 30.5, 42.2, 49.5, 56.0, 57.5, 62.6, 63.2, 69.5, 70.2, 80, 97, 99, 104, 118, 126]) frames.add(clampFrame(Math.round(s * fps)))
+  for (const f of closeFrames) frames.add(f)
   return [...frames].sort((a, b) => a - b)
 }
 
