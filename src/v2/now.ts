@@ -69,9 +69,10 @@ function tabled(table: Float64Array, seconds: number): number {
   return table[i] + (table[i + 1] - table[i]) * (x - i)
 }
 
+// Where the lightning sits: inside the film's frame in the storm hold, left of the plant and high, then right of it.
 const FLASHES: { from: number; azimuthDeg: number; elevationDeg: number }[] = [
-  { from: hitTime(33), azimuthDeg: 197, elevationDeg: 15 },
-  { from: hitTime(37), azimuthDeg: 179, elevationDeg: 19 },
+  { from: hitTime(33), azimuthDeg: 202.5, elevationDeg: 14.5 },
+  { from: hitTime(37), azimuthDeg: 178.5, elevationDeg: 14 },
 ]
 
 function blankDials(): Dials {
@@ -125,6 +126,34 @@ export function dialsAt(seconds: number, out: Dials): Dials {
   return out
 }
 
+// The world at rest, for the checks: no weather, no wind, one fixed sun in a clear sky. The plant's clock and the film second run on, so whatever still changes from frame to frame is growth.
+const REST = { world: 0.3, azimuthDeg: 205, elevationDeg: 38 }
+let still = false
+
+export function setStill(on: boolean): void {
+  still = on
+}
+
+function rest(out: Moment): Moment {
+  out.world = REST.world
+  out.day = 0
+  out.phase = REST.world
+  out.sunAzimuthDeg = REST.azimuthDeg
+  out.sunElevationDeg = REST.elevationDeg
+  direction(REST.azimuthDeg, REST.elevationDeg, out.sun)
+  out.light.copy(out.sun)
+  out.lightKind = 'sun'
+  out.night = 0
+  out.starTurn = 0
+  out.cloud.shiftX = 0
+  out.cloud.shiftZ = 0
+  out.cloud.speedX = 0
+  out.cloud.speedZ = 0
+  out.cloud.evolve = 0
+  Object.assign(out.dials, blankDials())
+  return out
+}
+
 export function momentAt(seconds: number, out: Moment): Moment {
   const b = barAt(seconds)
   const world = worldAtBar(b)
@@ -163,7 +192,7 @@ export function momentAt(seconds: number, out: Moment): Moment {
   for (const f of FLASHES) if (seconds >= f.from - 1e-6) flash = f
   direction(flash.azimuthDeg, flash.elevationDeg, out.flashAt)
   dialsAt(seconds, out.dials)
-  return out
+  return still ? rest(out) : out
 }
 
 export const now = blankMoment()

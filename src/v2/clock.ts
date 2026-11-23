@@ -139,9 +139,12 @@ export function worldAtBar(b: number): number {
   return evening.at(Math.min(b, BEND))
 }
 
+// A hold begins on the frame that holds its bar line, and that frame opens up to a frame before the line: growth has ended by then.
+const FROST_FROM = hitBar(17)
+const STORM_FROM = hitBar(33)
 const germination = new Monotone(
-  G.germination.map((m) => [m.seconds ?? barTime(m.bar ?? 1), m.tau] as const),
-  [[barTime(17), 0]],
+  G.germination.map((m) => [m.seconds ?? hitTime(m.bar ?? 1), m.tau] as const),
+  [[hitTime(17), 0]],
 )
 const BLOOM_FROM = hitBar(57)
 const settle = new Monotone(
@@ -156,9 +159,9 @@ const settle = new Monotone(
 
 // The plant's clock at a bar. It does not move in the two holds.
 export function tauAtBar(b: number): number {
-  if (b < 17) return germination.at(barTime(b))
+  if (b < FROST_FROM) return germination.at(barTime(b))
   if (b < 25) return G.frostHold
-  if (b < 33) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - 25) / 8, 0.05, 0.14)
+  if (b < STORM_FROM) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - 25) / (STORM_FROM - 25), 0.05, 0.14)
   if (b < 41) return G.stormHold
   if (b < 55.5) return G.stormHold + (G.bud - G.stormHold) * trapezoid((b - 41) / 14.5, 0.07, 0.12)
   if (b < BLOOM_FROM) return G.bud
@@ -185,12 +188,15 @@ export function flashAt(seconds: number): number {
   return clamp(f)
 }
 
+// The frost forms in the last night of the first growth, when the plant has all but stopped, and has melted to a trace before the plant grows again.
+const FROST_LEFT = 0.15
+
 export function frostAtBar(b: number): number {
   if (b < 16.4) return 0
   if (b < 17) return smooth((b - 16.4) / 0.6)
-  if (b < 23) return 1
-  if (b < 25) return lerp(1, 0.6, smooth((b - 23) / 2))
-  return 0.6 * (1 - smooth((b - 25) / 0.4))
+  if (b < 22.5) return 1
+  if (b < 25) return lerp(1, FROST_LEFT, smooth((b - 22.5) / 2.5))
+  return FROST_LEFT * (1 - smooth((b - 25) / 0.4))
 }
 
 export function fogAtBar(b: number): number {
@@ -212,10 +218,28 @@ export function overcastAtBar(b: number): number {
   return 0.74 * (1 - smooth((b - BREAK) / 0.7))
 }
 
+const RAIN_FULL = hitBar(34)
+// The rain thins before the break and its last drops fall into the first sun. They are gone before the plant has grown a centimetre.
+const rainEnd = new Monotone(
+  [
+    [39.5, 1],
+    [40.25, 0.74],
+    [BREAK, 0.45],
+    [41.4, 0.18],
+    [41.8, 0],
+  ],
+  [
+    [39.5, 0],
+    [41.8, 0],
+  ],
+)
+
+// The first drops fall with the lightning and the curtain closes within a bar.
 export function rainAtBar(b: number): number {
   if (b < RAIN_FROM) return 0
-  if (b < 39.5) return smooth((b - RAIN_FROM) / 0.12)
-  if (b < 41.1) return 1 - smooth((b - 39.5) / 1.6)
+  if (b < RAIN_FULL) return smooth((b - RAIN_FROM) / (RAIN_FULL - RAIN_FROM))
+  if (b < 39.5) return 1
+  if (b < 41.8) return rainEnd.at(b)
   return 0
 }
 

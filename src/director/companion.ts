@@ -1,11 +1,19 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
+import { lerp, smootherstep } from '../core/curves.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { companionPlace, companionVariant, right, toward } from '../field/layout.ts'
 import { bodyRadius, leafCount, leafDroop, leafLength, rayLength, stemRadius, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { leafFrameAt, poseAt, stemAt } from '../plant/skeleton.ts'
 
-const ratio = config.field.companion.heightRatio
+const full = config.field.companion.heightRatio
+// The companion is the smaller of the two until the storm has passed: when the lens stands back to take in the storm, the plant is the tallest thing in its frame.
+// It outgrows the plant before the bloom, where its upper leaf reaches into the frame.
+const YOUNG = { ratio: 0.86, until: 29, grown: 42 }
+
+export function companionRatio(tau: number): number {
+  return lerp(YOUNG.ratio, full, smootherstep(YOUNG.until, YOUNG.grown, tau))
+}
 
 // How the companion leans from upright, as a slope: meters sideways for each meter of height, to the right and toward the camera
 // that stands at `field.companion.fromAzimuthDeg`. It leans 3 degrees toward the plant: its foot stays wide of every frame
@@ -13,8 +21,8 @@ const ratio = config.field.companion.heightRatio
 const LEAN = { right: 0.055, toward: -0.021 }
 export const COMPANION_LEAN = { x: right.x * LEAN.right + toward.x * LEAN.toward, z: right.z * LEAN.right + toward.z * LEAN.toward }
 
-// How the companion stands: its size, its lean and its place. Its top stays at the plant's height times `field.companion.heightRatio`.
-export function companionMatrix(out: THREE.Matrix4 = new THREE.Matrix4(), place: { x: number; z: number } = companionPlace()): THREE.Matrix4 {
+// How the companion stands: its size, its lean and its place. Its top stays at the plant's height times `ratio`, which is `field.companion.heightRatio` once it is grown.
+export function companionMatrix(out: THREE.Matrix4 = new THREE.Matrix4(), place: { x: number; z: number } = companionPlace(), ratio: number = full): THREE.Matrix4 {
   const slope = Math.hypot(COMPANION_LEAN.x, COMPANION_LEAN.z)
   out.identity()
   if (slope > 0) {
@@ -27,14 +35,15 @@ export function companionMatrix(out: THREE.Matrix4 = new THREE.Matrix4(), place:
   return out.setPosition(place.x, 0, place.z)
 }
 
-const matrix = companionMatrix()
+const matrix = new THREE.Matrix4()
 const point = new THREE.Vector3()
 const STEM_STEPS = 10
 const LEAF_STEPS = [0.3, 0.65, 1]
 
 // Whether any part of the companion could be in the frame. It errs on the side of yes: every piece is taken as a ball that holds it with room to spare.
 // tanX and tanY are half the frame's width and height at one meter. near is the nearest depth the lens draws.
-export function companionInView(time: number, inputs: PlantInputs, pose: CameraPose, tanX: number, tanY: number, near: number): boolean {
+export function companionInView(time: number, inputs: PlantInputs, pose: CameraPose, tanX: number, tanY: number, near: number, ratio: number = full): boolean {
+  companionMatrix(matrix, companionPlace(), ratio)
   const size = matrix.getMaxScaleOnAxis()
   const slackX = Math.hypot(1, tanX)
   const slackY = Math.hypot(1, tanY)

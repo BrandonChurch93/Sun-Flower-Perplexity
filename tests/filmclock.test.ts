@@ -79,7 +79,32 @@ describe('the film clock', () => {
     expect(flashAt(hitTime(33))).toBe(1)
     expect(flashAt(hitTime(37))).toBe(1)
     expect(rainAtBar(barAt((hitFrame(33) - 1) / fps))).toBe(0)
-    expect(rainAtBar(barAt((hitFrame(33) + 8) / fps))).toBe(1)
+    expect(rainAtBar(barAt((hitFrame(33) + 3) / fps))).toBeGreaterThan(0)
+    expect(rainAtBar(barAt(hitTime(34)))).toBe(1)
+  })
+
+  it('lets the plant grow only when the frost and the rain have all but gone', () => {
+    const m = blankMoment()
+    const grown = (from: number, to: number): number => heightAt(tauAt(to / fps)) / heightAt(tauAt(from / fps)) - 1
+    let frostFrom = -1
+    let frostTo = -1
+    let rainFrom = -1
+    let rainTo = -1
+    for (const f of frames) {
+      momentAt(f / fps, m)
+      if (m.dials.frost >= 0.2) {
+        if (frostFrom < 0) frostFrom = f
+        frostTo = f
+      }
+      if (m.dials.rain >= 0.2) {
+        if (rainFrom < 0) rainFrom = f
+        rainTo = f
+      }
+    }
+    expect(grown(frostFrom, frostTo)).toBeLessThan(0.01)
+    expect(grown(rainFrom, rainTo)).toBeLessThan(0.01)
+    expect((frostTo - frostFrom) / fps).toBeGreaterThan(13)
+    expect((rainTo - rainFrom) / fps).toBeGreaterThan(13)
   })
 
   it('runs in real time in the holds and fastest in the climbs', () => {
