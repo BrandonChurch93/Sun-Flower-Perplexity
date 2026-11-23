@@ -34,6 +34,7 @@ class Place implements Part {
     airUniforms.uFogShare.value = 1 - (1 - RAIN_FOG_SHARE) * d.rain
     airUniforms.uFogNear.value = clamp(1.25 * d.fog + d.rain)
     airUniforms.uFogLow.value = 0.9 * clamp(d.fog)
+    airUniforms.uVeil.value = clamp(d.fog)
     airUniforms.uThrough.value = 0.12 + 0.88 * smoothstep(-5, -1, now.sunElevationDeg)
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet

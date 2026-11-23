@@ -36,7 +36,7 @@ out vec3 vUp;
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
 const float MATT = 0.15;
-const float THROUGH = 0.55;
+const float THROUGH = 4.0;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;
@@ -44,6 +44,8 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 // Of the crystals that melt, the share whose water is seen as a bead, and of those the share that take the water of their neighbors, grow heavy and fall.
 const float BEAD_SHARE = 0.34;
 const float HEAVY_SHARE = 0.07;
+// A very few of the heavy ones are drops large enough to watch: one swells at the edge of a leaf, lets go and is gone.
+const float DROP_SHARE = 0.0012;
 // And the share that stay where they formed, as the dew of the morning: many fine and a few big.
 const float STAY_SHARE = 0.45;
 const float BIG_SHARE = 0.08;
@@ -166,12 +168,13 @@ void main() {
   float pick = hash(own, 19.0) / BEAD_SHARE;
   if (needle == 4 && melt > 0.0 && pick < 1.0 && a.w > 0.0) {
     bool heavy = pick < HEAVY_SHARE;
+    bool drop = pick < DROP_SHARE;
     bool stays = pick > 1.0 - STAY_SHARE;
     float h21 = hash(own, 21.0);
     float fed = smoothstep(turn6 + 0.2, turn6 + 0.45, thaw);
     float lets = 0.3 + 0.6 * turn6 + 0.1 * hash(own, 20.0);
     float fallen = heavy && thaw > lets ? (thaw - lets) * THAW_S + uShutter * ${SHUTTER_SECONDS.toFixed(6)} : 0.0;
-    float radius = heavy ? (0.00055 + 0.0004 * h21) * (0.55 + 0.45 * fed) : stays ? (hash(own, 25.0) < BIG_SHARE ? 0.0005 + 0.0004 * h21 : 0.00014 + 0.0002 * h21) : (0.0002 + 0.00028 * h21) * (1.0 - fed);
+    float radius = heavy ? (drop ? (0.0015 + 0.0005 * h21) * (0.4 + 0.6 * smoothstep(lets - 0.2, lets, thaw)) : (0.00055 + 0.0004 * h21) * (0.55 + 0.45 * fed)) : stays ? (hash(own, 25.0) < BIG_SHARE ? 0.0005 + 0.0004 * h21 : 0.00014 + 0.0002 * h21) : (0.0002 + 0.00028 * h21) * (1.0 - fed);
     // A wearer that goes on wearing its set in the dew keeps the beads that stay. One that puts the set away with the frost loses them as the frost goes.
     radius *= plantSize() * melt * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
     float hangs = heavy ? smoothstep(lets - 0.2, lets, thaw) : 0.0;
