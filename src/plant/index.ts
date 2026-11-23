@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { Assets } from '../core/assets.ts'
 import { declareStandIn } from '../core/standins.ts'
-import type { Surface } from '../core/shading.ts'
+import { shared, type Surface } from '../core/shading.ts'
 import type { Caster } from '../core/shadow.ts'
 import { headOpen, paleness, usePlant, type Place, type PlantInputs } from './growth.ts'
 import { real as hairsReal } from './hairs/index.ts'
@@ -189,6 +189,7 @@ export class Plant {
   private readonly n: THREE.BufferAttribute
   private readonly hide: number
   private on = true
+  private readonly stands = { held: 0 }
   private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) } }
   // What the shape was last filled from: while none of it changes, the shape stands as it is with the graphics card.
   private readonly filled = new Float64Array(SIGNED).fill(NaN)
@@ -204,7 +205,7 @@ export class Plant {
     this.detail = o.detail ?? 'hero'
     const places = o.places ?? null
     this.at = places ? null : (o.at ?? { x: 0, z: 0 })
-    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own }
+    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own, stands: this.stands }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     for (const slot of SLOTS) {
@@ -277,16 +278,25 @@ export class Plant {
     sign(open, asked, 2)
     sign(close, asked, 2 + SIGNED_EACH)
     filling.held = held
+    this.stands.held = Math.min(held, feltClose.held ?? 0)
     asked[SIGNED - 3] = stateUniforms.uPlantFrost.value
     asked[SIGNED - 2] = wetFelt()
-    asked[SIGNED - 1] = stateUniforms.uPlantDew.value > 0 ? 1 : 0
+    asked[SIGNED - 1] = stateUniforms.uPlantDew.value
     let same = true
     for (let i = 0; i < SIGNED; i++) if (asked[i] !== this.filled[i]) same = false
-    if (same) {
+    // Only a plant whose clock stands is left as it is: any other is laid for this frame, so a frame never depends on the one drawn before it.
+    if (same && this.stands.held >= 1) {
       usePlant(0)
       return
     }
     this.filled.set(asked)
+    // What is laid while the clock stands is laid as of the instant it stopped and for the wet in steps, so it is the same whichever frame of the hold it is laid on.
+    const realNow = shared.uReal.value
+    const wetNow = stateUniforms.uPlantWet.value
+    if (this.stands.held >= 1 && feltOpen.stood !== undefined) {
+      shared.uReal.value = feltOpen.stood
+      stateUniforms.uPlantWet.value = wetFelt()
+    }
     if (this.hide !== ALL) {
       buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
       if (this.b) buildStandIn(timeClose, close, this.b.array as Float32Array, null, this.shape, this.hide)
@@ -314,6 +324,8 @@ export class Plant {
       for (const part of live) part.fill(1, second)
       for (const part of live) part.finish(timeOpen, open)
     }
+    shared.uReal.value = realNow
+    stateUniforms.uPlantWet.value = wetNow
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)
     this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)

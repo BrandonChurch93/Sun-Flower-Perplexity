@@ -77,6 +77,12 @@ function feel(seconds: number, d: Dials): Feel {
 // In a hold the hour hardly moves and nothing grows: the plant keeps the pose of the hold's first instant, the air moves it where it is drawn, and it catches up with the hour as its clock starts again.
 const stood: (Feel | null)[] = HOLDS.map(() => null)
 
+// The film second at which the plant's clock stopped, inside a hold.
+function stoodAt(seconds: number): number | undefined {
+  for (const [from, to] of HOLDS) if (seconds >= from && seconds <= to) return from
+  return undefined
+}
+
 function standing(seconds: number): Feel | null {
   for (let i = 0; i < HOLDS.length; i++) {
     const from = HOLDS[i][0]
@@ -113,5 +119,6 @@ export function plantInputsOf(m: Moment): PlantInputs {
     gust: storm,
     steady: true,
     held,
+    stood: stoodAt(m.t),
   }
 }
