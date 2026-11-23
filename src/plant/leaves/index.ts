@@ -6,6 +6,7 @@ import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
+import { createBristles } from '../bristles/index.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
@@ -596,6 +597,8 @@ export function create(options: PartOptions): PlantPart {
     for (let k = leafAt; k < leaves.length; k++) hairsUpTo[k] = hairs.count
   }
   const crystals = hero ? createCrystals(options, crystalSlots, 'leaf crystals') : null
+  // The bristles of the stalks and the roots of the ice round them are one list.
+  const bristles = crystals ? createBristles(options, rimeLeaves * STALK_ROOTS, 'stalk bristles') : null
   if (crystals) {
     // Where each crystal stands along its blade: on the edge from just over 0 at the base to 1 at the tip, on the face or a vein from -1 at the base to -2 at the tip, and -3 round the stalk.
     const place = crystals.place()
@@ -1199,7 +1202,16 @@ export function create(options: PartOptions): PlantPart {
       if (crystals && frosted) {
         const cr = crystals.root(slot)
         const cl = crystals.lean(slot)
+        const ca = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+        const sn = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1
         let q = crystalAt[h] * 4
+        if (ca) {
+          for (let c = crystalAt[h]; c < crystalAt[h + 1]; c++) {
+            ca[c * 3] = sx / sn
+            ca[c * 3 + 1] = sy / sn
+            ca[c * 3 + 2] = sz / sn
+          }
+        }
         if (hair.kind === 0) {
           for (let c = 0; c < FRINGE; c++, q += 4) {
             const r1 = c === 0 ? hair.r1 : hash01(seed, 9000 + h, c)
@@ -1246,6 +1258,8 @@ export function create(options: PartOptions): PlantPart {
     const cr = crystals.root(slot)
     const cl = crystals.lean(slot)
     const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+    const br = bristles ? bristles.root(slot) : null
+    const bl = bristles ? bristles.lean(slot) : null
     const out = slots[slot]
     const tube = tubeSlots[slot]
     for (let li = 0, q = 0; li < rimeLeaves; li++) {
@@ -1278,7 +1292,14 @@ export function create(options: PartOptions): PlantPart {
           sx = tube[v1] - tube[v0]
           sy = tube[v1 + 1] - tube[v0 + 1]
           sz = tube[v1 + 2] - tube[v0 + 2]
-          long = lerp(RIME_STALK_M[0], RIME_STALK_M[1], rimeOwn[q] * rimeOwn[q]) * scale
+          // A bristle stands out and a little toward the blade, and the young stalks wear the longest for their size.
+          const dn = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1
+          const sn = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1
+          const up = 0.1 + 0.35 * ((rimeOwn[q] * 7.31) % 1)
+          dx = dx / dn + (sx / sn) * up
+          dy = dy / dn + (sy / sn) * up
+          dz = dz / dn + (sz / sn) * up
+          long = lerp(RIME_STALK_M[0], RIME_STALK_M[1], Math.max(rimeOwn[q] * rimeOwn[q], 0.5 * (1 - smoothstep(0.03, 0.07, size)))) * clamp(size / 0.025, 0.3, 1)
         } else if (stands) {
           const a = Math.floor(rimeA[q])
           const t = rimeA[q] - a
@@ -1336,6 +1357,17 @@ export function create(options: PartOptions): PlantPart {
         cl[o + 1] = stands ? dy / dl : 0
         cl[o + 2] = stands ? dz / dl : 0
         cl[o + 3] = rimeOwn[q]
+        if (br && bl && i >= RIME_EACH - STALK_ROOTS) {
+          const b = (li * STALK_ROOTS + i - (RIME_EACH - STALK_ROOTS)) * 4
+          br[b] = px
+          br[b + 1] = py
+          br[b + 2] = pz
+          br[b + 3] = cr[o + 3]
+          bl[b] = cl[o]
+          bl[b + 1] = cl[o + 1]
+          bl[b + 2] = cl[o + 2]
+          bl[b + 3] = rimeOwn[q]
+        }
         if (run) {
           const w = q * 3
           run[w] = sl > 0 ? sx / sl : 0
@@ -1355,6 +1387,7 @@ export function create(options: PartOptions): PlantPart {
   if (hairs) meshes.push(...hairs.meshes)
   if (beads) meshes.push(...beads.meshes)
   if (crystals) meshes.push(...crystals.meshes)
+  if (bristles) meshes.push(...bristles.meshes)
 
   const settle = (share: number): void => {
     const to = share > 0 ? 1 : 0
@@ -1424,6 +1457,7 @@ export function create(options: PartOptions): PlantPart {
       hairs?.finish(shown)
       beads?.finish()
       crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystalAt[shown] : 0)
+      bristles?.finish(stateUniforms.uPlantFrost.value > 0 ? bristles.count : 0)
       settle(0)
     },
     settle,
