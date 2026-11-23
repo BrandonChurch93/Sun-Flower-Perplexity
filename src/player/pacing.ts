@@ -3,7 +3,7 @@ import type { Made } from '../v2/counter.ts'
 
 export const GAP_MS = 50
 
-export type RunKind = 'recording' | 'check' | 'play'
+export type RunKind = 'recording' | 'check' | 'play' | 'measure'
 
 export interface Shown {
   frame: number
@@ -40,6 +40,13 @@ export function asked(m: Made): Asked {
   return { made: m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.vertexArrays + m.uploads, writes: m.updates, writeBytes: m.updateBytes }
 }
 
+// One second of film as it went in the run: the frames due in it, those shown and skipped, and what a shown frame cost. `parts` are its dearest owners, mean ms.
+export interface Stretch { from: number; to: number; due: number; shown: number; skipped: number; longestGapMs: number; drawMs: number; scriptMs: number; worstScriptMs: number; worstScriptAtFrame: number; writeMb: number; parts: [string, number][] }
+
+export const STRETCH_FRAMES = config.film.fps
+const WORST_STRETCHES = 3
+const SHOWN_RUNS = 30
+
 // `atEnd` marks the time the last frame drawn stood in place of the frames that were due after it.
 export interface Gap { frame: number; film: number; gapMs: number; skipped: number; atEnd?: boolean }
 
@@ -63,12 +70,16 @@ export interface Report extends RunFacts {
   frames: { due: number; drawn: number; skipped: number; late: number }
   seconds: { film: number; audio: number }
   gapMs: { mean: number; p50: number; p99: number; longest: number; longestAtFilm: number }
-  drawMs: { mean: number; p99: number; longest: number }
+  drawMs: { mean: number; p99: number; longest: number; longestAtFrame: number }
   // Of that, the page's own work on the processor, and the wait for the graphics card.
-  scriptMs: { mean: number; p99: number; longest: number; longestAtFilm: number }
+  scriptMs: { mean: number; p99: number; longest: number; longestAtFilm: number; longestAtFrame: number }
   cardMs: { mean: number; p99: number; longest: number }
-  // The script time by part of the film, mean of the frames shown.
+  // The script time by part of the film, mean of the frames shown, and each part's dearest frame.
   partsMs: Cost
+  partsWorst: Record<string, { ms: number; frame: number }>
+  // The frames that were due and never shown, as runs of film frames, and the three seconds of film that went worst.
+  skippedRuns: { from: number; to: number }[]
+  stretches: Stretch[]
   // The audio clock minus the film second on screen, when each frame was drawn. Above one frame the picture is late.
   // `pickedMs`: the audio clock minus the frame's own second when the frame was chosen. `behindMs`: the same when it had been drawn.
   pickedMs: { mean: number; largest: number }
@@ -76,7 +87,7 @@ export interface Report extends RunFacts {
   gaps: Gap[]
   made: Made | null
   // Writes into existing storage for one frame, and the film seconds of the frames that made something new.
-  writes: { mean: number; largest: number; mbMean: number; mbLargest: number }
+  writes: { mean: number; largest: number; mbMean: number; mbLargest: number; mbLargestAtFrame: number; mbTotal: number }
   madeAtFilm: number[]
   holds: boolean
   verdict: string
@@ -102,6 +113,9 @@ export class Pacing {
   private lastPosition = -1
   private readonly gaps: Gap[] = []
   private readonly parts: Cost = {}
+  private readonly worst: Record<string, { ms: number; frame: number }> = {}
+  private readonly costs: Cost[] = []
+  private readonly runs: { from: number; to: number }[] = []
 
   // `position` counts the frames of the run in the order they are due, so the frames between two that were shown are the ones skipped.
   // `atMs` is the page's clock at the animation frame that showed it, used only to measure the gaps.
@@ -111,9 +125,26 @@ export class Pacing {
     const skipped = first ? position : Math.max(0, position - this.lastPosition - 1)
     if (!first && gapMs > GAP_MS) this.gaps.push({ frame, film: frame / config.film.fps, gapMs: round(gapMs), skipped })
     this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs), scriptMs: round(cost.script ?? 0), cardMs: round(cost.wait ?? 0), late: (audioDrawn - due) * 1000 > FRAME_MS, atMs: round(atMs, 1), made: card.made, writes: card.writes, writeMb: round(card.writeBytes / 1048576) })
-    for (const key of Object.keys(cost)) if (key !== 'script' && key !== 'wait') this.parts[key] = (this.parts[key] ?? 0) + cost[key]
+    if (skipped > 0) this.runs.push({ from: frame - skipped, to: frame - 1 })
+    const kept: Cost = {}
+    for (const key of Object.keys(cost)) {
+      if (key === 'script' || key === 'wait') continue
+      kept[key] = cost[key]
+      this.parts[key] = (this.parts[key] ?? 0) + cost[key]
+      const w = this.worst[key]
+      if (!w) this.worst[key] = { ms: round(cost[key]), frame }
+      else if (cost[key] > w.ms) {
+        w.ms = round(cost[key])
+        w.frame = frame
+      }
+    }
+    this.costs.push(kept)
     this.lastAt = atMs
     this.lastPosition = position
+  }
+
+  private stretches(runs: { from: number; to: number }[]): Stretch[] {
+    return worstStretches(this.shown, this.costs, runs)
   }
 
   // `planned` is the number of frames the whole run would show. A run that was stopped is measured up to the frame it stopped on.
@@ -124,7 +155,9 @@ export class Pacing {
     const draws = shown.map((s) => s.drawMs).sort((a, b) => a - b)
     const scripts = shown.map((s) => s.scriptMs).sort((a, b) => a - b)
     const cards = shown.map((s) => s.cardMs).sort((a, b) => a - b)
-    const dearest = shown.reduce((a, s) => (s.scriptMs > a.scriptMs ? s : a), shown[0] ?? { scriptMs: 0, film: 0 })
+    const dearest = shown.reduce((a, s) => (s.scriptMs > a.scriptMs ? s : a), shown[0] ?? { scriptMs: 0, film: 0, frame: -1 })
+    const slowest = shown.reduce((a, s) => (s.drawMs > a.drawMs ? s : a), shown[0] ?? { drawMs: 0, frame: -1 })
+    const heaviest = shown.reduce((a, s) => (s.writeMb > a.writeMb ? s : a), shown[0] ?? { writeMb: 0, frame: -1 })
     const partsMs: Cost = {}
     for (const key of Object.keys(this.parts)) partsMs[key] = round(this.parts[key] / Math.max(1, shown.length))
     const behind = shown.map((s) => (s.audioDrawn - s.due) * 1000)
@@ -148,6 +181,7 @@ export class Pacing {
     const after = complete && drawn > 0 ? planned - 1 - this.lastPosition : 0
     const closing = ((after + 1) * 1000) / config.film.fps
     const all = after > 0 ? [...this.gaps, { frame: shown[drawn - 1].frame, film: shown[drawn - 1].film, gapMs: round(closing), skipped: after, atEnd: true }] : this.gaps
+    const skippedRuns = after > 0 ? [...this.runs, { from: shown[drawn - 1].frame + 1, to: shown[drawn - 1].frame + after }] : this.runs
     if (after > 0) {
       gaps.push(closing)
       gaps.sort((a, b) => a - b)
@@ -179,10 +213,13 @@ export class Pacing {
       frames: { due, drawn, skipped, late: shown.filter((s) => s.late).length },
       seconds: { film: round(film, 3), audio: round(drawn ? shown[drawn - 1].audio - shown[0].audio : 0, 3) },
       gapMs: { mean: round(mean(gaps)), p50: round(percentile(gaps, 0.5)), p99: round(percentile(gaps, 0.99)), longest: round(longest), longestAtFilm: round(longestAt, 3) },
-      drawMs: { mean: round(mean(draws)), p99: round(percentile(draws, 0.99)), longest: round(draws.length ? draws[draws.length - 1] : 0) },
-      scriptMs: { mean: round(mean(scripts)), p99: round(percentile(scripts, 0.99)), longest: round(scripts.length ? scripts[scripts.length - 1] : 0), longestAtFilm: dearest.film },
+      drawMs: { mean: round(mean(draws)), p99: round(percentile(draws, 0.99)), longest: round(draws.length ? draws[draws.length - 1] : 0), longestAtFrame: slowest.frame },
+      scriptMs: { mean: round(mean(scripts)), p99: round(percentile(scripts, 0.99)), longest: round(scripts.length ? scripts[scripts.length - 1] : 0), longestAtFilm: dearest.film, longestAtFrame: dearest.frame },
       cardMs: { mean: round(mean(cards)), p99: round(percentile(cards, 0.99)), longest: round(cards.length ? cards[cards.length - 1] : 0) },
       partsMs,
+      partsWorst: { ...this.worst },
+      skippedRuns,
+      stretches: this.stretches(skippedRuns),
       pickedMs: { mean: round(mean(picked)), largest: round(picked.reduce((a, b) => Math.max(a, Math.abs(b)), 0)) },
       behindMs: { mean: round(mean(behind)), largest: round(largest), largestAtFilm: round(largestAt, 3), first: round(behind[0] ?? 0), last: round(behind[behind.length - 1] ?? 0) },
       gaps: all,
@@ -191,7 +228,9 @@ export class Pacing {
         mean: round(mean(shown.map((s) => s.writes)), 1),
         largest: shown.reduce((a, s) => Math.max(a, s.writes), 0),
         mbMean: round(mean(shown.map((s) => s.writeMb))),
-        mbLargest: shown.reduce((a, s) => Math.max(a, s.writeMb), 0),
+        mbLargest: heaviest.writeMb,
+        mbLargestAtFrame: heaviest.frame,
+        mbTotal: round(shown.reduce((a, s) => a + s.writeMb, 0)),
       },
       madeAtFilm: shown.filter((s) => s.made > 0).map((s) => s.film),
       holds,
@@ -201,15 +240,51 @@ export class Pacing {
   }
 }
 
+// The seconds of film that went worst: most frames skipped, then the longest gap, then the dearest to draw.
+function worstStretches(shown: Shown[], costs: Cost[], runs: { from: number; to: number }[]): Stretch[] {
+  interface Sum extends Stretch { draw: number; script: number; write: number; cost: Cost }
+  const byWindow = new Map<number, Sum>()
+  const at = (frame: number): Sum => {
+    const key = Math.floor(frame / STRETCH_FRAMES)
+    let w = byWindow.get(key)
+    if (!w) byWindow.set(key, (w = { from: key * STRETCH_FRAMES, to: key * STRETCH_FRAMES + STRETCH_FRAMES - 1, due: 0, shown: 0, skipped: 0, longestGapMs: 0, drawMs: 0, scriptMs: 0, worstScriptMs: 0, worstScriptAtFrame: -1, writeMb: 0, parts: [], draw: 0, script: 0, write: 0, cost: {} }))
+    return w
+  }
+  shown.forEach((s, i) => {
+    const w = at(s.frame)
+    w.shown++
+    w.draw += s.drawMs
+    w.script += s.scriptMs
+    w.write += s.writeMb
+    if (i > 0 && s.gapMs > w.longestGapMs) w.longestGapMs = s.gapMs
+    if (s.scriptMs > w.worstScriptMs) {
+      w.worstScriptMs = s.scriptMs
+      w.worstScriptAtFrame = s.frame
+    }
+    const cost = costs[i] ?? {}
+    for (const key of Object.keys(cost)) w.cost[key] = (w.cost[key] ?? 0) + cost[key]
+  })
+  for (const run of runs) for (let f = run.from; f <= run.to; f++) at(f).skipped++
+  const list = [...byWindow.values()].filter((w) => w.shown > 0 || w.skipped > 0)
+  list.sort((a, b) => b.skipped - a.skipped || b.longestGapMs - a.longestGapMs || b.draw / Math.max(1, b.shown) - a.draw / Math.max(1, a.shown))
+  return list.slice(0, WORST_STRETCHES).map((w) => {
+    const n = Math.max(1, w.shown)
+    const parts = Object.entries(w.cost)
+      .map(([name, v]): [string, number] => [name, round(v / n)])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+    return { from: w.from, to: w.to, due: w.shown + w.skipped, shown: w.shown, skipped: w.skipped, longestGapMs: round(w.longestGapMs), drawMs: round(w.draw / n), scriptMs: round(w.script / n), worstScriptMs: w.worstScriptMs, worstScriptAtFrame: w.worstScriptAtFrame, writeMb: round(w.write / n), parts }
+  })
+}
+
 // The report as a few lines of plain text, to paste into a message.
 export function reportText(report: Report, machine: string[] = []): string {
   const f = report.frames
   const things = report.made ? asked(report.made).made : null
-  const parts = Object.entries(report.partsMs)
-    .filter(([name, v]) => name !== 'script' && name !== 'wait' && typeof v === 'number' && v >= 0.05)
+  const owners = Object.entries(report.partsMs)
+    .filter(([name, v]) => name !== 'script' && name !== 'wait' && typeof v === 'number' && (v >= 0.05 || (report.partsWorst[name]?.ms ?? 0) >= 1))
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name, v]) => `${name} ${v.toFixed(1)}`)
+    .map(([name, v]) => `  ${name.padEnd(10)} mean ${v.toFixed(1).padStart(6)}   worst ${(report.partsWorst[name]?.ms ?? 0).toFixed(1).padStart(7)} at frame ${report.partsWorst[name]?.frame ?? -1}`)
   const faults: string[] = []
   if (f.skipped > 0) faults.push(`${f.skipped} ${f.skipped === 1 ? 'frame' : 'frames'} skipped`)
   if (f.late > 0) faults.push(`${f.late} shown late`)
@@ -217,19 +292,31 @@ export function reportText(report: Report, machine: string[] = []): string {
   if (things !== null && things > 0) faults.push(`${things} ${things === 1 ? 'thing' : 'things'} made on the graphics card`)
   const stopped = report.complete ? '' : `, stopped at ${(report.stoppedAtFilm ?? 0).toFixed(1)} s`
   const first = f.drawn === 0 ? 'Nothing measured: no frame was shown' : faults.length === 0 ? `Smooth: ${f.drawn} of ${f.due} frames shown, none late${stopped}` : `Not smooth: ${faults.join(', ')}${stopped}`
+  const rate = `${config.film.fps} frames a second`
+  const held = f.drawn === 0 ? `${rate}: nothing measured` : report.holds ? `${rate} held: YES` : `${rate} held: NO`
+  const runs = report.skippedRuns
+  const named = runs.slice(0, SHOWN_RUNS).map((r) => (r.from === r.to ? `${r.from}` : `${r.from} to ${r.to}`))
+  const stretches = report.stretches.map((w) => `  frames ${w.from} to ${w.to}: ${w.shown} of ${w.due} shown, ${w.skipped} skipped, longest gap ${w.longestGapMs.toFixed(0)} ms, frame time mean ${w.drawMs.toFixed(1)} ms, script mean ${w.scriptMs.toFixed(1)} ms and worst ${w.worstScriptMs.toFixed(1)} ms at frame ${w.worstScriptAtFrame}, ${w.writeMb.toFixed(2)} MB written a frame${w.parts.length ? ` (${w.parts.map(([name, v]) => `${name} ${v.toFixed(1)}`).join(', ')})` : ''}`)
   return [
     first,
     `${config.name}, pacing report, ${report.at}`,
-    `run: ${report.kind}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
+    held,
+    report.verdict,
+    `run: ${report.kind}, ${report.format}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
+    ...machine,
     `frames: ${f.due} due, ${f.drawn} shown, ${f.skipped} skipped, ${f.late} shown late`,
     `time: ${report.seconds.film.toFixed(3)} s of film in ${report.seconds.audio.toFixed(3)} s of the audio clock`,
-    `script a frame: mean ${report.scriptMs.mean} ms, 99th ${report.scriptMs.p99} ms, worst ${report.scriptMs.longest} ms at ${report.scriptMs.longestAtFilm} s`,
-    `wait for the picture a frame: mean ${report.cardMs.mean} ms, 99th ${report.cardMs.p99} ms, worst ${report.cardMs.longest} ms`,
+    `frame time: mean ${report.drawMs.mean} ms, 99th ${report.drawMs.p99} ms, worst ${report.drawMs.longest} ms at frame ${report.drawMs.longestAtFrame}`,
+    `  of it script: mean ${report.scriptMs.mean} ms, 99th ${report.scriptMs.p99} ms, worst ${report.scriptMs.longest} ms at frame ${report.scriptMs.longestAtFrame}`,
+    `  of it the wait for the picture: mean ${report.cardMs.mean} ms, 99th ${report.cardMs.p99} ms, worst ${report.cardMs.longest} ms`,
     `shown frame to shown frame: mean ${report.gapMs.mean} ms, 99th ${report.gapMs.p99} ms, longest ${report.gapMs.longest} ms at ${report.gapMs.longestAtFilm} s, ${report.gaps.length} over ${GAP_MS} ms`,
-    `script by part, mean ms: ${parts.length ? parts.join(', ') : 'not measured'}`,
+    `written into storage that exists: mean ${report.writes.mbMean.toFixed(2)} MB a frame in ${report.writes.mean.toFixed(0)} writes, worst ${report.writes.mbLargest.toFixed(2)} MB at frame ${report.writes.mbLargestAtFrame}, ${report.writes.mbTotal.toFixed(0)} MB in all`,
     `made after loading: ${things === null ? 'not counted' : things}${report.madeAtFilm.length ? `, first at ${report.madeAtFilm[0]} s` : ''}`,
-    ...machine,
-    report.verdict,
+    `script by owner, ms a frame:${owners.length ? '' : ' not measured'}`,
+    ...owners,
+    `skipped: ${f.skipped === 0 ? 'none' : `${f.skipped} ${f.skipped === 1 ? 'frame' : 'frames'} in ${runs.length} ${runs.length === 1 ? 'run' : 'runs'}, frames ${named.join(', ')}${runs.length > SHOWN_RUNS ? `, and ${runs.length - SHOWN_RUNS} more runs in the file` : ''}`}`,
+    `the ${stretches.length === 1 ? 'worst second' : `${stretches.length} worst seconds`} of film:`,
+    ...stretches,
   ].join('\n')
 }
 

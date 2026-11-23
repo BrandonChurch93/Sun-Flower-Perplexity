@@ -3,9 +3,11 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { reportText, type Report, type RunFacts } from '../player/pacing.ts'
+import { reportFile, reportName, reportText, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
-import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
+import { check, measure, pictureSize, record, type Deck, type Measured } from '../player/session.ts'
+import { createSheet } from '../player/sheet.ts'
+import { stateRun, stateText, type StateReport } from '../player/state.ts'
 import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
@@ -32,6 +34,10 @@ export interface PlayerState {
   range(first: number, last: number): Promise<Report | null>
   // Draws every frame from `first` to `last` in order through the same loop, one at each animation frame, with no clock to keep. Only for measuring what a frame costs.
   every(first: number, last: number): Promise<Report | null>
+  // Sets the film to every frame from `first` to `last` in a row and draws nothing: what the page's own work costs, by owner.
+  script(first: number, last: number): Promise<StateReport | null>
+  // The pacing report over `first` to `last`: live play against the clock, then the script alone. The button runs it over the whole film.
+  measure(first: number, last: number): Promise<{ live: Report; script: StateReport | null; text: string } | null>
 }
 
 declare global {
@@ -107,11 +113,11 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let dead = false
   let playing: Playing | null = null
   let until = lastFrame
-  let session: Session | null = null
+  let session: { stop(): void } | null = null
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every, script, measure: (first, last) => startMeasure(clampFrame(first), clampFrame(last)) }
   window.player = state
   window.showcase.pacing = () => playing?.soFar() ?? state.report
 
@@ -166,20 +172,33 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     },
     pacing: () => {
       const report = playing?.soFar() ?? state.report
-      if (!report) return null
-      const canvas = film.stage.canvas
-      let exported: string | null = null
-      try {
-        exported = localStorage.getItem(EXPORT_NOTE)
-      } catch {}
-      return reportText(report, [`picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`, `browser: ${navigator.userAgent}`, `graphics: ${cardName(film.stage.gl)}`, ...(exported ? [exported] : [])])
+      return report ? reportText(report, machine()) : null
     },
   })
+
+  function machine(): string[] {
+    const canvas = film.stage.canvas
+    let exported: string | null = null
+    try {
+      exported = localStorage.getItem(EXPORT_NOTE)
+    } catch {}
+    return [
+      `picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`,
+      `screen: ${window.innerWidth} x ${window.innerHeight} at ${window.devicePixelRatio}, ${navigator.hardwareConcurrency} processor threads`,
+      `browser: ${navigator.userAgent}`,
+      `graphics: ${cardName(film.stage.gl)}`,
+      `loading: ${window.loadingLog?.readyMs ? `ready ${(window.loadingLog.readyMs / 1000).toFixed(1)} s after the page opened` : 'not measured'}`,
+      ...(exported ? [exported] : []),
+    ]
+  }
+
+  const sheet = createSheet(host)
 
   const desk = createDesk(host, { quality, av, marks }, {
     track: (file) => void pick(file),
     record: () => void startRecord(),
     check: () => void startCheck(),
+    measure: () => void startMeasure(0, lastFrame),
     quality: (q) => void setQuality(q, false),
     checkLow: () => void setQuality('low', true),
     av: (ms) => {
@@ -498,6 +517,22 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     }
   }
 
+  async function script(first: number, last: number): Promise<StateReport | null> {
+    if (activity !== 'ready' || dead) return null
+    become('check', 'Measuring')
+    try {
+      await drawing
+      filmView()
+      return await stateRun(film, clampFrame(first), clampFrame(last), tier)
+    } catch (error) {
+      fail(error)
+      return null
+    } finally {
+      become('ready', 'Ready')
+      touch()
+    }
+  }
+
   function togglePlay(): void {
     if (activity === 'playing') playing?.stop()
     else void startPlay()
@@ -514,8 +549,9 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         filmView()
         return clock
       })
-      session = record(deck, settled, marks)
-      show(await session.finished)
+      const run = record(deck, settled, marks)
+      session = run
+      show(await run.finished)
     } catch (error) {
       note.textContent = `The recording did not start. ${error instanceof Error ? error.message : String(error)}`
     } finally {
@@ -534,8 +570,9 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       const clock = await clockFor()
       await drawing
       filmView()
-      session = check(deck, clock)
-      const report = await session.finished
+      const run = check(deck, clock)
+      session = run
+      const report = await run.finished
       show(report, advise(report, quality))
     } catch (error) {
       note.textContent = `The check did not run. ${error instanceof Error ? error.message : String(error)}`
@@ -544,6 +581,36 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       become('ready', 'Ready')
       touch()
     }
+  }
+
+  // The pacing report: one run, one page of text to copy.
+  async function startMeasure(first: number, last: number): Promise<{ live: Report; script: StateReport | null; text: string } | null> {
+    if (activity !== 'ready' || dead) return null
+    become('check', 'Measuring: the film plays once without sound')
+    menu.toggle(false)
+    sheet.close()
+    let measured: Measured | null = null
+    try {
+      const clock = await clockFor()
+      await drawing
+      filmView()
+      const run = measure(deck, clock, first, Math.max(first, last), (text) => desk.status(text))
+      session = run
+      measured = await run.finished
+    } catch (error) {
+      note.textContent = `The pacing report did not run. ${error instanceof Error ? error.message : String(error)}`
+    } finally {
+      session = null
+      become('ready', 'Ready')
+      touch()
+    }
+    if (!measured || measured.live.frames.drawn === 0) return null
+    const { live, script } = measured
+    const text = [reportText(live, machine()), '', script ? stateText(script) : 'script alone: not measured, the run was stopped before it'].join('\n')
+    show(live)
+    const whole = new Blob([JSON.stringify({ live, script }, null, 1)], { type: 'application/json' })
+    sheet.show({ verdict: live.verdict, holds: live.holds, text, file: { name: reportName(live), blob: script ? whole : reportFile(live) } })
+    return { live, script, text }
   }
 
   // Another quality is another set of programs: the film is made ready again before anything plays, with the track kept.
@@ -704,6 +771,10 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     const typing = target instanceof HTMLInputElement && (target.type === 'number' || target.type === 'text')
     const inField = typing || target instanceof HTMLSelectElement || (target instanceof HTMLInputElement && target.type === 'radio')
     const onButton = target instanceof HTMLButtonElement || target instanceof HTMLAnchorElement
+    if (sheet.open) {
+      if (event.key === 'Escape') sheet.close()
+      return
+    }
     if (activity === 'recording' || activity === 'check') {
       if (event.key === 'Escape') session?.stop()
       event.preventDefault()
@@ -736,6 +807,11 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       case 'C':
         event.preventDefault()
         void startCheck()
+        break
+      case 'p':
+      case 'P':
+        event.preventDefault()
+        void startMeasure(0, lastFrame)
         break
       case '0':
         event.preventDefault()
