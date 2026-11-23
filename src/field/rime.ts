@@ -81,7 +81,7 @@ export class Rime {
 
   constructor(options: PartOptions, leaves: THREE.BufferGeometry, uniforms: Record<string, THREE.IUniform>) {
     this.geometry = partGeometry(options) as THREE.InstancedBufferGeometry
-    for (const name of ['position', 'uv', 'aLeaf']) this.geometry.setAttribute(name, leaves.getAttribute(name))
+    for (const name of ['position', 'uv', 'aLeaf', 'aFieldNow', 'aFieldWas']) if (leaves.getAttribute(name)) this.geometry.setAttribute(name, leaves.getAttribute(name))
     const surface = makePartSurface(options, {
       name: 'rime of the rows',
       vertex,
