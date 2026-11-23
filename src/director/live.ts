@@ -66,8 +66,8 @@ export function advise(report: Report, quality: Quality): Advice {
   const at = `at ${report.format} and ${quality} quality`
   if (report.holds) return { text: `This machine holds ${fps} frames a second ${at}. Record at ${quality}.`, tryLow: false }
   if (f.skipped === 0) return { text: `This machine drew every frame ${at}, with a longest gap of ${report.gapMs.longest.toFixed(0)} ms where ${GAP_MS} is the limit. It nearly holds ${fps} frames a second.`, tryLow: quality !== 'low' }
-  if (quality !== 'low') return { text: `This machine does not hold ${fps} frames a second ${at}: ${f.skipped} of ${f.due} frames were skipped. Try low.`, tryLow: true }
-  return { text: `This machine does not hold ${fps} frames a second at ${report.format} and low quality either: ${f.skipped} of ${f.due} frames were skipped. A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.`, tryLow: false }
+  if (quality !== 'low') return { text: `This machine does not hold ${fps} frames a second ${at}: ${f.skipped} of ${f.due} frames ${f.skipped === 1 ? 'was' : 'were'} skipped. Try low.`, tryLow: true }
+  return { text: `This machine does not hold ${fps} frames a second at ${report.format} and low quality either: ${f.skipped} of ${f.due} frames ${f.skipped === 1 ? 'was' : 'were'} skipped. A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.`, tryLow: false }
 }
 
 export function startLive(film: Film, options: Options, host: HTMLElement, loading: Loading | null): void {

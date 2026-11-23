@@ -140,11 +140,11 @@ export class Pacing {
     const film = drawn ? shown[drawn - 1].due - shown[0].due : 0
     let verdict: string
     if (drawn === 0) verdict = 'No frame was drawn.'
-    else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s. Until then ${drawn} of ${due} frames were drawn${skipped ? ` and ${skipped} skipped` : ''}.`
+    else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s. Until then ${drawn} of ${due} frames ${drawn === 1 ? 'was' : 'were'} drawn${skipped ? ` and ${skipped} skipped` : ''}.`
     else if (holds) verdict = `Clean. Every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
     else if (skipped === 0) verdict = `Every frame was drawn, with ${all.length} ${all.length === 1 ? 'gap' : 'gaps'} over ${GAP_MS} ms. The longest was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
-    else if (nearly) verdict = `${skipped} of ${due} frames were skipped. The longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
-    else verdict = `This machine did not hold ${config.film.fps} frames a second: ${drawn} of ${due} frames were drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
+    else if (nearly) verdict = `${skipped} of ${due} frames ${skipped === 1 ? 'was' : 'were'} skipped. The longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
+    else verdict = `This machine did not hold ${config.film.fps} frames a second: ${drawn} of ${due} frames ${drawn === 1 ? 'was' : 'were'} drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
     if (madeSomething) verdict += ' The graphics card was asked to make something during the run, which is a defect of the film.'
     return {
       ...facts,
