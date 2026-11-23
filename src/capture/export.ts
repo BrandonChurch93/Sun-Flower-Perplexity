@@ -7,7 +7,7 @@ import type { Options } from '../director/modes.ts'
 import { clampFrame, keys, segments } from '../director/timeline.ts'
 import { EXPORT_NOTE, fileOf, readTrack, trackLine, type Track } from '../player/track.ts'
 import css from './export.module.css'
-import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_NEEDS_SECONDS, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
+import { addSound, checkSound, decodeSound, makeSound, pickSound, soundKinds, type Encoded, SOUND_NEEDS_SECONDS, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
 import { describe as describeBytes, Store, storeId, undescribe, type StoredChunk } from './store.ts'
 
 declare const __ENGINE_HASH__: string
@@ -516,6 +516,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
 
     let failure: unknown = null
     let unkept = ''
+    let soundNote = ''
     let done = 0
     // The frames a next start would take from the store: less than `done` once the store has refused a write.
     let safe = 0
@@ -528,14 +529,21 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     let wanted: string | null | undefined
     let soundCheck: SoundCheck | null = null
     let colour: VideoColorSpaceInit | null = null
-    const target = new ArrayBufferTarget()
-    const muxer = new Muxer({
-      target,
-      video: { codec: choice.container, width: size.width, height: size.height, frameRate: fps },
-      audio: voice ? { codec: voice.kind.container, numberOfChannels: voice.kind.config.numberOfChannels, sampleRate: SOUND_RATE } : undefined,
-      fastStart: 'in-memory',
-      firstTimestampBehavior: 'strict',
-    })
+    // The sound is encoded before the first frame is drawn, so that nothing about it can fail after the drawing.
+    let heard: AudioBuffer | null = null
+    let made: { sound: Encoded; mendedMs: number } | null = null
+    let voiceKind: SoundKind | null = voice?.kind ?? null
+    let soundFault = ''
+    let target = new ArrayBufferTarget()
+    const newMuxer = (): Muxer<ArrayBufferTarget> =>
+      new Muxer({
+        target,
+        video: { codec: choice.container, width: size.width, height: size.height, frameRate: fps },
+        audio: voiceKind ? { codec: voiceKind.container, numberOfChannels: voiceKind.config.numberOfChannels, sampleRate: SOUND_RATE } : undefined,
+        fastStart: 'in-memory',
+        firstTimestampBehavior: 'strict',
+      })
+    let muxer = newMuxer()
     let muxed = 0
     const encoder = new VideoEncoder({
       output: (chunk, meta) => {
@@ -585,6 +593,33 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     let error: string | null = null
     let store: Store | null = null
     try {
+      if (voice) {
+        say('Encoding the track first, before any frame is drawn.')
+        await breathe()
+        try {
+          heard = await decodeSound(voice.bytes)
+        } catch (caught) {
+          soundFault = `This browser could not read the track as sound (${words(caught)}).`
+        }
+        if (heard) {
+          const kinds = [voice.kind, ...(await soundKinds()).filter((k) => k.container !== voice.kind.container)]
+          for (const kind of kinds) {
+            try {
+              made = await makeSound(heard, kind, from / fps, n / fps, Number(new URLSearchParams(location.search).get('soundlate')) || 0)
+              if (kind !== voiceKind) {
+                soundNote = ` ${soundFault} The track is in the file as ${kind.label} instead.`
+                voiceKind = kind
+                target = new ArrayBufferTarget()
+                muxer = newMuxer()
+              }
+              break
+            } catch (caught) {
+              soundFault = `This browser could not encode the track as ${kind.label} (${words(caught)}).`
+            }
+          }
+        }
+        if (!made) throw new Error('sound')
+      }
       store = distrust ? null : await openStore()
       const have = await keptFrames(store)
       const meta = have > 0 && store ? await store.meta() : null
@@ -654,10 +689,8 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       if (lost()) throw new Error('lost')
       if (muxed !== n) throw new Error(`the file holds ${muxed} of ${n} frames`)
       let soundChunks = 0
-      if (voice) {
-        say('Encoding the track.')
-        const heard = await decodeSound(voice.bytes)
-        const made = await makeSound(heard, voice.kind, from / fps, n / fps, Number(new URLSearchParams(location.search).get('soundlate')) || 0)
+      if (made && heard) {
+        say('Putting the track into the file.')
         soundChunks = addSound(muxer, made.sound, n / fps)
         muxer.finalize()
         say('Listening to the file: where its sound sits against the track.')
@@ -669,6 +702,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
           : n / fps < SOUND_NEEDS_SECONDS
             ? `Sound against the track: not measured. The file is shorter than ${SOUND_NEEDS_SECONDS} seconds, too short to measure.`
             : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
+        soundLine.textContent += soundNote
         soundLine.dataset.pass = soundCheck ? (soundCheck.pass ? 'yes' : 'no') : 'unknown'
         soundLine.hidden = false
       } else muxer.finalize()
@@ -684,7 +718,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       await (store ?? (await openStore().catch(() => null)))?.clear()
       distrust = false
       try {
-        const heardLine = !voice ? 'no sound' : soundCheck ? `sound ${voice.kind.label}, ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms against the track, ${soundCheck.pass ? 'PASS' : 'FAIL'}` : `sound ${voice.kind.label}, not measured against the track`
+        const heardLine = !voiceKind ? 'no sound' : soundCheck ? `sound ${voiceKind.label}, ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms against the track, ${soundCheck.pass ? 'PASS' : 'FAIL'}` : `sound ${voiceKind.label}, not measured against the track`
         localStorage.setItem(EXPORT_NOTE, `last export: ${name}, ${n} frames at ${size.width} x ${size.height}, ${choice.codec}, ${heardLine}, ${new Date().toISOString()}`)
       } catch {}
       say(`Done. ${n} ${n === 1 ? 'frame' : 'frames'} are in ${name}, in your downloads folder${soundChunks > 0 ? ', with the track' : ''}.`)
@@ -696,7 +730,8 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         again = true
         distrust = message === 'unreadable'
         error = message === 'changed' ? 'The encoder of this browser is not the one the stopped export used, so the kept frames cannot be joined. Starting again from the first frame.' : 'The kept frames could not be read. Starting again from the first frame.'
-      } else if (message === 'stopped') error = `Stopped at frame ${from + reached}. No file was written.${keeps}`
+      } else if (message === 'sound') error = `${soundFault} No frame was drawn and no file was written. Untick "Put the track into the file" and start again to make the film without sound, or choose the track as another file.`
+      else if (message === 'stopped') error = `Stopped at frame ${from + reached}. No file was written.${keeps}`
       else if (message === 'lost' || lost()) {
         lostTold = true
         error = `The graphics context of this browser was lost at frame ${from + reached}, so the export stopped. No file was written.${keeps} Reload the page and start again.`
@@ -712,7 +747,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       start.textContent = 'Start the export'
       setControls(true)
       start.disabled = !ready || lost()
-      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : safe, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voice ? voice.kind.label : null, soundCheck }
+      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : safe, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voiceKind && made ? voiceKind.label : null, soundCheck }
       await lookForKept()
       if (unkept && error === null) keptCheck.set('ok', unkept)
     }
