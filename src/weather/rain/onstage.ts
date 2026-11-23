@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { config } from '../../config.ts'
 import type { Moment, Part, Quality, View } from '../../v2/api.ts'
 import { AirLayer, HeavyLayer, type LayerSpec } from './air.ts'
-import { rainAt } from './drops.ts'
 import { Veil } from './veil.ts'
 
 const QUALITY: Record<Quality, number> = { film: 0, high: 1, low: 2 }
@@ -10,7 +9,7 @@ const MASTER_WIDTH = config.formats.master.width
 
 // The rain in three depths: a few heavy drops just off the lens, far out of focus; the body of the rain round the plant, sharp where the lens is; and the fine rain beyond, which thins into the veil.
 const LAYERS: LayerSpec[] = [
-  { name: 'near', seed: 1, box: [2.6, 2.2, 2.6], ahead: 0.5, onGround: false, range: [0.1, 0.16, 0.8, 1.1], radii: [0.0009, 0.0026], gain: 7, count: [900, 600, 300] },
+  { name: 'near', seed: 1, box: [2.6, 2.2, 2.6], ahead: 0.5, onGround: false, range: [0.1, 0.16, 0.8, 1.1], radii: [0.0009, 0.0026], gain: 16, count: [900, 600, 300] },
   { name: 'plant', seed: 2, box: [7, 3.8, 7], ahead: 2.9, onGround: true, range: [0.8, 1.1, 4.6, 5.6], radii: [0.00035, 0.0022], gain: 13, count: [36000, 24000, 10000] },
   { name: 'far', seed: 3, box: [18, 6.5, 18], ahead: 8.5, onGround: true, range: [4.6, 5.6, 13, 17], radii: [0.0005, 0.0022], gain: 26, count: [70000, 40000, 14000] },
 ]
@@ -48,7 +47,7 @@ class Rain implements Part {
   }
 
   prepare(now: Moment, later: Moment, view: View): void {
-    const rain = rainAt(now.t)
+    const rain = now.dials.rain
     const on = rain > 0
     const quality = QUALITY[view.quality]
     this.veil.show(on, quality)

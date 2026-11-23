@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
+import { gustGlsl } from '../../v2/wind.ts'
 import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, fallDir, landingsNear, type Drop } from './drops.ts'
 
 // The rain in the air. Every drop is worked out on the graphics card from its own number and the film second: where it is at the open shutter and at the close,
@@ -23,11 +24,10 @@ float rnd(uint a, uint b) {
   return float(hashU(a * 0x9E3779B9U + b * 0x85EBCA6BU + 0x27D4EB2FU)) * (1.0 / 4294967296.0);
 }
 
-// How far the wind leans the rain, as the tangent of its slant: gusts cross the field in waves.
+${gustGlsl}
+// How far the wind leans the rain, as the tangent of its slant: the gust that bends the field leans the rain as it passes.
 float slantAt(vec2 p, float t) {
-  float gust = 0.5 + 0.5 * sin(t * 1.9 + p.x * 0.9 + p.y * 0.6 + 1.3 * sin(t * 0.7 + p.y * 0.4));
-  float flurry = 0.5 + 0.5 * sin(t * 4.3 + p.x * 2.3 - p.y * 1.7);
-  return ${SLANT_CALM.toFixed(4)} + uWind * ${SLANT_GUST.toFixed(4)} * (0.75 * gust + 0.25 * flurry);
+  return ${SLANT_CALM.toFixed(4)} + min(1.0, 1.8 * uWind) * ${SLANT_GUST.toFixed(4)} * gustAt(p, t);
 }
 
 struct Drop {
@@ -55,7 +55,9 @@ Drop dropOf(int index) {
   vec2 top = vec2(rnd(id, fall * 2U + 11U), rnd(id, fall * 2U + 12U)) * uBox.xz;
   // The first drops of a shower and the last are the heavy ones, far apart.
   float rank = mix(rnd(id, fall * 2U + 13U), 1.0 - d.size, 0.55);
-  d.there = smoothstep(0.0, 0.04, uRain * uRain * 1.04 - rank);
+  // The front of a gust carries a sheet of thicker rain with it.
+  float sheet = mix(1.0, 0.55 + 0.9 * gustAt(top, started), min(1.0, 1.8 * uWind) * smoothstep(0.5, 1.0, uRain));
+  d.there = smoothstep(0.0, 0.04, uRain * sqrt(uRain) * 1.04 * sheet - rank);
   float carry = mix(1.3, 0.85, d.size) * (1.0 + 0.3 * (rnd(id, 6U) - 0.5));
   float slant = slantAt(top, started) * carry;
   vec2 lean = vec2(${LEAN_X.toFixed(5)}, ${LEAN_Z.toFixed(5)});
@@ -330,6 +332,9 @@ export class HeavyLayer {
       this.data[i * 4 + 3] = d.radius
     }
     this.geometry.instanceCount = n
+    if (n === 0) return
+    this.drop.clearUpdateRanges()
+    this.drop.addUpdateRange(0, n * 4)
     this.drop.needsUpdate = true
   }
 }

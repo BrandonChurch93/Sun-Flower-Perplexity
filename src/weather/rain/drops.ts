@@ -1,6 +1,6 @@
 import { combine, streamSeed } from '../../core/random.ts'
-import { smoothstep } from '../../core/curves.ts'
 import { barAt, rainAtBar } from '../../v2/clock.ts'
+import { WIND_TOWARD_DEG } from '../../v2/wind.ts'
 
 // Every raindrop of the film, in closed form. The ground plane y = 0 is cut into square cells; each cell owns a few series of drops,
 // and each series lands one drop per period at a fresh place inside the cell. The streaks in the air and every landing read from here.
@@ -28,8 +28,8 @@ const SLANT_DEG = 9
 // The tangent of the slant in still air, and what the strongest gust adds to it.
 export const SLANT_CALM = Math.tan((6 * Math.PI) / 180)
 export const SLANT_GUST = Math.tan((20 * Math.PI) / 180) - SLANT_CALM
-// The level bearing the rain leans toward: to the left of the frame at the rain's key, as in the approved image.
-const LEAN_TOWARD_DEG = -80.5
+// The rain leans the way the wind goes.
+const LEAN_TOWARD_DEG = WIND_TOWARD_DEG
 const PERIOD_MIN_S = 0.9
 const PERIOD_MAX_S = 1.6
 const RADIUS_MIN_M = 0.0005
@@ -47,15 +47,9 @@ export const LEAN_Z = Math.cos(lean)
 // The direction every drop travels in: down, with a slant.
 export const fallDir: readonly [number, number, number] = [Math.sin(lean) * Math.sin(slant), -Math.cos(slant), Math.cos(lean) * Math.sin(slant)]
 
-// Stand-ins until the rain dial itself does it: the shower comes as a few heavy drops before the curtain closes, and its last rain still falls when the sun comes through at bar 41.
-const FIRST_DROPS = 0.3
-const LAST_RAIN = 0.45
-
-// The rain at a film second, 0 to 1: the dial, held back at its start and drawn out at its end.
+// The rain dial at a film second.
 export function rainAt(time: number): number {
-  const b = barAt(time)
-  const arrive = FIRST_DROPS * smoothstep(33, 33.6, b) + (1 - FIRST_DROPS) * smoothstep(33.6, 34, b)
-  return Math.max(Math.min(rainAtBar(b), arrive), LAST_RAIN * smoothstep(39.5, 40.5, b) * (1 - smoothstep(41, 42.25, b)))
+  return rainAtBar(barAt(time))
 }
 
 // How hard it rains at a film second, 0 to 1, with slow swells in it. A drop exists when its rank is under this at its landing.

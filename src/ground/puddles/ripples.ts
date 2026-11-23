@@ -93,7 +93,11 @@ export class Ripples {
 
   set(count: number, open: number, close: number, cx: number, cz: number, half: number): void {
     this.geometry.instanceCount = count
-    this.drops.needsUpdate = true
+    if (count > 0) {
+      this.drops.clearUpdateRanges()
+      this.drops.addUpdateRange(0, count * LANDING_FLOATS)
+      this.drops.needsUpdate = true
+    }
     this.uniforms.uSpan.value.set(open, close)
     this.uniforms.uBox.value.set(cx, cz, 1 / half)
   }

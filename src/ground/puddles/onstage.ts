@@ -3,9 +3,8 @@ import { makeSurface } from '../../core/shading.ts'
 import { right, toward } from '../../field/layout.ts'
 import { heightAt, stemBaseRadius } from '../../plant/growth.ts'
 import type { Moment, Part, View } from '../../v2/api.ts'
-import { rainAt } from '../../weather/rain/drops.ts'
 import { nearRadiusM } from '../geometry.ts'
-import { furrow, waterLevelsM } from '../soil.ts'
+import { furrow } from '../soil.ts'
 import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { DOT_LIFE_S, dotFragment, dotGeometry, dotVertex } from './dots.ts'
@@ -25,6 +24,8 @@ const SPLASH_HALF_M = [1.5, 1.5, 1.0]
 const SPLASH_TOWARD = 0.3
 const HAZE_HALF_M = 2.2
 const BED_M = -furrow.depthM - 0.003
+// Full, the water stands a little over the mean ground: it floods the dips beside the furrow and leaves the clods as islands.
+const FULL_M = 0.003
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const QUALITY = { film: 0, high: 1, low: 2 } as const
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
@@ -108,7 +109,7 @@ class Puddles implements Part {
 
   prepare(now: Moment, later: Moment, view: View): void {
     const d = now.dials
-    const rain = rainAt(now.t)
+    const rain = now.dials.rain
     const quality = QUALITY[view.quality]
     const eye = view.pose.position
     const flash = 0.5 * (d.flash + later.dials.flash) * Math.max(lum(view.light.horizon), lum(view.light.zenith), 1e-4)
@@ -118,7 +119,7 @@ class Puddles implements Part {
     lit.uBlaze.value = d.burst
     lit.uStalk.value.set(heightAt(now.tau), Math.max(stemBaseRadius(now.tau), 0.004), 0.3 * heightAt(now.tau), 0.85)
     // The rain keeps the water chopped; once it has passed the face stills and mirrors whole.
-    lit.uChop.value = 0.15 + 0.85 * Math.sqrt(rain)
+    lit.uChop.value = 0.12 + 0.55 * Math.sqrt(rain)
     lit.uHaze.value = 0.16 * rain * rain
     lit.uHazeAt.value.set(eye.x * 0.45, eye.z * 0.45, HAZE_HALF_M)
     lit.uHazeFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 2)
@@ -135,7 +136,7 @@ class Puddles implements Part {
     this.dry.value = dry
     if (!stands && !lands) return
     // The water rises from the bed of the furrow to its banks: a film on the mud first, a mirror after.
-    const y = BED_M + (waterLevelsM[1] - BED_M) * Math.sqrt(d.puddle)
+    const y = BED_M + (FULL_M - BED_M) * Math.sqrt(d.puddle)
     this.level.value.set(y, Math.min(1, d.puddle / 0.08))
     this.span.value.set(time, close)
     this.stands.value = (close - time) / Math.max(1, view.samples)
@@ -155,10 +156,19 @@ class Puddles implements Part {
     let struck = landings(mx, mz, half, 0, time - SPLASH_LIFE_S, close, this.splashes)
     if (stands && quality < 2) struck = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, near, y, time - SPLASH_LIFE_S, close, this.splashes, struck, FINE_CROWN_M)
     ;(this.crowns.geometry as THREE.InstancedBufferGeometry).instanceCount = struck
-    this.splashDrop.needsUpdate = true
+    if (struck > 0) {
+      this.splashDrop.clearUpdateRanges()
+      this.splashDrop.addUpdateRange(0, struck * LANDING_FLOATS)
+      this.splashDrop.needsUpdate = true
+    }
     if (dry > 0) {
-      ;(this.dots.geometry as THREE.InstancedBufferGeometry).instanceCount = landings(0, 0, nearRadiusM, 0, time - DOT_LIFE_S, close, this.spots)
-      this.spotDrop.needsUpdate = true
+      const marks = landings(0, 0, nearRadiusM, 0, time - DOT_LIFE_S, close, this.spots)
+      ;(this.dots.geometry as THREE.InstancedBufferGeometry).instanceCount = marks
+      if (marks > 0) {
+        this.spotDrop.clearUpdateRanges()
+        this.spotDrop.addUpdateRange(0, marks * LANDING_FLOATS)
+        this.spotDrop.needsUpdate = true
+      }
     }
   }
 }
