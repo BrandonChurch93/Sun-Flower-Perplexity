@@ -2,6 +2,7 @@
 // The stem, the head and the frames are kept in one place each and written over by the next call. Read what you need before you ask again.
 import type { PlantInputs } from './growth.ts'
 import { FLOOR_DOME, FLOOR_RIM, bractFrame, layHead, layStem, leafFrame, rayFrame, seedLeafFrame, stemLength, stemNode, type Frame, type Head, type Node } from './standin.ts'
+import { norm } from './norm.ts'
 
 export { blade, ellipsoid, gridNormals, roll, setFrame, FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, type Frame, type Head, type Node, type Outline } from './standin.ts'
 
@@ -68,7 +69,7 @@ export function floorAt(p: Pose, rho: number, theta: number, out: FloorPoint = f
   out.y = h.cy + out.oy * r + h.ay * up
   out.z = h.cz + out.oz * r + h.az * up
   const slope = h.radius > 0 ? (2 * h.depth * FLOOR_DOME * rho) / h.radius : 0
-  const l = Math.hypot(1, slope)
+  const l = norm(1, slope)
   out.nx = (h.ax + out.ox * slope) / l
   out.ny = (h.ay + out.oy * slope) / l
   out.nz = (h.az + out.oz * slope) / l
