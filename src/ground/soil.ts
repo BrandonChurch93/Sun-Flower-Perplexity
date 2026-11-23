@@ -246,7 +246,7 @@ float soilHeight(vec2 p, float lod) {
 
 // With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
 export const dampFill = [1, 1.12, 1.1]
-export const dayEarth = [0.22, 0.22, 0.22]
+export const dayEarth = [0.29, 0.29, 0.29]
 export const humus = [0.88, 1.04, 1.7]
 export const cropFar = [0.05, 0.04, 0.012]
 export const dawnSky = [0.85, 0.78, 0.66]
@@ -648,8 +648,8 @@ void main() {
   lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
   float sunny = uDay * (1.0 - smoothstep(0.1, 0.8, uWet));
   lit *= mix(1.0, smoothstep(0.3, 0.58, h) * mix(1.0, smoothstep(0.06, 0.38, lumpy.a), stand * (1.0 - smoothstep(0.0, 3.0, lodPix))), 0.9 * sunny);
-  lit *= 1.0 - heavyOn * mix(0.5, 0.9, sunny) * max(heavyShade, 1.0 - smoothstep(0.06, 0.38, heavy.a));
-  albedo *= 1.0 + 0.45 * crest * sunny;
+  lit *= 1.0 - heavyOn * mix(0.45, 0.85, sunny) * max(heavyShade, 1.0 - smoothstep(0.03, 0.2, heavy.a));
+  albedo *= 1.0 + mix(0.45, 0.9, heavyOn) * crest * sunny;
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt) * hollow;
 #ifdef NEAR
   open *= mix(1.0, 0.45 + 0.55 * lump, fade) * (1.0 - 0.3 * broken.y);
