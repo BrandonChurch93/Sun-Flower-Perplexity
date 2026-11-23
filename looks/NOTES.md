@@ -1,9 +1,7 @@
 # Looks of player
 
-2026-11-23 12:59 UTC, at commit c8061a9d of agent/player.
+2026-11-23 13:32 UTC, at commit 2d5d993b of agent/player.
 
-Timing at loading says which half is slow, and the export page with no encoder
+Loading at 2d5d993b after the build of the programs, 320 x 180 test page
 
-- `01-loading-high-did-not-hold-the-script-is-set-alon.jpg`: Loading, high did not hold, the script is set alone to see which half is slow
-- `02-desk-after-the-timing-the-script-is-the-slow-hal.jpg`: Desk after the timing, the script is the slow half, export named
-- `03-export-page-in-a-browser-with-no-video-encoder.jpg`: Export page in a browser with no video encoder
+- `01-loading-after-the-programs-were-built.jpg`: loading after the programs were built
