@@ -649,6 +649,7 @@ uniform float uElevation;
 uniform float uNight;
 uniform float uLunarNight;
 uniform float uFrostFog;
+uniform vec3 uFrostPhoto;
 uniform float uRainFog;
 uniform float uBreak;
 uniform float uSolarDeck;
@@ -683,6 +684,28 @@ vec4 skyLookup(vec3 d, float blur) {
 
 ${nightGlsl}
 
+vec3 frostSunAt(vec2 xy, float blur, float squash, float sr) {
+  float opening = uFrostPhoto.y;
+  float radius2 = dot(xy, xy);
+  // Airborne scatter is radiance against the mist, not the faint tail
+  // obtained by spreading a flux-conserving image of the photosphere.
+  float haze = mix(0.016, 0.013, opening);
+  float soft = 0.82 * exp(-radius2 / (haze * haze + 0.13 * blur * blur))
+    + 0.18 * exp(-radius2 / (0.035 * 0.035 + 0.38 * blur * blur));
+  float gold = mix(0.023, 0.012, opening);
+  float halo = exp(-radius2 / (gold * gold));
+  // Below the veil is the true 0.53-degree disc. Soften its limb with
+  // thinning mist; the lens's sampled glow remains separate.
+  float r = length(xy / vec2(1.0, squash));
+  float edge = uPixelAngle * 0.56 + mix(0.0040, 0.00045, opening);
+  float disc = (1.0 - smoothstep(sr - edge, sr + edge, r))
+    * (0.78 + 0.22 * sqrt(max(0.0, 1.0 - (r / sr) * (r / sr))));
+  vec3 pale = vec3(1.045, 1.0, 0.94) * mix(9.4, 0.27, smoothstep(0.0, 0.38, opening)) * soft;
+  vec3 warm = vec3(1.34, 0.90, 0.52) * (1.16 * opening) * halo;
+  vec3 core = vec3(1.045, 1.0, 0.90) * (8.5 * opening) * disc;
+  return uFrostPhoto.z * (pale + warm + core);
+}
+
 vec3 sunAt(vec3 d, float blur) {
   float mu = dot(d, uSunFace);
   if (mu < 0.949) return vec3(0.0);
@@ -710,6 +733,10 @@ vec3 sunAt(vec3 d, float blur) {
   float photo = disk * limb + 0.19 * exp(-dot(p, p) / 3.6);
   float glow = mix(mix(mix(disk * limb, 0.30 * mist, frost), photo, uPhotoMix), 0.003 * broken, diffuse);
   float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
+  if (uFrostPhoto.x > 0.0) {
+    vec3 sun = mix(uDisc * energy * glow, frostSunAt(xy, blur, squash, sr), uFrostPhoto.x);
+    return sun * visible * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
+  }
   return uDisc * visible * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
 }
 
@@ -738,6 +765,10 @@ void main() {
   float coc = min(uCocScale / uFocusM, 2048.0);
   float blur = 0.5 * coc * uPixelAngle;
   vec4 sky = skyLookup(d, blur);
+  // At highest fog the diffuse air around the soft disc is the cooler
+  // fill, not direct light. This does not change the foreground veil.
+  float thickClose = uFrostPhoto.x * (1.0 - smoothstep(0.0, 0.29, uFrostPhoto.y));
+  sky.rgb *= mix(vec3(1.0), vec3(0.69, 0.75, 0.84), thickClose * smoothstep(-0.012, 0.016, d.y));
   float stellarBlur = min(blur, 0.52 * uPixelAngle);
   float cloudTransmission = textureLod(tSky, where(d), 0.0).a;
   float stellarTransmission = cloudTransmission * smoothstep(0.08, 0.78, cloudTransmission);
