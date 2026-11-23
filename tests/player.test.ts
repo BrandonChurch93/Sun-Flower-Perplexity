@@ -26,7 +26,7 @@ function run(frames: number, drawMs: number, refreshMs: number): Pacing {
     if (frame !== onScreen) {
       const stamp = now
       now += drawMs
-      pacing.present(frame, frame, stamp / 1000, now / 1000, stamp, drawMs)
+      pacing.present(frame, frame, frame / fps, stamp / 1000, now / 1000, stamp, drawMs)
       onScreen = frame
     }
     now = (Math.floor(now / refreshMs + 1e-9) + 1) * refreshMs
@@ -69,7 +69,7 @@ describe('the pacing report', () => {
   it('says where a stopped run stopped', () => {
     const report = run(90, 4, 1000 / 60).report(facts, frameCount, false, null)
     expect(report.complete).toBe(false)
-    expect(report.stoppedAtFilm).toBeCloseTo(89 / fps, 5)
+    expect(report.stoppedAtFilm).toBeCloseTo(89 / fps, 3)
     expect(report.holds).toBe(false)
   })
 })

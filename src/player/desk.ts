@@ -27,7 +27,7 @@ export interface Desk {
 export interface Advice { text: string; tryLow: boolean }
 
 const KIND = { recording: 'Recording', check: 'Check', play: 'Playback' } as const
-const SHOWN_GAPS = 6
+const SHOWN_GAPS = 4
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -71,7 +71,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   input.type = 'file'
   input.accept = 'audio/*,.mp3,.wav,.flac,.m4a,.ogg'
   input.setAttribute('aria-label', 'Track file')
-  const dropHint = make('span', css.hint, 'or drop it anywhere on the page')
+  const dropHint = make('span', css.hint, 'or drop it on the page')
   drop.append(choose, dropHint, input)
   const trackText = make('p', css.text)
   const trackHash = make('p', css.small)
@@ -212,9 +212,9 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
         make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`),
         make('p', css.verdict, report.verdict),
         line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped`),
-        line('Time', `${report.seconds.film.toFixed(2)} s of film in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
+        line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
         line('Between frames', `longest ${ms(report.gapMs.longest)} at ${at(report.gapMs.longestAtFilm)}, 99th percentile ${ms(report.gapMs.p99)}, mean ${ms(report.gapMs.mean)}`),
-        line('Picture behind sound', `mean ${ms(report.behindMs.mean)}, largest ${ms(report.behindMs.largest)} at ${at(report.behindMs.largestAtFilm)}`),
+        line('Picture behind sound', `when chosen mean ${ms(report.pickedMs.mean)}, largest ${ms(report.pickedMs.largest)}. When drawn mean ${ms(report.behindMs.mean)}, largest ${ms(report.behindMs.largest)} at ${at(report.behindMs.largestAtFilm)}`),
         line('Drawing a frame', `mean ${ms(report.drawMs.mean)}, 99th percentile ${ms(report.drawMs.p99)}`),
       )
       const gaps = report.gaps

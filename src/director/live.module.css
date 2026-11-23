@@ -117,10 +117,13 @@
 }
 
 .name {
+  min-width: 0;
+  overflow: hidden;
   color: #a59f90;
   font-size: 11px;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .segment[data-current='yes'] .name {
