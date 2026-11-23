@@ -1,11 +1,10 @@
 # Looks of post
 
-2026-11-23 00:48 UTC, at commit 0d22d12 of agent/post.
+2026-11-23 00:57 UTC, at commit 09de36b of agent/post.
 
-second pass: glare scaled by light and blur, gold kept; clips at draft, stand-in sky
+after merging v2 89f09cc: the film's own camera, draft tier, stand-in sky
 
-- `01-judged-shots-at-draft.jpg`: judged shots at draft
-- `02-clip-5-5-to-8-5-the-sun-crosses-the-top-edge-in-.mp4`: clip 5.5 to 8.5: the sun crosses the top edge in and out
-- `03-clip-68-5-to-72-the-break.mp4`: clip 68.5 to 72: the break
-- `04-clip-96-to-100-the-bloom.mp4`: clip 96 to 100: the bloom
-- `05-clip-47-to-51-the-lapse.mp4`: clip 47 to 51: the lapse
+- `01-bars-21-37-02-41-25-47-57-61-73-5.jpg`: bars 21, 37.02, 41.25, 47, 57, 61, 73.5
+- `02-bar-41-25-the-break-beams-fan-down-under-the-sun.jpg`: bar 41.25, the break: beams fan down under the sun, cut by the plant
+- `03-bar-61-the-bloom-gold-glow-wraps-the-leaf.jpg`: bar 61, the bloom: gold glow wraps the leaf
+- `04-bar-21-frost.jpg`: bar 21, frost
