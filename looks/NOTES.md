@@ -1,8 +1,8 @@
 # Looks of plant
 
-2026-11-23 10:01 UTC, at commit 4435c274 of agent/plant.
+2026-11-23 10:17 UTC, at commit be9384a1 of agent/plant.
 
-The stem's length at rest is a smooth curve along the clock (1543af3): the head rises without corners through the bloom
+be9384a1: the stem narrows to a growing point while it has true leaves and no bud
 
-- `01-bloom-frames-2925-to-2970-at-the-film-s-lens-thr.mp4`: Bloom, frames 2925 to 2970 at the film's lens, three times over: left v2 bf55bd1, right the smooth length. Before, the head's rise went 3.4, -0.9, -1.5, 0.2 px a frame at 2939 to 2942 and again at 2956 to 2960; after it falls evenly from 3.1 to 1.7. Still wrong: preview size only, and the leaves are still laid whole on every frame
-- `02-frame-2940-of-the-same-before-and-after-side-by-.jpg`: Frame 2940 of the same, before and after side by side: the picture is the same to the eye, the difference is in the motion only
+- `01-frame-1106-at-the-film-s-lens-1920-enlarged-twic.jpg`: Frame 1106 at the film's lens, 1920, enlarged twice. Left before: a pale dome like a cut pipe on the stalk under the top pair. Right after be9384a1: the stalk narrows into the youngest leaves' stalks, no dome, no sky between stalk and leaf 6. Still wrong: the tuft of large pale blades on the narrow end (hairs and rime sized for the full stalk, the hairs owner's pointed cap comes on top)
+- `02-close-views-of-the-stem-s-tip-after-be9384a1-at-.jpg`: Close views of the stem's tip after be9384a1 at 1106, 1474, 1560, 1640 (narrow growing tip) and 1800, 2150 (the wrapped bud, unchanged). Still wrong: at 1474 the tip is a smooth green wedge with no small leaves on it
