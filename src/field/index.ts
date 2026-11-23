@@ -8,29 +8,27 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
-import { Shaped, leanBy, leavesApart, placeTurned, send, shapeInputs, turnBy } from './turn.ts'
-import { CANOPY_SIZE, PLACE, thinOrder, right, statureAt, sizeOf, standOf, blownBy, companionPlace, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, settleOf, settledBy, windOf, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
+import { type KindUniforms, fieldPlaceGlsl, fieldPlaceUniforms, kindData, kindList } from './place.ts'
+import { Shaped, shapeInputs } from './turn.ts'
+import { CANOPY_SIZE, PLACE, SETTLED_T, toward, earlyAt, farVariants, fieldAge, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, standOf, statureAt, stiffAt, wideAt, youngOf, type Tier } from './layout.ts'
 
-// A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
-// At the low quality the simpler plants thin out from here to there, to this share of them, and the leaves in the gaps stop early.
-const THIN_M = [12, 30]
+// At the low quality the simpler plants thin out with distance, to this share of them, and the leaves in the gaps stop early.
 const THIN_TO: Record<Quality, number> = { film: 1, high: 1, low: 0.3 }
 // The leaves in the gaps stay under the heads of the crop.
 const UNDER_SIZE = 0.74
-const FIXED = 11
-// From the crane the first rows behind the plant and its companion stand a shade darker, so that the two stand clear of them.
-const BEHIND = { fromM: 3.5, toM: 6.5, nearM: 2.5, wideM: 4.5, tone: 0.75, from: 53.6, full: 55.5 }
 const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11 }
+// How dark the rows behind the pair stand from the crane, and over which stretch of the plant's clock that comes in.
+const BEHIND = { tone: 0.75, from: 53.6, full: 55.5 }
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; fixed: Float32Array; sent: Float32Array; sentStill: Float32Array; shaped: Shaped; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; kind: KindUniforms; shaped: Shaped; count: number; index: number; tier: Tier; plant: Plant }
 
-// One kind of neighbor, drawn once for every place of its share that is in view.
+// One kind of neighbor, drawn once for every place of its share. Its list is written here and never again: where each one stands in a frame is worked out as it is drawn.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
-  const seen = new THREE.InstancedInterleavedBuffer(new Float32Array(places), PLACE)
-  seen.setUsage(THREE.DynamicDrawUsage)
-  const plant = new Plant({ detail, variant, places: seen })
+  const list = new THREE.InstancedInterleavedBuffer(kindList(places), PLACE)
+  const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
+  const plant = new Plant({ detail, variant, places: list, place: { glsl: fieldPlaceGlsl, uniforms: { ...fieldPlaceUniforms, ...kind } } })
   const head = { value: new THREE.Vector4(0, 0, 0, 1) }
   const grow = { value: 0 }
   const axis = { value: new THREE.Vector3(0, 0, 1) }
@@ -38,30 +36,11 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   // The leaves carry their own numbers late in the bloom, so they read how far those have come, and the head's place, from uniforms of their own.
   const leafHead = { value: new THREE.Vector4(0, 0, 0, 0) }
   const leafOwn = { value: 0 }
-  for (const part of plant.parts) if (part.name === 'leaves') for (const m of part.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: leafHead, uEarly: leafOwn })
+  for (const part of plant.parts) if (part.name === 'leaves') for (const m of part.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: leafHead, uEarly: leafOwn, uFieldLeaf: { value: 1 } })
   const count = places.length / PLACE
-  const own: Own[] = []
-  const face = new Float32Array(count)
-  const spin = new Float32Array(count)
-  const order = new Float32Array(count)
-  // What a neighbor carries for good, worked out once: how far from the plant it stands, and its own numbers for the bloom and the wind.
-  const fixed = new Float32Array(count * FIXED)
-  const stands = companionPlace()
-  const pair = { across: stands.x * right.x + stands.z * right.z }
-  for (let i = 0; i < count; i++) {
-    const id = places[i * PLACE + 7]
-    const reach = Math.hypot(places[i * PLACE], places[i * PLACE + 1])
-    const lean = lateLean(id)
-    const along = -(places[i * PLACE] * toward.x + places[i * PLACE + 1] * toward.z)
-    const across = places[i * PLACE] * right.x + places[i * PLACE + 1] * right.z - 0.5 * pair.across
-    const behind = (1 - THREE.MathUtils.smoothstep(along, BEHIND.fromM, BEHIND.toM)) * (1 - THREE.MathUtils.smoothstep(Math.abs(across), BEHIND.nearM, BEHIND.wideM))
-    fixed.set([reach, faceAt(id, reach), settleOf(id), lean.x, lean.z, lateLeafCode(id), leafShort(id), windOf(id, 0), windOf(id, 1), windOf(id, 2), behind], i * FIXED)
-    own.push(ownOf(id))
-    face[i] = faceToward(id)
-    spin[i] = leafSpin(id)
-    order[i] = thinOrder(id)
-  }
-  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, own, face, order, fixed, sent: new Float32Array(places.length).fill(Number.NaN), sentStill: new Float32Array(places.length).fill(Number.NaN), shaped: new Shaped(), spin, seen, still: leavesApart(plant, count), count, index, tier: detail }
+  plant.show(count)
+  if (bare) for (const part of plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
+  return { head, leafHead, leafOwn, axis, grow, bare, plant, kind, shaped: new Shaped(), count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -98,6 +77,7 @@ export class Field {
     ]
     this.far = new FarField(places.pictures)
     this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
+    this.shown = this.groups.reduce((sum, g) => sum + g.count, 0)
     fieldUniforms.uEdge.value.set(toward.x, toward.z, frontM)
     current = this
   }
@@ -188,77 +168,28 @@ export class Field {
     if (this.pose && this.filled !== quality) this.fill()
   }
 
+  // Hands every kind the frame's few numbers. Nothing is counted and no list is written: a neighbor outside the frame is left out as it is drawn.
   private fill(): number {
     const pose = this.pose as CameraPose
     const flat = Math.hypot(pose.forward.x, pose.forward.z) || 1
-    const fx = pose.forward.x / flat
-    const fz = pose.forward.z / flat
     const steep = Math.max(0.3, flat - (this.tanHalfWidth / this.aspect) * Math.abs(pose.forward.y))
-    const spread = this.tanHalfWidth / steep
-    const reach = 0.9
-    const late = lateAt(this.time)
-    const before = earlyAt(this.time)
-    const stiff = stiffAt(this.time)
-    const windy = this.wind > 0 || this.leafWind > 0
-    const shade = BEHIND.tone * THREE.MathUtils.smoothstep(this.time, BEHIND.from, BEHIND.full)
+    const s = this.stature
+    const u = fieldPlaceUniforms
+    u.uFieldStature.value.set(s.ahead, s.lag, s.uneven, s.behind)
+    u.uFieldStand.value.set(s.stand, s.even, s.farShort, s.plantTall)
+    u.uFieldPhase.value.set(lateAt(this.time), earlyAt(this.time), stiffAt(this.time), BEHIND.tone * THREE.MathUtils.smoothstep(this.time, BEHIND.from, BEHIND.full))
+    u.uFieldAir.value.set(this.seconds, this.wind, this.leafWind, s.young ? 1 : 0)
+    u.uFieldLens.value.set(pose.position.x, pose.position.z, pose.forward.x / flat, pose.forward.z / flat)
+    u.uFieldGate.value.set(pose.right.x, pose.right.z, this.tanHalfWidth / steep, 0.9)
     this.filled = this.quality
-    let total = 0
+    const full = heightAt(SETTLED_T)
     for (const g of this.groups) {
-      const all = g.all
       const clock = kindTime(this.time, g.index, g.tier)
-      const early = opensEarly(g.index, g.tier)
       const kindTall = heightAt(clock)
-      const local = Math.atan2(g.axis.value.x, g.axis.value.z)
-      const most = g.bare ? UNDER_REACH_M[this.quality] : 1000
-      const thin = g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1
-      const seen = g.seen.array as Float32Array
-      const still = g.still.array as Float32Array
-      let n = 0
-      for (let i = 0, k = 0; i < all.length; i += PLACE, k++) {
-        const dx = all[i] - pose.position.x
-        const dz = all[i + 1] - pose.position.z
-        const depth = dx * fx + dz * fz
-        if (depth < -reach) continue
-        const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
-        if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
-        const f = k * FIXED
-        const out = g.fixed[f]
-        if (most < 1000 && out > most) continue
-        if (thin < 1 && g.order[k] > 1 - (1 - thin) * THREE.MathUtils.smoothstep(out, THIN_M[0], THIN_M[1])) continue
-        const own = g.own[k]
-        const face = late > 0 ? g.fixed[f + 1] : 0
-        const round = early ? 1 : settledBy(clock, g.fixed[f + 2])
-        placeTurned(all, i, seen, still, n, round > 0 ? round * shortWay(g.face[k] - local - all[i + 2]) : 0)
-        seen[n + 3] = still[n + 3] = sizeOf(this.stature, all[i + 3], all[i + 6], own, kindTall, out) * (g.bare ? this.rise * UNDER_SIZE : 1)
-        if (shade > 0) seen[n + 6] = still[n + 6] = all[i + 6] - shade * g.fixed[f + 10]
-        if (before > 0) {
-          seen[n + 4] += before * own.leanX
-          seen[n + 5] += before * own.leanZ
-          still[n + 4] += before * own.leanX
-          still[n + 5] += before * own.leanZ
-        }
-        const blown = windy ? blownBy(g.fixed[f + 7], g.fixed[f + 8], g.fixed[f + 9], all[i], all[i + 1], this.seconds, this.wind, this.leafWind) : null
-        seen[n + 7] = before > 0 ? earlyCode(own, own.bud, own.leaf + stiff * STIFF_LEAF, own.droop - stiff * 0.67 * (own.droop + 0.15)) : ownCode(own, blown ? blown.nod : 0, face)
-        still[n + 7] = late > 0 ? g.fixed[f + 5] : seen[n + 7]
-        const mx = (blown ? blown.x : 0) + late * g.fixed[f + 3]
-        const mz = (blown ? blown.z : 0) + late * g.fixed[f + 4]
-        if (blown) turnBy(seen, n, blown.head)
-        turnBy(still, n, g.spin[k] + (blown ? blown.leaves : 0))
-        if (mx !== 0 || mz !== 0) {
-          leanBy(seen, n, mx, mz)
-          leanBy(still, n, mx, mz)
-        }
-        if (late > 0 && !g.bare) still[n + 3] *= 1 - late * g.fixed[f + 6]
-        n += PLACE
-      }
-      send(g.seen, g.sent, n)
-      send(g.still, g.sentStill, n)
-      g.plant.show(n / PLACE)
-      if (g.bare) for (const part of g.plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
-      total += n / PLACE
+      g.kind.uFieldKind.value.set(clock, kindTall, opensEarly(g.index, g.tier) ? 1 : 0, Math.atan2(g.axis.value.x, g.axis.value.z))
+      g.kind.uFieldDraw.value.set(Math.max(s.ahead, Math.min(4, full / Math.max(kindTall, 0.001))), g.bare ? this.rise * UNDER_SIZE : 1, g.bare ? UNDER_REACH_M[this.quality] : 1000, g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1)
     }
-    this.shown = total
-    return total
+    return this.shown
   }
 }
 
