@@ -1,7 +1,10 @@
 # Looks of checks
 
-2026-11-23 08:40 UTC, at commit a0d6ef37 of agent/checks.
+2026-11-23 09:33 UTC, at commit 990603c3 of agent/checks.
 
-script on de7042a with the time inside renderer.render beside it: the plant and its companion are 104 to 111 ms a frame late in the film; frame 1689 is a hitch because the plant uploads 8 MB of hair textures there
+Every dusk and dawn of the film frame to frame, frames of v2 02cb1bc: the dawn into the frost, the night that brightens under the Milky Way, the part that fails, the moon that dips
 
-- `01-script-time-by-window-de7042a.jpg`: script time by window, de7042a
+- `01-dawn-5-into-the-frost-838-to-858.jpg`: dawn 5 into the frost, 838 to 858
+- `02-night-7-1446-to-1462.jpg`: night 7, 1446 to 1462
+- `03-night-7-the-part-that-moves-the-wrong-way.jpg`: night 7, the part that moves the wrong way
+- `04-night-8-the-moon-dips-at-midnight.jpg`: night 8, the moon dips at midnight
