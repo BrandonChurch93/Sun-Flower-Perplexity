@@ -67,6 +67,10 @@ export interface ChecksPage {
   only(names: string[]): void
   // Only on a page opened with work=1: what the frames since the last call asked of three.js and of the card, and starts the next count.
   worked(): Worked
+  // The same fixed script, run now and timed, or run inside the n-th draw call of the next frame.
+  loop(work: number): number
+  loopAt(work: number, call: number): void
+  loopRead(): { ms: number; calls: number }
 }
 
 declare global {
@@ -238,6 +242,37 @@ function workTaps(): void {
   THREE.Material.prototype.customProgramCacheKey = function (this: THREE.Material) {
     workLooked.set(this, (workLooked.get(this) ?? 0) + 1)
     return key.call(this)
+  }
+}
+// A fixed piece of script of the kind a coat's choosing is: numbers worked out, gathered and sorted. It touches nothing of the film.
+function fixed(work: number): number {
+  const t = performance.now()
+  const kept: number[] = []
+  let h = 1
+  for (let i = 0; i < work; i++) {
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0
+    const v = Math.sin(h * 1e-6) * Math.sqrt(i + 1)
+    if (v > 0) kept.push(v)
+  }
+  kept.sort((a, b) => a - b)
+  if (kept.length === 0) throw new Error('nothing gathered')
+  return performance.now() - t
+}
+let loopWork = 0
+let loopCall = 0
+let loopCalls = 0
+let loopMs = -1
+let loopTapped = false
+function loopTap(): void {
+  if (loopTapped) return
+  loopTapped = true
+  const gl = film.stage.renderer.getContext() as unknown as Record<string, (...a: unknown[]) => unknown>
+  for (const name of DRAWS) {
+    const inner = gl[name].bind(gl)
+    gl[name] = (...a) => {
+      if (++loopCalls === loopCall) loopMs = fixed(loopWork)
+      return inner(...a)
+    }
   }
 }
 let workCount = 0
@@ -609,6 +644,15 @@ window.checks = {
     workLooked.clear()
     return out
   },
+  loop: (work) => fixed(work),
+  loopAt(work, call) {
+    loopTap()
+    loopWork = work
+    loopCall = call
+    loopCalls = 0
+    loopMs = -1
+  },
+  loopRead: () => ({ ms: loopMs, calls: loopCalls }),
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
