@@ -3,6 +3,7 @@ import { config, timeOf, type AssetSetId, type Format, type TierId } from '../co
 import { Assets } from '../core/assets.ts'
 import { lerp, smoothstep } from '../core/curves.ts'
 import { applyLens, cocScalePx, ranged, type CameraPose } from '../core/lens.ts'
+import { buildPrograms, type Built } from '../core/programs.ts'
 import { frameSamples } from '../core/sampler.ts'
 import { DIAG, shared, type DiagName } from '../core/shading.ts'
 import { ShadowMap, type Caster } from '../core/shadow.ts'
@@ -93,6 +94,8 @@ export class Film {
   private readonly center = new THREE.Vector3()
   private readonly middle = new THREE.Vector3()
   private readonly at: Moment = blankMoment()
+  // How many programs the loading asked the graphics card for at once, and whether the browser could build them beside the page.
+  built: Built | null = null
   private loaded: Promise<void> | null = null
   private busy: Promise<void> = Promise.resolve()
 
@@ -180,6 +183,7 @@ export class Film {
   async warm(tier: TierId = 'draft', onStep?: (done: number, of: number, next: 'moment' | 'every shape' | null) => void): Promise<void> {
     await this.load()
     const { renderer } = this.stage
+    this.built = await buildPrograms(renderer, this.scene, this.camera, this.stage.sample)
     this.sky?.warm(renderer)
     for (const { part } of this.parts) part.warm?.(renderer)
     for (let i = 0; i < heldFrames.length; i++) this.heldPose(i)
