@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, cellAt, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, cellAt, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -167,6 +167,7 @@ function plant(): Tree[] {
     return az > SEEN.fromDeg && az < SEEN.toDeg
   }
   const tree = (x: number, z: number, tall: number, poplar: boolean): void => {
+    if (plantedAt(x, z) > 0.9) return
     const soil = soilAt(x, z)
     const allowed = room(x, z, soil)
     let h = tall
@@ -179,6 +180,7 @@ function plant(): Tree[] {
     trees.push({ x, y: soil - 0.25, z, w: h * (variant === 5 ? 0.95 : 1), h, variant, flip: rnd.next() < 0.5 ? -1 : 1, phase: rnd.next(), tint: tint(1) })
   }
   const hedge = (x: number, z: number): number => {
+    if (plantedAt(x, z) > 0.9) return 2.5
     const soil = soilAt(x, z)
     const r = Math.hypot(x, z)
     const h = Math.min(rnd.range(2.1, 3.5), r * Math.tan(1.15 * RAD), room(x, z, soil))

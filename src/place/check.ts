@@ -1,5 +1,5 @@
 import { blankMoment, momentAt } from '../v2/now.ts'
-import { LAND_FROM_M, LAND_TO_M, cellAt, fromFields, landAt, toFields } from './land.ts'
+import { LAND_FROM_M, LAND_TO_M, cellAt, fromFields, landAt, plantedAt, toFields } from './land.ts'
 import { terrainGeometry, woodMapMegabytes } from './terrain.ts'
 import { atlasMegabytes, makeTrees } from './trees.ts'
 
@@ -39,18 +39,26 @@ rule('saddle of the mornings', morning < 0.95, `the land under the rising sun st
 rule('saddle of the last evening', evening < 0.95, `the land under the last setting sun stands ${evening.toFixed(2)} degrees at most`)
 rule('hills beside the saddles', flanks > 1.5, `the lowest of the flanks stands ${flanks.toFixed(2)} degrees`)
 
-// Where the land takes over from the soil: under the soil plane at its first ring, above it 18 m on.
+// Where the land takes over from the soil: under the soil plane at its first ring, above it from 82 m to where it takes its own depth, except under the planted field.
 let low = 9
 let high = -9
 let lowOn = 9
+let under = -9
 for (let az = 0; az < 360; az += 0.5) {
-  const h0 = landAt(Math.sin(az * RAD) * LAND_FROM_M, Math.cos(az * RAD) * LAND_FROM_M, at).height
-  const h1 = landAt(Math.sin(az * RAD) * 82, Math.cos(az * RAD) * 82, at).height
+  const sx = Math.sin(az * RAD)
+  const sz = Math.cos(az * RAD)
+  const h0 = landAt(sx * LAND_FROM_M, sz * LAND_FROM_M, at).height
   low = Math.min(low, h0)
   high = Math.max(high, h0)
-  lowOn = Math.min(lowOn, h1)
+  for (let r = 82; r <= 400; r += 2) {
+    const h = landAt(sx * r, sz * r, at).height
+    const planted = plantedAt(sx * r, sz * r)
+    if (planted === 0) lowOn = Math.min(lowOn, h)
+    if (planted === 1) under = Math.max(under, h)
+  }
 }
-rule('the seam with the soil', high < -0.2 && lowOn > 0.2, `first ring ${low.toFixed(2)} to ${high.toFixed(2)} m, at 82 m no lower than ${lowOn.toFixed(2)} m`)
+rule('the seam with the soil', high < -0.2 && lowOn > 0.2, `first ring ${low.toFixed(2)} to ${high.toFixed(2)} m, from 82 m to 400 m no lower than ${lowOn.toFixed(2)} m outside the planted field`)
+rule('under the planted field', under < -0.3, `the land lies ${(-under).toFixed(2)} m or more under the soil wherever the field stands`)
 
 // The same land every time it is asked.
 let same = true

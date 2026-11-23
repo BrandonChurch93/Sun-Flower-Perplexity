@@ -74,6 +74,22 @@ const RANGES = [
 
 export interface LandAt { height: number; wood: number; hill: number }
 
+// The planted field, as its owner lays it out: a wedge that opens away from the plant toward depthDeg, to endM.
+export const PLANTED = { depthDeg: 200, endM: 290, west: [13, 1.8], east: [10, 1.05], underM: -0.35, rampM: 22, sideM: 30 }
+const DEPTH = { x: Math.sin(PLANTED.depthDeg * RAD), z: Math.cos(PLANTED.depthDeg * RAD) }
+const ACROSS = { x: Math.sin((PLANTED.depthDeg - 90) * RAD), z: Math.cos((PLANTED.depthDeg - 90) * RAD) }
+
+// 1 where the planted field stands, falling to 0 just past its far end and its sides.
+export function plantedAt(x: number, z: number): number {
+  const depth = x * DEPTH.x + z * DEPTH.z
+  const across = x * ACROSS.x + z * ACROSS.z
+  const reach = Math.max(depth, 0)
+  const west = across + PLANTED.west[0] + PLANTED.west[1] * reach
+  const east = PLANTED.east[0] + PLANTED.east[1] * reach - across
+  const side = Math.min(west / Math.hypot(1, PLANTED.west[1]), east / Math.hypot(1, PLANTED.east[1]))
+  return smooth(-PLANTED.sideM, 0, side) * smooth(-PLANTED.sideM, 0, depth) * (1 - smooth(PLANTED.endM + 2, PLANTED.endM + 2 + PLANTED.rampM, depth))
+}
+
 // The bare land, without its woods.
 function bare(x: number, z: number, out: LandAt): LandAt {
   const r = Math.hypot(x, z)
@@ -100,7 +116,12 @@ function bare(x: number, z: number, out: LandAt): LandAt {
   }
   hill *= 0.7 + 0.6 * fbm2(x / 640, z / 640, 50, 4)
   out.hill = hill
-  out.height = verge + basin + roll * (1 - 0.6 * smooth(10, 60, hill)) + hill
+  // Out to where the land takes its own depth it stays above the flat soil, so the soil never shows through a dip.
+  const rise = basin + roll * (1 - 0.6 * smooth(10, 60, hill)) + hill
+  const kept = 0.5 * (rise - 0.1 + Math.sqrt((rise + 0.1) * (rise + 0.1) + 0.04))
+  const natural = verge + rise + (kept - rise) * (1 - smooth(420, 620, r))
+  // Under the planted field the land lies under the soil, so the field and its soil are all there is to see.
+  out.height = natural + (PLANTED.underM - natural) * plantedAt(x, z)
   out.wood = 0
   return out
 }

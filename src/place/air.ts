@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 // What every surface of the far land shares: its own place in the depth buffer, the air between it and the lens, and the weather on it.
-export const FAR_FROM_M = 110
+export const FAR_FROM_M = 350
 export const FAR_TO_M = 6000
 
 // Beyond FAR_FROM_M the land takes the depth range the ordinary projection leaves almost empty and spreads it evenly over the logarithm of the distance, always in front of the flat ground it lies on.
