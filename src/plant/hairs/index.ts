@@ -215,6 +215,29 @@ Seat hairSeat(sampler2D frames, mat4 pose, vec4 s0, vec4 s1, vec4 s2) {
   int n = int(uHairSeats.y + 0.5);
   int i0 = int(s0.x + 0.5);
   int i1 = int(s0.y + 0.5);
+  if (n == 1) {
+    // A sheet: a point a texel. The hair stands in the cell between its two points and the next of each, as far across as c1 says, and the cell's own edges say which way is along and which way the skin faces.
+    vec4 p00 = texelFetch(frames, ivec2(i0 & ${FRAME_ROW - 1}, i0 / ${FRAME_ROW}), 0);
+    vec4 p01 = texelFetch(frames, ivec2((i0 + 1) & ${FRAME_ROW - 1}, (i0 + 1) / ${FRAME_ROW}), 0);
+    vec4 p10 = texelFetch(frames, ivec2(i1 & ${FRAME_ROW - 1}, i1 / ${FRAME_ROW}), 0);
+    vec4 p11 = texelFetch(frames, ivec2((i1 + 1) & ${FRAME_ROW - 1}, (i1 + 1) / ${FRAME_ROW}), 0);
+    vec4 low = mix(p00, p01, s1.x);
+    vec4 high = mix(p10, p11, s1.x);
+    vec3 run = high.xyz - low.xyz;
+    vec3 span = mix(p01.xyz - p00.xyz, p11.xyz - p10.xyz, s0.z);
+    vec3 on = hairUnit(run);
+    vec3 face = hairUnit(cross(on, span));
+    mat3 turned = mat3(pose);
+    Seat sheet;
+    sheet.root = (pose * vec4(mix(low.xyz, high.xyz, s0.z), 1.0)).xyz;
+    sheet.way = hairUnit(turned * (hairUnit(span) * s2.x + on * s2.y + face * s2.z));
+    sheet.skin = hairUnit(turned * face);
+    sheet.reach = s0.w * mix(low.w, high.w, s0.z);
+    sheet.girth = length(span);
+    float area = length(cross(run, span));
+    sheet.dense = area > 1e-12 ? float(int(s1.z + 0.5) >> 2) / area : 0.0;
+    return sheet;
+  }
   ivec2 f0 = ivec2((i0 & ${FRAME_ROW - 1}) * n, i0 / ${FRAME_ROW});
   ivec2 f1 = ivec2((i1 & ${FRAME_ROW - 1}) * n, i1 / ${FRAME_ROW});
   vec4 o0 = texelFetch(frames, f0, 0);
@@ -852,8 +875,8 @@ export function packWay(out: Float32Array, at: number, at2: number, x: number, y
 // The frames a part lays for the hairs that sit on it: places on its body, for each of the two slots. Every set of hairs on the part reads the same frames.
 export interface HairFrames {
   readonly count: number
-  // The frames of a slot, to be written: 12 numbers a frame (its middle and how long the hairs on it are, as a share of their full length; its first arm and the first number of its way along the body; its second arm and the second), or 32 for a wide one (then how far its skin has grown, the most a hair on it may be long or 0 for any, how high its ribs stand as a share of its radius, one spare, and eight swellings on its ring, each the way it points in the ring's own two arms times how far it stands out as a share of the radius; on a wide ring how far the two numbers of a hair's seat are from 1 is how high the hair stands on a rib, and its skin leans as the ring widens or narrows along the body). Asking marks the slot as laid.
-  slot(slot: 0 | 1): Float32Array
+  // The frames of a slot, to be written: 12 numbers a frame (its middle and how long the hairs on it are, as a share of their full length; its first arm and the first number of its way along the body; its second arm and the second), or 32 for a wide one (then how far its skin has grown, the most a hair on it may be long or 0 for any, how high its ribs stand as a share of its radius, one spare, and eight swellings on its ring, each the way it points in the ring's own two arms times how far it stands out as a share of the radius; on a wide ring how far the two numbers of a hair's seat are from 1 is how high the hair stands on a rib, and its skin leans as the ring widens or narrows along the body). A sheet has 4 numbers a point: where it is, and how long the hairs round it are; a hair between point f0, the next after it, point f1 and the next after that stands as far from f0 to f1 as its share says and as far toward the next as c1 says. Asking marks the slot as laid, from frame `from` up to `to` when they are given: only those are sent.
+  slot(slot: 0 | 1, from?: number, to?: number): Float32Array
   // How the part stands in the plant in a slot. Left alone, as it lies.
   pose(slot: 0 | 1, matrix: THREE.Matrix4): void
   // Sends the slots that were laid since the last time, and no other.
@@ -868,24 +891,28 @@ class Frames implements HairFrames {
   // The longest any hair is drawn, as a share of its full length.
   reach = 0
   private readonly views: [Float32Array, Float32Array]
-  private readonly dirty = [false, false]
+  private readonly from = [Infinity, Infinity]
+  private readonly to = [0, 0]
+  private readonly whole = [true, true]
   private readonly most = [0, 0]
   private readonly turned = new THREE.Matrix4()
   private readonly key = new Float64Array(9).fill(NaN)
   private laid = 0
   private nearest = Infinity
 
-  constructor(readonly count: number, wide: boolean) {
-    this.texels = wide ? 8 : 3
+  constructor(readonly count: number, kind: boolean | 'sheet') {
+    this.texels = kind === 'sheet' ? 1 : kind ? 8 : 3
     this.stride = this.texels * 4
     const rows = Math.max(1, Math.ceil(count / FRAME_ROW))
     const make = (): THREE.DataTexture => hairTexture(new Float32Array(rows * FRAME_ROW * this.stride), FRAME_ROW * this.texels, THREE.RGBAFormat)
     this.textures = [make(), make()]
     this.views = [0, 1].map((k) => (this.textures[k].image.data as Float32Array).subarray(0, count * this.stride)) as [Float32Array, Float32Array]
+    for (let k = 0; k < 2; k++) this.textures[k].onUpdate = () => void (this.whole[k] = false)
   }
 
-  slot(slot: 0 | 1): Float32Array {
-    this.dirty[slot] = true
+  slot(slot: 0 | 1, from = 0, to = this.count): Float32Array {
+    if (from < this.from[slot]) this.from[slot] = Math.max(0, from)
+    if (to > this.to[slot]) this.to[slot] = Math.min(this.count, to)
     return this.views[slot]
   }
 
@@ -896,9 +923,20 @@ class Frames implements HairFrames {
 
   finish(): void {
     for (let k = 0; k < 2; k++) {
-      if (!this.dirty[k]) continue
-      this.dirty[k] = false
-      this.textures[k].needsUpdate = true
+      const from = this.from[k]
+      const to = this.to[k]
+      if (!(from < to)) continue
+      this.from[k] = Infinity
+      this.to[k] = 0
+      const texture = this.textures[k]
+      const first = Math.floor(from / FRAME_ROW)
+      const last = Math.floor((to - 1) / FRAME_ROW)
+      // Only the rows that were laid are sent, once the whole has been: the whole waits until something draws it, and ranges that pile up meanwhile give way to it.
+      if (this.whole[k] || (from === 0 && to === this.count) || texture.updateRanges.length > 2 * Math.ceil(this.count / FRAME_ROW)) {
+        texture.clearUpdateRanges()
+        this.whole[k] = true
+      } else for (let r = first; r <= last; r++) texture.addUpdateRange(Math.max(from, r * FRAME_ROW) * this.stride, (Math.min(to, (r + 1) * FRAME_ROW) - Math.max(from, r * FRAME_ROW)) * this.stride)
+      texture.needsUpdate = true
       const data = this.views[k]
       let most = 0
       for (let f = 0; f < this.count; f++) if (data[f * this.stride + 3] > most) most = data[f * this.stride + 3]
@@ -940,8 +978,8 @@ class Frames implements HairFrames {
   }
 }
 
-export function createHairFrames(count: number, wide = false): HairFrames {
-  return new Frames(count, wide)
+export function createHairFrames(count: number, kind: boolean | 'sheet' = false): HairFrames {
+  return new Frames(count, kind)
 }
 
 let blank: THREE.DataTexture | null = null
