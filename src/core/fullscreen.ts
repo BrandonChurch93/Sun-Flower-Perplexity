@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { remember } from './programs.ts'
 
 const geometry = new THREE.BufferGeometry()
 geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3))
@@ -20,7 +21,7 @@ export class FullscreenPass {
   private readonly mesh: THREE.Mesh
 
   constructor(fragment: string, uniforms: Uniforms, options: { blending?: THREE.Blending } = {}) {
-    this.material = new THREE.RawShaderMaterial({
+    this.material = remember(new THREE.RawShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: fullscreenVertex,
       fragmentShader: `precision highp float;\nprecision highp int;\nprecision highp sampler2D;\n${fragment}`,
@@ -28,7 +29,7 @@ export class FullscreenPass {
       depthTest: false,
       depthWrite: false,
       blending: options.blending ?? THREE.NoBlending,
-    })
+    }))
     this.mesh = new THREE.Mesh(geometry, this.material)
     this.mesh.frustumCulled = false
   }
