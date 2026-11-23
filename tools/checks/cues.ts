@@ -6,7 +6,7 @@ import type { Args } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { shutterSeconds } from '../../src/v2/now.ts'
 import { barAt, barTime, clockOf, crossing, FPS, FRAME, FRAMES, hitFrame, holds, nearestBar, secondsOf, type Clock } from './lib/film.ts'
-import { meantCuts } from './lib/meant.ts'
+import { meantCuts, sameCuts } from './lib/meant.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 
 const SENTENCE = 'time up the impactful moments of the video with the audio clip'
@@ -143,6 +143,7 @@ export async function run(args: Args): Promise<void> {
     const ok = f === hitFrame(bar)
     note(ok, 'a cut the film means', bar, secondsOf(f), `The cut must land on frame ${hitFrame(bar)}, the frame that holds the downbeat`)
   }
+  if (args.meant === undefined) findings.push(sameCuts(cutFrames))
   if (cutFrames.length) {
     const off = cutFrames.filter((f) => f !== hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME)))
     findings.push({ ok: off.length === 0, what: `${cutFrames.length === 1 ? '1 cut' : `${cutFrames.length} cuts`} the film means (tools/checks/limits.json), at ${cutFrames.length === 1 ? 'frame' : 'frames'} ${cutFrames.join(', ')}: ${off.length === 0 ? `each is the frame that holds a downbeat, of bars ${cutFrames.map((f) => nearestBar(secondsOf(f) + 0.5 * FRAME)).join(', ')}` : `${off.map((f) => `frame ${f} is ${sign(f - hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME)))} from frame ${hitFrame(nearestBar(secondsOf(f) + 0.5 * FRAME))}, which holds the downbeat of bar ${nearestBar(secondsOf(f) + 0.5 * FRAME)}`).join('; ')}`}` })

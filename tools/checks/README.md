@@ -122,7 +122,7 @@ The moon may not blink. `nights` works out where the film's camera puts the moon
 
 ## The cuts the film means
 
-The film may cut hard on the frames the Builder lists in `tools/checks/limits.json` under `cuts`, and nowhere else. The list is not read from the film, so the film cannot excuse a cut of its own. Exactly those frames are left out, each printed with what was measured there:
+The film may cut hard on the frames the Builder lists in `tools/checks/limits.json` under `cuts`, and nowhere else. The film keeps its own list in `src/v2/cuts.ts`; `cues` and `cuts` fail when the two lists differ, so neither can drift and the film cannot excuse a cut of its own by listing it. Exactly those frames are left out, each printed with what was measured there:
 
 - `cuts` does not judge the step into a listed frame and does not count it among the steps round its neighbours. It prints how far the edges moved there.
 - `nights` does not judge the step into a listed frame by the step of the frame's mean nor by its direction.

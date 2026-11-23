@@ -4,7 +4,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, FLASH_STEP, FRAMES, lightningFrames, secondsOf } from './lib/film.ts'
-import { meantCuts } from './lib/meant.ts'
+import { meantCuts, sameCuts } from './lib/meant.ts'
 import { frameFile, olderFilm, playDir, readLines, readStamp, runName } from './lib/play.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 import { mad, moved, small, type Small } from './lib/steps.ts'
@@ -144,6 +144,7 @@ export async function run(args: Args): Promise<void> {
   if (steps.length === 0) findings.push({ ok: false, what: `no two neighbouring frames of "${run}" have been drawn yet: run "npm run checks -- play" first` })
   else {
     findings.push({ ok: cuts.length === 0, what: cuts.length === 0 ? `${steps.length} of ${wanted} steps from one frame to the ${every > 1 ? `one ${every} frames on` : 'next'} measured (${stamp?.width} x ${stamp?.height}, sky ${stamp?.sky}): no hard cut. A hard cut is a step in which the edges of the upper or the lower half of the frame move more than ${CUT_MOVE} of 1 and more than ${CUT_RATIO} times the median of the ${2 * NEAR} steps round it` : `${cuts.length} ${every > 1 ? `place${cuts.length > 1 ? 's' : ''} where the picture moves far more than round it, seen every ${every}th frame. Draw the frames between and run cuts without --every to tell a fast dusk from a cut` : `hard cut${cuts.length > 1 ? 's' : ''} (a cut, or a pop of one frame that moves the edges as far)`}: ${cuts.slice(0, 12).map((s) => `into frame ${s.frame} (${secondsOf(s.frame).toFixed(3)} s, ${barText(secondsOf(s.frame))}): the edges of the ${s.half} half move ${s.move.toFixed(2)} of 1, ${s.times.toFixed(1)} times the steps round it`).join('; ')}` })
+    if (args.meant === undefined && !broken && every === 1) findings.push(sameCuts())
     for (const f of [...meant].sort((a, b) => a - b)) {
       const s = steps.find((x) => x.frame === f)
       if (!s) findings.push({ ok: true, expected: true, what: `left out: frame ${f} (${barText(secondsOf(f))}) is listed as a cut the film means (tools/checks/limits.json); the step into it is not measured yet` })
