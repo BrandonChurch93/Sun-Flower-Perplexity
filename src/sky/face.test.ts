@@ -5,7 +5,7 @@ import { direction } from '../v2/sun.ts'
 import { make } from './index.ts'
 
 describe('photographed solar centre', () => {
-  it('lifts the normalized mid-shutter direction at the last sunset without mutating the moments', () => {
+  it('lifts the normalized mid-shutter at a low sun before the finale without mutating the moments', () => {
     const open = blankMoment(), close = blankMoment()
     open.sunElevationDeg = -0.85
     close.sunElevationDeg = -0.65
@@ -22,6 +22,20 @@ describe('photographed solar centre', () => {
     expect(Math.atan2(out.x, out.z)).toBeCloseTo(Math.atan2(mid.x, mid.z), 14)
     expect(open.sun.equals(a) && close.sun.equals(b)).toBe(true)
     expect(sky.face!(open, close, new THREE.Vector3(1, 1, 1)).equals(out)).toBe(true)
+  })
+
+  it('uses the ridge-calibrated clock in the finale without adding refraction twice', () => {
+    const sky = make()
+    for (const elevation of [2.4, 1.1, 0.42]) {
+      const open = blankMoment(), close = blankMoment()
+      open.bar = 73
+      open.sunElevationDeg = close.sunElevationDeg = elevation
+      open.dials.evening = 1
+      direction(225.7, elevation, open.sun)
+      direction(225.8, elevation, close.sun)
+      const geometric = open.sun.clone().lerp(close.sun, 0.5).normalize()
+      expect(sky.face!(open, close, new THREE.Vector3()).distanceTo(geometric)).toBeLessThan(1e-14)
+    }
   })
 
   it('leaves midday and a sun well under the horizon in their geometric directions', () => {
