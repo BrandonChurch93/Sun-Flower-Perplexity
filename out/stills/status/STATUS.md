@@ -1,11 +1,12 @@
-# Status 52
+# Status 53
 
-2026-11-23 21:42 UTC
+2026-11-23 22:09 UTC
 
-- Status 52 · Phase 6. Brandon signed off on the film and asked for a bud still, a 6 to 9 s bloom clip that starts on that still, a second film with the prompt typing intro, and the repository playing the film for Vercel. The supplement jury is complete: 14 of 70 at the export tier against 16 of 70 on record. Ten machines are drawing the clip's frames at the export tier.
-- Next: Clip frames 2905 to 3112 at 48 samples, the prompt intro, the landing page, then the wrap. Time used: 23.7 h of 30 h.
+- Status 53 · Phase 6. Brandon signed off the film and asked for four more things; all four are in work. The card still is drawn at the final tier (film frame 2905, the closed bud against the low sun). The card clip runs from that exact frame for 6.9 s (208 frames, 2905 to 3112) and is being drawn at the final tier by twelve machines; 12 of 208 are in, each checked on arrival (right build, 48 samples, 1920 x 1080; one frame drawn on two machines came back the same to the pixel). The prompt intro is drawn with the typing skill: 18.2 s, 547 frames, every check of the skill passes; the prompt is typed, the effort chip is opened and set from Standard to Max, Send is pressed, then three build steps run. Sounds from his ElevenLabs are being fitted; the first mix (one key sound a letter) was judged too mechanical by a listening model and is being redone with a natural typing take. The keys apart timing pass is pushed as a side branch (agent/plant-keys-apart at c28ce9af), offered, not merged.
+- Next: Join the intro to the approved film without touching one film frame (one copy with sounds, one silent), build the landing page that plays the film for Vercel, encode the still and the clip when the frames are in (about 01:45 UTC), then the wrap. Time used: 24.2 h of 30 h.
 - Review page, private preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 
-- `status-1.jpg`: Card clip candidates: the still at frame 2905, the first opening frame, and two possible last frames (from the film)
-- `status-2.jpg`: Frame 2907 at three tiers, crops at full size: the film at 1 sample, 8 samples, and the export tier at 48
-- `status-3.jpg`: Frame 2907 at the export tier, 48 samples a frame: the clip is being drawn at this tier
+- `status-1.jpg`: The card still, film frame 2905 at the final tier
+- `status-2.jpg`: Card clip, frame 3050 at the final tier
+- `status-3.jpg`: Prompt intro, the effort menu with Max about to be chosen
+- `status-4.jpg`: Prompt intro, the three build steps
