@@ -215,6 +215,9 @@ export class Film {
       shared.uSkyZenith.value.set(1, 1, 1)
       shared.uSkyHorizon.value.set(1, 1, 1)
       shared.uGroundBounce.value.set(1, 1, 1)
+      shared.uAirSun.value.set(0, 0, 0)
+      shared.uAirZenith.value.set(1, 1, 1)
+      shared.uAirHorizon.value.set(1, 1, 1)
       shared.uFogDensity.value = 0
       this.sun.set(0, 1, 0)
       return false
@@ -224,6 +227,9 @@ export class Film {
       shared.uSkyZenith.value.set(0.12, 0.12, 0.12)
       shared.uSkyHorizon.value.set(0.12, 0.12, 0.12)
       shared.uGroundBounce.value.set(0.12, 0.12, 0.12)
+      shared.uAirSun.value.set(5, 5, 5)
+      shared.uAirZenith.value.set(0.12, 0.12, 0.12)
+      shared.uAirHorizon.value.set(0.12, 0.12, 0.12)
       shared.uFogDensity.value = 0
       this.sun.set(pose.forward.x, 0, pose.forward.z).normalize().multiplyScalar(Math.cos(0.35)).setY(Math.sin(0.35))
       return true

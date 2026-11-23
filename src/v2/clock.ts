@@ -171,6 +171,9 @@ export function worldAtBar(b: number): number {
 // A hold begins on the frame that holds its bar line, and that frame opens up to a frame before the line: growth has ended by then.
 const FROST_FROM = hitBar(17)
 const STORM_FROM = hitBar(33)
+// A hold ends on the frame that holds its bar line: that frame opens at rest and has moved by the time its shutter closes.
+const FROST_TO = hitBar(25)
+const STORM_TO = hitBar(41)
 const germination = new Monotone(
   G.germination.map((m) => [m.seconds ?? hitTime(m.bar ?? 1), m.tau] as const),
   [[hitTime(17), 0]],
@@ -189,10 +192,10 @@ const settle = new Monotone(
 // The plant's clock at a bar. It does not move in the two holds.
 export function tauAtBar(b: number): number {
   if (b < FROST_FROM) return germination.at(barTime(b))
-  if (b < 25) return G.frostHold
-  if (b < STORM_FROM) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - 25) / (STORM_FROM - 25), 0.05, 0.14)
-  if (b < 41) return G.stormHold
-  if (b < 55.5) return G.stormHold + (G.bud - G.stormHold) * trapezoid((b - 41) / 14.5, 0.07, 0.12)
+  if (b < FROST_TO) return G.frostHold
+  if (b < STORM_FROM) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - FROST_TO) / (STORM_FROM - FROST_TO), 0.05, 0.14)
+  if (b < STORM_TO) return G.stormHold
+  if (b < 55.5) return G.stormHold + (G.bud - G.stormHold) * trapezoid((b - STORM_TO) / (55.5 - STORM_TO), 0.07, 0.12)
   if (b < BLOOM_FROM) return G.bud
   if (b < 61) return G.bud + (G.open - G.bud) * trapezoid((b - BLOOM_FROM) / (61 - BLOOM_FROM), 0.05, 0.55)
   return settle.at(Math.min(b, BEND))

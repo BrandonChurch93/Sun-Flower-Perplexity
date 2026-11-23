@@ -61,6 +61,7 @@ export function blankLook(): WorldDef {
     standIn: false,
     sun: { azimuthDeg: 180, elevationDeg: 45, color: [1, 1, 1], softnessDeg: 1.2, lean: 1, lift: 1 },
     sky: { zenith: [0, 0, 0], horizon: [0, 0, 0], bounce: [0, 0, 0], ambient: 1, glow: [0, 0, 0], glowPower: 8, disc: 0, even: 0 },
+    air: { sun: [0, 0, 0], zenith: [0, 0, 0], horizon: [0, 0, 0] },
     backdrop: { file: null, key: '', sunAt: null, gain: 1, blur: 0.25 },
     fog: { color: [0, 0, 0], sunTint: [0, 0, 0], density: 0, falloff: 1 },
     grade: { ...DAY, gain: [1, 1, 1], lift: [0, 0, 0] },
@@ -121,6 +122,14 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
     out.sky.bounce[i] = SOIL[i] * (0.5 * (out.sky.horizon[i] + out.sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
   }
   out.sky.ambient = 1
+  // The air keeps the sky's own light, so that rain, mist and the glass sit in the sky's picture whatever the look does to the plant.
+  const air = out.air as NonNullable<WorldDef['air']>
+  const shows = now.lightKind === 'none' ? 0 : now.lightKind === 'sun' ? d.sunThrough * smoothstep(-1, 0.6, el) : smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
+  for (let i = 0; i < 3; i++) {
+    air.sun[i] = sky.direct[i] * shows
+    air.zenith[i] = sky.zenith[i]
+    air.horizon[i] = sky.horizon[i]
+  }
   out.sky.even = clamp(Math.max(d.fog, 0.8 * d.overcast, 0.6 * now.night))
 
   const thick = d.fog * d.fog
