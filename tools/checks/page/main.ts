@@ -24,10 +24,13 @@ export interface ChecksPage {
   keep(name: string): void
   differ(a: string, b: string): FloatDiff
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
-  // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames.
+  // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames,
+  // 'moon' makes the night's key `a` times as strong, 'slow' makes the field's turn last `a` ms longer in frame `b` or, with b under 0, in every frame.
   fault(kind: string, a: number, b: number): void
   // Which pixels of the last frame the scene drew into, row by row from the top: '1' where the scene's own numbers, before the lens and the grain, hold any light, '0' where the frame was left empty.
   covered(): string
+  // Where the page's own time went in the last frame drawn, in milliseconds by part: the film's own laps (film.cost). The first call hands the film its clock.
+  cost(): Record<string, number>
 }
 
 declare global {
@@ -68,6 +71,17 @@ let madeAt = -1
 let dice = false
 let memory = false
 let moon = 1
+let slowMs = 0
+let slowAt = -1
+// The fault of a part that takes too long: the field's turn in a frame lasts `slowMs` longer, in every frame or in one. It is time and no pixel.
+const showField = film.field.show.bind(film.field)
+film.field.show = (on: boolean): void => {
+  if (slowMs > 0 && (slowAt < 0 || slowAt === now.frame)) {
+    const until = performance.now() + slowMs
+    while (performance.now() < until);
+  }
+  showField(on)
+}
 // The night's key light, written by the film into its look on every frame, comes out `moon` times as strong: the fault of a moon brighter than the dusk.
 const key = film.look.sun as { color: number[] }
 key.color = new Proxy(key.color, {
@@ -199,6 +213,10 @@ window.checks = {
     }
     return rows.join('')
   },
+  cost() {
+    if (!film.clock) film.clock = () => performance.now()
+    return { ...film.cost }
+  },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
@@ -206,6 +224,10 @@ window.checks = {
     else if (kind === 'memory') memory = true
     else if (kind === 'grow') grow = { from: a, to: b, rate: 0.05 }
     else if (kind === 'moon') moon = a
+    else if (kind === 'slow') {
+      slowMs = a
+      slowAt = b
+    }
     else throw new Error(`unknown fault "${kind}"`)
   },
 }

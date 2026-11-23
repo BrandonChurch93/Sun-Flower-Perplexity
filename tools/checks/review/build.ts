@@ -22,7 +22,7 @@ import { shots } from './shot.ts'
 // No audio is read, copied or written. The page lets its viewer pick the track from their own disk and plays it in step.
 const SITE = path.join(OUT, 'review')
 const LOOKS = path.join(OUT, 'looks')
-const CHECKS = ['holds', 'nights', 'cuts', 'made', 'cues', 'pure']
+const CHECKS = ['holds', 'nights', 'cuts', 'made', 'script', 'cues', 'pure']
 const FPS = config.film.fps
 
 const rel = (file: string): string => path.relative(SITE, file).split(path.sep).join('/')

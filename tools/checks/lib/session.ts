@@ -88,6 +88,7 @@ export interface Session {
   differ(a: string, b: string): Promise<FloatDiff>
   fault(kind: string, a?: number, b?: number): Promise<void>
   covered(): Promise<string>
+  cost(): Promise<Record<string, number>>
   close(): Promise<void>
 }
 
@@ -140,6 +141,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       keep: (name) => page.evaluate((n) => window.checks.keep(n), name),
       differ: (a, b) => page.evaluate(([x, y]) => window.checks.differ(x, y), [a, b] as const),
       covered: () => page.evaluate(() => window.checks.covered()),
+      cost: () => page.evaluate(() => window.checks.cost()),
       fault: (kind, a = 0, b = 0) => page.evaluate(([k, x, y]) => window.checks.fault(k as string, x as number, y as number), [kind, a, b] as const),
       async close() {
         await theBrowser.close().catch(() => undefined)
