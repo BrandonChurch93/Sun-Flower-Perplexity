@@ -96,7 +96,7 @@ void main() {
   color *= 0.82 + 0.3 * saturate(lift);
   // So thin a mist takes the color of the sky that stands behind it.
   float sunward = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uGlowDir.xz + vec2(1e-6)))), 6.0);
-  color = mix(color, mix(uAirHorizon, uSkyHorizonSun, sunward), uDawn.x);
+  color = mix(color, 0.6 * mix(uAirHorizon, uSkyHorizonSun, sunward), uDawn.x);
   outColor = vec4(color, alpha);
 }
 `
