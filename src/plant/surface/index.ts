@@ -226,7 +226,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
     vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink, world);
-    bloom = mix(frost, 1.0, smoothstep(0.0, 0.3, frostThaw())) * crust.x;
+    bloom = frost * crust.x;
     flash = frost * crust.y;
   }
   // The down of a round body holds rime all over: a frosted stem is paler than its skin. A sheet has its own crust.
@@ -239,9 +239,12 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // Close by, a frozen blade's own face is a dark cold teal under the white of its crystals, and only what it returns: the light through it keeps its color.
   vec3 ray = world - uCamPos;
   float close = sheet * smoothstep(12.0, 24.0, 1.08 / max(length(ray) * length(dFdy(normalize(ray))) * uSize.y, 1e-9));
-  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, ice);
+  vec3 cold = mix(albedo, FROST_COLD * grey, 0.7) * 0.9;
+  albedo = mix(albedo, cold, ice);
   albedo = mix(albedo, FROST_TEAL * (0.3 * grey), ice * close);
   albedo = mix(albedo, FROST_RIME, bloom);
+  // The room left for the light through, and the tint of the sheen, are set by the tissue and its rime, not by the dark of the ice or the water on it.
+  vec3 room3 = mix(mix(own, cold, frost), FROST_RIME, bloom);
   // Rime on the sun's side sends most of the sun back before it reaches the blade. Rime on the side turned from the sun takes what crossed the blade and sends it on every way, pale.
   float crossing = dot(through, vec3(0.3, 0.6, 0.1)) * (1.0 - FROST_SHUT * frost);
   through *= (1.0 - FROST_SHUT * frost) * (1.0 - 0.65 * bloom);
@@ -249,9 +252,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
   // Hoar breaks the mirror of the wax: a frozen skin is matt.
-  wax *= 1.0 - FROST_MATT * ice * (1.0 - melt);
+  wax *= 1.0 - FROST_MATT * frost * (1.0 - melt);
   // The water fills the fine relief: the skin is darker and deeper in color, and its wax is a narrow mirror that lights only the ridges and swells that face the sun or the bright sky.
   albedo = mix(albedo, max(mix(vec3(grey), own, 1.2), 0.0) * 0.6, melt);
+  through = max(mix(vec3(dot(through, vec3(0.3, 0.6, 0.1))), through, 1.0 + 0.2 * melt), 0.0);
   rough = mix(rough, min(rough, 0.25), melt);
   wax = mix(wax, max(wax, 0.3), melt);
   fuzz *= 1.0 - 0.7 * melt;
@@ -316,7 +320,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float dusk = tissueEvening() * (1.0 - sheer) * (1.0 - sheer);
   // What it passes then is the low sun hardly dyed, most where the face stands square to it: gold on one blade, green on the next.
   // Never more than the blade has left after what it returns.
-  float room = max((1.0 - max(albedo.r, max(albedo.g, albedo.b))) / max(peak, 1e-4) - 1.0, 0.0);
+  float room = max((1.0 - max(room3.r, max(room3.g, room3.b))) / max(peak, 1e-4) - 1.0, 0.0);
   vec3 lamp = through * uSunColor * (min(TISSUE_LATE * dusk * 1.6 * wrap * saturate(-ndl), room) * wrap * lobe * crossed);
   if (dew > 0.0) skyBack *= 1.0 + min(mix(DEW_SHEER, DEW_SHEER_DRY, saturate(1.0 - 4.0 * wet)) * dew * sheet, room);
 
@@ -383,7 +387,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
 
   vec3 direct = uSunColor * (sun * crease);
   // The neighbors are taken to be as bright as the part itself: petals light each other far more than leaves do.
-  float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
+  float thin = sheer * min(max(room3.r, max(room3.g, room3.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
   float cover = 1.0 - 0.8 * thin * shade;
@@ -391,7 +395,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float seen = 1.0 - TISSUE_SHADE_SKY * sheet * (1.0 - sheer) * (1.0 - sheer);
   vec3 color = albedo * (direct * (matte * enter * under * skin) + skyFront * buried * (under * cover * seen));
   // The evening's high sky is no mirror image worth the name on a blade: the cold face goes with it.
-  vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.6 + 0.25 * sheet);
+  vec3 pale = mix(vec3(1.0), room3 / max(max(room3.r, max(room3.g, room3.b)), 1e-3), 0.6 + 0.25 * sheet);
   // On a sheet the sheen comes off the down and the cells under the wax as much as off the wax: a paler green, not white.
   vec3 sheen = mix(vec3(1.0), pale, 0.7 * sheet);
   color += direct * sheen * (gloss * skin) + skyGloss * sheen * (mirror * open * cover * (1.0 - 0.85 * dusk));
