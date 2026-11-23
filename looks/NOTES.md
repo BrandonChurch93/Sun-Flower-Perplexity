@@ -1,8 +1,7 @@
 # Looks of checks
 
-2026-11-23 14:05 UTC, at commit fe42576b of agent/checks.
+2026-11-23 16:02 UTC, at commit df09bbfc of agent/checks.
 
-numbers every 24th frame on 35bd33b: wild pixels in the flower's disc (3192, 3072, 3216, 3000) and on the companion (1992); a rim of mild sparks on leaf edges
+3499: one pixel of 32,800 before the lens on the far land right of the sun (magenta), found by play 3325 to 3500; made PASS on all 176 frames
 
-- `01-wild-pixels-marked-magenta-crop-beside-frame-319.jpg`: wild pixels marked magenta, crop beside frame: 3192, 1992, 3072, 3216, 3000
-- `02-mild-sparks-marked-magenta-1248-216-288-264-360.jpg`: mild sparks marked magenta: 1248, 216, 288, 264, 360
+- `01-frame-3499-with-the-pixel-over-60000-marked.jpg`: frame 3499 with the pixel over 60000 marked
