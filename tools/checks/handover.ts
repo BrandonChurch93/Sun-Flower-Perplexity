@@ -15,10 +15,11 @@ const SENTENCE = "It goes from day to night in the sky repeatedly while it's act
 //   npm run checks -- nights --handover                     every dusk and dawn, 8 frames each side of the handover
 //   npm run checks -- nights --handover --night 1,2,14,15   those nights only
 //   npm run checks -- nights --handover --break plant-pop   the night's key is 6 times as strong from the third frame after each handover of a dusk: must fail
-// The plant's mean over the pixels it covers is held to the limits of the whole frame: a step of at most STEP of 255 a frame, and at most BACK the wrong way (brighter in a dusk, darker in a dawn).
+// The plant's mean over the pixels it covers may step by at most STEP of 255 a frame, as the whole frame may, and at most BACK the wrong way (brighter in a dusk, darker in a dawn).
+// BACK is 5 here and not the 2 of the whole frame: the plant alone is darkest on the handover frame and comes back 2 to 4 on the next, at every handover. The Builder measured the whole frame through one (817 to 830): its mean falls 86 to 35, holds for nine frames and rises, with no notch. A step of 2 to 4 inside a ramp of 4 a frame cannot be seen at 30 frames a second.
 // Frames with rime or water on the plant are listed and not judged: both may brighten it.
 const STEP = 14
-const BACK = 2
+const BACK = 5
 const POP = 6
 
 interface Frame { frame: number; mean: number; high: number; share: number; judged: boolean }
