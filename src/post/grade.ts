@@ -104,8 +104,8 @@ vec3 sunGlare(vec2 px) {
   float under = mix(1.0, smoothstep(-0.15, 0.6, -away.y / max(ra, 1e-4)), uFan);
   float reach = 0.4 * exp(-ra / 0.14) + 0.6 * exp(-ra / 0.55);
   float standing = reach * open * mix(sqrt(open), 1.0, uFan) * here * beams * under * smoothstep(0.015, 0.12, ra);
-  float lit = uShafts * mix(0.8, 1.9, uFan) * standing;
-  return glass + mix(uSunLight / peak, uSunAir, 0.4) * (uShaftLevel * lit / (1.0 + 1.2 * lit));
+  float lit = uShafts * mix(0.8, 1.45, uFan) * standing;
+  return glass + mix(uSunLight / peak, uSunAir, 0.4) * (uShaftLevel * lit / (1.0 + mix(1.2, 1.7, uFan) * lit));
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
