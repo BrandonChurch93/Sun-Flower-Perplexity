@@ -44,7 +44,7 @@ export async function run(args: Args): Promise<void> {
   const busy = Number(spawnSync('pgrep', ['-c', '-f', 'type=gpu-process'], { encoding: 'utf8' }).stdout.trim()) || 0
   if (busy) console.log(`owners · NOT ALONE: ${busy} other pages are drawing on this machine now, so the milliseconds are too large`)
   const out: Span[] = []
-  const session = await openSession({ record: true })
+  const session = await openSession({ record: true, plain: true })
   try {
     const t0 = Date.now()
     await session.warm(tier)
