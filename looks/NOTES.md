@@ -1,11 +1,10 @@
 # Looks of sky-b
 
-2026-11-23 07:38 UTC, at commit ff8d044 of agent/sky-b.
+2026-11-23 08:00 UTC, at commit 96c659d of agent/sky-b.
 
-- `01-every-frame-410-to-432-before-and-after.jpg`: Every frame 410 to 432, before and after
-- `02-every-frame-612-to-632-before-and-after.jpg`: Every frame 612 to 632, before and after
-- `03-cloud-outlines-against-the-milky-way-414-to-420.jpg`: Cloud outlines against the Milky Way, 414 to 420
-- `04-dusk-and-dawn-samples-at-other-quick-nights.jpg`: Dusk and dawn samples at other quick nights
-- `05-daylight-pairs-at-bars-5-13-29-44-and-61.jpg`: Daylight pairs at bars 5 13 29 44 and 61
-- `06-frost-photo-draft-against-references.jpg`: Frost photo draft against references
-- `07-frost-photo-review-against-references.jpg`: Frost photo review against references
+Final sunset work in progress at 96c659d. Eight requested native 1920 drafts on the previous-color sky at 2ec5b26, with base v2 ee86b16 and stock glass. The orange close comparison and bar 71/73 frames are from the final sky color on that same base. Integrated grade/ridge/glass proof pending.
+
+- `01-eight-native-draft-bars-with-both-reference-keys.jpg`: Eight native draft bars with both reference keys
+- `02-updated-bar-73-sky-detail-beside-last-key.jpg`: Updated bar 73 sky detail beside last key
+- `03-updated-bar-73-with-original-meter-and-glass.jpg`: Updated bar 73 with original meter and glass
+- `04-updated-bar-71-with-original-meter-and-glass.jpg`: Updated bar 71 with original meter and glass
