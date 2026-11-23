@@ -75,8 +75,9 @@ export const kindTime = (time: number, index: number, tier: Tier): number =>
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
-const SETTLED_T = 45
+export const SETTLED_T = 45
 const KNEE = 12
+export const SIZE_KNEE = KNEE
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
 // After the bud the lead is given up more slowly than the neighbors still grow, so none of them gets shorter while it goes.
 const SETTLE_SLOW = 0.5
@@ -89,7 +90,7 @@ const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.56], [20, 0.52], [
 // While the field is low its plants are nearly of a height: how much of each one's own size shows, as a power of it.
 const EVEN_LOW = 0.12
 const EVEN_FROM_T = 29.2
-const SHARE_LOW = 0.05
+export const SHARE_LOW = 0.05
 const EVEN_STORM = 0.07
 const EVEN: [number, number][] = [[9, 1], [12, EVEN_LOW], [20, EVEN_STORM], [23.1, EVEN_STORM], [28.6, EVEN_LOW], [EVEN_FROM_T, EVEN_LOW]]
 // A curve through the marks that never turns back between two of them.

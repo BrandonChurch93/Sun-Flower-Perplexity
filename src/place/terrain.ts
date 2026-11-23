@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, HOME, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt, landHill, woodAt } from './land.ts'
+import { CROP, CROP_AXES, FIELDS, HOME, PLANTED, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt, landHill, woodAt } from './land.ts'
 
 const RAD = Math.PI / 180
 const RING_GROWTH = 1.022
@@ -199,6 +199,23 @@ ${fieldsGlsl}
 
 const vec3 CROPS[${CROPS.length}] = vec3[${CROPS.length}](${CROPS.map((c) => `vec3(${c.join(', ')})`).join(', ')});
 
+float cropAt(vec2 p, float px) {
+  float depth = dot(p, vec2(${CROP_AXES.depth.x.toFixed(6)}, ${CROP_AXES.depth.z.toFixed(6)}));
+  float across = dot(p, vec2(${CROP_AXES.across.x.toFixed(6)}, ${CROP_AXES.across.z.toFixed(6)}));
+  float reach = max(depth, 0.0);
+  float west = (across + ${PLANTED.west[0].toFixed(1)} + ${PLANTED.west[1].toFixed(2)} * reach) / ${Math.hypot(1, PLANTED.west[1]).toFixed(5)};
+  float east = (${PLANTED.east[0].toFixed(1)} + ${PLANTED.east[1].toFixed(2)} * reach - across) / ${Math.hypot(1, PLANTED.east[1]).toFixed(5)};
+  float r = length(p);
+  float inside = min(min(west, east), depth) + ${(1.8 * CROP.sideM).toFixed(1)} * (valueNoise(p / 210.0 + 4.0) - 0.5) * smoothstep(60.0, 400.0, r);
+  float end = ${CROP.toM.toFixed(1)} + ${(1.8 * CROP.endM).toFixed(1)} * (0.7 * valueNoise(p / 330.0 + 9.0) + 0.3 * valueNoise(p / 71.0 + 2.0) - 0.5) - r;
+  float soft = 2.0 + px;
+  return smoothstep(-soft, soft, inside) * smoothstep(-soft, soft, end);
+}
+
+const float HEADS_FROM = 0.3;
+const float HEADS_MORE = 0.3;
+const vec3 HEAD = vec3(0.3, 0.18, 0.03);
+
 float crowns(vec2 p) {
   return 0.62 * valueNoise(p / 7.5) + 0.38 * valueNoise(p / 2.9 + 11.0);
 }
@@ -220,11 +237,15 @@ void main() {
   vec3 albedo = CROPS[kind] * (0.8 + 0.4 * tone);
   // Round the planted field lies a headland of grass, and ahead of the lens the sunflowers go on to the first hedge.
   bool home = f.strip >= ${HOME.strips[0]} && f.strip <= ${HOME.strips[1]} && f.field >= ${HOME.fields[0]} && f.field <= ${HOME.fields[1]};
-  float headland = home ? 0.0 : 1.0 - smoothstep(86.0, 104.0, r);
+  float wide = cropAt(p, px);
+  float crop = max(home ? 1.0 : 0.0, wide);
+  float headland = (1.0 - crop) * (1.0 - smoothstep(86.0, 104.0, r));
   albedo = mix(albedo, vec3(0.05, 0.066, 0.03), headland);
-  if (home) albedo = vec3(0.03, 0.052, 0.018) * (0.85 + 0.3 * tone);
-  float tilled = kind == 4 && !home ? 1.0 - headland : 0.0;
-  float standing = (home || kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0;
+  // In bloom the far crop is seen from the side, heads over leaves.
+  float heads = uLandBloom * (HEADS_FROM + HEADS_MORE * valueNoise(p / 17.0 + 2.0));
+  albedo = mix(albedo, mix(vec3(0.03, 0.052, 0.018) * (0.85 + 0.3 * mix(tone, 0.5, wide)), HEAD, heads), crop);
+  float tilled = kind == 4 ? (1.0 - headland) * (1.0 - crop) : 0.0;
+  float standing = max(crop, (kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0);
   float mottle = 0.55 * valueNoise(p / 37.0 + 3.0) + 0.3 * valueNoise(p / 9.0 + 7.0) + 0.15 * valueNoise(p / 2.3);
   albedo *= 0.72 + 0.56 * mottle;
   float rowFade = 1.0 - smoothstep(0.12, 0.45, px / 3.0);
@@ -235,7 +256,7 @@ void main() {
   albedo *= 1.0 - 0.3 * tram * tramFade * standing;
   // The baulk between two fields: rough grass, darker than either.
   float baulk = 1.0 - smoothstep(1.2, 3.4 + 0.5 * px, f.edgeM + 1.5 * (valueNoise(p / 5.0) - 0.5));
-  albedo = mix(albedo, vec3(0.04, 0.058, 0.024) * (0.7 + 0.6 * mottle), home ? 0.0 : baulk * (1.0 - headland));
+  albedo = mix(albedo, vec3(0.04, 0.058, 0.024) * (0.7 + 0.6 * mottle), baulk * (1.0 - headland) * (1.0 - crop));
 
   // Woods.
   float wood = smoothstep(0.42, 0.58, texture(tWoods, p / ${(2 * MAP_HALF_M).toFixed(1)} + 0.5).r + 0.1 * (valueNoise(p / 19.0) - 0.5));

@@ -1,4 +1,5 @@
-import { clamp, smoothstep } from '../core/curves.ts'
+import { config } from '../config.ts'
+import { clamp, smootherstep, smoothstep } from '../core/curves.ts'
 import type * as THREE from 'three'
 import type { Moment, Part } from '../v2/api.ts'
 import { airUniforms } from './air.ts'
@@ -6,6 +7,8 @@ import { makeTerrain } from './terrain.ts'
 import { makeTrees } from './trees.ts'
 
 // Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
+// The far sunflowers open with the plant's own head, on its clock.
+const BLOOM = config.plant.stages.bloom
 const AIR = { clear: 0.00006, lowSun: -0.00003, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
 const MIST = { perM: 0.001, topM: 12 }
@@ -39,6 +42,7 @@ class Place implements Part {
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet
     airUniforms.uLandFrost.value = d.frost
+    airUniforms.uLandBloom.value = smootherstep(BLOOM[0] + 0.06 * (BLOOM[1] - BLOOM[0]), BLOOM[0] + 0.82 * (BLOOM[1] - BLOOM[0]), now.tau)
     airUniforms.uLandWind.value = d.wind
   }
 }

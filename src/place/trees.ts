@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, cellAt, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, cellAt, inCrop, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -218,7 +218,7 @@ export function plantList(): Tree[] {
       const r = Math.hypot(p.x, p.z)
       const inSight = seen(p.x, p.z)
       const wooded = r > 400 && woodAt(p.x, p.z, landHill(p.x, p.z)) > 0.45
-      if (r < HEDGE_FROM_M || r > LINES_TO_M || wooded || (!inSight && !trees_ && !bound)) {
+      if (r < HEDGE_FROM_M || r > LINES_TO_M || wooded || inCrop(p.x, p.z) || (!inSight && !trees_ && !bound)) {
         s += 6
         continue
       }
