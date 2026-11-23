@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { huskLengthM, huskRest } from '../plant/growth.ts'
 import { cropLight } from './light.ts'
-import { crack, crackShape, dampFill, groundStates, laneDir, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
+import { crack, crackShape, dampFill, groundStates, laneDir, soilClock, soilHeight, sunWayDir, sunWayRise } from './soil.ts'
 
 export { laneDir }
 
@@ -13,19 +13,16 @@ export { laneDir }
 // `rugged` is how broken a lump's own outline is, from 0 for a ball; a large lump with no crumbs of its own is kept round, or it reads as a stone. `cover` is how much of a lump's upper side its own crumbs hide, and `childM` their sizes. `beads` is the share of lumps and crumbs that carry a bead of dew.
 export interface Scatter { count: number; detail: number; minM: number; maxM: number; skew: number; innerM: number; outerM: number; spread: number; stones: number; sink: number; beside?: number; frontM?: number; cover?: number; childM?: [number, number]; beads?: number; flat?: number; rugged?: number; finer?: boolean }
 export const crumbScatter: Scatter = { count: 3500, detail: 1, minM: 0.001, maxM: 0.0045, skew: 2.2, innerM: 0.1, outerM: 0.9, spread: 1.4, stones: 0.03, sink: 0.38 }
-export const clodScatterKept: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.016, skew: 1.8, innerM: 0.1, outerM: 0.9, spread: 1.3, stones: 0.04, sink: 0.3 }
 export const clodScatter: Scatter = { count: 200, detail: 3, minM: 0.005, maxM: 0.01, skew: 1.8, innerM: 0.2, outerM: 0.9, spread: 1.3, stones: 0, sink: 0.45, rugged: 0.4 }
 export const grainScatter: Scatter = { count: 4200, detail: 2, minM: 0.0003, maxM: 0.0011, skew: 1.6, innerM: 0.004, outerM: 0.13, spread: 1.25, stones: 0.04, sink: 0.3, beside: 0.25, beads: 0.3 }
-export const lumpScatter: Scatter = { count: 520, detail: 3, minM: 0.0012, maxM: 0.0036, skew: 1.5, innerM: 0.007, outerM: 0.13, spread: 1.3, stones: 0, sink: 0.45, beside: 0.3, frontM: 0.0026, cover: 0.5, childM: [0.0004, 0.001], beads: 0.25 }
+// The lumps round the stem and their crumbs are built of finer faces, so no flat face shows where the lens is sharp.
+export const lumpScatter: Scatter = { finer: true, count: 520, detail: 3, minM: 0.0012, maxM: 0.0036, skew: 1.5, innerM: 0.007, outerM: 0.13, spread: 1.3, stones: 0, sink: 0.45, beside: 0.3, frontM: 0.0026, cover: 0.5, childM: [0.0004, 0.001], beads: 0.25 }
 // The grains and lumps round the stem are drawn while the lens is within the first of these distances of the plant's foot, and shrink to nothing by the second.
 export const fineReachM = [1.2, 1.5]
 // A film of dew on a crumb gives back more of the sky that lights it, and most of its blue.
 export const dewFill = [0.6, 0.62, 1.38]
-export const massScatter: Scatter = { count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
+export const massScatter: Scatter = { finer: true, count: 11, detail: 5, minM: 0.005, maxM: 0.009, skew: 1, innerM: 0.012, outerM: 0.032, spread: 1, stones: 0, sink: 0.4, frontM: 0.0045, cover: 1.5, childM: [0.0004, 0.002], beads: 0.3, flat: 1.1 }
 
-// Until the bloom the lumps round the stem and their crumbs are built of finer faces, so no flat face shows where the lens is sharp.
-export const lumpScatterYoung: Scatter = { ...lumpScatter, finer: true }
-export const massScatterYoung: Scatter = { ...massScatter, finer: true }
 
 const LANE_CRUMB_M = 0.0022
 // Where the husk comes to rest it lies on the soil itself: no loose lump larger than a lane crumb within reach of it, and full size only from twice that reach.
@@ -139,7 +136,7 @@ export function scatter(name: string, s: Scatter): THREE.Mesh {
     const low = s.frontM === undefined ? s.maxM : s.maxM + (s.frontM - s.maxM) * front
     const sunward = x * sunWayDir.x + z * sunWayDir.z
     const aside = Math.abs(x * sunWayDir.z - z * sunWayDir.x)
-    const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
+    const lit = (s.flat !== undefined && sunward > 0.008) || (sunward > 0.022 && sunward < 0.7 && aside < 0.02 + 0.35 * sunward) ? Math.max(LANE_CRUMB_M, 0.35 * sunWayRise * sunward) : s.maxM
     const husk = Math.min(1, Math.max(0, Math.hypot(x - huskRest.x, z - huskRest.z) / (HUSK_REACH * huskLengthM) - 1))
     const radius = Math.min(s.minM + (s.maxM - s.minM) * Math.pow(random.next(), s.skew), LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * open, low, lit, LANE_CRUMB_M + (s.maxM - LANE_CRUMB_M) * husk)
     const e = spin()
@@ -302,7 +299,6 @@ in vec4 aCenter;
 uniform float uDew;
 uniform float uWet;
 uniform float uFine;
-uniform vec2 uRainS;
 in vec4 aSeed;
 out vec3 vWorld;
 out float vDepth;
@@ -334,18 +330,18 @@ void main() {
   float near = 1.0 - smoothstep(uEmerge.z * 0.7, uEmerge.z * 1.7, r);
   float go = smoothstep(start, start + 0.6, uTime) * near * (1.0 - mass);
   float heave = heaved() * near * mass;
-  float first8 = uTime < uRainS.x ? 1.0 : 0.0;
-  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (mix(0.25, 0.35, first8) + mix(0.3, 0.4, first8) * hash11(own + 7.0));
+  float thin = 1.0 - smoothstep(${soilClock.thickens[0].toFixed(1)}, ${soilClock.thickens[1].toFixed(1)}, uTime);
+  float angle = go * (1.0 + 2.6 * hash11(own + 5.0)) + heave * (mix(0.25, 0.35, thin) + mix(0.3, 0.4, thin) * hash11(own + 7.0));
   vec3 axis = vec3(out2.y, 0.0, -out2.x);
   mat3 m = mat3(modelMatrix);
-  float young = mass * (1.0 - smoothstep(0.035, 0.05, r)) * (1.0 - smoothstep(uRainS.x, uRainS.y, uTime));
+  float young = mass * (1.0 - smoothstep(0.035, 0.05, r)) * thin;
   vec3 rel = m * mix(position * keep, aRound + (position - aRound) * keep, bead) * mix(1.0, ${MASS_YOUNG}, young);
   vec3 ball = m * mix(aRound, aNormal, bead);
   vec3 normal = m * aNormal;
   rel = rel * cos(angle) + cross(axis, rel) * sin(angle) + axis * dot(axis, rel) * (1.0 - cos(angle));
   ball = ball * cos(angle) + cross(axis, ball) * sin(angle) + axis * dot(axis, ball) * (1.0 - cos(angle));
   normal = normal * cos(angle) + cross(axis, normal) * sin(angle) + axis * dot(axis, normal) * (1.0 - cos(angle));
-  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * mix(0.002, 0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r)), first8));
+  c += out2 * (go * (0.003 + 0.007 * hash11(own + 9.0)) + heave * mix(0.002, 0.005 + 0.004 * (1.0 - smoothstep(0.004, 0.016, r)), thin));
   float span = crackSpan(c);
   if (span > 0.0) {
     float d = crackLine(c);
@@ -403,9 +399,7 @@ void main() {
     outColor = finish(drop, vWorld, vDepth, 1.0);
     return;
   }
-  vec3 face = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-  face *= sign(dot(face, v) + 1e-6);
-  vec3 side = abs(uTime < uKeptS ? normalize(vNormal) : face);
+  vec3 side = abs(normalize(vNormal));
   vec2 lay = side.y > 0.62 ? vWorld.xz : (side.x > side.z ? vWorld.zy : vWorld.xy);
   vec2 uv = TURN_K * lay * (uTiles.x * uScales.x) + vec2(vSeed.x * 0.37, vSeed.x * 0.61);
   vec4 cD = texture(tColor, uv);
@@ -424,7 +418,6 @@ void main() {
   albedo = mix(albedo, (0.25 + 1.5 * luma) * mix(vec3(0.24, 0.22, 0.19), vec3(0.36, 0.29, 0.22), vSeed.y), vSeed.z);
   float damp = saturate(uWet + 0.3 * uDew) * mix(1.0, 0.6, vSeed.z);
   albedo = dampened(albedo, damp);
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * smoothstep(0.1, 0.7, n.y) * smoothstep(0.35, 0.7, dD.a));
 
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), vBall.y, vWorld.y) * cropLight(p, -dot(p, uToward));
   float open = (mix(0.25, 0.4, uDew) + mix(0.75, 0.5, uDew) * saturate(0.5 + 0.5 * vBall.y)) * (mix(0.15, 0.32, uDew) + 1.15 * smoothstep(0.25, 0.8, dD.a)) * (0.45 + grit.a) * (1.0 - 0.5 * pore);
@@ -446,6 +439,9 @@ void main() {
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
   }
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
+  float rime = rimed(vWorld, saturate(0.55 * smoothstep(0.0, 0.7, n.y) + 0.6 * smoothstep(0.1, 0.8, ball.y)) * smoothstep(0.3, 0.62, dD.a), uFrost, lit * sunOn) * (1.0 - vSeed.z);
+  albedo = mix(frozen(albedo, uFrost), FROST_WHITE, 0.94 * rime);
+  open = mix(open, max(open, 0.85), rime);
   vec3 color = albedo * (uSunColor * sunOn * lit + groundAmbient(toSky) * open * proud(vWorld.y, uDew) * mix(vec3(1.0), DEW_FILL, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawn));
   vec3 hv = normalize(v + uSunDir);
   float gloss = mix(sheen(uWet, uDew), 0.25 + 0.75 * damp, vSeed.z) * (1.3 - dD.b);
@@ -453,6 +449,9 @@ void main() {
   color += groundAmbient(reflect(-v, n)) * selfShade() * (0.03 + pow(1.0 - max(dot(n, v), 0.0), 5.0)) * gloss * mix(0.08, 0.1, uWet) * open * mix(1.0, 0.25, dull);
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, normalize(smoothN + 0.35 * (n - smoothN)), uWet) * smoothstep(0.4, 0.85, dD.a)) * open;
   color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
+  color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit) * (0.3 + 0.7 * open) + flashOn(albedo, n);
+  color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
