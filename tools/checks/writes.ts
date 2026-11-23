@@ -34,8 +34,13 @@ function owned(owner: string): { object: string; part: string } {
   return cut > 0 ? { object: s.slice(0, cut), part: s.slice(cut + 1) } : { object: s, part: '' }
 }
 
-// The first name on the path: the plant, its companion, the field, the ground, a part of the sky.
-const top = (owner: string): string => (owner.startsWith('a ') ? 'not named: this checkout has no list of owners' : (/^[\w-]+(\[[\w -]+\])?/.exec(owned(owner).object)?.[0] ?? owner))
+// The first name on the path, and the second inside the plant, its companion and the ground: plant leaves, plant casters, companion stem, field, parts[rain].
+const top = (owner: string): string => {
+  if (owner.startsWith('a ')) return 'not named: this checkout has no list of owners'
+  const object = owned(owner).object
+  const inside = /^(plant|companion|ground)[ .]([\w-]+)/.exec(object)
+  return inside ? `${inside[1]} ${inside[2]}` : (/^[\w-]+(\[[\w -]+\])?/.exec(object)?.[0] ?? owner)
+}
 
 export function summary(place: Place): { owner: string; textureMb: number; textures: number; bufferMb: number; buffers: number }[] {
   const out = new Map<string, { owner: string; textureMb: number; textures: number; bufferMb: number; buffers: number }>()

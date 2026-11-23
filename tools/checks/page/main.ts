@@ -84,17 +84,15 @@ let owners: Map<object, string> | null = null
 function ownersOf(): Map<object, string> {
   const out = new Map<object, string>()
   const seen = new Set<object>()
-  // A part's own things are named by the part: each part is walked first, and stops at what belongs to the whole film.
-  const shared = new Set<unknown>([film, film.scene, film.stage, film.view])
-  const queue: [unknown, string][] = film.parts.map((p): [unknown, string] => [p.part, `film.parts[${p.name}]`])
-  let whole = false
-  for (let i = 0; (i < queue.length || !whole) && seen.size < 600000; i++) {
-    if (i === queue.length) {
-      whole = true
-      queue.push([film, 'film'])
-    }
+  // A thing is named by who owns it: the plant, the companion, the ground, the field and each part are walked first, one after the other, each stopping at what belongs to the whole film or to another of them. The film's own lists come last.
+  const owning: [unknown, string][] = [[film.plant, 'film.plant'], [film.companion, 'film.companion'], [film.ground, 'film.ground'], [film.field, 'film.field'], ...film.parts.map((p): [unknown, string] => [p.part, `film.parts[${p.name}]`]), [film, 'film']]
+  const shared = new Set<unknown>([film.scene, film.stage, film.view, ...owning.map(([v]) => v)])
+  const queue: [unknown, string][] = []
+  for (let i = 0, next = 0; (i < queue.length || next < owning.length) && seen.size < 600000; i++) {
+    const root = i === queue.length
+    if (root) queue.push(owning[next++])
     const [v, p] = queue[i]
-    if (!v || typeof v !== 'object' || seen.has(v) || (!whole && shared.has(v))) continue
+    if (!v || typeof v !== 'object' || seen.has(v) || (!root && next < owning.length && shared.has(v))) continue
     seen.add(v)
     if (ArrayBuffer.isView(v)) {
       out.set(v, p)
