@@ -1,5 +1,5 @@
 # Looks of sky-a
 
-2026-11-22 23:55 UTC, at commit 3882c45 of agent/sky-a.
+2026-11-23 00:05 UTC, at commit f6ca817 of agent/sky-a.
 
-- `01-first-whole-sky-all-sixteen-shots-960x540-draft-.jpg`: First whole sky, all sixteen shots, 960x540 draft. Physical air, disc, stars, moon, cumulus, cirrus. Wrong: storm deck reads as clear sky, cumulus too sparse, stars too big, twilight too dark
+- `01-second-pass-960x540-draft-better-cumulus-and-sto.jpg`: Second pass, 960x540 draft. Better cumulus and storm deck; count PASS. Still wrong: clearing round the low sun in 13 to 16 too wide, storm deck too pale and even, flash core a hard white blob, clouds soft
