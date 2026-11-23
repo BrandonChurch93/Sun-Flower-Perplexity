@@ -26,6 +26,7 @@ const REACH = 4
 const FOLDER: Record<string, string> = { plant: 'src/plant', companion: 'src/plant', field: 'src/field (its plants take their look from src/plant/surface)', ground: 'src/ground', sky: 'the sky in use' }
 
 const wrong = (h: Held): number => h.none + h.over + (h.sparks ?? 0)
+const place = (h: Held): string => (h.at ? ` at column ${h.at[0]}, row ${h.at[1]} from the top` : '')
 const said = (h: Held, most: number): string => `${h.none} pixels without a number, ${h.over} over ${most}${h.sparks === undefined ? '' : `, ${h.sparks} sparks (the most a pixel holds of what is near it, ${(h.ratio ?? 0).toFixed(1)} times)`}`
 
 interface Row { frame: number; held: Held; alone: string[] | null; picture: string | null }
@@ -118,7 +119,7 @@ export async function run(args: Args): Promise<void> {
           }
         }
         rows.push({ frame: f, held, alone, picture })
-        console.log(`numbers · frame ${f} · ${said(held, most)}, the largest in order ${held.most.toFixed(1)}${alone ? ` · alone: ${alone.join(', ') || 'no part by itself'}` : ''}`)
+        console.log(`numbers · frame ${f} · ${said(held, most)}, the largest in order ${held.most.toFixed(1)}${place(held)}${alone ? ` · alone: ${alone.join(', ') || 'no part by itself'}` : ''}`)
       }
     } finally {
       await session.close()
@@ -148,7 +149,7 @@ export async function run(args: Args): Promise<void> {
   const paired = rows.some((r) => r.held.sparks !== undefined)
   const top = rows.reduce((a, r) => (r.held.most > a.held.most ? r : a), rows[0])
   if (rows.length === 0) findings.unshift({ ok: false, what: 'no frame is read: draw the film with "npm run checks -- play", or name frames with --frames a,b' })
-  else if (bad.length === 0) findings.unshift({ ok: true, what: `${rows.length} frames: every pixel holds a number before the lens, none is over ${most}${paired ? ` and none is a spark (the most a pixel holds of what is near it: ${Math.max(...rows.map((r) => r.held.ratio ?? 0)).toFixed(1)} times, the limit ${num(args, 'times', TIMES)})` : ''}; the largest is ${top.held.most.toFixed(1)}, at frame ${top.frame}` })
+  else if (bad.length === 0) findings.unshift({ ok: true, what: `${rows.length} frames: every pixel holds a number before the lens, none is over ${most}${paired ? ` and none is a spark (the most a pixel holds of what is near it: ${Math.max(...rows.map((r) => r.held.ratio ?? 0)).toFixed(1)} times, the limit ${num(args, 'times', TIMES)})` : ''}; the largest is ${top.held.most.toFixed(1)}, at frame ${top.frame}${place(top.held)}` })
   else {
     findings.unshift({ ok: false, what: `${bad.length} of ${rows.length} frames hold a pixel without a number, over ${most} or a spark before the lens: ${bad.slice(0, 40).map((r) => r.frame).join(', ')}${bad.length > 40 ? ' and more' : ''}` })
     for (const r of bad.slice(0, SHOWN)) {
@@ -166,6 +167,6 @@ export async function run(args: Args): Promise<void> {
     findings,
     table: { head: ['frame', 'bar', 'without a number', `over ${most}`, 'sparks', 'times what is near', 'largest in order', 'where', 'alone'], rows: (bad.length ? bad.slice(0, 60) : rows.length ? [top] : []).map((r) => [r.frame, barText(secondsOf(r.frame)), r.held.none, r.held.over, r.held.sparks ?? '', r.held.ratio === undefined ? '' : r.held.ratio.toFixed(1), r.held.most.toFixed(1), box(r.held.where), r.alone ? r.alone.join(', ') || 'none' : '']) },
     pictures: bad.filter((r) => r.picture).slice(0, SHOWN).map((r) => ({ file: r.picture as string, caption: `frame ${r.frame}: the pixels without a number, over ${most} or a spark before the lens, in magenta` })),
-    data: { most, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, most: r.held.most, alone: r.alone })) },
+    data: { most, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, most: r.held.most, at: r.held.at ?? null, alone: r.alone })) },
   })
 }

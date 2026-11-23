@@ -76,7 +76,8 @@ function serve(traced: boolean): Promise<{ url: string; close: () => Promise<voi
   })
 }
 
-export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean; trace?: boolean }
+// `plain` draws a frame of one sample at one place a pixel (the film's `smooth: false`): for the checks that read script time and megabytes, which need the film's work and not its recorded edges. The checks that prove what is recorded leave it out.
+export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean; trace?: boolean; plain?: boolean }
 
 export interface Session {
   page: Page
@@ -123,6 +124,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
     if (options.only) query.set('only', options.only)
     if (options.view) query.set('view', options.view)
     if (options.quality) query.set('quality', options.quality)
+    if (options.plain) query.set('plain', '1')
     await page.goto(`${served.url}/index.html?${query.toString()}`, { waitUntil: 'load' })
     await page.waitForFunction(() => typeof window.checks === 'object', undefined, { timeout: 60000 })
     try {

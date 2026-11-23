@@ -223,7 +223,7 @@ async function proof(args: Args, broken: string, limits: Limits): Promise<void> 
   const [from, to] = span(str(args, 'window', '1000-1012'))
   const tier = str(args, 'tier', 'draft')
   const run = `broken-${broken}`
-  const session = await openSession({ only: 'sky' })
+  const session = await openSession({ only: 'sky', plain: true })
   const findings: Finding[] = []
   try {
     await session.warm(tier)
@@ -285,7 +285,7 @@ export async function run(args: Args): Promise<void> {
   if (todo.length) {
     const busy = othersDrawing()
     if (busy) console.log(`script · NOT ALONE: ${busy} other pages are drawing on this machine now. What is measured in this run is marked "not alone" and is too large`)
-    const session = await openSession({ only: only || undefined })
+    const session = await openSession({ only: only || undefined, plain: true })
     try {
       const t0 = Date.now()
       await session.warm(tier)

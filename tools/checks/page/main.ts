@@ -11,7 +11,7 @@ import { views, type ViewName } from '../../../src/v2/shots.ts'
 // It can also break the film on purpose, so that each check can be shown to fail.
 
 export interface Drawn { frame: number; seconds: number; made: Made; png: string | null }
-export interface Numbers { none: number; over: number; most: number; where: number[] }
+export interface Numbers { none: number; over: number; most: number; at: [number, number]; where: number[] }
 export interface Sparks { count: number; worst: number; at: [number, number]; where: number[] }
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
@@ -64,7 +64,7 @@ const quality = (q.get('quality') as Quality | null) ?? null
 const canvas = document.getElementById('film') as HTMLCanvasElement
 
 installCounter()
-const film = new Film(canvas, format, 'full', { sky: q.get('sky') ?? undefined, only, view, quality })
+const film = new Film(canvas, format, 'full', { sky: q.get('sky') ?? undefined, only, view, quality, smooth: q.get('plain') !== '1' })
 const ready = film.load()
 
 let grow: { from: number; to: number; rate: number } | null = null
@@ -397,7 +397,7 @@ window.checks = {
     const { width, height, renderer, accumulator } = film.stage
     const pixels = new Float32Array(width * height * 4)
     renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
-    const out: Numbers = { none: 0, over: 0, most: 0, where: [] }
+    const out: Numbers = { none: 0, over: 0, most: 0, at: [0, 0], where: [] }
     const seen = marks.length === width * height ? marks : null
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
@@ -410,7 +410,10 @@ window.checks = {
         const high = !lost && (mark === 2 || r > limit || g > limit || b > limit)
         if (lost) out.none++
         else if (high) out.over++
-        else out.most = Math.max(out.most, r, g, b)
+        else if (Math.max(r, g, b) > out.most) {
+          out.most = Math.max(r, g, b)
+          out.at = [x, height - 1 - y]
+        }
         if ((lost || high) && out.where.length < 8000) out.where.push(x, height - 1 - y)
       }
     }
