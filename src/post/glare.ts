@@ -1,3 +1,5 @@
+import { sound } from './fill.ts'
+
 // What is bright enough to scatter in the glass, kept in its own colour. Alpha says how open each place is to the light of the sky: 1 for sky as bright as the sky low toward the sun, 0 for anything that stands dark against it. The shafts are cast through it.
 export const brightFragment = /* glsl */ `
 uniform sampler2D tFrame;
@@ -6,8 +8,9 @@ uniform float uKnee;
 uniform float uSkyLevel;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
+${sound}
 vec4 bright(vec3 c) {
-  c = max(c, 0.0) * uExposure;
+  c = sound(c) * uExposure;
   float l = max(c.r, max(c.g, c.b));
   float soft = clamp(l - uKnee * 0.5, 0.0, uKnee);
   float over = max(l - uKnee, soft * soft / (2.0 * uKnee + 1e-4));
