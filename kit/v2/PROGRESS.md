@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 40 · 2026-11-23 17:38 UTC · Phase 5
+- Last status: 41 · 2026-11-23 18:03 UTC · Phase 5
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 18:03 UTC · status 41 · Phase 5 · `status-1.jpg`: Frame 60 of the 1920 film, the sprout; `status-2.jpg`: Frame 1055, the hard cut to the frosted tip; `status-3.jpg`: Frame 1775, the storm hold; `status-4.jpg`: Frame 3440, the crane over the field
 - 2026-11-23 17:38 UTC · status 40 · Phase 5 · `status-1.jpg`: Frozen build: first frost close shot, the leaf margin at bar 19 (frame 952); `status-2.jpg`: Frozen build: the thaw close shot at bar 23 (frame 1157); `status-3.jpg`: Frozen build: last frame of the thaw, a drop about to fall (frame 1259); `status-4.jpg`: Frozen build: the field in the crane at bar 71 (frame 3600)
 - 2026-11-23 17:20 UTC · status 39 · Phase 5 · `status-1.jpg`: Frozen build: frost close shot in the sun at bar 21 (frame 1055); `status-2.jpg`: Frozen build: the bloom opening at bar 59 (frame 3009); `status-3.jpg`: Bar 41 on the frozen build: the gap in the storm deck opens and beams fan from the sun; `status-4.jpg`: Far ridge before and after the cure, frames 2902 to 2912
 - 2026-11-23 16:57 UTC · status 38 · Phase 4 · `status-1.jpg`: The bloom at bar 61 with the head's rays restored; `status-2.jpg`: Bar 41 after the cure, the tear closes slowly (frames 2082 to 2100); `status-3.jpg`: Far ridge flicker, top 2902, middle 2903 before, bottom 2903 with the cure; `status-4.jpg`: Beams under the tear before and after, frames 2086 to 2089
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 14:33 UTC · status 32 · Phase 4 · `status-1.jpg`: Storm hold on the merged tree, frame 1830; `status-2.jpg`: The break, frame 2090; `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360; `status-4.jpg`: The field at the end of the pull back, frame 3492
 - 2026-11-23 14:08 UTC · status 31 · Phase 4 · `status-1.jpg`: Frame 60. The sprout with the merged leaf look; `status-2.jpg`: Frame 951. Wide frost hold, the last frame before the first cut; `status-3.jpg`: Frame 1106. Frost close shot, the right leaf now cool grey; `status-4.jpg`: Frame 2156. Dusk after the storm, the leaves no longer outshine the sky
 - 2026-11-23 13:42 UTC · status 30 · Phase 4 · `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976; `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208; `status-3.jpg`: The tip shot at 1106, 1920 wide, draft; `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009
-- 2026-11-23 13:13 UTC · status 29 · Phase 4 · `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down; `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
 
 ## Clock
 
@@ -43,9 +43,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
-| 5 | 3.00 h | 0.33 h |
+| 5 | 3.00 h | 0.75 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 19.64 h |
+| Whole build | 30.00 h | 20.06 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -431,4 +431,6 @@ None yet.
   Pictures: Frozen build: frost close shot in the sun at bar 21 (frame 1055); Frozen build: the bloom opening at bar 59 (frame 3009); Bar 41 on the frozen build: the gap in the storm deck opens and beams fan from the sun; Far ridge before and after the cure, frames 2902 to 2912.
 - Status 40, 2026-11-23 17:38 UTC, Phase 5. The frost's cure for live play is merged and proven: 18 frames, drawn in a row and in a jumping order, are the same to the pixel as the frozen build, 206 tests pass. Twelve machines are drawing the film once at 1920 x 1080 from the frozen build; seven have reported back with the right build so far. The proofs machine is paused so that no more than twelve work at once. Next: Read each part as it arrives (flicker, pops, sparks), give free machines the slowest range, start the proofs at the first free machine, then join the film to the track and run the record round. Time used: 19.6 h of 30 h.
   Pictures: Frozen build: first frost close shot, the leaf margin at bar 19 (frame 952); Frozen build: the thaw close shot at bar 23 (frame 1157); Frozen build: last frame of the thaw, a drop about to fall (frame 1259); Frozen build: the field in the crane at bar 71 (frame 3600).
+- Status 41, 2026-11-23 18:03 UTC, Phase 5. The film is being drawn once at 1920 x 1080 on the frozen build by twelve machines. Nine of 36 chunks are in (920 of 3,810 frames), every one on the right engine, the right size and the right frame count. Each chunk is read by eye and by three detectors: no black frame, no tear, no lone spark that stays. The flags that came up are the fast sunsets, the meant cut on 1055, the meant tear on 2083, rain streaks and the leaf twitch of the time lapse. The record round tool is written and type checks; its packs wait for the joined film. Next: Take in the remaining 27 chunks (the last is due about 19:40 UTC), join the film with the track for a private watch copy, build the record round's packs from lossless frames, start the proofs on the frozen build when the first machine is free. Time used: 20.1 h of 30 h.
+  Pictures: Frame 60 of the 1920 film, the sprout; Frame 1055, the hard cut to the frosted tip; Frame 1775, the storm hold; Frame 3440, the crane over the field.
 

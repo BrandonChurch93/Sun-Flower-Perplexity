@@ -1,12 +1,12 @@
-# Status 40
+# Status 41
 
-2026-11-23 17:38 UTC
+2026-11-23 18:03 UTC
 
-- Status 40 · Phase 5. The frost's cure for live play is merged and proven: 18 frames, drawn in a row and in a jumping order, are the same to the pixel as the frozen build, 206 tests pass. Twelve machines are drawing the film once at 1920 x 1080 from the frozen build; seven have reported back with the right build so far. The proofs machine is paused so that no more than twelve work at once.
-- Next: Read each part as it arrives (flicker, pops, sparks), give free machines the slowest range, start the proofs at the first free machine, then join the film to the track and run the record round. Time used: 19.6 h of 30 h.
+- Status 41 · Phase 5. The film is being drawn once at 1920 x 1080 on the frozen build by twelve machines. Nine of 36 chunks are in (920 of 3,810 frames), every one on the right engine, the right size and the right frame count. Each chunk is read by eye and by three detectors: no black frame, no tear, no lone spark that stays. The flags that came up are the fast sunsets, the meant cut on 1055, the meant tear on 2083, rain streaks and the leaf twitch of the time lapse. The record round tool is written and type checks; its packs wait for the joined film.
+- Next: Take in the remaining 27 chunks (the last is due about 19:40 UTC), join the film with the track for a private watch copy, build the record round's packs from lossless frames, start the proofs on the frozen build when the first machine is free. Time used: 20.1 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frozen build: first frost close shot, the leaf margin at bar 19 (frame 952)
-- `status-2.jpg`: Frozen build: the thaw close shot at bar 23 (frame 1157)
-- `status-3.jpg`: Frozen build: last frame of the thaw, a drop about to fall (frame 1259)
-- `status-4.jpg`: Frozen build: the field in the crane at bar 71 (frame 3600)
+- `status-1.jpg`: Frame 60 of the 1920 film, the sprout
+- `status-2.jpg`: Frame 1055, the hard cut to the frosted tip
+- `status-3.jpg`: Frame 1775, the storm hold
+- `status-4.jpg`: Frame 3440, the crane over the field

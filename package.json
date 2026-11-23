@@ -36,7 +36,8 @@
     "checks": "tsx tools/checks/run.ts",
     "part": "tsx tools/part.ts",
     "join": "tsx tools/join.ts",
-    "costs": "tsx tools/costs.ts"
+    "costs": "tsx tools/costs.ts",
+    "round": "tsx tools/round.ts"
   },
   "dependencies": {
     "gsap": "3.15.1",
