@@ -1,13 +1,15 @@
 import { clamp, smoothstep } from '../core/curves.ts'
 import type * as THREE from 'three'
-import type { Moment, Part } from '../v2/api.ts'
+import type { Moment, Part, View } from '../v2/api.ts'
 import { airUniforms } from './air.ts'
+import { heightAt } from '../plant/growth.ts'
 import { makeTerrain } from './terrain.ts'
 import { makeTrees } from './trees.ts'
 
-// Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
 // What the far crop gives back over the film, by bar: measured against the last rows of the planted field's own far crop, so the two meet. It stands still in the two holds.
-const CROP_AT: [number, number, number, number][] = [
+// From among the tops the lens sees the crop's side, from over them the open heads: one table for each, and the height of the lens over the tops chooses.
+type Knot = [number, number, number, number]
+const CROP_YOUNG: Knot[] = [
   [5, 0.01585, 0.02895, 0.01017],
   [13, 0.02026, 0.0319, 0.0105],
   [17, 0.03, 0.052, 0.018],
@@ -18,25 +20,45 @@ const CROP_AT: [number, number, number, number][] = [
   [43.75, 0.0135, 0.0234, 0.0081],
   [52, 0.0135, 0.02342, 0.00847],
   [57, 0.01711, 0.02985, 0.01026],
+]
+const CROP_AMONG: Knot[] = [
+  ...CROP_YOUNG,
   [58, 0.03226, 0.03333, 0.009444],
   [59, 0.06824, 0.05214, 0.01069],
   [60, 0.07686, 0.05494, 0.01035],
   [61, 0.0736, 0.05175, 0.01035],
   [65, 0.0684, 0.0495, 0.01035],
+]
+const CROP_OVER: Knot[] = [
+  ...CROP_YOUNG,
+  [60, 0.1835, 0.07773, 0.004658],
   [67, 0.1835, 0.07773, 0.004658],
   [69, 0.2011, 0.1069, 0.007809],
   [71, 0.2033, 0.1087, 0.01004],
   [73, 0.2217, 0.104, 0.01332],
   [74.5, 0.2431, 0.09077, 0.01455],
 ]
-function cropAt(bar: number, out: THREE.Vector3): void {
+// The lens's height over the tops, in heights of the tops, between which the far crop turns from its side to its heads.
+const OVER = { from: -0.06, to: 0.09 }
+function knotAt(table: Knot[], bar: number, out: Knot): Knot {
   let i = 0
-  while (i < CROP_AT.length - 2 && bar > CROP_AT[i + 1][0]) i++
-  const a = CROP_AT[i]
-  const b = CROP_AT[i + 1]
+  while (i < table.length - 2 && bar > table[i + 1][0]) i++
+  const a = table[i]
+  const b = table[i + 1]
   const k = clamp((bar - a[0]) / (b[0] - a[0]))
-  out.set(a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k)
+  for (let c = 1; c < 4; c++) out[c] = a[c] + (b[c] - a[c]) * k
+  return out
 }
+const among: Knot = [0, 0, 0, 0]
+const over: Knot = [0, 0, 0, 0]
+function cropAt(bar: number, tau: number, eyeM: number, out: THREE.Vector3): void {
+  const top = Math.max(heightAt(tau), 0.05)
+  const k = smoothstep(OVER.from, OVER.to, (eyeM - top) / top)
+  knotAt(CROP_AMONG, bar, among)
+  knotAt(CROP_OVER, bar, over)
+  out.set(among[1] + (over[1] - among[1]) * k, among[2] + (over[2] - among[2]) * k, among[3] + (over[3] - among[3]) * k)
+}
+// Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
 const AIR = { clear: 0.00006, lowSun: -0.00003, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
 const MIST = { perM: 0.001, topM: 12 }
@@ -53,7 +75,7 @@ class Place implements Part {
     renderer.initTexture(this.trees.atlas)
   }
 
-  prepare(now: Moment): void {
+  prepare(now: Moment, _later: Moment, view: View): void {
     const d = now.dials
     for (const o of this.objects) o.visible = true
     const low = 1 - smoothstep(4, 24, now.sunElevationDeg)
@@ -70,7 +92,7 @@ class Place implements Part {
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet
     airUniforms.uLandFrost.value = d.frost
-    cropAt(now.bar, airUniforms.uLandCrop.value)
+    cropAt(now.bar, now.tau, view.pose.position.y, airUniforms.uLandCrop.value)
     airUniforms.uLandWind.value = d.wind
   }
 }
