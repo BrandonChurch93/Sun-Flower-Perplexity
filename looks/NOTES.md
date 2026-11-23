@@ -1,12 +1,11 @@
 # Looks of place
 
-2026-11-23 02:13 UTC, at commit f1fa53c of agent/place.
+2026-11-23 03:41 UTC, at commit 6770cf2 of agent/place.
 
-- `01-film-view-twelve-bars-sky-b-everything.jpg`: film view twelve bars sky-b everything
-- `02-crane-field-frame-sky-b-review.jpg`: crane field frame sky-b review
-- `03-crane-last-frame-sky-b-review.jpg`: crane last frame sky-b review
-- `04-wide-strips-sky-ground-place.jpg`: wide strips sky ground place
-- `05-low-strips-sky-ground-place.jpg`: low strips sky ground place
-- `06-clip-after-aa7c0b7-five-frames-round-the-worst-s.jpg`: clip after aa7c0b7 five frames round the worst step
-- `07-clip-after-aa7c0b7-land-band-every-14th-frame.jpg`: clip after aa7c0b7 land band every 14th frame
-- `08-clip-before-the-two-sunsets-frame-by-frame.jpg`: clip before the two sunsets frame by frame
+- `01-job-2-storm-key-beside-before-and-after-bars-35-.jpg`: Job 2 storm, key beside before and after, bars 35 33.02 39 41.25
+- `02-job-2-storm-horizon-band-before-left-and-after-r.jpg`: Job 2 storm horizon band, before left and after right, bars 33.02 35 39 41.25
+- `03-job-2-frost-bar-21-key-before-after-with-all-par.jpg`: Job 2 frost bar 21, key, before, after with all parts, after with sky ground and far land only
+- `04-job-2-crane-key-beside-before-and-after-bars-69-.jpg`: Job 2 crane, key beside before and after, bars 69 72 75
+- `05-job-2-crane-horizon-band-after-bars-69-72-75.jpg`: Job 2 crane horizon band after, bars 69 72 75
+- `06-job-2-before-sheet-eight-bars.jpg`: Job 2 before sheet, eight bars
+- `07-job-2-after-sheet-eight-bars.jpg`: Job 2 after sheet, eight bars
