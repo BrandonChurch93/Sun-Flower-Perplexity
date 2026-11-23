@@ -733,7 +733,7 @@ void main() {
   color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.06 + 0.4 * ndl + 0.1 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.45 * crust);
   float sunward = mix(0.3, 1.0, pow(saturate(dot(-normalize(v.xz), uLowSun.xy)), 6.0));
   float icy = smoothstep(0.0, 0.3, uFrost) * kept * (0.3 + 0.7 * saturate(2.5 * rime)) * smoothstep(-0.5, 0.2, dot(n.xz, uLowSun.xy));
-  float beads = 0.5 * thaw * uDew * (1.0 - rime);
+  float beads = 0.8 * thaw * uDew * (1.0 - rime);
   color += sparkLight(vDepth) * (sparks(p, n, hv, mix(60.0, 200.0, beads / max(icy + beads, 1e-3)), cocOf(vDepth), (icy + beads) * sunward * (0.4 + 0.6 * lit) * (1.0 - 0.8 * under) * (1.0 - thatch)));
   outColor = finish(color, vWorld, vDepth, density);
 #ifndef NEAR

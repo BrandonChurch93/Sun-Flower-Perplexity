@@ -69,7 +69,10 @@ export function wetFelt(): number {
 }
 
 const FIELD_PLACE = '/*fieldPlace*/'
-const PLACE_FROM_LIST = 'Place fieldPlace() { return Place(aPlace, aVary); }'
+const FIELD_SHAPE = 'vec3 fieldShape(vec3 local) { return local; }'
+const PLACE_FROM_LIST = `Place fieldPlace() { return Place(aPlace, aVary); }\n${FIELD_SHAPE}`
+// The field may also give its own fieldShape, which every vertex of a neighbor goes through first: where it gives none, the shape stands as laid.
+const placeGlsl = (glsl: string | undefined): string => (glsl === undefined ? PLACE_FROM_LIST : glsl.includes('fieldShape') ? glsl : `${glsl}\n${FIELD_SHAPE}`)
 
 // Every vertex of a part goes through plantWorld, so that the same part stands as the plant, as the companion and as each neighbor.
 export const plantVertexGlsl = /* glsl */ `
@@ -185,6 +188,7 @@ out float vPlantTone;
 
 vec3 plantWorld(vec3 local) {
 #ifdef PLANT_FIELD
+  local = fieldShape(local);
   Place pl = plantPlace();
   float c = cos(pl.place.z);
   float s = sin(pl.place.z);
@@ -344,7 +348,7 @@ export function makePartSurface(options: PartOptions, o: SurfaceOptions): Surfac
   const define = options.places ? '#define PLANT_FIELD 1\n' : options.rigid ? '#define PLANT_RIGID 1\n' : ''
   return makeSurface({
     ...o,
-    vertex: `${define}${plantVertexGlsl.replace(FIELD_PLACE, options.place?.glsl ?? PLACE_FROM_LIST)}\n${o.vertex}`,
+    vertex: `${define}${plantVertexGlsl.replace(FIELD_PLACE, placeGlsl(options.place?.glsl))}\n${o.vertex}`,
     fragment: `${define}${plantFragmentGlsl}\n${o.fragment}`,
     castShadow: options.places ? false : o.castShadow,
     uniforms: { ...stateUniforms, ...wetUniforms, ...(options.places ? { ...fieldUniforms, ...(options.place?.uniforms ?? {}) } : (options.own ?? {})), ...(o.uniforms ?? {}) },

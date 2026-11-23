@@ -96,7 +96,7 @@ vec4 thawBead(vec4 form, vec4 gather, float across) {
   float front = thawFront((fract(gather.w + 1e-3) - 1e-3) / 0.4);
   float edge = step(0.95, abs(across));
   float rib = 1.0 - step(0.05, abs(across));
-  float full = mix(mix(mix(0.0003, 0.00085, form.w * form.w), mix(0.00035, 0.0009, form.w * form.w), rib), mix(0.0004, 0.0011, form.w * form.w), edge);
+  float full = mix(mix(mix(0.00022, 0.0007, form.w * form.w * form.w), mix(0.0003, 0.0008, form.w * form.w), rib), mix(0.00035, 0.001, form.w * form.w), edge);
   if (kind < ${THAW_RUNS}.0) return vec4(form.xyz, thawRadius(full, front));
   float taker = thawRadius(full, front);
   float runner = thawRadius(full * (0.55 + 0.35 * hash11(form.w * 61.7 + 5.0)), front);
@@ -215,7 +215,7 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
       hang = (tip ? 1.0 : 0.75) * dry;
       r = mix(r, (tip ? 0.0028 + 0.001 * fine : 0.0016 + 0.0014 * fine) * deep, dry);
       // The tip that carries the one drop of the thaw carries no other.
-      if (tip && uBeadTip.w > 0.0 && distance(kGather.xyz, uBeadTip.xyz) < uBeadTip.w) r = 0.0;
+      if (tip && real > ${THAW_FROM_GLSL} && uBeadTip.w > 0.0 && distance(kGather.xyz, uBeadTip.xyz) < uBeadTip.w) r = 0.0;
     }
     if (real > ${THAW_FROM_GLSL}) {
       // The dew of the thaw is the water of the ice: it stands where the ice has gone, and round on the hairs as the beads beside it.
@@ -390,11 +390,17 @@ vec3 beadSky(vec3 d) {
 
 // The world a bead of the thaw stands in, as its lens turns it over: the frozen field under the horizon, dark with the frost on it lit in soft discs, the mist bright over it, the sky above.
 vec3 thawWorld(vec3 d) {
-  float discs = smoothstep(0.42, 0.68, valueNoise(vec2(atan(d.z, d.x) * 7.0, d.y * 19.0) + 3.0));
-  vec3 field = mix(0.16 * uAirHorizon, 0.85 * uAirHorizon, max(discs * smoothstep(-0.7, -0.04, d.y), smoothstep(-0.22, -0.02, d.y)));
-  vec3 sky = mix(0.7 * uAirHorizon, uAirZenith, smoothstep(0.0, 0.35, d.y));
+  vec2 cellAt = vec2(atan(d.z, d.x) * 5.0, d.y * 9.0);
+  vec2 cell = floor(cellAt);
+  float pick = hash11(cell.x * 12.9898 + cell.y * 78.233);
+  float discs = step(pick, 0.55) * smoothstep(0.42, 0.18, length(fract(cellAt) - 0.5 - 0.2 * vec2(pick - 0.3, hash11(pick * 91.7) - 0.5))) * (0.4 + 1.1 * pick);
+  vec3 field = mix(0.07 * uAirHorizon, 0.75 * uAirHorizon, max(0.8 * discs * smoothstep(-0.8, -0.1, d.y), smoothstep(-0.14, -0.02, d.y)));
+  vec3 sky = mix(0.85 * uAirHorizon, 0.55 * uAirZenith, smoothstep(0.0, 0.6, d.y));
   float mist = exp(-(d.y - 0.04) * (d.y - 0.04) * 90.0);
-  return mix(field, sky, smoothstep(-0.03, 0.03, d.y)) + uAirHorizon * (0.2 * mist);
+  // The mist round the low sun is the brightest of it.
+  float toSun = saturate(dot(d, uSunDir));
+  toSun *= toSun;
+  return mix(field, sky, smoothstep(-0.03, 0.03, d.y)) + uAirHorizon * (0.2 * mist) + uSunColor * (0.35 * toSun * toSun * smoothstep(-0.1, 0.05, d.y));
 }
 
 // A round cone from the origin, where its radius is r1, to b, where it is r2.
@@ -501,7 +507,9 @@ void main() {
   // The blade is thin and the bead stands clear of it on its hairs: in the thaw the low sun reaches it through and over the blade.
   float key = thaw ? max(sun, 0.45) : sun;
   // Seen this near the sun in a bead is the sun, dim as the mist leaves it: one hard point, the harder the larger the bead stands in the frame.
-  if (thaw) glint = 30.0 * pow(aim, clamp(8.0 * vWide, 96.0, 1024.0));
+  if (thaw) glint = 24.0 * pow(aim, clamp(0.015 * vWide * vWide, 24.0, 400.0));
+  vec3 sunAside = uSunDir - ray * dot(uSunDir, ray);
+  vec3 sunward = sunAside / max(length(sunAside), 1e-4);
   vec3 sky = beadSky(mirror);
 
   // The light that enters a bead is gathered on its far side: bright where the ball turns away from the light, dark where it faces it.
@@ -515,7 +523,7 @@ void main() {
   // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
   vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
   // Seen this near the water is clear: the blade under it stands as bright as the blade beside it, lit through, and darker round the foot.
-  if (thaw) body = vTint * (uSunColor * (0.6 * key) + 1.3 * skyAmbient(up)) * mix(0.3, 1.0, smoothstep(0.0, 0.6, ndv));
+  if (thaw) body = vTint * (uSunColor * (0.6 * key) + 1.3 * skyAmbient(up)) * (0.32 + 1.1 * smoothstep(0.3, 0.9, -dot(n, sunward))) * mix(0.25, 1.0, smoothstep(0.0, 0.5, ndv));
   // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
   vec3 qn = normalize(q);
   vec3 dn = normalize(d);
@@ -527,7 +535,9 @@ void main() {
   float clearOfSkin = smoothstep(0.0, 0.6, leave.y - mix(0.3, -2.0, vHang)) * smoothstep(-0.1, 0.25, dot(beyond, up) + vHang);
   // A bead that stands round on the hairs is clear of the skin down to its foot.
   if (thaw) clearOfSkin = smoothstep(0.0, 0.3, leave.y - mix(-0.3, -2.0, vHang)) * smoothstep(-0.05, 0.15, dot(beyond, up) + vHang);
-  body = mix(body, (thaw ? thawWorld(beyond) : beadSky(beyond)) * 0.9, mix(thaw ? 0.85 : 0.35, 0.92, vHang) * clearOfSkin);
+  body = mix(body, (thaw ? thawWorld(beyond) : beadSky(beyond)) * 0.9, mix(thaw ? 0.22 : 0.35, 0.92, vHang) * clearOfSkin);
+  // Toward its edge a free drop shows the dark round it.
+  if (thaw) body *= mix(1.0, mix(0.3, 1.0, smoothstep(0.0, 0.4, ndv)), vHang);
   // A clear sun behind a bead is seen through it, bent to one small bright place on the side away from the sun.
   float lens = saturate(dot(beyond, uSunDir));
   lens *= lens;
@@ -536,13 +546,27 @@ void main() {
   lens *= lens;
   body += uSunColor * ((thaw ? 0.0 : BEAD_LENS) * clear * sun * clearOfSkin * lens * lens);
   if (thaw) {
-    // At this distance the bead is a lens to the eye: the sun through it is one small star with a little glow round it, and the light it gathers leaves by the rim turned from the sun.
+    // At this distance the bead is a lens to the eye. The sun through it is one small star, at the place a ray must enter the ball to leave it toward the sun: near the edge turned from the sun.
+    float turnTo = acos(clamp(dot(ray, uSunDir), -1.0, 1.0));
+    float enter = 0.5 * turnTo + 0.4;
+    for (int i = 0; i < 4; i++) enter = 0.5 * turnTo + asin(sin(enter) / 1.33);
+    vec3 off = n + ray * cos(enter) + sunward * sin(enter);
+    vec2 px = vec2(dot(off, sunward), dot(off, cross(ray, sunward))) * (0.5 * vWide);
+    float core = exp(-dot(px, px) / (drop ? 4.0 : 2.2)) * (drop ? 1.0 - smoothstep(1.02, 1.1, length(p - vMiddle) / vShape.x) : 1.0);
+    float rays = 0.0;
+    if (drop) {
+      float reach = core > 0.0 || length(p - vMiddle) < 1.05 * vShape.x ? exp(-length(px) / (0.08 * vWide)) * smoothstep(0.4 * vWide, 0.15 * vWide, length(px)) : 0.0;
+      for (int k = 0; k < 3; k++) {
+        vec2 way = vec2(cos(0.3 + 1.0472 * float(k)), sin(0.3 + 1.0472 * float(k)));
+        float aside = px.x * way.y - px.y * way.x;
+        rays += exp(-aside * aside / 0.5) * reach;
+      }
+    }
     float aimed = saturate(dot(beyond, uSunDir));
-    body += uSunColor * (key * clearOfSkin * (60.0 * pow(aimed, clamp(24.0 * vWide, 128.0, 2048.0)) + 1.2 * pow(aimed, 96.0)));
-    vec3 toSun = uSunDir - ray * dot(uSunDir, ray);
-    float away = saturate(-dot(n, toSun / max(length(toSun), 1e-4)));
-    float rim = smoothstep(0.35, 0.8, f) * (1.0 - smoothstep(0.92, 1.0, f));
-    body += (1.2 * key * uSunColor + 0.5 * uAirHorizon) * (away * away * rim);
+    body += uSunColor * (key * max(clearOfSkin, 0.3) * (50.0 * core + 7.0 * rays + 0.5 * clearOfSkin * pow(aimed, 96.0)));
+    float away = saturate(-dot(n, sunward));
+    float rim = smoothstep(0.45, 0.85, f) * (1.0 - smoothstep(0.93, 1.0, f));
+    body += (0.9 * key * uSunColor + 0.4 * uAirHorizon) * (away * away * rim);
   }
 
   // Under a closed sky the bead's one highlight is the sky itself over the lens: a small soft window near its top.
@@ -552,6 +576,7 @@ void main() {
   window *= window;
   // Water on a hairy skin rests on air held between the hairs, and that floor is a mirror from inside: the bead is silver on the side away from the light.
   vec3 closed = (uAirHorizon + uAirZenith) * smoothstep(0.0, 0.5, uPlantWet);
+  if (thaw) closed = vec3(0.0);
   body += closed * (0.3 * farSky * (1.0 - vHang));
   vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (key * glint * (1.0 - 0.75 * uWetMoon)) + closed * (1.2 * window);
   outColor = finish(color, p, vDepth, -1.0);
@@ -602,14 +627,15 @@ void main() {
     float low = length(lying);
     vec3 away = -lying / max(low, 1e-4);
     vec3 across = cross(up, away);
-    float wide = 0.7 * r;
-    vec3 middle = base + away * (clamp(0.45 * low / max(facing, 0.02), 0.95, 1.7) * r + 0.5 * wide);
+    float wide = 0.55 * r;
+    vec3 middle = base + away * ((facing > 0.0 ? clamp(0.45 * low / max(facing, 0.02), 0.95, 1.7) : 1.0) * r + 0.5 * wide);
     vec3 toEye = normalize(uCamPos - middle);
     vec3 world = middle + (away * aCorner.x + across * (0.55 * aCorner.y)) * wide + toEye * (0.25 * r);
     bool lit = kGather.w < ${THAW_DROP}.0 && floor(kGather.w + 1e-3) != ${THAW_RUNS}.0 && uReal > ${THAW_FROM_GLSL} && uPlantDew > 0.0 && kFormUp.w > 0.0 && abs(kEnd.w) > 0.0 && abs(kEnd.w) < 0.72 && fract(kGather.w) < 0.36;
     vAt = aCorner;
     vWorld = world;
-    vAge = smoothstep(-0.35, 0.05, facing) * smoothstep(0.00028, 0.0004, r);
+    // Where the sun stands under the face the light comes through the thin blade, weaker.
+    vAge = mix(0.5, 1.0, smoothstep(-0.35, 0.05, facing)) * smoothstep(0.0002, 0.0003, r);
     vSeed = -1.0;
     gl_Position = lit && vAge > 0.0 ? projectionMatrix * viewMatrix * vec4(world, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
     return;
@@ -653,7 +679,7 @@ void main() {
   if (vSeed < -0.5) {
     float sun = max(sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 2.5), 0.45);
     float core = (1.0 - far * far) * (1.0 - far * far);
-    outColor = vec4(applyFog(uSunColor * vec3(0.5, 0.62, 0.2), vWorld), 0.85 * core * sun * vAge);
+    outColor = vec4(applyFog(uSunColor * vec3(0.6, 0.85, 0.25), vWorld), 0.8 * core * sun * vAge);
     return;
   }
   float turn = atan(vAt.y, vAt.x);
