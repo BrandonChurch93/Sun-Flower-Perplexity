@@ -1,7 +1,7 @@
 # Looks of checks
 
-2026-11-23 06:22 UTC, at commit 62915a79 of agent/checks.
+2026-11-23 07:26 UTC, at commit bcd1e274 of agent/checks.
 
-script on c6b1997 alone, five windows; the pure failure of c48f9b6 for the record
+2966ba1: the four cuts the film means, three frames either side, as cuts measures them
 
-- `01-the-page-s-own-script-time-by-window-on-c6b1997-.jpg`: The page's own script time by window on c6b1997, measured alone: the bar is the mean by part, the tick the worst frame
+- `01-the-four-cuts-at-frames-952-1055-1157-1260-on-29.jpg`: the four cuts at frames 952, 1055, 1157, 1260 on 2966ba1
