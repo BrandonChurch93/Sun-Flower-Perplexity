@@ -75,17 +75,17 @@ One owner per folder. An agent works in its own clone and pushes `agent/<name>` 
 | Sky | `src/sky/` without `night/` | `sky_b_builder` | `0f043ba` |
 | Night sky | `src/sky/night/` | `sky_a_builder` | `6319d39` |
 | Place | `src/place/` | none at work (settled at `2d54054`) | `2d54054` |
-| Ground | `src/ground/` without `puddles/` | `soil_v2_builder` | `01fca39` |
-| Plant | `src/plant/` without `look/`, `head/`, `hairs/`, `stem/`, the top level of `surface/` and `surface/{wet,frost,dew}/`; `src/v2/inputs.ts` | `plant_builder` | `0443d32` |
+| Ground | `src/ground/` without `puddles/` | `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | woken 13:03: draws 3498 to 3809, and the soaked soil in the storm |
+| Plant | `src/plant/` without `look/`, `head/`, `hairs/`, `stem/`, the top level of `surface/` and `surface/{wet,frost,dew}/`; `src/v2/inputs.ts` | `plant_builder` | plant (see Modules) | `agent/plant` | keys apart in the time lapse, the twitch in the shader; `0e210b2` (only the leaves that exist) to report; the storm droop halved |
 | Stem and hairs | `src/plant/hairs/`, `src/plant/stem/` | `place_builder` | `e41a947` |
-| Flower head | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `sky_c_builder` | `418b46f` |
-| Leaf look | the rest of `src/plant/look/`, `src/plant/surface/index.ts` | `leaf_look_builder` | `a2cd4c6` |
-| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `rain_builder` | `033a6e5` |
-| Frost | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `frost_builder` | `9a23a4f` |
+| Flower head | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | idle since 12:26, nothing pushed since `418b46f`; the rays at 3009, then the frames call |
+| Leaf look | the rest of `src/plant/look/`, `src/plant/surface/index.ts` | `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | the opening beside its keys, the storm leaves on the lowered key |
+| Rain | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `rain_builder` | rain (see Modules) | `agent/rain` | drawing 0 to 317, then 318 to 635; `remember` on the ripples |
+| Frost | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `frost_builder` | frost (see Modules) | `agent/frost` | `2535db9` merged; the dark quadrilaterals at 1054, the tip at 1106 and 1130, the count, the wide hold at 900 |
 | Field | `src/field/` | `rows_v2_builder` | `6002fda` |
-| Lens and grade | `src/post/` | `optics_v2_builder` | `c72633b` |
-| Player | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `player_builder` | `7187cb0` |
-| Checks | `tools/checks/` | `checks_builder` | `fc52bf5` |
+| Lens and grade | `src/post/` | `optics_v2_builder` | `src/post/` | `agent/post` | counts at both qualities, then part 1272 to 1589, the test for a missing number, the tuft rule, `remember` |
+| Player | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `player_builder` | player (see Modules) | `agent/player` | the export end to end at 1920, then the desk text, `low` proven |
+| Checks | `tools/checks/` | `checks_builder` | `tools/checks/` | `agent/checks` | owners on 1266 to 1300 and 2120 to 2160, then `numbers` over every 24th frame, then the five spans again |
 
 ## Render budget
 
@@ -218,19 +218,19 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-In the order they cost the film (12:27 UTC, `v2` at `043d0d0`):
+In the order they cost the film (13:20 UTC, `v2` at `a637ece`):
 
 - Live play. The script takes two to five times a frame's time from the end of the storm hold on (table under Render budget). In work: the plant laid only at keys in the time lapse, with the twitch drawn by the shader (plant owner); hair roots laid once and hairs cut by their size on screen (stem and hairs owner, built, not pushed); bud and petals on the same frames call (head owner, built, parked until the hairs' hash); `uCrystals` not written beside the hold (frost owner). Targets: plant and companion together 10 ms in the mean, 16 worst, 2 MB a frame. The export page gives the same film with his track whatever live play does.
-- The first whole watch with the music (private). 2 of 12 parts are in: 636 to 953 (on `1a4ee27`) and 1590 to 1907 (on `699f0d2`). Drawing on `043d0d0`: 2544 to 2861 then 954 to 1271 (night sky owner), 1908 to 2225 and 2226 to 2543 (sky owner), 2862 to 3809 in three parts (field owner). Not given out yet: 0 to 317, 318 to 635, 1272 to 1589.
+- The first whole watch with the music (private), at 640 x 360 because four samples a pixel doubled a draft frame here. In and scaled down: 636 to 953 (on `1a4ee27`), 1590 to 1907 (on `699f0d2`). Drawing: 2544 to 2861 then 954 to 1271 (night sky owner), 1908 to 2225 then 2226 to 2543 (sky owner), 2862 to 3179 then 3180 to 3497 (field owner), 0 to 317 then 318 to 635 (rain owner), 1272 to 1589 (lens owner, after its counts), 3498 to 3809 (ground owner). All due about 14:30. Each part is read on arrival with `out/work/tmp/watchpart.sh` (sheets of every sixth frame, jumps and notches of the frame's mean, one frame bright blobs); the two in show only the wanted events (the cut at 952, the flashes at 1672 and 1877, rain streaks).
 - Frost close shots: a thin even coat on the bare olive centre of the leaf at 952 and 1054, more large plates and fewer, larger sparks in three sizes, a whiter upper third of the stalk at 1157 and 1208, the fog at 838 to 880, a flicker strip of 1040 to 1054, the melt. With the frost owner.
-- A notch one frame wide on the plant at every handover of sun and moon: the plant is darkest on the handover frame and comes back 2 to 4 of 255 on the next (15 of 25 dusks and dawns over the limit of 2; the checks' table of 12:22). Faint in a still, not judged in motion yet. With the Builder and the plant owner.
+- Closed: the notch one frame wide on the plant at every handover of sun and moon. MEASURED on the drawn part 636 to 953: the frame's mean falls 86 to 35 over frames 817 to 830, holds for nine frames and rises again, with no notch; a step of 2 to 4 of 255 inside a ramp of 4 a frame cannot be seen at 30 frames a second. The checks' limit goes to 5.
 - Bloom: at 3009 the short rays on the right lie flat like slivers, and the rays are a little bright and lemon beside the key. With the head owner, pictures first.
-- The opening (frames 60, 120, 240) and the storm leaves (1830) beside their keys. With the leaf look owner, pictures first.
-- Rain: cost in the storm hold, clips of 1877 and of the break, the count. With the rain owner.
-- Loading on a real card: one long program build could end as a lost context. `compileAsync` in `Film.warm` is the cure and is the Builder's. UNKNOWN on his machine.
-- No check catches a pixel without a number: the fault of `ce7e0b5` went through all of them. A check before the lens is asked of the checks owner, and the lens owner is asked what the lens does with such a pixel.
-- To judge in motion in the whole watch: the sparkle of white rim hairs on young leaves at 771 to 778 and 820; three faint discs at one height on the rows at 1262 (`FEW` in `src/field/rime.ts`).
-- The loading timing that picks the quality level (player owner, in work): when the script alone is over a frame at `high`, the desk says so and points to the export.
+- The storm beside its keys at 1830 and 2000: the near soil on the left reads 36 where the keys read 17 to 18 (ground owner, brief sent 13:03); the leaves hang too far (plant owner, asked 13:10) and pass too much light (leaf look owner: p90 74 and p99 93 after the key cut, target 62 and 85). The opening (frames 60, 120, 240) beside its keys: sprout stem pale with a soft blush, matt husk, seed leaves a quarter lighter and sage (leaf look owner, in work).
+- Rain: the storm hold is inside its limit (0.90 ms mean, 3.4 worst, nothing made in 108 frames, MEASURED by the rain owner). Open: clips of 1877 and of the break, the count, `remember` on the ripples' material.
+- Loading on a real card: every program is now asked for at once and waited for (`src/core/programs.ts`). Whether the page stays alive during the build on his card is UNKNOWN: this sandbox has no parallel compile. Two materials still build later in the warm (the lens's discs, the rain's ripples; their owners wrap them).
+- Wild pixels. The fault of `ce7e0b5` was a large number made on an edge pixel at four places a pixel, not a missing number (MEASURED by the checks owner). `npm run checks -- numbers` now fails on a missing number, a value over the limit, or a spark that the same frame at one place a pixel does not hold. Every owner of a fragment shader audits its own (CHANGES item 31). The lens takes a missing or infinite number as nothing (lens owner, in work) and gets no ceiling. Open: `numbers` over every 24th frame of the film.
+- To judge in the whole watch: three faint discs at one height on the rows at 1262 (`FEW` in `src/field/rime.ts`); whether the plant shows its frost in the wide hold 852 to 948; the hair rim in the storm, which reads hot at 1920. Looked at and let stand: the white hair tips on young leaves at 770 to 779 hold still from frame to frame.
+- The loading timing that picks the quality level is merged (`c8061a9`): when the script alone is over a frame at `high`, the desk says so and points to the export. Open with the player owner: the desk text in two weights, a switch to `low` proven to make nothing in play, the export end to end at 1920.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
 ## Running jobs
@@ -239,9 +239,9 @@ None.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Twelve at work, the limit; the ground owner is idle. All were told `v2` stands at `043d0d0` (pushed 12:22 UTC) and that `ce7e0b5` must not be drawn from.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Twelve at work, the limit; the head owner is idle since 12:26 and is woken when a drawing agent can be parked. All know `v2` at `d5cf2e9` or later.
 
-| Agent | Folder | Branch | State at 12:27 UTC 23 Nov |
+| Agent | Folder | Branch | State at 13:20 UTC 23 Nov |
 | --- | --- | --- | --- |
 | `sky_b_builder` | `src/sky/` | `agent/sky-b` | part 1590 to 1907 sent; drawing 1908 to 2225, then 2226 to 2543 |
 | `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | part 636 to 953 sent; drawing 2544 to 2861, then 954 to 1271 |
