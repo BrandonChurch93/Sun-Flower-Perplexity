@@ -456,6 +456,10 @@ void main() {
   vec3 n;
   vec3 q;
   vec3 d;
+  // A picture drawn smaller than the film: how many pixels of the film one of its pixels covers at the bead. The sun's point in a bead is spread over that, its light held, so it cannot fall between pixels and twinkle; in a bead under two pixels wide there is no point.
+  float coarse = length(dFdx(vWorld)) * vWide / max(2.0 * vShape.x, 1e-9);
+  float spread = 1.0 / max(coarse * coarse - 0.05, 1.0);
+  float pointed = smoothstep(1.0, 2.5, vWide / max(coarse, 1e-4));
   if (drop) {
     // The drop is no ball: the ray is walked to its skin.
     vec3 o = (uCamPos - vMiddle) / vShape.x;
@@ -514,15 +518,18 @@ void main() {
   a8 *= a8;
   float a32 = a8 * a8;
   a32 *= a32;
-  // A highlight smaller than a pixel is spread over the pixel, not left to flash.
-  float glint = mix(0.6 * a32 * a8 * a8, 40.0 * min(vWide * vWide / 256.0, 1.0) * a32 * a32 * a32, clear);
+  // A highlight smaller than a pixel is spread over the pixel with its light held, not left to flash as the bead moves under it.
+  float wide = vWide / max(coarse, 1e-4);
+  float tight = clamp(0.09 * wide * wide, 2.0, 96.0);
+  float fine = min(wide / 16.0, 1.0);
+  float glint = mix(0.6 * a32 * a8 * a8, 40.0 * fine * (tight / 96.0) * pow(aim, tight), clear);
   // The blade is thin and the bead stands clear of it on its hairs: in the thaw the low sun reaches it through and over the blade.
   float key = thaw ? max(sun, 0.45) : sun;
   // Seen this near the sun in a bead is the sun, dim as the mist leaves it: one hard point, the harder the larger the bead stands in the frame.
   // Far from the lens a bead of the thaw is a soft pale point. Its glint has the bead's share of the frame, and one bead in five stands so that it sparks.
   float small = 1.0 - smoothstep(8.0, 20.0, vWide);
   float sparks = mix(1.0, step(0.8, vSpark) * vWide * vWide / 400.0, small);
-  if (thaw) glint = 24.0 * sparks * pow(aim, clamp(0.015 * vWide * vWide, 24.0, 400.0));
+  if (thaw) glint = 24.0 * sparks * spread * pointed * pow(aim, max(2.0, spread * clamp(0.015 * vWide * vWide, 24.0, 400.0)));
   vec3 sunAside = uSunDir - ray * dot(uSunDir, ray);
   vec3 sunward = sunAside / max(length(sunAside), 1e-4);
   vec3 sky = beadSky(mirror);
@@ -558,12 +565,9 @@ void main() {
   // Toward its edge a free drop shows the dark round it.
   if (thaw) body *= mix(1.0, mix(0.1, 1.0, smoothstep(0.0, drop ? 0.3 : 0.55, ndv)), vHang);
   // A clear sun behind a bead is seen through it, bent to one small bright place on the side away from the sun.
-  float lens = saturate(dot(beyond, uSunDir));
-  lens *= lens;
-  lens *= lens;
-  lens *= lens;
-  lens *= lens;
-  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens * lens);
+  float through = clamp(0.03 * wide * wide, 2.0, 32.0);
+  float lens = fine * (through / 32.0) * pow(saturate(dot(beyond, uSunDir)), through);
+  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens);
   if (thaw) {
     // At this distance the bead is a lens to the eye. The sun through it is one small star, at the place a ray must enter the ball to leave it toward the sun: near the edge turned from the sun.
     float turnTo = acos(clamp(dot(ray, uSunDir), -1.0, 1.0));
@@ -573,14 +577,14 @@ void main() {
     if (drop) enter = min(enter, 0.93);
     vec3 off = n + ray * cos(enter) + sunward * sin(enter);
     vec2 px = vec2(dot(off, sunward), dot(off, cross(ray, sunward))) * (0.5 * vWide);
-    float core = exp(-dot(px, px) / (drop ? 4.0 : 2.2)) * (drop ? 1.0 - smoothstep(1.02, 1.1, length(p - vMiddle) / vShape.x) : 1.0);
+    float core = spread * pointed * exp(-dot(px, px) * spread / (drop ? 4.0 : 2.2)) * (drop ? 1.0 - smoothstep(1.02, 1.1, length(p - vMiddle) / vShape.x) : 1.0);
     float rays = 0.0;
     if (drop) {
       float reach = core > 0.0 || length(p - vMiddle) < 1.05 * vShape.x ? exp(-length(px) / (0.08 * vWide)) * (1.0 - smoothstep(0.15 * vWide, 0.4 * vWide, length(px))) : 0.0;
       for (int k = 0; k < 3; k++) {
         vec2 way = vec2(cos(0.3 + 1.0472 * float(k)), sin(0.3 + 1.0472 * float(k)));
         float aside = px.x * way.y - px.y * way.x;
-        rays += exp(-aside * aside / 0.5) * reach;
+        rays += sqrt(spread) * exp(-aside * aside * spread / 0.5) * reach;
       }
     }
     float aimed = saturate(dot(beyond, uSunDir));
