@@ -97,6 +97,7 @@ describe('the film clock', () => {
     expect(elevation(barTime(61))).toBeCloseTo(SUN.open, 3)
     expect(elevation(barTime(65))).toBeCloseTo(SUN.crane, 3)
     expect(elevation(barTime(73))).toBeCloseTo(SUN.last, 3)
+    expect(elevation(END)).toBeCloseTo(SUN.end, 3)
   })
 
   it('starts the sharp events on the frame that holds the beat', () => {

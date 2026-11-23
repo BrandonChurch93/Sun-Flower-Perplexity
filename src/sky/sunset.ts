@@ -6,7 +6,7 @@ export const sunsetAmount = (bar: number): number => smoothstep(65, 67, bar)
 export const afterSunset = (elevation: number): number => 1 - smoothstep(-3.4, 0.23, elevation)
 
 // Let skylight, the thin aerosol layer and its higher rose seam have
-// different scales. The meter samples exactly this same angular model.
+// different scales. The light taps sample exactly this same angular model.
 const DEEP = [0.0038, 0.018, 0.042] as const
 const LOW = [0.018, 0.055, 0.110] as const
 const LOW_FILTER = [0.83, 0.68, 0.40] as const
@@ -34,31 +34,51 @@ export function sunsetSkyAt(up: number, cosAzimuth: number, after: number, out: 
 }
 
 const METER_STEPS = 128
-const TAP_UP = [1, 0.023, 0.027] as const
-const TAP_AZ = [0, Math.cos(Math.PI * 0.79), 1] as const
-const TAPS = ['zenith', 'horizon', 'horizonSun'] as const
+const COMPASS_SAMPLES = 32
+const TAP_UP = [1, 0.10, 0.027, 0.023] as const
+const TAP_AZ = [0, 0, 1, Math.cos(Math.PI * 0.79)] as const
+const TAPS = ['zenith', 'horizon', 'horizonSun', 'band'] as const
+const STRIDE = TAPS.length * 3
+
+// Structural until the shared API grows its optional band field.
+export type SkyWithBand = SkyLight & { band?: RGB }
 
 export class SunsetMeter {
-  private readonly levels = new Float32Array((METER_STEPS + 1) * 9)
+  private readonly levels = new Float32Array((METER_STEPS + 1) * STRIDE)
 
   constructor() {
     const sample: RGB = [0, 0, 0]
+    const compass: RGB = [0, 0, 0]
+    const azimuth = Array.from({ length: COMPASS_SAMPLES }, (_, i) => Math.cos(i * 2 * Math.PI / COMPASS_SAMPLES))
     for (let i = 0; i <= METER_STEPS; i++) {
       for (let j = 0; j < TAPS.length; j++) {
-        sunsetSkyAt(TAP_UP[j], TAP_AZ[j], i / METER_STEPS, sample)
-        this.levels.set(sample, i * 9 + j * 3)
+        const offset = i * STRIDE + j * 3
+        if (TAPS[j] === 'horizon') {
+          // Air and upright faces see the whole compass above the orange
+          // band. The exposure meter still sees the narrow band itself.
+          compass.fill(0)
+          for (const az of azimuth) {
+            sunsetSkyAt(TAP_UP[j], az, i / METER_STEPS, sample)
+            for (let c = 0; c < 3; c++) compass[c] += sample[c] / COMPASS_SAMPLES
+          }
+          this.levels.set(compass, offset)
+        } else {
+          sunsetSkyAt(TAP_UP[j], TAP_AZ[j], i / METER_STEPS, sample)
+          this.levels.set(sample, offset)
+        }
       }
     }
   }
 
-  blend(after: number, amount: number, out: SkyLight): void {
+  blend(after: number, amount: number, out: SkyLight, band: RGB): void {
     const step = after * METER_STEPS
     const i = Math.min(METER_STEPS - 1, Math.floor(step))
     for (let j = 0; j < TAPS.length; j++) {
-      const into = out[TAPS[j]]
+      const tap = TAPS[j]
+      const into = tap === 'band' ? band : out[tap]
       for (let c = 0; c < 3; c++) {
-        const k = i * 9 + j * 3 + c
-        into[c] = lerp(into[c], lerp(this.levels[k], this.levels[k + 9], step - i), amount)
+        const k = i * STRIDE + j * 3 + c
+        into[c] = lerp(into[c], lerp(this.levels[k], this.levels[k + STRIDE], step - i), amount)
       }
     }
   }
