@@ -7,6 +7,7 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- play              draws every frame small and notes what each frame made: cuts and made read it
 //   npm run checks -- cuts              no hard cut anywhere in the film
 //   npm run checks -- made              nothing is made on the graphics card after loading
+//   npm run checks -- numbers           every pixel of a frame holds a number before the lens, and none too bright for it
 //   npm run checks -- pure              any frame drawn twice gives the same pixels, and no clock or dice in src
 //   npm run checks -- script            the page's own script time in a frame, by part, against tools/checks/limits.json
 //   npm run checks -- writes            what one frame writes into buffers and textures that exist, and whose they are
@@ -17,7 +18,7 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- review            builds the review page from what is in out/
 // --break <name> puts a film broken on purpose in the film's place, to show that the check fails. tools/checks/README.md lists them.
 
-const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'script', 'writes', 'owners', 'film', 'all', 'proof', 'review'] as const
+const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'numbers', 'pure', 'script', 'writes', 'owners', 'film', 'all', 'proof', 'review'] as const
 
 // What each check needs and what it costs, measured on four cores without a graphics card, four pages drawing at once.
 const HELP: [string, string, string, string][] = [
@@ -28,6 +29,7 @@ const HELP: [string, string, string, string][] = [
   ['play', 'draws the film small and notes what each frame made', 'a browser; --sky, --from, --to, --stride 6', '25 to 30 min a page for a third of a round of stride 6; 3 pages side by side'],
   ['cuts', 'no hard cut: the edges of the picture stay where they are from frame to frame', 'the frames of play', '10 to 40 s'],
   ['made', 'nothing is made on the graphics card after loading', 'the notes of play', '2 s'],
+  ['numbers', 'every pixel of a frame holds a number before the lens and none over 60000 in any sample: such a pixel becomes a bright disc', 'the notes of play, or draws --frames a,b itself', '2 s; 1 min and 5 s a frame when it draws'],
   ['pure', 'a frame drawn again, in another order, on a fresh page, gives the same bytes', 'draws 12 frames three times on two pages at 960 x 540 (--frames a,b,c)', '10 to 12 min'],
   ['script', 'the page keeps the frame rate: its own script time in a frame, by part, inside tools/checks/limits.json', 'draws 13 windows of 20 to 40 frames in a row itself (--window a-b, --frames 8, --all, --table)', 'about 30 min, 17 min with --frames 20; run it alone'],
   ['writes', 'what one frame writes into what exists, by owner', 'draws 8 frames itself', '6 min'],

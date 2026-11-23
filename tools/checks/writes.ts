@@ -183,7 +183,7 @@ export async function run(args: Args): Promise<void> {
     const asked = typeof args.frames === 'string' || typeof args.frames === 'number' ? String(args.frames).split(',').map(Number) : null
     if (asked) name = `writes.frames-${asked[0]}-${asked[asked.length - 1]}`
     const NAMES: Record<number, string> = { 21: 'the frost hold', 29: 'the fast time lapse', 35: 'the storm hold', 61: 'the bloom' }
-    const session = await openSession({ width: num(args, 'width', 320), height: num(args, 'height', 180), sky: typeof args.sky === 'string' ? args.sky : undefined, record: true })
+    const session = await openSession({ width: num(args, 'width', 320), height: num(args, 'height', 180), sky: typeof args.sky === 'string' ? args.sky : undefined, record: true, plain: true })
     try {
       await session.warm(tier)
       let last = -2
