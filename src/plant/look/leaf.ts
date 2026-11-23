@@ -51,9 +51,13 @@ export const leafMain = /* glsl */ `void main() {
   vec2 fUv = vPlane * 16.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.96, 1.25, fine);
+  // Its relief is read a mip coarser: a height finer than about three pixels would print the screen's blocks of two by two.
+  float fineHeight = dot(texture(uDetail, fUv, 0.6).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
 
   vec3 upper = vec3(0.041, 0.1, 0.016) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe));
+  // Close by the midrib and the side veins read as pale lines.
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
+  upper = mix(upper, mix(vec3(0.1, 0.16, 0.085), vec3(0.15, 0.22, 0.1), near), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe) * (1.0 + 0.3 * near));
   vec3 under = vec3(0.07, 0.115, 0.03) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
@@ -79,14 +83,13 @@ export const leafMain = /* glsl */ `void main() {
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
   // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
   if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
-  // Seen from a hand's breadth the glow is warm, and the margin, a single layer of cells, is a bright line.
-  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
-  through *= mix(vec3(1.0), vec3(1.3, 1.08, 0.75), 0.7 * near * (1.0 - brown));
+  // Seen from a hand's breadth the glow is warm, green gold, strongest in the thin fields between the veins, and the margin, a single layer of cells, is a bright line.
+  through *= mix(vec3(1.0), vec3(2.1, 1.75, 0.95), near * (1.0 - brown) * (0.55 + 0.45 * (1.0 - thick)));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) - (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) - (fine - 1.0) * 0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - 2.0 * near) * (1.0 - smoothstep(4.0, 9.0, texels)) + mix((fine - 1.0) * 0.0002, (1.0 - fineHeight) * 0.0003, near) * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
   float fold = vState.z;
 
