@@ -10,6 +10,14 @@
 - The camera goes in on the bud from bar 55, is half a metre from the head when it opens on bar 57, and backs out from bar 65 into the crane over the field.
 - The film as it now stands is in `kit/v2/FILM.md`; the reasons are in `kit/v2/briefs/CHANGES.md` items 14 to 16.
 
+23 November 2026, 21:19 UTC, from Brandon's sign off (in full in `kit/v2/NOTES-FROM-BRANDON.md`): the film is signed off as it stands, and four deliverables are added to the plan.
+
+- A still of the closed bud for the project card of his portfolio: frame 2905, the last still frame before the bud opens on bar 57, at 1920 x 1080, drawn at the export tier.
+- A clip of the opening that starts on that exact frame: frames 2905 to 3112, 6.93 s, no sound, drawn at the export tier from the frozen commit. Its first frame is the still.
+- A second version of the film: an opening of the prompt being typed, the reasoning set to Max and the build screen, made with the synthetic interface skill, then the film exactly as signed off. His track starts on the film's first frame.
+- The repository's site: the landing page plays the film, the live version is one link away, and the repository builds on Vercel as it is. `v2` is merged into `main` for that; version 1 is kept under the tag `v1`.
+- The line under "The music" that the track is never bundled stands. The film committed for the site is silent until he says otherwise.
+
 Labels used below: MEASURED means I ran it and a script printed the number. STATED means it comes from you, from a file in the kit or from a web page. UNKNOWN means not tested yet, with what would test it.
 
 Attached with this plan: the timeline picture, a two-minute timing sketch with your track (flat shapes, timing only, not the look), a click track to check the beat grid by ear, and the raw map of the track.
