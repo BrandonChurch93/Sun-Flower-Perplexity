@@ -372,7 +372,7 @@ vec3 thawWorld(vec3 d, float free) {
   vec2 cellAt = vec2(atan(d.z, d.x) * 2.6, d.y * 4.0);
   vec2 cell = floor(cellAt);
   float pick = hash11(cell.x * 12.9898 + cell.y * 78.233);
-  float discs = step(pick, 0.7) * smoothstep(0.5, 0.0, length(fract(cellAt) - 0.5 - 0.2 * vec2(pick - 0.3, hash11(pick * 91.7) - 0.5)));
+  float discs = step(pick, 0.7) * (1.0 - smoothstep(0.0, 0.5, length(fract(cellAt) - 0.5 - 0.2 * vec2(pick - 0.3, hash11(pick * 91.7) - 0.5))));
   vec3 field = uAirHorizon * (mix(0.04, 0.26, smoothstep(-0.7, 0.0, d.y)) + 0.14 * discs * smoothstep(-0.9, -0.15, d.y)) * mix(1.0, 0.55, free);
   vec3 sky = mix(0.8 * uAirHorizon, 0.5 * uAirZenith, smoothstep(0.0, 0.7, d.y)) * mix(1.0, 0.5, smoothstep(0.2, 0.95, d.y));
   // A drop that hangs free gathers the whole of the bright sky into its lower half.
@@ -402,6 +402,7 @@ in float vKind;
 in float vSpark;
 
 const float BEAD_LENS = 1.5;
+const vec3 BEAD_NIGHT = vec3(0.74, 1.11, 1.11);
 
 // The world as a bead shows it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
@@ -409,7 +410,8 @@ vec3 beadSky(vec3 d) {
   float t = d.y * 0.5 + 0.5;
   // A bead shows the sky as the sky draws itself, not the fill that lands on the leaf.
   vec3 dome = mix(uGroundBounce, mix(uAirHorizon, uAirZenith, smoothstep(0.55, 1.0, t)), smoothstep(0.15, 0.6, t));
-  return dome + uAirHorizon * (1.2 * band);
+  // The band is the day's: under the moon the horizon is no brighter than the dome over it.
+  return dome + uAirHorizon * (1.2 * band * (1.0 - uWetMoon));
 }
 
 ${THAW_WORLD}
@@ -532,9 +534,13 @@ void main() {
   farSun *= farSun;
   farSky *= farSky;
   // Under a bead on a face turned from the sun the skin is lit through the blade.
-  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * farSky * farSky);
+  // Under the moon the bead gathers little and the skin under it is the dim teal the eye sees the blade as: a dim cool point on the dark leaf, not a lamp.
+  float moon = thaw ? 0.0 : uWetMoon;
+  float gathers = 1.0 - 0.75 * moon;
+  vec3 skin = mix(vTint, BEAD_NIGHT * dot(vTint, vec3(0.3, 0.6, 0.1)), moon);
+  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * gathers * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * gathers * farSky * farSky);
   // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
-  vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
+  vec3 body = skin * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
   // Seen this near the water is clear: the blade under it stands as bright as the blade beside it, lit through, and darker round the foot.
   if (thaw) body = vTint * (uSunColor * (0.6 * key) + 1.3 * skyAmbient(up)) * (0.32 + 1.1 * smoothstep(0.3, 0.9, -dot(n, sunward))) * mix(0.25, 1.0, smoothstep(0.0, 0.5, ndv));
   // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
@@ -557,7 +563,7 @@ void main() {
   lens *= lens;
   lens *= lens;
   lens *= lens;
-  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS) * clear * sun * clearOfSkin * lens * lens);
+  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens * lens);
   if (thaw) {
     // At this distance the bead is a lens to the eye. The sun through it is one small star, at the place a ray must enter the ball to leave it toward the sun: near the edge turned from the sun.
     float turnTo = acos(clamp(dot(ray, uSunDir), -1.0, 1.0));
@@ -570,7 +576,7 @@ void main() {
     float core = exp(-dot(px, px) / (drop ? 4.0 : 2.2)) * (drop ? 1.0 - smoothstep(1.02, 1.1, length(p - vMiddle) / vShape.x) : 1.0);
     float rays = 0.0;
     if (drop) {
-      float reach = core > 0.0 || length(p - vMiddle) < 1.05 * vShape.x ? exp(-length(px) / (0.08 * vWide)) * smoothstep(0.4 * vWide, 0.15 * vWide, length(px)) : 0.0;
+      float reach = core > 0.0 || length(p - vMiddle) < 1.05 * vShape.x ? exp(-length(px) / (0.08 * vWide)) * (1.0 - smoothstep(0.15 * vWide, 0.4 * vWide, length(px))) : 0.0;
       for (int k = 0; k < 3; k++) {
         vec2 way = vec2(cos(0.3 + 1.0472 * float(k)), sin(0.3 + 1.0472 * float(k)));
         float aside = px.x * way.y - px.y * way.x;
@@ -585,7 +591,7 @@ void main() {
   }
 
   // Under a closed sky the bead's one highlight is the sky itself over the lens: a small soft window near its top.
-  float window = saturate(dot(mirror, normalize(vec3(0.0, 0.8, 0.0) - 0.6 * normalize(vec3(ray.x, 0.0, ray.z)))));
+  float window = saturate(dot(mirror, normalize(vec3(0.0, 0.8, 0.0) - 0.6 * normalize(vec3(ray.x, 0.0, ray.z + 1e-6)))));
   window *= window;
   window *= window;
   window *= window;
@@ -769,10 +775,10 @@ void main() {
     float sun = max(sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 2.5), 0.45);
     vec3 line = uSunColor * (50.0 * sun * exp(-aside * aside / 4.0) * dwell);
     // So is the sun mirrored on its skin, on the side toward the sun.
-    vec3 facing = normalize(uSunDir - ray);
+    vec3 facing = normalize(uSunDir - ray + vec3(0.0, 1e-5, 0.0));
     float turned = max(dot(facing, -ray), 0.05);
     float lobe = 1.0 / sqrt(4.0 * clamp(0.015 * vStreak.y * vStreak.y, 24.0, 400.0));
-    float wide = max(lobe * turned, 1.5 / vStreak.y);
+    float wide = max(lobe * turned, 1.5 / max(vStreak.y, 1e-3));
     float beside = (x - dot(facing, side)) / wide;
     float under = y + dot(facing, rise);
     line += uSunColor * (24.0 * sun * (lobe * turned / wide) * exp(-0.5 * beside * beside) * min(1.0, 2.5 * lobe / max(vAge, 1e-4)) * smoothstep(from - 0.08, from + 0.08, under) * (1.0 - smoothstep(to - 0.08, to + 0.08, under)));
@@ -784,7 +790,7 @@ void main() {
     float sun = max(sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 2.5), 0.45);
     vec2 at = vec2(1.35 + 0.45 * vAt.x, 0.95 * vAt.y);
     float out1 = length(at);
-    float crescent = smoothstep(0.92, 1.06, out1) * (1.0 - smoothstep(1.1, 1.5, out1)) * smoothstep(1.05, 0.25, abs(atan(at.y, at.x)));
+    float crescent = smoothstep(0.92, 1.06, out1) * (1.0 - smoothstep(1.1, 1.5, out1)) * (1.0 - smoothstep(0.25, 1.05, abs(atan(at.y, at.x))));
     outColor = vec4(applyFog(uSunColor * vec3(1.3, 1.05, 0.45), vWorld), saturate(0.9 * crescent * sun * vAge));
     return;
   }
@@ -793,9 +799,9 @@ void main() {
   // The crown breaks into a few jets of spray and fine drops thrown clear of them.
   float jets = smoothstep(0.45, 0.8, valueNoise(vec2(turn * 1.9 + vSeed * 31.0, vSeed * 7.0)));
   float reach = 0.45 + 0.4 * valueNoise(vec2(turn * 3.1 + vSeed * 13.0, 2.0));
-  float ring = exp(-pow((far - reach) / 0.16, 2.0)) * jets;
+  float ring = exp(-(far - reach) * (far - reach) / 0.0256) * jets;
   // Past the jets fine drops fly on, each a point.
-  float fine = smoothstep(0.72, 0.86, valueNoise(vec2(turn * 5.0, far * 4.0 - 2.5 * vAge) + vSeed * 53.0)) * smoothstep(1.0, 0.8, far);
+  float fine = smoothstep(0.72, 0.86, valueNoise(vec2(turn * 5.0, far * 4.0 - 2.5 * vAge) + vSeed * 53.0)) * (1.0 - smoothstep(0.8, 1.0, far));
   float mist = (1.0 - far) * (1.0 - far) * (1.0 - vAge);
   float fade = (1.0 - vAge) * (1.0 - vAge);
   float cover = saturate((0.6 * ring + 0.6 * fine + 0.15 * mist) * fade * smoothstep(0.0, 0.08, vAge));

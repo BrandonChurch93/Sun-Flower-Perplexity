@@ -105,7 +105,7 @@ void main() {
   float u = min(1.0, vAcross * vAcross + cap * cap);
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
-  float core = exp(-u / vSeen) * swing;
+  float core = exp(-u / max(vSeen, 1e-3)) * swing;
   float seen = 1.0 - vSeen;
   // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
   vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));

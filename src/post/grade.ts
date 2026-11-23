@@ -1,4 +1,5 @@
 import { glslCommon } from '../core/shading.ts'
+import { sound } from './fill.ts'
 
 export const gradeFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
@@ -50,7 +51,7 @@ layout(location = 0) out vec4 outColor;
 vec3 toSrgb(vec3 c) {
   return mix(c * 12.92, 1.055 * pow(max(c, 1e-6), vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c));
 }
-vec3 curve(vec3 x) {
+${sound}vec3 curve(vec3 x) {
   vec3 t = pow(max(x, 0.0), vec3(uContrast));
   return t / (t + uToneM) * uToneNorm;
 }
@@ -101,7 +102,7 @@ float farLand() {
   float peak = max(uSunLight.r, max(uSunLight.g, uSunLight.b));
   if (uFar <= 0.0 || peak <= 0.0) return 0.0;
   // Far land is blurred nearly as the sky is and never more: what is blurred more stands close to the lens.
-  float circle = texture(tRaw, vUv).a / uFar;
+  float circle = circleOf(texture(tRaw, vUv).a) / uFar;
   float ridge = smoothstep(0.0006, 0.0012, 1.0 - circle) * smoothstep(0.8, 0.95, circle) * min(1.0, 20.0 * peak);
   float clear = texelFetch(tSun, ivec2(3, 0), 0).r;
   return ridge * (1.0 - clear * clear * (3.0 - 2.0 * clear));
@@ -154,7 +155,7 @@ vec3 sunGlare(vec2 px) {
   float fanned = smoothstep(0.0, 0.3, uFan);
   vec3 tear = texelFetch(tSun, ivec2(1, 0), 0).xyz;
   vec2 off = away - fanned * tear.xy;
-  float back = uFar > 0.5 ? smoothstep(0.1, 0.5, texelFetch(tRaw, ivec2(px), 0).a / uFar) : 1.0;
+  float back = uFar > 0.5 ? smoothstep(0.1, 0.5, circleOf(texelFetch(tRaw, ivec2(px), 0).a) / uFar) : 1.0;
   float here = mix(mix(0.14, 1.0, texture(tOpen, vUv).a), back, fanned);
   float ra = length(off);
   // The beams: the air is never even, so the light stands in it in uneven bands that all point at the sun. Under the tear they are few and unlike: a broad one, some thin, some missing, each as long as the cloud lets it be, and none reaches the land.

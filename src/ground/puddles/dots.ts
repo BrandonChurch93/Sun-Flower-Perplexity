@@ -45,7 +45,7 @@ in float vShow;
 in vec3 vWorld;
 in float vDepth;
 void main() {
-  float a = atan(vAt.y, vAt.x);
+  float a = atan(vAt.y, vAt.x + 1e-6);
   float rim = 0.78 + 0.14 * sin(a * 5.0 + vSeed * 40.0) + 0.08 * sin(a * 11.0 + vSeed * 91.0);
   float r = length(vAt);
   float spot = 1.0 - smoothstep(rim - 0.22, rim, r);

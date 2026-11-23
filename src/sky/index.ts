@@ -151,6 +151,7 @@ class FieldSky implements Sky {
       uFlash: { value: this.sun.clone() },
       uWeather: { value: new THREE.Vector4(0.2, 0.0, 1.0, 0.0) },
       uEffects: { value: new THREE.Vector4() },
+      uClosedDeck: { value: 0 },
       uTearAttack: { value: 0 },
       uLunarMeter: { value: 0 },
       uTravel: { value: new THREE.Vector2() },
@@ -394,6 +395,10 @@ class FieldSky implements Sky {
     const deckShape = d.overcast + 0.81 * tear * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, tear)
+    // The closed front's finish is photographic only. Arrive with the
+    // deck, keep the lightning spill, and hand back before the first tear.
+    u.uClosedDeck.value = smoothstep(1640, 1690, now.frame) * (1 - smoothstep(2054, 2082, now.frame))
+      * (1 - smoothstep(0.04, 0.62, d.flash))
     u.uTearAttack.value = tearAttack(d.sunThrough, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)

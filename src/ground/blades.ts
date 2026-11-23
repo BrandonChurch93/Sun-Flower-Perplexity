@@ -249,15 +249,15 @@ ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
-  vec3 n = normalize(vNormal);
+  vec3 n = unit(vNormal);
   if (vKind > 1.5) {
     float shadow = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
     outColor = finish(beadColor(n, v, shadow), vWorld, vDepth, -1.0);
     return;
   }
   n *= sign(dot(n, v) + 1e-6);
-  float t = vAlong.x;
-  float a = abs(vAlong.y);
+  float t = saturate(vAlong.x);
+  float a = min(abs(vAlong.y), 1.0);
   float rib = 1.0 - smoothstep(0.0, 0.16, a);
   float edge = smoothstep(0.8, 1.0, a);
   vec3 albedo = mix(vec3(0.035, 0.06, 0.02), mix(vec3(0.07, 0.125, 0.035), vec3(0.1, 0.15, 0.045), vAlong.z), smoothstep(0.0, 0.5, t));

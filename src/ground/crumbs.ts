@@ -302,6 +302,7 @@ uniform float uFine;
 in vec4 aSeed;
 out vec3 vWorld;
 out float vDepth;
+centroid out vec3 vHere;
 out vec3 vBall;
 out vec3 vNormal;
 out vec4 vSeed;
@@ -315,6 +316,7 @@ void main() {
   vSeed = aSeed;
   if (keep <= 0.0) {
     vWorld = place.xyz;
+    vHere = place.xyz;
     vDepth = 1.0;
     vBall = vec3(0.0, 1.0, 0.0);
     vNormal = vBall;
@@ -352,6 +354,7 @@ void main() {
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
+  vHere = world.xyz;
   vDepth = -view.z;
   vBall = normalize(ball);
   vNormal = normalize(normal);
@@ -362,6 +365,7 @@ void main() {
 export const crumbFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
+centroid in vec3 vHere;
 in vec3 vBall;
 in vec3 vNormal;
 in vec4 vSeed;
@@ -390,23 +394,24 @@ const float CRACK_LIP = 0.8;
 const vec2 DEW_GLINT = vec2(0.1, 0.5);
 ${beadLook}
 void main() {
+  onFace = vHere - vWorld;
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
   if (vSeed.z > 1.5) {
-    vec3 nb = normalize(vNormal);
+    vec3 nb = unit(vNormal);
     float shadow = lowSun(sunShadow(vWorld, nb, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
     vec3 drop = beadColor(nb, v, shadow);
     outColor = finish(drop, vWorld, vDepth, 1.0);
     return;
   }
-  vec3 side = abs(normalize(vNormal));
+  vec3 side = abs(unit(vNormal));
   vec2 lay = side.y > 0.62 ? vWorld.xz : (side.x > side.z ? vWorld.zy : vWorld.xy);
   vec2 uv = TURN_K * lay * (uTiles.x * uScales.x) + vec2(vSeed.x * 0.37, vSeed.x * 0.61);
   vec4 cD = texture(tColor, uv);
   vec4 dD = texture(tData, uv);
   vec4 grit = texture(tData, TURN_K * uv * 3.3 + vec2(0.17, 0.59));
   vec2 g = dD.rg * 2.0 - 1.0 + (grit.rg * 2.0 - 1.0) * TURN_K * 0.9;
-  vec3 smoothN = normalize(vNormal);
+  vec3 smoothN = unit(vNormal);
   smoothN *= sign(dot(smoothN, v) + 0.35);
   float dull = soilMatt();
   vec4 pores = texture(tData, TURN_K * uv * 8.7 + vec2(0.43, 0.11));
@@ -428,7 +433,7 @@ void main() {
   float wrap = mix(0.25, 0.2, uDew) * (1.0 - 0.8 * dull * uDew);
   vec3 toSun = normalize(mix(n, smoothN, 0.85 * dull * uDew));
   float sunOn = saturate((dot(toSun, uSunDir) + wrap) / (1.0 + wrap));
-  vec3 ball = normalize(vBall);
+  vec3 ball = unit(vBall);
   float crest = saturate((dot(ball, uSunDir) + CREST.x + CREST_TOP * max(ball.y, 0.0)) / (1.0 + CREST.x)) * smoothstep(0.4, 0.8, dD.a) * (0.45 + grit.a);
   float dawn = dawnOnly() * uDew;
   float span = crackSpan(p);
@@ -453,7 +458,7 @@ void main() {
   color += uSunColor * (grains(vWorld + 0.37, DEW_GLINT.x) * DEW_GLINT.y * dawn * lit);
   color += duskSheen(vWorld, v, n) * (0.3 + 0.7 * open);
   color += duskGlow(vWorld, v, ball, albedo, 1.0) * (0.3 + 0.7 * open);
-  color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit, 0.0, smoothstep(0.0, 0.6, ball.y)) * (0.3 + 0.7 * open);
+  color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit, 0.0, smoothstep(0.0, 0.6, ball.y) * smoothstep(0.05, 0.3, dot(smoothN, v))) * (0.3 + 0.7 * open);
   color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.4 + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.2 + 0.35 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += sparkLight(vDepth) * sparks(vWorld.xz, normalize(v + uSunDir), 110.0, cocOf(vDepth), smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, lit * sunOn) * (0.3 + 0.7 * smoothstep(0.15, 0.5, sits)) * (0.4 + 0.6 * lit) / (1.0 + vDepth * vDepth / 64.0));
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));

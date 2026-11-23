@@ -27,6 +27,10 @@ const LOOK = 4
 const REACH = 4
 const LOOKED = 6
 const GROUPS = ['plant', 'companion', 'field', 'ground', 'sky']
+// A bright point finer than a pixel of the small frame (the sun in a bead of water) looks there like a wild pixel: one of a pixel's four places meets it and the middle does not.
+// So a frame that fails small by this rule alone is read again at LARGE, three times the size, before it counts. A wild pixel is still one pixel there; a real thing has become a shape the frame at one place a pixel holds too.
+const LARGE = [960, 540]
+const AGAIN = 12
 const FOLDER: Record<string, string> = { plant: 'src/plant', companion: 'src/plant', field: 'src/field (its plants take their look from src/plant/surface)', ground: 'src/ground', sky: 'the sky in use' }
 
 // A part drawn alone is named only where it gives a bad pixel within two pixels of one the whole frame has: alone, a part stands against an empty frame and has edges the film never shows.
@@ -36,10 +40,16 @@ const close = (a: number[], b: number[]): boolean => {
 }
 let times = TIMES
 const wild = (h: Held): boolean => (h.ratio ?? 0) > times
-const mild = (h: Held): boolean => !wild(h) && (h.sparks ?? 0) > 0
-const wrong = (h: Held): number => h.none + h.over + (wild(h) ? 1 : 0)
+const mild = (h: Held): boolean => !wild(h) && (h.sparks ?? 0) > 0 && !h.large
+const cleared = (h: Held): boolean => !!h.large?.length && h.large.every((a) => a.kind === 'thing')
+const wrong = (h: Held): number => h.none + h.over + (wild(h) && !cleared(h) ? 1 : 0)
 const place = (h: Held): string => (h.at ? ` at column ${h.at[0]}, row ${h.at[1]} from the top` : '')
 const said = (h: Held, most: number): string => `${h.none} pixels without a number, ${h.over} over ${most}${h.sparks === undefined ? '' : `, ${h.sparks} pixels over ${LOOK} times what is near them (the most, ${(h.ratio ?? 0).toFixed(1)} times${h.spark ? `: ${h.spark.value.toPrecision(3)} at column ${h.spark.at[0]}, row ${h.spark.at[1]} against ${h.spark.near.toPrecision(3)} near it and a mean of ${h.spark.mean.toPrecision(3)}` : ''})`}`
+
+const told = (h: Held): string =>
+  (h.large ?? [])
+    .map((a) => `${a.small.toPrecision(3)} at ${a.at[0]},${a.at[1]}: ${a.kind === 'wild' ? `still a wild pixel, ${a.worst.toFixed(0)} times what is near it (${a.value.toPrecision(3)})` : a.kind === 'thing' ? `a bright point on a real thing, ${a.size} pixels at ${a.value.toPrecision(3)}, ${a.plain.toPrecision(3)} at one place a pixel` : `nothing that bright there (${a.value.toPrecision(3)})`}`)
+    .join('; ')
 
 interface Row { frame: number; held: Held; alone: string[] | null; picture: string | null }
 
@@ -106,11 +116,11 @@ export async function run(args: Args): Promise<void> {
           await session.note()
           await session.plain(true)
           await session.draw(f, tier, false)
-          const s = await session.sparks(look, reach)
+          const s = await session.sparks(look, reach, times)
           await session.plain(false)
           held.sparks = s.count
           held.ratio = s.worst
-          held.spark = { at: s.at, value: s.value, near: s.near, mean: s.mean }
+          held.spark = { at: s.at, value: s.value, near: s.near, mean: s.mean, wild: s.wild }
           held.where.push(...s.where)
         }
         return { held, png: (d.png as Buffer | undefined) ?? null }
@@ -141,6 +151,33 @@ export async function run(args: Args): Promise<void> {
     } finally {
       await session.close()
     }
+    const width = num(args, 'width', 320)
+    const again = rows.filter((r) => wild(r.held) && r.held.none + r.held.over === 0 && r.held.spark?.wild.length)
+    if (again.length && !broken && width < LARGE[0] && args.again !== false && args['no-again'] === undefined) {
+      const large = await openSession({ width: LARGE[0], height: LARGE[1] })
+      const scale = LARGE[0] / width
+      try {
+        await large.watch(most)
+        for (const r of again.slice(0, AGAIN)) {
+          await large.draw(r.frame, tier, false)
+          await large.note()
+          await large.plain(true)
+          await large.draw(r.frame, tier, false)
+          await large.sparks(look, reach, times)
+          await large.plain(false)
+          const places = r.held.spark?.wild ?? []
+          r.held.large = []
+          for (let i = 0; i < places.length; i += 3) {
+            const spot = await large.spot(Math.floor((places[i] + 0.5) * scale), Math.floor((places[i + 1] + 0.5) * scale), Math.ceil(2 * scale), times)
+            const kind = spot.wild > 0 ? 'wild' : spot.value >= 0.25 * places[i + 2] ? 'thing' : 'gone'
+            r.held.large.push({ at: [places[i], places[i + 1]], small: places[i + 2], kind, worst: spot.worst, value: spot.value, size: spot.size, plain: spot.plain })
+          }
+          console.log(`numbers · frame ${r.frame} again at ${LARGE[0]} x ${LARGE[1]} · ${told(r.held)}`)
+        }
+      } finally {
+        await large.close()
+      }
+    }
   } else {
     const lines = readLines('film')
     for (const line of [...lines.values()].sort((a, b) => a.frame - b.frame)) {
@@ -164,6 +201,7 @@ export async function run(args: Args): Promise<void> {
   }
   const bad = rows.filter((r) => wrong(r.held) > 0)
   const soft = rows.filter((r) => wrong(r.held) === 0 && mild(r.held))
+  const real = rows.filter((r) => wrong(r.held) === 0 && cleared(r.held))
   const paired = rows.some((r) => r.held.sparks !== undefined)
   const top = rows.reduce((a, r) => (r.held.most > a.held.most ? r : a), rows[0])
   if (rows.length === 0) findings.unshift({ ok: false, what: 'no frame is read: draw the film with "npm run checks -- play", or name frames with --frames a,b' })
@@ -172,10 +210,11 @@ export async function run(args: Args): Promise<void> {
     findings.unshift({ ok: false, what: `${bad.length} of ${rows.length} frames hold a pixel without a number, over ${most} or over ${times} times what is near it before the lens: ${bad.slice(0, 40).map((r) => r.frame).join(', ')}${bad.length > 40 ? ' and more' : ''}` })
     for (const r of bad.slice(0, SHOWN)) {
       const owner = r.alone?.length ? ` Drawn alone, ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} such pixels. Owner: ${[...new Set(r.alone.map((a) => FOLDER[a] ?? `the part ${a}`))].join(', ')}` : r.alone ? ' No part gives such a pixel when drawn alone: it takes two of them.' : ''
-      findings.push({ ok: false, what: `frame ${r.frame} (${barText(secondsOf(r.frame))}): ${said(r.held, most)}, in ${box(r.held.where)}.${owner}` })
+      findings.push({ ok: false, what: `frame ${r.frame} (${barText(secondsOf(r.frame))}): ${said(r.held, most)}, in ${box(r.held.where)}.${owner}${r.held.large ? ` Read again at ${LARGE[0]} x ${LARGE[1]}: ${told(r.held)}.` : ''}` })
     }
   }
   const owned = (r: Row): string => (r.alone?.length ? `, drawn alone ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} it (${[...new Set(r.alone.map((a) => FOLDER[a] ?? `the part ${a}`))].join(', ')})` : r.alone ? ', no part gives it alone' : '')
+  if (real.length) findings.push({ ok: true, expected: true, what: `bright points on real things, not failed: ${real.length} frames failed at the small size and hold, at ${LARGE[0]} x ${LARGE[1]}, a shape of several pixels in each place. ${real.map((r) => `${r.frame}: ${told(r.held)}`).join('. ')}` })
   if (soft.length) findings.push({ ok: true, expected: true, what: `to look at, not failed: ${soft.length} of ${rows.length} frames hold a pixel from ${LOOK} to ${times} times what is near it. ${soft.slice(0, 60).map((r) => `${r.frame}: ${r.held.spark ? `${r.held.spark.value.toPrecision(3)} at ${r.held.spark.at[0]},${r.held.spark.at[1]} against ${r.held.spark.near.toPrecision(3)}, ` : ''}${(r.held.ratio ?? 0).toFixed(1)} times${owned(r)}`).join('; ')}${soft.length > 60 ? '; and more' : ''}` })
   finish({
     check: 'numbers',
@@ -187,6 +226,6 @@ export async function run(args: Args): Promise<void> {
     findings,
     table: { head: ['frame', 'bar', 'without a number', `over ${most}`, `over ${LOOK} times what is near`, 'the most, times', 'largest in order', 'where', 'alone'], rows: (bad.length + soft.length ? [...bad.slice(0, 60), ...soft.slice(0, 60)] : rows.length ? [top] : []).map((r) => [r.frame, barText(secondsOf(r.frame)), r.held.none, r.held.over, r.held.sparks ?? '', r.held.ratio === undefined ? '' : r.held.ratio.toFixed(1), r.held.most.toFixed(1), box(r.held.where), r.alone ? r.alone.join(', ') || 'none' : '']) },
     pictures: [...bad, ...soft].filter((r) => r.picture).slice(0, SHOWN).map((r) => ({ file: r.picture as string, caption: `frame ${r.frame}: the pixels without a number, over ${most} or over ${LOOK} times what is near them before the lens, in magenta` })),
-    data: { most, times, look: LOOK, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, spark: r.held.spark ?? null, most: r.held.most, at: r.held.at ?? null, alone: r.alone })) },
+    data: { most, times, look: LOOK, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, spark: r.held.spark ?? null, large: r.held.large ?? null, most: r.held.most, at: r.held.at ?? null, alone: r.alone })) },
   })
 }

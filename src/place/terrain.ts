@@ -128,15 +128,19 @@ const vertex = /* glsl */ `
 in vec3 position;
 in vec3 normal;
 in vec2 aLand;
-out vec3 vWorld;
-out vec3 vNormal;
-out vec2 vLand;
-out float vDepth;
+// On the ridge a piece of land is seen almost edge on. A pixel it only touches would be shaded where its middle lies, beside the piece, at a place the land never has: far behind the ridge or behind the lens.
+// So what the look reads is taken inside the piece. The size of a pixel on the ground is still measured from middle to middle.
+centroid out vec3 vWorld;
+centroid out vec3 vNormal;
+centroid out vec2 vLand;
+centroid out float vDepth;
+out vec2 vFoot;
 ${farDepth}
 void main() {
   vec4 view = viewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * view;
   vWorld = position;
+  vFoot = position.xz;
   vNormal = normal;
   vLand = aLand;
   vDepth = -view.z;
@@ -189,10 +193,11 @@ Field fieldAt(vec2 p) {
 `
 
 const fragment = /* glsl */ `
-in vec3 vWorld;
-in vec3 vNormal;
-in vec2 vLand;
-in float vDepth;
+centroid in vec3 vWorld;
+centroid in vec3 vNormal;
+centroid in vec2 vLand;
+centroid in float vDepth;
+in vec2 vFoot;
 uniform sampler2D tWoods;
 ${airGlsl}
 ${fieldsGlsl}
@@ -226,8 +231,9 @@ void main() {
   float dist = length(toCam);
   vec3 v = toCam / dist;
   float r = length(p);
-  vec2 foot = fwidth(p);
+  vec2 foot = fwidth(vFoot);
   float px = max(foot.x, foot.y);
+  px = px < 4000.0 ? px : 4000.0;
 
   Field f = fieldAt(p);
   float pick = fieldHash(f.strip, f.field, 4);
@@ -288,7 +294,7 @@ void main() {
   float through = uThrough * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * mix(lobe * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * farOff, upright, crop * (1.0 - wood));
   // From over its tops the far crop shows its lit heads toward the sun and its shaded sides away from it, and the sky lights the shade.
   float over = uLandOver * crop * (1.0 - wood);
-  float toward = pow(0.5 + 0.5 * dot(normalize(-v.xz), normalize(uTrueSun.xz + vec2(1e-6))), 9.0);
+  float toward = pow(saturate(0.5 + 0.5 * dot(normalize(-v.xz), normalize(uTrueSun.xz + vec2(1e-6)))), 9.0);
   vec3 shaded = mix(albedo, CROP_SHADE * (0.72 + 0.56 * mottle), over);
   vec3 color = albedo * uSunColor * sunOnLand(vWorld) * (ndl * shade + through) * mix(1.0, toward, over) + shaded * landAmbient(n, vWorld) * nook;
   outColor = landFinish(color, vWorld + vec3(0.0, uLandCropTopM * crop * (1.0 - wood), 0.0), vDepth);

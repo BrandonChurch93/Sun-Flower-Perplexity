@@ -64,7 +64,7 @@ void main() {
   float cover = smoothstep(0.0, 0.0035, depth) * (1.0 - smoothstep(${(0.8 * nearRadiusM).toFixed(2)}, ${nearRadiusM.toFixed(2)}, max(abs(p.x), abs(p.y))));
   if (cover <= 0.0) discard;
   vec2 q = boxPlace(p);
-  vec2 edge = smoothstep(vec2(1.0), vec2(0.85), abs(q));
+  vec2 edge = 1.0 - smoothstep(vec2(0.85), vec2(1.0), abs(q));
   vec2 slope = (texture(tRipple, q * 0.5 + 0.5).rg * edge.x * edge.y + chop(p, mix(uSpan.x, uSpan.y, uShutter), dFdx(p), dFdy(p)) * uChop) * smoothstep(0.0, 0.004, depth);
   // Water climbs what it wets: at its edge the face curls up the bank, and the curl catches the sky as a bright line round every clod.
   vec2 px = dFdx(p);
@@ -76,7 +76,7 @@ void main() {
   vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
   vec3 v = normalize(uCamPos - vWorld);
   float facing = max(dot(n, v), 0.0);
-  float mirror = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
+  float mirror = 0.02 + 0.98 * pow(saturate(1.0 - facing), 5.0);
   vec3 r = reflect(-v, n);
   vec3 up = vec3(r.x, abs(r.y), r.z);
   vec3 glitter = skyMirror(normalize(vec3(up.x, up.y * 0.35, up.z)), 6.0, 1.0 - uBlaze);
