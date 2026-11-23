@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 2.75 h |
+| 4 | 8.50 h | 2.79 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 17.18 h |
+| Whole build | 30.00 h | 17.22 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -249,6 +249,15 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 - 2026-11-23 15:01 UTC. Merged: plant `a9a9d33` (the older leaves open up from 1272), field `238a942` (the field blooms a few beats after the hero), checks `cfd8508`, leaf look `ce4cbc7` (the sprout's stem, the surface reads the frost's own dial). MEASURED on the merged tree: tsc clean, 206 tests pass, 951 and 1054 the same to the pixel as before; 120, 1640, 1830, 2000, 2500, 2990, 3030, 3070, 3112 and 3440 looked at, 1640 to 2500 beside the frames from before (the blades stand wider and nearer the horizontal, most at 2500). Part 318 to 635 read (rain owner): no jump, no notch, the flag at 635 is the dawn brightening evenly into the next part. Twelve of thirteen watch parts are in; 1272 to 2861 were drawn with the hung pose, so the open pose is seen in motion only when 2480 to 2760 is drawn again.
 - 2026-11-23 15:01 UTC. The sprout's neck: the stem is laid on 40 stations joined by straight lines, so the arch of the sprout shows corners of 4 to 8 degrees (stem owner, MEASURED on the drawn rings at 120). Ruling: the place runs between two stations as a curve that leaves each along its own direction, for the whole stem; the stem owner writes the patch, the plant owner takes it into its file, the stem owner proves it. The width of the arch is judged on a clip after that.
+
+- 2026-11-23 15:05 UTC. Part 1272 to 1430 read (night sky owner, `fe91b96` less the last merges): no jump, no notch. The spark reader's marks are leaves flapping against the low sun, they glow and move with the blade. Open, with the leaf look owner: the seed leaves at the foot of the stem read teal at 1372 to 1377, as at 132 and 150.
+- 2026-11-23 15:08 UTC. The first whole film is joined: `out/work/blockout-640x360-draft.mp4`, 3,810 frames, 640 x 360, one sample, parts from seven builds, and a private copy with the track (`out/work/private/`, never committed). MEASURED: video 127.0 s, sound 126.99 s, the sound in the joined file 0.00 ms off the track. The motion reader over all 3,810 frames marks 13 places and all are meant: the cuts on 952, 1055, 1157 and 1260, the flashes on 1672 and 1877 with their notches, and 954, which is two parts drawn on different builds meeting (`658fa5f` and `35bd33b`) and not a fault of the film.
+- 2026-11-23 15:09 UTC. The lens: the tangle rule stays as merged in `dabe636`; the owner's wider circle and its other tries are dropped (seen on its pairs at 952 to 959: no gain a viewer would name). Its guard against a circle that is not a number (`e8d19dcf`) is taken for the next merge.
+- 2026-11-23 15:09 UTC. The storm deck is accepted from its sheet (1700, 1830, 2000, 2082 beside `storm.png`): hanging bellies and a broken lip in place of the flat slab, the break at 2083 untouched. Pushed as `b979f42`; STATED by the sky owner: every light value the same to the bit at every frame, 1639, 2083 and after the same to the byte, `numbers` clean on 1700, 1830, 2000, 2082 (worst 3.3 times, limit 14).
+- 2026-11-23 15:09 UTC. The stem's fill is 42 to 49 percent cheaper with the same bits out (stem owner, STATED, `fadb8c81`, not pushed yet). The field's warmed count over 3320 to 3500, every sixth frame, finds nothing made (field owner, MEASURED by it). The head owner's clamps for the wild pixels in the disc are STATED and not pushed; the disc frames and 3072 are read again here before they merge.
+- 2026-11-23 15:11 UTC. Status 34 with the whole film sheet; the watch draft with the track is shared with Brandon privately, named as a one sample draft on mixed builds.
+- 2026-11-23 15:14 UTC. Frost: the front no longer comes in as a band of one width (frost `c6a26e63`, accepted from its pairs at 885, 888, 891). Its depth swings from tooth to tooth and it runs in along the side veins ahead of the fields between them; the term is zero under the close lens, in the thaw and past frame 916. It needs two lines in `src/plant/look/leaf.ts` from the leaf look owner (`frostAcross`, `frostVein`); without them only the swing shows. STATED by the frost owner: 951 and 1054 the same to the pixel, the largest step of leaf luma over 870 to 900 is 1.98, `numbers` clean at 885 and 900.
+- 2026-11-23 15:17 UTC. Three answers of the plant owner, taken. The stalls at 3323 and 2132 did not come back in two runs and their bytes equal their neighbours': closed as pauses of the machine unless a whole film run shows them again. 3318 repeats and is not the plant: the card's draw takes 39 ms against 13 beside it on the first frame of the pull back, so something is drawn there for the first time; passed to the field owner. The yellow shape at 2934 is a leaf tip of the companion with its lit margin and stays. There is no second set of arrays to save for the shadow casters. Ruling on keys apart: live play only; a frame asked for by number is laid for that frame, so drawn films stay the same to the pixel; at most 2 frames between keys while anything unfurls or grows fast, up to 4 where only wind moves the plant; no frame may carry more than the mean and a half.
 
 ## Notes from Brandon
 
