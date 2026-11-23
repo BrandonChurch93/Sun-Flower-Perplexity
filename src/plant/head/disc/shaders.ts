@@ -1,4 +1,4 @@
-import { RIM_SHARE, RING_SHARE, RIPE_FROM, RIPENS_S, SHOWN_FROM } from './opening.ts'
+import { FIRST_SIDE, RIM_SHARE, RING_SHARE, RIPE_FROM, RIPENS_S, SHOWN_FROM } from './opening.ts'
 import { floretMain } from '../../look/disc.ts'
 
 const headGlsl = /* glsl */ `
@@ -42,6 +42,7 @@ export const floretVertex = /* glsl */ `
 #define RIPE_FROM ${RIPE_FROM.toFixed(3)}
 #define RIM_SHARE ${RIM_SHARE.toFixed(3)}
 #define RING_SHARE ${RING_SHARE.toFixed(3)}
+#define FIRST_SIDE ${FIRST_SIDE.toFixed(3)}
 in vec4 aShape;
 in vec4 aFloret;
 in vec4 aSeed;
@@ -95,7 +96,9 @@ void main() {
   vec3 ey = fy * ct - fx * st;
 
   float middle = smoothstep(0.0, 0.28, rho);
-  float tall = w * 1.42 * mix(0.76, 1.04, middle) * aSeed.z * (0.88 + 0.24 * h1) * (1.0 + 0.24 * swell) * grown * (1.0 - 0.16 * uYoung) * (1.0 + 0.08 * blotch) * (1.0 - 0.7 * under) * (1.0 - 0.55 * tuck);
+  float shutSide = 0.5 - 0.5 * cos(aFloret.y - FIRST_SIDE);
+  float underRays = uCover * mix(0.45, 1.0, shutSide) * smoothstep(0.16, 0.65, rho) * (1.0 - open);
+  float tall = w * 1.42 * mix(0.76, 1.04, middle) * aSeed.z * (0.88 + 0.24 * h1) * (1.0 + 0.24 * swell) * grown * (1.0 - 0.16 * uYoung) * (1.0 + 0.08 * blotch) * (1.0 - 0.7 * under) * (1.0 - 0.55 * tuck) * (1.0 - 0.54 * underRays);
   float tube = w * 2.55 * (0.76 + 0.44 * aSeed.x) * (1.0 + 0.08 * blotch);
   float throat = mix(0.76 * tall, tube, open);
   float rc = w * 0.5;
