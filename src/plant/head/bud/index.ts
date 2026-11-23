@@ -273,9 +273,15 @@ export function create(options: PartOptions): PlantPart | null {
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
   const normal = dynamic(normalSlots[0] as Float32Array, 3)
+  const normalB = normalSlots[1] ? dynamic(normalSlots[1], 3) : null
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
   geometry.setAttribute('normal', normal)
+  if (normalB) geometry.setAttribute('normalB', normalB)
+  // What each slot was filled with beside the shape: the head's middle and radius, how far the bud has opened, how shut it is and how early.
+  const kept = [new Float32Array(7), new Float32Array(7)]
+  const filled = [false, false]
+  const led = [false, false]
   geometry.setAttribute('aInfo', new THREE.BufferAttribute(info, 4))
   geometry.setIndex(index)
   const uniforms = { uBudOpen: { value: 0 }, uBudShut: { value: 0 }, uBudEarly: { value: 0 }, uBudHead: { value: new THREE.Vector4(0, 0, 0, 1) } }
@@ -466,10 +472,13 @@ export function create(options: PartOptions): PlantPart | null {
     let row = 0
     const endNode = stemAt(pose, 1)
     const flip = qx * endNode.bx + qy * endNode.by + qz * endNode.bz < 0 ? -1 : 1
+    // The sleeve round the stem's end comes out of the end itself: first as wide as the stem, then down along it.
+    const wide = smoothstep(0, 0.0004, R)
+    const down = smoothstep(0, WRAP_BY_R, R)
     for (const back of shape.neck) {
-      const u = Math.max(0, 1 - back / Math.max(pose.length, 1e-6))
+      const u = Math.max(0, 1 - (back * down) / Math.max(pose.length, 1e-6))
       const n = stemAt(pose, u)
-      const radius = stemR(u) + 0.0003
+      const radius = (stemR(u) + 0.0003) * wide
       for (let b = 0; b < cols; b++) {
         const t = (b / shape.sides) * TAU
         const c = Math.cos(t)
@@ -828,6 +837,16 @@ export function create(options: PartOptions): PlantPart | null {
     }
   }
 
+  const settle = (share: number): void => {
+    const a = kept[0]
+    const b = kept[share > 0 ? 1 : 0]
+    const at = (n: number): number => a[n] + (b[n] - a[n]) * share
+    uniforms.uBudHead.value.set(at(0), at(1), at(2), at(3))
+    uniforms.uBudOpen.value = at(4)
+    uniforms.uBudShut.value = at(5)
+    uniforms.uBudEarly.value = at(6)
+  }
+
   return {
     name: 'bud',
     meshes: [mesh, ...(hairs ? hairs.meshes : []), ...(down ? down.meshes : []), ...(ice ? ice.meshes : [])],
@@ -836,22 +855,27 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 1 && !positionB) return
       const nor = normalSlots[slot]
       fillShape(slots[slot], nor, pose)
-      if (filling.lead) uniforms.uBudHead.value.set(pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius)
+      filled[slot] = true
+      if (filling.lead) {
+        led[slot] = true
+        const time = pose.time
+        kept[slot].set([pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius, headOpen(time), (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time), 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, time)])
+      }
       if (nor) fillHairs(slot, slots[slot], nor, pose)
-      // The one normal the skin is drawn with is the newest shape's.
-      if (filling.lead && slot === 1 && nor) (normalSlots[0] as Float32Array).set(nor)
     },
-    absent: (time) => bodyRadius(time) <= 0,
-    finish(time) {
-      uniforms.uBudOpen.value = headOpen(time)
-      uniforms.uBudShut.value = (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time)
-      uniforms.uBudEarly.value = 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, time)
-      position.needsUpdate = true
-      if (positionB) positionB.needsUpdate = true
-      normal.needsUpdate = true
+    absent: (time) => bodyRadius(time) <= 0 && loneAt(time) <= 0,
+    finish() {
+      if (filled[0]) position.needsUpdate = true
+      if (filled[1] && positionB) positionB.needsUpdate = true
+      if (led[0]) normal.needsUpdate = true
+      if (led[1] && normalB) normalB.needsUpdate = true
+      filled.fill(false)
+      led.fill(false)
       hairs?.finish()
       down?.finish()
       ice?.finish()
+      settle(0)
     },
+    settle,
   }
 }

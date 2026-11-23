@@ -109,3 +109,25 @@ export const leafMain = /* glsl */ `void main() {
   outColor = shaded;
 }
 `
+
+// A neighbor's blade, from the same vertex shader under PLANT_FIELD: it reads vWorld, vNormal, vUv, vLeaf.z, vState.y, vDepth and the tissue text, and no map.
+export const leafFieldMain = /* glsl */ `void main() {
+  vec3 view = normalize(uCamPos - vWorld);
+  vec3 face = normalize(vNormal);
+  bool top = dot(face, view) > 0.0;
+  if (!top) face = -face;
+  float rib = smoothstep(0.1, 0.0, abs(vUv.x));
+  float shade = 0.8 + 0.4 * vLeaf.z;
+  Tissue t;
+  t.albedo = (top ? vec3(0.045, 0.1, 0.022) : vec3(0.06, 0.11, 0.034)) * shade;
+  t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
+  t.through = vec3(0.11, 0.2, 0.01) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
+  t.face = face;
+  t.normal = face;
+  t.rough = top ? 0.82 : 0.9;
+  t.wax = top ? 0.3 : 0.12;
+  t.sheen = top ? 0.6 : 0.85;
+  t.occlusion = 1.0;
+  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+}
+`

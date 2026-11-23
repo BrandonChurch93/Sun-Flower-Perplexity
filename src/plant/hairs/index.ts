@@ -794,9 +794,11 @@ export class HairSet {
       out[q + 1] = y
       out[q + 2] = z
       out[q + 3] = stands
-      out[q + 4] = rb[o]
-      out[q + 5] = rb[o + 1]
-      out[q + 6] = rb[o + 2]
+      // A hair that has no size in the second slot has no place there either: it stays where the first has it.
+      const there = rb[o + 3] > 0
+      out[q + 4] = there ? rb[o] : x
+      out[q + 5] = there ? rb[o + 1] : y
+      out[q + 6] = there ? rb[o + 2] : z
       out[q + 7] = own
       out[q + 8] = la[o] / la2
       out[q + 9] = la[o + 1] / la2
