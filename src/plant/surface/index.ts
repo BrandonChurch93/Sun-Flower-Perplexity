@@ -256,6 +256,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   wax *= 1.0 - FROST_MATT * frost * (1.0 - melt);
   // The water fills the fine relief: the skin is darker and deeper in color, and its wax is a narrow mirror that lights only the ridges and swells that face the sun or the bright sky.
   albedo = mix(albedo, max(mix(vec3(grey), own, 1.2), 0.0) * 0.6, melt);
+  through = max(through, 0.0);
   float most = max(through.r, max(through.g, through.b));
   vec3 deep = most * pow(through / max(most, 1e-6), vec3(1.0 + melt));
   through = deep * (dot(through, vec3(0.3, 0.6, 0.1)) / max(dot(deep, vec3(0.3, 0.6, 0.1)), 1e-6));
