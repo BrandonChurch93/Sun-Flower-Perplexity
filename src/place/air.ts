@@ -28,6 +28,8 @@ export const airUniforms = {
   // The share of the shared ground fog that the land away from the field takes.
   uFogShare: { value: 1 },
   uFogNear: { value: 0 },
+  // How much of the ground fog lies low: the share of it that the high land stands clear of.
+  uFogLow: { value: 0 },
   // How much the light shines through leaves toward the lens: all of it for the sun, little for the moon.
   uThrough: { value: 1 },
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
@@ -44,6 +46,7 @@ uniform float uMist;
 uniform float uMistTopM;
 uniform float uFogShare;
 uniform float uFogNear;
+uniform float uFogLow;
 uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
@@ -53,8 +56,9 @@ uniform float uLandFrost;
 vec3 skyBehind(vec3 dir) {
   vec2 h = normalize(dir.xz + vec2(1e-6));
   vec2 s = normalize(uTrueSun.xz + vec2(1e-6));
-  float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 6.0) * uAirToSun;
-  vec3 clear = mix(uAirHorizon, uSkyHorizonSun, toSun);
+  float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun;
+  float up = saturate(dir.y / (length(dir) * 0.07));
+  vec3 clear = mix(mix(uAirHorizon, uAirZenith, 0.6 * up), uSkyHorizonSun, toSun);
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
 }
 
@@ -77,7 +81,8 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
     float r = length(worldPos.xz);
     // Where the field ends the land takes the ground fog in gradually, so no line of fog stands at the field's far edge.
     float near = mix(smoothstep(250.0, 800.0, r), 1.0, uFogNear);
-    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)));
+    float high = 1.0 - exp(-max(worldPos.y, 0.0) / 30.0);
+    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * (1.0 - uFogLow * high));
   }
   return done;
 }
