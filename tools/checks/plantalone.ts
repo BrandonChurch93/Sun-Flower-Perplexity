@@ -36,7 +36,7 @@ interface Stored { engineHash: string; at: string; width: number; height: number
 const scratch = blankMoment()
 const moonLit = (frame: number): boolean => momentAt(secondsOf(frame), scratch).lightKind === 'moon'
 
-const dialsOf = (frame: number): { frosty: boolean; wet: boolean } => {
+export const dialsOf = (frame: number): { frosty: boolean; wet: boolean } => {
   const d = momentAt(secondsOf(frame), scratch).dials
   return { frosty: d.frost >= DIAL, wet: d.wet >= DIAL }
 }
@@ -109,7 +109,7 @@ export function handovers(): { night: number; dusk: number; midnight: number; da
 }
 
 // The luminance of the finished frame, after the lens and the grain, over the pixels the plant was drawn into.
-async function measure(png: Buffer, cover: string): Promise<{ mean: number; high: number; share: number }> {
+export async function measure(png: Buffer, cover: string): Promise<{ mean: number; high: number; share: number }> {
   const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true })
   const counts = new Uint32Array(256)
   let sum = 0
