@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { config, frameCount } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import { declareStandIn } from '../core/standins.ts'
 import { shared, type Surface } from '../core/shading.ts'
@@ -15,6 +16,9 @@ import { poseAt } from './skeleton.ts'
 import { HERO, PART, buildStandIn, plantNumbers, standInTopology, tipAt, vertexCountOf, type Detail } from './standin.ts'
 import { create as createStem } from './stem/index.ts'
 import { real as surfaceReal, tissueGlsl } from './surface/index.ts'
+import { cell, restless } from './wind.ts'
+import { HOLD_FRAMES, plantInputsOf } from '../v2/inputs.ts'
+import { blankMoment, momentAt } from '../v2/now.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -34,7 +38,7 @@ void main() {
   vec4 world = vec4(plantWorld(position), 1.0);
   vNormal = plantDirection(normal);
 #else
-  vec4 world = vec4(plantWorld(mix(position, positionB, uShutter)), 1.0);
+  vec4 world = vec4(plantWorld(mix(position, positionB, plantBlend())), 1.0);
   vNormal = normal;
 #endif
   vec4 view = viewMatrix * world;
@@ -126,13 +130,13 @@ const bit = (part: number) => 1 << part
 const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk) | bit(PART.body) | bit(PART.bract) | bit(PART.ray)
 
 // The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of.
-const SLOTS: { name: string; make: PartMaker; pieces: number }[] = [
+const SLOTS: { name: string; make: PartMaker; pieces: number; rigid?: boolean }[] = [
   { name: 'stem', make: createStem, pieces: bit(PART.stem) },
   { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf) },
   { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk) },
-  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract) },
-  { name: 'disc', make: createDisc, pieces: 0 },
-  { name: 'petals', make: createPetals, pieces: bit(PART.ray) },
+  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), rigid: true },
+  { name: 'disc', make: createDisc, pieces: 0, rigid: true },
+  { name: 'petals', make: createPetals, pieces: bit(PART.ray), rigid: true },
 ]
 
 export interface PlantOptions {
@@ -143,7 +147,58 @@ export interface PlantOptions {
   places?: THREE.InstancedInterleavedBuffer | null
   // Where this plant stands, for the wind that reaches it. The plant stands at the middle.
   at?: Place
+  // The field's own way to say where each neighbor stands, in place of the list: GLSL that defines Place fieldPlace(), and its uniforms.
+  place?: { glsl: string; uniforms: Record<string, { value: unknown }> }
 }
+
+const FPS = config.film.fps
+// How much of a frame the shutter stands open.
+const SHUTTER_SHARE = config.film.shutterDegrees / 360
+// The plant's shape is laid at key frames only, this many frames apart at most, and every frame is drawn as a mix of the two keys round it. A key stands on the film's first and last frame and on both ends of each hold, and a hold is one stretch.
+export const KEY_EVERY = 8
+// Off until every part keeps its normals and the numbers of its skin once for each key: with one set for both, the light on the plant steps at every key and the stem's skin slides between them. In the two holds the keys are one shape, and they are on.
+const KEYS_WHILE_GROWING = false
+// The key frames of the film, in order.
+export function keyFrames(every: number): number[] {
+  const keys: number[] = []
+  const edges = [0, ...HOLD_FRAMES.flat(), frameCount - 1]
+  for (let e = 0; e + 1 < edges.length; e++) {
+    const held = HOLD_FRAMES.some(([from]) => from === edges[e])
+    for (let f = edges[e]; f < edges[e + 1]; f += held ? edges[e + 1] - edges[e] : every) keys.push(f)
+  }
+  keys.push(frameCount - 1)
+  return keys
+}
+const KEYS = keyFrames(KEY_EVERY)
+// The key at or before each frame, by its place in KEYS.
+const KEY_OF = new Int32Array(frameCount)
+for (let f = 0, k = 0; f < frameCount; f++) {
+  if (k + 1 < KEYS.length && KEYS[k + 1] <= f) k++
+  KEY_OF[f] = k
+}
+
+// What a key is laid from: the plant's clock and what it feels on that frame, in still air, and the state of its skin there.
+interface Key { frame: number; time: number; inputs: PlantInputs; real: number; wet: number; frost: number; dew: number; tip: THREE.Vector3 }
+const scratch = blankMoment()
+function keyAt(frame: number, out: Key): Key {
+  if (out.frame === frame) return out
+  const m = momentAt(frame / FPS, scratch)
+  const felt = plantInputsOf(m)
+  out.frame = frame
+  out.time = m.tau
+  out.inputs = { ...felt, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
+  out.real = felt.stood ?? m.t
+  out.wet = m.dials.wet
+  out.frost = m.dials.frost
+  out.dew = m.dials.dew
+  tipAt(out.time, { ...out.inputs, steady: false }, out.tip)
+  return out
+}
+const newKey = (): Key => ({ frame: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, real: 0, wet: 0, frost: 0, dew: 0, tip: new THREE.Vector3() })
+// How far a leaf twitches from frame to frame in the fastest time lapse, in radians.
+const TWITCH = 0.05
+const TAU = 2 * Math.PI
+const NO_SCALE = new THREE.Matrix4().makeScale(0, 0, 0)
 
 const SIGNED_EACH = 11
 const SIGNED = 2 + 2 * SIGNED_EACH + 3
@@ -190,7 +245,14 @@ export class Plant {
   private readonly hide: number
   private on = true
   private readonly stands = { held: 0 }
-  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) } }
+  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) }, uOwnMix: { value: new THREE.Vector2(0, 1) }, uOwnLapse: { value: new THREE.Vector4(0, 0, 0, 0) } }
+  // The key frame each slot of each part holds, and the key the part's unslotted numbers were laid from. The stand-in is listed under null.
+  private readonly holds = new Map<PlantPart | null, Int32Array>()
+  private readonly keys = [newKey(), newKey()]
+  private readonly now = blankMoment()
+  private readonly laid: PlantPart[] = []
+  // The parts drawn with no size, so the graphics card has them before they exist.
+  private readonly unborn = new Set<PlantPart>()
   // What the shape was last filled from: while none of it changes, the shape stands as it is with the graphics card.
   private readonly filled = new Float64Array(SIGNED).fill(NaN)
   private readonly asked = new Float64Array(SIGNED)
@@ -205,11 +267,11 @@ export class Plant {
     this.detail = o.detail ?? 'hero'
     const places = o.places ?? null
     this.at = places ? null : (o.at ?? { x: 0, z: 0 })
-    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own, stands: this.stands }
+    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own, stands: this.stands, place: places ? o.place : undefined }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     for (const slot of SLOTS) {
-      const part = slot.make(options)
+      const part = slot.make(slot.rigid ? { ...options, rigid: true } : options)
       if (part) {
         this.parts.push(part)
         hide |= slot.pieces
@@ -237,6 +299,8 @@ export class Plant {
     this.mesh = partMesh(geometry, this.surface)
     this.mesh.visible = hide !== ALL
     this.meshes = [this.mesh, ...this.parts.flatMap((p) => p.meshes)]
+    this.holds.set(null, new Int32Array(3).fill(-1))
+    for (const part of this.parts) this.holds.set(part, new Int32Array(3).fill(-1))
     this.casters = places ? [] : [{ mesh: this.mesh, surface: this.surface }, ...this.parts.flatMap((p) => p.casters)]
   }
 
@@ -264,7 +328,123 @@ export class Plant {
     for (const part of this.away) for (const m of part.meshes) m.visible = false
   }
 
+  // A part that does not exist at this moment is hidden, but it is drawn once first, with no size, so the graphics card has all of it from the start.
+  private showPart(part: PlantPart, gone: boolean): boolean {
+    const away = gone && this.drawn.has(part)
+    if (away) this.away.add(part)
+    else {
+      this.away.delete(part)
+      this.drawn.add(part)
+    }
+    if (gone && !away) {
+      this.unborn.add(part)
+      for (const m of part.meshes) m.matrixWorld.copy(NO_SCALE)
+    } else if (this.unborn.delete(part)) for (const m of part.meshes) m.matrixWorld.copy(this.mesh.matrixWorld)
+    for (const m of part.meshes) m.visible = this.on && !away
+    return !away
+  }
+
+  // Lays one key into one slot of the parts that lack it.
+  private lay(key: Key, slot: 0 | 1, hi: number): void {
+    const stand = this.holds.get(null) as Int32Array
+    const parts = this.laid
+    parts.length = 0
+    for (const part of this.live) {
+      const held = this.holds.get(part) as Int32Array
+      if (held[slot] !== key.frame || (key.frame === hi && held[2] !== hi)) parts.push(part)
+    }
+    const standIn = this.hide !== ALL && (stand[slot] !== key.frame || (key.frame === hi && stand[2] !== hi))
+    if (!parts.length && !standIn) return
+    const real = shared.uReal.value
+    const wet = stateUniforms.uPlantWet.value
+    const frost = stateUniforms.uPlantFrost.value
+    const dew = stateUniforms.uPlantDew.value
+    shared.uReal.value = key.real
+    stateUniforms.uPlantWet.value = key.wet
+    stateUniforms.uPlantFrost.value = key.frost
+    stateUniforms.uPlantDew.value = key.dew
+    filling.held = 1
+    filling.lead = true
+    if (standIn) {
+      const to = slot === 0 ? this.a : (this.b as THREE.BufferAttribute)
+      buildStandIn(key.time, key.inputs, to.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
+      to.needsUpdate = true
+      this.n.needsUpdate = true
+      stand[slot] = key.frame
+      stand[2] = key.frame
+    }
+    if (parts.length) {
+      const pose = poseAt(key.time, key.inputs)
+      for (const part of parts) {
+        part.fill(slot, pose)
+        const held = this.holds.get(part) as Int32Array
+        held[slot] = key.frame
+        held[2] = key.frame
+      }
+      for (const part of parts) part.finish(key.time, key.inputs)
+    }
+    shared.uReal.value = real
+    stateUniforms.uPlantWet.value = wet
+    stateUniforms.uPlantFrost.value = frost
+    stateUniforms.uPlantDew.value = dew
+  }
+
+  // Draws the frame as a mix of the two keys round it, when it is a frame of the film and the plant feels what the film says it feels there. The shape then depends on the frame's number and on nothing drawn before it.
+  private play(timeOpen: number, felt: PlantInputs): boolean {
+    const frame = shared.uFrame.value
+    if (this.at === null || !this.b || !(frame >= 0 && frame < frameCount)) return false
+    if (!KEYS_WHILE_GROWING && !HOLD_FRAMES.some(([from, to]) => frame >= from && frame <= to)) return false
+    const m = momentAt(frame / FPS, this.now)
+    if (m.tau !== timeOpen) return false
+    const here = plantInputsOf(m)
+    if (here.leanX !== felt.leanX || here.leanZ !== felt.leanZ || here.lift !== felt.lift || here.wind !== felt.wind || here.real !== felt.real || here.cold !== felt.cold) return false
+    usePlant(this.variant, this.at)
+    const i = KEY_OF[frame]
+    const j = Math.min(i + 1, KEYS.length - 1)
+    const first = keyAt(KEYS[i], this.keys[i & 1])
+    const second = keyAt(KEYS[j], this.keys[j & 1])
+    const span = Math.max(second.frame - first.frame, 1)
+    let w = (frame - first.frame) / span
+    let dw = SHUTTER_SHARE / span
+    if (span > KEY_EVERY) {
+      // The two ends of a hold are one shape and differ only in what frost, dew and water lay on it, so between them the mix follows the dial that moves most and not the time.
+      const d = m.dials
+      const frost = second.frost - first.frost
+      const wet = second.wet - first.wet
+      const dew = second.dew - first.dew
+      const most = Math.max(Math.abs(frost), Math.abs(wet), Math.abs(dew))
+      if (most > 1e-6) w = Math.abs(frost) === most ? (d.frost - first.frost) / frost : Math.abs(wet) === most ? (d.wet - first.wet) / wet : (d.dew - first.dew) / dew
+      w = Math.min(Math.max(w, 0), 1)
+      dw = 0
+    }
+    // Key n lies in slot n mod 2, so the second slot holds the later key of one stretch and the earlier key of the next.
+    const slot = (i & 1) as 0 | 1
+    this.own.uOwnMix.value.set(slot === 0 ? w : 1 - w, slot === 0 ? dw : -dw)
+    this.own.uOwnAir.value.set(Math.min(felt.calm ?? felt.wind, felt.wind), felt.wind, felt.gust ?? 0, felt.rain ?? 0)
+    this.own.uOwnTip.value.copy(first.tip).lerp(second.tip, w)
+    const lapse = (felt.lapse ?? 0) * (1 - (felt.held ?? 0))
+    const real = felt.real ?? timeOpen
+    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
+    this.stands.held = 1
+    this.filled.fill(NaN)
+    const live = this.live
+    live.length = 0
+    for (const part of this.parts) if (this.showPart(part, part.absent?.(first.time) === true && part.absent(second.time) === true)) live.push(part)
+    const heldWas = filling.held
+    this.lay(first, slot, second.frame)
+    if (j !== i) this.lay(second, (1 - slot) as 0 | 1, second.frame)
+    filling.held = heldWas
+    usePlant(0)
+    this.surface.main.uniforms.uPale.value = paleness(timeOpen)
+    this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)
+    return true
+  }
+
   prepare(timeOpen: number, timeClose: number, feltOpen: PlantInputs, feltClose: PlantInputs): void {
+    if (this.play(timeOpen, feltOpen)) return
+    for (const held of this.holds.values()) held.fill(-1)
+    this.own.uOwnMix.value.set(0, 1)
+    this.own.uOwnLapse.value.set(0, 0, 0, 0)
     usePlant(this.variant, this.at)
     // While the plant's clock stands the air moves it where it is drawn, so the shape is filled for still air and stays as it is.
     const open = stilled(feltOpen)
@@ -309,19 +489,16 @@ export class Plant {
       const live = this.live
       live.length = 0
       for (const part of this.parts) {
-        const away = this.at !== null && this.drawn.has(part) && part.absent?.(timeOpen) === true && part.absent(timeClose) === true
-        if (away) this.away.add(part)
-        else {
-          this.away.delete(part)
-          this.drawn.add(part)
-          live.push(part)
-        }
-        if (this.at !== null) for (const m of part.meshes) m.visible = this.on && !away
+        if (this.at === null) live.push(part)
+        else if (this.showPart(part, part.absent?.(timeOpen) === true && part.absent(timeClose) === true)) live.push(part)
       }
       const first = poseAt(timeOpen, open)
+      filling.lead = true
       for (const part of live) part.fill(0, first)
       const second = poseAt(timeClose, close)
+      filling.lead = false
       for (const part of live) part.fill(1, second)
+      filling.lead = true
       for (const part of live) part.finish(timeOpen, open)
     }
     shared.uReal.value = realNow

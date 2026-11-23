@@ -149,8 +149,8 @@ void readHair(int k) {
   vec4 b = texelFetch(uHairs, at + ivec2(1, 0), 0);
   vec4 c = texelFetch(uHairs, at + ivec2(2, 0), 0);
   vec4 d = texelFetch(uHairs, at + ivec2(3, 0), 0);
-  hairRoot = vec4(mix(a.xyz, b.xyz, uShutter), a.w);
-  hairDir = normalize(mix(c.xyz, d.xyz, uShutter));
+  hairRoot = vec4(mix(a.xyz, b.xyz, plantBlend()), a.w);
+  hairDir = normalize(mix(c.xyz, d.xyz, plantBlend()));
   hairStand = hairDir;
   hairOwn = b.w;
   hairShare = c.w;

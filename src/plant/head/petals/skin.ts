@@ -22,7 +22,7 @@ void main() {
 #ifdef PLANT_FIELD
   vec3 local = position;
 #else
-  vec3 local = mix(position, positionB, uShutter);
+  vec3 local = mix(position, positionB, plantBlend());
 #endif
   vec4 world = vec4(plantWorld(local), 1.0);
 #ifdef DEPTH_PASS

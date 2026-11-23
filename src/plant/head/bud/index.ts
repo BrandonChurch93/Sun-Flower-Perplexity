@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { bodyRadius, bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, realOf, stemRadius } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, floorAt, stemAt, type FloorPoint, type Pose } from '../../skeleton.ts'
 import { flutter } from '../../wind.ts'
 import { createCrystals, type CrystalSet } from '../../../weather/frost/index.ts'
@@ -836,8 +836,10 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 1 && !positionB) return
       const nor = normalSlots[slot]
       fillShape(slots[slot], nor, pose)
-      if (slot === 0) uniforms.uBudHead.value.set(pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius)
+      if (filling.lead) uniforms.uBudHead.value.set(pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius)
       if (nor) fillHairs(slot, slots[slot], nor, pose)
+      // The one normal the skin is drawn with is the newest shape's.
+      if (filling.lead && slot === 1 && nor) (normalSlots[0] as Float32Array).set(nor)
     },
     absent: (time) => bodyRadius(time) <= 0,
     finish(time) {
