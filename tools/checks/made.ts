@@ -7,7 +7,9 @@ import { strideFrames } from './lib/stride.ts'
 import { finish, type Finding } from './lib/report.ts'
 
 const SENTENCE = "whenever there's a scene change we have a huge frame rate drop ... we need to make sure that doesn't happen"
-const KINDS: (keyof Made)[] = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads']
+const NAMES: Partial<Record<keyof Made, string>> = { vertexArrays: 'vertex arrays' }
+const named = (k: keyof Made, n: number): string => `${n} ${(NAMES[k] ?? k).replace(/s$/, n === 1 ? '' : 's')}`
+const KINDS: (keyof Made)[] = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays']
 
 // In a hold the plant does not grow, so nothing that follows growth has to be written again. What is left is the geometry posed by the wind:
 // the Builder's goal is 12 MB a frame. The check called writes says whose the bytes are.
@@ -32,6 +34,8 @@ export async function run(args: Args): Promise<void> {
   let mostBytes = 0
   let mostAt = -1
   const guilty: number[] = []
+  const byKind = new Map<keyof Made, { frames: number; count: number; first: number }>()
+  let uncounted = 0
   const sessions = new Set<string>()
   for (let f = from; f <= to; f++) {
     const line = lines.get(f)
@@ -46,19 +50,22 @@ export async function run(args: Args): Promise<void> {
       mostBytes = line.made.updateBytes
       mostAt = f
     }
-    if (!nothingMade(line.made)) {
+    if (line.made.vertexArrays === undefined) uncounted++
+    if (!nothingMade({ ...line.made, vertexArrays: line.made.vertexArrays ?? 0 })) {
       guilty.push(f)
-      const what = KINDS.filter((k) => line.made[k] > 0).map((k) => `${line.made[k]} ${k}`).join(', ')
+      const what = KINDS.filter((k) => (line.made[k] ?? 0) > 0).map((k) => named(k, line.made[k])).join(', ')
+      for (const k of KINDS) if ((line.made[k] ?? 0) > 0) byKind.set(k, { frames: (byKind.get(k)?.frames ?? 0) + 1, count: (byKind.get(k)?.count ?? 0) + line.made[k], first: byKind.get(k)?.first ?? f })
       rows.push([f, secondsOf(f).toFixed(3), barText(secondsOf(f)).slice(4), what, `${(line.made.uploadBytes / 1048576).toFixed(2)} MB`, line.nth === 0 ? 'first frame drawn after warming' : `frame ${line.nth + 1} of its run`])
     }
   }
   const stride = num(args, 'stride', 0)
   const wanted = stride > 0 ? strideFrames(stride, from, to).length : to - from + 1
   const older = olderFilm(run)
-  const complete = have >= wanted && !older
+  const complete = have >= wanted && !older && uncounted === 0
   if (have === 0) findings.push({ ok: false, what: `no frame of "${run}" has been drawn yet: run "npm run checks -- play" first` })
-  else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer or renderbuffer was created and nothing was given new storage on any of them` })
-  else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}` })
+  else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer, renderbuffer or vertex array was created and nothing was given new storage on any of them` })
+  else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}. By kind: ${[...byKind].map(([k, v]) => `${named(k, v.count)} in ${v.frames} ${v.frames === 1 ? 'frame' : 'frames'}, first at frame ${v.first}`).join('; ')}. A vertex array made after loading means something was drawn for the first time while the film runs` })
+  if (uncounted > 0) findings.push({ ok: true, expected: true, what: `${uncounted} of ${have} frames were drawn before vertex arrays were counted: draw them again` })
   if (have > 0) findings.push({ ok: true, what: `allowed, and listed for its cost: every frame writes into buffers and textures that already exist, ${(updates / have).toFixed(0)} writes and ${(updateBytes / have / 1048576).toFixed(1)} MB a frame on average, the most ${(mostBytes / 1048576).toFixed(1)} MB at frame ${mostAt}${bufferBytes + textureBytes > 0 ? ` (${(bufferBytes / have / 1048576).toFixed(1)} MB into buffers, ${(textureBytes / have / 1048576).toFixed(1)} MB into textures)` : ''}. The megabytes are the film's own count (src/v2/counter.ts), by the bytes that are sent; the check called writes says whose they are` })
   const holdMb = num(args, 'hold-mb', HOLD_MB)
   const held: { name: string; frames: number; mean: number; most: number; mostAt: number }[] = []
@@ -75,11 +82,11 @@ export async function run(args: Args): Promise<void> {
   finish({
     check: 'made',
     sentence: SENTENCE,
-    subject: broken ? `a film that makes a texture and a program at one frame (${run})` : 'the film',
+    subject: broken === 'first-draw' ? `a film that draws a mesh for the first time at one frame, with nothing left to compile or send: only a vertex array is made (${run})` : broken ? `a film that makes a texture and a program at one frame (${run})` : 'the film',
     broken,
     complete,
     findings,
     table: rows.length ? { head: ['frame', 'second', 'bar', 'made', 'uploaded', 'where in its run'], rows: rows.slice(0, 60) } : undefined,
-    data: { run, stamp, from, to, frames: have, guilty, meanUpdateMb: have ? updateBytes / have / 1048576 : 0, holdMb, held },
+    data: { run, stamp, from, to, frames: have, guilty, byKind: Object.fromEntries(byKind), meanUpdateMb: have ? updateBytes / have / 1048576 : 0, holdMb, held },
   })
 }
