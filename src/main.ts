@@ -12,9 +12,11 @@ const options = readOptions(location.search)
 const canvas = document.getElementById('film') as HTMLCanvasElement
 const host = document.getElementById('ui') as HTMLElement
 const note = document.getElementById('note') as HTMLElement
-const played = options.mode === 'live' || options.mode === 'autopilot'
+const page = options.mode === 'live' || options.mode === 'review'
+const played = page || options.mode === 'autopilot'
 
-document.documentElement.dataset.mode = options.mode
+document.documentElement.dataset.mode = page ? 'live' : options.mode
+if (options.mode === 'review') document.documentElement.dataset.review = 'yes'
 if (options.count || played) installCounter()
 
 function say(text: string): void {
@@ -34,7 +36,7 @@ try {
   film.view.azimuthDeg = options.az
   film.view.elevationDeg = options.el
   film.view.dolly = options.dolly
-  const loading = options.mode === 'live' ? showLoading(host, film) : null
+  const loading = page ? showLoading(host, film) : null
   const ready = film.load()
   installShowcase(film, ready)
   ready.then(
