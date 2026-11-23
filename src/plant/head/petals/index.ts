@@ -1,6 +1,8 @@
 // The ray florets: 34 strips round the rim of the head, folded shut in the bud and unfurled by `rayOpen`.
+import { norm } from '../../norm.ts'
 import * as THREE from 'three'
 import type { Assets } from '../../../core/assets.ts'
+import { config } from '../../../config.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
 import { headOpen, rayAngle, rayCount, rayLength, rayOpen, realOf } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
@@ -53,7 +55,7 @@ const TIP_TUCK = 0.35
 const GAP_COMB = 0.5
 const GAP_REACH = 0.16
 // After the bloom every ray goes on growing on its own clock from this second: longer, wider, further back, its tip rolling.
-const LATE_FROM_S = 52
+const LATE_FROM_S = config.growth.open
 // A neighbor's clock runs up to 1.5 s ahead of the plant's. From this second of its own clock a ray also draws out long and narrow.
 const DRAWN_FROM_S = 53.55
 // The late whorl: rays of the hero head that come out between the others after the bloom, each from its own foot, shorter than the first.
@@ -544,7 +546,7 @@ export function create(options: PartOptions): PlantPart | null {
           let x = uy * vz - uz * vy
           let y = uz * vx - ux * vz
           let z = ux * vy - uy * vx
-          const l = Math.hypot(x, y, z)
+          const l = norm(x, y, z)
           if (l > 1e-12) {
             x /= l
             y /= l
@@ -585,11 +587,11 @@ export function create(options: PartOptions): PlantPart | null {
       const vx = pos[a + 3] - pos[a]
       const vy = pos[a + 4] - pos[a + 1]
       const vz = pos[a + 5] - pos[a + 2]
-      const lu = Math.hypot(ux, uy, uz) || 1
+      const lu = norm(ux, uy, uz) || 1
       let x = uy * vz - uz * vy
       let y = uz * vx - ux * vz
       let z = ux * vy - uy * vx
-      const l = Math.hypot(x, y, z) || 1
+      const l = norm(x, y, z) || 1
       x /= l
       y /= l
       z /= l

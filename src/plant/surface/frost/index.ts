@@ -20,7 +20,11 @@ vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3
   if (h >= chance) return vec2(0.0);
   float r = mix(least, most, hash21(cell + 37.0));
   vec2 middle = vec2(r) + (1.0 - 2.0 * r) * vec2(hash21(cell + 71.0), hash21(cell + 113.0));
-  float grain = 1.0 - smoothstep(r - 0.5 * reach, r + 0.5 * reach, length(g - cell - middle));
+  // A grain of ice has corners: it is not a bead.
+  vec2 p = g - cell - middle;
+  float spin = 6.2832 * hash21(cell + 257.0);
+  p = vec2(p.x * cos(spin) - p.y * sin(spin), p.x * sin(spin) + p.y * cos(spin)) * vec2(1.0, 0.6 + 0.8 * hash21(cell + 311.0));
+  float grain = 1.0 - smoothstep(r - 0.5 * reach, r + 0.5 * reach, mix(length(p), 1.25 * max(abs(p.x), abs(p.y)), 0.7));
   vec3 facet = normalize(N + 1.6 * (vec3(hash21(cell + 151.0), hash21(cell + 193.0), hash21(cell + 229.0)) - 0.5));
   float flash = saturate(dot(facet, normalize(uSunDir + view)));
   flash *= flash;
@@ -32,37 +36,45 @@ vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3
   return vec2(grain, grain * flash * flash);
 }
 
+// How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The dew comes up with the thaw and never with the freeze.
+float frostThaw() {
+  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost);
+}
+
 // x: the share of the pixel that is ice. y: the flash of the ice in it.
 // 'at' is in meters on the skin. 'gather' is where frost grows first: 0 in the middle of a face to 1 at an edge, a tip or the ridge of a vein.
 vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim) {
   float up = saturate(F.y);
   float bank = valueNoise(at * (1.0 / 0.006));
   float fine = valueNoise(at * (1.0 / 0.0013) + 17.0);
-  // Hoar grows on what is open to the sky: a face turned to the side holds it only at its very edge.
-  float open = (0.01 + 0.55 * up * up) * (0.2 + 0.8 * sheen);
-  // A fine powder lies on every face, the under one too, thicker toward what gathers it and in drifts.
-  float dusted = (0.07 + 0.2 * up * up) * (0.15 + 1.2 * bank * bank) + 0.22 * gather;
-  float grown = saturate(open * (0.3 + 1.4 * bank * bank) + 0.34 * gather * gather * (0.4 + 0.6 * up) + 0.45 * smoothstep(0.9, 1.0, gather));
   vec2 g = at * (1.0 / FROST_GRAIN_M);
   // A grain finer than the pixel is its share of the pixel: it never flickers.
   float reach = length(fwidth(g));
-  // A crust has a border: where the hoar is thick enough it closes, and the border is ragged at the scale of its grains.
   float seen = 1.0 - smoothstep(0.4, 1.2, reach * (FROST_GRAIN_M / 0.0013));
-  float ragged = grown + 0.3 * (fine - 0.5) * seen + 0.2 * (bank - 0.5);
-  // Under the grains a face open to the sky wears a thin grey bloom all over, in drifts.
-  float veil = 0.02 + 0.1 * grown + dusted * mix(1.0, 0.6 + 0.8 * fine, seen) + FROST_BLOOM * open * (0.04 + 0.96 * bank * bank * bank) * mix(1.0, 0.5 + fine, seen) + smoothstep(0.38, 0.66, ragged) * mix(0.6, 0.12 + 0.88 * fine * fine, seen);
+  float ragged = gather + 0.3 * (bank - 0.5) + 0.16 * (fine - 0.5) * seen;
+  // It comes in from the edges and the ridges, and the open face is the last to whiten.
+  float front = 1.2 - 1.6 * uPlantFrost;
+  float come = smoothstep(front, front + 0.3, ragged);
+  // It goes first where the sun is on it and where it is thin, and the thick fringe is the last ice on the leaf.
+  float turn = 0.5 * (1.0 - dot(N, uSunDir)) * 0.5 + 0.3 * bank + 0.25 * smoothstep(0.3, 0.9, ragged);
+  float held = come * (1.0 - smoothstep(turn, turn + 0.3, 1.3 * frostThaw()));
+  // The fringe: a crust that closes along the margin, the tip and the ridge of each vein.
+  float fringe = smoothstep(0.76, 0.98, ragged) * mix(0.6, 0.15 + 0.85 * fine * fine, seen);
+  // The sugar: grains that stand apart on the face, thin in the middle of it, with the green between them.
+  float thick = saturate(0.36 + 0.3 * up * up + 0.6 * gather + 0.45 * (bank * bank - 0.3));
+  float veil = 0.03 + 0.09 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
-  float chance = 0.94 * grown;
-  float most = 0.17 + 0.18 * grown;
-  vec2 dust = frostGrain(g, reach, chance, 0.08, most, N, view);
-  float mean = chance * 3.1416 * (0.08 * 0.08 + 0.08 * most + most * most) / 3.0;
+  float chance = 0.9 * thick;
+  float most = 0.13 + 0.15 * thick;
+  vec2 dust = frostGrain(g, reach, chance, 0.06, most, N, view);
+  float mean = chance * 2.6 * (0.06 * 0.06 + 0.06 * most + most * most) / 3.0;
 
   float wide = FROST_GRAIN_M / FROST_BEAD_M;
   // Frozen beads stand where the dew stood: along edges, tips and veins, not on an open face.
-  float lone = (0.2 + 0.3 * up) * smoothstep(0.0, 0.5, gather);
-  vec2 bead = frostGrain(g * wide + 53.0, reach * wide, lone, 0.05, 0.15, N, view);
+  float lone = (0.15 + 0.25 * up) * smoothstep(0.35, 0.8, gather);
+  vec2 bead = frostGrain(g * wide + 53.0, reach * wide, lone, 0.04, 0.1, N, view);
   float still = 1.0 - smoothstep(0.35, 1.1, reach * wide);
-  float ice = mix(mean, dust.x, sharp) + mix(lone * 0.034, bead.x, still);
-  return vec2(saturate(veil + ice + 0.34 * rim * (0.55 + 0.45 * sheen)), dust.y * sharp + 2.0 * bead.y * still);
+  float ice = 0.85 * mix(mean, dust.x, sharp) + mix(lone * 0.014, bead.x, still);
+  return vec2(saturate(veil + ice + fringe + 0.3 * rim * (0.55 + 0.45 * sheen)), dust.y * sharp + 2.0 * bead.y * still + 0.02 * fringe * fine) * held;
 }
 `

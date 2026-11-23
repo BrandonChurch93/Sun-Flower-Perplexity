@@ -88,6 +88,7 @@ float scaffold(vec3 p, vec3 eyeRay, float base, float depth, out vec4 shape, out
   float synoptic = mix(shape.r, 0.72 * shape.r + 0.28 * shape.g, st);
   float nightThinning = 0.084 * (1.0 - smoothstep(-13.0, -4.5, uElevation)) * (1.0 - st);
   float cutoff = mix(0.629 - 0.35 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x + nightThinning, 0.273 - 0.09 * uWeather.x, st);
+  cutoff += 0.063 * smoothstep(0.16, 0.28, uWeather.x) * (1.0 - st);
   gap = toGap(p, eyeRay, 0.38 * shape.g + 0.62 * shape.b);
   float clear = uWeather.z;
   float aperture = smoothstep(0.58, 1.0, clear + 0.21 * uEffects.w);
@@ -112,7 +113,7 @@ float densityAt(vec3 p, vec3 d, float t, float base, float dep, out float gap, o
   if (t < 49.0) {
     vec2 fine = f(w - vec3(motion.x, 0.0, motion.y) * 0.34).ba;
     if (dot(motion, motion) > 0.000001) fine = 0.5 * (fine + f(w + vec3(motion.x, 0.0, motion.y) * 0.34).ba);
-    small = mix(small, 0.88 * fine.x + 0.12 * fine.y, 1.0 - smoothstep(15.0, 49.0, t));
+    small = mix(small, 0.19 + 0.52 * fine.x + 0.11 * fine.y, 1.0 - smoothstep(15.0, 49.0, t));
     if (t < 32.0 && sc < 0.83) {
       float grit = f(w * 2.38 + vec3(0.31, 0.12, 0.52)).a;
       small += (grit - 0.47) * 0.13 * nearCloud * (1.0 - smoothstep(0.53, 0.83, sc));
@@ -120,7 +121,7 @@ float densityAt(vec3 p, vec3 d, float t, float base, float dep, out float gap, o
   }
   textureValue.y = 0.32 * textureValue.y + 0.68 * small;
   float contrast = max(uWeather.y, smoothstep(0.12, 0.40, uWeather.x));
-  float bite = (mix(0.42, 0.32, uWeather.y) + 0.38 * nearCloud * contrast) * max(0.06, 0.94 - 1.22 * small);
+  float bite = (mix(0.41, 0.32, uWeather.y) + 0.34 * nearCloud * contrast) * max(0.06, 0.94 - 1.22 * small);
   float body = max(0.0, sc - bite + (small - 0.48) * 0.73 * nearCloud * contrast) * profileWeight;
   float sunFilter = mix(1.0, 0.009 + 0.99 * (1.0 - uWeather.z) * (1.0 - uWeather.z), gap * (0.84 + 0.16 * uEffects.w));
   float fog = 1.0 - 0.87 * smoothstep(0.14, 0.85, uWeather.w);
@@ -170,16 +171,16 @@ void main() {
   vec3 clear = airAt(d);
   float dayTower = smoothstep(0.102, 0.29, uSun.y);
   float blueWindow = dayTower * (1.0 - st) * smoothstep(0.027, 0.23, d.y) * (1.0 - smoothstep(0.89, 0.998, mu));
-  clear *= mix(vec3(1.0), vec3(0.46, 0.72, 0.89), blueWindow);
+  clear *= mix(vec3(1.0), vec3(0.38, 0.59, 0.68), blueWindow);
   vec2 around = normalize(d.xz + vec2(1e-7));
   float hazeStrength = exp(-max(0.0, d.y) * 14.0);
   vec4 heads = f(vec3(around.x * 0.82 - 0.032 * uTravel.x, 0.21 + around.y * 0.68, 0.41 + 0.023 * uEvolve));
   float distantSlot = smoothstep(0.32, 0.73, 0.76 * heads.r + 0.24 * heads.g);
   vec3 slateHaze = uDeck * (0.48 + (2.7 + 2.4 * distantSlot) * hazeStrength);
-  float crest = 0.106 + 0.084 * distantSlot + 0.068 * (heads.b - 0.44);
-  float opening = 1.0 - smoothstep(crest - 0.055, crest + 0.050, d.y);
+  float crest = 0.058 + 0.071 * distantSlot + 0.070 * (heads.b - 0.44);
+  float opening = 1.0 - smoothstep(crest - 0.033, crest + 0.068, d.y);
   float distantLight = 0.46 + 0.54 * exp(-max(0.0, 1.0 - mu) * 9.8);
-  float patchHaze = opening * (6.7 + 15.2 * distantSlot) * distantLight;
+  float patchHaze = opening * (6.7 + 20.1 * distantSlot) * distantLight;
   vec3 gradedGap = dot(uDeck, vec3(0.2126, 0.7152, 0.0722)) * vec3(1.17, 1.10, 1.00);
   vec3 air = mix(clear, slateHaze, min(1.0, st * 1.01));
   float broad = exp(-max(0.0, d.y) * 19.0);
@@ -209,16 +210,23 @@ void main() {
     vec3 highHint = mix(uUpper, ambientGrey, 0.44) * 0.55 + 0.16 * uLower;
     float acrossAir = mix(0.0105, 0.016, st) + uWeather.w * 0.045;
     float horizonD = 0.001;
-    float concentrated = mix(0.29, 0.6, st);
+    float concentrated = mix(0.44, 0.60, st);
     float lowDeck = start + min(4.8, span * 0.24);
     vec3 lobe = d * lowDeck;
     vec4 belly = weatherField(lobe, heightAt(lobe));
-    float ceilingLight = 0.18 + 2.6 * smoothstep(0.24, 0.71, 0.61 * belly.r + 0.30 * belly.g + 0.09 * belly.b);
+    // Irregular wide wells of light in the storm volume, separate from the
+    // fine erosion. This is sampled in cloud space and advects with the deck.
+    vec3 pocketPos = d * (start + min(5.1, span * 0.33));
+    vec2 deckPos = rotateCloud(pocketPos.xz - uTravel);
+    vec4 pocket = f(vec3(deckPos.x * 0.053 + 0.32, heightAt(pocketPos) * 0.18 + 0.08, deckPos.y * 0.073 - 0.19));
+    float well = smoothstep(0.27, 0.66, 0.58 * pocket.r + 0.42 * pocket.g);
+    float ceilingLight = 0.11 + 2.7 * well * well + 0.52 * smoothstep(0.29, 0.69, belly.g);
     for (int i = 0; i < 60; i++) {
       if (i >= uSteps || through < 0.009) break;
       float k = (float(i) + offset) * dt;
       float at = start + span * (k * (1.0 - concentrated) + k * k * concentrated);
-      float ds = span * dt * (1.0 - concentrated + 2.0 * k * concentrated);
+      float center = (float(i) + 0.5) * dt;
+      float ds = span * dt * (1.0 - concentrated + 2.0 * center * concentrated);
       vec3 p = d * at;
       float gap;
       vec2 relief;
@@ -233,17 +241,18 @@ void main() {
       float hanging = 1.0 - smoothstep(0.30, 0.71, relief.x);
       float crown = smoothstep(0.13, 0.64, top);
       float sheltered = 1.0 - smoothstep(0.038, 0.30, d.y);
-      float buried = exp(-density * 0.23) * (0.38 + 0.62 * occlusion);
-      float bellyShade = 0.09 + (1.98 * vein * vein + 0.46 * hanging + 0.15 * top) * buried;
-      vec3 enclosed = uDeck * bellyShade * (0.66 + 0.70 * sheltered) * ceilingLight;
+      float buried = exp(-density * 0.18) * (0.40 + 0.60 * occlusion);
+      float rollDepth = smoothstep(0.25, 0.61, 0.57 * relief.x + 0.43 * relief.y);
+      float bellyShade = 0.12 + (2.33 * rollDepth * rollDepth + 0.37 * hanging + 0.08 * top) * buried;
+      vec3 enclosed = uDeck * bellyShade * (0.76 + 0.64 * sheltered) * ceilingLight;
       vec3 beforeSun = highHint * (0.49 + 0.97 * top) * (0.61 + 0.91 * vein) * occlusion;
-      vec3 daylight = (uUpper * vec3(0.105, 0.165, 0.255) + ambientGrey * 0.048 + 0.035 * uLower) * (0.51 + 0.60 * vein) * (0.49 + 0.51 * occlusion);
+      vec3 daylight = (uUpper * vec3(0.086, 0.13, 0.193) + ambientGrey * 0.036 + 0.026 * uLower) * (0.51 + 0.60 * vein) * (0.49 + 0.51 * occlusion);
       daylight += ambientGrey * crown * (0.10 + 0.40 * occlusion);
       vec3 dome = mix(mix(beforeSun, daylight, dayTower), enclosed, st);
       vec3 bounce = uLower * vec3(0.143, 0.124, 0.109) * (1.0 - st) * (1.0 - top) * (1.0 - 0.67 * dayTower);
       float sunVisible = mix(1.0, 0.017 + 0.86 * sunBreak * gap, st);
       vec3 beam = uCloudLight * (side + forward) * lit * powder * sunVisible * mix(1.0, 0.31 + 0.69 * crown, dayTower * (1.0 - st));
-      beam += uCloudLight * (1.0 - st) * dayTower * (0.021 + 0.39 * crown) * (0.74 + 0.48 * vein) * pow(lit, 0.69) * exp(-0.24 * density);
+      beam += uCloudLight * (1.0 - st) * dayTower * (0.008 + 0.48 * crown) * (0.86 + 0.23 * vein) * pow(lit, 0.72) * exp(-0.23 * density);
       float underside = (1.0 - smoothstep(0.008, 0.31, uSun.y)) * (1.0 - top);
       beam *= 1.0 + 0.49 * underside * (0.21 + 0.79 * pow(sat(mu), 12.0));
       float torn = sunBreak * exp(-pow((gap - 0.64) * 5.5, 2.0));
@@ -279,7 +288,7 @@ void main() {
     float streaks = 0.68 * strands.g + 0.32 * strands.b;
     band *= 0.43 + 0.72 * smoothstep(0.27, 0.73, streaks);
     float ceiling = 1.0 - smoothstep(0.082 + 0.14 * veil.g, 0.118 + 0.16 * veil.g, d.y);
-    float rain = band * ceiling * uEffects.y * (0.74 + 0.24 * opening) * smoothstep(-0.012, 0.021, d.y);
+    float rain = band * ceiling * uEffects.y * (0.51 + 0.28 * opening) * smoothstep(-0.012, 0.021, d.y);
     vec3 curtain = uDeck * (0.30 + 0.58 * veil.g);
     result = mix(result, curtain, rain);
   }

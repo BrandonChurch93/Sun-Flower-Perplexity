@@ -1,12 +1,12 @@
-# Status 03
+# Status 04
 
-2026-11-23 00:51 UTC
+2026-11-23 01:17 UTC
 
-- Status 03 · Phase 2. All twelve builders got their first round of notes. Every quick night is now two beats long and never fully dark, so the day to night changes read as a pulse instead of a flicker. Two more sky candidates sent first sheets: A has a full atmosphere but unlit clouds, C has thin sparse clouds; B (shown last time) leads so far. The plant is merged; one shared wind now drives everything that bends.
-- Next: Bring the three sky candidates onto one bench and compare them in the film's own frames, tune the light against the leading sky, then merge the ground, rain, frost and field as they report. Time used: 2.9 h of 30 h.
+- Status 04 · Phase 2. Every part of the film is now in one picture for the first time: the land, the ground, the field, the plant, rain, frost and the lens, under sky candidate B. The light on the plant is retuned so it no longer stands as a dark cut-out, and the storm has bare wet soil and small neighbours as in the references. Meeting for the first time, the rain, the mist and the lens glare came out too bright (washed frost, pale storm, white lightning frame): the cause is found and the three owners are fixing it now. The checks found both holds ending one frame late; fixed.
+- Next: Get the washed frames right as the three fixes land, bring sky candidates A and C to their second reports, then judge the three skies blind. Time used: 3.3 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise
-- `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back)
-- `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points
-- `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure
+- `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white
+- `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it
+- `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds
+- `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
