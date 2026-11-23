@@ -1,4 +1,6 @@
 {
+  "cutsNote": "The frames a hard cut of the film lands on, the first frame of each new shot, as the Builder lists them. The film's own list in src/v2/cuts.ts is held to this one. A step into one of them is not judged as a hard cut nor by the step of the frame's mean, and is printed where it is left out. script measures a window round each: a cut must cost nothing.",
+  "cuts": [952, 1055, 1157, 1260],
   "script": {
     "note": "Milliseconds of the page's own script time in a frame, on this machine, frames drawn in a row. The first frame of a window comes after a jump and is not counted. The windows under first hold the frames where a hold starts or ends: they are measured whole in every run and printed first.",
     "meanMs": 16,

@@ -101,7 +101,7 @@ export function phaseOfElevation(degrees: number, afternoon: boolean): number {
 }
 
 // The sun's height at the marks the film is built on, in degrees.
-export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
+export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 1.1, end: 0.42 } as const
 
 const W_FROST_FROM = 4 + phaseOfElevation(SUN.frostFrom, false)
 const W_FROST_MID = 4 + phaseOfElevation(SUN.frostMid, false)
@@ -114,9 +114,10 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-// The film opens with the sun 5 degrees under the horizon and closes with it 3 under, while the field can still be read.
+// The film opens with the sun 5 degrees under the horizon. On bar 73 the sun's lower edge stands on the far ridge, which is three quarters of a degree high there,
+// and its last sliver goes under a quarter of a second before the film closes.
 const DUSK = sinceSunset(5)
-const W_END = W_LAST + sinceSunset(3)
+const W_END = 14 + phaseOfElevation(SUN.end, true)
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
 const LEAD_RATE = DUSK / (1 - B0)
 // In the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line: a night of two beats.
@@ -276,6 +277,7 @@ export function fogAtBar(b: number): number {
 const DROP_FROM = 23.3
 const DROP_GOES = hitBar(24, 3) - 1e-9
 const DROP_PULL = 0.8
+const DROP_OVER = 26
 
 // How full the drop at the tip hangs. The one that follows the fallen drop stays small.
 export function dropAtBar(b: number): number {
@@ -284,12 +286,12 @@ export function dropAtBar(b: number): number {
     const u = (b - DROP_FROM) / (DROP_GOES - DROP_FROM)
     return 1 - (1 - u) * (1 - u)
   }
-  return lerp(0.25, 0.5, smooth((b - DROP_GOES) / 0.6)) * (1 - smooth((b - 25.2) / 0.8))
+  return lerp(0.25, 0.5, smooth((b - DROP_GOES) / 0.6)) * (1 - smooth((b - 25.2) / (DROP_OVER - 25.2)))
 }
 
 // How far the drop that let go has fallen, in metres. 0 while it hangs.
 export function dropFallAtBar(b: number): number {
-  if (b < DROP_GOES) return 0
+  if (b < DROP_GOES || b >= DROP_OVER) return 0
   const s = (b - DROP_GOES) * BAR
   return Math.min(1, 0.5 * DROP_PULL * s * s)
 }

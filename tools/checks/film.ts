@@ -19,7 +19,7 @@ import { strideFrames, twilights } from './lib/stride.ts'
 // It runs for over an hour: start it in the background and read out/work/checks/film.log.
 
 const RUN = at('tools', 'checks', 'run.ts')
-type StepRow = [number, number, number, number, number, number, number, number]
+type StepRow = [number, number, number, number, number, number, number, number, number?]
 
 function read(name: string): Result | null {
   const file = path.join(OUT, `${name}.json`)
@@ -93,7 +93,7 @@ export async function run(args: Args): Promise<void> {
       if (guilty.has(f)) makers++
     }
     const inside = steps.filter((x) => x[0] >= s.first && x[0] <= s.last)
-    const calm = inside.filter((x) => !x[5])
+    const calm = inside.filter((x) => !x[5] && !x[8])
     const most = calm.reduce<StepRow | null>((a, x) => (!a || Math.max(x[6], x[7]) > Math.max(a[6], a[7]) ? x : a), null)
     const hard = inside.filter((x) => x[4]).length
     const d = s.night ? dusks.find((x) => x.night === s.night) : undefined
