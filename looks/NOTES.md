@@ -1,9 +1,7 @@
 # Looks of rain
 
-2026-11-23 08:40 UTC, at commit 925459ca of agent/rain.
+2026-11-23 08:49 UTC, at commit 925459ca of agent/rain.
 
-- `01-thaw-1208-crop-925459c.jpg`: thaw-1208-crop-925459c
-- `02-thaw-1234-crop-925459c.jpg`: thaw-1234-crop-925459c
-- `03-wide-1262-crop-925459c.jpg`: wide-1262-crop-925459c
-- `04-drop-1208-and-1234-twice-size-925459c.jpg`: drop-1208-and-1234-twice-size-925459c
-- `05-sheet-1208-1234-1262-925459c.jpg`: sheet-1208-1234-1262-925459c
+- `01-thaw-review-tier-drop-at-1234-and-1240-at-twice-.jpg`: thaw review tier, drop at 1234 and 1240 at twice size, on 925459ca
+- `02-thaw-review-tier-frame-1240-crop-on-925459ca.jpg`: thaw review tier, frame 1240 crop, on 925459ca
+- `03-key-frost-thaw-over-frame-1240-at-review-tier-on.jpg`: key frost-thaw over frame 1240 at review tier, on 925459ca
