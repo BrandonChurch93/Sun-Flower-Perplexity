@@ -104,6 +104,13 @@ export function readOptions(search: string): Options {
       formatChosen = true
     } catch {}
   }
+  // A picture of any size, for measuring the page's own time where drawing is slow.
+  const w = number('w')
+  const h = number('h')
+  if (w !== null && h !== null && w >= 16 && h >= 16) {
+    format = { ...format, id: 'measure', width: Math.round(w), height: Math.round(h) }
+    formatChosen = true
+  }
   return {
     mode,
     format,
@@ -136,7 +143,10 @@ export function writeOptions(options: Options): string {
   const base = readOptions(options.mode === 'live' ? '' : `?mode=${options.mode}`)
   const p = new URLSearchParams()
   if (options.mode !== 'live') p.set('mode', options.mode)
-  if (options.chosen.format || options.format.id !== base.format.id) p.set('format', options.format.id)
+  if (options.format.id === 'measure') {
+    p.set('w', String(options.format.width))
+    p.set('h', String(options.format.height))
+  } else if (options.chosen.format || options.format.id !== base.format.id) p.set('format', options.format.id)
   if (options.chosen.tier || options.tier !== base.tier) p.set('tier', options.tier)
   if (options.chosen.assets || options.assets !== base.assets) p.set('assets', options.assets)
   if (options.unit) p.set('unit', options.unit)
