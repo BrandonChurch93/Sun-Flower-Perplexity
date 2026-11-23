@@ -1,6 +1,6 @@
 # Looks of post
 
-2026-11-23 14:48 UTC, at commit 03a3fbcd of agent/post.
+2026-11-23 15:07 UTC, at commit e8d19dcf of agent/post.
 
-- `01-tangle-rule-in-motion-tuft-952-to-959-at-8x-rows.jpg`: tangle rule in motion, tuft 952 to 959 at 8x, rows before the lens, before, after
-- `02-tangle-rule-in-motion-crossing-952-to-959-at-8x-.jpg`: tangle rule in motion, crossing 952 to 959 at 8x, rows before the lens, before, after
+- `01-bad-circle-injected-in-8x8-blocks-at-952-clean-b.jpg`: bad circle injected in 8x8 blocks at 952, clean, before, after
+- `02-the-tries-for-the-leftover-specks-and-the-tall-h.jpg`: the tries for the leftover specks and the tall hair at 952, all dropped
