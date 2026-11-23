@@ -80,7 +80,7 @@ export async function run(args: Args): Promise<void> {
   finish({
     check: 'nights',
     sentence: SENTENCE,
-    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : film.name,
+    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : broken === 'picture-blink' ? 'a film whose middle goes dark for one frame of each night' : film.name,
     broken,
     complete: proof ? proof.complete : true,
     pictures: proof?.pictures,
