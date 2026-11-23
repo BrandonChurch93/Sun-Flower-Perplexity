@@ -1,12 +1,12 @@
-# Status 32
+# Status 33
 
-2026-11-23 14:33 UTC
+2026-11-23 14:52 UTC
 
-- Status 32 · Phase 4. Three more merges are proven on the film tree (checks, plant, ground): type check, 204 tests and seven bench frames, three of them pixel identical to before. Two more watch parts are read, the buds of the ascent and the bloom with its pull back: no jump and no notch in either. Play cost is measured again on the merged tree: the bloom fell from about 140 ms of script a frame to 56 to 66 ms, the frost close shots to 25 ms, the break to 33 ms. A frame has 33 ms, so the bloom is still over. The older leaves open up after the frost (ruling logged), their owner is on it.
-- Next: Read the five parts that are still drawing (ground, the frost cuts, the first evenings, the first rain, the climb), join the whole film at 640 x 360 with the track, then the cures: bloom cost, the hairs' rim at 3600, the disc's wild pixels, and whether anything is made after loading in the last shot. Time used: 16.6 h of 30 h.
+- Status 33 · Phase 4. Frost section read in motion at 640 x 360: the three close shots cut on bars 19, 21, 23 and the cut back on bar 25 hold, no jump. The thaw drop now falls for six frames, it used to vanish in two. Stem hairs back on the far rim of the crane. Field bloom plan and the older leaves' open pose judged and accepted, merging next. Eleven of thirteen watch parts are in and read.
+- Next: Merge plant pose, field bloom, sprout stem colour and prove them; last two watch parts (rain 318 to 635, climb 1272 to 1430); join the whole film at 640 x 360 on the track; then the cures for live play cost at the bloom and the crane. Time used: 16.9 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Storm hold on the merged tree, frame 1830
-- `status-2.jpg`: The break, frame 2090
-- `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360
-- `status-4.jpg`: The field at the end of the pull back, frame 3492
+- `status-1.jpg`: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop
+- `status-2.jpg`: Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241
+- `status-3.jpg`: Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it
+- `status-4.jpg`: Older leaves open up through the climb, before and after pairs
