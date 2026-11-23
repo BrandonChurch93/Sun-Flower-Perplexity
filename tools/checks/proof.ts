@@ -21,7 +21,7 @@ const QUICK: [string, string, string[]][] = [
   ['nights', 'picture-bounce', []],
   ['nights', 'picture-blink', []],
 ]
-const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], ['made', 'made'], ['pure', 'dice'], ['pure', 'memory'], ['nights', 'plant-moon']]
+const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], ['made', 'made'], ['pure', 'dice'], ['pure', 'memory'], ['nights', 'plant-moon'], ['script', 'slow-frame'], ['script', 'slow-part']]
 
 export async function run(_args: Args): Promise<void> {
   const rows: (string | number)[][] = []
@@ -36,7 +36,9 @@ export async function run(_args: Args): Promise<void> {
     // Where the film itself already fails a check, the broken film is caught only by a failure the film does not have.
     const own = path.join(OUT, `${check}.json`)
     const already = new Set(fs.existsSync(own) ? (JSON.parse(fs.readFileSync(own, 'utf8')) as Result).findings.filter((f) => !f.ok).map((f) => f.what) : [])
-    const fresh = r.findings.find((f) => !f.ok && !already.has(f.what))
+    // A proof that first has to pass on a film without the fault counts only when it did.
+    const control = (r.data as { control?: { ok: boolean } } | undefined)?.control
+    const fresh = control && !control.ok ? undefined : r.findings.find((f) => !f.ok && !already.has(f.what))
     if (!fresh) missed++
     rows.push([check, broken, fresh ? 'caught' : 'NOT CAUGHT', ran, (fresh?.what ?? r.subject).slice(0, 130)])
   }

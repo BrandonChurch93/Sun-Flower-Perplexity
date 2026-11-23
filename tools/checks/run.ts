@@ -8,13 +8,14 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- cuts              no hard cut anywhere in the film
 //   npm run checks -- made              nothing is made on the graphics card after loading
 //   npm run checks -- pure              any frame drawn twice gives the same pixels, and no clock or dice in src
+//   npm run checks -- script            the page's own script time in a frame, by part, against tools/checks/limits.json
 //   npm run checks -- writes            what one frame writes into buffers and textures that exist, and whose they are
 //   npm run checks -- all               every check that does not draw, then what the drawn ones have so far
 //   npm run checks -- proof             every check run on a film broken on purpose: each has to fail
 //   npm run checks -- review            builds the review page from what is in out/
 // --break <name> puts a film broken on purpose in the film's place, to show that the check fails. tools/checks/README.md lists them.
 
-const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'writes', 'all', 'proof', 'review'] as const
+const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'script', 'writes', 'all', 'proof', 'review'] as const
 
 // What each check needs and what it costs, measured on four cores without a graphics card, four pages drawing at once.
 const HELP: [string, string, string, string][] = [
@@ -26,6 +27,7 @@ const HELP: [string, string, string, string][] = [
   ['cuts', 'no hard cut: the edges of the picture stay where they are from frame to frame', 'the frames of play', '10 to 40 s'],
   ['made', 'nothing is made on the graphics card after loading', 'the notes of play', '2 s'],
   ['pure', 'a frame drawn again, in another order, on a fresh page, gives the same bytes', 'draws 12 frames three times on two pages at 960 x 540 (--frames a,b,c)', '10 to 12 min'],
+  ['script', 'the page keeps the frame rate: its own script time in a frame, by part, inside tools/checks/limits.json', 'draws 13 windows of 20 to 40 frames in a row itself (--window a-b, --frames 8, --all, --table)', 'SCRIPT_TIME'],
   ['writes', 'what one frame writes into what exists, by owner', 'draws 8 frames itself', '6 min'],
   ['all', 'every check that does not draw, then what the drawn ones have so far', 'nothing', '1 min'],
   ['proof', 'every check on a film broken on purpose: each has to fail', 'nothing for the clock breaks; reads the last run of the drawn ones', '30 s'],
