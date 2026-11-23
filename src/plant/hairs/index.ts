@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
 import { shared, type Surface } from '../../core/shading.ts'
+import { norm } from '../norm.ts'
 
 // `real` turns true once this folder holds the plant's hairs at their real quality.
 export const real = true
@@ -658,7 +659,7 @@ export class HairSet {
   private gather(camera: THREE.Camera, object: THREE.Object3D): void {
     const e = this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).multiply(object.matrixWorld).elements
     const m = object.matrixWorld.elements
-    const size = Math.hypot(m[0], m[1], m[2])
+    const size = norm(m[0], m[1], m[2])
     const [ra, rb] = this.roots
     const [la, lb] = this.leans
     const out = this.data
@@ -713,8 +714,8 @@ export class HairSet {
       // A hair there is drawn long enough to stand off the outline, with the light of its true length and a little more.
       const stands = Math.max(length, (wide * WIDE_LONG_PX * (0.6 + 0.8 * ((own * 59.31 + 0.19) % 1))) / scale)
       share *= (length / stands) * (1 + (WIDE_GAIN - 1) * wide * (1 - fine))
-      const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
-      const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
+      const la2 = norm(la[o], la[o + 1], la[o + 2]) || 1
+      const lb2 = norm(lb[o], lb[o + 1], lb[o + 2]) || 1
       const q = n * 16
       const px = Math.min(cols - 1.001, Math.max(0, (((e[0] * x + e[4] * y + e[8] * z + e[12]) / w) * 0.5 + 0.5) * (shared.uSize.value.x / CROWD_CELL_PX)))
       const py = Math.min(rows - 1.001, Math.max(0, (((e[1] * x + e[5] * y + e[9] * z + e[13]) / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
@@ -807,7 +808,7 @@ export class HairSet {
       return
     }
     const m = object.matrixWorld.elements
-    const size = Math.hypot(m[0], m[1], m[2])
+    const size = norm(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     // Down that is wider than it is long on the screen stays a line: a ribbon has nothing to show of it.
@@ -829,7 +830,7 @@ export class HairSet {
 
   private softRange(camera: THREE.Camera, object: THREE.Object3D): { start: number; count: number } {
     const m = object.matrixWorld.elements
-    const size = Math.hypot(m[0], m[1], m[2])
+    const size = norm(m[0], m[1], m[2])
     const pixel = (this.nearest * 2) / (camera.projectionMatrix.elements[5] * shared.uSize.value.y)
     const thick = (1 + (RIME_M / this.widthM) * stateUniforms.uPlantFrost.value) * (1 + 2 * stateUniforms.uPlantWet.value)
     const damp = stateUniforms.uPlantDew.value > 0 || stateUniforms.uPlantWet.value > 0

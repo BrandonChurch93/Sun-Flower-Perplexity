@@ -1,3 +1,4 @@
+import { norm } from '../norm.ts'
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
@@ -393,7 +394,7 @@ export function create(options: PartOptions): PlantPart {
           let nx = ay * sz - az * sy
           let ny = az * sx - ax * sz
           let nz = ax * sy - ay * sx
-          const l = Math.hypot(nx, ny, nz)
+          const l = norm(nx, ny, nz)
           if (l > 1e-14) {
             nx /= l
             ny /= l
@@ -418,6 +419,7 @@ export function create(options: PartOptions): PlantPart {
       const root = c.set.root(slot)
       const lean = c.set.lean(slot)
       if (first) c.drawn = 0
+      let j = 0
       for (let i = 0; i < c.set.count; i++) {
         const k = c.seg[i]
         const span = S[k + 1] - S[k]
@@ -429,7 +431,8 @@ export function create(options: PartOptions): PlantPart {
         lean[o + 2] = 0
         const w = i * 6
         lean[o + 3] = c.own[w]
-        if (length <= 0) {
+        // A hair on tissue that has not stretched out, or a sprout hair after they are shed, has no size: its place is not worked out.
+        if (length <= 0 || (c.sprout ? shed <= 0 : stretched <= 0.03)) {
           root[o] = 0
           root[o + 1] = 0
           root[o + 2] = 0
@@ -437,13 +440,9 @@ export function create(options: PartOptions): PlantPart {
           continue
         }
         const s = S[k] + c.at[i] * span
-        let j = 0
-        let hi = main - 1
-        while (hi - j > 1) {
-          const mid = (j + hi) >> 1
-          if (ringS[mid] <= s) j = mid
-          else hi = mid
-        }
+        // The hairs come in order from the foot up, so the ring under each is the last one's or one further on.
+        if (s < ringS[j]) j = 0
+        while (j < main - 2 && ringS[j + 1] <= s) j++
         const step = Math.max(1e-9, ringS[j + 1] - ringS[j])
         const fr = clamp((s - ringS[j]) / step)
         const col = (c.own[w + 1] / TAU) * sides

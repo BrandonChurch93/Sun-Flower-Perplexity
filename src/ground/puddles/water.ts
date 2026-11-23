@@ -1,5 +1,5 @@
-import { rainSkyGlsl } from '../../worlds/rain/sky.ts'
 import { basin } from './basin.ts'
+import { skyMirror } from './mirror.ts'
 
 export const waterVertex = /* glsl */ `
 in vec3 position;
@@ -12,13 +12,6 @@ void main() {
   vWorld = world.xyz;
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
-}
-`
-
-// The sky a ray leaving the water meets: the rain world's own sky by direction.
-export const skyMirror = /* glsl */ `${rainSkyGlsl}
-vec3 skyMirror(vec3 d, float blur) {
-  return rainSky(d, blur);
 }
 `
 
@@ -50,6 +43,7 @@ in vec3 vWorld;
 in float vDepth;
 uniform sampler2D tRipple;
 uniform vec2 uSpan;
+uniform float uChop;
 ${basin}
 ${skyMirror}
 // How much of a ray leaving the water at p is stopped by the furrow's bank after s meters.
@@ -69,7 +63,14 @@ void main() {
   if (cover <= 0.0) discard;
   vec2 q = boxPlace(p);
   vec2 edge = smoothstep(vec2(1.0), vec2(0.85), abs(q));
-  vec2 slope = (texture(tRipple, q * 0.5 + 0.5).rg * edge.x * edge.y + chop(p, mix(uSpan.x, uSpan.y, uShutter), dFdx(p), dFdy(p))) * smoothstep(0.0, 0.004, depth);
+  vec2 slope = (texture(tRipple, q * 0.5 + 0.5).rg * edge.x * edge.y + chop(p, mix(uSpan.x, uSpan.y, uShutter), dFdx(p), dFdy(p)) * uChop) * smoothstep(0.0, 0.004, depth);
+  // Water climbs what it wets: at its edge the face curls up the bank, and the curl catches the sky as a bright line round every clod.
+  vec2 px = dFdx(p);
+  vec2 py = dFdy(p);
+  float det = px.x * py.y - px.y * py.x;
+  vec2 shoal = abs(det) > 1e-12 ? vec2(py.y * dFdx(depth) - px.y * dFdy(depth), px.x * dFdy(depth) - py.x * dFdx(depth)) / det : vec2(0.0);
+  float steep = length(shoal);
+  slope += (steep > 1e-5 ? shoal / steep : vec2(0.0)) * (0.9 * exp(-depth / 0.0012));
   vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
   vec3 v = normalize(uCamPos - vWorld);
   float facing = max(dot(n, v), 0.0);
@@ -80,6 +81,7 @@ void main() {
   vec3 sky = mix(mix(uGroundBounce * 0.25, skyMirror(normalize(up), 1.0), smoothstep(-0.06, 0.02, r.y)), glitter, ${ROUGH.toFixed(2)});
   float banked = max(max(bankOver(p, up, 0.035), bankOver(p, up, 0.09)), bankOver(p, up, 0.2));
   sky = mix(sky, uGroundBounce * 0.25, banked);
+  sky = mix(sky, uGroundBounce * 0.2, stalkOver(vWorld, up));
   float clear = exp(-depth / 0.008) * (1.0 - mirror);
   vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
   float alpha = 1.0 - clear;

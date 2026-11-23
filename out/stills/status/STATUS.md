@@ -1,12 +1,12 @@
-# Status 02
+# Status 04
 
-2026-11-23 00:35 UTC
+2026-11-23 01:17 UTC
 
-- Status 02 · Phase 2. The film camera now runs on the new clock: it creeps in during the frost hold and stands back and low for the storm. Rain and frost only show while the plant stands still. The first sky candidate reports complete (not yet judged). The checks found the quick nights flicker, which I am fixing next.
-- Next: Lengthen the quick nights to two beats with a smooth dusk, merge the plant's frost fix, send the new camera to all twelve agents, then judge the three skies blind. Time used: 2.6 h of 30 h.
+- Status 04 · Phase 2. Every part of the film is now in one picture for the first time: the land, the ground, the field, the plant, rain, frost and the lens, under sky candidate B. The light on the plant is retuned so it no longer stands as a dark cut-out, and the storm has bare wet soil and small neighbours as in the references. Meeting for the first time, the rain, the mist and the lens glare came out too bright (washed frost, pale storm, white lightning frame): the cause is found and the three owners are fixing it now. The checks found both holds ending one frame late; fixed.
+- Next: Get the washed frames right as the three fixes land, bring sky candidates A and C to their second reports, then judge the three skies blind. Time used: 3.3 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet)
-- `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky
-- `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C)
-- `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
+- `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white
+- `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it
+- `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds
+- `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
