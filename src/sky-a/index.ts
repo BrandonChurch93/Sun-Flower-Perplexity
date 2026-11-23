@@ -15,6 +15,8 @@ import { cloudFragment, skyFragment, SKYVIEW_H, SKYVIEW_W, skyViewFragment } fro
 const GAIN = 2.2
 const NIGHT_ZENITH: RGB = [0.0018, 0.0034, 0.006]
 const NIGHT_HORIZON: RGB = [0.004, 0.0065, 0.011]
+const GLOW: RGB = [0.014, 0.009, 0.0075]
+const glowAt = (e: number): number => smoothstep(-2.5, -8, e)
 const MOON: RGB = [0.19, 0.2, 0.23]
 const DISC = 90
 // The prepared clouds see a little more than the frame, so that every sample of the frame finds them.
@@ -30,7 +32,7 @@ const DETAIL_N = 32
 const POLE = new THREE.Vector3(0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4))
 
 // Twilight is lifted above what the single scattering of the model gives, so that the blue hour reads brighter than the moonlit night.
-const gainAt = (e: number): number => GAIN * Math.pow(10, 2 * smoothstep(0.5, -6, e))
+const gainAt = (e: number): number => GAIN * Math.pow(10, 1.4 * smoothstep(0.5, -5, e))
 const lum = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
 function halfTexture(data: Float32Array, w: number, h: number): THREE.DataTexture {
@@ -117,6 +119,7 @@ class PhysicalSky implements Sky {
       uGain: { value: GAIN },
       uNightZenith: { value: new THREE.Vector3().fromArray(NIGHT_ZENITH) },
       uNightHorizon: { value: new THREE.Vector3().fromArray(NIGHT_HORIZON) },
+      uGlow: { value: new THREE.Vector3() },
     })
     this.cloudPass = new FullscreenPass(cloudFragment, {
       ...shared,
@@ -201,9 +204,10 @@ class PhysicalSky implements Sky {
     for (let i = 0; i < 3; i++) {
       out.zenith[i] = out.zenith[i] * g + NIGHT_ZENITH[i]
       out.horizon[i] = out.horizon[i] * g + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
-      out.horizonSun[i] = out.horizonSun[i] * g + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
+      out.horizonSun[i] = out.horizonSun[i] * g + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05 + GLOW[i] * glowAt(e) * 0.7
+      out.horizon[i] += GLOW[i] * glowAt(e) * 0.2
     }
-    if (m.lightKind === 'moon') for (let i = 0; i < 3; i++) out.direct[i] = MOON[i] * smoothstep(5, 9, -e)
+    if (m.lightKind === 'moon') for (let i = 0; i < 3; i++) out.direct[i] = MOON[i] * 0.7 * smoothstep(4, 12, -e)
     return out
   }
 
@@ -241,6 +245,8 @@ class PhysicalSky implements Sky {
     sv.uniforms.uSun.value.copy(now.sun)
     const g = gainAt(now.sunElevationDeg)
     sv.uniforms.uGain.value = g
+    const gl = glowAt(now.sunElevationDeg)
+    sv.uniforms.uGlow.value.set(GLOW[0] * gl, GLOW[1] * gl, GLOW[2] * gl)
     sv.render(renderer, this.skyViewTarget)
 
     const plan = PLAN[view.quality]
@@ -276,9 +282,9 @@ class PhysicalSky implements Sky {
     u.uAmbTop.value.set(0.45 * clear.zenith[0] + 0.35 * clear.horizon[0] + 0.2 * clear.horizonSun[0], 0.45 * clear.zenith[1] + 0.35 * clear.horizon[1] + 0.2 * clear.horizonSun[1], 0.45 * clear.zenith[2] + 0.35 * clear.horizon[2] + 0.2 * clear.horizonSun[2])
     const ground = 0.18
     u.uAmbBottom.value.set(
-      ground * (clear.direct[0] * sunY / Math.PI + lit.horizon[0]),
-      ground * (clear.direct[1] * sunY / Math.PI + lit.horizon[1]),
-      ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]),
+      ground * (clear.direct[0] * sunY / Math.PI + lit.horizon[0]) + 0.07 * clear.horizonSun[0] + 0.04 * clear.horizon[0],
+      ground * (clear.direct[1] * sunY / Math.PI + lit.horizon[1]) + 0.07 * clear.horizonSun[1] + 0.04 * clear.horizon[1],
+      ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]) + 0.07 * clear.horizonSun[2] + 0.04 * clear.horizon[2],
     )
     u.uGain.value = g
     u.uUnder.value.fromArray(lit.horizon)

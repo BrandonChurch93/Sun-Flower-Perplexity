@@ -63,15 +63,15 @@ void main() {
   float heavy = mix(1.0 - 0.6 * SHAFTS[vSheet], 1.0 + 0.9 * SHAFTS[vSheet], shaft);
   // Under the cloud the rain has only begun to fall together.
   float body = 1.0 - smoothstep(0.55, 1.0, high);
-  float cover = (1.0 - exp(-THICK[vSheet] * heavy * 1.6)) * body * uRain;
+  float cover = (1.0 - exp(-THICK[vSheet] * heavy * 0.4)) * body * uRain;
   if (cover < 0.002) discard;
-  vec3 light = 0.5 * uSkyHorizon + 0.28 * uSkyZenith + 0.12 * uSkyHorizonSun;
+  vec3 light = 0.22 * uAirHorizon + 0.7 * uAirZenith + 0.04 * uSkyHorizonSun;
   // Heavy rain is darker than the air round it against a bright sky.
   light *= mix(1.08, 0.82, shaft);
   float toSun = saturate(dot(ray, uSunDir));
   float t2 = toSun * toSun;
-  light += uSunColor * (0.02 + 0.1 * t2 + 0.5 * t2 * t2 * t2 * t2 * (0.5 + uSpark));
-  light += uFlash * (0.08 + 0.5 * pow(saturate(dot(ray, uFlashAt)), 3.0));
+  light += uAirSun * (0.002 + 0.01 * t2 + 0.05 * t2 * t2 * t2 * t2 * (0.5 + uSpark));
+  light += uFlash * (0.02 + 0.15 * pow(saturate(dot(ray, uFlashAt)), 3.0));
   outColor = vec4(light, cover);
 }
 `

@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { heightAt, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
@@ -480,7 +480,7 @@ export function create(options: PartOptions): PlantPart {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
       if (first) dewDrawn = 0
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const rain = smoothstep(0.3, 0.9, wetFelt())
       const tint = dew.tint()
       const sLow = 0.0015
       const sHigh = Math.max(S[SEED_ANCHOR] - 0.0012, 0.9 * ringS[main - 1])

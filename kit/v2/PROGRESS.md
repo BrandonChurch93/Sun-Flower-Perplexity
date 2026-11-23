@@ -13,12 +13,14 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: none yet
-- Last status: 04 · 2026-11-23 01:17 UTC · Phase 2
+- Last status: 06 · 2026-11-23 02:11 UTC · Phase 2
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
+- 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
 - 2026-11-23 01:17 UTC · status 04 · Phase 2 · `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
 - 2026-11-23 00:51 UTC · status 03 · Phase 2 · `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure
 - 2026-11-23 00:35 UTC · status 02 · Phase 2 · `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky; `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
@@ -32,12 +34,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 1.91 h |
+| 2 | 3.50 h | 2.80 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 3.29 h |
+| Whole build | 30.00 h | 4.19 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -117,6 +119,10 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 00:56 UTC. The cue sheet is written in bars and beats (`config/music/cues.json`, table in `kit/v2/CUES.md`): 43 cues, none off the map. The film is written down in words in `kit/v2/FILM.md`. The slow sunsets of the first sixteen bars fall up to a tenth of a second before a beat and carry no cue.
 - 2026-11-23 01:03 UTC. The look sets how bright the light lands on the plant and the sky gives its colour (`src/v2/look.ts`). With the sky's own levels a low sun was a weak lamp beside its sky and the storm had no key at all: the plant stood as a cut-out. Now the key has a level on screen by the sun's height, a closed deck still gives a soft key from its bright gap, lightning swings the key to the strike, and the fill follows the sun's height.
 - 2026-11-23 01:08 UTC. The place, the ground, the field, the plant, the rain, the frost and the lens are merged into `v2` as they stand after their first round of notes, so that every part is judged in one picture from now on. The frame's quality is passed to the ground, the field and the lens.
+- 2026-11-23 01:13 UTC. A hold ends on the frame that holds its bar line. The checks found both holds ending one frame late; the clock now lets go at the hit of bars 25 and 41, and the last still frames are 1259 and 2082.
+- 2026-11-23 01:15 UTC. Two kinds of light. Surfaces (the soil, the plant, the field, the far land) are lit by the look, which sets a level on screen. What floats in the air or mirrors the sky (rain, mist, fog, the puddle, the lens glare) reads the sky's own light through `uAirSun`, `uAirZenith`, `uAirHorizon` and `uSkyHorizonSun`. Meeting for the first time, the rain, the mist and the lens came out washed because they read the look's raised key. The rule is in `kit/v2/briefs/CHANGES.md` and was sent to every owner.
+- 2026-11-23 01:22 UTC. One exception to one owner per folder: the Builder renamed a scalar in `src/place/` (`uAirToSun`) because its name clashed with the new shared light of the air and the film did not compile with every part on. The place agent was told.
+- 2026-11-23 01:26 UTC. The blue hour lights the soil. Before sunrise the fill from the dome is raised and the glow near the sun colours it only once the sun is close, so the opening frame reads as soil and a hook under a pink sky, not a black band.
 
 ## Notes from Brandon
 
@@ -168,4 +174,8 @@ None yet.
   Pictures: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure.
 - Status 04, 2026-11-23 01:17 UTC, Phase 2. Every part of the film is now in one picture for the first time: the land, the ground, the field, the plant, rain, frost and the lens, under sky candidate B. The light on the plant is retuned so it no longer stands as a dark cut-out, and the storm has bare wet soil and small neighbours as in the references. Meeting for the first time, the rain, the mist and the lens glare came out too bright (washed frost, pale storm, white lightning frame): the cause is found and the three owners are fixing it now. The checks found both holds ending one frame late; fixed. Next: Get the washed frames right as the three fixes land, bring sky candidates A and C to their second reports, then judge the three skies blind. Time used: 3.3 h of 30 h.
   Pictures: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm.
+- Status 05, 2026-11-23 01:41 UTC, Phase 2. The washed frames are fixed in the storm: rain, the puddle and the lens glare now take their light from the sky itself, so the storm is dark again with the plant lit and the lightning frame reads. The opening frame shows soil and the first hook instead of a black band. Drawing bar 61 three ways gave the same picture to the last pixel, so a frame depends only on its number there. The frost hold is still washed; its owner is switching the mist over now. Next: Get the frost hold right, take the second reports of sky candidates A and C, judge the three skies blind, then merge the player and the checks and run the film against the music. Time used: 3.7 h of 30 h.
+  Pictures: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; The lightning frame at bar 37 (draft tier, one sample a pixel); The open flower at bar 61 (draft tier); Opening frame: reference left, the film right.
+- Status 06, 2026-11-23 02:11 UTC, Phase 2. All parts merged again. Dusk and dawn no longer step: the largest change from one frame to the next fell from 28 to 10 of 255 (measured). The frost hold now shows a pale sun in grey mist. Found and sent back: fog banks standing in the opening. Next: Sky jury on the merged film, the opening without fog banks, then the first whole film in parts with the music. Time used: 4.2 h of 30 h.
+  Pictures: The merged film at sixteen moments, sky B; A sunset of the time lapse, thirteen frames in a row; Frost hold beside its reference key.
 

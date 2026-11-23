@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, realOf, stemRadius } from '../../growth.ts'
+import { bodyRadius, bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, realOf, stemRadius } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, floorAt, stemAt, type FloorPoint, type Pose } from '../../skeleton.ts'
@@ -839,6 +839,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 0) uniforms.uBudHead.value.set(pose.head.cx, pose.head.cy, pose.head.cz, pose.head.radius)
       if (nor) fillHairs(slot, slots[slot], nor, pose)
     },
+    absent: (time) => bodyRadius(time) <= 0,
     finish(time) {
       uniforms.uBudOpen.value = headOpen(time)
       uniforms.uBudShut.value = (1 - smoothstep(bloom0 - 4, bloom0 - 0.7, time)) * smoothstep(bloom0 - 16, bloom0 - 10, time)

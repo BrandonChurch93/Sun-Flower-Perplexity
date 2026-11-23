@@ -17,6 +17,8 @@ const THIN_FROM_PX = 10
 const THIN_LEAST = 0.12
 const THIN_EASE = 0.15
 const REGATHER_M = 0.03
+const REGATHER_SHARE = 0.2
+const REGATHER_STATE = 0.0625
 // Hairs hide one another: where they would cover more than this share of a pixel, only that many of them show.
 const CROWD_COVER = 0.35
 // A hair far thinner than a pixel cannot be told from its neighbors, and a coat of them is a haze. Where hairs are thinner than this on the screen, one strand of this width stands for those around it, with their light.
@@ -565,6 +567,10 @@ export class HairSet {
   private readonly texture: THREE.DataTexture
   private shown: number
   private stale = true
+  private sent = false
+  private readonly was = new Float64Array(5)
+  private readonly rows: number
+  private readonly views = new Map<number, Float32Array>()
   private kept = 0
   private nearest = 1
   private longest = 0
@@ -588,6 +594,10 @@ export class HairSet {
     this.texture.magFilter = THREE.NearestFilter
     this.texture.generateMipmaps = false
     this.texture.needsUpdate = true
+    this.texture.onUpdate = () => {
+      this.sent = true
+    }
+    this.rows = rows
     // The vertices carry nothing: a vertex knows its hair and its place on it from its number.
     const lineIndex = new Uint32Array(count * 6)
     const ribbonIndex = new Uint32Array(count * 36)
@@ -778,17 +788,45 @@ export class HairSet {
       this.pickTexture.needsUpdate = true
     }
     this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : picked * 24)
+    // Only the rows that hold hairs are sent, and nothing when there were none before and are none now.
+    if (n > 0 || this.kept > 0 || !this.sent) {
+      const rows = this.sent ? Math.max(1, Math.ceil(n / ROW)) : this.rows
+      let view = this.views.get(rows)
+      if (!view) {
+        view = rows === this.rows ? this.data : this.data.subarray(0, rows * ROW * 16)
+        this.views.set(rows, view)
+      }
+      const image = this.texture.image as { data: Float32Array; height: number }
+      image.data = view
+      image.height = rows
+      this.texture.needsUpdate = true
+    }
     this.kept = n
     this.nearest = nearest
     this.longest = longest
-    this.texture.needsUpdate = true
     this.stale = false
     this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
 
   private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft = false): void {
     // The samples of one frame differ by the width of the lens. A camera farther than that from where the hairs were gathered is another view.
-    if (this.stale || this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye) > REGATHER_M) this.gather(camera, object)
+    // Hairs that were not laid again are gathered again only for another view: a lens that has come a good part of the way to them, another focus, or a skin whose frost or wet has changed.
+    const moved = this.seen.setFromMatrixPosition(camera.matrixWorld).distanceTo(this.eye)
+    const far = this.nearest < Infinity ? Math.max(REGATHER_M, REGATHER_SHARE * this.nearest) : REGATHER_M
+    const frost = stateUniforms.uPlantFrost.value
+    const wet = stateUniforms.uPlantWet.value
+    const dew = stateUniforms.uPlantDew.value
+    const focus = shared.uFocusM.value
+    const blur = shared.uCocScale.value
+    const other = frost > 0.5 !== this.was[0] > 0.5 || Math.abs(frost - this.was[0]) > REGATHER_STATE || Math.abs(wet - this.was[1]) > REGATHER_STATE || Math.abs(dew - this.was[2]) > REGATHER_STATE || Math.abs(focus - this.was[3]) > REGATHER_SHARE * focus || Math.abs(blur - this.was[4]) > REGATHER_SHARE * blur
+    if (this.stale || moved > far || other) {
+      this.was[0] = frost
+      this.was[1] = wet
+      this.was[2] = dew
+      this.was[3] = focus
+      this.was[4] = blur
+      this.gather(camera, object)
+    }
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     this.lineFade.value = 1 - wide

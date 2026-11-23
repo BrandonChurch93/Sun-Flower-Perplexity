@@ -9,7 +9,7 @@ import { create as createBud } from './head/bud/index.ts'
 import { create as createDisc } from './head/disc/index.ts'
 import { create as createPetals } from './head/petals/index.ts'
 import { create as createLeaves } from './leaves/index.ts'
-import { makePartSurface, partGeometry, partMesh, type PartDetail, type PartMaker, type PartOptions, type PlantPart } from './part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartDetail, type PartMaker, type PartOptions, type PlantPart } from './part.ts'
 import { create as createSeedling } from './seedling/index.ts'
 import { poseAt } from './skeleton.ts'
 import { HERO, PART, buildStandIn, plantNumbers, standInTopology, tipAt, vertexCountOf, type Detail } from './standin.ts'
@@ -145,6 +145,35 @@ export interface PlantOptions {
   at?: Place
 }
 
+const SIGNED_EACH = 11
+const SIGNED = 2 + 2 * SIGNED_EACH + 3
+
+// The inputs the shape is filled from: the air of a plant whose clock stands is taken out of them.
+function stilled(inputs: PlantInputs): PlantInputs {
+  const held = inputs.held ?? 0
+  if (held <= 0) return inputs
+  const free = 1 - held
+  const less = (v: number | undefined): number | undefined => (v === undefined ? undefined : v * free)
+  return { ...inputs, wind: inputs.wind * free, calm: less(inputs.calm), gust: less(inputs.gust), rain: less(inputs.rain), lapse: less(inputs.lapse) }
+}
+
+// Every number of the inputs a shape depends on. The film second counts only while something runs on it.
+function sign(inputs: PlantInputs, out: Float64Array, at: number): void {
+  const held = inputs.held ?? 0
+  const runs = inputs.wind > 0 || (inputs.gust ?? 0) > 0 || (inputs.lapse ?? 0) > 0 || (held < 1 && ((inputs.rain ?? 0) > 0 || (inputs.cold ?? 0) > 0))
+  out[at] = inputs.leanX
+  out[at + 1] = inputs.leanZ
+  out[at + 2] = inputs.lift
+  out[at + 3] = inputs.liftLow ?? -1
+  out[at + 4] = inputs.wind
+  out[at + 5] = inputs.calm ?? -1
+  out[at + 6] = inputs.lapse ?? -1
+  out[at + 7] = inputs.cold ?? -1
+  out[at + 8] = inputs.rain ?? -1
+  out[at + 9] = inputs.gust ?? -1
+  out[at + 10] = runs ? (inputs.real ?? -1) : held
+}
+
 export class Plant {
   readonly variant: number
   readonly detail: PartDetail
@@ -159,6 +188,14 @@ export class Plant {
   private readonly b: THREE.BufferAttribute | null
   private readonly n: THREE.BufferAttribute
   private readonly hide: number
+  private on = true
+  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) } }
+  // What the shape was last filled from: while none of it changes, the shape stands as it is with the graphics card.
+  private readonly filled = new Float64Array(SIGNED).fill(NaN)
+  private readonly asked = new Float64Array(SIGNED)
+  private readonly live: PlantPart[] = []
+  private readonly drawn = new Set<PlantPart>()
+  private readonly away = new Set<PlantPart>()
   // Null when the shape is drawn once per neighbor: the field sways each of those where it stands.
   private readonly at: Place | null
 
@@ -167,7 +204,7 @@ export class Plant {
     this.detail = o.detail ?? 'hero'
     const places = o.places ?? null
     this.at = places ? null : (o.at ?? { x: 0, z: 0 })
-    const options: PartOptions = { detail: this.detail, variant: this.variant, places }
+    const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     for (const slot of SLOTS) {
@@ -221,11 +258,35 @@ export class Plant {
   }
 
   set visible(on: boolean) {
+    this.on = on
     for (const m of this.meshes) m.visible = on && (m !== this.mesh || this.hide !== ALL)
+    for (const part of this.away) for (const m of part.meshes) m.visible = false
   }
 
-  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs): void {
+  prepare(timeOpen: number, timeClose: number, feltOpen: PlantInputs, feltClose: PlantInputs): void {
     usePlant(this.variant, this.at)
+    // While the plant's clock stands the air moves it where it is drawn, so the shape is filled for still air and stays as it is.
+    const open = stilled(feltOpen)
+    const close = stilled(feltClose)
+    const held = feltOpen.held ?? 0
+    this.own.uOwnAir.value.set(held * Math.min(feltOpen.calm ?? feltOpen.wind, feltOpen.wind), held * feltOpen.wind, held * (feltOpen.gust ?? 0), held * (feltOpen.rain ?? 0))
+    if (held > 0) tipAt(timeOpen, { ...open, steady: false }, this.own.uOwnTip.value)
+    const asked = this.asked
+    asked[0] = timeOpen
+    asked[1] = timeClose
+    sign(open, asked, 2)
+    sign(close, asked, 2 + SIGNED_EACH)
+    filling.held = held
+    asked[SIGNED - 3] = stateUniforms.uPlantFrost.value
+    asked[SIGNED - 2] = wetFelt()
+    asked[SIGNED - 1] = stateUniforms.uPlantDew.value > 0 ? 1 : 0
+    let same = true
+    for (let i = 0; i < SIGNED; i++) if (asked[i] !== this.filled[i]) same = false
+    if (same) {
+      usePlant(0)
+      return
+    }
+    this.filled.set(asked)
     if (this.hide !== ALL) {
       buildStandIn(timeOpen, open, this.a.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
       if (this.b) buildStandIn(timeClose, close, this.b.array as Float32Array, null, this.shape, this.hide)
@@ -234,11 +295,24 @@ export class Plant {
       this.n.needsUpdate = true
     }
     if (this.parts.length) {
+      // A part that does not exist yet, or no longer, is not filled and not drawn. Each is drawn once first, so the graphics card has all of it from the start.
+      const live = this.live
+      live.length = 0
+      for (const part of this.parts) {
+        const away = this.at !== null && this.drawn.has(part) && part.absent?.(timeOpen) === true && part.absent(timeClose) === true
+        if (away) this.away.add(part)
+        else {
+          this.away.delete(part)
+          this.drawn.add(part)
+          live.push(part)
+        }
+        if (this.at !== null) for (const m of part.meshes) m.visible = this.on && !away
+      }
       const first = poseAt(timeOpen, open)
-      for (const part of this.parts) part.fill(0, first)
+      for (const part of live) part.fill(0, first)
       const second = poseAt(timeClose, close)
-      for (const part of this.parts) part.fill(1, second)
-      for (const part of this.parts) part.finish(timeOpen, open)
+      for (const part of live) part.fill(1, second)
+      for (const part of live) part.finish(timeOpen, open)
     }
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)

@@ -1,14 +1,14 @@
 {
  "version": 1,
  "boot": "6211bae4-0629-4fe8-95e7-aca58f0a9472",
- "last": 1795396639303,
+ "last": 1795399868813,
  "phases": {
   "0": 2220,
   "1": 2760,
-  "2": 6859.303
+  "2": 10088.813
  },
  "sinceStatus": 0,
- "lastStatusAt": "2026-11-23T01:17:19Z",
+ "lastStatusAt": "2026-11-23T02:11:08Z",
  "continuations": [],
  "extensions": {},
  "log": [
@@ -103,6 +103,36 @@
   },
   {
    "at": "2026-11-23T01:17:19Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 1
+  },
+  {
+   "at": "2026-11-23T01:25:47Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 509
+  },
+  {
+   "at": "2026-11-23T01:41:27Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 939
+  },
+  {
+   "at": "2026-11-23T01:41:37Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 11
+  },
+  {
+   "at": "2026-11-23T02:11:07Z",
+   "kind": "phase",
+   "id": 2,
+   "addedSeconds": 1770
+  },
+  {
+   "at": "2026-11-23T02:11:08Z",
    "kind": "phase",
    "id": 2,
    "addedSeconds": 1

@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount } from '../src/config.ts'
 import { diagNames } from '../src/core/shading.ts'
-import { VIEW, clampAzimuth, clampDolly, clampElevation, optionsFor, readOptions, writeOptions, type Mode } from '../src/director/modes.ts'
+import { AV_MAX_MS, VIEW, clampAv, clampAzimuth, clampDolly, clampElevation, optionsFor, readOptions, writeOptions, type Mode } from '../src/director/modes.ts'
 import { segments } from '../src/director/timeline.ts'
 
 describe('readOptions', () => {
   it('keeps the defaults of every mode', () => {
     const live = readOptions('')
     expect(live.mode).toBe('live')
-    expect(live.format).toBe(config.formats.preview)
+    expect(live.format).toBe(config.formats.master)
     expect(live.tier).toBe('draft')
-    expect(live.assets).toBe('web')
+    expect(live.assets).toBe('full')
     expect(live.frame).toBe(0)
     expect(live.first).toBe(0)
     expect(live.last).toBe(frameCount - 1)
@@ -18,11 +18,12 @@ describe('readOptions', () => {
     expect(live.diag).toBe('beauty')
     expect(live.hold).toBe(false)
     expect(live.loop).toBe(false)
-    expect(live.world).toBeNull()
+    expect([live.av, live.marks, live.fill, live.quality]).toEqual([0, false, false, null])
+    expect(live.count).toBe(false)
     expect([live.az, live.el, live.dolly]).toEqual([0, 0, 1])
     expect(live.chosen).toEqual({ format: false, tier: false, assets: false })
     const auto = readOptions('?mode=autopilot')
-    expect([auto.format.id, auto.tier, auto.assets]).toEqual([config.formats.preview.id, 'draft', 'web'])
+    expect([auto.format.id, auto.tier, auto.assets]).toEqual([config.formats.master.id, 'draft', 'full'])
     const capture = readOptions('?mode=capture')
     expect([capture.format.id, capture.tier, capture.assets]).toEqual([config.formats.master.id, 'draft', 'full'])
     const out = readOptions('?mode=export')
@@ -30,13 +31,14 @@ describe('readOptions', () => {
   })
 
   it('falls back on what it does not know', () => {
-    const o = readOptions('?mode=party&tier=best&assets=huge&unit=nope&diag=nope&world=mars&frame=abc&hold=maybe&loop=')
+    const o = readOptions('?mode=party&tier=best&assets=huge&unit=nope&diag=nope&format=imax&quality=best&av=soon&marks=maybe&frame=abc&hold=maybe&loop=')
     expect(o.mode).toBe('live')
     expect(o.tier).toBe('draft')
-    expect(o.assets).toBe('web')
+    expect(o.assets).toBe('full')
     expect(o.unit).toBeNull()
     expect(o.diag).toBe('beauty')
-    expect(o.world).toBeNull()
+    expect(o.format).toBe(config.formats.master)
+    expect([o.quality, o.av, o.marks]).toEqual([null, 0, false])
     expect(o.frame).toBe(0)
     expect(o.hold).toBe(false)
     expect(o.loop).toBe(false)
@@ -70,8 +72,18 @@ describe('readOptions', () => {
     expect(readOptions('?az=Infinity&el=NaN&dolly=x').dolly).toBe(1)
   })
 
-  it('reads every world and every diagnostic view', () => {
-    for (const w of config.worlds) expect(readOptions(`?world=${w.id}`).world).toBe(w.id)
+  it('reads what a recording needs', () => {
+    const o = readOptions('?av=-35&marks=1&quality=low&fill=1')
+    expect([o.av, o.marks, o.quality, o.fill]).toEqual([-35, true, 'low', true])
+    expect(readOptions('?av=12.6').av).toBe(13)
+    expect(readOptions('?av=99999').av).toBe(AV_MAX_MS)
+    expect(readOptions('?av=-99999').av).toBe(-AV_MAX_MS)
+    expect(Object.is(clampAv(-0.2), 0)).toBe(true)
+    for (const q of ['film', 'high', 'low']) expect(readOptions(`?quality=${q}`).quality).toBe(q)
+    expect(readOptions('?marks=0').marks).toBe(false)
+  })
+
+  it('reads every diagnostic view', () => {
     for (const d of diagNames) expect(readOptions(`?diag=${d}`).diag).toBe(d)
   })
 })
@@ -98,11 +110,13 @@ describe('writeOptions', () => {
       '',
       '?mode=autopilot&hold=1&format=preview',
       `?mode=autopilot&unit=${segments[2].id}&loop=1&tier=review`,
-      `?frame=437&world=${config.worlds[3].id}&az=-42.5&el=18.2&dolly=1.75&diag=depth&tier=final&assets=full&format=${config.formats.master.id}`,
+      `?frame=437&az=-42.5&el=18.2&dolly=1.75&diag=depth&tier=final&assets=full&format=${config.formats.master.id}`,
       '?mode=export&format=uhd&first=30&last=90',
       '?mode=capture&assets=web&diag=texels',
       '?tier=draft&format=preview&assets=web',
       '?az=721.26&el=99&dolly=9',
+      '?av=40&marks=1&quality=low&fill=1&format=preview',
+      '?mode=autopilot&av=-12&quality=high',
     ]
     for (const q of queries) {
       const a = readOptions(q)
@@ -121,7 +135,7 @@ describe('writeOptions', () => {
 
 describe('optionsFor', () => {
   it('carries the choices, the frame and the unit to another mode', () => {
-    const from = readOptions(`?format=${config.formats.master.id}&tier=review&assets=full&frame=300&unit=${segments[1].id}&az=30&world=${config.worlds[0].id}`)
+    const from = readOptions(`?format=${config.formats.master.id}&tier=review&assets=full&frame=300&unit=${segments[1].id}&az=30&av=25&marks=1`)
     const to = optionsFor('autopilot', from)
     expect(to.mode).toBe('autopilot')
     expect(to.format).toBe(config.formats.master)
@@ -129,7 +143,8 @@ describe('optionsFor', () => {
     expect(to.assets).toBe('full')
     expect(to.frame).toBe(300)
     expect(to.unit).toBe(segments[1].id)
-    expect([to.az, to.el, to.dolly, to.world]).toEqual([0, 0, 1, null])
+    expect([to.az, to.el, to.dolly]).toEqual([0, 0, 1])
+    expect([to.av, to.marks]).toEqual([25, true])
     expect(readOptions(writeOptions(to))).toEqual(to)
   })
 

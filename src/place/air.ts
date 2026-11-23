@@ -27,14 +27,13 @@ export const airUniforms = {
   uMistTopM: { value: 12 },
   // The share of the shared ground fog that the land away from the field takes.
   uFogShare: { value: 1 },
+  uFogNear: { value: 0 },
   // How much the light shines through leaves toward the lens: all of it for the sun, little for the moon.
   uThrough: { value: 1 },
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
   uLandWind: { value: 0 },
-  uFlashDir: { value: new THREE.Vector3(0, 1, 0) },
-  uFlash: { value: new THREE.Vector3(0, 0, 0) },
 }
 
 export const airGlsl = /* glsl */ `
@@ -44,19 +43,18 @@ uniform float uAirRain;
 uniform float uMist;
 uniform float uMistTopM;
 uniform float uFogShare;
+uniform float uFogNear;
 uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
 uniform float uLandFrost;
-uniform vec3 uFlashDir;
-uniform vec3 uFlash;
 
 // The sky that lies behind the land in the direction of a point.
 vec3 skyBehind(vec3 dir) {
   vec2 h = normalize(dir.xz + vec2(1e-6));
   vec2 s = normalize(uTrueSun.xz + vec2(1e-6));
   float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 6.0) * uAirToSun;
-  vec3 clear = mix(uSkyHorizon, uSkyHorizonSun, toSun);
+  vec3 clear = mix(uAirHorizon, uSkyHorizonSun, toSun);
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
 }
 
@@ -73,12 +71,14 @@ vec3 throughAir(vec3 color, vec3 worldPos) {
 // The land's last step: its own air, then the shared ground fog and the blur circle. Away from the field the land takes only a share of the ground fog.
 vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
   vec3 aired = throughAir(color, worldPos);
-  vec4 done = finish(aired, worldPos, viewDepth, -1.0);
-  if (uDiag == 0) done.rgb = mix(aired, done.rgb, mix(1.0, uFogShare, smoothstep(80.0, 320.0, length(worldPos.xz))));
+  // The lens takes a blur circle within a third of a percent of the circle of infinity for sky and leaves it sharp: the land stays just short of that.
+  vec4 done = finish(aired, worldPos, min(viewDepth, uFocusM / 0.0036), -1.0);
+  if (uDiag == 0) {
+    float r = length(worldPos.xz);
+    // Where the field ends the land takes the ground fog in gradually, so no line of fog stands at the field's far edge.
+    float near = mix(smoothstep(250.0, 800.0, r), 1.0, uFogNear);
+    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)));
+  }
   return done;
-}
-
-vec3 flashLight(vec3 n) {
-  return uFlash * (0.4 + 0.6 * max(dot(n, uFlashDir), 0.0));
 }
 `
