@@ -20,8 +20,8 @@ export const stemMain = /* glsl */ `void main() {
   float youth = saturate(vSkin.y - 1.0);
   float fresh = saturate((age - 64.0) * 0.0625);
   float tender = min(age, 64.0) * 0.015625;
-  float pale = vSkin.z;
-  float foot = vSkin.w;
+  float pale = saturate(vSkin.z);
+  float foot = saturate(vSkin.w);
   float thin = max(vSkin2.w, 0.0);
   float ribbed = vSkin3.y;
 #ifdef PLANT_FIELD
