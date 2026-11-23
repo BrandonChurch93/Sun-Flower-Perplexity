@@ -1,14 +1,18 @@
 # Looks of sky-b
 
-2026-11-23 08:47 UTC, at commit 64f4a08 of agent/sky-b.
+2026-11-23 08:52 UTC, at commit 64f4a08 of agent/sky-b.
 
-Finale cloud breakup proof at 960x540 from scratch f0991e4: v2 db46d56 with Place d47f280, optics 20dcfa7, and Sky 182a22e plus amber trim b60bc3e. One moving cloud volume erodes through bars 61 to 69, with no background-sky dissolve at the old failure. The short-night treatment, path and meter stay as before.
+Final Sky B at 64f4a08. Ending frames drawn at 1920x1080, proof of the six cloud-transition anchors at 960x540. At bar 73 the amber core is RGB 251/205/121 in the final grade and 9.15/.806/.172 after exposure before grade. Depth-isolated near-ridge controls show no analytic glare or shafts and no fill contribution at F3729, F3801 and F3809; the maximum bloom contribution is one 8-bit level. The solar silhouette is fully hidden by bar 74.4.
 
-- `01-open-bloom-to-field-six-frames.jpg`: Open bloom to field: six frames
-- `02-former-dissolve-window-f3326-to-f3344.jpg`: Former dissolve window F3326 to F3344
-- `03-open-bloom-f3112.jpg`: Open bloom F3112
-- `04-cloud-motion-f3194.jpg`: Cloud motion F3194
-- `05-cloud-motion-f3277.jpg`: Cloud motion F3277
-- `06-cloud-breakup-f3359.jpg`: Cloud breakup F3359
-- `07-crane-and-lingering-clouds-f3442.jpg`: Crane and lingering clouds F3442
-- `08-open-field-f3524.jpg`: Open field F3524
+- `01-eight-native-ending-frames-and-both-keys.jpg`: Eight native ending frames and both keys
+- `02-no-glow-on-the-ridge-at-four-times-magnification.jpg`: No glow on the ridge at four times magnification
+- `03-one-deck-from-bloom-to-crane-in-six-anchors.jpg`: One deck from bloom to crane in six anchors
+- `04-former-dissolve-window-with-the-new-deck.jpg`: Former dissolve window with the new deck
+- `05-bar-65.jpg`: Bar 65
+- `06-bar-67.jpg`: Bar 67
+- `07-bar-69.jpg`: Bar 69
+- `08-bar-71.jpg`: Bar 71
+- `09-bar-73.jpg`: Bar 73
+- `10-bar-73-75.jpg`: Bar 73.75
+- `11-bar-74-4.jpg`: Bar 74.4
+- `12-last-frame-f3809.jpg`: Last frame F3809
