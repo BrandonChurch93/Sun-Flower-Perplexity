@@ -30,7 +30,8 @@ export function asked(m: Made): Asked {
   return { made: m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads, writes: m.updates, writeBytes: m.updateBytes }
 }
 
-export interface Gap { frame: number; film: number; gapMs: number; skipped: number }
+// `atEnd` marks the time the last frame drawn stood in place of the frames that were due after it.
+export interface Gap { frame: number; film: number; gapMs: number; skipped: number; atEnd?: boolean }
 
 export interface RunFacts {
   kind: RunKind
@@ -122,6 +123,17 @@ export class Pacing {
     }
     const drawn = shown.length
     const skipped = Math.max(0, due - drawn)
+    const after = complete && drawn > 0 ? planned - 1 - this.lastPosition : 0
+    const closing = ((after + 1) * 1000) / config.film.fps
+    const all = after > 0 ? [...this.gaps, { frame: shown[drawn - 1].frame, film: shown[drawn - 1].film, gapMs: round(closing), skipped: after, atEnd: true }] : this.gaps
+    if (after > 0) {
+      gaps.push(closing)
+      gaps.sort((a, b) => a - b)
+      if (closing > longest) {
+        longest = closing
+        longestAt = shown[drawn - 1].film
+      }
+    }
     const madeSomething = made !== null && made.programs + made.shaders + made.textures + made.buffers + made.framebuffers + made.renderbuffers + made.uploads > 0
     const holds = complete && drawn > 0 && skipped === 0 && longest <= GAP_MS && !madeSomething
     const nearly = complete && drawn > 0 && skipped <= Math.ceil(due * 0.002) && longest <= 2 * GAP_MS
@@ -130,7 +142,7 @@ export class Pacing {
     if (drawn === 0) verdict = 'No frame was drawn.'
     else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s. Until then ${drawn} of ${due} frames were drawn${skipped ? ` and ${skipped} skipped` : ''}.`
     else if (holds) verdict = `Clean. Every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
-    else if (skipped === 0) verdict = `Every frame was drawn, with ${this.gaps.length} ${this.gaps.length === 1 ? 'gap' : 'gaps'} over ${GAP_MS} ms. The longest was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
+    else if (skipped === 0) verdict = `Every frame was drawn, with ${all.length} ${all.length === 1 ? 'gap' : 'gaps'} over ${GAP_MS} ms. The longest was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
     else if (nearly) verdict = `${skipped} of ${due} frames were skipped. The longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`
     else verdict = `This machine did not hold ${config.film.fps} frames a second: ${drawn} of ${due} frames were drawn and ${skipped} skipped. Every frame was chosen from the audio clock, so no time was lost.`
     if (madeSomething) verdict += ' The graphics card was asked to make something during the run, which is a defect of the film.'
@@ -145,7 +157,7 @@ export class Pacing {
       drawMs: { mean: round(mean(draws)), p99: round(percentile(draws, 0.99)), longest: round(draws.length ? draws[draws.length - 1] : 0) },
       pickedMs: { mean: round(mean(picked)), largest: round(picked.reduce((a, b) => Math.max(a, Math.abs(b)), 0)) },
       behindMs: { mean: round(mean(behind)), largest: round(largest), largestAtFilm: round(largestAt, 3), first: round(behind[0] ?? 0), last: round(behind[behind.length - 1] ?? 0) },
-      gaps: this.gaps,
+      gaps: all,
       made,
       writes: {
         mean: round(mean(shown.map((s) => s.writes)), 1),

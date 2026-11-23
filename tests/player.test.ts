@@ -66,6 +66,16 @@ describe('the pacing report', () => {
     expect(report.verdict).toContain('graphics card')
   })
 
+  it('counts the frames that were due after the last one drawn as a gap', () => {
+    const pacing = new Pacing()
+    pacing.present(0, 0, 0, 0.004, 9, 16.7, 9000)
+    const report = pacing.report(facts, 300, true, null)
+    expect(report.frames).toEqual({ due: 300, drawn: 1, skipped: 299 })
+    expect(report.gaps).toEqual([{ frame: 0, film: 0, gapMs: 10000, skipped: 299, atEnd: true }])
+    expect(report.gapMs.longest).toBe(10000)
+    expect(report.holds).toBe(false)
+  })
+
   it('says where a stopped run stopped', () => {
     const report = run(90, 4, 1000 / 60).report(facts, frameCount, false, null)
     expect(report.complete).toBe(false)

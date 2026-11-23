@@ -229,7 +229,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       const gaps = report.gaps
       const list = make('p', css.fact)
       list.append(make('span', css.label, `Gaps over ${GAP_MS} ms`))
-      const shown = gaps.slice(0, SHOWN_GAPS).map((g) => `${at(g.film)} ${g.gapMs.toFixed(0)} ms`)
+      const shown = gaps.slice(0, SHOWN_GAPS).map((g) => `${at(g.film)} ${g.gapMs.toFixed(0)} ms${g.atEnd ? ' to the end' : ''}`)
       const more = gaps.length > SHOWN_GAPS ? `, and ${gaps.length - SHOWN_GAPS} more in the file` : ''
       list.append(make('span', css.value, gaps.length ? `${gaps.length}: ${shown.join(', ')}${more}` : 'none'))
       reportBody.append(list)
