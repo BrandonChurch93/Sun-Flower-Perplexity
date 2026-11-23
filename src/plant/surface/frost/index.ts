@@ -36,10 +36,9 @@ vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3
   return vec2(grain, grain * flash * flash);
 }
 
-// How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The frost dial falls slowly at first and then all at once, and the dew comes up with the thaw and never with the freeze.
+// How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The dew comes up with the thaw and never with the freeze.
 float frostThaw() {
-  float gone = 1.0 - uPlantFrost;
-  return uPlantDew > 0.0 ? (gone < 0.4 ? gone * 1.875 : 0.75 + (gone - 0.4) * 0.4167) : 0.0;
+  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost);
 }
 
 // x: the share of the pixel that is ice. y: the flash of the ice in it.

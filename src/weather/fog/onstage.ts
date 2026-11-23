@@ -37,10 +37,10 @@ class Banks implements Part {
       const height = (0.14 + 0.017 * r) * lerp(1, 1.9, air.lifted)
       const last = i === count - 1
       s.place.set(r, last ? r * 0.6 : height * 6, -1, 0)
-      s.high.set(last ? 0.9 * air.amount * lerp(1, 0.6, air.lifted) : 0, 0.3)
+      s.high.set(last ? air.amount * lerp(1, 0.4, air.lifted) : 0, 0.3)
       s.center.set(0, 0)
-      s.air.set(r * (Math.exp(step) - 1), height, lerp(0.3, 0.08, far) * air.amount * lerp(1, 0.45, air.lifted), lerp(5, 40, far))
-      s.look.set(lerp(0.75, 0.5, far), air.glow, last ? 0 : air.shafts, (last ? 4 : 0.2) * air.glow)
+      s.air.set(r * (Math.exp(step) - 1), height, lerp(0.6, 0.16, far) * air.amount * lerp(1, 0.75, air.lifted), lerp(5, 40, far))
+      s.look.set(lerp(0.6, 0.35, far), air.glow, last ? 0 : air.shafts, (last ? 16 * air.amount : 0.2) * air.glow)
       s.mesh.renderOrder = ORDER + (count - i) * 0.1
     }
   }

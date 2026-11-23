@@ -11,8 +11,8 @@ export const CRYSTAL_ORDER = 18
 const ROW = 512
 const NEEDLES = 5
 const REGATHER_M = 0.03
+const scratch = new Float32Array(16)
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
-const fract = (x: number): number => x - Math.floor(x)
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
@@ -88,12 +88,11 @@ void main() {
   vec3 where = a.xyz * (6.2832 / PATCH_M);
   float lush = saturate(0.5 + 0.9 * sin(where.x + 1.7 * sin(where.z * 0.61 + 0.4)) * sin(where.y * 0.83 + 1.3 * sin(where.x * 0.47 + 2.1)));
   float size = min(a.w * (spike ? 0.7 + 1.4 * h5 * h5 : 0.3 + 0.8 * h5 * h5 * (0.5 + lush)), (spike ? SPIKE_MOST_M * (0.3 + hash(own, 23.0) * hash(own, 23.0)) : TUFT_MOST_M * (0.4 + 1.2 * hash(own, 23.0) * hash(own, 23.0)))) * plantSize();
-  // The dew comes up with the thaw and never with the freeze, so it tells the two apart. Freezing, each crystal starts at its own moment and grows. Thawing, the frost dial falls slowly and then all at once.
-  bool thawing = uMelts > 0.5 && uPlantDew > 0.0;
-  float gone = 1.0 - uPlantFrost;
-  float thaw = thawing ? (gone < 0.4 ? gone * 1.875 : 0.75 + (gone - 0.4) * 0.4167) : 0.0;
+  // The dew comes up with the thaw and never with the freeze, so it tells the two apart. Freezing, each crystal starts at its own moment and grows. Thawing, each gives way at its own moment.
+  float thawing = uMelts * smoothstep(0.0, 0.15, uPlantDew);
+  float thaw = thawing * (1.0 - uPlantFrost);
   float born = 0.45 * hash(own, 24.0);
-  size *= thawing ? 1.0 : uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost;
+  size *= mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost, 1.0, thawing);
   // A crystal the sun reaches goes first, and so does one high on the plant.
   float sunward = 0.5 + 0.5 * dot(grow, uSunDir);
   float turn6 = 0.42 * hash(own, 6.0) + 0.26 * (1.0 - sunward) + 0.1 * (1.0 - saturate(root.y / max(uPlantHeight, 0.05)));
@@ -285,20 +284,11 @@ export class CrystalSet {
     const cocScale = shared.uCocScale.value
     const focus = shared.uFocusM.value
     const height = shared.uSize.value.y
-    // A wearer that has not yet said how long its ice is gets a fringe from here: most of the margin bare or short, a little of it long, and a spike where the wearer asks for one.
-    let said = false
-    for (let i = 0; i < this.shown && !said; i++) said = ra[i * 4 + 3] > 0
     let n = 0
+    let changed = false
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
-      let length = ra[o + 3]
-      if (!said) {
-        const kind = la[o + 3]
-        const h1 = fract(Math.sin(i * 12.9898 + 1.3) * 43758.5453)
-        const h2 = fract(Math.sin(i * 78.233 + 2.1) * 24634.6345)
-        const run = 0.5 + 0.5 * Math.sin(ra[o] * 410 + 1.7 * Math.sin(ra[o + 2] * 290)) * Math.sin(ra[o + 1] * 370 + 0.9)
-        length = kind >= 2 ? 0.0028 : kind >= 1 ? (h2 > 0.62 || run < 0.3 * h1 + 0.16 ? 0 : (0.002 + 0.0016 * h1) * (0.6 + 2.2 * run * run)) : 0.0006 + 0.001 * h1
-      }
+      const length = ra[o + 3]
       if (!(length > 0)) continue
       const x = ra[o]
       const y = ra[o + 1]
@@ -312,26 +302,31 @@ export class CrystalSet {
       const la2 = Math.hypot(la[o], la[o + 1], la[o + 2]) || 1
       const lb2 = Math.hypot(lb[o], lb[o + 1], lb[o + 2]) || 1
       const q = n * 16
-      out[q] = x
-      out[q + 1] = y
-      out[q + 2] = z
-      out[q + 3] = length
-      out[q + 4] = rb[o]
-      out[q + 5] = rb[o + 1]
-      out[q + 6] = rb[o + 2]
-      out[q + 7] = la[o + 3]
-      out[q + 8] = la[o] / la2
-      out[q + 9] = la[o + 1] / la2
-      out[q + 10] = la[o + 2] / la2
-      out[q + 11] = 0
-      out[q + 12] = lb[o] / lb2
-      out[q + 13] = lb[o + 1] / lb2
-      out[q + 14] = lb[o + 2] / lb2
-      out[q + 15] = 0
+      scratch[0] = x
+      scratch[1] = y
+      scratch[2] = z
+      scratch[3] = length
+      scratch[4] = rb[o]
+      scratch[5] = rb[o + 1]
+      scratch[6] = rb[o + 2]
+      scratch[7] = la[o + 3]
+      scratch[8] = la[o] / la2
+      scratch[9] = la[o + 1] / la2
+      scratch[10] = la[o + 2] / la2
+      scratch[12] = lb[o] / lb2
+      scratch[13] = lb[o + 1] / lb2
+      scratch[14] = lb[o + 2] / lb2
+      for (let c = 0; c < 16; c++) {
+        if (out[q + c] !== scratch[c]) {
+          out[q + c] = scratch[c]
+          changed = true
+        }
+      }
       n++
     }
+    // In a hold nothing on the plant moves: what is already on the graphics card is not sent again.
+    if (changed) this.texture.needsUpdate = true
     this.kept = n
-    this.texture.needsUpdate = true
     this.stale = false
     this.eye.setFromMatrixPosition(camera.matrixWorld)
   }

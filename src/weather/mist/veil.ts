@@ -3,15 +3,15 @@ import { config } from '../../config.ts'
 import { clamp, smoothstep } from '../../core/curves.ts'
 import { makeSurface } from '../../core/shading.ts'
 import type { Moment } from '../../v2/api.ts'
+import { windWay } from '../../v2/wind.ts'
 import { unitRing } from '../fog/ring.ts'
 
 // The mist and the fog banks are one body of air: a layer that lies on the ground, thins upward, stands in banks and drifts. It is drawn as upright sheets, each standing for the slab of air between it and the next one out.
-const DRIFT_TOWARD_DEG = 42
 const DRIFT_M_PER_S = 0.07
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const SIDES = 96
 
-export const DRIFT = { x: Math.sin((DRIFT_TOWARD_DEG * Math.PI) / 180) * DRIFT_M_PER_S, z: Math.cos((DRIFT_TOWARD_DEG * Math.PI) / 180) * DRIFT_M_PER_S }
+export const DRIFT = { x: windWay.x * DRIFT_M_PER_S, z: windWay.z * DRIFT_M_PER_S }
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -36,7 +36,7 @@ uniform vec4 uLook;
 uniform vec2 uHigh;
 uniform vec3 uGlowDir;
 const vec2 DRIFT = vec2(${DRIFT.x.toFixed(5)}, ${DRIFT.z.toFixed(5)});
-const vec2 ALONG = vec2(${Math.sin((DRIFT_TOWARD_DEG * Math.PI) / 180).toFixed(5)}, ${Math.cos((DRIFT_TOWARD_DEG * Math.PI) / 180).toFixed(5)});
+const vec2 ALONG = vec2(${windWay.x.toFixed(5)}, ${windWay.z.toFixed(5)});
 void main() {
   if (uDiag > 1) discard;
   vec3 ray = vWorld - uCamPos;
@@ -78,10 +78,10 @@ void main() {
   float shafts = 1.0 + uLook.z * (smoothstep(0.1, 0.9, beam) * 1.3 - 0.5) * smoothstep(0.02, 0.12, theta) * exp(-theta / 0.4);
   // Mist is lit by the whole sky, so it is paler than the strip of sky behind it.
   vec3 air = 0.62 * uSkyHorizon + 0.42 * uSkyZenith;
-  air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.6) * 1.08;
+  air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.65) * 1.2;
   vec3 warm = max(uSkyHorizonSun - uSkyHorizon, vec3(0.0));
   // Mist between the eye and the sun throws the sun forward: it is brightest in front of it.
-  vec3 color = air + ((warm + 0.22 * uSunColor) * (uLook.y * wide) + uSunColor * (uLook.w * (exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
+  vec3 color = air + ((warm + 0.22 * uSunColor) * (uLook.y * wide) + uSunColor * (uLook.w * (0.6 * (1.0 - smoothstep(0.012, 0.04, theta)) + exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);
   outColor = vec4(color, alpha);

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { clamp, lerp } from '../../core/curves.ts'
+import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import type { Moment, Part, View } from '../../v2/api.ts'
 import { airAt, blankAir, makeSheet, sheetsFor, type Sheet } from './veil.ts'
 
@@ -11,8 +11,9 @@ const BEHIND_M = 0.12
 const HEIGHT_M = 0.1
 const HEIGHT_LIFTED_M = 0.34
 const PER_M = 0.85
-const PER_M_LIFTED = 0.1
+const PER_M_LIFTED = 0.3
 const BANK_M = 1.5
+const CLEAR_TO_M = 1.6
 // Before the hairs and crystals of the plant (18 to 21), and after them.
 const ORDER_BEHIND = 12
 const ORDER_BEFORE = 64
@@ -50,7 +51,8 @@ class GroundMist implements Part {
       const slab = i + 1 < count ? radius(i + 1) - r : r * (Math.exp(step) - 1)
       s.place.set(r, height * 7, -0.3, 0)
       s.center.set(eye.x, eye.z)
-      s.air.set(slab, height, perM, BANK_M)
+      // The air just before the lens is clear: the veils lie out on the soil, beyond the plant.
+      s.air.set(slab, height, perM * smoothstep(NEAR_M, CLEAR_TO_M, r), BANK_M)
       s.look.set(0.85, air.glow, air.shafts, 0.05 * air.glow)
       s.mesh.renderOrder = i >= nearest ? ORDER_BEHIND + (count - i) * 0.1 : ORDER_BEFORE + (count - i) * 0.1
     }
