@@ -26,7 +26,7 @@ export interface ChecksPage {
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
   // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames.
   fault(kind: string, a: number, b: number): void
-  // Which pixels of the last frame the scene drew into, row by row from the top: '1' where something was drawn, '0' where the frame was left empty.
+  // Which pixels of the last frame the scene drew into, row by row from the top: '1' where the scene's own numbers, before the lens and the grain, hold any light, '0' where the frame was left empty.
   covered(): string
 }
 
@@ -191,7 +191,10 @@ window.checks = {
     const rows: string[] = []
     for (let y = height - 1; y >= 0; y--) {
       let row = ''
-      for (let x = 0; x < width; x++) row += pixels[4 * (y * width + x) + 3] > 0.5 ? '1' : '0'
+      for (let x = 0; x < width; x++) {
+        const p = 4 * (y * width + x)
+        row += pixels[p] + pixels[p + 1] + pixels[p + 2] > 0 || pixels[p + 3] > 0.5 ? '1' : '0'
+      }
       rows.push(row)
     }
     return rows.join('')

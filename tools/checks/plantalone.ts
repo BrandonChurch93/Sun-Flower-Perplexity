@@ -21,7 +21,7 @@ const RISE = 0.5
 const MOON_FAULT = 2.4
 
 export interface PlantFrame { frame: number; mean: number; high: number; share: number }
-export interface PlantSide { night: number; side: 'dusk' | 'dawn'; handover: number; midnight: number; frames: PlantFrame[]; rise: number; riseAt: number; ok: boolean; why: string }
+export interface PlantSide { night: number; side: 'dusk' | 'dawn'; handover: number; midnight: number; frames: PlantFrame[]; rise: number; riseAt: number; ok: boolean; why: string; empty: number }
 export interface PlantProof { findings: Finding[]; complete: boolean; pictures: { file: string; caption: string }[]; sides: PlantSide[] }
 interface Stored { engineHash: string; at: string; width: number; height: number; every: number; sides: PlantSide[]; pictures: { file: string; caption: string }[] }
 
@@ -79,8 +79,11 @@ function storedFile(broken: string | null): string {
   return path.join(OUT, 'plant', broken ? `broken-${broken}` : 'film', 'plant.json')
 }
 
-function judge(sides: PlantSide[], drawnNow: boolean, total: number): Finding[] {
-  if (sides.length === 0) return []
+function judge(every: PlantSide[], drawnNow: boolean, total: number): Finding[] {
+  const sides = every.filter((s) => s.empty < 0)
+  const unseen = every.filter((s) => s.empty >= 0)
+  const none: Finding[] = unseen.length ? [{ ok: true, expected: true, what: `not measured: the plant covers no pixel in ${unseen.length} of ${every.length} dusks and dawns drawn with the plant alone (${unseen.slice(0, 4).map((s) => `night ${s.night} ${s.side}, frame ${s.empty}`).join('; ')})` }] : []
+  if (sides.length === 0) return none
   const bad = sides.filter((s) => !s.ok)
   const worst = sides.reduce((a, s) => (s.rise > a.rise ? s : a), sides[0])
   const fall = (s: PlantSide): number => s.frames[0].mean - s.frames[s.frames.length - 1].mean
@@ -94,24 +97,42 @@ function judge(sides: PlantSide[], drawnNow: boolean, total: number): Finding[] 
   ]
   for (const s of bad.slice(0, 6)) findings.push({ ok: false, what: `night ${s.night}, ${s.side} (${barText(secondsOf(s.handover))}): ${s.why}` })
   if (bad.length > 6) findings.push({ ok: false, what: `and ${bad.length - 6} more` })
-  return findings
+  return [...findings, ...none]
 }
 
-async function sheet(dir: string, side: PlantSide, width: number, height: number, caption: string): Promise<string> {
-  const w = 300
+async function sheet(dir: string, side: PlantSide, width: number, height: number, caption: string, second: string): Promise<string> {
+  const w = 360
   const h = Math.round((w * height) / width)
   const gap = 6
   const bar = 20
-  const parts: Placed[] = [{ input: strip(side.frames.length * (w + gap) - gap, bar + 2, caption), left: gap, top: gap }]
+  const across = side.frames.length * (w + gap) - gap
+  const parts: Placed[] = [{ input: strip(across, bar + 2, caption), left: gap, top: gap }, { input: strip(across, bar + 2, second), left: gap, top: gap + bar + 2 }]
+  const top = 2 * (bar + 2) + 2 * gap
   for (let i = 0; i < side.frames.length; i++) {
     const f = side.frames[i]
     const left = gap + i * (w + gap)
-    parts.push({ input: await scaled(path.join(dir, `${f.frame}.png`), w, h), left, top: bar + 2 + 2 * gap })
-    parts.push({ input: strip(w, bar, `${f.frame}${i === 0 ? ' handover' : i === side.frames.length - 1 ? ' midnight' : ''} · mean ${f.mean.toFixed(1)} · 90th ${f.high}`), left, top: bar + 2 + 2 * gap + h })
+    parts.push({ input: await scaled(path.join(dir, `${f.frame}.png`), w, h), left, top })
+    parts.push({ input: strip(w, bar, `${f.frame}${i === 0 ? ' handover' : i === side.frames.length - 1 ? ' midnight' : ''} · mean ${f.mean.toFixed(1)} · 90th ${f.high}`), left, top: top + h })
   }
   const file = path.join(dir, `night-${String(side.night).padStart(2, '0')}-${side.side}.jpg`)
-  await canvas(side.frames.length * (w + gap) + gap, 2 * bar + 2 + h + 3 * gap, parts).jpeg({ quality: 90 }).toFile(file)
+  await canvas(across + 2 * gap, top + h + bar + gap, parts).jpeg({ quality: 90 }).toFile(file)
   return file
+}
+
+// One sheet for each of the first two dusks or dawns that fail, or for the one that falls the least when none does.
+async function sheets(dir: string, every: PlantSide[], width: number, height: number): Promise<{ file: string; caption: string }[]> {
+  const pictures: { file: string; caption: string }[] = []
+  const sides = every.filter((s) => s.empty < 0 && s.frames.every((f) => fs.existsSync(path.join(dir, `${f.frame}.png`))))
+  if (sides.length === 0) return pictures
+  const bad = sides.filter((s) => !s.ok)
+  const fall = (s: PlantSide): number => s.frames[0].mean - s.frames[s.frames.length - 1].mean
+  const shown = bad.length > 0 ? bad.slice(0, 2) : [sides.reduce((a, s) => (fall(s) < fall(a) ? s : a), sides[0])]
+  for (const s of shown) {
+    const caption = `The plant alone, night ${s.night}, from the handover of the ${s.side} (frame ${s.handover}) to midnight (frame ${s.midnight}): mean ${s.frames[0].mean.toFixed(1)} to ${s.frames[s.frames.length - 1].mean.toFixed(1)} of 255 over the pixels the plant covers, 90th percentile ${s.frames[0].high} to ${s.frames[s.frames.length - 1].high}`
+    const second = s.ok ? 'It only gets darker toward midnight' : `FAIL: ${s.why}`
+    pictures.push({ file: path.relative(process.cwd(), await sheet(dir, s, width, height, caption, second)), caption: `${caption}. ${second}` })
+  }
+  return pictures
 }
 
 export async function plantProof(args: Args, broken: string | null): Promise<PlantProof> {
@@ -124,7 +145,8 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
     const findings = judge(stored.sides, false, total)
     const stale = stored.engineHash !== engineHash()
     if (stale) findings.push({ ok: true, expected: true, what: 'the plant alone was drawn from an older film: draw it again with npm run checks -- nights --plant' })
-    return { findings, complete: !stale && stored.sides.length === total, pictures: stored.pictures, sides: stored.sides }
+    const pictures = await sheets(path.dirname(file), stored.sides, stored.width, stored.height)
+    return { findings, complete: !stale && stored.sides.filter((s) => s.empty < 0).length === total, pictures: pictures.length ? pictures : stored.pictures, sides: stored.sides }
   }
   const width = num(args, 'width', 640)
   const height = num(args, 'height', 360)
@@ -156,31 +178,23 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
         for (let i = 1; i < frames.length; i++) if (frames[i].mean - frames[i - 1].mean > rise) [rise, riseAt] = [frames[i].mean - frames[i - 1].mean, frames[i].frame]
         const first = frames[0]
         const last = frames[frames.length - 1]
-        const why = [
+        const empty = frames.find((x) => x.share === 0)
+        const why = empty ? '' : [
           rise > RISE ? `the plant's mean rises ${rise.toFixed(2)} of 255 on the way to midnight, into frame ${riseAt}` : '',
           last.mean > first.mean ? `the plant's mean at midnight (${last.mean.toFixed(1)}, frame ${last.frame}) is above the handover's (${first.mean.toFixed(1)}, frame ${first.frame})` : '',
           last.high > first.high ? `its 90th percentile at midnight (${last.high}) is above the handover's (${first.high})` : '',
         ].filter(Boolean).join('; ')
-        sides.push({ night: n.night, side, handover, midnight: n.midnight, frames, rise, riseAt, ok: why === '', why })
-        console.log(`nights · plant alone · night ${n.night} ${side} · frames ${list.join(' ')} · mean ${frames.map((x) => x.mean.toFixed(1)).join(' ')} · 90th ${frames.map((x) => x.high).join(' ')} · ${why === '' ? 'ok' : 'FAIL'}`)
+        sides.push({ night: n.night, side, handover, midnight: n.midnight, frames, rise, riseAt, ok: why === '', why, empty: empty ? empty.frame : -1 })
+        console.log(`nights · plant alone · night ${n.night} ${side} · frames ${list.join(' ')} · mean ${frames.map((x) => x.mean.toFixed(1)).join(' ')} · 90th ${frames.map((x) => x.high).join(' ')} · ${empty ? `not measured: the plant covers no pixel of frame ${empty.frame}` : why === '' ? 'ok' : 'FAIL'}`)
       }
     }
   } finally {
     await session.close()
   }
-  const pictures: { file: string; caption: string }[] = []
-  if (sides.length > 0) {
-    const bad = sides.filter((s) => !s.ok)
-    const fall = (s: PlantSide): number => s.frames[0].mean - s.frames[s.frames.length - 1].mean
-    const shown = bad.length > 0 ? bad.slice(0, 2) : [sides.reduce((a, s) => (fall(s) < fall(a) ? s : a), sides[0])]
-    for (const s of shown) {
-      const caption = `The plant alone, night ${s.night}, from the handover of the ${s.side} (frame ${s.handover}) to midnight (frame ${s.midnight}): mean ${s.frames[0].mean.toFixed(1)} to ${s.frames[s.frames.length - 1].mean.toFixed(1)} of 255 over the pixels the plant covers, 90th percentile ${s.frames[0].high} to ${s.frames[s.frames.length - 1].high}${s.ok ? '' : `. ${s.why}`}`
-      pictures.push({ file: path.relative(process.cwd(), await sheet(dir, s, width, height, caption)), caption })
-    }
-  }
+  const pictures = await sheets(dir, sides, width, height)
   const stored: Stored = { engineHash: engineHash(), at: new Date().toISOString(), width, height, every, sides, pictures }
   fs.writeFileSync(storedFile(broken), JSON.stringify(stored, null, 1) + '\n')
   const findings = judge(sides, true, total)
   if (sides.length < total) findings.push({ ok: true, expected: true, what: `${total - sides.length} of ${total} dusks and dawns were left out with --night` })
-  return { findings, complete: sides.length === total, pictures, sides }
+  return { findings, complete: sides.filter((s) => s.empty < 0).length === total, pictures, sides }
 }
