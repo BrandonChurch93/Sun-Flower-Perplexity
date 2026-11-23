@@ -93,11 +93,11 @@ const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk
 
 // The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of.
 // `turn` is the frame of each stretch of keys on which the part is laid: the head is one thing and is laid together.
-// `beat` is its turn where keys stand two or four frames apart: the head falls on one frame, the leaves on the next, so neither is laid with the other.
+// `beat` is its turn where keys stand two frames apart: the head falls on one frame, the leaves on the next, so neither is laid with the other.
 const SLOTS: { name: string; make: PartMaker; pieces: number; turn: number; beat: number; rigid?: boolean }[] = [
-  { name: 'stem', make: createStem, pieces: bit(PART.stem), turn: 0, beat: 2 },
+  { name: 'stem', make: createStem, pieces: bit(PART.stem), turn: 0, beat: 0 },
   { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), turn: 2, beat: 1 },
-  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), turn: 6, beat: 2 },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), turn: 6, beat: 0 },
   { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), turn: 4, beat: 0, rigid: true },
   { name: 'disc', make: createDisc, pieces: 0, turn: 4, beat: 0, rigid: true },
   { name: 'petals', make: createPetals, pieces: bit(PART.ray), turn: 4, beat: 0, rigid: true },
@@ -124,29 +124,25 @@ export const KEY_EVERY = 8
 export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
 // One laying a frame: every part is laid as it stands when the shutter opens, in the film's own air, and is drawn from there toward the next frame's laying. A growing frame then lays one slot and not both ends of the shutter. It gives way to the keys of a part that is switched on above, which are laid in still air.
 export const once = { on: true }
-// Live play only: the keys of a plant laid once a frame stand apart, each part on its own turn, and a frame between two keys is drawn as their mix. A frame asked for by its number is laid for that frame, with this off.
+// Live play only: the keys of a plant laid once a frame stand apart, each part on its own turn, and a frame between two keys is drawn as their mix. A page that plays the film marks itself live before the film is made. A page that draws a frame asked for by its number does not, and there the plant is laid for that frame. `on` turns it on anywhere, for measuring.
 export const apart = { on: false }
-// The plant's clock moves less than this a frame where only the air moves the plant.
-const SLOW = 0.01
-const APART_GROWING = 2
-const APART_STANDING = 4
+const played = (): boolean => typeof document !== 'undefined' && document.documentElement.dataset.mode === 'live'
+// Keys that stand apart stand this many frames apart.
+const APART = 2
+// A key stands on every frame this near to one where the clock stands or is about to.
+const NEAR_HELD = 4
 let gapsAll: Uint8Array | null = null
-// The most frames between two keys at each frame of the film: every frame where the clock stands or is about to, two frames while the plant grows, four where only the air moves it.
+// The most frames between two keys at each frame of the film: one round a frame where the clock stands or is about to, two everywhere else.
 function gapsAt(): Uint8Array {
   if (gapsAll) return gapsAll
   const all = new Uint8Array(frameCount)
   const m = blankMoment()
-  const tau = new Float64Array(frameCount + 1)
   const held = new Uint8Array(frameCount + 1)
-  for (let f = 0; f <= frameCount; f++) {
-    momentAt(f / FPS, m)
-    tau[f] = m.tau
-    held[f] = (plantInputsOf(m).held ?? 0) > 0 ? 1 : 0
-  }
+  for (let f = 0; f <= frameCount; f++) held[f] = (plantInputsOf(momentAt(f / FPS, m)).held ?? 0) > 0 ? 1 : 0
   for (let f = 0; f < frameCount; f++) {
     let free = true
-    for (let g = Math.max(0, f - APART_STANDING); g <= Math.min(frameCount, f + APART_STANDING); g++) if (held[g]) free = false
-    all[f] = !free ? 1 : tau[f + 1] - tau[f] > SLOW ? APART_GROWING : APART_STANDING
+    for (let g = Math.max(0, f - NEAR_HELD); g <= Math.min(frameCount, f + NEAR_HELD); g++) if (held[g]) free = false
+    all[f] = free ? APART : 1
   }
   gapsAll = all
   return all
@@ -411,15 +407,15 @@ export class Plant {
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     const turned = this.variant === 0 ? 0 : 1
-    const spaced = this.airInKeys && apart.on
-    this.plays.set(null, { turn: spaced ? turnOf(turned, null, APART_STANDING, gapsAt()) : this.airInKeys ? turnOf(0, null, 1) : turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
+    const spaced = this.airInKeys && (apart.on || played())
+    this.plays.set(null, { turn: spaced ? turnOf(turned, null, APART, gapsAt()) : this.airInKeys ? turnOf(0, null, 1) : turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
     for (const slot of SLOTS) {
       // Each part mixes its two slots by its own share, since each is laid on its own turn.
       const mix = new THREE.Vector2(0, 1)
       const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid, ahead: keyed[slot.name] || spaced })
       if (part) {
         this.parts.push(part)
-        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : spaced ? turnOf((slot.beat + turned) % APART_STANDING, slot.name, APART_STANDING, gapsAt()) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: (keyed[slot.name] || spaced) && part.spare === true })
+        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : spaced ? turnOf((slot.beat + turned) % APART, slot.name, APART, gapsAt()) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: (keyed[slot.name] || spaced) && part.spare === true })
         if (spaced && slot.rigid && !this.head) this.head = (this.plays.get(part) as Play).turn
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
