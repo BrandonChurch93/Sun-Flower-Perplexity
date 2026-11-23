@@ -123,8 +123,30 @@ export const KEY_EVERY = 8
 export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
 // One laying a frame: every part is laid as it stands when the shutter opens, in the film's own air, and is drawn from there toward the next frame's laying. A growing frame then lays one slot and not both ends of the shutter. It gives way to the keys of a part that is switched on above, which are laid in still air.
 export const once = { on: true }
-// In a time lapse the plant sits differently in every frame, so the next frame's laying is not where this frame's shutter closes: above this much of it both ends are laid.
-const ONCE_LAPSE = 0.04
+// Where the time lapse runs at its fastest in air with no gust, rain or frost in it, a laying holds no moving air at all and differs from the next by growth alone. There the keys of a plant laid once a frame stand apart, each part on its own turn, as close as its own pace needs.
+export const apart = { on: false }
+let apartAll: Uint8Array | null = null
+// 1 for each frame that needs no key of its own: it and the frames on both sides of it are such frames.
+function apartAt(): Uint8Array {
+  if (apartAll) return apartAll
+  const all = new Uint8Array(frameCount)
+  const m = blankMoment()
+  const quiet = (f: number): boolean => {
+    if (f < 0 || f >= frameCount) return false
+    const felt = plantInputsOf(momentAt(f / FPS, m))
+    return (felt.lapse ?? 0) > 1 - 1e-6 && !(felt.held ?? 0) && !(felt.gust ?? 0) && !(felt.rain ?? 0) && !(felt.cold ?? 0)
+  }
+  let before = false
+  let here = quiet(0)
+  for (let f = 0; f < frameCount; f++) {
+    const after = quiet(f + 1)
+    if (before && here && after) all[f] = 1
+    before = here
+    here = after
+  }
+  apartAll = all
+  return all
+}
 // The key frames of the film, in order.
 export function keyFrames(every: number): number[] {
   const keys: number[] = []
@@ -215,20 +237,24 @@ function strayLimit(frame: number): number {
 // The keys of one part of the film. Every part has its own turn among the frames of each stretch of KEY_EVERY and its keys fall on that turn, so two parts are seldom laid on the same frame. The key that falls last before a hold or first after it is laid as the hold's own end: the clock has all but stopped there, the hold then has one key at each end, and nothing is laid inside it. Where a part's shape would stray from the truth between two keys, a key more is set halfway, and again, down to every frame: a part that moves fast for a moment is laid often for that moment only.
 interface Turn { at: Int32Array; of: Int32Array; held: Uint8Array; index: Int32Array }
 const turns = new Map<string, Turn>()
-function turnOf(turn: number, name: string | null, every = KEY_EVERY): Turn {
+function turnOf(turn: number, name: string | null, every = KEY_EVERY, only: Uint8Array | null = null): Turn {
   const phase = turn % every
-  const known = turns.get(`${name} ${phase} ${every}`)
+  const id = `${name} ${phase} ${every} ${only ? 1 : 0}`
+  const known = turns.get(id)
   if (known) return known
   const last = frameCount - 1
   const at = [0]
   const of = [0]
-  const up = (v: number) => ((v % every) + every) % every
+  // With `only`, keys stand apart on the frames it marks and on every frame elsewhere, so a hold is met as by a key on every frame.
+  const near = only ? 1 : every
+  const lead = phase % near
+  const up = (v: number) => ((v % near) + near) % near
   for (let f = 1; f < last; f++) {
-    if (f % every !== phase) continue
+    if (f % every !== phase && (!only || only[f] === 1)) continue
     let from = f
     for (const [start, end] of HOLD_FRAMES) {
-      const before = start - up(start - phase)
-      const after = end + up(phase - end)
+      const before = start - up(start - lead)
+      const after = end + up(lead - end)
       if (f === before) from = start
       else if (f === after) from = end
       else if (f > before && f < after) from = -1
@@ -261,7 +287,7 @@ function turnOf(turn: number, name: string | null, every = KEY_EVERY): Turn {
     index[f] = k
   }
   const made = { at: Int32Array.from(at), of: Int32Array.from(of), held, index }
-  turns.set(`${name} ${phase} ${every}`, made)
+  turns.set(id, made)
   return made
 }
 
@@ -284,7 +310,7 @@ function keyAt(frame: number, out: FilmKey, air = false): FilmKey {
   out.air = air
   out.held = air ? (felt.held ?? 0) : 1
   // A key is laid in still air: the air moves the plant where it is drawn. A laying of every frame carries the air of its own frame.
-  out.inputs = air ? { ...stilled(felt) } : { leanX: felt.leanX, leanZ: felt.leanZ, lift: felt.lift, liftLow: felt.liftLow, cold: felt.cold, real: felt.real, held: felt.held, stood: felt.stood, steady: felt.steady, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
+  out.inputs = air ? { ...stilled(felt), twitch: 0 } : { leanX: felt.leanX, leanZ: felt.leanZ, lift: felt.lift, liftLow: felt.liftLow, cold: felt.cold, real: felt.real, held: felt.held, stood: felt.stood, steady: felt.steady, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
   out.real = air && out.held < 1 ? m.t : (felt.stood ?? m.t)
   out.wet = m.dials.wet
   out.frost = m.dials.frost
@@ -295,8 +321,8 @@ const newFilmKey = (): FilmKey => ({ frame: -1, time: 0, inputs: { leanX: 0, lea
 // What a part plays the film from: its turn, the two keys round the frame, and its own mix of its two slots.
 // `next` is the key after those two and `ahead` how much of it lies in the part's spare shape: the key it is, 0 for none, and the share of it laid.
 interface Play { turn: Turn; film: [FilmKey, FilmKey]; mix: THREE.Vector2; next: FilmKey; ahead: { of: number; done: number }; spread: boolean }
-// How far a leaf twitches from frame to frame in the fastest time lapse, in radians.
-const TWITCH = 0.05
+// How far a leaf twitches from frame to frame in the fastest time lapse, in radians: the size of the twitch a leaf was once laid with.
+const TWITCH = 0.036
 const TAU = 2 * Math.PI
 const NO_SCALE = new THREE.Matrix4().makeScale(0, 0, 0)
 
@@ -356,8 +382,6 @@ export class Plant {
   private serial = 0
   private readonly growsByKeys = once.on || Object.values(keyed).some((on) => on)
   private readonly airInKeys = once.on && !Object.values(keyed).some((on) => on)
-  // How much of the way to the next laying the shutter's close is drawn.
-  private blur = 1
   private readonly signing = new Float64Array(KEY_SIGNED)
   private readonly now = blankMoment()
   private readonly laid: PlantPart[] = []
@@ -381,14 +405,15 @@ export class Plant {
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     const turned = this.variant === 0 ? 0 : 1
-    this.plays.set(null, { turn: this.airInKeys ? turnOf(0, null, 1) : turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
+    const spaced = this.airInKeys && apart.on
+    this.plays.set(null, { turn: spaced ? turnOf(turned, null, KEY_EVERY, apartAt()) : this.airInKeys ? turnOf(0, null, 1) : turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
     for (const slot of SLOTS) {
       // Each part mixes its two slots by its own share, since each is laid on its own turn.
       const mix = new THREE.Vector2(0, 1)
-      const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid, ahead: keyed[slot.name] })
+      const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid, ahead: keyed[slot.name] || spaced })
       if (part) {
         this.parts.push(part)
-        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: keyed[slot.name] && part.spare === true })
+        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : spaced ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name, KEY_EVERY, apartAt()) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: (keyed[slot.name] || spaced) && part.spare === true })
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
     }
@@ -566,7 +591,7 @@ export class Plant {
     this.own.uOwnTip.value.copy(first.tip).lerp(second.tip, share)
     const lapse = (felt.lapse ?? 0) * (1 - (felt.held ?? 0))
     const real = felt.real ?? time
-    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
+    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? Math.min(felt.calm ?? felt.wind, felt.wind) * lapse * 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
     this.stands.held = 1
     this.filled.fill(NaN)
     const live = this.live
@@ -642,6 +667,8 @@ export class Plant {
     const t = play.turn
     if (!play.spread || !part.ahead || k + 2 >= t.at.length) return
     const due = t.at[k + 1]
+    // Between two keys a frame apart the next one is laid where it goes, whole.
+    if (due - t.at[k] < 2) return
     const over = Math.min(due - t.at[k], KEY_EVERY)
     if (frame < due - over) return
     const key = keyAt(t.of[k + 2], play.next, this.airInKeys)
@@ -686,7 +713,7 @@ export class Plant {
     } else {
       const span = t.at[k + 1] - t.at[k]
       w = (frame - t.at[k]) / span
-      dw = (SHUTTER_SHARE * this.blur) / span
+      dw = SHUTTER_SHARE / span
     }
     const share = slot === 0 ? w : 1 - w
     play.mix.set(share, slot === 0 ? dw : -dw)
@@ -724,19 +751,18 @@ export class Plant {
     if (m.tau !== timeOpen) return false
     const here = plantInputsOf(m)
     if (here.leanX !== felt.leanX || here.leanZ !== felt.leanZ || here.lift !== felt.lift || here.wind !== felt.wind || here.real !== felt.real || here.cold !== felt.cold) return false
-    // Where every laying carries its own air, the shader moves the plant only as far as its clock stands, and a time lapse is in the laying.
+    // Where every laying carries its own air, the shader moves the plant only as far as its clock stands. A time lapse's restlessness is never in a laying: it is drawn here.
     const carried = this.airInKeys && !inHold
     const held = felt.held ?? 0
-    if (carried && (felt.lapse ?? 0) * (1 - held) > ONCE_LAPSE) return false
     usePlant(this.variant, this.at)
     this.own.uOwnKeys.value = 1
     const stood = carried ? held : 1
-    this.own.uOwnAir.value.set(stood * Math.min(felt.calm ?? felt.wind, felt.wind), stood * felt.wind, stood * (felt.gust ?? 0), stood * (felt.rain ?? 0))
-    const lapse = carried ? 0 : (felt.lapse ?? 0) * (1 - held)
+    const calm = Math.min(felt.calm ?? felt.wind, felt.wind)
+    this.own.uOwnAir.value.set(stood * calm, stood * felt.wind, stood * (felt.gust ?? 0), stood * (felt.rain ?? 0))
+    const lapse = (felt.lapse ?? 0) * (1 - held)
     const real = felt.real ?? timeOpen
-    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
+    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? calm * lapse * 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
     this.stands.held = carried ? Math.min(held, feltClose.held ?? 0) : 1
-    this.blur = carried ? 1 - (felt.lapse ?? 0) * (1 - held) : 1
     this.filled.fill(NaN)
     this.turnTo(null, frame, m.dials)
     if (carried && held > 0) tipAt(timeOpen, { ...stilled(felt), steady: false }, this.own.uOwnTip.value)

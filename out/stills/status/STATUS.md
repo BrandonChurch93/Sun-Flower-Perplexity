@@ -1,12 +1,12 @@
-# Status 29
+# Status 32
 
-2026-11-23 13:13 UTC
+2026-11-23 14:33 UTC
 
-- Status 29 · Phase 4. Merged and proven here: the reworked frost, the cure of the bright discs at its source, and the player's timing at loading, which now tells a slow picture from slow page work before it picks a quality. Every program is asked of the graphics card at once at loading; measured here, none is built after loading at five checked frames. The storm's key light is down: leaf highlights at 1830 fell from 84 to 74 (storm key 54, rain key 75). The storm's onset was drawn frame by frame after that change and holds, with the first flash on bar 33.
-- Next: The soaked soil in the storm is twice as light as the keys on the left: with the ground owner. The storm leaves hang too far and pass too much light: with the plant and leaf look owners. First whole watch with the music: 2 of 12 parts in, 10 drawing, all due about 14:30. Live play cost: the plant, hairs and head owners' cures, then a new measure of the five hardest spans. Time used: 15.2 h of 30 h.
+- Status 32 · Phase 4. Three more merges are proven on the film tree (checks, plant, ground): type check, 204 tests and seven bench frames, three of them pixel identical to before. Two more watch parts are read, the buds of the ascent and the bloom with its pull back: no jump and no notch in either. Play cost is measured again on the merged tree: the bloom fell from about 140 ms of script a frame to 56 to 66 ms, the frost close shots to 25 ms, the break to 33 ms. A frame has 33 ms, so the bloom is still over. The older leaves open up after the frost (ruling logged), their owner is on it.
+- Next: Read the five parts that are still drawing (ground, the frost cuts, the first evenings, the first rain, the climb), join the whole film at 640 x 360 with the track, then the cures: bloom cost, the hairs' rim at 3600, the disc's wild pixels, and whether anything is made after loading in the last shot. Time used: 16.6 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down
-- `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet
-- `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33
-- `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
+- `status-1.jpg`: Storm hold on the merged tree, frame 1830
+- `status-2.jpg`: The break, frame 2090
+- `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360
+- `status-4.jpg`: The field at the end of the pull back, frame 3492

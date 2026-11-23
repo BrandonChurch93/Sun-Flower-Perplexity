@@ -226,8 +226,13 @@
 }
 
 .advice {
-  margin: 8px 0 8px;
+  margin: 8px 0 0;
   font-weight: 600;
+}
+
+.advice + .small,
+.advice + .small + .small {
+  line-height: 1.45;
 }
 
 .advice[hidden] {

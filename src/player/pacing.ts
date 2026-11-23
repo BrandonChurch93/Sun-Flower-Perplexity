@@ -395,17 +395,23 @@ export const timedText = (t: Timed): string => `${t.quality} ${t.held ? 'held' :
 // The timing at loading runs on the page's clock, since no sound may start before a click. Every other run is on the audio clock.
 export const clockName = (report: Report): string => (report.kind === 'timing' ? "the page's clock" : 'the audio clock')
 
+// What the desk says after a run: one plain sentence, the numbers behind it, and a last line on what can still be done.
+export interface Advised { text: string; numbers: string; last: string }
+
+export const advisedText = (a: Advised): string => [a.text, a.numbers, a.last].filter((part) => part !== '').join(' ')
+
 // What the timing at the end of loading says, and the quality the film now plays at. `found` holds the qualities in the order they were timed.
-export function timedAdvice(found: Timed[], seconds: number): string {
+export function timedAdvice(found: Timed[], seconds: number): Advised {
   const last = found[found.length - 1]
   const rate = `${config.film.fps} frames a second`
   const lost = (t: Timed): string => `${t.skipped} of ${t.due} frames skipped, the longest gap ${t.longestGapMs.toFixed(0)} ms`
-  const skips = 'A recording stays with the music and skips frames. The export makes a file with every frame at any speed.'
-  if (!last) return ''
-  if (found.length === 1 && last.held) return `Timed at loading: this machine held ${rate} at ${last.quality} quality over ${seconds} seconds of the film's hardest parts. Record at ${last.quality} quality.`
-  if (scriptBound(last) && last.script) return `This machine cannot play the film live yet, and the export gives the same film with your track, every frame of it. Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}), and the page's own work alone, with nothing drawn, took longer than one frame of time on ${last.script.over} of the same ${last.script.frames} frames. A lower quality would not change that, so the film stays at ${last.quality} quality. You can still play it here: it stays with the music and skips frames.`
-  if (found.length === 1) return `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}). ${skips}`
+  const still = 'You can still play it here: it stays with the music and skips frames.'
+  const live = 'This machine cannot play the film live yet, and the export gives the same film with your track, every frame of it.'
+  if (!last) return { text: '', numbers: '', last: '' }
+  if (found.length === 1 && last.held) return { text: `Record at ${last.quality} quality.`, numbers: `Timed at loading: this machine held ${rate} at ${last.quality} quality over ${seconds} seconds of the film's hardest parts.`, last: '' }
+  if (scriptBound(last) && last.script) return { text: live, numbers: `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}), and the page's own work alone, with nothing drawn, took longer than one frame of time on ${last.script.over} of the same ${last.script.frames} frames. A lower quality would not change that, so the film stays at ${last.quality} quality.`, last: still }
+  if (found.length === 1) return { text: live, numbers: `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}).`, last: still }
   const first = found[0]
-  if (last.held) return `Timed at loading: ${first.quality} quality did not hold ${rate} on this machine (${lost(first)}) and it was the picture that was slow, ${last.quality} quality held. The film now plays at ${last.quality} quality. Record at ${last.quality} quality.`
-  return `Timed at loading: neither quality held ${rate} on this machine (${first.quality}: ${lost(first)}; ${last.quality}: ${lost(last)}). The film now plays at ${last.quality} quality. ${skips}`
+  if (last.held) return { text: `This machine plays the film live at ${last.quality} quality. Record at ${last.quality} quality.`, numbers: `Timed at loading: ${first.quality} quality did not hold ${rate} (${lost(first)}) and it was the picture that was slow. ${last.quality === 'low' ? 'Low' : 'High'} quality held (${lost(last)}), and the film now plays at it.`, last: '' }
+  return { text: live, numbers: `Timed at loading: neither quality held ${rate} (${first.quality}: ${lost(first)}; ${last.quality}: ${lost(last)}), and it was the picture that was slow. The film now plays at ${last.quality} quality.`, last: still }
 }
