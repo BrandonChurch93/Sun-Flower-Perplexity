@@ -1,4 +1,5 @@
 // The leaves: 24 blades on their stalks, each with its own outline, veins, curl and marks, grown by the timing in growth.ts.
+import { norm } from '../norm.ts'
 import * as THREE from 'three'
 import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
@@ -655,7 +656,7 @@ export function create(options: PartOptions): PlantPart {
       const turn = round * (side < 0 ? -1 : 1) * SIDE_ANGLE * ((front / (front + 0.04)) * Math.max(0, 1 - front / half) - (back / (back + 0.04)) * Math.max(0, 1 - back / half))
       const c = Math.cos(turn)
       const k = Math.sin(turn)
-      const foot = stemRadius(time, leafStemFraction(i, time)) / Math.max(Math.hypot(frame.mx, frame.mz), 1e-4)
+      const foot = stemRadius(time, leafStemFraction(i, time)) / Math.max(norm(frame.mx, frame.mz), 1e-4)
       const mx = frame.mx * c + frame.mz * k
       const mz = frame.mz * c - frame.mx * k
       frame.ox += (mx - frame.mx) * foot; frame.oz += (mz - frame.mz) * foot
@@ -671,7 +672,7 @@ export function create(options: PartOptions): PlantPart {
     let ceiling = 1.6
     // Before the bloom a leaf is laid out soon after it leaves the tip, and sooner if it grows toward the lens, which would see only its underside while it stands steep.
     if (main && early > 0 && i >= 2) {
-      const near = smoothstep(0.1, 0.7, (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)) / Math.max(Math.hypot(frame.mx, frame.mz), 1e-4))
+      const near = smoothstep(0.1, 0.7, (frame.mx * Math.sin(OPEN_SIDE) + frame.mz * Math.cos(OPEN_SIDE)) / Math.max(norm(frame.mx, frame.mz), 1e-4))
       lifted = Math.max(crown, (1 - near) * (1 - smoothstep(18, 23, time)))
       ceiling = lerp(1.6, lerp(lerp(0.6, 0.3, near), 0.75, lifted), early * smoothstep(1.5, 5, age))
     }
@@ -683,7 +684,7 @@ export function create(options: PartOptions): PlantPart {
       const off = stemRadius(time, u)
       const steep = leafElevation(i, time, pose.inputs)
       const reach = smoothstep(0.5, 1, total / Math.max(up - bud, 1e-4))
-      const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / Math.hypot(up, off))) - Math.atan2(off, up)
+      const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / norm(up, off))) - Math.atan2(off, up)
       if (guard > 0 && bud > 0) ceiling = Math.min(ceiling, lerp(1.6, 1.5708 - clear, guard * reach))
       const over = Math.max(0, steep - ceiling)
       const lower = over > 0 ? over : -lifted * smoothstep(2, 6, age) * Math.max(0, Math.min(CROWN_ANGLE, ceiling) - steep)
@@ -906,7 +907,7 @@ export function create(options: PartOptions): PlantPart {
       const under = onBlade ? smoothstep(0, 0.06, s) : 0
       const drop = under * (TROUGH * (1 - 0.7 * s) * blade + 0.55 * radius)
       // The first ring sits on the stem's axis, so the wide foot of the stalk comes out through the skin and no open end shows.
-      const back = ring === 0 ? Math.min((0.7 * stem) / Math.max(0.4, Math.hypot(tx, tz)), 0.5 * stalk * total) : 0
+      const back = ring === 0 ? Math.min((0.7 * stem) / Math.max(0.4, norm(tx, tz)), 0.5 * stalk * total) : 0
       const cx = frame.ox + frame.mx * at.x + frame.nx * at.z + frame.wx * at.y - tx * back - nx * drop
       const cy = frame.oy + frame.my * at.x + frame.ny * at.z + frame.wy * at.y - ty * back - ny * drop
       const cz = frame.oz + frame.mz * at.x + frame.nz * at.z + frame.wz * at.y - tz * back - nz * drop
@@ -921,7 +922,7 @@ export function create(options: PartOptions): PlantPart {
         tube[o + 2] = cz + (wz * c + nz * top) * radius
         if (slot === 0) {
           const lift = e > 0 ? 0.6 * e : e
-          const l = Math.hypot(c, lift) || 1
+          const l = norm(c, lift) || 1
           tubeNormals[o] = (wx * c + nx * lift) / l
           tubeNormals[o + 1] = (wy * c + ny * lift) / l
           tubeNormals[o + 2] = (wz * c + nz * lift) / l
@@ -970,8 +971,8 @@ export function create(options: PartOptions): PlantPart {
         dx = at(v0, 0) - at(far, 0)
         dy = at(v0, 1) - at(far, 1)
         dz = at(v0, 2) - at(far, 2)
-        const l = Math.hypot(dx, dy, dz) || 1
-        const tl = Math.hypot(tube[v1] - tube[v0], tube[v1 + 1] - tube[v0 + 1], tube[v1 + 2] - tube[v0 + 2]) || 1
+        const l = norm(dx, dy, dz) || 1
+        const tl = norm(tube[v1] - tube[v0], tube[v1 + 1] - tube[v0 + 1], tube[v1 + 2] - tube[v0 + 2]) || 1
         const along = (hair.r2 - 0.3) * 1.3
         dx = dx / l + ((tube[v1] - tube[v0]) / tl) * along
         dy = dy / l + ((tube[v1 + 1] - tube[v0 + 1]) / tl) * along
@@ -1010,7 +1011,7 @@ export function create(options: PartOptions): PlantPart {
           const lx = out[v10] - out[v00]
           const ly = out[v10 + 1] - out[v00 + 1]
           const lz = out[v10 + 2] - out[v00 + 2]
-          const ll = Math.hypot(lx, ly, lz) || 1
+          const ll = norm(lx, ly, lz) || 1
           const ahead = 1.4 * (hair.r3 - 0.3)
           dx = nx * side + (lx / ll) * ahead
           dy = ny * side + (ly / ll) * ahead
@@ -1022,12 +1023,12 @@ export function create(options: PartOptions): PlantPart {
           let ex = out[v00] - out[inner]
           let ey = out[v00 + 1] - out[inner + 1]
           let ez = out[v00 + 2] - out[inner + 2]
-          const el = Math.hypot(ex, ey, ez) || 1
+          const el = norm(ex, ey, ez) || 1
           ex /= el; ey /= el; ez /= el
           let fx = out[v10] - out[v00]
           let fy = out[v10 + 1] - out[v00 + 1]
           let fz = out[v10 + 2] - out[v00 + 2]
-          const fl = Math.hypot(fx, fy, fz) || 1
+          const fl = norm(fx, fy, fz) || 1
           fx /= fl; fy /= fl; fz /= fl
           const tilt = (hair.r2 - 0.5) * 1.5
           const ahead = -0.3 + 1.3 * hair.r3
@@ -1159,7 +1160,7 @@ function bladeNormals(pos: Float32Array, nor: Float32Array, leaf: Leaf): void {
       let x = uy * vz - uz * vy
       let y = uz * vx - ux * vz
       let z = ux * vy - uy * vx
-      const l = Math.hypot(x, y, z)
+      const l = norm(x, y, z)
       if (l > 1e-16) {
         x /= l
         y /= l
@@ -1182,14 +1183,14 @@ function bladeNormals(pos: Float32Array, nor: Float32Array, leaf: Leaf): void {
       let ox = pos[e] - pos[n]
       let oy = pos[e + 1] - pos[n + 1]
       let oz = pos[e + 2] - pos[n + 2]
-      const ol = Math.hypot(ox, oy, oz) || 1
+      const ol = norm(ox, oy, oz) || 1
       ox /= ol
       oy /= ol
       oz /= ol
       let x = nor[e] * 0.3 + ox
       let y = nor[e + 1] * 0.3 + oy
       let z = nor[e + 2] * 0.3 + oz
-      const l = Math.hypot(x, y, z) || 1
+      const l = norm(x, y, z) || 1
       x /= l
       y /= l
       z /= l

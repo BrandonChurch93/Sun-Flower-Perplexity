@@ -2,6 +2,7 @@ import { config } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { combine, hash01, streamSeed } from '../core/random.ts'
 import { STEM_LEAN, STEM_SWING, restless, squall, sway, windToward } from './wind.ts'
+import { norm } from './norm.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
 export interface PlantInputs {
@@ -211,17 +212,20 @@ const neckLength = new Monotone([
   [tiltStart, 0.07],
   [turnStart, 0.07],
   [turnEnd, 0.17],
+  [config.growth.seconds, 0.2],
 ])
 
 // The bud is a ball. It flattens into the disc as it opens.
 export function bodyHalfDepth(time: number): number {
   return bodyRadius(time) * depthShare.at(time)
 }
+// The open head fills with seed and bows: where its face points at the end, in degrees above the level.
+const HEAD_BOWED = -3
 const elevationCurve = new Monotone([
   [tiltStart, 90],
   [turnStart, 34],
   [turnEnd, 9],
-  [config.growth.seconds, 5],
+  [config.growth.seconds, HEAD_BOWED],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
 const EARLY_TURN = 6 * RAD
@@ -658,7 +662,7 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
 }
 
 function fromTilt(ax: number, az: number, out: Vec3): Vec3 {
-  const a = Math.hypot(ax, az)
+  const a = norm(ax, az)
   if (a < 1e-9) {
     out.x = 0
     out.y = 1
