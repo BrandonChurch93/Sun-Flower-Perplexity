@@ -1,6 +1,5 @@
 # Looks of frost
 
-2026-11-23 03:22 UTC, at commit 5fcf1f2 of agent/frost.
+2026-11-23 04:04 UTC, at commit 1996a15 of agent/frost.
 
-- `01-the-sun-in-the-mist-beside-the-key-bars-17-19-21.jpg`: the sun in the mist beside the key, bars 17 19 21 22.5 23.5 24.5
-- `02-the-thaw-at-the-boom-of-bar-25-frames-1240-to-13.jpg`: the thaw at the boom of bar 25, frames 1240 to 1300 every fourth
+- `01-bars-17-5-19-21-23-24-beside-the-key-low-fog-bur.jpg`: Bars 17.5, 19, 21, 23, 24 beside the key: low fog, burning fringe
