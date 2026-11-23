@@ -156,6 +156,8 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   let ready = false
   let running = false
   let stopAsked = false
+  // Up after kept frames could not be read: the next run draws every frame and keeps none, so it cannot fail the same way twice.
+  let distrust = false
   let secondsPerSample = 0
   let queue: Promise<void> = Promise.resolve()
   let turn = 0
@@ -513,7 +515,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     await holdAwake()
 
     let failure: unknown = null
+    let unkept = ''
     let done = 0
+    // The frames a next start would take from the store: less than `done` once the store has refused a write.
+    let safe = 0
     let reached = 0
     let resumed = 0
     let again = false
@@ -580,7 +585,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     let error: string | null = null
     let store: Store | null = null
     try {
-      store = await openStore()
+      store = distrust ? null : await openStore()
       const have = await keptFrames(store)
       const meta = have > 0 && store ? await store.meta() : null
       if (store && meta && have > 0) {
@@ -588,7 +593,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         wanted = meta.description
         for (let g = 0; done < have; g++) {
           const chunks = await store.group(g, framesIn(g))
-          if (!chunks) throw new Error('the kept frames could not be read')
+          if (!chunks) throw new Error('unreadable')
           for (const c of chunks) {
             const chunk = new EncodedVideoChunk({ type: c.key ? 'key' : 'delta', timestamp: c.timestamp, duration: c.duration, data: c.data })
             muxer.addVideoChunk(chunk, muxed === 0 ? { decoderConfig: { codec: meta.codec, codedWidth: size.width, codedHeight: size.height, description: undescribe(meta.description), colorSpace: meta.colour ?? undefined } } : undefined)
@@ -597,6 +602,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
           done += chunks.length
         }
         resumed = done
+        safe = done
         reached = done
         tell(from + done - 1)
       }
@@ -628,12 +634,20 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         await encoder.flush()
         if (failure) throw failure
         if (pending.length !== count) throw new Error(`the encoder returned ${pending.length} of ${count} frames`)
+        done = Math.min(n, (g + 1) * group)
+        // Keeping frames is a help, never a condition: a store that is full or broken ends the keeping and not the export.
         if (store) {
-          if (g === 0 || wanted === undefined) await store.writeMeta({ codec: choice.codec, description: description ?? null, frames: n, group, colour: colour ?? meta?.colour ?? null })
-          await store.writeGroup(g, pending)
+          try {
+            if (g === 0 || wanted === undefined) await store.writeMeta({ codec: choice.codec, description: description ?? null, frames: n, group, colour: colour ?? meta?.colour ?? null })
+            await store.writeGroup(g, pending)
+            safe = done
+          } catch (caught) {
+            store = null
+            unkept = `This browser stopped keeping frames at frame ${from + safe} (${words(caught)}). The export goes on and the file is not touched by it. If the export stops, the next start goes on from frame ${from + safe}.`
+            keptCheck.set('ok', unkept)
+          }
         }
         pending = []
-        done = Math.min(n, (g + 1) * group)
         reached = done
         tell(from + done - 1)
       }
@@ -667,7 +681,8 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       saved.replaceChildren(make('span', undefined, `${blob.size < 1048576 ? `${Math.ceil(blob.size / 1024)} kB` : `${(blob.size / 1048576).toFixed(1)} MB`} · `), link)
       saved.hidden = false
       link.click()
-      await store?.clear()
+      await (store ?? (await openStore().catch(() => null)))?.clear()
+      distrust = false
       try {
         const heardLine = !voice ? 'no sound' : soundCheck ? `sound ${voice.kind.label}, ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms against the track, ${soundCheck.pass ? 'PASS' : 'FAIL'}` : `sound ${voice.kind.label}, not measured against the track`
         localStorage.setItem(EXPORT_NOTE, `last export: ${name}, ${n} frames at ${size.width} x ${size.height}, ${choice.codec}, ${heardLine}, ${new Date().toISOString()}`)
@@ -675,11 +690,12 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       say(`Done. ${n} ${n === 1 ? 'frame' : 'frames'} are in ${name}, in your downloads folder${soundChunks > 0 ? ', with the track' : ''}.`)
     } catch (caught) {
       const message = words(caught)
-      const keeps = store && done > 0 ? ` Frames ${from} to ${from + done - 1} are kept: the next start goes on from there.` : ''
-      if (message === 'changed') {
-        await store?.clear()
+      const keeps = safe > 0 ? ` Frames ${from} to ${from + safe - 1} are kept: the next start goes on from there.` : ''
+      if (message === 'changed' || message === 'unreadable') {
+        await (store ?? (await openStore().catch(() => null)))?.clear()
         again = true
-        error = 'The encoder of this browser is not the one the stopped export used, so the kept frames cannot be joined. Starting again from the first frame.'
+        distrust = message === 'unreadable'
+        error = message === 'changed' ? 'The encoder of this browser is not the one the stopped export used, so the kept frames cannot be joined. Starting again from the first frame.' : 'The kept frames could not be read. Starting again from the first frame.'
       } else if (message === 'stopped') error = `Stopped at frame ${from + reached}. No file was written.${keeps}`
       else if (message === 'lost' || lost()) {
         lostTold = true
@@ -696,8 +712,9 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       start.textContent = 'Start the export'
       setControls(true)
       start.disabled = !ready || lost()
-      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : done, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voice ? voice.kind.label : null, soundCheck }
+      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : safe, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voice ? voice.kind.label : null, soundCheck }
       await lookForKept()
+      if (unkept && error === null) keptCheck.set('ok', unkept)
     }
     if (again) await run()
   }
