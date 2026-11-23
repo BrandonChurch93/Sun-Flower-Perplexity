@@ -472,10 +472,13 @@ export function create(options: PartOptions): PlantPart | null {
     let row = 0
     const endNode = stemAt(pose, 1)
     const flip = qx * endNode.bx + qy * endNode.by + qz * endNode.bz < 0 ? -1 : 1
+    // The sleeve round the stem's end comes out of the end itself: first as wide as the stem, then down along it.
+    const wide = smoothstep(0, 0.0004, R)
+    const down = smoothstep(0, WRAP_BY_R, R)
     for (const back of shape.neck) {
-      const u = Math.max(0, 1 - back / Math.max(pose.length, 1e-6))
+      const u = Math.max(0, 1 - (back * down) / Math.max(pose.length, 1e-6))
       const n = stemAt(pose, u)
-      const radius = stemR(u) + 0.0003
+      const radius = (stemR(u) + 0.0003) * wide
       for (let b = 0; b < cols; b++) {
         const t = (b / shape.sides) * TAU
         const c = Math.cos(t)
@@ -860,7 +863,7 @@ export function create(options: PartOptions): PlantPart | null {
       }
       if (nor) fillHairs(slot, slots[slot], nor, pose)
     },
-    absent: (time) => bodyRadius(time) <= 0,
+    absent: (time) => bodyRadius(time) <= 0 && loneAt(time) <= 0,
     finish() {
       if (filled[0]) position.needsUpdate = true
       if (filled[1] && positionB) positionB.needsUpdate = true

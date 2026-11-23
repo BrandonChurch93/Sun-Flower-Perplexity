@@ -26,9 +26,6 @@ const PATH = 48
 const OPEN_SIDE = 0.35
 const FACING = 1.2
 const FRINGE = 4
-const DAWN_GLOW = 0.35
-const RAIN_GLOW = 0.5
-const NIGHT_GLOW = 0.32
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
 const BLOOM = 40
 // The other marks on the plant's clock the leaves are timed to: where the first pair opens, where the plant is set, where its bud is formed, and where the seedling and the shoot are at their fullest.
@@ -407,7 +404,6 @@ export function create(options: PartOptions): PlantPart {
   let stateNow = stateSets[0]
   let ripeNow = ripeSets[0]
   let depthNow = depthSets[0]
-  const glows = [0, 0]
   const freshes = [0, 0]
   const hairsUp = [0, 0]
   const edges = new Float32Array(LEAVES * 4)
@@ -1183,7 +1179,6 @@ export function create(options: PartOptions): PlantPart {
       ripeness[i] = ripeSets[0][i] + (ripeSets[to][i] - ripeSets[0][i]) * share
       cut[i * 4 + 1] = depthSets[0][i] + (depthSets[to][i] - depthSets[0][i]) * share
     }
-    uniforms.uGlow.value = glows[0] + (glows[to] - glows[0]) * share
     uniforms.uFresh.value = freshes[0] + (freshes[to] - freshes[0]) * share
   }
 
@@ -1215,8 +1210,6 @@ export function create(options: PartOptions): PlantPart {
       filled[slot] = true
       if (lead) {
         led[slot] = true
-        // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-        glows[slot] = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
         freshes[slot] = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       }
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
