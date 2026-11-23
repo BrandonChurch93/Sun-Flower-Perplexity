@@ -402,6 +402,7 @@ in float vKind;
 in float vSpark;
 
 const float BEAD_LENS = 1.5;
+const vec3 BEAD_NIGHT = vec3(0.74, 1.11, 1.11);
 
 // The world as a bead shows it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
@@ -409,7 +410,8 @@ vec3 beadSky(vec3 d) {
   float t = d.y * 0.5 + 0.5;
   // A bead shows the sky as the sky draws itself, not the fill that lands on the leaf.
   vec3 dome = mix(uGroundBounce, mix(uAirHorizon, uAirZenith, smoothstep(0.55, 1.0, t)), smoothstep(0.15, 0.6, t));
-  return dome + uAirHorizon * (1.2 * band);
+  // The band is the day's: under the moon the horizon is no brighter than the dome over it.
+  return dome + uAirHorizon * (1.2 * band * (1.0 - uWetMoon));
 }
 
 ${THAW_WORLD}
@@ -532,9 +534,13 @@ void main() {
   farSun *= farSun;
   farSky *= farSky;
   // Under a bead on a face turned from the sun the skin is lit through the blade.
-  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * farSky * farSky);
+  // Under the moon the bead gathers little and the skin under it is the dim teal the eye sees the blade as: a dim cool point on the dark leaf, not a lamp.
+  float moon = thaw ? 0.0 : uWetMoon;
+  float gathers = 1.0 - 0.75 * moon;
+  vec3 skin = mix(vTint, BEAD_NIGHT * dot(vTint, vec3(0.3, 0.6, 0.1)), moon);
+  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * gathers * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * gathers * farSky * farSky);
   // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
-  vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
+  vec3 body = skin * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
   // Seen this near the water is clear: the blade under it stands as bright as the blade beside it, lit through, and darker round the foot.
   if (thaw) body = vTint * (uSunColor * (0.6 * key) + 1.3 * skyAmbient(up)) * (0.32 + 1.1 * smoothstep(0.3, 0.9, -dot(n, sunward))) * mix(0.25, 1.0, smoothstep(0.0, 0.5, ndv));
   // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
@@ -557,7 +563,7 @@ void main() {
   lens *= lens;
   lens *= lens;
   lens *= lens;
-  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS) * clear * sun * clearOfSkin * lens * lens);
+  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens * lens);
   if (thaw) {
     // At this distance the bead is a lens to the eye. The sun through it is one small star, at the place a ray must enter the ball to leave it toward the sun: near the edge turned from the sun.
     float turnTo = acos(clamp(dot(ray, uSunDir), -1.0, 1.0));
