@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskFall, huskLand, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
+import { makePartSurface, partGeometry, partMesh, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
@@ -583,7 +583,7 @@ export function create(options: PartOptions): PlantPart | null {
       const normals = leaves.normals
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
+      const rain = smoothstep(0.3, 0.9, wetFelt())
       const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length

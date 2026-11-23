@@ -12,7 +12,8 @@ const RIPPLE_SPEED = 5
 const pulse = (f: number): number => {
   const x = f - Math.floor(f)
   const rise = Math.min(1, x / 0.12)
-  return rise * rise * (3 - 2 * rise) * Math.exp(-3.2 * Math.max(x - 0.12, 0))
+  const out = Math.min(1, Math.max(0, (1 - x) / 0.25))
+  return rise * rise * (3 - 2 * rise) * Math.exp(-3.2 * Math.max(x - 0.12, 0)) * out * out * (3 - 2 * out)
 }
 
 // How hard the air pushes at a place in meters and a film second, 0 to about 1.
@@ -27,7 +28,7 @@ export function gustAt(x: number, z: number, seconds: number): number {
 export const gustGlsl = /* glsl */ `
 float gustPulse(float f) {
   float x = fract(f);
-  return smoothstep(0.0, 0.12, x) * exp(-3.2 * max(x - 0.12, 0.0));
+  return smoothstep(0.0, 0.12, x) * exp(-3.2 * max(x - 0.12, 0.0)) * smoothstep(0.0, 0.25, 1.0 - x);
 }
 float gustAt(vec2 at, float seconds) {
   float along = at.x * ${windWay.x.toFixed(4)} + at.y * ${windWay.z.toFixed(4)};

@@ -5,6 +5,7 @@ import type { Caster } from '../core/shadow.ts'
 import type { PlantInputs } from './growth.ts'
 import type { Pose } from './skeleton.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from './wind.ts'
+import { GUST_LEAN } from './growth.ts'
 import { config } from '../config.ts'
 
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
@@ -18,6 +19,8 @@ export interface PartOptions {
   variant: number
   // The places of the neighbors when the part is drawn once per neighbor. Null for the plant and the companion.
   places: THREE.InstancedInterleavedBuffer | null
+  // The uniforms that are the plant's own and not the field's: what the air does to it while its clock stands.
+  own?: Record<string, THREE.IUniform>
 }
 
 // One organ of the plant at its real quality. It owns its meshes and fills them for the two ends of the shutter.
@@ -46,6 +49,14 @@ export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDe
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
+// How far the plant being filled stands in a hold, 0 to 1.
+export const filling = { held: 0 }
+const WET_STEPS = 16
+// How wet the beads are laid: while the plant's clock stands, in steps, so the shape is not laid again on every frame of the rain.
+export function wetFelt(): number {
+  const wet = stateUniforms.uPlantWet.value
+  return filling.held >= 1 ? Math.round(wet * WET_STEPS) / WET_STEPS : wet
+}
 
 // Every vertex of a part goes through plantWorld, so that the same part stands as the plant, as the companion and as each neighbor.
 export const plantVertexGlsl = /* glsl */ `
@@ -62,7 +73,45 @@ uniform float uWide;
 uniform float uLate;
 uniform float uEarly;
 uniform vec3 uHeadAxis;
+#else
+// x the steady wind on the stem, y the wind on the leaves, z the storm's gusts, w the rain beating on the leaves: all 0 unless the plant's clock stands.
+uniform vec4 uOwnAir;
+// The end of the stem at rest, in the plant's own frame.
+uniform vec3 uOwnTip;
+#endif
 ${swayGlsl}
+#ifndef PLANT_FIELD
+// While the plant's clock stands its shape is not filled again: the air moves it here, on the film second. The stem bends from its foot, and what stands off it rides, flutters, is thrown by the gusts and nods under the drops.
+vec3 plantHeld(vec3 w) {
+  if (uOwnAir.x + uOwnAir.y + uOwnAir.z + uOwnAir.w <= 0.0) return w;
+  vec3 foot = modelMatrix[3].xyz;
+  vec3 tip = (modelMatrix * vec4(uOwnTip, 1.0)).xyz;
+  float size = length(modelMatrix[0].xyz);
+  float tall = max(tip.y - foot.y, 0.001);
+  float time = uReal + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
+  float h = clamp((w.y - foot.y) / tall, 0.0, 1.3);
+  vec2 way = vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)});
+  float push = 0.2 + 0.8 * plantGust(foot.xz, time - 0.1);
+  float lean = uOwnAir.x * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(time, foot.xz)) + uOwnAir.z * ${GUST_LEAN.toFixed(4)} * push;
+  float k = clamp((h - 0.15) / 0.85, 0.0, 1.3);
+  vec2 off = w.xz - foot.xz - (tip.xz - foot.xz) * h * h;
+  float r = length(off);
+  vec2 o = off / max(r, 1e-4);
+  float reach = r * smoothstep(0.03, 0.09, r / size);
+  float ph = 0.8 * o.x - 0.6 * o.y + 2.0 * h;
+  float flutter = 0.6 * sin(time * 5.9 + 3.1 * ph) + 0.4 * sin(time * 10.3 + 7.3 * ph);
+  float into = -dot(o, way);
+  float beat = 0.6 * o.x + 0.9 * o.y + 1.3 * h;
+  float a1 = fract(time / 0.83 + beat);
+  float a2 = fract(time / 1.31 + 1.7 * beat + 0.4);
+  float nod = exp(-4.2 * a1) * sin(20.0 * a1) + 0.7 * exp(-6.5 * a2) * sin(31.0 * a2);
+  float up = uOwnAir.y * (0.045 * flutter + 0.03 * (2.0 * plantGust(w.xz, time) - 1.0)) + uOwnAir.z * push * 0.4 * (into > 0.0 ? into : 0.6 * into) - uOwnAir.w * (0.07 * nod + 0.14);
+  vec2 across = vec2(-o.y, o.x);
+  vec2 side = way * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k) + reach * (0.03 * uOwnAir.y * flutter + 0.12 * uOwnAir.z * push)) + across * (reach * 0.3 * uOwnAir.z * push * dot(way, across));
+  return vec3(w.x + side.x, w.y + reach * up, w.z + side.y);
+}
+#endif
+#ifdef PLANT_FIELD
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
   if (uPlantWind <= 0.0) return vec2(0.0);
@@ -113,7 +162,7 @@ vec3 plantWorld(vec3 local) {
   return vec3(c * p.x + s * p.z + aPlace.x + blow.x, p.y, c * p.z - s * p.x + aPlace.y + blow.y);
 #else
   vPlantTone = 0.5;
-  return (modelMatrix * vec4(local, 1.0)).xyz;
+  return plantHeld((modelMatrix * vec4(local, 1.0)).xyz);
 #endif
 }
 
@@ -234,7 +283,7 @@ export function makePartSurface(options: PartOptions, o: SurfaceOptions): Surfac
     vertex: `${define}${plantVertexGlsl}\n${o.vertex}`,
     fragment: `${define}${plantFragmentGlsl}\n${o.fragment}`,
     castShadow: options.places ? false : o.castShadow,
-    uniforms: { ...stateUniforms, ...(options.places ? fieldUniforms : {}), ...(o.uniforms ?? {}) },
+    uniforms: { ...stateUniforms, ...(options.places ? fieldUniforms : (options.own ?? {})), ...(o.uniforms ?? {}) },
   })
 }
 
