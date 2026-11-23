@@ -152,6 +152,14 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 03:56 UTC. Rime arrives where it can be seen: `frostAtBar` rises from bar 16.9 to 18 (it rose from 16.4 to 17, in the dark). The frost test now asks for more than 12 s of frost (it asked for 13).
 - 2026-11-23 03:58 UTC. The plant alone check judges a frame only while the frost and the wet on the plant are under 0.02: rime and water may brighten the plant, the moon may not.
 - 2026-11-23 03:58 UTC. Under the moon the wet ground's glints are at most about a seventh of the day's and follow the moon's own strength. A cloud hides the stars behind it. A star is never drawn wider than about 2.5 pixels at 1920 wide.
+- 2026-11-23 04:20 UTC. Export is a first class way to get the video: the page takes his track from his disk, writes one mp4 with sound, can be resumed, and shows its progress outside the frame. Live play must be smooth as well. A menu entry copies the pacing report.
+- 2026-11-23 04:25 UTC. The moon stands at azimuth 177.5, elevation 12.5. MEASURED: 0 of 390 night frames have it near an edge of the frame.
+- 2026-11-23 04:28 UTC. Vertex arrays are counted as made things; one made after loading fails the count.
+- 2026-11-23 04:30 UTC. Loading waits for a painted frame after each step (`paint()` in `src/core/yield.ts`).
+- 2026-11-23 04:35 UTC. Noon is at 40 degrees (was 62) with the same speed at the horizon, and the day is exposed darker (`LEVEL.day` 0.38, key 3.9 to 3.5, fill colour by sun height). MEASURED on the Builder's frames: clods throw shadows, the plant keeps its back light, near earth at bar 29.7 is 40, 33, 26 of 255.
+- 2026-11-23 04:36 UTC. Limits of the script check: sum 16 ms mean and 25 worst; plant and companion 5; field 3; rain and puddles 2; scene 6; shadow pass 3; others 1. Wet plant frames may rise by 1.5 of 255 a frame in the mean, 2 at the 90th percentile.
+- 2026-11-23 04:40 UTC. The pair at the end keeps its heights for now (`heightRatio` 1.131): the companion's leaf at the upper left of the two bloom frames is part of the approved pictures. The shorter companion with its leaf holds set again comes after the field's processor work.
+- 2026-11-23 04:40 UTC. The place paints its near sunflower strips in the field's far colour from bar 57 to the end, so no line shows where the field's wedge ends. The crop's tops take the full low sun late in the bloom.
 
 ## Notes from Brandon
 
@@ -159,20 +167,16 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-In the order they cost the film (from the first whole watch beside the keys, 03:33 to 03:50 UTC):
+In the order they cost the film (from the second watch beside the keys, 04:39 UTC, `v2` at `12f8c44`):
 
-- The processor: script time 2 to 6 times the frame's budget wherever something grows. With the plant (key shapes), the field, the rain (puddles) and the checks (`script` check).
-- pure fails at frame 1700 (the plant's tip differs when the frame is drawn first on a page) and the plant is sent again on some frames of the storm hold (12.4 MB). With the plant.
-- Low sun in the first half is murky brown and beige (bars 1.5, 9.2, 13, 29.1). With the sky and the lens.
-- Midday soil is pale tan (bar 29.7: 135, 110, 75). With the ground.
-- The opening is too bright and pink, with pale caps on the clods, a pale green arch and a black hole. With the sky, the ground and the plant.
-- The frost hold is one flat picture for 13.7 s. With frost (events on bars) and the ground (rime on crests).
-- The end is too magenta. With the sky; the evening's cover is the Builder's.
-- Stars are discs and shine through clouds; the Milky Way is wired in next. With sky B and sky A.
-- The break: the disc shows through the deck one frame early and the tear opens in one frame; beams too clean; the puddle is a white slab. With the sky, the lens and the rain.
-- Storm: leaves hang like sheets, the strike of bar 37 is small, the flash has a hard round edge, wet rims on leaves before the rain. With the plant, the sky and the rain.
-- Night after the storm: glitter under the moon, leaves stepping at frame 2166. With the ground, the rain and the plant.
-- The Builder's own: nights of bars 8.65 and 12.73 near black, saturation at the break, the evening's cover, the flash as a cold rim.
+- The processor: STATED by the checks, script time 83.8 ms in the mean against 16 while the plant grows, 12 of 13 windows fail; the frost hold passes at 5.9 ms. With the plant (key shapes, pop at frame 2472), the field (lists into the shader, keys for its kinds), the Builder (shadow pass 1.7 to 2.7 ms against 3, the first warmed moment 5.1 s in one piece).
+- Full day: leaves teal and matte, weak back light, clouds grainy at the draft tier. With the plant after the processor work, and sky B.
+- Frost: the blade is bare green inside its fringe. With frost.
+- The end: a pale straight band under the ridge (the place paints it), the pair's leaves too bright, the heights of the pair (later, with the field).
+- The opening's foreground is close to black. With the ground and the Builder.
+- Night 9: a part step of 55 at frame 2177 (a cloud over the bright Milky Way after the storm). With sky B.
+- Loading: 96 s on this machine with stretches of 5 to 10 s unpainted. With the player and the Builder.
+- The Builder's own: long shadows of the pair at bars 69 to 75, the frost hold and the night level under the new sky, the flash as a cold rim.
 - The first whole film in parts with the music (private) has not been drawn yet.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
