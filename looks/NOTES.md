@@ -1,7 +1,8 @@
 # Looks of rain
 
-2026-11-23 07:50 UTC, at commit 779dac60 of agent/rain.
+2026-11-23 08:17 UTC, at commit 027347a0 of agent/rain.
 
-- `01-thaw-1175-1208-1234-1240-draft-plant-lines-local.jpg`: thaw-1175-1208-1234-1240-draft-plant-lines-local
-- `02-thaw-1234-crop.jpg`: thaw-1234-crop
-- `03-thaw-1208-crop.jpg`: thaw-1208-crop
+- `01-thaw-1240-crop-027347a.jpg`: thaw-1240-crop-027347a
+- `02-thaw-1234-crop-027347a.jpg`: thaw-1234-crop-027347a
+- `03-thaw-drop-1234-and-1240-twice-size.jpg`: thaw-drop-1234-and-1240-twice-size
+- `04-thaw-12-judged-frames-tip-crops-earlier-look.jpg`: thaw-12-judged-frames-tip-crops-earlier-look
