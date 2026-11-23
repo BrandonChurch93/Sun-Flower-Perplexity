@@ -80,7 +80,7 @@ export const leafMain = /* glsl */ `void main() {
   // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
   if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
   // Seen from a hand's breadth the glow is warm, and the margin, a single layer of cells, is a bright line.
-  float near = 1.0 - smoothstep(0.35, 1.2, vDepth);
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
   through *= mix(vec3(1.0), vec3(1.3, 1.08, 0.75), 0.7 * near * (1.0 - brown));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
