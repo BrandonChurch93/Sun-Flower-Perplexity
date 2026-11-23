@@ -84,15 +84,16 @@ const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) 
 const SETTLE_SLOW = 0.5
 const SETTLE_FROM_T = BUD_T - 0.4
 export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_T) / Math.max(heightAt(time <= SETTLE_FROM_T ? time : SETTLE_FROM_T + (time - SETTLE_FROM_T) * SETTLE_SLOW), 0.001)))
-// The plant towers over a young field. As seedlings the rows are its size; through the climb and the storm they stand at two fifths of it,
+// The plant towers over a young field. As seedlings the rows are its size; in the storm they stand at half of it and close into one band,
 // and on the way up to the bud they stay under the lens that rises with the plant. By the bud they have their full size.
 // Each pair is a mark of the plant's clock and the share of its full height the tallest neighbor stands at.
-const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.43], [20, 0.405], [29.2, 0.405], [30.03, 0.41], [31.19, 0.5], [32.35, 0.62], [33.5, 0.72], [34.66, 0.76], [38.14, 0.8], [41.6, 0.84], [BUD_T, 1]]
+const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.56], [20, 0.52], [23.1, 0.505], [25.35, 0.462], [29.2, 0.405], [30.03, 0.41], [31.19, 0.5], [32.35, 0.62], [33.5, 0.72], [34.66, 0.76], [38.14, 0.8], [41.6, 0.84], [BUD_T, 1]]
 // While the field is low its plants are nearly of a height: how much of each one's own size shows, as a power of it.
 const EVEN_LOW = 0.12
 const EVEN_FROM_T = 29.2
 const SHARE_LOW = 0.05
-const EVEN: [number, number][] = [[9, 1], [12, EVEN_LOW], [EVEN_FROM_T, EVEN_LOW]]
+const EVEN_STORM = 0.07
+const EVEN: [number, number][] = [[9, 1], [12, EVEN_LOW], [20, EVEN_STORM], [23.1, EVEN_STORM], [28.6, EVEN_LOW], [EVEN_FROM_T, EVEN_LOW]]
 // A curve through the marks that never turns back between two of them.
 function curve(marks: [number, number][]): (time: number) => number {
   const n = marks.length
@@ -185,7 +186,9 @@ export function lateLean(id: number): { x: number; z: number } {
 const FACE_EAST = 84 * RAD
 export const faceToward = (id: number): number => (hash01(SEED, 156, id) < 0.16 ? 2 * Math.PI * hash01(SEED, 155, id) : FACE_EAST + 0.5 * bell(id, 157))
 // How far a head has come round to that side, by its own clock: a bud stands as it grew, an open head has settled.
-export const settled = (clock: number, id: number): number => ramp(BUD_T - 1.5 + 2 * hash01(SEED, 41, id), OPEN_T - 1.5 + 2 * hash01(SEED, 41, id), clock)
+export const settled = (clock: number, id: number): number => settledBy(clock, settleOf(id))
+export const settleOf = (id: number): number => hash01(SEED, 41, id)
+export const settledBy = (clock: number, own: number): number => ramp(BUD_T - 1.5 + 2 * own, OPEN_T - 1.5 + 2 * own, clock)
 // The middle and far rows lift their heads from their hang and fill out to the size of the larger heads.
 export const faceAt = (id: number, reach: number): number => (hash01(SEED, 156, id) < 0.1 ? 0 : step(9, 17, reach))
 export const shortWay = (turn: number): number => turn - 2 * Math.PI * Math.round(turn / (2 * Math.PI))
@@ -210,10 +213,10 @@ export const LEAN_GUST = 0.56
 export interface Blown { x: number; z: number; head: number; leaves: number; nod: number }
 const blown: Blown = { x: 0, z: 0, head: 0, leaves: 0, nod: 0 }
 // What the wind does to one neighbor: it is pushed over as the front strikes, shakes while it is held, and swings back on a period of its own; its head and its leaves turn with it, each its own way.
-export function blownOf(id: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown {
-  const a = hash01(SEED, 141, id)
-  const b = hash01(SEED, 142, id)
-  const c = hash01(SEED, 143, id)
+export const blownOf = (id: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown => blownBy(windOf(id, 0), windOf(id, 1), windOf(id, 2), x, z, seconds, wind, leafWind)
+// A neighbor's three numbers for the wind: they never change, so they are worked out once.
+export const windOf = (id: number, which: number): number => hash01(SEED, 141 + which, id)
+export function blownBy(a: number, b: number, c: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown {
   const g = gustAt(x, z, seconds - 0.25 * a)
   const turn = 2 * Math.PI
   const shake = Math.sin(turn * (seconds / (0.9 + 0.8 * b) + c))
@@ -281,6 +284,8 @@ const UNDER_FROM_M = 7
 const UNDER_TO_M = 18
 const UNDER_PER_GAP = 2
 const UNDER_ID = 1000000
+// How far along its line a row starts behind the front edge, in plants.
+const ROW_STEP = 1
 // Each kind of picture is drawn twice, no two heads facing the same way: most to the east and its sides, one to the west with its back to the morning.
 const PICTURE_FACES_DEG = [[62, 98], [80, 128], [104, 38], [72, 232]]
 export const pictureFace = (kind: number, turn: number): number => PICTURE_FACES_DEG[kind][turn] * RAD
@@ -361,19 +366,22 @@ export function fieldPlaces(): FieldPlaces {
   const under: number[] = []
   const { plantSpacingM, rowSpacingM, plantAheadOfRowM } = config.field
   let id = 0
-  for (let k = 0; plantAheadOfRowM + k * rowSpacingM <= fieldThinM; k++) {
-    const depth = plantAheadOfRowM + k * rowSpacingM
-    const phase = hash01(SEED, 1, k)
-    for (let n = -Math.floor(fieldWest(depth) / plantSpacingM); n <= Math.floor(fieldEast(depth) / plantSpacingM); n++) {
+  // A row is a line that runs away from the plant. A lane, not a row, lies on the plant's own axis, and no two rows start in step.
+  for (let k = 0; plantAheadOfRowM + k * plantSpacingM <= fieldThinM; k++) {
+    const sown = plantAheadOfRowM + k * plantSpacingM
+    for (let n = Math.ceil(-fieldWest(sown) / rowSpacingM - 0.5); n <= Math.floor(fieldEast(sown) / rowSpacingM - 0.5); n++) {
       id++
+      const depth = sown + ROW_STEP * hash01(SEED, 1, n + 100000) * plantSpacingM
+      // How many old rows of depth lie between the front edge and this plant.
+      const k0 = (depth - plantAheadOfRowM) / rowSpacingM
       // Past the last full row the pictures thin out: most of them at first, one in four at the end.
       if (depth > fieldPicturesM && hash01(SEED, 6, id) > 0.85 - 0.6 * step(fieldPicturesM, fieldThinM, depth)) continue
-      // Past the near rows the plants stand off their lines, so no row can be followed to the horizon.
-      const out = Math.hypot(depth, n * plantSpacingM)
-      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
-      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
+      // A plant stands a hand off its line at most, so a row can be followed to the far end of the field.
+      const out = Math.hypot(depth, (n + 0.5) * rowSpacingM)
+      const across = (n + 0.5) * rowSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.1 + 0.08 * step(8, 40, out))
+      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.12 + 0.2 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
-      const skirt = k < edgeRows(across) - 0.5 && !(k === 0 && frontRow(across))
+      const skirt = k0 < edgeRows(across) - 0.5 && !(k0 < 0.5 && frontRow(across))
       if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -382,9 +390,8 @@ export function fieldPlaces(): FieldPlaces {
       for (let u = 0; !skirt && reach < UNDER_TO_M && u < UNDER_PER_GAP; u++) {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
-        const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
-        if (k < edgeRows(off) - 0.5 && !(k === 0 && frontRow(off))) continue
-        const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
+        const off = across + (hash01(SEED, 52, uid) - 0.5) * 0.1
+        const back = along + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
         under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
       }
       const away = step(20, 60, Math.min(reach, 60))
@@ -393,7 +400,7 @@ export function fieldPlaces(): FieldPlaces {
       if (!skirt && hash01(SEED, 9, id) < 0.03 + thin) continue
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const short = skirt || hash01(SEED, 15, id) < SHORT || (k === 0 && frontRow(across) && hash01(SEED, FRONT_CHANNEL, id) < FRONT_SHORT)
+      const short = skirt || hash01(SEED, 15, id) < SHORT || (k0 < 0.5 && frontRow(across) && hash01(SEED, FRONT_CHANNEL, id) < FRONT_SHORT)
       const size = skirt ? SKIRT_SIZE[0] + (SKIRT_SIZE[1] - SKIRT_SIZE[0]) * hash01(SEED, 72, id) : short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
