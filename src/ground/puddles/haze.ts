@@ -43,7 +43,7 @@ void main() {
   vec3 ray = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(ray, uSunDir));
   float t4 = toSun * toSun * toSun * toSun;
-  vec3 light = 0.4 * uSkyHorizon + 0.25 * uSkyZenith + 0.15 * uSkyHorizonSun + uSunColor * (0.03 + 0.5 * t4) + uHazeFlash;
+  vec3 light = 0.4 * uAirHorizon + 0.25 * uAirZenith + 0.15 * uSkyHorizonSun + uAirSun * (0.006 + 0.1 * t4) + uHazeFlash;
   outColor = vec4(applyFog(light, vWorld), cover);
 }
 `
