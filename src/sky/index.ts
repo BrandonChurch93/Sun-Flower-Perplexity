@@ -13,7 +13,7 @@ import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
-import { sunsetAmount, sunsetDuskAt, SunsetMeter } from './sunset.ts'
+import { finaleCloudDecay, sunsetAmount, sunsetDuskAt, SunsetMeter, sunsetPhotoAt } from './sunset.ts'
 
 const levels = {
   film: { width: 832, height: 512, steps: 60, light: 6 },
@@ -60,13 +60,17 @@ function lastLightAt(elevation: number, evening: number): number {
   return evening * (1 - smoothstep(0.4, 2.7, elevation))
 }
 
-// The high sheets enter gradually over the last lapse and take over on
-// the crane. They stay in the air through dusk, night, and dawn.
-function eveningStreaksAt(m: Moment): number {
+function shortStreaksAt(m: Moment): number {
   const b = m.bar
-  const short = 0.64 * smoothstep(53, 54.1, b) * (1 - smoothstep(55.7, 57, b))
+  return 0.64 * smoothstep(53, 54.1, b) * (1 - smoothstep(55.7, 57, b)) * (1 - smoothstep(0.10, 0.27, m.dials.overcast))
+}
+
+// Keep the broad ambient lighting/meter on its existing curve. The finale
+// cloud's shape and opacity use their own longer, film-time evolution.
+function sheetLightAt(m: Moment): number {
+  const b = m.bar
   const long = smoothstep(65, 65.35, b) * (1 - smoothstep(75, 75.25, b))
-  return Math.max(short, long) * (1 - smoothstep(0.10, 0.27, m.dials.overcast))
+  return Math.max(shortStreaksAt(m), long * (1 - smoothstep(0.10, 0.27, m.dials.overcast)))
 }
 
 // Under a remaining deck, high sun transmission means a local opening
@@ -110,6 +114,7 @@ class FieldSky implements Sky {
   private readonly mist = rgb()
   private readonly groundSun = rgb()
   private readonly cloudSun = rgb()
+  private readonly sunsetPhoto = rgb()
   private readonly deck = rgb()
   private readonly moon = rgb()
   private readonly lunarVisibility = new Float32Array(frameCount).fill(-1)
@@ -150,6 +155,7 @@ class FieldSky implements Sky {
       uGolden: { value: 0 },
       uLate: { value: 0 },
       uStreaks: { value: 0 },
+      uEndDeck: { value: 0 },
       uSideBanks: { value: 0 },
       uWetHaze: { value: 0 },
       uWetDome: { value: new THREE.Vector3() },
@@ -276,7 +282,7 @@ class FieldSky implements Sky {
     this.air.deckAt(e, this.deck)
     const over = d.overcast
     const blend = smoothstep(0.40, 1, over)
-    const sheets = eveningStreaksAt(m)
+    const sheets = sheetLightAt(m)
     const fair = 0.21 * d.cover * (1 - blend) * (1 - 0.82 * sheets)
     const cold = smoothstep(0.25, 0.84, d.fog)
     const burst = tearAt(over, d.sunThrough, d.burst)
@@ -384,8 +390,9 @@ class FieldSky implements Sky {
     u.uTearAttack.value = tearAttack(d.sunThrough, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
-    u.uStreaks.value = eveningStreaksAt(now)
-    u.uSideBanks.value = smoothstep(66.35, 67, now.bar) * (1 - smoothstep(71, 71.85, now.bar))
+    u.uStreaks.value = shortStreaksAt(now)
+    u.uEndDeck.value = finaleCloudDecay(now.bar)
+    u.uSideBanks.value = smoothstep(64.8, 67, now.bar) * (1 - smoothstep(71, 71.85, now.bar))
     u.uWetHaze.value = wetHaze
     if (wetHaze > 0) {
       const b = wetBlueAt(e)
@@ -431,10 +438,9 @@ class FieldSky implements Sky {
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
     v.uElevation.value = e
-    // Stars need clear air as well as a hole in the cloud. Residual storm
-    // moisture lingers after the rain dial falls, and dims point sources
-    // and the galaxy without relaxing the cloud transmission mask.
-    const starClarity = 1 - 0.985 * smoothstep(0.24, 0.45, d.wet)
+    // The storm deck extinguishes starlight, not moisture on the ground.
+    // The display shader still applies local cloud transmission and fog.
+    const starClarity = 1 - smoothstep(0.12, 0.58, d.overcast)
     v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e))) * starClarity
     v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
@@ -469,12 +475,11 @@ class FieldSky implements Sky {
     if (finale > 0) {
       // Radiance before grade, not a display swatch. Decouple it from
       // the dim horizon so the glass receives a real over-white source.
-      const dusk = v.uFinaleDusk.value
-      const brilliancy = lerp(2.8, 1.60, dusk) * visibleDisk
+      const photo = sunsetPhotoAt(v.uFinaleDusk.value, visibleDisk, this.sunsetPhoto)
       disc.set(
-        lerp(disc.x, brilliancy, finale),
-        lerp(disc.y, brilliancy * lerp(0.80, 0.15, dusk), finale),
-        lerp(disc.z, brilliancy * lerp(0.42, 0.019, dusk), finale),
+        lerp(disc.x, photo[0], finale),
+        lerp(disc.y, photo[1], finale),
+        lerp(disc.z, photo[2], finale),
       )
     }
     this.stellar.setFromMatrix4(this.turn.makeRotationAxis(north, -now.starTurn - 0.18))

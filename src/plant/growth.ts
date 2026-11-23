@@ -231,7 +231,7 @@ const elevationCurve = new Monotone([
   [turnEnd, 9],
   [config.growth.seconds, HEAD_BOWED],
 ])
-const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
+const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 12) * RAD
 const EARLY_TURN = 6 * RAD
 // Where round the head the first rays open, an angle from the head's `p` toward `q`.
 export const RAY_FIRST = 2.8

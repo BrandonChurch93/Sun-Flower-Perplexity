@@ -107,6 +107,8 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   out.warm = low * (0.3 + 0.7 * d.evening) * (1 - d.fog)
   out.tight = 1 - smoothstep(14, 24, now.sunElevationDeg)
   out.evening = d.evening
+  // The last sun goes down red: the stock lets its highlights keep their colour as it nears the land.
+  out.whiten *= 1 - 0.8 * d.evening * (1 - smoothstep(1.2, 2.6, now.sunElevationDeg))
   // Once the disc has left the frame the veil and the shafts thin out over half a frame height, so a sun that crosses the edge in one frame of the time lapse takes ten to leave the glass.
   const out01 = sun ? outside(sun.x, sun.y, aspect) : 0
   const edge = 1 - smoothstep(0, 0.6, out01)
