@@ -146,6 +146,13 @@ ${dewGlsl}
 ${wetGlsl}
 
 vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear, float sheet) {
+  // On a pixel a part covers only in part its look is worked out beside it: a tissue is held to what a tissue can be.
+  t.albedo = max(t.albedo, 0.0);
+  t.through = max(t.through, 0.0);
+  t.rough = saturate(t.rough);
+  t.wax = saturate(t.wax);
+  t.sheen = saturate(t.sheen);
+  t.occlusion = saturate(t.occlusion);
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -439,7 +446,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   color += (direct + skyFront * open) * FROST_RIME * (FROST_SIDE * frost * (0.4 + 0.6 * t.sheen) * body * saturate((1.0 - fv) / 0.6) * side);
   // The sun enters a clear body at its outline and leaves toward the eye: a bright line down the sun's side, near the sun's own color.
   if (clear > 0.0) {
-    float line = 1.0 - smoothstep(0.08, 0.45, fv);
+    float line = (1.0 - smoothstep(0.08, 0.45, fv)) * smoothstep(0.0, 0.6, 0.5 * fv / max(fwidth(fv), 1e-5));
     vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
     color += direct * own * (TISSUE_CLEAR * clear * line * line * side * (0.2 + 0.8 * against * against));
   }
