@@ -591,7 +591,9 @@ vec3 sunAt(vec3 d, float blur) {
   float rupture = smoothstep(0.06, 0.85, uBreak);
   float broken = exp(-dot(p, p) * 0.34);
   float mist = exp(-0.89 * dot(p, p));
-  float glow = mix(mix(disk * limb, 0.30 * mist, frost), 0.003 * broken, rupture);
+  // A held deck still diffuses the photosphere after the lens fan falls.
+  float diffuse = max(rupture, 0.997 * uSolarDeck * smoothstep(0.07, 0.65, uBreak));
+  float glow = mix(mix(disk * limb, 0.30 * mist, frost), 0.003 * broken, diffuse);
   float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
   return uDisc * visible * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
 }
