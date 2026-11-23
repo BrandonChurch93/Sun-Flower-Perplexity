@@ -311,6 +311,12 @@ float sparkle(vec3 world, vec3 v, vec3 n) {
 vec3 skyImage(vec3 d) {
   return mix(uAirHorizon, uAirZenith, smoothstep(0.1, 1.0, d.y));
 }
+// Before the sun is up, dewy soil is a dark mirror of the dusk above it: this is all that tells one crumb from the next.
+uniform float uDusk;
+vec3 duskSheen(vec3 v, vec3 n) {
+  float skim = 1.0 - saturate(dot(n, v));
+  return skyImage(reflect(-v, n)) * (uDusk * uDew * (0.02 + 0.17 * skim * skim) * smoothstep(-0.2, 0.3, n.y));
+}
 // Wet grains each mirror the bright sky low over the horizon.
 vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
   float skim = 1.0 - max(dot(n, v), 0.0);
@@ -620,6 +626,7 @@ void main() {
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
+  color += duskSheen(v, n) * open * (1.0 - thatch);
   float soaked = max(smoothstep(0.1, 0.8, uWet), pool);
   vec3 film = normalize(vec3(sleek.x, 1.0, sleek.y));
   color *= 1.0 - 0.6 * soaked * (1.0 - pool);
