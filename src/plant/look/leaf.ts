@@ -91,18 +91,44 @@ export const leafMain = /* glsl */ `void main() {
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
   float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - 2.0 * near) * (1.0 - smoothstep(4.0, 9.0, texels)) + mix((fine - 1.0) * 0.0002, (1.0 - fineHeight) * 0.0003, near) * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
+  // Close by the same relief is sloped from the maps a pixel either side and laid along the flat blade, not differenced across the screen's blocks of two by two, which print a lattice in the glint of the sun.
+  vec2 aReach = 2.0 * reliefReach(a);
+  vec2 pReach = 2.0 * reliefReach(vPlane);
+  float vSide = (1.0 - 2.0 * uVeinPad) / 3.0;
+  vec2 vAt = vec2((vLeaf.y + uVeinPad + (1.0 - 2.0 * uVeinPad) * a.x) / 3.0, a.y);
+  vec2 vSlope = vec2(texture(uVeins, vAt + vec2(vSide * aReach.x, 0.0)).g - texture(uVeins, vAt - vec2(vSide * aReach.x, 0.0)).g, texture(uVeins, vAt + vec2(0.0, aReach.y)).g - texture(uVeins, vAt - vec2(0.0, aReach.y)).g) / (2.0 * aReach);
+  vec3 lumOf = vec3(0.3, 0.6, 0.1) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
+  vec2 dStep = 7.0 * pReach;
+  vec2 lSlope = vec2(dot(texture(uDetail, dUv + vec2(dStep.x, 0.0)).rgb - texture(uDetail, dUv - vec2(dStep.x, 0.0)).rgb, lumOf), dot(texture(uDetail, dUv + vec2(0.0, dStep.y)).rgb - texture(uDetail, dUv - vec2(0.0, dStep.y)).rgb, lumOf)) / (2.0 * pReach);
+  vec2 fStep = 16.0 * pReach;
+  vec2 fSlope = vec2(dot(texture(uDetail, fUv + vec2(fStep.x, 0.0), 0.6).rgb - texture(uDetail, fUv - vec2(fStep.x, 0.0), 0.6).rgb, lumOf), dot(texture(uDetail, fUv + vec2(0.0, fStep.y), 0.6).rgb - texture(uDetail, fUv - vec2(0.0, fStep.y), 0.6).rgb, lumOf)) / (2.0 * pReach);
+  float lift = vState.x * 4.0 * (top ? 1.0 : -1.0);
+  vec2 aSlope = vSlope * (0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) * lift);
+  vec2 pSlope = (lSlope * (0.00018 * (1.0 - 2.0 * near) * (1.0 - smoothstep(4.0, 9.0, texels))) + fSlope * (mix(0.0002, -0.0003, near) * (1.0 - smoothstep(24.0, 70.0, texels * 2.29)))) * lift;
+  vec2 px = dFdx(vPlane);
+  vec2 py = dFdy(vPlane);
+  float pd = px.x * py.y - px.y * py.x;
+  mat2 toA = mat2(dFdx(a), dFdy(a)) * mat2(py.y, -px.y, -py.x, px.x) / (abs(pd) > 1e-14 ? pd : 1e-14);
+  vec3 wx = dFdx(vWorld);
+  vec3 wy = dFdy(vWorld);
+  vec3 along = (py.y * wx - px.y * wy) * sign(pd);
+  along = normalize(along - face * dot(along, face) + 1e-9 * cross(face, vec3(0.0, 1.0, 0.0)));
+  vec3 aside = cross(face, along) * sign(dot(cross(face, along), px.x * wy - py.x * wx) * sign(pd));
+  vec2 grad = pSlope + aSlope * toA;
+  vec3 tilt = grad.x * along + grad.y * aside;
+  vec3 sloped = normalize(face - tilt * inversesqrt(1.0 + 0.7 * dot(tilt, tilt)));
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
   float bay = serration(vUv, vKey, vCut);
   float margin = 1.0 - smoothstep(0.86, 0.98, min(1.0, abs(vUv.x) + bay)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   // The wax lies over a pebbled skin: close by, its sheen breaks into grains and is never one smooth light.
-  float pebble = saturate((fine - 0.82) * 2.5);
+  float pebble = saturate((fineHeight - 0.82) * 2.5);
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through + vec3(0.2, 0.22, 0.05) * (near * thin * (1.0 - brown) * smoothstep(0.965, 0.995, min(1.0, abs(vUv.x) + bay)));
   t.face = face;
-  t.normal = reliefNormal(face, vWorld, high, 1.0);
+  t.normal = normalize(mix(reliefNormal(face, vWorld, high, 1.0), sloped, near));
   t.rough = (top ? 0.82 : 0.95) + 0.08 * near * (1.0 - pebble);
   t.wax = (top ? 0.22 : 0.04) * margin * mix(1.0, 0.25 + 1.5 * pebble, near);
   // A face turned from the sun mirrors only the sky: half the sheen there, and half on the under side.
