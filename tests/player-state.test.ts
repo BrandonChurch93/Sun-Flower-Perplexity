@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inOrder, stateText, summarize, type StateRow } from '../src/player/state.ts'
+import { inOrder, longestOver, overText, stateText, summarize, type StateRow } from '../src/player/state.ts'
 
 const row = (frame: number, plant: number, field: number, bytes: number): StateRow => ({
   frame,
@@ -40,6 +40,17 @@ describe('the script cost of a stretch with nothing drawn', () => {
     expect(report.stretches).toHaveLength(1)
     expect(report.stretches[0]).toMatchObject({ from: 0, to: 29, frames: 3, worstAtFrame: 11 })
     expect(lines[lines.length - 1]).toContain('frames 0 to 29')
+  })
+
+  it('names the longest row of frames that each took more script than one frame of time', () => {
+    expect(report.overRun).toEqual({ from: 11, to: 11, frames: 1 })
+    expect(overText(report)).toBe('1 of 3 frames, the longest run of them one frame, 11')
+    const rows = [5, 40, 40, 5, 40, 40, 40, 5].map((ms, i) => row(100 + i, ms, 0, 0))
+    expect(longestOver(rows)).toEqual({ from: 104, to: 106, frames: 3 })
+    expect(longestOver([row(1, 40, 0, 0), row(3, 40, 0, 0)])).toEqual({ from: 1, to: 1, frames: 1 })
+    expect(longestOver([row(1, 2, 0, 0)])).toBeNull()
+    const long = summarize(rows, { from: 100, to: 107, tier: 'draft', format: '1920 x 1080', quality: 'high' })
+    expect(stateText(long)).toContain('5 of 8 frames, the longest run of them 3 in a row, frames 104 to 106')
   })
 
   it('keeps the owners in one order whatever they cost, so two runs lie side by side', () => {

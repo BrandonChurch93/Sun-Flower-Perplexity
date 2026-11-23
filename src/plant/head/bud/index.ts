@@ -54,7 +54,7 @@ const LATE_SHARE = [0.25, 1, 1]
 // The rest of the way back follows the bract's own rays, this many seconds after them.
 const BACK_LAG = [1.5, 1.6, 1.7]
 // On the side away from the first rays the folded bracts stay spread behind the rays by this share and do not lie back on the stem.
-const FOLD_STAY = 0.74
+const FOLD_STAY = 0.84
 const FLARE = [0.25, 0.25, 0.5]
 // The shut rays stand up from the rim and arch over the face as a tall cone. A bract lies on a shell this much wider and higher than that cone, as shares of the radius, until the rays in front of it open.
 const CONE_WIDE = 0.1
@@ -80,7 +80,7 @@ const BRACTS_BROAD = 56
 // A bract first folds only this far, out sideways just behind its rays, and goes the rest of the way back as the whole head opens.
 const FOLD_FIRST = [1.95, 1.9, 1.86]
 // On the plant the inner series is the longest, so it reaches up the cone of shut rays. A neighbor keeps shorter bracts: the companion's head stands just outside the bloom frames and longer ones would show in them. Width follows the length growth.ts gives, not this.
-const LONG = [0.95, 1, 1.1]
+const LONG = [1.14, 1.08, 1.12]
 // How much shorter the shortest bract of a series is. The inner series stays even so the shut bud is covered; the outer ones differ more.
 const LONG_VARY = [0.3, 0.26, 0.12]
 const LONG_NEIGHBOR = [0.92, 0.9, 0.84]
@@ -385,6 +385,31 @@ export function create(options: PartOptions): PlantPart | null {
     iceOpen[n] = u >= 0.9 ? 1.3 : rnd(2323, n) < 0.1 ? 0 : 1.4 * reached
   }
   const jitter = hairs ? Float32Array.from({ length: allCount * 4 }, (_, i) => hash01(seed, 700 + (i % 4), i >> 2)) : null
+  const hairV00 = new Int32Array(allCount)
+  const hairV10 = new Int32Array(allCount)
+  const hairW = new Float32Array(allCount * 4)
+  const hairLeanW = new Float32Array(allCount)
+  if (jitter) {
+    for (let i = 0; i < allCount; i++) {
+      const nv = hairWidth[i]
+      const fa = hairAt[i * 2]
+      const fb = hairAt[i * 2 + 1]
+      const rows = hairKind[i] === 0 ? floorRow : shape.nu
+      const a = Math.min(Math.floor(fa), rows - 2)
+      const b = Math.min(Math.floor(fb), nv - 2)
+      const ga = fa - a
+      const gb = fb - b
+      const v00 = (hairBase[i] + a * nv + b) * 3
+      hairV00[i] = v00
+      hairV10[i] = v00 + nv * 3
+      const o = i * 4
+      hairW[o] = (1 - ga) * (1 - gb)
+      hairW[o + 1] = (1 - ga) * gb
+      hairW[o + 2] = ga * (1 - gb)
+      hairW[o + 3] = ga * gb
+      hairLeanW[i] = i < furCount ? jitter[o + 3] : (fa < 0.9 * (shape.nu - 1) ? 1 : 2) + Math.min(jitter[o + 3], 0.999)
+    }
+  }
 
   const floor: FloorPoint = { x: 0, y: 0, z: 0, nx: 0, ny: 1, nz: 0, ox: 1, oy: 0, oz: 0 }
   const sub = shape.nu > 1 ? Math.max(2, Math.ceil(48 / (shape.nu - 1))) : 1
@@ -464,7 +489,7 @@ export function create(options: PartOptions): PlantPart | null {
     const grown = Math.min(1, heightAt(time) / 0.006)
     const stemR = (u: number): number => Math.max(stemRadius(time, u) * grown, NECK_FLARE * R * Math.max(0, (u - 0.97) / 0.03))
     // The dome starts where it is as wide as the stem's end, a hair behind the joint.
-    const Rw = R * (1 + SHOULDER)
+    const Rw = R * (1 + SHOULDER * (1 - 0.78 * smoothstep(0.15, 0.85, headOpen(time))))
     const sideR = (h: number): number => R + (Rw - R) * Math.sqrt(Math.max(0, 1 - ((h - hw) / (hr - hw)) ** 2))
     const sin0 = clamp(stemR(1) / Rw, 0.1, 0.92)
     const psi0 = Math.min(Math.asin(sin0), Math.acos(clamp((hw + SEAT * D) / Hb, 0, 1)) + 0.02)
@@ -572,24 +597,29 @@ export function create(options: PartOptions): PlantPart | null {
       const oy = py * co + qy * so
       const oz = pz * co + qz * so
       const under = smoothstep(-0.1, 0.6, -oy)
+      const upper = smoothstep(-0.22, 0.16, oy)
       const folded = smoothstep(0, 1, opened)
       const held = 1 - smoothstep(0.1, 0.5, low)
       const cone = Math.pow(smoothstep(0.1, 0.7, grown), 0.6) * held
       const coneWide = smoothstep(0, 0.12, grown) * held
       const inBud = Math.min(time, bloom0 - 3)
       const near = smoothstep(-0.2, 0.4, ox)
-      const late = COLLAR_LATE * LATE_SHARE[k.series] * near * (1 - smoothstep(0.45, 0.85, oy))
+      const stayFlank = near * (1 - smoothstep(-0.28, -0.04, oy)) * (1 - smoothstep(0.62, 0.92, -oy))
+      const late = COLLAR_LATE * LATE_SHARE[k.series] * near * (1 - smoothstep(0.15, 0.55, oy))
       const collar = smoothstep(bloom0 + COLLAR_FROM + late, bloom0 + COLLAR_FROM + COLLAR_TAKES + late, time)
       const stand = lerp(lerp(STAND[k.series] + k.lean, Math.min(STAND[k.series], -0.35) + 0.3 * k.lean, under), lerp(COLLAR[k.series] + k.lean, k.away, under), collar)
-      const gone = Math.max(back, smoothstep(0.2, 1, passed))
+      const upperGone = smoothstep(0.08, 0.58, opened) * upper
+      const gone = Math.max(back, smoothstep(0.2, 1, passed), upperGone)
+      const foldTo = lerp(FOLD[k.series], 3.92, upper)
+      const leanKeep = 1 - 0.94 * upper * gone
       const wrapped = lerp(lerp(bractAngle(j, inBud) - SHUT[k.series] * shut + ((YOUNG_OUT[k.series] + YOUNG_OUT_VARY[k.series] * mine.tip + 0.3 * k.spread + (k.series === 1 ? 0.5 * (k.leafy - 0.5) : 0)) * unfold - YOUNG_IN[k.series] * (1 - unfold)) * young, lerp(SHUT_ANGLE_LATE[k.series], SHUT_ANGLE[k.series], early) + lerp(CROWN_ANGLE_LATE, CROWN_ANGLE, early) * crown + k.lean + VARY.lean * mine.lean * early + lerp(1, SPREAD_OUT, early) * spread, globe), stand, ready)
-      const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], FOLD[k.series], gone * (1 - FOLD_STAY * near)) + 0.5 * k.lean, folded)
+      const angle = lerp(lerp(wrapped, LOOSE[k.series] + k.lean, smoothstep(0, 0.5, folded)), lerp(FOLD_FIRST[k.series], foldTo, gone * (1 - FOLD_STAY * stayFlank)) + 0.5 * k.lean * leanKeep, folded)
       const hooked = smoothstep(0.3, 0.9, folded)
       const meet = -Math.asin(Math.min(0.8, (1.15 * tipR) / Math.max(L, 1e-6)))
-      const hook = (k.hook * (1 - 0.75 * gone) + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
+      const hook = (k.hook * (1 - 0.75 * gone) * leanKeep + LOW_HOOK * under) * hooked + k.low * under * collar * (1 - hooked)
       const reflex = k.reflex * ready * (1 - folded) * (1 - 0.8 * under) * (1 - 0.9 * collar)
-      const curl = lerp(lerp(lerp(bractCurl(j, inBud), lerp(SHUT_CURL_LATE[k.series], SHUT_CURL[k.series], early) + lerp(1, -SPREAD_OPEN, early) * spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), -0.22, folded)
-      const hugEnd = lerp(k.hug, YOUNG_HUG[k.series], young * unfold)
+      const curl = lerp(lerp(lerp(bractCurl(j, inBud), lerp(SHUT_CURL_LATE[k.series], SHUT_CURL[k.series], early) + lerp(1, -SPREAD_OPEN, early) * spread, globe), -FLARE[k.series] * (1 - 0.7 * under), ready), lerp(-0.22, 0.28, upper * gone), folded)
+      const hugEnd = lerp(k.hug * (1 - 0.78 * upper * gone), YOUNG_HUG[k.series], young * unfold)
       hugs[i] = hugEnd
       const rayS = Math.sin(behind - RAY_CLEAR)
       const rayC = Math.cos(behind - RAY_CLEAR)
@@ -613,7 +643,7 @@ export function create(options: PartOptions): PlantPart | null {
         const bulge = lerp(BULGE_LATE[k.series], BULGE[k.series], early) * R * tight * smoothstep(k.series === 0 ? 0.12 : 0, 0.55, u)
         const surfaceAngle = psi < Math.PI / 2 ? Math.atan2(Rw * Math.cos(psi), Hb * Math.sin(psi)) : 0
         const tipW = smoothstep(0.55, 1, u)
-        const free = Math.max(lerp(angle - 1.3 * curl * u * u, meet, closed), behind, -1.75) + k.tip * (1 - 0.7 * over * shut) * (1 - 0.5 * closed) * tipW * tipW + WRAP_TIP[k.series] * closed * smoothstep(0.6, 1, u) + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * crown) * globe * smoothstep(0.4, 1, u) + (CROWN_HOOK * (2 * k.seed - 1) * crown + VARY.tip * mine.tip * (1 - crown)) * early * globe * smoothstep(0.65, 1, u) + mine.bent * early * globe * smoothstep(0.74, 0.92, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
+        const free = Math.max(lerp(angle - 1.3 * curl * u * u, meet, closed), behind, -1.75) + k.tip * leanKeep * (1 - 0.7 * over * shut) * (1 - 0.5 * closed) * tipW * tipW + WRAP_TIP[k.series] * closed * smoothstep(0.6, 1, u) + (lerp(SHUT_TIP_LATE[k.series], SHUT_TIP[k.series], early) + lerp(CROWN_TIP_LATE, CROWN_TIP, early) * crown) * globe * smoothstep(0.4, 1, u) + (CROWN_HOOK * (2 * k.seed - 1) * crown + VARY.tip * mine.tip * (1 - crown)) * early * globe * smoothstep(0.65, 1, u) + mine.bent * early * globe * smoothstep(0.74, 0.92, u) + reflex * smoothstep(BEND_FROM[k.series], BEND_FROM[k.series] + 0.3, u) + hook * smoothstep(0.2, 1, u) + sway * u * u
         const Ea = R * (1 + CONE_WIDE * coneWide) + lift + BULGE_TOP * bulge
         const Eh = lerp(Hf, CONE_HIGH * R, cone) + lift + BULGE_HIGH * bulge
         const fr = r / Ea
@@ -730,6 +760,9 @@ export function create(options: PartOptions): PlantPart | null {
     }
   }
 
+  const cellU = new Float32Array(count * 3)
+  const cellE = new Float32Array(count * 3)
+
   const fillHairs = (slot: 0 | 1, pos: Float32Array, nor: Float32Array, pose: Pose) => {
     if (!hairs || !jitter) return
     const hairRoot = hairs.root(slot)
@@ -744,7 +777,6 @@ export function create(options: PartOptions): PlantPart | null {
     const young = 1 - smoothstep(bloom0 - 17, bloom0 - 11, pose.time)
     const fringe = lerp(lerp(1, 0.45, tight), YOUNG_FRINGE, young)
     const early = options.variant === 0 ? 1 - smoothstep(bloom0 - 5.5, bloom0 - 3, pose.time) : 0
-    // Until the body has some size its hairs lie inside the stem's tip: a hair too short to see would still glint.
     const out = smoothstep(0.0004, WRAP_BY_R, R)
     const end = stemAt(pose, 1)
     const inX = end.x - h.ax * HAIR_IN_M
@@ -753,87 +785,100 @@ export function create(options: PartOptions): PlantPart | null {
     const iceRoot = ice ? ice.root(slot) : hairRoot
     const iceLean = ice ? ice.lean(slot) : hairLean
     const upTo = stateUniforms.uPlantFrost.value > 0 ? allCount : furCount
+    const bnv = shape.nv
+    const bnu = shape.nu
+    for (let br = 0; br < shape.bracts; br++) {
+      const base = bodyCount + br * perBract
+      for (let a = 0; a < bnu - 1; a++) {
+        for (let b = 0; b < bnv - 1; b++) {
+          const v00 = (base + a * bnv + b) * 3
+          const v10 = v00 + bnv * 3
+          const ux = pos[v10] - pos[v00]
+          const uy = pos[v10 + 1] - pos[v00 + 1]
+          const uz = pos[v10 + 2] - pos[v00 + 2]
+          const ul = Math.sqrt(ux * ux + uy * uy + uz * uz) || 1
+          cellU[v00] = ux / ul
+          cellU[v00 + 1] = uy / ul
+          cellU[v00 + 2] = uz / ul
+          const ex = pos[v00 + 3] - pos[v00]
+          const ey = pos[v00 + 4] - pos[v00 + 1]
+          const ez = pos[v00 + 5] - pos[v00 + 2]
+          const el = Math.sqrt(ex * ex + ey * ey + ez * ez) || 1
+          cellE[v00] = ex / el
+          cellE[v00 + 1] = ey / el
+          cellE[v00 + 2] = ez / el
+        }
+      }
+    }
+    const wornFace = Math.max(1 - tight, 0.8 * young) * scale * out
+    const wornEdge = Math.max(fringe, FROST_FRINGE * early) * scale * out
+    const wornBack = fringe * scale * out
+    const wornDownShut = lerp(1, 0.7, tight) * scale * out
+    const wornDownOpen = (1 - tight) * scale * out
+    const hax = h.ax * 0.15
+    const hay = h.ay * 0.15
+    const haz = h.az * 0.15
+    const invOut = 1 - out
+    const inXo = inX * invOut
+    const inYo = inY * invOut
+    const inZo = inZ * invOut
     for (let i = 0; i < upTo; i++) {
-      const nv = hairWidth[i]
-      const fa = hairAt[i * 2]
-      const fb = hairAt[i * 2 + 1]
-      const kind = hairKind[i]
-      const rows = kind === 0 ? floorRow : shape.nu
-      const a = Math.min(Math.floor(fa), rows - 2)
-      const b = Math.min(Math.floor(fb), nv - 2)
-      const ga = fa - a
-      const gb = fb - b
-      const v00 = (hairBase[i] + a * nv + b) * 3
+      const v00 = hairV00[i]
       const v01 = v00 + 3
-      const v10 = v00 + nv * 3
+      const v10 = hairV10[i]
       const v11 = v10 + 3
-      const w00 = (1 - ga) * (1 - gb)
-      const w01 = (1 - ga) * gb
-      const w10 = ga * (1 - gb)
-      const w11 = ga * gb
+      const wi = i * 4
+      const w00 = hairW[wi]
+      const w01 = hairW[wi + 1]
+      const w10 = hairW[wi + 2]
+      const w11 = hairW[wi + 3]
       const x = pos[v00] * w00 + pos[v01] * w01 + pos[v10] * w10 + pos[v11] * w11
       const y = pos[v00 + 1] * w00 + pos[v01 + 1] * w01 + pos[v10 + 1] * w10 + pos[v11 + 1] * w11
       const z = pos[v00 + 2] * w00 + pos[v01 + 2] * w01 + pos[v10 + 2] * w10 + pos[v11 + 2] * w11
       let nx = nor[v00] * w00 + nor[v01] * w01 + nor[v10] * w10 + nor[v11] * w11
       let ny = nor[v00 + 1] * w00 + nor[v01 + 1] * w01 + nor[v10 + 1] * w10 + nor[v11 + 1] * w11
       let nz = nor[v00 + 2] * w00 + nor[v01 + 2] * w01 + nor[v10 + 2] * w10 + nor[v11 + 2] * w11
-      const j0 = jitter[i * 4] - 0.5
-      const j1 = jitter[i * 4 + 1] - 0.5
-      const j2 = jitter[i * 4 + 2] - 0.5
+      const j0 = jitter[wi] - 0.5
+      const j1 = jitter[wi + 1] - 0.5
+      const j2 = jitter[wi + 2] - 0.5
+      const kind = hairKind[i]
       let dx: number
       let dy: number
       let dz: number
       if (kind === 0) {
-        dx = nx + j0 * 0.5 - h.ax * 0.15
-        dy = ny + j1 * 0.5 - h.ay * 0.15
-        dz = nz + j2 * 0.5 - h.az * 0.15
+        dx = nx + j0 * 0.5 - hax
+        dy = ny + j1 * 0.5 - hay
+        dz = nz + j2 * 0.5 - haz
+      } else if (kind === 2) {
+        const nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1
+        nx /= nl
+        ny /= nl
+        nz /= nl
+        dx = nx + cellU[v00] * 0.5 + j0 * 0.5
+        dy = ny + cellU[v00 + 1] * 0.5 + j1 * 0.5
+        dz = nz + cellU[v00 + 2] * 0.5 + j2 * 0.5
       } else {
-        let ux = pos[v10] - pos[v00]
-        let uy = pos[v10 + 1] - pos[v00 + 1]
-        let uz = pos[v10 + 2] - pos[v00 + 2]
-        const ul = norm(ux, uy, uz) || 1
-        ux /= ul
-        uy /= ul
-        uz /= ul
-        if (kind === 2) {
-          const nl = norm(nx, ny, nz) || 1
-          nx /= nl
-          ny /= nl
-          nz /= nl
-          dx = nx + ux * 0.5 + j0 * 0.5
-          dy = ny + uy * 0.5 + j1 * 0.5
-          dz = nz + uz * 0.5 + j2 * 0.5
-        } else {
-          let ex = (pos[v01] - pos[v00]) * kind
-          let ey = (pos[v01 + 1] - pos[v00 + 1]) * kind
-          let ez = (pos[v01 + 2] - pos[v00 + 2]) * kind
-          const el = norm(ex, ey, ez) || 1
-          ex /= el
-          ey /= el
-          ez /= el
-          const plain = kind > 2 || kind < -2 ? 0 : 1
-          const frozen = kind > 3 || kind < -3 ? 1 : 0
-          const up = (0.15 + j2 * 0.9) * plain + j2 * 1.6 * frozen
-          const on = (0.35 + j0 * 0.5) * plain + j0 * 0.8 * frozen
-          dx = ex + ux * on + nx * up
-          dy = ey + uy * on + ny * up
-          dz = ez + uz * on + nz * up
-        }
+        const sgn = kind > 0 ? 1 : -1
+        const plain = kind > 2 || kind < -2 ? 0 : 1
+        const frozen = kind > 3 || kind < -3 ? 1 : 0
+        const up = (0.15 + j2 * 0.9) * plain + j2 * 1.6 * frozen
+        const on = (0.35 + j0 * 0.5) * plain + j0 * 0.8 * frozen
+        dx = cellE[v00] * sgn + cellU[v00] * on + nx * up
+        dy = cellE[v00 + 1] * sgn + cellU[v00 + 1] * on + ny * up
+        dz = cellE[v00 + 2] * sgn + cellU[v00 + 2] * on + nz * up
       }
       const root = i < hairCount ? hairRoot : i < furCount ? downRoot : iceRoot
       const lean = i < hairCount ? hairLean : i < furCount ? downLean : iceLean
       const o = (i < hairCount ? i : i < furCount ? i - hairCount : i - furCount) * 4
-      // Shut, the bud wears a short fringe and only part of its down: the rest grows as the bracts loosen.
-      const worn = kind === 2 ? Math.max(1 - tight, 0.8 * young) : kind === 1 || kind === -1 ? Math.max(fringe, FROST_FRINGE * early) : kind === 0 ? fringe : kind === 3 || kind === -3 ? lerp(1, jitter[i * 4 + 3] < DOWN_SHUT ? 0.7 : 0, tight) : lerp(1, iceOpen[i - furCount], early)
-      root[o] = lerp(inX, x, out)
-      root[o + 1] = lerp(inY, y, out)
-      root[o + 2] = lerp(inZ, z, out)
-      root[o + 3] = hairLong[i] * scale * worn * out
+      const wornScale = kind === 3 || kind === -3 ? (jitter[wi + 3] < DOWN_SHUT ? wornDownShut : wornDownOpen) : kind === 1 || kind === -1 ? wornEdge : kind === 2 ? wornFace : kind === 0 ? wornBack : lerp(1, iceOpen[i - furCount], early) * scale * out
+      root[o] = inXo + x * out
+      root[o + 1] = inYo + y * out
+      root[o + 2] = inZo + z * out
+      root[o + 3] = hairLong[i] * wornScale
       lean[o] = dx
       lean[o + 1] = dy
       lean[o + 2] = dz
-      // A crystal on a margin is a low tuft, one on a point a spike.
-      lean[o + 3] = i < furCount ? jitter[i * 4 + 3] : (hairAt[i * 2] < 0.9 * (shape.nu - 1) ? 1 : 2) + Math.min(jitter[i * 4 + 3], 0.999)
+      lean[o + 3] = hairLeanW[i]
     }
   }
 

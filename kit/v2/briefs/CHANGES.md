@@ -365,3 +365,31 @@ Why: in the time lapse the sun hands over to the moon between 5 and 9 degrees un
 
 What it means for owners: the leaf look owner keeps the one line in `tissueClearSun()` of `src/plant/surface/index.ts` (`uKeyClear >= 0.0 ? uKeyClear : <the old formula>`) when merging. Anyone who needs to know whether the key is clear reads `uKeyClear` and treats a negative value as unknown; nobody works it out from the key's colour again.
 
+
+
+## 23 Nov, 11:55 UTC: `v2` at `699f0d2`, and the cost of live play
+
+### 27. What is in
+
+Merged and drawn since `f0dd054`: frost `9a23a4f` (a white closed coat, crystals in groups of three sizes, fans of ice on the rim, thin sleeves on the bristles), leaf look `7c861f3` (cold dark tissue under the ice), hairs `e41a947`, sky A `6319d39` (the starlight holds while the camera's exposure climbs; `starHoldAt` has a test), head `418b46f` (rays of unequal length), post `7e8c28c` (every small spark gets a glow of its own in the frost and last light grades), rain `c1728ae` (one puddle in the furrow), player `7187cb0`. 199 tests pass.
+
+Two lines of the surface shader are shared and stay when anyone merges: the spark that mirrors the sky takes the frost's tint (`frostSpark`), and the sky lies on a rimed face where the frost says so (`frostSky`).
+
+### 28. Live play: where the time goes, and who cuts it
+
+Measured in software rendering at 1920, script alone, a frame of the film being 33.3 ms: a held frame costs 3.5 to 7 ms and writes nothing; a growing frame costs 41 ms at 1255 to 1275, 78 ms at 2078 to 2095, 140 to 152 ms from 3000 to 3330, and writes 7.5 to 17.8 MB. The plant is two thirds of it, the companion a fifth. Targets on every growing frame: hero and companion together at most 10 ms mean and 16 worst, 2 MB mean and 4 worst.
+
+- One laying a frame (plant): each frame lays the plant once, as it stands when its shutter opens, and is drawn toward the next frame's laying.
+- Keys apart in the time lapse (plant): the twitch of the time lapse is drawn by the shader. It may be another throw of the dice than today's if it has the same size and character, is a pure function of the frame, and no leaf jumps where the lapse hands over to the film's own air.
+- Roots laid once (stem and hairs, head, plant): a hair's seat on its part is written once at load; a laying writes only a small texture of frames for that part and the pose; the shader places the hair. One call for every hair set (`createHairFrames`, `HairSet.bindFrames`, `HairSet.sealSeats`). The rime, dew and drop lists on hairs become fixed lists made at load.
+- The cut by size on screen (stem and hairs): a hair set is neither gathered nor drawn when its typical hair is shorter than 0.6 pixel on screen; its width fades in between 0.6 and 1.2 pixel. One rule for every set.
+- Crystals (frost): `uCrystals` is not written again on the frames beside the hold.
+- The measure of record for script time is the player's stepping run (`npx tsx src/player/steps.ts`), because hair gathering runs inside the renderer's pass, where the film's own lap table does not see it; the checks owner's `owners` line names who wrote what.
+
+### 29. Sparks
+
+The lens holds a lone bright pixel to twice its brightest neighbour, so the smallest spark anyone draws covers two pixels. A flash rises and falls over at least three frames, and a flashing face is brightest at its mirror point and falls toward its edge.
+
+### 30. The leaf under the moon
+
+When the key is cold the light through a leaf turns to the key's teal and comes down to about half; the sheen and the edge light stay. Judged against the night key.

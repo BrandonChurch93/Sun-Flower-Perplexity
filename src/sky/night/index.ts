@@ -5,6 +5,14 @@ export const STAR_CELLS = 512
 export const STAR_MAP_WIDTH = STAR_CELLS * 3
 export const STAR_MAP_HEIGHT = STAR_CELLS * 2
 
+// The camera's exposure climbs after the dusk has gone; the starlight gives that rise back, so the stars and the band stand still on the screen.
+export const STAR_HOLD = { from: -10.9, to: -13.7, rise: 0.62 }
+
+export function starHoldAt(elevationDeg: number): number {
+  const t = Math.min(1, Math.max(0, (elevationDeg - STAR_HOLD.from) / (STAR_HOLD.to - STAR_HOLD.from)))
+  return 1 / (1 + STAR_HOLD.rise * t * t * (3 - 2 * t))
+}
+
 const CORE = [-0.5148, 0.1481, -0.8444]
 const POLE = [0.7606, -0.3756, -0.5296]
 const ACROSS = [
@@ -75,6 +83,7 @@ export function starMap(): THREE.DataTexture {
 const v3 = (a: number[]): string => `vec3(${a.map((x) => x.toFixed(4)).join(', ')})`
 
 export const nightGlsl = /* glsl */ `
+const float BAND = 0.024;
 vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   if (uNight <= 0.0001 || d.y < 0.0 || visible < 0.003) return vec3(0.0);
   const float N = ${STAR_CELLS}.0;
@@ -177,7 +186,10 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   vec3 milkyTone = mix(vec3(0.70, 0.80, 1.0), vec3(1.0, 0.70, 0.45), warm);
   float faint = 0.3 + 0.7 * (1.0 - dust);
   float extinction = exp(-0.03 / max(0.016, d.y)) * smoothstep(0.0, 0.035, d.y);
-  float wash = 1.0 - smoothstep(0.006, 0.05, dot(air, vec3(0.21, 0.72, 0.07)));
-  return (stars * 0.75 * faint + 0.027 * light * milkyTone) * extinction * wash * visible * uNight;
+  float wash = 1.0 - smoothstep(0.012, 0.09, dot(air, vec3(0.21, 0.72, 0.07)));
+  float early = (1.0 - smoothstep(-9.5, -1.5, uElevation)) * clamp(uNight / max(uLunarNight, 0.05), 0.0, 1.0);
+  float come = max(uNight, early);
+  float hold = 1.0 / (1.0 + ${STAR_HOLD.rise.toFixed(4)} * (1.0 - smoothstep(${STAR_HOLD.to.toFixed(4)}, ${STAR_HOLD.from.toFixed(4)}, uElevation)));
+  return (stars * 0.75 * faint * come + BAND * light * milkyTone * early) * extinction * wash * visible * hold;
 }
 `
