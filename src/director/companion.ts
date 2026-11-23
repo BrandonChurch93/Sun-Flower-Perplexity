@@ -9,7 +9,7 @@ import { leafFrameAt, poseAt, stemAt } from '../plant/skeleton.ts'
 const full = config.field.companion.heightRatio
 // The companion is the smaller of the two until the storm has passed: when the lens stands back to take in the storm, the plant is the tallest thing in its frame.
 // It outgrows the plant before the bloom, where its upper leaf reaches into the frame.
-const YOUNG = { ratio: 0.86, until: 29, grown: 42 }
+const YOUNG = { ratio: 0.7, until: 29, grown: 42 }
 
 export function companionRatio(tau: number): number {
   return lerp(YOUNG.ratio, full, smootherstep(YOUNG.until, YOUNG.grown, tau))
