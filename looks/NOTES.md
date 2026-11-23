@@ -1,6 +1,6 @@
 # Looks of post
 
-2026-11-23 12:25 UTC, at commit ce7e0b59 of agent/post.
+2026-11-23 12:38 UTC, at commit 043d0d0c of agent/post.
 
-- `01-952-foot-of-one-soft-hair-at-8x-no-multisampling.jpg`: 952 foot of one soft hair at 8x: no multisampling | multisampling old guess | multisampling new rule
-- `02-1208-hairs-at-100-percent-with-the-second-target.jpg`: 1208 hairs at 100 percent with the second target
+- `01-952-the-tuft-at-8x-before-the-lens-one-sample-be.jpg`: 952 the tuft at 8x: before the lens one sample | before the lens four samples | after the lens one sample | after the lens four samples
+- `02-1452-on-ce7e0b5-the-faulty-pixel-before-and-afte.jpg`: 1452 on ce7e0b5, the faulty pixel before and after the lens at 8x
