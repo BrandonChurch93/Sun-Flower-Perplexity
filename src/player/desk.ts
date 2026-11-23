@@ -31,6 +31,7 @@ export interface Advice { text: string; numbers?: string; last?: string; tryLow:
 
 const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report', timing: 'Timed at loading' } as const
 const SHOWN_GAPS = 4
+const BELOW_PX = 16
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -179,8 +180,18 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   const exportLink = make('a', css.link, 'Export the film to a file')
   exportLink.href = '?mode=export'
   foot.append(exportLink)
-  panel.append(foot)
+  const below = make('p', css.below, 'More below')
+  below.setAttribute('aria-hidden', 'true')
+  panel.append(foot, below)
   host.append(panel)
+  const edges = (): void => {
+    const next = panel.scrollHeight - panel.scrollTop - panel.clientHeight > BELOW_PX ? 'yes' : 'no'
+    if (panel.dataset.below !== next) panel.dataset.below = next
+  }
+  panel.addEventListener('scroll', edges, { passive: true })
+  new ResizeObserver(edges).observe(panel)
+  new MutationObserver(edges).observe(panel, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'open'] })
+  edges()
 
   const veil = make('div', css.veil, 'Drop the track')
   veil.hidden = true
@@ -283,7 +294,8 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       const more = gaps.length > SHOWN_GAPS ? `, and ${gaps.length - SHOWN_GAPS} more in the file` : ''
       list.append(make('span', css.value, gaps.length ? `${gaps.length}: ${shown.join(', ')}${more}` : 'none'))
       reportBody.append(list)
-      reportGroup.scrollIntoView({ block: 'start' })
+      const first = advice ? goStep.body : reportGroup
+      first.scrollIntoView({ block: 'start' })
     },
     busy(on) {
       for (const b of [choose, record, check, tryLow, measure]) b.disabled = on
