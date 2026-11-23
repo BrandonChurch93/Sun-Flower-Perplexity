@@ -101,6 +101,8 @@ export const earlyAt = (time: number): number => 1 - ramp(35.5, 40, time)
 // How far behind a neighbor is shows while the rows are open: by the frost the crop has closed and the laggards have caught up.
 export const behindAt = (time: number): number => 1 - ramp(27, 35.5, time)
 const handSet = new Set<number>()
+// At the low quality the simpler plants thin out with distance: which of them go first, 0 to 1, for good.
+export const thinOrder = (id: number): number => hash01(SEED, 170, id)
 export interface Own { turn: number; tall: number; head: number; nod: number; low: number; young: number; stalk: number; leaf: number; droop: number; bud: number; leanX: number; leanZ: number }
 export function ownOf(id: number): Own {
   // The neighbors set by hand keep their turn and their height: only their heads differ.
@@ -125,9 +127,9 @@ export function lateLean(id: number): { x: number; z: number } {
   return { x: Math.cos(way) * lean, z: Math.sin(way) * lean }
 }
 // Open and heavy, the heads of a field face the morning for good: east, each a little differently, so a lens that looks into the evening sun sees
-// most of them from the side or from three quarters and some from behind. One in ten faces its own way.
+// most of them from the side or from three quarters and some from behind. One in six faces its own way.
 const FACE_EAST = 84 * RAD
-export const faceToward = (id: number): number => (hash01(SEED, 156, id) < 0.1 ? 2 * Math.PI * hash01(SEED, 155, id) : FACE_EAST + 0.5 * bell(id, 157))
+export const faceToward = (id: number): number => (hash01(SEED, 156, id) < 0.16 ? 2 * Math.PI * hash01(SEED, 155, id) : FACE_EAST + 0.5 * bell(id, 157))
 // How far a head has come round to that side, by its own clock: a bud stands as it grew, an open head has settled.
 export const settled = (clock: number, id: number): number => ramp(BUD_T - 1.5 + 2 * hash01(SEED, 41, id), OPEN_T - 1.5 + 2 * hash01(SEED, 41, id), clock)
 // The middle and far rows lift their heads from their hang and fill out to the size of the larger heads.

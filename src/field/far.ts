@@ -157,6 +157,29 @@ uniform float uWind;
 uniform vec4 uWedge;
 uniform vec2 uEnd;
 ${gustGlsl}
+// The heads of the far crop. Near, one disc to a plant. Farther off a plant is smaller than a pixel and the eye sees the heads that stand clear,
+// one to every few plants: the cells double in size as they shrink on the screen, each way on its own, and one size fades into the next.
+float headsAt(vec2 f, out float tone) {
+  vec2 lod = max(log2(max(fwidth(f), vec2(1e-5)) * 2.4), vec2(0.0));
+  vec2 lo = floor(lod);
+  vec2 t = smoothstep(0.4, 1.0, lod - lo);
+  float sum = 0.0;
+  tone = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 up = vec2(float(i & 1), float(i >> 1));
+    vec2 size = exp2(lo + up);
+    vec2 g = f / size;
+    vec2 c = floor(g) + size * 31.0;
+    vec2 o = fract(g) - 0.5 - 0.3 * (vec2(hash21(c + 3.0), hash21(c + 9.0)) - 0.5);
+    float first = 1.0 - step(1.5, size.x * size.y);
+    o.y *= mix(1.0, ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)}, first);
+    float w = mix(1.0 - t.x, t.x, up.x) * mix(1.0 - t.y, t.y, up.y);
+    float d = (1.0 - smoothstep(0.2, 0.42, length(o))) * step(hash21(c + 5.0), mix(0.55, 0.8, first));
+    sum += w * d;
+    tone += w * hash21(c + 13.0);
+  }
+  return sum;
+}
 void main() {
   float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
   // The wind carries a sheet as far as it carries a neighbor at the sheet's height, so the wave that crosses the rows crosses the sheets too.
@@ -201,13 +224,13 @@ void main() {
     color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * mix(0.5, grain, fine)) * (0.74 + 0.52 * patchy);
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
-    float both = clamp(1.0 - 0.7 * max(fwidth(f.x), fwidth(f.y)), 0.0, 1.0);
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
-    float share = mix(0.16, 0.5, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
-    vec2 off = fract(f) - 0.5 - 0.2 * (vec2(hash21(cell + 3.0), hash21(cell + 9.0)) - 0.5);
-    float disc = (1.0 - smoothstep(0.2, 0.42, length(off * vec2(1.0, ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)})))) * step(hash21(cell + 5.0), 0.8);
-    vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (0.8 + 0.5 * hash21(cell + 13.0) * both);
-    color = mix(color, gold, uOpen * mix(share, disc, both));
+    float share = mix(0.06, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    float tone;
+    float disc = headsAt(f, tone);
+    vec3 gold = vHead * vec3(1.25, 1.0, 0.55);
+    color = mix(color, gold, uOpen * share);
+    color = mix(color, gold * (0.9 + 0.6 * tone), uOpen * disc);
     // The rows, as far as the eye can part them: the tops in light and the dark between.
     float row = 0.5 + 0.5 * cos(6.2831853 * along / ${config.field.rowSpacingM.toFixed(3)});
     color *= 1.0 + 0.22 * fine * (row - 0.5);

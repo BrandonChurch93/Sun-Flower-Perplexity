@@ -9,17 +9,18 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
-import { PLACE, behindAt, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
+import { PLACE, thinOrder, behindAt, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
 // The kinds whose leaves fill the gaps of the first rows.
 const UNDER_KINDS = [0, 3, 4, 6]
-// How far out the simpler plants are drawn at each quality. Past it the leaf layers and the carpet stand for them.
-const FAR_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 27 }
+// At the low quality the simpler plants thin out from here to there, to this share of them, and the leaves in the gaps stop early.
+const THIN_M = [12, 30]
+const THIN_TO: Record<Quality, number> = { film: 1, high: 1, low: 0.3 }
 const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11 }
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share that is in view.
 function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
@@ -38,13 +39,15 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   const own: Own[] = []
   const face = new Float32Array(count)
   const spin = new Float32Array(count)
+  const order = new Float32Array(count)
   for (let i = 0; i < count; i++) {
     const id = places[i * PLACE + 7]
     own.push(ownOf(id))
     face[i] = faceToward(id)
     spin[i] = leafSpin(id)
+    order[i] = thinOrder(id)
   }
-  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, own, face, spin, seen, still: leavesApart(plant, count), count, index, tier: detail }
+  return { head, leafHead, leafOwn, axis, grow, bare, plant, all: places, own, face, order, spin, seen, still: leavesApart(plant, count), count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -183,7 +186,8 @@ export class Field {
       const clock = kindTime(this.time, g.index, g.tier)
       const early = opensEarly(g.index, g.tier)
       const local = Math.atan2(g.axis.value.x, g.axis.value.z)
-      const most = g.bare ? UNDER_REACH_M[this.quality] : g.tier === 'far' ? FAR_REACH_M[this.quality] : 1000
+      const most = g.bare ? UNDER_REACH_M[this.quality] : 1000
+      const thin = g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1
       const seen = g.seen.array as Float32Array
       const still = g.still.array as Float32Array
       let n = 0
@@ -194,7 +198,8 @@ export class Field {
         if (depth < -reach) continue
         const side = Math.abs(dx * pose.right.x + dz * pose.right.z)
         if (side > Math.max(depth, 0) * spread + reach * (1 + spread)) continue
-        if (most < 1000 && Math.hypot(dx, dz) > most) continue
+        if (most < 1000 && Math.hypot(all[i], all[i + 1]) > most) continue
+        if (thin < 1 && g.order[k] > 1 - (1 - thin) * THREE.MathUtils.smoothstep(Math.hypot(all[i], all[i + 1]), THIN_M[0], THIN_M[1])) continue
         const id = all[i + 7]
         const own = g.own[k]
         const face = late > 0 ? faceAt(id, Math.hypot(all[i], all[i + 1])) : 0
