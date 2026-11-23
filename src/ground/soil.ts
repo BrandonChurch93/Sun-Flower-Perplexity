@@ -465,6 +465,11 @@ vec3 glintSun() {
   float most = max(max(pale.r, pale.g), max(pale.b, 1e-4));
   return pale * min(SPARK, GLINT_WHITE / (most * max(uWorldExposure, 1e-3)));
 }
+// A bead of dew holds the sun's image the same way, and is held under the same level.
+vec3 heldGlint(vec3 c) {
+  float most = max(c.r, max(c.g, c.b)) * uWorldExposure;
+  return c * min(1.0, GLINT_WHITE / max(most, 1e-4));
+}
 // How bright one such face is in focus, and more by the area of the circle the lens opens it into, so the disc it becomes is as bright whatever its size.
 vec3 sparkLight(float depth) {
   float circle = cocOf(depth) / 15.0;
