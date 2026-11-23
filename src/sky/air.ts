@@ -11,6 +11,9 @@ const MY = 20
 const SKY_X = 48
 const SKY_Y = 42
 const SKY_N = 89
+const PHOTO_N = 97
+const PHOTO_LOW = -0.15
+const PHOTO_HIGH = 4.65
 const RAD = Math.PI / 180
 const EYE = 0.003
 const SUN = 10
@@ -61,11 +64,13 @@ export class Air {
   private readonly sky = new Float32Array(SKY_X * SKY_Y * SKY_N * 3)
   private readonly directTable = new Float32Array(SKY_N * 3)
   private readonly cloudTable = new Float32Array(SKY_N * 3)
+  private readonly photoTable = new Float32Array(PHOTO_N * 3)
   private readonly tap = rgb()
   readonly texture: THREE.DataTexture
 
   constructor() {
     this.makeTransmittance()
+    this.makePhoto()
     this.makeMultiple()
     this.makeSky()
     const data = new Uint16Array(SKY_X * SKY_Y * SKY_N * 4)
@@ -113,6 +118,24 @@ export class Air {
     out[0] *= visible
     out[1] *= visible
     out[2] *= visible
+  }
+
+  private makePhoto(): void {
+    const t = rgb()
+    for (let i = 0; i < PHOTO_N; i++) {
+      const e = lerp(PHOTO_LOW, PHOTO_HIGH, i / (PHOTO_N - 1))
+      this.transmission(EYE, Math.sin(e * RAD), t)
+      // The final shot sees a long near-ground aerosol path. Add its
+      // optical depth to the broadband transmission, not a warm RGB lift.
+      for (let c = 0; c < 3; c++) this.photoTable[i * 3 + c] = t[c] ** 1.22
+    }
+  }
+
+  photographedSunAt(apparentElevation: number, out: RGB): RGB {
+    const s = clamp((apparentElevation - PHOTO_LOW) / (PHOTO_HIGH - PHOTO_LOW)) * (PHOTO_N - 1)
+    const i = Math.min(PHOTO_N - 2, Math.floor(s))
+    for (let c = 0; c < 3; c++) out[c] = lerp(this.photoTable[i * 3 + c], this.photoTable[(i + 1) * 3 + c], s - i)
+    return out
   }
 
   private makeMultiple(): void {
