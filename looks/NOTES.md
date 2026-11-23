@@ -1,7 +1,11 @@
 # Looks of checks
 
-2026-11-23 00:02 UTC, at commit b2e774e of agent/checks.
+2026-11-23 00:24 UTC, at commit 5c7fdac of agent/checks.
 
-Before anything is built: the film on v2 today, every bench shot from the film camera with the whole scene, 960 x 540, one sample, stand-in sky. Seen beside references/approved and references/v2/keys.
+Checks at 00:24: the holds by the picture (only the first frame of each hold differs, as the clock said), the same proof on a film broken on purpose, and the largest steps of the film drawn every 4th frame so far: between sunset and sunrise the sky moves 77 of 255 inside four frames.
 
-- `01-today-s-v2-sixteen-moments-wrong-against-the-ref.jpg`: Today's v2, sixteen moments. Wrong against the references: frame 0 is an orange dusk and not blue hour, the seed lies on the soil; no cloud and no far land in any shot, the horizon is a ruled line; the storm (10) is flat grey with no rain and no puddle, the flash frame (11) looks the same as the storm so the lightning does not read; the break (12) has no shafts; the frost ground reads as a snow slab with no mist; the bloom has no sunburst; field and last are dark with no sun on the horizon
+- `01-storm-hold-in-flat-light-low-camera-frame-1672-d.jpg`: Storm hold in flat light, low camera: frame 1672 differs, 1673 to 2082 identical
+- `02-frost-hold-in-flat-light-low-camera.jpg`: Frost hold in flat light, low camera
+- `03-frost-hold-on-a-film-whose-plant-grows-while-its.jpg`: Frost hold on a film whose plant grows while its clock reads still: the check fails
+- `04-every-4th-frame-round-frame-2588-sunset-night-su.jpg`: Every 4th frame round frame 2588: sunset, night, sunrise inside half a second
+- `05-every-4th-frame-round-frame-1364.jpg`: Every 4th frame round frame 1364
