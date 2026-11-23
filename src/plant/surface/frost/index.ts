@@ -24,11 +24,13 @@ const float FROST_CHIP_SHARP = 600.0;
 const float FROST_CHIP_FLASH = 2.0;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
 const float FROST_COAT_FIELD = 0.5;
-const float FROST_COAT_EDGE = 0.85;
-const float FROST_COAT_BED = 0.72;
+const float FROST_COAT_EDGE = 0.92;
+const float FROST_COAT_BED = 1.0;
 // How far the coat has come where the close lens first sees it, and the share of the far veil that still lies under it there.
 const float FROST_COAT_FIRST = 0.4;
-const float FROST_COAT_UNDER = 0.4;
+const float FROST_COAT_UNDER = 0.2;
+// The banks the coat lies in on an open field, in meters across.
+const float FROST_BANK_M = 0.0035;
 const float FROST_FORM_SHADE = 0.8;
 
 // One grain to a cell, whole inside it. x: its share of the pixel, y: the flash of its face when it mirrors the sun to the eye.
@@ -122,8 +124,8 @@ vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 s
   if (far > 0.0) {
     vec2 b = q2 * (1.0 / FROST_FORM_M) + 91.0;
     vec2 f = q1 * (1.0 / FROST_FORM_FINE_M) + 37.0;
-    float many = 0.45 + 0.5 * want;
-    float more = 0.55 + 0.4 * want;
+    float many = 0.08 + 0.9 * want;
+    float more = 0.1 + 0.9 * want;
     big = frostForm(b, px / FROST_FORM_M, many, grown, N, view);
     small = frostForm(f, px / FROST_FORM_FINE_M, more, grown, N, view);
     vec2 turned = vec2(0.6 * off.x - 0.8 * off.y, 0.6 * off.y + 0.8 * off.x);
@@ -199,10 +201,13 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   vec3 wy = dFdy(world);
   if (close > 0.0) {
     // A close lens tells the coat apart. It hides most of the skin at an edge and along a vein and a third of it in the middle of a field, in banks, so the veins read through it as lines of thicker grain.
-    float want = saturate(mix(FROST_COAT_FIELD, FROST_COAT_EDGE, smoothstep(0.0, 0.75, gather)) + 0.3 * (bank - 0.45)) * (0.85 + 0.15 * smoothstep(-0.3, 0.2, F.y));
+    float dense = smoothstep(0.12, 0.5, gather + 0.1 * (fine - 0.5));
+    // On an open field it lies in banks with bare skin between them, a third of the field in all.
+    float banked = smoothstep(0.4, 0.66, 0.6 * valueNoise(round * (1.0 / FROST_BANK_M) + 23.0) + 0.4 * bank);
+    float want = mix(FROST_COAT_FIELD * banked, FROST_COAT_EDGE, dense) * (0.85 + 0.15 * smoothstep(-0.3, 0.2, F.y));
     // It is the last of the frost to come, over the last third of the freeze: from the edge and the veins inward, and the fields between the veins last.
     float late = mix(mix(FROST_COAT_FIRST, 1.0, saturate((uPlantFrost - 0.7) / 0.3)), 1.0, smoothstep(0.0, 0.15, uPlantDew));
-    float grown = saturate((late - 0.45 * saturate(1.0 - smoothstep(0.0, 0.75, gather) + 0.5 * (bank - 0.5))) / 0.55);
+    float grown = saturate((late - 0.45 * saturate(1.0 - dense + 0.5 * (bank - 0.5))) / 0.55);
     // The skin is measured as the grown blade's: on a young one a meter of it is a fraction of a true meter. The crystals keep their true size, so they are laid on the size of cell nearest to it, and between two sizes on both.
     float level = 0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20));
     float lower = exp2(floor(level));
