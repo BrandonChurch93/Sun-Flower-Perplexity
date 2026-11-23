@@ -317,6 +317,21 @@ vec3 duskSheen(vec3 v, vec3 n) {
   float skim = 1.0 - saturate(dot(n, v));
   return skyImage(reflect(-v, n)) * (uDusk * uDew * (0.02 + 0.17 * skim * skim) * smoothstep(-0.2, 0.3, n.y));
 }
+// Before sunrise and after sunset the glow on the horizon is the only light with a direction: faces turned to it take its colour, edges seen against it rim, and dew points throw it at the lens.
+vec3 afterglow() {
+  float most = max(max(uSkyHorizonSun.r, uSkyHorizonSun.g), max(uSkyHorizonSun.b, 1e-3));
+  return uSkyHorizonSun * (min(most, 2.0) / most * uDusk * (1.0 - uAir.w));
+}
+vec3 duskGlow(vec3 world, vec3 v, vec3 n, vec3 albedo, float edge) {
+  vec3 l = normalize(vec3(uLowSun.x, 0.22, uLowSun.y));
+  float facing = smoothstep(0.1, 0.7, dot(n, l));
+  float lying = smoothstep(0.0, 0.6, dot(n, l));
+  float skim = 1.0 - saturate(dot(n, v));
+  float rim = smoothstep(-0.2, 0.5, dot(n, l)) * skim * skim * skim * saturate(0.4 - dot(v, l)) * edge;
+  float points = grains(world + 0.53, 0.05) * pow(saturate(dot(reflect(-v, n), l)), 16.0) * uDew;
+  float round = exp(-dot(world.xz, world.xz) / 0.05);
+  return afterglow() * (albedo * (mix(0.3, 0.03, uDew) * lying + 0.8 * facing * round) + (0.25 * rim + 1.2 * points) * round);
+}
 // Wet grains each mirror the bright sky low over the horizon.
 vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
   float skim = 1.0 - max(dot(n, v), 0.0);
@@ -391,6 +406,12 @@ vec3 frozen(vec3 albedo, float frost) {
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
   return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.2, 0.95, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
+}
+// Under the crystals the soil itself is dusted pale wherever it lies open to the sky, thinner than the hoar and gone sooner as the frost dial falls.
+float dusted(vec3 world, float lies, float frost, float sunny) {
+  float pixel = sqrt(length(dFdx(world)) * length(dFdy(world)));
+  float fine = mix(0.6 * valueNoise(world.xz * 610.0 + world.y * 300.0) + 0.4 * valueNoise(world.zx * 1700.0), 0.5, smoothstep(0.0004, 0.002, pixel));
+  return 0.46 * smoothstep(0.25, 0.9, frost) * frostKept(frost, sunny) * smoothstep(0.04, 0.4, lies) * (0.45 + 1.1 * fine * fine);
 }
 // The crystals each face their own way, and one that throws the sun at the lens flares and dies as the light or the lens moves.
 float frostSpark(vec3 world, vec3 n, vec3 v, vec3 l) {
@@ -611,7 +632,8 @@ void main() {
 #endif
   float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
   float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
-  float rime = rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8));
+  float lies = saturate(sits + 0.32 * hollow * smoothstep(0.08, 0.45, mix(h, lumpy.a, stand)) * (1.0 - 0.7 * under) * (1.0 - pool)) * (1.0 - 0.4 * saturate(2.0 * dot(n.xz, uLowSun.xy)));
+  float rime = max(rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8)), dusted(vWorld, lies, uFrost, lit * saturate(ndl * 1.8)));
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
   albedo = mix(albedo, FROST_WHITE, 0.85 * rime);
@@ -631,12 +653,13 @@ void main() {
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
   color += duskSheen(v, n) * open * (1.0 - thatch);
+  color += duskGlow(vWorld, v, n, albedo, 0.6 * crest * stand) * (0.3 + 0.7 * open) * (1.0 - 0.6 * under);
   float soaked = max(smoothstep(0.1, 0.8, uWet), pool);
   vec3 film = normalize(vec3(sleek.x, 1.0, sleek.y));
   color *= 1.0 - 0.72 * soaked * (1.0 - pool);
   float lying = max(pool, stand * (1.0 - smoothstep(0.1, 0.4, lumpy.a)));
   color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5)), soaked, lit, lying) * mix(0.4, 1.0, stand) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.3 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
-  color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, density);
 }
