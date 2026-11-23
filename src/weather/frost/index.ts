@@ -211,8 +211,8 @@ void main() {
       float round = 6.2832 * hb;
       foot = root + grow * (size * fract(hb * 7.31 + 0.11 * float(blade)));
       axis = normalize(grow * (1.6 * hash(own, 52.0 + float(blade)) - 0.8) + e1 * cos(round) + e2 * sin(round));
-      reach = SLEEVE_M * plantSize() * (0.4 + 1.0 * hash(own, 50.0 + float(blade)) * hash(own, 51.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
-      wide = 0.6 * SLEEVE_M * plantSize();
+      reach = SLEEVE_M * plantSize() * (0.3 + 0.8 * hash(own, 50.0 + float(blade)) * hash(own, 51.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
+      wide = 0.9 * SLEEVE_M * plantSize();
     }
   }
   if (bristle) {
@@ -271,7 +271,7 @@ void main() {
     float lit = pow(0.5 + 0.5 * cos(POINT_TURNS * dot(own3, normalize(toEye + uSunDir)) + 6.2832 * hash(own, 72.0 + g)), POINT_SHARP);
     // Out of focus the lens spreads a point over its blur circle: the point is as much brighter as that circle is larger, so the disc it opens into can be seen.
     float circle = min(cocOf(depth), POINT_CIRCLE_MOST);
-    float share = POINT_SHARE * (c.w < -0.5 ? 0.12 : 1.0) / (1.0 + POINT_FEWER * circle);
+    float share = POINT_SHARE * (ridge ? 0.04 : c.w < -0.5 ? 0.15 : 1.0) / (1.0 + POINT_FEWER * circle);
     float mass = hash(own, 81.0 + g);
     float amount = POINT * (0.06 + 2.6 * mass * mass * mass) * (1.0 + POINT_OPEN * circle * circle) * lit * close * stays * (1.0 - melt) * (0.06 + 0.94 * behind) * saturate((share - hash(own, 78.0 + g)) / (0.3 * share));
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), toEye));
