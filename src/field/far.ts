@@ -11,7 +11,7 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
-import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldThinM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
@@ -21,20 +21,23 @@ const UNLIT = 0.3
 // How much of the sky behind it the far crop takes by 220 m. Past its end the land carries the same crop on, so it does not fade into the sky there.
 const FAR_AIR = 0.1
 // How much of the pictures' top colour the carpet keeps once the low sun rims the tops.
-const RIM_KEEP = [0.4, 0.48, 0.48]
+const RIM_KEEP = [0.34, 0.46, 0.46]
 // The dark between the rows of the carpet: its colour as a share of the leaves' in the pictures, how much of the light it takes where the carpet starts and far off,
 // and the share of a row's width it holds once the rows are too close to part.
 const DARK = 0.06
 // How much of the rim the leaves of a far picture keep, seen from over the crop.
-const RIM_FAR = [0.58, 0.7, 0.7]
+const RIM_FAR = [0.48, 0.64, 0.66]
 const GAP_DEEP = 0.9
 const GAP_FAR = 0.35
 const GAP_MEAN = 0.5
-// The rays of a head that stands clear, over the colour of the heads in the pictures.
 // The radius of a head with its rays, in meters.
 const HEAD_R_M = 0.15
-// How much of a clear head is left at the far end of the carpet, where the air lies on it.
-const HEAD_FAR = 0.3
+// A clear head keeps its light to this distance and loses it past there by this length, as the air comes to lie on it.
+const HEAD_NEAR_M = 90
+const HEAD_FADE_M = 60
+// A head in the air stands out of the crop round it by this power of what the air leaves of it.
+const HEAD_AIR = 3
+// The rays of a head that stands clear, over the colour of the heads in the pictures.
 const HEAD_RAYS = [3.5, 3.3, 1.2]
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
@@ -63,17 +66,21 @@ uniform float uAirRain;
 uniform float uMist;
 uniform float uMistTopM;
 uniform vec3 uTrueSun;
-vec3 farAir(vec3 color, vec3 world) {
+float farAirOn(vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
-  float toSun = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uTrueSun.xz + vec2(1e-6)))), 6.0) * uAirToSun;
-  vec3 behind = mix(mix(uAirHorizon, uSkyHorizonSun, toSun), uFogColor + uFogSunTint * toSun, uAirRain);
   float k = v.y / uMistTopM;
   float mist = uMist * exp(-max(uCamPos.y, 0.0) / uMistTopM) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
   float land = 1.0 - exp(-d * uAir - mist);
   float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
   // Near, the crop has the air its neighbors have. The land's own air comes in toward the far end, where the crop meets the land.
-  return mix(color, behind, max(land * smoothstep(100.0, 290.0, length(world.xz)), own));
+  return max(land * smoothstep(100.0, 290.0, length(world.xz)), own);
+}
+vec3 farAir(vec3 color, vec3 world) {
+  vec3 v = world - uCamPos;
+  float toSun = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uTrueSun.xz + vec2(1e-6)))), 6.0) * uAirToSun;
+  vec3 behind = mix(mix(uAirHorizon, uSkyHorizonSun, toSun), uFogColor + uFogSunTint * toSun, uAirRain);
+  return mix(color, behind, farAirOn(world));
 }
 `
 
@@ -319,7 +326,7 @@ void main() {
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share * 0.4 * closed);
     // A head that stands clear is the colour of its rays, as the heads of the pictures before it are.
-    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * mix(1.0, ${HEAD_FAR.toFixed(2)}, smoothstep(${fieldThinM.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, gone)));
+    color = mix(color, gold * vec3(${HEAD_RAYS.join(', ')}) * (0.8 + 0.5 * tone), uOpen * disc * exp(-max(gone - ${HEAD_NEAR_M.toFixed(1)}, 0.0) / ${HEAD_FADE_M.toFixed(1)}) * pow(1.0 - farAirOn(vWorld), ${HEAD_AIR.toFixed(1)}));
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
     color = farAir(color, vWorld);
