@@ -1,9 +1,9 @@
 # Looks of sky-b
 
-2026-11-22 23:50 UTC, at commit a322eb0 of agent/sky-b.
+2026-11-23 00:03 UTC, at commit 337380f of agent/sky-b.
 
-- `01-first-full-sixteen-shot-pass-cloud-contrast-and-.jpg`: First full sixteen-shot pass, cloud contrast and night visibility need polish
-- `02-sunset-hazed-amber-cloud-bases.jpg`: Sunset, hazed amber cloud bases
-- `03-fast-climb-cumulus-silhouettes-need-crisper-ligh.jpg`: Fast climb, cumulus silhouettes need crisper light
-- `04-break-aperture-needs-a-less-symmetrical-edge.jpg`: Break, aperture needs a less symmetrical edge
-- `05-field-low-gold-disc-and-a-higher-layer.jpg`: Field, low gold disc and a higher layer
+- `01-16-shot-1080p-review-sheet-sky-and-ground-only-n.jpg`: 16-shot 1080p review sheet; sky and ground only, no plant or field
+- `02-06-shared-low-moon-deterministic-star-field-star.jpg`: 06: shared low moon, deterministic star field; star positions procedural
+- `03-08-advecting-cumulus-and-bright-afternoon-near-s.jpg`: 08: advecting cumulus and bright afternoon; near silhouettes are still a little smooth
+- `04-12-first-gold-tearing-through-the-wet-deck-share.jpg`: 12: first gold tearing through the wet deck; shared lens shafts not yet wired
+- `05-15-final-warm-field-sky-blank-field-because-this.jpg`: 15: final warm field sky; blank field because this is sky and ground only
