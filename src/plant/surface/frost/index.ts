@@ -60,10 +60,10 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   float turn = 0.5 * (1.0 - dot(N, uSunDir)) * 0.5 + 0.3 * bank + 0.25 * smoothstep(0.3, 0.9, ragged);
   float held = come * (1.0 - smoothstep(turn, turn + 0.3, 1.3 * frostThaw()));
   // The fringe: a crust that closes along the margin, the tip and the ridge of each vein.
-  float fringe = smoothstep(0.64, 0.92, ragged) * mix(0.7, 0.25 + 0.75 * fine, seen);
+  float fringe = smoothstep(0.76, 0.98, ragged) * mix(0.6, 0.15 + 0.85 * fine * fine, seen);
   // The sugar: grains that stand apart on the face, thin in the middle of it, with the green between them.
-  float thick = saturate(0.16 + 0.34 * up * up + 0.75 * gather + 0.3 * (bank * bank - 0.3));
-  float veil = 0.02 + 0.05 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen);
+  float thick = saturate(0.36 + 0.3 * up * up + 0.6 * gather + 0.45 * (bank * bank - 0.3));
+  float veil = 0.03 + 0.09 * thick * (0.4 + 1.2 * bank * bank) * (0.6 + 0.4 * sheen);
   float sharp = 1.0 - smoothstep(0.35, 1.1, reach);
   float chance = 0.9 * thick;
   float most = 0.13 + 0.15 * thick;

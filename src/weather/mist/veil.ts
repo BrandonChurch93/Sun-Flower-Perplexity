@@ -73,13 +73,15 @@ void main() {
   vec3 e1 = normalize(cross(uGlowDir, vec3(0.0, 1.0, 0.0)));
   vec3 e2 = cross(uGlowDir, e1);
   float fan = atan(dot(v, e2), dot(v, e1));
-  float beam = valueNoise(vec2(fan * 4.0, 0.05 * uReal)) * 0.7 + valueNoise(vec2(fan * 9.0 + 5.0, 0.08 * uReal)) * 0.3;
-  float shafts = 1.0 + uLook.z * (smoothstep(0.2, 0.85, beam) * 1.5 - 0.5) * exp(-theta / 0.5);
+  float beam = valueNoise(vec2(fan * 5.0, 0.05 * uReal)) * 0.6 + valueNoise(vec2(fan * 12.0 + 5.0, 0.08 * uReal)) * 0.4;
+  // A shaft is soft at its sides, starts a little way off the sun and dies out away from it.
+  float shafts = 1.0 + uLook.z * (smoothstep(0.1, 0.9, beam) * 1.3 - 0.5) * smoothstep(0.02, 0.12, theta) * exp(-theta / 0.4);
   // Mist is lit by the whole sky, so it is paler than the strip of sky behind it.
   vec3 air = 0.62 * uSkyHorizon + 0.42 * uSkyZenith;
   air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.6) * 1.08;
   vec3 warm = max(uSkyHorizonSun - uSkyHorizon, vec3(0.0));
-  vec3 color = air + (warm * (uLook.y * wide) + uSunColor * (uLook.w * (exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
+  // Mist between the eye and the sun throws the sun forward: it is brightest in front of it.
+  vec3 color = air + ((warm + 0.22 * uSunColor) * (uLook.y * wide) + uSunColor * (uLook.w * (exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);
   outColor = vec4(color, alpha);
@@ -135,7 +137,7 @@ export interface Air {
 export function airAt(m: Moment, out: Air): Air {
   const d = m.dials
   const low = 1 - smoothstep(2, 11, m.sunElevationDeg)
-  const dawn = 0.55 * d.dew * low * (1 - d.wet)
+  const dawn = 0.4 * d.dew * low * (1 - d.wet)
   out.amount = clamp(Math.max(d.fog, dawn))
   out.lifted = d.fog > dawn ? smoothstep(0.25, 1, d.sunThrough) : smoothstep(0, 9, m.sunElevationDeg)
   out.glow = smoothstep(-9, -1, m.sunElevationDeg)
