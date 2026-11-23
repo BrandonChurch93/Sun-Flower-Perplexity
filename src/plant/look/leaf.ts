@@ -19,7 +19,47 @@
 // The holes, the tear and the teeth are thrown away here and in bladeDepth alike: hole, tear and bay must stay as they are, or the shadow no longer fits the leaf.
 const DETAIL_MEAN = 'vec3(0.163, 0.269, 0.111)'
 
-export const leafMain = /* glsl */ `void main() {
+export const leafMain = /* glsl */ `// The short stiff hairs of a blade's upper face, at 'p' on the flat blade in meters: x the share of the pixel that is hair, y the share that is its dark foot. They lean toward the tip and fade where the pixel is too coarse to draw them.
+float bladeHash(vec2 c, float key) {
+  highp uvec2 q = uvec2(ivec2(c) + 65536);
+  highp uint n = (q.x * 1597334677u) ^ (q.y * 3812015801u) ^ uint(key * 4095.0);
+  n = (n ^ (n >> 16u)) * 2246822519u;
+  n = (n ^ (n >> 13u)) * 3266489917u;
+  return float(n ^ (n >> 16u)) / 4294967296.0;
+}
+
+vec2 bladeHairs(vec2 p, float key) {
+  const float CELL = 0.0007;
+  float px = max(0.7 * length(fwidth(p)), 1e-8);
+  float shown = smoothstep(2.0, 5.0, 0.6 * CELL / px);
+  vec2 hair = vec2(0.0);
+  if (shown <= 0.0) return hair;
+  vec2 id = floor(p / CELL);
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 c = id + vec2(float(i), float(j));
+      float h0 = bladeHash(c, key);
+      if (h0 > 0.7) continue;
+      float h1 = bladeHash(c + 0.5, key);
+      float h2 = bladeHash(c + 0.25, key);
+      float h3 = bladeHash(c + 0.75, key);
+      vec2 foot = (c + vec2(0.1 + 0.8 * h1, 0.1 + 0.8 * h2)) * CELL;
+      float ang = 1.5708 + 0.7 * (h3 - 0.5);
+      vec2 dir = vec2(cos(ang), sin(ang));
+      float len = CELL * (0.45 + 0.5 * h0 / 0.7);
+      vec2 d = p - foot;
+      float along = clamp(dot(d, dir) / len, 0.0, 1.0);
+      float w = 0.000016 * (1.0 - 0.75 * along);
+      float dist = length(d - dir * (along * len));
+      hair.x = max(hair.x, (1.0 - smoothstep(0.0, w + px, dist)) * min(1.0, 2.0 * w / (w + px)) * (0.5 + 0.5 * along));
+      float fw = 0.000035;
+      hair.y = max(hair.y, (1.0 - smoothstep(0.0, fw + px, length(d))) * min(1.0, 2.0 * fw / (fw + px)));
+    }
+  }
+  return hair * shown;
+}
+
+void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
   bool top = gl_FrontFacing;
@@ -51,9 +91,13 @@ export const leafMain = /* glsl */ `void main() {
   vec2 fUv = vPlane * 16.0 + vec2(vLeaf.z * 11.0, vLeaf.z * 5.0);
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.96, 1.25, fine);
+  // Its relief is read a mip coarser: a height finer than about three pixels would print the screen's blocks of two by two.
+  float fineHeight = dot(texture(uDetail, fUv, 0.6).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
 
   vec3 upper = vec3(0.041, 0.1, 0.016) * mix(vec3(1.0), var, 0.85) * tone;
-  upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe));
+  // Close by the midrib and the side veins read as pale lines.
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
+  upper = mix(upper, mix(vec3(0.1, 0.16, 0.085), vec3(0.15, 0.22, 0.1), near), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe) * (1.0 + 0.3 * near));
   vec3 under = vec3(0.07, 0.115, 0.03) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
   // A young leaf is a paler, fresher green than a grown one.
@@ -79,34 +123,66 @@ export const leafMain = /* glsl */ `void main() {
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
   // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
   if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
-  // Seen from a hand's breadth the glow is warm, and the margin, a single layer of cells, is a bright line.
-  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
-  through *= mix(vec3(1.0), vec3(1.3, 1.08, 0.75), 0.7 * near * (1.0 - brown));
+  // Seen from a hand's breadth the glow is warm, green gold, strongest in the thin fields between the veins, and the margin, a single layer of cells, is a bright line.
+  through *= mix(vec3(1.0), vec3(2.1, 1.75, 0.95), near * (1.0 - brown) * (0.55 + 0.45 * (1.0 - thick)) * (1.0 - 0.7 * uPlantFrost));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) - (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) - (fine - 1.0) * 0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) - (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + mix(1.0 - fine, 1.0 - fineHeight, near) * 0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
+  // Close by the same relief is sloped from the maps a pixel either side and laid along the flat blade, not differenced across the screen's blocks of two by two, which print a lattice in the glint of the sun.
+  vec2 aReach = 2.0 * reliefReach(a);
+  vec2 pReach = 2.0 * reliefReach(vPlane);
+  float vSide = (1.0 - 2.0 * uVeinPad) / 3.0;
+  vec2 vAt = vec2((vLeaf.y + uVeinPad + (1.0 - 2.0 * uVeinPad) * a.x) / 3.0, a.y);
+  vec2 vSlope = vec2(texture(uVeins, vAt + vec2(vSide * aReach.x, 0.0)).g - texture(uVeins, vAt - vec2(vSide * aReach.x, 0.0)).g, texture(uVeins, vAt + vec2(0.0, aReach.y)).g - texture(uVeins, vAt - vec2(0.0, aReach.y)).g) / (2.0 * aReach);
+  vec3 lumOf = vec3(0.3, 0.6, 0.1) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
+  vec2 dStep = 7.0 * pReach;
+  vec2 lSlope = vec2(dot(texture(uDetail, dUv + vec2(dStep.x, 0.0)).rgb - texture(uDetail, dUv - vec2(dStep.x, 0.0)).rgb, lumOf), dot(texture(uDetail, dUv + vec2(0.0, dStep.y)).rgb - texture(uDetail, dUv - vec2(0.0, dStep.y)).rgb, lumOf)) / (2.0 * pReach);
+  vec2 fStep = 16.0 * pReach;
+  vec2 fSlope = vec2(dot(texture(uDetail, fUv + vec2(fStep.x, 0.0), 0.6).rgb - texture(uDetail, fUv - vec2(fStep.x, 0.0), 0.6).rgb, lumOf), dot(texture(uDetail, fUv + vec2(0.0, fStep.y), 0.6).rgb - texture(uDetail, fUv - vec2(0.0, fStep.y), 0.6).rgb, lumOf)) / (2.0 * pReach);
+  float lift = vState.x * 4.0 * (top ? 1.0 : -1.0);
+  vec2 aSlope = vSlope * (0.0016 * (1.0 + 4.0 * near) * (1.0 - smoothstep(3.0, 7.0, veinTexels)) * lift);
+  vec2 pSlope = (lSlope * (-0.00018 * (1.0 - smoothstep(4.0, 9.0, texels))) + fSlope * (-0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29)))) * lift;
+  vec2 px = dFdx(vPlane);
+  vec2 py = dFdy(vPlane);
+  float pd = px.x * py.y - px.y * py.x;
+  mat2 toA = mat2(dFdx(a), dFdy(a)) * mat2(py.y, -px.y, -py.x, px.x) / (abs(pd) > 1e-14 ? pd : 1e-14);
+  vec3 wx = dFdx(vWorld);
+  vec3 wy = dFdy(vWorld);
+  vec3 along = (py.y * wx - px.y * wy) * sign(pd);
+  along = normalize(along - face * dot(along, face) + 1e-9 * cross(face, vec3(0.0, 1.0, 0.0)));
+  vec3 aside = cross(face, along) * sign(dot(cross(face, along), px.x * wy - py.x * wx) * sign(pd));
+  vec2 grad = pSlope + aSlope * toA;
+  vec3 tilt = grad.x * along + grad.y * aside;
+  vec3 sloped = normalize(face - tilt * inversesqrt(1.0 + 0.7 * dot(tilt, tilt)));
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
   float bay = serration(vUv, vKey, vCut);
   float margin = 1.0 - smoothstep(0.86, 0.98, min(1.0, abs(vUv.x) + bay)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   // The wax lies over a pebbled skin: close by, its sheen breaks into grains and is never one smooth light.
-  float pebble = saturate((fine - 0.82) * 2.5);
+  float pebble = saturate((fineHeight - 0.82) * 2.5);
   Tissue t;
+  // Close by the upper face is matt with bloom, a pale veil that takes the color of the sky, and stiff glassy hairs on dark feet.
+  vec2 hairs = top ? bladeHairs(vPlane, vLeaf.z) * near * (1.0 - brown) : vec2(0.0);
+  albedo = mix(albedo, vec3(0.12, 0.15, 0.18), (top ? 0.45 : 0.0) * near * (1.0 - brown) * (1.0 - thick));
+  albedo = mix(albedo, vec3(0.03, 0.04, 0.02), 0.6 * hairs.y);
+  albedo = mix(albedo, vec3(0.5, 0.55, 0.56), hairs.x);
+  through = mix(through, vec3(0.5, 0.52, 0.45), hairs.x);
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through + vec3(0.2, 0.22, 0.05) * (near * thin * (1.0 - brown) * smoothstep(0.965, 0.995, min(1.0, abs(vUv.x) + bay)));
   t.face = face;
-  t.normal = reliefNormal(face, vWorld, high, 1.0);
+  t.normal = normalize(mix(reliefNormal(face, vWorld, high, 1.0), sloped, near));
   t.rough = (top ? 0.82 : 0.95) + 0.08 * near * (1.0 - pebble);
   t.wax = (top ? 0.22 : 0.04) * margin * mix(1.0, 0.25 + 1.5 * pebble, near);
   // A face turned from the sun mirrors only the sky: half the sheen there, and half on the under side.
   t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.06) * margin * mix(0.5, 1.0, smoothstep(0.0, 0.3, dot(top ? face : -face, uSunDir)));
-  t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
+  t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) * (1.0 - 0.5 * near * thick) : 1.0;
   // The skin's states stand thickest at the margin, the tip and along the veins.
   float brim = max(max(smoothstep(0.55, 1.0, abs(vUv.x)), smoothstep(0.85, 1.0, vUv.y)), 0.7 * vein.r);
+  frostAlong = vUv.y;
   vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;

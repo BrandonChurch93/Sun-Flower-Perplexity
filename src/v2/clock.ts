@@ -304,8 +304,8 @@ const BREAK_STILL = barAt((Math.floor(hitTime(41) * FPS + 1e-6) - 1) / FPS)
 const BREAK_OPEN = barAt(6 / FPS) - barAt(0)
 const breakRise = (b: number): number => 1 - Math.pow(1 - clamp((b - BREAK_STILL) / BREAK_OPEN), 2.2)
 
-// The deck stays over the break: the sun comes through a tear in it and sets under it, and the night takes the deck away.
-const DECK_GOES = 42.3
+// The deck stays over the break: the sun comes through a tear in it and sets under what is left of it, and the deck is gone before the middle of the night, so that the first night after the storm has its stars.
+const DECK_GOES = 42
 
 export function overcastAtBar(b: number): number {
   if (b < 31.6) return 0
@@ -377,14 +377,15 @@ function fairAt(world: number): number {
   return lerp(FAIR[i], FAIR[i + 1], smooth(w - i))
 }
 
-// By night the fair weather cloud thins to half and closes again by sunrise, so that the stars stand in more than the gaps of a day's sky.
-const NIGHT_CLEAR = 0.5
+// By night the fair weather cloud thins and closes again by sunrise, so that the stars stand in more than the gaps of a day's sky. How far it thins is set night by night, by the look of each: half as a rule, more where the day's banks would cover most of the sky.
+const NIGHT_CLEAR = [0.5, 0.6, 0.5, 0.65, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.6, 0.5, 0.5, 0.5]
 
 function nightClear(world: number): number {
-  const phase = world - Math.floor(world)
+  const day = Math.floor(world)
+  const phase = world - day
   if (phase <= DAY) return 1
   const s = Math.sin((Math.PI * (phase - DAY)) / (1 - DAY))
-  return 1 - NIGHT_CLEAR * s * s
+  return 1 - NIGHT_CLEAR[Math.min(NIGHT_CLEAR.length - 1, Math.max(0, day))] * s * s
 }
 
 export function coverAtBar(b: number): number {

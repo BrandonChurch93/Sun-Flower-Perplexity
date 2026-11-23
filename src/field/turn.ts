@@ -66,4 +66,9 @@ export class Shaped {
     this.felt = felt
     return true
   }
+
+  // The shape was laid by other hands: whatever is asked next is laid.
+  forget(): void {
+    this.open = Number.NaN
+  }
 }

@@ -72,6 +72,13 @@ export const stemMain = /* glsl */ `void main() {
   albedo = mix(albedo, sprout, 0.92 * saturate(1.5 * pale));
   albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.3, 0.03, 0.055), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.8 + 0.12 * streak + 0.08 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
+  // The side the sun stands on all day, the south, flushes purple red in streaks, and a bloom of wax pales the rest at the outline.
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
+  vec2 round = face.xz / max(length(face.xz), 1e-4);
+  float flush = smoothstep(0.1, 0.95, dot(round, vec2(-0.17, -0.985))) * (0.45 + 0.55 * streak) * (1.0 - pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)) * near;
+  albedo = mix(albedo, vec3(0.2, 0.045, 0.06) * (0.6 + 0.8 * tone), 0.42 * flush);
+  float bloom = (1.0 - abs(dot(face, view))) * (1.0 - pale) * (1.0 - foot) * near;
+  albedo = mix(albedo, vec3(0.24, 0.27, 0.22) * (0.8 + 0.4 * tone), 0.3 * bloom * bloom * (1.0 - uPlantWet));
   float rough = mix(${GUIDE.rough}, 0.5, thin);
   float wax = mix(${GUIDE.wax}, 0.45, thin);
   // A round stalk passes light where the way through it is short: at its outline.
@@ -79,6 +86,7 @@ export const stemMain = /* glsl */ `void main() {
   Tissue t;
   t.albedo = albedo;
   t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.07 - 0.45 * smoothstep(0.004, 0.032, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.34, 0.51, 0.33), vec3(0.33, 0.08, 0.07), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
+  t.through = mix(t.through, t.through.g * vec3(1.2, 0.4, 0.32), 0.35 * flush);
   t.through *= mix(1.0, mix(0.45, 1.75, smoothstep(-0.5, 0.7, dot(face, uSunDir))), max(pale, fresh));
   t.face = face;
   t.normal = normal;

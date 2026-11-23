@@ -31,4 +31,5 @@ export function heldLensAt(frame: number): number {
 
 // The held lens of the frame being drawn, set by the film before anything is drawn. `lens` is -1 where there is none.
 // `perTan` is pixels for a tangent of one, `cocScale` the blur circle in pixels for a difference of one in 1 / depth, both at the size of the frame being drawn.
-export const held = { lens: -1, eye: new THREE.Vector3(), forward: new THREE.Vector3(), perTan: 0, focusM: 1, cocScale: 0 }
+// Everything from `focusNearM` to `focusM` is sharp; the two are equal for a lens focused at one distance. `blurPx` in `core/lens.ts` gives the blur circle.
+export const held = { lens: -1, eye: new THREE.Vector3(), forward: new THREE.Vector3(), perTan: 0, focusM: 1, focusNearM: 1, cocScale: 0 }
