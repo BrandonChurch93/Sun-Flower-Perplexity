@@ -83,15 +83,36 @@ void main() {
 }
 `
 
-// The discs laid over the filled frame.
+// The discs laid over the filled frame. In a frame summed from several pictures drawn through one place on the lens, a pixel on the edge of a sharp thing still holds its share of the ground behind as it was drawn: that share is changed for the blurred ground beside it.
 export const joinFragment = /* glsl */ `
 uniform sampler2D tFill;
 uniform sampler2D tDiscs;
+uniform sampler2D tRaw;
+uniform float uMixed;
+uniform float uRadiusScale;
 layout(location = 0) out vec4 outColor;
+${skyness}
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   vec4 c = texelFetch(tFill, p, 0);
-  outColor = vec4(c.rgb + texelFetch(tDiscs, p, 0).rgb, c.a);
+  vec3 rgb = c.rgb;
+  if (uMixed > 0.5) {
+    float own = texelFetch(tRaw, p, 0).a;
+    if (abs(c.a) < 0.6 && own * uRadiusScale > 0.6 && sky(own) < 0.5) {
+      ivec2 top = textureSize(tRaw, 0) - 1;
+      float most = own;
+      ivec2 at = p;
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+        ivec2 q = clamp(p + ivec2(i, j), ivec2(0), top);
+        float n = texelFetch(tRaw, q, 0).a;
+        if (n > most) { most = n; at = q; }
+      }
+      float share = clamp(own / max(most, 1e-3), 0.0, 1.0);
+      vec3 change = share * (texelFetch(tFill, at, 0).rgb - max(texelFetch(tRaw, at, 0).rgb, 0.0));
+      rgb = max(rgb + change, (1.0 - share) * rgb);
+    }
+  }
+  outColor = vec4(rgb + texelFetch(tDiscs, p, 0).rgb, c.a);
 }
 `
 

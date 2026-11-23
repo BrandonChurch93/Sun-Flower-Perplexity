@@ -10,7 +10,7 @@ float sky(float a) {
 }
 `
 
-// The radius over which each pixel is spread, with the sharp zone grown by one pixel so the soft edge pixels of a sharp thing keep their own color.
+// The radius over which each pixel is spread. Where the frame is the sum of several places on the lens the sharp zone is grown by one pixel, so the soft edge pixels of a sharp thing keep their own color; a frame drawn through one place has no such pixels, and there the growth would leave a ring of unblurred ground round every hair.
 export const reachFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
 uniform sampler2D tNear;
@@ -19,6 +19,10 @@ uniform float uSpecks;
 uniform float uSkyHold;
 uniform float uExposure;
 uniform float uDiscScale;
+uniform float uGrow;
+uniform float uMixed;
+uniform sampler2D tPure;
+uniform float uPure;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -26,23 +30,50 @@ float circle(ivec2 q, float near) {
   float a = texelFetch(tFrame, q, 0).a;
   return a * max(1.0 - sky(a), near);
 }
-#define RING(o) { vec3 n = texelFetch(tFrame, clamp(p + o, ivec2(0), top), 0).rgb; ring = max(ring, max(n.r, max(n.g, n.b))); }
+#define RING(o) { ivec2 q = p + o; if (q == clamp(q, ivec2(0), top)) { vec3 n = texelFetch(tFrame, q, 0).rgb; ring = max(ring, max(n.r, max(n.g, n.b))); } }
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 top = ivec2(uSize) - 1;
   vec4 c = texelFetch(tFrame, p, 0);
   float near = uFar > 0.0 ? texture(tNear, vUv).r : 1.0;
   float a = circle(p, near);
-  a = min(a, circle(min(p + ivec2(1, 0), top), near));
-  a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
-  a = min(a, circle(min(p + ivec2(0, 1), top), near));
-  a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
+  if (uMixed > 0.5) {
+    // The frame is the sum of several pictures drawn through one place on the lens: a pixel on the edge of a thing holds a share of the thing and a share of what lies behind, and the mean of their two circles. Spread by that mean, a hair in front of blurred ground would dissolve. So the pixel is taken for the thing: it keeps the thing's own circle, and the ground's share of it is put right after the fill.
+    float most = c.a;
+    ivec2 way = ivec2(0);
+    for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+      float n = texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a;
+      if (n > most) { most = n; way = ivec2(i, j); }
+    }
+    float dip = (most - c.a) / max(most, 1e-3);
+    if (dip > 0.08) {
+      float thing = c.a;
+      if (uPure > 0.5) {
+        // One of the pictures alone has no shared pixels: the least circle it holds round here is the thing's own.
+        for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) thing = min(thing, texelFetch(tPure, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+      } else {
+        // Without such a picture: away from the widest circle lies the thing itself. Where it goes on for two pixels at one circle that circle is its own, and where it does not the thing is thinner than the pixel and is taken for sharp.
+        float o1 = texelFetch(tFrame, clamp(p - way, ivec2(0), top), 0).a;
+        float o2 = texelFetch(tFrame, clamp(p - 2 * way, ivec2(0), top), 0).a;
+        thing = abs(o1 - o2) <= 0.1 * o1 + 0.25 && o1 <= 1.1 * c.a + 0.25 ? min(c.a, o1) : 0.0;
+      }
+      a = mix(a, thing, smoothstep(0.08, 0.2, dip));
+    }
+  }
+  if (uGrow > 0.5) {
+    a = min(a, circle(min(p + ivec2(1, 0), top), near));
+    a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
+    a = min(a, circle(min(p + ivec2(0, 1), top), near));
+    a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
+  }
   // A lone pixel far brighter than everything round it is a sampling accident, not a light: no lens draws a point one pixel wide. In focus it is held to twice its brightest neighbor, so it neither sits as a hard dot nor blooms.
   vec3 rgb = max(c.rgb, 0.0);
   float most = 0.0;
   for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-    if (i == 0 && j == 0) continue;
-    vec3 n = texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).rgb;
+    ivec2 q = p + ivec2(i, j);
+    // A place past the border of the frame is nobody's neighbor: read as the border pixel again, a light on the border row would be its own surround and never be held.
+    if ((i == 0 && j == 0) || q != clamp(q, ivec2(0), top)) continue;
+    vec3 n = texelFetch(tFrame, q, 0).rgb;
     most = max(most, max(n.r, max(n.g, n.b)));
   }
   float ring = 0.0;
@@ -107,7 +138,7 @@ ${taps}
 // Rings close round the pixel, read only for what stands in front: a thing blurred less than the pixel reaches it from near by, where the rings of the disc hardly look.
 const INNER = [0.05, 0.08, 0.125, 0.19]
 
-// Each pixel gathers the neighbors whose own blur circle reaches it. A sharp neighbor reaches nobody, so the head never bleeds into the field behind it, and a sharp pixel gathers nothing.
+// Each pixel gathers the neighbors whose own blur circle reaches it, and none past the border of the frame: read as the border pixel again and again, a light on the border row would be spread as a half disc many times too bright. A sharp neighbor reaches nobody, so the head never bleeds into the field behind it, and a sharp pixel gathers nothing.
 // With `front` a neighbor blurred less than the pixel is taken as standing before it: it covers the pixel by the share of its own small circle that the tap stands for, so that the soft edge of a nearer thing is as deep on the far side of its outline as on the near side.
 export function fillFragment(rings: number, front = false): string {
   const outer = (rings - 0.5) / (rings + 0.5)
@@ -138,8 +169,8 @@ uniform float uSeed;
 uniform float uTurn;
 layout(location = 0) out vec4 outColor;
 #define COVER(color, reach, w, area) { float e = w * area * min(radius * radius / max(reach * reach, 0.25), 144.0) * (1.0 - smoothstep(0.6, 0.9, reach / radius)); before += vec4(color, reach) * e; cover += e; }
-#define TAP(o, len, gain, area) { vec4 s = texelFetch(tFrame, clamp(p + ivec2(round(turn * o)), ivec2(0), top), 0); float reach = abs(s.a) * uSpread; float w = saturate(reach - len * radius + 1.0); vec3 color = s.a < 0.0 ? (held ? c.rgb : min(s.rgb, 2.0 * c.rgb + 0.004)) : s.rgb; sum += color * (w * gain); total += w * gain; ${front ? 'COVER(color, reach, w, area)' : ''} }
-#define NEAR(o, len, area) { vec4 s = texelFetch(tFrame, clamp(p + ivec2(round(turn * o)), ivec2(0), top), 0); float reach = abs(s.a) * uSpread; float w = s.a < 0.0 ? 0.0 : saturate(reach - len * radius + 1.0); COVER(s.rgb, reach, w, area) }
+#define TAP(o, len, gain, area) { ivec2 q = p + ivec2(round(turn * o)); ivec2 k = clamp(q, ivec2(0), top); vec4 s = texelFetch(tFrame, k, 0); float reach = abs(s.a) * uSpread; float w = q == k ? saturate(reach - len * radius + 1.0) : 0.0; vec3 color = s.a < 0.0 ? (held ? c.rgb : min(s.rgb, 2.0 * c.rgb + 0.004)) : s.rgb; sum += color * (w * gain); total += w * gain; ${front ? 'COVER(color, reach, w, area)' : ''} }
+#define NEAR(o, len, area) { ivec2 q = p + ivec2(round(turn * o)); ivec2 k = clamp(q, ivec2(0), top); vec4 s = texelFetch(tFrame, k, 0); float reach = abs(s.a) * uSpread; float w = s.a < 0.0 || q != k ? 0.0 : saturate(reach - len * radius + 1.0); COVER(s.rgb, reach, w, area) }
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 top = ivec2(uSize) - 1;

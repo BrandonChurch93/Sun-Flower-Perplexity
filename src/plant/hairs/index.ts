@@ -869,8 +869,7 @@ export class HairSet {
       out[q + 8] = wa[o] / la2
       out[q + 9] = wa[o + 1] / la2
       out[q + 10] = wa[o + 2] / la2
-      const bare = faces !== null && faces[i] === 1 && (m[0] * wa[o] + m[4] * wa[o + 1] + m[8] * wa[o + 2]) * fx + (m[1] * wa[o] + m[5] * wa[o + 1] + m[9] * wa[o + 2]) * fy + (m[2] * wa[o] + m[6] * wa[o + 1] + m[10] * wa[o + 2]) * fz < 0
-      out[q + 11] = bare ? -share : share
+      out[q + 11] = faces !== null && faces[i] === 1 ? -share : share
       out[q + 12] = fold ? (1 - Math.abs(by)) * (bx >= 0 ? 1 : -1) : bx
       out[q + 13] = fold ? (1 - Math.abs(bx)) * (by >= 0 ? 1 : -1) : by
       out[q + 14] = keyed ? (second ? Math.max(rb[o + 3], least) : 0) : stands

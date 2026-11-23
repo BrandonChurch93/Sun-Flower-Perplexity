@@ -7,7 +7,8 @@ export type RGB = [number, number, number]
 
 export interface WorldSettings {
   standIn: boolean
-  sun: { azimuthDeg: number; elevationDeg: number; color: RGB; softnessDeg: number; lean: number; lift: number }
+  // `clear` is how clear the key stands over the sky above it, 0 to 1. Left out, the plant's skin reads it from the two lights as it did.
+  sun: { azimuthDeg: number; elevationDeg: number; color: RGB; softnessDeg: number; lean: number; lift: number; clear?: number }
   // `even` is how far thick air evens the sky's light on the plant, 0 to 1. Left out, it follows the fog's density as it did.
   sky: { zenith: RGB; horizon: RGB; bounce: RGB; ambient: number; glow: RGB; glowPower: number; disc: number; even?: number }
   // The sky's own light, for what floats in the air. Left out, the air is lit as the surfaces are.
@@ -81,5 +82,6 @@ export function applyWorld(def: WorldDef): void {
   shared.uFogDensity.value = def.fog.density
   shared.uFogFalloff.value = def.fog.falloff
   shared.uSkyEven.value = def.sky.even ?? Math.min(1, Math.max(0, 26 * def.fog.density - 0.15))
+  shared.uKeyClear.value = def.sun.clear ?? -1
   shared.uWorldExposure.value = def.grade.exposure
 }
