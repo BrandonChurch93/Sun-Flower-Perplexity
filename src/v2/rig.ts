@@ -50,7 +50,7 @@ const STORM_F_NUMBER = 5.6
 // The top of the stem never comes nearer to the top of the frame than this, as a fraction of its height: the youngest leaves stand around it.
 const HEADROOM = { least: 0.05, soft: 0.02, from: 0.2, until: 0.3 }
 // The crane goes on rising and tips up toward the afterglow after the field has come into view.
-const CRANE = { from: 69, to: 75, riseM: 0.9, backM: 1.3, aimM: 1.1 }
+const CRANE = { from: 69, to: 75, riseM: 0.3, backM: 0.2, aimM: 0.6 }
 
 const panOf = (d: number, rise: number, at: number, focalMm: number): number => {
   const t = ((at - 0.5) * GATE) / focalMm

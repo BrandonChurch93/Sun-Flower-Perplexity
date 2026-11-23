@@ -101,7 +101,7 @@ export function phaseOfElevation(degrees: number, afternoon: boolean): number {
 }
 
 // The sun's height at the marks the film is built on, in degrees.
-export const SUN = { frostFrom: 3, frostMid: 5.5, frostEnd: 9, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
+export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
 
 const W_FROST_FROM = 4 + phaseOfElevation(SUN.frostFrom, false)
 const W_FROST_MID = 4 + phaseOfElevation(SUN.frostMid, false)
