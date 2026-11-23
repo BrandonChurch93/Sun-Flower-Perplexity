@@ -35,6 +35,11 @@ const BLOOM = 40
 const PAIR_OPENS_S = 8
 const SET_S = 20
 const BUDDED_S = 30
+// The bud's radius at which the leaves beside it have given way to it in full.
+const BUD_FILLED_M = 0.012
+// The angle a ball takes up as seen from a point, from its radius as a share of the distance. Near and inside the ball an arcsine turns without limit, so from here on it runs straight to the right angle.
+const CLEAR_STRAIGHT = 0.9
+const clearAngle = (share: number): number => (share < CLEAR_STRAIGHT ? Math.asin(share) : Math.min(0.5 * Math.PI, Math.asin(CLEAR_STRAIGHT) + (share - CLEAR_STRAIGHT) / Math.sqrt(1 - CLEAR_STRAIGHT * CLEAR_STRAIGHT)))
 const SEEDLING_FULL_S = 6.5
 const STOUT_S = 36
 const FPS = config.film.fps
@@ -502,7 +507,11 @@ export function create(options: PartOptions): PlantPart {
   if (beads) {
     const tint = beads.tint()
     // The water is shared out by the face each blade shows where the plant stands in the rain, and a tenth evenly for the blades that come later.
-    const share = leaves.map((leaf) => lengthAt(leaf.i, RAIN_STANDS) ** 2)
+    // Asked of the plant itself and past the store of lengths: a length stored here under another plant's name would be read back in the rain.
+    const inUse = plantVariant()
+    usePlant(options.variant)
+    const share = leaves.map((leaf) => lengthOf(leaf.i, RAIN_STANDS) ** 2)
+    usePlant(inUse)
     const whole = share.reduce((a, b) => a + b, 0)
     for (let k = 0; k < beads.count; k++) {
       const r = (c: number) => hash01(seed, 9000 + k, c)
@@ -714,8 +723,9 @@ export function create(options: PartOptions): PlantPart {
       const off = stemRadius(time, u)
       const steep = leafElevation(i, time, pose.inputs)
       const reach = smoothstep(0.5, 1, total / Math.max(up - bud, 1e-4))
-      const clear = Math.asin(Math.min(1, (bud + 0.7 * bractLength(2, time) + 0.004) / norm(up, off))) - Math.atan2(off, up)
-      if (guard > 0 && bud > 0) ceiling = Math.min(ceiling, lerp(1.6, 1.5708 - clear, guard * reach))
+      const clear = clearAngle((bud + 0.7 * bractLength(2, time) + 0.004) / norm(up, off)) - Math.atan2(off, up)
+      // The new bud is a few millimeters wide: a leaf beside it gives way as the bud fills out, not in the instant it appears.
+      if (guard > 0 && bud > 0) ceiling = Math.min(ceiling, lerp(1.6, 1.5708 - clear, guard * reach * smoothstep(0, BUD_FILLED_M, bud)))
       const over = Math.max(0, steep - ceiling)
       const lower = over > 0 ? over : -lifted * smoothstep(2, 6, age) * Math.max(0, Math.min(CROWN_ANGLE, ceiling) - steep)
       if (lower !== 0) {

@@ -52,13 +52,10 @@ const RAIN_FROM_GLSL = Number.isFinite(RAIN_FROM_S) ? RAIN_FROM_S.toFixed(4) : '
 // Half the master frame's height in pixels, as shader text: a bead is judged by how wide it stands in the finished frame.
 const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
 
-// A set laid at two key frames of the plant stands between them as the plant's own skin does. Until the plant says how far along it is, the shutter does.
+// A set laid at two key frames of the plant stands between them as the plant's own skin does.
 const KEYED = /* glsl */ `
-float beadBlend() {
-  return uShutter;
-}
 vec4 keyed(vec4 a, vec4 b) {
-  return mix(a, b, uBeadKeys * beadBlend());
+  return mix(a, b, uBeadKeys * plantBlend());
 }
 `
 
@@ -180,7 +177,7 @@ void main() {
   vec4 restA = aRestA;
   vec4 restB = aRestB;
   float lee = uBeadLee;
-  float share = beadBlend();
+  float share = plantBlend();
   if (uBeadPaths > 0.5) {
     // A set on paths keeps its second key where a placed set keeps its seats.
     kForm = keyed(aForm, aSeatA);
