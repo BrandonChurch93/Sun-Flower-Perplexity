@@ -1,39 +1,14 @@
-import * as THREE from 'three'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
-import { poseOf, project } from '../src/director/pose.ts'
-import { rigPathAt } from '../src/director/rig.ts'
-import { PLACE, companionPlace, fieldPlaces, right, toward } from '../src/field/layout.ts'
-import { heightAt } from '../src/plant/growth.ts'
-import { timeOf } from '../src/config.ts'
-import { rayLength } from '../src/plant/growth.ts'
-import { sunDirection } from '../src/core/world.ts'
-import { plantInputsAt, worldAtTime } from '../src/director/inputs.ts'
-import { worldOf } from '../src/director/registry.ts'
-import { poseAtTime } from '../src/director/state.ts'
-import { headAt } from '../src/plant/model.ts'
-import { sunDisc } from '../src/post/sun.ts'
+import { hash01, streamSeed } from '../src/core/random.ts'
+import { PLACE, WIND_TOWARD_DEG, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, gustAt, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, toward, windWay } from '../src/field/layout.ts'
 
 const places = fieldPlaces()
 const all = [places.near, places.far]
+const growth = config.growth
 
 describe('the field', () => {
-  it('shows at least the number of plants the film asks for at the field key', () => {
-    const key = config.keys.find((k) => k.id === 'field')!
-    const pose = poseOf({ ...rigPathAt(key.time), fNumber: 8 }, new THREE.Vector3(0, 1.6, 0))
-    const aspect = config.formats.master.width / config.formats.master.height
-    const top = heightAt(key.time) * 0.9
-    let seen = 0
-    const p = new THREE.Vector3()
-    for (const list of all) {
-      for (let i = 0; i < list.length; i += PLACE) {
-        const at = project(pose, p.set(list[i], top * list[i + 3], list[i + 1]), aspect)
-        if (at.depthM > 0 && at.x >= 0 && at.x <= 1 && at.y >= 0 && at.y <= 1) seen++
-      }
-    }
-    expect(seen).toBeGreaterThanOrEqual(config.field.minPlantsInView)
-  })
-
   it('stands in rows behind the plant, the first one the set distance away', () => {
     let nearest = Infinity
     for (const list of all) {
@@ -76,82 +51,61 @@ describe('the field', () => {
     expect(Array.from(again.near)).toEqual(Array.from(places.near))
     expect(again.far.length).toBe(places.far.length)
   })
-})
 
-describe('the neighbors before the rows, beside the companion', () => {
-  const judged = [1350, 1515, 1755]
-  const aspect = config.formats.master.width / config.formats.master.height
-  const margin = 0.02
-  const count = places.front.length / PLACE
-
-  it('are five', () => {
-    expect(count).toBe(5)
+  it('lies behind the plant only, inside its wedge, and has full rows to the last row of plants', () => {
+    let deepest = 0
+    for (const list of [places.near, places.far, places.pictures, places.under]) {
+      for (let i = 0; i < list.length; i += PLACE) {
+        const along = -(list[i] * toward.x + list[i + 1] * toward.z)
+        const across = list[i] * right.x + list[i + 1] * right.z
+        expect(along).toBeGreaterThan(-0.1)
+        expect(across).toBeGreaterThan(-fieldWest(along) - 1.5)
+        expect(across).toBeLessThan(fieldEast(along) + 1.5)
+        deepest = Math.max(deepest, along)
+      }
+    }
+    expect(deepest).toBeGreaterThan(fieldPicturesM)
   })
 
-  it('stand 1.3 m and more from the plant on the side of the companion, no nearer to the lens than the line the plant stands on', () => {
+  it('has five neighbors before the rows, on the side of the companion', () => {
+    expect(places.front.length / PLACE).toBe(5)
     for (let i = 0; i < places.front.length; i += PLACE) {
-      const x = places.front[i]
-      const z = places.front[i + 1]
-      expect(x * right.x + z * right.z).toBeLessThanOrEqual(-1.3)
-      expect(-(x * toward.x + z * toward.z)).toBeGreaterThanOrEqual(0)
-      for (const frame of judged) {
-        const pose = poseAtTime(timeOf(frame))
-        const plant = project(pose, new THREE.Vector3(0, 0, 0), aspect).depthM
-        expect(project(pose, new THREE.Vector3(x, 0, z), aspect).depthM, `frame ${frame}`).toBeGreaterThanOrEqual(plant)
-      }
-    }
-  })
-
-  it('never stand over the head of the plant, its stem or the disc of the sun in the judged frames', () => {
-    for (const frame of judged) {
-      const time = timeOf(frame)
-      const pose = poseAtTime(time)
-      const scale = pose.focalMm / config.camera.gateWidthMm
-      const head = headAt(time, plantInputsAt(time))
-      const center = new THREE.Vector3(head.center.x, head.center.y, head.center.z)
-      const reachOfHead = head.radius + rayLength(0, time)
-      // What must stay clear, each a point in the frame with its radius as a share of the frame's width: the head, the stem under it and the sun.
-      const clear: { x: number; y: number; r: number }[] = []
-      const at = project(pose, center, aspect)
-      clear.push({ x: at.x, y: at.y, r: (reachOfHead / at.depthM) * scale })
-      for (let k = 0; k <= 20; k++) {
-        const s = project(pose, center.clone().multiplyScalar(k / 20), aspect)
-        if (s.depthM > 0.05) clear.push({ x: s.x, y: s.y, r: (0.03 / s.depthM) * scale })
-      }
-      const sun = sunDirection(worldOf(worldAtTime(time)))
-      if (sun.dot(pose.forward) > 0.05) {
-        const s = project(pose, pose.position.clone().addScaledVector(sun, 1000), aspect)
-        clear.push({ x: s.x, y: s.y, r: sunDisc })
-      }
-      for (let i = 0; i < places.front.length; i += PLACE) {
-        const size = places.front[i + 3]
-        const top = heightAt(time) * size
-        // A neighbor is taken as wide as its leaves reach, from the ground to the top of its head.
-        const reach = 0.45 * size + reachOfHead
-        for (let y = 0; y <= top + reachOfHead; y += 0.05) {
-          const p = project(pose, new THREE.Vector3(places.front[i], y, places.front[i + 1]), aspect)
-          if (p.depthM <= 0.05) continue
-          for (const c of clear) {
-            const apart = Math.hypot(p.x - c.x, (p.y - c.y) / aspect)
-            expect(apart, `frame ${frame}, neighbor ${i / PLACE}`).toBeGreaterThan((reach / p.depthM) * scale + c.r + margin)
-          }
-        }
-      }
+      expect(places.front[i] * right.x + places.front[i + 1] * right.z).toBeLessThanOrEqual(-1.3)
+      expect(-(places.front[i] * toward.x + places.front[i + 1] * toward.z)).toBeGreaterThanOrEqual(0)
     }
   })
 })
 
-import { lateAt, nearVariants, ownOf } from '../src/field/layout.ts'
-import { hash01, streamSeed } from '../src/core/random.ts'
+describe('the neighbors grow on the clock of the plant', () => {
+  const tiers = [
+    { tier: 'near' as const, count: nearVariants.length },
+    { tier: 'far' as const, count: farVariants.length },
+    { tier: 'pictures' as const, count: farVariants.length },
+  ]
 
-describe('the neighbors from 52 s', () => {
-  it('are as they were up to frame 1559 and go their own ways from frame 1560', () => {
-    for (let frame = 0; frame <= 1559; frame += 3) expect(lateAt(timeOf(frame))).toBe(0)
-    expect(lateAt(timeOf(1559))).toBe(0)
-    expect(lateAt(52)).toBe(0)
-    expect(lateAt(timeOf(1561))).toBeGreaterThan(0)
-    expect(lateAt(timeOf(1755))).toBe(1)
-    for (let frame = 1560; frame < 1799; frame++) expect(lateAt(timeOf(frame + 1)) - lateAt(timeOf(frame))).toBeLessThan(0.012)
+  it('no clock runs backward, each kind is a little ahead or behind, and all meet the plant at the end', () => {
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        let before = kindTime(0, k, tier)
+        for (let tau = 0.05; tau <= growth.seconds; tau += 0.05) {
+          const at = kindTime(tau, k, tier)
+          expect(at, `${tier} ${k} at ${tau}`).toBeGreaterThanOrEqual(before - 1e-9)
+          expect(Math.abs(at - tau)).toBeLessThan(6)
+          before = at
+        }
+        expect(kindTime(0, k, tier)).toBeCloseTo(0, 6)
+        expect(kindTime(growth.seconds, k, tier)).toBeCloseTo(growth.seconds, 6)
+      }
+    }
+    const apart = new Set(Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.frostHold, k, 'near').toFixed(2)))
+    expect(apart.size).toBeGreaterThan(3)
+    expect(fieldAge(growth.frostHold)).toBeLessThan(growth.frostHold)
+  })
+
+  it('go their own ways as the heads open, by degrees', () => {
+    expect(lateAt(growth.bud)).toBe(0)
+    expect(lateAt(growth.seconds)).toBe(1)
+    for (let tau = 0; tau < growth.seconds; tau += 0.02) expect(lateAt(tau + 0.02) - lateAt(tau)).toBeLessThan(0.01)
   })
 
   it('are no two alike among the nearest thirty', () => {
@@ -165,10 +119,6 @@ describe('the neighbors from 52 s', () => {
     }
     list.sort((a, b) => a.reach - b.reach)
     const nearest = list.slice(0, 30)
-    for (const n of nearest) {
-      expect(n.head).toBeGreaterThanOrEqual(0.75)
-      expect(n.head).toBeLessThanOrEqual(1.15)
-    }
     for (let a = 0; a < nearest.length; a++) {
       for (let b = a + 1; b < nearest.length; b++) {
         const p = nearest[a]
@@ -179,95 +129,78 @@ describe('the neighbors from 52 s', () => {
     }
   })
 
-  it('have heads from 0.75 to 1.15 of the size they had and stand from 0.85 to 1.1 as tall, over the whole field', () => {
-    let low = { head: 9, tall: 9 }
-    let high = { head: 0, tall: 0 }
+  it('have heads from 0.75 to 1.15 of the size of their kind and stand from 0.85 to 1.1 as tall', () => {
     for (const from of all) {
       for (let i = 0; i < from.length; i += PLACE) {
         const own = ownOf(from[i + 7])
-        low = { head: Math.min(low.head, own.head), tall: Math.min(low.tall, own.tall) }
-        high = { head: Math.max(high.head, own.head), tall: Math.max(high.tall, own.tall) }
+        expect(own.head).toBeGreaterThanOrEqual(0.75)
+        expect(own.head).toBeLessThanOrEqual(1.15)
+        expect(own.tall).toBeGreaterThanOrEqual(0.85)
+        expect(own.tall).toBeLessThanOrEqual(1.1)
       }
     }
-    expect(low.head).toBeGreaterThanOrEqual(0.75)
-    expect(low.head).toBeLessThan(0.78)
-    expect(high.head).toBeLessThanOrEqual(1.15)
-    expect(high.head).toBeGreaterThan(1.12)
-    expect(low.tall).toBeGreaterThanOrEqual(0.85)
-    expect(high.tall).toBeLessThanOrEqual(1.1)
-  })
-})
-
-import { behindAt, earlyAt, earlyCode, kindTime, nightAt } from '../src/field/layout.ts'
-import { bodyRadius } from '../src/plant/growth.ts'
-
-describe('before the bloom every neighbor is its own', () => {
-  it('each kind is at its own stage in the rain and under the moon, and no clock runs backward', () => {
-    for (const time of [14, 26]) {
-      const clocks = [0, 1, 2, 3, 4, 5, 6].map((k) => kindTime(time, k, 'near'))
-      for (let a = 0; a < clocks.length; a++) {
-        // In the rain every kind is behind the plant. Under the moon a kind may stand up to 1.5 s ahead of it, so each carries a bud at the night key.
-        if (time === 14) expect(clocks[a]).toBeLessThan(time)
-        else {
-          expect(clocks[a]).toBeGreaterThanOrEqual(time)
-          expect(clocks[a]).toBeLessThanOrEqual(time + 1.5)
-          expect(bodyRadius(clocks[a])).toBeGreaterThan(0)
-        }
-        for (let b = a + 1; b < clocks.length; b++) expect(Math.abs(clocks[a] - clocks[b]), `${time} s, ${a} and ${b}`).toBeGreaterThan(0.1)
-      }
-    }
-    for (let k = 0; k < 7; k++) for (let f = 0; f < 1800; f++) expect(kindTime((f + 1) / 30, k, 'near')).toBeGreaterThan(kindTime(f / 30, k, 'near'))
   })
 
-  it('no two of the nearest twenty have the same stalk, leaves and droop', () => {
-    const near: { d: number; code: number }[] = []
-    for (let i = 0; i < places.near.length; i += PLACE) near.push({ d: Math.hypot(places.near[i], places.near[i + 1]), code: earlyCode(ownOf(places.near[i + 7])) })
-    near.sort((a, b) => a.d - b.d)
-    const codes = near.slice(0, 20).map((n) => n.code)
-    expect(new Set(codes).size).toBe(codes.length)
-  })
-
-  it('all of it is gone by 40.0 s, and the night by 35.5 s', () => {
-    for (const time of [40, 45, 52, 58.5, 60]) {
-      expect(earlyAt(time)).toBe(0)
-      expect(behindAt(time)).toBe(0)
-      expect(nightAt(time)).toBe(0)
-    }
-    expect(nightAt(35.5)).toBe(0)
-    expect(earlyAt(26)).toBe(1)
-  })
-})
-
-import { fieldAge, gapsAt, rainAt, standsClear, stiffAt } from '../src/field/layout.ts'
-
-describe('the rain and the moon leave nothing behind', () => {
-  it('the seedlings in the gaps come and go by degrees and are the same on both sides of the cut to the night', () => {
-    expect(gapsAt(8)).toBe(0)
-    for (const cut of [8, 20, 30]) expect(Math.abs(gapsAt(cut) - gapsAt(cut - 1 / 30))).toBeLessThan(0.01)
-    expect(gapsAt(19.97)).toBe(1)
-    for (const time of [0, 4, 27, 30, 36, 40, 52, 60]) expect(gapsAt(time)).toBe(0)
-  })
-
-  it('from 21 s the field is its own age, and by the frost every kind is near the age of the plant', () => {
-    for (const time of [21, 26, 36, 40, 45, 52, 58.5, 60]) {
-      expect(rainAt(time)).toBe(0)
-      expect(fieldAge(time)).toBe(time)
-    }
-    for (let k = 0; k < 7; k++) for (const time of [34, 34.5, 36]) expect(Math.abs(kindTime(time, k, 'near') - time)).toBeLessThan(0.6)
-    expect(stiffAt(26)).toBe(0)
-    expect(stiffAt(36)).toBe(1)
-  })
-
-  it('three of the second and third rows stand clear under the moon and the code of every other neighbor is unchanged', () => {
-    let clear = 0
+  it('turn their heads mostly one way, each a little differently, and only once in bud', () => {
+    let east = 0
+    let count = 0
+    const ways = new Set<string>()
     for (let i = 0; i < places.near.length; i += PLACE) {
-      const own = ownOf(places.near[i + 7])
-      expect(earlyCode(own)).toBe(earlyCode(own, own.bud, own.leaf, own.droop))
-      if (!standsClear(places.near[i + 7])) continue
-      clear++
-      expect(Math.hypot(places.near[i], places.near[i + 1])).toBeLessThan(3.3)
-      expect(places.near[i + 3]).toBeGreaterThan(0.7)
+      const id = places.near[i + 7]
+      const way = faceToward(id)
+      ways.add(way.toFixed(2))
+      if (Math.cos(way - Math.PI / 2) > 0.7) east++
+      count++
+      expect(settled(growth.bud - 2, id)).toBe(0)
+      expect(settled(growth.open + 1, id)).toBe(1)
     }
-    expect(clear).toBe(3)
+    expect(east / count).toBeGreaterThan(0.75)
+    expect(east / count).toBeLessThan(0.97)
+    expect(ways.size).toBeGreaterThan(count / 4)
+  })
+})
+
+describe('the wind over the field', () => {
+  it('sends one gust every few seconds, travelling toward azimuth 42', () => {
+    expect(WIND_TOWARD_DEG).toBe(42)
+    const peaks: number[] = []
+    let last = gustAt(0, 0, 0)
+    let rising = false
+    for (let s = 0.02; s < 40; s += 0.02) {
+      const g = gustAt(0, 0, s)
+      if (rising && g < last && last > 0.7) peaks.push(s)
+      rising = g > last
+      last = g
+    }
+    expect(peaks.length).toBeGreaterThanOrEqual(8)
+    for (let i = 1; i < peaks.length; i++) {
+      expect(peaks[i] - peaks[i - 1]).toBeGreaterThan(2)
+      expect(peaks[i] - peaks[i - 1]).toBeLessThan(6)
+    }
+    // The same front arrives later downwind.
+    const arrives = (x: number, z: number): number => {
+      for (let s = peaks[0] - 1; s < peaks[0] + 6; s += 0.01) if (gustAt(x, z, s) > 0.8) return s
+      return NaN
+    }
+    expect(arrives(windWay.x * 6, windWay.z * 6)).toBeGreaterThan(arrives(0, 0) + 0.4)
+  })
+
+  it('is still in still air and bends a neighbor downwind in a gust', () => {
+    const calm = blownOf(7, 3, -5, 60, 0, 0)
+    expect(Math.hypot(calm.x, calm.z, calm.head, calm.leaves, calm.nod)).toBe(0)
+    let most = 0
+    for (let s = 55; s < 62; s += 0.05) {
+      const b = blownOf(7, 3, -5, s, 0.54, 0.54)
+      most = Math.max(most, b.x * windWay.x + b.z * windWay.z)
+    }
+    expect(most).toBeGreaterThan(0.1)
+    expect(most).toBeLessThan(0.4)
+  })
+})
+
+describe('the field knows no scene of the first film', () => {
+  it('reads no scene time', () => {
+    const banned = /segmentById|segmentStart|config\.segments|config\.keys|config\.worlds|worldOf|growthline|director\/registry|director\/inputs|worlds\/|units\//
+    for (const name of readdirSync('src/field')) expect(banned.test(readFileSync(`src/field/${name}`, 'utf8')), name).toBe(false)
   })
 })

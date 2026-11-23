@@ -1,19 +1,20 @@
 import * as THREE from 'three'
-import { config, segmentStart } from '../config.ts'
+import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { makeSurface, shared, type Surface } from '../core/shading.ts'
-import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, type PlantInputs } from '../plant/growth.ts'
+import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
+import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
-import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from '../plant/wind.ts'
+import type { Quality } from '../v2/api.ts'
+import { now } from '../v2/now.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { PLACE, beyondAt, beyondPlaces, budTurn, fieldBeyondM, carpetBandM, farVariants, fieldFarM, fieldHalfWidth, fieldPicturesM, kindTime, lagAt, nightAt, NIGHT_LOW, pictureCount, pictureTurn, pictureTurns, plantAhead, right, sizeGlsl, toward } from './layout.ts'
+import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, gustGlsl, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward, windWay } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
 const TILE_H = 128
-const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
 const UNDER_BAND_M = 6
@@ -39,17 +40,15 @@ uniform vec2 uTile;
 uniform vec2 uCrop;
 uniform float uOpen;
 uniform float uCount;
-uniform float uPlantWind;
-uniform float uPlantHeight;
+uniform float uWind;
 uniform float uAhead;
-uniform float uLow;
 uniform float uSquat;
-${swayGlsl}
+uniform float uFarthest;
+${gustGlsl}
 ${sizeGlsl}
 void main() {
   float across = aCorner.x;
   float size = sizeAt(aPlace.w, aVary.z, uAhead);
-  if (uLow > 0.0) size *= 1.0 - uLow;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
@@ -65,11 +64,10 @@ void main() {
   float h = top + off.y;
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * off.x;
   world.xz += aVary.xy * h;
-  // The bend plantWorld gives a real neighbor, so the wave crosses the pictures as it crosses the rows.
-  float tall = max(uPlantHeight * size * (1.0 - uSquat), 0.001);
-  float k = clamp((h / tall - 0.3) / 0.7, 0.0, 1.0);
-  float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, aPlace.xy));
-  world.xz += vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
+  // The lean a real neighbor takes under the gust, so the wave crosses the pictures as it crosses the rows.
+  float blow = uWind * (0.7 + 0.6 * fract(draw * 29.0)) * (${LEAN_STEADY.toFixed(3)} + ${LEAN_GUST.toFixed(3)} * gustAt(aPlace.xy, uReal - 0.25 * fract(draw * 17.0)));
+  world.xz += vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)}) * (blow * h);
+  if (length(aPlace.xy) > uFarthest) world.y = -1000.0;
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
   vUv = vec2((floor(aPlace.z) + clamp(across * flip + 0.5, inset, 1.0 - inset)) / uCount, v);
@@ -138,16 +136,16 @@ uniform float uAbove;
 uniform float uLevel;
 uniform float uThrough;
 uniform float uHeight;
-uniform float uPlantWind;
-uniform float uPlantHeight;
-${swayGlsl}
+uniform float uWind;
+uniform vec4 uWedge;
+uniform vec2 uEnd;
+${gustGlsl}
 void main() {
   float reach = smoothstep(uStart.x, uStart.x + uStart.y, length(vWorld.xz));
   // The wind carries a sheet as far as it carries a neighbor at the sheet's height, so the wave that crosses the rows crosses the sheets too.
-  float tall = max(uPlantHeight * ${PICTURE_SIZE.toFixed(3)}, 0.001);
-  float k = clamp((uHeight / tall - 0.3) / 0.7, 0.0, 1.0);
-  float blow = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, vWorld.xz));
-  vec2 at = vWorld.xz - vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (blow * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
+  float gust = gustAt(vWorld.xz, uReal);
+  float blow = uWind * (${LEAN_STEADY.toFixed(3)} + ${LEAN_GUST.toFixed(3)} * gust);
+  vec2 at = vWorld.xz - vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)}) * (blow * uHeight);
   vec3 color;
   if (uLevel > 0.0) {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
@@ -171,10 +169,24 @@ void main() {
     float along = -dot(at, uToward);
     float across = at.x * uToward.y - at.y * uToward.x;
     vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
-    if (uCover * reach < hash21(cell)) discard;
+    // Near, the carpet comes in plant by plant. Far off a plant is smaller than a pixel, and the field breaks up in tongues and islands
+    // of crop that thin out toward the far land and along its sides: there is no line where it ends.
+    float fine = clamp(1.0 - 0.6 * fwidth(along / ${config.field.rowSpacingM.toFixed(3)}), 0.0, 1.0);
+    float gone = length(vWorld.xz);
+    float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / (30.0 + 0.5 * along);
+    float lost = max(smoothstep(uEnd.x, uEnd.y, gone), 1.0 - smoothstep(0.0, 1.0, inside));
+    float island = 0.6 * valueNoise(vWorld.xz * vec2(0.021, 0.017) + 3.7) + 0.4 * valueNoise(vWorld.xz * 0.067 + 11.0);
+    float keep = mix(hash21(cell), 0.5, 1.0 - fine);
+    if (uCover * reach < keep) discard;
+    if (lost > 0.0 && island < lost * 1.15 - 0.05) discard;
     float grain = valueNoise(vec2(across, along) * 1.7);
-    float patchy = valueNoise(at * 0.028);
-    color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * grain) * (0.78 + 0.44 * patchy);
+    float patchy = 0.6 * valueNoise(at * 0.028) + 0.4 * valueNoise(at * 0.0093 + 5.0);
+    color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * mix(0.5, grain, fine)) * (0.74 + 0.52 * patchy);
+    // The rows, as far as the eye can part them: the tops in light and the dark between.
+    float row = 0.5 + 0.5 * cos(6.2831853 * along / ${config.field.rowSpacingM.toFixed(3)});
+    color *= 1.0 + 0.22 * fine * (row - 0.5);
+    // Where a gust lies on the crop the leaves show their pale undersides.
+    color *= 1.0 + 0.3 * uWind * (gust - 0.3);
   }
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
@@ -184,44 +196,11 @@ void main() {
 }
 `
 
-// The ground past the last rows rises to the foot of the tree row, and the tops on it come up over the rows in front as the lens does.
-const BEYOND_LIFT_M = 1.8
-const BEYOND_BUMPS_M = 0.3
-const BEYOND_HEADS_M = 0.4
-const BEYOND_SHADE = 0.5
-const beyondLift = (at: string, liftM = BEYOND_LIFT_M): string => `smoothstep(${fieldBeyondM[0].toFixed(1)}, ${(fieldBeyondM[0] + 6).toFixed(1)}, length(${at})) * (${liftM.toFixed(2)} + ${BEYOND_BUMPS_M.toFixed(2)} * (0.5 + 0.3 * sin(atan(${at}.x, ${at}.y) * 23.0 + 1.3) + 0.2 * sin(atan(${at}.x, ${at}.y) * 57.0 + 4.1)))`
-
-function ringGeometry(): THREE.BufferGeometry {
-  const position: number[] = []
-  const index: number[] = []
-  const sides = 160
-  const rings = 10
-  for (let r = 0; r < rings; r++) {
-    const reach = fieldBeyondM[0] + ((fieldBeyondM[1] + 0.4 - fieldBeyondM[0]) * r) / (rings - 1)
-    for (let a = 0; a <= sides; a++) {
-      const turn = (a / sides - 0.5) * 2.4
-      const along = Math.cos(turn) * reach
-      const across = Math.sin(turn) * reach
-      position.push(-toward.x * along + right.x * across, 0, -toward.z * along + right.z * across)
-      if (r > 0 && a > 0) {
-        const q = r * (sides + 1) + a
-        const p = q - (sides + 1)
-        index.push(p - 1, p, q - 1, p, q, q - 1)
-      }
-    }
-  }
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(position), 3))
-  geometry.setIndex(index)
-  return geometry
-}
-
 function sheetGeometry(depths: number[]): THREE.BufferGeometry {
   const position: number[] = []
   const index: number[] = []
   depths.forEach((d, i) => {
-    const half = fieldHalfWidth(d)
-    for (const side of [-1, 1]) position.push(-toward.x * d + right.x * half * side, 0, -toward.z * d + right.z * half * side)
+    for (const across of [-fieldWest(d), fieldEast(d)]) position.push(-toward.x * d + right.x * across, 0, -toward.z * d + right.z * across)
     if (i > 0) {
       const a = (i - 1) * 2
       index.push(a, a + 1, a + 2, a + 1, a + 3, a + 2)
@@ -275,9 +254,7 @@ function quads(places: Float32Array): THREE.BufferGeometry {
 export class FarField {
   readonly count: number
   readonly pictures: THREE.Mesh
-  readonly beyond: THREE.Mesh
   readonly carpet: THREE.Mesh
-  readonly end: THREE.Mesh
   readonly under: THREE.Mesh[]
   readonly meshes: THREE.Mesh[]
   private readonly plants: Plant[] = []
@@ -292,15 +269,16 @@ export class FarField {
     uTile: { value: new THREE.Vector2(1, 1) },
     uCrop: { value: new THREE.Vector2(1, 1) },
     uCount: { value: pictureCount },
-    uPlantWind: fieldUniforms.uPlantWind,
-    uPlantHeight: fieldUniforms.uPlantHeight,
+    uWind: { value: 0 },
+    uWedge: { value: new THREE.Vector4(fieldWest(0), fieldWest(1) - fieldWest(0), fieldEast(0), fieldEast(1) - fieldEast(0)) },
+    uEnd: { value: new THREE.Vector2(fieldEndM[0], fieldEndM[1]) },
+    uFarthest: { value: 1000 },
     uToward: { value: new THREE.Vector2(toward.x, toward.z) },
     uCover: { value: 0 },
     uOpen: { value: 0 },
     uAbove: { value: 0 },
     uAhead: { value: 1 },
     uLag: { value: 0 },
-    uLow: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
   }
@@ -311,6 +289,8 @@ export class FarField {
   private stale = false
   private time = 0
   private above = false
+  private readonly local = farVariants.map(() => 0)
+  quality: Quality = 'high'
 
   constructor(places: Float32Array) {
     this.atlas = new THREE.WebGLRenderTarget(TILE_W * pictureCount, TILE_H, {
@@ -341,28 +321,21 @@ export class FarField {
     this.count = places.length / PLACE
     const picture = makeSurface({ name: 'field pictures', vertex: pictureVertex, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms })
     this.pictures = plain(quad, picture)
-    const late = pictureVertex.replace('  vec4 view = viewMatrix * vec4(world, 1.0);', `  world.y += ${beyondLift('aPlace.xy', BEYOND_LIFT_M + BEYOND_HEADS_M)};\n  vec4 view = viewMatrix * vec4(world, 1.0);`)
-    this.beyond = plain(quads(beyondPlaces()), makeSurface({ name: 'field pictures beyond', vertex: late, fragment: pictureFragment, side: THREE.DoubleSide, castShadow: false, uniforms: this.uniforms }))
-    this.beyond.renderOrder = 10.5
 
     const sheet = (level: number, height: { value: number }, startM: number, bandM: number, depths: number[]): THREE.Mesh => {
       const uniforms = { ...this.uniforms, uHeight: height, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
       return plain(sheetGeometry(depths), makeSurface({ name: level > 0 ? 'field leaf layer' : 'field carpet', vertex: sheetVertex, fragment: sheetFragment, side: THREE.DoubleSide, castShadow: false, uniforms }))
     }
-    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldPicturesM])
+    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldEndM[1]])
     this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, fieldPicturesM]))
 
-    const riseVertex = sheetVertex.replace('uHeight, position.z', `uHeight + ${beyondLift('position.xz')}, position.z`)
-    const riseFragment = sheetFragment.replace('float reach = smoothstep(', 'float reach = 1.0 - smoothstep(').replace('  if (uDiag == 7) {', `  color *= mix(1.0, ${BEYOND_SHADE.toFixed(2)}, smoothstep(0.5, ${BEYOND_LIFT_M.toFixed(2)}, vWorld.y - uHeight));\n  if (uDiag == 7) {`)
-    this.end = plain(ringGeometry(), makeSurface({ name: 'field carpet rise', vertex: riseVertex, fragment: riseFragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...this.uniforms, uCover: { value: 1 }, uHeight: this.carpetHeight, uLevel: { value: 0 }, uStart: { value: new THREE.Vector2(fieldBeyondM[1] + 2, 1) } } }))
-    this.end.renderOrder = 14
     // The pictures are made just before the first surface that reads them is drawn.
     this.pictures.onBeforeRender = (renderer) => this.draw(renderer as THREE.WebGLRenderer)
     // Solid surfaces all: the order only lets the nearer ones hide the sheets before the sheets are shaded.
     this.pictures.renderOrder = 10
     this.under.forEach((m, i) => (m.renderOrder = 12 - i))
     this.carpet.renderOrder = 13
-    this.meshes = [this.pictures, this.beyond, ...this.under, this.carpet, this.end]
+    this.meshes = [this.pictures, ...this.under, this.carpet]
   }
 
   async load(assets: Assets): Promise<void> {
@@ -372,13 +345,19 @@ export class FarField {
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number): void {
     this.time = timeOpen
     this.plants.forEach((plant, i) => {
-      plant.prepare(kindTime(timeOpen, i, 'pictures'), kindTime(timeClose, i, 'pictures'), open, close)
+      const clock = kindTime(timeOpen, i, 'pictures')
+      plant.prepare(clock, kindTime(timeClose, i, 'pictures'), open, close)
+      usePlant(plant.variant, null)
+      const axis = headAt(clock, open).axis
+      this.local[i] = Math.atan2(axis.x, axis.z)
+      usePlant(0)
     })
+    this.uniforms.uWind.value = now.dials.wind
+    this.uniforms.uFarthest.value = this.quality === 'low' ? fieldPicturesM : 1000
     this.uniforms.uAhead.value = plantAhead(timeOpen)
     this.uniforms.uLag.value = lagAt(timeOpen)
-    this.uniforms.uLow.value = nightAt(timeOpen) * NIGHT_LOW
-    // Moonlight and the white sun of the frost do not glow green through a leaf; the low sun of the bloom does.
-    this.uniforms.uThrough.value = THREE.MathUtils.smoothstep(timeOpen, segmentStart('frost'), segmentStart('bloom'))
+    // Moonlight does not glow green through a leaf; the sun does.
+    this.uniforms.uThrough.value = now.lightKind === 'sun' ? 1 - now.night : 0
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
@@ -411,7 +390,8 @@ export class FarField {
       for (let j = 0; j < pictureTurns; j++) {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
         const id = 1 + i * pictureTurns + j
-        placeTurned([rx * across, rz * across, pictureTurn(i, j), 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, budTurn(kindTime(this.time, i, 'pictures'), id))
+        const base = 0.25 + (j === 0 ? -0.5 : 0.7)
+        placeTurned([rx * across, rz * across, base, 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
       }
       spot.needsUpdate = true
       still.needsUpdate = true
@@ -433,8 +413,6 @@ export class FarField {
   show(on: boolean): void {
     this.pictures.visible = on
     this.carpet.visible = on && this.above
-    this.end.visible = on && beyondAt(this.time)
-    this.beyond.visible = this.end.visible
     for (const m of this.under) m.visible = on && this.above
   }
 
