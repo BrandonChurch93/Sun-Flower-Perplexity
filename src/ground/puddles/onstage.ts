@@ -25,7 +25,7 @@ const SPLASH_TOWARD = 0.3
 const HAZE_HALF_M = 2.2
 const BED_M = -furrow.depthM - 0.003
 // Full, the water stands a little over the mean ground: it floods the dips beside the furrow and leaves the clods as islands.
-const FULL_M = 0.003
+const FULL_M = 0.008
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const QUALITY = { film: 0, high: 1, low: 2 } as const
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
@@ -60,6 +60,8 @@ class Puddles implements Part {
     uHaze: { value: 0 },
     uHazeAt: { value: new THREE.Vector3() },
     uHazeFlash: { value: new THREE.Vector3() },
+    uHazeFlashAt: { value: new THREE.Vector3(0, 1, 0) },
+    uHazeStrike: { value: 0 },
   }
   private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
   private readonly drops = new Float32Array(MAX_RINGS * LANDING_FLOATS)
@@ -114,7 +116,7 @@ class Puddles implements Part {
     const eye = view.pose.position
     const flash = 0.5 * (d.flash + later.dials.flash) * Math.max(lum(view.light.horizon), lum(view.light.zenith), 1e-4)
     const lit = this.lit
-    lit.uMirrorFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 6)
+    lit.uMirrorFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 3)
     lit.uMirrorFlashAt.value.copy(now.flashAt)
     lit.uBlaze.value = d.burst
     lit.uStalk.value.set(heightAt(now.tau), Math.max(stemBaseRadius(now.tau), 0.004), 0.3 * heightAt(now.tau), 0.85)
@@ -123,6 +125,8 @@ class Puddles implements Part {
     lit.uHaze.value = 0.16 * rain * rain
     lit.uHazeAt.value.set(eye.x * 0.45, eye.z * 0.45, HAZE_HALF_M)
     lit.uHazeFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 2)
+    lit.uHazeFlashAt.value.copy(now.flashAt)
+    lit.uHazeStrike.value = Math.min(1, 2 * (d.flash + later.dials.flash))
     this.haze.visible = rain > 0.2 && quality < 2
 
     const time = now.t
