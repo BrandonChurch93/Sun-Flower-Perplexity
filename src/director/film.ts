@@ -229,7 +229,9 @@ export class Film {
       return true
     }
     applyWorld(def)
-    this.sun.copy(now.light).lerp(later.light, shutter).normalize()
+    this.sun.copy(now.light).lerp(later.light, shutter)
+    if (now.dials.flash > 0) this.sun.lerp(now.flashAt, now.dials.flash)
+    this.sun.normalize()
     return now.lightKind !== 'none' && this.sun.y > 0.005 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 1e-4
   }
 
