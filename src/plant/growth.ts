@@ -31,6 +31,8 @@ export interface PlantInputs {
   steady?: boolean
   // 0 to 1: the plant's clock stands. The air then moves the plant where it is drawn, on the film second, and nothing of its shape is filled again.
   held?: number
+  // The film second at which the plant's clock stopped, while it stands. Water that sits on the plant is laid as of then.
+  stood?: number
 }
 
 // The film second the air moves by, and the inputs of still air and even light, which the stem is measured in and the lens is aimed by.

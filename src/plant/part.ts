@@ -21,6 +21,8 @@ export interface PartOptions {
   places: THREE.InstancedInterleavedBuffer | null
   // The uniforms that are the plant's own and not the field's: what the air does to it while its clock stands.
   own?: Record<string, THREE.IUniform>
+  // How far the plant's clock stands, 0 to 1: the plant sets it on every frame.
+  stands?: { held: number }
 }
 
 // One organ of the plant at its real quality. It owns its meshes and fills them for the two ends of the shutter.
