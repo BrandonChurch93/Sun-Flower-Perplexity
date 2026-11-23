@@ -132,7 +132,7 @@ vec3 sunGlare(vec2 px) {
   float torn = exp(-ra / 0.16) * (1.0 - smoothstep(0.45 * span, span, -off.y)) * smoothstep(0.0, 0.07, (px.y / uSize.y - uHorizon) * uSize.y / uSize.x);
   float reach = mix(0.4 * exp(-ra / mix(0.14, 0.1, uTight)) + 0.6 * (1.0 - uTight) * exp(-ra / 0.55), torn, fanned);
   float standing = reach * mix(open * sqrt(open), mix(0.6, 1.0, open), fanned) * here * beams * under * smoothstep(mix(0.015, 0.0, fanned), mix(0.12, 0.03, fanned), ra);
-  float lit = uShafts * mix(0.8 + 1.6 * uWarm, 1.4 * smoothstep(0.1, 0.7, tear.z), fanned) * standing;
+  float lit = uShafts * mix(0.8 + 1.6 * uWarm, 1.4 * sqrt(clamp(tear.z / 0.5, 0.0, 1.0)), fanned) * standing;
   // The beams under the tear carry the sun's own colour, deepened: the air between them is the storm's and stays cold.
   vec3 own = uSunLight / peak;
   vec3 tint = mix(mix(own, uSunAir, 0.4), own * own, fanned);

@@ -212,3 +212,38 @@ One frame costs about 10 s on a builder's machine and here, so the whole film at
 ### 6. One merge commit without the trailer
 
 `866a003` on `agent/post` (a merge of `v2` into the branch) has no trailer. History is not rewritten for it; the merge of that branch into `v2` (`676e690`) carries the trailer. Later merges carry it.
+
+
+## 23 Nov, 05:25 UTC
+
+### 1. Round 5 is in
+
+Eight parts merged between 04:55 and 05:07 (`bc51ddc`): the sky's break on the boom's frame, the place, the field's hook, the plant (the companion in the Storm hold is the same frame whatever was drawn before), rain, ground, frost. The lens followed at `167a815`: its beams come up with the tear over six frames, never ahead of the dial. Seen in my own frames 2081 to 2090: closed at 2082, the tear at 2083, beams from 2085, the whole fan by 2087.
+
+### 2. The crop runs to the ridge for the whole film
+
+No hedges and no patchwork between the field and the ridge: the land from the end of the field's carpet to the ridge's foot reads as the same crop. The field showed with a magenta trial that its carpet past 100 m is three pixels high at 960 by 540 and that the pale band under the ridge at bars 69 to 73 is the place's land from 290 m outward. Dropping `last` from `farAir` changed no pixel. The band is the place's to mend.
+
+### 3. The frost fringe stays at 1.8
+
+`THROUGH` in the frost's fringe stays 1.8.
+
+### 4. Parts write what they cost
+
+`npm run part` writes `part-FFFFF-TTTTT.cost.json` beside the clip: script time by part, megabytes written and anything made, for every frame. `npm run costs` reads all of them and names the stretches, the hitches (over 25 ms and over three times the median of the sixteen frames round it) and the frames where something was made. The rule for a hitch stays as it is: a frame after a hold that is slow because growing is slow is a stretch, not a hitch.
+
+### 5. The count names the frame
+
+Three owners got the same FAIL from `--count`: one vertex array made after loading somewhere in 200 frames. `--count` now prints the frame for every counter that moves and writes the list to `count.json`. The rain owner is the one finder.
+
+### 6. The plant's order of work for the processor
+
+Agreed as the plant proposed: per slot normals, skin numbers and uniforms; the low layer `key(slot, tau, inputs)` and `blend()` for the field's kinds; hairs off the key; spread by part and leaf; keys 16 apart. `KEYS_WHILE_GROWING` stays off on `v2` until the spread is in. Added: the wet dial is rounded to sixteenths, so plant, companion and field lay again on 32 frames in and after the Storm hold (found by the rain owner by reading, 5.4 MB written at frame 1689 measured by the checks). No frame inside a hold may lay anything and a step of the dial may not be seen.
+
+### 7. A new owner: the look of the plant's skin
+
+At bar 29.7 the grown leaves read dark teal with white ribs against the key `climb-fair.png`. The plant owner has the processor work, so the fragment side goes to a new owner, `leaf_look_builder`, brief `leaf-look.md`: folders `src/plant/look/` (made by the plant owner in a move that changes no pixel) and the top level of `src/plant/surface/`. The evening of the leaves is to go by the light and not by the plant's clock. Sky C stands by so that no more than twelve agents are at work.
+
+### 8. The moon may not blink
+
+Rule for every quick night: between the first and the last frame at which the moon's disc is at half its peak, its level may not fall and come back by more than 12 of 255 inside any five frames. Frame 2179 broke it (153, 46, 123, 77 over frames 2178 to 2181).
