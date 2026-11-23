@@ -6,6 +6,9 @@ import css from './loading.module.css'
 export interface Loading {
   // The scene's own loading. It starts once the screen has been painted, so the page never sits blank while the first part is built.
   loaded: Promise<void>
+  // The film's programs are about to be built, which is the first thing `warm` does and can take a card a minute.
+  // The line that says so is on the screen before the promise resolves, since a browser that builds programs in the page cannot paint until they are done.
+  programs(): Promise<void>
   // A step of the film's warming is done: `done` of `of`. `next` is what runs now: a moment of the film, or the last pass over every shape.
   step(done: number, of: number, next: 'moment' | 'every shape' | null): void
   // Shows the screen again for a second preparation, at another quality.
@@ -22,7 +25,7 @@ export interface Loading {
 export interface LoadingLog {
   // `scriptMs` is the page's own work in drawing a moment, apart from the graphics card.
   // `cost` is the film's own table of that moment, milliseconds by part, `wait` the graphics card.
-  steps: { atMs: number; what: string; frame?: number; scriptMs?: number; cost?: Record<string, number> }[]
+  steps: { atMs: number; what: string; frame?: number; scriptMs?: number; cost?: Record<string, number>; programs?: number; beside?: boolean }[]
   freezes: { fromMs: number; ms: number }[]
   readyMs: number | null
 }
@@ -70,6 +73,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const warmLine = make('p', css.line)
   const warmName = make('span', css.what, 'Moments drawn once')
   const warmCount = make('span', css.count, 'waiting')
+  warmCount.dataset.role = 'loading-warm'
   warmLine.append(warmName, warmCount)
   const warmBar = make('div', css.bar)
   const warmFill = make('i', css.fill)
@@ -142,8 +146,20 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     stepAt = now
     pace.textContent = paceText()
   }
+  // The build of the programs, from the call until the film says it is done. `was` is what the film held before, since a second warming builds again.
+  let build: { from: number; was: Film['built'] } | null = null
+  let reason = ''
+  const built = (): void => {
+    if (!build || film.built === build.was || !film.built) return
+    build = null
+    log.steps.push({ atMs: Math.round(performance.now()), what: 'programs built', programs: film.built.programs, beside: film.built.beside })
+    warmCount.textContent = `${film.built.programs} programs built`
+    stepped('the programs')
+  }
   const timer = window.setInterval(() => {
     if (!sceneDone) sceneCount.textContent = sceneText()
+    built()
+    if (build) warmCount.textContent = `building the programs, ${took(performance.now() - build.from)}`
     pace.textContent = paceText()
   }, 100)
   const finishScene = () => {
@@ -154,17 +170,18 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     sceneFill.style.setProperty('--at', '1')
     if (state.textContent?.startsWith('Building')) state.textContent = warming
   }
-  const painted = new Promise<void>((resolve) => {
-    let open = true
-    const go = (): void => {
-      if (!open) return
-      open = false
-      resolve()
-    }
-    window.setTimeout(go, 200)
-    requestAnimationFrame(() => requestAnimationFrame(go))
-  })
-  const loaded = painted.then(() =>
+  const paint = (): Promise<void> =>
+    new Promise<void>((resolve) => {
+      let open = true
+      const go = (): void => {
+        if (!open) return
+        open = false
+        resolve()
+      }
+      window.setTimeout(go, 200)
+      requestAnimationFrame(() => requestAnimationFrame(go))
+    })
+  const loaded = paint().then(() =>
     film.load((done, of, what, next) => {
       part = done < of ? `Part ${done} of ${of}, ${what}. ` : ''
       log.steps.push({ atMs: Math.round(performance.now()), what: `part ${done} of ${of}, ${what}` })
@@ -178,8 +195,20 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
 
   return {
     loaded,
+    programs() {
+      finishScene()
+      const beside = film.stage.gl.getExtension('KHR_parallel_shader_compile') !== null
+      const how = beside ? 'A graphics card takes from a few seconds to a minute over it' : 'This browser builds them in the page, so the page stands still until they are done, from a few seconds to a minute'
+      state.textContent = `${reason ? `${reason}. Building its programs` : 'Building the programs of the film'}. ${how}`
+      build = { from: performance.now(), was: film.built }
+      stepAt = build.from
+      warmCount.textContent = 'building the programs, 0 s'
+      log.steps.push({ atMs: Math.round(build.from), what: 'programs asked for', beside })
+      return paint()
+    },
     step(done, of, next) {
       finishScene()
+      built()
       const moments = of - 1
       if (done === 0) log.steps.push({ atMs: Math.round(performance.now()), what: 'parts warmed' })
       else if (done <= moments) {
@@ -211,6 +240,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       timedCount.textContent = 'after that'
       timedFill.style.setProperty('--at', '0')
       state.textContent = text
+      reason = text
       lastStep = ''
       opened = performance.now()
       stepAt = opened
