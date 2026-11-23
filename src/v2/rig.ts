@@ -48,7 +48,7 @@ const FROST = { from: 16.5, to: 26, back: 31.5, closer: 0.09, turnDeg: 2.4, rise
 const STORM = { in: 28.5, from: 33, to: 41, out: 46.5 }
 const STORM_F_NUMBER = 5.6
 // The bloom: the lens closes on the bud over the two bars before it opens, gives way as the head opens toward it, and hands the frame to the crane from bar 65.
-const BLOOM = { from: 55, by: 57, until: 65, gone: 66.8, topY: 0.125, fNumber: 5.6 }
+const BLOOM = { from: 55, by: 57, until: 65, gone: 66.8, topY: 0.125, fNumber: 2.8 }
 // Lens to the stem's axis, in meters, while it is close.
 const bloomReach = new Monotone([
   [55, 0.5],
@@ -193,5 +193,5 @@ export function fixedPose(v: FixedView): CameraPose {
   const right = new THREE.Vector3(-Math.cos(heading), 0, Math.sin(heading))
   const forward = level.clone().multiplyScalar(Math.cos(pitch)).setY(Math.sin(pitch))
   const up = new THREE.Vector3().crossVectors(right, forward).normalize()
-  return { position: new THREE.Vector3(v.distanceM * Math.sin(az), v.heightM, v.distanceM * Math.cos(az)), forward, right, up, focalMm: v.focalMm, focusM: v.focusM, fNumber: v.fNumber }
+  return { position: new THREE.Vector3(v.distanceM * Math.sin(az), v.heightM, v.distanceM * Math.cos(az)), forward, right, up, focalMm: v.focalMm, focusM: v.focusM, fNumber: v.fNumber, focusNearM: v.focusNearM }
 }

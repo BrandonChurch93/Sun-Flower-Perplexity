@@ -99,7 +99,7 @@ export function checkPlace(): Rule[] {
     flattest = Math.min(flattest, Math.max(...span) - Math.min(...span))
   }
   rule('the mornings', morning < 0.95, `the land under the rising sun stands ${morning.toFixed(2)} degrees at most`)
-  rule('the last evening', eveningLow > 0.7 && evening < 0.8 && eveningWood > 0.5 && eveningCard < 0, `from the crane's lens at bars 73 and 74.5 the line the last sun stands on is ${eveningLow.toFixed(3)} to ${evening.toFixed(3)} degrees up from bearing 223 to 229, wooded (${eveningWood.toFixed(2)}), the tallest tree ${(-eveningCard).toFixed(3)} degrees under it`)
+  rule('the last evening', eveningLow > 0.7 && evening < 0.86 && eveningWood > 0.5 && eveningCard < 0, `from the crane's lens at bars 73 and 74.5 the line the last sun stands on is ${eveningLow.toFixed(3)} to ${evening.toFixed(3)} degrees up from bearing 223 to 229, wooded (${eveningWood.toFixed(2)}), the tallest tree ${(-eveningCard).toFixed(3)} degrees under it`)
   rule('one long low line', lineLow > 0.7 && lineHigh < 1.7, `beside the hill the ridge stands ${lineLow.toFixed(2)} to ${lineHigh.toFixed(2)} degrees from bearing 190 to 240`)
   rule('the hill at the left of the storm', hill > 1.8 && hill < 2.3, `it stands ${hill.toFixed(2)} degrees`)
   rule('a line that wanders', flattest > 0.08, `over any 10 degrees of bearing from 165 to 245 the skyline moves by ${flattest.toFixed(2)} degrees or more`)

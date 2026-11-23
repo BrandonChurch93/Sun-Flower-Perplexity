@@ -32,8 +32,8 @@ export const floretMain = /* glsl */ `void main() {
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(mix(0.3, 0.18, ripe), mix(0.85, 0.75, ripe), along);
-    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.2, 0.22, 0.03), centre);
-    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.28, 0.32, 0.05), centre);
+    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.16, 0.21, 0.065), centre);
+    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.24, 0.31, 0.095), centre);
     float olive = 4.0 * centre * (1.0 - centre);
     dark += vec3(0.03, 0.01, 0.0) * olive;
     pale += vec3(0.06, 0.02, 0.0) * olive;
@@ -44,7 +44,7 @@ export const floretMain = /* glsl */ `void main() {
     vec3 young = mix(vec3(0.06, 0.12, 0.028), vec3(0.17, 0.275, 0.062), ridge);
     young = mix(young, vec3(0.3, 0.43, 0.11), smoothstep(0.7, 1.0, along) * (0.5 + 0.3 * vKind.w));
     closed = mix(young * mix(0.8, 1.0, deep), closed, ripe) * tone;
-    vec3 flower = mix(vec3(0.16, 0.052, 0.007), vec3(0.24, 0.085, 0.011), smoothstep(0.3, 0.7, along));
+    vec3 flower = mix(vec3(0.14, 0.064, 0.018), vec3(0.22, 0.11, 0.03), smoothstep(0.3, 0.7, along));
     flower = mix(flower, vec3(0.07, 0.018, 0.004), smoothstep(0.78, 1.0, along) * 0.85);
     flower = mix(flower, pollen, 0.25 * smoothstep(0.55, 0.75, grain) * smoothstep(0.5, 1.0, along));
     float bloom = smoothstep(0.05, 0.6, open);

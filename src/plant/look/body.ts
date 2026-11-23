@@ -7,6 +7,13 @@ export const stalkMain = /* glsl */ `void main() {
   float streak = valueNoise(vec2(vUv.x * 30.0, vUv.y * 140.0));
   Tissue t;
   t.albedo = mix(vec3(0.06, 0.09, 0.012), vec3(0.14, 0.185, 0.025), 0.45 * ribs + 0.55 * streak);
+  // Purple red where the stalk leaves the stem and in streaks on its side to the sun.
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
+  vec2 round = face.xz / max(length(face.xz), 1e-4);
+  float flush = max(smoothstep(0.014, 0.0, vUv.y) * step(0.0, vUv.y), 0.6 * smoothstep(0.1, 0.95, dot(round, vec2(-0.17, -0.985))) * streak) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)) * near;
+  t.albedo = mix(t.albedo, vec3(0.19, 0.04, 0.055) * (0.7 + 0.6 * streak), 0.5 * flush);
+  float bloom = (1.0 - abs(dot(face, view))) * near;
+  t.albedo = mix(t.albedo, vec3(0.22, 0.25, 0.2), 0.25 * bloom * bloom * (1.0 - uPlantWet));
   t.through = vec3(0.012, 0.018, 0.003);
   t.face = face;
   t.normal = reliefNormal(face, vWorld, 0.00025 * ribs, 1.0);

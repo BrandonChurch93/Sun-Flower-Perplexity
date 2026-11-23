@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { config, timeOf, type AssetSetId, type Format, type TierId } from '../config.ts'
 import { Assets } from '../core/assets.ts'
 import { lerp, smoothstep } from '../core/curves.ts'
-import { applyLens, cocScalePx, type CameraPose } from '../core/lens.ts'
+import { applyLens, cocScalePx, ranged, type CameraPose } from '../core/lens.ts'
 import { frameSamples } from '../core/sampler.ts'
 import { DIAG, shared, type DiagName } from '../core/shading.ts'
 import { ShadowMap, type Caster } from '../core/shadow.ts'
@@ -384,6 +384,7 @@ export class Film {
       held.forward.copy(pose.forward)
       held.perTan = (stage.width * pose.focalMm) / config.camera.gateWidthMm
       held.focusM = pose.focusM
+      held.focusNearM = pose.focusNearM ?? pose.focusM
       held.cocScale = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
     }
     const inputs = plantInputsOf(now)
@@ -450,15 +451,18 @@ export class Film {
     const span = this.center.distanceTo(this.middle) + (alone ? reach : both)
     stage.accumulator.reset()
     const samples = frameSamples(frame, count)
+    // A picture sharp over a range of depths is drawn through the middle of the lens and blurred by the lens pass, at every tier as in live play.
+    const deep = ranged(first)
     for (const s of samples) {
       const at = seconds + shutterSeconds * s.shutter
       const pose = this.poseAt(at)
       shared.uShutter.value = s.shutter
       const lit = this.light(def, pose, s.shutter)
       shared.uSunDir.value.copy(this.sun)
-      applyLens(camera, pose, { gateMm: config.camera.gateWidthMm, width: stage.width, height: stage.height, near: this.nearAt(at), far: farPlane, pixelX: s.pixelX, pixelY: s.pixelY, lensX: s.lensX, lensY: s.lensY })
+      applyLens(camera, pose, { gateMm: config.camera.gateWidthMm, width: stage.width, height: stage.height, near: this.nearAt(at), far: farPlane, pixelX: s.pixelX, pixelY: s.pixelY, lensX: deep ? 0 : s.lensX, lensY: deep ? 0 : s.lensY })
       shared.uCamPos.value.copy(camera.position)
       shared.uFocusM.value = pose.focusM
+      shared.uFocusNear.value = pose.focusNearM ?? pose.focusM
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
       if (lit && plantOn) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span, s.index)
       else this.shadow.off()
@@ -478,7 +482,7 @@ export class Film {
     // The lens pass needs the blur circle of the sky in every frame that shows it, so the sky it gets already blurred is not blurred again. The sun itself counts only while it is the light.
     const sunAt = skyOn ? sunInFrame(this.poseAt(seconds + 0.5 * shutterSeconds), sky.face ? sky.face(now, later, this.sun) : this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize(), config.camera.gateWidthMm, stage.width, stage.height) : null
     if (sunAt && now.lightKind !== 'sun') sunAt.weight = 0
-    this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
+    this.post.render(renderer, stage.accumulator.texture, def, frame, deep ? 1 : count, this.diag, sunAt)
     this.lap('post')
     if (this.clock) {
       let script = 0

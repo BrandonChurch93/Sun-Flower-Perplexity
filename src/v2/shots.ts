@@ -1,7 +1,7 @@
 import { barTime } from './clock.ts'
 
 // A fixed camera for looking at the sky and the place without the plant. `film` is the camera of the film at that moment.
-export interface FixedView { azimuthDeg: number; distanceM: number; heightM: number; headingDeg: number; pitchDeg: number; focalMm: number; focusM: number; fNumber: number }
+export interface FixedView { azimuthDeg: number; distanceM: number; heightM: number; headingDeg: number; pitchDeg: number; focalMm: number; focusM: number; fNumber: number; focusNearM?: number }
 export type ViewName = 'film' | 'low' | 'wide' | 'up' | 'west' | 'crane' | 'puddle'
 
 export const views: Record<Exclude<ViewName, 'film'>, FixedView> = {
@@ -21,20 +21,21 @@ export const views: Record<Exclude<ViewName, 'film'>, FixedView> = {
 
 const DEG = 180 / Math.PI
 
-export function eyeView(eye: number[], at: number[], focalMm: number, fNumber: number, focusM?: number): FixedView {
+export function eyeView(eye: number[], at: number[], focalMm: number, fNumber: number, focusM?: number, focusNearM?: number): FixedView {
   const dx = at[0] - eye[0]
   const dy = at[1] - eye[1]
   const dz = at[2] - eye[2]
   const reach = Math.hypot(dx, dy, dz)
-  return { azimuthDeg: Math.atan2(eye[0], eye[2]) * DEG, distanceM: Math.hypot(eye[0], eye[2]), heightM: eye[1], headingDeg: Math.atan2(dx, dz) * DEG, pitchDeg: Math.asin(dy / reach) * DEG, focalMm, focusM: focusM ?? reach, fNumber }
+  return { azimuthDeg: Math.atan2(eye[0], eye[2]) * DEG, distanceM: Math.hypot(eye[0], eye[2]), heightM: eye[1], headingDeg: Math.atan2(dx, dz) * DEG, pitchDeg: Math.asin(dy / reach) * DEG, focalMm, focusM: focusM ?? reach, fNumber, focusNearM }
 }
 
-// A view by its name, or one written out as `eye:x,y,z,x,y,z,mm,stop[,focus]`: where the lens is, the point it looks at, the lens and the stop.
+// A view by its name, or one written out as `eye:x,y,z,x,y,z,mm,stop[,focus[,near]]`: where the lens is, the point it looks at, the lens and the stop,
+// then the focus distance and, for a picture sharp over a range, the depth that range starts at.
 export function viewNamed(name: string): FixedView {
   if (name in views) return views[name as Exclude<ViewName, 'film'>]
   if (name.startsWith('eye:')) {
     const n = name.slice(4).split(',').map(Number)
-    if (n.length >= 8 && n.every(Number.isFinite)) return eyeView(n.slice(0, 3), n.slice(3, 6), n[6], n[7], n[8])
+    if (n.length >= 8 && n.every(Number.isFinite)) return eyeView(n.slice(0, 3), n.slice(3, 6), n[6], n[7], n[8], n[9])
   }
   throw new Error(`unknown view "${name}"`)
 }

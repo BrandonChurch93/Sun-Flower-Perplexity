@@ -27,6 +27,7 @@ uniform float uRealSky;
 uniform float uGolden;
 uniform float uLate;
 uniform float uStreaks;
+uniform float uEndDeck;
 uniform float uSideBanks;
 uniform float uWetHaze;
 uniform vec3 uWetDome;
@@ -153,7 +154,10 @@ float scaffold(vec3 p, vec3 eyeRay, float base, float depth, out vec4 shape, out
   float synoptic = mix(shape.r, 0.72 * shape.r + 0.28 * shape.g, st);
   float cutoff = mix(0.629 - 0.35 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x, 0.273 - 0.09 * uWeather.x, st);
   cutoff += 0.063 * smoothstep(0.16, 0.28, uWeather.x) * (1.0 - st);
-  cutoff += 0.26 * uFinale * (1.0 - st);
+  // Erode the moving density field, not a picture of the deck. Weaker
+  // patches break up earlier; the denser billows run on into the crane.
+  float drying = smoothstep(0.18, 0.83, 0.57 * shape.g + 0.43 * shape.b);
+  cutoff += 0.24 * uEndDeck * mix(0.56, 1.25, drying) * (1.0 - st);
   gap = toGap(p, eyeRay, 0.38 * shape.g + 0.62 * shape.b);
   float clear = uWeather.z;
   float aperture = smoothstep(0.58, 1.0, clear + 0.21 * uEffects.w);
@@ -216,14 +220,14 @@ float shadowAt(vec3 p, vec3 d, float base, float dep) {
 
 vec3 thinClouds(vec3 d, vec3 air, float mu) {
   float st = uWeather.y;
-  float weather = (0.09 + 0.75 * uEffects.x + 0.26 * uWeather.x) * (1.0 - st) * (1.0 - uWeather.w) * (1.0 - uFinale);
+  float weather = (0.09 + 0.75 * uEffects.x + 0.26 * uWeather.x) * (1.0 - st) * (1.0 - uWeather.w) * (1.0 - uEndDeck);
   if (weather < 0.013 || d.y < 0.006) return air;
   float t = foot(6.2, d);
   vec2 p = rotateCloud(d.xz * t - uTravel * 1.32);
   vec4 a = f(vec3(0.029 * p.x + 0.17, 0.073 * uEvolve + 0.42, 0.12 * p.y));
   vec4 b = f(vec3(0.092 * p.x + 0.55, 0.067 * uEvolve, 0.26 * p.y + 0.72));
   float shape = 0.67 * a.r + 0.23 * a.g + 0.1 * a.b;
-  float coverage = (weather * 0.84) * smoothstep(0.48 - 0.085 * uEffects.x, 0.74, shape - 0.16 * (1.0 - b.b));
+  float coverage = (weather * 0.84) * smoothstep(0.48 - 0.085 * uEffects.x + 0.12 * uEndDeck, 0.74, shape - 0.16 * (1.0 - b.b));
   coverage *= 1.0 - exp(-17.0 * max(d.y, 0.0));
   float lighting = smoothstep(-11.0, 3.0, uElevation);
   float warm = 1.0 - smoothstep(2.0, 22.0, uElevation);
@@ -234,43 +238,18 @@ vec3 thinClouds(vec3 d, vec3 air, float mu) {
   return mix(air, light, coverage);
 }
 
-vec3 lateCirrus(vec3 d, vec3 sky, float theta) {
-  // Thin streaming sheets on different levels. Their near sides stay dark;
-  // the perforated lower edges still catch light after the ridge hides the sun.
-  vec3 reflected = mix(vec3(0.26, 0.034, 0.071), vec3(0.36, 0.115, 0.073), uFinale) * (0.17 + 0.83 * exp(-theta * 10.0));
-  float low = exp(-squared((d.y - 0.051) * mix(13.0, 26.0, uFinale)));
-  vec3 air = sky * mix(mix(vec3(1.02, 0.77, 1.18), vec3(0.76, 0.97, 1.30), smoothstep(0.055, 0.36, d.y)), vec3(1.0), uFinale);
-  air += reflected * low * mix(0.39, 0.018, uFinale);
-  for (int i = 0; i < 2; i++) {
-    float k = float(i);
-    float t = foot(4.4 + 2.0 * k, d);
-    vec2 p = rotateCloud(d.xz * min(t, 240.0) - uTravel * (1.1 + 0.1 * k));
-    vec3 broad = f(vec3(p.x * 0.019 + 0.69 * k, 0.63 + 0.22 * k + 0.019 * uEvolve, p.y * 0.032)).rgb;
-    vec3 q = vec3(p.x * (0.016 + 0.006 * k) + 0.71 * k, 0.24 + 0.37 * k + 0.043 * uEvolve,
-      p.y * (0.096 + 0.029 * k) + (broad.g - 0.5) * 0.65);
-    q.z *= mix(1.0, 1.55, uFinale);
-    vec4 roll = f(q);
-    float filaments = f(q * vec3(2.27, 1.0, 2.8) + vec3(0.59, 0.17, 0.49)).g;
-    float textureValue = 0.74 * roll.r + 0.26 * filaments;
-    float shape = smoothstep(0.49 + 0.028 * k, 0.71, textureValue) * smoothstep(0.24, 0.66, broad.r) * smoothstep(0.018, 0.065, d.y);
-    shape *= mix(1.0, low * (1.0 - smoothstep(0.046, 0.108, d.y)) * smoothstep(0.48, 0.65, textureValue), uFinale);
-    float edge = exp(-squared((textureValue - mix(0.53, 0.56, uFinale) - 0.025 * k) * mix(14.0, 20.0, uFinale)));
-    vec3 shaded = air * mix(vec3(0.27, 0.39, 0.59), vec3(0.45, 0.53, 0.69), uFinale)
-      + reflected * edge * mix(0.93 + 0.87 * low, 0.32 + 0.44 * low, uFinale);
-    air = mix(air, shaded, shape * (0.83 - 0.19 * k));
-  }
-  return air;
-}
-
 // Three advecting banks of shallow, nearly horizontal cloud, lit along
 // their lower faces. Elevation and azimuth are world directions, not UVs.
-vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
+vec4 eveningStreaks(vec3 d, vec3 sky, float theta, float amount, bool shortNight) {
   float elevation = max(0.0, d.y);
-  float cool = 0.60 * (1.0 - uFinale) * (1.0 - exp(-17.0 * elevation)) * smoothstep(0.016, 0.10, theta);
-  vec3 air = mix(sky, dot(sky, LUMA) * vec3(0.61, 1.04, 1.64), cool);
-  float afterglow = (1.0 - uFinale) * (1.0 - smoothstep(-3.1, -0.20, uElevation));
-  air += vec3(0.24, 0.056, 0.011) * exp(-squared(elevation * 37.0) - 21.0 * theta) * afterglow;
-  float limit = mix(0.171, 0.119, uFinale);
+  vec3 air = sky;
+  if (shortNight) {
+    float cool = 0.60 * (1.0 - exp(-17.0 * elevation)) * smoothstep(0.016, 0.10, theta);
+    air = mix(sky, dot(sky, LUMA) * vec3(0.61, 1.04, 1.64), cool);
+    float afterglow = 1.0 - smoothstep(-3.1, -0.20, uElevation);
+    air += vec3(0.24, 0.056, 0.011) * exp(-squared(elevation * 37.0) - 21.0 * theta) * afterglow;
+  }
+  float limit = mix(0.171, 0.119, uEndDeck);
   if (d.y < 0.006 || d.y > limit) return vec4(air, 1.0);
   float az = atan(d.x, -d.z);
   float drift = 0.0042 * (0.69 * uTravel.x - 0.31 * uTravel.y);
@@ -279,7 +258,7 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
   vec3 red = vec3(0.32, 0.083, 0.037) * lit * (0.35 + 0.65 * exp(-15.0 * theta));
   vec3 edgeSun = mix(vec3(0.135, 0.079, 0.039), vec3(0.158, 0.032, 0.018), uFinaleDusk);
   red = mix(red, edgeSun * (0.10 + 0.90 * exp(-24.0 * theta)), uFinale);
-  float clearGap = 1.0 - 0.80 * uFinale * exp(-1840.0 * max(0.0, 1.0 - dot(d, LAST_GAP)));
+  float clearGap = 1.0 - 0.80 * uEndDeck * exp(-1840.0 * max(0.0, 1.0 - dot(d, LAST_GAP)));
   vec3 outAir = air;
   float transmission = 1.0;
   for (int i = 0; i < 5; i++) {
@@ -294,15 +273,15 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
     float run = 1.0 - smoothstep(0.19, 1.03, abs(strip + 0.28 * (flow.a - 0.5)));
     vec3 ribs = f(vec3(2.68 * along - 0.48 * k, 0.41 + k * 0.29 + 0.023 * uEvolve, flow.a * 0.26 + 0.87)).rgb;
     float clumps = smoothstep(0.27, 0.67, 0.39 * flow.r + 0.61 * ribs.r);
-    float level = (sideBank ? (i == 3 ? 0.046 : 0.059) : (i == 0 ? 0.028 : (i == 1 ? mix(0.073, 0.060, uFinale) : mix(0.131, 0.094, uFinale))))
+    float level = (sideBank ? (i == 3 ? 0.046 : 0.059) : (i == 0 ? 0.028 : (i == 1 ? mix(0.073, 0.060, uEndDeck) : mix(0.131, 0.094, uEndDeck))))
       + (0.028 - 0.003 * k) * (flow.g - 0.5) + 0.015 * (ribs.b - 0.5)
       + (sideBank ? 0.0055 : 0.012 + 0.005 * k) * sin(6.1 * along + 2.41 * k) + 0.006 * sin(13.5 * along - 1.64 * k);
-    float width = (0.0065 + 0.012 * clumps) * (0.59 + 0.41 * run) * (1.0 - 0.073 * k) * mix(1.0, 0.78, uFinale);
+    float width = (0.0065 + 0.012 * clumps) * (0.59 + 0.41 * run) * (1.0 - 0.073 * k) * mix(1.0, 0.78, uEndDeck);
     float y = (d.y - level) / width;
     if (abs(y) > 2.2) continue;
     float wisp = f(vec3(1.46 * along + 0.77 * k, 0.11 + 0.057 * y, 0.43 + 0.19 * k + 0.024 * uEvolve)).g;
     float mass = (0.21 + 0.79 * clumps) * run * clearGap * (1.0 - smoothstep(limit - 0.019, limit, d.y));
-    mass = min(1.0, mass * (1.0 + 0.48 * uFinale));
+    mass = min(1.0, mass * (1.0 + 0.48 * uEndDeck)) * amount;
     if (sideBank) mass *= 0.93 * uSideBanks;
     float ragged = 0.66 * (wisp - 0.5) + 0.32 * (ribs.g - 0.5);
     float cloud = exp(-1.08 * squared(y - 0.32 + ragged)) * mass * (0.69 + 0.31 * wisp);
@@ -388,16 +367,19 @@ void main() {
     float breadth = 0.077 + 0.172 * ridge.g + 0.060 * (mass.b - 0.44);
     riftLight = exp(-squared((d.y - breadth) * (18.0 + 9.0 * apron.r))) * smoothstep(0.30, 0.68, 0.53 * apron.b + 0.47 * mass.g);
   }
-  vec3 sky = air;
-  if (uStreaks < 0.999) {
-    sky = thinClouds(d, air, mu);
-    if (uFinale > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uFinale);
-  }
+  vec3 sky = thinClouds(d, air, mu);
   float sheetTransmission = 1.0;
   if (uStreaks > 0.001) {
-    vec4 sheets = eveningStreaks(d, air, angle);
+    vec4 sheets = eveningStreaks(d, air, angle, 1.0, true);
     sky = mix(sky, sheets.rgb, uStreaks);
     sheetTransmission = mix(1.0, sheets.a, uStreaks);
+  }
+  if (uEndDeck > 0.0) {
+    // High wisps lie behind the lower volume. The same cloud integration
+    // reveals them as holes widen, without blending whole sky images.
+    vec4 sheets = eveningStreaks(d, sky, angle, uEndDeck, false);
+    sky = sheets.rgb;
+    sheetTransmission *= sheets.a;
   }
   float through = 1.0;
   vec3 radiation = vec3(0.0);
@@ -425,7 +407,7 @@ void main() {
     strikeUp = cross(uFlash, strikeSide);
   }
 
-  if (uStreaks < 0.999 && span > 0.0 && d.y > -0.018) {
+  if (uEndDeck < 0.999 && span > 0.0 && d.y > -0.018) {
     float region = f(d * 0.24 + vec3(0.13, 0.02, 0.59)).g;
     // Stratified depth jitter removes coherent contours without a repeated
     // screen tile. Spatial only: no history or frame-dependent seed.
@@ -467,7 +449,7 @@ void main() {
       float gap;
       vec2 relief;
       float density = densityAt(p, d, at, base, dep, gap, relief);
-      density *= 1.0 - uFinale * (0.73 + 0.27 * smoothstep(0.04, 0.112, d.y));
+      density *= 1.0 - uEndDeck * uEndDeck;
       density *= 1.0 - uStreaks;
       if (density < 0.009) continue;
       float shade = shadowAt(p, d, base, dep);

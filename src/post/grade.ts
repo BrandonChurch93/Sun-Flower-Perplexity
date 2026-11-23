@@ -96,6 +96,21 @@ float drifting(float turn, float n, float seed, float rate) {
   f = f * f * (3.0 - 2.0 * f);
   return mix(band(turn, n, seed + k), band(turn, n, seed + k + 1.0), f);
 }
+// A sun going down behind the far land is in the air behind it: as its lower edge comes to the land the glass draws less and less in front of that land, and nothing once they touch. 1 on far land then, 0 on everything else and while the sun stands clear.
+float farLand() {
+  float peak = max(uSunLight.r, max(uSunLight.g, uSunLight.b));
+  if (uFar <= 0.0 || peak <= 0.0) return 0.0;
+  // Far land is blurred nearly as the sky is and never more: what is blurred more stands close to the lens.
+  float circle = texture(tRaw, vUv).a / uFar;
+  float ridge = smoothstep(0.0006, 0.0012, 1.0 - circle) * smoothstep(0.8, 0.95, circle) * min(1.0, 20.0 * peak);
+  float clear = texelFetch(tSun, ivec2(3, 0), 0).r;
+  return ridge * (1.0 - clear * clear * (3.0 - 2.0 * clear));
+}
+// The same for the light that only passes the sun's foot: the bloom of the disc and the beams, cut on the far land close under the sun and left alone further along it.
+float footCut(vec2 px) {
+  vec2 away = (px - uSunAt * uSize) / uSize.x;
+  return 1.0 - farLand() * exp(-dot(away, away) / 0.0036);
+}
 vec3 sunGlare(vec2 px) {
   float peak = max(uSunLight.r, max(uSunLight.g, uSunLight.b));
   if (peak <= 0.0) return vec3(0.0);
@@ -109,15 +124,19 @@ vec3 sunGlare(vec2 px) {
   vec4 face = texelFetch(tSun, ivec2(2, 0), 0);
   float top = max(face.r, max(face.g, face.b));
   float dull = 1.0;
+  float glowing = 1.0;
   if (top > 0.0) {
     air = face.rgb * (peak / top);
     hot = air;
     // In the evenings the sky draws a low sun a few times over white and no more: there a disc four times over white has the whole glass.
     dull = min(1.0, top * uExposure / mix(5.66 * peak * uSunHot, 4.0, uEvening));
+    // A disc gone red is a dim one: its core in the glass goes back to a share of the disc, so the disc keeps the colour the sky drew.
+    glowing = mix(min(1.0, top * uExposure / (5.66 * peak * uSunHot)), dull, smoothstep(0.25, 0.7, face.g / top));
   } else if (uFar > 0.0) {
     dull = 0.0;
+    glowing = 0.0;
   }
-  float size = uSunCore * (1.0 + 0.8 * uWarm * dull);
+  float size = uSunCore * (1.0 + 0.8 * uWarm * glowing);
   float q = r * r / (size * size);
   float core = 1.0 / ((1.0 + q) * (1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
@@ -125,12 +144,9 @@ vec3 sunGlare(vec2 px) {
   glow += uWarm * (0.16 * exp(-r / 0.035));
   float fogged = uMist * 0.3 * exp(-r / 0.03);
   float veil = uVeilSun * (1.0 - uTight) * (0.003 + 0.006 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
-  vec3 glass = hot * (uSunHot * core * min(seen.a, 2.0 * face.a) * dull) + air * (((glow + veil) * dull + fogged) * seen.r);
-  // A sun going down behind the far land is in the air behind it: as its lower edge comes to the land the glass draws less and less in front of that land, and nothing once they touch.
-  float circle = texture(tRaw, vUv).a;
-  float ridge = uFar > 0.0 ? smoothstep(0.0006, 0.0012, abs(circle / uFar - 1.0)) * smoothstep(0.8, 0.95, circle / uFar) : 0.0;
-  float clear = texelFetch(tSun, ivec2(3, 0), 0).r;
-  glass *= 1.0 - ridge * (1.0 - clear * clear * (3.0 - 2.0 * clear));
+  vec3 glass = hot * (uSunHot * core * min(seen.a, 2.0 * face.a) * glowing) + air * (((glow + veil) * dull + fogged) * seen.r);
+  float hidden = farLand();
+  glass *= 1.0 - hidden;
   // Under a deck that has just torn the sun is the tear itself, ragged and already in the sky's picture: the glass adds no disc and no veil of its own there, only the beams.
   glass *= 1.0 - smoothstep(0.0, 0.35, uFan);
   float open = texture(tShafts, vUv).r;
@@ -157,7 +173,7 @@ vec3 sunGlare(vec2 px) {
   // The beams under the tear carry the sun's own colour, deepened: the air between them is the storm's and stays cold.
   vec3 own = uSunLight / peak;
   vec3 tint = mix(mix(own, uSunAir, 0.4), own * own, fanned);
-  return glass + tint * (uShaftLevel * lit / (1.0 + 1.2 * lit));
+  return glass + tint * (uShaftLevel * lit / (1.0 + 1.2 * lit)) * (1.0 - hidden * exp(-dot(away, away) / 0.0036));
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));
@@ -183,7 +199,7 @@ void main() {
   if (uMode == 3) { outColor = vec4(vec3(1.0 / (1.0 + max(c.r, 0.0))), 1.0); return; }
   if (uMode == 1) { outColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0); return; }
   c = max(c, 0.0) * uExposure;
-  vec3 scattered = texture(tBloom, vUv).rgb * uBloom;
+  vec3 scattered = texture(tBloom, vUv).rgb * (uBloom * footCut(gl_FragCoord.xy));
   c += scattered / (1.0 + uBloomCap * dot(scattered, vec3(0.2126, 0.7152, 0.0722))) + sunGlare(gl_FragCoord.xy);
   c *= uGain;
   // The falloff of a lens wide open: the fourth power of the cosine of the field angle, scaled to reach uVignette in the corners.
