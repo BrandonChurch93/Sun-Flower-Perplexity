@@ -226,8 +226,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
   albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, frost);
   albedo = mix(albedo, FROST_RIME, bloom);
-  // Rime on the sun's side sends most of the sun back before it reaches the blade.
+  // Rime on the sun's side sends most of the sun back before it reaches the blade. Rime on the side turned from the sun takes what crossed the blade and sends it on every way, pale.
+  float crossing = dot(through, vec3(0.3, 0.6, 0.1)) * (1.0 - FROST_SHUT * frost);
   through *= (1.0 - FROST_SHUT * frost) * (1.0 - 0.65 * bloom);
+  crossing -= dot(through, vec3(0.3, 0.6, 0.1));
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
   // Hoar breaks the mirror of the wax: a frozen skin is matt.
@@ -371,6 +373,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float behind = 0.6 + 0.4 * lit1;
   if (dew > 0.0) behind = mix(behind, DEW_BEHIND, dew * sheet);
   color += passed * (uSunColor * glow * (crease * wrap * lobe * crossed) + skyBack * (open * behind)) + lamp * glow * crease;
+  color += uSunColor * glow * FROST_RIME * (crossing * sheet * crease * wrap * lobe * smoothstep(0.0, 0.3, -fdl) * smoothstep(0.0, 0.3, frostThaw()));
   if (wet > 0.0) color += evened * skyBack * (open * behind);
   // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.
   color += albedo * hue * uSunColor * (TISSUE_BOUNCE * crease * thin * reach * shade * under * crossed);
