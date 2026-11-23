@@ -5,11 +5,12 @@ import type { CameraPose } from '../core/lens.ts'
 import { headOpen, heightAt, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
-import { fieldUniforms } from '../plant/part.ts'
+import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { type KindUniforms, fieldPlaceGlsl, fieldPlaceUniforms, kindData, kindList } from './place.ts'
+import { Rime } from './rime.ts'
 import { ROOM_M, bySeen, filmLens, frameOf, lensOf, needed } from './seen.ts'
 import { Shaped, shapeInputs } from './turn.ts'
 import { CANOPY_SIZE, PLACE, SETTLED_T, toward, earlyAt, farVariants, fieldAge, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, standOf, statureAt, stiffAt, wideAt, youngOf, type Tier } from './layout.ts'
@@ -24,7 +25,11 @@ const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11
 // How dark the rows behind the pair stand from the crane, and over which stretch of the plant's clock that comes in.
 const BEHIND = { tone: 0.75, from: 53.6, full: 55.5 }
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; kind: KindUniforms; shaped: Shaped; places: Float32Array; need: Uint16Array; drawn: THREE.InstancedBufferGeometry[]; count: number; index: number; tier: Tier; plant: Plant }
+// The frost's glints come to the neighbors over this stretch of the frost.
+const RIME_FROM = 0.1
+const RIME_FULL = 0.7
+
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; rime: Rime | null; kind: KindUniforms; shaped: Shaped; places: Float32Array; need: Uint16Array; drawn: THREE.InstancedBufferGeometry[]; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share. Its list is written here and never again, in the order the film first sees its neighbors:
 // where each one stands in a frame is worked out as it is drawn, and a frame draws only the front part of the list that it can see.
@@ -32,7 +37,8 @@ function group(detail: 'near' | 'far', variant: number, share: Float32Array, ind
   const places = bySeen(share, lens)
   const list = new THREE.InstancedInterleavedBuffer(kindList(places), PLACE)
   const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
-  const plant = new Plant({ detail, variant, places: list, place: { glsl: fieldPlaceGlsl, uniforms: { ...fieldPlaceUniforms, ...kind } } })
+  const options = { detail, variant, places: list, place: { glsl: fieldPlaceGlsl, uniforms: { ...fieldPlaceUniforms, ...kind } } }
+  const plant = new Plant(options)
   const head = { value: new THREE.Vector4(0, 0, 0, 1) }
   const grow = { value: 0 }
   const axis = { value: new THREE.Vector3(0, 0, 1) }
@@ -51,7 +57,11 @@ function group(detail: 'near' | 'far', variant: number, share: Float32Array, ind
       else drawn.push(m.geometry)
     }
   }
-  return { head, leafHead, leafOwn, axis, grow, bare, plant, kind, shaped: new Shaped(), places, need: needed(places, lens), drawn, count, index, tier: detail }
+  // The full plants wear the frost's glints on their leaves.
+  const blades = plant.parts.find((part) => part.name === 'leaves')?.meshes.find((m) => m.geometry.getAttribute('aLeaf'))?.geometry
+  const rime = detail === 'near' && !bare && blades ? new Rime(options, blades, { uHeadAt: leafHead, uHeadGrow: grow, uHeadAxis: axis, uEarly: leafOwn, uFieldLeaf: { value: 1 } }) : null
+  if (rime) drawn.push(rime.geometry)
+  return { head, leafHead, leafOwn, axis, grow, bare, rime, plant, kind, shaped: new Shaped(), places, need: needed(places, lens), drawn, count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -59,10 +69,11 @@ function group(detail: 'near' | 'far', variant: number, share: Float32Array, ind
 export class Field {
   readonly groups: Group[]
   readonly far: FarField
-  readonly meshes: THREE.Mesh[]
+  readonly meshes: THREE.Object3D[]
   // Set by the field's own stage part before the frame is drawn, from the frame's view.
   quality: Quality = 'high'
   private time = 0
+  private rimed = 0
   private rise = 0
   private ahead = 1
   private lag = 0
@@ -91,7 +102,7 @@ export class Field {
       ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, this.lens, true)),
     ]
     this.far = new FarField(places.pictures)
-    this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
+    this.meshes = [...this.groups.flatMap((g) => (g.rime ? [...g.plant.meshes, g.rime.points] : g.plant.meshes)), ...this.far.meshes]
     this.shown = this.groups.reduce((sum, g) => sum + g.count, 0)
     fieldUniforms.uEdge.value.set(toward.x, toward.z, frontM)
     current = this
@@ -116,6 +127,10 @@ export class Field {
     const still = shapeInputs(open)
     const stillClose = shapeInputs(close)
     const felt = JSON.stringify([still, stillClose])
+    // The frost shows on the neighbors as it stands on the plant, and its melt water for as long as the plant's clock stands.
+    const frost = stateUniforms.uPlantFrost.value
+    const melt = stateUniforms.uPlantDew.value * Math.min(1, open.held ?? 0)
+    this.rimed = Math.max(THREE.MathUtils.smoothstep(frost, RIME_FROM, RIME_FULL), melt)
     for (const g of this.groups) {
       const clock = kindTime(timeOpen, g.index, g.tier)
       const clockClose = kindTime(timeClose, g.index, g.tier)
@@ -159,7 +174,10 @@ export class Field {
   }
 
   show(on: boolean): void {
-    for (const g of this.groups) g.plant.visible = on
+    for (const g of this.groups) {
+      g.plant.visible = on
+      g.rime?.set(this.rimed, on)
+    }
     this.far.show(on)
   }
 
