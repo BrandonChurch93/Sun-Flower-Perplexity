@@ -44,6 +44,7 @@ export function nightsOf(film: ReturnType<typeof clockOf>): Night[] {
 
 export async function run(args: Args): Promise<void> {
   if (args.list === true) return (await import('./dusklist.ts')).run(args)
+  if (args.handover === true) return (await import('./handover.ts')).run(args)
   const broken = typeof args.break === 'string' ? args.break : null
   const drawnBreak = broken !== null && (broken.startsWith('picture-') || broken.startsWith('plant-') || broken === 'moon-blink')
   const film = clockOf(broken && !drawnBreak ? broken : null)

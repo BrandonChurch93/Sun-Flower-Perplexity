@@ -4,6 +4,7 @@ import { keys, segments } from '../director/timeline.ts'
 import { MARK_HOLD_SECONDS, markSeconds, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
 import type { Report, RunFacts } from './pacing.ts'
 import { filmPlan, play, stretchPlan, type Plan, type Playing } from './play.ts'
+import { stateRun, type StateReport } from './state.ts'
 
 const CHECK_SECONDS = 10
 const CHECK_STRETCHES = 3
@@ -173,6 +174,57 @@ export function check(deck: Deck, clock: FilmClock): Session {
     } finally {
       delete deck.root.dataset.run
     }
+  }
+  return {
+    stop() {
+      stopped = true
+      playing?.stop()
+    },
+    finished: run(),
+  }
+}
+
+export interface Measured { live: Report; script: StateReport | null }
+
+export interface Measuring {
+  stop(): void
+  readonly finished: Promise<Measured>
+}
+
+// The pacing report: the film from `first` to `last` once against the audio clock with the sound off, then the same frames set in a row with nothing drawn.
+// `say` is told what runs now. A run that is stopped gives what it has measured until then.
+export function measure(deck: Deck, clock: FilmClock, first: number, last: number, say: (text: string) => void): Measuring {
+  const fps = config.film.fps
+  let stopped = false
+  let playing: Playing | null = null
+  const run = async (): Promise<Measured> => {
+    deck.root.dataset.run = 'measure'
+    let live: Report
+    try {
+      await deck.film.renderFrame(first, deck.tier)
+      const clockRun = await runFrom(clock, first / fps, false, 0)
+      try {
+        const facts = deck.facts('measure', clock.ctx)
+        playing = play({ film: deck.film, tier: deck.tier, plan: filmPlan(first, last), time: clockRun.time, facts: (stepMs) => stepped(facts, stepMs) })
+        if (stopped) playing.stop()
+        live = await playing.finished
+      } finally {
+        clockRun.stop()
+      }
+    } finally {
+      delete deck.root.dataset.run
+    }
+    if (stopped) return { live, script: null }
+    const of = last - first + 1
+    say(`Measuring the script, frame 1 of ${of}`)
+    const script = await stateRun(deck.film, first, last, deck.tier, {
+      stopped: () => stopped,
+      onFrame(frame) {
+        const done = frame - first + 1
+        if (done % fps === 0 || done === of) say(`Measuring the script, frame ${done} of ${of}`)
+      },
+    })
+    return { live, script }
   }
   return {
     stop() {

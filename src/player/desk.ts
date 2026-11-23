@@ -9,6 +9,7 @@ export interface DeskActions {
   track(file: File): void
   record(): void
   check(): void
+  measure(): void
   quality(quality: Quality): void
   checkLow(): void
   av(ms: number): void
@@ -27,7 +28,7 @@ export interface Desk {
 
 export interface Advice { text: string; tryLow: boolean }
 
-const KIND = { recording: 'Recording', check: 'Check', play: 'Playback' } as const
+const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report' } as const
 const SHOWN_GAPS = 4
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -119,7 +120,11 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   const record = button('Record', 'R', true)
   record.addEventListener('click', () => actions.record())
   const recordText = make('p', css.small, `Start the screen recorder first, then press Record. The page goes full screen: ${SETTLE_SECONDS + LEAD_SECONDS} seconds of dark, the film, ${TAIL_SECONDS} seconds of dark. Esc stops it.`)
-  goStep.body.append(check, checkText, adviceText, tryLow, record, recordText)
+  const measure = button('Pacing report', 'P')
+  measure.dataset.role = 'measure'
+  measure.addEventListener('click', () => actions.measure())
+  const measureText = make('p', css.small, 'Once on this machine: the whole film plays without sound, then every frame is set with nothing drawn. A few minutes. The result opens as one page to copy and send. Esc stops it.')
+  goStep.body.append(check, checkText, adviceText, tryLow, record, recordText, measure, measureText)
 
   const more = make('details', css.more)
   more.append(make('summary', css.summary, 'More settings'))
@@ -273,7 +278,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       reportGroup.scrollIntoView({ block: 'start' })
     },
     busy(on) {
-      for (const b of [choose, record, check, tryLow]) b.disabled = on
+      for (const b of [choose, record, check, tryLow, measure]) b.disabled = on
       for (const radio of qualities.values()) radio.disabled = on
       marks.disabled = on
       av.disabled = on
