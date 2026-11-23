@@ -118,8 +118,8 @@ const FPS = config.film.fps
 const SHUTTER_SHARE = config.film.shutterDegrees / 360
 // The plant's shape is laid at key frames only, this many frames apart at most, and every frame is drawn as a mix of the two keys round it. A key stands on the film's first and last frame and on both ends of each hold, and a hold is one stretch.
 export const KEY_EVERY = 8
-// Off until every part keeps its normals and the numbers of its skin once for each key: with one set for both, the light on the plant steps at every key and the stem's skin slides between them. In the two holds the keys are one shape, and they are on.
-const KEYS_WHILE_GROWING = false
+// The parts drawn from keys while the plant grows, each on its own switch. A part that is off has a key on every frame, so it is true to each frame and still moves in the same air as the parts that are on. With none on, a growing plant is laid whole for every frame. In the two holds the keys are one shape, and they are always on.
+export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
 // The key frames of the film, in order.
 export function keyFrames(every: number): number[] {
   const keys: number[] = []
@@ -194,15 +194,16 @@ function strayLimit(frame: number): number {
 // The keys of one part of the film. Every part has its own turn among the frames of each stretch of KEY_EVERY and its keys fall on that turn, so two parts are seldom laid on the same frame. The key that falls last before a hold or first after it is laid as the hold's own end: the clock has all but stopped there, the hold then has one key at each end, and nothing is laid inside it. Where a part's shape would stray from the truth between two keys, a key more is set halfway, and again, down to every frame: a part that moves fast for a moment is laid often for that moment only.
 interface Turn { at: Int32Array; of: Int32Array; held: Uint8Array; index: Int32Array }
 const turns = new Map<string, Turn>()
-function turnOf(phase: number, name: string | null): Turn {
-  const known = turns.get(`${name} ${phase}`)
+function turnOf(turn: number, name: string | null, every = KEY_EVERY): Turn {
+  const phase = turn % every
+  const known = turns.get(`${name} ${phase} ${every}`)
   if (known) return known
   const last = frameCount - 1
   const at = [0]
   const of = [0]
-  const up = (v: number) => ((v % KEY_EVERY) + KEY_EVERY) % KEY_EVERY
+  const up = (v: number) => ((v % every) + every) % every
   for (let f = 1; f < last; f++) {
-    if (f % KEY_EVERY !== phase) continue
+    if (f % every !== phase) continue
     let from = f
     for (const [start, end] of HOLD_FRAMES) {
       const before = start - up(start - phase)
@@ -238,9 +239,9 @@ function turnOf(phase: number, name: string | null): Turn {
     while (k + 2 < at.length && at[k + 1] <= f) k++
     index[f] = k
   }
-  const turn = { at: Int32Array.from(at), of: Int32Array.from(of), held, index }
-  turns.set(`${name} ${phase}`, turn)
-  return turn
+  const made = { at: Int32Array.from(at), of: Int32Array.from(of), held, index }
+  turns.set(`${name} ${phase} ${every}`, made)
+  return made
 }
 
 // What a slot is laid from: the plant's clock and what it feels there, in still air, and the state of its skin. `serial` names the laying: a part holds a slot's key when it holds its serial.
@@ -328,6 +329,7 @@ export class Plant {
   private readonly tips = [new THREE.Vector3(), new THREE.Vector3()]
   private readonly tipOf = [-1, -1]
   private serial = 0
+  private readonly growsByKeys = Object.values(keyed).some((on) => on)
   private readonly signing = new Float64Array(KEY_SIGNED)
   private readonly now = blankMoment()
   private readonly laid: PlantPart[] = []
@@ -358,7 +360,7 @@ export class Plant {
       const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid })
       if (part) {
         this.parts.push(part)
-        this.plays.set(part, { turn: turnOf((slot.turn + turned) % KEY_EVERY, slot.name), film: [newFilmKey(), newFilmKey()], mix })
+        this.plays.set(part, { turn: keyed[slot.name] ? turnOf((slot.turn + turned) % KEY_EVERY, slot.name) : turnOf(0, null, 1), film: [newFilmKey(), newFilmKey()], mix })
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
     }
@@ -643,7 +645,7 @@ export class Plant {
   private play(timeOpen: number, felt: PlantInputs): boolean {
     const frame = shared.uFrame.value
     if (this.at === null || !this.b || !(frame >= 0 && frame < frameCount)) return false
-    if (!KEYS_WHILE_GROWING && !HOLD_FRAMES.some(([from, to]) => frame >= from && frame <= to)) return false
+    if (!this.growsByKeys && !HOLD_FRAMES.some(([from, to]) => frame >= from && frame <= to)) return false
     const m = momentAt(frame / FPS, this.now)
     if (m.tau !== timeOpen) return false
     const here = plantInputsOf(m)
