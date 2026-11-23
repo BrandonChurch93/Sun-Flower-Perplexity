@@ -6,7 +6,7 @@ import type { PlantInputs } from './growth.ts'
 import type { Pose } from './skeleton.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from './wind.ts'
 import { wetUniforms } from './surface/wet/film.ts'
-import { GUST_LEAN } from './growth.ts'
+import { GUST_LEAN, RAIN_WEIGHT } from './growth.ts'
 import { config } from '../config.ts'
 
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
@@ -176,7 +176,7 @@ vec3 plantHeld(vec3 w) {
   float nod = exp(-4.2 * a1) * sin(20.0 * a1) + 0.7 * exp(-6.5 * a2) * sin(31.0 * a2);
   float live = 1.0 - uOwnLapse.x;
   float twitch = uOwnLapse.z * (0.65 * sin(3.1 * ph + 1.9 * time) + 0.55 * sin(7.3 * ph + uOwnLapse.w));
-  float up = live * uOwnAir.y * (0.045 * flutter + 0.03 * (2.0 * plantGust(w.xz, time) - 1.0)) + twitch + uOwnAir.z * push * 0.4 * (into > 0.0 ? into : 0.6 * into) - uOwnAir.w * (0.07 * nod + 0.14);
+  float up = live * uOwnAir.y * (0.045 * flutter + 0.03 * (2.0 * plantGust(w.xz, time) - 1.0)) + twitch + uOwnAir.z * push * 0.4 * (into > 0.0 ? into : 0.6 * into) - uOwnAir.w * (0.07 * nod + ${RAIN_WEIGHT.toFixed(4)});
   vec2 across = vec2(-o.y, o.x);
   vec2 side = way * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k) + reach * (0.03 * live * uOwnAir.y * flutter + 0.12 * uOwnAir.z * push)) + across * (reach * 0.3 * uOwnAir.z * push * dot(way, across));
   return vec3(w.x + side.x, w.y + reach * up, w.z + side.y);

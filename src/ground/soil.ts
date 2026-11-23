@@ -398,11 +398,18 @@ vec3 wetSky(vec3 v, vec3 n) {
   vec3 r = reflect(-v, n);
   return skyImage(r) * (WET_MIRROR * (0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0)) * smoothstep(-0.05, 0.2, r.y));
 }
-// What water adds to a soaked face: the sky it mirrors, the sun thrown at the lens, and the lightning. Only where water lies as a film (lying, 0 to 1: the low places) is it one mirror; on the crumbs' tops it is single wet grains.
-vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit, float lying) {
+// A soaked clod is rough, so its back shows the dim sky as one soft light and not as a mirror: most where the lens skims it, none where it faces the ground.
+const float WET_BACK = 0.23;
+vec3 wetBack(vec3 v, vec3 n) {
+  vec3 r = reflect(-v, n);
+  float skim = 1.0 - saturate(dot(n, v));
+  return mix(uAirHorizon, uAirZenith, 0.35 * smoothstep(0.0, 0.9, r.y)) * (WET_BACK * mix(0.35, 1.0, skim * skim) * smoothstep(-0.5, 0.2, r.y));
+}
+// What water adds to a soaked face: the sky it mirrors, the sun thrown at the lens, and the lightning. Only where water lies as a film (lying, 0 to 1: the low places) is it one mirror; on the crumbs' tops (tops, 0 to 1) it is a few single wet grains.
+vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit, float lying, float tops) {
   vec3 r = reflect(-v, n);
   float fres = 0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0);
-  vec3 sky = wetSky(v, n) * (0.9 * lying + 2.2 * grains(world + 0.11, 0.1));
+  vec3 sky = wetSky(v, n) * (0.9 * lying) + uAirHorizon * (5.0 * grains(world + 0.11, 0.06) * tops);
   vec3 hs = normalize(v + uSunDir);
   float off = 1.0 - saturate(dot(n, hs));
   vec3 sun = uAirSun * uMirror * ((2.0 * exp(-off / 0.006) + 0.1 * exp(-off / 0.1) + 1.5 * grains(world + 0.37, 0.3 * exp(-off / 0.05))) * lit);
@@ -742,7 +749,8 @@ void main() {
   float seen = smoothstep(0.02, 0.2, v.y);
   float lying = max(pool, stand * (1.0 - smoothstep(0.1, 0.4, lumpy.a)) * seen);
   float edged = smoothstep(0.06, 0.4, length(n.xz - film.xz)) * (1.0 - lying);
-  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.6 * soaked * edged * mix(0.3, 1.0, seen)) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under);
+  float tops = 0.1 + 0.9 * crest;
+  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying, tops) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.5 * soaked * edged * tops * mix(0.3, 1.0, seen)) + wetBack(v, n) * (soaked * (1.0 - 0.3 * lying) * (0.4 + 0.6 * hollow) * (0.2 + 1.6 * smoothstep(0.3, 0.8, h))) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under);
   vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
   color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.06 + 0.4 * ndl + 0.1 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.45 * crust);
   float sunward = mix(0.3, 1.0, pow(saturate(dot(-normalize(v.xz), uLowSun.xy)), 6.0));
