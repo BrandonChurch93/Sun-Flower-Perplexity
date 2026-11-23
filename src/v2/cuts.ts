@@ -10,9 +10,9 @@ type V3 = readonly [number, number, number]
 export interface CloseShot { id: string; fromBar: number; toBar: number; what: string; eye: readonly [V3, V3]; at: readonly [V3, V3]; focalMm: number; fNumber: number }
 
 export const closeShots: CloseShot[] = [
-  { id: 'margin', fromBar: 19, toBar: 21, what: 'The edge of a leaf against the dim sun in the mist: the needles of ice still growing.', eye: [[0.046, 0.107, 0.168], [0.034, 0.109, 0.162]], at: [[0.039, 0.113, -0.023], [0.035, 0.112, -0.023]], focalMm: 100, fNumber: 8 },
-  { id: 'tip', fromBar: 21, toBar: 23, what: 'The growing tip and the furred stem as the sun comes through: glitter.', eye: [[-0.046, 0.124, 0.204], [-0.03, 0.127, 0.196]], at: [[0.003, 0.137, 0], [0.003, 0.139, 0]], focalMm: 100, fNumber: 8 },
-  { id: 'thaw', fromBar: 23, toBar: 25, what: 'A leaf as the ice goes to water: beads, and one drop that falls.', eye: [[-0.03, 0.098, 0.224], [-0.022, 0.096, 0.218]], at: [[0.044, 0.084, 0.068], [0.046, 0.082, 0.068]], focalMm: 100, fNumber: 8 },
+  { id: 'margin', fromBar: 19, toBar: 21, what: 'The edge of a leaf against the dim sun in the mist: the needles of ice still growing.', eye: [[0.0019, 0.137, 0.2093], [0.0078, 0.137, 0.1919]], at: [[0.027, 0.137, 0.021], [0.027, 0.137, 0.021]], focalMm: 100, fNumber: 8 },
+  { id: 'tip', fromBar: 21, toBar: 23, what: 'The growing tip and the furred stem as the sun comes through: glitter.', eye: [[-0.0239, 0.13, 0.2339], [-0.0142, 0.132, 0.2216]], at: [[-0.001, 0.134, 0.0], [-0.001, 0.135, 0.0]], focalMm: 100, fNumber: 8 },
+  { id: 'thaw', fromBar: 23, toBar: 25, what: 'A leaf in profile as the ice goes to water: beads, and one drop at its tip that falls.', eye: [[-0.1085, 0.071, 0.2004], [-0.0932, 0.071, 0.1934]], at: [[0.0446, 0.065, 0.0626], [0.0446, 0.065, 0.0626]], focalMm: 85, fNumber: 8 },
 ]
 
 const FPS = config.film.fps

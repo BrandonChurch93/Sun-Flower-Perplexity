@@ -234,6 +234,30 @@
    "prompt": "v2/prompts/frost-thaw-take1.txt",
    "output": "v2/keys/frost-thaw.png",
    "pick": true
+  },
+  {
+   "name": "bloom-close-opening",
+   "take": 1,
+   "images": [
+    "approved/bloom-opening.png",
+    "approved/bloom-hero.png",
+    "v2/layouts/bloom-close-opening.jpg"
+   ],
+   "prompt": "v2/prompts/bloom-close-opening-take1.txt",
+   "output": "v2/keys/bloom-close-opening.png",
+   "pick": true
+  },
+  {
+   "name": "bloom-close",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/bloom-opening.png",
+    "v2/layouts/bloom-close.jpg"
+   ],
+   "prompt": "v2/prompts/bloom-close-take1.txt",
+   "output": "v2/keys/bloom-close.png",
+   "pick": true
   }
  ],
  "note": "Paths are relative to references/. The tool returns JPEG bytes under a .png name at 2816 x 1584; each pick was saved again as a true PNG with the same pixels, each other take as a JPEG at quality 92. An image under cache/ is a photograph from the web used as a reference only; that folder is not in the repository (the list of sources is in references/BOARD.md)."

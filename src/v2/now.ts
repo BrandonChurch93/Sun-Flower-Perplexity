@@ -8,6 +8,8 @@ import {
   coldAtBar,
   coverAtBar,
   dewAtBar,
+  dropAtBar,
+  dropFallAtBar,
   eveningAtBar,
   flashAt,
   fogAtBar,
@@ -77,7 +79,7 @@ const FLASHES: { from: number; azimuthDeg: number; elevationDeg: number }[] = [
 ]
 
 function blankDials(): Dials {
-  return { cover: 0, overcast: 0, sunThrough: 1, fog: 0, cold: 0, frost: 0, dew: 0, rain: 0, wet: 0, puddle: 0, flash: 0, burst: 0, wind: 0, lapse: 0, evening: 0 }
+  return { cover: 0, overcast: 0, sunThrough: 1, fog: 0, cold: 0, frost: 0, dew: 0, drop: 0, dropFall: 0, rain: 0, wet: 0, puddle: 0, flash: 0, burst: 0, wind: 0, lapse: 0, evening: 0 }
 }
 
 export function blankMoment(): Moment {
@@ -117,6 +119,8 @@ export function dialsAt(seconds: number, out: Dials): Dials {
   out.cold = coldAtBar(b)
   out.frost = frostAtBar(b)
   out.dew = dewAtBar(b)
+  out.drop = dropAtBar(b)
+  out.dropFall = dropFallAtBar(b)
   out.rain = rainAtBar(b)
   out.wet = wetAtBar(b)
   out.puddle = puddleAtBar(b)
