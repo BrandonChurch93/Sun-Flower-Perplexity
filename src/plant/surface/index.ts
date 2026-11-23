@@ -231,7 +231,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // Rime is seen thick where the eye looks along the face itself, not along each fold of its relief.
   float brink = gf * gf;
   brink *= brink * gf;
-  float bloom = frost * (0.08 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * brink) * (0.55 + 0.45 * t.sheen);
+  float bloom = frostFar() * (0.08 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * brink) * (0.55 + 0.45 * t.sheen);
   float flash = 0.0;
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
