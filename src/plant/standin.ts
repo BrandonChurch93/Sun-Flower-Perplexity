@@ -1,3 +1,4 @@
+import { config } from '../config.ts'
 import { norm } from './norm.ts'
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import {
@@ -556,32 +557,81 @@ const KEEP = 32
 const scratch = new Float32Array(standInVertexCount * 3)
 
 // The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment, in still air.
+function solveLength(time: number, still: PlantInputs): number {
+  const target = heightAt(time)
+  if (!(target > 0)) return 0
+  measureStem(true)
+  const under = stemSunk(time)
+  let l0 = target + under
+  let f0 = place(time, still, l0, scratch, null) - target
+  let l1 = Math.max(1e-7, (l0 * (target + under)) / (f0 + target + under))
+  let f1 = place(time, still, l1, scratch, null) - target
+  for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
+    const slope = (f1 - f0) / (l1 - l0)
+    if (!(slope > 1e-6)) break
+    const l2 = Math.max(0, l1 - f1 / slope)
+    l0 = l1
+    f0 = f1
+    l1 = l2
+    f1 = place(time, still, l1, scratch, null) - target
+  }
+  measureStem(false)
+  return l1
+}
+
+// When a taller piece overtakes the highest one, the solved length turns in one frame. The plant at rest has a length of the clock alone, so there it runs as a smooth curve by its solved lengths at marks along the clock: REST_STEP_S apart while the plant grows, REST_STEP_BLOOM_S apart once the head opens, where the rays overtake each other for seconds on end.
+// The sprout keeps the solved length itself: while its hook unbends the length sways, and that sway is what lets the top rise evenly.
+const REST_STEP_S = 0.3
+const REST_STEP_BLOOM_S = 1
+const REST_BLOOM_MARK = 140
+const REST_BLOOM_EASE = 2
+const REST_SMOOTH_FROM_S = 1.2
+const REST_SMOOTH_S = 2.2
+// The clock at mark s, and the mark at a moment of the clock.
+function markTime(s: number): number {
+  return REST_STEP_S * s + (REST_STEP_BLOOM_S - REST_STEP_S) * REST_BLOOM_EASE * Math.log(1 + Math.exp((s - REST_BLOOM_MARK) / REST_BLOOM_EASE))
+}
+function markAt(time: number): number {
+  let s = time / REST_STEP_S
+  for (let i = 0; i < 12; i++) {
+    const e = Math.exp((s - REST_BLOOM_MARK) / REST_BLOOM_EASE)
+    const step = (markTime(s) - time) / (REST_STEP_S + ((REST_STEP_BLOOM_S - REST_STEP_S) * e) / (1 + e))
+    s -= step
+    if (Math.abs(step) < 1e-12) break
+  }
+  return s
+}
+const REST_MARKS = Math.ceil(markAt(config.growth.seconds)) + 4
+const rests = new Map<number, Float64Array>()
+function restAt(known: Float64Array, j: number): number {
+  let length = known[j + 1]
+  if (length !== length) {
+    length = solveLength(clamp(markTime(j), 0, config.growth.seconds), REST)
+    known[j + 1] = length
+  }
+  return length
+}
+function restLength(time: number): number {
+  const early = 1 - smoothstep(REST_SMOOTH_FROM_S, REST_SMOOTH_S, time)
+  const exact = early > 0 ? solveLength(time, REST) : 0
+  if (early >= 1) return exact
+  const variant = plantVariant()
+  let known = rests.get(variant)
+  if (!known) rests.set(variant, (known = new Float64Array(REST_MARKS).fill(NaN)))
+  const x = markAt(Math.min(time, config.growth.seconds))
+  const j = Math.floor(x)
+  const u = x - j
+  const v = 1 - u
+  const smooth = (v * v * v * restAt(known, j - 1) + (3 * u * u * u - 6 * u * u + 4) * restAt(known, j) + (3 * v * v * v - 6 * v * v + 4) * restAt(known, j + 1) + u * u * u * restAt(known, j + 2)) / 6
+  return lerp(smooth, exact, early)
+}
+
 // With `steady` inputs that is the plant at rest, and what it feels bends it and never stretches it: the length is the plant clock's alone.
 export function stemLength(time: number, inputs: PlantInputs): number {
   const variant = plantVariant()
   const still = inputs.steady ? REST : inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
   for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === still.leanX && s.leanZ === still.leanZ && s.lift === still.lift) return s.length
-  const target = heightAt(time)
-  let length = 0
-  if (target > 0) {
-    measureStem(true)
-    const under = stemSunk(time)
-    let l0 = target + under
-    let f0 = place(time, still, l0, scratch, null) - target
-    let l1 = Math.max(1e-7, (l0 * (target + under)) / (f0 + target + under))
-    let f1 = place(time, still, l1, scratch, null) - target
-    for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
-      const slope = (f1 - f0) / (l1 - l0)
-      if (!(slope > 1e-6)) break
-      const l2 = Math.max(0, l1 - f1 / slope)
-      l0 = l1
-      f0 = f1
-      l1 = l2
-      f1 = place(time, still, l1, scratch, null) - target
-    }
-    length = l1
-    measureStem(false)
-  }
+  const length = inputs.steady ? restLength(time) : solveLength(time, still)
   solved.push({ variant, time, leanX: still.leanX, leanZ: still.leanZ, lift: still.lift, length })
   if (solved.length > KEEP) solved.shift()
   return length
