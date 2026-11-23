@@ -4,7 +4,7 @@ import path from 'node:path'
 import { config, frameCount } from '../src/config.ts'
 import { formatById, isTier } from '../src/core/tiers.ts'
 import { nothingMade, type Made } from '../src/v2/counter.ts'
-import { barAt } from '../src/v2/clock.ts'
+import { barAt, barTime } from '../src/v2/clock.ts'
 import { shots, type Shot } from '../src/v2/shots.ts'
 import { flag, num, parseArgs, str } from './lib/args.ts'
 import { canvas, scaled, strip, type Placed } from './lib/layout.ts'
@@ -16,7 +16,9 @@ import { openSession, type Session } from './lib/render.ts'
 //   npm run bench -- --sky sky-a --shots 05,12 --format 16x9 --tier review
 //   npm run bench -- --sky sky-a --only all              the whole scene
 //   npm run bench -- --sky sky-a --clip 73,85 --view wide   a clip of film seconds 73 to 85 from one camera
+//   npm run bench -- --sky sky-a --only all --bars 17,21,25 --name frost   the film's own camera at those bars, on one sheet
 //   npm run bench -- --sky sky-a --count                 plays 200 frames across the film and says what the graphics card was asked to make after loading
+//   npm run bench -- --sky sky-0 --only ground,plant,field --still --view wide --shots 07   the world at rest: no weather, no wind, one fixed sun
 
 const fps = config.film.fps
 const frameAt = (seconds: number): number => Math.min(frameCount - 1, Math.max(0, Math.round(seconds * fps)))
@@ -57,6 +59,7 @@ const session = await openSession({ format, extra, what: 'bench' })
 try {
   const drawn = await session.page.evaluate(() => window.showcase.sky())
   if (drawn !== sky) throw new Error(`there is no sky in src/${sky}: the page drew "${drawn}"`)
+  if (flag(args, 'still')) await session.page.evaluate(() => window.showcase.setStill(true))
   const info = await session.info()
   console.log(`bench · sky ${sky} · ${format} · ${tier} · ${only || 'everything'} · textures ${info.textureMb.toFixed(0)} MB · loaded in ${session.startSeconds.toFixed(1)} s`)
   if (flag(args, 'count')) {
@@ -101,7 +104,8 @@ try {
     console.log(`clip · ${frames.length} frames · ${(total / frames.length).toFixed(1)} s a frame · ${path.relative(process.cwd(), file)}`)
   } else {
     const wanted = str(args, 'shots', 'all')
-    const list: Shot[] = wanted === 'all' ? shots : wanted.split(',').map((id) => {
+    const atBars = typeof args.bars === 'string' ? args.bars.split(',').map(Number) : null
+    const list: Shot[] = atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
       const s = shots.find((x) => x.id === id || x.id.startsWith(`${id}-`) || x.id.slice(3) === id)
       if (!s) throw new Error(`unknown shot "${id}"`)
       return s
@@ -118,8 +122,8 @@ try {
       console.log(`shot · ${s.id} · ${clock(s.seconds)} · ${view} · ${seconds.toFixed(1)} s · ${path.relative(process.cwd(), file)}`)
     }
     if (files.length > 1) {
-      const out = path.join(dir, `sheet-${format}-${tier}.jpg`)
-      await sheet(files, out, 4)
+      const out = path.join(dir, `${str(args, 'name', atBars ? 'bars' : 'sheet')}-${format}-${tier}.jpg`)
+      await sheet(files, out, num(args, 'cols', 4))
       console.log(`sheet · ${path.relative(process.cwd(), out)}`)
     }
   }
