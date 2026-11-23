@@ -439,6 +439,7 @@ void main() {
     sunOn = max(sunOn, CRACK_LIP * lip * (0.45 + grit.a));
   }
   sunOn = mix(sunOn, max(sunOn, CREST.y * crest), dawn);
+  sunOn *= 1.0 - 0.8 * uDusk * uDew;
   float sits = saturate(0.55 * smoothstep(0.0, 0.7, n.y) + 0.6 * smoothstep(0.1, 0.8, ball.y)) * smoothstep(0.3, 0.62, dD.a);
   float rime = max(rimed(vWorld, sits, uFrost, lit * sunOn), dusted(vWorld, sits, uFrost, lit * sunOn)) * (1.0 - vSeed.z);
   albedo = mix(frozen(albedo, uFrost), FROST_WHITE, 0.8 * rime);
