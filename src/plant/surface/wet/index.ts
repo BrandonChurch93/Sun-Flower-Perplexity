@@ -518,8 +518,11 @@ void main() {
   a8 *= a8;
   float a32 = a8 * a8;
   a32 *= a32;
-  // A highlight smaller than a pixel is spread over the pixel, not left to flash.
-  float glint = mix(0.6 * a32 * a8 * a8, 40.0 * min(vWide * vWide / 256.0, 1.0) * a32 * a32 * a32, clear);
+  // A highlight smaller than a pixel is spread over the pixel with its light held, not left to flash as the bead moves under it.
+  float wide = vWide / max(coarse, 1e-4);
+  float tight = clamp(0.09 * wide * wide, 2.0, 96.0);
+  float fine = min(wide / 16.0, 1.0);
+  float glint = mix(0.6 * a32 * a8 * a8, 40.0 * fine * (tight / 96.0) * pow(aim, tight), clear);
   // The blade is thin and the bead stands clear of it on its hairs: in the thaw the low sun reaches it through and over the blade.
   float key = thaw ? max(sun, 0.45) : sun;
   // Seen this near the sun in a bead is the sun, dim as the mist leaves it: one hard point, the harder the larger the bead stands in the frame.
@@ -562,12 +565,9 @@ void main() {
   // Toward its edge a free drop shows the dark round it.
   if (thaw) body *= mix(1.0, mix(0.1, 1.0, smoothstep(0.0, drop ? 0.3 : 0.55, ndv)), vHang);
   // A clear sun behind a bead is seen through it, bent to one small bright place on the side away from the sun.
-  float lens = saturate(dot(beyond, uSunDir));
-  lens *= lens;
-  lens *= lens;
-  lens *= lens;
-  lens *= lens;
-  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens * lens);
+  float through = clamp(0.03 * wide * wide, 2.0, 32.0);
+  float lens = fine * (through / 32.0) * pow(saturate(dot(beyond, uSunDir)), through);
+  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS * gathers) * clear * sun * clearOfSkin * lens);
   if (thaw) {
     // At this distance the bead is a lens to the eye. The sun through it is one small star, at the place a ray must enter the ball to leave it toward the sun: near the edge turned from the sun.
     float turnTo = acos(clamp(dot(ray, uSunDir), -1.0, 1.0));
