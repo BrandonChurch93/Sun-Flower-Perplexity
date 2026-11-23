@@ -172,18 +172,24 @@ export class Film {
   }
 
   // Draws the film's own moments once, so every program is built, every texture is with the graphics card and every buffer exists before the film starts.
-  async warm(tier: TierId = 'draft', onStep?: (done: number, of: number) => void): Promise<void> {
+  // `onStep` is told how many of the steps are done and what the next one is: a moment of the film, or the pass over every shape that ends the warming (null after it).
+  async warm(tier: TierId = 'draft', onStep?: (done: number, of: number, next: 'moment' | 'every shape' | null) => void): Promise<void> {
     await this.load()
     const { renderer } = this.stage
     this.sky?.warm(renderer)
     for (const { part } of this.parts) part.warm?.(renderer)
     const frames = warmFrames()
+    const of = frames.length + 1
+    onStep?.(0, of, 'moment')
+    await paint()
     for (let i = 0; i < frames.length; i++) {
       await this.renderFrame(frames[i], tier)
-      onStep?.(i + 1, frames.length)
+      onStep?.(i + 1, of, i + 1 < frames.length ? 'moment' : 'every shape')
       await paint()
     }
     this.everyShape(renderer)
+    onStep?.(of, of, null)
+    await paint()
   }
 
   // Draws every mesh once with its own material and every caster once into the shadow map, whatever the lens and the sun can see.
@@ -204,6 +210,7 @@ export class Film {
       w.object.frustumCulled = w.culled
     }
     this.shadow.off()
+    this.stage.finish()
   }
 
   async setFormat(format: Format): Promise<void> {

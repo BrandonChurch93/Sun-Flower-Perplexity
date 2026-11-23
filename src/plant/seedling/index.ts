@@ -5,8 +5,9 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskFall, huskLand, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
-import { filling, makePartSurface, partGeometry, partMesh, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
+import { createCrystals } from '../../weather/frost/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
@@ -37,6 +38,11 @@ const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
 const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
+// Where ice can root on a seed leaf: at even steps along each margin and along the middle of its upper face.
+const EDGE = 120
+const MID_ROOTS = 60
+const RIME_EACH = 2 * EDGE + MID_ROOTS
+const RIME_M = [0.0003, 0.0008]
 
 interface Body {
   husk: boolean
@@ -353,6 +359,22 @@ export function create(options: PartOptions): PlantPart | null {
   const beadSeed = combine(streamSeed('seed leaf dew'), options.variant)
   const beadSpot = new Float32Array((beads ? beads.count : 0) * 4)
   const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  const crystals = leaves && options.detail === 'hero' && options.variant === 0 ? createCrystals(options, RIME_EACH * leaves.bodies.length, 'seed leaf crystals') : null
+  const rimeAt = new Float32Array((crystals ? crystals.count : 0) * 2)
+  if (crystals && leaves) {
+    const place = crystals.place()
+    leaves.bodies.forEach((b, id) => {
+      for (let i = 0; i < RIME_EACH; i++) {
+        const q = id * RIME_EACH + i
+        const edge = i < 2 * EDGE
+        const n = edge ? EDGE : MID_ROOTS
+        const share = (((edge ? i % EDGE : i - 2 * EDGE) + hash01(beadSeed, 4000 + q, 0)) / n) * (edge ? 1 : 0.95)
+        rimeAt[q * 2] = Math.min(share * (b.rings - 1), b.rings - 1.001)
+        rimeAt[q * 2 + 1] = hash01(beadSeed, 4000 + q, 1)
+        place[q] = edge ? Math.max(share, 0.001) : -1 - share
+      }
+    })
+  }
   if (beads && leaves) {
     const tint = beads.tint()
     for (let i = 0; i < beads.count; i++) {
@@ -644,6 +666,46 @@ export function create(options: PartOptions): PlantPart | null {
       }
     }
 
+    if (crystals && leaves && stateUniforms.uPlantFrost.value > 0) {
+      const out = leaves.slots[slot]
+      const normals = leaves.normals[of]
+      const root = crystals.root(slot)
+      const lean = crystals.lean(slot)
+      const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+      const scale = length <= 0 ? 0 : clamp(length / 0.07, 0.35, 1) * (1 - wither)
+      leaves.bodies.forEach((b, id) => {
+        const row = b.loop + 1
+        const half = b.loop >> 1
+        for (let i = 0; i < RIME_EACH; i++) {
+          const q = id * RIME_EACH + i
+          const o = q * 4
+          const a0 = Math.floor(rimeAt[q * 2])
+          const t = rimeAt[q * 2] - a0
+          const k = i < EDGE ? 0 : i < 2 * EDGE ? half : b.loop >> 2
+          const far = i < EDGE ? half : 0
+          const v0 = (b.base + a0 * row + k) * 3
+          const v1 = v0 + row * 3
+          const w0 = (b.base + a0 * row + far) * 3
+          let dl = 0
+          let sl = 0
+          for (let c = 0; c < 3; c++) {
+            root[o + c] = lerp(out[v0 + c], out[v1 + c], t)
+            lean[o + c] = i < 2 * EDGE ? out[v0 + c] - out[w0 + c] : normals[v0 + c]
+            dl += lean[o + c] * lean[o + c]
+            sl += (out[v1 + c] - out[v0 + c]) ** 2
+          }
+          dl = Math.sqrt(dl)
+          sl = Math.sqrt(sl)
+          for (let c = 0; c < 3; c++) {
+            lean[o + c] = dl > 0 && scale > 0 ? lean[o + c] / dl : 0
+            if (run) run[q * 3 + c] = sl > 0 ? (out[v1 + c] - out[v0 + c]) / sl : 0
+          }
+          root[o + 3] = dl > 0 && i >= 2 * EDGE ? lerp(RIME_M[0], RIME_M[1], rimeAt[q * 2 + 1]) * scale : 0
+          lean[o + 3] = rimeAt[q * 2 + 1]
+        }
+      })
+    }
+
     if (!crumbs) return
     const foot = stemAt(pose, 0)
     const fx = foot.x
@@ -728,7 +790,7 @@ export function create(options: PartOptions): PlantPart | null {
 
   return {
     name: 'seedling',
-    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : [])],
+    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : []), ...(crystals ? crystals.meshes : [])],
     casters: [...groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })), ...(crumbs ? [{ mesh: crumbs.mesh, surface: crumbs.surface }] : [])],
     fill,
     absent: (time) => time >= CRUMBS_GONE_S && seedLeafLength(time) <= 0 && huskSize(time) <= 0,
@@ -743,6 +805,7 @@ export function create(options: PartOptions): PlantPart | null {
       filled.fill(false)
       led.fill(false)
       if (beads) beads.finish()
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystals.count : 0)
     },
   }
 }

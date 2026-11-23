@@ -10,11 +10,11 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- play --stride 6` | draws the film small for `nights`, `cuts` and `made` | 1,432 frames | about 1 hour in three runs side by side |
 | `npm run checks -- play` | the same, every frame | 3,810 frames | 2 to 3 hours |
 | `npm run checks -- cuts` | no hard cuts: the edges of the picture stay where they are from one frame to the next | reads `play` | 10 to 40 s |
-| `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading, a vertex array included, which is made when something is drawn for the first time; what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s |
+| `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading, a vertex array included, which is made when something is drawn for the first time; each frame that made something is listed with what it made by the counter's own names, and for a vertex array or a program `tools/made-where.mts` draws the first six such frames again and names the program and the first draw (`--no-where` leaves that out); what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s, some minutes more when something was made |
 | `npm run checks -- script` | no frame rate drop: the page's own script time in a frame, by part, inside the limits of `tools/checks/limits.json` | 13 windows of frames in a row, about 490 frames | about 30 min, 17 min with --frames 20; run it alone |
 | `npm run checks -- film` | the whole film small in one go: `play` on three pages, then `nights`, `cuts` and `made` in one table | 1,432 frames | 80 to 100 min |
 | `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61 | 8 frames | 4 min |
-| `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels | 42 frames | 10 to 12 min |
+| `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels: drawn in order, again backwards, and on a fresh page that has warmed as the film does before it plays (the first page draws without warming, so the warming may leave nothing behind that changes a pixel) | 42 frames and the warming | 12 to 15 min |
 | `npm run checks -- all` | one line for each check | no, or `--draw` | 5 s |
 | `npm run checks -- review` | the review page | `--draw` for the looks | 1 min |
 
@@ -48,6 +48,8 @@ The numbers are wall time on this machine, so the check has to run alone: anothe
 
 Besides the level it names every hitch: a frame over 25 ms that is also over three times the median of the sixteen frames around it, with its parts. That is the stutter a viewer sees whatever the level, and the rule is the one of `tools/costs.ts`.
 
+The film waits for the drawing at the end of every frame (`stage.finish()`, the lap `wait`, which is not in the number), and the check starts the next frame only after that. The browser still shows the canvas afterwards, and on a machine that draws on the processor the first call of the next frame that needs room can wait for it, in whichever lap issues that call. So a frame over ten times the frames around it, in which nothing was made, is drawn once more after a pause, in a row with the two frames before it. Slow again, it is the film's and stays a hitch. Else the second number is judged, the first is kept beside it in the window's file (`first`, `firstLap`), and the frame is listed under "the graphics process was behind".
+
 The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070-2110) hold the frames where a hold starts or ends, the worst frames found so far (860, 1260, 1665, 2083, where the boom of the music lands). They are measured whole in every run, whatever `--window` or `--frames` says, and printed first.
 
 ## The whole film in one go
@@ -77,15 +79,18 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `cues --break hold-short` | the frost hold ends half a bar early |
 | `cues --break hold-early` | the frost hold ends one frame early |
 | `cues --break hold-late` | the frost hold ends one frame late |
+| `cues --break cut-late` | the first cut the film means listed one frame after its downbeat |
 | `nights --break picture-quick` | every dusk and dawn three times as fast |
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
+| `nights --break moon-blink` | the moon's disc at the level of the sky round it for the one frame where it stands highest in each night |
 | `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
-| `nights --plant --break plant-wet --night 9` | the moon steps up to 2.4 times as strong in the middle of the wet dusk of night 9, over the limit for a wet plant |
+| `nights --plant --break plant-wet --night 9` | the moon steps up to 2.4 times as strong half way from the handover to midnight in the wet dusk of night 9, when the dusk's own fall no longer hides it: over the limit for a wet plant |
 | `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails, the mean of the sum passes |
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
+| `cuts --break cut --from 984 --to 1016 --meant 1001` | the same broken film with a cut listed one frame beside its jump: the listed frame is left out and the jump at 1000 is still a hard cut. With `--meant 1000` it is left out, and said so. With `--meant 990` the list names a frame where the film does not cut: that fails too |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
 | `play --break first-draw --at 900 --from 890 --to 910`, then `made --break first-draw --from 890 --to 910` | a mesh is drawn for the first time at frame 900, its geometry and material already drawn on others: only a vertex array is made |
 | `pure --break dice --frames 159,1429,2699,3651` | the camera turns by a throw of `Math.random` |
@@ -111,4 +116,17 @@ Measured: a camera put elsewhere at frame 1000 moves both halves 1.0 (50 times t
 
 The step of the brightness is listed beside it and judges nothing in `cuts`. `nights` holds every dusk and dawn to a step of the frame's mean of at most 14 of 255 a frame and to no more than 2 of 255 the wrong way (`--step` for another limit). It also cuts the frame into 16 by 9 parts and lists the largest move the wrong way in any one part, and how many parts move the wrong way in one frame: the mean of the whole frame hides a plant that goes dark between the sun's light and the night's while the sky round it fades as it should. A part may move the wrong way by at most 8 of 255 a frame: wider than the limit for the whole frame, because a plant that grows across a part moves it too.
 
+The moon may not blink. `nights` works out where the film's camera puts the moon in each frame of a night (`lib/moon.ts`, as the film works out its camera, nothing drawn), takes the mean of the nine brightest pixels within four pixels of that place as the disc and the median of a ring six to ten pixels out as the sky round it, and judges the disc less the ring. Between the first and the last frame at which that level is at half its peak, the disc and its level may not both fall and come back by more than 12 of 255 inside any five frames: the smaller of the two falls is the one judged. The dusk fading, or a veil that lifts disc and sky alike, moves the disc and not its level. A sky that brightens for a frame behind a steady disc moves the level and not the disc: it is listed under the moon as not the moon's blink, and the parts of the frame judge it (measured on the film at c6b1997, night 13: the level fell 22.5 at frame 2581 with the disc rising from 178 to 217 and the sky round it going 40, 98, 78). A cloud's edge that takes the disc alone out of the picture does, and counts: beside every fail stands how far the ring moved in the same frame, so the reader sees whether the disc changed alone or something crossed disc and sky. On a steady moon the measure itself moves by 4 to 6 of 255 from frame to frame (the disc is four pixels across at 320 wide). A night in which the disc never stands 20 over its ring is listed as not judged: the moon is out of the frame or behind cloud all night.
+
 `nights --plant` draws the plant with nothing else in the frame, from the frame where the sun hands the light over to the moon (the sun 5 degrees under) to midnight, on both sides of each night, at 640 x 360, every second frame (`--every 1` for every frame, `--night 6,7` for some nights). It measures the mean and the 90th percentile of the luminance over the pixels the plant covers. Toward midnight the mean may not rise by more than half a level of 255 between drawn frames, and at midnight neither the mean nor the 90th percentile may be above the handover's. `nights` without `--plant` reads the last drawing and says when it is from an older film.
+
+## The cuts the film means
+
+The film may cut hard on the frames the Builder lists in `tools/checks/limits.json` under `cuts`, and nowhere else. The film keeps its own list in `src/v2/cuts.ts`; `cues` and `cuts` fail when the two lists differ, so neither can drift and the film cannot excuse a cut of its own by listing it. Exactly those frames are left out, each printed with what was measured there:
+
+- `cuts` does not judge the step into a listed frame and does not count it among the steps round its neighbours. It prints how far the edges moved there.
+- `nights` does not judge the step into a listed frame by the step of the frame's mean nor by its direction.
+- `cuts` fails when the film does not cut on a listed frame: a list the film does not follow hides nothing, and a cut one frame beside a listed one is a hard cut.
+- `cues` holds each listed frame to the frame that holds a downbeat (`hitFrame` of a whole bar), and a cue of the sheet that says cut to a listed frame. `cues --break cut-late` lists the first cut one frame late and must fail.
+- `play --stride 6` and `film` draw every frame within 12 of a listed frame, as round every cue.
+- `script` measures a window of 10 frames either side of each listed frame whole in every run, and fails when the cut's own frame is a long frame or makes anything: a cut must cost nothing. The hitch rule leaves no frame out.
