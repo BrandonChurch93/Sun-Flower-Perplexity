@@ -40,6 +40,10 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
 >
 > Go ahead and add this to the plan and work until it's finished and give me all the deliverables and make sure that they giithub repo plays the video when users visit the site so I can host it on VERCEL
 
+## 23 November 2026, about 23:28 UTC (asks where the work stands)
+
+> Don’t stop working, but you have been working for quite a few hours now. All I asked you to do was invoke a skill to add an intro to one video, and then make a looping video in a screenshot. Seems like you’ve been taking way too long on that. Again, don’t stop working or change your plans, just update me on where you are in the current process and let me know what’s still left to do
+
 ## How these were read
 
 - "The timing looks great" settles the timing of `kit/v2/PLAN.md`, the 140 BPM grid and its click track included.
@@ -63,3 +67,8 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
   - "Make sure the GitHub repo plays the video when users visit the site so I can host it on Vercel": the page a visitor lands on plays the film, the live version is one link away, the repository builds on Vercel without settings, and `v2` is merged into `main`.
   - The track and the repository: the approved plan says the track is never bundled and the repository holds only the map. That line stands until he says otherwise, so the film committed for the site is silent, the same encode with his track is handed to him as a file, and he is asked which one the site should play.
   - "Work until it's finished": no stop for a review. The added work is logged from 21:19 UTC and bounded the way the kit bounds an extension, at 8 hours. If the clock of the 30 hour box prints its report first, the report goes into the log and the final message and the work in hand is finished.
+- The message of 23 November, 23:28 UTC, asks where the work stands and says the two things he asked for are taking too long. It was read like this:
+  - He is right about the time. The film with the opening was with him at 22:27 UTC. What is slow is the still and the clip, because the Builder chose to draw their 208 frames again at 48 samples (about 700 s a frame on twelve machines) instead of cutting them out of the film.
+  - "Don't stop working or change your plans": the clean frames keep drawing. So that he does not wait for them, the same still and clip are cut out of the film he signed off and handed to him at once; the clean ones replace them when the last frame is in.
+  - "A looping video": the clip runs from the bud to the open flower, as his message of 21:19 says. Played as a loop it jumps from the open flower back to the bud. That is said to him with the files, and nothing is added for it.
+  - Nothing new is started. What is left is only what he asked for: the clean still and clip, the last merge, the final summary.

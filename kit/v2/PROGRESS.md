@@ -13,13 +13,14 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Review preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
-- Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 56 · 2026-11-23 23:09 UTC · Phase 6
+- Last push: see `git log origin/v2`; one push with every status
+- Last status: 57 · 2026-11-23 23:35 UTC · Phase 6
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 23:35 UTC · status 57 · Phase 6 · `status-1.jpg`: The card still, cut from the signed off film (frame 2905); `status-2.jpg`: The card clip, nine of its 208 frames, cut from the signed off film; `status-3.jpg`: The site built from a fresh clone of main, playing by itself; `status-4.jpg`: A frame of the clean redraw at 48 samples (3006)
 - 2026-11-23 23:09 UTC · status 56 · Phase 6 · `status-1.jpg`: Card clip at the export tier, twelve of the 82 frames that are in (2905 is the still); `status-2.jpg`: Card frame 2987 at the export tier, 48 samples a frame; `status-3.jpg`: Card frame 2952 at the export tier: the rays open from the left; `status-4.jpg`: The review page, rebuilt with the film's last checks
 - 2026-11-23 22:43 UTC · status 55 · Phase 6 · `status-1.jpg`: The page at 1920 x 1080: the film starts by itself, muted; `status-2.jpg`: A phone upright and on its side: it gets the 720p file; `status-3.jpg`: Open the live version leads to the app that draws the film live; `status-4.jpg`: Card frame 2957 at the export tier: the rays are opening
 - 2026-11-23 22:26 UTC · status 54 · Phase 6 · `status-1.jpg`: Opening: the prompt being typed; `status-2.jpg`: Opening: reasoning menu, Standard to Max; `status-3.jpg`: Opening: the build screen before the cut to the film; `status-4.jpg`: Card clip, frame 2941 at the export tier
@@ -31,7 +32,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 20:33 UTC · status 48 · Phase 6 · `status-1.jpg`: Frame 1479, the film as drawn here against the export look; `status-2.jpg`: Frame 2957, the opening head; `status-3.jpg`: Frame 2096 at twice size: rain breaks into specks at the export look (a fault, being cured); `status-4.jpg`: Frame 3755, the last frame
 - 2026-11-23 20:16 UTC · status 47 · Phase 5 · `status-1.jpg`: Review page with the drawn film, the bar clock and the check results (built, not yet a link); `status-2.jpg`: Frost hold from a fixed camera, one row a shot (first, middle, last frame), then 45 frames after the hold; `status-3.jpg`: Clouds at frame 1479, three crops at full size, the film on the left and the cure on a side branch on the right
 - 2026-11-23 19:49 UTC · status 46 · Phase 5 · `status-1.jpg`: The sprout at 2.0 s, from the joined film; `status-2.jpg`: Frost against the sun at 35.2 s, the cut on bar 21; `status-3.jpg`: The flower nearly open at 101.7 s, from the last part taken in; `status-4.jpg`: The field at 117.4 s, the pull back
-- 2026-11-23 19:30 UTC · status 45 · Phase 5 · `status-1.jpg`: Frost at first light, frame 940; `status-2.jpg`: The thaw, frame 1234; `status-3.jpg`: The storm, frame 2000 (new part); `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
 
 ## Clock
 
@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 2.77 h |
-| Whole build | 30.00 h | 25.16 h |
+| 6 | 4.00 h | 3.20 h |
+| Whole build | 30.00 h | 25.59 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -357,6 +357,14 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 22:47 UTC. The README is rewritten for version 2 (it still described the 60 second film): what the film is, how to host the site on Vercel, the keys of the live version, how to draw the film, how it was checked and judged, and that version 1 is under the tag `v1`. `FLOWS.md` lists what a visitor can do on the two pages.
 - 2026-11-23 22:50 UTC. The card frames, evened out: 58 of 208 are in, none bad, about 706 s a frame. The leaf look owner's machine started late and lost one try (frame 2940 stopped by a signal after 544 s, cause unknown, second try running), so its last two frames went to the field owner's and the player owner's machines, and the sky owner B's last frame to the rain owner's. Every machine now has at most 13 frames left; the last should be in about 01:30 UTC.
 - 2026-11-23 22:59 UTC. Round 27's summary is complete (`scorecards/round-027/SUMMARY.md`): the machine checks as they printed on the head, the tier the round judged, the supplement (14 of 70 at the export look against 16 of 70 on record, outside the record) and what happens next. Each number in the four new sections was read again from its file or from this log before it went in; two that could not be found again were replaced by ones that can (the cost of a draft frame is now the mean of the film's own drawing, about 28 s; the cuts check counts 1,402 steps on 1,816 play frames). `kit/v2/FILM.md` said 9.2 s of deep night and never more than 0.70 s; the nights check on the film's own clock says 7.5 s and 0.57 s, fourteen nights of 0.86 to 0.96 s, and FILM.md now says that.
+- 2026-11-23 23:01 UTC. The rain cure is merged (`f0ff56a`, the merge of `agent/rain-final-cure` at `9da7d26e`): one line of `src/weather/rain/onstage.ts`. After it 213 of 213 tests pass, the types are clean and the engine hash is `0549d510201eb8dc`. The film is not drawn again: at the draft tier the cure leaves the frames the same to the pixel (entry of 21:01), so the file Brandon signed off stands. The checks keep the stamp of the build they read, `4598d2d351869e22`.
+- 2026-11-23 23:07 UTC. The review page is rebuilt on the merged head and put up again at the same private address. MEASURED in the sandbox's browser at 23:07: built 22:59 UTC; the chips read holds PASS, nights PASS SO FAR, cuts PASS, made PASS, script FAIL, cues PASS, pure PASS; 47 pictures, none broken; the film plays; `live/build.json` says engine `0549d510201eb8dc`. Four pictures are missing and listed under "Not built yet": the sheets of the film broken on purpose (`holds`, `picture-grows`), which were drawn on another machine and never came here.
+- 2026-11-23 23:15 UTC. Version 1 is kept under the tag `v1` (annotated, at `9325cc4`, pushed), as the plan says.
+- 2026-11-23 23:15 UTC. Two things are left undone on purpose. The 38 optional frames after 3112 are not drawn, so the card clip is 208 frames. The folders of the two sky candidates that lost (`src/sky-a/`, `src/sky-c/`) and version 1's units and worlds stay, because the director still loads them and taking them out changes the engine hash that every proof is stamped with.
+- 2026-11-23 23:19 UTC. The card encode is written and tried on the first 59 frames, 2905 to 2963 (`out/work/card/encode.py`): H.264 High, 4:2:0, BT.709, 30 frames a second, a key frame every second, no sound stream, the project's own conversion. MEASURED on the trial: the still's PNG is the drawn frame to the pixel; at CRF 15 the first decoded frame of the 1920 x 1080 clip stands at 43.5 dB against the still (1.2 levels of 255 in the mean) and every frame at 41.9 dB in the mean against its drawn frame.
+- 2026-11-23 23:23 UTC. `v2` is merged into `main` (pull request 1, merge commit `94a0d07`), so a Vercel import of the repository builds version 2. Before the merge, on the head: 213 of 213 tests pass, types clean. After it, MEASURED on a fresh shallow clone of `main` from GitHub: `npm ci` in 5.6 s and `npm run site` in 6.6 s under Node 20.20.2, engine `0549d510201eb8dc`; the built `site/` is the one built here byte for byte apart from the time stamp in `live/build.json`; in headless Chrome the film starts by itself, muted, at 1440 x 900 and 1920 x 1080 (the 1080p file) and at 375 x 812 and 812 x 375 (the 720p file), no console errors, and with reduced motion the cover and the button show and nothing plays (`out/work/site/shots-main/`). UNKNOWN until he deploys: the build and the playback on Vercel.
+- 2026-11-23 23:28 UTC. Brandon asks where the work stands and says the two things he asked for are taking too long (his words and how they were read are in `kit/v2/NOTES-FROM-BRANDON.md`). He is right about the time: the opening was with him at 22:27, and what is slow is the redraw of the card's 208 frames at 48 samples, which was the Builder's choice. He says not to change the plan, so the redraw goes on (100 of 208 in at 23:32). So that he does not wait, the still and the clip are cut out of the film he signed off (frames 2905 to 3112 of `out/work/film-16x9-draft.mp4`) and handed to him now; the clean ones replace them under the same names. Nothing new is started from here.
+- 2026-11-23 23:32 UTC. The live version at 320 x 180 on this machine (MEASURED, headless Chrome, software renderer, four cores, other jobs running; `out/work/checks/live-320-load.log`): it loads to Ready in 11 min 28 s. The sandbox's desktop browser stopped answering at 4 of 27 moments at the same address, so there it is not confirmed; the open item says so.
 
 ## Notes from Brandon
 
@@ -364,44 +372,52 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-In the order they cost the film (17:22 UTC, `v2` frozen at `d42a8692`, engine hash `9c62c3b3b10c7180`):
+As of 23:15 UTC on 23 Nov. `v2` stands at the merge of the rain cure (engine hash `0549d510201eb8dc`). The film is the one drawn from `d42a8692` (engine `9c62c3b3b10c7180`); Brandon signed it off at 21:19 UTC. Nothing below is worked on without him.
 
-- Phase 5. The film at 1920 x 1080, one sample, is being drawn on twelve machines (see Running agents). Each part is checked as it arrives (engine hash, size, frame count), read by the detectors (`blips.py`, `pops.py`, `sparks.py`) and looked at on a sheet. Then joined with his track, privately.
-- To look for in the 1920 film: the neighbours' rays between lays at 2975 to 3060; a spark at 1249; three faint discs at one height on the rows at 1262; the hair rim in the storm; the glint at 2968; the petals' grain in motion at 3320 to 3340; the soil's shimmer in the opening (one sample in time lapse light); the far ridge, which must stand still.
-- Cures for live play that wait for the film. Each must leave the captured frames the same to the pixel, proven here against the frozen frames. In: the frost's gather (`2935f581`, merged 17:36, proven at 960; 849 and 850 at 1920 owed). Waiting: keys apart (plant owner, floor and pairs on the frozen commit), the hairs' gathering (hairs owner), bud hairs and leaf hairs on frames (head owner, plant owner), the field's compiles at 3025, 3033, 3047 (field owner).
-- Live play on his machine: UNKNOWN. On a four core machine with no graphics card at 320 x 180, 11 of 16 windows are over a limit (mean 25.6 ms; a frame has 33.3 ms). The export gives the same film with his track whatever live play does.
-- Player: the count has no verdict; 3418 to 3809 on every frame not measured; the checker of a real recording has only ever read its own test file.
-- Phase 6: the proofs on the frozen build (checks owner), cue lint again, the record round, the private review link, the cleanup of version 1's folders.
-- The clouds' stipple at one sample (see the decision of 18:40 on 23 Nov): seen at native size in the grey clouds of the climb and in the storm clouds; cause and cure asked of the sky owner; a cure means a second drawing of the film.
-- After the film: a finer form of the lens' hold for 48 samples (lens owner).
+- The film is below the kit's bar, as version 1 was. Round 27: the critics give 3 to 8 where the bar is 9, and the jury gives the film's frames 16 of 70 votes against 38 of 65 for the reference pictures; 8 of the 14 judged frames fail. Every severe and major issue is in `scorecards/round-027/SUMMARY.md` in the critics' words. Lowest are the frames against their target pictures (3 to 4 in all six parts). What the jurors name is what is drawn, not noise: at the export look the jury gives 14 of 70.
+- Live play is heavy. `script` FAIL on a four core machine with no graphics card at 320 x 180: 11 of 16 stretches over a limit, 20.1 ms of script a frame in the mean, and every stretch in which the plant grows fails on the plant. His machine: UNKNOWN. The recording on the site does not depend on it. Offered, not merged: `agent/plant-keys-apart` (`c28ce9af`).
+- The clouds' stipple at one sample. Offered, not merged: `agent/sky-cloud-cure` (`46f2fab5`); taking it means drawing 1,568 frames again.
+- The film at the export tier is not drawn: about sixty hours on twelve machines. Drawn at the export tier: the fourteen judged frames, the frost close shots 952 and 1157, and the card clip 2905 to 3112.
+- `nights` is PASS SO FAR: the proof by the picture is not run on this film, and the proof by the plant alone was read from an earlier drawing.
+- `holds`: the four pictures of the film broken on purpose (`picture-grows`) were drawn on another machine and never came here, so the review page lists them as missing. The result is here and fails as it must.
+- The site on Vercel: UNKNOWN until he deploys. MEASURED here: a fresh clone builds under Node 26, 24 and 22, and the built site plays in headless Chrome at four sizes. The film on the site is silent until he says otherwise.
+- The live version on this machine, which has no graphics card. In the sandbox's desktop browser at 1920 x 1080 the browser takes the graphics context away while the first moment is drawn (one minute for one picture), and the page says so and asks for a reload. At 320 x 180 (`live/index.html?w=320&h=180`) it loads to Ready in headless Chrome here in 11 min 28 s with other jobs running (MEASURED 23:32 UTC: twelve parts of the scene, 27 moments drawn once at 16 to 46 s each, the last pass 30 s). In the desktop browser the same address stood at 4 of 27 moments when the browser stopped answering, so there it is not confirmed.
+- The sounds of the prompt opening were fitted by measurement and judged by a listening model. Nobody here heard them. The interface in the opening is drawn by the typing skill, not recorded, and the skill's font is cleared for private demos only.
+- Not done: the cleanup of the two sky candidates that lost (`src/sky-a/`, `src/sky-c/`) and of version 1's units and worlds, which the director still loads. It changes the engine hash that every proof is stamped with, so it belongs to a pass that draws again.
+- The checker of a real screen recording has only read its own test file. It is ready for his recording.
+- A finer form of the lens' hold for 48 samples (lens owner), if the film is ever drawn at the export tier.
 
 ## Running jobs
 
-The film, drawn by the agents below. Nothing is drawn on this machine while parts arrive; it reads them.
+The card clip: frames 2905 to 3112 at the export tier, drawn from the frozen commit by the twelve machines below and taken in here by `out/work/card/intake.py` (right build, 48 samples, 1920 x 1080, each frame's pixels hashed). Nothing else runs.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Thirteen exist; twelve draw, one proves. All are detached at `d42a8692` since 17:20.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Thirteen exist; twelve draw the card clip, each from `d42a8692`, two frames a message. The lists are in `out/work/card/assign.json`. They are told to stop when the last frame is in.
 
-| Agent | Folder | Branch | Frames of the film (three chunks each) |
+| Agent | Folder | Branch | Card frames |
 | --- | --- | --- | --- |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | 0 to 289 |
-| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | 290 to 561 |
-| `frost_builder` | frost (see Modules) | `agent/frost` | 562 to 985; `2935f581` merged after the freeze |
-| `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | 986 to 1303 |
-| `place_builder` | `src/plant/hairs/`, `src/plant/stem/`, `src/place/` | `agent/hairs` | 1304 to 1678 |
-| `rain_builder` | rain (see Modules) | `agent/rain` | 1679 to 2040 |
-| `optics_v2_builder` | `src/post/` | `agent/post` | 2041 to 2350 |
-| `sky_b_builder` | `src/sky/` | `agent/sky` | 2351 to 2777 |
-| `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | 2778 to 3107 |
-| `rows_v2_builder` | `src/field/` | `agent/field` | 3108 to 3414 |
-| `player_builder` | player (see Modules) | `agent/player` | 3415 to 3625 |
-| `plant_builder` | plant (see Modules) | `agent/plant` | 3626 to 3809, then the keys apart pairs |
-| `checks_builder` | `tools/checks/` | `agent/checks` | none; stopped since 17:28 (twelve at work is the limit), then `made`, `pure`, the count, `script --again`, `play` on the frozen commit |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | 17 |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | 18 |
+| `frost_builder` | frost (see Modules) | `agent/frost` | 17 |
+| `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | 15 (started late, lost one try) |
+| `place_builder` | `src/plant/hairs/`, `src/plant/stem/`, `src/place/` | `agent/hairs` | 17 |
+| `rain_builder` | rain (see Modules) | `agent/rain`, `agent/rain-final-cure` (merged) | 18 |
+| `optics_v2_builder` | `src/post/` | `agent/post` | 17 |
+| `sky_b_builder` | `src/sky/` | `agent/sky`, `agent/sky-cloud-cure` (offered) | 18 |
+| `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | 17 |
+| `rows_v2_builder` | `src/field/` | `agent/field` | 18 |
+| `player_builder` | player (see Modules) | `agent/player` | 18 |
+| `checks_builder` | `tools/checks/` | `agent/checks` | 17 |
+| `plant_builder` | plant (see Modules) | `agent/plant`, `agent/plant-keys-apart` (offered) | none, stopped |
 
 ## Rounds
 
-None yet.
+| Round | What | Result | Record |
+| --- | --- | --- | --- |
+| 27 | The record round of version 2, run once on the film drawn from `d42a8692`. 17 cards from 16 seats and a jury of 70 | Below the bar. R1 4, 3, 3, 4, 3, 3; R3 6, 6, 4, 6, 6; R4 4 and 8; R5 6; R6 7; R7 7; R2 FAIL, 16 of 70 against the controls' 38 of 65. Outside the record, at the export look: 14 of 70 | `scorecards/round-027/SUMMARY.md` |
+
+Rounds 1 to 26 belong to version 1 (`kit/PROGRESS.md`). Round 26, its record: R1 5, 3, 3 (and 4), 3, 4, 3; R3 4, 4, 5, 7, 7, 7, 5; R4 4 and 5; R5 8; R6 8; R7 6; R2 26 of 50 against 24 of 40.
 
 ## Push log
 
@@ -534,4 +550,6 @@ None yet.
   Pictures: The page at 1920 x 1080: the film starts by itself, muted; A phone upright and on its side: it gets the 720p file; Open the live version leads to the app that draws the film live; Card frame 2957 at the export tier: the rays are opening.
 - Status 56, 2026-11-23 23:09 UTC, Phase 6. The summary of round 27 is complete: the machine checks as they printed, the tier the round judged, the supplement and what happens next; every number in the new sections was read again from its file. The rain cure is merged (one line; the film's frames stay the same to the pixel; 213 of 213 tests pass, types clean) and v2 is pushed. The review page is rebuilt from the film's last checks and put up again at the same private link: holds PASS, nights PASS SO FAR, cuts PASS, made PASS, script FAIL, cues PASS, pure PASS. Card clip: 82 of 208 frames at the export tier are in, each checked on arrival, none bad; the sheet shows twelve of them. Next: The rest of the card frames, due about 01:20 UTC; then the still and the clip are encoded and the clip's first frame is proven to be the still. Before that: the log's open items, the tag v1, the pull request of v2 into main and its merge, and a check that main builds the site. Time used: 25.2 h of 30 h.
   Pictures: Card clip at the export tier, twelve of the 82 frames that are in (2905 is the still); Card frame 2987 at the export tier, 48 samples a frame; Card frame 2952 at the export tier: the rays open from the left; The review page, rebuilt with the film's last checks.
+- Status 57, 2026-11-23 23:35 UTC, Phase 6. Answer to the question of 23:28 UTC. Done and attached since 22:27: the film with the prompt opening, with typing sounds and with a silent opening. Done: the site for Vercel; main now holds version 2 (pull request 1), and a fresh clone from GitHub builds and plays the film by itself in headless Chrome. New now: the card still and the 6.93 s clip, cut straight from the film he signed off, are attached (still 1920 x 1080; clip 1080p 16.4 MB and 720p 4.5 MB, no sound, first frame is the still). The slow part, by the Builder's choice: the same 208 frames drawn again clean at 48 samples, about 700 s a frame on twelve machines; 106 of 208 are in, none bad. Next: Left: the last 102 clean frames (due about 01:25 UTC, hands off), the clean still and clip swapped in under the same names, one last merge into main, the final summary. Nothing new is started. Time used: 25.6 h of 30 h.
+  Pictures: The card still, cut from the signed off film (frame 2905); The card clip, nine of its 208 frames, cut from the signed off film; The site built from a fresh clone of main, playing by itself; A frame of the clean redraw at 48 samples (3006).
 
