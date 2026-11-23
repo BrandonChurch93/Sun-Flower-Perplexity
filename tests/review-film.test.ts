@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clipFilter, filmNote, pictureFile, rateFor } from './film.ts'
+import { clipFilter, filmNote, pictureFile, rateFor } from '../tools/checks/review/film.ts'
 
 describe('the drawn film on the review page', () => {
   it('says what the file holds', () => {
