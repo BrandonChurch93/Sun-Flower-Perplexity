@@ -6,9 +6,11 @@ import { makePartSurface, partGeometry, type PartOptions } from '../plant/part.t
 // A blade that has not left the stem yet carries none: how far from the stem's line a place must stand, in meters of the kind's own shape.
 const NEAR_STEM_M = [0.006, 0.018]
 // How bright the disc of a facet stands, as a share of the sun on a white wall, whatever the blur.
-const LEVEL = 0.3
+const LEVEL = 0.18
 // The blur circle a facet is counted at when it is in focus, in pixels: it never goes out, it is a small hard point there.
-const SHARP_PX = 10
+const SHARP_PX = 6
+// The widest blur circle a disc holds its level at, as a share of the frame's height: wider than that it thins as a real one does.
+const WIDEST = 0.1
 // A facet is small: past this distance it sends the lens less light, by the square of the distance, and fewer of them are large enough to send any.
 const FULL_M = 2.6
 // The share of the places on a blade that carry a facet large enough to be seen, near the lens.
@@ -46,7 +48,8 @@ void main() {
   float thick = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * d * (abs(k) > 1e-4 ? (1.0 - exp(-k)) / k : 1.0);
   float keep = ${SHARE.toFixed(3)} * far;
   float facet = smoothstep(0.0, 0.25 * keep, keep - hash11(own + 7.0));
-  float sum = ${LEVEL.toFixed(3)} * (0.4 + 0.6 * hash11(own + 6.0)) * lit * behind * 0.785 * coc * coc * far * exp(-thick) * there * facet;
+  float held = min(coc, ${WIDEST.toFixed(3)} * uSize.y);
+  float sum = ${LEVEL.toFixed(3)} * (0.4 + 0.6 * hash11(own + 6.0)) * lit * behind * 0.785 * held * held * far * exp(-thick) * there * facet;
   vec3 light = uSunColor * sum;
   // What a pixel may hold is bounded: a brighter point takes more pixels, and its sum stays.
   float wide = clamp(sqrt(max(light.r, max(light.g, light.b)) / ${MOST.toFixed(1)}), 1.0, 4.0);
