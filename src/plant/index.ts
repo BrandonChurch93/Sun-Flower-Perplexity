@@ -21,6 +21,7 @@ import { cell, restless } from './wind.ts'
 import { HOLD_FRAMES, plantInputsOf } from '../v2/inputs.ts'
 import pace from './pace.json'
 import { blankMoment, momentAt } from '../v2/now.ts'
+import { rigAtFilm } from '../v2/rig.ts'
 
 const vertex = /* glsl */ `
 in vec3 position;
@@ -120,6 +121,8 @@ const SHUTTER_SHARE = config.film.shutterDegrees / 360
 export const KEY_EVERY = 8
 // The parts drawn from keys while the plant grows, each on its own switch. A part that is off has a key on every frame, so it is true to each frame and still moves in the same air as the parts that are on. With none on, a growing plant is laid whole for every frame. In the two holds the keys are one shape, and they are always on.
 export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
+// One laying a frame: every part is drawn from the frame's own shape toward the next frame's, so a growing frame lays one slot and not both ends of the shutter.
+export const once = { on: false }
 // The key frames of the film, in order.
 export function keyFrames(every: number): number[] {
   const keys: number[] = []
@@ -186,6 +189,22 @@ function strays(kind: Pace, atA: number, ofA: number, atB: number, ofB: number):
   const span = to - from
   return (turn * span * span) / 8 + speed * off[0] + lean * (off[1] + off[2]) + lift * off[3] + low * off[4] + cold * off[5]
 }
+// How far a part's motion turns at a key, in pixels of a picture 1080 lines high at the film's own lens: between keys it moves straight, so at a key its pace changes by what its shape turns in one stretch.
+const KINK_PX = 1
+const WIDE_PX = 1920
+const pixelsAMm = (frame: number): number => {
+  const rig = rigAtFilm(frame / FPS)
+  return ((rig.focalMm / config.camera.gateWidthMm) * WIDE_PX) / (rig.distanceM * 1000)
+}
+function kinks(kind: Pace, atA: number, ofA: number, atB: number, ofB: number): number {
+  const felt = feltAt()
+  const from = Math.min(felt[ofA * FELT], felt[ofB * FELT])
+  const to = Math.max(felt[ofA * FELT], felt[ofB * FELT])
+  const last = kind.turn.length - 1
+  let turn = 0
+  for (let bin = Math.min(last, Math.floor(from / pace.step)); bin <= Math.min(last, Math.floor(to / pace.step)); bin++) turn = Math.max(turn, kind.turn[bin])
+  return ((turn * (to - from) * (to - from)) / (atB - atA)) * Math.max(pixelsAMm(atA), pixelsAMm(atB))
+}
 function strayLimit(frame: number): number {
   const tall = pace.tall[Math.min(pace.tall.length - 1, Math.floor(feltAt()[frame * FELT] / pace.step))]
   return Math.max(STRAY_MM, STRAY_OF_HEIGHT * 1000 * tall)
@@ -222,7 +241,7 @@ function turnOf(turn: number, name: string | null, every = KEY_EVERY): Turn {
   const kind = name === null ? undefined : PACES[name]
   if (kind) {
     for (let k = 0; k + 1 < at.length; ) {
-      if (at[k + 1] - at[k] < 2 || inHold(k) || strays(kind, at[k], of[k], at[k + 1], of[k + 1]) <= strayLimit(of[k])) {
+      if (at[k + 1] - at[k] < 2 || inHold(k) || (strays(kind, at[k], of[k], at[k + 1], of[k + 1]) <= strayLimit(of[k]) && kinks(kind, at[k], of[k], at[k + 1], of[k + 1]) <= KINK_PX)) {
         k++
         continue
       }
@@ -330,7 +349,7 @@ export class Plant {
   private readonly tips = [new THREE.Vector3(), new THREE.Vector3()]
   private readonly tipOf = [-1, -1]
   private serial = 0
-  private readonly growsByKeys = Object.values(keyed).some((on) => on)
+  private readonly growsByKeys = once.on || Object.values(keyed).some((on) => on)
   private readonly signing = new Float64Array(KEY_SIGNED)
   private readonly now = blankMoment()
   private readonly laid: PlantPart[] = []
