@@ -5,7 +5,7 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 ## Status
 
 - Build: in progress
-- Current phase: 4 · Full build
+- Current phase: 5 · Whole film
 - Current unit: none (the whole film)
 - Blocked: no
 - Budget: running
@@ -43,9 +43,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
-| 5 | 3.00 h | 0.04 h |
+| 5 | 3.00 h | 0.21 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 19.35 h |
+| Whole build | 30.00 h | 19.52 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -57,8 +57,8 @@ Continuations and extensions are listed under this table with their own hours.
 | 1 · References | done | nine picks for the seven new states under `references/v2/keys/`, approved by the Builder as Brandon's message 6 allows | `268c4b4` |
 | 2 · Sky and blockout | done | every part merged on one draw path under the chosen sky; three blind critics unanimous for sky candidate B; dusk and dawn measured inside the limits; 168 of 168 tests. The first whole film in parts is drawn in phase 3, on the chosen sky | `81e961b` |
 | 3 · Look lock | done | closed at the end of its box (9.2 h of 9.0). Every look of `config/showcase.json` is drawn through the film camera on one tree and judged by the Builder beside its key at 1920: open, sprout, seedling, frost with its three close shots, climb, storm, flash, break, late, bloom opening, bloom hero, field, last. Brandon's message 7 is in the film: hard cuts on bars 19, 21, 23 and 25 to three close shots, one move in for the bloom and the pull back into the field. 199 of 199 tests. No critics yet, they judge in phase 6. The look work that is left is listed under Open items and goes on in phase 4 | `043d0d0` |
-| 4 · Full build | in progress | | |
-| 5 · Whole film | not started | | |
+| 4 · Full build | done | closed at the freeze of 17:18 UTC on 23 Nov. Every part of the film is merged on one tree and drawn through the film camera; the look work of phase 3 is closed or listed under Open items; cue lint 47 cues, 0 mismatches; the `cues` check passes; 206 of 206 tests; types clean. The cost of live play is measured on a machine with no graphics card only and is over the limit in 11 of 16 windows there (see Open items) | `d42a869` |
+| 5 · Whole film | in progress | the film at 1920 x 1080, one sample, drawn once on twelve machines from the frozen commit (engine hash `9c62c3b3b10c7180`) | |
 | 6 · Proof and deliver | not started | | |
 
 ## Units
@@ -286,6 +286,7 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 17:18 UTC. Drawn on the merged build before the freeze (27 frames at 960 x 540, one sample): 2902, 2903, 2904 are the same to the pixel as the one number test, the ridge at one height; 1054 and 3600 keep every pixel; 3009 changes on 67,051 pixels (largest 65 levels) along the ridge, the near leaf's edge and the petals' outline, to the held look the other frames already had; over 100 to 108 the far edge no longer shows in the change from frame to frame. The lens owner's own numbers agree (edge row 145.5 to 146.4 over 100 to 116 with no flip; 444, 3112, 3600 the same, 2300 and 3009 changed to the held look). What is left in the opening is a wander of the far edge inside 1.5 rows of 540, not seen in its strip; a clamp of the circle for far land in `src/core/shading.ts` would change pixels and is not taken.
 - 2026-11-23 17:18 UTC. FROZEN. The film is drawn once at 1920 x 1080, one sample, on the commit that carries this line, engine hash `9c62c3b3b10c7180` (206 tests pass, types clean). Changes to the plan of 16:29: this machine (two cores) draws nothing and keeps reading parts and proving cures; its range 3626 to 3809 goes to the plant owner's machine, which draws it before the keys apart pairs. The frost owner's gather cure (`2935f581`) is not in the frozen build: it goes in after, with pairs drawn here, like every cure for live play (each must leave the captured frames the same to the pixel). The checks owner's test (MEASURED, its machine): script inside the draw runs 1.0 to 1.3 times as slow as outside it, so the cost record's columns stand as written.
 - 2026-11-23 17:21 UTC. The frozen commit is `d42a8692` (the line above plus the checks owner's tools at `49642571`, which do not move the engine hash: still `9c62c3b3b10c7180`, types clean). Sent at 17:20 to the twelve drawing machines with their ranges in three chunks each, and to the checks owner with its five proofs. Read from the owners before the freeze, for the record: the head's `owners` over 2900 to 3120 passes (plant 15.4 ms, companion 7.5 ms, 5.16 MB written a frame); the frost's gather cure as read by the checks owner brings 849 to 26.7 ms from 35.6 and 1260 to 33.4 from 58.0; the player's count has no verdict (38 minutes without reaching frame 200), its own play makes nothing on any frame from 3124 to 3417, and 3418 to 3809 is not measured.
+- 2026-11-23 17:36 UTC. The frost's gather cure is merged after the freeze (`2935f581`, merge `e732abd`; the tree's engine hash is now `4598d2d351869e22`, the drawn film stays on `9c62c3b3b10c7180`). Proven here at 960 x 540, one sample, against the frozen build's frames: 848 to 853, 952, 1054, 1259, 1260, 1261 drawn in a row, then 853, 851, 849, 1261, 1260, 850, 1259 in that jumping order, each the same to the pixel (0 of 518,400). 206 tests pass, types clean. Owed by the frost owner after its chunks: 849 and 850 at 1920 x 1080 against its frozen frames on disk. The checks owner is stopped since 17:28 so that no more than twelve are at work; it starts when the first drawing machine has sent its last chunk, and the keys apart pairs wait for the next free machine.
 
 ## Notes from Brandon
 
@@ -297,7 +298,7 @@ In the order they cost the film (17:22 UTC, `v2` frozen at `d42a8692`, engine ha
 
 - Phase 5. The film at 1920 x 1080, one sample, is being drawn on twelve machines (see Running agents). Each part is checked as it arrives (engine hash, size, frame count), read by the detectors (`blips.py`, `pops.py`, `sparks.py`) and looked at on a sheet. Then joined with his track, privately.
 - To look for in the 1920 film: the neighbours' rays between lays at 2975 to 3060; a spark at 1249; three faint discs at one height on the rows at 1262; the hair rim in the storm; the glint at 2968; the petals' grain in motion at 3320 to 3340; the soil's shimmer in the opening (one sample in time lapse light); the far ridge, which must stand still.
-- Cures for live play that wait for the film. Each must leave the captured frames the same to the pixel, proven here against the frozen frames: the frost's gather (`2935f581`), keys apart (plant owner, floor and pairs on the frozen commit), the hairs' gathering (hairs owner), bud hairs and leaf hairs on frames (head owner, plant owner), the field's compiles at 3025, 3033, 3047 (field owner).
+- Cures for live play that wait for the film. Each must leave the captured frames the same to the pixel, proven here against the frozen frames. In: the frost's gather (`2935f581`, merged 17:36, proven at 960; 849 and 850 at 1920 owed). Waiting: keys apart (plant owner, floor and pairs on the frozen commit), the hairs' gathering (hairs owner), bud hairs and leaf hairs on frames (head owner, plant owner), the field's compiles at 3025, 3033, 3047 (field owner).
 - Live play on his machine: UNKNOWN. On a four core machine with no graphics card at 320 x 180, 11 of 16 windows are over a limit (mean 25.6 ms; a frame has 33.3 ms). The export gives the same film with his track whatever live play does.
 - Player: the count has no verdict; 3418 to 3809 on every frame not measured; the checker of a real recording has only ever read its own test file.
 - Phase 6: the proofs on the frozen build (checks owner), cue lint again, the record round, the private review link, the cleanup of version 1's folders.
@@ -315,7 +316,7 @@ All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of 
 | --- | --- | --- | --- |
 | `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | 0 to 289 |
 | `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | 290 to 561 |
-| `frost_builder` | frost (see Modules) | `agent/frost` | 562 to 985; `2935f581` waits for the film |
+| `frost_builder` | frost (see Modules) | `agent/frost` | 562 to 985; `2935f581` merged after the freeze |
 | `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | 986 to 1303 |
 | `place_builder` | `src/plant/hairs/`, `src/plant/stem/`, `src/place/` | `agent/hairs` | 1304 to 1678 |
 | `rain_builder` | rain (see Modules) | `agent/rain` | 1679 to 2040 |
@@ -325,7 +326,7 @@ All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of 
 | `rows_v2_builder` | `src/field/` | `agent/field` | 3108 to 3414 |
 | `player_builder` | player (see Modules) | `agent/player` | 3415 to 3625 |
 | `plant_builder` | plant (see Modules) | `agent/plant` | 3626 to 3809, then the keys apart pairs |
-| `checks_builder` | `tools/checks/` | `agent/checks` | none; `script --again`, `made`, `play`, the count, `pure` on the frozen commit |
+| `checks_builder` | `tools/checks/` | `agent/checks` | none; stopped since 17:28 (twelve at work is the limit), then `made`, `pure`, the count, `script --again`, `play` on the frozen commit |
 
 ## Rounds
 
