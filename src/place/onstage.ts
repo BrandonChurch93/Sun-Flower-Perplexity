@@ -34,6 +34,7 @@ class Place implements Part {
     airUniforms.uMist.value = MIST.perM * d.fog * d.fog
     airUniforms.uMistTopM.value = MIST.topM
     airUniforms.uFogShare.value = 1 - (1 - RAIN_FOG_SHARE) * d.rain
+    airUniforms.uThrough.value = now.lightKind === 'sun' ? 1 : 0.12
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet
     airUniforms.uLandFrost.value = d.frost

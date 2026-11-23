@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, fieldEdge, fieldHash, fromFields, gateAt, landHill, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, cellAt, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -144,6 +144,7 @@ interface Tree { x: number; y: number; z: number; w: number; h: number; variant:
 const SEEN = { fromDeg: 128, toDeg: 282 }
 const HEDGE_FROM_M = 125
 const TREES_FROM_M = 340
+const BOUND_TREES_FROM_M = 230
 const LINES_TO_M = 2500
 
 function plant(): Tree[] {
@@ -191,16 +192,35 @@ function plant(): Tree[] {
     const poplars = kind < 0.05
     const trees_ = kind < 0.32
     const hedges = kind < 0.68
-    if (!hedges) return
     let s = rnd.range(0, 4)
     let gap = 0
     while (s < length) {
       const k = s / length
+      // No hedge runs through the sunflowers.
+      const mu = from.u + (to.u - from.u) * k
+      const mv = from.v + (to.v - from.v) * k
+      const sideU = Math.abs(to.u - from.u) < 1 ? 6 : 0
+      const sideV = sideU > 0 ? 0 : 6
+      const one = cellAt(mu - sideU, mv - sideV)
+      const other = cellAt(mu + sideU, mv + sideV)
+      const homeOne = isHome(one.i, one.j)
+      const homeOther = isHome(other.i, other.j)
+      if (homeOne && homeOther) {
+        s += 6
+        continue
+      }
+      // Where the sunflowers end stands a hedge with trees in it, in runs with long gaps between them.
+      const bound = homeOne !== homeOther
+      const run = bound && noise2(mu / 140 + 3.3, mv / 140 + 8.1, 90) > 0.42
       const p = fromFields(from.u + (to.u - from.u) * k + rnd.range(-1.2, 1.2), from.v + (to.v - from.v) * k + rnd.range(-1.2, 1.2))
       const r = Math.hypot(p.x, p.z)
       const inSight = seen(p.x, p.z)
       const wooded = r > 400 && woodAt(p.x, p.z, landHill(p.x, p.z)) > 0.45
-      if (r < HEDGE_FROM_M || r > LINES_TO_M || wooded || (!inSight && !trees_)) {
+      if (r < HEDGE_FROM_M || r > LINES_TO_M || wooded || (!inSight && !trees_ && !bound)) {
+        s += 6
+        continue
+      }
+      if (!hedges && !bound) {
         s += 6
         continue
       }
@@ -210,10 +230,13 @@ function plant(): Tree[] {
         continue
       }
       if (rnd.next() < 0.035) gap = 2 + rnd.int(5)
-      if (trees_ && r > TREES_FROM_M) {
-        const tall = poplars ? rnd.range(15, 21) : rnd.range(9.5, 16.5) * (0.85 + 0.3 * fieldHash(salt, Math.floor(s / 90), 9))
+      if (bound ? run && r > BOUND_TREES_FROM_M : trees_ && r > TREES_FROM_M) {
+        const young = !poplars && rnd.next() < 0.22
+        const tall = poplars ? rnd.range(15, 21) : young ? rnd.range(5.5, 9) : rnd.range(9.5, 16.5) * (0.85 + 0.3 * fieldHash(salt, Math.floor(s / 90), 9))
         if (inSight || rnd.next() < 0.5) tree(p.x, p.z, tall, poplars)
-        s += (poplars ? 0.3 : 0.5) * tall * rnd.range(0.7, 1.3)
+        // Thorn and bramble at the foot of a tree line.
+        if (inSight && !poplars && rnd.next() < 0.7) hedge(p.x, p.z)
+        s += (poplars ? 0.3 : 0.5) * tall * rnd.range(0.55, 1.35)
       } else {
         const w = hedge(p.x, p.z)
         if (rnd.next() < 0.05 && r > TREES_FROM_M * 0.8) tree(p.x, p.z, rnd.range(6, 10), false)
@@ -324,7 +347,7 @@ void main() {
   albedo = mix(albedo, vec3(0.7, 0.76, 0.82), uLandFrost * 0.42 * smoothstep(-0.2, 0.7, n.y) * (0.5 + 0.5 * open));
   float ndl = max(dot(n, uSunDir), 0.0);
   float low = 1.0 - smoothstep(0.2, 0.55, uSunDir.y);
-  float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low;
+  float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low * uThrough;
   // Leaves let the low sun through: the crown's thin edge glows when the sun stands behind it.
   vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * thin);
   vec3 color = albedo * (uSunColor * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open + flashLight(n));

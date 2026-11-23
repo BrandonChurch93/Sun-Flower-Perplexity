@@ -155,6 +155,23 @@ export const FIELDS = { stripM: 150, lengthM: 420, acrossDeg: 199, bendM: [46, 7
 const TURN = FIELDS.acrossDeg * RAD
 export const fieldAxes = { ux: Math.sin(TURN), uz: Math.cos(TURN), vx: Math.cos(TURN), vz: -Math.sin(TURN) }
 
+// The sunflowers go on beyond the planted field: these strips and fields round the plant are the same crop, one field with no hedge across it.
+export const HOME = { strips: [-1, 1], fields: [-2, 1] }
+export const isHome = (i: number, j: number): boolean => i >= HOME.strips[0] && i <= HOME.strips[1] && j >= HOME.fields[0] && j <= HOME.fields[1]
+
+// The strip and the field a point of the fields' frame lies in.
+export function cellAt(u: number, v: number): { i: number; j: number } {
+  const su = u / FIELDS.stripM
+  let i = Math.floor(su)
+  if (su < stripEdge(i)) i -= 1
+  else if (su > stripEdge(i + 1)) i += 1
+  const sv = v / FIELDS.lengthM
+  let j = Math.floor(sv - fieldHash(i, 0, 2))
+  if (sv < fieldEdge(i, j)) j -= 1
+  else if (sv > fieldEdge(i, j + 1)) j += 1
+  return { i, j }
+}
+
 export function fieldHash(i: number, j: number, salt: number): number {
   return hash32(((i + 32768) ^ hash32(((j + 32768) ^ (salt << 20)) >>> 0)) >>> 0) / 4294967296
 }

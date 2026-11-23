@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt, landHill, woodAt } from './land.ts'
+import { FIELDS, HOME, LAND_FROM_M, LAND_TO_M, fieldAxes, landAt, landHill, woodAt } from './land.ts'
 
 const RAD = Math.PI / 180
 const RING_GROWTH = 1.022
@@ -218,11 +218,13 @@ void main() {
   int kind = int(pick * ${CROPS.length}.0);
   float tone = fieldHash(f.strip, f.field, 7);
   vec3 albedo = CROPS[kind] * (0.8 + 0.4 * tone);
-  // The field next to the sunflowers is a headland of grass.
-  float headland = 1.0 - smoothstep(86.0, 104.0, r);
+  // Round the planted field lies a headland of grass, and ahead of the lens the sunflowers go on to the first hedge.
+  bool home = f.strip >= ${HOME.strips[0]} && f.strip <= ${HOME.strips[1]} && f.field >= ${HOME.fields[0]} && f.field <= ${HOME.fields[1]};
+  float headland = home ? 0.0 : 1.0 - smoothstep(86.0, 104.0, r);
   albedo = mix(albedo, vec3(0.05, 0.066, 0.03), headland);
-  float tilled = kind == 4 ? 1.0 - headland : 0.0;
-  float standing = (kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0;
+  if (home) albedo = vec3(0.03, 0.052, 0.018) * (0.85 + 0.3 * tone);
+  float tilled = kind == 4 && !home ? 1.0 - headland : 0.0;
+  float standing = (home || kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0;
   float mottle = 0.55 * valueNoise(p / 37.0 + 3.0) + 0.3 * valueNoise(p / 9.0 + 7.0) + 0.15 * valueNoise(p / 2.3);
   albedo *= 0.72 + 0.56 * mottle;
   float rowFade = 1.0 - smoothstep(0.12, 0.45, px / 3.0);
@@ -233,7 +235,7 @@ void main() {
   albedo *= 1.0 - 0.3 * tram * tramFade * standing;
   // The baulk between two fields: rough grass, darker than either.
   float baulk = 1.0 - smoothstep(1.2, 3.4 + 0.5 * px, f.edgeM + 1.5 * (valueNoise(p / 5.0) - 0.5));
-  albedo = mix(albedo, vec3(0.04, 0.058, 0.024) * (0.7 + 0.6 * mottle), baulk * (1.0 - headland));
+  albedo = mix(albedo, vec3(0.04, 0.058, 0.024) * (0.7 + 0.6 * mottle), home ? 0.0 : baulk * (1.0 - headland));
 
   // Woods.
   float wood = smoothstep(0.42, 0.58, texture(tWoods, p / ${(2 * MAP_HALF_M).toFixed(1)} + 0.5).r + 0.1 * (valueNoise(p / 19.0) - 0.5));
@@ -255,7 +257,7 @@ void main() {
   float ndl = max(dot(n, uSunDir), 0.0);
   float shade = mix(1.0, smoothstep(0.3, 0.8, c0), low * wood * bump);
   // A standing crop and a wood let the low sun through toward the lens.
-  float through = pow(saturate(dot(-v, uSunDir)), 3.0) * (0.25 * standing + 0.3 * wood * (1.0 - bump * c0)) * (1.0 - smoothstep(0.25, 0.6, uSunDir.y));
+  float through = uThrough * pow(saturate(dot(-v, uSunDir)), 3.0) * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * (1.0 - smoothstep(0.25, 0.6, uSunDir.y));
   vec3 color = albedo * (uSunColor * (ndl * shade + through) + skyAmbient(n) * nook + flashLight(n));
   outColor = landFinish(color, vWorld, vDepth);
 }

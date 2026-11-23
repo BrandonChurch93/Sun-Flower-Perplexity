@@ -27,6 +27,8 @@ export const airUniforms = {
   uMistTopM: { value: 12 },
   // The share of the shared ground fog that the land away from the field takes.
   uFogShare: { value: 1 },
+  // How much the light shines through leaves toward the lens: all of it for the sun, little for the moon.
+  uThrough: { value: 1 },
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
@@ -42,6 +44,7 @@ uniform float uAirRain;
 uniform float uMist;
 uniform float uMistTopM;
 uniform float uFogShare;
+uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
 uniform float uLandFrost;
