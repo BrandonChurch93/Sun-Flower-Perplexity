@@ -1,0 +1,14 @@
+{
+  "critic": "R6",
+  "score": 7,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-F-01.png",
+      "where": "low center, where the green shoot meets the soil",
+      "what": "At phone size the opening reads as dark ground with a small green sliver, not a seedling emerging. The rising stem and warming sunrise reward staying, but the subject is difficult to pick out on the first glance.",
+      "fix": "Open with slightly more of the curved shoot above the soil and give it a faint cool edge light. Keep the warm sunrise reveal so the first two seconds still have a clear payoff."
+    }
+  ]
+}

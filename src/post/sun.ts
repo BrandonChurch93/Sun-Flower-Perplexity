@@ -1,42 +1,138 @@
 import type * as THREE from 'three'
+import { config } from '../config.ts'
 import { cocScalePx, type CameraPose } from '../core/lens.ts'
+import { later, now, shutterSeconds } from '../v2/now.ts'
+import { sound } from './fill.ts'
 
-// Where the main light sits in the picture: x from the left and y from the bottom as shares of the frame (it may lie outside it), and how much it counts, 0 when it is behind the camera or far off frame. With it comes the blur circle of things at infinity, in pixels, which is what the sky carries.
-export interface SunInFrame { x: number; y: number; weight: number; farCircle: number }
+const clampTo = (v: number, most: number): number => Math.min(most, Math.max(-most, v))
+
+// Where the sun sits in the picture: x from the left and y from the bottom as shares of the frame (it may lie outside it), and how much it counts, 0 when it is behind the camera or far off frame. With it comes the blur circle of things at infinity, in pixels, which is what the sky carries, the radius of the sun's own disc at this lens as a share of the frame width, and how far the sun moves in the frame from one frame to the next.
+export interface SunInFrame { x: number; y: number; weight: number; farCircle: number; disc?: number; dx?: number; dy?: number; horizon?: number }
+
+// The sun's radius seen from the ground, in radians.
+const SUN_RADIUS = 0.00465
 
 export function sunInFrame(pose: CameraPose, toSun: THREE.Vector3, gateMm: number, width: number, height: number): SunInFrame {
   const aspect = width / height
   const farCircle = Math.min(cocScalePx(pose, gateMm, width) / pose.focusM, 2048)
-  const depth = toSun.dot(pose.forward)
-  if (depth < 0.05) return { x: 0.5, y: 0.5, weight: 0, farCircle }
   const scale = pose.focalMm / gateMm
+  const disc = SUN_RADIUS * scale
+  const depth = toSun.dot(pose.forward)
+  if (depth < 0.05) return { x: 0.5, y: 0.5, weight: 0, farCircle, disc }
   const x = 0.5 + (toSun.dot(pose.right) / depth) * scale
   const y = 0.5 + (toSun.dot(pose.up) / depth) * scale * aspect
   const off = Math.hypot((x - 0.5) * aspect, y - 0.5) / Math.hypot(0.5 * aspect, 0.5)
   const t = Math.min(1, Math.max(0, (2.2 - off) / 1.0))
-  return { x, y, weight: t * t * (3 - 2 * t), farCircle }
+  const from = now.sun.dot(pose.forward)
+  const to = later.sun.dot(pose.forward)
+  let dx = 0
+  let dy = 0
+  if (from > 0.05 && to > 0.05) {
+    const frames = 1 / (config.film.fps * shutterSeconds)
+    dx = clampTo((later.sun.dot(pose.right) / to - now.sun.dot(pose.right) / from) * scale * frames, 0.5)
+    dy = clampTo((later.sun.dot(pose.up) / to - now.sun.dot(pose.up) / from) * scale * aspect * frames, 0.5)
+  }
+  // Where the horizon stands in the frame under the sun, as a share of its height.
+  const flat = Math.hypot(toSun.x, toSun.z)
+  const level = flat > 1e-4 ? (toSun.x * pose.forward.x + toSun.z * pose.forward.z) / flat : 0
+  const horizon = level > 0.05 ? 0.5 + ((toSun.x * pose.up.x + toSun.z * pose.up.z) / flat / level) * scale * aspect : 0
+  return { x, y, weight: t * t * (3 - 2 * t), farCircle, disc, dx, dy, horizon }
 }
 
-// The sun's disc as a share of the frame width, as the golden sky draws it at the shot's lens.
+// The sun's disc as a share of the frame width at the bloom's lens.
 export const sunDisc = 0.0095
 
-// How much of the sun shows and where the showing part sits: readings on four rings from half the disc's radius to two and a half of it, so the glow hard by the disc counts when a leaf hides the disc itself. Red is their mean, green and blue the offset of their center of light from the disc's center, in frame widths.
+// How far outside the frame a point lies, in frame heights. 0 inside.
+export function outside(x: number, y: number, aspect: number): number {
+  return Math.hypot(Math.max(0, -x, x - 1) * aspect, Math.max(0, -y, y - 1))
+}
+
+// How much of the sun's disc is in view, and where the showing part sits. Sixteen points over the disc are tested against what stands in front of the sky. Red is the share that is clear over the three frames round this one, along the way the sun moves in the frame: in the time lapse the disc crosses a tree line inside one frame, and this is what lets the glare swell and fade over three. Alpha is the share clear at this instant, for the disc's own core. Green and blue are the offset of the clear part from the disc's centre, in frame widths.
+// A point that has left the frame is tested at the frame's edge nearest to it.
 export const sunReadFragment = /* glsl */ `
-uniform sampler2D tHot;
+uniform sampler2D tRaw;
+uniform sampler2D tBright;
 uniform vec2 uSunAt;
+uniform vec2 uTrack;
 uniform float uAspect;
+uniform float uPatch;
+uniform float uDisc;
+uniform float uRim;
+uniform float uFar;
 layout(location = 0) out vec4 outColor;
+${sound}
+float openAt(vec2 uv) {
+  float a = circleOf(texture(tRaw, clamp(uv, 0.002, 0.998)).a);
+  return uFar > 0.0 ? 1.0 - smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) : 0.0;
+}
 void main() {
-  float sum = dot(texture(tHot, uSunAt).rgb, vec3(0.2126, 0.7152, 0.0722));
-  vec2 at = vec2(0.0);
-  for (int i = 0; i < 36; i++) {
-    int ring = i < 6 ? 0 : i < 12 ? 1 : i < 24 ? 2 : 3;
-    float a = float(i) * (ring < 2 ? 1.0471976 : 0.5235988) + 0.4 * float(ring);
-    vec2 o = vec2(cos(a), sin(a)) * (ring == 0 ? 0.5 : ring == 1 ? 1.0 : ring == 2 ? 1.75 : 2.5) * ${sunDisc};
-    float l = dot(texture(tHot, uSunAt + vec2(o.x, o.y * uAspect)).rgb, vec3(0.2126, 0.7152, 0.0722));
-    sum += l;
-    at += l * o;
+  if (gl_FragCoord.x > 3.0) {
+    // The fourth column: how far the disc stands clear of the far land under it, from 0 with its lower edge within a radius of the land to 1 five radii above. Only land near infinity counts: a leaf under the sun is in the glass with it.
+    float clear = 0.0;
+    for (int i = 0; i < 16; i++) {
+      float k = (float(i) + 0.5) / 16.0;
+      vec2 p = uSunAt + vec2((fract(float(i) * 0.618034) - 0.5) * uRim, -(2.0 + 4.0 * k) * uRim * uAspect);
+      float a = circleOf(texture(tRaw, clamp(p, 0.002, 0.998)).a);
+      float land = uFar > 0.0 ? smoothstep(0.0006, 0.0012, 1.0 - a / uFar) * smoothstep(0.8, 0.95, a / uFar) : 0.0;
+      clear += 1.0 - land;
+    }
+    outColor = vec4(clear / 16.0);
+    return;
   }
-  outColor = vec4(sum / 37.0, at / max(sum, 1e-6), 1.0);
+  if (gl_FragCoord.x > 2.0) {
+    // The third column: the colour of the disc as the sky drew it, where it shows, and the share of it that shows.
+    vec3 face = vec3(0.0);
+    float shows = 0.0;
+    for (int i = 0; i < 16; i++) {
+      float k = (float(i) + 0.5) / 16.0;
+      float a = float(i) * 2.3999632;
+      vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * uDisc;
+      vec2 p = uSunAt + vec2(o.x, o.y * uAspect);
+      float here = openAt(p);
+      face += here * sound(texture(tRaw, clamp(p, 0.002, 0.998)).rgb);
+      shows += here;
+    }
+    outColor = vec4(shows > 0.0 ? face / shows : vec3(0.0), shows / 16.0);
+    return;
+  }
+  if (gl_FragCoord.x > 1.0) {
+    // The second column: where the sky is most open round the sun, as an offset from the sun in frame widths, and how open it is there. Under a torn deck that is the tear, and the beams start there and are as strong as it is open. Each place counts by how open it is and not by how bright: a lit drop of rain is brighter than the tear and a pixel wide, and would pull the start to itself for a frame.
+    vec2 base = clamp(uSunAt, 0.03, 0.97);
+    vec2 sum = vec2(0.0);
+    float total = 0.05;
+    float lit = 0.0;
+    for (int i = 0; i < 48; i++) {
+      float k = (float(i) + 0.5) / 48.0;
+      float a = float(i) * 2.3999632;
+      vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * 0.2 / uAspect;
+      vec4 c = texture(tBright, base + vec2(o.x, o.y * uAspect));
+      lit = max(lit, c.a * (1.0 - k * k));
+      float w = c.a * c.a * (1.0 - k);
+      sum += w * o;
+      total += w;
+    }
+    outColor = vec4(vec2(base.x - uSunAt.x, (base.y - uSunAt.y) / uAspect) + sum / total, lit, 1.0);
+    return;
+  }
+  float clear = 0.0;
+  float around = 0.0;
+  float weights = 0.0;
+  vec2 at = vec2(0.0);
+  for (int i = 0; i < 16; i++) {
+    float k = (float(i) + 0.5) / 16.0;
+    float a = float(i) * 2.3999632;
+    vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * uPatch;
+    vec2 p = uSunAt + vec2(o.x, o.y * uAspect);
+    float here = openAt(p);
+    clear += here;
+    at += here * o;
+    for (int j = -3; j <= 3; j++) {
+      float t = float(j) * 0.5;
+      float w = 1.0 - abs(t) * 0.5;
+      around += w * (j == 0 ? here : openAt(p + uTrack * t));
+      weights += w;
+    }
+  }
+  outColor = vec4(around / weights, clear > 0.0 ? at / clear : vec2(0.0), clear / 16.0);
 }
 `

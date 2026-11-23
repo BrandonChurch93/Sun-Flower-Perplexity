@@ -5,6 +5,9 @@ export interface Segment { id: string; world: string; start: number; end: number
 export interface Key { id: string; unit: string; time: number; image: string; settled?: string[] }
 export interface CameraKey { time: number; distanceM: number; heightM: number; aimHeightM: number; frameX: number; azimuthDeg: number; focalMm: number }
 export interface AssetSet { skyWidth: number; plantMapWidth: number; groundMapWidth: number; maxTextureMb: number }
+export interface GrowthMark { seconds?: number; bar?: number; tau: number }
+export interface Section { id: string; name: string; fromBar: number; toBar: number; kind: 'grow' | 'hold' | 'bloom' | 'field' }
+export interface Look { id: string; section: string; seconds?: number; bar?: number; beat?: number; image: string }
 export interface Budget {
   runHours: number
   phaseHours: Record<string, number>
@@ -23,6 +26,10 @@ export interface Config {
   seed: number
   repo: { url: string; branch: string; maxFileMb: number; maxTreeGb: number; maxPushGb: number }
   film: { fps: number; durationSeconds: number; shutterDegrees: number; hookSeconds: number }
+  growth: { seconds: number; germination: GrowthMark[]; frostHold: number; stormHold: number; bud: number; open: number; crane: number; field: number }
+  music: { title: string; bpm: number; beatsPerBar: number; bar1Seconds: number; seconds: number; sha256: string; map: string }
+  sections: Section[]
+  looks: Look[]
   formats: Record<'master' | 'preview' | 'uhd', Format>
   platform: { name: string; maxWidth: number; maxHeight: number; maxFps: number; maxBitrateMbps: number; standardAccountMaxSeconds: number; loopsUnderSeconds: number }
   export: { container: string; videoCodec: string; bitrateMbps: number; audio: string; proofSeconds: number; memoryTestSeconds: number; files: { master: string; uhd: string; clip: string; preview: string } }
@@ -87,9 +94,11 @@ export type FormatKey = keyof Config['formats']
 export type AssetSetId = keyof Config['assetSets']
 
 const REQUIRED: Record<string, string[]> = {
-  '': ['name', 'slug', 'seed', 'repo', 'film', 'formats', 'platform', 'export', 'previewFilm', 'tiers', 'assetSets', 'worlds', 'segments', 'lookLockUnit', 'buildOrderAfterLookLock', 'keys', 'plant', 'camera', 'field', 'continuity', 'detail', 'reference', 'assets', 'quality', 'critics', 'status', 'budget', 'sandbox', 'deliver'],
+  '': ['name', 'slug', 'seed', 'repo', 'film', 'growth', 'music', 'sections', 'looks', 'formats', 'platform', 'export', 'previewFilm', 'tiers', 'assetSets', 'worlds', 'segments', 'lookLockUnit', 'buildOrderAfterLookLock', 'keys', 'plant', 'camera', 'field', 'continuity', 'detail', 'reference', 'assets', 'quality', 'critics', 'status', 'budget', 'sandbox', 'deliver'],
   repo: ['url', 'branch', 'maxFileMb', 'maxTreeGb', 'maxPushGb'],
   film: ['fps', 'durationSeconds', 'shutterDegrees', 'hookSeconds'],
+  growth: ['seconds', 'germination', 'frostHold', 'stormHold', 'bud', 'open', 'crane', 'field'],
+  music: ['title', 'bpm', 'beatsPerBar', 'bar1Seconds', 'seconds', 'sha256', 'map'],
   formats: ['master', 'preview', 'uhd'],
   platform: ['name', 'maxWidth', 'maxHeight', 'maxFps', 'maxBitrateMbps', 'standardAccountMaxSeconds', 'loopsUnderSeconds'],
   export: ['container', 'videoCodec', 'bitrateMbps', 'audio', 'proofSeconds', 'memoryTestSeconds', 'files'],
@@ -155,7 +164,28 @@ export function validateConfig(input: unknown, options: ValidateOptions = {}): C
     if (!isWholeFrame(s.start, fps) || !isWholeFrame(s.end, fps)) fail(`a boundary of segment "${s.id}" is not on a whole frame`)
     at = s.end
   }
-  if (Math.abs(at - durationSeconds) > 1e-9) fail('the last segment does not end at film.durationSeconds')
+  if (Math.abs(at - c.growth.seconds) > 1e-9) fail('the last segment does not end at growth.seconds')
+  if (!(durationSeconds > 0)) fail('film.durationSeconds must be above zero')
+  if (!Array.isArray(c.sections) || c.sections.length === 0) fail('sections is empty')
+  let bar = c.sections[0].fromBar
+  const sectionIds = new Set<string>()
+  for (const s of c.sections) {
+    if (sectionIds.has(s.id)) fail(`the section id "${s.id}" is used twice`)
+    sectionIds.add(s.id)
+    if (s.fromBar !== bar) fail(`section "${s.id}" does not start where the one before it ends`)
+    if (!(s.toBar > s.fromBar)) fail(`section "${s.id}" has no length`)
+    bar = s.toBar
+  }
+  const lookIds = new Set<string>()
+  for (const l of c.looks) {
+    if (lookIds.has(l.id)) fail(`the look id "${l.id}" is used twice`)
+    lookIds.add(l.id)
+    if (!sectionIds.has(l.section)) fail(`look "${l.id}" names the unknown section "${l.section}"`)
+    if (l.seconds === undefined && l.bar === undefined) fail(`look "${l.id}" has neither seconds nor a bar`)
+    if (options.imageExists && !options.imageExists(l.image)) fail(`the reference image "${l.image}" is missing`)
+  }
+  const marks = c.growth.germination
+  for (let i = 1; i < marks.length; i++) if (!(marks[i].tau > marks[i - 1].tau)) fail('growth.germination must rise')
   if (!seen.has(c.lookLockUnit)) fail(`lookLockUnit "${c.lookLockUnit}" is not a segment`)
   for (const id of c.buildOrderAfterLookLock) if (!seen.has(id)) fail(`buildOrderAfterLookLock names the unknown unit "${id}"`)
   const keyIds = new Set<string>()

@@ -1,0 +1,1976 @@
+{
+  "critic": "R2",
+  "round": 27,
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "control": {
+    "votes": 65,
+    "a": 38,
+    "share": 0.5846153846153846
+  },
+  "controlsByKey": {
+    "open": {
+      "key": "references/v2/keys/open.png",
+      "votes": 5,
+      "a": 5,
+      "share": 1,
+      "letters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "fromRound": 27
+    },
+    "sprout": {
+      "key": "references/approved/dawn-sprout.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "fromRound": 9
+    },
+    "seedling": {
+      "key": "references/approved/dawn-seedling.png",
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 9
+    },
+    "frost-sun": {
+      "key": "references/v2/keys/frost.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    },
+    "climb": {
+      "key": "references/v2/keys/climb.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    },
+    "storm": {
+      "key": "references/v2/keys/storm.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    },
+    "storm-flash": {
+      "key": "references/v2/keys/storm-flash.png",
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "d"
+      ],
+      "fromRound": 27
+    },
+    "break": {
+      "key": "references/v2/keys/break.png",
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    },
+    "late-dusk": {
+      "key": "references/v2/keys/late.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    },
+    "bloom-opening": {
+      "key": "references/approved/bloom-opening.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 3
+    },
+    "bloom-hero": {
+      "key": "references/approved/bloom-hero.png",
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 3
+    },
+    "field": {
+      "key": "references/approved/field.png",
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
+      "letters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "b"
+      ],
+      "fromRound": 7
+    },
+    "last": {
+      "key": "references/v2/keys/last.png",
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "fromRound": 27
+    }
+  },
+  "judged": {
+    "votes": 70,
+    "a": 16,
+    "share": 0.22857142857142856
+  },
+  "passOverall": false,
+  "passEveryFrame": false,
+  "failingFrames": [
+    0,
+    60,
+    1055,
+    1479,
+    1775,
+    2096,
+    3523,
+    3755
+  ],
+  "pass": false,
+  "perImage": {
+    "set-B-01.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 0,
+      "id": "open",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/open.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "controlVotes": 5,
+      "controlA": 5,
+      "controlShare": 1,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-02.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 60,
+      "id": "sprout",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/approved/dawn-sprout.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 9,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-03.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 236,
+      "id": "seedling",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "a"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "controlKey": "references/approved/dawn-seedling.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 9,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-04.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/frost.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-05.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1479,
+      "id": "climb",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/climb.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-06.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1775,
+      "id": "storm",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/storm.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-07.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "d"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "controlKey": "references/v2/keys/storm-flash.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "d"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-08.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 2096,
+      "id": "break",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/break.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-09.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "a"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "controlKey": "references/v2/keys/late.png",
+      "controlLetters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-10.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 2880,
+      "id": "late",
+      "letters": [
+        "e",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "votes": 5,
+      "a": 4,
+      "share": 0.8,
+      "controlKey": "references/v2/keys/late.png",
+      "controlLetters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-11.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "e",
+        "b"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "controlKey": "references/approved/bloom-opening.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 3,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-12.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "d"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "controlKey": "references/approved/bloom-hero.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 3,
+      "missing": false,
+      "pass": true
+    },
+    "set-B-13.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 3523,
+      "id": "field",
+      "letters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/approved/field.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 4,
+      "controlShare": 0.8,
+      "controlFromRound": 7,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-14.png": {
+      "control": false,
+      "what": "judged frame",
+      "frame": 3755,
+      "id": "last",
+      "letters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/last.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "missing": false,
+      "pass": false
+    },
+    "set-B-15.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "votes": 5,
+      "a": 5,
+      "share": 1
+    },
+    "set-B-16.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6
+    },
+    "set-B-17.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6
+    },
+    "set-B-18.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6
+    },
+    "set-B-19.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "d"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4
+    },
+    "set-B-20.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4
+    },
+    "set-B-21.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6
+    },
+    "set-B-22.png": {
+      "control": true,
+      "what": "control: the target picture of the key",
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_525",
+      "family": "GPT",
+      "image": "set-B-01.png",
+      "control": false,
+      "frame": 0,
+      "id": "open",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88/100. The grass blades have nearly identical bead-like highlights that look like repeated 3D assets."
+    },
+    {
+      "juror": "reviewer_526",
+      "family": "Gemini",
+      "image": "set-B-01.png",
+      "control": false,
+      "frame": 0,
+      "id": "open",
+      "letter": "e",
+      "confidence": 85,
+      "answer": "(e), confidence: 85. Most influenced by the real-time 3D mesh construction around the sprout, which is a smooth extruded tube intersected along sharp polygon edges by repeated low-poly dirt-clump instances rather than organic plant tissue or high-end cinematic assets."
+    },
+    {
+      "juror": "reviewer_527",
+      "family": "Claude",
+      "image": "set-B-01.png",
+      "control": false,
+      "frame": 0,
+      "id": "open",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55 — CG render with cinematic depth of field but the emerging sprout is a smooth, untextured, plastic-looking shape and grass blades are simple, suggesting a hobbyist 3D (e.g. Blender) render rather than top-budget production."
+    },
+    {
+      "juror": "reviewer_528",
+      "family": "GLM",
+      "image": "set-B-01.png",
+      "control": false,
+      "frame": 0,
+      "id": "open",
+      "letter": "e",
+      "confidence": 83,
+      "answer": "e, 83/100: The grass blades look like smooth, repeated 3D meshes."
+    },
+    {
+      "juror": "reviewer_529",
+      "family": "Grok",
+      "image": "set-B-01.png",
+      "control": false,
+      "frame": 0,
+      "id": "open",
+      "letter": "d",
+      "confidence": 81,
+      "answer": "d, 81, the sprout is a smooth extruded tube with perfect spherical dew meshes, a beginner offline 3D render rather than a photo or a real-time web demo"
+    },
+    {
+      "juror": "reviewer_530",
+      "family": "GPT",
+      "image": "set-B-02.png",
+      "control": false,
+      "frame": 60,
+      "id": "sprout",
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100. The seedling’s near-uniform curve looks like a modeled 3D mesh."
+    },
+    {
+      "juror": "reviewer_531",
+      "family": "Gemini",
+      "image": "set-B-02.png",
+      "control": false,
+      "frame": 60,
+      "id": "sprout",
+      "letter": "e",
+      "confidence": 90,
+      "answer": "e, 90 — The sprout's simplified real-time 3D geometry, where a smooth tubular stem plugs directly into a hollow split seed-shell mesh with discrete low-poly dirt blobs sitting on its surface."
+    },
+    {
+      "juror": "reviewer_532",
+      "family": "Claude",
+      "image": "set-B-02.png",
+      "control": false,
+      "frame": 60,
+      "id": "sprout",
+      "letter": "d",
+      "confidence": 50,
+      "answer": "d, 50, The image is clearly CG (procedural-looking soil, simplistic uniform grass blades, too-clean seed shell texture) — cinematic lighting and depth of field, but not at top-budget film/documentary fidelity."
+    },
+    {
+      "juror": "reviewer_533",
+      "family": "GLM",
+      "image": "set-B-02.png",
+      "control": false,
+      "frame": 60,
+      "id": "sprout",
+      "letter": "e",
+      "confidence": 83,
+      "answer": "e, 83/100. The repeated, rigid grass blades look like instanced 3D assets."
+    },
+    {
+      "juror": "reviewer_534",
+      "family": "Grok",
+      "image": "set-B-02.png",
+      "control": false,
+      "frame": 60,
+      "id": "sprout",
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72, The flanking grass is flat low-poly ribbons beside a shaded hero sprout, a real-time demo shortcut rather than cinema detail."
+    },
+    {
+      "juror": "reviewer_535",
+      "family": "GPT",
+      "image": "set-B-03.png",
+      "control": false,
+      "frame": 236,
+      "id": "seedling",
+      "letter": "e",
+      "confidence": 78,
+      "answer": "e, 78/100. The uniformly smooth, blade-like grass looks like simple 3D meshes."
+    },
+    {
+      "juror": "reviewer_536",
+      "family": "Gemini",
+      "image": "set-B-03.png",
+      "control": false,
+      "frame": 236,
+      "id": "seedling",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88 — Real-time 3D rendering cues, especially the tessellated procedural displacement mesh of the foreground soil combined with simple ribbon-mesh grass, instanced dewdrop geometry on the stem, and screen-space depth-of-field blur."
+    },
+    {
+      "juror": "reviewer_537",
+      "family": "Claude",
+      "image": "set-B-03.png",
+      "control": false,
+      "frame": 236,
+      "id": "seedling",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55 — Cinematic, path-traced-looking render (shallow anamorphic-style depth of field, backlit sunset rim light on dew-covered sprout) reads as high-end film/documentary CG, though the seedling-at-sunrise subject is a classic stock-photo trope."
+    },
+    {
+      "juror": "reviewer_538",
+      "family": "GLM",
+      "image": "set-B-03.png",
+      "control": false,
+      "frame": 236,
+      "id": "seedling",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82/100. The surrounding grass blades look like flat, tapered 3D ribbons."
+    },
+    {
+      "juror": "reviewer_539",
+      "family": "Grok",
+      "image": "set-B-03.png",
+      "control": false,
+      "frame": 236,
+      "id": "seedling",
+      "letter": "a",
+      "confidence": 80,
+      "answer": "(a) 80 cinematic subsurface scattering and macro depth of field that look pre-rendered, not like a web demo or catalog shot"
+    },
+    {
+      "juror": "reviewer_540",
+      "family": "GPT",
+      "image": "set-B-04.png",
+      "control": false,
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 85,
+      "answer": "e, 85/100. The frost forms repeated needle clusters along the leaf edges, giving it a procedural 3D look."
+    },
+    {
+      "juror": "reviewer_541",
+      "family": "Gemini",
+      "image": "set-B-04.png",
+      "control": false,
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e)\nConfidence: 92\nMost influential factor: Raw real-time GPU rasterization stair-step aliasing along coarse low-poly 3D plant geometry and unshadowed instanced frost-spike meshes."
+    },
+    {
+      "juror": "reviewer_542",
+      "family": "Claude",
+      "image": "set-B-04.png",
+      "control": false,
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d, 60 — Obviously a CG render (uniform straight-spike 'hairs', paper-thin leaf edge with visible geometry, textbook DOF bokeh/sun-flare setup) with offline path-traced quality but hobbyist-level detail, typical of a Blender personal render rather than film/AAA polish or real-time web graphics."
+    },
+    {
+      "juror": "reviewer_543",
+      "family": "GLM",
+      "image": "set-B-04.png",
+      "control": false,
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 86,
+      "answer": "e, 86/100. The frost forms a uniformly dense fringe of needle-like spikes along the leaf edges, which looks procedurally rendered."
+    },
+    {
+      "juror": "reviewer_544",
+      "family": "Grok",
+      "image": "set-B-04.png",
+      "control": false,
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "d",
+      "confidence": 74,
+      "answer": "d, 74, uniform particle-hair frost and synthetic star-glint sprites on a polygonal leaf, a mid-tier offline 3D still rather than a photo, film frame, or web demo."
+    },
+    {
+      "juror": "reviewer_545",
+      "family": "GPT",
+      "image": "set-B-05.png",
+      "control": false,
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 86,
+      "answer": "e, 86/100. The angular, faceted folds in the backlit leaves look like 3D mesh geometry."
+    },
+    {
+      "juror": "reviewer_546",
+      "family": "Gemini",
+      "image": "set-B-05.png",
+      "control": false,
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 90,
+      "answer": "e\nConfidence: 90\nMost influential factor: The coarse real-time 3D mesh geometry—visible in the angular polygon segments along the foreground leaf edges and the stretched heightmap displacement of the foreground dirt—which rules out a photograph or AI image while being too low-poly for a top-budget film or AAA cinematic."
+    },
+    {
+      "juror": "reviewer_547",
+      "family": "Claude",
+      "image": "set-B-05.png",
+      "control": false,
+      "frame": 1479,
+      "id": "climb",
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d, 60 — It is clearly a CG render rather than a photo. Visible render noise in the sky, a repeating soil texture and a uniform background crop point to a hobbyist offline (Blender-style) render, not a high-budget production."
+    },
+    {
+      "juror": "reviewer_548",
+      "family": "GLM",
+      "image": "set-B-05.png",
+      "control": false,
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 91,
+      "answer": "e, 91/100. The blocky, visibly dithered cloud edges are the strongest clue that this is a real-time render."
+    },
+    {
+      "juror": "reviewer_549",
+      "family": "Grok",
+      "image": "set-B-05.png",
+      "control": false,
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72, the cracked soil is a continuous displaced mesh with stretched textures and waxy highlights, a real-time engine look rather than film, photo, or catalog imagery"
+    },
+    {
+      "juror": "reviewer_550",
+      "family": "GPT",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 86,
+      "answer": "e, 86/100. The same angular leaf geometry appears to repeat across the field."
+    },
+    {
+      "juror": "reviewer_551",
+      "family": "Gemini",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92 — The real-time procedural 3D rendering cues, especially the noise-displaced soil intersected by a flat water plane with a mathematical concentric ripple shader alongside faceted, instanced plant meshes."
+    },
+    {
+      "juror": "reviewer_552",
+      "family": "Claude",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1775,
+      "id": "storm",
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d — confidence 60 — Clearly a CG render (blobby procedural-displacement soil, identical cloned plants in background rows, uniform particle rain), polished but with hobbyist Blender-style shortcuts rather than top-budget film/cinematic detail."
+    },
+    {
+      "juror": "reviewer_553",
+      "family": "GLM",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 79,
+      "answer": "e, 79/100: The same rigid seedling shapes repeat across the field, like copies of a single 3D model."
+    },
+    {
+      "juror": "reviewer_554",
+      "family": "Grok",
+      "image": "set-B-06.png",
+      "control": false,
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 70,
+      "answer": "e, 70, perfectly concentric puddle ripple rings with no splash physics"
+    },
+    {
+      "juror": "reviewer_555",
+      "family": "GPT",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 73,
+      "answer": "a, 73/100. The fine rain-impact ripples in the reflective foreground puddle look like polished cinematic effects work."
+    },
+    {
+      "juror": "reviewer_556",
+      "family": "Gemini",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 78,
+      "answer": "d (confidence: 78) — The foreground mud looks like a glossy, procedurally displaced black plastic mesh rather than real granular soil."
+    },
+    {
+      "juror": "reviewer_557",
+      "family": "Claude",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "(a), confidence 55. Most influential: polished offline-CGI look — cinematic stormy lighting, shallow depth of field, detailed leaf hairs and rain splashes in puddles — reads as a high-end rendered cinematic frame rather than a photo, catalog image, or real-time web demo."
+    },
+    {
+      "juror": "reviewer_558",
+      "family": "GLM",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 74,
+      "answer": "a, 74, The way the storm light catches the translucent, rain-soaked leaves looks like a carefully lit cinematic shot."
+    },
+    {
+      "juror": "reviewer_559",
+      "family": "Grok",
+      "image": "set-B-07.png",
+      "control": false,
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 74,
+      "answer": "d, 74, plastic procedural wet-soil highlights and artificial leaf shading that read as mid-tier generated art, not a film frame, photograph, catalog plate, or real-time web demo"
+    },
+    {
+      "juror": "reviewer_560",
+      "family": "GPT",
+      "image": "set-B-08.png",
+      "control": false,
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 79,
+      "answer": "e, 79/100. The same rigid plant silhouette repeats across the field, suggesting instanced 3D meshes."
+    },
+    {
+      "juror": "reviewer_561",
+      "family": "Gemini",
+      "image": "set-B-08.png",
+      "control": false,
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e\nConfidence: 92\nMost influential detail: Real-time 3D geometry and shader construction—specifically the polygonal facets along the leaf edges paired with a flat, normal-mapped water plane intersecting the displaced soil mesh and diamond-shaped billboard rain sprites."
+    },
+    {
+      "juror": "reviewer_562",
+      "family": "Claude",
+      "image": "set-B-08.png",
+      "control": false,
+      "frame": 2096,
+      "id": "break",
+      "letter": "d",
+      "confidence": 70,
+      "answer": "d, 70, The plant is a detailed CG render, but the blobby, plasticky soil, flat painted-looking sky backdrop with stock god-rays, and copy-pasted background plants read as a hobbyist Blender render rather than a top-budget production."
+    },
+    {
+      "juror": "reviewer_563",
+      "family": "GLM",
+      "image": "set-B-08.png",
+      "control": false,
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 87,
+      "answer": "e, 87/100: The same plant model appears to repeat across the field."
+    },
+    {
+      "juror": "reviewer_564",
+      "family": "Grok",
+      "image": "set-B-08.png",
+      "control": false,
+      "frame": 2096,
+      "id": "break",
+      "letter": "d",
+      "confidence": 80,
+      "answer": "d, 80. The soil’s uniform procedural “melted clay” displacement and identically instanced plants, which read as a hobbyist offline 3D render rather than a photograph, a film/AAA shot, or a real-time web demo."
+    },
+    {
+      "juror": "reviewer_565",
+      "family": "GPT",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82/100: The sunflower bud’s sharply outlined, angular bracts look like 3D mesh geometry."
+    },
+    {
+      "juror": "reviewer_566",
+      "family": "Gemini",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e\nConfidence: 88\nMost influential factor: The white alpha-cutout texture fringe and jagged, un-antialiased pixel edges along the overlapping 3D bract cards of the sunflower bud."
+    },
+    {
+      "juror": "reviewer_567",
+      "family": "Claude",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 60,
+      "answer": "a, 60 — cinematic widescreen framing with high-end CG rendering (backlit stem hairs, shallow depth of field, dusk grading) that reads as a polished film/cinematic frame rather than a stock or catalog photo."
+    },
+    {
+      "juror": "reviewer_568",
+      "family": "GLM",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 79,
+      "answer": "e, 79/100. The uniformly bright outlines tracing the sunflower bud’s overlapping bracts look like a real-time rendering artifact."
+    },
+    {
+      "juror": "reviewer_569",
+      "family": "Grok",
+      "image": "set-B-09.png",
+      "control": false,
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 62,
+      "answer": "a 62 The crushed low-key dusk exposure, with the bud only rim-lit against a near-black field, reads as a cinema nature-documentary or high-end cinematic frame rather than a commercially readable stock still."
+    },
+    {
+      "juror": "reviewer_570",
+      "family": "GPT",
+      "image": "set-B-10.png",
+      "control": false,
+      "frame": 2880,
+      "id": "late",
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72/100. The bud’s bracts have a repeated, sharply angular geometry that looks like a real-time 3D mesh."
+    },
+    {
+      "juror": "reviewer_571",
+      "family": "Gemini",
+      "image": "set-B-10.png",
+      "control": false,
+      "frame": 2880,
+      "id": "late",
+      "letter": "a",
+      "confidence": 88,
+      "answer": "a\nConfidence: 88\nMost influential factor: Offline cinematic path-traced 3D rendering—true ray-traced depth-of-field bokeh on fine 3D trichome hairs and Monte Carlo subsurface leaf translucency paired with polygonal leaf-edge facets and procedurally instanced inner bracts, ruling out both real photography and real-time web 3D."
+    },
+    {
+      "juror": "reviewer_572",
+      "family": "Claude",
+      "image": "set-B-10.png",
+      "control": false,
+      "frame": 2880,
+      "id": "late",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55, cinematic widescreen framing with polished backlit rim-lighting and shallow depth of field on a high-detail (likely CG) sunflower bud, reading as a high-end film/cinematic frame"
+    },
+    {
+      "juror": "reviewer_573",
+      "family": "GLM",
+      "image": "set-B-10.png",
+      "control": false,
+      "frame": 2880,
+      "id": "late",
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78, The precise rim lighting on the bud’s tiny hairs gives the close-up a cinematic feel."
+    },
+    {
+      "juror": "reviewer_574",
+      "family": "Grok",
+      "image": "set-B-10.png",
+      "control": false,
+      "frame": 2880,
+      "id": "late",
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78, unfilled dramatic rim light and a muted cinematic grade on a 16:9 frame"
+    },
+    {
+      "juror": "reviewer_575",
+      "family": "GPT",
+      "image": "set-B-11.png",
+      "control": false,
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "a",
+      "confidence": 80,
+      "answer": "a, 80/100. The backlighting that picks out individual hairs along the sunflower’s bracts most influenced my choice."
+    },
+    {
+      "juror": "reviewer_576",
+      "family": "Gemini",
+      "image": "set-B-11.png",
+      "control": false,
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "e",
+      "confidence": 85,
+      "answer": "e, 85 — Visible low-poly faceting and rigid procedural hair spikes along the foreground bract silhouettes show real-time mesh and shader approximations rather than a real photograph or high-subdivision offline cinema asset."
+    },
+    {
+      "juror": "reviewer_577",
+      "family": "Claude",
+      "image": "set-B-11.png",
+      "control": false,
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55, Highly polished CG render (path-traced backlit rim hairs, translucent petals, cinematic depth of field and sun glow) — too procedural/regular to be a real photo, but too sophisticated for amateur or real-time web 3D."
+    },
+    {
+      "juror": "reviewer_578",
+      "family": "GLM",
+      "image": "set-B-11.png",
+      "control": false,
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82: The sunflower’s disk florets repeat with the mechanical uniformity of instanced 3D geometry."
+    },
+    {
+      "juror": "reviewer_579",
+      "family": "Grok",
+      "image": "set-B-11.png",
+      "control": false,
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "b",
+      "confidence": 70,
+      "answer": "b, 70, shallow-focus field and individually varied florets read as a real golden-hour photo composed as a commercial still, not a cinematic or rendered frame"
+    },
+    {
+      "juror": "reviewer_580",
+      "family": "GPT",
+      "image": "set-B-12.png",
+      "control": false,
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 74,
+      "answer": "a, 74/100. The golden backlight makes the petals glow from within while leaving the flower’s center in shadow."
+    },
+    {
+      "juror": "reviewer_581",
+      "family": "Gemini",
+      "image": "set-B-12.png",
+      "control": false,
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92 — The visibly faceted, low-polygon leaf edges paired with procedural 3D flower geometry and real-time translucency shaders."
+    },
+    {
+      "juror": "reviewer_582",
+      "family": "Claude",
+      "image": "set-B-12.png",
+      "control": false,
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55 — cinematic widescreen framing with polished CG-like rendering (procedural floret spiral, backlit petal translucency, shallow-focus bokeh) suggests a high-end rendered/film frame rather than a plain stock photo."
+    },
+    {
+      "juror": "reviewer_583",
+      "family": "GLM",
+      "image": "set-B-12.png",
+      "control": false,
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 74,
+      "answer": "a, 74, The carefully backlit petals glow translucently against the dark field, giving the shot a cinematic look."
+    },
+    {
+      "juror": "reviewer_584",
+      "family": "Grok",
+      "image": "set-B-12.png",
+      "control": false,
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "d",
+      "confidence": 86,
+      "answer": "d, 86, the sun sits on the left but the strongest rim light hits the flower from the upper right, and the seed head is concentric rings rather than a real spiral."
+    },
+    {
+      "juror": "reviewer_585",
+      "family": "GPT",
+      "image": "set-B-13.png",
+      "control": false,
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 89,
+      "answer": "e, 89/100. The same sunflower shapes recur across the field with the regularity of instanced 3D models."
+    },
+    {
+      "juror": "reviewer_586",
+      "family": "Gemini",
+      "image": "set-B-13.png",
+      "control": false,
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92 — The repeated low-poly instanced sunflower meshes paired with procedural shader clouds in the sky clearly reflect real-time web 3D rendering."
+    },
+    {
+      "juror": "reviewer_587",
+      "family": "Claude",
+      "image": "set-B-13.png",
+      "control": false,
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 45,
+      "answer": "e — confidence 45 — Clearly CG (identical instanced sunflowers all facing camera despite backlit sun, simple gradient sky, low-detail tiled ground grass): competent but cheap real-time rendering rather than film-grade or photographic."
+    },
+    {
+      "juror": "reviewer_588",
+      "family": "GLM",
+      "image": "set-B-13.png",
+      "control": false,
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88/100. The same sunflower shapes repeat across the field like instanced 3D models."
+    },
+    {
+      "juror": "reviewer_589",
+      "family": "Grok",
+      "image": "set-B-13.png",
+      "control": false,
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 74,
+      "answer": "e, 74, repeated alpha-cut sunflower meshes and a flat unlit ground, with no photographic or cinematic camera"
+    },
+    {
+      "juror": "reviewer_590",
+      "family": "GPT",
+      "image": "set-B-14.png",
+      "control": false,
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 91,
+      "answer": "e, 91, the same sunflower shapes repeat across the field like instanced 3D models."
+    },
+    {
+      "juror": "reviewer_591",
+      "family": "Gemini",
+      "image": "set-B-14.png",
+      "control": false,
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "Answer: (e)\nConfidence: 92\nMost influential factor: Thousands of identical instanced low-poly 3D sunflower meshes with aliased alpha-cutout leaf edges and flat real-time shading."
+    },
+    {
+      "juror": "reviewer_592",
+      "family": "Claude",
+      "image": "set-B-14.png",
+      "control": false,
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 3,
+      "answer": "Answer: (e) real-time web 3D demo. Confidence: 45. Main influence: the sunflowers look like identical copies placed in a grid, and they are lit from the front even though the sun is setting behind them. That points to a CG render with instanced models and artificial lighting, not a photo."
+    },
+    {
+      "juror": "reviewer_593",
+      "family": "GLM",
+      "image": "set-B-14.png",
+      "control": false,
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 87,
+      "answer": "e, 87/100. The same sunflower shapes repeat across the field like instanced 3D models."
+    },
+    {
+      "juror": "reviewer_594",
+      "family": "Grok",
+      "image": "set-B-14.png",
+      "control": false,
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 80,
+      "answer": "e\n80\nUniform sharpness with faceted, repeated sunflower meshes reads as a real-time viewport, not a cinematic camera."
+    },
+    {
+      "juror": "reviewer_595",
+      "family": "GPT",
+      "image": "set-B-15.png",
+      "control": true,
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letter": "a",
+      "confidence": 87,
+      "answer": "a, 87, The ground-level focus isolates the rim-lit soil against a soft, misty dawn horizon, giving the shot a cinematic look."
+    },
+    {
+      "juror": "reviewer_596",
+      "family": "Gemini",
+      "image": "set-B-15.png",
+      "control": true,
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letter": "a",
+      "confidence": 85,
+      "answer": "a, confidence 85. Most influenced by the narrative motion-picture staging: a 16:9 low-angle macro shot focused on two heaved clods of soil in pre-dawn blue-hour light, composed as a temporal anticipation frame before something emerges rather than as a standalone still subject."
+    },
+    {
+      "juror": "reviewer_597",
+      "family": "Claude",
+      "image": "set-B-15.png",
+      "control": true,
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letter": "a",
+      "confidence": 70,
+      "answer": "a, 70, cinematic widescreen (~16:9 letterbox-like) low-angle shallow-depth-of-field shot with filmic blue-hour color grade, like a nature documentary/film frame"
+    },
+    {
+      "juror": "reviewer_598",
+      "family": "GLM",
+      "image": "set-B-15.png",
+      "control": true,
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84/100. The ground-level framing isolates a few sharp soil clods against a misty dawn horizon."
+    },
+    {
+      "juror": "reviewer_599",
+      "family": "Grok",
+      "image": "set-B-15.png",
+      "control": true,
+      "key": "references/v2/keys/open.png",
+      "id": "open",
+      "letter": "a",
+      "confidence": 70,
+      "answer": "a 70 The extreme low-angle, low-key dawn macro that treats soil clods as a monumental landscape, which reads as cinema nature-documentary cinematography rather than stock, catalog, generated art, or a web 3D demo."
+    },
+    {
+      "juror": "reviewer_600",
+      "family": "GPT",
+      "image": "set-B-16.png",
+      "control": true,
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82, The precisely placed sunrise backlight traces the seedling’s fine hairs against the fog."
+    },
+    {
+      "juror": "reviewer_601",
+      "family": "Gemini",
+      "image": "set-B-16.png",
+      "control": true,
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letter": "d",
+      "confidence": 82,
+      "answer": "d\nConfidence: 82\nMost influential factor: The hero seedling's malformed botanical anatomy—specifically its thick, untapered main stem terminating abruptly in a blunt rounded stump near the apex with the top leaf perched directly on it—which reveals AI image generation beneath the superficially cinematic sunrise lighting and film grain."
+    },
+    {
+      "juror": "reviewer_602",
+      "family": "Claude",
+      "image": "set-B-16.png",
+      "control": true,
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letter": "a",
+      "confidence": 65,
+      "answer": "a, 65, Cinematic widescreen framing with a filmic color grade, grain and shallow-depth backlit fog look like a high-end film or nature documentary frame rather than stock or catalog imagery."
+    },
+    {
+      "juror": "reviewer_603",
+      "family": "GLM",
+      "image": "set-B-16.png",
+      "control": true,
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84/100. The dawn backlight tracing the seedling against the mist gives it the look of a cinema nature documentary."
+    },
+    {
+      "juror": "reviewer_604",
+      "family": "Grok",
+      "image": "set-B-16.png",
+      "control": true,
+      "key": "references/v2/keys/frost.png",
+      "id": "frost-sun",
+      "letter": "b",
+      "confidence": 76,
+      "answer": "b 76 The staged hero seedling, golden-hour rim light, and shallow focus read as an inspirational agriculture stock photo, not an observational documentary frame."
+    },
+    {
+      "juror": "reviewer_605",
+      "family": "GPT",
+      "image": "set-B-17.png",
+      "control": true,
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84, The dramatic backlighting picks out individual stem hairs against the dark field, giving the shot a cinematic look."
+    },
+    {
+      "juror": "reviewer_606",
+      "family": "Gemini",
+      "image": "set-B-17.png",
+      "control": true,
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letter": "d",
+      "confidence": 95,
+      "answer": "d\nConfidence: 95\nMost influential factor: Anatomically inconsistent leaf-and-petiole structure on the central plant—including petioles with stray backward-pointing spurs at the leaf base, a disconnected leaf lobe behind the stem, and a curled lower-right leaf whose midrib does not connect to its petiole—characteristic of AI image generation rather than a real photograph or 3D model."
+    },
+    {
+      "juror": "reviewer_607",
+      "family": "Claude",
+      "image": "set-B-17.png",
+      "control": true,
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55, Cinematic widescreen framing with dramatic film-style color grading (teal sky, crepuscular rays, backlit hero plant with shallow depth of field) reads like a high-end nature documentary frame."
+    },
+    {
+      "juror": "reviewer_608",
+      "family": "GLM",
+      "image": "set-B-17.png",
+      "control": true,
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letter": "a",
+      "confidence": 87,
+      "answer": "a, 87/100. The decisive cue was the dramatic backlighting that picks out individual hairs on the stem against the stormy sky."
+    },
+    {
+      "juror": "reviewer_609",
+      "family": "Grok",
+      "image": "set-B-17.png",
+      "control": true,
+      "key": "references/v2/keys/climb.png",
+      "id": "climb",
+      "letter": "b",
+      "confidence": 76,
+      "answer": "b, 76, polished commercial grade and a centered crop-seedling hero shot, not a film, documentary, catalog, or render"
+    },
+    {
+      "juror": "reviewer_610",
+      "family": "GPT",
+      "image": "set-B-18.png",
+      "control": true,
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letter": "a",
+      "confidence": 81,
+      "answer": "a, 81/100. The backlighting catches the rain and the fine hairs on the stem in a single, carefully composed ground-level shot."
+    },
+    {
+      "juror": "reviewer_611",
+      "family": "Gemini",
+      "image": "set-B-18.png",
+      "control": true,
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a\nConfidence: 78\nMost influential factor: The cohesive cinema-grade photography and color grading, combining a moody desaturated storm palette, organic film grain, and a consistent shallow focal plane across the backlit fuzzy stem and puddle crown splash typical of a cinema nature documentary."
+    },
+    {
+      "juror": "reviewer_612",
+      "family": "Claude",
+      "image": "set-B-18.png",
+      "control": true,
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letter": "d",
+      "confidence": 65,
+      "answer": "d, 65, The hyper-polished 'cinematic' look (teal-moody grade, perfectly centered hero seedling, idealized rain splashes, slightly smeared soil and leaf detail) reads as a typical AI text-to-image 'cinematic shot' rather than a real film frame or photo."
+    },
+    {
+      "juror": "reviewer_613",
+      "family": "GLM",
+      "image": "set-B-18.png",
+      "control": true,
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letter": "a",
+      "confidence": 87,
+      "answer": "a, 87/100. The dramatic ground-level backlighting makes the rain and plant read like a cinematic shot."
+    },
+    {
+      "juror": "reviewer_614",
+      "family": "Grok",
+      "image": "set-B-18.png",
+      "control": true,
+      "key": "references/v2/keys/storm.png",
+      "id": "storm",
+      "letter": "b",
+      "confidence": 68,
+      "answer": "b, 68, The lone backlit crop seedling is staged as a storm-resilience symbol, which is a stock-photo formula rather than a film, catalog, or demo frame."
+    },
+    {
+      "juror": "reviewer_615",
+      "family": "GPT",
+      "image": "set-B-19.png",
+      "control": true,
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 89,
+      "answer": "a, 89/100. The dramatic backlighting catches the rain and rims the seedling, giving the shot a cinematic look."
+    },
+    {
+      "juror": "reviewer_616",
+      "family": "Gemini",
+      "image": "set-B-19.png",
+      "control": true,
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 90,
+      "answer": "d\nConfidence: 90\nThe one thing that most influenced my answer: Physically contradictory shutter behavior typical of AI generation, where long motion-blurred rain streaks appear simultaneously with a frozen high-speed puddle crown splash."
+    },
+    {
+      "juror": "reviewer_617",
+      "family": "Claude",
+      "image": "set-B-19.png",
+      "control": true,
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 65,
+      "answer": "d, 65. The overly perfect 'cinematic' look (teal storm grade, hero seedling, staged splash) reads like a typical AI-generated image prompted to look cinematic, with slightly generic, odd leaf and stem structure."
+    },
+    {
+      "juror": "reviewer_618",
+      "family": "GLM",
+      "image": "set-B-19.png",
+      "control": true,
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82/100. The sculpted backlight rim-lighting the seedling and rain looks cinematic."
+    },
+    {
+      "juror": "reviewer_619",
+      "family": "Grok",
+      "image": "set-B-19.png",
+      "control": true,
+      "key": "references/v2/keys/storm-flash.png",
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 78,
+      "answer": "d, 78, contradictory water physics: motion-blurred rain streaks beside a freeze-frame splash, with no drops hitting the leaves"
+    },
+    {
+      "juror": "reviewer_620",
+      "family": "GPT",
+      "image": "set-B-20.png",
+      "control": true,
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76/100. The low-angle backlighting makes the rain around the plant look like a deliberately composed cinematic shot."
+    },
+    {
+      "juror": "reviewer_621",
+      "family": "Gemini",
+      "image": "set-B-20.png",
+      "control": true,
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letter": "d",
+      "confidence": 85,
+      "answer": "d, 85 — The contrived, physically inconsistent combination of dramatic AI lighting and weather tropes in a single frame: collimated sunbeams aimed directly behind a centered, overly symmetrical plant, a high bright sun above an unrelated red sunset patch near the horizon, and uniform sharp rain streaks lacking foreground bokeh blur despite shallow depth of field."
+    },
+    {
+      "juror": "reviewer_622",
+      "family": "Claude",
+      "image": "set-B-20.png",
+      "control": true,
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d, 60 — the over-the-top 'cinematic' look (god rays through storm clouds, rain plus backlit sun, a perfectly symmetric hero seedling) reads like a text-to-image prompt result rather than a real film/documentary frame."
+    },
+    {
+      "juror": "reviewer_623",
+      "family": "GLM",
+      "image": "set-B-20.png",
+      "control": true,
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letter": "a",
+      "confidence": 83,
+      "answer": "a, 83/100. The dramatic backlighting through the rain makes the plant read like the subject of a cinematic shot."
+    },
+    {
+      "juror": "reviewer_624",
+      "family": "Grok",
+      "image": "set-B-20.png",
+      "control": true,
+      "key": "references/v2/keys/break.png",
+      "id": "break",
+      "letter": "b",
+      "confidence": 78,
+      "answer": "b\n78\nCommercial hero framing of one photographed farm seedling against a storm-and-sun sky."
+    },
+    {
+      "juror": "reviewer_625",
+      "family": "GPT",
+      "image": "set-B-21.png",
+      "control": true,
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 81,
+      "answer": "a, 81/100. The warm sunset rim light picks out individual hairs on the stem against an otherwise dark frame."
+    },
+    {
+      "juror": "reviewer_626",
+      "family": "Gemini",
+      "image": "set-B-21.png",
+      "control": true,
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letter": "b",
+      "confidence": 78,
+      "answer": "b, 78 — Authentic DSLR/mirrorless still-photo characteristics in deep twilight—microscopic organic botanical detail, high-ISO sensor noise, RAW capture-sharpening halos along the silhouetted bracts, and a moody teal-and-orange edit on an unlit natural-light silhouette—point to a stock photograph rather than generated art, 3D rendering, or a lit, cinema-graded film frame."
+    },
+    {
+      "juror": "reviewer_627",
+      "family": "Claude",
+      "image": "set-B-21.png",
+      "control": true,
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 50,
+      "answer": "a, 50, 16:9 video-frame aspect with cinematic teal-orange grade and rim-lit stem hairs at dusk, like a nature documentary shot (stock photo is the close alternative)."
+    },
+    {
+      "juror": "reviewer_628",
+      "family": "GLM",
+      "image": "set-B-21.png",
+      "control": true,
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76/100. The sunset rim light picking out individual hairs on the stem made it feel like a cinema nature-documentary frame."
+    },
+    {
+      "juror": "reviewer_629",
+      "family": "Grok",
+      "image": "set-B-21.png",
+      "control": true,
+      "key": "references/v2/keys/late.png",
+      "id": "late-dusk",
+      "letter": "b",
+      "confidence": 73,
+      "answer": "b\n73\nStill-camera sharpness on a single crop plant in a commercial golden-hour composition, with no motion-picture artifacts"
+    },
+    {
+      "juror": "reviewer_630",
+      "family": "GPT",
+      "image": "set-B-22.png",
+      "control": true,
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letter": "a",
+      "confidence": 83,
+      "answer": "a, 83/100. The sunset rim light isolates the two foreground sunflowers against the dark field like a deliberately lit film shot."
+    },
+    {
+      "juror": "reviewer_631",
+      "family": "Gemini",
+      "image": "set-B-22.png",
+      "control": true,
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letter": "d",
+      "confidence": 92,
+      "answer": "d\nConfidence: 92\nMost influential factor: Physically impossible lighting and shadow geometry—despite a single sun sitting flat on the horizon behind the dense sunflower field, an isolated circular pool of steeper-angled light illuminates only the grass around the two foreground plants while the single stem on the right casts duplicate parallel trunk shadows."
+    },
+    {
+      "juror": "reviewer_632",
+      "family": "Claude",
+      "image": "set-B-22.png",
+      "control": true,
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letter": "d",
+      "confidence": 60,
+      "answer": "d, 60 — the sunflower faces are brightly front-lit even though the sun is setting directly behind them (inconsistent lighting typical of AI-generated art), despite the cinematic widescreen grade."
+    },
+    {
+      "juror": "reviewer_633",
+      "family": "GLM",
+      "image": "set-B-22.png",
+      "control": true,
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letter": "a",
+      "confidence": 84,
+      "answer": "a, 84/100. The precise sunset rim lighting isolates the two foreground sunflowers from the dark field like a deliberately composed cinematic shot."
+    },
+    {
+      "juror": "reviewer_634",
+      "family": "Grok",
+      "image": "set-B-22.png",
+      "control": true,
+      "key": "references/v2/keys/last.png",
+      "id": "last",
+      "letter": "b",
+      "confidence": 68,
+      "answer": "(b) 68 — The staged pair of hero sunflowers against a sunset field is a classic stock-photo composition, not a narrative film frame, catalog plate, or real-time render."
+    }
+  ]
+}

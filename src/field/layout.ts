@@ -1,19 +1,18 @@
-import { config, keyTime, segmentStart } from '../config.ts'
+import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
-import { heightAt, setHeadKeep, setLeafHold, setLeafTurn } from '../plant/growth.ts'
+import { barAt, tauAtBar } from '../v2/clock.ts'
+import { gustAt, windWay } from '../v2/wind.ts'
+import { heightAt, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
 export { PLACE }
 
 const SEED = streamSeed('field')
 const RAD = Math.PI / 180
-// The film's own times, read from the config: where the rain, the bloom and the field start, where the film ends, and the dawn's two keys.
-const RAIN_S = segmentStart('rain')
-const BLOOM_S = segmentStart('bloom')
-const FIELD_S = segmentStart('field')
-const FILM_END_S = config.film.durationSeconds
-const SPROUT_KEY_S = keyTime('dawn-sprout')
-const SEEDLING_KEY_S = keyTime('dawn-seedling')
+// The marks of the plant's clock: where the bud stands closed, where the flower is open, where the crane starts and where growth ends.
+const BUD_T = config.growth.bud
+const OPEN_T = config.growth.open
+const END_T = config.growth.seconds
 const from = config.field.companion.fromAzimuthDeg * RAD
 
 // The direction from the plant toward a camera standing at `field.companion.fromAzimuthDeg`, and that camera's right.
@@ -25,8 +24,6 @@ export const right = { x: Math.cos(from), z: -Math.sin(from) }
 export const companionVariant = 77
 // Its leaf spiral is turned by hand so that a large upper leaf reaches in from the left edge to the sun in both bloom frames.
 setLeafTurn(companionVariant, 228.3 * RAD)
-// Its head is kept young, a bud just breaking: the field's last frames have one open face standing clear, the plant's.
-setHeadKeep(companionVariant, 44)
 // Its upper leaves are held by hand for the bloom frames, as a cluster along the left edge: one swung round the stem and turned broadside across the sun
 // on a stalk that rises from the lower left, a small dark one above it, three under it and two in the bottom corner. The one that grew toward the sun
 // is swung out of the frame. They sink through the bloom as the stem carries them up, so that they stay where they are in the frame.
@@ -45,89 +42,196 @@ for (const leaf of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) setLeafHold(companionVari
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// The field never opens in step with the plant. Through the bloom each kind runs on its own clock: a few are seconds ahead of the plant,
-// most are behind it and still buds when it is open. The clocks part slowly before the bloom and meet again before the last frame.
+// Every kind of neighbor runs on the plant's clock, each a little behind it, so no two kinds are at the same stage.
+// While the crop is young every kind is behind the plant, which stands in the open. Each clock only ever runs forward.
 export type Tier = 'near' | 'far' | 'pictures'
-const AHEAD_S: Record<Tier, number[]> = {
+const AHEAD_T: Record<Tier, number[]> = {
   near: [-4.5, -0.6, 0.8, -1.5, -3.5, 0.4, -2.5],
-  far: [-4.5, 1.5, -3, -4],
+  far: [-4.5, 0.3, -3, -4],
   pictures: [-4.6, -2.5, -4.2, -3.5],
 }
-const EARLY_S = 3
+const EARLY_T = 3
 const ramp = (a: number, b: number, t: number): number => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)))
   return x * x * (3 - 2 * x)
 }
-export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_S[tier][index] >= EARLY_S
-// Before the bloom no two kinds are at the same stage: each is its own days behind the plant.
-const BEHIND_S: Record<Tier, number[]> = {
+export const opensEarly = (index: number, tier: Tier): boolean => AHEAD_T[tier][index] >= EARLY_T
+const BEHIND_T: Record<Tier, number[]> = {
   near: [-3.4, -1.5, -4.2, -2.4, -1.0, -3.0, -2.0],
   far: [-2.0, -3.8, -1.2, -3.0],
   pictures: [-3.2, -1.4, -2.4, -4.0],
 }
-// In the rain the rows are seedlings, well behind the plant in the open. Sown thick, they bud before it does: under the moon every kind is a little ahead
-// of the plant, the one that was least behind the most, and carries its bud. By the frost they are in step with it.
-const RAIN_BEHIND_S = 1.1
-export const rainAt = (time: number): number => ramp(SEEDLING_KEY_S, 13.5, time) * (1 - ramp(15, 21, time))
 // The age of the middle of the field, for the height its tops stand at.
-export const fieldAge = (time: number): number => time - (RAIN_BEHIND_S + 1) * rainAt(time)
-export const kindTime = (time: number, index: number, tier: Tier): number =>
-  time + AHEAD_S[tier][index] * ramp(34, 44, time) * (1 - ramp(55, FILM_END_S, time)) + BEHIND_S[tier][index] * ramp(SPROUT_KEY_S, 12, time) * (1 - 0.6 * rainAt(time)) * (1 - ramp(17, 23, time)) - RAIN_BEHIND_S * rainAt(time) + (0.15 + 1.25 * (4.2 + BEHIND_S[tier][index]) / 3.2) * ramp(19, 25, time) * (1 - ramp(28.5, 34, time))
+// As seedlings the rows are close behind the plant; they fall back as it shoots up, and catch up by the bud.
+const youngLag = (time: number): number => ramp(1.5, 9, time) * (0.35 + 0.65 * ramp(12, 20, time)) * (1 - ramp(36, BUD_T + 2.5, time))
+export const fieldAge = (time: number): number => time - 2.4 * youngLag(time)
+// One kind of the near rows is a slow grower: it falls further and further behind and is the last of the field to open.
+const SLOW_KIND = 4
+const SLOW_T = -12.5
+const budTime = (time: number, index: number, tier: Tier): number =>
+  time + BEHIND_T[tier][index] * youngLag(time) + (tier === 'near' && index === SLOW_KIND ? SLOW_T * ramp(30, 57, time) : AHEAD_T[tier][index] * ramp(BUD_T - 3.5, OPEN_T - 1, time))
+
+// The bloom. The plant opens first and the field follows it as a second wave: a few kinds early, most of them together, the last stragglers well after.
+// Each kind has the bar of the film at which its first ray shows and the bar at which it stands open, no two alike.
+// A kind's clock is still a number of the plant's clock alone: the bar is read back from the plant's clock, which rises all the way from the bud to the end.
+export const OPENS: Record<Tier, [number, number][]> = {
+  near: [[60.14, 61.7], [58.88, 60.3], [58.38, 59.83], [59.11, 60.51], [61.19, 62.9], [58.63, 60.07], [59.35, 60.75]],
+  far: [[59.23, 60.63], [58.49, 59.95], [59.0, 60.42], [59.99, 61.54]],
+  pictures: [[59.29, 60.69], [58.74, 60.18], [59.52, 60.88], [59.06, 60.48]],
+}
+// A neighbor's clock where its first ray lifts off the bud, and where its last has opened.
+export const FIRST_RAY_T = 43.6
+export const ALL_OPEN_T = 49.5
+const BAR_STEP = 1 / 64
+let risen: { from: number; taus: Float64Array } | null = null
+function risenTable(): { from: number; taus: Float64Array } {
+  if (risen) return risen
+  const last = barAt(config.film.durationSeconds)
+  let from = Math.floor(last)
+  while (from > 0 && tauAtBar(from) > BUD_T) from--
+  while (tauAtBar(from + BAR_STEP) <= BUD_T) from += BAR_STEP
+  const taus = new Float64Array(Math.ceil((last - from) / BAR_STEP) + 1)
+  for (let i = 0; i < taus.length; i++) taus[i] = Math.max(tauAtBar(Math.min(last, from + i * BAR_STEP)), i > 0 ? taus[i - 1] : BUD_T)
+  risen = { from, taus }
+  return risen
+}
+// The bar of the film at which the plant's clock, past the bud, stands at `time`.
+export function barOfTime(time: number): number {
+  const { from, taus } = risenTable()
+  let lo = 0
+  let hi = taus.length - 1
+  if (time <= taus[0]) return from
+  if (time >= taus[hi]) return from + hi * BAR_STEP
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (taus[mid] <= time) lo = mid
+    else hi = mid
+  }
+  const span = taus[hi] - taus[lo]
+  return from + (lo + (span > 0 ? (time - taus[lo]) / span : 0)) * BAR_STEP
+}
+// The plant's clock at a bar, read off the same table, so that the two are each other's inverse to the last digit.
+function timeOfBar(bar: number): number {
+  const { from, taus } = risenTable()
+  const at = Math.min(taus.length - 1, Math.max(0, (bar - from) / BAR_STEP))
+  const lo = Math.min(taus.length - 2, Math.floor(at))
+  return taus[lo] + (taus[lo + 1] - taus[lo]) * (at - lo)
+}
+const opened: Record<Tier, { bud: number; first: number; open: number }[]> = { near: [], far: [], pictures: [] }
+export const kindTime = (time: number, index: number, tier: Tier): number => {
+  if (time <= BUD_T) return budTime(time, index, tier)
+  const [first, open] = OPENS[tier][index]
+  const own = (opened[tier][index] ??= { bud: budTime(BUD_T, index, tier), first: timeOfBar(first), open: timeOfBar(open) })
+  // Open, it ages as the plant does, and has the plant's own age at the end.
+  if (time >= own.open) return ALL_OPEN_T + ((END_T - ALL_OPEN_T) * (time - own.open)) / (END_T - own.open)
+  const bar = barOfTime(time)
+  if (time >= own.first) {
+    const x = Math.min(1, Math.max(0, (bar - first) / (open - first)))
+    return FIRST_RAY_T + (ALL_OPEN_T - FIRST_RAY_T) * (0.5 * x + 0.5 * x * x * (3 - 2 * x))
+  }
+  // The bud fills out and stands closed until its turn: slowly at first, as the plant's own clock starts again.
+  const from = risenTable().from
+  const x = Math.min(1, Math.max(0, (bar - from) / (first - from)))
+  return own.bud + (FIRST_RAY_T - own.bud) * x * x * (1.5 - 0.5 * x)
+}
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
-const SETTLED_S = keyTime('bloom-opening')
+export const SETTLED_T = 45
 const KNEE = 12
+export const SIZE_KNEE = KNEE
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
-export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_S) / Math.max(heightAt(time), 0.001)))
+// After the bud the lead is given up more slowly than the neighbors still grow, so none of them gets shorter while it goes.
+const SETTLE_SLOW = 0.5
+const SETTLE_FROM_T = BUD_T - 0.4
+export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_T) / Math.max(heightAt(time <= SETTLE_FROM_T ? time : SETTLE_FROM_T + (time - SETTLE_FROM_T) * SETTLE_SLOW), 0.001)))
+// The plant towers over a young field. As seedlings the rows are its size; in the storm they stand at half of it and close into one band,
+// and on the way up to the bud they stay under the lens that rises with the plant. By the bud they have their full size.
+// Each pair is a mark of the plant's clock and the share of its full height the tallest neighbor stands at.
+const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.56], [20, 0.52], [23.1, 0.505], [25.35, 0.462], [29.2, 0.405], [30.03, 0.41], [31.19, 0.5], [32.35, 0.62], [33.5, 0.72], [34.66, 0.76], [38.14, 0.8], [41.6, 0.84], [BUD_T, 1]]
+// While the field is low its plants are nearly of a height: how much of each one's own size shows, as a power of it.
+const EVEN_LOW = 0.12
+const EVEN_FROM_T = 29.2
+export const SHARE_LOW = 0.05
+const EVEN_STORM = 0.07
+const EVEN: [number, number][] = [[9, 1], [12, EVEN_LOW], [20, EVEN_STORM], [23.1, EVEN_STORM], [28.6, EVEN_LOW], [EVEN_FROM_T, EVEN_LOW]]
+// A curve through the marks that never turns back between two of them.
+function curve(marks: [number, number][]): (time: number) => number {
+  const n = marks.length
+  const d = marks.slice(1).map((p, i) => (p[1] - marks[i][1]) / (p[0] - marks[i][0]))
+  const m = marks.map((_, i) => (i === 0 || i === n - 1 ? 0 : d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2))
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) {
+      m[i] = 0
+      m[i + 1] = 0
+      continue
+    }
+    const a = m[i] / d[i]
+    const b = m[i + 1] / d[i]
+    const r = Math.hypot(a, b)
+    if (r > 3) {
+      m[i] = (3 * a * d[i]) / r
+      m[i + 1] = (3 * b * d[i]) / r
+    }
+  }
+  return (time: number): number => {
+    if (time <= marks[0][0]) return marks[0][1]
+    if (time >= marks[n - 1][0]) return marks[n - 1][1]
+    let i = 0
+    while (time > marks[i + 1][0]) i++
+    const h = marks[i + 1][0] - marks[i][0]
+    const t = (time - marks[i][0]) / h
+    const t2 = t * t
+    const t3 = t2 * t
+    return (2 * t3 - 3 * t2 + 1) * marks[i][1] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * marks[i + 1][1] + (t3 - t2) * h * m[i + 1]
+  }
+}
+export const standAt = curve(STAND)
+const evenEarly = curve(EVEN)
+// Past the storm it is tied to how tall the field stands, so a neighbor cannot get shorter while the rest catch up.
+export const evenAt = (time: number): number =>
+  time <= EVEN_FROM_T ? evenEarly(time) : time >= BUD_T ? 1 : EVEN_LOW + (1 - EVEN_LOW) * Math.min(1, Math.max(0, Math.log(standAt(time) / standAt(EVEN_FROM_T)) / Math.log(1 / standAt(EVEN_FROM_T))))
+// The rows nearest the plant are the tallest of the young field: by how much the far ones are shorter.
+export const farShortAt = (time: number): number => 0.05 * ramp(9, 14, time) * (1 - ramp(36, BUD_T, time))
+// What a neighbor's size is multiplied by: `share` is its height as a share of the plant's, `reach` how far from the plant it stands.
+export const standOf = (share: number, reach: number, stand: number, even: number, farShort: number): number =>
+  stand * Math.pow(Math.max(share, SHARE_LOW), even - 1) * (1 - farShort * step(2, 9, reach))
 // Before the bloom the rows are uneven: the plants in poorer ground are well behind, and catch up as the buds fill.
-export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - ramp(35, BLOOM_S, time))
+export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - ramp(35, 40, time))
 export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
 export const sizeAt = (size: number, young: number, ahead: number): number => size * (softMin(young / size, ahead) - softMin(young / size, 1) + 1)
-// At night the rows are low and broad, leaf over leaf; before the frost they shoot up to the plant's height.
-// In the rain the seedlings stand a little short of their age: their tops stay about the height of the lens, so the far land shows over them.
-export const squatAt = (time: number): number => 0.05 + 0.22 * ramp(15, 20.5, time) - 0.27 * ramp(27, 35.5, time) + 0.04 * ramp(RAIN_S, 12.5, time) * (1 - ramp(15, 19, time))
-// In the thick of the rows a young leaf hangs outward from its stalk; by the bloom it is held as the plant holds its own.
-export const hangAt = (time: number): number => 0.5 * ramp(12, 24, time) * (1 - ramp(28, 34, time)) + 0.1 * ramp(RAIN_S, 12.5, time) * (1 - ramp(15, 19, time))
-// In the rain the young rows are broad: each plant spreads its leaves over the open ground before the rows close and the leaves hang.
-export const wideAt = (time: number): number => 0.5 * ramp(RAIN_S, 13, time) * (1 - ramp(16, 24, time))
-// From the field's start the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
-// A neighbor's own turn off the camera's side, its height, the size of its head and how far the head nods.
-export const lateAt = (time: number): number => ramp(FIELD_S, 57, time)
-// In the rain the rows are open and sown thick: the leaves in their gaps are those of seedlings like the rest, and come up as it starts.
-// Under the moon the crop closes over them and they fall behind into its shade.
-export const GAPS_END_S = 27
-export const gapsAt = (time: number): number => ramp(RAIN_S, 11, time) * (1 - ramp(22, GAPS_END_S, time))
-export const gapTone = (id: number): number => 0.15 + 0.5 * hash01(SEED, 99, id)
-// Under the moon the young rows stand lower than the lens, and one in fourteen stands clear of them, as do three of the second and third rows on the moon's side
-// of the plant, set by hand, each a little taller than its row with a large bud. 0 by the rain's key and from 35.5 s.
-export const nightAt = (time: number): number => ramp(17, 23, time) * (1 - ramp(29, 35.5, time))
-export const NIGHT_LOW = 0.02
-const CLEAR = new Set([129, 76, 77])
-export const standsClear = (id: number): boolean => CLEAR.has(id)
-export const clearLow = (id: number): number => -0.1 - 0.08 * hash01(SEED, 97, id)
-export const clearBud = (id: number): number => 1.6 + 0.4 * hash01(SEED, 98, id)
+// The young crop stands a little short of its age, and loses that as it shoots up.
+export const squatAt = (time: number): number => 0.05 * (1 - ramp(27, 35.5, time))
+// In the thick of the rows a young leaf hangs outward from its stalk; by the bud it is held as the plant holds its own.
+export const hangAt = (time: number): number => 0.3 * ramp(14, 24, time) * (1 - ramp(30, 38, time))
+// The seedlings are broad: each spreads its leaves over the open ground before the rows close.
+export const wideAt = (time: number): number => 0.25 * ramp(6, 11, time) * (1 - ramp(16, 24, time))
+// From the crane's start the heads are heavy and every neighbor goes its own way: `late` is how far that has come.
+// A neighbor's own turn, its height, the size of its head and how far the head nods.
+export const lateAt = (time: number): number => ramp(OPEN_T - 3, 57, time)
 // Before the bloom every neighbor is its own: how far it has come, how long its stalk and its leaves are, how its leaves hang, which way it leans. Out by the bloom's start.
-// In the cold the leaves are held out stiff, none hangs far, and the crop has filled out: every leaf reaches a third farther.
+// As the crop fills out the leaves are held out stiff, none hangs far, and every leaf reaches a third farther.
 export const STIFF_LEAF = 0.3
 export const stiffAt = (time: number): number => ramp(28, 34, time)
-export const earlyAt = (time: number): number => 1 - ramp(35.5, BLOOM_S, time)
+export const earlyAt = (time: number): number => 1 - ramp(35.5, 40, time)
 // How far behind a neighbor is shows while the rows are open: by the frost the crop has closed and the laggards have caught up.
 export const behindAt = (time: number): number => 1 - ramp(27, 35.5, time)
 const handSet = new Set<number>()
+// At the low quality the simpler plants thin out with distance: which of them go first, 0 to 1, for good.
+export const thinOrder = (id: number): number => hash01(SEED, 170, id)
 export interface Own { turn: number; tall: number; head: number; nod: number; low: number; young: number; stalk: number; leaf: number; droop: number; bud: number; leanX: number; leanZ: number }
 export function ownOf(id: number): Own {
   // The neighbors set by hand keep their turn and their height: only their heads differ.
-  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id), low: NIGHT_LOW, young: 1, stalk: 0.9 + 0.25 * hash01(SEED, 101, id), leaf: 0.85 + 0.3 * hash01(SEED, 102, id), droop: 0.5 * hash01(SEED, 103, id), bud: 1.1 + 0.4 * hash01(SEED, 108, id), leanX: 0, leanZ: 0 }
+  if (handSet.has(id)) return { turn: 0, tall: 1, head: 0.85 + 0.2 * hash01(SEED, 117, id), nod: 0.15 + 0.5 * hash01(SEED, 87, id), low: 0, young: 1, stalk: 0.9 + 0.25 * hash01(SEED, 101, id), leaf: 0.85 + 0.3 * hash01(SEED, 102, id), droop: 0.5 * hash01(SEED, 103, id), bud: 1.1 + 0.4 * hash01(SEED, 108, id), leanX: 0, leanZ: 0 }
   // One in twelve is far behind, a gap in its row; one in twenty five is bent well over.
   const young = hash01(SEED, 100, id) < 0.085 ? 0.35 + 0.25 * hash01(SEED, 104, id) : 0.84 + 0.26 * hash01(SEED, 104, id)
   const way = hash01(SEED, 105, id) * 2 * Math.PI
   const lean = hash01(SEED, 106, id) < 0.04 ? 0.25 + 0.2 * hash01(SEED, 107, id) : 0.12 * hash01(SEED, 107, id)
   const off = hash01(SEED, 80, id) < 0.4 ? (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.5 + 0.55 * hash01(SEED, 82, id)) : (hash01(SEED, 81, id) < 0.5 ? -1 : 1) * (0.12 + 0.33 * hash01(SEED, 82, id))
-  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: hash01(SEED, 154, id) < 0.3 ? 1.0 + 0.45 * hash01(SEED, 87, id) : 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: hash01(SEED, 94, id) < 0.07 ? -0.08 - 0.2 * hash01(SEED, 95, id) : NIGHT_LOW * 2 * hash01(SEED, 95, id), young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
+  return { turn: off, tall: 0.85 + 0.25 * hash01(SEED, 83, id), head: 0.75 + 0.4 * hash01(SEED, 117, id), nod: hash01(SEED, 154, id) < 0.3 ? 1.0 + 0.45 * hash01(SEED, 87, id) : 0.2 + 0.9 * Math.pow(hash01(SEED, 87, id), 1.2), low: 0, young, stalk: 0.82 + 0.33 * hash01(SEED, 101, id), leaf: 0.75 + 0.5 * hash01(SEED, 102, id), droop: -0.15 + 0.75 * hash01(SEED, 103, id), bud: 1.0 + 0.7 * hash01(SEED, 108, id), leanX: Math.cos(way) * lean, leanZ: Math.sin(way) * lean }
 }
 // Every neighbor wears its leaves its own way round its stem, for good: the same kind is never seen twice from the same side. Those set by hand keep theirs, as do the three that stand clear under the moon.
-export const leafSpin = (id: number): number => (handSet.has(id) || CLEAR.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
+export const leafSpin = (id: number): number => (handSet.has(id) ? 0 : 2 * Math.PI * hash01(SEED, 121, id))
 // Late in the bloom the stalk under a heavy head has gone on growing past its last leaves: each neighbor has its own length of bare neck.
 export const leafShort = (id: number): number => (handSet.has(id) ? 0 : 0.2 * Math.pow(hash01(SEED, 122, id), 1.5))
 // Under a heavy head no stalk stays plumb: from the field's start every neighbor comes to stand off its line its own way, most by 1 to 5 degrees, one in ten by 6 to 9.
@@ -138,54 +242,16 @@ export function lateLean(id: number): { x: number; z: number } {
   const lean = hash01(SEED, 152, id) < 0.1 ? 0.1 + 0.05 * hash01(SEED, 153, id) : 0.02 + 0.07 * hash01(SEED, 153, id)
   return { x: Math.cos(way) * lean, z: Math.sin(way) * lean }
 }
-// In the evening air of the field segment every neighbor leans and comes back on a period of its own, 3.2 to 6.8 s, along a line of its own,
-// by up to 2.3 degrees; its leaves swing round the stem by up to 3.5 degrees and its head by up to 5, each on its own period. Those set by hand stand still.
-export const SWAY_FROM_S = FIELD_S
-export const swayAt = (time: number): number => ramp(SWAY_FROM_S, SWAY_FROM_S + 1.1, time)
-export function swayOf(id: number, time: number): { x: number; z: number; leaves: number; head: number } | null {
-  const on = swayAt(time)
-  if (on === 0 || handSet.has(id)) return null
-  const turn = 2 * Math.PI
-  const beat = (channel: number, low: number, high: number): number => Math.sin(turn * (time / (low + (high - low) * hash01(SEED, channel, id)) + hash01(SEED, channel + 1, id)))
-  const way = turn * hash01(SEED, 130, id)
-  const along = on * (0.022 + 0.018 * hash01(SEED, 131, id)) * beat(132, 3.2, 6.8)
-  const across = on * 0.012 * beat(134, 2.6, 5.2)
-  return { x: Math.cos(way) * along - Math.sin(way) * across, z: Math.sin(way) * along + Math.cos(way) * across, leaves: on * 0.06 * beat(136, 2.4, 5.6), head: on * 0.087 * beat(138, 3.6, 7.4) }
-}
-// One gust crosses the field from the sun's side, left to right in the last frames: its front enters at the far left at about 53.5 s and passes the plant at 56.1 s, uneven along its length.
-// Each neighbor is pushed over as it is struck, shakes while it is held, and springs back on a period and with a damping of its own; its head and its leaves
-// follow, each with its own lag. All is still again by 58.4 s.
-export const GUST = { fromS: 53.4, fromM: -49, speedMS: 18, x: 0.9659, z: 0.2588, stillS: 58.4 }
-const gustHit = (x: number, z: number): number => Math.max(52.1, GUST.fromS + (x * GUST.x + z * GUST.z - GUST.fromM) / GUST.speedMS)
-const blowOf = (tau: number, a: number, b: number, c: number): number => {
-  if (tau <= 0) return 0
-  const held = ramp(0, 0.28, tau) * (1 - ramp(0.7 + 0.3 * a, 1.2 + 0.45 * a, tau)) * (1 + 0.14 * Math.sin(2 * Math.PI * (tau / (0.36 + 0.2 * b) + c)))
-  const free = tau - (0.95 + 0.37 * a)
-  return held - (free > 0 ? (0.2 + 0.25 * b) * ramp(0, 0.2, free) * Math.exp(-free / (0.3 + 0.25 * c)) * Math.sin((2 * Math.PI * free) / (0.8 + 0.7 * a)) : 0)
-}
-export function gustOf(id: number, x: number, z: number, time: number): { x: number; z: number; leaves: number; head: number; nod: number } | null {
-  const end = 1 - ramp(57.5, GUST.stillS, time)
-  if (time <= 52.1 || end === 0) return null
-  const tau = time - gustHit(x, z) - 0.25 * hash01(SEED, 140, id) - 0.35 * noise(32, x * 0.07, z * 0.07)
-  if (tau <= 0) return null
-  const a = hash01(SEED, 141, id)
-  const b = hash01(SEED, 142, id)
-  const c = hash01(SEED, 143, id)
-  const lean = end * (0.07 + 0.035 * hash01(SEED, 144, id)) * (1 - 0.45 * step(12, 45, Math.hypot(x, z))) * blowOf(tau, a, b, c)
-  const way = (hash01(SEED, 145, id) - 0.5) * 0.5
-  const side = (channel: number): number => (hash01(SEED, channel, id) < 0.5 ? -1 : 1)
-  return {
-    x: (Math.cos(way) * GUST.x - Math.sin(way) * GUST.z) * lean,
-    z: (Math.sin(way) * GUST.x + Math.cos(way) * GUST.z) * lean,
-    head: end * 0.22 * side(146) * blowOf(tau - 0.06 - 0.16 * hash01(SEED, 147, id), b, c, a),
-    leaves: end * 0.17 * side(148) * blowOf(tau - 0.04 - 0.2 * hash01(SEED, 149, id), c, a, b),
-    nod: end * 0.14 * blowOf(tau - 0.08 - 0.1 * hash01(SEED, 150, id), a, c, b),
-  }
-}
-// Open and heavy, the heads of a field come to face one way, the lens's side here: from the field's start nine in ten of the middle and far rows come round to it,
-// each to within 20 degrees, lift from their hang and fill out to the size of the larger heads. The near rows keep their own ways.
+// Open and heavy, the heads of a field face the morning for good: east, each a little differently, so a lens that looks into the evening sun sees
+// most of them from the side or from three quarters and some from behind. One in six faces its own way.
+const FACE_EAST = 84 * RAD
+export const faceToward = (id: number): number => (hash01(SEED, 156, id) < 0.16 ? 2 * Math.PI * hash01(SEED, 155, id) : FACE_EAST + 0.5 * bell(id, 157))
+// How far a head has come round to that side, by its own clock: a bud stands as it grew, an open head has settled.
+export const settled = (clock: number, id: number): number => settledBy(clock, settleOf(id))
+export const settleOf = (id: number): number => hash01(SEED, 41, id)
+export const settledBy = (clock: number, own: number): number => ramp(BUD_T - 1.5 + 2 * own, OPEN_T - 1.5 + 2 * own, clock)
+// The middle and far rows lift their heads from their hang and fill out to the size of the larger heads.
 export const faceAt = (id: number, reach: number): number => (hash01(SEED, 156, id) < 0.1 ? 0 : step(9, 17, reach))
-export const faceTurn = (id: number): number => meanTurn + (hash01(SEED, 155, id) - 0.5) * 0.7
 export const shortWay = (turn: number): number => turn - 2 * Math.PI * Math.round(turn / (2 * Math.PI))
 // The two a head's own shape needs, as one number: the nod in 64ths of a radian, whole, and half the size of the head after the point.
 export const ownCode = (own: Own, nod = 0, face = 0): number => Math.max(0, Math.round((own.nod + nod - face * 0.7 * Math.max(own.nod - 0.2, 0)) * 64)) + (own.head + face * 0.6 * (1.15 - own.head)) * 0.5
@@ -202,32 +268,74 @@ float sizeAt(float size, float tone, float ahead) {
 }
 `
 
-// A bud follows the sun through the day and at sunset has its back to the lens. As it opens it comes round to face the morning, and stays.
-const AWAY_SHARE = 0.85
-export const budTurn = (time: number, id: number): number => {
-  if (hash01(SEED, 40, id) >= AWAY_SHARE) return 0
-  const start = 45.2 + 0.9 * hash01(SEED, 41, id)
-  const away = (hash01(SEED, 42, id) < 0.5 ? -1 : 1) * (2.0 + 0.9 * hash01(SEED, 43, id))
-  return away * (1 - ramp(start, start + 3.4, time))
+// How far a stem leans under the wind at full strength, as a slope: a steady lean and the gust on top of it.
+export const LEAN_STEADY = 0.08
+export const LEAN_GUST = 0.56
+export interface Blown { x: number; z: number; head: number; leaves: number; nod: number }
+const blown: Blown = { x: 0, z: 0, head: 0, leaves: 0, nod: 0 }
+// What the wind does to one neighbor: it is pushed over as the front strikes, shakes while it is held, and swings back on a period of its own; its head and its leaves turn with it, each its own way.
+export const blownOf = (id: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown => blownBy(windOf(id, 0), windOf(id, 1), windOf(id, 2), x, z, seconds, wind, leafWind)
+// A neighbor's three numbers for the wind: they never change, so they are worked out once.
+export const windOf = (id: number, which: number): number => hash01(SEED, 141 + which, id)
+export function blownBy(a: number, b: number, c: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown {
+  const g = gustAt(x, z, seconds - 0.25 * a)
+  const turn = 2 * Math.PI
+  const shake = Math.sin(turn * (seconds / (0.9 + 0.8 * b) + c))
+  const quick = Math.sin(turn * (seconds / (0.31 + 0.2 * c) + a))
+  const lean = wind * (0.7 + 0.6 * b) * (LEAN_STEADY + LEAN_GUST * g + 0.045 * shake * (0.35 + g))
+  const way = (c - 0.5) * 0.5 + 0.25 * shake * g
+  const cw = Math.cos(way)
+  const sw = Math.sin(way)
+  const side = a < 0.5 ? -1 : 1
+  blown.x = (cw * windWay.x - sw * windWay.z) * lean
+  blown.z = (sw * windWay.x + cw * windWay.z) * lean
+  blown.head = wind * side * (0.6 * g + 0.12 * shake)
+  blown.leaves = leafWind * (b < 0.5 ? -1 : 1) * (0.75 * g + 0.15 * quick * (0.4 + g))
+  blown.nod = wind * (0.3 * g + 0.06 * shake)
+  return blown
 }
 
 // Full plants to here, simpler ones to the next, pictures of plants to the last row, where the field ends on a straight edge.
 // A carpet closes the tops over the last rows.
 export const fieldNearM = 12
+// The size the tops of the crop stand at: the light and the sky a neighbor keeps are counted down from there.
+export const CANOPY_SIZE = 0.65
 export const fieldFarM = 40
 export const fieldPicturesM = 66
 const NEAR_BAND_M = 4
 const FAR_BAND_M = 12
-export const carpetBandM = 14
+export const carpetBandM = 26
 
 // Two turns of each simpler kind are drawn as pictures.
 export const pictureTurns = 2
 export const pictureCount = farVariants.length * pictureTurns
 
-// The heads face the camera's side of the field, with scatter. The plant's own head faces 27 degrees to the left of it.
+// A neighbor stands turned its own way round its stem. Its head comes round to the east as it opens.
 export const meanTurn = 0.25
 const TURN_SCATTER = 0.8
 const SIDEWAYS = 0.2
+// How tall the neighbors stand at one moment of the plant's clock, and the size of one of them: what its copy of the plant is multiplied by.
+export interface Stature { ahead: number; lag: number; uneven: number; behind: number; stand: number; even: number; farShort: number; plantTall: number; young: boolean }
+export function statureAt(time: number, into: Stature = { ahead: 1, lag: 0, uneven: 0, behind: 0, stand: 1, even: 1, farShort: 0, plantTall: 1, young: false }): Stature {
+  into.ahead = plantAhead(time)
+  into.lag = lagAt(time)
+  // From knee height on no two neighbors stand as tall: the spread of their heights comes in as they grow.
+  into.uneven = Math.max(lateAt(time), ramp(14, 30, time))
+  into.behind = behindAt(time)
+  into.stand = standAt(time)
+  into.even = evenAt(time)
+  into.farShort = farShortAt(time)
+  into.plantTall = Math.max(heightAt(time), 1e-4)
+  into.young = into.stand < 1 || into.even < 1 || into.farShort > 0
+  return into
+}
+// `kindTall` is the height of the neighbor's kind at its own clock, `reach` how far from the plant it stands.
+export function sizeOf(s: Stature, size: number, tone: number, own: Own, kindTall: number, reach: number): number {
+  // A kind on a slower clock keeps its lead by its own height, not the plant's: so its lead never goes faster than it grows.
+  const ahead = Math.max(s.ahead, Math.min(4, heightAt(SETTLED_T) / Math.max(kindTall, 0.001)))
+  const full = sizeAt(size, youngOf(tone, s.lag), ahead) * (1 + s.uneven * (own.tall - 1)) * (1 + s.behind * (own.young - 1))
+  return s.young ? full * standOf((full * kindTall) / s.plantTall, reach, s.stand, s.even, s.farShort) : full
+}
 const BEHIND = 0.22
 const SHORT = 0.1
 const STRAGGLERS = 0.05
@@ -237,11 +345,21 @@ const UNDER_FROM_M = 7
 const UNDER_TO_M = 18
 const UNDER_PER_GAP = 2
 const UNDER_ID = 1000000
-// Each kind of picture is drawn once from the front and once from the side or from behind, no two at the same angle.
-const PICTURE_TURNS = [[-0.1, 1.55], [0.35, 3.0], [0.7, -1.2], [0.15, 2.3]]
-export const pictureTurn = (kind: number, turn: number): number => PICTURE_TURNS[kind][turn]
+// How far along its line a row starts behind the front edge, in plants.
+const ROW_STEP = 1
+// Each kind of picture is drawn twice, no two heads facing the same way: most to the east and its sides, one to the west with its back to the morning.
+const PICTURE_FACES_DEG = [[62, 98], [80, 128], [104, 38], [72, 232]]
+export const pictureFace = (kind: number, turn: number): number => PICTURE_FACES_DEG[kind][turn] * RAD
 
-export const fieldHalfWidth = (depth: number): number => 10 + 0.85 * depth
+// The field is a wedge that opens away from the plant, wider on the west, where the lens of the last shot looks.
+// `depth` is measured from the plant against `toward`, `across` along `right`: east is positive.
+const WEST = { baseM: 13, slope: 1.8 }
+const EAST = { baseM: 10, slope: 1.05 }
+export const fieldWest = (depth: number): number => WEST.baseM + WEST.slope * depth
+export const fieldEast = (depth: number): number => EAST.baseM + EAST.slope * depth
+// Past the last row of plants the tops go on as pictures, ever fewer, and as one carpet that stands whole to where the land takes over and frays only in its last rows.
+export const fieldThinM = 112
+export const fieldEndM: [number, number] = [272, 290]
 
 export function companionPlace(): { x: number; z: number } {
   const c = config.field.companion
@@ -309,19 +427,22 @@ export function fieldPlaces(): FieldPlaces {
   const under: number[] = []
   const { plantSpacingM, rowSpacingM, plantAheadOfRowM } = config.field
   let id = 0
-  for (let k = 0; plantAheadOfRowM + k * rowSpacingM <= fieldPicturesM; k++) {
-    const depth = plantAheadOfRowM + k * rowSpacingM
-    const half = fieldHalfWidth(depth)
-    const phase = hash01(SEED, 1, k)
-    const count = Math.floor(half / plantSpacingM)
-    for (let n = -count; n <= count; n++) {
+  // A row is a line that runs away from the plant. A lane, not a row, lies on the plant's own axis, and no two rows start in step.
+  for (let k = 0; plantAheadOfRowM + k * plantSpacingM <= fieldThinM; k++) {
+    const sown = plantAheadOfRowM + k * plantSpacingM
+    for (let n = Math.ceil(-fieldWest(sown) / rowSpacingM - 0.5); n <= Math.floor(fieldEast(sown) / rowSpacingM - 0.5); n++) {
       id++
-      // Past the near rows the plants stand off their lines, so no row can be followed to the horizon.
-      const out = Math.hypot(depth, n * plantSpacingM)
-      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
-      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.1 + 0.65 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
+      const depth = sown + ROW_STEP * hash01(SEED, 1, n + 100000) * plantSpacingM
+      // How many old rows of depth lie between the front edge and this plant.
+      const k0 = (depth - plantAheadOfRowM) / rowSpacingM
+      // Past the last full row the pictures thin out: most of them at first, one in four at the end.
+      if (depth > fieldPicturesM && hash01(SEED, 6, id) > 0.85 - 0.6 * step(fieldPicturesM, fieldThinM, depth)) continue
+      // A plant stands a hand off its line at most, so a row can be followed to the far end of the field.
+      const out = Math.hypot(depth, (n + 0.5) * rowSpacingM)
+      const across = (n + 0.5) * rowSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.1 + 0.08 * step(8, 40, out))
+      const along = depth + (hash01(SEED, 3, id) - 0.5) * (0.12 + 0.2 * step(fieldFarM + FAR_BAND_M, fieldFarM + 30, out))
       // Before the edge the crop is thin and stays short: a skirt of low plants, far under the plant's head when it opens.
-      const skirt = k < edgeRows(across) - 0.5 && !(k === 0 && frontRow(across))
+      const skirt = k0 < edgeRows(across) - 0.5 && !(k0 < 0.5 && frontRow(across))
       if (skirt && hash01(SEED, 71, id) < SKIRT_GAPS) continue
       const x = -toward.x * along + right.x * across
       const z = -toward.z * along + right.z * across
@@ -330,18 +451,17 @@ export function fieldPlaces(): FieldPlaces {
       for (let u = 0; !skirt && reach < UNDER_TO_M && u < UNDER_PER_GAP; u++) {
         const uid = UNDER_ID + id * UNDER_PER_GAP + u
         if (hash01(SEED, 50, uid) >= 1 - 0.85 * step(UNDER_FROM_M, UNDER_TO_M, reach)) continue
-        const off = across + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
-        if (k < edgeRows(off) - 0.5 && !(k === 0 && frontRow(off))) continue
-        const back = along + (hash01(SEED, 52, uid) - 0.5) * 0.1
+        const off = across + (hash01(SEED, 52, uid) - 0.5) * 0.1
+        const back = along + ((u + 0.5) / UNDER_PER_GAP + (hash01(SEED, 51, uid) - 0.5) * 0.3) * plantSpacingM
         under.push(-toward.x * back + right.x * off, -toward.z * back + right.z * off, meanTurn + bell(uid, 53) * 1.2, 0.5 + 0.4 * hash01(SEED, 56, uid), bell(uid, 57) * 0.09, bell(uid, 60) * 0.09, -0.9 + 0.5 * hash01(SEED, 63, uid), uid)
       }
-      const away = step(20, 60, reach)
+      const away = step(20, 60, Math.min(reach, 60))
       const wide = noise(25, x * 0.035, z * 0.035)
       const thin = 0.05 * step(0.62, 0.8, noise(21, across * 0.5, depth * 0.5)) + 0.3 * away * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))
       if (!skirt && hash01(SEED, 9, id) < 0.03 + thin) continue
       const pick = hash01(SEED, 10, id)
       const patch = noise(22, x * 0.16, z * 0.16)
-      const short = skirt || hash01(SEED, 15, id) < SHORT || (k === 0 && frontRow(across) && hash01(SEED, FRONT_CHANNEL, id) < FRONT_SHORT)
+      const short = skirt || hash01(SEED, 15, id) < SHORT || (k0 < 0.5 && frontRow(across) && hash01(SEED, FRONT_CHANNEL, id) < FRONT_SHORT)
       const size = skirt ? SKIRT_SIZE[0] + (SKIRT_SIZE[1] - SKIRT_SIZE[0]) * hash01(SEED, 72, id) : short ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 * away + (hash01(SEED, 5, id) - 0.5) * 0.8))
       const leanX = Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075))
       const leanZ = Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075))
@@ -354,7 +474,7 @@ export function fieldPlaces(): FieldPlaces {
         const behind = !close && hash01(SEED, 46, id) < BEHIND
         const turn = straggler ? (hash01(SEED, 12, id) - 0.5) * 2 * Math.PI : behind ? Math.PI + bell(id, 36) * 0.6 : meanTurn + side + bell(id, 36) * TURN_SCATTER
         // Near the lens the kinds that open first are the tall ones, so the open heads are few and large.
-        const tall = close && !short && AHEAD_S.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0.5
+        const tall = close && !short && AHEAD_T.near[Math.floor(hash01(SEED, 15, id) * nearVariants.length)] > 0.5
         const list = close ? near : far
         list.push(x, z, turn, tall ? 0.72 + 0.09 * hash01(SEED, 5, id) : close ? size : size - 0.05, leanX, leanZ, tone, id)
         continue
@@ -370,7 +490,7 @@ export function fieldPlaces(): FieldPlaces {
     let at = 0
     for (let i = 0; i < near.length; i += PLACE) if (Math.hypot(near[i] - x, near[i + 1] - z) < Math.hypot(near[at] - x, near[at + 1] - z)) at = i
     do id++
-    while (kindOf(id) !== edge.kind || hash01(SEED, 40, id) < AWAY_SHARE)
+    while (kindOf(id) !== edge.kind)
     near.splice(at, edge.more ? 0 : PLACE, x, z, edge.turn, edge.size, 0, 0, 0.6, id)
     handSet.add(id)
   }
@@ -390,46 +510,6 @@ export function fieldPlaces(): FieldPlaces {
   })
   made = { near: new Float32Array(near), far: new Float32Array(far), pictures: new Float32Array(pictures), under: new Float32Array(under), front: new Float32Array(front) }
   return made
-}
-
-// In the film's last world the land rises past the last rows to the foot of the tree row: a ring of plants, thinner toward an uneven edge short of the bank.
-// It stands whole from the world's first frame to its last.
-export const fieldBeyondM: [number, number] = [65.5, 73.6]
-const LAST_WORLD = config.segments[config.segments.length - 1].world
-const LAST_WORLD_FROM_S = Math.min(...config.segments.filter((s) => s.world === LAST_WORLD).map((s) => s.start))
-export const beyondAt = (time: number): boolean => time > LAST_WORLD_FROM_S - 1e-6
-const BEYOND_ID = 3000000
-let beyond: Float32Array | null = null
-export function beyondPlaces(): Float32Array {
-  if (beyond) return beyond
-  const out: number[] = []
-  const { plantSpacingM, rowSpacingM, plantAheadOfRowM } = config.field
-  let id = BEYOND_ID
-  for (let k = 0; plantAheadOfRowM + k * rowSpacingM <= fieldBeyondM[1]; k++) {
-    const depth = plantAheadOfRowM + k * rowSpacingM
-    const count = Math.floor(fieldBeyondM[1] / plantSpacingM)
-    const phase = hash01(SEED, 1, k) + (depth <= fieldPicturesM ? 0.5 : 0)
-    for (let n = -count; n <= count; n++) {
-      id++
-      if (Math.hypot(depth, n * plantSpacingM) < fieldBeyondM[0] - 1) continue
-      const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * 0.42
-      const along = depth + (hash01(SEED, 3, id) - 0.5) * 0.75
-      const x = -toward.x * along + right.x * across
-      const z = -toward.z * along + right.z * across
-      const reach = Math.hypot(x, z)
-      const edge = fieldBeyondM[1] - 2.4 * noise(29, Math.atan2(across, along) * 14, 0.5) - 1.2 * noise(31, Math.atan2(across, along) * 60, 2.5)
-      if (reach < fieldBeyondM[0] || reach > edge) continue
-      if (hash01(SEED, 9, id) >= 0.95 - 0.2 * step(70, fieldBeyondM[1], reach) - 0.15 * step(0.55, 0.72, noise(27, x * 0.05, z * 0.05))) continue
-      const wide = noise(25, x * 0.035, z * 0.035)
-      const patch = noise(22, x * 0.16, z * 0.16)
-      const size = hash01(SEED, 15, id) < SHORT ? 0.45 + 0.15 * hash01(SEED, 16, id) : 0.6 + 0.2 * Math.min(1, Math.max(0, 0.5 + (patch - 0.5) * 0.9 + (wide - 0.5) * 1.4 + (hash01(SEED, 5, id) - 0.5) * 0.8))
-      const tone = Math.min(1, Math.max(0, 0.35 * hash01(SEED, 8, id) + 0.35 * noise(23, x * 0.09, z * 0.09) + 0.1 * (patch - 0.5) + 0.15 + 0.9 * (noise(26, x * 0.03, z * 0.03) - 0.5)))
-      const kind = 0.45 * hash01(SEED, 14, id) + 0.55 * Math.min(1, Math.max(0, 0.5 + (noise(28, x * 0.06, z * 0.06) - 0.5) * 2.4))
-      out.push(x, z, Math.min(pictureCount - 1, Math.floor(kind * pictureCount)) + 0.98 * Math.min(1, Math.max(0, 0.6 * hash01(SEED, 44, id) + 0.4 * wide + 0.25 * (hash01(SEED, 45, id) - 0.5))), size, Math.max(-0.2, Math.min(0.2, bell(id, 30) * 0.075)), Math.max(-0.2, Math.min(0.2, bell(id, 33) * 0.075)), tone, id)
-    }
-  }
-  beyond = new Float32Array(out)
-  return beyond
 }
 
 // The share of a list that one kind of neighbor draws: every neighbor belongs to one kind for good.

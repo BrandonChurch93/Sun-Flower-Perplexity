@@ -6,10 +6,28 @@
     <meta name="color-scheme" content="dark" />
     <title>Sunflower</title>
     <link rel="icon" href="data:," />
+    <style>
+      html { background: #0d0f0e; }
+      #boot { position: fixed; inset: 0; z-index: 9; background: #0d0f0e; display: grid; place-content: center; gap: 8px; color: #e9e4d6; font: 16px/1.4 system-ui, sans-serif; }
+      #boot p { margin: 0; }
+      #boot p:first-child { font-size: 28px; font-weight: 700; }
+      #boot div { position: relative; width: min(320px, 70vw); height: 2px; overflow: hidden; background: #2b2820; }
+      #boot i { position: absolute; inset: 0; width: 25%; background: #e2b23a; will-change: transform; animation: boot 1.4s linear infinite; }
+      @keyframes boot { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+      @media (prefers-reduced-motion: reduce) { #boot i { animation: none; transform: translateX(150%); } }
+    </style>
   </head>
   <body>
-    <canvas id="film"></canvas>
+    <div id="stage">
+      <canvas id="film"></canvas>
+      <div id="curtain"></div>
+    </div>
     <div id="ui"></div>
+    <div id="boot" role="status">
+      <p>Sunflower</p>
+      <p>Starting the page</p>
+      <div><i></i></div>
+    </div>
     <div id="note" role="status"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

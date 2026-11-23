@@ -1,0 +1,42 @@
+{
+  "critic": "R4",
+  "score": 8,
+  "pass": true,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-D-07.png",
+      "where": "both plants, every leaf, frames 1775-1786",
+      "what": "In the rain the leaves hold exactly the same pose on all 12 frames. Drops fall past them and none land on a leaf, so no leaf dips or springs back. There is no sign of the wind either. The streaks and the puddle ripples move, but the plant looks like a still model set into moving rain.",
+      "fix": "make each leaf dip a little when drops hit it, plus a slow sway from the wind with a different phase and size for each leaf, keeping it small because the plant does not grow here"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-07.png",
+      "where": "rain streaks over the sky and the field",
+      "what": "The rain is sparse, short faint dashes. Only the puddle shows any drops landing. There are no splashes on the soil or the leaves, so the rain reads lighter and has less weight than a storm that breaks at 69.43 s.",
+      "fix": "add more streaks, with longer ones nearer the camera, and small splashes on the soil and leaf tops"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-01.png",
+      "where": "wide frosted view, frames 946-951, and the close views in set-D-02/03/04",
+      "what": "The camera's motion is too small to measure here (under about 1 px per frame at delivery size), and the frosted plant does not move at all. On screen the shot reads as stopped. Only set-D-08 shows a measurable slow drift, about 2-3 px over 12 frames.",
+      "fix": "keep a slow, steady drift with weight through every frost shot so the move never seems to stop, and give the plant a tiny settle or breath"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-05.png",
+      "where": "soil round the base of the stem as the hook lifts, frames 30-41",
+      "what": "The seed, hook and stem rise about 6-8 px per frame at tile size, but the soil where the stem comes out hardly cracks or lifts. Where it emerges, the stem looks like it slides up through a fixed surface.",
+      "fix": "make the soil crack, heave and roll a few crumbs aside where the stem comes out"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-10.png",
+      "where": "sun, sky and far rows, frames 3724-3735",
+      "what": "The light level stays flat to within 0.3 of 255 across the sheet, and the sun and clouds are fixed. This part reads more like real time than time lapse. The far rows keep a little fine change from frame to frame (mean change about 2 of 255) that could read as a faint shimmer at dusk.",
+      "fix": "let the sun sink and the clouds streak a little across the sheet if this part is time lapse, and temporally filter the far rows"
+    }
+  ]
+}

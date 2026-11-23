@@ -1,0 +1,105 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "background field across left and right sides",
+      "what": "the field is a plain blurry green expanse with zero yellow sunflower blooms, whereas -a has dozens of out-of-focus golden sunflowers across the field",
+      "fix": "populate the background field on both left and right with out-of-focus golden-yellow sunflower heads and dark centers matching the density, warm tones, and dark foliage shadows of -a"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-02.png",
+      "where": "region 2 (the disc) and center of head in set-A-01-b.png",
+      "what": "the entire circular disc is exposed and covered in uniform dark-green spherical floret bumps ringed by upright spiky green phyllaries, whereas in -a the head is still unfurling and covered across most of its face by long sweeping yellowish-green inner bracts converging toward a small spiral at upper left",
+      "fix": "close the face of the flower head with long overlapping yellowish-green inner bracts sweeping from right to upper-left so only a small tight spiral of immature buds shows at upper-left"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "ray petals along the left and lower-left side of the head (and set-A-02.png regions 1, 3, and 5)",
+      "what": "yellow ray petals stop abruptly around mid-left (~8:30 position) leaving the entire lower-left quadrant bare, and the remaining petals are fewer, stiffer, and blown-out flat lemon-yellow instead of forming a full sculpted golden-amber arc extending down beneath the head (~7 o'clock)",
+      "fix": "extend overlapping curved golden-amber ray petals all the way down the lower-left and underside of the head, replace the stiff upright olive spear petal at top-right of region 1, and add warm amber shading and dark longitudinal vein creases"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "sun and sky (and set-A-02.png region 6)",
+      "what": "the sun is shifted far to the right and higher as a sharp-edged white circle inside a huge featureless cream glare that erases the cloud bands, and the upper sky lacks the layered clouds and blue sky patches of -a",
+      "fix": "move the sun lower and further left near the left frame edge, soften its disc behind warm horizontal cloud bands, and restore the broken stratocumulus cloud deck and blue sky openings above the flower"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "ray petals around the entire head, especially right and lower-right sides (and set-A-04.png regions 2, 3, and 4)",
+      "what": "all ray petals including those on the away-from-sun right side glow bright saturated yellow-orange with dark reddish-orange bases and wide spiky gaps between petals, whereas in -a the right-side petals fall into deep olive-ochre shadow and the fuller overlapping crown has warm amber raking shadows",
+      "fix": "put the right and lower-right petals into deep muted olive-ochre shadow matching the backlight direction, remove the fiery red-orange inner ring, broaden and overlap the petals to close the wide gaps, and restore raking amber shadows on the lit petals"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "left edge of frame (upper-left sky and lower-left foreground, including set-A-04.png region 5)",
+      "what": "a large blurry green leaf juts into the upper-left sky and an out-of-focus leafy plant fills the lower-left foreground, whereas -a has a completely open sky and distant field along the entire left edge",
+      "fix": "remove the intruding foreground leaves and stalk from the left side of the frame so the horizon, sky, and distant sunflower field run cleanly to the left border"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "sun horizontal placement, sun disc, and sky clouds (and set-A-04.png regions 2 and 5)",
+      "what": "the sun is shifted too far left and rendered as a crisp flat white circle inside a large blown-out cream wash with no warm radial flare streaks, and the detailed sunlit clouds and teal-blue sky patches of -a are replaced by smooth featureless gradients",
+      "fix": "shift the sun rightward closer to the flower horizontally, soften the solar disc with warm atmospheric bloom and subtle radial flare streaks, and restore the broken sunlit cloud deck and teal-blue sky patches"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-02.png",
+      "where": "regions 4 and 5 (outer green bracts on the right and underside of the head)",
+      "what": "the bracts are thinner and lighter olive-green with lifted shadows, pale outlined edges, hard geometric cast shadows, and coarse, overly long thorn-like hairs along the tips instead of deep velvety black-green shadows and short fine fuzz",
+      "fix": "deepen the shadow core on the bracts to near-black velvety green, soften the hard cast-shadow edges underneath, and shorten and densify the edge trichomes into fine delicate rim-lit fuzz"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "far-left edge foreground leaf",
+      "what": "a large dark-green blurry leaf protrudes into the frame below the sun, whereas -a shows only a small, higher, warm-backlit leaf tip at the far-left edge",
+      "fix": "trim back and raise the left-edge leaf tip so only a small warm-olive corner enters near the height of the sun"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "large stem leaf at lower right",
+      "what": "the leaf margins have blotchy yellow-brown discoloration instead of the clean deep-green body and crisp rim-lit edge in -a",
+      "fix": "remove the yellow-brown edge blotches so the leaf is dark green with a narrow warm backlit rim"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-04.png",
+      "where": "region 1 (the disc)",
+      "what": "florets are coarser, rounder dark beads separated by black gaps with bright yellow pollen dots extending around the shaded right rim, missing the tight pale sage-green central spiral rosette and subtle rusty-brown outer texture of -a",
+      "fix": "pack the center into a tight pale sage-green rosette transitioning smoothly into finer dark rusty-brown florets, and confine warm rim highlights on pollen to the sun-facing left side"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "leaves directly behind the lower-left and lower-right petals (and set-A-04.png region 4)",
+      "what": "large bright-green leaves protrude behind the lower-left and middle-right petals, whereas -a has only small pointed bract tips on the right and a low, dark shadowed horizontal leaf with a thin backlit top rim beside the stem",
+      "fix": "remove the large protruding leaves behind the lower-left and right petals, leaving small involucral bract tips on the right and darkening the lower stem leaf into deep shadow with a crisp rim highlight"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-04.png",
+      "where": "region 6 (the field) and background field in set-A-03-b.png",
+      "what": "background sunflowers are larger in scale, overly blurred, and bright lemon-yellow set in vivid green foliage, whereas -a has smaller, slightly more structured golden-amber blooms nestled in dark warm dusk shadows",
+      "fix": "reduce the scale and blur radius of the background blooms slightly, darken the surrounding foliage into deep warm shadows, and shift the field grade from lemon-green toward warm amber-brown"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-02.png",
+      "where": "all native crop tiles in set-A-02.png and set-A-04.png",
+      "what": "surfaces and sky gradients in -b are digitally smooth and noise-free, lacking the fine organic photographic film grain present across -a",
+      "fix": "add fine photographic film grain matching the amplitude and color texture of -a across shadows, midtones, and sky"
+    }
+  ]
+}

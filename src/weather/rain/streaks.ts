@@ -37,7 +37,7 @@ void main() {
   vec2 along = runLength > 1e-7 ? run / runLength : vec2(0.0, -1.0);
   vec2 across = vec2(-along.y, along.x);
   float pixelM = depth * uPixelAngle;
-  float coc = min(uCocScale * abs(1.0 / depth - 1.0 / uFocusM), 2048.0);
+  float coc = cocOf(depth);
   // Out of focus, one lens sample carries its share of the blur circle: the strip is drawn that wide so the samples close into it.
   float halfPx = max(max(r / pixelM, uLeast), 1.2 * coc / sqrt(uSamples));
   float halfM = halfPx * pixelM;
@@ -105,7 +105,7 @@ void main() {
   float u = min(1.0, vAcross * vAcross + cap * cap);
   // A drop is a small lens: it gathers the bright horizon into a line down its middle and shows the dark land and cloud toward its edges. It also swings as it falls, so the line swells and thins.
   float swing = 0.75 + 0.25 * sin(vAlong * (0.22 + 0.2 * vSeed) + 40.0 * vSeed);
-  float core = exp(-u / vSeen) * swing;
+  float core = exp(-u / max(vSeen, 1e-3)) * swing;
   float seen = 1.0 - vSeen;
   // Where the drop is wider than a pixel and the blur, only that line and a faint body show, the line never finer than the blur so the lens samples close; where it is not, the strip is the blur itself and holds the line's light evenly.
   vec3 color = mix(uShade, uLight, mix(0.85, 0.3 + 0.7 * core, seen));
@@ -161,6 +161,8 @@ export function makeStreaks(light: [number, number, number], shade: [number, num
   const geometry = new THREE.InstancedBufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
   geometry.setIndex([0, 1, 2, 2, 1, 3])
+  // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
   const openAttr = new THREE.InstancedBufferAttribute(opens, 4)
   const closeAttr = new THREE.InstancedBufferAttribute(closes, 4)
   openAttr.setUsage(THREE.DynamicDrawUsage)

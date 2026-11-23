@@ -5,6 +5,8 @@ import type { Caster } from '../core/shadow.ts'
 import type { PlantInputs } from './growth.ts'
 import type { Pose } from './skeleton.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from './wind.ts'
+import { wetUniforms } from './surface/wet/film.ts'
+import { GUST_LEAN, RAIN_WEIGHT } from './growth.ts'
 import { config } from '../config.ts'
 
 const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
@@ -18,6 +20,16 @@ export interface PartOptions {
   variant: number
   // The places of the neighbors when the part is drawn once per neighbor. Null for the plant and the companion.
   places: THREE.InstancedInterleavedBuffer | null
+  // The uniforms that are the plant's own and not the field's: what the air does to it while its clock stands.
+  own?: Record<string, THREE.IUniform>
+  // How far the plant's clock stands, 0 to 1: the plant sets it on every frame.
+  stands?: { held: number }
+  // The field's own way to say where each neighbor stands, in place of the list: GLSL that defines Place fieldPlace(), and its uniforms.
+  place?: { glsl: string; uniforms: Record<string, { value: unknown }> }
+  // The head: the air carries it whole on the stem's tip, where a leaf also flutters by itself.
+  rigid?: boolean
+  // The part is drawn from keys while it grows, so it may keep a spare shape to lay the next key in, a share a frame.
+  ahead?: boolean
 }
 
 // One organ of the plant at its real quality. It owns its meshes and fills them for the two ends of the shutter.
@@ -31,6 +43,16 @@ export interface PlantPart {
   fill(slot: 0 | 1, pose: Pose): void
   // Called once a frame after both fills.
   finish(time: number, inputs: PlantInputs): void
+  // True when nothing of the part exists at that time: it is then neither filled nor drawn.
+  absent?(time: number): boolean
+  // Sets what the part keeps once for a moment and not for each vertex, as the mix of what its two slots were filled with: the share is the second slot's.
+  settle?(share: number): void
+  // True for a part that keeps a spare shape and can lay it a share at a time, before the frame that needs it.
+  readonly spare?: boolean
+  // Lays the shape at `pose` into the spare shape from the share `from` of the work up to the share `to`, 0 to 1. The shares of one shape are laid in order, under what the shape's own moment sets.
+  ahead?(pose: Pose, from: number, to: number): void
+  // Moves the spare shape into a slot, as fill would have laid it there.
+  take?(slot: 0 | 1): void
 }
 
 export type PartMaker = (options: PartOptions) => PlantPart | null
@@ -44,6 +66,21 @@ export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDe
 
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
+// How far the plant being filled stands in a hold, 0 to 1.
+// 'lead' is true while the shape being filled also takes its own normals, skin and numbers: the first slot always does, the second when both slots are keys.
+export const filling = { held: 0, lead: true }
+const WET_STEPS = 16
+// How wet the beads are laid: while the plant's clock stands, in steps, so the shape is not laid again on every frame of the rain.
+export function wetFelt(): number {
+  const wet = stateUniforms.uPlantWet.value
+  return filling.held >= 1 ? Math.round(wet * WET_STEPS) / WET_STEPS : wet
+}
+
+const FIELD_PLACE = '/*fieldPlace*/'
+const FIELD_SHAPE = 'vec3 fieldShape(vec3 local) { return local; }'
+const PLACE_FROM_LIST = `Place fieldPlace() { return Place(aPlace, aVary); }\n${FIELD_SHAPE}`
+// The field may also give its own fieldShape, which every vertex of a neighbor goes through first: where it gives none, the shape stands as laid.
+const placeGlsl = (glsl: string | undefined): string => (glsl === undefined ? PLACE_FROM_LIST : glsl.includes('fieldShape') ? glsl : `${glsl}\n${FIELD_SHAPE}`)
 
 // Every vertex of a part goes through plantWorld, so that the same part stands as the plant, as the companion and as each neighbor.
 export const plantVertexGlsl = /* glsl */ `
@@ -60,13 +97,98 @@ uniform float uWide;
 uniform float uLate;
 uniform float uEarly;
 uniform vec3 uHeadAxis;
+// Where a neighbor stands and how it differs. The field may give its own fieldPlace: it is asked once a vertex.
+struct Place {
+  vec4 place;
+  vec4 vary;
+};
+/*fieldPlace*/
+Place plantPlaceKept;
+bool plantPlaceKnown = false;
+Place plantPlace() {
+  if (!plantPlaceKnown) {
+    plantPlaceKept = fieldPlace();
+    plantPlaceKnown = true;
+  }
+  return plantPlaceKept;
+}
+#else
+// x the steady wind on the stem, y the wind on the leaves, z the storm's gusts, w the rain beating on the leaves: all 0 unless the plant's clock stands.
+uniform vec4 uOwnAir;
+// The end of the stem at rest, in the plant's own frame.
+uniform vec3 uOwnTip;
+// How much of the second slot of the shape is drawn when the shutter opens, and how much more when it closes.
+uniform vec2 uOwnMix;
+// 1 when both slots carry their own normals and skin numbers, 0 when only the first does.
+uniform float uOwnKeys;
+// What a time lapse does to it: x how fast the days run, y how far this frame catches the stem off its lean, as a share of its swing, z how far a leaf twitches in radians, w where this frame catches the leaves.
+uniform vec4 uOwnLapse;
+#endif
+// The two slots of a part hold the plant at two moments: this is the share of the second one at this sample of the shutter.
+float plantBlend() {
+#ifdef PLANT_FIELD
+  return 0.0;
+#else
+  return uOwnMix.x + uOwnMix.y * uShutter;
+#endif
+}
+// The share of the second slot in what a slot carries beside the shape: its normals and skin numbers.
+float plantLead() {
+#ifdef PLANT_FIELD
+  return 0.0;
+#else
+  return uOwnKeys * plantBlend();
+#endif
+}
 ${swayGlsl}
+#ifndef PLANT_FIELD
+// While the plant's clock stands its shape is not filled again: the air moves it here, on the film second. The stem bends from its foot, and what stands off it rides, flutters, is thrown by the gusts and nods under the drops.
+vec3 plantHeld(vec3 w) {
+  if (uOwnAir.x + uOwnAir.y + uOwnAir.z + uOwnAir.w + uOwnLapse.z <= 0.0) return w;
+  vec3 foot = modelMatrix[3].xyz;
+  vec3 tip = (modelMatrix * vec4(uOwnTip, 1.0)).xyz;
+  float size = length(modelMatrix[0].xyz);
+  float tall = max(tip.y - foot.y, 0.001);
+  float time = uReal + uShutter * ${SHUTTER_SECONDS.toFixed(6)};
+#ifdef PLANT_RIGID
+  float h = 1.0;
+#else
+  float h = clamp((w.y - foot.y) / tall, 0.0, 1.3);
+#endif
+  vec2 way = vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)});
+  float push = 0.2 + 0.8 * plantGust(foot.xz, time - 0.1);
+  float lean = uOwnAir.x * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * (1.0 - uOwnLapse.x) * plantSway(time, foot.xz)) + ${STEM_SWING.toFixed(4)} * uOwnLapse.y + uOwnAir.z * ${GUST_LEAN.toFixed(4)} * push;
+  float k = clamp((h - 0.15) / 0.85, 0.0, 1.3);
+  vec2 off = w.xz - foot.xz - (tip.xz - foot.xz) * h * h;
+  float r = length(off);
+  vec2 o = off / max(r, 1e-4);
+#ifdef PLANT_RIGID
+  float reach = 0.0;
+#else
+  float reach = r * smoothstep(0.03, 0.09, r / size);
+#endif
+  float ph = 0.8 * o.x - 0.6 * o.y + 2.0 * h;
+  float flutter = 0.6 * sin(time * 5.9 + 3.1 * ph) + 0.4 * sin(time * 10.3 + 7.3 * ph);
+  float into = -dot(o, way);
+  float beat = 0.6 * o.x + 0.9 * o.y + 1.3 * h;
+  float a1 = fract(time / 0.83 + beat);
+  float a2 = fract(time / 1.31 + 1.7 * beat + 0.4);
+  float nod = exp(-4.2 * a1) * sin(20.0 * a1) + 0.7 * exp(-6.5 * a2) * sin(31.0 * a2);
+  float live = 1.0 - uOwnLapse.x;
+  float twitch = uOwnLapse.z * (0.65 * sin(3.1 * ph + 1.9 * time) + 0.55 * sin(7.3 * ph + uOwnLapse.w));
+  float up = live * uOwnAir.y * (0.045 * flutter + 0.03 * (2.0 * plantGust(w.xz, time) - 1.0)) + twitch + uOwnAir.z * push * 0.4 * (into > 0.0 ? into : 0.6 * into) - uOwnAir.w * (0.07 * nod + ${RAIN_WEIGHT.toFixed(4)});
+  vec2 across = vec2(-o.y, o.x);
+  vec2 side = way * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k) + reach * (0.03 * live * uOwnAir.y * flutter + 0.12 * uOwnAir.z * push)) + across * (reach * 0.3 * uOwnAir.z * push * dot(way, across));
+  return vec3(w.x + side.x, w.y + reach * up, w.z + side.y);
+}
+#endif
+#ifdef PLANT_FIELD
 // How far the wind carries a point of a neighbor sideways, in meters: the same bend the plant's own stem takes, from 0.3 of its height up.
 vec2 plantBlow(vec2 at, float y, float size) {
   if (uPlantWind <= 0.0) return vec2(0.0);
   float tall = max(uPlantHeight * size, 0.001);
   float k = clamp((y / tall - 0.3) / 0.7, 0.0, 1.0);
-  float lean = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, at));
+  float lean = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uReal + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, at));
   return vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
 }
 #endif
@@ -74,51 +196,54 @@ out float vPlantTone;
 
 vec3 plantWorld(vec3 local) {
 #ifdef PLANT_FIELD
-  float c = cos(aPlace.z);
-  float s = sin(aPlace.z);
+  local = fieldShape(local);
+  Place pl = plantPlace();
+  float c = cos(pl.place.z);
+  float s = sin(pl.place.z);
   // A short neighbor's head is nearly as large as the plant's own: the head and what touches it are drawn larger about the head's middle.
   vec3 q = local - uHeadAt.xyz;
-  local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / aPlace.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
-  // Late in the bloom every head has its own weight: it nods by its own angle and is its own size. The whole of aVary.w is the nod, the rest the size.
+  local = uHeadAt.xyz + q * mix(1.0, clamp(0.95 / pl.place.w, 1.0, 1.5), uHeadGrow * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
+  // Late in the bloom every head has its own weight: it nods by its own angle and is its own size. The whole of pl.vary.w is the nod, the rest the size.
   if (uLate > 0.0 && uHeadAt.w > 0.0) {
     float atHead = uLate * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q)));
-    float nod = atHead * floor(aVary.w) * ${(1 / 64).toFixed(6)};
+    float nod = atHead * floor(pl.vary.w) * ${(1 / 64).toFixed(6)};
     vec3 k = normalize(cross(vec3(0.0, 1.0, 0.0), uHeadAxis) + vec3(1e-5, 0.0, 0.0));
     q = local - uHeadAt.xyz;
     q = q * cos(nod) + cross(k, q) * sin(nod) + k * (dot(k, q) * (1.0 - cos(nod)));
-    local = uHeadAt.xyz + q * mix(1.0, 2.0 * fract(aVary.w), atHead);
+    local = uHeadAt.xyz + q * mix(1.0, 2.0 * fract(pl.vary.w), atHead);
   }
-  // Before the bloom every bud is its own size: 32 steps above the other three in aVary.w.
+  // Before the bloom every bud is its own size: 32 steps above the other three in pl.vary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
     q = local - uHeadAt.xyz;
-    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 2.6, floor(aVary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
+    local = uHeadAt.xyz + q * mix(1.0, mix(0.8, 2.6, floor(pl.vary.w / 32768.0) / 31.0), uEarly * (1.0 - smoothstep(uHeadAt.w, 1.9 * uHeadAt.w, length(q))));
   }
-  vec3 p = local * aPlace.w;
+  vec3 p = local * pl.place.w;
   p.y = p.y * (1.0 - uSquat) - uHang * max(length(p.xz) - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
   p.xz *= 1.0 + uWide * smoothstep(0.02, 0.06, length(p.xz));
-  // Before the bloom every neighbor has its own stalk, its own leaves and their own droop: 32 steps of each in aVary.w.
+  // Before the bloom every neighbor has its own stalk, its own leaves and their own droop: 32 steps of each in pl.vary.w.
   if (uEarly > 0.0 && uHeadAt.w > 0.0) {
-    float stalk = mix(0.75, 1.3, mod(aVary.w, 32.0) / 31.0);
-    float leaf = mix(0.75, 1.6, mod(floor(aVary.w / 32.0), 32.0) / 31.0);
-    float droop = mix(-0.15, 0.6, mod(floor(aVary.w / 1024.0), 32.0) / 31.0);
+    float stalk = mix(0.75, 1.3, mod(pl.vary.w, 32.0) / 31.0);
+    float leaf = mix(0.75, 1.6, mod(floor(pl.vary.w / 32.0), 32.0) / 31.0);
+    float droop = mix(-0.15, 0.6, mod(floor(pl.vary.w / 1024.0), 32.0) / 31.0);
     float reach = length(p.xz);
     p.y = p.y * mix(1.0, stalk, uEarly) - uEarly * droop * max(reach - 0.03, 0.0) * (1.0 - 0.85 * smoothstep(0.6, 0.9, local.y / max(uHeadAt.y, 0.01)));
     p.xz *= mix(1.0, leaf, uEarly * smoothstep(0.02, 0.06, reach));
   }
-  p.xz += aVary.xy * p.y;
-  vPlantTone = aVary.z;
-  vec2 blow = plantBlow(aPlace.xy, p.y, aPlace.w);
-  return vec3(c * p.x + s * p.z + aPlace.x + blow.x, p.y, c * p.z - s * p.x + aPlace.y + blow.y);
+  p.xz += pl.vary.xy * p.y;
+  vPlantTone = pl.vary.z;
+  vec2 blow = plantBlow(pl.place.xy, p.y, pl.place.w);
+  return vec3(c * p.x + s * p.z + pl.place.x + blow.x, p.y, c * p.z - s * p.x + pl.place.y + blow.y);
 #else
   vPlantTone = 0.5;
-  return (modelMatrix * vec4(local, 1.0)).xyz;
+  return plantHeld((modelMatrix * vec4(local, 1.0)).xyz);
 #endif
 }
 
 vec3 plantDirection(vec3 d) {
 #ifdef PLANT_FIELD
-  float c = cos(aPlace.z);
-  float s = sin(aPlace.z);
+  Place pl = plantPlace();
+  float c = cos(pl.place.z);
+  float s = sin(pl.place.z);
   return vec3(c * d.x + s * d.z, d.y, c * d.z - s * d.x);
 #else
   return normalize(mat3(modelMatrix) * d);
@@ -127,7 +252,7 @@ vec3 plantDirection(vec3 d) {
 
 float plantSize() {
 #ifdef PLANT_FIELD
-  return aPlace.w;
+  return plantPlace().place.w;
 #else
   return length(modelMatrix[0].xyz);
 #endif
@@ -181,6 +306,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   if (uMoon > 0.0) lit = mix(lit, exp(-2.5 * under), uMoon);
   // In the night's own frames the moon is too weak to show a leaf lit: a third of it is left.
   if (uDark > 0.0) lit *= 0.33;
+  // Late in the bloom the tops of the crop stand in the whole of the low sun.
+  lit = max(lit, smoothstep(0.6, 0.95, uLate) * (1.0 - uMoon) * (1.0 - smoothstep(0.12, 0.4, under)));
   return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
@@ -226,13 +353,13 @@ float plantTone() {
 
 // A surface for a part. The vertex shader gets plantWorld, plantDirection and plantSize. The fragment shader gets plantSun, plantSky, plantTone and the three skin states.
 export function makePartSurface(options: PartOptions, o: SurfaceOptions): Surface {
-  const define = options.places ? '#define PLANT_FIELD 1\n' : ''
+  const define = options.places ? '#define PLANT_FIELD 1\n' : options.rigid ? '#define PLANT_RIGID 1\n' : ''
   return makeSurface({
     ...o,
-    vertex: `${define}${plantVertexGlsl}\n${o.vertex}`,
+    vertex: `${define}${plantVertexGlsl.replace(FIELD_PLACE, placeGlsl(options.place?.glsl))}\n${o.vertex}`,
     fragment: `${define}${plantFragmentGlsl}\n${o.fragment}`,
     castShadow: options.places ? false : o.castShadow,
-    uniforms: { ...stateUniforms, ...(options.places ? fieldUniforms : {}), ...(o.uniforms ?? {}) },
+    uniforms: { ...stateUniforms, ...wetUniforms, ...(options.places ? { ...fieldUniforms, ...(options.place?.uniforms ?? {}) } : (options.own ?? {})), ...(o.uniforms ?? {}) },
   })
 }
 

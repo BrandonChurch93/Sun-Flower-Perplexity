@@ -1,0 +1,1806 @@
+{
+  "round": 27,
+  "film": "out/work/film-16x9-draft.mp4",
+  "critics": {
+    "R6": {
+      "set-F-01.png": {
+        "what": "frame at phone size",
+        "frame": 0
+      },
+      "set-F-02.png": {
+        "what": "frame at phone size",
+        "frame": 8
+      },
+      "set-F-03.png": {
+        "what": "frame at phone size",
+        "frame": 15
+      },
+      "set-F-04.png": {
+        "what": "frame at phone size",
+        "frame": 23
+      },
+      "set-F-05.png": {
+        "what": "frame at phone size",
+        "frame": 30
+      },
+      "set-F-06.png": {
+        "what": "frame at phone size",
+        "frame": 38
+      },
+      "set-F-07.png": {
+        "what": "frame at phone size",
+        "frame": 45
+      },
+      "set-F-08.png": {
+        "what": "frame at phone size",
+        "frame": 53
+      },
+      "set-F-09.png": {
+        "what": "frame at phone size",
+        "frame": 60
+      }
+    },
+    "R1-1": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/open.png",
+        "id": "open"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 0,
+        "id": "open"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 0,
+        "id": "open"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/approved/dawn-sprout.png",
+        "id": "sprout"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 60,
+        "id": "sprout"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 60,
+        "id": "sprout"
+      },
+      "set-A-05-a.png": {
+        "what": "target",
+        "key": "references/approved/dawn-seedling.png",
+        "id": "seedling"
+      },
+      "set-A-05-b.png": {
+        "what": "frame",
+        "frame": 236,
+        "id": "seedling"
+      },
+      "set-A-06.png": {
+        "what": "crops of the pair",
+        "frame": 236,
+        "id": "seedling"
+      }
+    },
+    "R1-2": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/frost.png",
+        "id": "frost-wide"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 940,
+        "id": "frost-wide"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 940,
+        "id": "frost-wide"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/frost-margin.png",
+        "id": "frost-margin"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 1003,
+        "id": "frost-margin"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 1003,
+        "id": "frost-margin"
+      },
+      "set-A-05-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/frost-sun.png",
+        "id": "frost-sun"
+      },
+      "set-A-05-b.png": {
+        "what": "frame",
+        "frame": 1055,
+        "id": "frost-sun"
+      },
+      "set-A-06.png": {
+        "what": "crops of the pair",
+        "frame": 1055,
+        "id": "frost-sun"
+      }
+    },
+    "R1-3": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/frost-thaw.png",
+        "id": "frost-thaw"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 1234,
+        "id": "frost-thaw"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 1234,
+        "id": "frost-thaw"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/climb.png",
+        "id": "climb"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 1479,
+        "id": "climb"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 1479,
+        "id": "climb"
+      },
+      "set-A-05-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/storm.png",
+        "id": "storm"
+      },
+      "set-A-05-b.png": {
+        "what": "frame",
+        "frame": 1775,
+        "id": "storm"
+      },
+      "set-A-06.png": {
+        "what": "crops of the pair",
+        "frame": 1775,
+        "id": "storm"
+      }
+    },
+    "R1-4": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/storm-flash.png",
+        "id": "storm-flash"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 1877,
+        "id": "storm-flash"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 1877,
+        "id": "storm-flash"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/break.png",
+        "id": "break"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 2096,
+        "id": "break"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 2096,
+        "id": "break"
+      },
+      "set-A-05-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/late.png",
+        "id": "late-dusk"
+      },
+      "set-A-05-b.png": {
+        "what": "frame",
+        "frame": 2780,
+        "id": "late-dusk"
+      },
+      "set-A-06.png": {
+        "what": "crops of the pair",
+        "frame": 2780,
+        "id": "late-dusk"
+      }
+    },
+    "R1-5": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/bloom-close-opening.png",
+        "id": "bloom-opening"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 2957,
+        "id": "bloom-opening"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 2957,
+        "id": "bloom-opening"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/bloom-close.png",
+        "id": "bloom-hero"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 3112,
+        "id": "bloom-hero"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 3112,
+        "id": "bloom-hero"
+      }
+    },
+    "R1-6": {
+      "set-A-01-a.png": {
+        "what": "target",
+        "key": "references/approved/field.png",
+        "id": "field"
+      },
+      "set-A-01-b.png": {
+        "what": "frame",
+        "frame": 3523,
+        "id": "field"
+      },
+      "set-A-02.png": {
+        "what": "crops of the pair",
+        "frame": 3523,
+        "id": "field"
+      },
+      "set-A-03-a.png": {
+        "what": "target",
+        "key": "references/v2/keys/last.png",
+        "id": "last"
+      },
+      "set-A-03-b.png": {
+        "what": "frame",
+        "frame": 3755,
+        "id": "last"
+      },
+      "set-A-04.png": {
+        "what": "crops of the pair",
+        "frame": 3755,
+        "id": "last"
+      }
+    },
+    "R3-1": {
+      "set-C-01.png": {
+        "what": "frame",
+        "frame": 0,
+        "id": "open"
+      },
+      "set-C-02.png": {
+        "what": "crops",
+        "frame": 0,
+        "id": "open"
+      },
+      "set-C-03.png": {
+        "what": "frame",
+        "frame": 60,
+        "id": "sprout"
+      },
+      "set-C-04.png": {
+        "what": "crops",
+        "frame": 60,
+        "id": "sprout"
+      },
+      "set-C-05.png": {
+        "what": "frame",
+        "frame": 236,
+        "id": "seedling"
+      },
+      "set-C-06.png": {
+        "what": "crops",
+        "frame": 236,
+        "id": "seedling"
+      },
+      "set-C-07.png": {
+        "what": "frame",
+        "frame": 940,
+        "id": "frost-wide"
+      },
+      "set-C-08.png": {
+        "what": "crops",
+        "frame": 940,
+        "id": "frost-wide"
+      }
+    },
+    "R3-2": {
+      "set-C-01.png": {
+        "what": "frame",
+        "frame": 1003,
+        "id": "frost-margin"
+      },
+      "set-C-02.png": {
+        "what": "crops",
+        "frame": 1003,
+        "id": "frost-margin"
+      },
+      "set-C-03.png": {
+        "what": "frame",
+        "frame": 1055,
+        "id": "frost-sun"
+      },
+      "set-C-04.png": {
+        "what": "crops",
+        "frame": 1055,
+        "id": "frost-sun"
+      },
+      "set-C-05.png": {
+        "what": "frame",
+        "frame": 1234,
+        "id": "frost-thaw"
+      },
+      "set-C-06.png": {
+        "what": "crops",
+        "frame": 1234,
+        "id": "frost-thaw"
+      },
+      "set-C-07.png": {
+        "what": "frame",
+        "frame": 1479,
+        "id": "climb"
+      },
+      "set-C-08.png": {
+        "what": "crops",
+        "frame": 1479,
+        "id": "climb"
+      }
+    },
+    "R3-3": {
+      "set-C-01.png": {
+        "what": "frame",
+        "frame": 1775,
+        "id": "storm"
+      },
+      "set-C-02.png": {
+        "what": "crops",
+        "frame": 1775,
+        "id": "storm"
+      },
+      "set-C-03.png": {
+        "what": "frame",
+        "frame": 1877,
+        "id": "storm-flash"
+      },
+      "set-C-04.png": {
+        "what": "crops",
+        "frame": 1877,
+        "id": "storm-flash"
+      },
+      "set-C-05.png": {
+        "what": "frame",
+        "frame": 2096,
+        "id": "break"
+      },
+      "set-C-06.png": {
+        "what": "crops",
+        "frame": 2096,
+        "id": "break"
+      }
+    },
+    "R3-4": {
+      "set-C-01.png": {
+        "what": "frame",
+        "frame": 2780,
+        "id": "late-dusk"
+      },
+      "set-C-02.png": {
+        "what": "crops",
+        "frame": 2780,
+        "id": "late-dusk"
+      },
+      "set-C-03.png": {
+        "what": "frame",
+        "frame": 2880,
+        "id": "late"
+      },
+      "set-C-04.png": {
+        "what": "crops",
+        "frame": 2880,
+        "id": "late"
+      },
+      "set-C-05.png": {
+        "what": "frame",
+        "frame": 2957,
+        "id": "bloom-opening"
+      },
+      "set-C-06.png": {
+        "what": "crops",
+        "frame": 2957,
+        "id": "bloom-opening"
+      }
+    },
+    "R3-5": {
+      "set-C-01.png": {
+        "what": "frame",
+        "frame": 3112,
+        "id": "bloom-hero"
+      },
+      "set-C-02.png": {
+        "what": "crops",
+        "frame": 3112,
+        "id": "bloom-hero"
+      },
+      "set-C-03.png": {
+        "what": "frame",
+        "frame": 3523,
+        "id": "field"
+      },
+      "set-C-04.png": {
+        "what": "crops",
+        "frame": 3523,
+        "id": "field"
+      },
+      "set-C-05.png": {
+        "what": "frame",
+        "frame": 3755,
+        "id": "last"
+      },
+      "set-C-06.png": {
+        "what": "crops",
+        "frame": 3755,
+        "id": "last"
+      }
+    },
+    "R2": {
+      "set-B-01.png": {
+        "controls": false,
+        "frame": 0,
+        "id": "open",
+        "what": "judged frame 0"
+      },
+      "set-B-02.png": {
+        "controls": false,
+        "frame": 60,
+        "id": "sprout",
+        "what": "judged frame 60"
+      },
+      "set-B-03.png": {
+        "controls": false,
+        "frame": 236,
+        "id": "seedling",
+        "what": "judged frame 236"
+      },
+      "set-B-04.png": {
+        "controls": false,
+        "frame": 1055,
+        "id": "frost-sun",
+        "what": "judged frame 1055"
+      },
+      "set-B-05.png": {
+        "controls": false,
+        "frame": 1479,
+        "id": "climb",
+        "what": "judged frame 1479"
+      },
+      "set-B-06.png": {
+        "controls": false,
+        "frame": 1775,
+        "id": "storm",
+        "what": "judged frame 1775"
+      },
+      "set-B-07.png": {
+        "controls": false,
+        "frame": 1877,
+        "id": "storm-flash",
+        "what": "judged frame 1877"
+      },
+      "set-B-08.png": {
+        "controls": false,
+        "frame": 2096,
+        "id": "break",
+        "what": "judged frame 2096"
+      },
+      "set-B-09.png": {
+        "controls": false,
+        "frame": 2780,
+        "id": "late-dusk",
+        "what": "judged frame 2780"
+      },
+      "set-B-10.png": {
+        "controls": false,
+        "frame": 2880,
+        "id": "late",
+        "what": "judged frame 2880"
+      },
+      "set-B-11.png": {
+        "controls": false,
+        "frame": 2957,
+        "id": "bloom-opening",
+        "what": "judged frame 2957"
+      },
+      "set-B-12.png": {
+        "controls": false,
+        "frame": 3112,
+        "id": "bloom-hero",
+        "what": "judged frame 3112"
+      },
+      "set-B-13.png": {
+        "controls": false,
+        "frame": 3523,
+        "id": "field",
+        "what": "judged frame 3523"
+      },
+      "set-B-14.png": {
+        "controls": false,
+        "frame": 3755,
+        "id": "last",
+        "what": "judged frame 3755"
+      },
+      "set-B-15.png": {
+        "controls": true,
+        "key": "references/v2/keys/open.png",
+        "id": "open",
+        "what": "control references/v2/keys/open.png"
+      },
+      "set-B-16.png": {
+        "controls": true,
+        "key": "references/v2/keys/frost.png",
+        "id": "frost-sun",
+        "what": "control references/v2/keys/frost.png"
+      },
+      "set-B-17.png": {
+        "controls": true,
+        "key": "references/v2/keys/climb.png",
+        "id": "climb",
+        "what": "control references/v2/keys/climb.png"
+      },
+      "set-B-18.png": {
+        "controls": true,
+        "key": "references/v2/keys/storm.png",
+        "id": "storm",
+        "what": "control references/v2/keys/storm.png"
+      },
+      "set-B-19.png": {
+        "controls": true,
+        "key": "references/v2/keys/storm-flash.png",
+        "id": "storm-flash",
+        "what": "control references/v2/keys/storm-flash.png"
+      },
+      "set-B-20.png": {
+        "controls": true,
+        "key": "references/v2/keys/break.png",
+        "id": "break",
+        "what": "control references/v2/keys/break.png"
+      },
+      "set-B-21.png": {
+        "controls": true,
+        "key": "references/v2/keys/late.png",
+        "id": "late-dusk",
+        "what": "control references/v2/keys/late.png"
+      },
+      "set-B-22.png": {
+        "controls": true,
+        "key": "references/v2/keys/last.png",
+        "id": "last",
+        "what": "control references/v2/keys/last.png"
+      }
+    },
+    "R4-1": {
+      "set-D-01.png": {
+        "what": "section sheet",
+        "section": "germination",
+        "frames": [
+          0,
+          77,
+          154,
+          231,
+          308,
+          385,
+          463,
+          540,
+          617,
+          694,
+          771,
+          848
+        ]
+      },
+      "set-D-02.png": {
+        "what": "section sheet",
+        "section": "freeze",
+        "frames": [
+          849,
+          886,
+          924,
+          961,
+          998,
+          1035,
+          1073,
+          1110,
+          1147,
+          1184,
+          1222,
+          1259
+        ]
+      },
+      "set-D-03.png": {
+        "what": "section sheet",
+        "section": "climb",
+        "frames": [
+          1260,
+          1297,
+          1335,
+          1372,
+          1409,
+          1447,
+          1484,
+          1522,
+          1559,
+          1596,
+          1634,
+          1671
+        ]
+      },
+      "set-D-04.png": {
+        "what": "section sheet",
+        "section": "storm",
+        "frames": [
+          1672,
+          1709,
+          1747,
+          1784,
+          1821,
+          1858,
+          1896,
+          1933,
+          1970,
+          2007,
+          2045,
+          2082
+        ]
+      },
+      "set-D-05.png": {
+        "what": "section sheet",
+        "section": "ascent",
+        "frames": [
+          2083,
+          2158,
+          2233,
+          2307,
+          2382,
+          2457,
+          2532,
+          2607,
+          2682,
+          2756,
+          2831,
+          2906
+        ]
+      },
+      "set-D-06.png": {
+        "what": "section sheet",
+        "section": "flower",
+        "frames": [
+          2907,
+          2944,
+          2982,
+          3019,
+          3056,
+          3093,
+          3131,
+          3168,
+          3205,
+          3242,
+          3280,
+          3317
+        ]
+      },
+      "set-D-07.png": {
+        "what": "section sheet",
+        "section": "crane",
+        "frames": [
+          3318,
+          3355,
+          3393,
+          3430,
+          3467,
+          3505,
+          3542,
+          3580,
+          3617,
+          3654,
+          3692,
+          3729
+        ]
+      },
+      "set-D-08.png": {
+        "what": "section sheet",
+        "section": "dusk",
+        "frames": [
+          3730,
+          3737,
+          3744,
+          3752,
+          3759,
+          3766,
+          3773,
+          3780,
+          3787,
+          3795,
+          3802,
+          3809
+        ]
+      },
+      "set-D-09.png": {
+        "what": "consecutive frames",
+        "first": 2422
+      },
+      "set-D-10.png": {
+        "what": "consecutive frames",
+        "first": 2990
+      }
+    },
+    "R4-2": {
+      "set-D-01.png": {
+        "what": "cut sheet",
+        "cut": 952,
+        "frames": [
+          946,
+          947,
+          948,
+          949,
+          950,
+          951,
+          952,
+          953,
+          954,
+          955,
+          956,
+          957
+        ]
+      },
+      "set-D-02.png": {
+        "what": "cut sheet",
+        "cut": 1055,
+        "frames": [
+          1049,
+          1050,
+          1051,
+          1052,
+          1053,
+          1054,
+          1055,
+          1056,
+          1057,
+          1058,
+          1059,
+          1060
+        ]
+      },
+      "set-D-03.png": {
+        "what": "cut sheet",
+        "cut": 1157,
+        "frames": [
+          1151,
+          1152,
+          1153,
+          1154,
+          1155,
+          1156,
+          1157,
+          1158,
+          1159,
+          1160,
+          1161,
+          1162
+        ]
+      },
+      "set-D-04.png": {
+        "what": "cut sheet",
+        "cut": 1260,
+        "frames": [
+          1254,
+          1255,
+          1256,
+          1257,
+          1258,
+          1259,
+          1260,
+          1261,
+          1262,
+          1263,
+          1264,
+          1265
+        ]
+      },
+      "set-D-05.png": {
+        "what": "consecutive frames",
+        "first": 30
+      },
+      "set-D-06.png": {
+        "what": "consecutive frames",
+        "first": 1604
+      },
+      "set-D-07.png": {
+        "what": "consecutive frames",
+        "first": 1775
+      },
+      "set-D-08.png": {
+        "what": "consecutive frames",
+        "first": 1100
+      },
+      "set-D-09.png": {
+        "what": "consecutive frames",
+        "first": 3020
+      },
+      "set-D-10.png": {
+        "what": "consecutive frames",
+        "first": 3724
+      }
+    },
+    "R5": {
+      "set-E-01.png": {
+        "what": "whole film sheet",
+        "frames": [
+          0,
+          54,
+          107,
+          161,
+          215,
+          268,
+          322,
+          376,
+          429,
+          483,
+          536,
+          590
+        ]
+      },
+      "set-E-02.png": {
+        "what": "whole film sheet",
+        "frames": [
+          644,
+          697,
+          751,
+          805,
+          858,
+          912,
+          966,
+          1019,
+          1073,
+          1127,
+          1180,
+          1234
+        ]
+      },
+      "set-E-03.png": {
+        "what": "whole film sheet",
+        "frames": [
+          1288,
+          1341,
+          1395,
+          1448,
+          1502,
+          1556,
+          1609,
+          1663,
+          1717,
+          1770,
+          1824,
+          1878
+        ]
+      },
+      "set-E-04.png": {
+        "what": "whole film sheet",
+        "frames": [
+          1931,
+          1985,
+          2039,
+          2092,
+          2146,
+          2200,
+          2253,
+          2307,
+          2361,
+          2414,
+          2468,
+          2521
+        ]
+      },
+      "set-E-05.png": {
+        "what": "whole film sheet",
+        "frames": [
+          2575,
+          2629,
+          2682,
+          2736,
+          2790,
+          2843,
+          2897,
+          2951,
+          3004,
+          3058,
+          3112,
+          3165
+        ]
+      },
+      "set-E-06.png": {
+        "what": "whole film sheet",
+        "frames": [
+          3219,
+          3273,
+          3326,
+          3380,
+          3433,
+          3487,
+          3541,
+          3594,
+          3648,
+          3702,
+          3755,
+          3809
+        ]
+      },
+      "set-E-07.png": {
+        "what": "key frames",
+        "frames": [
+          0,
+          60,
+          236,
+          1055
+        ]
+      },
+      "set-E-08.png": {
+        "what": "key frames",
+        "frames": [
+          1479,
+          1775,
+          1877,
+          2096
+        ]
+      },
+      "set-E-09.png": {
+        "what": "key frames",
+        "frames": [
+          2780,
+          2880,
+          2957,
+          3112
+        ]
+      },
+      "set-E-10.png": {
+        "what": "key frames",
+        "frames": [
+          3523,
+          3755
+        ]
+      }
+    },
+    "R7": {
+      "set-G-01.png": {
+        "what": "before and after",
+        "frame": 427
+      },
+      "set-G-02.png": {
+        "what": "crops before and after",
+        "frame": 427
+      },
+      "set-G-03.png": {
+        "what": "before and after",
+        "frame": 940
+      },
+      "set-G-04.png": {
+        "what": "crops before and after",
+        "frame": 940
+      },
+      "set-G-05.png": {
+        "what": "before and after",
+        "frame": 1775
+      },
+      "set-G-06.png": {
+        "what": "crops before and after",
+        "frame": 1775
+      },
+      "set-G-07.png": {
+        "what": "before and after",
+        "frame": 3112
+      },
+      "set-G-08.png": {
+        "what": "crops before and after",
+        "frame": 3112
+      },
+      "set-G-09.png": {
+        "what": "before and after",
+        "frame": 3523
+      },
+      "set-G-10.png": {
+        "what": "crops before and after",
+        "frame": 3523
+      }
+    }
+  },
+  "reviewers": {
+    "reviewer_509": {
+      "critic": "R1-1",
+      "family": "GPT",
+      "asked": "19:14:29",
+      "answered": "19:16"
+    },
+    "reviewer_510": {
+      "critic": "R1-2",
+      "family": "Gemini",
+      "asked": "19:21:13",
+      "answered": "19:26"
+    },
+    "reviewer_511": {
+      "critic": "R1-3",
+      "family": "Claude",
+      "asked": "19:15:34",
+      "answered": "19:16"
+    },
+    "reviewer_512": {
+      "critic": "R1-4",
+      "family": "GPT",
+      "asked": "19:16:26",
+      "answered": "19:18"
+    },
+    "reviewer_513": {
+      "critic": "R1-5",
+      "family": "Gemini",
+      "asked": "19:16:53",
+      "answered": "19:20"
+    },
+    "reviewer_514": {
+      "critic": "R1-6",
+      "family": "Claude",
+      "asked": "19:01:16",
+      "answered": "19:02"
+    },
+    "reviewer_515": {
+      "critic": "R3-1",
+      "family": "Claude",
+      "asked": "19:22:05",
+      "answered": "19:23"
+    },
+    "reviewer_516": {
+      "critic": "R3-2",
+      "family": "GPT",
+      "asked": "19:17:08",
+      "answered": "19:18"
+    },
+    "reviewer_517": {
+      "critic": "R3-3",
+      "family": "Gemini",
+      "asked": "19:18:12",
+      "answered": "19:23"
+    },
+    "reviewer_518": {
+      "critic": "R3-4",
+      "family": "Claude",
+      "asked": "19:18:28",
+      "answered": "19:19"
+    },
+    "reviewer_519": {
+      "critic": "R3-5",
+      "family": "GPT",
+      "asked": "19:02:08",
+      "answered": "19:03"
+    },
+    "reviewer_520": {
+      "critic": "R4-1",
+      "family": "Gemini",
+      "asked": "19:52:39",
+      "answered": "20:12"
+    },
+    "reviewer_635": {
+      "critic": "R4-1b",
+      "family": "Gemini",
+      "asked": "20:08:27",
+      "answered": "20:27"
+    },
+    "reviewer_521": {
+      "critic": "R4-2",
+      "family": "Claude",
+      "asked": "19:52:42",
+      "answered": "20:01"
+    },
+    "reviewer_522": {
+      "critic": "R5",
+      "family": "Grok",
+      "asked": "19:52:45",
+      "answered": "20:04"
+    },
+    "reviewer_523": {
+      "critic": "R6",
+      "family": "GLM",
+      "asked": "19:04:29",
+      "answered": "19:05"
+    },
+    "reviewer_524": {
+      "critic": "R7",
+      "family": "GPT",
+      "asked": "19:52:48",
+      "answered": "19:53"
+    },
+    "reviewer_525": {
+      "image": "set-B-01.png",
+      "family": "GPT",
+      "asked": "19:38:39",
+      "answered": "19:38"
+    },
+    "reviewer_526": {
+      "image": "set-B-01.png",
+      "family": "Gemini",
+      "asked": "19:38:41",
+      "answered": "19:40"
+    },
+    "reviewer_527": {
+      "image": "set-B-01.png",
+      "family": "Claude",
+      "asked": "19:38:42",
+      "answered": "19:38"
+    },
+    "reviewer_528": {
+      "image": "set-B-01.png",
+      "family": "GLM",
+      "asked": "19:38:43",
+      "answered": "19:39"
+    },
+    "reviewer_529": {
+      "image": "set-B-01.png",
+      "family": "Grok",
+      "asked": "19:38:45",
+      "answered": "19:40"
+    },
+    "reviewer_530": {
+      "image": "set-B-02.png",
+      "family": "GPT",
+      "asked": "19:38:46",
+      "answered": "19:39"
+    },
+    "reviewer_531": {
+      "image": "set-B-02.png",
+      "family": "Gemini",
+      "asked": "19:38:48",
+      "answered": "19:40"
+    },
+    "reviewer_532": {
+      "image": "set-B-02.png",
+      "family": "Claude",
+      "asked": "19:39:03",
+      "answered": "19:39"
+    },
+    "reviewer_533": {
+      "image": "set-B-02.png",
+      "family": "GLM",
+      "asked": "19:39:04",
+      "answered": "19:39"
+    },
+    "reviewer_534": {
+      "image": "set-B-02.png",
+      "family": "Grok",
+      "asked": "19:39:05",
+      "answered": "19:41"
+    },
+    "reviewer_535": {
+      "image": "set-B-03.png",
+      "family": "GPT",
+      "asked": "19:39:07",
+      "answered": "19:39"
+    },
+    "reviewer_536": {
+      "image": "set-B-03.png",
+      "family": "Gemini",
+      "asked": "19:39:21",
+      "answered": "19:40"
+    },
+    "reviewer_537": {
+      "image": "set-B-03.png",
+      "family": "Claude",
+      "asked": "19:39:35",
+      "answered": "19:40"
+    },
+    "reviewer_538": {
+      "image": "set-B-03.png",
+      "family": "GLM",
+      "asked": "19:39:37",
+      "answered": "19:40"
+    },
+    "reviewer_539": {
+      "image": "set-B-03.png",
+      "family": "Grok",
+      "asked": "19:40:03",
+      "answered": "19:41"
+    },
+    "reviewer_540": {
+      "image": "set-B-04.png",
+      "family": "GPT",
+      "asked": "19:40:05",
+      "answered": "19:40"
+    },
+    "reviewer_541": {
+      "image": "set-B-04.png",
+      "family": "Gemini",
+      "asked": "19:40:18",
+      "answered": "19:42"
+    },
+    "reviewer_542": {
+      "image": "set-B-04.png",
+      "family": "Claude",
+      "asked": "19:40:20",
+      "answered": "19:40"
+    },
+    "reviewer_543": {
+      "image": "set-B-04.png",
+      "family": "GLM",
+      "asked": "19:40:34",
+      "answered": "19:41"
+    },
+    "reviewer_544": {
+      "image": "set-B-04.png",
+      "family": "Grok",
+      "asked": "19:40:36",
+      "answered": "19:42"
+    },
+    "reviewer_545": {
+      "image": "set-B-05.png",
+      "family": "GPT",
+      "asked": "19:40:37",
+      "answered": "19:41"
+    },
+    "reviewer_546": {
+      "image": "set-B-05.png",
+      "family": "Gemini",
+      "asked": "19:40:51",
+      "answered": "19:41"
+    },
+    "reviewer_547": {
+      "image": "set-B-05.png",
+      "family": "Claude",
+      "asked": "19:40:53",
+      "answered": "19:41"
+    },
+    "reviewer_548": {
+      "image": "set-B-05.png",
+      "family": "GLM",
+      "asked": "19:40:54",
+      "answered": "19:41"
+    },
+    "reviewer_549": {
+      "image": "set-B-05.png",
+      "family": "Grok",
+      "asked": "19:41:08",
+      "answered": "19:44"
+    },
+    "reviewer_550": {
+      "image": "set-B-06.png",
+      "family": "GPT",
+      "asked": "19:41:10",
+      "answered": "19:41"
+    },
+    "reviewer_551": {
+      "image": "set-B-06.png",
+      "family": "Gemini",
+      "asked": "19:41:24",
+      "answered": "19:41"
+    },
+    "reviewer_552": {
+      "image": "set-B-06.png",
+      "family": "Claude",
+      "asked": "19:41:26",
+      "answered": "19:41"
+    },
+    "reviewer_553": {
+      "image": "set-B-06.png",
+      "family": "GLM",
+      "asked": "19:41:40",
+      "answered": "19:42"
+    },
+    "reviewer_554": {
+      "image": "set-B-06.png",
+      "family": "Grok",
+      "asked": "19:41:41",
+      "answered": "19:44"
+    },
+    "reviewer_555": {
+      "image": "set-B-07.png",
+      "family": "GPT",
+      "asked": "19:41:56",
+      "answered": "19:42"
+    },
+    "reviewer_556": {
+      "image": "set-B-07.png",
+      "family": "Gemini",
+      "asked": "19:41:57",
+      "answered": "19:45"
+    },
+    "reviewer_557": {
+      "image": "set-B-07.png",
+      "family": "Claude",
+      "asked": "19:41:59",
+      "answered": "19:42"
+    },
+    "reviewer_558": {
+      "image": "set-B-07.png",
+      "family": "GLM",
+      "asked": "19:42:13",
+      "answered": "19:42"
+    },
+    "reviewer_559": {
+      "image": "set-B-07.png",
+      "family": "Grok",
+      "asked": "19:42:27",
+      "answered": "19:43"
+    },
+    "reviewer_560": {
+      "image": "set-B-08.png",
+      "family": "GPT",
+      "asked": "19:42:29",
+      "answered": "19:42"
+    },
+    "reviewer_561": {
+      "image": "set-B-08.png",
+      "family": "Gemini",
+      "asked": "19:42:30",
+      "answered": "19:43"
+    },
+    "reviewer_562": {
+      "image": "set-B-08.png",
+      "family": "Claude",
+      "asked": "19:42:45",
+      "answered": "19:43"
+    },
+    "reviewer_563": {
+      "image": "set-B-08.png",
+      "family": "GLM",
+      "asked": "19:42:59",
+      "answered": "19:43"
+    },
+    "reviewer_564": {
+      "image": "set-B-08.png",
+      "family": "Grok",
+      "asked": "19:43:00",
+      "answered": "19:44"
+    },
+    "reviewer_565": {
+      "image": "set-B-09.png",
+      "family": "GPT",
+      "asked": "19:43:15",
+      "answered": "19:43"
+    },
+    "reviewer_566": {
+      "image": "set-B-09.png",
+      "family": "Gemini",
+      "asked": "19:43:29",
+      "answered": "19:45"
+    },
+    "reviewer_567": {
+      "image": "set-B-09.png",
+      "family": "Claude",
+      "asked": "19:43:42",
+      "answered": "19:44"
+    },
+    "reviewer_568": {
+      "image": "set-B-09.png",
+      "family": "GLM",
+      "asked": "19:43:44",
+      "answered": "19:44"
+    },
+    "reviewer_569": {
+      "image": "set-B-09.png",
+      "family": "Grok",
+      "asked": "19:43:46",
+      "answered": "19:50"
+    },
+    "reviewer_570": {
+      "image": "set-B-10.png",
+      "family": "GPT",
+      "asked": "19:44:00",
+      "answered": "19:44"
+    },
+    "reviewer_571": {
+      "image": "set-B-10.png",
+      "family": "Gemini",
+      "asked": "19:44:14",
+      "answered": "19:48"
+    },
+    "reviewer_572": {
+      "image": "set-B-10.png",
+      "family": "Claude",
+      "asked": "19:44:29",
+      "answered": "19:44"
+    },
+    "reviewer_573": {
+      "image": "set-B-10.png",
+      "family": "GLM",
+      "asked": "19:44:31",
+      "answered": "19:44"
+    },
+    "reviewer_574": {
+      "image": "set-B-10.png",
+      "family": "Grok",
+      "asked": "19:44:32",
+      "answered": "19:46"
+    },
+    "reviewer_575": {
+      "image": "set-B-11.png",
+      "family": "GPT",
+      "asked": "19:44:46",
+      "answered": "19:45"
+    },
+    "reviewer_576": {
+      "image": "set-B-11.png",
+      "family": "Gemini",
+      "asked": "19:44:48",
+      "answered": "19:46"
+    },
+    "reviewer_577": {
+      "image": "set-B-11.png",
+      "family": "Claude",
+      "asked": "19:45:01",
+      "answered": "19:45"
+    },
+    "reviewer_578": {
+      "image": "set-B-11.png",
+      "family": "GLM",
+      "asked": "19:45:16",
+      "answered": "19:45"
+    },
+    "reviewer_579": {
+      "image": "set-B-11.png",
+      "family": "Grok",
+      "asked": "19:45:17",
+      "answered": "19:50"
+    },
+    "reviewer_580": {
+      "image": "set-B-12.png",
+      "family": "GPT",
+      "asked": "19:45:32",
+      "answered": "19:45"
+    },
+    "reviewer_581": {
+      "image": "set-B-12.png",
+      "family": "Gemini",
+      "asked": "19:45:46",
+      "answered": "19:46"
+    },
+    "reviewer_582": {
+      "image": "set-B-12.png",
+      "family": "Claude",
+      "asked": "19:45:48",
+      "answered": "19:46"
+    },
+    "reviewer_583": {
+      "image": "set-B-12.png",
+      "family": "GLM",
+      "asked": "19:46:15",
+      "answered": "19:46"
+    },
+    "reviewer_584": {
+      "image": "set-B-12.png",
+      "family": "Grok",
+      "asked": "19:46:16",
+      "answered": "19:47"
+    },
+    "reviewer_585": {
+      "image": "set-B-13.png",
+      "family": "GPT",
+      "asked": "19:46:31",
+      "answered": "19:46"
+    },
+    "reviewer_586": {
+      "image": "set-B-13.png",
+      "family": "Gemini",
+      "asked": "19:46:58",
+      "answered": "19:47"
+    },
+    "reviewer_587": {
+      "image": "set-B-13.png",
+      "family": "Claude",
+      "asked": "19:47:00",
+      "answered": "19:47"
+    },
+    "reviewer_588": {
+      "image": "set-B-13.png",
+      "family": "GLM",
+      "asked": "19:47:30",
+      "answered": "19:47"
+    },
+    "reviewer_589": {
+      "image": "set-B-13.png",
+      "family": "Grok",
+      "asked": "19:47:32",
+      "answered": "19:51"
+    },
+    "reviewer_590": {
+      "image": "set-B-14.png",
+      "family": "GPT",
+      "asked": "19:47:33",
+      "answered": "19:47"
+    },
+    "reviewer_591": {
+      "image": "set-B-14.png",
+      "family": "Gemini",
+      "asked": "19:47:48",
+      "answered": "19:49"
+    },
+    "reviewer_592": {
+      "image": "set-B-14.png",
+      "family": "Claude",
+      "asked": "19:47:49",
+      "answered": "19:48"
+    },
+    "reviewer_593": {
+      "image": "set-B-14.png",
+      "family": "GLM",
+      "asked": "19:48:04",
+      "answered": "19:48"
+    },
+    "reviewer_594": {
+      "image": "set-B-14.png",
+      "family": "Grok",
+      "asked": "19:48:06",
+      "answered": "19:48"
+    },
+    "reviewer_595": {
+      "image": "set-B-15.png",
+      "family": "GPT",
+      "asked": "19:04:55",
+      "answered": "19:05"
+    },
+    "reviewer_596": {
+      "image": "set-B-15.png",
+      "family": "Gemini",
+      "asked": "19:05:22",
+      "answered": "19:07"
+    },
+    "reviewer_597": {
+      "image": "set-B-15.png",
+      "family": "Claude",
+      "asked": "19:07:26",
+      "answered": "19:07"
+    },
+    "reviewer_598": {
+      "image": "set-B-15.png",
+      "family": "GLM",
+      "asked": "19:07:53",
+      "answered": "19:08"
+    },
+    "reviewer_599": {
+      "image": "set-B-15.png",
+      "family": "Grok",
+      "asked": "19:08:06",
+      "answered": "19:10"
+    },
+    "reviewer_600": {
+      "image": "set-B-16.png",
+      "family": "GPT",
+      "asked": "19:08:21",
+      "answered": "19:08"
+    },
+    "reviewer_601": {
+      "image": "set-B-16.png",
+      "family": "Gemini",
+      "asked": "19:08:47",
+      "answered": "19:20"
+    },
+    "reviewer_602": {
+      "image": "set-B-16.png",
+      "family": "Claude",
+      "asked": "19:10:02",
+      "answered": "19:10"
+    },
+    "reviewer_603": {
+      "image": "set-B-16.png",
+      "family": "GLM",
+      "asked": "19:10:28",
+      "answered": "19:10"
+    },
+    "reviewer_604": {
+      "image": "set-B-16.png",
+      "family": "Grok",
+      "asked": "19:10:55",
+      "answered": "19:12"
+    },
+    "reviewer_605": {
+      "image": "set-B-17.png",
+      "family": "GPT",
+      "asked": "19:11:09",
+      "answered": "19:11"
+    },
+    "reviewer_606": {
+      "image": "set-B-17.png",
+      "family": "Gemini",
+      "asked": "19:11:23",
+      "answered": "19:16"
+    },
+    "reviewer_607": {
+      "image": "set-B-17.png",
+      "family": "Claude",
+      "asked": "19:12:38",
+      "answered": "19:13"
+    },
+    "reviewer_608": {
+      "image": "set-B-17.png",
+      "family": "GLM",
+      "asked": "19:13:05",
+      "answered": "19:13"
+    },
+    "reviewer_609": {
+      "image": "set-B-17.png",
+      "family": "Grok",
+      "asked": "19:13:18",
+      "answered": "19:14"
+    },
+    "reviewer_610": {
+      "image": "set-B-18.png",
+      "family": "GPT",
+      "asked": "19:18:54",
+      "answered": "19:19"
+    },
+    "reviewer_611": {
+      "image": "set-B-18.png",
+      "family": "Gemini",
+      "asked": "19:19:21",
+      "answered": "19:22"
+    },
+    "reviewer_612": {
+      "image": "set-B-18.png",
+      "family": "Claude",
+      "asked": "19:19:35",
+      "answered": "19:20"
+    },
+    "reviewer_613": {
+      "image": "set-B-18.png",
+      "family": "GLM",
+      "asked": "19:20:02",
+      "answered": "19:20"
+    },
+    "reviewer_614": {
+      "image": "set-B-18.png",
+      "family": "Grok",
+      "asked": "19:20:29",
+      "answered": "19:28"
+    },
+    "reviewer_615": {
+      "image": "set-B-19.png",
+      "family": "GPT",
+      "asked": "19:20:30",
+      "answered": "19:20"
+    },
+    "reviewer_616": {
+      "image": "set-B-19.png",
+      "family": "Gemini",
+      "asked": "19:20:44",
+      "answered": "19:22"
+    },
+    "reviewer_617": {
+      "image": "set-B-19.png",
+      "family": "Claude",
+      "asked": "19:22:43",
+      "answered": "19:23"
+    },
+    "reviewer_618": {
+      "image": "set-B-19.png",
+      "family": "GLM",
+      "asked": "19:22:57",
+      "answered": "19:23"
+    },
+    "reviewer_619": {
+      "image": "set-B-19.png",
+      "family": "Grok",
+      "asked": "19:23:10",
+      "answered": "19:25"
+    },
+    "reviewer_620": {
+      "image": "set-B-20.png",
+      "family": "GPT",
+      "asked": "19:23:12",
+      "answered": "19:23"
+    },
+    "reviewer_621": {
+      "image": "set-B-20.png",
+      "family": "Gemini",
+      "asked": "19:23:50",
+      "answered": "19:25"
+    },
+    "reviewer_622": {
+      "image": "set-B-20.png",
+      "family": "Claude",
+      "asked": "19:23:52",
+      "answered": "19:24"
+    },
+    "reviewer_623": {
+      "image": "set-B-20.png",
+      "family": "GLM",
+      "asked": "19:23:53",
+      "answered": "19:24"
+    },
+    "reviewer_624": {
+      "image": "set-B-20.png",
+      "family": "Grok",
+      "asked": "19:24:20",
+      "answered": "19:30"
+    },
+    "reviewer_625": {
+      "image": "set-B-21.png",
+      "family": "GPT",
+      "asked": "19:24:21",
+      "answered": "19:24"
+    },
+    "reviewer_626": {
+      "image": "set-B-21.png",
+      "family": "Gemini",
+      "asked": "19:24:48",
+      "answered": "19:36"
+    },
+    "reviewer_627": {
+      "image": "set-B-21.png",
+      "family": "Claude",
+      "asked": "19:24:49",
+      "answered": "19:25"
+    },
+    "reviewer_628": {
+      "image": "set-B-21.png",
+      "family": "GLM",
+      "asked": "19:25:03",
+      "answered": "19:25"
+    },
+    "reviewer_629": {
+      "image": "set-B-21.png",
+      "family": "Grok",
+      "asked": "19:25:17",
+      "answered": "19:27"
+    },
+    "reviewer_630": {
+      "image": "set-B-22.png",
+      "family": "GPT",
+      "asked": "19:25:31",
+      "answered": "19:25"
+    },
+    "reviewer_631": {
+      "image": "set-B-22.png",
+      "family": "Gemini",
+      "asked": "19:25:32",
+      "answered": "19:29"
+    },
+    "reviewer_632": {
+      "image": "set-B-22.png",
+      "family": "Claude",
+      "asked": "19:25:59",
+      "answered": "19:26"
+    },
+    "reviewer_633": {
+      "image": "set-B-22.png",
+      "family": "GLM",
+      "asked": "19:26:25",
+      "answered": "19:26"
+    },
+    "reviewer_634": {
+      "image": "set-B-22.png",
+      "family": "Grok",
+      "asked": "19:26:52",
+      "answered": "19:28"
+    }
+  }
+}

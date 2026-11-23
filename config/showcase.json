@@ -4,17 +4,68 @@
   "seed": 20261120,
   "repo": {
     "url": "https://github.com/BrandonChurch93/Sun-Flower-Perplexity",
-    "branch": "main",
+    "branch": "v2",
     "maxFileMb": 95,
     "maxTreeGb": 2,
     "maxPushGb": 1
   },
   "film": {
     "fps": 30,
-    "durationSeconds": 60,
+    "durationSeconds": 127,
     "shutterDegrees": 180,
     "hookSeconds": 2
   },
+  "growth": {
+    "seconds": 60,
+    "germination": [
+      { "seconds": 0, "tau": 0 },
+      { "seconds": 2, "tau": 1.5 },
+      { "bar": 5, "tau": 6 },
+      { "bar": 9, "tau": 8.75 },
+      { "bar": 13, "tau": 10.5 },
+      { "bar": 17, "tau": 12 }
+    ],
+    "frostHold": 12,
+    "stormHold": 23,
+    "bud": 43.5,
+    "open": 51,
+    "crane": 52,
+    "field": 58.5
+  },
+  "music": {
+    "title": "Wonders of the Earth",
+    "bpm": 140,
+    "beatsPerBar": 4,
+    "bar1Seconds": 0.883143,
+    "seconds": 149.6033,
+    "sha256": "5462037249c835be9003234bd5a8cc6918af83e3828549d0e3bd92ca8145471d",
+    "map": "config/music/map.json"
+  },
+  "sections": [
+    { "id": "germination", "name": "Germination", "fromBar": 1, "toBar": 17, "kind": "grow" },
+    { "id": "freeze", "name": "Frost", "fromBar": 17, "toBar": 25, "kind": "hold" },
+    { "id": "climb", "name": "First climb", "fromBar": 25, "toBar": 33, "kind": "grow" },
+    { "id": "storm", "name": "Storm", "fromBar": 33, "toBar": 41, "kind": "hold" },
+    { "id": "ascent", "name": "The great climb", "fromBar": 41, "toBar": 57, "kind": "grow" },
+    { "id": "flower", "name": "Bloom", "fromBar": 57, "toBar": 65, "kind": "bloom" },
+    { "id": "crane", "name": "Field", "fromBar": 65, "toBar": 73, "kind": "field" },
+    { "id": "dusk", "name": "Last light", "fromBar": 73, "toBar": 75, "kind": "field" }
+  ],
+  "looks": [
+    { "id": "open", "section": "germination", "seconds": 0, "image": "references/v2/keys/open.png" },
+    { "id": "sprout", "section": "germination", "seconds": 2, "image": "references/approved/dawn-sprout.png" },
+    { "id": "seedling", "section": "germination", "bar": 5, "beat": 3, "image": "references/approved/dawn-seedling.png" },
+    { "id": "frost", "section": "freeze", "bar": 21, "beat": 1, "image": "references/v2/keys/frost.png" },
+    { "id": "climb", "section": "climb", "bar": 29, "beat": 2, "image": "references/v2/keys/climb.png" },
+    { "id": "storm", "section": "storm", "bar": 35, "beat": 1, "image": "references/v2/keys/storm.png" },
+    { "id": "storm-flash", "section": "storm", "bar": 37, "beat": 1, "image": "references/v2/keys/storm-flash.png" },
+    { "id": "break", "section": "ascent", "bar": 41, "beat": 2, "image": "references/v2/keys/break.png" },
+    { "id": "late", "section": "ascent", "bar": 56, "beat": 3, "image": "references/v2/keys/late.png" },
+    { "id": "bloom-opening", "section": "flower", "bar": 58, "beat": 1, "image": "references/approved/bloom-opening.png" },
+    { "id": "bloom-hero", "section": "flower", "bar": 61, "beat": 1, "image": "references/approved/bloom-hero.png" },
+    { "id": "field", "section": "crane", "bar": 69, "beat": 1, "image": "references/approved/field.png" },
+    { "id": "last", "section": "dusk", "bar": 73, "beat": 3, "image": "references/v2/keys/last.png" }
+  ],
   "formats": {
     "master": {
       "id": "16x9",
@@ -45,7 +96,7 @@
     "container": "mp4",
     "videoCodec": "h264",
     "bitrateMbps": 20,
-    "audio": "none",
+    "audio": "none unless the box is ticked",
     "proofSeconds": 1,
     "memoryTestSeconds": 4,
     "files": {

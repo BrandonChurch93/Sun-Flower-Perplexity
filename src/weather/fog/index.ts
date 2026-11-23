@@ -1,10 +1,9 @@
 import * as THREE from 'three'
-import { config } from '../../config.ts'
 import { makeSurface } from '../../core/shading.ts'
 import type { RGB, WorldDef } from '../../core/world.ts'
 import { heightAt } from '../../plant/growth.ts'
 import { windToward } from '../../plant/wind.ts'
-import { ringStrip } from '../skyline.ts'
+import { roundStrip } from './ring.ts'
 
 // The light the fog sends toward the eye from a direction: the shared fog's own color at eye level, paler overhead, and the sun's glow through it. The sky, the banks and the far shapes all read it, so a thing that fades into the fog fades into the sky behind it.
 export const fogLight = /* glsl */ `
@@ -160,6 +159,10 @@ const DEEP_FAR = 0.33
 const NEAR_M = 1.9
 const FAR_M = 4.5
 
+// The film seconds between which the stage before this one stood in frost. The stage of today reads the dials and not these.
+const FROST_FROM_S = 28.3
+const FROST_TO_S = 42
+
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -167,22 +170,19 @@ const smooth = (a: number, b: number, x: number): number => {
 
 // How far the fog has thinned round the sun, 0 to 1: it starts late in the frost and is as far as it goes on the unit's last frame.
 export function fogThinAt(time: number): number {
-  const unit = config.segments.find((s) => s.world === 'frost')
-  return unit ? smooth(unit.end - THIN_OVER_S, unit.end, time) : 0
+  return smooth(FROST_TO_S - THIN_OVER_S, FROST_TO_S, time)
 }
 
 const FAR_HOLD_S = 1
 
 // How far the far shapes have come out of the thinning fog, 0 to 1: full through the unit's last second.
 export function fogFarAt(time: number): number {
-  const unit = config.segments.find((s) => s.world === 'frost')
-  return unit ? smooth(unit.end - THIN_OVER_S, unit.end - FAR_HOLD_S, time) : 0
+  return smooth(FROST_TO_S - THIN_OVER_S, FROST_TO_S - FAR_HOLD_S, time)
 }
 
 // How much of the night's far shapes still stands in the fog just after the cut into the frost, 1 to 0: the fog closes over them in the unit's first seconds.
 export function fogCloseAt(time: number): number {
-  const unit = config.segments.find((s) => s.world === 'frost')
-  return unit ? 1 - smooth(unit.start, unit.start + CLOSE_OVER_S, time) : 0
+  return 1 - smooth(FROST_FROM_S, FROST_FROM_S + CLOSE_OVER_S, time)
 }
 
 export interface Fog {
@@ -205,7 +205,7 @@ export function makeFog(def: WorldDef, high: RGB): Fog {
   const first = { value: FIRST.alpha }
   const sheet = (bank: Bank, layer: number, order: number, alpha: { value: number }): THREE.Mesh => {
     const far = smooth(NEAR_M, FAR_M, bank.radiusM)
-    const geometry = ringStrip(96, () => ({ radius: bank.radiusM, top: bank.topM }))
+    const geometry = roundStrip(96, bank.radiusM, bank.topM)
     const surface = makeSurface({
       name: `fog bank ${layer}`,
       vertex,

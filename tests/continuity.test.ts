@@ -5,19 +5,19 @@ import * as THREE from 'three'
 import { horizonY, poseOf } from '../src/director/pose.ts'
 import { rigPathAt } from '../src/director/rig.ts'
 import { stateAt } from '../src/director/state.ts'
-import { cuts } from '../src/director/timeline.ts'
+import { cuts } from '../src/director/growthline.ts'
+import { cuts as filmCuts, segments } from '../src/director/timeline.ts'
 
-describe('continuity across the cuts', () => {
-  it('has cuts to test', () => {
+describe('continuity of a film with no cut', () => {
+  it('has no cut in the film and keeps the cuts of the plant clock for the growth path', () => {
+    expect(filmCuts.length).toBe(0)
     expect(cuts.length).toBeGreaterThan(0)
   })
 
-  it('moves the camera and the plant no more across a cut than between ordinary neighbors', () => {
-    for (const cut of cuts) {
-      const result = continuityFrom(stateAt, cut.frame)
-      expect(result.worst.ratio, `cut ${cut.index} at frame ${cut.frame}, ${result.worst.name}`).toBeLessThanOrEqual(config.continuity.maxStepRatio)
-      expect(stateAt(cut.frame).world).toBe(cut.toWorld)
-      expect(stateAt(cut.frame - 1).world).toBe(cut.fromWorld)
+  it('moves the camera and the plant no more at a section line than between ordinary neighbors', () => {
+    for (const s of segments.slice(1)) {
+      const result = continuityFrom(stateAt, s.firstFrame)
+      expect(result.worst.ratio, `section ${s.id} at frame ${s.firstFrame}, ${result.worst.name}`).toBeLessThanOrEqual(config.continuity.maxStepRatio)
     }
   })
 
@@ -29,7 +29,7 @@ describe('continuity across the cuts', () => {
   })
 
   it('gives the same numbers every time', () => {
-    for (const f of [0, 239, 240, 901, frameCount - 1]) expect(stateAt(f)).toEqual(stateAt(f))
+    for (const f of [0, 239, 240, 901, 2083, frameCount - 1]) expect(stateAt(f)).toEqual(stateAt(f))
   })
 
   it('carries each key and never rocks the horizon before the rain key', () => {

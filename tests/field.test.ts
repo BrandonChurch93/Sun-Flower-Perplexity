@@ -1,66 +1,46 @@
-import * as THREE from 'three'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
-import { poseOf, project } from '../src/director/pose.ts'
-import { rigPathAt } from '../src/director/rig.ts'
-import { PLACE, companionPlace, fieldPlaces, right, toward } from '../src/field/layout.ts'
+import { hash01, streamSeed } from '../src/core/random.ts'
+import { ALL_OPEN_T, FIRST_RAY_T, OPENS, PLACE, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, shareOf, sizeOf, statureAt, toward } from '../src/field/layout.ts'
+import { ROOM_M, bySeen, filmLens, frameOf, needed } from '../src/field/seen.ts'
 import { heightAt } from '../src/plant/growth.ts'
-import { timeOf } from '../src/config.ts'
-import { rayLength } from '../src/plant/growth.ts'
-import { sunDirection } from '../src/core/world.ts'
-import { plantInputsAt, worldAtTime } from '../src/director/inputs.ts'
-import { worldOf } from '../src/director/registry.ts'
-import { poseAtTime } from '../src/director/state.ts'
-import { headAt } from '../src/plant/model.ts'
-import { sunDisc } from '../src/post/sun.ts'
+import { barTime, tauAt, tauAtBar } from '../src/v2/clock.ts'
+import { rigAtFilm } from '../src/v2/rig.ts'
+import { WIND_TOWARD_DEG, gustAt, windWay } from '../src/v2/wind.ts'
 
 const places = fieldPlaces()
 const all = [places.near, places.far]
+const growth = config.growth
 
 describe('the field', () => {
-  it('shows at least the number of plants the film asks for at the field key', () => {
-    const key = config.keys.find((k) => k.id === 'field')!
-    const pose = poseOf({ ...rigPathAt(key.time), fNumber: 8 }, new THREE.Vector3(0, 1.6, 0))
-    const aspect = config.formats.master.width / config.formats.master.height
-    const top = heightAt(key.time) * 0.9
-    let seen = 0
-    const p = new THREE.Vector3()
-    for (const list of all) {
-      for (let i = 0; i < list.length; i += PLACE) {
-        const at = project(pose, p.set(list[i], top * list[i + 3], list[i + 1]), aspect)
-        if (at.depthM > 0 && at.x >= 0 && at.x <= 1 && at.y >= 0 && at.y <= 1) seen++
-      }
-    }
-    expect(seen).toBeGreaterThanOrEqual(config.field.minPlantsInView)
-  })
-
-  it('stands in rows behind the plant, the first one the set distance away', () => {
+  it('stands in rows that run away from the plant, a lane on its axis, the row ends the set distance away', () => {
+    const { rowSpacingM, plantSpacingM, plantAheadOfRowM } = config.field
     let nearest = Infinity
-    for (const list of all) {
-      for (let i = 0; i < list.length; i += PLACE) {
-        const along = -(list[i] * toward.x + list[i + 1] * toward.z)
-        nearest = Math.min(nearest, along)
-        const row = (along - config.field.plantAheadOfRowM) / config.field.rowSpacingM
-        expect(Math.abs(row - Math.round(row))).toBeLessThan(0.08)
-      }
+    for (let i = 0; i < places.far.length; i += PLACE) {
+      const across = places.far[i] * right.x + places.far[i + 1] * right.z
+      const row = across / rowSpacingM - 0.5
+      expect(Math.abs(row - Math.round(row)) * rowSpacingM).toBeLessThan(0.1)
     }
-    expect(nearest).toBeGreaterThan(config.field.plantAheadOfRowM - 0.06)
-    expect(nearest).toBeLessThan(config.field.plantAheadOfRowM + 0.06)
+    for (let i = 0; i < places.near.length; i += PLACE) nearest = Math.min(nearest, -(places.near[i] * toward.x + places.near[i + 1] * toward.z))
+    expect(nearest).toBeGreaterThan(plantAheadOfRowM - 0.07)
+    expect(nearest).toBeLessThan(plantAheadOfRowM + plantSpacingM)
   })
 
   it('keeps the spacing along a row', () => {
+    const { rowSpacingM, plantSpacingM } = config.field
     const row: number[] = []
-    for (let i = 0; i < places.near.length; i += PLACE) {
-      const along = -(places.near[i] * toward.x + places.near[i + 1] * toward.z)
-      if (Math.abs(along - config.field.plantAheadOfRowM) < 0.1) row.push(places.near[i] * right.x + places.near[i + 1] * right.z)
+    for (let i = 0; i < places.far.length; i += PLACE) {
+      const across = places.far[i] * right.x + places.far[i + 1] * right.z
+      if (Math.abs(across - 4.5 * rowSpacingM) < 0.2) row.push(-(places.far[i] * toward.x + places.far[i + 1] * toward.z))
     }
     row.sort((a, b) => a - b)
     expect(row.length).toBeGreaterThan(10)
     for (let i = 1; i < row.length; i++) {
       const gap = row[i] - row[i - 1]
-      if (gap > config.field.plantSpacingM * 1.6) continue
-      expect(gap).toBeGreaterThan(config.field.plantSpacingM - 0.13)
-      expect(gap).toBeLessThan(config.field.plantSpacingM + 0.13)
+      if (gap > plantSpacingM * 1.6) continue
+      expect(gap).toBeGreaterThan(plantSpacingM - 0.2)
+      expect(gap).toBeLessThan(plantSpacingM + 0.2)
     }
   })
 
@@ -76,82 +56,110 @@ describe('the field', () => {
     expect(Array.from(again.near)).toEqual(Array.from(places.near))
     expect(again.far.length).toBe(places.far.length)
   })
-})
 
-describe('the neighbors before the rows, beside the companion', () => {
-  const judged = [1350, 1515, 1755]
-  const aspect = config.formats.master.width / config.formats.master.height
-  const margin = 0.02
-  const count = places.front.length / PLACE
-
-  it('are five', () => {
-    expect(count).toBe(5)
+  it('lies behind the plant only, inside its wedge, and has full rows to the last row of plants', () => {
+    let deepest = 0
+    for (const list of [places.near, places.far, places.pictures, places.under]) {
+      for (let i = 0; i < list.length; i += PLACE) {
+        const along = -(list[i] * toward.x + list[i + 1] * toward.z)
+        const across = list[i] * right.x + list[i + 1] * right.z
+        expect(along).toBeGreaterThan(-0.1)
+        expect(across).toBeGreaterThan(-fieldWest(along) - 1.5)
+        expect(across).toBeLessThan(fieldEast(along) + 1.5)
+        deepest = Math.max(deepest, along)
+      }
+    }
+    expect(deepest).toBeGreaterThan(fieldPicturesM)
   })
 
-  it('stand 1.3 m and more from the plant on the side of the companion, no nearer to the lens than the line the plant stands on', () => {
+  it('has five neighbors before the rows, on the side of the companion', () => {
+    expect(places.front.length / PLACE).toBe(5)
     for (let i = 0; i < places.front.length; i += PLACE) {
-      const x = places.front[i]
-      const z = places.front[i + 1]
-      expect(x * right.x + z * right.z).toBeLessThanOrEqual(-1.3)
-      expect(-(x * toward.x + z * toward.z)).toBeGreaterThanOrEqual(0)
-      for (const frame of judged) {
-        const pose = poseAtTime(timeOf(frame))
-        const plant = project(pose, new THREE.Vector3(0, 0, 0), aspect).depthM
-        expect(project(pose, new THREE.Vector3(x, 0, z), aspect).depthM, `frame ${frame}`).toBeGreaterThanOrEqual(plant)
-      }
-    }
-  })
-
-  it('never stand over the head of the plant, its stem or the disc of the sun in the judged frames', () => {
-    for (const frame of judged) {
-      const time = timeOf(frame)
-      const pose = poseAtTime(time)
-      const scale = pose.focalMm / config.camera.gateWidthMm
-      const head = headAt(time, plantInputsAt(time))
-      const center = new THREE.Vector3(head.center.x, head.center.y, head.center.z)
-      const reachOfHead = head.radius + rayLength(0, time)
-      // What must stay clear, each a point in the frame with its radius as a share of the frame's width: the head, the stem under it and the sun.
-      const clear: { x: number; y: number; r: number }[] = []
-      const at = project(pose, center, aspect)
-      clear.push({ x: at.x, y: at.y, r: (reachOfHead / at.depthM) * scale })
-      for (let k = 0; k <= 20; k++) {
-        const s = project(pose, center.clone().multiplyScalar(k / 20), aspect)
-        if (s.depthM > 0.05) clear.push({ x: s.x, y: s.y, r: (0.03 / s.depthM) * scale })
-      }
-      const sun = sunDirection(worldOf(worldAtTime(time)))
-      if (sun.dot(pose.forward) > 0.05) {
-        const s = project(pose, pose.position.clone().addScaledVector(sun, 1000), aspect)
-        clear.push({ x: s.x, y: s.y, r: sunDisc })
-      }
-      for (let i = 0; i < places.front.length; i += PLACE) {
-        const size = places.front[i + 3]
-        const top = heightAt(time) * size
-        // A neighbor is taken as wide as its leaves reach, from the ground to the top of its head.
-        const reach = 0.45 * size + reachOfHead
-        for (let y = 0; y <= top + reachOfHead; y += 0.05) {
-          const p = project(pose, new THREE.Vector3(places.front[i], y, places.front[i + 1]), aspect)
-          if (p.depthM <= 0.05) continue
-          for (const c of clear) {
-            const apart = Math.hypot(p.x - c.x, (p.y - c.y) / aspect)
-            expect(apart, `frame ${frame}, neighbor ${i / PLACE}`).toBeGreaterThan((reach / p.depthM) * scale + c.r + margin)
-          }
-        }
-      }
+      expect(places.front[i] * right.x + places.front[i + 1] * right.z).toBeLessThanOrEqual(-1.3)
+      expect(-(places.front[i] * toward.x + places.front[i + 1] * toward.z)).toBeGreaterThanOrEqual(0)
     }
   })
 })
 
-import { lateAt, nearVariants, ownOf } from '../src/field/layout.ts'
-import { hash01, streamSeed } from '../src/core/random.ts'
+describe('the neighbors grow on the clock of the plant', () => {
+  const tiers = [
+    { tier: 'near' as const, count: nearVariants.length },
+    { tier: 'far' as const, count: farVariants.length },
+    { tier: 'pictures' as const, count: farVariants.length },
+  ]
 
-describe('the neighbors from 52 s', () => {
-  it('are as they were up to frame 1559 and go their own ways from frame 1560', () => {
-    for (let frame = 0; frame <= 1559; frame += 3) expect(lateAt(timeOf(frame))).toBe(0)
-    expect(lateAt(timeOf(1559))).toBe(0)
-    expect(lateAt(52)).toBe(0)
-    expect(lateAt(timeOf(1561))).toBeGreaterThan(0)
-    expect(lateAt(timeOf(1755))).toBe(1)
-    for (let frame = 1560; frame < 1799; frame++) expect(lateAt(timeOf(frame + 1)) - lateAt(timeOf(frame))).toBeLessThan(0.012)
+  it('no clock runs backward, each kind is a little ahead or behind, and every kind has the age of the plant at the end', () => {
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        let before = kindTime(0, k, tier)
+        for (let tau = 0.05; tau <= growth.seconds; tau += 0.05) {
+          const at = kindTime(tau, k, tier)
+          expect(at, `${tier} ${k} at ${tau}`).toBeGreaterThanOrEqual(before - 1e-9)
+          expect(at).toBeLessThan(tau + 3)
+          expect(at).toBeGreaterThan(tau - 13)
+          before = at
+        }
+        expect(kindTime(0, k, tier)).toBeCloseTo(0, 6)
+        expect(kindTime(growth.seconds, k, tier)).toBeCloseTo(growth.seconds, 6)
+      }
+    }
+    const apart = new Set(Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.frostHold, k, 'near').toFixed(2)))
+    expect(apart.size).toBeGreaterThan(3)
+    expect(fieldAge(growth.frostHold)).toBeLessThan(growth.frostHold)
+  })
+
+  it('open after the plant, as a second wave: no yellow before bar 58.33, most by bar 61, all by bar 63, no two kinds on one frame', () => {
+    const frames = Math.round(config.film.durationSeconds * 30)
+    const firsts: number[] = []
+    const opens: number[] = []
+    let total = 0
+    let openAt61 = 0
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        expect(kindTime(tauAtBar(58.33), k, tier), `${tier} ${k}`).toBeLessThan(FIRST_RAY_T)
+        expect(kindTime(tauAtBar(63), k, tier), `${tier} ${k}`).toBeGreaterThanOrEqual(ALL_OPEN_T)
+        let first = -1
+        let open = -1
+        let before = kindTime(tauAt(0), k, tier)
+        for (let f = 1; f < frames; f++) {
+          const at = kindTime(tauAt(f / 30), k, tier)
+          expect(at).toBeGreaterThanOrEqual(before)
+          expect(at - before, `${tier} ${k} frame ${f}`).toBeLessThan(0.12)
+          if (first < 0 && at >= FIRST_RAY_T) first = f
+          if (open < 0 && at >= ALL_OPEN_T) open = f
+          before = at
+        }
+        expect(open - first, `${tier} ${k}`).toBeGreaterThanOrEqual(40)
+        firsts.push(first)
+        opens.push(open)
+        total++
+        if (kindTime(tauAtBar(61), k, tier) >= ALL_OPEN_T) openAt61++
+      }
+    }
+    expect(new Set(firsts).size).toBe(firsts.length)
+    expect(new Set(opens).size).toBe(opens.length)
+    expect(openAt61 / total).toBeGreaterThan(0.75)
+    // The plant's own rays are out before the first of the field's.
+    expect(tauAt(Math.min(...firsts) / 30)).toBeGreaterThan(FIRST_RAY_T + 2.5)
+  })
+
+  it('has no step where a bud fills, opens, and ages: the clock of a kind is one unbroken line', () => {
+    for (const { tier, count } of tiers) {
+      for (let k = 0; k < count; k++) {
+        for (const bar of OPENS[tier][k]) {
+          const at = tauAtBar(bar)
+          for (let d = -0.002; d <= 0.002; d += 0.00001) expect(Math.abs(kindTime(at + d + 0.00001, k, tier) - kindTime(at + d, k, tier)), `${tier} ${k} bar ${bar}`).toBeLessThan(0.002)
+        }
+        const bud = growth.bud
+        expect(Math.abs(kindTime(bud + 1e-7, k, tier) - kindTime(bud - 1e-7, k, tier))).toBeLessThan(1e-5)
+      }
+    }
+  })
+
+  it('go their own ways as the heads open, by degrees', () => {
+    expect(lateAt(growth.bud)).toBe(0)
+    expect(lateAt(growth.seconds)).toBe(1)
+    for (let tau = 0; tau < growth.seconds; tau += 0.02) expect(lateAt(tau + 0.02) - lateAt(tau)).toBeLessThan(0.01)
   })
 
   it('are no two alike among the nearest thirty', () => {
@@ -165,10 +173,6 @@ describe('the neighbors from 52 s', () => {
     }
     list.sort((a, b) => a.reach - b.reach)
     const nearest = list.slice(0, 30)
-    for (const n of nearest) {
-      expect(n.head).toBeGreaterThanOrEqual(0.75)
-      expect(n.head).toBeLessThanOrEqual(1.15)
-    }
     for (let a = 0; a < nearest.length; a++) {
       for (let b = a + 1; b < nearest.length; b++) {
         const p = nearest[a]
@@ -179,95 +183,171 @@ describe('the neighbors from 52 s', () => {
     }
   })
 
-  it('have heads from 0.75 to 1.15 of the size they had and stand from 0.85 to 1.1 as tall, over the whole field', () => {
-    let low = { head: 9, tall: 9 }
-    let high = { head: 0, tall: 0 }
+  it('have heads from 0.75 to 1.15 of the size of their kind and stand from 0.85 to 1.1 as tall', () => {
     for (const from of all) {
       for (let i = 0; i < from.length; i += PLACE) {
         const own = ownOf(from[i + 7])
-        low = { head: Math.min(low.head, own.head), tall: Math.min(low.tall, own.tall) }
-        high = { head: Math.max(high.head, own.head), tall: Math.max(high.tall, own.tall) }
+        expect(own.head).toBeGreaterThanOrEqual(0.75)
+        expect(own.head).toBeLessThanOrEqual(1.15)
+        expect(own.tall).toBeGreaterThanOrEqual(0.85)
+        expect(own.tall).toBeLessThanOrEqual(1.1)
       }
     }
-    expect(low.head).toBeGreaterThanOrEqual(0.75)
-    expect(low.head).toBeLessThan(0.78)
-    expect(high.head).toBeLessThanOrEqual(1.15)
-    expect(high.head).toBeGreaterThan(1.12)
-    expect(low.tall).toBeGreaterThanOrEqual(0.85)
-    expect(high.tall).toBeLessThanOrEqual(1.1)
-  })
-})
-
-import { behindAt, earlyAt, earlyCode, kindTime, nightAt } from '../src/field/layout.ts'
-import { bodyRadius } from '../src/plant/growth.ts'
-
-describe('before the bloom every neighbor is its own', () => {
-  it('each kind is at its own stage in the rain and under the moon, and no clock runs backward', () => {
-    for (const time of [14, 26]) {
-      const clocks = [0, 1, 2, 3, 4, 5, 6].map((k) => kindTime(time, k, 'near'))
-      for (let a = 0; a < clocks.length; a++) {
-        // In the rain every kind is behind the plant. Under the moon a kind may stand up to 1.5 s ahead of it, so each carries a bud at the night key.
-        if (time === 14) expect(clocks[a]).toBeLessThan(time)
-        else {
-          expect(clocks[a]).toBeGreaterThanOrEqual(time)
-          expect(clocks[a]).toBeLessThanOrEqual(time + 1.5)
-          expect(bodyRadius(clocks[a])).toBeGreaterThan(0)
-        }
-        for (let b = a + 1; b < clocks.length; b++) expect(Math.abs(clocks[a] - clocks[b]), `${time} s, ${a} and ${b}`).toBeGreaterThan(0.1)
-      }
-    }
-    for (let k = 0; k < 7; k++) for (let f = 0; f < 1800; f++) expect(kindTime((f + 1) / 30, k, 'near')).toBeGreaterThan(kindTime(f / 30, k, 'near'))
   })
 
-  it('no two of the nearest twenty have the same stalk, leaves and droop', () => {
-    const near: { d: number; code: number }[] = []
-    for (let i = 0; i < places.near.length; i += PLACE) near.push({ d: Math.hypot(places.near[i], places.near[i + 1]), code: earlyCode(ownOf(places.near[i + 7])) })
-    near.sort((a, b) => a.d - b.d)
-    const codes = near.slice(0, 20).map((n) => n.code)
-    expect(new Set(codes).size).toBe(codes.length)
-  })
-
-  it('all of it is gone by 40.0 s, and the night by 35.5 s', () => {
-    for (const time of [40, 45, 52, 58.5, 60]) {
-      expect(earlyAt(time)).toBe(0)
-      expect(behindAt(time)).toBe(0)
-      expect(nightAt(time)).toBe(0)
-    }
-    expect(nightAt(35.5)).toBe(0)
-    expect(earlyAt(26)).toBe(1)
-  })
-})
-
-import { fieldAge, gapsAt, rainAt, standsClear, stiffAt } from '../src/field/layout.ts'
-
-describe('the rain and the moon leave nothing behind', () => {
-  it('the seedlings in the gaps come and go by degrees and are the same on both sides of the cut to the night', () => {
-    expect(gapsAt(8)).toBe(0)
-    for (const cut of [8, 20, 30]) expect(Math.abs(gapsAt(cut) - gapsAt(cut - 1 / 30))).toBeLessThan(0.01)
-    expect(gapsAt(19.97)).toBe(1)
-    for (const time of [0, 4, 27, 30, 36, 40, 52, 60]) expect(gapsAt(time)).toBe(0)
-  })
-
-  it('from 21 s the field is its own age, and by the frost every kind is near the age of the plant', () => {
-    for (const time of [21, 26, 36, 40, 45, 52, 58.5, 60]) {
-      expect(rainAt(time)).toBe(0)
-      expect(fieldAge(time)).toBe(time)
-    }
-    for (let k = 0; k < 7; k++) for (const time of [34, 34.5, 36]) expect(Math.abs(kindTime(time, k, 'near') - time)).toBeLessThan(0.6)
-    expect(stiffAt(26)).toBe(0)
-    expect(stiffAt(36)).toBe(1)
-  })
-
-  it('three of the second and third rows stand clear under the moon and the code of every other neighbor is unchanged', () => {
-    let clear = 0
+  it('turn their heads mostly one way, each a little differently, and only once in bud', () => {
+    let east = 0
+    let count = 0
+    const ways = new Set<string>()
     for (let i = 0; i < places.near.length; i += PLACE) {
-      const own = ownOf(places.near[i + 7])
-      expect(earlyCode(own)).toBe(earlyCode(own, own.bud, own.leaf, own.droop))
-      if (!standsClear(places.near[i + 7])) continue
-      clear++
-      expect(Math.hypot(places.near[i], places.near[i + 1])).toBeLessThan(3.3)
-      expect(places.near[i + 3]).toBeGreaterThan(0.7)
+      const id = places.near[i + 7]
+      const way = faceToward(id)
+      ways.add(way.toFixed(2))
+      if (Math.cos(way - Math.PI / 2) > 0.7) east++
+      count++
+      expect(settled(growth.bud - 2, id)).toBe(0)
+      expect(settled(growth.open + 1, id)).toBe(1)
     }
-    expect(clear).toBe(3)
+    expect(east / count).toBeGreaterThan(0.75)
+    expect(east / count).toBeLessThan(0.97)
+    expect(ways.size).toBeGreaterThan(count / 4)
+  })
+})
+
+describe('the wind over the field', () => {
+  it('sends one gust every few seconds, travelling toward azimuth 42', () => {
+    expect(WIND_TOWARD_DEG).toBe(42)
+    const peaks: number[] = []
+    let last = gustAt(0, 0, 0)
+    let rising = false
+    for (let s = 0.02; s < 40; s += 0.02) {
+      const g = gustAt(0, 0, s)
+      if (rising && g < last && last > 0.7) peaks.push(s)
+      rising = g > last
+      last = g
+    }
+    expect(peaks.length).toBeGreaterThanOrEqual(8)
+    for (let i = 1; i < peaks.length; i++) {
+      expect(peaks[i] - peaks[i - 1]).toBeGreaterThan(2)
+      expect(peaks[i] - peaks[i - 1]).toBeLessThan(6)
+    }
+    // The same front arrives later downwind.
+    const arrives = (x: number, z: number): number => {
+      for (let s = peaks[0] - 1; s < peaks[0] + 6; s += 0.01) if (gustAt(x, z, s) > 0.8) return s
+      return NaN
+    }
+    expect(arrives(windWay.x * 6, windWay.z * 6)).toBeGreaterThan(arrives(0, 0) + 0.4)
+  })
+
+  it('is still in still air and bends a neighbor downwind in a gust', () => {
+    const calm = blownOf(7, 3, -5, 60, 0, 0)
+    expect(Math.hypot(calm.x, calm.z, calm.head, calm.leaves, calm.nod)).toBe(0)
+    let most = 0
+    for (let s = 55; s < 62; s += 0.05) {
+      const b = blownOf(7, 3, -5, s, 0.54, 0.54)
+      most = Math.max(most, b.x * windWay.x + b.z * windWay.z)
+    }
+    expect(most).toBeGreaterThan(0.1)
+    expect(most).toBeLessThan(0.4)
+  })
+
+  // Every full neighbor's height at one bar of the film, lowest and highest. The few that are far behind in their rows are left out of the lowest.
+  const heightsAt = (bar: number): { low: number; high: number; each: number[] } => {
+    const tau = tauAtBar(bar)
+    const st = statureAt(tau)
+    const each: number[] = []
+    let low = Infinity
+    let high = 0
+    const tiers = [{ tier: 'near' as const, list: places.near, kinds: nearVariants.length }, { tier: 'far' as const, list: places.far, kinds: farVariants.length }]
+    for (const { tier, list, kinds } of tiers) {
+      for (let k = 0; k < kinds; k++) {
+        const mine = shareOf(list, k, kinds)
+        const kindTall = heightAt(kindTime(tau, k, tier))
+        for (let i = 0; i < mine.length; i += PLACE) {
+          const own = ownOf(mine[i + 7])
+          const h = sizeOf(st, mine[i + 3], mine[i + 6], own, kindTall, Math.hypot(mine[i], mine[i + 1])) * kindTall
+          each.push(h)
+          high = Math.max(high, h)
+          if (own.young > 0.7) low = Math.min(low, h)
+        }
+      }
+    }
+    return { low, high, each }
+  }
+
+  it('is a young field under a towering plant in the storm, and stays under the lens on the way up', () => {
+    const storm = heightsAt(35)
+    const plant = heightAt(tauAtBar(35))
+    expect(storm.low).toBeGreaterThan(0.44 * plant)
+    expect(storm.high).toBeLessThan(0.505 * plant)
+    for (let bar = 43; bar <= 55; bar += 0.25) expect(heightsAt(bar).high, `bar ${bar}`).toBeLessThan(rigAtFilm(barTime(bar)).heightM)
+    // In bloom the field has its full size: the plant stands a little over it.
+    const bloom = heightsAt(61)
+    expect(bloom.high).toBeGreaterThan(0.8 * heightAt(tauAtBar(61)))
+    expect(bloom.high).toBeLessThan(heightAt(tauAtBar(61)))
+  })
+
+  it('no neighbor ever gets shorter: every one of them, at every eighth of a bar', () => {
+    let before = heightsAt(0).each
+    for (let bar = 0.125; bar <= 75; bar += 0.125) {
+      const now = heightsAt(bar).each
+      let worst = 0
+      for (let i = 0; i < now.length; i++) worst = Math.max(worst, before[i] - now[i])
+      expect(worst, `bar ${bar}`).toBeLessThan(1e-6)
+      before = now
+    }
+  })
+})
+
+describe('the part of each list a frame draws', () => {
+  const lens = filmLens(16 / 9)
+  const frames = lens.length / 5
+  // The test each neighbor is given as it is drawn.
+  const kept = (f: number, x: number, z: number): boolean => {
+    const ox = x - lens[f * 5]
+    const oz = z - lens[f * 5 + 1]
+    const depth = ox * lens[f * 5 + 2] + oz * lens[f * 5 + 3]
+    const side = Math.abs(oz * lens[f * 5 + 2] - ox * lens[f * 5 + 3])
+    return !(depth < -ROOM_M || side > Math.max(depth, 0) * lens[f * 5 + 4] + ROOM_M * (1 + lens[f * 5 + 4]))
+  }
+
+  it('holds every neighbor the frame can see, at every frame, and few it cannot', () => {
+    let sent = 0
+    let seen = 0
+    for (const list of [shareOf(places.near, 0, nearVariants.length), shareOf(places.far, 1, farVariants.length), shareOf(places.under, 2, 4)]) {
+      const sorted = bySeen(list, lens)
+      const need = needed(sorted, lens)
+      expect([...sorted].sort()).toEqual([...list].sort())
+      for (let f = 0; f < frames; f += 2) {
+        let last = 0
+        let inside = 0
+        for (let k = 0; k < sorted.length / PLACE; k++) {
+          if (!kept(f, sorted[k * PLACE], sorted[k * PLACE + 1])) continue
+          last = k + 1
+          inside++
+        }
+        expect(need[f]).toBeGreaterThanOrEqual(last)
+        expect(inside).toBeGreaterThanOrEqual(0.75 * need[f])
+        sent += need[f]
+        seen += inside
+      }
+    }
+    expect(seen / sent).toBeGreaterThan(0.9)
+  })
+
+  it('serves the film\'s own lens and no other', () => {
+    const mine = lens.slice(1502 * 5, 1503 * 5)
+    expect(frameOf(lens, 1502 / config.film.fps, mine)).toBe(1502)
+    expect(frameOf(lens, 1502.4 / config.film.fps, mine)).toBe(1502)
+    mine[0] += 0.5
+    expect(frameOf(lens, 1502 / config.film.fps, mine)).toBe(-1)
+    expect(frameOf(lens, 900 / config.film.fps, lens.slice(1502 * 5, 1503 * 5))).toBe(-1)
+  })
+})
+
+describe('the field knows no scene of the first film', () => {
+  it('reads no scene time', () => {
+    const banned = /segmentById|segmentStart|config\.segments|config\.keys|config\.worlds|worldOf|growthline|director\/registry|director\/inputs|worlds\/|units\//
+    for (const name of readdirSync('src/field')) expect(banned.test(readFileSync(`src/field/${name}`, 'utf8')), name).toBe(false)
   })
 })

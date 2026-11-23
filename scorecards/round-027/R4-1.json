@@ -1,0 +1,70 @@
+{
+  "critic": "R4",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-10.png",
+      "where": "right and lower-right face of the flower head across frames 2990-3001 (also visible in set-D-06.png frames 2944-3019)",
+      "what": "yellow ray petals and green phyllary bracts pass straight through the convex dark floret disc and through each other, leaving jagged sawtooth intersection edges across the disc face as the flower opens",
+      "fix": "constrain petal and bract unfolding paths around the outer rim of the floret dome with collision clearance so neither bracts nor petals penetrate the disc or each other"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "upper-left sky and scene lighting at frame 1672 (55.73 s) following set-D-03.png frame 1671 (55.70 s)",
+      "what": "across consecutive frames at an unmeant segment boundary, a bright white cloud mass pops into the upper-left sky and fill light jumps across the plants and soil in one frame before darkening again by frame 1709",
+      "fix": "make sky cloud density and scene illumination continuous across frames 1671 and 1672 so the entry into the rain segment has no single-frame flash or sky pop"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-09.png",
+      "where": "hero plant leaves across consecutive frames 2422-2433 (80.73-81.10 s)",
+      "what": "leaves flip up and down randomly on alternating 1/30 s frames instead of following smooth time-lapse trajectories, and backlit leaf undersides break up into popping white sky-colored speckles from frame to frame",
+      "fix": "replace uncorrelated per-frame leaf pose offsets with temporally smooth circadian nutation curves and fix leaf alpha/translucency shading so bright sky does not bleed through leaf undersides"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-04.png",
+      "where": "storm clouds and horizon mist band across tiles 1-10 (frames 1709-2045, 56.97-68.17 s)",
+      "what": "both the storm cloud layer and the white mist along the horizon freeze completely in world space for over 11 seconds while rain streaks fall in front of them",
+      "fix": "drive continuous wind advection and turbulent evolution in the storm clouds and horizon mist throughout the entire rain segment"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-07.png",
+      "where": "camera trajectory across tiles 0-11 (frames 3318-3729, 110.60-124.30 s, continuing into set-D-08.png)",
+      "what": "after barely pulling back across set-D-06.png, the camera accelerates sharply at 110.60 s, stops pulling back around 115.6 s, reverses horizontal pan (shifting the mountain ridge right before stopping horizontal motion after 120.6 s), and reverses vertical horizon motion from rising to sinking",
+      "fix": "re-time and smooth the camera rig onto one continuous spline with physical mass and monotonic direction from the close bloom through the final wide shot without axis reversals or stops"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-09.png",
+      "where": "rim-lit hairs along both edges of the stem and distant crop rows across frames 2422-2433",
+      "what": "fine stem hairs and sub-pixel foliage in the far background rows flicker and shimmer with crawling aliasing noise on every consecutive frame",
+      "fix": "increase temporal supersampling and apply screen-space hair width clamping and mip/roughness filtering on the distant crop rows to stop frame-to-frame shimmer"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-07.png",
+      "where": "dusk clouds in the upper-right sky across tiles 5-11 (116.83-124.30 s) and all of set-D-08.png (124.33-126.97 s)",
+      "what": "while the sun drops rapidly below the horizon in time-lapse over 10 seconds, the sunset cloud bands remain locked at zero displacement relative to the mountains",
+      "fix": "animate continuous time-lapse drift and morphological evolution in the dusk clouds to match the speed of the setting sun"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-05.png",
+      "where": "sky opening, falling rain, and puddle light at frame 2083 (69.43 s) relative to set-D-04.png frames 2045-2082 (68.17-69.40 s)",
+      "what": "the meant one-frame storm end at 69.43 s leaks early and does not complete in one frame: warm horizon and puddle reflections already ramp up by 69.40 s, and heavy rain streaks continue falling across frame 2083 with only a small sharp-edged blue patch opening in the cloud",
+      "fix": "keep overcast storm lighting and rain through frame 2082 (69.40 s), then clear the falling rain and step up the cloud tear and scene sunlight cleanly on frame 2083 (69.43 s)"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "seedling stem tip and shed seed hull on the soil in tile 2 (frame 154, 5.13 s) relative to tiles 1 and 3",
+      "what": "the hypocotyl ends in a flat horizontal cap with two separated vertical cotyledon blades leaving a gap of sky between their bases, and the split seed hull pops onto the dirt oversized before shrinking into the soil by frame 231",
+      "fix": "maintain a continuous joined shoot apex as the cotyledons unfold from the hook and keep the shed seed hull at a constant physical world-space scale on the ground"
+    }
+  ]
+}

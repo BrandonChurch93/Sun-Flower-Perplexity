@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, type Pose } from '../../skeleton.ts'
 import { tissueGlsl } from '../../surface/index.ts'
 import { FIRST_OPEN, FIRST_SIDE, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
@@ -97,12 +97,12 @@ export function create(options: PartOptions): PlantPart | null {
   for (let n = 0; n < COUNT; n++) {
     const rho = RIM_SHARE * Math.sqrt((n + 0.5) / COUNT)
     const theta = n * GOLDEN
-    const ragged = (hash01(seed, 1, n) - 0.5) * 0.085 + 0.022 * Math.sin(3 * theta + wave) + 0.014 * Math.sin(7 * theta + wave * 2.3) + 0.06 * Math.cos(theta - FIRST_SIDE)
+    const ragged = (hash01(seed, 1, n) - 0.5) * 0.055 + 0.018 * Math.sin(3 * theta + wave) + 0.012 * Math.sin(7 * theta + wave * 2.3) + 0.025 * Math.cos(theta - FIRST_SIDE)
     const when = schedule(rho + ragged)
-    when.start = Math.max(FIRST_OPEN, when.start + (hash01(seed, 6, n) - 0.5) * 1.4)
+    when.start = Math.max(FIRST_OPEN, when.start + (hash01(seed, 6, n) - 0.5) * 0.55)
     when.length *= 0.75 + 0.6 * hash01(seed, 7, n)
     each.set([rho, theta, when.start, when.length, hash01(seed, 2, n), hash01(seed, 3, n) * Math.PI * 2, 0.9 + 0.2 * hash01(seed, 4, n), hash01(seed, 5, n)], n * 8)
-    sets[when.start > config.film.durationSeconds + 0.25 ? 1 : 0].florets.push(n)
+    sets[when.start > config.growth.seconds + 0.25 ? 1 : 0].florets.push(n)
   }
 
   const meshes: THREE.Mesh[] = []
@@ -123,18 +123,29 @@ export function create(options: PartOptions): PlantPart | null {
     meshes.push(partMesh(geometry, surface))
   }
 
+  // What each slot was filled with beside the head's frame: whether the florets show, how young they are and how far the cover has drawn back.
+  const kept = [new Float32Array(3), new Float32Array(3)]
+  const settle = (share: number): void => {
+    const a = kept[0]
+    const b = kept[share > 0 ? 1 : 0]
+    const shown = a[0] > 0 || b[0] > 0
+    for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
+    uniforms.uYoung.value = a[1] + (b[1] - a[1]) * share
+    uniforms.uCover.value = a[2] + (b[2] - a[2]) * share
+  }
+
   return {
     name: 'disc',
     meshes,
     casters: [],
     fill(slot, pose) {
       setHead(uniforms, slot, pose)
-      if (slot === 1) return
-      const shown = pose.time >= SHOWN_FROM && uniforms.uHS.value[0].x > 0
-      for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
-      uniforms.uYoung.value = youth(pose.time)
-      uniforms.uCover.value = cover(pose.time)
+      if (!filling.lead) return
+      kept[slot].set([pose.time >= SHOWN_FROM && uniforms.uHS.value[slot].x > 0 ? 1 : 0, youth(pose.time), cover(pose.time)])
     },
-    finish() {},
+    finish() {
+      settle(0)
+    },
+    settle,
   }
 }

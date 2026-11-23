@@ -1,4 +1,5 @@
 import { timeOf } from '../config.ts'
+import { tauAt } from '../v2/clock.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { carrierAt, focusAt, plantNumbers } from '../plant/model.ts'
 import { rigAt } from './camera.ts'
@@ -22,6 +23,6 @@ export function poseAtTime(time: number, held = new THREE.Vector3()): CameraPose
 
 export function stateAt(frameIndex: number): FrameState {
   const frame = clampFrame(frameIndex)
-  const time = timeOf(frame)
+  const time = tauAt(timeOf(frame))
   return { camera: cameraNumbers(poseAtTime(time)), plant: plantNumbers(time, plantInputsAt(time)), world: worldAt(frame) }
 }

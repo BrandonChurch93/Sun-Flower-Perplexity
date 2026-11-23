@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crop 5, the frosted soil clods across the left foreground (also set-C-07 lower left)",
+      "what": "the clods are smooth rounded blobs with a glossy, plasticine sheen and flat white patches laid on their tops; they read as modelled clay with a frost decal, not crumbly soil with frost crystals growing on it",
+      "fix": "break the clods into rough crumbs and aggregates, kill the specular sheen, and grow frost as fine crystalline rime that follows the surface relief and is denser on exposed edges"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "crops 1-3, the edges of every leaf",
+      "what": "the frost on the leaf margins is a row of bright white fluffy tufts stuck out at regular spacing, like glued cotton; it glows evenly against the sky and looks like an added effect rather than hoar frost; the leaf blades themselves are a flat grey-green with almost no vein relief or translucency",
+      "fix": "replace the tufts with small, irregular needle crystals of varying length, keep them on the upper surface and the hairs as well as the margin, and give the blades visible veins and some backlit translucency where the frost is thin"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-07.png",
+      "where": "the eight true leaves",
+      "what": "the leaves share nearly the same outline, serration and frosting, and several sit as flat stiff cards on their petioles, so the plant reads as one leaf instanced and scaled",
+      "fix": "vary outline, size, curl and droop per leaf, and add some twist and cupping so none lies flat"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crop 1, the hook at the soil",
+      "what": "the hook is a smooth, single flat green tube with an even waxy sheen and no hairs; the soil crumbs on it look like flat cut-out stickers; directly right of it is a large smooth dark slab with no crumb detail that reads as a hole in the soil model",
+      "fix": "add surface hairs, subtle colour variation and a pale-to-green gradient on the hook; make the clinging crumbs three-dimensional with contact shadows; fill the dark slab with crumb geometry"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 1 and crop 7, the seed leaves",
+      "what": "the seed leaves are one even green with a waxy sheen and painted-looking veins, and the dew drops are near-identical bright beads spaced evenly along the margin",
+      "fix": "add tonal variation, thickness and a slightly matte, cellular surface; vary the dew in size, spacing and shape, with some merged and some missing"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 2, the foot of the stem",
+      "what": "the stem meets the soil as a straight-sided cylinder with a hard horizontal change in tone near its base and little contact shadow; the soil around it has smooth, shiny planar patches unlike the crumbs elsewhere",
+      "fix": "add a soft occlusion shadow and a few crumbs pushed up against the stem, remove the tonal step, and replace the shiny patches with crumb detail"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 3-4, the grass blades (also set-C-04 crops 4 and 7)",
+      "what": "the grass blades are flat single-green ribbons with no midrib, no edge thickness and no translucency, and the dew drops on them are uniform spheres with the same highlight",
+      "fix": "give the blades a midrib, edge thickness, colour variation from base to tip and backlit translucency; vary dew size and highlight"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-04.png",
+      "where": "crop 1 and crop 2, soil particles on the stem",
+      "what": "the dark crumbs clinging to the stem are flat, similar-sized blobs with no shadow on the stem, so they look pasted on",
+      "fix": "vary their size and shape and give each a contact shadow"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crops 5-8, the sky, glow and out-of-focus soil",
+      "what": "the grain in the dark, out-of-focus areas is coloured and slightly blotchy when zoomed",
+      "fix": "denoise the defocused regions a little more, or match grain across the frame"
+    }
+  ]
+}

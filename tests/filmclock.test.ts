@@ -1,0 +1,158 @@
+import { describe, expect, it } from 'vitest'
+import { config, frameCount } from '../src/config.ts'
+import { BAR, BAR1, END, SUN, barAt, barTime, flashAt, hitFrame, hitTime, lapseAt, rainAtBar, sunElevationOfPhase, tauAt, worldAt } from '../src/v2/clock.ts'
+import { blankMoment, momentAt } from '../src/v2/now.ts'
+import { heightAt } from '../src/plant/model.ts'
+
+const fps = config.film.fps
+const frames = Array.from({ length: frameCount }, (_, i) => i)
+const elevation = (t: number): number => {
+  const w = worldAt(t)
+  return sunElevationOfPhase(w - Math.floor(w))
+}
+
+describe('the film clock', () => {
+  it('stands on the music', () => {
+    expect(BAR).toBeCloseTo(1.714286, 6)
+    expect(barTime(1)).toBeCloseTo(BAR1, 9)
+    expect(barAt(barTime(33, 3))).toBeCloseTo(33.5, 9)
+    expect(hitFrame(33)).toBe(1672)
+    expect(frameCount).toBe(3810)
+    expect(END).toBe(127)
+  })
+
+  it('never runs the world or the plant backwards', () => {
+    let w = -Infinity
+    let tau = -Infinity
+    for (const f of frames) {
+      const t = f / fps
+      expect(worldAt(t)).toBeGreaterThanOrEqual(w - 1e-9)
+      expect(tauAt(t)).toBeGreaterThanOrEqual(tau - 1e-9)
+      w = worldAt(t)
+      tau = tauAt(t)
+    }
+    expect(tauAt(0)).toBe(0)
+    expect(tauAt(END)).toBeCloseTo(config.growth.seconds, 6)
+  })
+
+  it('does not grow the plant in a hold', () => {
+    const shutter = config.film.shutterDegrees / 360 / fps
+    for (const [from, to, tau] of [[17, 25, config.growth.frostHold], [33, 41, config.growth.stormHold]] as const) {
+      for (let f = hitFrame(from); f < hitFrame(to); f++) {
+        expect(tauAt(f / fps)).toBe(tau)
+        expect(tauAt(f / fps + shutter)).toBe(tau)
+      }
+      expect(tauAt((hitFrame(from) - 1) / fps)).toBeLessThan(tau)
+      expect(tauAt(hitFrame(to) / fps)).toBe(tau)
+      expect(tauAt(hitFrame(to) / fps + shutter)).toBeGreaterThan(tau)
+    }
+    expect([hitFrame(17), hitFrame(25) - 1, hitFrame(33), hitFrame(41) - 1]).toEqual([849, 1259, 1672, 2082])
+    expect(heightAt(config.growth.frostHold)).toBeGreaterThan(0.15)
+    expect(heightAt(config.growth.frostHold)).toBeLessThan(0.22)
+    expect(heightAt(config.growth.stormHold)).toBeGreaterThan(0.56)
+    expect(heightAt(config.growth.stormHold)).toBeLessThan(0.66)
+  })
+
+  it('brings the sun up on the bar lines', () => {
+    const rises: number[] = []
+    for (let f = 1; f < frameCount; f++) if (elevation((f - 1) / fps) < 0 && elevation(f / fps) >= 0) rises.push(f)
+    const bars = rises.map((f) => barAt(f / fps))
+    expect(bars.map((b) => Math.round(b))).toEqual([1, 5, 9, 13, 17, 27, 29, 31, 43, 45, 47, 49, 51, 53, 55])
+    for (const b of bars) expect(Math.abs(b - Math.round(b)) * BAR).toBeLessThan(1.01 / fps)
+  })
+
+  it('keeps every night short', () => {
+    let run = 0
+    let longest = 0
+    for (const f of frames) {
+      if (elevation(f / fps) < -6) run++
+      else run = 0
+      longest = Math.max(longest, run)
+    }
+    expect(longest / fps).toBeLessThanOrEqual(0.8)
+  })
+
+  it('lets the sun down for two beats in the fast time lapse and for under a second every night', () => {
+    const nights: [number, number][] = []
+    let from = -1
+    for (let f = 1; f < frameCount; f++) {
+      const before = elevation((f - 1) / fps)
+      const here = elevation(f / fps)
+      if (before >= 0 && here < 0) from = f
+      if (before < 0 && here >= 0 && from > 0) nights.push([from, f])
+    }
+    expect(nights.length).toBe(14)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeGreaterThan(0.8)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeLessThan(1)
+    const fast = nights.map(([a]) => barAt(a / fps)).filter((b) => (b > 26 && b < 31) || b > 44)
+    expect(fast.length).toBe(9)
+    for (const b of fast) expect(Math.abs(b - Math.floor(b) - 0.5) * BAR).toBeLessThan(1.5 / fps)
+  })
+
+  it('holds the sun where the film needs it', () => {
+    expect(elevation(barTime(25))).toBeCloseTo(SUN.frostEnd, 3)
+    expect(elevation(barTime(33))).toBeCloseTo(SUN.stormFrom, 3)
+    expect(elevation(barTime(41))).toBeCloseTo(SUN.stormTo, 3)
+    expect(elevation(barTime(57))).toBeCloseTo(SUN.bloom, 3)
+    expect(elevation(barTime(61))).toBeCloseTo(SUN.open, 3)
+    expect(elevation(barTime(65))).toBeCloseTo(SUN.crane, 3)
+    expect(elevation(barTime(73))).toBeCloseTo(SUN.last, 3)
+    expect(elevation(END)).toBeCloseTo(SUN.end, 3)
+  })
+
+  it('starts the sharp events on the frame that holds the beat', () => {
+    expect(flashAt((hitFrame(33) - 1) / fps)).toBe(0)
+    expect(flashAt(hitTime(33))).toBe(1)
+    expect(flashAt(hitTime(37))).toBe(1)
+    expect(rainAtBar(barAt((hitFrame(33) - 1) / fps))).toBe(0)
+    expect(rainAtBar(barAt((hitFrame(33) + 3) / fps))).toBeGreaterThan(0)
+    expect(rainAtBar(barAt(hitTime(34)))).toBe(1)
+  })
+
+  it('lets the plant grow only when the frost and the rain have all but gone', () => {
+    const m = blankMoment()
+    const grown = (from: number, to: number): number => heightAt(tauAt(to / fps)) / heightAt(tauAt(from / fps)) - 1
+    let frostFrom = -1
+    let frostTo = -1
+    let rainFrom = -1
+    let rainTo = -1
+    for (const f of frames) {
+      momentAt(f / fps, m)
+      if (m.dials.frost >= 0.2) {
+        if (frostFrom < 0) frostFrom = f
+        frostTo = f
+      }
+      if (m.dials.rain >= 0.2) {
+        if (rainFrom < 0) rainFrom = f
+        rainTo = f
+      }
+    }
+    expect(grown(frostFrom, frostTo)).toBeLessThan(0.01)
+    expect(grown(rainFrom, rainTo)).toBeLessThan(0.01)
+    expect((frostTo - frostFrom) / fps).toBeGreaterThan(12)
+    expect((rainTo - rainFrom) / fps).toBeGreaterThan(13)
+  })
+
+  it('runs in real time in the holds and fastest in the climbs', () => {
+    expect(lapseAt(barTime(20))).toBeLessThan(0.05)
+    expect(lapseAt(barTime(36))).toBeLessThan(0.03)
+    expect(lapseAt(barTime(60))).toBeLessThan(0.03)
+    expect(lapseAt(barTime(8))).toBeCloseTo(0.5, 2)
+    expect(lapseAt(barTime(29.5))).toBeCloseTo(1, 2)
+    expect(lapseAt(barTime(48.5))).toBeCloseTo(1, 2)
+  })
+
+  it('gives every dial a value between 0 and 1 and a light that never jumps while it is lit', () => {
+    const m = blankMoment()
+    let cloud = -Infinity
+    for (const f of frames) {
+      momentAt(f / fps, m)
+      for (const [name, v] of Object.entries(m.dials)) expect(v, `${name} at frame ${f}`).toBeGreaterThanOrEqual(0)
+      for (const [name, v] of Object.entries(m.dials)) expect(v, `${name} at frame ${f}`).toBeLessThanOrEqual(1)
+      expect(m.sun.length()).toBeCloseTo(1, 9)
+      const travel = Math.hypot(m.cloud.shiftX, m.cloud.shiftZ)
+      expect(travel).toBeGreaterThanOrEqual(cloud)
+      cloud = travel
+    }
+  })
+})

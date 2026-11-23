@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en" data-sound="__SOUND__">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0d0f0e" />
+    <title>Sunflower</title>
+    <meta name="description" content="One sunflower from seed to full bloom. A time lapse of 2 minutes 7 seconds, drawn frame by frame in the browser." />
+    <meta property="og:title" content="Sunflower" />
+    <meta property="og:description" content="One sunflower from seed to full bloom. A time lapse of 2 minutes 7 seconds, drawn frame by frame in the browser." />
+    <meta property="og:type" content="video.other" />
+    <link rel="icon" href="data:," />
+    <link rel="preload" as="image" href="film/first-frame.jpg" />
+    <style>
+      :root {
+        --ground: #0d0f0e;
+        --panel: #14130f;
+        --line: #3a362b;
+        --text: #ece7db;
+        --quiet: #a8a290;
+        --gold: #e2b23a;
+        --edge: clamp(16px, 2.4vw, 32px);
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html { height: 100%; background: var(--ground); }
+      body {
+        margin: 0;
+        height: 100vh;
+        height: 100dvh;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+        background: var(--ground);
+        color: var(--text);
+        font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .stage {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        background: #000;
+      }
+      video {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+      .start {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 0 22px 0 18px;
+        border: 1px solid var(--gold);
+        border-radius: 999px;
+        background: rgba(13, 15, 14, 0.82);
+        color: var(--text);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+      .start::before {
+        content: '';
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 7px 0 7px 11px;
+        border-color: transparent transparent transparent var(--gold);
+      }
+      .start:hover { background: rgba(29, 27, 22, 0.92); }
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px 28px;
+        min-height: 72px;
+        padding: 12px var(--edge);
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(58, 54, 43, 0.7);
+        background: var(--panel);
+      }
+      .about { min-width: 0; }
+      h1 {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+      }
+      .about p {
+        margin: 2px 0 0;
+        color: var(--quiet);
+        font-size: 13px;
+      }
+      nav {
+        flex: none;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(29, 27, 22, 0.9);
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 550;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+      }
+      .pill:hover { border-color: var(--gold); }
+      .pill.lead { border-color: var(--gold); }
+      .pill.lead:hover { background: rgba(226, 178, 58, 0.14); }
+      .pill[aria-pressed='true'] { border-color: var(--gold); color: var(--gold); }
+      :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+      [hidden] { display: none !important; }
+      @media (pointer: coarse) {
+        .pill { min-height: 44px; }
+      }
+      @media (max-height: 480px) and (min-aspect-ratio: 1/1) {
+        .bar { min-height: 56px; padding-top: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+        .about p { display: none; }
+      }
+      @media (max-width: 760px), (max-aspect-ratio: 1/1) {
+        html { height: auto; }
+        body { height: auto; min-height: 100vh; min-height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
+        .stage { width: 100%; aspect-ratio: 16 / 9; }
+        .bar {
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: flex-start;
+          gap: 16px;
+          min-height: 0;
+          padding-top: 20px;
+          border-top: 0;
+          background: var(--ground);
+        }
+        h1 { font-size: 20px; }
+        .about p { display: block; margin-top: 6px; font-size: 14px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pill { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <video id="film" autoplay muted playsinline controls preload="auto" poster="film/first-frame.jpg" aria-label="Sunflower, the film">
+        <source src="film/sunflower-720.mp4" type="video/mp4" media="(max-width: 900px)" />
+        <source src="film/sunflower-1080.mp4" type="video/mp4" />
+        <p>This browser cannot play the film here. <a href="film/sunflower-1080.mp4">Open the film file</a>.</p>
+      </video>
+      <button id="start" class="start" type="button" hidden>Play the film</button>
+    </main>
+    <footer class="bar">
+      <div class="about">
+        <h1>Sunflower</h1>
+        <p>One sunflower from seed to full bloom. A time lapse of 2 minutes 7 seconds, drawn frame by frame in the browser.</p>
+      </div>
+      <nav aria-label="More of this project">
+        <button id="sound" class="pill" type="button" aria-pressed="false" hidden>Turn the sound on</button>
+        <a class="pill lead" href="live/index.html">Open the live version</a>
+        <a class="pill" href="__REPO__">Source on GitHub</a>
+      </nav>
+    </footer>
+    <script>
+      (function () {
+        var film = document.getElementById('film')
+        var start = document.getElementById('start')
+        var sound = document.getElementById('sound')
+        var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        function offer(label) {
+          start.textContent = label
+          start.hidden = false
+        }
+        function cover() {
+          film.poster = 'film/cover.jpg'
+          offer('Play the film')
+        }
+        if (calm) {
+          film.autoplay = false
+          film.preload = 'metadata'
+          film.pause()
+          cover()
+        } else {
+          var tried = film.play()
+          if (tried && tried.catch) tried.catch(function (e) { if (e && e.name === 'NotAllowedError') cover() })
+        }
+        start.addEventListener('click', function () {
+          if (film.ended) film.currentTime = 0
+          film.play()
+        })
+        film.addEventListener('play', function () { start.hidden = true })
+        film.addEventListener('ended', function () { offer('Play it again') })
+        if (document.documentElement.getAttribute('data-sound') === 'yes') {
+          var show = function () {
+            var on = !film.muted && film.volume > 0
+            sound.setAttribute('aria-pressed', on ? 'true' : 'false')
+            sound.textContent = on ? 'Turn the sound off' : 'Turn the sound on'
+          }
+          sound.hidden = false
+          sound.addEventListener('click', function () {
+            film.muted = !film.muted
+            if (!film.muted && film.volume === 0) film.volume = 1
+            show()
+          })
+          film.addEventListener('volumechange', show)
+          show()
+        }
+      })()
+    </script>
+  </body>
+</html>

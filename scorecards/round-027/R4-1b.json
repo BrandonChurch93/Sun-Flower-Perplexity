@@ -1,0 +1,49 @@
+{
+  "critic": "R4",
+  "score": 5,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-D-09.png",
+      "where": "mid-stem and lower leaves of the hero plant across frames 2422-2433, especially the middle-left and middle-right leaves",
+      "what": "leaves snap in opposite vertical directions on almost every consecutive 1/30 s frame rather than varying smoothly along a growth trajectory, and the bending deformation tears open bright sky-colored gaps between the midrib and leaf blade that flicker open and shut from frame to frame (also visible in set-D-05.png frames 2233, 2457 and 2532)",
+      "fix": "drive time-lapse leaf nutation with temporally correlated low-amplitude curves instead of uncorrelated per-frame random pose jumps, and skin the midrib and lamina together as a single watertight mesh so grazing poses never separate or self-intersect"
+    },
+    {
+      "severity": "severe",
+      "file": "set-D-06.png",
+      "where": "upper-left side of the flower bud in frame 2944 (98.13 s) and lower-left seed disc in frame 2982 (99.40 s)",
+      "what": "bright yellow ray petals pass straight out through the still-closed dark green involucral bracts before the bracts peel back, and folded petals and bract tips slice through the face of the seed disc as the head opens",
+      "fix": "sequence involucral bract opening ahead of ray-petal extension and add collision or clearance constraints so petals unfold around the bract rim and above the disc florets without interpenetrating either surface"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-10.png",
+      "where": "right rim of the flower head (1 to 5 o'clock) and lower-left interior of the seed disc across frames 2990-3001",
+      "what": "three to four unfolding yellow ray petals pass through one another into a jagged fused sheet with sharp intersection creases, clip through the right-side green involucral bracts and outer disc florets, and a green bract spike pokes straight through the lower-left seed disc",
+      "fix": "stagger individual petal unfolding angles and curl paths with self-collision clearance between adjacent petals, bracts and disc florets, and keep involucral bracts outside the receptacle disc"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-01.png",
+      "where": "seedling stem tip and fallen seed hull in frame 154 (5.13 s) between frames 77 and 231",
+      "what": "between 2.57 s and 5.13 s the curved hypocotyl hook turns into a flat-topped cylindrical stump with two thin vertical green slivers sticking out of the flat cap, while an oversized split clam-shell seed hull pops onto the dirt balanced upright on its pointed tip beside the stem",
+      "fix": "animate the hypocotyl hook straightening continuously while the cotyledons swell and pry the seed hull off their tips, letting the hull slide off at consistent world scale and come to rest flat on the soil"
+    },
+    {
+      "severity": "major",
+      "file": "set-D-07.png",
+      "where": "camera pullback from frame 3318 (110.60 s) through frame 3467 (115.57 s) following set-D-06.png",
+      "what": "after holding a nearly constant close-up distance for almost 14 s across set-D-06.png, the camera abruptly surges backward starting around 111.8 s, halving the hero flower's screen width in 1.27 s (frames 3355 to 3393) and shrinking it fivefold in 3.7 s before sharply decelerating again",
+      "fix": "blend camera Z-translation and crane elevation into one continuous mass-weighted spline from the close-up through the final wide shot with gradual acceleration across 97-127 s instead of a close-up hold followed by a sudden whip pullback"
+    },
+    {
+      "severity": "minor",
+      "file": "set-D-09.png",
+      "where": "rim-lit trichome hairs along the right edge of the hero stem across frames 2422-2433",
+      "what": "subpixel bright hair highlights pop on and off at different heights along the stem silhouette on consecutive frames, creating slight crawling sparkle",
+      "fix": "increase hair supersampling or filter specular roughness on thin subpixel stem trichomes so rim highlights evolve smoothly without per-frame aliasing"
+    }
+  ]
+}

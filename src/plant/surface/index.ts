@@ -1,4 +1,3 @@
-import { segmentStart } from '../../config.ts'
 import { dewGlsl } from './dew/index.ts'
 import { frostGlsl } from './frost/index.ts'
 import { wetGlsl } from './wet/film.ts'
@@ -21,8 +20,6 @@ export const tissueGuide = {
 } as const
 
 // A part fills a Tissue for the pixel and gives it to shadeTissue. Needs the chunks of `makePartSurface` before it.
-// The field's start in film seconds, as shader text: the evening light begins there.
-const FIELD_FROM_S = segmentStart('field').toFixed(1)
 export const tissueGlsl = /* glsl */ `
 struct Tissue {
   // The color of the skin.
@@ -59,6 +56,12 @@ vec3 reliefNormal(vec3 n, vec3 world, float height, float strength) {
   return reliefTilt(n, world, dFdx(height), dFdy(height), strength);
 }
 
+// The share kept of a relief or a grain whose period, in the part's own coordinates 'at', is 'period': one finer than about two pixels would print the screen's blocks of two by two, and goes, smoothly, at every distance.
+float reliefKeep(vec2 at, vec2 period) {
+  vec2 px = period / max(fwidth(at), vec2(1e-9));
+  return smoothstep(2.0, 4.0, min(px.x, px.y));
+}
+
 // Half the reach of one pixel in a part's own coordinates. A height differenced from one such step back to one ahead fades by itself where it is finer than a pixel.
 vec2 reliefReach(vec2 at) {
   vec2 ax = dFdx(at);
@@ -75,6 +78,8 @@ vec3 reliefSlope(vec3 n, vec3 world, vec2 at, vec2 slope, float strength) {
 const float TISSUE_THROUGH = 0.17;
 const float TISSUE_FORWARD = 0.55;
 const float TISSUE_BEAM = 5.5;
+// Under the closed deck of a storm no sun stands behind a blade: the share of what it passes that is left.
+const float TISSUE_DECK = 0.45;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
@@ -95,20 +100,26 @@ const float TISSUE_SPREAD_FAR_M = 0.012;
 const float TISSUE_HID = 0.35;
 // The share of the high sky that the down of a sheet scatters to the eye.
 const float TISSUE_SLATE = 0.21;
+// The hue of a frozen blade's own face close by, at unit luminance: a cold teal.
+const vec3 FROST_TEAL = vec3(0.62, 1.05, 1.2);
+const vec3 NIGHT_TEAL = vec3(0.74, 1.11, 1.11);
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
+// The share of the open sky a blade does not see: its own plant stands in front of it.
+const float TISSUE_SHADE_SKY = 0.4;
 
 // The share by which a blade passes more of the sun once the evening has come.
-const float TISSUE_LATE = 4.0;
+const float TISSUE_LATE = 0.75;
 
-// The evening, from the field's start: the high sky goes out behind the haze and the low sun is all the light a leaf has. Exactly 0 before.
-float tissueEvening() {
-  return smoothstep(${FIELD_FROM_S}, 55.0, uTime);
+// A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun. Where the look says it, the look is heard: it knows the hour the two lights do not show.
+float tissueClearSun() {
+  return uKeyClear >= 0.0 ? uKeyClear : smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
 }
 
-// A sun no brighter than the sky over it stands in mist or cloud: 0 there, 1 under a clear sun.
-float tissueClearSun() {
-  return smoothstep(1.5, 5.0, dot(uSunColor, vec3(0.3, 0.6, 0.1)) / max(dot(skyAmbient(vec3(0.0, 1.0, 0.0)), vec3(0.3, 0.6, 0.1)), 1e-4));
+// A low, clear, warm sun: the high sky goes out behind the haze and the low sun is all the light a leaf has. By the light alone, at every sunrise and sunset; the cold moon is never an evening.
+float tissueEvening() {
+  float warm = smoothstep(0.05, 0.3, (uSunColor.r - uSunColor.b) / max(uSunColor.r, 1e-6));
+  return (1.0 - smoothstep(0.035, 0.21, uSunDir.y)) * warm * (1.0 - uSkyEven) * tissueClearSun();
 }
 
 // With the sun low the sky is bright and warm on its side, dim and cool away from it; thick air evens it. The mean of skyAmbient is kept.
@@ -135,6 +146,13 @@ ${dewGlsl}
 ${wetGlsl}
 
 vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float clear, float sheet) {
+  // On a pixel a part covers only in part its look is worked out beside it: a tissue is held to what a tissue can be.
+  t.albedo = max(t.albedo, 0.0);
+  t.through = max(t.through, 0.0);
+  t.rough = saturate(t.rough);
+  t.wax = saturate(t.wax);
+  t.sheen = saturate(t.sheen);
+  t.occlusion = saturate(t.occlusion);
   // Normals handed over on the far side are turned round, not lit from inside.
   float turn = dot(t.face, view) < 0.0 ? -1.0 : 1.0;
   vec3 F = t.face * turn;
@@ -201,14 +219,23 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float soft = gf * gf * inside * blade;
 
   float frost = uPlantFrost;
+  float melt = 0.0;
+  float ice = frost;
+#ifndef PLANT_FIELD
+  // Where the ice has gone the skin is wet, and no longer cold.
+  if (margin >= 0.0 && frostThaw() > 0.0) {
+    melt = frostGone(at, margin, N) * sheet;
+    ice *= frostLeft(at, margin, N);
+  }
+#endif
   // Rime is seen thick where the eye looks along the face itself, not along each fold of its relief.
   float brink = gf * gf;
   brink *= brink * gf;
-  float bloom = frost * (0.08 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * brink) * (0.55 + 0.45 * t.sheen);
+  float bloom = frostFar() * (0.08 + 0.26 * saturate(N.y) * saturate(N.y) + 0.34 * brink) * (0.55 + 0.45 * t.sheen);
   float flash = 0.0;
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
-    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink);
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink, world);
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
@@ -217,15 +244,42 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * body);
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
+  vec3 own = albedo;
   // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
-  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, frost);
+  // Close by, a frozen blade's own face is a dark cold teal under the white of its crystals, and only what it returns: the light through it keeps its color.
+  vec3 ray = world - uCamPos;
+  float close = sheet * smoothstep(12.0, 24.0, 1.08 / max(length(ray) * length(dFdy(normalize(ray))) * uSize.y, 1e-9));
+  vec3 cold = mix(albedo, FROST_COLD * grey, 0.7) * 0.9;
+  albedo = mix(albedo, cold, ice);
+  albedo = mix(albedo, FROST_TEAL * (0.3 * grey), ice * close);
   albedo = mix(albedo, FROST_RIME, bloom);
-  // Rime on the sun's side sends most of the sun back before it reaches the blade.
-  through *= (1.0 - FROST_SHUT * frost) * (1.0 - 0.65 * bloom);
+  // The room left for the light through, and the tint of the sheen, are set by the tissue and its rime, not by the dark of the ice or the water on it.
+  vec3 room3 = mix(mix(own, cold, frost), FROST_RIME, bloom);
+  // Rime on the sun's side sends most of the sun back before it reaches the blade. Rime on the side turned from the sun takes what crossed the blade and sends it on every way, pale.
+  float crossing = dot(through, vec3(0.3, 0.6, 0.1)) * (1.0 - frostShut * frost);
+  through *= (1.0 - frostShut * frost) * (1.0 - 0.65 * bloom);
+  crossing -= dot(through, vec3(0.3, 0.6, 0.1));
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
   // Hoar breaks the mirror of the wax: a frozen skin is matt.
-  wax *= 1.0 - FROST_MATT * frost;
+  wax *= 1.0 - FROST_MATT * frost * (1.0 - melt);
+  // The water fills the fine relief: the skin is darker and deeper in color, and its wax is a narrow mirror that lights only the ridges and swells that face the sun or the bright sky.
+  albedo = mix(albedo, max(mix(vec3(grey), own, 1.2), 0.0) * 0.6, melt);
+  through = max(through, 0.0);
+  float most = max(through.r, max(through.g, through.b));
+  vec3 deep = most * pow(through / max(most, 1e-6), vec3(1.0 + melt));
+  through = deep * (dot(through, vec3(0.3, 0.6, 0.1)) / max(dot(deep, vec3(0.3, 0.6, 0.1)), 1e-6));
+  // Under the cold moon the eye sees what a blade passes as a dim teal: the light stays on its edges and its sheen.
+  float moon = smoothstep(0.1, 0.2, (uSunColor.b - uSunColor.r) / max(uSunColor.b, 1e-6)) * smoothstep(0.1, 0.3, 1.0 - uSkyEven);
+  through = mix(through, NIGHT_TEAL * (0.5 * dot(through, vec3(0.3, 0.6, 0.1))), moon);
+  rough = mix(rough, min(rough, 0.25), melt);
+  wax = mix(wax, max(wax, 0.3), melt);
+  fuzz *= 1.0 - 0.7 * melt;
+  if (melt > 0.0) {
+    N = normalize(mix(N, F, 0.3 * melt));
+    ndl = dot(N, L);
+    ndv = min(abs(dot(N, view)) + 0.002, 1.0);
+  }
 
   float peak = max(through.r, max(through.g, through.b));
   // A thin part is asked on the sun's side, a thick one on the side that is seen.
@@ -249,7 +303,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 glow = vec3(sun);
   float reach = 1.0;
   if (peak > 0.0 && sun < 0.98 && uShadowOn > 0.5) {
-    float beyond = sunShadow(world + L * TISSUE_LAYER_M + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
+    float beyond = sunShadow(world + L * (TISSUE_LAYER_M * mix(1.0, 4.0, saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6 - 1.0))) + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
     glow += min(through * TISSUE_LAYER, vec3(1.0)) * saturate(beyond - sun);
     // The bounce never switches off along a shadow's edge: the creases of the part dim it instead.
     reach = 0.5 + 0.5 * beyond;
@@ -272,6 +326,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 passed = through * mix(vec3(1.0), hue, 0.85 + 0.15 * slant) * (1.0 - 0.3 * slant);
   // A soaked blade is evenly clear between its veins: what it passes of the sky no longer follows its thin and thick places.
   vec3 evened = (hue * hue * (WET_PASS * smoothstep(0.0, WET_VEIN, peak)) - passed) * (wet * sheet);
+  float deck = mix(1.0, mix(TISSUE_DECK, 1.0, tissueClearSun()), smoothstep(0.2, 0.6, wet));
+  passed *= deck;
+  evened *= deck;
   float a4 = against * against;
   a4 *= a4;
   a4 *= a4;
@@ -282,8 +339,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float dusk = tissueEvening() * (1.0 - sheer) * (1.0 - sheer);
   // What it passes then is the low sun hardly dyed, most where the face stands square to it: gold on one blade, green on the next.
   // Never more than the blade has left after what it returns.
-  float room = max((1.0 - max(albedo.r, max(albedo.g, albedo.b))) / max(peak, 1e-4) - 1.0, 0.0);
-  vec3 lamp = through * uSunColor * (min(TISSUE_LATE * dusk * (0.2 + 1.6 * wrap * saturate(-ndl)), room) * wrap * lobe * crossed);
+  float room = max((1.0 - max(room3.r, max(room3.g, room3.b))) / max(peak, 1e-4) - 1.0, 0.0);
+  vec3 lamp = through * uSunColor * (deck * min(TISSUE_LATE * dusk * 1.6 * wrap * saturate(-ndl), room) * wrap * lobe * crossed);
   if (dew > 0.0) skyBack *= 1.0 + min(mix(DEW_SHEER, DEW_SHEER_DRY, saturate(1.0 - 4.0 * wet)) * dew * sheet, room);
 
 #ifdef PLANT_FIELD
@@ -295,7 +352,8 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   return color;
 #else
   vec3 H = normalize(L + view);
-  float ndh = saturate(dot(N, H));
+  vec3 G = normalize(mix(N, F, 0.65 * sheet));
+  float ndh = saturate(dot(G, H));
   float vdh = saturate(dot(view, H));
   float lit = max(ndl, 0.0) * smoothstep(-0.08, 0.12, fdl);
 
@@ -318,8 +376,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   g5 = g5 * g5 * grazing;
   // The rise of the mirror at grazing is a line thinner than a pixel on a small round part: it fades with the outline.
   // A mist of beads breaks the mirror: each bead shows the whole sky, so the rise at grazing goes and the high sky takes the place of the horizon.
-  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
-  vec3 R = reflect(-view, N);
+  // Water mirrors more than a leaf's wax does.
+  float f0 = mix(TISSUE_F0, WET_F0, rained);
+  float mirror = wax * (f0 + (max(1.0 - rough, f0) - f0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
+  vec3 R = reflect(-view, G);
   // Water on a living skin is never one mirror: it stands over cells and hairs, and each small rise shows its own piece of the sky.
   if (rained > 0.0 && margin >= 0.0) R = normalize(R + wetRipple(at, t1, t2) * rained);
   vec3 toSky = normalize(mix(R, N, max(a2, DEW_BREAK * mist)));
@@ -346,33 +406,39 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
 
   vec3 direct = uSunColor * (sun * crease);
   // The neighbors are taken to be as bright as the part itself: petals light each other far more than leaves do.
-  float thin = sheer * min(max(albedo.r, max(albedo.g, albedo.b)) / 0.7, 1.0);
+  float thin = sheer * min(max(room3.r, max(room3.g, room3.b)) / 0.7, 1.0);
   float shade = 1.0 - saturate(lit1);
   // The neighbors that shade a thin part stand in front of some of its sky.
   float cover = 1.0 - 0.8 * thin * shade;
-  vec3 color = albedo * (direct * (matte * enter * under * skin) + skyFront * buried * (under * cover));
+  // A blade sees a part of its sky through its neighbors and the stem: its shade is the sky's, and darker than the sky.
+  float seen = 1.0 - TISSUE_SHADE_SKY * sheet * (1.0 - sheer) * (1.0 - sheer);
+  vec3 color = albedo * (direct * (matte * enter * under * skin) + skyFront * buried * (under * cover * seen));
   // The evening's high sky is no mirror image worth the name on a blade: the cold face goes with it.
-  color += direct * (gloss * skin) + skyGloss * (mirror * open * cover * (1.0 - 0.85 * dusk));
+  vec3 pale = mix(vec3(1.0), room3 / max(max(room3.r, max(room3.g, room3.b)), 1e-3), 0.6 + 0.25 * sheet);
+  // On a sheet the sheen comes off the down and the cells under the wax as much as off the wax: a paler green, not white.
+  vec3 sheen = mix(vec3(1.0), pale, 0.7 * sheet);
+  color += direct * sheen * (gloss * skin) + skyGloss * sheen * (mirror * open * cover * (1.0 - 0.85 * dusk));
   // What hides the sun hides the brightest of the sky behind as well: a shaded blade does not glow by itself.
   float behind = 0.6 + 0.4 * lit1;
   if (dew > 0.0) behind = mix(behind, DEW_BEHIND, dew * sheet);
   color += passed * (uSunColor * glow * (crease * wrap * lobe * crossed) + skyBack * (open * behind)) + lamp * glow * crease;
+  color += uSunColor * glow * FROST_RIME * (crossing * sheet * crease * wrap * lobe * smoothstep(0.0, 0.3, -fdl) * smoothstep(0.0, 0.3, frostThaw()));
   if (wet > 0.0) color += evened * skyBack * (open * behind);
   // In shade a thin, colored tissue is lit by the sun off its neighbors and through them: twice colored, so deep and warm.
   color += albedo * hue * uSunColor * (TISSUE_BOUNCE * crease * thin * reach * shade * under * crossed);
   // Only the side that faces the sun: the far side of a stem stays in shade.
   float catches = smoothstep(-0.3, 0.4, 0.5 * (fdl + ndl)) * (0.15 + 0.85 * against * against);
-  vec3 pale = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.6);
   color += (direct * (catches * TISSUE_GLANCE * soft) + skyFront * (0.5 * open * TISSUE_FUZZ * rim * inside * blade * cover * (1.0 - 0.7 * dusk))) * pale * fuzz;
   // The down on a blade scatters the sky well before the edge: a soft sheen, paler than the green under it.
   color += skyFront * pale * (TISSUE_DOWN * (1.0 - 0.85 * dusk) * open * fuzz * grazing * grazing * (1.0 - rim) * blade * cover);
   // On the broad face of a sheet the down scatters the high sky: the cool sheen of a dark leaf, the short end most and not dyed by the pigment under it. Only what the tissue neither returns nor passes is there to scatter.
   float up = saturate(0.5 + 0.5 * N.y);
   float spare = 1.0 - keep * max(total.r, max(total.g, total.b));
-  color += uSkyZenith * vec3(0.6, 0.85, 1.0) * (TISSUE_SLATE * (1.0 - dusk) * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
+  color += uSkyZenith * pale * (TISSUE_SLATE * (1.0 - dusk) * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
-  color += direct * (FROST_FLASH * flash);
+  color += direct * frostSpark * (FROST_FLASH * flash);
+  color += skyFront * open * FROST_RIME * (frost * frostSky);
   // Which side of the outline the sun is on, as the eye sees it.
   float vl = dot(view, L);
   float side = smoothstep(0.0, 0.6, (fdl - fv * vl) / max(sqrt(max(1.0 - vl * vl, 0.0)), 0.05));
@@ -380,7 +446,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   color += (direct + skyFront * open) * FROST_RIME * (FROST_SIDE * frost * (0.4 + 0.6 * t.sheen) * body * saturate((1.0 - fv) / 0.6) * side);
   // The sun enters a clear body at its outline and leaves toward the eye: a bright line down the sun's side, near the sun's own color.
   if (clear > 0.0) {
-    float line = 1.0 - smoothstep(0.08, 0.45, fv);
+    float line = (1.0 - smoothstep(0.08, 0.45, fv)) * smoothstep(0.0, 0.6, 0.5 * fv / max(fwidth(fv), 1e-5));
     vec3 own = mix(vec3(1.0), albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3), 0.3);
     color += direct * own * (TISSUE_CLEAR * clear * line * line * side * (0.2 + 0.8 * against * against));
   }

@@ -1,13 +1,16 @@
 import * as THREE from 'three'
-import { config } from '../config.ts'
+import { smoothstep } from '../core/curves.ts'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
-import { fillFragment, maxFillPx, nearFragment, reachFragment } from './fill.ts'
-import { brightFragment, downFragment, flareFragment, levelGain, upFragment } from './glare.ts'
+import type { Quality } from '../v2/api.ts'
+import { now } from '../v2/now.ts'
+import { fillFragment, nearFragment, reachFragment } from './fill.ts'
+import { brightFragment, downFragment, levelGain, SHAFT_TAPS, shaftFragment, upFragment } from './glare.ts'
 import { gradeFragment } from './grade.ts'
-import { gradeOf, lensLook } from './looks.ts'
+import { blankLens, lensAt, lum, type LensLook } from './looks.ts'
 import { sunReadFragment, type SunInFrame } from './sun.ts'
+import { CELL, cellFragment, Discs, joinFragment } from './discs.ts'
 
 type Mode = 0 | 1 | 2 | 3
 
@@ -17,6 +20,10 @@ const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backli
 const fillGain = 2.3
 // With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
 const soloGain = 0.9
+// The pyramid level the shafts are cast through.
+const OPEN_LEVEL = 1
+// The level the tear in the deck is looked for in.
+const HOLE_LEVEL = 3
 
 function halfTarget(width: number, height: number): THREE.WebGLRenderTarget {
   const t = new THREE.WebGLRenderTarget(width, height, {
@@ -53,8 +60,8 @@ export function toneConstants(contrast: number, white: number): { m: number; nor
   return { m, norm: (w + m) / w }
 }
 
-function fillPass(rings: number): FullscreenPass {
-  return new FullscreenPass(fillFragment(rings), { ...shared, tFrame: { value: null }, uSpread: { value: 1 }, uEdge: { value: 0 }, uSeed: { value: 0 } })
+function fillPass(rings: number, front: boolean): FullscreenPass {
+  return new FullscreenPass(fillFragment(rings, front), { ...shared, tFrame: { value: null }, uSpread: { value: 1 }, uEdge: { value: 0 }, uSeed: { value: 0 }, uTurn: { value: 1 } })
 }
 
 export class Post {
@@ -62,28 +69,40 @@ export class Post {
   private fillB: THREE.WebGLRenderTarget
   private down: THREE.WebGLRenderTarget[] = []
   private up: THREE.WebGLRenderTarget[] = []
-  private flareTarget: THREE.WebGLRenderTarget | null = null
-  private flareLevel = 0
+  private shaftA: THREE.WebGLRenderTarget | null = null
+  private shaftB: THREE.WebGLRenderTarget | null = null
   private nearTarget: THREE.WebGLRenderTarget | null = null
-  private readonly sunTarget = halfTarget(2, 2)
-  private readonly sunRead = new FullscreenPass(sunReadFragment, { tHot: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } })
+  private cells: THREE.WebGLRenderTarget[] = []
+  private discTarget: THREE.WebGLRenderTarget | null = null
+  private quality: Quality | null = null
+  private held = false
+  // For the bench: `nolens` in the list of what is shown leaves the glass out (bloom, the sun in the lens, shafts), so a frame can be seen with and without it.
+  private readonly bare = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nolens')
+  private readonly unfilled = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nofill')
+  private warmed = false
+  private readonly look: LensLook = blankLens()
+  private readonly sunTarget = halfTarget(4, 2)
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uDisc: { value: 0.005 }, uRim: { value: 0.005 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
-  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uAirSoft: { value: 0 }, uAirFloor: { value: 0 } })
-  private readonly fillWide = fillPass(3)
-  private readonly fillTight = fillPass(2)
-  private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 } })
+  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uExposure: { value: 1 }, uDiscScale: { value: 0.5 }, uGrow: { value: 0 }, uMixed: { value: 0 }, tPure: { value: null }, uPure: { value: 0 } })
+  private readonly fillWide = fillPass(3, true)
+  private readonly fillTight = fillPass(2, false)
+  private readonly cellLight = new FullscreenPass(cellFragment(false), { ...shared, tRaw: { value: null }, tHeld: { value: null }, uFar: { value: 0 } })
+  private readonly cellPlace = new FullscreenPass(cellFragment(true), { ...shared, tRaw: { value: null }, tHeld: { value: null }, uFar: { value: 0 } })
+  private readonly discs = new Discs()
+  private readonly join = new FullscreenPass(joinFragment, { tFill: { value: null }, tDiscs: { value: null }, tRaw: { value: null }, uMixed: { value: 0 }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 } })
+  private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 }, uSkyLevel: { value: 1 } })
   private readonly downPass = new FullscreenPass(downFragment, { tSource: { value: null }, uTexel: { value: new THREE.Vector2() } })
-  private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) } })
-  private readonly flare = new FullscreenPass(flareFragment, { tNear: { value: null }, tFar: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 }, uStreak: { value: 0 }, uGhost: { value: 0 } })
+  private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) }, tWide: { value: null }, uSmall: { value: 0 } })
+  private readonly shaft = new FullscreenPass(shaftFragment, { tSource: { value: null }, tSun: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.5) }, uRatio: { value: 1 }, uAspect: { value: 1 }, uFan: { value: 0 }, uAlpha: { value: 0 } })
   private readonly grade = new FullscreenPass(gradeFragment, {
     ...shared,
     tFrame: { value: null },
-    tRaw: { value: null },
-    uFar: { value: 0 },
     tBloom: { value: null },
-    tFlare: { value: null },
+    tShafts: { value: null },
+    tOpen: { value: null },
+    tSun: { value: null },
     uBloom: { value: 0 },
-    uFlare: { value: 0 },
     uExposure: { value: 1 },
     uGain: { value: new THREE.Vector3(1, 1, 1) },
     uLift: { value: new THREE.Vector3() },
@@ -94,33 +113,33 @@ export class Post {
     uPunch: { value: 0 },
     uPale: { value: 0 },
     uGreens: { value: 1 },
+    uKnee: { value: 0.88 },
     uTop: { value: 0.12 },
     uWhiten: { value: 0 },
     uBlack: { value: new THREE.Vector3() },
-    tHot: { value: null },
     uSunAt: { value: new THREE.Vector2(0.5, 0.5) },
-    uStar: { value: 0 },
-    uStarLen: { value: 1 },
-    uGlow: { value: 0 },
+    uSunLight: { value: new THREE.Vector3() },
+    uSunAir: { value: new THREE.Vector3(1, 1, 1) },
+    uSunCore: { value: 0.01 },
+    uSunHot: { value: 0 },
+    uFan: { value: 0 },
+    uShaftLevel: { value: 0 },
+    uBloomCap: { value: 0 },
+    uHaze: { value: 0 },
+    uVeilSun: { value: 0 },
+    uMist: { value: 0 },
+    uWarm: { value: 0 },
+    uEvening: { value: 0 },
+    tRaw: { value: null },
+    uFar: { value: 0 },
     uShafts: { value: 0 },
-    tSun: { value: null },
-    uRays: { value: 0 },
-    uSunClear: { value: 0 },
-    uGlowNear: { value: new THREE.Vector3(1, 0.9, 0.76) },
-    uGlowFar: { value: new THREE.Vector3(1, 0.5, 0.2) },
-    uAirTint: { value: new THREE.Vector3(1, 0.4, 0.12) },
-    uLowSun: { value: 0 },
-    uBloomWide: { value: 0.1 },
-    uLowFlare: { value: 1 },
-    uKnee: { value: 0.88 },
-    uDisc: { value: 0 },
-    uFarFill: { value: 1 },
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
     uGrain: { value: 0 },
-    uAirSoft: { value: 0 },
-    uSpokes: { value: 0 },
     uSeed: { value: 0 },
+    uDrift: { value: 0 },
+    uTight: { value: 0 },
+    uHorizon: { value: 0 },
     uMode: { value: 0 },
   })
 
@@ -132,8 +151,11 @@ export class Post {
 
   private buildChain(width: number, height: number): void {
     for (const t of [...this.down, ...this.up]) t.dispose()
-    this.flareTarget?.dispose()
+    this.shaftA?.dispose()
+    this.shaftB?.dispose()
     this.nearTarget?.dispose()
+    this.discTarget?.dispose()
+    for (const t of this.cells) t.dispose()
     this.down = []
     this.up = []
     // The widest level is about eight texels tall: one texel of it is an eighth of the frame, which is what carries the veil.
@@ -146,10 +168,16 @@ export class Post {
       this.down.push(halfTarget(w, h))
       if (i < levels - 1) this.up.push(halfTarget(w, h))
     }
-    this.flareLevel = Math.max(0, levels - 5)
-    const at = this.down[this.flareLevel]
-    this.flareTarget = halfTarget(at.width, at.height)
+    const at = this.down[OPEN_LEVEL]
+    this.shaftA = halfTarget(at.width, at.height)
+    this.shaftB = halfTarget(at.width, at.height)
     this.nearTarget = halfTarget(Math.max(2, Math.ceil(width / 8)), Math.max(2, Math.ceil(height / 8)))
+    const cw = Math.ceil(width / CELL)
+    const ch = Math.ceil(height / CELL)
+    this.cells = [fullTarget(cw, ch), fullTarget(cw, ch)]
+    this.discs.setCells(cw * ch)
+    this.discTarget = halfTarget(width, height)
+    this.warmed = false
   }
 
   setSize(width: number, height: number): void {
@@ -158,18 +186,27 @@ export class Post {
     this.buildChain(width, height)
   }
 
+  // `film` and `high` draw everything. `low` is for a weak graphics card: the out of focus fill takes two rounds in place of three and the shafts two in place of three.
+  setQuality(quality: Quality | null): void {
+    this.quality = quality
+  }
+
+  // For the proofs of a world at rest: the grain stops following the frame, so nothing of the lens changes from frame to frame.
+  setStill(on: boolean): void {
+    this.held = on
+  }
+
   bytes(): number {
     let sum = (this.fillA.width * this.fillA.height * 16) * 2
-    for (const t of [...this.down, ...this.up]) sum += t.width * t.height * 8
-    if (this.flareTarget) sum += this.flareTarget.width * this.flareTarget.height * 8
-    if (this.nearTarget) sum += this.nearTarget.width * this.nearTarget.height * 8
+    for (const t of [...this.down, ...this.up, this.shaftA, this.shaftB, this.nearTarget, this.discTarget]) if (t) sum += t.width * t.height * 8
+    for (const t of this.cells) sum += t.width * t.height * 16
     return sum + this.sunTarget.width * this.sunTarget.height * 8
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number, specks: number, skyHold: number, airSoft: number, airFloor: number): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean, exposure: number, pure: THREE.Texture | null, smooth: boolean): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
-    if (farCircle > 0) {
+    if (farCircle > 0 || !this.warmed) {
       const n = this.near.uniforms
       n.tFrame.value = frame
       n.uRadiusScale.value = scale
@@ -182,39 +219,84 @@ export class Post {
     r.tNear.value = near.texture
     r.uRadiusScale.value = scale
     r.uFar.value = farCircle
-    r.uSpecks.value = specks
-    r.uSkyHold.value = skyHold
-    r.uAirSoft.value = airSoft
-    r.uAirFloor.value = airFloor
+    r.uSpecks.value = this.look.specks
+    r.uSkyHold.value = 1
+    r.uExposure.value = exposure
+    const discScale = samples === 1 ? 0.5 : 0.55 / Math.sqrt(samples)
+    r.uDiscScale.value = discScale
+    r.uGrow.value = samples > 1 ? 1 : 0
+    // The film's own tiers draw a shot that is sharp over a range through the middle of the lens on every sample and tell this pass one sample: such a frame has edge pixels that are part thing and part ground. So has a frame of one sample drawn at several places in each pixel.
+    const mixed = samples === 1 && (pure !== null || smooth || this.quality === 'film') ? 1 : 0
+    r.uMixed.value = mixed
+    r.tPure.value = pure ?? frame
+    r.uPure.value = pure ? 1 : 0
     this.reach.render(renderer, this.fillA)
+    this.drawDiscs(renderer, frame, this.fillA.texture, farCircle, discScale)
     let from = this.fillA
     let to = this.fillB
     // One sample has no copies to join: the whole blur circle is drawn here, so its rim is weighted as the sampler weights the rim of the lens.
-    const rounds: { pass: FullscreenPass; spread: number; edge: number }[] = [
-      { pass: this.fillWide, spread: 1, edge: samples === 1 ? 0.35 : 0 },
-      { pass: this.fillTight, spread: 0.45, edge: 0 },
-      { pass: this.fillTight, spread: 0.18, edge: 0 },
-    ]
+    // The first rounds turn their taps per pixel and leave fine noise; the last stands on a fixed lattice over a picture already smooth at the spacing of its taps, and leaves none.
+    const rounds: { pass: FullscreenPass; spread: number; edge: number; turn: number }[] = low
+      ? [
+          { pass: this.fillWide, spread: 1, edge: samples === 1 ? 0.35 : 0, turn: 1 },
+          { pass: this.fillTight, spread: 0.3, edge: 0, turn: 0 },
+        ]
+      : [
+          { pass: this.fillWide, spread: 1, edge: samples === 1 ? 0.35 : 0, turn: 1 },
+          { pass: this.fillTight, spread: 0.45, edge: 0, turn: 1 },
+          { pass: this.fillTight, spread: 0.18, edge: 0, turn: 0 },
+        ]
     for (let i = 0; i < rounds.length; i++) {
       const u = rounds[i].pass.uniforms
       u.tFrame.value = from.texture
       u.uSpread.value = rounds[i].spread
       u.uEdge.value = rounds[i].edge
-      u.uSeed.value = frameIndex + 0.25 * i
+      u.uTurn.value = rounds[i].turn
+      // The stipple of the fill is a fixed pattern: one that followed the frame made far things a little sharper in some frames than in others.
+      u.uSeed.value = 0.25 * i
       rounds[i].pass.render(renderer, to)
       const swap = from
       from = to
       to = swap
     }
-    return from.texture
+    const j = this.join.uniforms
+    j.tFill.value = from.texture
+    j.tDiscs.value = (this.discTarget as THREE.WebGLRenderTarget).texture
+    j.tRaw.value = frame
+    j.uMixed.value = mixed
+    j.uRadiusScale.value = scale
+    j.uFar.value = farCircle
+    this.join.render(renderer, to)
+    return to.texture
+  }
+
+  // The lights the hold took out of the blurred places, each drawn as a disc of its blur circle.
+  private drawDiscs(renderer: THREE.WebGLRenderer, frame: THREE.Texture, held: THREE.Texture, farCircle: number, discScale: number): void {
+    const [light, place] = this.cells
+    for (const [pass, target] of [[this.cellLight, light], [this.cellPlace, place]] as const) {
+      const u = pass.uniforms
+      u.tRaw.value = frame
+      u.tHeld.value = held
+      u.uFar.value = farCircle
+      pass.render(renderer, target)
+    }
+    const d = this.discs.uniforms
+    d.tLight.value = light.texture
+    d.tPlace.value = place.texture
+    d.tRaw.value = frame
+    d.uSize.value.set(this.fillA.width, this.fillA.height)
+    d.uDiscScale.value = discScale
+    this.discs.render(renderer, this.discTarget as THREE.WebGLRenderTarget)
   }
 
   // The light the glass scatters: a pyramid of ever wider blurs of what is bright, summed with a share for each width.
-  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, grade: WorldDef['grade'], veil: number, halation: number, core: number, tint: readonly number[]): THREE.Texture {
+  private scatter(renderer: THREE.WebGLRenderer, source: THREE.Texture, grade: WorldDef['grade'], skyLevel: number): THREE.Texture {
+    const look = this.look
     const b = this.bright.uniforms
     b.tFrame.value = source
     b.uExposure.value = grade.exposure
     b.uKnee.value = grade.bloomKnee
+    b.uSkyLevel.value = skyLevel
     this.bright.render(renderer, this.down[0])
     const levels = this.down.length
     for (let i = 1; i < levels; i++) {
@@ -229,47 +311,94 @@ export class Post {
       u.tSource.value = from.texture
       u.tBase.value = this.down[i].texture
       u.uTexel.value.set(1 / from.width, 1 / from.height)
-      if (i === this.up.length - 1) u.uSourceGain.value.fromArray(levelGain(levels - 1, levels, veil, halation, core, tint))
+      if (i === this.up.length - 1) u.uSourceGain.value.fromArray(levelGain(levels - 1, levels, look.veil, look.halation, look.core))
       else u.uSourceGain.value.set(1, 1, 1)
-      u.uBaseGain.value.fromArray(levelGain(i, levels, veil, halation, core, tint))
+      u.uBaseGain.value.fromArray(levelGain(i, levels, look.veil, look.halation, look.core))
+      u.tWide.value = this.down[i + 1].texture
+      u.uSmall.value = i < 2 ? look.sparks : 0
       this.upPass.render(renderer, this.up[i])
       from = this.up[i]
     }
     return from.texture
   }
 
-  // The frame before lens and grade stays in the accumulator. `sun` is where the main light sits in the picture and how wide infinity blurs; without it there is no flare and the sky is filled like everything else.
-  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null): void {
+  // How open the way to the sun is from every place in the frame, at a quarter of its size.
+  private castShafts(renderer: THREE.WebGLRenderer, sun: SunInFrame, rounds: number, aspect: number, fan: number): THREE.Texture {
+    const a = this.shaftA as THREE.WebGLRenderTarget
+    const b = this.shaftB as THREE.WebGLRenderTarget
+    const u = this.shaft.uniforms
+    u.uSun.value.set(sun.x, sun.y)
+    u.tSun.value = this.sunTarget.texture
+    u.uAspect.value = aspect
+    u.uFan.value = fan
+    // The last reading stands at a twelfth of the way from the sun, whatever the count.
+    const total = Math.pow(SHAFT_TAPS, rounds) - 1
+    let ratio = Math.exp(Math.log(1 / 12) / total)
+    let source: THREE.Texture = this.down[OPEN_LEVEL].texture
+    let to = a
+    for (let i = 0; i < rounds; i++) {
+      u.tSource.value = source
+      u.uRatio.value = ratio
+      u.uAlpha.value = i === 0 ? 1 : 0
+      this.shaft.render(renderer, to)
+      source = to.texture
+      to = to === a ? b : a
+      ratio = Math.pow(ratio, SHAFT_TAPS)
+    }
+    return source
+  }
+
+  // The frame before lens and grade stays in the accumulator. `sun` is where the sun sits in the picture and how wide infinity blurs; without it the glass sees no sun and the sky is filled like everything else.
+  // `pure` is one of the pictures the frame was summed from, where they were all drawn through one place on the lens: it tells whose circle a shared edge pixel has.
+  // `smooth` says the one sample of the frame was drawn at several places in each pixel.
+  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null, pure: THREE.Texture | null = null, smooth = false): void {
     const mode = MODES[diag]
+    const seed = this.held ? 0 : frameIndex
     const g = this.grade.uniforms
     g.uMode.value = mode
-    g.uSeed.value = frameIndex
+    g.uSeed.value = seed
+    g.uDrift.value = seed / 30
     let source = frame
     if (mode === 0) {
-      const look = lensLook(def, frameIndex / config.film.fps)
-      const grade = gradeOf(def, frameIndex / config.film.fps)
-      const airSoft = sun ? (look.air * this.fillA.height) / config.formats.master.height : 0
-      // With many samples the copies already stand close and the fill would leave the disc its hard edge. A floor under its reach keeps the edge soft and the middle bright, as an apodized lens draws it.
-      const scale = samples === 1 ? 0.5 * soloGain : Math.max((0.5 * fillGain) / Math.sqrt(samples), look.soft)
-      source = this.fillGaps(renderer, frame, frameIndex, scale, samples, sun ? sun.farCircle : 0, look.specks, look.skyHold, airSoft, sun ? sun.y - 0.25 : 2)
-      const bloom = this.scatter(renderer, source, grade, look.veil, look.halation, look.core, look.veilTint)
-      const flare = sun ? look.flare * sun.weight : 0
-      const target = this.flareTarget as THREE.WebGLRenderTarget
-      if (flare > 0 && sun) {
-        const f = this.flare.uniforms
-        f.tNear.value = this.down[this.flareLevel].texture
-        f.tFar.value = this.down[Math.min(this.down.length - 1, this.flareLevel + 2)].texture
-        f.uSun.value.set(sun.x, sun.y)
-        f.uAspect.value = target.width / target.height
-        f.uStreak.value = 0.3
-        f.uGhost.value = 0.09
-        this.flare.render(renderer, target)
+      const width = this.fillA.width
+      const height = this.fillA.height
+      const aspect = width / height
+      const low = (this.quality ?? (samples > 1 ? 'film' : 'high')) === 'low'
+      const look = lensAt(now, def, sun, aspect, this.look)
+      const grade = def.grade
+      const farCircle = sun ? sun.farCircle : 0
+      const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
+      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low, grade.exposure, pure, smooth)
+      if (this.unfilled) source = frame
+      const toSun = shared.uSkyHorizonSun.value
+      const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
+      const bloom = this.scatter(renderer, source, grade, skyLevel)
+      if (this.bare) look.sun[0] = look.sun[1] = look.sun[2] = 0
+      const light = lum(look.sun)
+      const at = sun ?? { x: 0.5, y: 0.5, weight: 0, farCircle: 0 }
+      const disc = at.disc ?? 0.005
+      const blurred = Math.hypot(disc, (0.5 * farCircle) / width)
+      if (light > 0 || !this.warmed) {
+        const r = this.sunRead.uniforms
+        r.tRaw.value = frame
+        r.tBright.value = this.down[Math.min(HOLE_LEVEL, this.down.length - 1)].texture
+        r.uSunAt.value.set(at.x, at.y)
+        r.uTrack.value.set(at.dx ?? 0, at.dy ?? 0)
+        r.uAspect.value = aspect
+        r.uPatch.value = Math.max(blurred, 1 / width)
+        r.uDisc.value = Math.max(0.9 * disc, 1 / width)
+        r.uRim.value = Math.max(disc, 1 / width)
+        r.uFar.value = farCircle
+        this.sunRead.render(renderer, this.sunTarget)
       }
+      const cast = light * look.shafts > 0 || !this.warmed
+      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, smoothstep(0, 0.3, look.fan)) : (this.shaftA as THREE.WebGLRenderTarget).texture
       const tone = toneConstants(grade.contrast, grade.white)
       g.tBloom.value = bloom
-      g.tFlare.value = target.texture
-      g.uBloom.value = grade.bloom
-      g.uFlare.value = flare
+      g.tShafts.value = shafts
+      g.tOpen.value = this.down[OPEN_LEVEL].texture
+      g.tSun.value = this.sunTarget.texture
+      g.uBloom.value = this.bare ? 0 : grade.bloom * look.bloom
       g.uExposure.value = grade.exposure
       g.uGain.value.fromArray(grade.gain)
       g.uLift.value.fromArray(grade.lift)
@@ -280,49 +409,35 @@ export class Post {
       g.uPunch.value = look.punch
       g.uPale.value = look.pale
       g.uGreens.value = look.greens
+      g.uKnee.value = look.knee
       g.uTop.value = look.top
       g.uWhiten.value = look.whiten
       g.uBlack.value.fromArray(look.black)
-      // The floors under the bloom and the shafts would pop as the sun crosses the frame edge, so they fade over its last few percent.
-      const margin = sun ? Math.min(1, Math.max(0, Math.min(sun.x, 1 - sun.x, sun.y, 1 - sun.y) / 0.04)) : 0
-      const seen = margin * margin * (3 - 2 * margin)
-      const hot = this.down[Math.min(this.down.length - 1, 3)].texture
-      if (sun) {
-        const r = this.sunRead.uniforms
-        r.tHot.value = hot
-        r.uSunAt.value.set(sun.x, sun.y)
-        r.uAspect.value = this.fillA.width / this.fillA.height
-        this.sunRead.render(renderer, this.sunTarget)
-      }
-      g.tHot.value = hot
-      g.tSun.value = this.sunTarget.texture
-      g.uStar.value = sun ? look.star * sun.weight * seen : 0
-      g.uGlow.value = sun ? look.glow * sun.weight * seen : 0
-      g.uShafts.value = sun ? look.shafts * sun.weight * seen : 0
-      g.uRays.value = look.rays
-      g.uSunClear.value = look.sunClear
-      g.uGlowNear.value.fromArray(look.glowNear)
-      g.uGlowFar.value.fromArray(look.glowFar)
-      g.uAirTint.value.fromArray(look.airTint)
-      g.uLowSun.value = look.lowSun
-      g.uBloomWide.value = look.bloomWide
-      g.uLowFlare.value = look.lowFlare
-      g.uKnee.value = look.knee
-      g.uDisc.value = look.disc
+      g.uSunAt.value.set(at.x, at.y)
+      g.uSunLight.value.fromArray(look.sun).multiplyScalar(look.glare)
+      g.uSunAir.value.fromArray(look.air)
+      g.uSunCore.value = 1.2 * blurred
+      g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
+      g.uHaze.value = look.haze
+      g.uFan.value = look.fan
+      // Under a deck that has just torn the sun itself is still thin, and the beams carry the light of the gap: the level between the two.
+      g.uShaftLevel.value = Math.sqrt(Math.max(look.sun[0], look.sun[1], look.sun[2]) * look.glare * skyLevel)
+      g.uBloomCap.value = look.cap
+      g.uVeilSun.value = look.veilSun
+      g.uMist.value = look.mist
+      g.uWarm.value = look.warm
+      g.uEvening.value = look.evening
+      g.uTight.value = look.tight
+      g.uHorizon.value = at.horizon ?? 0
       g.tRaw.value = frame
-      g.uFar.value = sun ? sun.farCircle : 0
-      g.uFarFill.value = sun ? Math.min(sun.farCircle * scale, maxFillPx) : 1
-      if (sun) g.uSunAt.value.set(sun.x, sun.y)
-      g.uStarLen.value = 0.2 * this.fillA.width
+      g.uFar.value = farCircle
+      g.uShafts.value = cast ? look.shafts : 0
       g.uSaturation.value = grade.saturation
       g.uVignette.value = grade.vignette
       g.uGrain.value = grade.grain * look.grain
-      g.uAirSoft.value = airSoft
-      g.uSpokes.value = look.spokes
+      this.warmed = true
     }
     g.tFrame.value = source
     this.grade.render(renderer, null)
   }
 }
-
-

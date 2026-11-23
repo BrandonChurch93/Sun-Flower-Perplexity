@@ -1,11 +1,11 @@
-import { config, keyTime } from '../../config.ts'
+import { config } from '../../config.ts'
 import { clamp, smoothstep } from '../../core/curves.ts'
 import { hash01 } from '../../core/random.ts'
 import { heightAt, leafAge, leafCount, leafStemFraction, seedLeafFraction, stemRadius } from '../growth.ts'
 import type { Pose } from '../skeleton.ts'
 
 const TAU = Math.PI * 2
-const END = config.film.durationSeconds
+const END = config.growth.seconds
 
 // The tissue of the stem is named by where it ends up, in meters from the foot at the last frame.
 // Anchors: the foot, the middle of the stretch below the seed leaves, the seed-leaf joint, every leaf node, the top.
@@ -160,7 +160,7 @@ export function wrapAngle(d: number): number {
 }
 
 // The young stem is never an even tube: it tapers from the foot to the hook, is a little stouter where the hook was, and swells and narrows slightly along its length. It has filled out evenly by 6 s.
-const SEEDLING_KEY_S = keyTime('dawn-seedling')
+const SEEDLING_KEY_S = 6.5
 export function youngGirth(time: number, u: number): number {
   const young = 1 - smoothstep(3, 6, time)
   const at = (u - 0.8) / 0.13

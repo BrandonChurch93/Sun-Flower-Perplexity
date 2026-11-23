@@ -1,0 +1,133 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "upright crown and side leaves across the frame (regions 1, 3, 5, 6)",
+      "what": "the two open V-shaped top leaves in -a are clamped into a single vertical spear clipped off the top frame edge, while oversized side and foreground leaves crowd the middle and lower corners instead of two lower arching leaves",
+      "fix": "reframe or pull back to restore sky headroom above the crown, open the top pair into a distinct V-shape around the central bud, and lower and reduce the lateral leaves to two downward-arching leaves with open space around the stem"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "lower-right margin of the leaf at right (region 5)",
+      "what": "the folded underside edge of the right leaf is a hard, ruler-straight geometric slab with layered polygonal planes and isolated spikes poking out of it",
+      "fix": "give the right leaf margin a natural organic curve, subtle curl, and continuous crystalline frost with no straight polygonal crease"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "sun, sky, mist, and background field (regions 2, 3, 5)",
+      "what": "the large warm golden-cream sun orb, cool cyan-blue morning mist, distant treeline silhouette, and deep blue frosted ground of -a are replaced by a tiny faint white sun smudge in a featureless pale gray sky over a muddy warm-brown blur with ringed bokeh discs",
+      "fix": "enlarge and warm the sun orb and its golden-peach bloom beside the crown, restore the misty treeline and deep cool teal-blue frosted field below, soften the ringed bokeh circles, and match -a's cool cyan-blue shadow grade"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "leaf surfaces across all leaves (regions 1, 3, 5, 6)",
+      "what": "the leaves are lumpy, opaque chalky gray-slate with long straight needle spikes jutting out of flat blade faces and single-pixel white specular fireflies, losing -a's rich dark blue-green color and warm olive-green backlit translucency",
+      "fix": "restore deep blue-green leaf tissue with warm green subsurface translucency in backlit areas, smooth the exaggerated surface lumps, replace long vertical face spikes with short crystalline hoarfrost concentrated on rims and veins, and eliminate specular firefly pixels"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "low sun behind right leaves and soil behind stem (regions 3, 4)",
+      "what": "the distinct low golden-orange sun disc under the right leaf in -a and its warm amber specular glints on the frosted soil behind the stem are missing, leaving only flat pale cream haze and dark unlit pebbles",
+      "fix": "restore the low warm golden sun disc just beneath the upper-right leaf margin and add warm amber rim highlights and bokeh glints across the soil clods behind the stem"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "foreground and midground soil across the field (regions 4, 5)",
+      "what": "instead of matte, crumbly dark blue-black earth clods sparsely dusted with fine rime frost on ridges, -b renders glossy dark rounded cobbles capped with thick opaque white snow patches and loose uniform black beads speckled with white dots near the stem",
+      "fix": "replace the snowy rounded cobbles and beaded pebbles with rough, matte dark blue-black soil clods and confine frost to delicate crystalline rime along small ridges"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "base of the hero stem (region 4)",
+      "what": "a large, stiff dark grass clump rises beside the lower-right leaf and a striped sprout sits at the left foot of the stem, whereas -a has open soil around the stem with only tiny hair-thin shoots",
+      "fix": "remove the tall grass clump and striped sprout next to the stem so the hero seedling stands cleanly in open soil with only tiny inconspicuous shoots"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "face of the leaf (region 2)",
+      "what": "an opaque, chalky white frost layer blankets much of the blade along with flat square and polygonal white flakes and bright metallic-looking specular hotspots, hiding the rich dark blue-green leaf tissue and crisp veins seen in -a",
+      "fix": "remove the chalky white wash, flat geometric flakes, and mirror-like specular glints so deep dark blue-green leaf color and veins show clearly beneath discrete, translucent 3D hoarfrost granules"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "out-of-focus ground, air, and overall grade (region 6)",
+      "what": "the grade shifts from -a's cool cyan-slate morning mist to a neutral brownish-gray palette with crushed pitch-black ground shadows, no atmospheric mist between leaf and ground, and hard bright-ringed circular bokeh discs",
+      "fix": "shift the color grade to -a's cool cyan-blue morning palette, add subtle cool freezing mist in the air to lift the crushed ground blacks, and soften the optical blur to remove hard-ringed bokeh circles"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "leaf contour, orientation, and right-edge stem (regions 1, 4, 5)",
+      "what": "the leaf has an angular kite-like polygonal outline pointing right-to-left from a thick vertical stem along the right frame border with a bright warm blurry leaf directly behind its upper peak, whereas -a shows a curved lance-ovate leaf pointing up-right with open rim separation and a softly recessed stem",
+      "fix": "round out the straight polygonal leaf edges into a natural curved lance-ovate silhouette, recess and soften the prominent right-edge stem (orienting the leaf up-right if blocking permits), and darken or clear the warm blurry leaf behind the upper frost rim"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "stem surface and edges (region 4)",
+      "what": "the stem is thicker, completely smooth and hairless, and dull olive-brown with vertical stripes instead of -a's slender dark green stem covered in glowing backlit hairs and frost rim-light",
+      "fix": "narrow the stem slightly, deepen its color to rich dark green, and add dense fine backlit trichomes and frost rim highlights along both edges"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "midground seedlings and left horizon hill (regions 5, 6)",
+      "what": "the distinct out-of-focus green seedlings spaced across the midground in -a are missing in -b, and the cool blue-gray hill silhouette on the left horizon is washed out into pale haze above a dark brown blur band",
+      "fix": "populate the midground with matching soft-focus young green seedlings at left, center, and right, and restore the darker cool blue-gray hill silhouette rising out of cool mist on the left"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "hero plant leaves (regions 1, 2, 3)",
+      "what": "the leaves are paler milky gray-green with clumpy, overly long spiky ice needles at their tips and edges and a blocky dark under-leaf silhouette at left, losing -a's deep dark blue-green shadow density and fine even edge frost",
+      "fix": "deepen the dark blue-green shadow tones of the leaves, replace long clumpy tip spikes with short fine rime frost along the margins, and clean up the jagged under-leaf silhouette in region 2"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "lower leaf edge, tip, and stem focus planes (regions 1, 3, 4, 5)",
+      "what": "the entire leaf from tip to lower margin and the vertical stem at right are uniformly razor-sharp, lacking -a's shallow macro depth of field where focus falls off smoothly away from the upper-mid leaf plane",
+      "fix": "use a shallower macro depth of field so the lower leaf edge, petiole base, and adjacent stem fall smoothly out of focus while keeping the primary upper leaf plane and frost rim sharp"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "frost crystals on leaf margins and stem hairs (regions 1, 3, 4, 5)",
+      "what": "sparse, razor-straight, overly long CG spikes shoot far out from the leaf edges and stick out rigidly from a pale speckled gray-green stem instead of -a's feathered crystalline hoarfrost clusters and soft green plant tissue",
+      "fix": "replace the ultra-long straight spikes on the leaf margins and stem with shorter, clustered dendritic frost crystals and softer natural trichomes over deeper green stem tissue"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "foreground leaves at left and lower right (regions 3, 6)",
+      "what": "the close foreground leaves are rendered tack-sharp right to the lens instead of falling softly out of focus as in -a",
+      "fix": "apply shallow macro focus falloff so the closer lower leaves blur softly while focus holds on the central stem and upper crown"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "central stem (region 4)",
+      "what": "the stem is twice as thick, pale washed-out gray-green, crowded on the right by the right leaf base, and lined on the left with sparser, stiffer straight spikes instead of -a's slender dark green stem furred on both sides with fine warm-lit frost",
+      "fix": "make the stem narrower and darker green, open clean petiole separation on the right, and line both edges with dense, fine backlit hairs and frost crystals"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-01-b.png",
+      "where": "sky gradient across pairs 1 and 3 (set-A-02.png regions 1, 6 and set-A-06.png region 2)",
+      "what": "the sky and mist gradients are completely smooth and noiseless CG ramps, lacking the fine organic photographic grain visible at native crop size in -a",
+      "fix": "add subtle fine photographic grain matching -a across the sky and mist"
+    }
+  ]
+}

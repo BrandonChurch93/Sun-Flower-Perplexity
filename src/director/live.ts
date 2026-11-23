@@ -1,27 +1,58 @@
-import { config, frameCount, type AssetSetId, type TierId } from '../config.ts'
+import { config, frameCount, type TierId } from '../config.ts'
 import type { DiagName } from '../core/shading.ts'
-import { formatById } from '../core/tiers.ts'
+import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
+import { createDesk, type Advice } from '../player/desk.ts'
+import type { Loading } from '../player/loading.ts'
+import { reportFile, reportName, advisedText, reportText, scriptBound, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
+import { filmPlan, play, type Playing } from '../player/play.ts'
+import { check, CHECK_SECONDS, measure, pictureSize, record, timing, timingScript, type Deck, type Measured } from '../player/session.ts'
+import { createSheet } from '../player/sheet.ts'
+import { stateRun, stateText, type StateReport } from '../player/state.ts'
+import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
+import type { Quality } from '../v2/api.ts'
+import { barAt, hitFrame } from '../v2/clock.ts'
 import type { Film } from './film.ts'
 import css from './live.module.css'
 import { createMenu, MENU_MODES, type MenuMode } from './menu.ts'
-import { clampAzimuth, clampDolly, clampElevation, optionsFor, VIEW, writeOptions, type Options } from './modes.ts'
-import { clampFrame, cuts, keys, segmentAt, segments } from './timeline.ts'
+import { clampAv, clampAzimuth, clampDolly, clampElevation, optionsFor, VIEW, writeOptions, type Options } from './modes.ts'
+import { clampFrame, keys, segmentAt, segments } from './timeline.ts'
 
-export interface LiveState { frame: number; shown: number; tier: TierId | null; playing: boolean; busy: boolean; error: string | null }
+export type Activity = 'ready' | 'playing' | 'recording' | 'check' | 'warming'
 
-declare global {
-  interface Window { live?: LiveState }
+export interface PlayerState {
+  activity: Activity
+  frame: number
+  shown: number
+  quality: Quality
+  track: { name: string; sha256: string; matches: boolean } | null
+  picture: { width: number; height: number; exact: boolean }
+  report: Report | null
+  advice: string | null
+  timed: Timed[]
+  error: string | null
+  sky: string
+  // Plays the frames from `first` to `last` against the clock, without a track unless one is loaded, and gives the run's report.
+  range(first: number, last: number): Promise<Report | null>
+  // Draws every frame from `first` to `last` in order through the same loop, one at each animation frame, with no clock to keep. Only for measuring what a frame costs.
+  every(first: number, last: number): Promise<Report | null>
+  // Sets the film to every frame from `first` to `last` in a row and draws nothing: what the page's own work costs, by owner.
+  script(first: number, last: number): Promise<StateReport | null>
+  // The pacing report over `first` to `last`: live play against the clock, then the script alone. The button runs it over the whole film.
+  measure(first: number, last: number): Promise<{ live: Report; script: StateReport | null; text: string } | null>
 }
 
-const REST_MS = 400
+declare global {
+  interface Window { player?: PlayerState }
+}
+
 const IDLE_MS = 3000
 const URL_MS = 300
-const TURN_MS = 100
 const ORBIT_DEG_PER_PX = 0.25
 const WHEEL_PER_PX = 0.0015
 const LINE_PX = 16
 const THUMB_PX = 3
-const SHIFT_STEP = 10
+const NUMBERED_BARS = 8
+const TALL_BARS = 4
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -30,61 +61,111 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
   return node
 }
 
+function cardName(gl: WebGL2RenderingContext): string {
+  const told = gl.getExtension('WEBGL_debug_renderer_info')
+  const name: unknown = gl.getParameter(told ? told.UNMASKED_RENDERER_WEBGL : gl.RENDERER)
+  return typeof name === 'string' && name ? name : 'not told'
+}
+
 function between(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value))
 }
 
-export function startLive(film: Film, options: Options, host: HTMLElement): void {
+const REVIEW_KEYS = new Set([' ', 'ArrowLeft', 'ArrowRight', '[', ']'])
+
+function clockText(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  return `${m}:${(seconds - m * 60).toFixed(2).padStart(5, '0')}`
+}
+
+// What the check says about this machine at this quality, and whether the lower quality is worth a try.
+export function advise(report: Report, quality: Quality): Advice {
+  if (!report.complete) return { text: 'The check was stopped before its end. Run it again.', tryLow: false }
+  if (report.holds) return { text: `Record at ${quality} quality.`, tryLow: false }
+  if (quality !== 'low') return { text: report.frames.skipped === 0 ? 'It nearly keeps up. Try low quality.' : 'Try low quality.', tryLow: true }
+  if (report.frames.skipped === 0) return { text: 'It nearly keeps up at low quality. Record, and look at the report after it.', tryLow: false }
+  return { text: 'A recording stays with the music and skips frames. The picture is never drawn smaller to keep up. The export makes a file with every frame at any speed.', tryLow: false }
+}
+
+export function startLive(film: Film, options: Options, host: HTMLElement, loading: Loading | null): void {
+  const root = document.documentElement
+  const stage = document.getElementById('stage') as HTMLElement
   const canvas = document.getElementById('film') as HTMLCanvasElement
+  const curtain = document.getElementById('curtain') as HTMLElement
   const note = document.getElementById('note') as HTMLElement
   const fps = config.film.fps
   const lastFrame = frameCount - 1
+  const tier: TierId = options.tier
+  const review = options.mode === 'review'
 
   let frame = options.frame
-  const view = { az: options.az, el: options.el, dolly: options.dolly, world: options.world }
-  let formatId = options.format.id
-  let assets: AssetSetId = options.assets
+  const view = { az: options.az, el: options.el, dolly: options.dolly }
   let diag: DiagName = options.diag
-  let tier: TierId = options.chosen.tier ? options.tier : 'review'
-  const chosen = { ...options.chosen }
+  let quality: Quality = film.quality ?? 'high'
+  let av = options.av
+  let marks = options.marks
+  let track: Track | null = null
 
+  let activity: Activity = 'ready'
   let version = 0
   let drawnVersion = -1
-  let refined = false
-  let running = false
+  let drawing: Promise<void> = Promise.resolve()
+  let pumping = false
   let dead = false
-  let playing = false
-  let playFrom = 0
-  let playOrigin = 0
-  let holding = 0
-  let restAt = 0
-  let wake: (() => void) | null = null
+  let playing: Playing | null = null
+  let until = lastFrame
+  let session: { stop(): void } | null = null
+  // Whether the quality was named by the address or by hand. A quality the timing chose is not written into the address, so the next loading times again.
+  let named = options.quality !== null
+  let seekTo: number | null = null
+  let again = false
 
-  const state: LiveState = { frame, shown: -1, tier: null, playing: false, busy: true, error: null }
-  window.live = state
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, timed: [], error: null, sky: film.skyName, range, every, script, measure: (first, last) => startMeasure(clampFrame(first), clampFrame(last)) }
+  window.player = state
+  window.showcase.pacing = () => playing?.soFar() ?? state.report
+
+  let clockKey = ''
+  let clockReady: Promise<FilmClock> | null = null
+  function clockFor(): Promise<FilmClock> {
+    const key = `${track?.sha256 ?? ''}|${av}|${marks}`
+    if (clockReady && key === clockKey) return clockReady
+    const old = clockReady
+    const bytes = track?.bytes ?? null
+    clockKey = key
+    clockReady = (async () => {
+      if (old) await old.then((c) => c.ctx.close(), () => undefined)
+      return makeClock(bytes, { avMs: av, marks })
+    })()
+    clockReady.catch(() => undefined)
+    return clockReady
+  }
+
+  const deck: Deck = {
+    film,
+    tier,
+    root,
+    stage,
+    curtain,
+    facts(kind, ctx): RunFacts {
+      const box = canvas.getBoundingClientRect()
+      const ratio = window.devicePixelRatio
+      return {
+        kind,
+        quality,
+        format: `${film.format.width} x ${film.format.height}`,
+        tier,
+        track: track ? { name: track.name, sha256: track.sha256, matches: track.matches } : null,
+        avMs: av,
+        marks,
+        audio: ctx ? { sampleRate: ctx.sampleRate, baseLatencyMs: Number((ctx.baseLatency * 1000).toFixed(2)), outputLatencyMs: Number(((ctx.outputLatency || 0) * 1000).toFixed(2)), stepMs: 0 } : { sampleRate: 0, baseLatencyMs: 0, outputLatencyMs: 0, stepMs: 0 },
+        screen: { width: window.innerWidth, height: window.innerHeight, pixelRatio: ratio, fullScreen: document.fullscreenElement !== null, pictureWidth: Math.round(box.width * ratio), pictureHeight: Math.round(box.height * ratio) },
+        browser: navigator.userAgent,
+      }
+    },
+  }
 
   const menu = createMenu(host, {
     jump: (to) => seek(to, true),
-    hold: (world) => {
-      view.world = world
-      touch()
-    },
-    format: (id) => {
-      formatId = formatById(id).id
-      chosen.format = true
-      touch()
-    },
-    tier: (next) => {
-      tier = next
-      chosen.tier = true
-      refined = false
-      touch()
-    },
-    assets: (set) => {
-      assets = set
-      chosen.assets = true
-      touch()
-    },
     diag: (name) => {
       diag = name
       touch()
@@ -92,79 +173,129 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
     go: (mode) => {
       location.assign(linkTo(mode))
     },
+    pacing: () => {
+      const report = playing?.soFar() ?? state.report
+      return report ? reportText(report, machine()) : null
+    },
+  })
+
+  function machine(): string[] {
+    const canvas = film.stage.canvas
+    let exported: string | null = null
+    try {
+      exported = localStorage.getItem(EXPORT_NOTE)
+    } catch {}
+    return [
+      `picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`,
+      `screen: ${window.innerWidth} x ${window.innerHeight} at ${window.devicePixelRatio}, ${navigator.hardwareConcurrency} processor threads`,
+      `browser: ${navigator.userAgent}`,
+      `graphics: ${cardName(film.stage.gl)}`,
+      ...(state.timed.length ? [`timed at loading: ${state.timed.map(timedText).join('; ')}`] : []),
+      `programs built at loading: ${film.built ? `${film.built.programs}, beside the page: ${film.built.beside ? 'yes' : 'no'}` : 'not built'}`,
+      `loading: ${window.loadingLog?.readyMs ? `ready ${(window.loadingLog.readyMs / 1000).toFixed(1)} s after the page opened` : 'not measured'}`,
+      ...(exported ? [exported] : []),
+    ]
+  }
+
+  const sheet = createSheet(host)
+
+  const desk = createDesk(host, { quality, av, marks }, {
+    track: (file) => void pick(file),
+    record: () => void startRecord(),
+    check: () => void startCheck(),
+    measure: () => void startMeasure(0, lastFrame),
+    quality: (q) => void setQuality(q, false),
+    checkLow: () => void setQuality('low', true),
+    av: (ms) => {
+      av = clampAv(ms)
+      syncUrl()
+    },
+    marks: (on) => {
+      marks = on
+      syncUrl()
+    },
   })
 
   const bar = make('div', css.bar)
   bar.setAttribute('role', 'group')
   bar.setAttribute('aria-label', 'Timeline')
-  const play = make('button', css.play)
-  play.type = 'button'
-  play.append(make('span', css.icon))
-  const track = make('div', css.track)
-  track.style.setProperty('--thumb', `${THUMB_PX}px`)
+  const stepper = (text: string, label: string, act: () => void): HTMLButtonElement => {
+    const b = make('button', css.step, text)
+    b.type = 'button'
+    b.setAttribute('aria-label', label)
+    b.title = label
+    b.addEventListener('click', act)
+    return b
+  }
+  const playButton = make('button', css.play)
+  playButton.type = 'button'
+  playButton.append(make('span', css.icon))
+  const steps = make('div', css.steps)
+  steps.append(
+    stepper('|‹', 'Back one bar', () => stepBar(-1)),
+    stepper('‹', 'Back one frame', () => seek(frame - 1)),
+    stepper('›', 'Forward one frame', () => seek(frame + 1)),
+    stepper('›|', 'Forward one bar', () => stepBar(1)),
+  )
+  const trackBox = make('div', css.track)
+  trackBox.style.setProperty('--thumb', `${THUMB_PX}px`)
   const strip = make('div', css.segments)
   strip.setAttribute('aria-hidden', 'true')
   const segmentNodes = segments.map((s) => {
     const node = make('span', css.segment)
     node.style.flexGrow = String(s.frames)
-    node.append(make('span', css.name, s.id))
+    node.title = `${s.name}, bars ${s.fromBar} to ${s.toBar}`
+    if (s.toBar - s.fromBar >= 4) node.append(make('span', css.name, s.name))
     strip.append(node)
     return node
   })
   const played = make('div', css.played)
-  const marks = make('div', css.marks)
-  marks.setAttribute('aria-hidden', 'true')
-  const place = (node: HTMLElement, at: number) => {
-    node.style.setProperty('--at', String(at / lastFrame))
-    marks.append(node)
+  const marksBox = make('div', css.marks)
+  marksBox.setAttribute('aria-hidden', 'true')
+  const place = (node: HTMLElement, at: number): HTMLElement => {
+    node.style.setProperty('--at', String(between(at / lastFrame, 0, 1)))
+    marksBox.append(node)
+    return node
   }
-  for (const c of cuts) place(make('i', css.cut), c.frame)
   for (const k of keys) place(make('i', css.keyMark), k.frame)
+  const firstBar = Math.ceil(barAt(0) - 1e-6)
+  const lastBar = Math.floor(barAt(lastFrame / fps) + 1e-6)
+  for (let b = firstBar; b <= lastBar; b++) {
+    const at = hitFrame(b)
+    const tick = place(make('i', css.tick), at)
+    if ((b - 1) % TALL_BARS === 0) tick.dataset.tall = 'yes'
+    if ((b - 1) % NUMBERED_BARS === 0) place(make('span', css.barNumber, String(b)), at)
+  }
   const scrub = make('input', css.scrub)
   scrub.type = 'range'
   scrub.min = '0'
   scrub.max = String(lastFrame)
   scrub.step = '1'
   scrub.setAttribute('aria-label', 'Time')
-  track.append(strip, played, marks, scrub)
+  trackBox.append(strip, played, marksBox, scrub)
   const readout = make('div', css.readout)
   const seconds = make('span', css.seconds)
-  const unitName = make('span', css.unit)
-  const dot = make('span', css.dot)
-  dot.setAttribute('aria-hidden', 'true')
-  readout.append(seconds, unitName, dot)
-  bar.append(play, track, readout)
+  const frameText = make('span', css.dim)
+  const barText = make('span', css.dim)
+  const sectionName = make('span', css.unit)
+  readout.append(seconds, frameText, barText, sectionName)
+  bar.append(playButton, steps, trackBox, readout)
   host.append(bar)
 
   function current(): Options {
-    return {
-      ...options,
-      mode: 'live',
-      format: formatById(formatId),
-      tier: chosen.tier ? tier : options.tier,
-      assets,
-      frame,
-      diag,
-      world: view.world,
-      az: clampAzimuth(view.az),
-      el: clampElevation(view.el),
-      dolly: clampDolly(view.dolly),
-      hold: false,
-      loop: false,
-      chosen: { ...chosen },
-    }
+    return { ...options, mode: review ? 'review' : 'live', frame, diag, quality: named ? quality : null, av, marks, az: clampAzimuth(view.az), el: clampElevation(view.el), dolly: clampDolly(view.dolly), hold: false, loop: false }
   }
 
   function linkTo(mode: MenuMode): string {
     const now = current()
-    return `${location.pathname}${writeOptions(mode === 'live' ? now : optionsFor(mode, now))}`
+    return `${location.pathname}${writeOptions(mode === 'live' ? now : optionsFor(mode, { ...now, mode: 'live' }))}`
   }
 
   let urlTimer = 0
   function syncUrl(): void {
     window.clearTimeout(urlTimer)
     urlTimer = window.setTimeout(() => {
-      if (playing) return
+      if (activity !== 'ready') return
       history.replaceState(history.state, '', `${linkTo('live')}${location.hash}`)
       syncMenu()
     }, URL_MS)
@@ -173,73 +304,113 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
   function syncMenu(): void {
     const links = {} as Record<MenuMode, string>
     for (const m of MENU_MODES) links[m] = linkTo(m)
-    menu.update({ frame, unit: segmentAt(frame).id, world: view.world, format: formatId, tier, assets, diag, links })
+    menu.update({ frame, unit: segmentAt(frame).id, diag, links })
+    desk.exportLink(links.export)
   }
 
   let shownUnit = ''
   function syncBar(): void {
     const segment = segmentAt(frame)
-    const time = `${(frame / fps).toFixed(2)} s`
+    const time = frame / fps
+    const barNow = barAt(time)
+    const whole = Math.floor(barNow + 1e-6)
+    const beat = Math.floor((barNow - whole) * config.music.beatsPerBar + 1e-6) + 1
     scrub.value = String(frame)
-    scrub.setAttribute('aria-valuetext', `${time}, ${segment.id}`)
-    seconds.textContent = time
-    unitName.textContent = segment.id
+    scrub.setAttribute('aria-valuetext', `${time.toFixed(2)} seconds, ${segment.name}`)
+    seconds.textContent = clockText(time)
+    frameText.textContent = `frame ${frame}`
+    barText.textContent = barNow >= 1 ? `bar ${whole}.${beat}` : 'before bar 1'
+    sectionName.textContent = segment.name
     played.style.setProperty('--at', String(frame / lastFrame))
     if (segment.id !== shownUnit) {
       shownUnit = segment.id
       for (const [i, node] of segmentNodes.entries()) node.dataset.current = segments[i].id === segment.id ? 'yes' : 'no'
-      syncMenu()
+      if (activity === 'ready') syncMenu()
     }
-    play.setAttribute('aria-label', playing ? 'Pause' : 'Play')
-    play.dataset.playing = playing ? 'yes' : 'no'
+    const on = activity === 'playing'
+    playButton.setAttribute('aria-label', on ? 'Pause' : 'Play')
+    playButton.dataset.playing = on ? 'yes' : 'no'
     state.frame = frame
-    state.playing = playing
   }
 
-  function setBusy(busy: boolean): void {
-    state.busy = busy
-    bar.dataset.busy = busy ? 'yes' : 'no'
+  function become(next: Activity, status: string): void {
+    activity = next
+    state.activity = next
+    desk.status(status)
+    desk.busy(next !== 'ready' && next !== 'playing')
+    syncBar()
   }
 
-  function rest(): void {
-    restAt = performance.now() + REST_MS
+  function applyView(): void {
+    film.diag = diag
+    film.view.azimuthDeg = view.az
+    film.view.elevationDeg = view.el
+    film.view.dolly = view.dolly
   }
 
-  // Something about the picture changed: draw it again, and let the address follow.
+  // A recording and a check show the film as it is: its own camera and its finished picture.
+  function filmView(): void {
+    film.diag = 'beauty'
+    film.view.azimuthDeg = 0
+    film.view.elevationDeg = 0
+    film.view.dolly = 1
+  }
+
+  function fail(error: unknown): void {
+    dead = true
+    const text = error instanceof Error ? error.message : String(error)
+    state.error = text
+    note.textContent = `The film stopped drawing: ${text}. Reload the page to start again.`
+    idle(false)
+  }
+
+  // While nothing runs, the frame under the playhead is drawn again whenever something about it changed.
+  function pump(): Promise<void> {
+    if (pumping || dead) return drawing
+    pumping = true
+    drawing = (async () => {
+      try {
+        while (drawnVersion !== version && activity === 'ready') {
+          const v = version
+          const f = frame
+          applyView()
+          await film.renderFrame(f, tier, true)
+          state.shown = f
+          drawnVersion = v
+        }
+      } catch (error) {
+        fail(error)
+      }
+      pumping = false
+    })()
+    return drawing
+  }
+
   function touch(): void {
     version++
-    rest()
-    setBusy(true)
     syncBar()
-    syncMenu()
     syncUrl()
-    const w = wake
-    wake = null
-    if (w) w()
-    void pump()
+    if (activity === 'ready') void pump()
   }
 
   function seek(to: number, keepPlaying = false): void {
-    frame = clampFrame(to)
-    if (playing) {
-      if (keepPlaying) {
-        playFrom = frame
-        playOrigin = performance.now()
-      } else setPlaying(false)
+    const target = clampFrame(to)
+    if (activity === 'playing') {
+      seekTo = target
+      again = keepPlaying
+      playing?.stop()
+      return
     }
+    if (activity !== 'ready') return
+    frame = target
     touch()
   }
 
-  function setPlaying(on: boolean): void {
-    if (on === playing) return
-    playing = on
-    if (on) {
-      if (frame >= lastFrame) frame = 0
-      playFrom = frame
-      playOrigin = performance.now()
-    }
-    idle(false)
-    touch()
+  function stepBar(direction: number): void {
+    const now = Math.floor(barAt(frame / fps) + 1e-6)
+    let to = hitFrame(direction > 0 ? now + 1 : now)
+    if (direction < 0 && to >= frame) to = hitFrame(now - 1)
+    seek(to)
   }
 
   function resetView(): void {
@@ -249,126 +420,326 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
     touch()
   }
 
-  function pause(ms: number): Promise<void> {
-    return new Promise((resolve) => {
-      let settled = false
-      const done = () => {
-        if (settled) return
-        settled = true
-        if (wake === done) wake = null
-        resolve()
-      }
-      wake = done
-      window.setTimeout(done, ms)
-    })
+  function show(report: Report, advice: Advice | null = null): void {
+    state.report = report
+    state.advice = advice ? advisedText({ text: advice.text, numbers: advice.numbers ?? '', last: advice.last ?? '' }) : null
+    desk.report(report, advice)
   }
 
-  // The next look at the clock while playing. Nothing is drawn inside the callback.
-  function turn(): Promise<void> {
-    return new Promise((resolve) => {
-      let settled = false
-      const done = () => {
-        if (settled) return
-        settled = true
-        resolve()
-      }
-      requestAnimationFrame(done)
-      window.setTimeout(done, TURN_MS)
-    })
-  }
-
-  function fail(error: unknown): void {
-    dead = true
-    playing = false
-    const text = error instanceof Error ? error.message : String(error)
-    state.error = text
-    note.textContent = `The film stopped drawing: ${text}. Reload the page to start again.`
-    setBusy(false)
-    syncBar()
-    idle(false)
-  }
-
-  async function settle(): Promise<void> {
-    if (film.format.id !== formatId) await film.setFormat(formatById(formatId))
-    if (film.assets.set !== assets) {
-      const before = film.assets.set
-      try {
-        await film.setAssets(assets)
-      } catch (error) {
-        note.textContent = `The ${assets} asset set could not load: ${error instanceof Error ? error.message : String(error)}. The ${before} set is back.`
-        assets = before
-        await film.setAssets(before)
-        syncMenu()
-        syncUrl()
-      }
-    }
-    film.diag = diag
-    film.view.azimuthDeg = view.az
-    film.view.elevationDeg = view.el
-    film.view.dolly = view.dolly
-    film.view.world = view.world
-  }
-
-  async function draw(wanted: TierId): Promise<boolean> {
-    const v = version
-    const f = frame
-    await settle()
-    await film.renderFrame(f, wanted, true)
-    state.shown = f
-    state.tier = wanted
-    if (v !== version) return false
-    drawnVersion = v
-    return true
-  }
-
-  // One frame at a time, always to the end: a frame that started is finished, then the newest one wanted is drawn.
-  async function pump(): Promise<void> {
-    if (running || dead) return
-    running = true
+  async function startPlay(): Promise<void> {
+    if (activity !== 'ready' || dead) return
+    if (frame >= until) frame = 0
+    become('playing', 'Playing')
+    if (review) note.textContent = ''
+    let run: Run | null = null
     try {
-      for (;;) {
-        if (playing) {
-          const due = playFrom + Math.floor(((performance.now() - playOrigin) / 1000) * fps)
-          const next = Math.min(lastFrame, due)
-          if (next >= lastFrame) {
-            playing = false
-            rest()
-            idle(false)
-            syncUrl()
+      const clock = await clockFor()
+      await drawing
+      applyView()
+      const facts = deck.facts('play', clock.ctx)
+      run = await runFrom(clock, frame / fps, true, av)
+      playing = play({
+        film,
+        tier,
+        plan: filmPlan(frame, until),
+        time: run.time,
+        facts: (stepMs) => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } }),
+        tick(_seconds, cue) {
+          if (performance.now() - stirred > IDLE_MS) idle(true)
+          applyView()
+          if (cue && cue.frame !== frame) {
+            frame = cue.frame
+            syncBar()
           }
-          if (next !== frame) {
-            frame = next
-            version++
-          }
-          syncBar()
-        }
-        if (drawnVersion !== version) {
-          await draw('draft')
-          refined = tier === 'draft'
-          continue
-        }
-        if (playing) {
-          await turn()
-          continue
-        }
-        if (!refined) {
-          const wait = restAt - performance.now()
-          if (holding > 0 || wait > 0) {
-            await pause(holding > 0 ? REST_MS : wait)
-            continue
-          }
-          if (await draw(tier)) refined = true
-          continue
-        }
-        break
-      }
-      setBusy(false)
+        },
+      })
+      const report = await playing.finished
+      state.shown = frame
+      if (report.frames.drawn > 0) show(report)
     } catch (error) {
       fail(error)
+    } finally {
+      run?.stop()
+      playing = null
+      if (seekTo !== null) frame = seekTo
+      seekTo = null
+      const resume = again
+      again = false
+      become('ready', 'Ready')
+      idle(false)
+      touch()
+      if (resume) void startPlay()
     }
-    running = false
-    if (!dead && (drawnVersion !== version || !refined)) void pump()
   }
+
+  async function range(first: number, last: number): Promise<Report | null> {
+    if (activity !== 'ready' || dead) return null
+    frame = Math.max(0, Math.min(lastFrame, Math.round(first)))
+    until = Math.max(frame, Math.min(lastFrame, Math.round(last)))
+    state.report = null
+    try {
+      await startPlay()
+    } finally {
+      until = lastFrame
+    }
+    return state.report
+  }
+
+  async function every(first: number, last: number): Promise<Report | null> {
+    if (activity !== 'ready' || dead) return null
+    const from = Math.max(0, Math.min(lastFrame, Math.round(first)))
+    const to = Math.max(from, Math.min(lastFrame, Math.round(last)))
+    become('playing', 'Playing')
+    try {
+      const clock = await clockFor()
+      await drawing
+      applyView()
+      const facts = deck.facts('play', clock.ctx)
+      let next = from
+      const run = play({
+        film,
+        tier,
+        plan: filmPlan(from, to),
+        raw: true,
+        time: () => (next + 0.5) / fps,
+        facts: (stepMs) => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } }),
+        tick(_seconds, cue) {
+          if (!cue) return
+          performance.mark(`frame ${cue.frame}`)
+          next = cue.frame + 1
+          frame = cue.frame
+          syncBar()
+        },
+      })
+      const report = await run.finished
+      state.shown = frame
+      return report
+    } catch (error) {
+      fail(error)
+      return null
+    } finally {
+      become('ready', 'Ready')
+    }
+  }
+
+  async function script(first: number, last: number): Promise<StateReport | null> {
+    if (activity !== 'ready' || dead) return null
+    become('check', 'Measuring')
+    try {
+      await drawing
+      filmView()
+      return await stateRun(film, clampFrame(first), clampFrame(last), tier)
+    } catch (error) {
+      fail(error)
+      return null
+    } finally {
+      become('ready', 'Ready')
+      touch()
+    }
+  }
+
+  function togglePlay(): void {
+    if (activity === 'playing') playing?.stop()
+    else void startPlay()
+  }
+
+  async function startRecord(): Promise<void> {
+    if (activity === 'playing') return
+    if (activity !== 'ready' || dead) return
+    become('recording', 'Recording')
+    menu.toggle(false)
+    try {
+      const clock = clockFor()
+      const settled = drawing.then(() => {
+        filmView()
+        return clock
+      })
+      const run = record(deck, settled, marks)
+      session = run
+      show(await run.finished)
+    } catch (error) {
+      note.textContent = `The recording did not start. ${error instanceof Error ? error.message : String(error)}`
+    } finally {
+      session = null
+      become('ready', 'Ready')
+      fit()
+      touch()
+    }
+  }
+
+  async function startCheck(): Promise<void> {
+    if (activity !== 'ready' || dead) return
+    become('check', 'Checking')
+    menu.toggle(false)
+    try {
+      const clock = await clockFor()
+      await drawing
+      filmView()
+      const run = check(deck, clock)
+      session = run
+      const report = await run.finished
+      show(report, advise(report, quality))
+    } catch (error) {
+      note.textContent = `The check did not run. ${error instanceof Error ? error.message : String(error)}`
+    } finally {
+      session = null
+      become('ready', 'Ready')
+      touch()
+    }
+  }
+
+  // The pacing report: one run, one page of text to copy.
+  async function startMeasure(first: number, last: number): Promise<{ live: Report; script: StateReport | null; text: string } | null> {
+    if (activity !== 'ready' || dead) return null
+    become('check', 'Measuring: the film plays once without sound')
+    menu.toggle(false)
+    sheet.close()
+    let measured: Measured | null = null
+    try {
+      const clock = await clockFor()
+      await drawing
+      filmView()
+      const run = measure(deck, clock, first, Math.max(first, last), (text) => desk.status(text))
+      session = run
+      measured = await run.finished
+    } catch (error) {
+      note.textContent = `The pacing report did not run. ${error instanceof Error ? error.message : String(error)}`
+    } finally {
+      session = null
+      become('ready', 'Ready')
+      touch()
+    }
+    if (!measured || measured.live.frames.drawn === 0) return null
+    const { live, script } = measured
+    const text = [reportText(live, machine()), '', script ? stateText(script) : 'script alone: not measured, the run was stopped before it'].join('\n')
+    show(live)
+    const whole = new Blob([JSON.stringify({ live, script }, null, 1)], { type: 'application/json' })
+    sheet.show({ verdict: live.verdict, holds: live.holds, felt: slowLine(live).replace(/^s/, 'S'), text, file: { name: reportName(live), blob: script ? whole : reportFile(live) } })
+    return { live, script, text }
+  }
+
+  // The timing at the end of loading: twenty seconds at the quality the film would play at. If that does not hold the rate, the same frames are set in a row with nothing drawn.
+  // If the script alone is over the frame, low quality cures nothing and nothing is warmed twice. If it is the picture that is slow, the film is made ready at low quality and timed again.
+  async function timeLevels(): Promise<void> {
+    become('check', 'Timing this machine')
+    const found: Timed[] = []
+    let last: Report | null = null
+    try {
+      await drawing
+      filmView()
+      for (;;) {
+        const level = quality
+        const run = timing(deck, (seconds) => loading?.timing(level, seconds, CHECK_SECONDS))
+        session = run
+        const report = await run.finished
+        session = null
+        last = report
+        if (!report.complete) break
+        const one: Timed = { quality: level, held: report.nearly, due: report.frames.due, shown: report.frames.drawn, skipped: report.frames.skipped, longestGapMs: report.gapMs.longest, slow: report.slow.frames, script: null }
+        found.push(one)
+        if (report.nearly || level === 'low') break
+        loading?.script(level, 0, report.frames.due)
+        const alone = timingScript(deck, (done, of) => loading?.script(level, done, of))
+        session = alone
+        one.script = await alone.finished
+        session = null
+        if (one.script === null || scriptBound(one)) break
+        loading?.again(`High quality did not hold ${config.film.fps} frames a second here, and it is the picture that is slow. Getting ready at low quality`)
+        film.quality = 'low'
+        await loading?.programs()
+        await film.warm(tier, loading?.step)
+        quality = 'low'
+        state.quality = 'low'
+        desk.quality('low')
+      }
+    } catch (error) {
+      session = null
+      loading?.fail(`The film could not be made ready. ${error instanceof Error ? error.message : String(error)}`)
+      dead = true
+      return
+    }
+    state.timed = found
+    loading?.done()
+    become('ready', 'Ready')
+    if (last) show(last, last.complete ? { ...timedAdvice(found, CHECK_SECONDS), tryLow: false } : { text: 'The timing at loading was stopped. Check this machine before recording.', tryLow: false })
+  }
+
+  // Another quality is another set of programs: the film is made ready again before anything plays, with the track kept.
+  async function setQuality(next: Quality, thenCheck: boolean): Promise<void> {
+    if (activity !== 'ready' || dead) return
+    named = true
+    if (next === quality) {
+      if (thenCheck) void startCheck()
+      return
+    }
+    become('warming', `Getting ready at ${next} quality`)
+    try {
+      await drawing
+      loading?.again(`Getting ready at ${next} quality`)
+      film.quality = next
+      await loading?.programs()
+      await film.warm(tier, loading?.step)
+      quality = next
+      state.quality = next
+      desk.quality(next)
+      loading?.done()
+    } catch (error) {
+      loading?.fail(`The film could not be made ready. ${error instanceof Error ? error.message : String(error)}`)
+      dead = true
+      return
+    }
+    become('ready', 'Ready')
+    touch()
+    if (thenCheck) void startCheck()
+  }
+
+  async function pick(file: File): Promise<void> {
+    if (activity !== 'ready') return
+    desk.track(track, `Reading ${file.name}`)
+    try {
+      const next = await readTrack(file)
+      const before = track
+      track = next
+      try {
+        await clockFor()
+      } catch {
+        track = before
+        void clockFor()
+        desk.track(track)
+        note.textContent = `${file.name} could not be read as sound. Nothing changed.`
+        return
+      }
+      note.textContent = review ? trackLine(next) : ''
+      state.track = { name: next.name, sha256: next.sha256, matches: next.matches }
+      desk.track(track)
+    } catch (error) {
+      desk.track(track)
+      note.textContent = `${file.name} could not be read. ${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
+  function fit(): void {
+    const ratio = window.devicePixelRatio || 1
+    const width = stage.clientWidth
+    const height = stage.clientHeight
+    const size = pictureSize(film.format, width, height, ratio, options.fill)
+    const snap = (v: number): number => Math.round(v * ratio) / ratio
+    canvas.style.width = `${size.width}px`
+    canvas.style.height = `${size.height}px`
+    canvas.style.left = `${snap((width - size.width) / 2)}px`
+    canvas.style.top = `${snap((height - size.height) / 2)}px`
+    const shownWidth = Math.round(size.width * ratio)
+    const shownHeight = Math.round(size.height * ratio)
+    state.picture = { width: shownWidth, height: shownHeight, exact: size.exact }
+    const f = film.format
+    desk.picture(
+      size.exact
+        ? `Picture ${f.width} x ${f.height}, one film pixel on one screen pixel.`
+        : `Picture ${f.width} x ${f.height}, shown at ${shownWidth} x ${shownHeight} here to fit this ${Math.round(width * ratio)} x ${Math.round(height * ratio)} window. Nothing is stretched or cut.`,
+    )
+  }
+  window.addEventListener('resize', fit)
+  document.addEventListener('fullscreenchange', fit)
 
   const pointers = new Map<number, { x: number; y: number }>()
   let spread = 0
@@ -378,17 +749,15 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
   }
   const release = (event: PointerEvent) => {
     if (!pointers.delete(event.pointerId)) return
-    holding = Math.max(0, holding - 1)
     if (pointers.size === 0) delete canvas.dataset.drag
-    rest()
   }
   canvas.addEventListener('pointerdown', (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
+    if (review || (event.pointerType === 'mouse' && event.button !== 0)) return
+    if (activity !== 'ready' && activity !== 'playing') return
     try {
       canvas.setPointerCapture(event.pointerId)
     } catch {}
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    holding++
     canvas.dataset.drag = 'yes'
     if (pointers.size === 2) spread = spreadNow()
   })
@@ -420,6 +789,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
   canvas.addEventListener(
     'wheel',
     (event) => {
+      if (review) return
       event.preventDefault()
       const pixels = event.deltaMode === 1 ? event.deltaY * LINE_PX : event.deltaY
       view.dolly = between(view.dolly * Math.exp(pixels * WHEEL_PER_PX), VIEW.dollyMin, VIEW.dollyMax)
@@ -428,34 +798,21 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
     { passive: false },
   )
 
-  let scrubbing = false
-  const scrubEnd = () => {
-    if (!scrubbing) return
-    scrubbing = false
-    holding = Math.max(0, holding - 1)
-    rest()
-  }
-  scrub.addEventListener('pointerdown', () => {
-    if (scrubbing) return
-    scrubbing = true
-    holding++
-  })
-  window.addEventListener('pointerup', scrubEnd, true)
-  window.addEventListener('pointercancel', scrubEnd, true)
-  scrub.addEventListener('change', scrubEnd)
   scrub.addEventListener('input', () => seek(Number(scrub.value)))
-  play.addEventListener('click', () => setPlaying(!playing))
+  playButton.addEventListener('click', togglePlay)
 
   let idleTimer = 0
+  let stirred = performance.now()
   function idle(on: boolean): void {
     if (on) host.dataset.idle = 'yes'
     else delete host.dataset.idle
   }
   function stir(): void {
+    stirred = performance.now()
     idle(false)
     window.clearTimeout(idleTimer)
     idleTimer = window.setTimeout(() => {
-      if (playing) idle(true)
+      if (activity === 'playing') idle(true)
       else stir()
     }, IDLE_MS)
   }
@@ -464,8 +821,20 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
   window.addEventListener('keydown', (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey) return
     const target = event.target
-    const inField = target instanceof HTMLSelectElement || (target instanceof HTMLInputElement && target.type === 'radio')
+    const typing = target instanceof HTMLInputElement && (target.type === 'number' || target.type === 'text')
+    const inField = typing || target instanceof HTMLSelectElement || (target instanceof HTMLInputElement && target.type === 'radio')
     const onButton = target instanceof HTMLButtonElement || target instanceof HTMLAnchorElement
+    if (sheet.open) {
+      if (event.key === 'Escape') sheet.close()
+      return
+    }
+    if (activity === 'recording' || activity === 'check') {
+      if (event.key === 'Escape') session?.stop()
+      event.preventDefault()
+      return
+    }
+    if (typing) return
+    if (review && !REVIEW_KEYS.has(event.key)) return
     switch (event.key) {
       case 'm':
       case 'M':
@@ -473,7 +842,29 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
         menu.toggle()
         break
       case 'Escape':
-        if (menu.open) menu.toggle(false)
+        if (root.dataset.bare) delete root.dataset.bare
+        else if (menu.open) menu.toggle(false)
+        break
+      case 'h':
+      case 'H':
+        event.preventDefault()
+        if (root.dataset.bare) delete root.dataset.bare
+        else root.dataset.bare = 'yes'
+        break
+      case 'r':
+      case 'R':
+        event.preventDefault()
+        void startRecord()
+        break
+      case 'c':
+      case 'C':
+        event.preventDefault()
+        void startCheck()
+        break
+      case 'p':
+      case 'P':
+        event.preventDefault()
+        void startMeasure(0, lastFrame)
         break
       case '0':
         event.preventDefault()
@@ -482,25 +873,41 @@ export function startLive(film: Film, options: Options, host: HTMLElement): void
       case ' ':
         if (inField || onButton) return
         event.preventDefault()
-        setPlaying(!playing)
+        togglePlay()
+        break
+      case '[':
+      case ']':
+        event.preventDefault()
+        stepBar(event.key === '[' ? -1 : 1)
         break
       case 'ArrowLeft':
       case 'ArrowRight': {
         if (inField) return
         event.preventDefault()
-        const step = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? SHIFT_STEP : 1)
-        seek(frame + step)
+        const direction = event.key === 'ArrowLeft' ? -1 : 1
+        if (event.shiftKey) stepBar(direction)
+        else seek(frame + direction)
         break
       }
     }
   })
 
-  film.view.azimuthDeg = view.az
-  film.view.elevationDeg = view.el
-  film.view.dolly = view.dolly
-  film.view.world = view.world
-  syncBar()
+  desk.track(null)
+  if (review) note.textContent = 'Space plays and pauses. Drop the track on the page to hear it.'
+  fit()
   syncMenu()
-  stir()
-  void pump()
+  // A page that a tool drives is not timed unless the address asks for it, so its pictures and its numbers stay at the quality they name.
+  const asked = new URLSearchParams(location.search).get('timing')
+  const timedHere = loading !== null && !review && options.quality === null && asked !== 'off' && (asked === 'on' || !navigator.webdriver)
+  const open = (): void => {
+    stir()
+    touch()
+    void clockFor()
+  }
+  if (timedHere) void timeLevels().then(() => (dead ? undefined : open()))
+  else {
+    loading?.done()
+    become('ready', 'Ready')
+    open()
+  }
 }

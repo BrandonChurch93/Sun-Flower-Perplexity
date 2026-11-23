@@ -5,6 +5,9 @@ import { REQUIRED_EXTENSIONS } from '../core/stage.ts'
 import { standIns, type StandIn } from '../core/standins.ts'
 import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
 import type { Film, FrameCheck, FrameState, TexelCheck } from '../director/film.ts'
+import type { Report } from '../player/pacing.ts'
+import { madeSoFar, type Made } from '../v2/counter.ts'
+import { viewNamed } from '../v2/shots.ts'
 
 declare const __ENGINE_HASH__: string
 declare const __UNIT_HASHES__: Record<string, string>
@@ -34,6 +37,17 @@ export interface Showcase {
   requirements(): { extensions: string[]; limits: Record<string, number> }
   check(frameIndex: number): FrameCheck
   texels(frameIndex: number): TexelCheck
+  // Draws the film's own moments once so that nothing is left to make while it plays.
+  warm(tier: string): Promise<void>
+  // What the graphics card has been asked to make since the page opened.
+  made(): Made
+  setView(name: string): void
+  // The world at rest: no weather, no wind, one fixed sun. For the checks that look for growth.
+  setStill(on: boolean): void
+  sky(): string
+  cost(): Record<string, number>
+  // The pacing of the run that is playing, or of the last one: every frame shown with its script time, its gap and whether it was late.
+  pacing(): Report | null
 }
 
 declare global {
@@ -71,6 +85,21 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
     },
     check: (frameIndex) => film.check(frameIndex),
     texels: (frameIndex) => film.texels(frameIndex),
+    warm: (tier) => {
+      if (!isTier(tier)) throw new Error(`unknown tier "${tier}"`)
+      return film.warm(tier as TierId)
+    },
+    made: () => madeSoFar(),
+    setView: (name) => {
+      film.view.fixed = name === 'film' ? null : viewNamed(name)
+    },
+    setStill: (on) => film.setStill(on),
+    sky: () => film.skyName,
+    pacing: () => null,
+    cost: () => {
+      if (!film.clock) film.clock = () => performance.now()
+      return { ...film.cost }
+    },
     requirements: () => ({
       extensions: REQUIRED_EXTENSIONS.slice(),
       limits: {

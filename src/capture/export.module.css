@@ -10,7 +10,7 @@
 
 .shell {
   box-sizing: border-box;
-  max-width: 1240px;
+  max-width: 1640px;
   margin: 0 auto;
   padding: 32px 32px 56px;
 }
@@ -43,7 +43,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 1fr) minmax(340px, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -89,39 +89,47 @@
   position: static;
   inset: auto;
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
   max-width: 100%;
-  max-height: none;
-  margin: 0;
+  max-height: max(200px, calc(100vh - 430px));
+  margin: 0 auto;
 }
 
-.pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.option {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 0;
 }
 
-.pair[data-single='yes'] {
-  grid-template-columns: minmax(0, 0.5fr);
-}
-
-.figure {
-  margin: 0;
-}
-
-.figure[hidden] {
+.option[hidden] {
   display: none;
 }
 
-.still {
-  display: block;
+.option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #e2b23a;
+}
+
+.number {
+  box-sizing: border-box;
   width: 100%;
-  height: auto;
-  aspect-ratio: var(--still-aspect);
-  object-fit: cover;
-  border-radius: 8px;
-  background: #0f0e0b;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #3a362b;
+  border-radius: 10px;
+  background: #14130f;
+  color: #ece7db;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.number:focus-visible {
+  outline: 2px solid #e2b23a;
+  outline-offset: 2px;
 }
 
 .fields {
@@ -186,7 +194,7 @@
 .checks {
   display: grid;
   gap: 10px;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -371,6 +379,22 @@
   }
 }
 
+@media (max-width: 1400px) {
+  .shell {
+    max-width: 1240px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(340px, 1fr);
+  }
+
+  .column:nth-child(3) {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
 @media (max-width: 1000px) {
   .shell {
     padding: 32px 24px 48px;
@@ -385,17 +409,8 @@
     margin: 0 auto;
   }
 
-  .pair {
-    max-width: 560px;
-    margin: 0 auto;
-  }
-
   .column {
     display: contents;
-  }
-
-  .first {
-    order: -1;
   }
 
   .last {

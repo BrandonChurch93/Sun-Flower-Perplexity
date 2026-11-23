@@ -1,0 +1,126 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "storm sky and illumination, including crop 6",
+      "what": "The broad pale blue-gray cloud opening sits high behind the plant, filling the shot with light. The target has a small luminous break farther upper left, deep blue-black overhead clouds, and a separate lower silver band near the horizon.",
+      "fix": "Localize the bright break to the upper left, deepen the cool overhead cloud mass, and preserve the narrower bright gap low behind the plant."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "rain across sky, plant, and ground",
+      "what": "Bright, thick, frequently long blue-white streaks cover the frame, many slanting down-right. The target rain falls on the opposite slant and reads as much finer backlit threads and localized droplets.",
+      "fix": "Reverse the slant, reduce streak width and brightness, vary their visibility with depth, and concentrate bright droplets near the rim light and water impacts."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "hero plant crown, left leaves, and right leaves, crops 1 to 3",
+      "what": "The crown spreads into a broad V and the lower half is crowded with large hanging green leaves. The target has a strong up-right lead leaf, a more open silhouette around the lower stem, and predominantly blue-green shadow faces with narrow light on the edges.",
+      "fix": "Rebuild the main leaf groups around the target silhouette with more open space low on the stem, retain the settled matte toothed foliage, darken and cool the faces, and reserve the light for thin backlit rims and isolated droplets."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "puddle and adjacent foreground, crop 4",
+      "what": "A broad silver sheet runs under the stem and keeps its dense fine ripples sharp almost to the frame edge. The target has the stem rooted on a dark raised bank beside a narrower channel, with a distinct splash, spreading rings, and broken highlights that soften toward the camera.",
+      "fix": "Put the base on a raised bank, run the channel to its left, shape the light into broken glints, add the localized splash and larger rings, and soften the nearest water and mud."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "sun and shafts, crop 1",
+      "what": "The sun is farther right and higher, with a small white point in a blue gap and hard, symmetric spokes. The target has a larger, warm break farther upper left, ragged glowing cloud edges, and diffuse shafts that fan mostly down-right toward the plant and field.",
+      "fix": "Move the source left and slightly down, expand and warm the cloud-edge bloom, and replace the hard spokes with wider, irregular shafts softened by illuminated rain and haze."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "hero crown and left and right leaf tiers, crops 2 to 4",
+      "what": "The crown ends in a fork of small leaves instead of the target's compact pointed bud, and the large leaves read as open yellow-green panels with strongly drawn veins rather than dark, angled wet leaves catching warm light on one side.",
+      "fix": "Keep the settled overall scale, add the developing crown bud, establish the target's more varied leaf angles and spacing, darken the broad faces, and put the warm rim and wet highlights on the sunward edges and stem."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "field, horizon, and right sky",
+      "what": "Regular dark rows meet a high, flat gray mist band. The target has a deeper field with scattered gold glints, a low dark ridge rising toward the right, a small orange break low at left, and a visible rain curtain below the right-hand storm bank.",
+      "fix": "Rebuild the sloping horizon and low cloud breaks, replace the flat haze with layered depth and a distant right-side rain curtain, and carry warm broken reflections into the wet middle distance."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "puddle and dark soil around the stem, crop 5",
+      "what": "The stem stands in a dull brown reflective sheet with largely uniform fine ripples and dark, hard-textured banks. In the target it stands on a mound beside a puddle with a concentrated glittering path of sunlight and bright wet clods.",
+      "fix": "Raise the soil around the stem, align the strongest broken gold reflection with the relocated sun to the left, bring back wet glints on the banks, and soften the near foreground."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "foreground bud and bract silhouette, crops 1 and 2",
+      "what": "The head is wider and farther right, and reads as an open, patterned center surrounded by triangular plates and bright crisscrossing seams. The target is a compact closed bud with layered overlapping dark bracts, long curved tapered points, and only restrained rim light.",
+      "fix": "Reduce and shift the head and stalk left, close the center under overlapping bracts, vary and curve the tapering tips, and remove the bright seam network."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "twilight sky and horizon, crop 5",
+      "what": "The sky is slate blue over a broadly lavender-pink horizon and an even mauve haze stripe. The target grades from deep teal-blue into vivid orange at lower left, with thinner coral-edged streak clouds and a darker, more defined ridge.",
+      "fix": "Recover the deep teal upper sky and low orange light at left, reshape the clouds into thinner red-edged bands, and remove the uniform pink stripe along the ridge."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "left foreground plant, crop 5",
+      "what": "The plant at left has bright, comparatively defined green leaves and a stem traceable to the bottom. The target lateral plant is a softer dark silhouette with only a few wet glints.",
+      "fix": "Darken and soften the leaves and stem, keep the isolated backlit droplets, and let the base disappear into the shadowed bank."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "middle-distance rows and low ridge",
+      "what": "The field looks like evenly legible rows under a flat low mist layer, with the prominent ridge crest left of center. The target field rolls into a softer dark treeline and has more irregular layers of vegetation, rain, and selective glints.",
+      "fix": "Soften and vary row definition, reshape the ridge silhouette, and layer the rain and glints through the middle distance rather than screening it with uniform mist."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "left foreground plant, crop 6",
+      "what": "The left plant is a narrow, relatively crisp figure with several legible leaves and little bright rim. The target left-edge plant is a nearer, larger out-of-focus mass with a warmer glowing stem and specular bokeh.",
+      "fix": "Move this secondary plant into the near left foreground, soften it more, and restore warm broken rim highlights."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "falling rain in front of the sun, clouds, and field",
+      "what": "Large bright gold dashes and occasional thick streaks read close to camera, while the target uses finer, subtler slanted rain with more luminous suspended moisture in and below the shafts.",
+      "fix": "Thin the large streaks, match the target slant and distribution, and add fine backlit rain through the illuminated volume."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "stem and hairs, crop 3",
+      "what": "The edge light is a paler pink-white outline and less strongly keyed on the left, with the shadow side greener. The target shows a distinct hot coral-orange key on individual hairs and a cool, dark stem face.",
+      "fix": "Warm and strengthen the left-only rim without lifting the face, keep individual hair glints distinct, and tone down the right edge."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "hero leaves below the bud and left frame edge, crop 4",
+      "what": "The lower-left hero leaf hangs lower and shows heavy olive-yellow patches and prominent veins; the right leaf and the large cropped leaf at upper left show similar yellow-green fill. The target leaves are more subdued blue-green, and the upper-left intrusion is small and dark.",
+      "fix": "Raise and reshape the lower-left hero leaf, cool and darken the leaf faces while retaining fine warm rims, and reduce the upper-left intrusion to the target's small silhouette."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "field behind the plant, crop 6",
+      "what": "The field dissolves into a nearly uniform olive-black leaf blur. In the target, isolated round buds on stems are still legible against cool shadows, with scattered warm glints that give the field depth.",
+      "fix": "Restore blurred but recognizable backlit bud silhouettes at staggered distances, separate them from the darker cool foliage, and add sparse warm bokeh."
+    }
+  ]
+}

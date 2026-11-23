@@ -78,6 +78,7 @@ const no = String(lastNo + 1).padStart(2, '0')
 const stamp = new Date(now).toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
 const url = getField(text, 'App URL') ?? ''
 const published = /^https?:/.test(url)
+const preview = getField(text, 'Review preview') ?? ''
 
 const outDir = at('out', 'stills', 'status')
 fs.rmSync(outDir, { recursive: true, force: true })
@@ -101,7 +102,7 @@ const head = [where, unit ? `unit ${unit}` : null, round ? `round ${round}` : nu
 const lines = [
   `Status ${no} · ${head}${changed ? `. ${changed}` : ''}`,
   `${next ? `Next: ${next} ` : ''}Time used: ${timeLine}.`,
-  published ? `Review page: ${url.replace(/\/$/, '')}/review.html` : 'Review page: not published yet.',
+  published ? `Review page: ${url.replace(/\/$/, '')}/review.html` : /^https?:/.test(preview) ? `Review page, private preview: ${preview}` : 'Review page: not published yet.',
 ]
 fs.writeFileSync(
   path.join(outDir, 'STATUS.md'),

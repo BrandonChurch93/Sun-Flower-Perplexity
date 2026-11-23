@@ -1,0 +1,42 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-07.png",
+      "where": "49.3 s, cloud banks across the sky; also visible in set-C-08.png crops 2 and 6",
+      "what": "The clouds break into conspicuous square patches with stepped, mostly horizontal edges. The block pattern is visible even in the reduced whole frame and makes the sky read like a low-resolution backdrop.",
+      "fix": "Use a higher-resolution cloud source or finer volumetric sampling, and check that the transition from bright cloud to blue sky stays continuous at delivery size."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "41.1 s, crop 1, hanging drop at the leaf tip",
+      "what": "The drop reads as two smooth bulbs joined by a pinched neck. The lower bulb has a broad, nearly opaque white band and looks like a polished bead rather than water.",
+      "fix": "Shape the drop as one continuous liquid surface from the leaf contact point through the neck, and tune its refraction so the lighter region reads as a distorted view of the scene."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "35.2 s, crop 5, lower diagonal edge of the right leaf",
+      "what": "A thin pale rim and a dark green strip run in nearly ruler-straight parallel lines beneath the irregular frosted surface, making the leaf look like a cut laminate.",
+      "fix": "Taper and slightly warp the edge, and break up the parallel rim with local curl, thickness variation and irregular frost coverage."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "33.4 s, crops 1, 3 and 5, frost along the leaf margin and tip",
+      "what": "Long runs of similarly sized angular needles form a dense fringe along the outline. The abrupt contrast with the flatter crystal speckling on the blade makes the frost look applied to the edge.",
+      "fix": "Vary crystal size, density and growth direction in patches, and let smaller clusters bridge the transition from the margin onto the blade."
+    },
+    {
+      "severity": "major",
+      "file": "set-C-08.png",
+      "where": "49.3 s, crop 5, lit faces of the front soil clods",
+      "what": "The near clods have stretched, glossy ridges and very little visible grit. The ridges make the clods look molded rather than granular even along the clearer front edge of the crop.",
+      "fix": "Break up the elongated ridges with irregular grains and small stones, and vary local roughness so the clods do not catch a continuous smooth sheen."
+    }
+  ]
+}

@@ -1,42 +1,24 @@
-import { segmentStart } from '../config.ts'
-import type { WorldDef } from '../core/world.ts'
+import { clamp, smoothstep } from '../core/curves.ts'
+import { shared } from '../core/shading.ts'
+import type { RGB, WorldDef } from '../core/world.ts'
+import { config } from '../config.ts'
+import type { Moment } from '../v2/api.ts'
+import { barAt, burstAtBar } from '../v2/clock.ts'
+import { weightsAt, type LookWeights } from '../v2/look.ts'
+import { outside, type SunInFrame } from './sun.ts'
 
-// What the lens needs per world beyond WorldSettings.grade. Kept here by world id until the Builder moves it into the settings.
-export interface LensLook {
-  // How much more of the scattered light goes into the frame-wide levels than into the tight ones.
+// What the glass and the film stock do in one kind of light. A frame is a blend of these by the weights of the kinds, so nothing here can jump.
+interface Stock {
+  // How much more of the scattered light goes into the frame-wide levels than into the tight ones, and into the tightest.
   veil: number
-  // Color of those frame-wide levels: the air between the lens and a low sun is not white.
-  veilTint: readonly [number, number, number]
-  // Strength of the streak and the ghosts.
-  flare: number
+  core: number
   // Warm glow of the film base round the hottest edges.
   halation: number
-  // How much of its own color a blown highlight keeps on its way to white.
+  // How much of its own colour a blown highlight keeps on its way to white.
   keep: number
-  // How much more of the scattered light stays close round its source.
-  core: number
-  // Strength of the star the aperture blades draw round the sun.
-  star: number
-  // Bloom of the glass round a sun in the frame, and the lit air round it: soft shafts and a warm spill.
-  glow: number
-  shafts: number
-  // Strength of the thin rays out of the sun against the wide shafts.
-  rays: number
-  // Brightness of the hottest patch of an uncovered sun in the master format, which the shafts never fall below six tenths of and the bloom is measured against. 0 leaves both tied to what shows.
-  sunClear: number
-  // Color of the glass's bloom hard by the sun and out in its halo, and of the lit air.
-  glowNear: readonly [number, number, number]
-  glowFar: readonly [number, number, number]
-  airTint: readonly [number, number, number]
-  // Radius, in frame widths, of the flat burnt out disc a sun in mist shows. 0 draws none.
-  disc: number
-  // Above 0 the sun stands just over the land in mist: no rays, a gold bloom in the air that falls off over `bloomWide` frame widths, as strong as `rays`, and a warm flare in the glass of strength `lowFlare`.
-  lowSun: number
-  bloomWide: number
-  lowFlare: number
   // Extra slope through the upper half of the tones.
   punch: number
-  // White a burning color takes on at the very top.
+  // White a burning colour takes on at the very top.
   pale: number
   // Slope left to bright greens above their shade: 1 leaves them alone.
   greens: number
@@ -45,73 +27,104 @@ export interface LensLook {
   top: number
   // How far the brightest light loses its hue toward white.
   whiten: number
-  // Least reach of the out of focus fill as a share of the blur circle: above 0 it softens the disc's edge at high sample counts.
-  soft: number
-  // Share of the grade's lift taken back out of true black, per channel. It fades as the picture brightens, so only the deepest shade moves.
-  black: readonly [number, number, number]
-  // 1 where the world has small lights in the air that the blur should draw as discs; 0 holds every lone bright pixel down as noise.
-  specks: number
-  // 1 where the sky holds points of light: a sky pixel is then never spread itself and only takes the copies of blurred things in front of it.
-  skyHold: number
+  // Share of the grade's lift taken back out of true black.
+  black: RGB
   // Times the grade's grain.
   grain: number
-  // Radius, in pixels of a frame as high as the master format, by which the air softens what stands beyond the field: the far land, the sky and the edge between them. Nothing nearer is touched.
-  air: number
-  // How far the lit air round the sun breaks into wide spokes, above the sun and below it.
-  spokes: number
+  // How much of small lights out of focus is drawn as discs, against held down as noise.
+  specks: number
+  // The glow a light smaller than a few pixels gets on top of its share of the scattered light, as times that light.
+  sparks: number
 }
 
-const fallback: LensLook = { veil: 1, veilTint: [1, 1, 1], flare: 0.5, halation: 0.3, keep: 0.25, core: 1, star: 0, glow: 0, shafts: 0, rays: 0, sunClear: 0, glowNear: [1, 0.9, 0.76], glowFar: [1, 0.5, 0.2], airTint: [1, 0.4, 0.12], disc: 0, lowSun: 0, bloomWide: 0.1, lowFlare: 1, punch: 0, pale: 0, greens: 1, knee: 0.88, top: 0.12, whiten: 0, soft: 0, black: [0, 0, 0], specks: 0, skyHold: 0, grain: 1, air: 0, spokes: 0 }
+const DAY: Stock = { veil: 1, core: 1, halation: 0.3, keep: 0.25, punch: 0.1, pale: 0.03, greens: 0.8, knee: 0.88, top: 0.09, whiten: 0.35, black: [0.5, 0.5, 0.5], grain: 1, specks: 0.5, sparks: 0 }
+const WARM: Stock = { veil: 1.2, core: 1.2, halation: 0.5, keep: 0.3, punch: 0.16, pale: 0.05, greens: 0.5, knee: 0.88, top: 0.07, whiten: 0.45, black: [1, 0.55, 1], grain: 1.2, specks: 1, sparks: 4 }
+const STORM: Stock = { veil: 0.9, core: 1, halation: 0.2, keep: 0.25, punch: 0.1, pale: 0, greens: 0.8, knee: 0.88, top: 0.1, whiten: 0.3, black: [0.6, 0.6, 0.6], grain: 1.2, specks: 0.5, sparks: 0 }
+const FROST: Stock = { veil: 1.4, core: 1, halation: 0.15, keep: 0.15, punch: 0.06, pale: 0.02, greens: 0.8, knee: 0.82, top: 0.07, whiten: 0.5, black: [0.4, 0.4, 0.4], grain: 1.3, specks: 1, sparks: 4 }
+const NIGHT: Stock = { veil: 0.3, core: 1, halation: 0.2, keep: 0.25, punch: 0.04, pale: 0, greens: 1, knee: 0.88, top: 0.1, whiten: 0.2, black: [0.3, 0.3, 0.3], grain: 1.3, specks: 0.5, sparks: 0 }
 
-const table: Record<string, Partial<LensLook>> = {
-  dawn: { grain: 1.35, star: 0.025, veil: 1.4, veilTint: [1.1, 0.72, 0.45], flare: 0, knee: 0.82, top: 0.07, whiten: 0.5, specks: 1, glow: 0.004, sunClear: 60, glowNear: [1, 0.97, 0.92], glowFar: [0.3, 0.2, 0.12], disc: 0.031, shafts: 0.008, rays: 0.8, lowSun: 1, bloomWide: 0.2, lowFlare: 0.08, airTint: [1, 0.56, 0.3] },
-  rain: { flare: 0, halation: 0.2 },
-  night: { veil: 0, flare: 0, halation: 0.2, skyHold: 1 },
-  frost: { flare: 0.3, halation: 0.15, keep: 0.15 },
-  golden: { veil: 1.2, veilTint: [1.15, 0.62, 0.3], flare: 0, halation: 0.5, keep: 0.3, core: 1.2, star: 0, glow: 0.004, shafts: 0.008, rays: 1.2, sunClear: 63.6, punch: 0.23, pale: 0.075, greens: 0.45, top: 0.05, whiten: 0.7, soft: 0.28, black: [1, 0.55, 1], specks: 1 },
+export interface LensLook extends Stock {
+  // Times the grade's bloom: the lightning opens it for a few frames.
+  bloom: number
+  // The sun's light at the lens, in the frame's exposed units, as the air has coloured it: zero when cloud, mist or the land has taken it.
+  sun: RGB
+  // The colour of the lit air toward the sun, brightest channel 1.
+  air: RGB
+  // How thick the air is between the lens and the sun, 0 clear to 1.
+  haze: number
+  // The light the mist has taken out of the sun's beam and holds close round the disc, and the warm bloom of a low evening sun, both as times the glow.
+  mist: number
+  warm: number
+  // A sun low in the frame keeps its glow close: a core and a short skirt, nothing over the frame.
+  tight: number
+  // The evening of the bloom and the last one: 1 from the head's opening to the end.
+  evening: number
+  // The glass round the sun: the core and its glow, the veil over the whole frame, and the light standing in the air.
+  glare: number
+  veilSun: number
+  shafts: number
+  // How far the shafts lean to the air under the sun: 1 under a deck that has just torn.
+  fan: number
+  // How hard the scattered light is held under white: only the lightning asks for it.
+  cap: number
 }
 
-// From the field's start the lens stands back over the whole field with the sun in the open: these come in over the two seconds after it, and every frame up to it is drawn as before.
-const FIELD_FROM_S = segmentStart('field')
-const FIELD_FULL_S = 54
-const overField = { grain: 2.1, air: 3, spokes: 1, glow: 0.002, core: 1 }
-const fieldBlack: readonly [number, number, number] = [0.5, 0.6, 0.5]
-// The field's grade: softer, less saturated, its shade neutral and a little lifted.
-const fieldGrade: WorldDef['grade'] = { exposure: 0.78, contrast: 1.22, white: 9, saturation: 0.98, gain: [1.06, 1, 0.91], lift: [0.0024, 0.0048, 0.0038], bloom: 0.13, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 }
+const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+const weights: LookWeights = { day: 1, warm: 0, storm: 0, frost: 0, night: 0 }
+const kinds: [keyof LookWeights, Stock][] = [['day', DAY], ['warm', WARM], ['storm', STORM], ['frost', FROST], ['night', NIGHT]]
+const scalars = ['veil', 'core', 'halation', 'keep', 'punch', 'pale', 'greens', 'knee', 'top', 'whiten', 'grain', 'specks', 'sparks'] as const
 
-function fieldShare(def: WorldDef, timeS: number): number {
-  if (def.id !== 'golden' || timeS <= FIELD_FROM_S) return 0
-  const t = Math.min(1, (timeS - FIELD_FROM_S) / (FIELD_FULL_S - FIELD_FROM_S))
-  return t * t * (3 - 2 * t)
+export function blankLens(): LensLook {
+  return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, mist: 0, warm: 0, tight: 0, evening: 0, glare: 0, veilSun: 0, shafts: 0, fan: 0, cap: 0 }
 }
 
-const blend = (a: number, b: number, w: number): number => a + (b - a) * w
-const blend3 = (a: readonly [number, number, number], b: readonly [number, number, number], w: number): [number, number, number] => [blend(a[0], b[0], w), blend(a[1], b[1], w), blend(a[2], b[2], w)]
-
-export function gradeOf(def: WorldDef, timeS: number): WorldDef['grade'] {
-  const w = fieldShare(def, timeS)
-  if (w === 0) return def.grade
-  const a = def.grade
-  const b = fieldGrade
-  return {
-    exposure: blend(a.exposure, b.exposure, w),
-    contrast: blend(a.contrast, b.contrast, w),
-    white: blend(a.white, b.white, w),
-    saturation: blend(a.saturation, b.saturation, w),
-    gain: blend3(a.gain, b.gain, w),
-    lift: blend3(a.lift, b.lift, w),
-    bloom: blend(a.bloom, b.bloom, w),
-    bloomKnee: blend(a.bloomKnee, b.bloomKnee, w),
-    vignette: blend(a.vignette, b.vignette, w),
-    grain: blend(a.grain, b.grain, w),
+// The lens of one instant: the stock from the kinds of light, the sun from the frame's own light and from where it stands.
+export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspect: number, out: LensLook): LensLook {
+  weightsAt(now, weights)
+  const total = weights.day + weights.warm + weights.storm + weights.frost + weights.night
+  for (const key of scalars) out[key] = 0
+  out.black[0] = out.black[1] = out.black[2] = 0
+  for (const [name, stock] of kinds) {
+    const w = weights[name] / total
+    for (const key of scalars) out[key] += w * stock[key]
+    for (let i = 0; i < 3; i++) out.black[i] += w * stock.black[i]
   }
+  const d = now.dials
+  out.bloom = 1 + 1.6 * d.flash
+  out.veil *= 1 + 0.6 * d.flash
+
+  const e = def.grade.exposure
+  const counts = sun && now.lightKind === 'sun' ? sun.weight : 0
+  const sky = def.air ? def.air.sun : def.sun.color
+  for (let i = 0; i < 3; i++) out.sun[i] = sky[i] * e * counts
+  const toSun = shared.uSkyHorizonSun.value
+  const top = Math.max(toSun.x, toSun.y, toSun.z, 1e-6)
+  out.air[0] = toSun.x / top
+  out.air[1] = toSun.y / top
+  out.air[2] = toSun.z / top
+  // A low sun shines through many times the air of a high one, and the evening of the bloom is hazier than the mornings.
+  const low = 1 - smoothstep(2, 16, now.sunElevationDeg)
+  out.haze = clamp(Math.max(d.fog, 0.7 * d.rain, low * (0.3 + 0.7 * d.evening)))
+  out.mist = (d.fog * (1 - d.sunThrough)) / Math.max(d.sunThrough, 0.15)
+  out.warm = low * (0.3 + 0.7 * d.evening) * (1 - d.fog)
+  out.tight = 1 - smoothstep(14, 24, now.sunElevationDeg)
+  out.evening = d.evening
+  // The last sun goes down red: the stock lets its highlights keep their colour as it nears the land.
+  out.whiten *= 1 - 0.8 * d.evening * (1 - smoothstep(1.2, 2.6, now.sunElevationDeg))
+  // Once the disc has left the frame the veil and the shafts thin out over half a frame height, so a sun that crosses the edge in one frame of the time lapse takes ten to leave the glass.
+  const out01 = sun ? outside(sun.x, sun.y, aspect) : 0
+  const edge = 1 - smoothstep(0, 0.6, out01)
+  out.glare = 1
+  out.veilSun = edge * edge
+  // The shafts stand in the frame only with the sun: they open over the first tenth of a frame height inside the edge and are gone at it.
+  const near = sun ? smoothstep(0, 0.1, Math.min(sun.x * aspect, (1 - sun.x) * aspect, sun.y, 1 - sun.y)) : 0
+  // The beams come up behind the tear: over the six frames after it opens, never ahead of the dial, and they leave with it.
+  let risen = 0
+  for (let i = 0; i < 6; i++) risen += burstAtBar(barAt(now.t - i / config.film.fps)) / 6
+  out.shafts = near * clamp(Math.max(Math.pow(Math.min(d.burst, risen), 0.7), 0.6 * d.fog, 0.7 * low * (0.3 + 0.7 * d.evening)))
+  out.fan = d.burst
+  out.cap = 0.7 * d.flash
+  return out
 }
 
-export function lensLook(def: WorldDef, timeS = 0): LensLook {
-  const look = { ...fallback, ...(table[def.id] ?? {}) }
-  const w = fieldShare(def, timeS)
-  if (w === 0) return look
-  for (const key of Object.keys(overField) as (keyof typeof overField)[]) look[key] += (overField[key] - look[key]) * w
-  look.black = blend3(look.black, fieldBlack, w)
-  return look
-}
+export { lum }

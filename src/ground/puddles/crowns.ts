@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { basin } from './basin.ts'
 import { config } from '../../config.ts'
-import { skyMirror } from './water.ts'
+import { skyMirror } from './mirror.ts'
+import { LEAN_X, LEAN_Z } from '../../weather/rain/drops.ts'
 
 // Half the master frame's height in pixels, as shader text: a crown is sized by how large it stands in the finished frame.
 const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)
@@ -18,6 +19,8 @@ const JET_ENDS = 2
 const PLANT_CLEAR_M = [0.02, 0.06]
 // Nor within the first of these distances of the lens, where a bead is only a smear across the glass.
 const LENS_CLEAR_M = [0.15, 0.3]
+// The least half width a flying bead is drawn at, in pixels of the finished frame.
+const SPRAY_LEAST_PX = 0.8
 
 export const crownVertex = /* glsl */ `
 in vec3 position;
@@ -58,12 +61,14 @@ vec3 cup(float th, float v, float x, float size, float onWater, float seed) {
   float lot = hash11(mod(floor(tooth), teeth) + 17.0 * seed);
   float ragged = 0.2 + 1.3 * lot * lot;
   float lobe = max(0.12, 1.0 + mix(0.22, 0.5, onWater) * sin(th * 2.0 + seed * 40.0) + mix(0.14, 0.34, onWater) * sin(th * 3.0 + seed * 91.0));
-  float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - TAU * fract(seed * 29.0));
+  // The drop comes in on the wind, so its crown stands tallest and tips over on the side the wind blows to.
+  float way = ${Math.atan2(LEAN_Z, LEAN_X).toFixed(4)} + 1.2 * (fract(seed * 29.0) - 0.5);
+  float lean = 1.0 + mix(0.3, 0.6, onWater) * cos(th - way);
   float finger = bump * ragged * v * v * v;
   float y = tall * rise * mix(0.6 + 0.4 * lobe * lean, 0.3 + 0.7 * min(lobe * lean, 1.3), onWater) * (mix(0.5, 0.35, onWater) * v + mix(0.6, 1.0, onWater) * finger);
   float foot = 0.3 * onWater * pow(1.0 - v, 3.0);
   float r = wide * mix(0.35 + 0.65 * sqrt(x), 1.0 - 0.6 * exp(-7.0 * x), onWater) * (0.8 + 0.2 * lobe) * (mix(0.8, 0.6, onWater) + foot + mix(0.2, 0.5, onWater) * v + 0.4 * v * v * mix(1.0, 0.8, onWater) + mix(0.22, 0.9, onWater) * finger);
-  vec2 over = vec2(cos(TAU * fract(seed * 29.0)), sin(TAU * fract(seed * 29.0))) * 0.5 * y * onWater;
+  vec2 over = vec2(cos(way), sin(way)) * 0.5 * y * mix(0.4, 1.0, onWater);
   return vec3(cos(th) * r + over.x, y, sin(th) * r + over.y);
 }
 
@@ -133,8 +138,13 @@ void main() {
     float floorM = max(under, uLevel.x - 1.0 + step(0.0, waterDepthOver(under, over))) - base;
     if (flown > 0.0 && center.y < floorM - radius) return;
     vec3 shape = grit ? position * (0.7 + 0.6 * vec3(ha, hb, hc)) : position;
-    vTop = smoothstep(0.5, 1.4, radius * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z));
-    at = center + shape * radius;
+    float px = radius * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(1e-4, -(viewMatrix * vec4(drop.x, base, drop.y, 1.0)).z);
+    // A bead of spray finer than the frame's grain is drawn at the grain's size and fainter, so the spray over the soil stays a haze of points and does not drop out.
+    float drawn = grit ? px : max(px, ${SPRAY_LEAST_PX.toFixed(2)});
+    vTop = grit ? smoothstep(0.5, 1.4, px) : saturate(px / ${SPRAY_LEAST_PX.toFixed(2)});
+    // Drawn out over its share of the shutter a bead is as much fainter as it is longer: one sample and many then show the same.
+    vTop *= drawn / (drawn + 0.5 * length(going) * uStands * step(1e-6, flown) * px / max(radius, 1e-7));
+    at = center + shape * radius * drawn / max(px, 1e-4);
     n = normalize(position);
   }
   vec4 world = vec4(drop.x + at.x, base + at.y, drop.y + at.z, 1.0);
@@ -156,11 +166,11 @@ in float vMud;
 in float vFlute;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0), smoothstep(-0.06, 0.04, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y) + 1e-5, d.z)), 0.0, 1.0), smoothstep(-0.06, 0.04, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
-  vec3 n = normalize(vNormal);
+  vec3 n = normalize(vNormal + vec3(0.0, 1e-6, 0.0));
   n = dot(n, v) < 0.0 ? -n : n;
   vec3 color;
   float alpha = 1.0;
@@ -170,24 +180,27 @@ void main() {
   } else {
     float facing = max(dot(n, v), 0.0);
     if (vKind > 0.5) {
-      float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
+      float mirror = 0.03 + 0.97 * pow(saturate(1.0 - facing), 5.0);
       vec3 inside = refract(-v, n, 0.75);
       vec3 leaves = refract(inside, 2.0 * dot(n, inside) * inside - n, 1.333);
       alpha = saturate(mirror + 0.92) * vTop;
-      color = mix(seen(leaves), seen(reflect(-v, n)), mirror);
+      // A bead in flight is a lens with the world upside down in it: drawn out along its path it shows the sky it gathers, not the ground.
+      color = mix(seen(vec3(leaves.x, abs(leaves.y), leaves.z)) * 0.7, seen(reflect(-v, n)), mirror);
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.35 * smoothstep(0.5, 1.0, vTop) + 0.5 * sin(17.0 * vTop + 2.3 * vFlute)));
-      float one = mix(0.03, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), mix(5.0, 4.0, vMud));
+      float one = mix(0.03, 0.04, vMud) + 0.93 * pow(saturate(1.0 - dot(n, v)), mix(5.0, 4.0, saturate(vMud)));
       float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.6 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
-      float silt = mix(1.0 - 0.2 * vTop, 1.0, vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.1 + 0.15 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.014, 0.012, 0.01), vMud) * skyAmbient(n), silt);
-      alpha = mirror + (1.0 - mirror) * mix(0.75, 0.95, silt);
+      // A crown on water is a thin sheet of it: what stands behind shows through, the puddle with the sky in it, and only its foot carries the mud. On mud the crown is mud.
+      float silt = mix(0.5 - 0.35 * vTop, 1.0, vMud);
+      vec3 behind = refract(-v, n, 0.75);
+      vec3 through = mix(seen(vec3(behind.x, abs(behind.y), behind.z)) * (0.55 + 0.25 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.014, 0.012, 0.01), vMud) * skyAmbient(n), silt);
+      alpha = mirror + (1.0 - mirror) * mix(0.3, 0.95, silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
-  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, saturate(alpha));
 }
 `
 

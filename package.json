@@ -29,7 +29,16 @@
     "determinism": "tsx tools/determinism.ts",
     "gate": "tsx tools/gate.ts",
     "push": "tsx tools/push.ts",
-    "inline": "tsx tools/inline.ts"
+    "inline": "tsx tools/inline.ts",
+    "bench": "tsx tools/bench.ts",
+    "looks": "tsx tools/agentlooks.ts",
+    "filmclock": "tsx tools/filmclock.ts",
+    "checks": "tsx tools/checks/run.ts",
+    "part": "tsx tools/part.ts",
+    "join": "tsx tools/join.ts",
+    "costs": "tsx tools/costs.ts",
+    "round": "tsx tools/round.ts",
+    "site": "npm run build && tsx tools/site.ts"
   },
   "dependencies": {
     "gsap": "3.15.1",

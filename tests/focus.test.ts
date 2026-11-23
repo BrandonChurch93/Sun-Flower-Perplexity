@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { frameCount, timeOf } from '../src/config.ts'
 import { plantInputsAt } from '../src/director/inputs.ts'
 import { poseAtTime } from '../src/director/state.ts'
-import { cuts } from '../src/director/timeline.ts'
+import { cuts } from '../src/director/growthline.ts'
 import { headAt, tipAt } from '../src/plant/model.ts'
 import { bodyHalfDepth, bodyRadius } from '../src/plant/growth.ts'
 

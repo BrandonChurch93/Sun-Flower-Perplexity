@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import type { RGB } from '../../core/world.ts'
-import { ringStrip } from '../skyline.ts'
+import { roundStrip } from '../fog/ring.ts'
 
 // Ground mist: a low layer of lit air, drawn as upright sheets round the plant. Each sheet stands for the slab of mist between it and the next, so the mist thickens with distance. It is lit by the world's sun and by the sky's fill, and it is a closed form of the time it is given.
 export interface MistSettings {
@@ -92,7 +92,7 @@ void main() {
   float alpha = (1.0 - exp(-depth)) * smoothstep(0.15, 0.6, length(ray.xz) / uRadiusM);
   float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
   float glow = 0.02 + uForward * (exp(-pow(theta / uLobe, 3.0)) + 2.0 * exp(-theta / 0.1));
-  vec3 color = uLit * uSunColor * glow + uShade * skyAmbient(vec3(0.0, 1.0, 0.0));
+  vec3 color = uLit * uAirSun * glow + uShade * 0.5 * (uAirZenith + uAirHorizon);
   outColor = vec4(color, alpha);
 }
 `
@@ -108,7 +108,7 @@ export function makeMist(name: string, settings: MistSettings, order = 60): Mist
   const step = Math.log(settings.toM / settings.fromM) / (count - 1)
   for (let i = 0; i < count; i++) {
     const radius = settings.fromM * Math.exp(step * i)
-    const geometry = ringStrip(SIDES, () => ({ radius, top: settings.heightM * 9 }))
+    const geometry = roundStrip(SIDES, radius, settings.heightM * 9)
     const surface = makeSurface({
       name: `${name} mist ${i}`,
       vertex,

@@ -1,11 +1,13 @@
+import { norm } from '../norm.ts'
 import * as THREE from 'three'
-import { config, keyTime, segmentStart } from '../../config.ts'
+import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskFall, huskLand, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartOptions, type PlantPart } from '../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
+import { createCrystals } from '../../weather/frost/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
@@ -23,20 +25,24 @@ const REST_SIDE = unit(1, 0, 0.12)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
-const CRUMB_MAX_M = 0.0006
+const CRUMB_MAX_M = 0.00095
 const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
 // The approved seedling carries finer dew than the shared bead sizes: a mist of specks on the faces, small pearls on the edges.
-const RAIN_FROM_S = segmentStart('rain')
 const DEW_FACE = 0.28
 const DEW_EDGE = 0.2
 const CRUMBS_SINK_S = 9
-const CRUMBS_KEY_S = keyTime('dawn-sprout')
+const CRUMBS_KEY_S = 1.5
 const CRUMBS_IN_AIR = [0.55, 0.7, 0.82]
 const CRUMBS_GONE_S = 12.5
 const HUSK_NECK_M = -0.0006
 const HUSK_TIP_M = 0.0022
+// Where ice can root on a seed leaf: at even steps along each margin and along the middle of its upper face.
+const EDGE = 120
+const MID_ROOTS = 60
+const RIME_EACH = 2 * EDGE + MID_ROOTS
+const RIME_M = [0.0003, 0.0008]
 
 interface Body {
   husk: boolean
@@ -48,9 +54,10 @@ interface Body {
 interface Group {
   bodies: Body[]
   slots: Float32Array[]
-  normals: Float32Array
-  state: Float32Array
-  live: (THREE.BufferAttribute | null)[]
+  normals: Float32Array[]
+  state: Float32Array[]
+  shapes: (THREE.BufferAttribute | null)[]
+  carried: THREE.BufferAttribute[][]
   mesh: THREE.Mesh
   surface: Surface
   casts: boolean
@@ -85,14 +92,17 @@ interface Crumbs {
   local: Float32Array
   localNormal: Float32Array
   slots: Float32Array[]
-  normals: Float32Array
-  live: (THREE.BufferAttribute | null)[]
+  normals: Float32Array[]
+  shapes: (THREE.BufferAttribute | null)[]
+  carried: THREE.BufferAttribute[][]
   mesh: THREE.Mesh
   surface: Surface
 }
 
+const HUSK_LAST = 0.06
+
 function unit(x: number, y: number, z: number): [number, number, number] {
-  const l = Math.hypot(x, y, z) || 1
+  const l = norm(x, y, z) || 1
   return [x / l, y / l, z / l]
 }
 
@@ -100,7 +110,7 @@ function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
   if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0, beads: 0 }
   if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3, beads: 36 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 100 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 24, huskCrumbs: 16, beads: 100 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
@@ -187,12 +197,12 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       let ux = y * 0 - z * 1
       let uy = z * 0 - x * 0
       let uz = x * 1 - y * 0
-      if (Math.hypot(ux, uy, uz) < 0.3) {
+      if (norm(ux, uy, uz) < 0.3) {
         ux = 0
         uy = -z
         uz = y
       }
-      const ul = Math.hypot(ux, uy, uz)
+      const ul = norm(ux, uy, uz)
       ux /= ul
       uy /= ul
       uz /= ul
@@ -200,8 +210,8 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       const wy = z * ux - x * uz
       const wz = x * uy - y * ux
       const h = 0.09
-      const n1 = Math.hypot(x + ux * h, y + uy * h, z + uz * h)
-      const n2 = Math.hypot(x + wx * h, y + wy * h, z + wz * h)
+      const n1 = norm(x + ux * h, y + uy * h, z + uz * h)
+      const n2 = norm(x + wx * h, y + wy * h, z + wz * h)
       lump(own, (x + ux * h) / n1, (y + uy * h) / n1, (z + uz * h) / n1, p, 0, size)
       lump(own, (x + wx * h) / n2, (y + wy * h) / n2, (z + wz * h) / n2, p, 3, size)
       const ax = p[0] - local[at]
@@ -213,7 +223,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       let nx = ay * bz - az2 * by
       let ny = az2 * bx - ax * bz
       let nz = ax * by - ay * bx
-      const nl = Math.hypot(nx, ny, nz)
+      const nl = norm(nx, ny, nz)
       if (nl < 1e-18 || nx * x + ny * y + nz * z < 0) {
         nx = -nx
         ny = -ny
@@ -236,18 +246,21 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   }
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * each * 3), new Float32Array(count * each * 3)]
-  const normals = new Float32Array(count * each * 3)
+  const both = options.places ? [0] : [0, 1]
+  const normals = both.map(() => new Float32Array(count * each * 3))
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const normal = dynamic(normals, 3)
+  const carried = both.map((k) => [dynamic(normals[k], 3)])
+  const still = new THREE.BufferAttribute(state, 4)
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
-  geometry.setAttribute('normal', normal)
+  carried.forEach(([n], k) => geometry.setAttribute(k === 1 ? 'normalB' : 'normal', n))
   geometry.setAttribute('aCoord', new THREE.BufferAttribute(coords, 4))
-  geometry.setAttribute('aState', new THREE.BufferAttribute(state, 4))
+  geometry.setAttribute('aState', still)
+  if (positionB) geometry.setAttribute('aStateB', still)
   const surface = makePartSurface(options, { name: 'seedling crumbs', vertex, fragment, side: THREE.FrontSide, castShadow: true })
-  return { list, each, local, localNormal, slots, normals, live: [position, positionB, normal], mesh: partMesh(geometry, surface), surface }
+  return { list, each, local, localNormal, slots, normals, shapes: [position, positionB], carried, mesh: partMesh(geometry, surface), surface }
 }
 
 export function create(options: PartOptions): PlantPart | null {
@@ -271,9 +284,10 @@ export function create(options: PartOptions): PlantPart | null {
     }
     const geometry = partGeometry(options)
     const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
-    const normals = new Float32Array(count * 3)
+    const both = options.places ? [0] : [0, 1]
+    const normals = both.map(() => new Float32Array(count * 3))
     const coords = new Float32Array(count * 4)
-    const state = new Float32Array(count * 4)
+    const state = both.map(() => new Float32Array(count * 4))
     const index: number[] = []
     bodies.forEach((b, id) => {
       const row = b.loop + 1
@@ -305,13 +319,14 @@ export function create(options: PartOptions): PlantPart | null {
     const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
     const position = dynamic(slots[0], 3)
     const positionB = options.places ? null : dynamic(slots[1], 3)
-    const normal = dynamic(normals, 3)
-    const sent = dynamic(state, 4)
+    const carried = both.map((k) => [dynamic(normals[k], 3), dynamic(state[k], 4)])
     geometry.setAttribute('position', position)
     if (positionB) geometry.setAttribute('positionB', positionB)
-    geometry.setAttribute('normal', normal)
+    carried.forEach(([n, st], k) => {
+      geometry.setAttribute(k === 1 ? 'normalB' : 'normal', n)
+      geometry.setAttribute(k === 1 ? 'aStateB' : 'aState', st)
+    })
     geometry.setAttribute('aCoord', new THREE.BufferAttribute(coords, 4))
-    geometry.setAttribute('aState', sent)
     geometry.setIndex(index)
     const surface = makePartSurface(options, {
       name,
@@ -325,7 +340,8 @@ export function create(options: PartOptions): PlantPart | null {
       slots,
       normals,
       state,
-      live: [position, positionB, normal, sent],
+      shapes: [position, positionB],
+      carried,
       mesh: partMesh(geometry, surface),
       surface,
       casts,
@@ -343,6 +359,22 @@ export function create(options: PartOptions): PlantPart | null {
   const beadSeed = combine(streamSeed('seed leaf dew'), options.variant)
   const beadSpot = new Float32Array((beads ? beads.count : 0) * 4)
   const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  const crystals = leaves && options.detail === 'hero' && options.variant === 0 ? createCrystals(options, RIME_EACH * leaves.bodies.length, 'seed leaf crystals') : null
+  const rimeAt = new Float32Array((crystals ? crystals.count : 0) * 2)
+  if (crystals && leaves) {
+    const place = crystals.place()
+    leaves.bodies.forEach((b, id) => {
+      for (let i = 0; i < RIME_EACH; i++) {
+        const q = id * RIME_EACH + i
+        const edge = i < 2 * EDGE
+        const n = edge ? EDGE : MID_ROOTS
+        const share = (((edge ? i % EDGE : i - 2 * EDGE) + hash01(beadSeed, 4000 + q, 0)) / n) * (edge ? 1 : 0.95)
+        rimeAt[q * 2] = Math.min(share * (b.rings - 1), b.rings - 1.001)
+        rimeAt[q * 2 + 1] = hash01(beadSeed, 4000 + q, 1)
+        place[q] = edge ? Math.max(share, 0.001) : -1 - share
+      }
+    })
+  }
   if (beads && leaves) {
     const tint = beads.tint()
     for (let i = 0; i < beads.count; i++) {
@@ -363,8 +395,19 @@ export function create(options: PartOptions): PlantPart | null {
     }
   }
 
+  const filled = [false, false]
+  const led = [false, false]
+  // The crumbs lie under the soil from CRUMBS_GONE_S on and are one shape from then, whatever the clock: a slot that holds it is not laid again.
+  const crumbsLaid = [false, false]
+  const crumbsLed = [false, false]
+  const sunkShape = [false, false]
+  const sunkNormals = [false, false]
+
   function fill(slot: 0 | 1, pose: Pose): void {
-    const first = slot === 0
+    const first = filling.lead
+    const of = first && !options.places ? slot : 0
+    filled[slot] = true
+    if (first) led[of] = true
     const time = pose.time
     const grown = smoothstep(0, 0.006, heightAt(time))
     const pale = paleness(time)
@@ -414,7 +457,7 @@ export function create(options: PartOptions): PlantPart | null {
     let ax = -ty * REST_AXIS[2] + tz * REST_AXIS[1]
     let ay = -tz * REST_AXIS[0] + tx * REST_AXIS[2]
     let az = -tx * REST_AXIS[1] + ty * REST_AXIS[0]
-    const al = Math.hypot(ax, ay, az)
+    const al = norm(ax, ay, az)
     if (al > 1e-6) {
       ax /= al
       ay /= al
@@ -440,7 +483,7 @@ export function create(options: PartOptions): PlantPart | null {
     px -= B[0] * pb
     py -= B[1] * pb
     pz -= B[2] * pb
-    const pl = Math.hypot(px, py, pz) || 1
+    const pl = norm(px, py, pz) || 1
     px /= pl
     py /= pl
     pz /= pl
@@ -453,8 +496,8 @@ export function create(options: PartOptions): PlantPart | null {
 
     for (const g of groups) {
       const out = g.slots[slot]
-      const state = g.state
-      const normals = g.normals
+      const state = g.state[of]
+      const normals = g.normals[of]
       for (const b of g.bodies) {
         const row = b.loop + 1
         if (!b.husk) {
@@ -507,7 +550,8 @@ export function create(options: PartOptions): PlantPart | null {
           const oy = py * b.side * cg - B[1] * sg
           const oz = pz * b.side * cg - B[2] * sg
           const arc = b.loop / 2
-          const shown = kept > 0 ? 1 : 0
+          // The husk is nearly under the soil by then: it shrinks to nothing over its last second and does not go out in one frame.
+          const shown = smoothstep(0, HUSK_LAST, kept)
           const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
           const shell = huskLength * (1 + 0.3 * smoothstep(0, 1, loose))
           for (let a = 0; a < b.rings; a++) {
@@ -559,7 +603,7 @@ export function create(options: PartOptions): PlantPart | null {
             let nx = uy * vz - uz * vy
             let ny = uz * vx - ux * vz
             let nz = ux * vy - uy * vx
-            const l = Math.hypot(nx, ny, nz)
+            const l = norm(nx, ny, nz)
             if (l > 1e-16) {
               nx /= l
               ny /= l
@@ -580,10 +624,10 @@ export function create(options: PartOptions): PlantPart | null {
 
     if (beads && leaves) {
       const out = leaves.slots[slot]
-      const normals = leaves.normals
+      const normals = leaves.normals[of]
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
+      const rain = smoothstep(0.3, 0.9, wetFelt())
       const tint = beads.tint()
       for (let i = 0; i < beads.count; i++) {
         const k = i % leaves.bodies.length
@@ -627,7 +671,55 @@ export function create(options: PartOptions): PlantPart | null {
       }
     }
 
+    if (crystals && leaves && stateUniforms.uPlantFrost.value > 0) {
+      const out = leaves.slots[slot]
+      const normals = leaves.normals[of]
+      const root = crystals.root(slot)
+      const lean = crystals.lean(slot)
+      const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+      const scale = length <= 0 ? 0 : clamp(length / 0.07, 0.35, 1) * (1 - wither)
+      leaves.bodies.forEach((b, id) => {
+        const row = b.loop + 1
+        const half = b.loop >> 1
+        for (let i = 0; i < RIME_EACH; i++) {
+          const q = id * RIME_EACH + i
+          const o = q * 4
+          const a0 = Math.floor(rimeAt[q * 2])
+          const t = rimeAt[q * 2] - a0
+          const k = i < EDGE ? 0 : i < 2 * EDGE ? half : b.loop >> 2
+          const far = i < EDGE ? half : 0
+          const v0 = (b.base + a0 * row + k) * 3
+          const v1 = v0 + row * 3
+          const w0 = (b.base + a0 * row + far) * 3
+          let dl = 0
+          let sl = 0
+          for (let c = 0; c < 3; c++) {
+            root[o + c] = lerp(out[v0 + c], out[v1 + c], t)
+            lean[o + c] = i < 2 * EDGE ? out[v0 + c] - out[w0 + c] : normals[v0 + c]
+            dl += lean[o + c] * lean[o + c]
+            sl += (out[v1 + c] - out[v0 + c]) ** 2
+          }
+          dl = Math.sqrt(dl)
+          sl = Math.sqrt(sl)
+          for (let c = 0; c < 3; c++) {
+            lean[o + c] = dl > 0 && scale > 0 ? lean[o + c] / dl : 0
+            if (run) run[q * 3 + c] = sl > 0 ? (out[v1 + c] - out[v0 + c]) / sl : 0
+          }
+          root[o + 3] = dl > 0 && i >= 2 * EDGE ? lerp(RIME_M[0], RIME_M[1], rimeAt[q * 2 + 1]) * scale : 0
+          lean[o + 3] = rimeAt[q * 2 + 1]
+        }
+      })
+    }
+
     if (!crumbs) return
+    const sunk = time >= CRUMBS_GONE_S
+    if (sunk && sunkShape[slot] && (!first || sunkNormals[of])) return
+    sunkShape[slot] = sunk
+    crumbsLaid[slot] = true
+    if (first) {
+      sunkNormals[of] = sunk
+      crumbsLed[of] = true
+    }
     const foot = stemAt(pose, 0)
     const fx = foot.x
     const fz = foot.z
@@ -668,7 +760,7 @@ export function create(options: PartOptions): PlantPart | null {
         let ux = qx * st * dp + ox * ct * hw
         let uy = qy * st * dp + oy * ct * hw
         let uz = qz * st * dp + oz * ct * hw
-        const ul = Math.hypot(ux, uy, uz) || 1
+        const ul = norm(ux, uy, uz) || 1
         ux /= ul
         uy /= ul
         uz /= ul
@@ -678,7 +770,7 @@ export function create(options: PartOptions): PlantPart | null {
       }
       // It lets go, falls and lies where it lands; the rain takes it into the ground.
       const gone = clamp((time - c.from) / c.fall)
-      const landY = soilHeightAt(fx + c.landX, fz + c.landZ, time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
+      const landY = soilHeightAt(fx + c.landX, fz + c.landZ, sunk ? CRUMBS_GONE_S : time) + 0.5 * c.size - under * (0.004 + 2.5 * c.size)
       x = lerp(x, fx + c.landX, gone)
       z = lerp(z, fz + c.landZ, gone)
       y = lerp(y, landY, gone * gone)
@@ -702,22 +794,40 @@ export function create(options: PartOptions): PlantPart | null {
         const my = crumbs.localNormal[at + 1]
         const mz = crumbs.localNormal[at + 2]
         const e = (kx * mx + ky * my + kz * mz) * (1 - cs)
-        crumbs.normals[at] = mx * cs + (ky * mz - kz * my) * sn + kx * e
-        crumbs.normals[at + 1] = my * cs + (kz * mx - kx * mz) * sn + ky * e
-        crumbs.normals[at + 2] = mz * cs + (kx * my - ky * mx) * sn + kz * e
+        crumbs.normals[of][at] = mx * cs + (ky * mz - kz * my) * sn + kx * e
+        crumbs.normals[of][at + 1] = my * cs + (kz * mx - kx * mz) * sn + ky * e
+        crumbs.normals[of][at + 2] = mz * cs + (kx * my - ky * mx) * sn + kz * e
       }
     }
   }
 
   return {
     name: 'seedling',
-    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : [])],
+    meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : []), ...(crystals ? crystals.meshes : [])],
     casters: [...groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })), ...(crumbs ? [{ mesh: crumbs.mesh, surface: crumbs.surface }] : [])],
     fill,
+    absent: (time) => time >= CRUMBS_GONE_S && seedLeafLength(time) <= 0 && huskSize(time) <= 0,
     finish() {
-      for (const g of groups) for (const a of g.live) if (a) a.needsUpdate = true
-      if (crumbs) for (const a of crumbs.live) if (a) a.needsUpdate = true
+      for (const g of groups) {
+        for (let k = 0; k < 2; k++) {
+          const shape = g.shapes[k]
+          if (filled[k] && shape) shape.needsUpdate = true
+          if (led[k] && g.carried[k]) for (const a of g.carried[k]) a.needsUpdate = true
+        }
+      }
+      if (crumbs) {
+        for (let k = 0; k < 2; k++) {
+          const shape = crumbs.shapes[k]
+          if (crumbsLaid[k] && shape) shape.needsUpdate = true
+          if (crumbsLed[k] && crumbs.carried[k]) for (const a of crumbs.carried[k]) a.needsUpdate = true
+        }
+      }
+      filled.fill(false)
+      led.fill(false)
+      crumbsLaid.fill(false)
+      crumbsLed.fill(false)
       if (beads) beads.finish()
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystals.count : 0)
     },
   }
 }

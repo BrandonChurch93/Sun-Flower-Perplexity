@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { stream } from '../core/random.ts'
 import { right, toward } from '../field/layout.ts'
-import { grassMask, grassTimes, patchy, patchyCover, stemFoot, turfCover } from './cover.ts'
+import { grassMask, grassTimes, patchy, pioneersGo, patchyCover, stemFoot, turfCover } from './cover.ts'
 import { lane } from './crumbs.ts'
 import { cropLight, fieldGate } from './light.ts'
-import { MATT_EASE_S, groundStates, soilHeight, sunWayDir } from './soil.ts'
+import { groundStates, soilClock, soilHeight, sunWayDir } from './soil.ts'
+import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TUFTS = 14000
 const BLADES = 7
@@ -102,6 +103,9 @@ function meshes(geometry: THREE.BufferGeometry, cells: Cells): THREE.InstancedMe
 
 // What the field shot adds: weeds under the crop's front, so that no bare strip lies between the turf and the crop, low broad tufts that mat the turf, and tall thin stalks that stand over it and take the low sun from behind.
 const FIELD_TUFTS = 14000
+// They come up over the weeks before the turf closes, each in its own time.
+const TURF_FROM_S = soilClock.crust[0] - 4
+const TURF_SPREAD_S = 5
 const UNDER = { share: 0.4, fromM: 1.2, toM: 3.4 }
 const STALKS = { fromM: -1.5, toM: 1.6, chance: 0.3 }
 export function fieldTufts(): THREE.InstancedMesh[] {
@@ -135,7 +139,7 @@ export function fieldTufts(): THREE.InstancedMesh[] {
     const cell = cells.get(key) ?? { matrices: [], seeds: [] }
     cells.set(key, cell)
     cell.matrices.push(new THREE.Matrix4().compose(at, turn, size))
-    cell.seeds.push(-100, tone, under ? 1 : stalk ? 1.9 : 1.6, seed)
+    cell.seeds.push(TURF_FROM_S + TURF_SPREAD_S * random.next(), tone, under ? 1 : stalk ? 1.9 : 1.6, seed)
   }
   return meshes(tuft(), cells)
 }
@@ -169,7 +173,7 @@ export function tufts(): THREE.InstancedMesh[] {
     if (chance > grassMask(x, z) * (0.5 + 0.5 * clump) || r < 0.035) continue
     if (early && (inLane > 0.02 || r < 0.06)) continue
     const height = early ? (seed < 0.22 && r > 0.1 ? 0.045 + 0.04 * tall : 0.012 + 0.03 * tall) : (0.045 + 0.1 * tall) * (0.6 + 0.6 * clump) * (weed ? 0.45 : seed > 0.93 ? 1.8 : 1)
-    const first = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.8), inLane > 0.02 ? t.laneS + 8 * birth : 0)
+    const first = early ? -100 : Math.max(t.firstS + (t.lastS - t.firstS) * Math.pow(birth, 0.5), inLane > 0.02 ? t.laneS + 8 * birth : 0)
     const born = first < SUN_CLEAR.untilS && underSun(x, z) ? SUN_CLEAR.untilS : first
     turn.setFromAxisAngle(up, spin)
     size.set(height * wide, height, height * wide)
@@ -197,27 +201,35 @@ out vec3 vAlong;
 out vec4 vTuft;
 out vec3 vField;
 uniform vec4 uGrassTimes;
-uniform float uKeptS;
+uniform vec4 uAir;
+${gustGlsl}
+const float GONE_FROM = ${pioneersGo[0].toFixed(1)};
+const float GONE_BY = ${pioneersGo[1].toFixed(1)};
+const vec2 WIND_WAY = vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)});
+const float CRUST_S = ${soilClock.crust[1].toFixed(1)};
 ${soilHeight}
 ${fieldGate}
 ${turfCover}
 ${patchyCover}
 void main() {
-  float grown = smoothstep(aTuft.x, aTuft.x + uGrassTimes.z, uTime);
+  float grown = smoothstep(aTuft.x, aTuft.x + uGrassTimes.z, uTime) * (1.0 - step(aTuft.x, -50.0) * smoothstep(GONE_FROM, GONE_BY, uTime));
   mat4 place = modelMatrix * instanceMatrix;
   vec2 c = place[3].xz;
   float tall = length(place[1].xyz);
   float seen = tall * projectionMatrix[1][1] * uSize.y / max((projectionMatrix * viewMatrix * place[3]).w, 1e-4);
   float thin = max(1.0, 1.4 / max(seen * 0.03 * aTuft.z, 1e-3));
-  float early = 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
+  float early = 1.0 - smoothstep(${soilClock.crust[0].toFixed(1)}, CRUST_S, uTime);
   float broad = aTuft.z > 2.0 ? mix(aTuft.z, ${WEED_YOUNG}, early) : aTuft.z;
   vec3 local = (position * vec3(1.0, mix(0.25, 1.0, grown), 1.0) + aSide * broad * min(thin, 4.0)) * step(0.001, grown) * mix(0.4, 1.0, grown);
-  float young = aTuft.x < uKeptS - ${SPROUT_BY_S} ? 1.0 : 0.0;
+  float young = aTuft.x < CRUST_S - ${SPROUT_BY_S} ? 1.0 : 0.0;
   float older = smoothstep(0.0, 0.5, grown);
   local *= mix(1.0, smoothstep(0.0, ${SPROUT}, grown), young);
   local *= mix(vec3(1.0), vec3(mix(${SPROUT_SLIM}, 1.0, older), mix(${SPROUT_TALL}, 1.0, older), mix(${SPROUT_SLIM}, 1.0, older)), young);
   vField = vec3(0.0);
-  if (fieldOn()) {
+  float field = fieldOn();
+  if (field > 0.0) {
+    vec3 plain = local;
+    float plainTall = tall;
     vec2 tf = turf(c);
     float near = stemNear(c);
     float chosen = fract(aTuft.w * 7.31);
@@ -233,17 +245,15 @@ void main() {
     local.xz += (outward * local.y * mix(0.0, 0.7, fract(each * 7.7)) + over * mix(0.1, 0.7, fract(kind * 9.1))) * local.y / max(girth, 0.3);
     local.y *= mix(1.0, 0.25, lying);
     local.xz *= mix(1.0, 1.5, lying);
-    local *= rough;
-    tall *= rough;
-    vField = vec3(1.0, tf.x, near);
+    local = mix(plain, local * rough, field);
+    tall = mix(plainTall, tall * rough, field);
+    vField = vec3(field, tf.x, near);
   }
   vec4 world = place * vec4(local, 1.0);
   world.y += soilHeight(c, soilLod(c));
   float bend = aAlong.x * aAlong.x * tall;
-  float own = (aTuft.w + aAlong.y) * 6.2832;
-  vec2 sway = vec2(sin(uTime * 1.7 + aTuft.w * 6.28 + aAlong.y * 2.0), cos(uTime * 1.3 + aTuft.w * 4.1));
-  vec2 gust = vec2(sin(uTime * 3.3 + own * 3.0) + 0.6 * sin(uTime * 5.9 + own * 7.0), cos(uTime * 2.7 + own * 5.0) + 0.6 * cos(uTime * 4.9 + own * 11.0));
-  world.xz += (sway + early * 1.3 * gust) * 0.035 * bend;
+  vec2 sway = vec2(sin(uReal * 1.7 + aTuft.w * 6.28 + aAlong.y * 2.0), cos(uReal * 1.3 + aTuft.w * 4.1));
+  world.xz += (0.45 * sway + WIND_WAY * (0.5 + 2.4 * gustAt(c, uReal))) * 0.035 * bend * uAir.x;
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -269,39 +279,42 @@ ${groundStates}
 ${cropLight}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
-  vec3 n = normalize(vNormal);
+  vec3 n = unit(vNormal);
   n *= sign(dot(n, v) + 1e-6);
-  float t = vAlong.x;
+  float t = saturate(vAlong.x);
   float weed = step(2.0, vTuft.z);
   vec3 albedo = mix(vec3(0.03, 0.046, 0.018), mix(vec3(0.075, 0.12, 0.036), vec3(0.11, 0.14, 0.045), vTuft.y), t);
   albedo = mix(albedo, albedo * vec3(0.85, 1.05, 1.25), weed);
   albedo = mix(albedo, vec3(0.2, 0.16, 0.06), smoothstep(0.55, 1.0, t) * step(0.72, vAlong.y) * (1.0 - weed));
   albedo *= 0.86 + 0.14 * cos(vAlong.z * 7.0);
   float shut = 1.0;
-  if (vField.x > 0.5) {
+  if (vField.x > 0.0) {
+    vec3 plain = albedo;
     float chosen = fract(vTuft.w * 13.7);
     float dry = step(0.6 + 0.32 * vField.y, chosen) * (1.0 - weed);
     albedo *= vec3(1.5, 0.8, 2.4) * mix(0.65, 1.15, fract(vTuft.w * 29.3));
     albedo = mix(albedo, mix(vec3(0.04, 0.036, 0.026), vec3(0.115, 0.096, 0.058), t) * mix(0.7, 1.1, fract(vTuft.w * 41.9)), dry);
     albedo *= mix(vec3(1.0), vec3(1.1, 1.75, 0.8), (1.0 - dry) * smoothstep(0.3, 0.75, vField.y) * mix(0.4, 1.0, fract(vTuft.w * 67.3)));
-    shut = 1.0 - 0.55 * exp(-vField.z * vField.z / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
+    albedo = mix(plain, albedo, vField.x);
+    shut = 1.0 - 0.55 * vField.x * exp(-vField.z * vField.z / ${(stemFoot.shadeM * stemFoot.shadeM).toFixed(4)});
   }
   albedo *= mix(1.0, 0.75, saturate(uWet + 0.5 * uDew));
   float rained = smoothstep(0.3, 1.0, uWet);
   albedo *= mix(vec3(1.0), vec3(1.3, 1.55, 1.2), rained);
-  albedo = mix(albedo, vec3(0.75, 0.8, 0.85), uFrost * 0.75 * smoothstep(0.15, 0.8, t));
+  albedo = mix(frozen(albedo, uFrost), FROST_WHITE * 1.15, smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.7) * 0.7 * smoothstep(0.15, 0.8, t));
   vec2 p = vWorld.xz;
   float deep = mix(0.3, 1.0, smoothstep(0.0, 0.6, t));
   float lit = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward)) * deep;
-  if (vField.x > 0.5) lit = max(lit, fieldPatch(p, -dot(p, uToward)) * deep);
+  lit = max(lit, fieldPatch(p, -dot(p, uToward)) * deep);
   float ndl = dot(n, uSunDir);
   float warm = saturate((uSunColor.r / max(uSunColor.b, 1e-4) - 1.0) / 0.2);
-  vec3 through = albedo * (vField.x > 0.5 ? vec3(1.7, 2.1, 2.2) : vec3(2.6, 1.25, 0.45) * warm + vec3(1.1, 1.3, 0.9) * (1.0 - warm)) * 0.7 * max(-ndl, 0.0);
+  vec3 through = albedo * mix(mix(vec3(2.6, 1.25, 0.45) * warm + vec3(1.1, 1.3, 0.9) * (1.0 - warm), vec3(1.7, 2.1, 2.2), vField.x), vec3(1.0, 1.05, 1.15), 0.85 * smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.7)) * 0.7 * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
-  if (vField.x > 0.5) color *= shut * edgeShade(-dot(p, uToward));
+  color += albedo * afterglow() * ((1.0 - uDew) * 0.35 * deep);
+  color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
-  color += skyAmbient(reflect(-v, n)) * (0.05 * rained * deep);
+  color += mix(uAirHorizon, uAirZenith, saturate(reflect(-v, n).y)) * (0.05 * rained * deep);
   float bead = step(0.9, hash31(floor(vWorld * 700.0))) * uDew * (1.0 - smoothstep(0.25, 0.9, vDepth));
   color += bead * (uSunColor * 1.2 * lit + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.4);
   outColor = finish(color, vWorld, vDepth, -1.0);

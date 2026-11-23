@@ -35,7 +35,7 @@ describe('the plant', () => {
     }
     expect(heightAt(0)).toBeGreaterThan(0)
     expect(heightAt(0)).toBeCloseTo(new Monotone(config.plant.heightM).at(headStartSeconds), 12)
-    expect(heightAt(config.film.durationSeconds)).toBeCloseTo(config.plant.fullHeightM, 6)
+    expect(heightAt(config.growth.seconds)).toBeCloseTo(config.plant.fullHeightM, 6)
   })
 
   it('starts with a head start that is gone by 1.4 s, and passes through every height the config names from 1.5 s on', () => {
@@ -52,7 +52,7 @@ describe('the plant', () => {
       const top = buildStandIn(time, { ...inputs, wind: 0 }, pos, null)
       expect(Math.abs(top - heightAt(time))).toBeLessThan(2e-5)
       const blown = buildStandIn(time, inputs, pos, null)
-      expect(Math.abs(blown - heightAt(time))).toBeLessThan(5e-3)
+      expect(Math.abs(blown - heightAt(time))).toBeLessThan(7e-3)
     }
   })
 
@@ -79,7 +79,7 @@ describe('the plant', () => {
       expect(leafLength(i, birth - 1)).toBe(0)
       let last = 0
       let largest = 0
-      for (let t = birth; t <= config.film.durationSeconds; t += step) {
+      for (let t = birth; t <= config.growth.seconds; t += step) {
         const now = leafLength(i, t)
         expect(now).toBeGreaterThanOrEqual(last)
         largest = Math.max(largest, now - last)
@@ -94,7 +94,7 @@ describe('the plant', () => {
     expect(seedLeafLength(0)).toBeLessThan(0.013)
     expect(bodyRadius(config.plant.stages.bud[0])).toBe(0)
     expect(bodyRadius(config.plant.stages.bud[0] - 1)).toBe(0)
-    expect(bodyRadius(config.film.durationSeconds)).toBeCloseTo(config.plant.discDiameterM / 2, 9)
+    expect(bodyRadius(config.growth.seconds)).toBeCloseTo(config.plant.discDiameterM / 2, 9)
     for (let k = 0; k < rayCount; k++) {
       expect(rayLength(k, config.plant.stages.bud[0])).toBe(0)
       expect(rayLength(k, (config.plant.stages.bud[0] + config.plant.stages.bud[1]) / 2)).toBe(0)

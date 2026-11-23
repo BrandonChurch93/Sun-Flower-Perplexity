@@ -1,3 +1,5 @@
+import { config } from '../config.ts'
+import { norm } from './norm.ts'
 import { clamp, lerp, smoothstep } from '../core/curves.ts'
 import {
   archShare,
@@ -23,6 +25,7 @@ import {
   leafSeed,
   leafStemFraction,
   measureStem,
+  REST,
   plantVariant,
   rayAngle,
   rayCount,
@@ -35,6 +38,7 @@ import {
   stemBend,
   stemDirection,
   stemRadius,
+  stemSunk,
   type PlantInputs,
   type StemBend,
   type Vec3,
@@ -139,8 +143,10 @@ const rz = new Float64Array(STEM_RINGS)
 const dir: Vec3 = { x: 0, y: 1, z: 0 }
 let bend: StemBend = stemBend(0, { leanX: 0, leanZ: 0, lift: 1, wind: 0 })
 
+let sunk = 0
 export function layStem(time: number, inputs: PlantInputs): void {
   bend = stemBend(time, inputs)
+  sunk = stemSunk(time)
   let x = 0
   let y = 0
   let z = 0
@@ -161,7 +167,7 @@ export function layStem(time: number, inputs: PlantInputs): void {
     px -= dir.x * along
     py -= dir.y * along
     pz -= dir.z * along
-    const l = Math.hypot(px, py, pz) || 1
+    const l = norm(px, py, pz) || 1
     px /= l
     py /= l
     pz /= l
@@ -186,13 +192,19 @@ export function stemNode(u: number, length: number): Node {
   const f = clamp(u) * (STEM_RINGS - 1)
   const i = Math.min(STEM_RINGS - 2, Math.floor(f))
   const k = f - i
-  node.x = lerp(sx[i], sx[i + 1], k) * length
-  node.y = lerp(sy[i], sy[i + 1], k) * length
-  node.z = lerp(sz[i], sz[i + 1], k) * length
+  // Between two stations the place runs on the curve that leaves each along its own direction, so the line has no corner at a station.
+  const k2 = k * k
+  const k3 = k2 * k
+  const h1 = 3 * k2 - 2 * k3
+  const g0 = (k3 - 2 * k2 + k) / (STEM_RINGS - 1)
+  const g1 = (k3 - k2) / (STEM_RINGS - 1)
+  node.x = (lerp(sx[i], sx[i + 1], h1) + g0 * tx[i] + g1 * tx[i + 1]) * length
+  node.y = (lerp(sy[i], sy[i + 1], h1) + g0 * ty[i] + g1 * ty[i + 1]) * length - sunk
+  node.z = (lerp(sz[i], sz[i + 1], h1) + g0 * tz[i] + g1 * tz[i + 1]) * length
   let ax = lerp(tx[i], tx[i + 1], k)
   let ay = lerp(ty[i], ty[i + 1], k)
   let az = lerp(tz[i], tz[i + 1], k)
-  let l = Math.hypot(ax, ay, az) || 1
+  let l = norm(ax, ay, az) || 1
   ax /= l
   ay /= l
   az /= l
@@ -203,7 +215,7 @@ export function stemNode(u: number, length: number): Node {
   qx -= ax * along
   qy -= ay * along
   qz -= az * along
-  l = Math.hypot(qx, qy, qz) || 1
+  l = norm(qx, qy, qz) || 1
   node.tx = ax
   node.ty = ay
   node.tz = az
@@ -307,7 +319,7 @@ export function gridNormals(pos: Float32Array, nor: Float32Array, base: number, 
       let x = uy * vz - uz * vy
       let y = uz * vx - ux * vz
       let z = ux * vy - uy * vx
-      const l = Math.hypot(x, y, z)
+      const l = norm(x, y, z)
       if (l > 1e-14) {
         x /= l
         y /= l
@@ -349,7 +361,7 @@ export function ellipsoid(pos: Float32Array, nor: Float32Array | null, base: num
         let nx = ax * h * across + ox * w * along
         let ny = ay * h * across + oy * w * along
         let nz = az * h * across + oz * w * along
-        const l = Math.hypot(nx, ny, nz) || 1
+        const l = norm(nx, ny, nz) || 1
         nx /= l
         ny /= l
         nz /= l
@@ -379,7 +391,7 @@ export function layHead(time: number, length: number): Head {
   let px = end.rx - head.ax * along
   let py = end.ry - head.ay * along
   let pz = end.rz - head.az * along
-  const l = Math.hypot(px, py, pz) || 1
+  const l = norm(px, py, pz) || 1
   px /= l
   py /= l
   pz /= l
@@ -495,14 +507,14 @@ function place(time: number, inputs: PlantInputs, length: number, pos: Float32Ar
     let ax = lerp(end.tx, 0.94, k)
     let ay = lerp(end.ty, 0.04, k)
     let az = lerp(end.tz, 0.34, k)
-    const l = Math.hypot(ax, ay, az) || 1
+    const l = norm(ax, ay, az) || 1
     ax /= l
     ay /= l
     az /= l
     let px = end.bx - ax * (end.bx * ax + end.by * ay + end.bz * az)
     let py = end.by - ay * (end.bx * ax + end.by * ay + end.bz * az)
     let pz = end.bz - az * (end.bx * ax + end.by * ay + end.bz * az)
-    const pl = Math.hypot(px, py, pz) || 1
+    const pl = norm(px, py, pz) || 1
     px /= pl
     py /= pl
     pz /= pl
@@ -550,33 +562,83 @@ const solved: Solved[] = []
 const KEEP = 32
 const scratch = new Float32Array(standInVertexCount * 3)
 
-// The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment.
+// The stem is as long as it must be for the top of the whole plant to stand at the height the film gives for this moment, in still air.
+function solveLength(time: number, still: PlantInputs): number {
+  const target = heightAt(time)
+  if (!(target > 0)) return 0
+  measureStem(true)
+  const under = stemSunk(time)
+  let l0 = target + under
+  let f0 = place(time, still, l0, scratch, null) - target
+  let l1 = Math.max(1e-7, (l0 * (target + under)) / (f0 + target + under))
+  let f1 = place(time, still, l1, scratch, null) - target
+  for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
+    const slope = (f1 - f0) / (l1 - l0)
+    if (!(slope > 1e-6)) break
+    const l2 = Math.max(0, l1 - f1 / slope)
+    l0 = l1
+    f0 = f1
+    l1 = l2
+    f1 = place(time, still, l1, scratch, null) - target
+  }
+  measureStem(false)
+  return l1
+}
+
+// When a taller piece overtakes the highest one, the solved length turns in one frame. The plant at rest has a length of the clock alone, so there it runs as a smooth curve by its solved lengths at marks along the clock: REST_STEP_S apart while the plant grows, REST_STEP_BLOOM_S apart once the head opens, where the rays overtake each other for seconds on end.
+// The sprout keeps the solved length itself: while its hook unbends the length sways, and that sway is what lets the top rise evenly.
+const REST_STEP_S = 0.3
+const REST_STEP_BLOOM_S = 1
+const REST_BLOOM_MARK = 140
+const REST_BLOOM_EASE = 2
+const REST_SMOOTH_FROM_S = 1.2
+const REST_SMOOTH_S = 2.2
+// The clock at mark s, and the mark at a moment of the clock.
+function markTime(s: number): number {
+  return REST_STEP_S * s + (REST_STEP_BLOOM_S - REST_STEP_S) * REST_BLOOM_EASE * Math.log(1 + Math.exp((s - REST_BLOOM_MARK) / REST_BLOOM_EASE))
+}
+function markAt(time: number): number {
+  let s = time / REST_STEP_S
+  for (let i = 0; i < 12; i++) {
+    const e = Math.exp((s - REST_BLOOM_MARK) / REST_BLOOM_EASE)
+    const step = (markTime(s) - time) / (REST_STEP_S + ((REST_STEP_BLOOM_S - REST_STEP_S) * e) / (1 + e))
+    s -= step
+    if (Math.abs(step) < 1e-12) break
+  }
+  return s
+}
+const REST_MARKS = Math.ceil(markAt(config.growth.seconds)) + 4
+const rests = new Map<number, Float64Array>()
+function restAt(known: Float64Array, j: number): number {
+  let length = known[j + 1]
+  if (length !== length) {
+    length = solveLength(clamp(markTime(j), 0, config.growth.seconds), REST)
+    known[j + 1] = length
+  }
+  return length
+}
+function restLength(time: number): number {
+  const early = 1 - smoothstep(REST_SMOOTH_FROM_S, REST_SMOOTH_S, time)
+  const exact = early > 0 ? solveLength(time, REST) : 0
+  if (early >= 1) return exact
+  const variant = plantVariant()
+  let known = rests.get(variant)
+  if (!known) rests.set(variant, (known = new Float64Array(REST_MARKS).fill(NaN)))
+  const x = markAt(Math.min(time, config.growth.seconds))
+  const j = Math.floor(x)
+  const u = x - j
+  const v = 1 - u
+  const smooth = (v * v * v * restAt(known, j - 1) + (3 * u * u * u - 6 * u * u + 4) * restAt(known, j) + (3 * v * v * v - 6 * v * v + 4) * restAt(known, j + 1) + u * u * u * restAt(known, j + 2)) / 6
+  return lerp(smooth, exact, early)
+}
+
+// With `steady` inputs that is the plant at rest, and what it feels bends it and never stretches it: the length is the plant clock's alone.
 export function stemLength(time: number, inputs: PlantInputs): number {
   const variant = plantVariant()
-  for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === inputs.leanX && s.leanZ === inputs.leanZ && s.lift === inputs.lift) return s.length
-  const target = heightAt(time)
-  // The stem is as long as it takes to stand that tall in still air. The wind then bends it and never stretches it.
-  const still = inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
-  let length = 0
-  if (target > 0) {
-    measureStem(true)
-    let l0 = target
-    let f0 = place(time, still, l0, scratch, null) - target
-    let l1 = Math.max(1e-7, (l0 * target) / (f0 + target))
-    let f1 = place(time, still, l1, scratch, null) - target
-    for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
-      const slope = (f1 - f0) / (l1 - l0)
-      if (!(slope > 1e-6)) break
-      const l2 = Math.max(0, l1 - f1 / slope)
-      l0 = l1
-      f0 = f1
-      l1 = l2
-      f1 = place(time, still, l1, scratch, null) - target
-    }
-    length = l1
-    measureStem(false)
-  }
-  solved.push({ variant, time, leanX: inputs.leanX, leanZ: inputs.leanZ, lift: inputs.lift, length })
+  const still = inputs.steady ? REST : inputs.wind === 0 ? inputs : { ...inputs, wind: 0 }
+  for (const s of solved) if (s.variant === variant && s.time === time && s.leanX === still.leanX && s.leanZ === still.leanZ && s.lift === still.lift) return s.length
+  const length = inputs.steady ? restLength(time) : solveLength(time, still)
+  solved.push({ variant, time, leanX: still.leanX, leanZ: still.leanZ, lift: still.lift, length })
   if (solved.length > KEEP) solved.shift()
   return length
 }
@@ -601,9 +663,10 @@ export const FLOOR_RIM = 0.5
 export const FLOOR_DOME = 0.22
 
 // The growing tip: the top of the arch, then the end of the stem, then the bud, then the middle of the open face. From the bud on it lies inside the head.
+// With `steady` inputs the lens holds the plant as it stands at rest: what the sun, the wind and the cold do to it is seen against a frame that does not chase it.
 export function tipAt(time: number, inputs: PlantInputs, out: Vec3): Vec3 {
   const length = stemLength(time, inputs)
-  layStem(time, inputs)
+  layStem(time, inputs.steady ? REST : inputs)
   const n = stemNode(archShare(time), length)
   const x = n.x
   const y = n.y
@@ -624,7 +687,7 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
   let dx = out.x - eye.x
   let dy = out.y - eye.y
   let dz = out.z - eye.z
-  const far = Math.hypot(dx, dy, dz)
+  const far = norm(dx, dy, dz)
   if (!(far > 1e-9)) return out
   dx /= far
   dy /= far
@@ -653,7 +716,7 @@ export function focusAt(time: number, inputs: PlantInputs, eye: Vec3, out: Vec3)
 const UNDER_HEAD_M = 0.2
 export function carrierAt<T extends Vec3>(time: number, inputs: PlantInputs, held: Vec3, out: T): T {
   const length = stemLength(time, inputs)
-  layStem(time, inputs)
+  layStem(time, inputs.steady ? REST : inputs)
   const share = smoothstep(0, 0.02, layHead(time, length).radius)
   const n = stemNode(archShare(time) * (1 - Math.min(0.5, UNDER_HEAD_M / Math.max(length, 1e-6))), length)
   out.x = lerp(held.x, n.x, share)

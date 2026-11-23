@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { remember } from '../../core/programs.ts'
 import { glslCommon, glslHead, shared } from '../../core/shading.ts'
 import { basin } from './basin.ts'
 import { LANDING_FLOATS } from './landings.ts'
@@ -29,7 +30,7 @@ void main() {
   float fade = ${RING_FADE_S[0].toFixed(2)} + ${RING_FADE_S[1].toFixed(2)} * size;
   float life = ${RING_FADES.toFixed(1)} * fade;
   float rc = 0.002 + (0.18 + 0.1 * size + 0.03 * seed) * t;
-  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.05 + 0.09 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size;
+  float amp = smoothstep(0.0, 0.015, t) * exp(-t / fade - rc / (0.03 + 0.055 * size)) * (1.0 - smoothstep(0.75 * life, life, t)) * size;
   amp *= smoothstep(0.0003, 0.003, waterDepth(drop.xy));
   if (amp < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -38,7 +39,7 @@ void main() {
   float w = 0.003 + 0.008 * size + (0.02 + 0.05 * size) * t;
   float a = ring.x * 6.2831853;
   vOff = vec2(cos(a), sin(a)) * mix(max(rc - 4.0 * w, 0.0), (rc + 2.2 * w) * 1.01, ring.y);
-  vWave = vec4(rc, w, 3.4 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
+  vWave = vec4(rc, w, 2.6 * amp, 0.0065 + 0.0135 * size + (0.006 + 0.026 * size) * t + 0.004 * seed);
   vPhase = 6.2831853 * seed;
   gl_Position = vec4(boxPlace(drop.xy + vOff), 0.0, 1.0);
 }
@@ -84,7 +85,7 @@ export class Ripples {
     this.geometry.setAttribute('drop', this.drops)
     this.geometry.instanceCount = 0
     this.uniforms = { ...shared, ...ground, uLevel: level, uBox: { value: new THREE.Vector3() }, uSpan: { value: new THREE.Vector2() } }
-    const material = new THREE.RawShaderMaterial({ name: 'puddle rings', glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms: this.uniforms, side: THREE.DoubleSide, depthTest: false, depthWrite: false, transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor })
+    const material = remember(new THREE.RawShaderMaterial({ name: 'puddle rings', glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms: this.uniforms, side: THREE.DoubleSide, depthTest: false, depthWrite: false, transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor }))
     const mesh = new THREE.Mesh(this.geometry, material)
     mesh.frustumCulled = false
     this.scene.add(mesh)
@@ -93,7 +94,11 @@ export class Ripples {
 
   set(count: number, open: number, close: number, cx: number, cz: number, half: number): void {
     this.geometry.instanceCount = count
-    this.drops.needsUpdate = true
+    if (count > 0) {
+      this.drops.clearUpdateRanges()
+      this.drops.addUpdateRange(0, count * LANDING_FLOATS)
+      this.drops.needsUpdate = true
+    }
     this.uniforms.uSpan.value.set(open, close)
     this.uniforms.uBox.value.set(cx, cz, 1 / half)
   }

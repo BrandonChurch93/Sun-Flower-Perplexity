@@ -1,0 +1,314 @@
+{
+  "round": 27,
+  "shots": [
+    {
+      "id": "open", "frame": 0, "judged": true,
+      "key": "references/v2/keys/open.png", "control": "references/v2/keys/open.png",
+      "spots": [
+        { "label": "the seedling's tip on the soil", "x": 0.50, "y": 0.73 },
+        { "label": "the soil in front", "x": 0.30, "y": 0.88 },
+        { "label": "the grass blades at left", "x": 0.22, "y": 0.66 },
+        { "label": "the grass blade at right", "x": 0.93, "y": 0.62 },
+        { "label": "the glow over the hills", "x": 0.72, "y": 0.25 },
+        { "label": "the sky", "x": 0.35, "y": 0.10 },
+        { "label": "the far hills at left", "x": 0.15, "y": 0.27 },
+        { "label": "the soil behind the plane of focus", "x": 0.62, "y": 0.50 }
+      ],
+      "settled": ["In -b the bent tip of the seedling already shows above the soil. In -a the soil is still closed over the seed."]
+    },
+    {
+      "id": "sprout", "frame": 60, "judged": true,
+      "key": "references/approved/dawn-sprout.png", "control": "references/approved/dawn-sprout.png", "controlVotes": "round 9",
+      "spots": [
+        { "label": "the seed coat and the hook", "x": 0.59, "y": 0.33 },
+        { "label": "the stem where it leaves the soil", "x": 0.60, "y": 0.70 },
+        { "label": "the soil crumbs in front", "x": 0.42, "y": 0.86 },
+        { "label": "the grass at right", "x": 0.92, "y": 0.58 },
+        { "label": "the light of the sun in the sky", "x": 0.80, "y": 0.20 },
+        { "label": "the out of focus soil at left", "x": 0.12, "y": 0.50 },
+        { "label": "the grass at left", "x": 0.25, "y": 0.75 },
+        { "label": "the sky at upper left", "x": 0.30, "y": 0.10 }
+      ]
+    },
+    {
+      "id": "seedling", "frame": 236, "judged": true,
+      "key": "references/approved/dawn-seedling.png", "control": "references/approved/dawn-seedling.png", "controlVotes": "round 9",
+      "spots": [
+        { "label": "the seed leaves", "x": 0.60, "y": 0.34 },
+        { "label": "the stem and the shed seed coat", "x": 0.57, "y": 0.80 },
+        { "label": "the grass at right", "x": 0.80, "y": 0.50 },
+        { "label": "the soil in front", "x": 0.30, "y": 0.88 },
+        { "label": "the horizon at left", "x": 0.15, "y": 0.33 },
+        { "label": "the sky", "x": 0.30, "y": 0.12 },
+        { "label": "the tip between the seed leaves", "x": 0.60, "y": 0.42 },
+        { "label": "the soil at right", "x": 0.92, "y": 0.72 }
+      ]
+    },
+    {
+      "id": "frost-wide", "frame": 940, "judged": false,
+      "key": "references/v2/keys/frost.png",
+      "spots": [
+        { "label": "the top leaves", "x": 0.62, "y": 0.22 },
+        { "label": "the leaves at left", "x": 0.53, "y": 0.37 },
+        { "label": "the leaves at right", "x": 0.72, "y": 0.40 },
+        { "label": "the foot of the stem", "x": 0.63, "y": 0.68 },
+        { "label": "the frosted soil", "x": 0.15, "y": 0.63 },
+        { "label": "the mist at the horizon", "x": 0.28, "y": 0.48 },
+        { "label": "the soil in front", "x": 0.40, "y": 0.88 },
+        { "label": "the low sun", "x": 0.90, "y": 0.55 }
+      ]
+    },
+    {
+      "id": "frost-margin", "frame": 1003, "judged": false,
+      "key": "references/v2/keys/frost-margin.png",
+      "spots": [
+        { "label": "the upper edge of the leaf", "x": 0.45, "y": 0.12 },
+        { "label": "the face of the leaf", "x": 0.45, "y": 0.45 },
+        { "label": "the lower edge of the leaf", "x": 0.40, "y": 0.80 },
+        { "label": "the stem and its hairs", "x": 0.94, "y": 0.45 },
+        { "label": "the tip of the leaf", "x": 0.22, "y": 0.70 },
+        { "label": "the out of focus ground", "x": 0.12, "y": 0.35 },
+        { "label": "the leaf near its stalk", "x": 0.80, "y": 0.42 },
+        { "label": "the leaf below", "x": 0.70, "y": 0.93 }
+      ],
+      "settled": ["The sun is in the picture in -a and outside it in -b, and -b looks at the leaf more from above."]
+    },
+    {
+      "id": "frost-sun", "frame": 1055, "judged": true,
+      "key": "references/v2/keys/frost-sun.png", "control": "references/v2/keys/frost.png",
+      "spots": [
+        { "label": "the upright leaf", "x": 0.57, "y": 0.22 },
+        { "label": "the sun", "x": 0.32, "y": 0.25 },
+        { "label": "the leaf at left", "x": 0.25, "y": 0.55 },
+        { "label": "the stem", "x": 0.55, "y": 0.72 },
+        { "label": "the leaf at right", "x": 0.85, "y": 0.45 },
+        { "label": "the leaf at lower right", "x": 0.85, "y": 0.82 },
+        { "label": "the out of focus ground", "x": 0.10, "y": 0.75 },
+        { "label": "the leaf edge at lower left", "x": 0.08, "y": 0.92 }
+      ]
+    },
+    {
+      "id": "frost-thaw", "frame": 1234, "judged": false,
+      "key": "references/v2/keys/frost-thaw.png",
+      "spots": [
+        { "label": "the drop", "x": 0.72, "y": 0.68 },
+        { "label": "the face of the leaf", "x": 0.38, "y": 0.38 },
+        { "label": "the lower edge of the leaf", "x": 0.42, "y": 0.60 },
+        { "label": "the upper left of the picture", "x": 0.10, "y": 0.15 },
+        { "label": "the ground", "x": 0.50, "y": 0.88 },
+        { "label": "the sky", "x": 0.80, "y": 0.25 },
+        { "label": "the leaf near its tip", "x": 0.60, "y": 0.55 },
+        { "label": "the out of focus lights at right", "x": 0.90, "y": 0.60 }
+      ],
+      "settled": ["The rays of light across -a are a flare of the lens. -b does not copy them."]
+    },
+    {
+      "id": "climb", "frame": 1479, "judged": true,
+      "key": "references/v2/keys/climb.png", "control": "references/v2/keys/climb.png",
+      "spots": [
+        { "label": "the top of the plant", "x": 0.60, "y": 0.18 },
+        { "label": "the leaf at left", "x": 0.42, "y": 0.44 },
+        { "label": "the leaf at right", "x": 0.78, "y": 0.48 },
+        { "label": "the stem", "x": 0.61, "y": 0.60 },
+        { "label": "the soil in front", "x": 0.22, "y": 0.88 },
+        { "label": "the clouds", "x": 0.22, "y": 0.28 },
+        { "label": "the horizon at left", "x": 0.14, "y": 0.62 },
+        { "label": "the foot of the plant", "x": 0.72, "y": 0.85 }
+      ],
+      "settled": ["In -b the clouds are streaked by the time lapse. In -a they are sharp."]
+    },
+    {
+      "id": "storm", "frame": 1775, "judged": true,
+      "key": "references/v2/keys/storm.png", "control": "references/v2/keys/storm.png",
+      "spots": [
+        { "label": "the top of the plant", "x": 0.62, "y": 0.20 },
+        { "label": "the large leaf at left", "x": 0.49, "y": 0.53 },
+        { "label": "the leaves at right", "x": 0.71, "y": 0.62 },
+        { "label": "the stem near the ground", "x": 0.60, "y": 0.78 },
+        { "label": "the plant at left", "x": 0.12, "y": 0.55 },
+        { "label": "the bright band of cloud", "x": 0.30, "y": 0.42 },
+        { "label": "the rain against the dark cloud", "x": 0.25, "y": 0.15 },
+        { "label": "the puddle", "x": 0.53, "y": 0.90 }
+      ]
+    },
+    {
+      "id": "storm-flash", "frame": 1877, "judged": true,
+      "key": "references/v2/keys/storm-flash.png", "control": "references/v2/keys/storm-flash.png",
+      "spots": [
+        { "label": "the top of the plant", "x": 0.60, "y": 0.20 },
+        { "label": "the leaves at left", "x": 0.52, "y": 0.62 },
+        { "label": "the leaves at right", "x": 0.70, "y": 0.68 },
+        { "label": "the puddle", "x": 0.55, "y": 0.90 },
+        { "label": "the plant at left", "x": 0.10, "y": 0.62 },
+        { "label": "the lit cloud", "x": 0.45, "y": 0.10 },
+        { "label": "the far hills", "x": 0.25, "y": 0.48 },
+        { "label": "the rain at right", "x": 0.88, "y": 0.35 }
+      ],
+      "settled": ["In -a the leaves are glossy and smooth. In -b they are matte with toothed edges, as in the rest of the film."]
+    },
+    {
+      "id": "break", "frame": 2096, "judged": true,
+      "key": "references/v2/keys/break.png", "control": "references/v2/keys/break.png",
+      "spots": [
+        { "label": "the sun and its shafts", "x": 0.38, "y": 0.20 },
+        { "label": "the top of the plant", "x": 0.62, "y": 0.22 },
+        { "label": "the lit leaf at left", "x": 0.47, "y": 0.56 },
+        { "label": "the leaves at right", "x": 0.72, "y": 0.65 },
+        { "label": "the puddle", "x": 0.52, "y": 0.90 },
+        { "label": "the plant at left", "x": 0.08, "y": 0.70 },
+        { "label": "the far field", "x": 0.85, "y": 0.55 },
+        { "label": "the dark cloud", "x": 0.82, "y": 0.20 }
+      ],
+      "settled": ["The plant is larger in the picture in -b than in -a."]
+    },
+    {
+      "id": "late-dusk", "frame": 2780, "judged": true,
+      "key": "references/v2/keys/late.png", "control": "references/v2/keys/late.png",
+      "spots": [
+        { "label": "the bud", "x": 0.62, "y": 0.32 },
+        { "label": "the tips of the bracts", "x": 0.63, "y": 0.16 },
+        { "label": "the stem and its hairs", "x": 0.63, "y": 0.68 },
+        { "label": "the leaf at lower left", "x": 0.46, "y": 0.85 },
+        { "label": "the sky over the horizon", "x": 0.25, "y": 0.38 },
+        { "label": "the field behind", "x": 0.30, "y": 0.62 },
+        { "label": "the near leaf at left", "x": 0.07, "y": 0.33 },
+        { "label": "the leaf at right", "x": 0.78, "y": 0.62 }
+      ]
+    },
+    {
+      "id": "late", "frame": 2880, "judged": true,
+      "spots": [
+        { "label": "the top bracts", "x": 0.62, "y": 0.14 },
+        { "label": "the middle of the bud", "x": 0.60, "y": 0.42 },
+        { "label": "the bracts at lower left", "x": 0.46, "y": 0.66 },
+        { "label": "the stem", "x": 0.63, "y": 0.84 },
+        { "label": "the leaf at right", "x": 0.86, "y": 0.82 },
+        { "label": "the clouds and the sun", "x": 0.27, "y": 0.12 },
+        { "label": "the horizon at left", "x": 0.15, "y": 0.64 },
+        { "label": "the bracts at right", "x": 0.77, "y": 0.40 }
+      ]
+    },
+    {
+      "id": "bloom-opening", "frame": 2957, "judged": true,
+      "key": "references/v2/keys/bloom-close-opening.png", "control": "references/approved/bloom-opening.png", "controlVotes": "round 3",
+      "spots": [
+        { "label": "the rays at the top", "x": 0.57, "y": 0.12 },
+        { "label": "the disc", "x": 0.60, "y": 0.48 },
+        { "label": "the rays at left", "x": 0.38, "y": 0.55 },
+        { "label": "the bracts at right", "x": 0.80, "y": 0.25 },
+        { "label": "under the head", "x": 0.55, "y": 0.85 },
+        { "label": "the sun", "x": 0.20, "y": 0.38 },
+        { "label": "the field", "x": 0.12, "y": 0.80 },
+        { "label": "the leaf at lower right", "x": 0.88, "y": 0.85 }
+      ]
+    },
+    {
+      "id": "bloom-hero", "frame": 3112, "judged": true,
+      "key": "references/v2/keys/bloom-close.png", "control": "references/approved/bloom-hero.png", "controlVotes": "round 3",
+      "spots": [
+        { "label": "the disc", "x": 0.57, "y": 0.48 },
+        { "label": "the rays at the top", "x": 0.58, "y": 0.13 },
+        { "label": "the rays at right", "x": 0.78, "y": 0.45 },
+        { "label": "the rays at lower left", "x": 0.44, "y": 0.72 },
+        { "label": "the sun", "x": 0.18, "y": 0.33 },
+        { "label": "the field", "x": 0.15, "y": 0.72 },
+        { "label": "the leaf at left", "x": 0.05, "y": 0.35 },
+        { "label": "the bracts and the leaf under the head", "x": 0.76, "y": 0.68 }
+      ],
+      "settled": ["In -a the sun sits on the horizon. In -b it stands a little above it."]
+    },
+    {
+      "id": "field", "frame": 3523, "judged": true,
+      "key": "references/approved/field.png", "control": "references/approved/field.png", "controlVotes": "round 7",
+      "spots": [
+        { "label": "the two plants in front", "x": 0.50, "y": 0.52 },
+        { "label": "the sun", "x": 0.27, "y": 0.22 },
+        { "label": "the far ridge", "x": 0.52, "y": 0.25 },
+        { "label": "the rows in the middle distance", "x": 0.80, "y": 0.42 },
+        { "label": "the near plants", "x": 0.50, "y": 0.85 },
+        { "label": "the upper sky", "x": 0.72, "y": 0.13 },
+        { "label": "the heads at left", "x": 0.13, "y": 0.44 },
+        { "label": "the near ground at right", "x": 0.85, "y": 0.80 }
+      ],
+      "settled": ["In -b a second sunflower stands a short step to the left of the foreground plant and a little nearer the camera, with its own shadow, and it hides the part of the field behind it. In -a the foreground plant stands alone."]
+    },
+    {
+      "id": "last", "frame": 3755, "judged": true,
+      "key": "references/v2/keys/last.png", "control": "references/v2/keys/last.png",
+      "spots": [
+        { "label": "the two plants in front", "x": 0.55, "y": 0.57 },
+        { "label": "the glow where the sun went down", "x": 0.30, "y": 0.24 },
+        { "label": "the far ridge at right", "x": 0.80, "y": 0.30 },
+        { "label": "the rows in the middle distance", "x": 0.25, "y": 0.45 },
+        { "label": "the near plants", "x": 0.55, "y": 0.85 },
+        { "label": "the upper sky", "x": 0.70, "y": 0.08 },
+        { "label": "the heads at right", "x": 0.85, "y": 0.50 },
+        { "label": "the near ground at left", "x": 0.12, "y": 0.80 }
+      ]
+    }
+  ],
+  "sections": [
+    { "id": "germination", "from": 0, "to": 848 },
+    { "id": "freeze", "from": 849, "to": 1259 },
+    { "id": "climb", "from": 1260, "to": 1671 },
+    { "id": "storm", "from": 1672, "to": 2082 },
+    { "id": "ascent", "from": 2083, "to": 2906 },
+    { "id": "flower", "from": 2907, "to": 3317 },
+    { "id": "crane", "from": 3318, "to": 3729 },
+    { "id": "dusk", "from": 3730, "to": 3809 }
+  ],
+  "motionA": [
+    { "first": 2422, "what": "in a time lapse part of the film, where the plant grows fastest" },
+    { "first": 2990, "what": "as the flower opens", "x": 0.58, "y": 0.42, "round": "the flower head" }
+  ],
+  "motionB": [
+    { "first": 30, "what": "as the seedling lifts out of the soil", "x": 0.58, "y": 0.52, "round": "the seedling" },
+    { "first": 1604, "what": "in a time lapse part of the film" },
+    { "first": 1775, "what": "in the rain" },
+    { "first": 1100, "what": "in a close view in the frost, where the camera drifts slowly", "x": 0.45, "y": 0.45, "round": "the middle of the picture" },
+    { "first": 3020, "what": "as the flower opens" },
+    { "first": 3724, "what": "as the day ends" }
+  ],
+  "cuts": [952, 1055, 1157, 1260],
+  "hook": [0, 8, 15, 23, 30, 38, 45, 53, 60],
+  "wholeSheets": 6,
+  "stress": [
+    { "frame": 427, "spots": [
+      { "label": "the night sky", "x": 0.60, "y": 0.12 },
+      { "label": "the seedling", "x": 0.58, "y": 0.42 },
+      { "label": "the soil in front", "x": 0.35, "y": 0.80 }
+    ] },
+    { "frame": 940, "spots": [
+      { "label": "the frosted leaves", "x": 0.62, "y": 0.30 },
+      { "label": "the frosted soil", "x": 0.25, "y": 0.70 },
+      { "label": "the mist at the horizon", "x": 0.30, "y": 0.48 }
+    ] },
+    { "frame": 1775, "spots": [
+      { "label": "the top of the plant in the rain", "x": 0.60, "y": 0.22 },
+      { "label": "the bright band of cloud", "x": 0.30, "y": 0.42 },
+      { "label": "the puddle", "x": 0.52, "y": 0.88 }
+    ] },
+    { "frame": 3112, "spots": [
+      { "label": "the disc", "x": 0.57, "y": 0.48 },
+      { "label": "the rays at the top", "x": 0.62, "y": 0.14 },
+      { "label": "the field", "x": 0.18, "y": 0.70 }
+    ] },
+    { "frame": 3523, "spots": [
+      { "label": "the two plants in front", "x": 0.50, "y": 0.52 },
+      { "label": "the rows in the middle distance", "x": 0.78, "y": 0.42 },
+      { "label": "the upper sky", "x": 0.70, "y": 0.12 }
+    ] }
+  ],
+  "settledMotion": [
+    "The film is one continuous view of one plant in one place. It has four hard cuts, all in the frost part: to close views of the frosted plant and back, each on a downbeat of the music. The cuts are meant.",
+    "In the frost part and in the rain part the plant does not grow. That is meant.",
+    "The other parts are meant to look like time lapse photography: days and nights pass within seconds, the clouds streak, and the leaves take a slightly different pose on every frame. Judge how well that is done, not that it is done.",
+    "At 69.43 s the storm ends on one frame: the light steps up as the cloud tears open. That step is meant."
+  ],
+  "settledWhole": [
+    "The film is made to a piece of music that is not attached. Its parts change on the bars of that music.",
+    "It is one continuous view of one plant in one place, from seed to flower. While the plant grows, the sky runs through days and nights within seconds, as in time lapse photography.",
+    "Twice the time lapse stops and the plant does not grow: once under frost and once in a rain storm. In the frost part there are hard cuts to close views of the frosted plant and back.",
+    "As the flower opens the camera moves in close on the head, then draws back to show the whole field."
+  ]
+}

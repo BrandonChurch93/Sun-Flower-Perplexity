@@ -1,0 +1,119 @@
+{
+  "critic": "R1",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "0.0 s, overall framing and distant hills (region 5)",
+      "what": "The horizon runs about a quarter of the way down the frame instead of near midframe, so dark ground dominates and the shot loses its open dawn sky. The hills and low mist also merge into a soft dark strip, with a weak lavender glow rather than a clear blue mist band and peach light toward the right.",
+      "fix": "Lower the skyline toward midframe, restore the low blue layer of mist and the soft but readable hill silhouette, and concentrate a warmer peach-pink glow toward the right."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "2.0 s, sun, sky and distant ground (region 5)",
+      "what": "The distinct low sun at the upper right and its peach-gold bloom across the field are gone. A broad pale-yellow sky with gray cloud streaks and a relatively level tan skyline takes their place; the field behind the hook is dark instead of visibly veiled by backlit air.",
+      "fix": "Put a bright soft-edged sun back near the right-hand horizon, restore the peach bloom and warm light spreading through the low haze, and soften the cloud streaks and skyline against the cooler left sky."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, sun and air behind the seedling",
+      "what": "A small, clean-edged sun hangs above the skyline. The target has a lower, much more bloomed sun with visible rays, veiling flare and illuminated air behind the seedling and right grass; the replacement field instead drops into dark brown and black.",
+      "fix": "Lower the sun to the skyline, soften and expand its bloom, and restore the warm rays, low illuminated haze and gentle shadow lift through the midground."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "2.0 s, peripheral grass and left field (regions 4 and 6)",
+      "what": "The tall soft diagonal blade that enters from the far left and nearly reaches the top is missing. Shorter upright blades sit inboard at lower left, and a conspicuous dark upright cluster occupies the right crop where the target is mostly warm-lit soil and bokeh.",
+      "fix": "Restore the large edge-entering diagonal on the left, clear the dominant cluster from the right crop, and use cool soft ground at left and scattered warm, round glints at right."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, cotyledons and growing tip (region 1)",
+      "what": "The two seed leaves form a lower, tighter V, shifted right, with no upright green bud between them. The flat dark blades, broad linear veins and hard gold flecks lack the target's rounded blue-green surfaces, fine texture and softly luminous margins.",
+      "fix": "Fan the left leaf farther left, lift the right tip and the junction, restore the small upright rim-lit bud, and give the blades finer surface texture, softer veins and more natural dew and backlight."
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, right grass cluster (region 3)",
+      "what": "The grass is a dense dark fan shifted inward behind the right leaf, with the highest blade curving left. The target's more open tuft is farther right, with a slim blade rising outward toward the upper right and many bright gold dew circles.",
+      "fix": "Move and open the tuft toward the right edge, redirect its tallest blade outward, and recover translucent edge light and bright, defocused dew against the lit mist."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "0.0 s, soil at the emergence point and lower foreground (regions 1 and 2)",
+      "what": "Around the emergence point, a broad blue-gray bank of coarse clods and a deep fissure replace the low, right-of-center group of isolated warm-rimmed clods. The rough ground stays readable too far into the bottom of frame and has few of the target's small wet glints.",
+      "fix": "Keep the approved exposed tip, but lower and break up the surrounding bank, place the prominent clods farther right, return the warm edge glints and fine cool wet texture, and let near soil fall off into softer black-blue blur."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "0.0 s, left grass (region 3 and left edge)",
+      "what": "Two large upright blades with oversized cool drops intrude well into the left crop. The target leaves that crop largely to soil and keeps its conspicuous slim, diagonal blade near the far-left edge.",
+      "fix": "Move the grass toward the edge, give the main blade a thin outward diagonal, and reduce the drops to small point glints."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "0.0 s, right grass (region 4)",
+      "what": "A broad dark near blade and large cyan droplet dominate the crop instead of the target's slim upright and small curved shoots with delicate warm and cool dew highlights.",
+      "fix": "Use a thinner, smaller tuft rising from the right-hand midground, and replace the large cyan drop with several fine individual glints."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "0.0 s, upper sky (region 6)",
+      "what": "The upper sky is a relatively even, lighter teal-blue. The target is much deeper navy at upper left, graduating diagonally to a lighter blue toward the right and down.",
+      "fix": "Deepen the upper-left blue and strengthen the gradual brightening to the right and toward the horizon."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "2.0 s, hooked tip and seed coat (region 1)",
+      "what": "The seed coat reads brown-gray with a narrow dark split, and the hook is flatter olive with larger isolated dirt flecks. The target reads cooler slate-striped, has a visible bright green body in the lower opening, and has a more rounded green hook with finer hairs and dirt.",
+      "fix": "Cool and brighten the shell stripes, reveal the green interior near the lower opening, and give the hook more rounded shading, fine dirt and a brighter fine backlit rim."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "2.0 s, lower stem and emergence pocket (region 2)",
+      "what": "The lower stem looks broader, straighter and flat yellow-olive with a muted peach band, rather than a tapering pale-green stem with a strong rose-magenta flank. It appears plugged into a less distinct gap, with fewer visible fine falling crumbs.",
+      "fix": "Taper and lean the lower stem to match, restore the rose-to-pale-green gradient and rim, define the crevice with backlit clods, and make the suspended crumbs small and distinct."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "2.0 s, foreground soil (region 3)",
+      "what": "Coarse dark rubble fills the foreground with relatively hard relief. The target falls into much softer cool near blur and has distinct golden circular glints on the wet soil, which give it more depth.",
+      "fix": "Concentrate sharp soil detail around the stem, soften the closest clods, and return the scattered warm point reflections and round bokeh."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, stem foot and shed shell (region 2)",
+      "what": "The stem is thicker and straighter with an abrupt brown cutoff at the soil. The shell is dull brown, more upright and less clearly lit than the cool pale striped halves in the target.",
+      "fix": "Narrow and subtly taper the stem, carry pale yellow-green color to a natural soil contact, and cool, brighten and rim-light the shell halves while matching their more open fan."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, foreground ground and left-side grasses (region 4)",
+      "what": "Dark grass blades rise into the near foreground to the left of the stem, and hard, coarse soil banks interrupt the lower frame. The target has largely open, soft blue-black foreground soil with round amber highlights and sparser, softer grasses set farther back.",
+      "fix": "Remove or push back the prominent near blades, break up the coarse banks, and restore a shallower focus falloff and warm wet-soil bokeh."
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "7.9 s, left hills and upper sky (regions 5 and 6)",
+      "what": "A low, nearly level ochre ridge replaces the higher blue-green slope on the left. The clear left-to-right sky gradient is replaced by conspicuous smudged gray cloud bands, and the cool lower landscape and the warm horizon no longer separate clearly.",
+      "fix": "Raise and reshape the left hill so it descends toward the plant, restore the cool blue-green distance and low veil, and soften cloud bands into a near-continuous blue-gray-to-peach gradient."
+    }
+  ]
+}

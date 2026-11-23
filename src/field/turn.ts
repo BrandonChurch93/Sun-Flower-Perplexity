@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import type { PlantInputs } from '../plant/growth.ts'
 import type { Plant } from '../plant/index.ts'
 import { PLACE } from './layout.ts'
 
@@ -27,22 +28,47 @@ export function placeTurned(from: ArrayLike<number>, at: number, turned: Float32
   turned[to + 5] = c * from[at + 5] + s * from[at + 4]
 }
 
-// Turns one neighbor of a list round its own stem's line, its lean with it.
-export function turnBy(list: Float32Array, at: number, turn: number): void {
-  if (turn === 0) return
-  const c = Math.cos(turn)
-  const s = Math.sin(turn)
-  const x = list[at + 4]
-  const z = list[at + 5]
-  list[at + 2] += turn
-  list[at + 4] = c * x - s * z
-  list[at + 5] = c * z + s * x
+// Hands the graphics card the part of a list that is not what it already has. In still air that is nothing.
+export function send(buffer: THREE.InstancedInterleavedBuffer, sent: Float32Array, length: number): void {
+  const list = buffer.array as Float32Array
+  let first = 0
+  while (first < length && list[first] === sent[first]) first++
+  if (first === length) return
+  let last = length - 1
+  while (last > first && list[last] === sent[last]) last--
+  sent.set(list.subarray(first, last + 1), first)
+  buffer.addUpdateRange(first, last + 1 - first)
+  buffer.needsUpdate = true
 }
 
-// Leans one neighbor of a list by a slope given in the field's own directions, whichever way it is turned.
-export function leanBy(list: Float32Array, at: number, x: number, z: number): void {
-  const c = Math.cos(list[at + 2])
-  const s = Math.sin(list[at + 2])
-  list[at + 4] += c * x - s * z
-  list[at + 5] += c * z + s * x
+// What a neighbor's shape feels. The field sways it, so its own air is still. Its lean after the sun moves in steps too fine to see, and it twitches on the film second only while the days run: in a hold nothing grows and its shape is the same frame after frame.
+const STEP = 256
+const HELD = 0.05
+const fine = (value: number): number => Math.round(value * STEP) / STEP
+
+export function shapeInputs(inputs: PlantInputs): PlantInputs {
+  const { real, ...rest } = inputs
+  const lapse = Math.max(0, ((inputs.lapse ?? 0) - HELD) / (1 - HELD))
+  const calmed = { ...rest, wind: 0, calm: 0, lapse, leanX: fine(inputs.leanX), leanZ: fine(inputs.leanZ), lift: fine(inputs.lift), liftLow: fine(inputs.liftLow ?? inputs.lift) }
+  return lapse > 0 && real !== undefined ? { ...calmed, real } : calmed
+}
+
+// A shape is made again only when its clock or what it feels has moved.
+export class Shaped {
+  private open = Number.NaN
+  private close = Number.NaN
+  private felt = ''
+
+  again(open: number, close: number, felt: string): boolean {
+    if (open === this.open && close === this.close && felt === this.felt) return false
+    this.open = open
+    this.close = close
+    this.felt = felt
+    return true
+  }
+
+  // The shape was laid by other hands: whatever is asked next is laid.
+  forget(): void {
+    this.open = Number.NaN
+  }
 }
