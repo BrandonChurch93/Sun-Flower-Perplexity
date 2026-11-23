@@ -29,8 +29,10 @@ function along(knots: Knots, x: number): number {
 // How bright the light lands on what it lights, on the screen and before the curve, by how high the sun stands. The sky gives the colour of the light and the look gives its level: a low sun is a weak lamp beside its own sky, and a camera that held the sky would lose the plant.
 const KEY: Knots = [[-1, 0], [0, 1.5], [1, 3.1], [2.5, 4.2], [10, 4.2], [25, 3.4], [45, 2.9], [90, 2.7]]
 const MOON_KEY = 1.3
-const FILL_LOW: Knots = [[-14, 0.08], [-10, 0.09], [-6, 0.14], [-3, 0.25], [0, 0.42], [5, 0.5], [25, 0.55]]
-const FILL_HIGH: Knots = [[-14, 0.045], [-6, 0.065], [-3, 0.1], [0, 0.14], [5, 0.16], [25, 0.2]]
+const FILL_LOW: Knots = [[-14, 0.08], [-10, 0.1], [-6, 0.26], [-3, 0.34], [0, 0.42], [5, 0.5], [25, 0.55]]
+const FILL_HIGH: Knots = [[-14, 0.045], [-10, 0.06], [-6, 0.14], [-3, 0.15], [0, 0.15], [5, 0.16], [25, 0.2]]
+// How much of the sky near the sun colours the fill from the horizon: none in the blue hour, when the glow is a thin band and the dome lights the soil.
+const FILL_WARMTH = 0.25
 const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
 const FLASH = { key: 7, fill: 2.5, color: [0.86, 0.94, 1.22] as RGB }
@@ -113,7 +115,8 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   const day = w.day + w.warm + w.night
   const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * (1 + FLASH.fill * flash)
   const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * (1 + FLASH.fill * flash)
-  for (let i = 0; i < 3; i++) round[i] = lerp(sky.horizon[i], sky.horizonSun[i], 0.25)
+  const warmth = FILL_WARMTH * smoothstep(-4, 0.5, el)
+  for (let i = 0; i < 3; i++) round[i] = lerp(sky.horizon[i], sky.horizonSun[i], warmth)
   const roundLum = Math.max(lum(round), 1e-6)
   const zenithLum = Math.max(lum(sky.zenith), 1e-6)
   for (let i = 0; i < 3; i++) {

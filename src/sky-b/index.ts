@@ -99,6 +99,8 @@ class FieldSky implements Sky {
       uElevation: { value: 25 },
       uNight: { value: 0 },
       uFrostFog: { value: 0 },
+      uRainFog: { value: 0 },
+      uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
       uDisc: { value: new THREE.Vector3() },
@@ -188,7 +190,9 @@ class FieldSky implements Sky {
     u.uLower.value.fromArray(this.lower)
     u.uDeck.value.fromArray(this.deck)
     u.uFlash.value.copy(now.flashAt)
-    u.uWeather.value.set(d.cover, d.overcast, d.sunThrough, d.fog)
+    // The sun clears a local tear before the rest of the front moves off.
+    const deckShape = d.overcast + 0.48 * d.burst * (1 - d.overcast)
+    u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, d.burst)
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
@@ -204,6 +208,8 @@ class FieldSky implements Sky {
     v.uElevation.value = e
     v.uNight.value = night
     v.uFrostFog.value = d.fog
+    v.uRainFog.value = d.rain * d.overcast
+    v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)
     v.uSunFace.value.y += RAD * 0.33 * (1 - smoothstep(-0.6, 3.8, e))
     v.uSunFace.value.normalize()
