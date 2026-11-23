@@ -5,7 +5,7 @@ import type { CameraPose } from '../core/lens.ts'
 import { headOpen, heightAt, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
-import { fieldUniforms, stateUniforms } from '../plant/part.ts'
+import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
@@ -116,9 +116,6 @@ export class Field {
     const still = shapeInputs(open)
     const stillClose = shapeInputs(close)
     const felt = JSON.stringify([still, stillClose])
-    // A neighbor carries no beads: while its clock stands its shape is asked for as of one wet level, so the rain of a hold lays nothing again.
-    const wet = stateUniforms.uPlantWet.value
-    if ((open.held ?? 0) >= 1) stateUniforms.uPlantWet.value = 0
     for (const g of this.groups) {
       const clock = kindTime(timeOpen, g.index, g.tier)
       const clockClose = kindTime(timeClose, g.index, g.tier)
@@ -159,7 +156,6 @@ export class Field {
     // The leaves in the gaps come up as the crop closes over them.
     this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
     this.far.prepare(timeOpen, timeClose, still, stillClose, felt, eyeHeightM, canopy, low)
-    stateUniforms.uPlantWet.value = wet
   }
 
   show(on: boolean): void {

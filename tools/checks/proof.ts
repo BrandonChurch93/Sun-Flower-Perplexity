@@ -17,9 +17,11 @@ const QUICK: [string, string, string[]][] = [
   ['cues', 'hold-short', []],
   ['cues', 'hold-early', []],
   ['cues', 'hold-late', []],
+  ['cues', 'cut-late', []],
   ['nights', 'picture-quick', []],
   ['nights', 'picture-bounce', []],
   ['nights', 'picture-blink', []],
+  ['nights', 'moon-blink', []],
 ]
 const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], ['made', 'made'], ['made', 'first-draw'], ['pure', 'dice'], ['pure', 'memory'], ['nights', 'plant-moon'], ['nights', 'plant-wet'], ['script', 'slow-frame'], ['script', 'slow-part']]
 

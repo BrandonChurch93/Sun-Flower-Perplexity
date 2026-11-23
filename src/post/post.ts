@@ -78,8 +78,8 @@ export class Post {
   private readonly unfilled = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nofill')
   private warmed = false
   private readonly look: LensLook = blankLens()
-  private readonly sunTarget = halfTarget(2, 2)
-  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uFar: { value: 0 } })
+  private readonly sunTarget = halfTarget(3, 2)
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uDisc: { value: 0.005 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
   private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 } })
   private readonly fillWide = fillPass(3)
@@ -327,6 +327,7 @@ export class Post {
         r.uTrack.value.set(at.dx ?? 0, at.dy ?? 0)
         r.uAspect.value = aspect
         r.uPatch.value = Math.max(blurred, 1 / width)
+        r.uDisc.value = Math.max(0.6 * disc, 1 / width)
         r.uFar.value = farCircle
         this.sunRead.render(renderer, this.sunTarget)
       }
@@ -355,7 +356,7 @@ export class Post {
       g.uSunAt.value.set(at.x, at.y)
       g.uSunLight.value.fromArray(look.sun).multiplyScalar(look.glare)
       g.uSunAir.value.fromArray(look.air)
-      g.uSunCore.value = 1.2 * blurred * (1 + 0.8 * look.warm)
+      g.uSunCore.value = 1.2 * blurred
       g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
       g.uFan.value = look.fan
