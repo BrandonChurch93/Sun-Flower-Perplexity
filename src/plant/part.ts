@@ -121,7 +121,7 @@ uniform vec3 uOwnTip;
 uniform vec2 uOwnMix;
 // 1 when both slots carry their own normals and skin numbers, 0 when only the first does.
 uniform float uOwnKeys;
-// What a time lapse does to it: x how fast the days run, y where this frame catches the stem on its swing, z how far a leaf twitches in radians, w where this frame catches the leaves.
+// What a time lapse does to it: x how fast the days run, y how far this frame catches the stem off its lean, as a share of its swing, z how far a leaf twitches in radians, w where this frame catches the leaves.
 uniform vec4 uOwnLapse;
 #endif
 // The two slots of a part hold the plant at two moments: this is the share of the second one at this sample of the shutter.
@@ -157,7 +157,7 @@ vec3 plantHeld(vec3 w) {
 #endif
   vec2 way = vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)});
   float push = 0.2 + 0.8 * plantGust(foot.xz, time - 0.1);
-  float lean = uOwnAir.x * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * mix(plantSway(time, foot.xz), uOwnLapse.y, uOwnLapse.x)) + uOwnAir.z * ${GUST_LEAN.toFixed(4)} * push;
+  float lean = uOwnAir.x * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * (1.0 - uOwnLapse.x) * plantSway(time, foot.xz)) + ${STEM_SWING.toFixed(4)} * uOwnLapse.y + uOwnAir.z * ${GUST_LEAN.toFixed(4)} * push;
   float k = clamp((h - 0.15) / 0.85, 0.0, 1.3);
   vec2 off = w.xz - foot.xz - (tip.xz - foot.xz) * h * h;
   float r = length(off);

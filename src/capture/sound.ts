@@ -11,15 +11,21 @@ const KINDS: { container: 'aac' | 'opus'; codec: string; label: string; bitrate:
   { container: 'opus', codec: 'opus', label: 'Opus', bitrate: 192000 },
 ]
 
-export async function pickSound(): Promise<SoundKind | null> {
-  if (typeof AudioEncoder === 'undefined') return null
+// Every kind of sound this browser says it can encode, the first one first.
+export async function soundKinds(): Promise<SoundKind[]> {
+  const out: SoundKind[] = []
+  if (typeof AudioEncoder === 'undefined') return out
   for (const k of KINDS) {
     const config: AudioEncoderConfig = { codec: k.codec, sampleRate: SOUND_RATE, numberOfChannels: CHANNELS, bitrate: k.bitrate }
     try {
-      if ((await AudioEncoder.isConfigSupported(config)).supported) return { container: k.container, label: k.label, kbps: k.bitrate / 1000, config }
+      if ((await AudioEncoder.isConfigSupported(config)).supported) out.push({ container: k.container, label: k.label, kbps: k.bitrate / 1000, config })
     } catch {}
   }
-  return null
+  return out
+}
+
+export async function pickSound(): Promise<SoundKind | null> {
+  return (await soundKinds())[0] ?? null
 }
 
 export interface SoundChunk { data: Uint8Array; key: boolean; timestamp: number; duration: number }
@@ -76,6 +82,7 @@ export async function encodeSound(decoded: AudioBuffer, kind: SoundKind, first: 
     }
     await encoder.flush()
     if (failure) throw failure
+    if (out.chunks.length === 0) throw new Error('the encoder returned no sound')
   } finally {
     if (encoder.state !== 'closed') encoder.close()
   }

@@ -21,6 +21,8 @@ export interface PlantInputs {
   liftLow?: number
   // How fast the days run, 0 real time to 1 the fastest time lapse: the leaves are restless in a time lapse.
   lapse?: number
+  // How much of a time lapse's restlessness is in the shape, 0 to 1: all of it when left out. The film lays none and draws it where the plant is drawn, so a laying differs from the next by growth and air alone.
+  twitch?: number
   // 0 to 1: frost in the tissue. The leaves stand lower, cupped and stiff.
   cold?: number
   // 0 to 1: drops falling on the leaves.
@@ -663,7 +665,7 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
     const ride = first ? swellOf : sway
     const swell = lapse < 1 ? ride(real, standsAt.x, standsAt.z) : 0
     const caught = lapse > 0 ? restless(real, Math.floor(real * FPS + 1e-6), 0.37 + 0.11 * variant) : 0
-    blow = steady * (STEM_LEAN + STEM_SWING * lerp(swell, 0.5 * caught, lapse))
+    blow = steady * (STEM_LEAN + STEM_SWING * lerp(swell, 0.5 * caught * (inputs.twitch ?? 1), lapse))
     // A bud or a head has weight: it comes after the stem that carries it and passes it on the way back.
     const heavy = smoothstep(bud0 + 6, bloom1, time)
     if (heavy > 0 && lapse < 1) nod = HEAD_NOD * heavy * steady * (1 - lapse) * (ride(real - HEAD_LATE_S, standsAt.x, standsAt.z) - swell)
