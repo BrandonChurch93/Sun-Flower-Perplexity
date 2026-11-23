@@ -1,11 +1,14 @@
 # Looks of plant
 
-2026-11-23 00:31 UTC, at commit f05ace8 of agent/plant.
+2026-11-23 00:59 UTC, at commit c923739 of agent/plant.
 
-Second looks: plant on its own clock, arch sunk and heaving up, day swing, frost pose, storm
+One wind from src/v2/wind.ts, rain weight on blades, first pass of light through rays and leaves
 
-- `01-hook-at-1-31-s-review-tier-the-arch-now-starts-f.jpg`: Hook at 1.31 s, review tier. The arch now starts full size and sunk. Still wrong: side of the stem reads flat and bald, a dotted row of bead hairs on the rim, no crumbs on its back, husk hangs clear of the soil already
-- `02-frost-hold-at-35-17-s-review-tier-leaves-lowered.jpg`: Frost hold at 35.17 s, review tier. Leaves lowered and cupped by the cold. Still wrong: to be judged against the frost key, cupping may be weak
-- `03-first-two-seconds-every-fourth-frame-arch-heaves.jpg`: First two seconds, every fourth frame: arch heaves out of the soil at full size. Still wrong: no soil carried on its back
-- `04-time-lapse-44-to-50-5-s-every-third-frame-tip-sw.jpg`: Time lapse 44 to 50.5 s, every third frame: tip swings after the sun, leaves hang at night. Still wrong: full rate clip not yet judged
-- `05-storm-58-to-60-s-stem-gives-to-gusts-still-wrong.jpg`: Storm 58 to 60 s: stem gives to gusts. Still wrong: motion is mild, long lull in the gusts
+- `01-hook-at-0-s-with-green-and-red-arch-and-crumbs-s.jpg`: Hook at 0 s with green and red arch and crumbs. Still wrong: husk end sits in soil the ground cleft does not open for
+- `02-storm-frames-hero-leaning-to-the-gust-still-wron.jpg`: Storm frames, hero leaning to the gust. Still wrong: lower plant ghostly behind fog and grass
+- `03-bloom-97-to-105-s-still-wrong-rays-flat-orange-h.jpg`: Bloom 97 to 105 s. Still wrong: rays flat orange, head nearly static since the plant clock runs 51 to 52
+- `04-seedling-3-to-9-s.jpg`: Seedling 3 to 9 s
+- `05-eighteen-consecutive-time-lapse-frames.jpg`: Eighteen consecutive time lapse frames
+- `06-nine-bars-of-the-film-before-the-shared-wind.jpg`: Nine bars of the film, before the shared wind
+- `07-bars-35-to-35-4-before-the-film-second-reached-t.jpg`: Bars 35 to 35.4, before the film second reached the leaf nods
+- `08-light-through-leaves-at-bar-29-29-and-rays-at-ba.jpg`: Light through leaves at bar 29.29 and rays at bar 61, first pass. Still wrong: leaves too bright and green, rays not yet lamps
