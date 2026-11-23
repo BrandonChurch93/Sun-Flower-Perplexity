@@ -642,7 +642,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       if (voice) {
         say('Encoding the track.')
         const heard = await decodeSound(voice.bytes)
-        const made = await makeSound(heard, voice.kind, from / fps, n / fps)
+        const made = await makeSound(heard, voice.kind, from / fps, n / fps, Number(new URLSearchParams(location.search).get('soundlate')) || 0)
         soundChunks = addSound(muxer, made.sound, n / fps)
         muxer.finalize()
         say('Listening to the file: where its sound sits against the track.')

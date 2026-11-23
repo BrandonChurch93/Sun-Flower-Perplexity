@@ -145,14 +145,16 @@ export async function soundOffset(file: ArrayBuffer, track: AudioBuffer, first: 
 }
 
 // Encodes the stretch, listens to where it sits, and when the encoder has moved it, encodes it again moved back by as much.
-export async function makeSound(track: AudioBuffer, kind: SoundKind, from: number, seconds: number): Promise<{ sound: Encoded; mendedMs: number }> {
+// `lateMs` is only for proving the mend: it feeds the encoder that much earlier, as an encoder that delays the sound would.
+export async function makeSound(track: AudioBuffer, kind: SoundKind, from: number, seconds: number, lateMs = 0): Promise<{ sound: Encoded; mendedMs: number }> {
   const first = Math.round(from * SOUND_RATE)
+  const fed = Math.max(0, first - Math.round((lateMs / 1000) * SOUND_RATE))
   const total = Math.round(seconds * SOUND_RATE)
-  const plain = await encodeSound(track, kind, first, total)
+  const plain = await encodeSound(track, kind, fed, total)
   const sits = await soundOffset(soundAlone(kind, plain, seconds), track, first).catch(() => null)
   if (!sits || sits.match < HEARD || Math.abs(sits.ms) < MEND_FROM_MS) return { sound: plain, mendedMs: 0 }
   const moved = Math.round((sits.ms / 1000) * SOUND_RATE)
-  const mended = await encodeSound(track, kind, first + moved, total)
+  const mended = await encodeSound(track, kind, fed + moved, total)
   const now = await soundOffset(soundAlone(kind, mended, seconds), track, first).catch(() => null)
   if (now && Math.abs(now.ms) < Math.abs(sits.ms)) return { sound: mended, mendedMs: sits.ms }
   return { sound: plain, mendedMs: 0 }
