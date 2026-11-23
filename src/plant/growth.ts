@@ -69,6 +69,8 @@ const TAU = Math.PI * 2
 const FPS = config.film.fps
 // How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
 export const GUST_LEAN = 0.3
+// How far the water lying on a blade lets it hang for as long as it rains, in radians.
+export const RAIN_WEIGHT = 0.07
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
 // How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.
