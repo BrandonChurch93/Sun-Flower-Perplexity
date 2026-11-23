@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 45 · 2026-11-23 19:30 UTC · Phase 5
+- Last status: 46 · 2026-11-23 19:49 UTC · Phase 5
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 19:49 UTC · status 46 · Phase 5 · `status-1.jpg`: The sprout at 2.0 s, from the joined film; `status-2.jpg`: Frost against the sun at 35.2 s, the cut on bar 21; `status-3.jpg`: The flower nearly open at 101.7 s, from the last part taken in; `status-4.jpg`: The field at 117.4 s, the pull back
 - 2026-11-23 19:30 UTC · status 45 · Phase 5 · `status-1.jpg`: Frost at first light, frame 940; `status-2.jpg`: The thaw, frame 1234; `status-3.jpg`: The storm, frame 2000 (new part); `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
 - 2026-11-23 19:06 UTC · status 44 · Phase 5 · `status-1.jpg`: Dawn over the seedling, frame 238 (new part); `status-2.jpg`: Storm flash, frame 1877; `status-3.jpg`: The open flower, frame 2957; `status-4.jpg`: Dusk over the field, frame 3755
 - 2026-11-23 18:39 UTC · status 43 · Phase 5 · `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun; `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip; `status-3.jpg`: Frame 2630: the bud on the last days of the climb; `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 16:25 UTC · status 37 · Phase 4 · `status-1.jpg`: Bars 51 to 57 after the cure, leaves open (2620, 2700, 2800, 2900); `status-2.jpg`: Open flower at bar 61, before and after: the leaf now meets the lowest rays; `status-3.jpg`: Storm at 1920 x 1080, frame 2040 (rain owner's machine); `status-4.jpg`: Dawn beads, frames 439 to 447: before above, after below
 - 2026-11-23 16:08 UTC · status 36 · Phase 4 · `status-1.jpg`: The bloom at bars 58 and 61: the key, the head we keep, the head I took out; `status-2.jpg`: Frost comes in along the veins (frame 885): before, after, difference; `status-3.jpg`: The cloud tears on the downbeat of bar 41: frames 2082, 2083, 2084; `status-4.jpg`: Drawn on the pushed tree
 - 2026-11-23 15:39 UTC · status 35 · Phase 4 · `status-1.jpg`: The storm deck coming in, every sixth frame of 1630 to 1720, with the first flash at 1672 (640 x 360); `status-2.jpg`: The frost front at 885, 888, 891: before above, after below. It now runs in along the veins; `status-3.jpg`: Rain at 2000: before above, after below. The spray is a low mist behind the plant; `status-4.jpg`: Night at 216 with the new beads under the moon
-- 2026-11-23 15:11 UTC · status 34 · Phase 4 · `status-1.jpg`: The whole film, one frame every second bar (640 x 360 watch draft, parts from seven builds); `status-2.jpg`: Bloom on the merged tree, frames 2990, 3030, 3070, 3112: the field opens behind the hero; `status-3.jpg`: Older leaves, before and after: 1640 and 1830; `status-4.jpg`: Crane at 3440 on the merged tree
 
 ## Clock
 
@@ -43,9 +43,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
-| 5 | 3.00 h | 2.34 h |
+| 5 | 3.00 h | 2.51 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 21.65 h |
+| Whole build | 30.00 h | 21.82 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -299,6 +299,9 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 19:35 UTC. Three more chunks read at 1920 (MEASURED, no fault), 36 of 37 parts in: 1921 to 2040 (the storm hold; the flags at 2036, 2037 and 2039 are a gust in the rain and the leaves moving under it), 2636 to 2777 (three days of the ascent, the bud swelling; the flags at 2773 to 2777 are the leaf twitch in the last light of a dusk) and 3313 to 3414 (the pull back from the open flower; at 3402 to 3405 the sun comes out from behind the petals and a neighbour's head, and its glare in the upper left steps 188, 197, 198, 210, 205, 209 of 255 over six frames, a dip of 5 for one frame, left as it is).
 - 2026-11-23 19:35 UTC. Twelve of the sixteen critics are in. R1, final shots against their pictures: 4, 3, 3, 4, 3, 3 (the first film's record: 3 to 5). R3, close crops: 6, 6, 4, 6, 6 (record: 5 to 7). R6, the opening at phone size: 7 (record: 8). What they name most: soil that reads as glossy rounded clods, frost as white tufts and caps laid on, leaves of one outline, the sun's shafts after the storm as flat cones, rain as thick pale streaks, and the clouds (stipple, square patches at 1479, rings on the lit cloud at 1877). None of it is cured before the round ends: the ruling of 19:10 stands.
 - 2026-11-23 19:35 UTC. Two inquiries are out, neither changes the film. The sky owner looks for the cause and the cheapest cure of the clouds' stipple, patches and rings on a side branch (`agent/sky-cloud-cure`, not merged); its first answer, STATED with file and line: at the draft tier the cloud atlas is 464 x 288, of which about 361 x 191 texels cover the 1920 x 1080 frame, so one texel of the march's dither is magnified to about 5 screen pixels. The checks owner extends the review page to show the joined 1920 x 1080 film and the lossless frames instead of the small frames of the play check.
+- 2026-11-23 19:48 UTC. The last part is in and read (2998 to 3107, the flower opening to full with the neighbours' heads opening behind it; no flag, no fault), and the film is joined: `out/work/film-16x9-draft.mp4`, 3,810 frames, 30 fps, 1920 x 1080, 37 parts from one build (engine `9c62c3b3b10c7180`, commit `d42a869`), 328.3 MB, and a private copy with the track (`out/work/private/`, never committed, never published). MEASURED: frames 60, 1055 and 3523 taken out of the joined file match the lossless frames the critics were sent (40.9, 34.5 and 27.8 dB against 32.1, 29.8 and 22.3 dB for the frame after), so the round judges this film. Every machine is told that the film is joined.
+- 2026-11-23 19:48 UTC. The checks owner's `made` check passes on v2's head, warmed and traced (MEASURED by it at 320 x 180, engine `4598d2d351869e22`): nothing is made in 313 of 313 frames, which covers every hold edge, every frost cut, both flashes, the tear, the pull back, and every frame at which a cold drawing page made anything (the largest cold one, at 1511 to 1514: 1 program, 2 shaders, 30 textures, about 155 buffers). This is the answer to the first film's fall to one or two frames a second at scene changes, as far as what is made goes; what a frame costs with nothing made is the `script` record, still to come. Not proven: the same at 1920 x 1080, and frames outside the 313.
+- 2026-11-23 19:48 UTC. The jury's judged set was built again from the final lossless frames before any juror of that set was asked: six of its fourteen images changed (frames 236, 1479, 1877, 2780, 2957, 3755, redrawn at the frozen commit after the set was first built), the eight control images stayed byte identical (their forty votes were already in). All 110 jurors are asked. The asking loop stopped once, when three critics were marked ready before their briefs were on disk; nobody was asked twice.
 
 ## Notes from Brandon
 
@@ -454,4 +457,6 @@ None yet.
   Pictures: Dawn over the seedling, frame 238 (new part); Storm flash, frame 1877; The open flower, frame 2957; Dusk over the field, frame 3755.
 - Status 45, 2026-11-23 19:30 UTC, Phase 5. 36 of 37 parts are in at 1920 x 1080 (3,700 of 3,810 frames), all read, nothing to cure. Twelve of sixteen critics are in: final shots against their keys 4, 3, 3, 4, 3, 3 (the first film's record: 3 to 5), close crops 6, 6, 4, 6, 6 (record: 5 to 7), the opening at phone size 7 (record: 8). The jury's 40 control votes on the reference pictures are in but one. The first half of the frame rate proof passes: nothing is made after loading in 160 of 313 frames checked. Next: The last part (the bloom opening, frames 2998 to 3107) is due about 19:40 UTC, then the join, the jury's 70 votes on the film's frames and the four film critics, the round's summary, and Phase 6: the proofs, the private review link and the cleanup. Time used: 21.5 h of 30 h.
   Pictures: Frost at first light, frame 940; The thaw, frame 1234; The storm, frame 2000 (new part); The pull back from the flower, frame 3384 (new part).
+- Status 46, 2026-11-23 19:49 UTC, Phase 5. The film is joined at 1920 x 1080: 3,810 frames from 37 parts of one build, every part read, and a private copy sits on the track. The check that nothing is made after the warming passes on 313 of 313 frames (MEASURED at 320 x 180), which is the cause of the first film's stalls at scene changes. Twelve of sixteen critics are in, all 110 jurors are asked and 105 have answered; the last four critics need the joined film and are asked next. Next: The last four critics, the round's summary beside the first film's record, the review page behind a private link, the remaining proofs, then the final report. Time used: 21.8 h of 30 h.
+  Pictures: The sprout at 2.0 s, from the joined film; Frost against the sun at 35.2 s, the cut on bar 21; The flower nearly open at 101.7 s, from the last part taken in; The field at 117.4 s, the pull back.
 

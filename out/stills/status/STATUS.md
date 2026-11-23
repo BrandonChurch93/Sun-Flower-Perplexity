@@ -1,12 +1,12 @@
-# Status 45
+# Status 46
 
-2026-11-23 19:30 UTC
+2026-11-23 19:49 UTC
 
-- Status 45 · Phase 5. 36 of 37 parts are in at 1920 x 1080 (3,700 of 3,810 frames), all read, nothing to cure. Twelve of sixteen critics are in: final shots against their keys 4, 3, 3, 4, 3, 3 (the first film's record: 3 to 5), close crops 6, 6, 4, 6, 6 (record: 5 to 7), the opening at phone size 7 (record: 8). The jury's 40 control votes on the reference pictures are in but one. The first half of the frame rate proof passes: nothing is made after loading in 160 of 313 frames checked.
-- Next: The last part (the bloom opening, frames 2998 to 3107) is due about 19:40 UTC, then the join, the jury's 70 votes on the film's frames and the four film critics, the round's summary, and Phase 6: the proofs, the private review link and the cleanup. Time used: 21.5 h of 30 h.
+- Status 46 · Phase 5. The film is joined at 1920 x 1080: 3,810 frames from 37 parts of one build, every part read, and a private copy sits on the track. The check that nothing is made after the warming passes on 313 of 313 frames (MEASURED at 320 x 180), which is the cause of the first film's stalls at scene changes. Twelve of sixteen critics are in, all 110 jurors are asked and 105 have answered; the last four critics need the joined film and are asked next.
+- Next: The last four critics, the round's summary beside the first film's record, the review page behind a private link, the remaining proofs, then the final report. Time used: 21.8 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost at first light, frame 940
-- `status-2.jpg`: The thaw, frame 1234
-- `status-3.jpg`: The storm, frame 2000 (new part)
-- `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
+- `status-1.jpg`: The sprout at 2.0 s, from the joined film
+- `status-2.jpg`: Frost against the sun at 35.2 s, the cut on bar 21
+- `status-3.jpg`: The flower nearly open at 101.7 s, from the last part taken in
+- `status-4.jpg`: The field at 117.4 s, the pull back
