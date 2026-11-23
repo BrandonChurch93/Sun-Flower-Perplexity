@@ -3,6 +3,7 @@ import type { Film } from '../director/film.ts'
 import { madeSince, madeSoFar } from '../v2/counter.ts'
 import { Steady } from './clock.ts'
 import { asked, Pacing, type Report, type RunFacts } from './pacing.ts'
+import { splitOf } from './split.ts'
 
 const FPS = config.film.fps
 
@@ -67,6 +68,7 @@ export function play(options: PlayOptions): Playing {
   const { film, plan } = options
   const pacing = new Pacing()
   const steady = new Steady()
+  const split = splitOf(film)
   const before = madeSoFar()
   let stopped = false
   let onScreen = -1
@@ -101,7 +103,7 @@ export function play(options: PlayOptions): Playing {
         await film.renderFrame(cue.frame, options.tier)
         const t1 = performance.now()
         onScreen = cue.frame
-        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp, t1 - t0, asked(madeSince(had)))
+        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp, t1 - t0, asked(madeSince(had)), split.scriptMs)
       }
       requestAnimationFrame(turn)
     } catch (error) {

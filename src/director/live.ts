@@ -6,6 +6,7 @@ import type { Loading } from '../player/loading.ts'
 import type { Report, RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
+import { splitOf, type Split } from '../player/split.ts'
 import { readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
@@ -27,6 +28,9 @@ export interface PlayerState {
   report: Report | null
   advice: string | null
   error: string | null
+  // The last frame drawn: the page's own work and the wait for the graphics card, in milliseconds.
+  split: Split
+  sky: string
 }
 
 declare global {
@@ -99,7 +103,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, split: splitOf(film), sky: film.skyName }
   window.player = state
 
   let clockKey = ''
