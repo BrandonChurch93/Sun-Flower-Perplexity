@@ -1386,7 +1386,9 @@ export class HairSet {
         return 1
       }
     }
-    const px = nearest < Infinity ? (usual * size * perM) / Math.max(nearest, 1e-4) : 0
+    // In the wide shot a hair is drawn long enough to stand off the outline, and that is its size there.
+    const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
+    const px = nearest < Infinity ? Math.max((usual * size * perM) / Math.max(nearest, 1e-4), ease * ease * (3 - 2 * ease) * WIDE_LONG_PX) : 0
     const t = Math.min(1, Math.max(0, (px - CUT_FROM_PX) / (CUT_FULL_PX - CUT_FROM_PX)))
     this.cut.value = t * t * (3 - 2 * t)
     return this.cut.value
