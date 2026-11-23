@@ -9,7 +9,7 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
-import { leavesApart, placeTurned } from './turn.ts'
+import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
 import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
@@ -311,6 +311,9 @@ export class FarField {
   private readonly plants: Plant[] = []
   private readonly spots: THREE.InstancedInterleavedBuffer[] = []
   private readonly stills: THREE.InstancedInterleavedBuffer[] = []
+  private readonly sent: Float32Array[] = []
+  private readonly sentStill: Float32Array[] = []
+  private readonly shaped: Shaped[] = []
   private readonly atlas: THREE.WebGLRenderTarget
   private readonly scene = new THREE.Scene()
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, 0, 0.1, 200)
@@ -362,6 +365,9 @@ export class FarField {
       plant.show(pictureTurns)
       this.spots.push(spot)
       this.stills.push(leavesApart(plant, pictureTurns))
+      this.sent.push(new Float32Array(pictureTurns * PLACE).fill(Number.NaN))
+      this.sentStill.push(new Float32Array(pictureTurns * PLACE).fill(Number.NaN))
+      this.shaped.push(new Shaped())
       this.plants.push(plant)
       this.scene.add(...plant.meshes)
     })
@@ -393,11 +399,12 @@ export class FarField {
     for (const plant of this.plants) await plant.load(assets)
   }
 
-  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number, stand: number): void {
+  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, felt: string, eyeHeightM: number, canopy: number, stand: number): void {
     this.time = timeOpen
     this.plants.forEach((plant, i) => {
       const clock = kindTime(timeOpen, i, 'pictures')
-      plant.prepare(clock, kindTime(timeClose, i, 'pictures'), open, close)
+      const clockClose = kindTime(timeClose, i, 'pictures')
+      if (this.shaped[i].again(clock, clockClose, felt)) plant.prepare(clock, clockClose, open, close)
       usePlant(plant.variant, null)
       const axis = headAt(clock, open).axis
       this.local[i] = Math.atan2(axis.x, axis.z)
@@ -447,8 +454,8 @@ export class FarField {
         const code = early > 0 ? EARLY_CODE : Math.round(PICTURE_NODS[i * pictureTurns + j] * 64) + 0.5 * PICTURE_HEADS[i * pictureTurns + j]
         placeTurned([rx * across, rz * across, base, 1, 0, 0, 0.5, code], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
       }
-      spot.needsUpdate = true
-      still.needsUpdate = true
+      send(spot, this.sent[i], pictureTurns * PLACE)
+      send(still, this.sentStill[i], pictureTurns * PLACE)
     })
     const cam = this.camera
     const half = (pictureCount * tile.x) / 2
