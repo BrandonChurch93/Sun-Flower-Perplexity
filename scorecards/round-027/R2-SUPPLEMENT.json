@@ -1,0 +1,1977 @@
+{
+  "critic": "R2",
+  "round": 27,
+  "supplement": true,
+  "note": "Not the record. The record of round 27 is R2.json, which judged the film as it was drawn, with one sample a frame. This supplement asks the same question of seventy fresh jurors about the same fourteen frames of the same frozen commit drawn at the final tier, 48 samples a frame, which is what the export draws. The controls are the votes of R2.json.",
+  "question": "You will see one image. Which of these is it most likely to be? (a) a frame from a top-budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real-time web 3D demo. Answer with one letter, a confidence from 0 to 100, and the one thing that most influenced your answer.",
+  "jurorsPerImage": 5,
+  "maxShareGap": 0.2,
+  "complete": true,
+  "control": {
+    "votes": 65,
+    "a": 38,
+    "share": 0.5846153846153846
+  },
+  "judged": {
+    "votes": 70,
+    "a": 14,
+    "share": 0.2
+  },
+  "record": {
+    "votes": 70,
+    "a": 16,
+    "share": 0.22857142857142856
+  },
+  "passOverall": false,
+  "passEveryFrame": false,
+  "failingFrames": [
+    0,
+    1055,
+    1479,
+    1775,
+    2096,
+    2780,
+    2880,
+    3523,
+    3755
+  ],
+  "pass": false,
+  "perImage": {
+    "set-H-01.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "b"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "controlKey": "references/approved/bloom-hero.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 3,
+      "recordLetters": [
+        "a",
+        "e",
+        "a",
+        "a",
+        "d"
+      ],
+      "recordA": 3,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": true
+    },
+    "set-H-02.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 1775,
+      "id": "storm",
+      "letters": [
+        "a",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 1,
+      "share": 0.2,
+      "controlKey": "references/v2/keys/storm.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-03.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 1479,
+      "id": "climb",
+      "letters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/climb.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-04.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 236,
+      "id": "seedling",
+      "letters": [
+        "e",
+        "e",
+        "b",
+        "a",
+        "a"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "controlKey": "references/approved/dawn-seedling.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 9,
+      "recordLetters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "a"
+      ],
+      "recordA": 2,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": true
+    },
+    "set-H-05.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "b"
+      ],
+      "votes": 5,
+      "a": 1,
+      "share": 0.2,
+      "controlKey": "references/v2/keys/late.png",
+      "controlLetters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "a",
+        "e",
+        "a"
+      ],
+      "recordA": 2,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-06.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 60,
+      "id": "sprout",
+      "letters": [
+        "a",
+        "d",
+        "a",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 2,
+      "share": 0.4,
+      "controlKey": "references/approved/dawn-sprout.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 9,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": true
+    },
+    "set-H-07.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/frost.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-08.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letters": [
+        "a",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 1,
+      "share": 0.2,
+      "controlKey": "references/v2/keys/storm-flash.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "d"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "a",
+        "d",
+        "a",
+        "a",
+        "d"
+      ],
+      "recordA": 3,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": true
+    },
+    "set-H-09.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 2880,
+      "id": "late",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "b"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/late.png",
+      "controlLetters": [
+        "a",
+        "b",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "recordA": 4,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-10.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 3523,
+      "id": "field",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/approved/field.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 4,
+      "controlShare": 0.8,
+      "controlFromRound": 7,
+      "recordLetters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-11.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letters": [
+        "e",
+        "e",
+        "a",
+        "a",
+        "a"
+      ],
+      "votes": 5,
+      "a": 3,
+      "share": 0.6,
+      "controlKey": "references/approved/bloom-opening.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 3,
+      "controlShare": 0.6,
+      "controlFromRound": 3,
+      "recordLetters": [
+        "a",
+        "e",
+        "a",
+        "e",
+        "b"
+      ],
+      "recordA": 2,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": true
+    },
+    "set-H-12.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 0,
+      "id": "open",
+      "letters": [
+        "e",
+        "d",
+        "a",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 1,
+      "share": 0.2,
+      "controlKey": "references/v2/keys/open.png",
+      "controlLetters": [
+        "a",
+        "a",
+        "a",
+        "a",
+        "a"
+      ],
+      "controlVotes": 5,
+      "controlA": 5,
+      "controlShare": 1,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-13.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 3755,
+      "id": "last",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "e"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/last.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    },
+    "set-H-14.png": {
+      "what": "judged frame at the final tier (48 samples a frame)",
+      "frame": 2096,
+      "id": "break",
+      "letters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "votes": 5,
+      "a": 0,
+      "share": 0,
+      "controlKey": "references/v2/keys/break.png",
+      "controlLetters": [
+        "a",
+        "d",
+        "d",
+        "a",
+        "b"
+      ],
+      "controlVotes": 5,
+      "controlA": 2,
+      "controlShare": 0.4,
+      "controlFromRound": 27,
+      "recordLetters": [
+        "e",
+        "e",
+        "d",
+        "e",
+        "d"
+      ],
+      "recordA": 0,
+      "recordVotes": 5,
+      "missing": false,
+      "pass": false
+    }
+  },
+  "votes": [
+    {
+      "juror": "reviewer_636",
+      "family": "GPT",
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a, 78, The dramatic sunset backlighting makes the foreground petals glow translucently."
+    },
+    {
+      "juror": "reviewer_637",
+      "family": "Gemini",
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88 — The visibly low-poly, straight-edged polygonal silhouettes on the leaves (especially along the left foreground and beneath the flower head), paired with mathematically instanced 3D florets and real-time depth-of-field post-processing, indicate a real-time 3D scene rather than a photograph, generated image, or pre-rendered cinematic."
+    },
+    {
+      "juror": "reviewer_638",
+      "family": "Claude",
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55, Polished path-traced CG look in a cinematic widescreen frame (procedural phyllotaxis seed head, shallow DOF bokeh field, graded sunset sky), though the flower is front-lit against a backlit sun, which hints at CG."
+    },
+    {
+      "juror": "reviewer_639",
+      "family": "GLM",
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "a",
+      "confidence": 82,
+      "answer": "a, 82/100. The finely textured petals glow translucently in the backlight, giving the close-up a cinematic finish."
+    },
+    {
+      "juror": "reviewer_640",
+      "family": "Grok",
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "id": "bloom-hero",
+      "letter": "b",
+      "confidence": 64,
+      "answer": "b 64 The image is a photoreal golden-hour hero shot of a sunflower, composed like a commercial stock photograph rather than a film frame, catalog plate, or real-time render."
+    },
+    {
+      "juror": "reviewer_641",
+      "family": "GPT",
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "id": "storm",
+      "letter": "a",
+      "confidence": 72,
+      "answer": "a, 72/100, the convincing interaction of rain with the reflective, rippling puddles."
+    },
+    {
+      "juror": "reviewer_642",
+      "family": "Gemini",
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92, the low-poly faceted plant geometry set in procedurally displaced mud intersected by a flat water plane with a synthetic concentric ripple."
+    },
+    {
+      "juror": "reviewer_643",
+      "family": "Claude",
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "id": "storm",
+      "letter": "d",
+      "confidence": 45,
+      "answer": "Answer: (d) amateur generated art. Confidence: 45. Most influential: it is clearly a CG render (procedural-looking clumpy soil, uniform plastic-ish leaves, repeated background plants) with cinematic lighting, but not photoreal enough for a top-budget production; it reads like a hobbyist Blender-style showcase render."
+    },
+    {
+      "juror": "reviewer_644",
+      "family": "GLM",
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100. The repeated seedling geometry across the field looks like instanced 3D meshes."
+    },
+    {
+      "juror": "reviewer_645",
+      "family": "Grok",
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "id": "storm",
+      "letter": "e",
+      "confidence": 74,
+      "answer": "e\n74\nScreen-space rain streaks and faceted leaf edges that read as a real-time 3D shader, not a photographed or cinema-grade frame."
+    },
+    {
+      "juror": "reviewer_646",
+      "family": "GPT",
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82, The evenly repeated seedlings in the background look like copies of the same 3D model."
+    },
+    {
+      "juror": "reviewer_647",
+      "family": "Gemini",
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88 — Visibly faceted low-polygon leaf silhouettes on the hero foreground plant paired with real-time 3D shader effects (approximated leaf translucency, displaced dirt mesh, and procedural sky)."
+    },
+    {
+      "juror": "reviewer_648",
+      "family": "Claude",
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 45,
+      "answer": "e, 45 — It is clearly a CG render, not a photo. What decided it: the background seedlings are low-detail, the soil texture repeats and the leaves are simple shapes, which points to a real-time engine. The rim-lit translucent leaves and fuzzy stem hairs over an HDRI-style sky are polished, but they are not film-grade."
+    },
+    {
+      "juror": "reviewer_649",
+      "family": "GLM",
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 83,
+      "answer": "e, 83/100. The background rows look like repetitions of the same 3D seedling model."
+    },
+    {
+      "juror": "reviewer_650",
+      "family": "Grok",
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "id": "climb",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82, heightmap soil with texture stretch, repeated plant instances, and a simple post bloom instead of real lens optics"
+    },
+    {
+      "juror": "reviewer_651",
+      "family": "GPT",
+      "image": "set-H-04.png",
+      "frame": 236,
+      "id": "seedling",
+      "letter": "e",
+      "confidence": 85,
+      "answer": "e, 85/100. The grass blades have uniformly smooth, tapered curves that look like repeated 3D meshes."
+    },
+    {
+      "juror": "reviewer_652",
+      "family": "Gemini",
+      "image": "set-H-04.png",
+      "frame": 236,
+      "id": "seedling",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e) | Confidence: 92 | The scene is built from lightweight procedural 3D primitives rather than real photography or film-grade assets, most visibly the simple cylindrical stem with an abrupt mesh seam where the two leaf meshes plug into its top."
+    },
+    {
+      "juror": "reviewer_653",
+      "family": "Claude",
+      "image": "set-H-04.png",
+      "frame": 236,
+      "id": "seedling",
+      "letter": "b",
+      "confidence": 45,
+      "answer": "b, 45, The clichéd 'seedling at golden-hour sunset with bokeh' composition is a classic stock-image concept (polished, generic, likely a 3D render made for stock), rather than a narrative film frame."
+    },
+    {
+      "juror": "reviewer_654",
+      "family": "GLM",
+      "image": "set-H-04.png",
+      "frame": 236,
+      "id": "seedling",
+      "letter": "a",
+      "confidence": 72,
+      "answer": "a, 72, The carefully controlled sunset rim lighting on the seedling gives it the look of a cinematic macro shot."
+    },
+    {
+      "juror": "reviewer_655",
+      "family": "Grok",
+      "image": "set-H-04.png",
+      "frame": 236,
+      "id": "seedling",
+      "letter": "a",
+      "confidence": 78,
+      "answer": "a\n78\nPath-traced cinematic lighting and shader-clean plant geometry, with no photographic lens artifacts, labels, or real-time demo tells."
+    },
+    {
+      "juror": "reviewer_656",
+      "family": "GPT",
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72, The bud’s bracts have uniformly bright, angular outlines that look like rendered geometry."
+    },
+    {
+      "juror": "reviewer_657",
+      "family": "Gemini",
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "(e), confidence: 92. What most influenced my answer is the low-poly faceted bract geometry on the flower bud, which shows straight polygonal silhouettes, mathematically instanced phyllotaxis meshes, and aliased 1-pixel white alpha-cutout fringes characteristic of real-time WebGL rasterization."
+    },
+    {
+      "juror": "reviewer_658",
+      "family": "Claude",
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55, Cinematic dusk lighting with fine rim-lit stem hairs and shallow depth of field on a 16:9 frame: it looks like a high-end offline CG render or film frame, not a catalog or stock shot."
+    },
+    {
+      "juror": "reviewer_659",
+      "family": "GLM",
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "e",
+      "confidence": 69,
+      "answer": "e, 69, The bud’s repeated, razor-edged bracts look like duplicated 3D geometry."
+    },
+    {
+      "juror": "reviewer_660",
+      "family": "Grok",
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "id": "late-dusk",
+      "letter": "b",
+      "confidence": 74,
+      "answer": "b, 74, the flawless sunflower bud staged as a generic twilight hero shot reads as a commercial stock photograph, not a labeled plate, game render, or documentary frame."
+    },
+    {
+      "juror": "reviewer_661",
+      "family": "GPT",
+      "image": "set-H-06.png",
+      "frame": 60,
+      "id": "sprout",
+      "letter": "a",
+      "confidence": 83,
+      "answer": "a, 83/100. The precisely controlled sunset rim light tracing the seedling’s fine hairs."
+    },
+    {
+      "juror": "reviewer_662",
+      "family": "Gemini",
+      "image": "set-H-06.png",
+      "frame": 60,
+      "id": "sprout",
+      "letter": "d",
+      "confidence": 78,
+      "answer": "d, 78 — Despite cinematic lighting and shallow depth of field, the hero sprout's crude 3D geometry gives it away: a smooth cylindrical stem pokes directly into a hollow, visibly faceted seed hull with no cotyledons inside."
+    },
+    {
+      "juror": "reviewer_663",
+      "family": "Claude",
+      "image": "set-H-06.png",
+      "frame": 60,
+      "id": "sprout",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55 — cinematic widescreen composition with filmic rim/backlighting, shallow depth of field and fine stem hairs, which looks like a high-end CG nature-documentary frame rather than a stock photo or catalog picture."
+    },
+    {
+      "juror": "reviewer_664",
+      "family": "GLM",
+      "image": "set-H-06.png",
+      "frame": 60,
+      "id": "sprout",
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100, the repeated, uniformly shaped grass blades make the scene look like a real-time 3D render."
+    },
+    {
+      "juror": "reviewer_665",
+      "family": "Grok",
+      "image": "set-H-06.png",
+      "frame": 60,
+      "id": "sprout",
+      "letter": "d",
+      "confidence": 66,
+      "answer": "d, 66. The soil is a uniform procedural displacement plane with instanced dirt flecks and no photographic grain, which reads as a hobbyist 3D render rather than a film frame, stock photo, catalog plate, or web demo."
+    },
+    {
+      "juror": "reviewer_666",
+      "family": "GPT",
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 79,
+      "answer": "e, 79/100. The frost needles look like repeated geometry scattered along the leaf outlines."
+    },
+    {
+      "juror": "reviewer_667",
+      "family": "Gemini",
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e (confidence: 92) — Low-poly, zero-thickness leaf meshes with rigid instanced frost spikes clipping straight through the cylindrical stems and midribs."
+    },
+    {
+      "juror": "reviewer_668",
+      "family": "Claude",
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "d",
+      "confidence": 50,
+      "answer": "d, 50 — It is clearly a 3D CG render (particle-hair frost spikes, a paper-thin leaf shell edge, a soft HDRI sun and bokeh), but the uniform, stiff hair strands and simple geometry look like a hobbyist Blender-style render, not polished film or AAA work."
+    },
+    {
+      "juror": "reviewer_669",
+      "family": "GLM",
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "e",
+      "confidence": 85,
+      "answer": "e, 85/100. The frost looks like repeated needle geometry scattered along the leaf edges."
+    },
+    {
+      "juror": "reviewer_670",
+      "family": "Grok",
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "id": "frost-sun",
+      "letter": "d",
+      "confidence": 72,
+      "answer": "d, 72, the right leaf’s hard straight edge and repeated frost spikes clipping through it, which read as a hobby 3D render rather than a photo, film frame, or web demo."
+    },
+    {
+      "juror": "reviewer_671",
+      "family": "GPT",
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "a",
+      "confidence": 77,
+      "answer": "a, 77/100: The finely resolved backlighting on the wet leaves and tiny stem hairs looks like a polished cinematic render."
+    },
+    {
+      "juror": "reviewer_672",
+      "family": "Gemini",
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92, the polygonal leaf edges and flat water plane clipping into procedural noise-displaced terrain with shader-generated ripples and billboarded rain streaks typical of real-time WebGL rendering."
+    },
+    {
+      "juror": "reviewer_673",
+      "family": "Claude",
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55 — Clearly a CG render (blobby uniform soil clumps, repeated cloned plants, stretched rain streaks), polished like an offline Blender-style render but lacking the detail and realism of a top-budget production."
+    },
+    {
+      "juror": "reviewer_674",
+      "family": "GLM",
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "e",
+      "confidence": 76,
+      "answer": "e, 76/100. The evenly repeated ripple rings across the puddles look like a real-time shader effect."
+    },
+    {
+      "juror": "reviewer_675",
+      "family": "Grok",
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "id": "storm-flash",
+      "letter": "e",
+      "confidence": 78,
+      "answer": "e, 78, Uniform linear rain streaks, procedural wet-soil shading, and repeated instanced plants read as a real-time engine demo, not a photograph or a film-quality offline render."
+    },
+    {
+      "juror": "reviewer_676",
+      "family": "GPT",
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "id": "late",
+      "letter": "e",
+      "confidence": 73,
+      "answer": "e, 73, the bud’s bracts repeat in unusually regular, sharply outlined shapes that look like 3D geometry."
+    },
+    {
+      "juror": "reviewer_677",
+      "family": "Gemini",
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "id": "late",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88, real-time 3D rendering cues—specifically the unshadowed white marginal hair primitives glowing along dark front-facing bract edges, subtle polygonal leaf silhouettes, and a procedural sky and screen-space depth-of-field shader."
+    },
+    {
+      "juror": "reviewer_678",
+      "family": "Claude",
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "id": "late",
+      "letter": "d",
+      "confidence": 50,
+      "answer": "d, 50, The sunflower bud looks like a CG render: its bracts are too regular, its surfaces look plasticky and the rim-lit hairs look procedural. It reads as a polished hobbyist or portfolio render rather than real footage or a production frame."
+    },
+    {
+      "juror": "reviewer_679",
+      "family": "GLM",
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "id": "late",
+      "letter": "e",
+      "confidence": 73,
+      "answer": "e, 73/100: The bud’s sharply outlined, uniformly rim-lit bracts look like modeled geometry."
+    },
+    {
+      "juror": "reviewer_680",
+      "family": "Grok",
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "id": "late",
+      "letter": "b",
+      "confidence": 68,
+      "answer": "b, 68, A generic backlit farm sunflower bud sits right of center with empty space on the left and no narrative event, which is how commercial stock is composed."
+    },
+    {
+      "juror": "reviewer_681",
+      "family": "GPT",
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 87,
+      "answer": "e, 87/100. The same sunflower shapes repeat across the field like instanced 3D models."
+    },
+    {
+      "juror": "reviewer_682",
+      "family": "Gemini",
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 92,
+      "answer": "e, 92 — The repeated instanced low-poly 3D sunflower meshes paired with a simple procedural noise sky and cloud shader clearly indicate real-time web 3D rendering."
+    },
+    {
+      "juror": "reviewer_683",
+      "family": "Claude",
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "id": "field",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55 — clearly a CG render (instanced, cloned sunflowers all facing the camera while backlit by the sun, simple painted-looking sky and flat hills), polished enough to be an offline hobbyist render but lacking film-grade art direction and detail."
+    },
+    {
+      "juror": "reviewer_684",
+      "family": "GLM",
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88/100. The field looks like it was populated by repeating a small set of sunflower models."
+    },
+    {
+      "juror": "reviewer_685",
+      "family": "Grok",
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "id": "field",
+      "letter": "e",
+      "confidence": 82,
+      "answer": "e, 82, visible polygon faceting, instanced flower meshes, and flat billboard grass that read as a real-time engine demo rather than a film frame or photograph"
+    },
+    {
+      "juror": "reviewer_686",
+      "family": "GPT",
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "e",
+      "confidence": 72,
+      "answer": "e, 72, The backlit bracts have unusually angular, mesh-like silhouettes."
+    },
+    {
+      "juror": "reviewer_687",
+      "family": "Gemini",
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88, Procedural 3D geometry and real-time rendering artifacts—specifically the mathematically uniform Vogel-spiral florets, faceted polygon edges on the green bracts, and screen-space depth-of-field haloing against a procedural sky shader."
+    },
+    {
+      "juror": "reviewer_688",
+      "family": "Claude",
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "a",
+      "confidence": 60,
+      "answer": "a, 60, Cinematic widescreen CG render with high-end detail (procedural seed spiral, backlit rim-lit leaf hairs, filmic depth of field and sun glow) — looks like a production-quality cinematic frame rather than a photo, catalog image, or real-time web demo."
+    },
+    {
+      "juror": "reviewer_689",
+      "family": "GLM",
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "a",
+      "confidence": 76,
+      "answer": "a, 76/100. The delicate cinematic backlighting on the translucent petals and fine leaf hairs most influenced my choice."
+    },
+    {
+      "juror": "reviewer_690",
+      "family": "Grok",
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "id": "bloom-opening",
+      "letter": "a",
+      "confidence": 80,
+      "answer": "a\n80\nUniformly groomed, evenly spaced rim-lit bract hairs that read as a high-end cinematic 3D strand groom, not a photograph, catalog plate, amateur generation, or web demo."
+    },
+    {
+      "juror": "reviewer_691",
+      "family": "GPT",
+      "image": "set-H-12.png",
+      "frame": 0,
+      "id": "open",
+      "letter": "e",
+      "confidence": 84,
+      "answer": "e, 84/100. The unnaturally smooth, uniformly rounded seedling looks like simple 3D geometry."
+    },
+    {
+      "juror": "reviewer_692",
+      "family": "Gemini",
+      "image": "set-H-12.png",
+      "frame": 0,
+      "id": "open",
+      "letter": "d",
+      "confidence": 85,
+      "answer": "d\nConfidence: 85\nMost influential factor: The central sprout is a smooth, untextured 3D green cylinder with a few low-poly dirt clumps perched on top and a faceted black seed mesh underneath, marking it as an amateur path-traced 3D render rather than a real photograph or top-budget studio work."
+    },
+    {
+      "juror": "reviewer_693",
+      "family": "Claude",
+      "image": "set-H-12.png",
+      "frame": 0,
+      "id": "open",
+      "letter": "a",
+      "confidence": 55,
+      "answer": "a, 55 — Cinematic widescreen framing with shallow depth of field, dusk grading and a carefully lit CG seedling hook emerging from soil reads as a polished film or cinematic frame, not a stock photo or textbook shot."
+    },
+    {
+      "juror": "reviewer_694",
+      "family": "GLM",
+      "image": "set-H-12.png",
+      "frame": 0,
+      "id": "open",
+      "letter": "e",
+      "confidence": 84,
+      "answer": "e, 84/100. The repeated grass blades carry nearly identical crescent-shaped droplets, a strong sign of reused 3D assets."
+    },
+    {
+      "juror": "reviewer_695",
+      "family": "Grok",
+      "image": "set-H-12.png",
+      "frame": 0,
+      "id": "open",
+      "letter": "d",
+      "confidence": 78,
+      "answer": "d, 78, The rubber-smooth seedling and idealized dew drops mark mid-tier computer-generated art, not a film frame, photograph, catalog plate, or real-time demo."
+    },
+    {
+      "juror": "reviewer_696",
+      "family": "GPT",
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 84,
+      "answer": "e, 84/100. The sunflower heads repeat with the regularity of instanced 3D assets."
+    },
+    {
+      "juror": "reviewer_697",
+      "family": "Gemini",
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "(e)\nConfidence: 88\nMost influential factor: The procedural sky/cloud shader paired with thousands of sharply rasterized, low-poly instanced 3D sunflowers and grass clumps lit uniformly without depth-of-field, characteristic of a real-time WebGL/WebGPU 3D scene rather than photography, offline cinema rendering, or 2D generative art."
+    },
+    {
+      "juror": "reviewer_698",
+      "family": "Claude",
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "id": "last",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d, 55. The image is clearly CG, not a photo: the sunflowers are identical copies repeated across the field, and they face the camera fully lit even though the sun is behind them. That looks like a hobbyist 3D render, not film-grade or stock work."
+    },
+    {
+      "juror": "reviewer_699",
+      "family": "GLM",
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 81,
+      "answer": "e, 81/100: The same sunflower shapes repeat across the field at different scales and angles, a telltale sign of instanced 3D models."
+    },
+    {
+      "juror": "reviewer_700",
+      "family": "Grok",
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "id": "last",
+      "letter": "e",
+      "confidence": 80,
+      "answer": "e, 80, repeated jagged alpha-cutout grass and flat petal cards with no photographic or path-traced noise"
+    },
+    {
+      "juror": "reviewer_701",
+      "family": "GPT",
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 87,
+      "answer": "e, 87/100. The same leaf shapes repeat across the field, suggesting instanced 3D plant models."
+    },
+    {
+      "juror": "reviewer_702",
+      "family": "Gemini",
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 88,
+      "answer": "e, 88 — Polygonal leaf silhouettes and a flat water plane intersecting procedural displaced soil geometry, paired with screen-space god rays and instanced background plants typical of a real-time WebGL/Three.js scene."
+    },
+    {
+      "juror": "reviewer_703",
+      "family": "Claude",
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "id": "break",
+      "letter": "d",
+      "confidence": 55,
+      "answer": "d — confidence 55 — Polished-but-hobbyist CG look: blobby, plasticky soil and a repetitive, low-detail background field next to a carefully lit hero plant suggest a single-artist offline render (e.g. Blender), not top-budget film quality or a real-time web demo."
+    },
+    {
+      "juror": "reviewer_704",
+      "family": "GLM",
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "id": "break",
+      "letter": "e",
+      "confidence": 86,
+      "answer": "e, 86/100. The same leaf-and-stem geometry repeats across the field like a single instanced 3D model."
+    },
+    {
+      "juror": "reviewer_705",
+      "family": "Grok",
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "id": "break",
+      "letter": "d",
+      "confidence": 74,
+      "answer": "d 74 cloned background plants and plastic procedural wet soil, not a photograph or film-quality render"
+    }
+  ],
+  "reviewers": {
+    "reviewer_636": {
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "family": "GPT",
+      "asked": "21:08:52",
+      "answered": "21:09",
+      "sent": {
+        "set-H-01.png": "b2236c564a713406"
+      }
+    },
+    "reviewer_637": {
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "family": "Gemini",
+      "asked": "21:08:54",
+      "answered": "21:09",
+      "sent": {
+        "set-H-01.png": "b2236c564a713406"
+      }
+    },
+    "reviewer_638": {
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "family": "Claude",
+      "asked": "21:08:55",
+      "answered": "21:09",
+      "sent": {
+        "set-H-01.png": "b2236c564a713406"
+      }
+    },
+    "reviewer_639": {
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "family": "GLM",
+      "asked": "21:08:56",
+      "answered": "21:09",
+      "sent": {
+        "set-H-01.png": "b2236c564a713406"
+      }
+    },
+    "reviewer_640": {
+      "image": "set-H-01.png",
+      "frame": 3112,
+      "family": "Grok",
+      "asked": "21:08:57",
+      "answered": "21:21",
+      "sent": {
+        "set-H-01.png": "b2236c564a713406"
+      }
+    },
+    "reviewer_641": {
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "family": "GPT",
+      "asked": "21:09:00",
+      "answered": "21:09",
+      "sent": {
+        "set-H-02.png": "d45c168b7e97b02e"
+      }
+    },
+    "reviewer_642": {
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "family": "Gemini",
+      "asked": "21:09:01",
+      "answered": "21:09",
+      "sent": {
+        "set-H-02.png": "d45c168b7e97b02e"
+      }
+    },
+    "reviewer_643": {
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "family": "Claude",
+      "asked": "21:09:16",
+      "answered": "21:09",
+      "sent": {
+        "set-H-02.png": "d45c168b7e97b02e"
+      }
+    },
+    "reviewer_644": {
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "family": "GLM",
+      "asked": "21:09:17",
+      "answered": "21:09",
+      "sent": {
+        "set-H-02.png": "d45c168b7e97b02e"
+      }
+    },
+    "reviewer_645": {
+      "image": "set-H-02.png",
+      "frame": 1775,
+      "family": "Grok",
+      "asked": "21:09:32",
+      "answered": "21:10",
+      "sent": {
+        "set-H-02.png": "d45c168b7e97b02e"
+      }
+    },
+    "reviewer_646": {
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "family": "GPT",
+      "asked": "21:09:35",
+      "answered": "21:09",
+      "sent": {
+        "set-H-03.png": "42f773dcd1c40c1f"
+      }
+    },
+    "reviewer_647": {
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "family": "Gemini",
+      "asked": "21:09:49",
+      "answered": "21:10",
+      "sent": {
+        "set-H-03.png": "42f773dcd1c40c1f"
+      }
+    },
+    "reviewer_648": {
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "family": "Claude",
+      "asked": "21:09:50",
+      "answered": "21:10",
+      "sent": {
+        "set-H-03.png": "42f773dcd1c40c1f"
+      }
+    },
+    "reviewer_649": {
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "family": "GLM",
+      "asked": "21:09:53",
+      "answered": "21:10",
+      "sent": {
+        "set-H-03.png": "42f773dcd1c40c1f"
+      }
+    },
+    "reviewer_650": {
+      "image": "set-H-03.png",
+      "frame": 1479,
+      "family": "Grok",
+      "asked": "21:10:07",
+      "answered": "21:12",
+      "sent": {
+        "set-H-03.png": "42f773dcd1c40c1f"
+      }
+    },
+    "reviewer_651": {
+      "image": "set-H-04.png",
+      "frame": 236,
+      "family": "GPT",
+      "asked": "21:10:08",
+      "answered": "21:10",
+      "sent": {
+        "set-H-04.png": "3cfca89611b38d63"
+      }
+    },
+    "reviewer_652": {
+      "image": "set-H-04.png",
+      "frame": 236,
+      "family": "Gemini",
+      "asked": "21:10:23",
+      "answered": "21:11",
+      "sent": {
+        "set-H-04.png": "3cfca89611b38d63"
+      }
+    },
+    "reviewer_653": {
+      "image": "set-H-04.png",
+      "frame": 236,
+      "family": "Claude",
+      "asked": "21:10:25",
+      "answered": "21:10",
+      "sent": {
+        "set-H-04.png": "3cfca89611b38d63"
+      }
+    },
+    "reviewer_654": {
+      "image": "set-H-04.png",
+      "frame": 236,
+      "family": "GLM",
+      "asked": "21:10:39",
+      "answered": "21:11",
+      "sent": {
+        "set-H-04.png": "3cfca89611b38d63"
+      }
+    },
+    "reviewer_655": {
+      "image": "set-H-04.png",
+      "frame": 236,
+      "family": "Grok",
+      "asked": "21:10:41",
+      "answered": "21:12",
+      "sent": {
+        "set-H-04.png": "3cfca89611b38d63"
+      }
+    },
+    "reviewer_656": {
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "family": "GPT",
+      "asked": "21:10:55",
+      "answered": "21:11",
+      "sent": {
+        "set-H-05.png": "c79c3eba8c772338"
+      }
+    },
+    "reviewer_657": {
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "family": "Gemini",
+      "asked": "21:10:56",
+      "answered": "21:11",
+      "sent": {
+        "set-H-05.png": "c79c3eba8c772338"
+      }
+    },
+    "reviewer_658": {
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "family": "Claude",
+      "asked": "21:11:11",
+      "answered": "21:11",
+      "sent": {
+        "set-H-05.png": "c79c3eba8c772338"
+      }
+    },
+    "reviewer_659": {
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "family": "GLM",
+      "asked": "21:11:25",
+      "answered": "21:11",
+      "sent": {
+        "set-H-05.png": "c79c3eba8c772338"
+      }
+    },
+    "reviewer_660": {
+      "image": "set-H-05.png",
+      "frame": 2780,
+      "family": "Grok",
+      "asked": "21:11:40",
+      "answered": "21:17",
+      "sent": {
+        "set-H-05.png": "c79c3eba8c772338"
+      }
+    },
+    "reviewer_661": {
+      "image": "set-H-06.png",
+      "frame": 60,
+      "family": "GPT",
+      "asked": "21:11:55",
+      "answered": "21:12",
+      "sent": {
+        "set-H-06.png": "51c5580b26a3caca"
+      }
+    },
+    "reviewer_662": {
+      "image": "set-H-06.png",
+      "frame": 60,
+      "family": "Gemini",
+      "asked": "21:11:56",
+      "answered": "21:16",
+      "sent": {
+        "set-H-06.png": "51c5580b26a3caca"
+      }
+    },
+    "reviewer_663": {
+      "image": "set-H-06.png",
+      "frame": 60,
+      "family": "Claude",
+      "asked": "21:12:10",
+      "answered": "21:12",
+      "sent": {
+        "set-H-06.png": "51c5580b26a3caca"
+      }
+    },
+    "reviewer_664": {
+      "image": "set-H-06.png",
+      "frame": 60,
+      "family": "GLM",
+      "asked": "21:12:13",
+      "answered": "21:12",
+      "sent": {
+        "set-H-06.png": "51c5580b26a3caca"
+      }
+    },
+    "reviewer_665": {
+      "image": "set-H-06.png",
+      "frame": 60,
+      "family": "Grok",
+      "asked": "21:12:27",
+      "answered": "21:14",
+      "sent": {
+        "set-H-06.png": "51c5580b26a3caca"
+      }
+    },
+    "reviewer_666": {
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "family": "GPT",
+      "asked": "21:12:41",
+      "answered": "21:13",
+      "sent": {
+        "set-H-07.png": "9cf57a336431a574"
+      }
+    },
+    "reviewer_667": {
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "family": "Gemini",
+      "asked": "21:12:43",
+      "answered": "21:13",
+      "sent": {
+        "set-H-07.png": "9cf57a336431a574"
+      }
+    },
+    "reviewer_668": {
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "family": "Claude",
+      "asked": "21:12:45",
+      "answered": "21:13",
+      "sent": {
+        "set-H-07.png": "9cf57a336431a574"
+      }
+    },
+    "reviewer_669": {
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "family": "GLM",
+      "asked": "21:12:58",
+      "answered": "21:13",
+      "sent": {
+        "set-H-07.png": "9cf57a336431a574"
+      }
+    },
+    "reviewer_670": {
+      "image": "set-H-07.png",
+      "frame": 1055,
+      "family": "Grok",
+      "asked": "21:13:14",
+      "answered": "21:21",
+      "sent": {
+        "set-H-07.png": "9cf57a336431a574"
+      }
+    },
+    "reviewer_671": {
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "family": "GPT",
+      "asked": "21:13:27",
+      "answered": "21:13",
+      "sent": {
+        "set-H-08.png": "d2428c31f9f891f3"
+      }
+    },
+    "reviewer_672": {
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "family": "Gemini",
+      "asked": "21:13:41",
+      "answered": "21:14",
+      "sent": {
+        "set-H-08.png": "d2428c31f9f891f3"
+      }
+    },
+    "reviewer_673": {
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "family": "Claude",
+      "asked": "21:13:55",
+      "answered": "21:14",
+      "sent": {
+        "set-H-08.png": "d2428c31f9f891f3"
+      }
+    },
+    "reviewer_674": {
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "family": "GLM",
+      "asked": "21:14:22",
+      "answered": "21:14",
+      "sent": {
+        "set-H-08.png": "d2428c31f9f891f3"
+      }
+    },
+    "reviewer_675": {
+      "image": "set-H-08.png",
+      "frame": 1877,
+      "family": "Grok",
+      "asked": "21:14:24",
+      "answered": "21:15",
+      "sent": {
+        "set-H-08.png": "d2428c31f9f891f3"
+      }
+    },
+    "reviewer_676": {
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "family": "GPT",
+      "asked": "21:14:38",
+      "answered": "21:14",
+      "sent": {
+        "set-H-09.png": "1fe75248fe25e055"
+      }
+    },
+    "reviewer_677": {
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "family": "Gemini",
+      "asked": "21:14:53",
+      "answered": "21:15",
+      "sent": {
+        "set-H-09.png": "1fe75248fe25e055"
+      }
+    },
+    "reviewer_678": {
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "family": "Claude",
+      "asked": "21:15:07",
+      "answered": "21:15",
+      "sent": {
+        "set-H-09.png": "1fe75248fe25e055"
+      }
+    },
+    "reviewer_679": {
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "family": "GLM",
+      "asked": "21:15:22",
+      "answered": "21:16",
+      "sent": {
+        "set-H-09.png": "1fe75248fe25e055"
+      }
+    },
+    "reviewer_680": {
+      "image": "set-H-09.png",
+      "frame": 2880,
+      "family": "Grok",
+      "asked": "21:15:36",
+      "answered": "21:21",
+      "sent": {
+        "set-H-09.png": "1fe75248fe25e055"
+      }
+    },
+    "reviewer_681": {
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "family": "GPT",
+      "asked": "21:15:37",
+      "answered": "21:16",
+      "sent": {
+        "set-H-10.png": "a9833d8dd745b418"
+      }
+    },
+    "reviewer_682": {
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "family": "Gemini",
+      "asked": "21:15:38",
+      "answered": "21:16",
+      "sent": {
+        "set-H-10.png": "a9833d8dd745b418"
+      }
+    },
+    "reviewer_683": {
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "family": "Claude",
+      "asked": "21:15:52",
+      "answered": "21:16",
+      "sent": {
+        "set-H-10.png": "a9833d8dd745b418"
+      }
+    },
+    "reviewer_684": {
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "family": "GLM",
+      "asked": "21:15:53",
+      "answered": "21:16",
+      "sent": {
+        "set-H-10.png": "a9833d8dd745b418"
+      }
+    },
+    "reviewer_685": {
+      "image": "set-H-10.png",
+      "frame": 3523,
+      "family": "Grok",
+      "asked": "21:16:08",
+      "answered": "21:17",
+      "sent": {
+        "set-H-10.png": "a9833d8dd745b418"
+      }
+    },
+    "reviewer_686": {
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "family": "GPT",
+      "asked": "21:16:22",
+      "answered": "21:16",
+      "sent": {
+        "set-H-11.png": "29ec5322b7bf548c"
+      }
+    },
+    "reviewer_687": {
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "family": "Gemini",
+      "asked": "21:16:23",
+      "answered": "21:21",
+      "sent": {
+        "set-H-11.png": "29ec5322b7bf548c"
+      }
+    },
+    "reviewer_688": {
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "family": "Claude",
+      "asked": "21:16:38",
+      "answered": "21:17",
+      "sent": {
+        "set-H-11.png": "29ec5322b7bf548c"
+      }
+    },
+    "reviewer_689": {
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "family": "GLM",
+      "asked": "21:16:39",
+      "answered": "21:17",
+      "sent": {
+        "set-H-11.png": "29ec5322b7bf548c"
+      }
+    },
+    "reviewer_690": {
+      "image": "set-H-11.png",
+      "frame": 2957,
+      "family": "Grok",
+      "asked": "21:16:54",
+      "answered": "21:21",
+      "sent": {
+        "set-H-11.png": "29ec5322b7bf548c"
+      }
+    },
+    "reviewer_691": {
+      "image": "set-H-12.png",
+      "frame": 0,
+      "family": "GPT",
+      "asked": "21:17:08",
+      "answered": "21:17",
+      "sent": {
+        "set-H-12.png": "a6639a3e13110934"
+      }
+    },
+    "reviewer_692": {
+      "image": "set-H-12.png",
+      "frame": 0,
+      "family": "Gemini",
+      "asked": "21:17:09",
+      "answered": "21:21",
+      "sent": {
+        "set-H-12.png": "a6639a3e13110934"
+      }
+    },
+    "reviewer_693": {
+      "image": "set-H-12.png",
+      "frame": 0,
+      "family": "Claude",
+      "asked": "21:17:25",
+      "answered": "21:21",
+      "sent": {
+        "set-H-12.png": "a6639a3e13110934"
+      }
+    },
+    "reviewer_694": {
+      "image": "set-H-12.png",
+      "frame": 0,
+      "family": "GLM",
+      "asked": "21:17:39",
+      "answered": "21:21",
+      "sent": {
+        "set-H-12.png": "a6639a3e13110934"
+      }
+    },
+    "reviewer_695": {
+      "image": "set-H-12.png",
+      "frame": 0,
+      "family": "Grok",
+      "asked": "21:17:40",
+      "answered": "21:21",
+      "sent": {
+        "set-H-12.png": "a6639a3e13110934"
+      }
+    },
+    "reviewer_696": {
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "family": "GPT",
+      "asked": "21:17:42",
+      "answered": "21:21",
+      "sent": {
+        "set-H-13.png": "2dc1357087d229e7"
+      }
+    },
+    "reviewer_697": {
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "family": "Gemini",
+      "asked": "21:28:41",
+      "answered": "21:29",
+      "sent": {
+        "set-H-13.png": "2dc1357087d229e7"
+      }
+    },
+    "reviewer_698": {
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "family": "Claude",
+      "asked": "21:28:43",
+      "answered": "21:29",
+      "sent": {
+        "set-H-13.png": "2dc1357087d229e7"
+      }
+    },
+    "reviewer_699": {
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "family": "GLM",
+      "asked": "21:28:44",
+      "answered": "21:29",
+      "sent": {
+        "set-H-13.png": "2dc1357087d229e7"
+      }
+    },
+    "reviewer_700": {
+      "image": "set-H-13.png",
+      "frame": 3755,
+      "family": "Grok",
+      "asked": "21:28:45",
+      "answered": "21:34",
+      "sent": {
+        "set-H-13.png": "2dc1357087d229e7"
+      }
+    },
+    "reviewer_701": {
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "family": "GPT",
+      "asked": "21:28:48",
+      "answered": "21:29",
+      "sent": {
+        "set-H-14.png": "86b9b101f46c3c16"
+      }
+    },
+    "reviewer_702": {
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "family": "Gemini",
+      "asked": "21:28:49",
+      "answered": "21:29",
+      "sent": {
+        "set-H-14.png": "86b9b101f46c3c16"
+      }
+    },
+    "reviewer_703": {
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "family": "Claude",
+      "asked": "21:28:50",
+      "answered": "21:29",
+      "sent": {
+        "set-H-14.png": "86b9b101f46c3c16"
+      }
+    },
+    "reviewer_704": {
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "family": "GLM",
+      "asked": "21:28:53",
+      "answered": "21:29",
+      "sent": {
+        "set-H-14.png": "86b9b101f46c3c16"
+      }
+    },
+    "reviewer_705": {
+      "image": "set-H-14.png",
+      "frame": 2096,
+      "family": "Grok",
+      "asked": "21:29:07",
+      "answered": "21:30",
+      "sent": {
+        "set-H-14.png": "86b9b101f46c3c16"
+      }
+    }
+  }
+}
