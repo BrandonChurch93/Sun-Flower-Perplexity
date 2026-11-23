@@ -1,11 +1,11 @@
 # Looks of post
 
-2026-11-23 00:18 UTC, at commit c24a1d5 of agent/post.
+2026-11-23 00:48 UTC, at commit 0d22d12 of agent/post.
 
-first pass of the new lens, draft tier, stand-in sky
+second pass: glare scaled by light and blur, gold kept; clips at draft, stand-in sky
 
-- `01-sheet-of-judged-shots.jpg`: sheet of judged shots
-- `02-05-sunset-core-glow-and-veil-in-place-of-the-bar.jpg`: 05 sunset: core, glow and veil in place of the bare disc
-- `03-12-break-sun-in-haze-no-cloud-in-the-stand-in-sk.jpg`: 12 break: sun in haze, no cloud in the stand-in sky so no shafts yet
-- `04-13-evening.jpg`: 13 evening
-- `05-14-bloom.jpg`: 14 bloom
+- `01-judged-shots-at-draft.jpg`: judged shots at draft
+- `02-clip-5-5-to-8-5-the-sun-crosses-the-top-edge-in-.mp4`: clip 5.5 to 8.5: the sun crosses the top edge in and out
+- `03-clip-68-5-to-72-the-break.mp4`: clip 68.5 to 72: the break
+- `04-clip-96-to-100-the-bloom.mp4`: clip 96 to 100: the bloom
+- `05-clip-47-to-51-the-lapse.mp4`: clip 47 to 51: the lapse
