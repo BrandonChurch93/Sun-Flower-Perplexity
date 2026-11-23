@@ -1,11 +1,9 @@
 # Looks of place
 
-2026-11-23 06:16 UTC, at commit dbb882e of agent/place.
+2026-11-23 06:36 UTC, at commit 9201145d of agent/place.
 
-- `01-bar-73-on-v2-fcc4c7e-the-ridge-dark-and-cool-its.jpg`: Bar 73 on v2 fcc4c7e: the ridge dark and cool, its foot in the mist
-- `02-bar-74-5.jpg`: Bar 74.5
-- `03-bar-69.jpg`: Bar 69
-- `04-bar-71.jpg`: Bar 71
-- `05-bar-67.jpg`: Bar 67
-- `06-bars-69-71-73-74-5-the-horizon-at-three-times-le.jpg`: Bars 69, 71, 73, 74.5: the horizon at three times, left and right halves
-- `07-bars-73-and-74-5-at-three-times-before-and-after.jpg`: Bars 73 and 74.5 at three times, before and after the dusk, on the old crane
+- `01-sky-b-bars-73-and-74-5-at-three-times-before-abo.jpg`: Sky B, bars 73 and 74.5 at three times, before above after below: the ridge takes the dome's light
+- `02-sky-b-bar-73-after.jpg`: Sky B bar 73 after
+- `03-sky-b-bar-74-5-after.jpg`: Sky B bar 74.5 after
+- `04-key-above-bars-73-and-74-5-below-layers-of-the-r.jpg`: Key above, bars 73 and 74.5 below: layers of the ridge
+- `05-nightfalls-at-bars-28-5-28-6-44-5-44-6-before-ab.jpg`: Nightfalls at bars 28.5, 28.6, 44.5, 44.6, before above after below
