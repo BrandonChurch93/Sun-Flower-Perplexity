@@ -140,6 +140,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     { format: config.formats.uhd, label: 'UHD' },
   ]
   if (options.format.id === config.formats.preview.id) formats.push({ format: config.formats.preview, label: 'Preview' })
+  else if (!formats.some((f) => f.format.id === options.format.id)) formats.push({ format: options.format, label: 'Test size' })
 
   const limited = options.first > 0 || options.last < frameCount - 1
   const unit = options.unit ? (segments.find((s) => s.id === options.unit) ?? null) : null
@@ -341,10 +342,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   const total = (): number => last - first + 1
   const groups = (): number => Math.ceil(total() / group)
   const framesIn = (g: number): number => Math.min(group, total() - g * group)
-  const wantsSound = (): boolean => track !== null && track.matches && withSound.checked && sound !== null
+  const wantsSound = (): boolean => track !== null && withSound.checked && sound !== null
 
   const fileName = (): string => {
-    if (format.id === config.formats.preview.id) return config.export.files.preview
+    if (format.id === config.formats.preview.id || !Object.values(config.formats).some((f) => f.id === format.id)) return config.export.files.preview
     const range = rangeOf()
     if (range === 'frames') return config.export.files.clip.replace('{unit}', `frames-${first}-${last}`)
     if (range !== 'film') return config.export.files.clip.replace('{unit}', range)
@@ -369,7 +370,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
 
   const openStore = async (): Promise<Store | null> => {
     if (!picked) return null
-    return Store.open(await storeId([__ENGINE_HASH__, format.id, tier, assetSet, first, last, picked.codec, bitrate, group]))
+    return Store.open(await storeId([__ENGINE_HASH__, format.id, format.width, format.height, tier, assetSet, options.sky ?? '', options.only.join('+'), first, last, picked.codec, bitrate, group]))
   }
 
   // How many frames a stopped export of exactly these settings left behind: whole groups from the first one on.
@@ -592,9 +593,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         tell(from + done - 1)
       }
       if (done < n) say(`Drawing and encoding ${n - done} ${n - done === 1 ? 'frame' : 'frames'}. Keep this tab open and in front.`)
-      encoder.configure(choice.encoder)
       for (let g = done / group; g < groups(); g++) {
         const count = framesIn(g)
+        encoder.reset()
+        encoder.configure(choice.encoder)
         for (let k = 0; k < count; k++) {
           const i = g * group + k
           const frame = from + i
@@ -686,10 +688,11 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   }
   const showTrack = () => {
     trackText.textContent = track ? trackLine(track) : 'No track. The file is made without sound.'
-    const can = track !== null && track.matches && sound !== null
+    const can = track !== null && sound !== null
     withLabel.hidden = !can
     withSound.checked = can
-    if (track && !track.matches) trackText.textContent += ' Only the track the film was timed to can go into the file.'
+    if (track && !sound) trackText.textContent += ' This browser cannot encode sound, so the file is made without it.'
+    else if (track) trackText.textContent += ` It goes into the file as ${sound?.label}, its second zero on frame 0 of the film.`
     describe()
   }
 

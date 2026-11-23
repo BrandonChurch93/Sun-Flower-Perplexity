@@ -3,7 +3,7 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import type { Report, RunFacts } from '../player/pacing.ts'
+import { reportText, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
 import { readTrack, trackLine, type Track } from '../player/track.ts'
@@ -50,6 +50,11 @@ function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
   if (className) node.className = className
   if (text !== undefined) node.textContent = text
   return node
+}
+
+function cardName(gl: WebGL2RenderingContext): string {
+  const name: unknown = gl.getParameter(gl.RENDERER)
+  return typeof name === 'string' && name ? name : 'not told'
 }
 
 function between(value: number, low: number, high: number): number {
@@ -155,6 +160,12 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     },
     go: (mode) => {
       location.assign(linkTo(mode))
+    },
+    pacing: () => {
+      const report = playing?.soFar() ?? state.report
+      if (!report) return null
+      const canvas = film.stage.canvas
+      return reportText(report, [`picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`, `browser: ${navigator.userAgent}`, `graphics: ${cardName(film.stage.gl)}`])
     },
   })
 

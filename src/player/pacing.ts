@@ -37,7 +37,7 @@ export type Cost = Record<string, number>
 const FRAME_MS = 1000 / config.film.fps
 
 export function asked(m: Made): Asked {
-  return { made: m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads, writes: m.updates, writeBytes: m.updateBytes }
+  return { made: m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.vertexArrays + m.uploads, writes: m.updates, writeBytes: m.updateBytes }
 }
 
 // `atEnd` marks the time the last frame drawn stood in place of the frames that were due after it.
@@ -156,7 +156,7 @@ export class Pacing {
         longestAt = shown[drawn - 1].film
       }
     }
-    const madeSomething = made !== null && made.programs + made.shaders + made.textures + made.buffers + made.framebuffers + made.renderbuffers + made.uploads > 0
+    const madeSomething = made !== null && made.programs + made.shaders + made.textures + made.buffers + made.framebuffers + made.renderbuffers + made.vertexArrays + made.uploads > 0
     const holds = complete && drawn > 0 && skipped === 0 && longest <= GAP_MS && !madeSomething
     const nearly = complete && drawn > 0 && skipped <= Math.ceil(due * 0.002) && longest <= 2 * GAP_MS
     const film = drawn ? shown[drawn - 1].due - shown[0].due : 0
@@ -199,6 +199,30 @@ export class Pacing {
       shown,
     }
   }
+}
+
+// The report as a few lines of plain text, to paste into a message.
+export function reportText(report: Report, machine: string[] = []): string {
+  const f = report.frames
+  const things = report.made ? asked(report.made).made : null
+  const parts = Object.entries(report.partsMs)
+    .filter(([name, v]) => name !== 'script' && name !== 'wait' && typeof v === 'number' && v >= 0.05)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([name, v]) => `${name} ${v.toFixed(1)}`)
+  return [
+    `${config.name}, pacing report, ${report.at}`,
+    `run: ${report.kind}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
+    `frames: ${f.due} due, ${f.drawn} shown, ${f.skipped} skipped, ${f.late} shown late`,
+    `time: ${report.seconds.film.toFixed(3)} s of film in ${report.seconds.audio.toFixed(3)} s of the audio clock`,
+    `script a frame: mean ${report.scriptMs.mean} ms, 99th ${report.scriptMs.p99} ms, worst ${report.scriptMs.longest} ms at ${report.scriptMs.longestAtFilm} s`,
+    `wait for the picture a frame: mean ${report.cardMs.mean} ms, 99th ${report.cardMs.p99} ms, worst ${report.cardMs.longest} ms`,
+    `shown frame to shown frame: mean ${report.gapMs.mean} ms, 99th ${report.gapMs.p99} ms, longest ${report.gapMs.longest} ms at ${report.gapMs.longestAtFilm} s, ${report.gaps.length} over ${GAP_MS} ms`,
+    `script by part, mean ms: ${parts.length ? parts.join(', ') : 'not measured'}`,
+    `made after loading: ${things === null ? 'not counted' : things}${report.madeAtFilm.length ? `, first at ${report.madeAtFilm[0]} s` : ''}`,
+    ...machine,
+    report.verdict,
+  ].join('\n')
 }
 
 // The report as a file: the summary, every gap, and one line for each frame that was shown.
