@@ -2,7 +2,7 @@ import { nothingMade, type Made } from '../../src/v2/counter.ts'
 import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { barText, FRAMES, holds, secondsOf } from './lib/film.ts'
-import { readLines, readStamp, runName } from './lib/play.ts'
+import { olderFilm, readLines, readStamp, runName } from './lib/play.ts'
 import { strideFrames } from './lib/stride.ts'
 import { finish, type Finding } from './lib/report.ts'
 
@@ -49,7 +49,8 @@ export async function run(args: Args): Promise<void> {
   }
   const stride = num(args, 'stride', 0)
   const wanted = stride > 0 ? strideFrames(stride, from, to).length : to - from + 1
-  const complete = have >= wanted
+  const older = olderFilm(run)
+  const complete = have >= wanted && !older
   if (have === 0) findings.push({ ok: false, what: `no frame of "${run}" has been drawn yet: run "npm run checks -- play" first` })
   else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer or renderbuffer was created and nothing was given new storage on any of them` })
   else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}` })
@@ -64,7 +65,8 @@ export async function run(args: Args): Promise<void> {
     held.push(row)
     findings.push({ ok: row.most <= holdMb, what: `${h.name} hold (${row.frames} of its ${h.last - h.first + 1} frames drawn): each frame writes ${row.mean.toFixed(1)} MB on average into what exists, the most ${row.most.toFixed(1)} MB at frame ${row.mostAt}, against a limit of ${holdMb} MB a frame while the plant stands still` })
   }
-  if (!complete && have > 0) findings.push({ ok: true, expected: true, what: `${wanted - have} frames of ${from} to ${to} are not drawn yet` })
+  if (older) findings.push({ ok: true, expected: true, what: older })
+  if (have < wanted && have > 0) findings.push({ ok: true, expected: true, what: `${wanted - have} frames of ${from} to ${to} are not drawn yet` })
   finish({
     check: 'made',
     sentence: SENTENCE,

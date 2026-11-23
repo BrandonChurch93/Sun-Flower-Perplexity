@@ -4,7 +4,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, FLASH_STEP, FRAMES, lightningFrames, secondsOf } from './lib/film.ts'
-import { frameFile, playDir, readLines, readStamp, runName } from './lib/play.ts'
+import { frameFile, olderFilm, playDir, readLines, readStamp, runName } from './lib/play.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
 import { mad, small, type Small } from './lib/steps.ts'
 import { ranker } from './lib/stride.ts'
@@ -101,7 +101,8 @@ export async function run(args: Args): Promise<void> {
     wanted = 0
     for (let f = Math.max(1, from); f <= to; f++) if (round(f) < 3 && round(f - 1) < 3) wanted++
   }
-  const complete = steps.length >= wanted
+  const older = olderFilm(run)
+  const complete = steps.length >= wanted && !older
   const cuts = steps.filter((s) => s.cut)
   const largest = [...steps].sort((a, b) => b.blur - a.blur).slice(0, 10)
   const dir = path.join(OUT, 'cuts', every > 1 ? `${run}-every-${every}` : run)
@@ -136,7 +137,8 @@ export async function run(args: Args): Promise<void> {
       findings.push({ ok: true, expected: true, what: `lightning at frame ${f} (${barText(secondsOf(f))}), a jump that is meant: the blurred picture moves ${s.blur.toFixed(2)} of 255, ${s.ratio.toFixed(1)} times its neighbours${seen ? '' : '. That is no jump at all: the lightning does not show in the picture yet'}` })
     }
   }
-  if (!complete && steps.length > 0) findings.push({ ok: true, expected: true, what: `${wanted - steps.length} steps of frames ${from} to ${to} are not judged yet, because their frames or the frames round them are not drawn` })
+  if (older) findings.push({ ok: true, expected: true, what: older })
+  if (steps.length < wanted && steps.length > 0) findings.push({ ok: true, expected: true, what: `${wanted - steps.length} steps of frames ${from} to ${to} are not judged yet, because their frames or the frames round them are not drawn` })
   finish({
     check: 'cuts',
     sentence: SENTENCE,

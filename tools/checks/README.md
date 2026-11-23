@@ -32,7 +32,7 @@ npm run checks -- play --stride 6 --from 2540 --to 3809
 
 `cuts --stride 6` and `made --stride 6` judge that round and say PASS SO FAR while frames are missing. Where every frame is drawn a cut is found between neighbours. On the stride it is found between frames six apart, so a jump smaller than about four times what the film moves in six frames is not caught there: the every frame zones round the cues are where a cut is expected, and the full drawing is the proof for the rest.
 
-A draft frame is drawn through one point of the lens and one instant of the shutter, another for each frame, so where the lens is wide open the far horizon jumps a little from frame to frame. That is the draft, not the film. It sets how fine these picture checks can be: `nights` allows a dusk 2 of 255 the wrong way, and judges a step of more than 20 of 255 a frame (the film's steepest is 17.7).
+A draft frame has one sample, so everything out of focus is blurred by the lens fill alone (`src/post/post.ts`), whose stipple follows the frame number: far things are a little sharper in some frames than in others. That is the draft, not the film, and each frame is still a function of its number (`pure` passes on them). It sets how fine these picture checks can be: `nights` allows a dusk to move 2 of 255 the wrong way (measured up to 1.5 on sky-0), and fails a step of more than 20 of 255 a frame (the steepest measured is 17.7).
 
 ## The holds, to the frame
 

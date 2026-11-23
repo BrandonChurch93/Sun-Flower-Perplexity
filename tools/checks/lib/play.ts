@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { engineHash } from './report.ts'
 import type { Made } from '../../../src/v2/counter.ts'
 import { OUT } from './report.ts'
 
@@ -15,6 +16,13 @@ export const runName = (broken: string | null): string => (broken ? `broken-${br
 export function readStamp(run: string): Stamp | null {
   const file = path.join(playDir(run), 'stamp.json')
   return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Stamp) : null
+}
+
+// Says so when the frames were drawn from a film that is not the one in the working tree: a check that reads them has then not judged today's film.
+export function olderFilm(run: string): string | null {
+  const stamp = readStamp(run)
+  if (!stamp || run !== 'film' || stamp.hash === engineHash()) return null
+  return `the frames were drawn from another state of the film (${stamp.hash}, sky ${stamp.sky}) than the one here (${engineHash()}): draw them again with "npm run checks -- play" before trusting this`
 }
 
 // Every frame drawn so far, the newest drawing of each.

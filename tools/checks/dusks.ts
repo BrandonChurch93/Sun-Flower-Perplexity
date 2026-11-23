@@ -5,7 +5,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, secondsOf } from './lib/film.ts'
-import { frameFile, runName } from './lib/play.ts'
+import { frameFile, olderFilm, runName } from './lib/play.ts'
 import { OUT, type Finding } from './lib/report.ts'
 import { twilights, type Twilight } from './lib/stride.ts'
 
@@ -17,7 +17,7 @@ import { twilights, type Twilight } from './lib/stride.ts'
 
 // Measured on sky-0 at 320 x 180: the steepest frame of a dusk or dawn moves the mean luminance by 10.5 to 17.7 of 255.
 export const DUSK_STEP = 20
-// A move the wrong way smaller than this is the grain of a draft frame, which is drawn through one point of the lens: measured up to 1.5 of 255 where the lens is wide open, under 0.3 elsewhere.
+// A move the wrong way smaller than this is the grain of a draft frame, whose blur comes from the lens fill and its stipple alone: measured up to 1.5 of 255 where the far background is out of focus, under 0.3 elsewhere.
 // The direction is judged from the frame of the sunset to the last frame before the sunrise. The eight frames of day on either side are held to the step only: on sky-0 the frame brightens toward a sunset.
 const WRONG_WAY = 2
 
@@ -151,6 +151,11 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
       await sheetOf(run, t, file, caption)
       pictures.push({ file: path.relative(process.cwd(), file), caption })
     }
+  }
+  const older = olderFilm(run)
+  if (older && drawn > 0) {
+    findings.push({ ok: true, expected: true, what: older })
+    complete = false
   }
   return { findings, complete, rows, pictures, step }
 }
