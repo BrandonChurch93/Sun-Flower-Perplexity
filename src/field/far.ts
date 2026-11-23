@@ -41,7 +41,8 @@ const farAirGlsl = /* glsl */ `
 vec3 farAir(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
-  return mix(color, uFogColor + uFogSunTint * pow(saturate(dot(v / max(d, 1e-5), uSunDir)), 6.0), mix(0.22, 0.6, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1)))) * smoothstep(40.0, 220.0, d));
+  float lit = smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1)));
+  return mix(color, uFogColor + uFogSunTint * (lit * pow(saturate(dot(v / max(d, 1e-5), uSunDir)), 6.0)), mix(0.22, 0.6, lit) * smoothstep(40.0, 220.0, d));
 }
 `
 
