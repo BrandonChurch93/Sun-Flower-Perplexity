@@ -49,7 +49,9 @@ const VEIN_ROOTS = 60
 const STALK_ROOTS = 200
 const RIME_VEINS = [1, 2, 3]
 const RIME_EACH = 2 * EDGE + VEIN_ROOTS * (1 + 2 * RIME_VEINS.length) + STALK_ROOTS
-const RIME_M = 0.003
+// How long the ice's own root is: none on an edge, where the frost sizes it, a grain on a vein, a bristle's length round the stalk.
+const RIME_VEIN_M = [0.0003, 0.0008]
+const RIME_STALK_M = [0.001, 0.0025]
 // The plant's clock when the last frost of the film is gone.
 const FROST_ENDS_S = ((): number => {
   let last = -1
@@ -491,6 +493,8 @@ export function create(options: PartOptions): PlantPart {
   const rimeA = new Float32Array(rimeSlots)
   const rimeB = new Float32Array(rimeSlots)
   const rimeOwn = new Float32Array(rimeSlots)
+  // The way a vein runs at its root, in rows and columns of the grid.
+  const rimeRun = new Float32Array(rimeSlots * 2)
   for (let li = 0, q = 0; li < rimeLeaves; li++) {
     const leaf = leaves[li]
     const r = (k: number, i: number) => hash01(seed, 7000 + li * 16 + k, i)
@@ -519,6 +523,7 @@ export function create(options: PartOptions): PlantPart {
       rimeA[q] = rowAt(0.02 + ((i + r(4, i)) / VEIN_ROOTS) * 0.95)
       rimeB[q] = colAt(0)
       rimeOwn[q] = r(5, i)
+      rimeRun[q * 2] = 1
     }
     for (let side = 0; side < 2; side++) {
       const veins = veinSets[leaf.set][leaf.mirror > 0 ? side : 1 - side]
@@ -531,6 +536,9 @@ export function create(options: PartOptions): PlantPart {
           rimeA[q] = s < 0.97 ? rowAt(s) : -1
           rimeB[q] = colAt(side === 0 ? -w : w)
           rimeOwn[q] = r(12, side * 3 * VEIN_ROOTS + n * VEIN_ROOTS + i)
+          const on = veinAt(veins[RIME_VEINS[n]], w + 0.02)
+          rimeRun[q * 2] = s < 0.95 ? rowAt(Math.min(on, 0.97)) - rimeA[q] : 1
+          rimeRun[q * 2 + 1] = s < 0.95 ? colAt(side === 0 ? -w - 0.02 : w + 0.02) - rimeB[q] : 0
         }
       }
     }
@@ -589,13 +597,13 @@ export function create(options: PartOptions): PlantPart {
   }
   const crystals = hero ? createCrystals(options, crystalSlots, 'leaf crystals') : null
   if (crystals) {
-    // Where each crystal stands along its leaf's edge, from just over 0 at the base to 1 at the tip. A grain of the face stands on no edge.
+    // Where each crystal stands along its blade: on the edge from just over 0 at the base to 1 at the tip, on the face or a vein from -1 at the base to -2 at the tip, and -3 round the stalk.
     const place = crystals.place()
-    for (let li = 0, q = 0; li < rimeLeaves; li++) for (let i = 0; i < RIME_EACH; i++, q++) place[q] = rimeKind[q] === 0 ? Math.max(rimeA[q] / (leaves[li].nu - 1), 0.001) : -rimeKind[q]
+    for (let li = 0, q = 0; li < rimeLeaves; li++) for (let i = 0; i < RIME_EACH; i++, q++) place[q] = rimeKind[q] === 2 ? -3 : rimeKind[q] === 1 ? -1 - Math.max(0, rimeA[q]) / (leaves[li].nu - 1) : Math.max(rimeA[q] / (leaves[li].nu - 1), 0.001)
     for (let h = 0; h < plan.length; h++) {
       const hair = plan[h]
       if (hair.kind === 0) place.fill(Math.max(hair.a / (leaves[hair.leaf].nu - 1), 0.001), crystalAt[h], crystalAt[h] + FRINGE)
-      else if (crystalAt[h + 1] > crystalAt[h]) place[crystalAt[h]] = -1
+      else if (crystalAt[h + 1] > crystalAt[h]) place[crystalAt[h]] = -1 - hair.a / (leaves[hair.leaf].nu - 1)
     }
   }
 
@@ -1243,12 +1251,13 @@ export function create(options: PartOptions): PlantPart {
     for (let li = 0, q = 0; li < rimeLeaves; li++) {
       const leaf = leaves[li]
       const size = lengthAt(leaf.i, pose.time)
-      const long = size <= 0 ? 0 : RIME_M * clamp(size / 0.07, 0.35, 1)
+      const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.35, 1)
       const nv = leaf.nv
       for (let i = 0; i < RIME_EACH; i++, q++) {
         const o = q * 4
         let px = 0, py = 0, pz = 0, dx = 0, dy = 1, dz = 0, sx = 0, sy = 0, sz = 0
-        let stands = long > 0 && rimeA[q] >= 0
+        let stands = scale > 0 && rimeA[q] >= 0
+        let long = 0
         if (stands && rimeKind[q] === 2) {
           const ring = Math.min(RINGS - 2, Math.floor(rimeA[q]))
           const t = rimeA[q] - ring
@@ -1269,6 +1278,7 @@ export function create(options: PartOptions): PlantPart {
           sx = tube[v1] - tube[v0]
           sy = tube[v1 + 1] - tube[v0 + 1]
           sz = tube[v1 + 2] - tube[v0 + 2]
+          long = lerp(RIME_STALK_M[0], RIME_STALK_M[1], rimeOwn[q] * rimeOwn[q]) * scale
         } else if (stands) {
           const a = Math.floor(rimeA[q])
           const t = rimeA[q] - a
@@ -1301,10 +1311,18 @@ export function create(options: PartOptions): PlantPart {
             dy = (out[v00 + 4] - out[v00 + 1]) * way
             dz = (out[v00 + 5] - out[v00 + 2]) * way
           } else {
+            const ra = rimeRun[q * 2]
+            const rb = rimeRun[q * 2 + 1]
+            sx = sx * ra + (out[v00 + 3] - out[v00]) * rb
+            sy = sy * ra + (out[v00 + 4] - out[v00 + 1]) * rb
+            sz = sz * ra + (out[v00 + 5] - out[v00 + 2]) * rb
+            const rl = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1
             const n = v00 + (tb > 0.5 ? 3 : 0) + (t > 0.5 ? nv * 3 : 0)
-            dx = normals[n]
-            dy = normals[n + 1]
-            dz = normals[n + 2]
+            const tip = 0.5 * (rimeOwn[q] - 0.3)
+            dx = normals[n] + (sx / rl) * tip
+            dy = normals[n + 1] + (sy / rl) * tip
+            dz = normals[n + 2] + (sz / rl) * tip
+            long = lerp(RIME_VEIN_M[0], RIME_VEIN_M[1], rimeOwn[q]) * scale
           }
         }
         const dl = Math.sqrt(dx * dx + dy * dy + dz * dz)
@@ -1315,7 +1333,7 @@ export function create(options: PartOptions): PlantPart {
         cr[o + 2] = pz
         cr[o + 3] = stands ? long : 0
         cl[o] = stands ? dx / dl : 0
-        cl[o + 1] = stands ? dy / dl : 1
+        cl[o + 1] = stands ? dy / dl : 0
         cl[o + 2] = stands ? dz / dl : 0
         cl[o + 3] = rimeOwn[q]
         if (run) {

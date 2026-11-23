@@ -31,7 +31,7 @@ const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
 // Where ice can root on the stem: this many places, evenly from the foot to the tip as it stands, each this long at most.
 const RIME_ROOTS = 1600
-const RIME_M = 0.003
+const RIME_M = [0.001, 0.0025]
 
 // `hairs` is how many stand on a square meter of grown skin.
 interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number[]; sprout: boolean; down: boolean }
@@ -140,7 +140,7 @@ export function create(options: PartOptions): PlantPart {
   const crystals = createCrystals(options, shape.full && options.variant === 0 ? RIME_ROOTS : 0, 'stem crystals')
   const rimeOwn = new Float32Array((crystals ? crystals.count : 0) * 5)
   if (crystals) {
-    crystals.place().fill(-2)
+    crystals.place().fill(-3)
     for (let i = 0; i < crystals.count; i++) {
       const a = ((i * 0.618034 + 0.3 * hash01(seed, 302, i)) % 1) * TAU
       rimeOwn.set([(i + hash01(seed, 301, i)) / crystals.count, a, Math.cos(a), Math.sin(a), hash01(seed, 303, i)], i * 5)
@@ -499,6 +499,7 @@ export function create(options: PartOptions): PlantPart {
     if (crystals && stateUniforms.uPlantFrost.value > 0) {
       const root = crystals.root(slot)
       const lean = crystals.lean(slot)
+      const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
       const top = ringS[main - 1]
       for (let i = 0, j = 0; i < crystals.count; i++) {
         const w = i * 5
@@ -519,11 +520,16 @@ export function create(options: PartOptions): PlantPart {
         root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * radius
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * radius
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * radius
-        root[o + 3] = top > 0.004 ? RIME_M : 0
+        root[o + 3] = top > 0.004 ? lerp(RIME_M[0], RIME_M[1], rimeOwn[w + 4] * rimeOwn[w + 4]) : 0
         lean[o] = ox
         lean[o + 1] = oy
         lean[o + 2] = oz
         lean[o + 3] = rimeOwn[w + 4]
+        if (run) {
+          run[i * 3] = lerp(ringAt[p + 9], ringAt[p + 21], fr)
+          run[i * 3 + 1] = lerp(ringAt[p + 10], ringAt[p + 22], fr)
+          run[i * 3 + 2] = lerp(ringAt[p + 11], ringAt[p + 23], fr)
+        }
       }
     }
     if (dew) {

@@ -42,7 +42,7 @@ const HUSK_TIP_M = 0.0022
 const EDGE = 120
 const MID_ROOTS = 60
 const RIME_EACH = 2 * EDGE + MID_ROOTS
-const RIME_M = 0.003
+const RIME_M = [0.0003, 0.0008]
 
 interface Body {
   husk: boolean
@@ -371,7 +371,7 @@ export function create(options: PartOptions): PlantPart | null {
         const share = (((edge ? i % EDGE : i - 2 * EDGE) + hash01(beadSeed, 4000 + q, 0)) / n) * (edge ? 1 : 0.95)
         rimeAt[q * 2] = Math.min(share * (b.rings - 1), b.rings - 1.001)
         rimeAt[q * 2 + 1] = hash01(beadSeed, 4000 + q, 1)
-        place[q] = edge ? Math.max(share, 0.001) : -1
+        place[q] = edge ? Math.max(share, 0.001) : -1 - share
       }
     })
   }
@@ -672,7 +672,7 @@ export function create(options: PartOptions): PlantPart | null {
       const root = crystals.root(slot)
       const lean = crystals.lean(slot)
       const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
-      const long = length <= 0 ? 0 : RIME_M * clamp(length / 0.07, 0.35, 1) * (1 - wither)
+      const scale = length <= 0 ? 0 : clamp(length / 0.07, 0.35, 1) * (1 - wither)
       leaves.bodies.forEach((b, id) => {
         const row = b.loop + 1
         const half = b.loop >> 1
@@ -697,10 +697,10 @@ export function create(options: PartOptions): PlantPart | null {
           dl = Math.sqrt(dl)
           sl = Math.sqrt(sl)
           for (let c = 0; c < 3; c++) {
-            lean[o + c] = dl > 0 ? lean[o + c] / dl : c === 1 ? 1 : 0
+            lean[o + c] = dl > 0 && scale > 0 ? lean[o + c] / dl : 0
             if (run) run[q * 3 + c] = sl > 0 ? (out[v1 + c] - out[v0 + c]) / sl : 0
           }
-          root[o + 3] = dl > 0 ? long : 0
+          root[o + 3] = dl > 0 && i >= 2 * EDGE ? lerp(RIME_M[0], RIME_M[1], rimeAt[q * 2 + 1]) * scale : 0
           lean[o + 3] = rimeAt[q * 2 + 1]
         }
       })
