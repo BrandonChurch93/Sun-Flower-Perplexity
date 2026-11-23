@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import { gustGlsl } from '../../v2/wind.ts'
-import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, SLANT_WIND, fallDir, landingsNear, type Drop } from './drops.ts'
+import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, SLANT_WIND, fallDir, prepareDrops, scanLandings } from './drops.ts'
 
 // The rain in the air. Every drop is worked out on the graphics card from its own number and the film second: where it is at the open shutter and at the close,
 // and the strip between the two is the streak the exposure leaves. A layer is a box of drops that wraps round the lens, fixed to the world.
@@ -303,9 +303,20 @@ export class HeavyLayer {
   private readonly geometry = new THREE.InstancedBufferGeometry()
   private readonly data = new Float32Array(HEAVY_MAX * 4)
   private readonly drop: THREE.InstancedBufferAttribute
-  private readonly found: Drop[] = []
+  private readonly at = { x: 0, z: 0, reach: 0, n: 0 }
+  private readonly take = (x: number, z: number, time: number, radius: number): void => {
+    const at = this.at
+    if (at.n >= HEAVY_MAX || (x - at.x) * (x - at.x) + (z - at.z) * (z - at.z) > at.reach * at.reach) return
+    const o = at.n * 4
+    this.data[o] = x
+    this.data[o + 1] = z
+    this.data[o + 2] = time
+    this.data[o + 3] = radius
+    at.n++
+  }
 
   constructor(lit: Record<string, THREE.IUniform>, gain: number) {
+    prepareDrops()
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
     // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
@@ -334,16 +345,13 @@ export class HeavyLayer {
     this.meshes[0].visible = on
     this.meshes[1].visible = on && samples === 1
     if (!on) return
-    this.found.length = 0
-    landingsNear(x, z, half, open, open + HEAVY_AHEAD_S, this.found)
-    const n = Math.min(this.found.length, HEAVY_MAX)
-    for (let i = 0; i < n; i++) {
-      const d = this.found[i]
-      this.data[i * 4] = d.x
-      this.data[i * 4 + 1] = d.z
-      this.data[i * 4 + 2] = d.time
-      this.data[i * 4 + 3] = d.radius
-    }
+    const at = this.at
+    at.x = x
+    at.z = z
+    at.reach = half
+    at.n = 0
+    scanLandings(x - half, z - half, x + half, z + half, open, open + HEAVY_AHEAD_S, this.take)
+    const n = at.n
     this.geometry.instanceCount = n
     if (n === 0) return
     this.drop.clearUpdateRanges()
