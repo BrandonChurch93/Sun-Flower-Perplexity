@@ -3,7 +3,7 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { reportFile, reportName, reportText, type Report, type RunFacts } from '../player/pacing.ts'
+import { reportFile, reportName, reportText, slowLine, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, measure, pictureSize, record, type Deck, type Measured } from '../player/session.ts'
 import { createSheet } from '../player/sheet.ts'
@@ -609,7 +609,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     const text = [reportText(live, machine()), '', script ? stateText(script) : 'script alone: not measured, the run was stopped before it'].join('\n')
     show(live)
     const whole = new Blob([JSON.stringify({ live, script }, null, 1)], { type: 'application/json' })
-    sheet.show({ verdict: live.verdict, holds: live.holds, text, file: { name: reportName(live), blob: script ? whole : reportFile(live) } })
+    sheet.show({ verdict: live.verdict, holds: live.holds, felt: slowLine(live).replace(/^s/, 'S'), text, file: { name: reportName(live), blob: script ? whole : reportFile(live) } })
     return { live, script, text }
   }
 
