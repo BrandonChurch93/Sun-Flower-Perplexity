@@ -1,12 +1,12 @@
-# Status 25
+# Status 26
 
-2026-11-23 11:28 UTC
+2026-11-23 11:54 UTC
 
-- Status 25 · Phase 3. The frost in the first close shot is now built from crystals of three sizes: fine sugar, faced grains up to 0.6 mm and plates up to 1.6 mm, with a closed fringe of crystal fans along the margin and rime in chains along the veins (merged and proved on eight frames at full size). The lens pass now reads the edge of a hair from one clean sample. The far glints of the field take the same blur circle as the ground's sparks. New tools: a cost table by owner and a pacing report as one page. Measured: type check clean, 34 test files, 195 tests pass on 42ea2ba. Measured cost of live play on software cores (not a real graphics card): the plant's script is 26 ms a frame after the frost, 41 after the storm and 76 through the bloom against a limit of 10, so the frame cost stays the largest risk and three owners are on it.
-- Next: A dark cold teal leaf under the frost so the white stands out (built by its owner, on the bench next), brighter plates with a shadow foot, thinner rime sleeves on the stalk, the melt; antialiased hairs in live play; one laying of the plant a frame; the open head's fourth pass; the sun's short wink behind the neighbor at bar 66. Time used: 13.5 h of 30 h.
+- Status 26 · Phase 3. Frost close shots whiter with ice fans on the rim and soft star sparks; bloom head pass 4 with rays of unequal length; storm puddle fixed; Milky Way holds through the night. All in v2 699f0d2, 199 tests pass.
+- Next: merge one laying a frame for the plant, hair roots laid once and the cut by size for live play cost, then the first whole watch in motion (parts being drawn on three machines). Time used: 13.9 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost is there at the cut and grows. Sparks where a crystal mirrors the sun
-- `status-2.jpg`: The margin at full size, frame 1054: fans of needles on the edge, rime in chains on the veins. The plates on the blade are still too grey
-- `status-3.jpg`: Second and third close shots, frames 1106 and 1208: the tip against the sun, then the thaw with the drop about to let go
-- `status-4.jpg`: Guards, frames 1240, 940 and 1466: the thaw's last frame, the wide frame before the first cut, the climb after it
+- `status-1.jpg`: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star
+- `status-2.jpg`: Frost close shot, frame 1106 (bar 22): the tip against the low sun
+- `status-3.jpg`: Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4
+- `status-4.jpg`: Storm hold, frame 1830 (bar 36): one puddle in the furrow
