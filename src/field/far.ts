@@ -36,6 +36,15 @@ const EARLY_CODE = earlyCode({ turn: 0, tall: 1, head: 1, nod: 0, low: 0, young:
 // The carpet comes in under the last of the real plants, so there is crop under every picture.
 const CARPET_FROM_M = fieldFarM - 8
 
+// Far off the crop goes by degrees into the air that lies on the land past it, so it ends in no line.
+const farAirGlsl = /* glsl */ `
+vec3 farAir(vec3 color, vec3 world) {
+  vec3 v = world - uCamPos;
+  float d = length(v);
+  return mix(color, uFogColor + uFogSunTint * pow(saturate(dot(v / max(d, 1e-5), uSunDir)), 6.0), mix(0.22, 0.6, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1)))) * smoothstep(40.0, 220.0, d));
+}
+`
+
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
 in vec4 aPlace;
@@ -94,6 +103,7 @@ in vec3 vWorld;
 in float vDepth;
 in float vTone;
 uniform sampler2D uAtlas;
+${farAirGlsl}
 void main() {
   vec4 t = texture(uAtlas, vUv);
   float cover = 1.0 - t.a;
@@ -109,7 +119,7 @@ void main() {
     outColor = vec4(color, cocOf(vDepth));
     return;
   }
-  outColor = finish(color * vTone, vWorld, vDepth, -1.0);
+  outColor = finish(farAir(color * vTone, vWorld), vWorld, vDepth, -1.0);
 }
 `
 
@@ -163,6 +173,7 @@ uniform float uWind;
 uniform vec4 uWedge;
 uniform vec2 uEnd;
 ${gustGlsl}
+${farAirGlsl}
 // The heads of the far crop. Near, one disc to a plant. Farther off a plant is smaller than a pixel and the eye sees the heads that stand clear,
 // one to every few plants: the cells double in size as they shrink on the screen, each way on its own, and one size fades into the next.
 float headsAt(vec2 f, out float tone) {
@@ -247,6 +258,7 @@ void main() {
     color *= 1.0 + 0.22 * fine * (row - 0.5);
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
+    color = farAir(color, vWorld);
   }
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
