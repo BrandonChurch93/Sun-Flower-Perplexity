@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { config } from '../config.ts'
 import type { Assets } from '../core/assets.ts'
 import type { CameraPose } from '../core/lens.ts'
 import { headOpen, heightAt, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
@@ -9,6 +10,7 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { type KindUniforms, fieldPlaceGlsl, fieldPlaceUniforms, kindData, kindList } from './place.ts'
+import { ROOM_M, bySeen, filmLens, frameOf, lensOf, needed } from './seen.ts'
 import { Shaped, shapeInputs } from './turn.ts'
 import { CANOPY_SIZE, PLACE, SETTLED_T, toward, earlyAt, farVariants, fieldAge, fieldPlaces, frontM, hangAt, kindTime, lagAt, lateAt, nearVariants, opensEarly, plantAhead, shareOf, sizeAt, squatAt, standOf, statureAt, stiffAt, wideAt, youngOf, type Tier } from './layout.ts'
 
@@ -22,10 +24,12 @@ const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11
 // How dark the rows behind the pair stand from the crane, and over which stretch of the plant's clock that comes in.
 const BEHIND = { tone: 0.75, from: 53.6, full: 55.5 }
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; kind: KindUniforms; shaped: Shaped; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; kind: KindUniforms; shaped: Shaped; places: Float32Array; need: Uint16Array; drawn: THREE.InstancedBufferGeometry[]; count: number; index: number; tier: Tier; plant: Plant }
 
-// One kind of neighbor, drawn once for every place of its share. Its list is written here and never again: where each one stands in a frame is worked out as it is drawn.
-function group(detail: 'near' | 'far', variant: number, places: Float32Array, index: number, bare = false): Group {
+// One kind of neighbor, drawn once for every place of its share. Its list is written here and never again, in the order the film first sees its neighbors:
+// where each one stands in a frame is worked out as it is drawn, and a frame draws only the front part of the list that it can see.
+function group(detail: 'near' | 'far', variant: number, share: Float32Array, index: number, lens: Float32Array, bare = false): Group {
+  const places = bySeen(share, lens)
   const list = new THREE.InstancedInterleavedBuffer(kindList(places), PLACE)
   const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
   const plant = new Plant({ detail, variant, places: list, place: { glsl: fieldPlaceGlsl, uniforms: { ...fieldPlaceUniforms, ...kind } } })
@@ -39,8 +43,15 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   for (const part of plant.parts) if (part.name === 'leaves') for (const m of part.meshes) Object.assign((m.material as THREE.RawShaderMaterial).uniforms, { uHeadAt: leafHead, uEarly: leafOwn, uFieldLeaf: { value: 1 } })
   const count = places.length / PLACE
   plant.show(count)
-  if (bare) for (const part of plant.parts) if (part.name !== 'leaves') for (const m of part.meshes) if (m.geometry instanceof THREE.InstancedBufferGeometry) m.geometry.instanceCount = 0
-  return { head, leafHead, leafOwn, axis, grow, bare, plant, kind, shaped: new Shaped(), count, index, tier: detail }
+  const drawn: THREE.InstancedBufferGeometry[] = []
+  for (const part of plant.parts) {
+    for (const m of part.meshes) {
+      if (!(m.geometry instanceof THREE.InstancedBufferGeometry) || !m.geometry.getAttribute('aPlace')) continue
+      if (bare && part.name !== 'leaves') m.geometry.instanceCount = 0
+      else drawn.push(m.geometry)
+    }
+  }
+  return { head, leafHead, leafOwn, axis, grow, bare, plant, kind, shaped: new Shaped(), places, need: needed(places, lens), drawn, count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -63,6 +74,10 @@ export class Field {
   private tanHalfWidth = 1
   private aspect = 1
   private filled: Quality | null = null
+  // The film's own lens at every frame, for the shape of frame the lists were last counted for.
+  private lensAspect = config.formats.master.width / config.formats.master.height
+  private lens = filmLens(this.lensAspect)
+  private readonly mine = new Float32Array(5)
   shown = 0
 
   constructor() {
@@ -71,9 +86,9 @@ export class Field {
     near.set(places.near)
     near.set(places.front, places.near.length)
     this.groups = [
-      ...nearVariants.map((v, i) => group('near', v, shareOf(near, i, nearVariants.length), i)),
-      ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i)),
-      ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, true)),
+      ...nearVariants.map((v, i) => group('near', v, shareOf(near, i, nearVariants.length), i, this.lens)),
+      ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i, this.lens)),
+      ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, this.lens, true)),
     ]
     this.far = new FarField(places.pictures)
     this.meshes = [...this.groups.flatMap((g) => g.plant.meshes), ...this.far.meshes]
@@ -180,7 +195,7 @@ export class Field {
     u.uFieldPhase.value.set(lateAt(this.time), earlyAt(this.time), stiffAt(this.time), BEHIND.tone * THREE.MathUtils.smoothstep(this.time, BEHIND.from, BEHIND.full))
     u.uFieldAir.value.set(this.seconds, this.wind, this.leafWind, s.young ? 1 : 0)
     u.uFieldLens.value.set(pose.position.x, pose.position.z, pose.forward.x / flat, pose.forward.z / flat)
-    u.uFieldGate.value.set(pose.right.x, pose.right.z, this.tanHalfWidth / steep, 0.9)
+    u.uFieldGate.value.set(pose.right.x, pose.right.z, this.tanHalfWidth / steep, ROOM_M)
     this.filled = this.quality
     const full = heightAt(SETTLED_T)
     for (const g of this.groups) {
@@ -189,7 +204,22 @@ export class Field {
       g.kind.uFieldKind.value.set(clock, kindTall, opensEarly(g.index, g.tier) ? 1 : 0, Math.atan2(g.axis.value.x, g.axis.value.z))
       g.kind.uFieldDraw.value.set(Math.max(s.ahead, Math.min(4, full / Math.max(kindTall, 0.001))), g.bare ? this.rise * UNDER_SIZE : 1, g.bare ? UNDER_REACH_M[this.quality] : 1000, g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1)
     }
-    return this.shown
+    // A frame of the film draws the front part of each list that its lens can see. Any other lens draws them whole.
+    if (Math.abs(this.aspect - this.lensAspect) > 1e-6) {
+      this.lensAspect = this.aspect
+      this.lens = filmLens(this.aspect)
+      for (const g of this.groups) g.need = needed(g.places, this.lens)
+    }
+    lensOf(pose, this.tanHalfWidth, this.aspect, this.mine)
+    const frame = frameOf(this.lens, this.seconds, this.mine)
+    let shown = 0
+    for (const g of this.groups) {
+      const count = frame < 0 ? g.count : g.need[frame]
+      for (const geometry of g.drawn) geometry.instanceCount = count
+      shown += count
+    }
+    this.shown = shown
+    return shown
   }
 }
 
