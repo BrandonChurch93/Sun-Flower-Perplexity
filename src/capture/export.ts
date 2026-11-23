@@ -516,6 +516,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     let pending: StoredChunk[] = []
     let description: string | null | undefined
     let wanted: string | null | undefined
+    let colour: VideoColorSpaceInit | null = null
     const target = new ArrayBufferTarget()
     const muxer = new Muxer({
       target,
@@ -531,6 +532,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
           const told = meta?.decoderConfig
           if (told && description === undefined) {
             description = describeBytes(told.description)
+            colour = told.colorSpace ?? null
             if (wanted !== undefined && wanted !== description) throw new Error('changed')
           }
           muxer.addVideoChunk(chunk, muxed === 0 ? meta : undefined)
@@ -583,7 +585,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
           if (!chunks) throw new Error('the kept frames could not be read')
           for (const c of chunks) {
             const chunk = new EncodedVideoChunk({ type: c.key ? 'key' : 'delta', timestamp: c.timestamp, duration: c.duration, data: c.data })
-            muxer.addVideoChunk(chunk, muxed === 0 ? { decoderConfig: { codec: meta.codec, codedWidth: size.width, codedHeight: size.height, description: undescribe(meta.description) } } : undefined)
+            muxer.addVideoChunk(chunk, muxed === 0 ? { decoderConfig: { codec: meta.codec, codedWidth: size.width, codedHeight: size.height, description: undescribe(meta.description), colorSpace: meta.colour ?? undefined } } : undefined)
             muxed++
           }
           done += chunks.length
@@ -621,7 +623,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         if (failure) throw failure
         if (pending.length !== count) throw new Error(`the encoder returned ${pending.length} of ${count} frames`)
         if (store) {
-          if (g === 0 || wanted === undefined) await store.writeMeta({ codec: choice.codec, description: description ?? null, frames: n, group })
+          if (g === 0 || wanted === undefined) await store.writeMeta({ codec: choice.codec, description: description ?? null, frames: n, group, colour: colour ?? meta?.colour ?? null })
           await store.writeGroup(g, pending)
         }
         pending = []
