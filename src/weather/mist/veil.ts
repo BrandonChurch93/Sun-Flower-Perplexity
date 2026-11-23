@@ -77,11 +77,11 @@ void main() {
   // A shaft is soft at its sides, starts a little way off the sun and dies out away from it.
   float shafts = 1.0 + uLook.z * (smoothstep(0.1, 0.9, beam) * 1.3 - 0.5) * smoothstep(0.02, 0.12, theta) * exp(-theta / 0.4);
   // Mist is lit by the whole sky, so it is paler than the strip of sky behind it.
-  vec3 air = 0.62 * uSkyHorizon + 0.42 * uSkyZenith;
+  vec3 air = 0.62 * uAirHorizon + 0.42 * uAirZenith;
   air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.65) * 1.2;
-  vec3 warm = max(uSkyHorizonSun - uSkyHorizon, vec3(0.0));
+  vec3 warm = max(uSkyHorizonSun - uAirHorizon, vec3(0.0));
   // Mist between the eye and the sun throws the sun forward: it is brightest in front of it.
-  vec3 color = air + ((warm + 0.22 * uSunColor) * (uLook.y * wide) + uSunColor * (uLook.w * (0.6 * (1.0 - smoothstep(0.012, 0.04, theta)) + exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
+  vec3 color = air + ((warm + 0.22 * uAirSun) * (uLook.y * wide) + uAirSun * (uLook.w * (0.6 * (1.0 - smoothstep(0.012, 0.04, theta)) + exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);
   outColor = vec4(color, alpha);
