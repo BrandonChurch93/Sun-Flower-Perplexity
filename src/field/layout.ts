@@ -63,9 +63,16 @@ const BEHIND_T: Record<Tier, number[]> = {
   pictures: [-3.2, -1.4, -2.4, -4.0],
 }
 // The age of the middle of the field, for the height its tops stand at.
-export const fieldAge = (time: number): number => time - 2.4 * ramp(1.5, 9, time) * (1 - ramp(36, BUD_T + 2.5, time))
+// As seedlings the rows are close behind the plant; they fall back as it shoots up, and catch up by the bud.
+const youngLag = (time: number): number => ramp(1.5, 9, time) * (0.35 + 0.65 * ramp(12, 20, time)) * (1 - ramp(36, BUD_T + 2.5, time))
+export const fieldAge = (time: number): number => time - 2.4 * youngLag(time)
+// One kind of the near rows is a slow grower: it falls further and further behind and is still in bud when the rest of the field is open.
+const SLOW_KIND = 4
+const SLOW_T = -12.5
 export const kindTime = (time: number, index: number, tier: Tier): number =>
-  time + BEHIND_T[tier][index] * ramp(1.5, 9, time) * (1 - ramp(36, BUD_T + 2.5, time)) + AHEAD_T[tier][index] * ramp(BUD_T - 3.5, OPEN_T - 1, time) * (1 - ramp(56, END_T, time))
+  time +
+  BEHIND_T[tier][index] * youngLag(time) +
+  (tier === 'near' && index === SLOW_KIND ? SLOW_T * ramp(30, 57, time) : AHEAD_T[tier][index] * ramp(BUD_T - 3.5, OPEN_T - 1, time) * (1 - ramp(56, END_T, time)))
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.
@@ -174,8 +181,8 @@ float gustAt(vec2 at, float seconds) {
 }
 `
 // How far a stem leans under the wind at full strength, as a slope: a steady lean and the gust on top of it.
-export const LEAN_STEADY = 0.05
-export const LEAN_GUST = 0.34
+export const LEAN_STEADY = 0.08
+export const LEAN_GUST = 0.56
 export interface Blown { x: number; z: number; head: number; leaves: number; nod: number }
 const blown: Blown = { x: 0, z: 0, head: 0, leaves: 0, nod: 0 }
 // What the wind does to one neighbor: it is pushed over as the front strikes, shakes while it is held, and swings back on a period of its own; its head and its leaves turn with it, each its own way.
@@ -194,8 +201,8 @@ export function blownOf(id: number, x: number, z: number, seconds: number, wind:
   const side = a < 0.5 ? -1 : 1
   blown.x = (cw * windWay.x - sw * windWay.z) * lean
   blown.z = (sw * windWay.x + cw * windWay.z) * lean
-  blown.head = wind * side * (0.45 * g + 0.1 * shake)
-  blown.leaves = leafWind * (b < 0.5 ? -1 : 1) * (0.5 * g + 0.12 * quick * (0.4 + g))
+  blown.head = wind * side * (0.6 * g + 0.12 * shake)
+  blown.leaves = leafWind * (b < 0.5 ? -1 : 1) * (0.75 * g + 0.15 * quick * (0.4 + g))
   blown.nod = wind * (0.3 * g + 0.06 * shake)
   return blown
 }

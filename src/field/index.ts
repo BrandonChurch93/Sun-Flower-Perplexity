@@ -172,6 +172,8 @@ export class Field {
     const late = lateAt(this.time)
     const before = earlyAt(this.time)
     const behind = behindAt(this.time)
+    // From knee height on no two neighbors stand as tall: the spread of their heights comes in as they grow.
+    const uneven = Math.max(late, THREE.MathUtils.smoothstep(this.time, 14, 30))
     const stiff = stiffAt(this.time)
     const windy = this.wind > 0 || this.leafWind > 0
     this.filled = this.quality
@@ -198,7 +200,7 @@ export class Field {
         const face = late > 0 ? faceAt(id, Math.hypot(all[i], all[i + 1])) : 0
         const round = early ? 1 : settled(clock, id)
         placeTurned(all, i, seen, still, n, round > 0 ? round * shortWay(g.face[k] - local - all[i + 2]) : 0)
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + late * (own.tall - 1)) * (1 + behind * (own.young - 1))
+        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + uneven * (own.tall - 1)) * (1 + behind * (own.young - 1))
         if (before > 0) {
           seen[n + 4] += before * own.leanX
           seen[n + 5] += before * own.leanZ

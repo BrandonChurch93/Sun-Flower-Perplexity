@@ -83,20 +83,24 @@ describe('the neighbors grow on the clock of the plant', () => {
     { tier: 'pictures' as const, count: farVariants.length },
   ]
 
-  it('no clock runs backward, each kind is a little ahead or behind, and all meet the plant at the end', () => {
+  it('no clock runs backward, each kind is a little ahead or behind, and one is still in bud at the end', () => {
     for (const { tier, count } of tiers) {
       for (let k = 0; k < count; k++) {
         let before = kindTime(0, k, tier)
         for (let tau = 0.05; tau <= growth.seconds; tau += 0.05) {
           const at = kindTime(tau, k, tier)
           expect(at, `${tier} ${k} at ${tau}`).toBeGreaterThanOrEqual(before - 1e-9)
-          expect(Math.abs(at - tau)).toBeLessThan(6)
+          expect(at).toBeLessThan(tau + 3)
+          expect(at).toBeGreaterThan(tau - 13)
           before = at
         }
         expect(kindTime(0, k, tier)).toBeCloseTo(0, 6)
-        expect(kindTime(growth.seconds, k, tier)).toBeCloseTo(growth.seconds, 6)
       }
     }
+    // One kind of the near rows is still in bud at the end; every other kind has caught up with the plant.
+    const last = Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.seconds, k, 'near'))
+    expect(last.filter((at) => at < growth.open).length).toBe(1)
+    expect(last.filter((at) => Math.abs(at - growth.seconds) < 1e-6).length).toBe(nearVariants.length - 1)
     const apart = new Set(Array.from({ length: nearVariants.length }, (_, k) => kindTime(growth.frostHold, k, 'near').toFixed(2)))
     expect(apart.size).toBeGreaterThan(3)
     expect(fieldAge(growth.frostHold)).toBeLessThan(growth.frostHold)
