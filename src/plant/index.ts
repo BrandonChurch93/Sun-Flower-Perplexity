@@ -497,7 +497,8 @@ export class Plant {
     filling.held = held
     this.stands.held = Math.min(held, feltClose.held ?? 0)
     asked[SIGNED - 3] = stateUniforms.uPlantFrost.value
-    asked[SIGNED - 2] = wetFelt()
+    // Only the plant and the companion carry drops: a neighbor's shape does not know the wet.
+    asked[SIGNED - 2] = this.at === null ? 0 : wetFelt()
     asked[SIGNED - 1] = stateUniforms.uPlantDew.value
     let same = true
     for (let i = 0; i < SIGNED; i++) if (asked[i] !== this.filled[i]) same = false
