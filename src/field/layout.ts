@@ -242,7 +242,7 @@ export const fieldFarM = 40
 export const fieldPicturesM = 66
 const NEAR_BAND_M = 4
 const FAR_BAND_M = 12
-export const carpetBandM = 14
+export const carpetBandM = 26
 
 // Two turns of each simpler kind are drawn as pictures.
 export const pictureTurns = 2
