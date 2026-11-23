@@ -2,6 +2,7 @@ import { config } from '../config.ts'
 import { sunAzimuthAt } from '../v2/sun.ts'
 import { clodClearM, clodGlsl, clodSlopeMost } from './clods.ts'
 import { grassCover, stemFoot, turfCover } from './cover.ts'
+import { reliefRadiusM } from './geometry.ts'
 import { cropLight } from './light.ts'
 
 // The soil's tile is the scan's own size on the ground. Its mean color and the depth of its relief come from the recipe.
@@ -387,7 +388,7 @@ float frostSpark(vec3 world, vec3 n, vec3 v, vec3 l) {
     vec3 own = vec3(hash31(cell), hash31(cell + 17.3), hash31(cell + 41.7));
     vec3 facet = normalize(n + 1.3 * (own - 0.5));
     float glint = pow(max(dot(facet, hv), 0.0), 220.0) * smoothstep(0.5, 0.15, length(fract(world * scale) - 0.5));
-    glint *= 0.6 + 0.4 * sin(uReal * (2.0 + 6.0 * own.y) + own.z * 40.0);
+    glint *= smoothstep(0.25, 0.9, 0.5 + 0.5 * sin(uReal * (1.5 + 5.0 * own.y) + own.z * 40.0));
     lit += glint * (k == 0 ? 1.0 - fract(size) : fract(size));
   }
   return lit;
@@ -511,7 +512,8 @@ void main() {
   vec2 uvB = TURN_B * p * (uTiles.x * 0.73) + vec2(0.37, 0.61);
   vec4 cB = texture(tColor, uvB);
   vec4 dB = texture(tData, uvB);
-  float w = saturate((valueNoise(p * 1.9 + 31.0) - 0.5) * 3.5 + 0.5 + (dB.a - dA.a) * 1.2) * smoothstep(1.0, 1.7, r);
+  float beyond = smoothstep(${reliefRadiusM.toFixed(2)}, ${(reliefRadiusM + 0.9).toFixed(2)}, r);
+  float w = saturate((valueNoise(p * 1.9 + 31.0) - 0.5) * 3.5 + 0.5 + (dB.a - dA.a) * 1.2) * beyond;
   vec3 albedo = mix(cA.rgb, cB.rgb, w);
   float h = mix(dA.a, dB.a, w);
   float rough = mix(dA.b, dB.b, w);
@@ -519,10 +521,10 @@ void main() {
   vec3 wide = texture(tColor, TURN_W * p * uTiles.y + vec2(0.13, 0.77)).rgb;
   float tone = dot(wide, vec3(0.3, 0.6, 0.1)) * uTiles.z;
   float big = 0.6 * valueNoise(p * 0.13 + 7.0) + 0.4 * valueNoise(p * 0.037 + 3.0);
-  albedo *= mix(1.0, mix(0.7, 1.25, saturate(tone * 0.5)), smoothstep(1.0, 2.0, r)) * mix(0.82, 1.16, big);
+  albedo *= mix(1.0, mix(0.7, 1.25, saturate(tone * 0.5)), beyond) * mix(0.82, 1.16, big);
 
   float along = dot(p, uRight);
-  float rowAmt = smoothstep(0.6, 1.3, d);
+  float rowAmt = smoothstep(0.6, 1.3, d) * beyond;
   float phase = 6.2832 * ((d - uRows.y) / uRows.x + (valueNoise(vec2(along * 0.7, d * 0.4)) - 0.5) * 0.14);
   float ridge = 0.5 + 0.5 * cos(phase);
   float slope = uRows.z * 3.1416 / uRows.x * sin(phase) * rowAmt;
@@ -530,8 +532,8 @@ void main() {
   albedo *= mix(1.0, mix(0.74, 1.07, ridge), rowAmt);
   vec2 tilt = g * 1.6 * clod - uToward * slope;
   vec4 litter = texture(tLitter, TURN_W * p * uLitter + vec2(0.21, 0.43));
-  albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
-  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.34) - 0.004 * (1.0 - ridge) * rowAmt, uWet);
+  albedo = mix(albedo, litter.rgb, litter.a * smoothstep(0.7, 1.6, d) * beyond * mix(0.45, 1.0, uCover) * mix(1.0, 0.7, ridge));
+  float pool = pooled((h - 0.55) * uRelief.x * 0.6 + 0.03 * (valueNoise(p * 2.3 + 5.0) - 0.34) - 0.004 * (1.0 - ridge) * rowAmt, uWet) * beyond;
   float stand = 1.0;
   float top = 0.0;
 #endif
