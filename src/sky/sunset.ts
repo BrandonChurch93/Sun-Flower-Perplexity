@@ -3,9 +3,23 @@ import type { RGB } from '../core/world.ts'
 import type { SkyLight } from '../v2/api.ts'
 
 export const sunsetAmount = (bar: number): number => smoothstep(65, 67, bar)
+export const finaleCloudDecay = (bar: number): number => smoothstep(61, 69, bar)
 // The last sun sets behind the ridge, while it is still above the
 // mathematical horizon. Deep evening is lit by that lower sun.
 export const sunsetDuskAt = (elevation: number): number => 1 - smoothstep(0.95, 2.04, elevation)
+
+export function sunsetPhotoAt(dusk: number, transmission: number, out: RGB): RGB {
+  // The low air takes green and blue out of the photosphere, while its
+  // red channel stays over white. This is radiance for the lens, not a
+  // display swatch; the diffuse air has its own angular colours.
+  const lowAir = smoothstep(0.30, 0.48, dusk)
+  const ember = smoothstep(0.48, 0.95, dusk)
+  const red = lerp(2.8, 1.60, dusk) * transmission
+  out[0] = red
+  out[1] = red * lerp(lerp(0.80, 0.15, dusk), lerp(0.12, 0.075, ember), lowAir)
+  out[2] = red * lerp(lerp(0.42, 0.019, dusk), lerp(0.032, 0.009, ember), lowAir)
+  return out
+}
 
 // Let skylight, the thin aerosol layer and its higher rose seam have
 // different scales. The light taps sample exactly this same angular model.
