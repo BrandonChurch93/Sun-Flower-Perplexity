@@ -421,7 +421,9 @@ vec3 frozen(vec3 albedo, float frost) {
 }
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
-  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.3, 0.8, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
+  float pixel = sqrt(length(dFdx(world)) * length(dFdy(world)));
+  float crystal = mix(0.55 * valueNoise(world.xz * 420.0 + world.y * 210.0) + 0.45 * valueNoise(world.zx * 1300.0 + 7.0), 0.5, smoothstep(0.0006, 0.003, pixel));
+  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.45, 0.95, sits * (0.5 + 1.0 * crystal));
 }
 // Under the crystals the soil itself is dusted pale wherever it lies open to the sky, thinner than the hoar and gone sooner as the frost dial falls.
 float dusted(vec3 world, float lies, float frost, float sunny) {
@@ -516,6 +518,8 @@ const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
 const float HEAVY = 0.4;
+// What the larger clods come to where one is too small on screen to draw: the mean of their shade, of their crests and of how open they lie.
+const vec3 HEAVY_MEAN = vec3(0.45, 0.07, 0.5);
 
 void main() {
   vec2 p = vWorld.xz;
@@ -604,7 +608,10 @@ void main() {
   vec2 uvG = TURN_B * uvL * HEAVY + vec2(0.57, 0.11);
   float thin = min(length(dFdx(uvG)), length(dFdy(uvG))) * uClods.z / uClods.x;
   float lodG = log2(max(min(max(length(dFdx(uvG)), length(dFdy(uvG))) * uClods.z / uClods.x, 4.0 * thin), 1.0));
-  float heavyOn = smoothstep(0.5, 2.5, lodPix) * (1.0 - smoothstep(2.0, 4.5, log2(max(thin, 1.0))));
+  float beyondFine = smoothstep(0.5, 2.5, lodPix);
+  float tall = 1.0 / (13.0 * max(max(length(dFdx(uvG)), length(dFdy(uvG))), 1e-6));
+  float heavyOn = beyondFine * smoothstep(1.0, 2.0, tall) * (1.0 - smoothstep(2.0, 4.5, log2(max(thin, 1.0))));
+  float heavyFlat = beyondFine - heavyOn;
   vec4 heavy = textureLod(tClods, uvG, lodG);
   tilt -= (((heavy.rg * 2.0 - 1.0) * ${(0.7 * clodSlopeMost).toFixed(1)}) * TURN_B) * TURN_L * heavyOn;
   float heavyShade = 0.0;
@@ -617,8 +624,8 @@ void main() {
       heavyShade = max(heavyShade, smoothstep(0.0, 0.06, textureLod(tClods, uvG + sunStep * s, lodG).a - heavy.a - 0.03 - s * rise));
     }
   }
-  hollow *= mix(1.0, smoothstep(-0.1, 0.7, heavy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, heavy.a)), heavyOn);
-  crest = mix(crest, smoothstep(0.3, 0.75, heavy.a) * smoothstep(0.4, 0.8, heavy.b), heavyOn);
+  hollow *= mix(1.0, smoothstep(-0.1, 0.7, heavy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, heavy.a)), heavyOn) * mix(1.0, HEAVY_MEAN.z, heavyFlat);
+  crest = mix(mix(crest, smoothstep(0.3, 0.75, heavy.a) * smoothstep(0.4, 0.8, heavy.b), heavyOn), HEAVY_MEAN.y, heavyFlat);
 
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
@@ -648,7 +655,7 @@ void main() {
   lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
   float sunny = uDay * (1.0 - smoothstep(0.1, 0.8, uWet));
   lit *= mix(1.0, smoothstep(0.3, 0.58, h) * mix(1.0, smoothstep(0.06, 0.38, lumpy.a), stand * (1.0 - smoothstep(0.0, 3.0, lodPix))), 0.9 * sunny);
-  lit *= 1.0 - heavyOn * mix(0.45, 0.85, sunny) * max(heavyShade, 1.0 - smoothstep(0.03, 0.2, heavy.a));
+  lit *= 1.0 - mix(0.45, 0.85, sunny) * (heavyOn * max(heavyShade, 1.0 - smoothstep(0.03, 0.2, heavy.a)) + heavyFlat * HEAVY_MEAN.x);
   albedo *= 1.0 + mix(0.45, 0.9, heavyOn) * crest * sunny;
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt) * hollow;
 #ifdef NEAR
@@ -683,6 +690,8 @@ void main() {
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
   albedo = mix(albedo, FROST_WHITE, 0.95 * rime);
+  float crust = rime * smoothstep(0.35, 0.8, max(crest * stand, brow)) * smoothstep(0.3, 0.7, n.y);
+  albedo = mix(albedo, FROST_WHITE, crust);
   open = mix(open, max(open, 0.85), rime);
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) * (1.0 - 0.8 * uDusk * uDew) * underFlash(smoothstep(0.1, 0.8, uWet)) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew * (1.0 - uBlueHour)));
 
@@ -709,9 +718,14 @@ void main() {
   color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.6 * soaked * edged * mix(0.3, 1.0, seen)) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under);
   vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
   float toSun = pow(saturate(dot(normalize(-v.xz), uLowSun.xy)), 160.0) * uLowSun.z;
-  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.8 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.6 * crust);
+  float sunSide = smoothstep(-0.1, 0.5, dot(normalize(p + vec2(1e-5, 0.0)), uLowSun.xy)) * (1.0 - smoothstep(1.2, 2.0, r));
+  color += warmGlint() * (0.8 * crust * sunSide * uLowSun.z * (0.3 + 0.7 * lit) * grains(vWorld + 5.3, 0.07));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime * (1.0 + 5.0 * toSun);
   color += warmGlint() * (toSun * smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.4) * 2.0 * grains(vWorld + 1.7, 0.1) * (0.3 + 0.7 * crest) * hollow * (1.0 - thatch));
   outColor = finish(color, vWorld, vDepth, density);
+#ifndef NEAR
+  if (uDiag == 0) outColor.rgb = mix(outColor.rgb, color, 0.9 * smoothstep(250.0, 900.0, r));
+#endif
 }
 `
