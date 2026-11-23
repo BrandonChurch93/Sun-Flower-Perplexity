@@ -108,8 +108,9 @@ function ownersOf(): Map<object, string> {
       for (const x of v) queue.push([x, `${p}.entry`])
       continue
     }
-    // The film's own names come before the scene's list of children, so that a mesh is called by its owner.
-    const keys = v === film ? [...Object.keys(v).filter((k) => k !== 'scene'), 'scene'] : Object.keys(v)
+    // The film's own names come before the scene's list of children, and a part's name before the plain list of meshes, so that a mesh is called by its owner.
+    const own = Object.keys(v)
+    const keys = v === film ? [...own.filter((k) => k !== 'scene'), 'scene'] : own.includes('parts') ? own.filter((k) => k !== 'meshes') : own
     for (const key of keys) if (key !== 'parent') queue.push([(v as Record<string, unknown>)[key], `${p}.${key}`])
   }
   return out

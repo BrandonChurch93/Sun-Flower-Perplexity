@@ -25,7 +25,7 @@ export interface Place { name: string; frame: number; rows: WriteRow[]; drawSeco
 
 // The path from the film to an array, cut into the object that owns it and the part of it that is written.
 function owned(owner: string): { object: string; part: string } {
-  const s = owner.replace(/^film\./, '').replace(/\.array$/, '').replace(/\.children\[/g, '[')
+  const s = owner.replace(/^film\./, '').replace(/\.array$/, '').replace(/\.children\[/g, '[').replace(/\.parts\[([^\]]+)\]\.meshes\[/g, ' $1 [')
   const uniform = /^(.*?)\.(?:material\.)?uniforms\.(\w+)\.value\b/.exec(s)
   if (uniform) return { object: uniform[1], part: uniform[2] }
   const attribute = /^(.*?)\.geometry\.(?:attributes\.(\w+)|(index))/.exec(s)
@@ -75,6 +75,36 @@ function print(place: Place): void {
   }
   const rows = [...groups.entries()].sort((a, b) => b[1].bytes - a[1].bytes).slice(0, 22)
   console.log(table(['whose, and what is written', 'writes', 'MB a frame', 'largest MB', 'share', 'parts'], rows.map(([k, g]) => [k, g.calls, mb(g.bytes), mb(g.largest), total > 0 ? `${((100 * g.bytes) / total).toFixed(0)} %` : '', [...g.parts].slice(0, 5).join(' ')])))
+}
+
+// The same table for a page of notes.
+function markdown(place: Place, most: number): string {
+  const written = place.rows.filter((r) => !r.kind.endsWith('new storage'))
+  const fresh = place.rows.filter((r) => r.kind.endsWith('new storage'))
+  const total = written.reduce((a, r) => a + r.bytes, 0)
+  const groups = new Map<string, { calls: number; bytes: number; largest: number; parts: Set<string> }>()
+  for (const r of place.rows) {
+    const o = owned(r.owner)
+    const key = r.kind === 'buffer' ? `${o.object}, buffers` : `${o.object}, ${r.kind} ${o.part}`
+    const g = groups.get(key) ?? { calls: 0, bytes: 0, largest: 0, parts: new Set<string>() }
+    g.calls += r.calls
+    g.bytes += r.bytes
+    g.largest = Math.max(g.largest, r.largest)
+    g.parts.add(o.part)
+    groups.set(key, g)
+  }
+  const sorted = [...groups.entries()].sort((a, b) => b[1].bytes - a[1].bytes)
+  const rest = sorted.slice(most)
+  const lines = [
+    `**${place.name}, frame ${place.frame}**: ${written.reduce((a, r) => a + r.calls, 0)} writes into what exists, ${mb(total)} MB${fresh.length ? `; and ${fresh.reduce((a, r) => a + r.calls, 0)} objects given new storage, ${mb(fresh.reduce((a, r) => a + r.bytes, 0))} MB` : ''}. By owner: ${summary(place).map((o) => `${o.owner} ${mb((o.textureMb + o.bufferMb) * MB)} MB (${o.textures} texture writes ${mb(o.textureMb * MB)} MB, ${o.buffers} buffer writes ${mb(o.bufferMb * MB)} MB)`).join('; ')}.`,
+    '',
+    '| whose, and what is written | writes | MB a frame | largest MB | which |',
+    '| --- | ---: | ---: | ---: | --- |',
+    ...sorted.slice(0, most).map(([k, g]) => `| ${k} | ${g.calls} | ${mb(g.bytes)} | ${mb(g.largest)} | ${[...g.parts].slice(0, 5).join(' ')} |`),
+    ...(rest.length ? [`| the other ${rest.length} | ${rest.reduce((a, [, g]) => a + g.calls, 0)} | ${mb(rest.reduce((a, [, g]) => a + g.bytes, 0))} | ${mb(Math.max(...rest.map(([, g]) => g.largest)))} | |`] : []),
+    '',
+  ]
+  return lines.join('\n')
 }
 
 async function another(root: string, seconds: number[], tier: string, format: string): Promise<Place[]> {
@@ -127,7 +157,10 @@ export async function run(args: Args): Promise<void> {
   let name = 'writes'
   if (typeof args.read === 'string') {
     // Prints a table that was measured before, without drawing.
-    for (const p of (JSON.parse(fs.readFileSync(path.join(OUT, `${args.read}.json`), 'utf8')) as { places: Place[] }).places) print(p)
+    for (const p of (JSON.parse(fs.readFileSync(path.join(OUT, `${args.read}.json`), 'utf8')) as { places: Place[] }).places) {
+      if (args.md) console.log(markdown(p, num(args, 'most', 10)))
+      else print(p)
+    }
     return
   }
   if (root) {

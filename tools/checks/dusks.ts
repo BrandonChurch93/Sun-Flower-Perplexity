@@ -15,9 +15,11 @@ import { twilights, type Twilight } from './lib/stride.ts'
 //   npm run checks -- nights --break picture-quick     every night three times as fast (every third of its frames): must fail on the step
 //   npm run checks -- nights --break picture-bounce    two frames of a dusk the wrong way round: must fail on the direction
 
-export const DUSK_STEP = 12
-// A move the wrong way smaller than this is the grain of the film, not a flicker.
-const WRONG_WAY = 0.35
+// Measured on sky-0 at 320 x 180: the steepest frame of a dusk or dawn moves the mean luminance by 10.5 to 17.7 of 255.
+export const DUSK_STEP = 20
+// A move the wrong way smaller than this is the grain of a draft frame, which is drawn through one point of the lens: measured up to 1.5 of 255 where the lens is wide open, under 0.3 elsewhere.
+// The direction is judged from the frame of the sunset to the last frame before the sunrise. The eight frames of day on either side are held to the step only: on sky-0 the frame brightens toward a sunset.
+const WRONG_WAY = 2
 
 export interface DuskRow { night: number; first: number; last: number; midnight: number; frames: number; missing: number; day: number; dark: number; after: number; fall: number; fallAt: number; rise: number; riseAt: number; wrong: number; wrongAt: number; duskFrames: number; dawnFrames: number; ok: boolean }
 export interface DuskProof { findings: Finding[]; complete: boolean; rows: DuskRow[]; pictures: { file: string; caption: string }[]; step: number }
@@ -120,7 +122,8 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
       if (dusk && -d > fall) [fall, fallAt] = [-d, series[i].frame]
       if (!dusk && d > rise) [rise, riseAt] = [d, series[i].frame]
       const against = dusk ? d : -d
-      if (against > wrong) [wrong, wrongAt] = [against, series[i].frame]
+      const night = series[i - 1].frame >= t.sunset && series[i].frame < t.sunrise
+      if (night && against > wrong) [wrong, wrongAt] = [against, series[i].frame]
     }
     const day = series[0].l
     const after = series[series.length - 1].l
