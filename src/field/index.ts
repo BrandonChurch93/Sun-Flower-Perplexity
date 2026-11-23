@@ -9,7 +9,7 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { Shaped, leanBy, leavesApart, placeTurned, send, shapeInputs, turnBy } from './turn.ts'
-import { CANOPY_SIZE, PLACE, thinOrder, statureAt, sizeOf, standOf, blownBy, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, settleOf, settledBy, windOf, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
+import { CANOPY_SIZE, PLACE, thinOrder, right, statureAt, sizeOf, standOf, blownBy, companionPlace, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, settleOf, settledBy, windOf, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 // The kinds whose leaves fill the gaps of the first rows.
@@ -19,7 +19,9 @@ const THIN_M = [12, 30]
 const THIN_TO: Record<Quality, number> = { film: 1, high: 1, low: 0.3 }
 // The leaves in the gaps stay under the heads of the crop.
 const UNDER_SIZE = 0.74
-const FIXED = 10
+const FIXED = 11
+// From the crane the first rows behind the plant and its companion stand a shade darker, so that the two stand clear of them.
+const BEHIND = { fromM: 3.5, toM: 6.5, nearM: 2.5, wideM: 4.5, tone: 0.75, from: 53.6, full: 55.5 }
 const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11 }
 
 interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; fixed: Float32Array; sent: Float32Array; sentStill: Float32Array; shaped: Shaped; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
@@ -44,11 +46,16 @@ function group(detail: 'near' | 'far', variant: number, places: Float32Array, in
   const order = new Float32Array(count)
   // What a neighbor carries for good, worked out once: how far from the plant it stands, and its own numbers for the bloom and the wind.
   const fixed = new Float32Array(count * FIXED)
+  const stands = companionPlace()
+  const pair = { across: stands.x * right.x + stands.z * right.z }
   for (let i = 0; i < count; i++) {
     const id = places[i * PLACE + 7]
     const reach = Math.hypot(places[i * PLACE], places[i * PLACE + 1])
     const lean = lateLean(id)
-    fixed.set([reach, faceAt(id, reach), settleOf(id), lean.x, lean.z, lateLeafCode(id), leafShort(id), windOf(id, 0), windOf(id, 1), windOf(id, 2)], i * FIXED)
+    const along = -(places[i * PLACE] * toward.x + places[i * PLACE + 1] * toward.z)
+    const across = places[i * PLACE] * right.x + places[i * PLACE + 1] * right.z - 0.5 * pair.across
+    const behind = (1 - THREE.MathUtils.smoothstep(along, BEHIND.fromM, BEHIND.toM)) * (1 - THREE.MathUtils.smoothstep(Math.abs(across), BEHIND.nearM, BEHIND.wideM))
+    fixed.set([reach, faceAt(id, reach), settleOf(id), lean.x, lean.z, lateLeafCode(id), leafShort(id), windOf(id, 0), windOf(id, 1), windOf(id, 2), behind], i * FIXED)
     own.push(ownOf(id))
     face[i] = faceToward(id)
     spin[i] = leafSpin(id)
@@ -193,6 +200,7 @@ export class Field {
     const before = earlyAt(this.time)
     const stiff = stiffAt(this.time)
     const windy = this.wind > 0 || this.leafWind > 0
+    const shade = BEHIND.tone * THREE.MathUtils.smoothstep(this.time, BEHIND.from, BEHIND.full)
     this.filled = this.quality
     let total = 0
     for (const g of this.groups) {
@@ -222,6 +230,7 @@ export class Field {
         const round = early ? 1 : settledBy(clock, g.fixed[f + 2])
         placeTurned(all, i, seen, still, n, round > 0 ? round * shortWay(g.face[k] - local - all[i + 2]) : 0)
         seen[n + 3] = still[n + 3] = sizeOf(this.stature, all[i + 3], all[i + 6], own, kindTall, out) * (g.bare ? this.rise * UNDER_SIZE : 1)
+        if (shade > 0) seen[n + 6] = still[n + 6] = all[i + 6] - shade * g.fixed[f + 10]
         if (before > 0) {
           seen[n + 4] += before * own.leanX
           seen[n + 5] += before * own.leanZ
