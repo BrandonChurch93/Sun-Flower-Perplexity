@@ -16,7 +16,7 @@ What the lens sees, in order of screen time:
 2. Clouds racing in time lapse: they travel, they boil and change shape, they form and dissolve, their shadows and their lit edges turn as the sun crosses in two to four seconds. No flicker, no popping, no swimming noise.
 3. A storm: a closed, heavy, dark deck with structure in its underside (not a flat grey), rain veils hanging under it, lightning that lights the cloud from inside. Then the deck tears open round the sun.
 4. A frost morning: a low sun as a soft disc in thick mist. The sky is almost featureless, the sun's glow is everything.
-5. Quick nights of under a second: stars that turn, the moon, the last blue of dusk at the horizon.
+5. Quick nights of 0.83 to 0.97 seconds (in the fast time lapse from beat 3 of a bar to the next bar line): the sun goes 14 degrees under the horizon and no deeper, so a glow stays on the horizon all night and travels from where the sun set to where it will rise; stars that turn, the moon. Dusk and dawn each take about a quarter of a second: they must be a smooth dimming and brightening, never a step.
 6. The end: a golden evening, the sun 8 degrees up sinking to the horizon over 27 seconds in real time, then afterglow.
 
 The reference pictures for these: `references/v2/keys/open.png` (blue hour), `climb-fair.png` and `climb.png` (time lapse day), `storm.png`, `storm-flash.png`, `break.png`, `frost.png`, `late.png` and `last.png` (the evening), and `references/approved/` for the dawn and the bloom. The sky in those pictures is the target for mood, colour and cloud character.
