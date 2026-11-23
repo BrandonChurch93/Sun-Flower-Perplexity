@@ -46,6 +46,9 @@ uniform sampler2D tBase;
 uniform vec2 uTexel;
 uniform vec3 uSourceGain;
 uniform vec3 uBaseGain;
+uniform sampler2D tWide;
+uniform float uSmall;
+const float SPARK_CAP = 0.35;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 void main() {
@@ -58,7 +61,13 @@ void main() {
   s += texture(tSource, vUv + uTexel * vec2(1.0, -1.0)).rgb;
   s += texture(tSource, vUv + uTexel * vec2(-1.0, 1.0)).rgb;
   s += texture(tSource, vUv + uTexel * vec2(1.0, 1.0)).rgb;
-  outColor = vec4(s / 16.0 * uSourceGain + texture(tBase, vUv).rgb * uBaseGain, 1.0);
+  vec3 base = texture(tBase, vUv).rgb;
+  vec3 sum = s / 16.0 * uSourceGain + base * uBaseGain;
+  if (uSmall > 0.0) {
+    vec3 d = max(base - texture(tWide, vUv).rgb, 0.0);
+    sum += uSmall * d / (1.0 + max(d.r, max(d.g, d.b)) / SPARK_CAP);
+  }
+  outColor = vec4(sum, 1.0);
 }
 `
 
