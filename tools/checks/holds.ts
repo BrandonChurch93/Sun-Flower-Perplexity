@@ -1,4 +1,5 @@
 import type { Args } from '../lib/args.ts'
+import { flag } from '../lib/args.ts'
 import { shutterSeconds } from '../../src/v2/now.ts'
 import { barText, clockOf, FRAMES, holds, secondsOf } from './lib/film.ts'
 import { finish, type Finding } from './lib/report.ts'
@@ -53,6 +54,7 @@ export async function run(args: Args): Promise<void> {
   findings.push(...proof.findings)
   finish({
     check: 'holds',
+    name: flag(args, 'no-pictures') && !broken ? 'holds.clock' : undefined,
     sentence: SENTENCE,
     subject: broken?.startsWith('picture-') ? `the film drawn with ${broken}` : film.name,
     broken,

@@ -7,17 +7,37 @@ import { segments } from '../../src/director/timeline.ts'
 import { FRAMES, lightningFrames } from './lib/film.ts'
 import { frameFile, framesDir, playDir, readLines, readStamp, runName, type Line, type Stamp } from './lib/play.ts'
 import { openSession } from './lib/session.ts'
+import { mad, small, type Small } from './lib/steps.ts'
 
 // Draws frames of the film small, in order, after loading and warming as the film does before it plays. Keeps each picture and what each frame made.
 //   npm run checks -- play                         every frame, 320 x 180, one sample, the whole scene
 //   npm run checks -- play --from 0 --to 1269      a range, so that several can run side by side
 //   npm run checks -- play --minutes 8             stops by itself after 8 minutes; run it again and it carries on
-//   npm run checks -- play --first 4               every fourth frame first, so the whole film is seen early, then the frames round each seam, then the rest
-//   npm run checks -- play --break cut --at 1000 --from 970 --to 1030      a film whose camera jumps at frame 1000
-//   npm run checks -- play --break made --at 900 --from 880 --to 920       a film that builds a texture and a program at frame 900
+//   npm run checks -- play --first 4               every fourth frame first, so the whole film is seen early, then the frames round each seam, then the rest where the picture moves most
+//   npm run checks -- play --break cut --at 1000 --from 984 --to 1016      a film whose camera jumps at frame 1000
+//   npm run checks -- play --break made --at 900 --from 890 --to 910       a film that builds a texture and a program at frame 900
 // A frame that is already there is not drawn again. A change of the film or of the size throws the old frames away.
 
-const SEAM = 14
+const SEAM = 6
+const ROUND = 2
+
+// For every stretch between two frames of the coarse pass, how far the picture moves across it or across a stretch beside it.
+async function coarseSteps(run: string, every: number, from: number, to: number): Promise<Map<number, number>> {
+  const own = new Map<number, number>()
+  let before: Small | null = null
+  for (let f = Math.ceil(from / every) * every; f <= to; f += every) {
+    const now = fs.existsSync(frameFile(run, f)) ? await small(frameFile(run, f)) : null
+    if (before && now) own.set(f / every - 1, mad(before.blur, now.blur))
+    before = now
+  }
+  const out = new Map<number, number>()
+  for (const k of own.keys()) {
+    let most = 0
+    for (let d = -ROUND; d <= ROUND; d++) most = Math.max(most, own.get(k + d) ?? 0)
+    out.set(k, most)
+  }
+  return out
+}
 
 export async function run(args: Args): Promise<void> {
   const broken = typeof args.break === 'string' ? args.break : null
@@ -51,12 +71,10 @@ export async function run(args: Args): Promise<void> {
     const have = readLines(run)
     const wanted: number[] = []
     for (let f = from; f <= to; f++) if (!have.has(f)) wanted.push(f)
-    if (first > 1) {
-      // Then the frames round every seam, where a hard cut or a late build is most likely: each section's first frame and each stroke of lightning.
-      const seams = [...segments.map((s) => s.firstFrame), ...lightningFrames()]
-      const rank = (f: number): number => (f % first === 0 ? 0 : seams.some((x) => Math.abs(f - x) <= SEAM) ? 1 : 2)
-      wanted.sort((a, b) => rank(a) - rank(b) || a - b)
-    }
+    // Every `first`th frame first. Then the frames round every seam, where a hard cut or a late build is most likely: each section's first frame and each stroke of lightning.
+    const seams = [...segments.map((s) => s.firstFrame), ...lightningFrames()]
+    const rank = (f: number): number => (f % first === 0 ? 0 : seams.some((x) => Math.abs(f - x) <= SEAM) ? 1 : 2)
+    if (first > 1) wanted.sort((a, b) => rank(a) - rank(b) || a - b)
     console.log(`play · ${run} · sky ${session.info.sky} · ${width} x ${height} · ${tier} · ${only || 'everything'} · frames ${from} to ${to}: ${wanted.length} to draw, ${to - from + 1 - wanted.length} already there · loaded in ${session.startSeconds.toFixed(1)} s`)
     if (wanted.length === 0) return
     if (broken) await session.fault(broken, num(args, 'at'))
@@ -67,7 +85,17 @@ export async function run(args: Args): Promise<void> {
     const progress = path.join(dir, `progress-${from}-${to}.txt`)
     let total = 0
     let done = 0
-    for (const f of wanted) {
+    let sorted = first <= 1
+    for (let i = 0; i < wanted.length; i++) {
+      if (!sorted && rank(wanted[i]) === 2) {
+        // Then where the picture moves most between the frames drawn so far: that is where a hard cut would be.
+        sorted = true
+        const score = await coarseSteps(run, first, from, to)
+        const rest = wanted.slice(i).sort((a, b) => (score.get(Math.floor(b / first)) ?? 0) - (score.get(Math.floor(a / first)) ?? 0) || a - b)
+        wanted.splice(i, rest.length, ...rest)
+        console.log(`play · every ${first}th frame and the seams are drawn: the rest goes by how far the picture moves, the largest first (frame ${wanted[i]})`)
+      }
+      const f = wanted[i]
       const d = await session.draw(f, tier)
       fs.writeFileSync(frameFile(run, f), d.png as Buffer)
       const line: Line = { frame: f, seconds: d.seconds, made: d.made, session: id, nth: done }

@@ -40,21 +40,21 @@ npm run checks -- play --from 2540 --to 3809 --first 4
 
 ## Breaking the film on purpose
 
-A check that passes on a film that breaks its rule is worse than no check. `--break <name>` puts a broken film in the film's place. Each of these has to print FAIL and exit with 1. Its result is written beside the real one, never over it.
+A check that passes on a film that breaks its rule is worse than no check. `--break <name>` puts a broken film in the film's place. Each of these has to print FAIL and exit with 1. Its result is written beside the real one, never over it. `npm run checks -- proof` runs the quick ones, reads the last run of the ones that draw, and prints which were caught.
 
 | command | what is broken |
 | --- | --- |
 | `nights --break long-night` | one night of nearly four seconds outside the holds |
-| `holds --break hold-grows` | the plant's clock runs on through the frost hold |
-| `holds --break hold-creeps` | the plant's clock creeps by a millionth a frame in the storm hold |
+| `holds --break hold-grows` | the plant's clock runs on through the storm hold |
+| `holds --break hold-creeps` | the plant's clock creeps a little every frame of the frost hold |
 | `holds --break picture-grows` | the clock reads still and the plant grows all the same |
 | `cues --break late` | every sunrise two frames late |
 | `cues --break flash-late` | the lightning a beat late |
 | `cues --break hold-short` | the frost hold ends a bar early |
-| `play --break cut --at 1000 --from 970 --to 1030`, then `cuts --break cut --from 970 --to 1030` | the camera jumps to another place at frame 1000 |
-| `play --break made --at 900 --from 880 --to 920`, then `made --break made --from 880 --to 920` | a texture and a program are made at frame 900 |
-| `pure --break dice` | the camera turns by a throw of `Math.random` |
-| `pure --break memory` | the camera turns by how many frames were drawn before |
+| `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
+| `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
+| `pure --break dice --frames 159,1429,2699,3651` | the camera turns by a throw of `Math.random` |
+| `pure --break memory --frames 159,1429,2699,3651` | the camera turns by how many frames were drawn before |
 
 ## How the film is driven
 

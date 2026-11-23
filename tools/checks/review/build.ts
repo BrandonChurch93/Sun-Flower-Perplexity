@@ -12,11 +12,13 @@ import { barText, holds, secondsOf } from '../lib/film.ts'
 import { frameFile, readLines, readStamp } from '../lib/play.ts'
 import { engineHash, OUT, type Result } from '../lib/report.ts'
 import { openSession } from '../lib/session.ts'
+import { shots } from './shot.ts'
 
 // The review page: one static page, built from what is in out/ and from nothing else. What is missing is said to be missing.
 //   npm run checks -- review                 builds out/work/checks/review/index.html
 //   npm run checks -- review --draw          first draws the film's frame for every look at 960 x 540 (one sample)
 //   npm run checks -- review --draw --tier review     the same with the samples of the export
+//   npm run checks -- review --shot          also takes pictures of the page, wide and narrow
 // No audio is read, copied or written. The page lets its viewer pick the track from their own disk and plays it in step.
 const SITE = path.join(OUT, 'review')
 const LOOKS = path.join(OUT, 'looks')
@@ -180,4 +182,5 @@ export async function run(args: Args): Promise<void> {
   walk(SITE)
   console.log(`review · ${path.relative(process.cwd(), path.join(SITE, 'index.html'))} · ${(bytes / 1048576).toFixed(1)} MB · ${looks.filter((l) => l.film).length} of ${looks.length} looks, ${sections.filter((s) => s.clip).length} of ${sections.length} clips, ${checks.filter((c) => c.result).length} of ${checks.length} checks${film ? ', the whole film' : ''}`)
   for (const m of missing) console.log(`review · missing: ${m}`)
+  if (flag(args, 'shot')) for (const f of await shots()) console.log(`review · picture of the page: ${path.relative(process.cwd(), f)}`)
 }

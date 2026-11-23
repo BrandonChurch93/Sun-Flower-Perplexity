@@ -1,50 +1,23 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import sharp from 'sharp'
 import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, FLASH_STEP, FRAMES, lightningFrames, secondsOf } from './lib/film.ts'
 import { frameFile, playDir, readLines, readStamp, runName } from './lib/play.ts'
 import { finish, OUT, type Finding } from './lib/report.ts'
+import { mad, small, type Small } from './lib/steps.ts'
 
 const SENTENCE = "It goes from day to night in the sky repeatedly while it's actually growing, no more hard cuts."
 
 // A step is how far the picture moves from one frame to the next, 0 to 255: the mean absolute difference of luminance, and the same of a copy blurred to 40 x 23.
 // A hard cut changes the whole picture at once, so it shows in the blurred copy, and it stands alone: the steps on either side of it are small.
-const BLUR_W = 40
-const BLUR_H = 23
 // A step is a hard cut when the blurred picture moves by more than CUT_STEP and by more than CUT_RATIO times what its neighbours move.
 const CUT_STEP = 2.5
 const CUT_RATIO = 4
 const NEAR = 6
 
-interface Small { luma: Float32Array; blur: Float32Array }
 export interface Step { frame: number; full: number; blur: number; neighbours: number; ratio: number; lightning: boolean; cut: boolean }
-
-async function small(file: string): Promise<Small> {
-  const { data, info } = await sharp(file).removeAlpha().raw().toBuffer({ resolveWithObject: true })
-  const luma = new Float32Array(info.width * info.height)
-  for (let i = 0, p = 0; i < luma.length; i++, p += 3) luma[i] = 0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]
-  const blur = new Float32Array(BLUR_W * BLUR_H)
-  const count = new Float32Array(BLUR_W * BLUR_H)
-  for (let y = 0; y < info.height; y++) {
-    const by = Math.min(BLUR_H - 1, Math.floor((y * BLUR_H) / info.height))
-    for (let x = 0; x < info.width; x++) {
-      const b = by * BLUR_W + Math.min(BLUR_W - 1, Math.floor((x * BLUR_W) / info.width))
-      blur[b] += luma[y * info.width + x]
-      count[b]++
-    }
-  }
-  for (let i = 0; i < blur.length; i++) blur[i] /= count[i]
-  return { luma, blur }
-}
-
-function mad(a: Float32Array, b: Float32Array): number {
-  let sum = 0
-  for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i])
-  return sum / a.length
-}
 
 function median(values: number[]): number {
   if (values.length === 0) return 0
@@ -107,6 +80,8 @@ export async function run(args: Args): Promise<void> {
       // A stroke of lightning is two jumps a few frames apart and its fall: none of them may hide a cut beside them, nor be hidden.
       if (d !== 0 && other && !flashes.has(frame + d * every)) near.push(other.blur)
     }
+    // A step with too few measured steps round it cannot be told from its neighbours yet: it waits for their frames.
+    if (near.length < NEAR) continue
     const neighbours = median(near)
     const ratio = s.blur / Math.max(neighbours, 0.05)
     const lightning = flashes.has(frame)
@@ -114,6 +89,8 @@ export async function run(args: Args): Promise<void> {
   }
   steps.sort((a, b) => a.frame - b.frame)
 
+  // Seen every few frames only, a fast dusk looks like a cut. Such a place is a suspect, and the frames between decide.
+  const CUT = every > 1 ? 'SUSPECT' : 'HARD CUT'
   const findings: Finding[] = []
   const wanted = Math.floor(to / every) - Math.ceil(Math.max(1, from) / every) + 1
   const complete = steps.length === wanted
@@ -127,7 +104,7 @@ export async function run(args: Args): Promise<void> {
   for (const s of [...cuts.slice(0, 12), ...largest]) {
     if (shown.has(s.frame)) continue
     shown.add(s.frame)
-    const what = s.cut ? 'HARD CUT' : s.lightning ? 'lightning, meant' : 'no cut'
+    const what = s.cut ? CUT : s.lightning ? 'lightning, meant' : 'no cut'
     const caption = `${what}: into frame ${s.frame} (${secondsOf(s.frame).toFixed(3)} s, ${barText(secondsOf(s.frame))}) the blurred picture moves ${s.blur.toFixed(2)} of 255, ${s.ratio.toFixed(1)} times its neighbours`
     const file = path.join(dir, `step-${String(s.frame).padStart(5, '0')}.jpg`)
     await stripOf(run, s.frame, every, file, caption)
@@ -136,7 +113,7 @@ export async function run(args: Args): Promise<void> {
 
   if (steps.length === 0) findings.push({ ok: false, what: `no two neighbouring frames of "${run}" have been drawn yet: run "npm run checks -- play" first` })
   else {
-    findings.push({ ok: cuts.length === 0, what: cuts.length === 0 ? `${steps.length} of ${wanted} steps from one frame to the ${every > 1 ? `one ${every} frames on` : 'next'} measured (${stamp?.width} x ${stamp?.height}, sky ${stamp?.sky}): no hard cut. A hard cut is a step of the blurred picture over ${CUT_STEP} of 255 that is over ${CUT_RATIO} times the median of the ${2 * NEAR} steps round it` : `${cuts.length} hard cut${cuts.length > 1 ? 's' : ''}: ${cuts.slice(0, 12).map((s) => `into frame ${s.frame} (${secondsOf(s.frame).toFixed(3)} s, ${barText(secondsOf(s.frame))}): ${s.blur.toFixed(2)} of 255, ${s.ratio.toFixed(1)} times its neighbours`).join('; ')}` })
+    findings.push({ ok: cuts.length === 0, what: cuts.length === 0 ? `${steps.length} of ${wanted} steps from one frame to the ${every > 1 ? `one ${every} frames on` : 'next'} measured (${stamp?.width} x ${stamp?.height}, sky ${stamp?.sky}): no hard cut. A hard cut is a step of the blurred picture over ${CUT_STEP} of 255 that is over ${CUT_RATIO} times the median of the ${2 * NEAR} steps round it` : `${cuts.length} ${every > 1 ? `place${cuts.length > 1 ? 's' : ''} where the picture moves far more than round it, seen every ${every}th frame. Draw the frames between and run cuts without --every to tell a fast dusk from a cut` : `hard cut${cuts.length > 1 ? 's' : ''}`}: ${cuts.slice(0, 12).map((s) => `into frame ${s.frame} (${secondsOf(s.frame).toFixed(3)} s, ${barText(secondsOf(s.frame))}): ${s.blur.toFixed(2)} of 255, ${s.ratio.toFixed(1)} times its neighbours`).join('; ')}` })
     const all = steps.map((s) => s.blur)
     findings.push({ ok: true, what: `the blurred picture moves ${median(all).toFixed(3)} of 255 a frame at the median and ${Math.max(...all).toFixed(2)} at the most; the largest ratio to its neighbours outside the lightning is ${Math.max(...steps.filter((s) => !s.lightning).map((s) => s.ratio)).toFixed(1)}` })
     // Lightning is meant to jump. Where the dial jumps and the picture does not, the lightning does not show.
@@ -150,7 +127,7 @@ export async function run(args: Args): Promise<void> {
       findings.push({ ok: true, expected: true, what: `lightning at frame ${f} (${barText(secondsOf(f))}), a jump that is meant: the blurred picture moves ${s.blur.toFixed(2)} of 255, ${s.ratio.toFixed(1)} times its neighbours${seen ? '' : '. That is no jump at all: the lightning does not show in the picture yet'}` })
     }
   }
-  if (!complete && steps.length > 0) findings.push({ ok: true, expected: true, what: `${wanted - steps.length} steps of frames ${from} to ${to} are not measured yet, because their frames are not drawn` })
+  if (!complete && steps.length > 0) findings.push({ ok: true, expected: true, what: `${wanted - steps.length} steps of frames ${from} to ${to} are not judged yet, because their frames or the frames round them are not drawn` })
   finish({
     check: 'cuts',
     sentence: SENTENCE,
@@ -159,7 +136,7 @@ export async function run(args: Args): Promise<void> {
     broken,
     complete,
     findings,
-    table: { head: ['into frame', 'second', 'bar', 'luminance step', 'blurred step', 'neighbours', 'ratio', 'what'], rows: largest.map((s) => [s.frame, secondsOf(s.frame).toFixed(3), barText(secondsOf(s.frame)).slice(4), s.full.toFixed(3), s.blur.toFixed(3), s.neighbours.toFixed(3), s.ratio.toFixed(1), s.cut ? 'HARD CUT' : s.lightning ? 'lightning, meant' : 'no cut']) },
+    table: { head: ['into frame', 'second', 'bar', 'luminance step', 'blurred step', 'neighbours', 'ratio', 'what'], rows: largest.map((s) => [s.frame, secondsOf(s.frame).toFixed(3), barText(secondsOf(s.frame)).slice(4), s.full.toFixed(3), s.blur.toFixed(3), s.neighbours.toFixed(3), s.ratio.toFixed(1), s.cut ? CUT : s.lightning ? 'lightning, meant' : 'no cut']) },
     pictures,
     data: { run, stamp, from, to, every, thresholds: { step: CUT_STEP, ratio: CUT_RATIO, near: NEAR }, steps: steps.map((s) => [s.frame, Number(s.full.toFixed(4)), Number(s.blur.toFixed(4)), Number(s.ratio.toFixed(2)), s.cut ? 1 : 0, s.lightning ? 1 : 0]) },
   })

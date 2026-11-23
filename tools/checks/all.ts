@@ -13,23 +13,23 @@ import { OUT, table, type Result } from './lib/report.ts'
 export async function run(args: Args): Promise<void> {
   const draw = flag(args, 'draw')
   const pass = typeof args.sky === 'string' ? ['--sky', args.sky] : []
-  const plan: [string, string[]][] = [
-    ['nights', []],
-    ['holds', draw ? pass : ['--no-pictures']],
-    ['cues', []],
-    ['cuts', []],
-    ['made', []],
-    ['pure', draw ? pass : ['--search']],
+  const plan: [string, string[], string][] = [
+    ['nights', [], 'nights'],
+    ['holds', draw ? pass : ['--no-pictures'], draw ? 'holds' : 'holds.clock'],
+    ['cues', [], 'cues'],
+    ['cuts', [], 'cuts'],
+    ['made', [], 'made'],
+    ['pure', draw ? pass : ['--search'], draw ? 'pure' : 'pure.search'],
   ]
   const rows: (string | number)[][] = []
   let failed = 0
-  for (const [name, extra] of plan) {
+  for (const [name, extra, written] of plan) {
     const r = spawnSync(process.execPath, ['--import', 'tsx', at('tools', 'checks', 'run.ts'), name, ...extra], { cwd: at(), stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8' })
-    const file = path.join(OUT, `${name}.json`)
+    const file = path.join(OUT, `${written}.json`)
     const result = fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Result) : null
     const bad = result?.findings.find((f) => !f.ok)
     if (r.status !== 0) failed++
-    rows.push([name, r.status === 0 ? (result?.complete ? 'PASS' : 'PASS SO FAR') : 'FAIL', (bad ?? result?.findings[0])?.what.slice(0, 150) ?? 'no result written'])
+    rows.push([draw || written === name ? name : `${name}, without drawing`, r.status === 0 ? (result?.complete ? 'PASS' : 'PASS SO FAR') : 'FAIL', (bad ?? result?.findings[0])?.what.slice(0, 150) ?? 'no result written'])
   }
   console.log(table(['check', 'verdict', 'what it found'], rows))
   console.log(`\nchecks · ${failed === 0 ? 'no check fails' : `${failed} of ${plan.length} checks fail`} · each check's whole output: npm run checks -- <name>`)

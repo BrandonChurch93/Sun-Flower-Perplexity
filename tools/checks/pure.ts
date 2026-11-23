@@ -16,6 +16,7 @@ const COUNT = 12
 // Twelve frames spread over the film are drawn in order, then six others, then the twelve again backwards, then once more on a fresh page in a third order.
 //   npm run checks -- pure                      960 x 540, one sample
 //   npm run checks -- pure --tier review        with the eight samples of the export
+//   npm run checks -- pure --frames 159,1429,2699,3651     these frames in place of the twelve
 //   npm run checks -- pure --search             the search of src/ alone, which draws nothing
 //   npm run checks -- pure --break dice         a film whose camera turns by a throw of Math.random: must fail
 //   npm run checks -- pure --break memory       a film whose camera turns by how many frames were drawn before: must fail
@@ -37,7 +38,7 @@ export async function run(args: Args): Promise<void> {
     const tier = str(args, 'tier', 'draft')
     const options: SessionOptions = { width: num(args, 'width', 960), height: num(args, 'height', 540), sky: typeof args.sky === 'string' ? args.sky : undefined }
     const frames = typeof args.frames === 'string' ? args.frames.split(',').map(Number) : Array.from({ length: COUNT }, (_, i) => Math.round(((i + 0.5) * FRAMES) / COUNT))
-    const between = frames.slice(0, 6).map((f, i) => Math.round(0.5 * (f + frames[i + 1])))
+    const between = frames.slice(0, Math.min(6, frames.length - 1)).map((f, i) => Math.round(0.5 * (f + frames[i + 1])))
     const third = frames.map((_, i) => frames[(i * 5 + 3) % frames.length])
     const dir = path.join(OUT, 'pure', broken ? `broken-${broken}` : 'film')
     fs.rmSync(dir, { recursive: true, force: true })
@@ -103,6 +104,7 @@ export async function run(args: Args): Promise<void> {
   }
   finish({
     check: 'pure',
+    name: flag(args, 'search') ? 'pure.search' : undefined,
     sentence: SENTENCE,
     subject: broken === 'dice' ? 'a film whose camera turns by a throw of Math.random' : broken === 'memory' ? 'a film whose camera turns by how many frames were drawn before' : 'the film',
     broken,
