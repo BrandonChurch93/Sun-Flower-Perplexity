@@ -1,7 +1,10 @@
 # Looks of plant
 
-2026-11-23 06:53 UTC, at commit 0a90115 of agent/plant.
+2026-11-23 07:25 UTC, at commit 8a84e63 of agent/plant.
 
-Keys while growing, off against on, same commit 0a90115 plus the switch. Not on yet.
+Present state before the bristles (0aa8f1d): the stem and stalks are smooth tubes at the close lens, the leaf edge is a paper cut. Frost roots are laid (8a84e63); bristles as shapes are being built now.
 
-- `01-frames-3016-and-1429-keys-off-on-the-left-keys-o.jpg`: Frames 3016 and 1429, keys off on the left, keys on (8 apart) on the right. The three hold frames 1111, 1746, 2064 are the same bytes either way. While growing the pictures differ because the wind is then worked out where the plant is drawn and not where it is laid: head and leaves stand a few pixels elsewhere. Still wrong: at 8 apart the bracts and the leaves' morning lift stray up to 16 mm, so the switch stays off until each part has keys as close as it needs
+- `01-frame-1003-shot-margin-present-edge-of-leaf-5-is.jpg`: frame 1003 shot margin, present: edge of leaf 5 is a paper cut, no cilia, stalk smooth
+- `02-frame-1106-shot-tip-present-stem-a-smooth-pale-t.jpg`: frame 1106 shot tip, present: stem a smooth pale tube, no bristles, apex is a plain folded leaf
+- `03-frame-1208-shot-thaw-present-leaf-0-with-sparse-.jpg`: frame 1208 shot thaw, present: leaf 0 with sparse hairs, edge without thickness
+- `04-bloom-frames-2916-to-2975-keys-off-left-and-on-r.mp4`: bloom frames 2916 to 2975, keys off left and on right: the head's nod with keys on is still in question
