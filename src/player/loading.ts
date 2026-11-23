@@ -24,8 +24,6 @@ export interface LoadingLog {
 }
 
 const FREEZE_MS = 250
-// The parts of the scene in the order the film builds them, so the screen can name a part before its work starts.
-const ORDER = ['ground', 'plant', 'companion', 'field', 'sky', 'field', 'puddles', 'place', 'fog', 'frost', 'mist', 'rain']
 const warming = `Warming the film, 1 of ${warmFrames().length}`
 const building = (name: string | undefined): string => (name ? `Building the ${name}` : 'Building the scene')
 
@@ -61,7 +59,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const warmBar = make('div', css.bar)
   const warmFill = make('i', css.fill)
   warmBar.append(warmFill)
-  const state = make('p', css.state, building(ORDER[0]))
+  const state = make('p', css.state, building(film.steps()[0]))
   state.dataset.role = 'loading-now'
   const pulse = make('div', css.pulse)
   pulse.setAttribute('aria-hidden', 'true')
@@ -100,7 +98,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   let beat = performance.now()
   const sceneText = (): string => {
     const made = madeSoFar()
-    return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
+    return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures made`
   }
   let watching = true
   const watch = (now: number) => {
@@ -131,11 +129,11 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     requestAnimationFrame(() => requestAnimationFrame(go))
   })
   const loaded = painted.then(() =>
-    film.load((done, of, what) => {
+    film.load((done, of, what, next) => {
       part = done < of ? `Part ${done} of ${of}, ${what}. ` : ''
       log.steps.push({ atMs: Math.round(performance.now()), what: `part ${done} of ${of}, ${what}` })
       sceneFill.style.setProperty('--at', String(done / of))
-      state.textContent = done >= of ? warming : building(ORDER[done - 1] === what ? ORDER[done] : undefined)
+      state.textContent = next === null ? warming : building(next)
       sceneCount.textContent = sceneText()
     }),
   )
@@ -148,7 +146,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${of}`, scriptMs: Math.round(film.cost.script ?? 0) })
       warmCount.textContent = `${done} of ${of}`
       warmFill.style.setProperty('--at', String(done / of))
-      state.textContent = done >= of ? 'Ready' : `Warming the film, ${done + 1} of ${of}`
+      state.textContent = done >= of ? 'One last pass over the whole scene' : `Warming the film, ${done + 1} of ${of}`
     },
     again(text) {
       warmCount.textContent = 'waiting'
