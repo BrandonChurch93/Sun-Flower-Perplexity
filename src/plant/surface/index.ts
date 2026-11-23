@@ -78,8 +78,8 @@ vec3 reliefSlope(vec3 n, vec3 world, vec2 at, vec2 slope, float strength) {
 const float TISSUE_THROUGH = 0.17;
 const float TISSUE_FORWARD = 0.55;
 const float TISSUE_BEAM = 5.5;
-// Under a closed deck no sun stands behind a blade: the share of what it passes that is left.
-const float TISSUE_DECK = 0.3;
+// Under the closed deck of a storm no sun stands behind a blade: the share of what it passes that is left.
+const float TISSUE_DECK = 0.45;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
@@ -319,7 +319,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 passed = through * mix(vec3(1.0), hue, 0.85 + 0.15 * slant) * (1.0 - 0.3 * slant);
   // A soaked blade is evenly clear between its veins: what it passes of the sky no longer follows its thin and thick places.
   vec3 evened = (hue * hue * (WET_PASS * smoothstep(0.0, WET_VEIN, peak)) - passed) * (wet * sheet);
-  float deck = mix(TISSUE_DECK, 1.0, tissueClearSun());
+  float deck = mix(1.0, mix(TISSUE_DECK, 1.0, tissueClearSun()), smoothstep(0.2, 0.6, wet));
   passed *= deck;
   evened *= deck;
   float a4 = against * against;
