@@ -50,11 +50,11 @@ const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 // Seen close, a crystal carries points that throw the sun at the lens. Each answers the angle between the lens, its own face and the sun, and nothing else: a turn of the lens by a degree lights some and puts others out.
 const float POINT = 45.0;
-const float POINT_TURNS = 140.0;
+const float POINT_TURNS = 45.0;
 const float POINT_SHARP = 16.0;
 const float POINT_PX = 7.0;
 // Of the points a crystal could carry, the share it does.
-const float POINT_SHARE = 0.14;
+const float POINT_SHARE = 0.1;
 const float POINT_OPEN = 0.0004;
 // Out of focus the discs of neighbors lie over one another and close into a band, so fewer of the points are kept the wider the circle.
 const float POINT_FEWER = 0.15;
@@ -69,7 +69,7 @@ const float SKY = 1.6;
 // How far outside the picture a root may stand and its crystal still reach into it, with the blur of the lens.
 const float OUTSIDE_M = 0.012;
 // Seen close most of the fringe is grey ice against the bright air: the share of the sky's light a blade gives back there, and the few crystals in which the low sun stands.
-const float SKY_CLOSE = 0.75;
+const float SKY_CLOSE = 1.1;
 const float LIT_SHARE = 0.28;
 const float LIT_LEAST = 0.12;
 // Along an edge the ice stands in tufts with gaps between them: this many radians of them from the stalk to the tip.
@@ -268,8 +268,9 @@ void main() {
     float lit = pow(0.5 + 0.5 * cos(POINT_TURNS * dot(own3, normalize(toEye + uSunDir)) + 6.2832 * hash(own, 72.0 + g)), POINT_SHARP);
     // Out of focus the lens spreads a point over its blur circle: the point is as much brighter as that circle is larger, so the disc it opens into can be seen.
     float circle = min(uCocScale * abs(1.0 / max(depth, 1e-4) - 1.0 / uFocusM), POINT_CIRCLE_MOST);
-    float share = POINT_SHARE * (c.w < -0.5 ? 0.3 : 1.0) / (1.0 + POINT_FEWER * circle);
-    float amount = POINT * (1.0 + POINT_OPEN * circle * circle) * lit * close * stays * (1.0 - melt) * (0.06 + 0.94 * behind) * saturate((share - hash(own, 78.0 + g)) / (0.3 * share));
+    float share = POINT_SHARE * (c.w < -0.5 ? 0.12 : 1.0) / (1.0 + POINT_FEWER * circle);
+    float mass = hash(own, 81.0 + g);
+    float amount = POINT * (0.06 + 2.6 * mass * mass * mass) * (1.0 + POINT_OPEN * circle * circle) * lit * close * stays * (1.0 - melt) * (0.06 + 0.94 * behind) * saturate((share - hash(own, 78.0 + g)) / (0.3 * share));
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), toEye));
     vec3 up = cross(toEye, right);
     float spin = 1.5708 * hash(own, 75.0 + g);
@@ -278,6 +279,7 @@ void main() {
     world = center + (right * corner.x + up * corner.y) * (amount > 0.02 ? pixel : 0.0);
     vLight = vec4(0.0, 0.0, 0.0, amount);
     vMore.x = 2.0;
+    vMore.w = c.w < -0.5 ? 0.0 : 1.0;
     vAcross = 0.0;
     vHalf = 0.0;
     vFade = 1.0;
@@ -340,6 +342,7 @@ const vec3 ICE = vec3(0.93, 0.96, 1.0);
 const float MATT = 0.15;
 // A point of light is added to what stands behind it: it is written this many times too bright at this share of cover.
 const float POINT_COVER = 0.02;
+const float POINT_PX = 7.0;
 void main() {
   float close = vMore.y;
   float x = abs(vAcross);
@@ -361,17 +364,24 @@ void main() {
   float star = 0.0;
   if (vMore.x > 1.5) {
     star = exp(-dot(vAt, vAt) / 1.2) + 0.3 * (exp(-1.4 * abs(vAt.x) - vAt.y * vAt.y / 16.0) + exp(-1.4 * abs(vAt.y) - vAt.x * vAt.x / 16.0));
+    // It fades to nothing inside its card, however bright it is.
+    float inside = 1.0 - smoothstep(0.45, 1.0, max(abs(vAt.x), abs(vAt.y)) / POINT_PX);
+    star *= inside * inside;
     cover = saturate(star) * saturate(vLight.w / 8.0);
   }
 #ifdef BLUR_CIRCLE
+  if (cover < 0.004) discard;
   outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
 #else
-  if (cover < 0.004) discard;
   float sun = plantSun(vLitAt, uSunDir);
   if (vMore.x > 1.5) {
-    outColor = vec4(finish(uSunColor * (sun * vLight.w * star / POINT_COVER), vWorld, vDepth, -1.0).rgb, POINT_COVER);
+    if (star * vLight.w < 1e-4) discard;
+    // The sun in a face of clear ice is white to pale gold.
+    vec3 gold = mix(vec3(dot(uSunColor, vec3(0.2126, 0.7152, 0.0722))), uSunColor, mix(0.06, 0.25 + 0.5 * vMore.z, vMore.w));
+    outColor = vec4(finish(gold * (sun * vLight.w * star / POINT_COVER), vWorld, vDepth, -1.0).rgb, POINT_COVER);
     return;
   }
+  if (cover < 0.004) discard;
   // Ice is clear where it is thick and white where it is thin and broken: the root of a blade lets the leaf through, its edges take the light.
   float rim = smoothstep(0.4, 1.0, x / max(hw, 0.5));
   float face = saturate(vAcross + 0.5);
