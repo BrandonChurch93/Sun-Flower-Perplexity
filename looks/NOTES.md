@@ -1,15 +1,10 @@
 # Looks of player
 
-2026-11-23 01:37 UTC, at commit 5017dea of agent/player.
+2026-11-23 02:00 UTC, at commit f8997f7 of agent/player.
 
-Heartbeat 01:37, after the merge of v2 b587656, drawn with sky-b at 1920 x 1080 in the headless browser with a test tone. Recording: 7 of 3810 frames drawn here, 124.00 s of picture in 124.00 s of audio clock, nothing made on the graphics card.
+02:01. Check at high and at low quality on the merged film (v2 29dab5f, sky-b), 960 x 540 shown at twice its size, idle machine: 4.99 s and 3.96 s a frame in the software renderer. Count with sky-b: PASS. Export proof: pass.
 
-- `01-loading.jpg`: Loading
-- `02-ready-frame-0-nothing-started.jpg`: Ready, frame 0, nothing started
-- `03-track-picked-not-the-file-the-film-was-timed-to.jpg`: Track picked, not the file the film was timed to
-- `04-track-picked-match-hash-stubbed-for-the-picture.jpg`: Track picked, match (hash stubbed for the picture)
-- `05-check-result.jpg`: Check result
-- `06-recording-mode-dark-lead.jpg`: Recording mode, dark lead
-- `07-recording-mode-film-only.jpg`: Recording mode, film only
-- `08-report-after-the-recording.jpg`: Report after the recording
-- `09-scrubbing-with-the-menu-open.jpg`: Scrubbing with the menu open
+- `01-check-at-high-quality-offers-low.jpg`: Check at high quality, offers low
+- `02-check-at-low-quality-says-it-plainly.jpg`: Check at low quality, says it plainly
+- `03-export-stopped-frames-kept.jpg`: Export stopped, frames kept
+- `04-export-done-with-the-track.jpg`: Export done with the track
