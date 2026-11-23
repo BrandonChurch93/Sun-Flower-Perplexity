@@ -25,20 +25,20 @@ export const seedlingMain = /* glsl */ `void main() {
   float mid = (1.0 - smoothstep(0.0, 0.09, abs(across))) * (1.0 - 0.7 * along);
   float rung = abs(fract(along * 7.0 - abs(across) * 1.9 + 0.11 * cloud) - 0.5) * 2.0;
   float vein = (1.0 - smoothstep(0.0, 0.16, rung)) * smoothstep(0.04, 0.2, abs(across)) * (1.0 - smoothstep(0.7, 0.98, abs(across))) * (1.0 - 0.6 * along);
-  vec3 leaf = mix(vec3(0.016, 0.13, 0.1), vec3(0.033, 0.19, 0.13), 0.65 * cloud + 0.35 * grain);
+  vec3 leaf = mix(vec3(0.02, 0.135, 0.075), vec3(0.04, 0.195, 0.095), 0.65 * cloud + 0.35 * grain);
   // The skin of a seed leaf is a mosaic of cells, some paler, with darker moist patches.
   float cells = mix(0.5, valueNoise(vec2(across * 70.0 + body * 4.0, along * 190.0)), reliefKeep(at, vec2(1.0 / 70.0, 1.0 / 190.0)));
   float patchy = valueNoise(vec2(across * 5.0 - body * 3.0, along * 13.0));
   // The skin's grain at the size the lens can hold: it breaks the sheen into pores and is never one smooth light.
   float pore = mix(0.5, valueNoise(vec2(across * 16.0 + body * 6.0, along * 45.0)), reliefKeep(at, vec2(1.0 / 16.0, 1.0 / 45.0)));
   leaf *= (0.8 + 0.4 * cells) * (0.62 + 0.76 * patchy);
-  leaf = mix(leaf * vec3(1.9, 1.5, 2.0), leaf, upper);
-  leaf *= mix(vec3(1.0), vec3(0.36, 0.8, 0.9), 1.0 - wither);
+  leaf = mix(leaf * vec3(2.6, 2.0, 1.1), leaf, upper);
+  leaf *= mix(vec3(1.0), vec3(0.5, 0.84, 0.62), 1.0 - wither);
   leaf = mix(leaf, vec3(0.28, 0.46, 0.24), (0.45 * mid + 0.1 * vein) * upper);
   leaf = mix(leaf, vec3(0.2, 0.28, 0.15) * (0.9 + 0.2 * cloud), 0.75 * pale);
   leaf = mix(leaf, mix(vec3(0.52, 0.47, 0.1), vec3(0.3, 0.2, 0.07), smoothstep(0.5, 1.0, wither + 0.3 * cloud - 0.15)), wither);
   float lens = 1.0 - across * across;
-  vec3 glow = mix(vec3(0.07, 0.1, 0.09), vec3(0.008, 0.03, 0.032), smoothstep(0.0, 0.45, lens)) * (1.0 - 0.5 * mid) * (1.0 - 0.25 * vein) * (0.6 + 0.8 * patchy) * mix(1.0, mix(1.8, 0.5, smoothstep(0.1, 0.8, along)), 1.0 - wither);
+  vec3 glow = mix(vec3(0.08, 0.1, 0.06), vec3(0.012, 0.03, 0.016), smoothstep(0.0, 0.45, lens)) * (1.0 - 0.5 * mid) * (1.0 - 0.25 * vein) * (0.6 + 0.8 * patchy) * mix(1.0, mix(1.8, 0.5, smoothstep(0.1, 0.8, along)), 1.0 - wither);
   // The thin margin of the leaf passes the sun almost whole.
   glow = mix(glow, vec3(0.3, 0.27, 0.1), 0.5 * smoothstep(0.955, 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.14, 0.07), 0.7 * pale);
@@ -83,6 +83,8 @@ export const seedlingMain = /* glsl */ `void main() {
   t.wax = mix(${SEED_LEAF.wax} * (1.0 - 0.7 * wither) * (0.35 + 0.8 * pore), mix(0.05, 0.12 * (1.0 - dusty), upper), husk) * (1.0 - crumb);
   t.sheen = flesh0 * (1.0 - wither) * (0.3 + 0.6 * smoothstep(0.8, 1.0, abs(across)));
   t.occlusion = vState.z;
+  t.wax *= mix(0.35, 0.6, upper);
+  t.sheen *= 0.35;
   // A seed leaf is thick, clear flesh: the sun enters at its outline and leaves toward the lens.
   float flesh = (1.0 - husk) * (1.0 - crumb);
   vec3 color = shadeTissueClear(t, vWorld, view, vec2(across * 0.008, along * 0.03), flesh * smoothstep(0.55, 1.0, abs(across)), 0.6 * flesh * (1.0 - wither));

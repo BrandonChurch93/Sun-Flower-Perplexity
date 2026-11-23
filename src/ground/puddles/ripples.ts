@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { remember } from '../../core/programs.ts'
 import { glslCommon, glslHead, shared } from '../../core/shading.ts'
 import { basin } from './basin.ts'
 import { LANDING_FLOATS } from './landings.ts'
@@ -84,7 +85,7 @@ export class Ripples {
     this.geometry.setAttribute('drop', this.drops)
     this.geometry.instanceCount = 0
     this.uniforms = { ...shared, ...ground, uLevel: level, uBox: { value: new THREE.Vector3() }, uSpan: { value: new THREE.Vector2() } }
-    const material = new THREE.RawShaderMaterial({ name: 'puddle rings', glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms: this.uniforms, side: THREE.DoubleSide, depthTest: false, depthWrite: false, transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor })
+    const material = remember(new THREE.RawShaderMaterial({ name: 'puddle rings', glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms: this.uniforms, side: THREE.DoubleSide, depthTest: false, depthWrite: false, transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor }))
     const mesh = new THREE.Mesh(this.geometry, material)
     mesh.frustumCulled = false
     this.scene.add(mesh)
