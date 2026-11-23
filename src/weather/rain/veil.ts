@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST } from './drops.ts'
+import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_WIND } from './drops.ts'
 
 // Past the reach of the streaks the rain is a grey veil: sheets that stand round the lens at set distances, each thicker than the one before, with shafts of heavier rain drifting across them.
 const SHEETS_M = [900, 260, 70, 22, 9]
@@ -52,7 +52,7 @@ void main() {
   if (high > 1.0) discard;
   float t = mix(uReal, uReal, uShutter);
   vec2 lean = vec2(${LEAN_X.toFixed(5)}, ${LEAN_Z.toFixed(5)});
-  float slant = ${SLANT_CALM.toFixed(4)} + uWind * ${SLANT_GUST.toFixed(4)} * 0.6;
+  float slant = ${SLANT_CALM.toFixed(4)} + min(1.0, 1.8 * uWind) * ${SLANT_WIND.toFixed(4)};
   vec2 side = vec2(lean.y, -lean.x);
   // A shaft hangs from the cloud and trails behind it as it falls.
   float across = (dot(hit.xz, side) + (dot(hit.xz, lean) - hit.y * slant) * 0.35) / SHAFT[vSheet];
@@ -71,7 +71,8 @@ void main() {
   float toSun = saturate(dot(ray, uSunDir));
   float t2 = toSun * toSun;
   light += uAirSun * (0.002 + 0.01 * t2 + 0.05 * t2 * t2 * t2 * t2 * (0.5 + uSpark));
-  light += uFlash * (0.02 + 0.15 * pow(saturate(dot(ray, uFlashAt)), 3.0));
+  // The far rain shows the strike only round the strike.
+  light += uFlash * (0.25 * pow(saturate(dot(ray, uFlashAt)), 6.0));
   outColor = vec4(light, cover);
 }
 `

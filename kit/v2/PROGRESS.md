@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: none yet
-- Last status: 07 · 2026-11-23 02:38 UTC · Phase 2
+- Last status: 08 · 2026-11-23 03:15 UTC · Phase 2
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 03:15 UTC · status 08 · Phase 2 · `status-1.jpg`: The storm: reference, an hour ago, now (draft tier); `status-2.jpg`: Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; `status-3.jpg`: One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; `status-4.jpg`: Frost hold: reference left, the film right (review tier)
 - 2026-11-23 02:38 UTC · status 07 · Phase 2 · `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier); `status-2.jpg`: Sky candidate A in the jury's ten film frames; `status-3.jpg`: Sky candidate C in the jury's ten film frames; `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
 - 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
 - 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
@@ -35,12 +36,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 3.26 h |
+| 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.64 h |
+| Whole build | 30.00 h | 5.26 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -191,4 +192,6 @@ None yet.
   Pictures: The merged film at sixteen moments, sky B; A sunset of the time lapse, thirteen frames in a row; Frost hold beside its reference key.
 - Status 07, 2026-11-23 02:38 UTC, Phase 2. Every builder's second round is merged and the whole film draws as one picture again. The opening is clear (the fog banks are gone), the soil carries hoar in the frost hold, the storm has soft streaks and a puddle, and the break of bar 41 comes up over five frames instead of one. The three sky candidates were drawn in the same twenty frames and went to three blind critics: the first verdict is in (B first, A second, C third), two are pending. The counter for bytes written per frame overcounted textures and is corrected. Next: Take the other two verdicts and move the winning sky to its place, then draw the whole film in parts and join it under the music for the first full watch. Time used: 4.6 h of 30 h.
   Pictures: The merged film at twelve moments under sky candidate B (draft tier); Sky candidate A in the jury's ten film frames; Sky candidate C in the jury's ten film frames; Sky candidate B through the jury's wide camera (not a film view, it shows more sky).
+- Status 08, 2026-11-23 03:15 UTC, Phase 2. The sky is chosen: three blind critics all ranked candidate B first, and it is now the film's sky. The storm hold was the weakest picture, so the plant now stands at 61 cm there (was 90 cm) with the lens closer, as in the reference. The moon no longer lights the leaves brighter at midnight than at dusk. Rain, frost, player, checks and plant merged; 168 tests pass. Next: Phase 3, look lock: every builder has its notes against the references (storm sky, break, suns, rain on the leaves, wet soil, frost glow, field at the crane). A first whole watch of the film at two frames a second is being drawn. Time used: 5.3 h of 30 h.
+  Pictures: The storm: reference, an hour ago, now (draft tier); Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; Frost hold: reference left, the film right (review tier).
 
