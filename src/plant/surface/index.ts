@@ -249,7 +249,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 glow = vec3(sun);
   float reach = 1.0;
   if (peak > 0.0 && sun < 0.98 && uShadowOn > 0.5) {
-    float beyond = sunShadow(world + L * TISSUE_LAYER_M + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
+    float beyond = sunShadow(world + L * (TISSUE_LAYER_M * mix(1.0, 4.0, saturate(max(t.through.r, max(t.through.g, t.through.b)) / 0.6 - 1.0))) + (t2 * cos(spin) - t1 * sin(spin)) * TISSUE_SPREAD_FAR_M, lee, lift);
     glow += min(through * TISSUE_LAYER, vec3(1.0)) * saturate(beyond - sun);
     // The bounce never switches off along a shadow's edge: the creases of the part dim it instead.
     reach = 0.5 + 0.5 * beyond;
