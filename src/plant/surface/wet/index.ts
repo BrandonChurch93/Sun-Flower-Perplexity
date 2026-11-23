@@ -268,7 +268,8 @@ void dropVertex() {
   } else {
     float want = full * pow(dial.x, 1.0 / 3.0);
     float small = min(want, 0.00025);
-    float t = saturate((front - 0.2) / 0.12);
+    // The water gathers under the tip while the last ice there goes: the drop swells with the thaw and not all at once.
+    float t = saturate((front - 0.12) / 0.3);
     r = small * pow(saturate(front / 0.2), 0.7) + (want - small) * t * t * (3.0 - 2.0 * t);
     neck = after < 0.0 ? smoothstep(0.9, 1.0, dial.x) : 0.0;
     // What is left at the tip springs back and comes to rest.
@@ -276,7 +277,7 @@ void dropVertex() {
     middle = tip - vec3(0.0, r * (mix(1.0, DRAWN, neck * neck) + spring), 0.0);
   }
   float top = fell ? r : r * mix(0.55, 0.42, neck);
-  float waist = r * mix(0.7, 0.07, neck);
+  float waist = r * mix(0.7, 0.05, neck);
   vec3 hold = fell ? middle : tip;
   float high = hold.y + top;
   float low = middle.y - r * drawn;
@@ -290,7 +291,7 @@ void dropVertex() {
   vMiddle = middle;
   vBase = hold;
   vUp = vec3(neck, 1.0, 0.0);
-  vDown = vec3(r * mix(0.5, 0.14, neck), drawn, fell ? 1.0 : 0.0);
+  vDown = vec3(r * mix(0.5, 0.3, neck), drawn, fell ? 1.0 : 0.0);
   vTint = aTint;
   vShape = vec3(r, top, waist);
   vHang = 1.0;
@@ -330,6 +331,8 @@ void main() {
   vec4 rest = mix(restA, restB, share);
   float own = hash11(float(gl_InstanceID) * 0.618 + 0.37);
   float r = seat.w * plantSize();
+  // The dew of a set laid by places follows the thaw as a body with no tip does.
+  if (uBeadPaths < 0.5 && uReal > ${THAW_FROM_GLSL} && uReal < ${RAIN_FROM_GLSL}) r = thawRadius(r, thawFront(0.5));
   vec3 base = plantWorld(seat.xyz);
   vec3 up = plantDirection(normalize(rest.xyz + vec3(0.0, 1e-6, 0.0)));
   float hang = saturate(rest.w);

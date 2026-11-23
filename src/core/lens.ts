@@ -8,6 +8,8 @@ export interface CameraPose {
   focalMm: number
   focusM: number
   fNumber: number
+  // Where set, everything from this depth to `focusM` is sharp, as in a macro picture put together from several focus distances. The blur grows from those two ends.
+  focusNearM?: number
 }
 
 export interface LensSetup {
@@ -30,8 +32,19 @@ export function cocScalePx(pose: CameraPose, gateMm: number, width: number): num
   return ((2 * apertureRadiusM(pose) * pose.focalMm) / gateMm) * width
 }
 
+// The blur circle in pixels of a thing at `depthM`, for a lens sharp from `focusNearM` to `focusM`. The same rule as `cocOf` in the shaders.
+export function blurPx(cocScale: number, focusM: number, focusNearM: number, depthM: number): number {
+  const inv = 1 / depthM
+  return cocScale * Math.max(1 / focusM - inv, inv - 1 / focusNearM, 0)
+}
+
 export function cocPixels(pose: CameraPose, gateMm: number, width: number, depthM: number): number {
-  return cocScalePx(pose, gateMm, width) * Math.abs(1 / depthM - 1 / pose.focusM)
+  return blurPx(cocScalePx(pose, gateMm, width), pose.focusM, pose.focusNearM ?? pose.focusM, depthM)
+}
+
+// Whether the pose is sharp over a range of depths. Such a picture cannot be made by moving the eye over the lens opening, so the lens pass blurs it at every tier.
+export function ranged(pose: CameraPose): boolean {
+  return pose.focusNearM !== undefined && pose.focusNearM < pose.focusM
 }
 
 const basis = new THREE.Matrix4()

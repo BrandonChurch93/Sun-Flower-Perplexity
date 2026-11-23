@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../part.ts'
+import { blurPx } from '../../core/lens.ts'
 import { shared, type Surface } from '../../core/shading.ts'
 import { norm } from '../norm.ts'
 import { held } from '../../v2/held.ts'
@@ -747,6 +748,7 @@ export class HairSet {
     const key = this.key
     const cocScale = lens ? held.cocScale : stepped ? key[5] : shared.uCocScale.value
     const focus = lens ? held.focusM : stepped ? key[4] : shared.uFocusM.value
+    const focusNear = lens ? held.focusNearM : stepped ? key[4] : shared.uFocusNear.value
     const height = shared.uSize.value.y
     const width = shared.uSize.value.x
     const cols = (stepped ? 2 : 1) * (Math.ceil(width / CROWD_CELL_PX) + 1)
@@ -816,12 +818,12 @@ export class HairSet {
         if (w < long) continue
         const cx = e[0] * x + e[4] * y + e[8] * z + e[12]
         const cy = e[1] * x + e[5] * y + e[9] * z + e[13]
-        const reach = w * (1.04 + (2 * cocScale * Math.abs(1 / w - 1 / focus)) / height) + long * 4
+        const reach = w * (1.04 + (2 * blurPx(cocScale, focus, focusNear, w)) / height) + long * 4
         if (Math.abs(cx) > reach || Math.abs(cy) > reach) continue
         px = Math.min(cols - 1.001, Math.max(0, ((cx / w) * 0.5 + 0.5) * (width / CROWD_CELL_PX)))
         py = Math.min(rows - 1.001, Math.max(0, ((cy / w) * 0.5 + 0.5) * (height / CROWD_CELL_PX)))
       }
-      const coc = cocScale * Math.abs(1 / w - 1 / focus)
+      const coc = blurPx(cocScale, focus, focusNear, w)
       const own = la[o + 3]
       let share = 1
       const scale = (size * perM) / w
@@ -986,6 +988,7 @@ export class HairSet {
       sign[11] = this.shown
       sign[12] = this.keyed.value
       sign[13] = this.shape
+      sign[14] = held.focusNearM
       let set = this.lenses[held.lens] ?? null
       let same = set !== null
       for (let k = 0; set && k < SIGNS; k++) if (sign[k] !== set.sign[k]) same = false

@@ -39,8 +39,10 @@ export const shared = {
   uShadowTexel: { value: 1 / 2048 },
   uShadowTexelM: { value: 0.001 },
   uFocusM: { value: 1 },
+  uFocusNear: { value: 1 },
   uCocScale: { value: 0 },
   uFocusCoc: { value: 1.5 },
+  uWorldExposure: { value: 1 },
   uDiag: { value: 0 },
   uSize: { value: new THREE.Vector2(1, 1) },
 }
@@ -73,13 +75,22 @@ uniform float uFogFalloff;
 uniform float uSkyEven;
 uniform vec3 uCamPos;
 uniform float uFocusM;
+uniform float uFocusNear;
 uniform float uCocScale;
 uniform float uFocusCoc;
+uniform float uWorldExposure;
 uniform int uDiag;
 uniform vec2 uSize;
 
 float saturate(float x) { return clamp(x, 0.0, 1.0); }
 vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
+
+// The blur circle, in pixels across, of a thing at this depth along the lens axis. Everything from uFocusNear to uFocusM is sharp and the blur grows from those two ends.
+// For a lens focused at one distance the two are equal.
+float cocOf(float viewDepth) {
+  float inv = 1.0 / max(viewDepth, 1e-4);
+  return min(uCocScale * max(max(1.0 / uFocusM - inv, inv - 1.0 / uFocusNear), 0.0), 2048.0);
+}
 
 uint hashU(uint x) {
   x ^= x >> 16; x *= 0x7feb352dU; x ^= x >> 15; x *= 0x846ca68bU; x ^= x >> 16;
@@ -157,10 +168,6 @@ vec3 applyFog(vec3 color, vec3 worldPos) {
   float f = 1.0 - exp(-depth);
   float toSun = pow(saturate(dot(v / max(d, 1e-5), uSunDir)), 6.0);
   return mix(color, uFogColor + uFogSunTint * toSun, f);
-}
-
-float cocOf(float viewDepth) {
-  return min(uCocScale * abs(1.0 / max(viewDepth, 1e-4) - 1.0 / uFocusM), 2048.0);
 }
 
 vec3 heat(float t) {

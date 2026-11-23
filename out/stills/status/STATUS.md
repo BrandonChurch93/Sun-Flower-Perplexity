@@ -1,12 +1,12 @@
-# Status 19
+# Status 20
 
-2026-11-23 09:04 UTC
+2026-11-23 09:32 UTC
 
-- Status 19 · Phase 3. Merged: the saddle in the far ridge under the last sun, the rain owner's update, hairs on the grown stem, a cloud deck that thins over bars 61 to 69. Mine: the bloom's lens opens to f/2.8 and the head turns to face it, the storm's deck is gone by bar 42.6 so the first night after the storm can show stars, three nights clear further. A new owner took the flower head (bud, disc, rays). MEASURED: 30 test files, 180 tests pass; 20 proof frames drawn and read at draft size. FOUND and open: the review tier draws the frost close shots softer than the draft tier and breaks each spark into a cluster of small discs.
-- Next: Merge the plant's facing line, the stars that follow the overcast and the leaf look's frost furrows; close the gap between the draft and review tiers on the close shots and settle the stop of close shot 1; the frost owner's crystal coat on the leaf faces; a new owner for stem and hairs; then the blockout clips of the whole film with the music. Time used: 11.1 h of 30 h.
+- Status 20 · Phase 3. Frost, ground and rain merged. A close shot can now be sharp over a range of depths: the first frost close shot holds the whole leaf sharp at film size, so the crystals read. Plant found the cause of a small stutter of the head at the bloom and is curing it.
+- Next: The same treatment for the second and third frost shots, the head owner's rays and disc, then the whole film pass. Time used: 11.5 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835)
-- `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8
-- `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262)
-- `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)
+- `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf
+- `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now
+- `status-3.jpg`: Frame 1054 beside its reference picture
+- `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
