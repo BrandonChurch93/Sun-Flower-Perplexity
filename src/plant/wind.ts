@@ -38,3 +38,34 @@ export function flutter(time: number, seed: number): number {
 
 // The direction the wind blows toward, level with the ground.
 export const windToward = TOWARD
+
+// A storm's gusts at a place, 0 to about 1: each one rises fast, holds unevenly and lets go slower, and no two are alike.
+export function squall(time: number, x: number, z: number): number {
+  const t = time - (x * TOWARD.x + z * TOWARD.z) / 6
+  const slow = 0.5 + 0.5 * Math.sin(t * 1.05 + 1.9 * Math.sin(t * 0.31 + 0.7) + 0.4)
+  const quick = 0.5 + 0.5 * Math.sin(t * 2.7 + 1.3 * Math.sin(t * 0.83 + 2.1))
+  const push = slow * slow * (0.65 + 0.35 * quick)
+  return push + 0.12 * slow * Math.sin(t * 7.3 + 2 * quick)
+}
+
+const cell = (n: number, seed: number): number => {
+  let h = (Math.imul(n | 0, 0x9e3779b1) ^ Math.imul((seed * 65536) | 0, 0x85ebca6b)) >>> 0
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0
+  return ((h ^ (h >>> 15)) >>> 0) / 2147483648 - 1
+}
+
+const eased = (x: number, seed: number): number => {
+  const n = Math.floor(x)
+  const f = x - n
+  const a = cell(n, seed)
+  return a + (cell(n + 1, seed) - a) * f * f * (3 - 2 * f)
+}
+
+// What a time lapse does to an organ, about -1 to 1: every frame is a moment minutes from the last, so it sits a little differently in each, and now and then it settles to a new rest.
+export function restless(time: number, frame: number, seed: number): number {
+  const settle = eased(time * 1.9 + seed * 17, seed)
+  const hop = Math.floor(time * 3.1 + seed * 29)
+  const jump = cell(hop, seed + 0.31) > 0.55 ? cell(hop, seed + 0.57) : 0
+  return 0.4 * settle + 0.25 * jump + 0.35 * cell(frame, seed + 0.11)
+}
