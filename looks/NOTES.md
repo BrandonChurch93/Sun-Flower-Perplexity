@@ -1,8 +1,10 @@
 # Looks of sky-b
 
-2026-11-23 01:38 UTC, at commit 7164c7f of agent/sky-b.
+2026-11-23 01:50 UTC, at commit c465921 of agent/sky-b.
 
-- `01-round-3-all-layers-15-requested-film-bars-on-b58.jpg`: Round 3 all layers • 15 requested film bars on b587656; shared rain veil washes out the storm at 35–39
-- `02-rain-off-control-the-cloud-strikes-and-deck-retu.jpg`: Rain-off control • the cloud strikes and deck return without the shared veil (earlier wider sunset break)
-- `03-round-3-close-review-beneath-the-storm-deck-at-3.jpg`: Round 3 close review • beneath the storm deck at 33 and 37.02, with a localized strike in the cloud
-- `04-round-3-sun-break-tighter-ragged-opening-in-the-.jpg`: Round 3 sun break • tighter ragged opening in the sky, shafts supplied by the lens
+- `01-integrated-film-on-29dab5f-all-15-requested-bars.jpg`: Integrated film on 29dab5f • all 15 requested bars in film view at film quality; frost hold still very veiled
+- `02-storm-break-41-25-warm-air-through-a-staggered-o.jpg`: Storm break 41.25 • warm air through a staggered opening and gold-lit cloud faces; light shaft is the lens
+- `03-lightning-37-02-the-upper-right-strike-bottom-ga.jpg`: Lightning 37.02 • the upper-right strike, bottom gap and plant all stay visible through rain
+- `04-bloom-at-57-golden-cloud-faces-behind-the-closed.jpg`: Bloom at 57 • golden cloud faces behind the closed head
+- `05-bloom-at-61-warm-window-near-the-sun-against-gra.jpg`: Bloom at 61 • warm window near the sun against gray-blue shaded lobes
+- `06-29-29-the-high-key-fair-weather-sky-shows-white-.jpg`: 29.29 • the high-key fair-weather sky shows white tops and blue-grey undersides
