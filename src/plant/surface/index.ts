@@ -317,7 +317,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   g5 = g5 * g5 * grazing;
   // The rise of the mirror at grazing is a line thinner than a pixel on a small round part: it fades with the outline.
   // A mist of beads breaks the mirror: each bead shows the whole sky, so the rise at grazing goes and the high sky takes the place of the horizon.
-  float mirror = wax * (TISSUE_F0 + (max(1.0 - rough, TISSUE_F0) - TISSUE_F0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
+  // Water mirrors more than a leaf's wax does.
+  float f0 = mix(TISSUE_F0, WET_F0, rained);
+  float mirror = wax * (f0 + (max(1.0 - rough, f0) - f0) * g5 * (1.0 - fuzz) * inside * (1.0 - DEW_BREAK * mist));
   vec3 R = reflect(-view, N);
   // Water on a living skin is never one mirror: it stands over cells and hairs, and each small rise shows its own piece of the sky.
   if (rained > 0.0 && margin >= 0.0) R = normalize(R + wetRipple(at, t1, t2) * rained);
