@@ -60,6 +60,10 @@ function finaleAt(bar: number): number {
   return smoothstep(70.55, 71.75, bar)
 }
 
+function lastLightAt(elevation: number, evening: number): number {
+  return evening * (1 - smoothstep(0.4, 2.7, elevation))
+}
+
 // Replace the cumulus only for the last time-lapse dusk and the late crane.
 // Phase rejects the mornings inside the first bar range.
 function eveningStreaksAt(m: Moment, elevation: number): number {
@@ -324,6 +328,17 @@ class FieldSky implements Sky {
     return out
   }
 
+  // The photographed centre at mid-shutter, including refraction. The
+  // lens calls this independently of prepare(); the key light stays geometric.
+  face(now: Moment, later: Moment, out: THREE.Vector3): THREE.Vector3 {
+    const e = (now.sunElevationDeg + later.sunElevationDeg) * 0.5
+    const ending = lastLightAt(e, now.dials.evening)
+    const lift = (0.33 + 0.64 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
+    out.copy(now.sun).lerp(later.sun, 0.5).normalize()
+    out.y += RAD * lift
+    return out.normalize()
+  }
+
   private setCloud(now: Moment, later: Moment, eyeM: number, light: SkyLight, e: number, level: typeof levels.film): void {
     const d = now.dials
     const wetHaze = wetHazeAt(d.wet, e)
@@ -338,7 +353,7 @@ class FieldSky implements Sky {
     this.air.sunAt(e, this.cloudSun, true)
     this.air.moonAt(e, this.moon)
     this.air.deckAt(e, this.deck)
-    const ending = d.evening * (1 - smoothstep(0.4, 2.7, e))
+    const ending = lastLightAt(e, d.evening)
     const dawn = (1 - smoothstep(0.22, 0.68, d.lapse)) * (1 - d.evening) * (1 - d.overcast) * (1 - d.fog)
       * smoothstep(-3.2, 0.7, e) * (1 - smoothstep(2.9, 10.5, e))
     const u = this.cloud.uniforms
@@ -403,7 +418,7 @@ class FieldSky implements Sky {
     renderer.setRenderTarget(old)
     const u = this.cloud.uniforms
     const night = smoothstep(-2.6, -12.6, e)
-    const ending = d.evening * (1 - smoothstep(0.4, 2.7, e))
+    const ending = lastLightAt(e, d.evening)
     const v = this.display.uniforms
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
@@ -422,10 +437,7 @@ class FieldSky implements Sky {
     const darkDeck = smoothstep(0.42, 0.84, d.overcast) * (1 - d.flash) * (1 - tear)
     v.uMarchFilter.value = (view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast)
       + 0.46 * darkDeck
-    v.uSunFace.value.copy(this.sun)
-    const refraction = (0.33 + 0.64 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
-    v.uSunFace.value.y += RAD * refraction
-    v.uSunFace.value.normalize()
+    this.face(now, later, v.uSunFace.value)
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3 * moonClarity)
     v.uLunarVisibility.value = this.lunarVisibility[now.frame] ?? -1
