@@ -29,6 +29,7 @@ void main() {
 
 const fragment = /* glsl */ `
 in vec3 vWorld;
+// w: how many times taller than the layer its thickest rolls stand, less one.
 uniform vec4 uPlace;
 // x: the depth of this sheet's slab in meters, y: the height at which the air has thinned to a third, z: how much light a meter of it takes at the ground, w: the width of a bank.
 uniform vec4 uAir;
@@ -55,7 +56,7 @@ void main() {
   // A slab deeper than its banks holds several of them: seen through, they even out.
   float told = saturate(1.6 * uAir.w / uAir.x);
   float shape = mix(0.5, 0.62 * bank + 0.38 * wisp, told);
-  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told));
+  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told)) * (1.0 + uPlace.w * smoothstep(0.5, 0.85, bank));
   float amount = mix(1.0, 2.2 * smoothstep(0.24, 0.8, shape) * (0.35 + 1.3 * broad), uLook.x);
   float across = max(length(v.xz), 0.05);
   float fall = -v.y / across;
@@ -113,7 +114,7 @@ void main() {
 
 export interface Sheet {
   mesh: THREE.Mesh
-  // x: radius, y: top, z: foot.
+  // x: radius, y: top, z: foot, w: the tongues.
   place: THREE.Vector4
   center: THREE.Vector2
   air: THREE.Vector4

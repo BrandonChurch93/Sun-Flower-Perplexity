@@ -14,6 +14,8 @@ const PER_M = 0.3
 const PER_M_LIFTED = 0.2
 const BANK_M = 1.5
 const CLEAR_TO_M = 1.6
+// The thickest rolls of fog stand up out of the layer as tongues, so a breath of it is seen crossing the soil.
+const TONGUES = 1.5
 // Before the hairs and crystals of the plant (18 to 21), and after them.
 const ORDER_BEHIND = 12
 const ORDER_BEFORE = 64
@@ -44,12 +46,13 @@ class GroundMist implements Part {
     const shift = Math.log(plantM / NEAR_M) - nearest * step
     const height = lerp(HEIGHT_M, HEIGHT_LIFTED_M, air.lifted)
     const perM = lerp(PER_M, PER_M_LIFTED, air.lifted) * air.amount
+    const tongues = TONGUES * (1 - air.dawn) * (1 - 0.6 * air.lifted)
     const radius = (i: number): number => NEAR_M * Math.exp(step * i + shift * (i <= nearest ? i / Math.max(nearest, 1) : (count - 1 - i) / Math.max(count - 1 - nearest, 1)))
     for (let i = 0; i < count; i++) {
       const s = this.sheets[i]
       const r = radius(i)
       const slab = i + 1 < count ? radius(i + 1) - r : r * (Math.exp(step) - 1)
-      s.place.set(r, height * 7, -0.3, 0)
+      s.place.set(r, height * (7 + 3 * tongues), -0.3, tongues)
       s.center.set(eye.x, eye.z)
       // The air just before the lens is clear: the veils lie out on the soil, beyond the plant.
       s.air.set(slab, height, perM * smoothstep(NEAR_M, CLEAR_TO_M, r), BANK_M)

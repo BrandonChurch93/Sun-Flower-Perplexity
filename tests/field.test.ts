@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
 import { hash01, streamSeed } from '../src/core/random.ts'
 import { PLACE, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, shareOf, sizeOf, statureAt, toward } from '../src/field/layout.ts'
+import { ROOM_M, bySeen, filmLens, frameOf, needed } from '../src/field/seen.ts'
 import { heightAt } from '../src/plant/growth.ts'
 import { barTime, tauAtBar } from '../src/v2/clock.ts'
 import { rigAtFilm } from '../src/v2/rig.ts'
@@ -250,6 +251,52 @@ describe('the wind over the field', () => {
       expect(worst, `bar ${bar}`).toBeLessThan(1e-6)
       before = now
     }
+  })
+})
+
+describe('the part of each list a frame draws', () => {
+  const lens = filmLens(16 / 9)
+  const frames = lens.length / 5
+  // The test each neighbor is given as it is drawn.
+  const kept = (f: number, x: number, z: number): boolean => {
+    const ox = x - lens[f * 5]
+    const oz = z - lens[f * 5 + 1]
+    const depth = ox * lens[f * 5 + 2] + oz * lens[f * 5 + 3]
+    const side = Math.abs(oz * lens[f * 5 + 2] - ox * lens[f * 5 + 3])
+    return !(depth < -ROOM_M || side > Math.max(depth, 0) * lens[f * 5 + 4] + ROOM_M * (1 + lens[f * 5 + 4]))
+  }
+
+  it('holds every neighbor the frame can see, at every frame, and few it cannot', () => {
+    let sent = 0
+    let seen = 0
+    for (const list of [shareOf(places.near, 0, nearVariants.length), shareOf(places.far, 1, farVariants.length), shareOf(places.under, 2, 4)]) {
+      const sorted = bySeen(list, lens)
+      const need = needed(sorted, lens)
+      expect([...sorted].sort()).toEqual([...list].sort())
+      for (let f = 0; f < frames; f += 2) {
+        let last = 0
+        let inside = 0
+        for (let k = 0; k < sorted.length / PLACE; k++) {
+          if (!kept(f, sorted[k * PLACE], sorted[k * PLACE + 1])) continue
+          last = k + 1
+          inside++
+        }
+        expect(need[f]).toBeGreaterThanOrEqual(last)
+        expect(inside).toBeGreaterThanOrEqual(0.75 * need[f])
+        sent += need[f]
+        seen += inside
+      }
+    }
+    expect(seen / sent).toBeGreaterThan(0.9)
+  })
+
+  it('serves the film\'s own lens and no other', () => {
+    const mine = lens.slice(1502 * 5, 1503 * 5)
+    expect(frameOf(lens, 1502 / config.film.fps, mine)).toBe(1502)
+    expect(frameOf(lens, 1502.4 / config.film.fps, mine)).toBe(1502)
+    mine[0] += 0.5
+    expect(frameOf(lens, 1502 / config.film.fps, mine)).toBe(-1)
+    expect(frameOf(lens, 900 / config.film.fps, lens.slice(1502 * 5, 1503 * 5))).toBe(-1)
   })
 })
 
