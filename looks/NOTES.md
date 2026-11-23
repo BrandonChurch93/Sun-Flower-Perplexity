@@ -1,8 +1,7 @@
 # Looks of frost
 
-2026-11-23 08:12 UTC, at commit 7c4b85a7 of agent/frost.
+2026-11-23 08:32 UTC, at commit 5613ebea of agent/frost.
 
-- `01-h3-margin-1003-review-ours-left-key-right-before.jpg`: h3 margin 1003 review, ours left, key right (before the lattice fix)
-- `02-h3-tip-1106-review-ours-left-key-right.jpg`: h3 tip 1106 review, ours left, key right
-- `03-h3-thaw-1208-review-ours-left-key-right.jpg`: h3 thaw 1208 review, ours left, key right
-- `04-h3-draft-940-975-1054-1262.jpg`: h3 draft 940 975 1054 1262
+- `01-h4-new-margin-952-1003-1054-and-wide-940-draft-f.jpg`: h4 new margin 952 1003 1054 and wide 940, draft, first coat (still paint, forms next)
+- `02-h4-thaw-front-1170-1190-1208-1234-1250-1262-draf.jpg`: h4 thaw front 1170 1190 1208 1234 1250 1262 draft
+- `03-h4-thaw-1208-review-beside-key.jpg`: h4 thaw 1208 review beside key
