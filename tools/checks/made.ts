@@ -62,6 +62,7 @@ function madeWhere(frames: number[]): Map<number, Where[]> {
 
 // Reads what `play` noted on every frame it drew after loading and warming, and fails if any frame made anything, and says what each frame of a hold wrote against the goal.
 export async function run(args: Args): Promise<void> {
+  if (flag(args, 'trace')) return (await import('./trace.ts')).run(args)
   const broken = typeof args.break === 'string' ? args.break : null
   const run = runName(broken)
   const from = Math.max(0, num(args, 'from', 0))

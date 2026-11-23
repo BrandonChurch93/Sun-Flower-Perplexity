@@ -65,6 +65,8 @@ void main() {
     albedo = mix(albedo, vec3(0.2, 0.09, 0.035), 0.7 * smoothstep(0.94, 1.0, u));
     if (inner) albedo = mix(albedo, vec3(0.07, 0.115, 0.05), 0.7);
     else albedo *= vec3(0.6, 0.67, 0.58);
+    // A grown bract is felted: its hairs grey its green.
+    albedo = mix(albedo, vec3(dot(albedo, vec3(0.3, 0.6, 0.1))) * vec3(0.95, 1.08, 0.85), 0.35 * (1.0 - uBudShut));
     // The bracts of the shut bud are young: a fresher green, paler toward the margin.
     albedo *= mix(vec3(1.0), mix(mix(vec3(1.15, 2.0, 0.85), mix(vec3(0.6, 1.1, 0.45), vec3(2.6, 2.8, 0.5), smoothstep(0.5, 1.0, rank)), uBudEarly), vec3(2.6), smoothstep(0.78, 1.0, ax) * (1.0 - uBudEarly)), uBudShut);
     // A young bract thins and pales from its keel to its lip.
@@ -89,7 +91,7 @@ void main() {
     vec2 reach = reliefReach(at);
     slope = vec2(bractRelief(x + reach.x, u, seed) - bractRelief(x - reach.x, u, seed), bractRelief(x, u + reach.y, seed) - bractRelief(x, u - reach.y, seed)) / (2.0 * reach);
     float buried = smoothstep(0.0, 0.16, u);
-    t.sheen = 0.45;
+    t.sheen = mix(0.7, 0.45, uBudShut);
     t.occlusion = mix(0.8, 1.0, buried) * (inner ? mix(0.75, 1.0, toTip) : 1.0) * (1.0 - 0.25 * middle * (1.0 - toTip));
     t.occlusion *= 1.0 - 0.3 * uPlantWet;
     // Shut, the foot of a bract lies under the points of the row below it.

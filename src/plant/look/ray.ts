@@ -39,11 +39,11 @@ export const rayMain = /* glsl */ `void main() {
   // The thin edges and the far end let the most light through, and it comes out pale.
   float pale = max(smoothstep(0.45, 1.0, abs(across)), 0.75 * smoothstep(0.35, 0.95, u)) * mix(0.3, 1.0, unfolded);
   body = mix(body, vec3(1.0, 0.62, 0.1), 0.12 * pale * (1.0 - fresh));
-  vec3 albedo = mix(body, vec3(0.5, 0.26, 0.012), 0.6 * foot);
+  vec3 albedo = mix(body, vec3(0.52, 0.2, 0.008), 0.7 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
   vec3 through = mix(vec3(0.5, 0.44, 0.015), vec3(1.25, 0.86, 0.16), smoothstep(0.1, 0.8, u));
   through.g *= 0.9 + 0.2 * own;
-  through = mix(through, vec3(1.4, 0.78, 0.8), 0.5 * pale);
+  through = mix(through, vec3(1.35, 0.82, 0.22), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
   through *= mix(vec3(0.62, 0.66, 0.5), vec3(1.0), unfolded);
   // A lifting ray is still creased double, yet the low sun comes through it amber.
