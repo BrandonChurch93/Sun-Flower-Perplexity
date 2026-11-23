@@ -628,6 +628,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (slot === 0) layNormals(out)
       if (hairs && where) layHairs(hairs, where, out, slot, pose.time)
     },
+    absent: (time) => rayLength(0, time) <= 0,
     finish() {
       position.needsUpdate = true
       if (positionB) positionB.needsUpdate = true

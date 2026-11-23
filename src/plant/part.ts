@@ -31,6 +31,8 @@ export interface PlantPart {
   fill(slot: 0 | 1, pose: Pose): void
   // Called once a frame after both fills.
   finish(time: number, inputs: PlantInputs): void
+  // True when nothing of the part exists at that time: it is then neither filled nor drawn.
+  absent?(time: number): boolean
 }
 
 export type PartMaker = (options: PartOptions) => PlantPart | null
