@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { stream } from '../core/random.ts'
 import { beadLook } from './crumbs.ts'
 import { cropLight } from './light.ts'
-import { MATT_EASE_S, groundStates, soilHeight } from './soil.ts'
+import { groundStates, soilHeight } from './soil.ts'
 
 // The grass close to the plant, where the dawn lens sees single blades: each blade is a folded ribbon with a mid line, and carries beads of dew that are small balls of their own.
 // A clump stands at x, z in meters from the plant. Its blades lean every way, or within headingRad where the lens should see their faces. Its blades are born between bornS and take growS to grow; a clump born before the film stands from its first frame. Where beadsSeen is given, only that many of each blade's beads are made.
@@ -12,13 +12,6 @@ export interface Clump { x: number; z: number; blades: number; heightM: [number,
 // Where `drops` is given the dew is drops, not balls: only `share` of them are kept, most are small, each lies on the blade with a flat foot and sags down it, and a tip's drop hangs under the tip as a tear. The blades then bow sideways and their edges run unevenly.
 export interface BeadSizes { tipM: [number, number]; leastM: number; moreM: number; drops?: { share: number; tipShare: number; flat: number; sag: number; bowM: number; uneven: number } }
 export const beadSizes: BeadSizes = { tipM: [0.0005, 0.0008], leastM: 0.0002, moreM: 0.0009, drops: { share: 0.4, tipShare: 0, flat: 0.55, sag: 0.45, bowM: 0.1, uneven: 0.12 } }
-export const beadSizesKept: BeadSizes = { tipM: [0.00045, 0.0007], leastM: 0.00016, moreM: 0.0004 }
-export const clumpsKept: Clump[] = [
-  { x: -0.042, z: 0.034, blades: 3, heightM: [0.034, 0.048], widthM: [0.0016, 0.0022], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 8, headingRad: [-2.0, -1.1] },
-  { x: 0.042, z: -0.075, blades: 8, heightM: [0.045, 0.075], widthM: [0.002, 0.0032], spreadM: 0.011, lean: [0.12, 0.55], bornS: [1.2, 2.6], growS: 3.4, beads: 12 },
-  { x: -0.109, z: -0.06, blades: 3, heightM: [0.01, 0.018], widthM: [0.0014, 0.002], spreadM: 0.004, lean: [0.1, 0.5], bornS: [2, 3.2], growS: 3, beads: 3 },
-  { x: -0.088, z: -0.04, blades: 2, heightM: [0.008, 0.014], widthM: [0.0013, 0.0018], spreadM: 0.003, lean: [0.1, 0.5], bornS: [2.4, 3.4], growS: 3, beads: 2 },
-]
 export const clumps: Clump[] = [
   { x: -0.032, z: 0.06, blades: 2, heightM: [0.02, 0.027], widthM: [0.0015, 0.002], spreadM: 0.004, lean: [0.08, 0.3], bornS: [-100, -100], growS: 1, beads: 2, headingRad: [-2.0, -1.1] },
   { x: 0.046, z: -0.07, blades: 14, heightM: [0.04, 0.09], widthM: [0.0028, 0.0046], spreadM: 0.016, lean: [0.08, 0.45], bornS: [-2.5, -0.5], growS: 9.5, beads: 44 },
@@ -36,13 +29,12 @@ export const clumpsDawn: Clump[] = [
 ]
 
 const ROWS = 16
-// Until the bloom every blade also moves in the air on its own, eased out over the last seconds before it.
+// Every blade also moves in the air on its own.
 const GUST = '1.3'
 const FOLD = 0.35
 const DROOP_BEADS = 12
 
-export function blades(clumps: Clump[], bead: BeadSizes, first: Clump[] = []): THREE.Mesh {
-  let stay = -1
+export function blades(clumps: Clump[], bead: BeadSizes): THREE.Mesh {
   const random = stream('ground blades')
   const loose = stream('ground blades drops')
   const drops = bead.drops
@@ -63,8 +55,7 @@ export function blades(clumps: Clump[], bead: BeadSizes, first: Clump[] = []): T
   const n = new THREE.Vector3()
   const down = new THREE.Vector3()
   const out = new THREE.Vector3()
-  for (const clump of [...clumps, ...first]) {
-    if (clump === first[0]) stay = index.length
+  for (const clump of clumps) {
     for (let b = 0; b < clump.blades; b++) {
       const place = random.next() * Math.PI * 2
       const away = clump.spreadM * Math.sqrt(random.next())
@@ -191,7 +182,6 @@ export function blades(clumps: Clump[], bead: BeadSizes, first: Clump[] = []): T
   geometry.setAttribute('aCenter', new THREE.Float32BufferAttribute(center, 4))
   geometry.setAttribute('aAlong', new THREE.Float32BufferAttribute(along, 4))
   geometry.setIndex(index)
-  geometry.userData.stay = stay < 0 ? index.length : stay
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 0.3)
   return new THREE.Mesh(geometry)
 }
@@ -202,7 +192,7 @@ in vec3 aNormal;
 in vec4 aRoot;
 in vec4 aCenter;
 in vec4 aAlong;
-uniform float uKeptS;
+uniform vec4 uAir;
 uniform float uDew;
 uniform float uWet;
 out vec3 vWorld;
@@ -229,11 +219,10 @@ void main() {
   vec2 c = (modelMatrix * vec4(aRoot.xyz, 1.0)).xz;
   world.y += soilHeight(c, soilLod(c)) - 0.001;
   float t = aAlong.x;
-  float early = 1.0 - smoothstep(uKeptS - ${MATT_EASE_S.toFixed(1)}, uKeptS, uTime);
   float own = aAlong.z * 6.2832;
-  vec2 sway = vec2(sin(uTime * 1.7 + aRoot.x * 190.0), cos(uTime * 1.3 + aRoot.z * 170.0));
-  vec2 gust = vec2(sin(uTime * 3.3 + own * 3.0) + 0.6 * sin(uTime * 5.9 + own * 7.0), cos(uTime * 2.7 + own * 5.0) + 0.6 * cos(uTime * 4.9 + own * 11.0));
-  world.xz += (sway + early * ${GUST} * gust) * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
+  vec2 sway = vec2(sin(uReal * 1.7 + aRoot.x * 190.0), cos(uReal * 1.3 + aRoot.z * 170.0));
+  vec2 gust = vec2(sin(uReal * 3.3 + own * 3.0) + 0.6 * sin(uReal * 5.9 + own * 7.0), cos(uReal * 2.7 + own * 5.0) + 0.6 * cos(uReal * 4.9 + own * 11.0));
+  world.xz += (sway + ${GUST} * gust) * mix(0.6, 2.2, uAir.x) * (0.03 * t * t * grown * length(aCenter.xyz - aRoot.xyz));
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
@@ -278,7 +267,7 @@ void main() {
   float ndl = dot(n, uSunDir);
   vec3 through = albedo * vec3(2.4, 2.0, 0.5) * (0.55 + 0.45 * edge) * (1.0 - 0.4 * rib) * max(-ndl, 0.0);
   vec3 color = (albedo * max(ndl, 0.0) + through) * uSunColor * lit + albedo * groundAmbient(n) * deep;
-  if (uTime < uKeptS) {
+  {
     float fine = saturate(1.0 - fwidth(vAlong.y) * 5.0);
     float vein = mix(0.5, 0.5 + 0.5 * cos(vAlong.y * 28.3), fine) * (1.0 - rib);
     float mottle = valueNoise(vec2(t * 13.0 + vAlong.z * 40.0, vAlong.y * 1.5 + vAlong.z * 90.0));
