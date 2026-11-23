@@ -1,8 +1,10 @@
 # Looks of place
 
-2026-11-23 00:08 UTC, at commit 47efbf0 of agent/place.
+2026-11-23 00:29 UTC, at commit 3f94c7c of agent/place.
 
-- `01-first-whole-place-crane-at-bar-69-sky-and-ground.jpg`: First whole place, crane at bar 69, sky and ground and place only. Hills in three ranges with a saddle under the sun. Wrong: no trees yet, hills are plain wedges, the land between field and hills is as dark as the soil
-- `02-wide-view-in-the-time-lapse-day-bar-29-wrong-woo.jpg`: Wide view in the time lapse day, bar 29. Wrong: woods read as flat topped green mounds, the grain field on the hill has a sawtooth edge, no tree lines or hedges yet
-- `03-low-view-at-the-first-sunrise-the-sun-comes-up-i.jpg`: Low view at the first sunrise. The sun comes up in the saddle. Wrong: silhouette too plain, no crowns
-- `04-before-the-film-camera-with-no-far-land.jpg`: Before: the film camera with no far land
+- `01-15-crane-everything-after-trees.jpg`: 15 crane, everything, after trees
+- `02-16-crane-everything.jpg`: 16 crane, everything
+- `03-08-wide-everything.jpg`: 08 wide, everything
+- `04-wide-view-land-strip-of-shots-01-02-05-06-07-10-.jpg`: wide view, land strip of shots 01 02 05 06 07 10 11 12 13, twice the size
+- `05-low-view-same-shots.jpg`: low view, same shots
+- `06-02-low.jpg`: 02 low
