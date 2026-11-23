@@ -52,7 +52,7 @@ export const leafMain = /* glsl */ `void main() {
   float fine = dot(texture(uDetail, fUv, -1.0).rgb, vec3(0.3, 0.6, 0.1)) / dot(vec3(${DETAIL_MEAN}), vec3(0.3, 0.6, 0.1));
   float cells = smoothstep(0.96, 1.25, fine);
 
-  vec3 upper = vec3(0.036, 0.088, 0.014) * mix(vec3(1.0), var, 0.85) * tone;
+  vec3 upper = vec3(0.041, 0.1, 0.016) * mix(vec3(1.0), var, 0.85) * tone;
   upper = mix(upper, vec3(0.1, 0.16, 0.085), (0.85 * vein.r + 0.45 * vein.b) * (0.4 + 0.6 * vRipe));
   vec3 under = vec3(0.07, 0.115, 0.03) * mix(vec3(1.0), var, 0.55) * tone;
   under = mix(under, vec3(0.11, 0.15, 0.08), 0.7 * vein.r + 0.35 * vein.b);
@@ -70,7 +70,7 @@ export const leafMain = /* glsl */ `void main() {
   // A young blade lets the light through evenly: the thin patches come with age.
   float thin = (0.36 + mix(0.3, 0.2 + 0.6 * smoothstep(0.35, 0.85, mark.g), vRipe) + 0.7 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
   // A leaf holds back red: what comes through is a deep green, gold at the rim and the tip of a grown blade, where it is thinnest, and against the low sun.
-  vec3 through = mix(mix(vec3(0.074, 0.126, 0.036), vec3(0.11, 0.2, 0.045), uFresh), vec3(0.24, 0.19, 0.05), max(max(0.8 * sheer * smoothstep(0.55, 0.95, abs(vUv.x)), 0.75 * vRipe * max(smoothstep(0.8, 0.98, abs(vUv.x)), smoothstep(0.9, 1.0, vUv.y))), uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.6 - 1.1 * thick);
+  vec3 through = mix(mix(vec3(0.088, 0.14, 0.022), vec3(0.11, 0.2, 0.045), uFresh), vec3(0.24, 0.19, 0.05), max(max(0.8 * sheer * smoothstep(0.55, 0.95, abs(vUv.x)), 0.75 * vRipe * max(smoothstep(0.8, 0.98, abs(vUv.x)), smoothstep(0.9, 1.0, vUv.y))), uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.6 - 1.1 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
   through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
   through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe) * (1.0 - 0.7 * uFresh);
@@ -92,7 +92,7 @@ export const leafMain = /* glsl */ `void main() {
   float margin = 1.0 - smoothstep(0.86, 0.98, min(1.0, abs(vUv.x) + bay)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
-  t.through = through * 3.0;
+  t.through = through;
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
   t.rough = top ? 0.82 : 0.95;
