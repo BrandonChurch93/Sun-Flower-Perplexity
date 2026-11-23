@@ -89,12 +89,12 @@ vec3 sunGlare(vec2 px) {
   float q = r * r / (uSunCore * uSunCore);
   float core = 1.0 / ((1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
-  float glow = (0.22 + 0.4 * uHaze) * exp(-r / wide) + (0.03 + 0.3 * uHaze) * exp(-r / 0.16);
+  float glow = (0.22 + 0.4 * uHaze) * exp(-r / wide) + (0.03 + 0.17 * uHaze) * exp(-r / 0.16);
   float veil = uVeilSun * (0.004 + 0.016 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
   vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
   vec3 glass = mix(uSunLight, vec3(peak), 0.7) * (uSunHot * core) + air * (glow + veil);
   float open = texture(tShafts, vUv).r;
-  float here = mix(0.3, 1.0, texture(tOpen, vUv).a);
+  float here = mix(0.14, 1.0, texture(tOpen, vUv).a);
   float ra = length(away);
   // The beams: the air is never even, so the light stands in it in uneven bands that all point at the sun. Under a deck that has just torn the lit air is below the tear.
   float turn = atan(away.y, away.x);
