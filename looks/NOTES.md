@@ -1,9 +1,10 @@
 # Looks of post
 
-2026-11-23 09:53 UTC, at commit bf55bd1 of agent/post.
+2026-11-23 10:17 UTC, at commit dcf7095 of agent/post.
 
-- `01-952-needles-at-draft-960-x6-before-and-after-the.jpg`: 952 needles at draft 960 x6, before and after: the ring of unblurred ground round every sharp thing is gone
-- `02-952-stalk-hairs-at-draft-x8-before-and-after.jpg`: 952 stalk hairs at draft x8, before and after
-- `03-952-stalk-on-bf55bd1-before-the-cure-draft-left-.jpg`: 952 stalk on bf55bd1 before the cure, draft left, review right: pale ground between the hairs
-- `04-1106-dome-on-the-stem-with-my-fill-left-and-with.jpg`: 1106 dome on the stem, with my fill left and with fill and discs off right: it is geometry
-- `05-3112-draft-left-review-right.jpg`: 3112 draft left, review right
+- `01-1003-leaf-edge-at-1920-100-percent-draft-review-.jpg`: 1003 leaf edge at 1920, 100 percent: draft, review before, review with the edge rule
+- `02-1003-needles-3x-draft-review-before-review-with-.jpg`: 1003 needles 3x: draft, review before, review with the edge rule
+- `03-1106-stem-hairs-3x-draft-review-before-review-wi.jpg`: 1106 stem hairs 3x: draft, review before, review with the edge rule
+- `04-1208-hairs-3x-draft-review-before-review-with-th.jpg`: 1208 hairs 3x: draft, review before, review with the edge rule (dark fringe pixels, being cured)
+- `05-1003-top-border-3x-before-and-after-nothing-is-g.jpg`: 1003 top border 3x: before and after nothing is gathered from past the border
+- `06-952-stalk-at-960-6x-draft-review-with-the-guess-.jpg`: 952 stalk at 960, 6x: draft, review with the guess, review with one pure picture
