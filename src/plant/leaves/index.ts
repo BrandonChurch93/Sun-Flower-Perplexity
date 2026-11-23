@@ -26,9 +26,6 @@ const PATH = 48
 const OPEN_SIDE = 0.35
 const FACING = 1.2
 const FRINGE = 4
-const DAWN_GLOW = 0.35
-const RAIN_GLOW = 0.5
-const NIGHT_GLOW = 0.32
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
 const BLOOM = 40
 // The other marks on the plant's clock the leaves are timed to: where the first pair opens, where the plant is set, where its bud is formed, and where the seedling and the shoot are at their fullest.
@@ -377,13 +374,19 @@ export function create(options: PartOptions): PlantPart {
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const geometry = partGeometry(options)
   const slots = [new Float32Array(vertices * 3), new Float32Array(vertices * 3)]
-  const normals = new Float32Array(vertices * 3)
+  // What a slot carries beside the shape, of its own moment: the normals here, and below each leaf's numbers and the stalks' skin. The neighbors keep one.
+  const both = options.places ? [0] : [0, 1]
+  const normalSets = both.map(() => new Float32Array(vertices * 3))
+  let normals = normalSets[0]
+  let blade = slots[0]
+  const filled = [false, false]
+  const led = [false, false]
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const normal = dynamic(normals, 3)
+  const normalSent = normalSets.map((set) => dynamic(set, 3))
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
-  geometry.setAttribute('normal', normal)
+  normalSent.forEach((a, k) => geometry.setAttribute(k === 1 ? 'normalB' : 'normal', a))
   geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvList), 2))
   geometry.setAttribute('aLeaf', new THREE.BufferAttribute(new Float32Array(leafList), 4))
   if (!options.places) {
@@ -394,6 +397,15 @@ export function create(options: PartOptions): PlantPart {
   const state = new Float32Array(LEAVES * 4)
   const ripeness = new Float32Array(LEAVES)
   const cut = new Float32Array(LEAVES * 4)
+  const stateSets = both.map(() => new Float32Array(LEAVES * 4))
+  const ripeSets = both.map(() => new Float32Array(LEAVES))
+  // How deep each leaf's teeth are cut at the slot's moment.
+  const depthSets = both.map(() => new Float32Array(LEAVES))
+  let stateNow = stateSets[0]
+  let ripeNow = ripeSets[0]
+  let depthNow = depthSets[0]
+  const freshes = [0, 0]
+  const hairsUp = [0, 0]
   const edges = new Float32Array(LEAVES * 4)
   for (const leaf of leaves) {
     cut[leaf.i * 4] = leaf.teeth
@@ -423,12 +435,14 @@ export function create(options: PartOptions): PlantPart {
   const mesh = partMesh(geometry, surface)
 
   const tubeSlots = hero ? [new Float32Array(tubes * 3), new Float32Array(tubes * 3)] : null
-  const tubeNormals = hero ? new Float32Array(tubes * 3) : null
-  const tubeUv = hero ? new Float32Array(tubes * 2) : null
+  const tubeNormalSets = hero ? [new Float32Array(tubes * 3), new Float32Array(tubes * 3)] : null
+  const tubeUvSets = hero ? [new Float32Array(tubes * 2), new Float32Array(tubes * 2)] : null
+  let tubeNormals = tubeNormalSets ? tubeNormalSets[0] : null
+  let tubeUv = tubeUvSets ? tubeUvSets[0] : null
   let tubeMesh: THREE.Mesh | null = null
   let tubeSurface: ReturnType<typeof makePartSurface> | null = null
   let tubeAttributes: THREE.BufferAttribute[] = []
-  if (tubeSlots && tubeNormals && tubeUv) {
+  if (tubeSlots && tubeNormalSets && tubeUvSets) {
     const g = new THREE.BufferGeometry()
     const tubeIndex: number[] = []
     for (const leaf of leaves) {
@@ -439,11 +453,13 @@ export function create(options: PartOptions): PlantPart {
         }
       }
     }
-    tubeAttributes = [dynamic(tubeSlots[0], 3), dynamic(tubeSlots[1], 3), dynamic(tubeNormals, 3), dynamic(tubeUv, 2)]
+    tubeAttributes = [dynamic(tubeSlots[0], 3), dynamic(tubeSlots[1], 3), dynamic(tubeNormalSets[0], 3), dynamic(tubeUvSets[0], 2), dynamic(tubeNormalSets[1], 3), dynamic(tubeUvSets[1], 2)]
     g.setAttribute('position', tubeAttributes[0])
     g.setAttribute('positionB', tubeAttributes[1])
     g.setAttribute('normal', tubeAttributes[2])
     g.setAttribute('uv', tubeAttributes[3])
+    g.setAttribute('normalB', tubeAttributes[4])
+    g.setAttribute('uvB', tubeAttributes[5])
     g.setIndex(tubeIndex)
     tubeSurface = makePartSurface(options, { name: 'leaf stalks', vertex: stalkVertex, fragment: stalkFragment })
     tubeMesh = partMesh(g, tubeSurface)
@@ -456,7 +472,6 @@ export function create(options: PartOptions): PlantPart {
   let crystalSlots = 0
   // The hairs lie in the order of the leaves and each leaf has its share by its area, so the hairs of the leaves not yet born are simply not drawn.
   const hairsUpTo: number[] = []
-  let hairsShown = 0
   if (hairs) {
     const area = (leaf: Leaf) => fullLength[leaf.i] * fullLength[leaf.i] * shares[leaf.i]
     let sum = 0
@@ -541,7 +556,7 @@ export function create(options: PartOptions): PlantPart {
 
   // A place on a blade's skin and the normal of the face that holds water there.
   const put = (leaf: Leaf, along: number, across: number, to: Float32Array, up: Float32Array | null, o: number): void => {
-    const out = slots[0]
+    const out = blade
     const b0 = leaf.hem ? 1 : 0
     const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
     const s = clamp(along, 0, 1)
@@ -552,7 +567,7 @@ export function create(options: PartOptions): PlantPart {
       const k0 = Math.floor(fb) - 1
       const w = HERO_COLS[k0] + (HERO_COLS[k0 + 1] - HERO_COLS[k0]) * (fb - 1 - k0)
       const sd = combine(seed, leaf.i * 2 + (w < 0 ? 0 : 1))
-      const reach = 0.97 - bayAt(s, sd, leaf.teeth, toothKey(sd)) * cut[leaf.i * 4 + 1]
+      const reach = 0.97 - bayAt(s, sd, leaf.teeth, toothKey(sd)) * depthNow[leaf.i]
       if (Math.abs(w) > reach) {
         const edge = Math.sign(w) * reach
         let c = 0
@@ -580,14 +595,14 @@ export function create(options: PartOptions): PlantPart {
   }
 
   // Each bead's path is laid on the skin as it stands: where it forms, where its slide ends and where its dew gathers. The running is in the bead's own shader.
-  const fillBeads = (pose: Pose): void => {
+  const fillBeads = (slot: 0 | 1, pose: Pose): void => {
     if (!beads) return
-    const form = beads.form()
-    const formUp = beads.formUp()
-    const mid = beads.mid()
-    const end = beads.end()
-    const endUp = beads.endUp()
-    const gather = beads.gather()
+    const form = beads.form(slot)
+    const formUp = beads.formUp(slot)
+    const mid = beads.mid(slot)
+    const end = beads.end(slot)
+    const endUp = beads.endUp(slot)
+    const gather = beads.gather(slot)
     for (let k = 0; k < beads.count; k++) {
       const spot = beadSpots[k]
       const leaf = leaves[spot.leaf]
@@ -907,13 +922,14 @@ export function create(options: PartOptions): PlantPart {
 
     if (filling.lead) {
       bladeNormals(out, normals, leaf)
+      const state = stateNow
       state[i * 4] = size
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
       state[i * 4 + 2] = smoothstep(0.35, 1.3, fold)
       // Before the bloom the plant's blades are whole: the holes and bites come with the summer.
       state[i * 4 + 3] = main && early > 0 ? lerp(smoothstep(5, 24, age), -2, early) : smoothstep(5, 24, age)
-      ripeness[i] = tint
-      cut[i * 4 + 1] = lerp(YOUNG_TEETH, leaf.depth, ripe) * (i < 2 ? smoothstep(PAIR_OPENS_S, 11, time) : 1)
+      ripeNow[i] = tint
+      depthNow[i] = lerp(YOUNG_TEETH, leaf.depth, ripe) * (i < 2 ? smoothstep(PAIR_OPENS_S, 11, time) : 1)
     }
 
     if (!tubeSlots || !tubeNormals || !tubeUv) return
@@ -995,7 +1011,7 @@ export function create(options: PartOptions): PlantPart {
     let born = 0
     while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
     const count = born > 0 ? hairsUpTo[born - 1] : 0
-    if (filling.lead) hairsShown = count
+    hairsUp[slot] = count
     const frosted = stateUniforms.uPlantFrost.value > 0
     // The ice grows after the cut to the frost: at the cut the edge is the one the night left.
     const rime = 1
@@ -1037,9 +1053,9 @@ export function create(options: PartOptions): PlantPart {
         if (hair.bay > 0) {
           const left = hair.b === 1
           let k = 0
-          const reach = 1 - hair.bay * cut[leaf.i * 4 + 1]
+          const reach = 1 - hair.bay * depthNow[leaf.i]
           while (k < 4 && Math.abs(HERO_COLS[k + 1]) > reach) k++
-          const share = clamp((1 - hair.bay * cut[leaf.i * 4 + 1] - Math.abs(HERO_COLS[k])) / (Math.abs(HERO_COLS[k + 1]) - Math.abs(HERO_COLS[k])))
+          const share = clamp((1 - hair.bay * depthNow[leaf.i] - Math.abs(HERO_COLS[k])) / (Math.abs(HERO_COLS[k + 1]) - Math.abs(HERO_COLS[k])))
           b = left ? 1 + k : leaf.nv - 3 - k
           tb = left ? share : 1 - share
         }
@@ -1154,6 +1170,18 @@ export function create(options: PartOptions): PlantPart {
   if (beads) meshes.push(...beads.meshes)
   if (crystals) meshes.push(...crystals.meshes)
 
+  const settle = (share: number): void => {
+    const to = share > 0 ? 1 : 0
+    const a = stateSets[0]
+    const b = stateSets[to]
+    for (let k = 0; k < state.length; k++) state[k] = a[k] + (b[k] - a[k]) * share
+    for (let i = 0; i < LEAVES; i++) {
+      ripeness[i] = ripeSets[0][i] + (ripeSets[to][i] - ripeSets[0][i]) * share
+      cut[i * 4 + 1] = depthSets[0][i] + (depthSets[to][i] - depthSets[0][i]) * share
+    }
+    uniforms.uFresh.value = freshes[0] + (freshes[to] - freshes[0]) * share
+  }
+
   return {
     name: 'leaves',
     meshes,
@@ -1168,22 +1196,50 @@ export function create(options: PartOptions): PlantPart {
     },
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
-      // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (filling.lead) uniforms.uGlow.value = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
-      if (filling.lead) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
+      const lead = filling.lead
+      const of = lead ? slot : 0
+      normals = normalSets[of]
+      stateNow = stateSets[of]
+      ripeNow = ripeSets[of]
+      depthNow = depthSets[of]
+      if (tubeNormalSets && tubeUvSets) {
+        tubeNormals = tubeNormalSets[of]
+        tubeUv = tubeUvSets[of]
+      }
+      blade = slots[slot]
+      filled[slot] = true
+      if (lead) {
+        led[slot] = true
+        freshes[slot] = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
+      }
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
-      if (filling.lead) fillBeads(pose)
+      // The water lies on the blade of each slot, so it rides with the blade between the two.
+      fillBeads(slot, pose)
     },
     finish() {
-      position.needsUpdate = true
-      if (positionB) positionB.needsUpdate = true
-      normal.needsUpdate = true
-      for (const a of tubeAttributes) a.needsUpdate = true
-      hairs?.finish(hairsShown)
+      if (filled[0]) position.needsUpdate = true
+      if (filled[1] && positionB) positionB.needsUpdate = true
+      for (let k = 0; k < normalSent.length; k++) if (led[k]) normalSent[k].needsUpdate = true
+      if (tubeAttributes.length) {
+        for (let k = 0; k < 2; k++) {
+          if (filled[k]) tubeAttributes[k].needsUpdate = true
+          if (led[k]) {
+            tubeAttributes[2 + 2 * k].needsUpdate = true
+            tubeAttributes[3 + 2 * k].needsUpdate = true
+          }
+        }
+      }
+      filled.fill(false)
+      led.fill(false)
+      // A leaf born between the two slots has its hairs in one of them only: they wait for the other.
+      const shown = positionB ? Math.min(hairsUp[0], hairsUp[1]) : hairsUp[0]
+      hairs?.finish(shown)
       beads?.finish()
-      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystalAt[hairsShown] : 0)
+      crystals?.finish(stateUniforms.uPlantFrost.value > 0 ? crystalAt[shown] : 0)
+      settle(0)
     },
+    settle,
   }
 }
 

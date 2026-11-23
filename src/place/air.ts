@@ -32,6 +32,8 @@ export const airUniforms = {
   uFogLow: { value: 0 },
   // How much fog stands between the sun and the far land: its hills are lit by the sky alone and fade toward the sky above them.
   uVeil: { value: 0 },
+  // The last light of the evening, sun at the horizon and under it: the day's haze has sunk to the low land and the high land stands dark against the sky.
+  uDusk: { value: 0 },
   // How much the light shines through leaves toward the lens: all of it for the sun, little for the moon.
   uThrough: { value: 1 },
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
@@ -51,6 +53,7 @@ uniform float uFogShare;
 uniform float uFogNear;
 uniform float uFogLow;
 uniform float uVeil;
+uniform float uDusk;
 uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
@@ -61,7 +64,8 @@ uniform vec3 uLandCrop;
 vec3 skyBehind(vec3 dir) {
   vec2 h = normalize(dir.xz + vec2(1e-6));
   vec2 s = normalize(uTrueSun.xz + vec2(1e-6));
-  float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun;
+  // At dusk the air before the high land lies in that land's shadow: the sky lights it from above, not the sun from behind.
+  float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun * (1.0 - 0.9 * uDusk);
   float up = saturate(dir.y / (length(dir) * mix(0.07, 0.03, uVeil)));
   vec3 clear = mix(mix(uAirHorizon, uAirZenith, mix(0.6, 1.0, uVeil) * up), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
@@ -91,7 +95,7 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
     // The field's far crop stands in the ground fog to its end, and the land past it takes the same.
     float near = mix(smoothstep(150.0, 290.0, r), 1.0, uFogNear);
     float high = 1.0 - exp(-max(worldPos.y, 0.0) / 30.0);
-    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * (1.0 - uFogLow * high));
+    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * (1.0 - max(uFogLow * high, 0.85 * uDusk * smoothstep(2.0, 16.0, worldPos.y))));
   }
   return done;
 }

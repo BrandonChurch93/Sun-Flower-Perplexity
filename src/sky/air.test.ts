@@ -29,6 +29,16 @@ describe('sky air transport', () => {
     assert.ok(night[2] > 0.003 && night[2] < 0.009)
   })
 
+  it('dims and reddens the photographed sun continuously down the low path', () => {
+    const high = air.photographedSunAt(1.8, rgb())
+    const low = air.photographedSunAt(0.55, rgb())
+    const rim = air.photographedSunAt(0.08, rgb())
+    assert.ok(high[0] > low[0] && low[0] > rim[0] && rim[0] > 0)
+    assert.ok(high[1] / high[0] > low[1] / low[0])
+    assert.ok(low[1] / low[0] > rim[1] / rim[0])
+    assert.ok(high[2] < high[1])
+  })
+
   it('gives the same directional result after interleaving light queries', () => {
     const a = air.skyAt(-4.8, 0.047, 0.12, rgb())
     air.deckAt(14, rgb())

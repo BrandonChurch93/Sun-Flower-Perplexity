@@ -205,7 +205,7 @@ export class Plant {
   private readonly hide: number
   private on = true
   private readonly stands = { held: 0 }
-  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) }, uOwnMix: { value: new THREE.Vector2(0, 1) }, uOwnLapse: { value: new THREE.Vector4(0, 0, 0, 0) } }
+  private readonly own = { uOwnAir: { value: new THREE.Vector4(0, 0, 0, 0) }, uOwnTip: { value: new THREE.Vector3(0, 1, 0) }, uOwnMix: { value: new THREE.Vector2(0, 1) }, uOwnKeys: { value: 0 }, uOwnLapse: { value: new THREE.Vector4(0, 0, 0, 0) } }
   // The key frame each slot of each part holds, and the key the part's unslotted numbers were laid from. The stand-in is listed under null.
   private readonly holds = new Map<PlantPart | null, Int32Array>()
   private readonly keys = [newKey(), newKey()]
@@ -380,6 +380,7 @@ export class Plant {
     // Key n lies in slot n mod 2, so the second slot holds the later key of one stretch and the earlier key of the next.
     const slot = (i & 1) as 0 | 1
     this.own.uOwnMix.value.set(slot === 0 ? w : 1 - w, slot === 0 ? dw : -dw)
+    this.own.uOwnKeys.value = 1
     this.own.uOwnAir.value.set(Math.min(felt.calm ?? felt.wind, felt.wind), felt.wind, felt.gust ?? 0, felt.rain ?? 0)
     this.own.uOwnTip.value.copy(first.tip).lerp(second.tip, w)
     const lapse = (felt.lapse ?? 0) * (1 - (felt.held ?? 0))
@@ -394,6 +395,8 @@ export class Plant {
     this.lay(first, slot, second.frame)
     if (j !== i) this.lay(second, (1 - slot) as 0 | 1, second.frame)
     filling.held = heldWas
+    // What a part keeps once and not for each vertex stands between its two keys where the shape does.
+    for (const part of live) part.settle?.(this.own.uOwnMix.value.x)
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)
     this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)
@@ -404,6 +407,7 @@ export class Plant {
     if (this.play(timeOpen, feltOpen)) return
     for (const held of this.holds.values()) held.fill(-1)
     this.own.uOwnMix.value.set(0, 1)
+    this.own.uOwnKeys.value = 0
     this.own.uOwnLapse.value.set(0, 0, 0, 0)
     usePlant(this.variant, this.at)
     // While the plant's clock stands the air moves it where it is drawn, so the shape is filled for still air and stays as it is.

@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 13 · 2026-11-23 05:33 UTC · Phase 3
+- Last status: 14 · 2026-11-23 06:14 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 06:14 UTC · status 14 · Phase 3 · `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5; `status-2.jpg`: Bar 67: the pull back begins; `status-3.jpg`: Bar 73: the sun touches the ridge
 - 2026-11-23 05:33 UTC · status 13 · Phase 3 · `status-1.jpg`: The break at the boom of bar 41, frames 2081 to 2090, with the lens merged (draft tier, drawn here); `status-2.jpg`: The end of a quick night, frames 2174 to 2184: the moon fades once and does not come back (draft tier, drawn here); `status-3.jpg`: The end of the film at bars 67, 69, 71 and 73 with the new far crop (draft tier, drawn here); `status-4.jpg`: The held tear after the storm at bars 42.19 and 42.33, and two days at bars 29.7 and 43.75 (draft tier, drawn here)
 - 2026-11-23 05:06 UTC · status 12 · Phase 3 · `status-1.jpg`: The merged film at twelve moments (draft tier, drawn here); `status-2.jpg`: The break at the boom of bar 41, frames 2080 to 2090: the tear opens on frame 2083 (draft tier, drawn here); `status-3.jpg`: The night after the storm, frames 2150 to 2196, every second frame (draft tier, drawn here); `status-4.jpg`: Frost hold, bar 21, at the review tier (drawn by the frost builder)
 - 2026-11-23 04:40 UTC · status 11 · Phase 3 · `status-1.jpg`: Frost hold, bar 21: reference left, film right (draft tier); `status-2.jpg`: Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); `status-3.jpg`: Night, bar 46.82: reference left, film right (draft tier); `status-4.jpg`: The field, bar 69: reference left, film right (draft tier)
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
 - 2026-11-23 01:17 UTC · status 04 · Phase 2 · `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white; `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it; `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds; `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
 - 2026-11-23 00:51 UTC · status 03 · Phase 2 · `status-1.jpg`: The new two beat night with the stand-in sky, bars 50.3 to 51.1 (frame by frame, about 0.9 s): sunset, a short blue night, sunrise; `status-2.jpg`: The film camera through the ascent, bars 44 to 54, stand-in sky: the sun stays on the horizon in frame. The neighbours are still too tall and the leaf highlights too green (both sent back); `status-3.jpg`: Sky candidate A, first sheet (unverified): good colour at dawn and dusk, but the clouds are dark unlit masses and the storm is flat. Sent back with six points; `status-4.jpg`: Sky candidate C, first sheet (unverified): clean gradients, but clouds are sparse and the storm has no structure
-- 2026-11-23 00:35 UTC · status 02 · Phase 2 · `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky; `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
 
 ## Clock
 
@@ -41,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 2.29 h |
+| 3 | 9.00 h | 2.98 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 7.56 h |
+| Whole build | 30.00 h | 8.24 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -247,4 +247,6 @@ None yet.
   Pictures: The merged film at twelve moments (draft tier, drawn here); The break at the boom of bar 41, frames 2080 to 2090: the tear opens on frame 2083 (draft tier, drawn here); The night after the storm, frames 2150 to 2196, every second frame (draft tier, drawn here); Frost hold, bar 21, at the review tier (drawn by the frost builder).
 - Status 13, 2026-11-23 05:33 UTC, Phase 3. The lens is merged with the beams of the break rising with the tear over six frames (measured here: closed at frame 2082, tear at 2083, whole fan by 2087). The moon no longer blinks at the end of the quick nights (measured here on frames 2174 to 2184: the disc fades once into the dawn). The far crop at the end of the film now reaches the foot of the ridge with no line. The count now names the frame where something was made after loading, and one part still makes one vertex array (being found). The text that paints the plant's skin moved to its own folder and a new owner has started on the day look of the leaves, the largest gap to the key pictures. Two of twelve parts of the first whole watch are drawn. Next: The day look of the leaves, the plant's script time while it grows, the glow of the last sunset (the lens puts it 8 pixels under the drawn disc), the thaw of the frost (its fringe still reads as an outline at bars 23 and 24), then the first whole watch joined from parts. Time used: 7.6 h of 30 h.
   Pictures: The break at the boom of bar 41, frames 2081 to 2090, with the lens merged (draft tier, drawn here); The end of a quick night, frames 2174 to 2184: the moon fades once and does not come back (draft tier, drawn here); The end of the film at bars 67, 69, 71 and 73 with the new far crop (draft tier, drawn here); The held tear after the storm at bars 42.19 and 42.33, and two days at bars 29.7 and 43.75 (draft tier, drawn here).
+- Status 14, 2026-11-23 06:14 UTC, Phase 3. The crane now ends lower and nearer, so the pair stands larger against the field, the horizon sits a third from the top and the sun on the left third. The far field is one sea of heads to the mist (the ruled line, the yellow dashes and the holes are gone). The lens glow sits on the drawn sun. The one shape that was still made in play (frame 3350) is mended: frames 3331 to 3351 make nothing after loading. The plant's bud and constant glow, the place's two tables and the field's hold fix are merged; 175 tests pass. Next: Your note is in the plan: frost close ups on hard cuts at bars 19, 21 and 23 (each lands on a chord, back to the wide on 25), and the lens closes in on the opening head from bar 55 and pulls out on 65. Reference pictures for those shots come first. Also in work: the last sunset (narrow orange band, red disc, darker land), the leaf look, the plant's cost while growing. Time used: 8.2 h of 30 h.
+  Pictures: The last stretch on the lower crane, bars 67 to 74.5; Bar 67: the pull back begins; Bar 73: the sun touches the ridge.
 

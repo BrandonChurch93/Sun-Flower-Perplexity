@@ -30,7 +30,7 @@ const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
 
 // `hairs` is how many stand on a square meter of grown skin.
-interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number; sprout: boolean; down: boolean }
+interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number[]; sprout: boolean; down: boolean }
 interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; beads: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
@@ -39,6 +39,8 @@ function shapeOf(options: PartOptions): Shape {
   if (options.variant !== 0) return { main: 100, sides: 24, below: 1, cap: 4, hairs: 8500, sprout: 1500, beads: 30, full: true }
   return { main: 170, sides: 40, below: 1, cap: 5, hairs: 34000, sprout: 5200, beads: 90, full: true }
 }
+
+const tender = (time: number): number => Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
 
 export function create(options: PartOptions): PlantPart {
   const shape = shapeOf(options)
@@ -52,11 +54,12 @@ export function create(options: PartOptions): PlantPart {
 
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
-  const normals = new Float32Array(count * 3)
-  const coords = new Float32Array(count * 3)
-  const skin = new Float32Array(count * 4)
-  const skin2 = new Float32Array(count * 4)
-  const skin3 = new Float32Array(count * 4)
+  // What a slot carries beside the shape: the normals and the skin's numbers of its own moment. The neighbors keep one.
+  const carried = (options.places ? [0] : [0, 1]).map(() => ({ normals: new Float32Array(count * 3), coords: new Float32Array(count * 3), skin: new Float32Array(count * 4), skin2: new Float32Array(count * 4), skin3: new Float32Array(count * 4) }))
+  // How tender the skin is in each slot, in steps: 64 for the young stem's and 16 more for the sprout's.
+  const ages = [0, 0]
+  const filled = [false, false]
+  const led = [false, false]
   const index: number[] = []
   for (let r = 0; r < rings - 1; r++) {
     for (let s = 0; s < sides; s++) {
@@ -68,17 +71,15 @@ export function create(options: PartOptions): PlantPart {
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const sent = [dynamic(normals, 3), dynamic(coords, 3), dynamic(skin, 4), dynamic(skin2, 4), dynamic(skin3, 4)]
+  const sent = carried.map((c) => [dynamic(c.normals, 3), dynamic(c.coords, 3), dynamic(c.skin, 4), dynamic(c.skin2, 4), dynamic(c.skin3, 4)])
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
-  geometry.setAttribute('normal', sent[0])
-  geometry.setAttribute('aCoord', sent[1])
-  geometry.setAttribute('aSkin', sent[2])
-  geometry.setAttribute('aSkin2', sent[3])
-  geometry.setAttribute('aSkin3', sent[4])
+  const names = ['normal', 'aCoord', 'aSkin', 'aSkin2', 'aSkin3']
+  sent.forEach((list, k) => list.forEach((a, n) => geometry.setAttribute(names[n] + (k === 1 ? 'B' : ''), a)))
   geometry.setIndex(index)
   const maps = { uSkin: { value: null as THREE.Texture | null }, uRibs: { value: null as THREE.Texture | null } }
-  const surface = makePartSurface(options, { name: 'stem', vertex, fragment, uniforms: options.places ? {} : maps })
+  const age = { uStemAge: { value: 0 } }
+  const surface = makePartSurface(options, { name: 'stem', vertex, fragment, uniforms: options.places ? age : { ...maps, ...age } })
   const mesh = partMesh(geometry, surface)
 
   // On the field tiers one ring spacing is far longer than the foot, so the foot's color would spread up the stem.
@@ -98,7 +99,7 @@ export function create(options: PartOptions): PlantPart {
     const set = perM2 ? createHairs(options, Math.round(perM2 * hairTable[CELLS]), name, undefined, widthM) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: false, down: high < 0.002 }
+    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: [0, 0], sprout: false, down: high < 0.002 }
     for (let i = 0; i < n; i++) {
       const want = ((i + hash01(seed, salt, i)) / n) * hairTable[CELLS]
       let cell = Math.min(CELLS - 1, Math.floor((i / n) * CELLS))
@@ -120,7 +121,7 @@ export function create(options: PartOptions): PlantPart {
     const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
     if (!set) return null
     const n = set.count
-    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: 0, sprout: true, down: false }
+    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: [0, 0], sprout: true, down: false }
     for (let i = 0; i < n; i++) {
       const x = (i + hash01(seed, salt, i)) / n
       c.seg[i] = x < 0.5 ? 0 : 1
@@ -136,7 +137,7 @@ export function create(options: PartOptions): PlantPart {
   const dew = shape.beads ? createBeads(options, shape.beads, 'stem dew') : null
   const dewOwn = new Float32Array((dew ? dew.count : 0) * 5)
   const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
-  let dewDrawn = 0
+  const dewDrawn = [0, 0]
   if (dew) {
     const tint = dew.tint()
     for (let i = 0; i < dew.count; i++) {
@@ -167,6 +168,12 @@ export function create(options: PartOptions): PlantPart {
     if (slot === 1 && !positionB) return
     const out = slots[slot]
     const first = filling.lead
+    const { normals, coords, skin, skin2, skin3 } = carried[first ? slot : 0]
+    filled[slot] = true
+    if (first) {
+      led[slot] = true
+      ages[slot] = tender(pose.time)
+    }
     const time = pose.time
     const length = pose.length
     const grown = smoothstep(0, 0.006, heightAt(time))
@@ -176,7 +183,6 @@ export function create(options: PartOptions): PlantPart {
     const rFoot = stemRadius(time, 0) * grown
     const footLength = Math.min(0.03, 0.12 * length + 0.002)
     const pale = paleness(time)
-    const tender = Math.round(64 * (1 - smoothstep(37, 44.5, time))) + Math.round(16 * (1 - smoothstep(10, 16, time)))
     const flareTo = NECK_FLARE * headR
     const grounded = 1 - smoothstep(36.5, BLOOM_FROM_S, time)
 
@@ -361,7 +367,7 @@ export function create(options: PartOptions): PlantPart {
         coords[at * 3 + 1] = label / SKIN_TILE_M
         coords[at * 3 + 2] = label / TOP_M
         skin[at * 4] = rib
-        skin[at * 4 + 1] = youth + 1 + 4 * tender
+        skin[at * 4 + 1] = youth + 1
         skin[at * 4 + 2] = sprout
         skin[at * 4 + 3] = foot
         skin2[at * 4] = open
@@ -418,7 +424,7 @@ export function create(options: PartOptions): PlantPart {
     for (const c of coats) {
       const root = c.set.root(slot)
       const lean = c.set.lean(slot)
-      if (first) c.drawn = 0
+      c.drawn[slot] = 0
       let j = 0
       for (let i = 0; i < c.set.count; i++) {
         const k = c.seg[i]
@@ -469,7 +475,7 @@ export function create(options: PartOptions): PlantPart {
         root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * reach
         root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
         root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
-        if (shown > 0) c.drawn = Math.max(c.drawn, i + 1)
+        if (shown > 0) c.drawn[slot] = i + 1
         root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1) * (1 - stateUniforms.uPlantFrost.value * hasHead * (1 - smoothstep(0.005, 0.02, length - s)))
         lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
         lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
@@ -479,7 +485,7 @@ export function create(options: PartOptions): PlantPart {
     if (dew) {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
-      if (first) dewDrawn = 0
+      dewDrawn[slot] = 0
       const rain = smoothstep(0.3, 0.9, wetFelt())
       const tint = dew.tint()
       const sLow = 0.0015
@@ -522,9 +528,13 @@ export function create(options: PartOptions): PlantPart {
         rest[o + 1] = oy
         rest[o + 2] = oz
         rest[o + 3] = 0
-        if (size > 0) dewDrawn = i + 1
+        if (size > 0) dewDrawn[slot] = i + 1
       }
     }
+  }
+
+  const settle = (share: number): void => {
+    age.uStemAge.value = share > 0 ? lerp(ages[0], ages[1], share) : ages[0]
   }
 
   return {
@@ -538,11 +548,15 @@ export function create(options: PartOptions): PlantPart {
     },
     fill,
     finish() {
-      position.needsUpdate = true
-      if (positionB) positionB.needsUpdate = true
-      for (const a of sent) a.needsUpdate = true
-      for (const c of coats) c.set.finish(c.drawn)
-      if (dew) dew.finish(dewDrawn)
+      if (filled[0]) position.needsUpdate = true
+      if (filled[1] && positionB) positionB.needsUpdate = true
+      for (let k = 0; k < sent.length; k++) if (led[k]) for (const a of sent[k]) a.needsUpdate = true
+      filled.fill(false)
+      led.fill(false)
+      for (const c of coats) c.set.finish(Math.max(c.drawn[0], c.drawn[1]))
+      if (dew) dew.finish(Math.max(dewDrawn[0], dewDrawn[1]))
+      settle(0)
     },
+    settle,
   }
 }

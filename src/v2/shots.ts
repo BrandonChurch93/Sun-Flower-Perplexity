@@ -19,6 +19,26 @@ export const views: Record<Exclude<ViewName, 'film'>, FixedView> = {
   puddle: { azimuthDeg: 18, distanceM: 1.25, heightM: 0.3, headingDeg: 199, pitchDeg: -9, focalMm: 38, focusM: 1.25, fNumber: 5.6 },
 }
 
+const DEG = 180 / Math.PI
+
+export function eyeView(eye: number[], at: number[], focalMm: number, fNumber: number, focusM?: number): FixedView {
+  const dx = at[0] - eye[0]
+  const dy = at[1] - eye[1]
+  const dz = at[2] - eye[2]
+  const reach = Math.hypot(dx, dy, dz)
+  return { azimuthDeg: Math.atan2(eye[0], eye[2]) * DEG, distanceM: Math.hypot(eye[0], eye[2]), heightM: eye[1], headingDeg: Math.atan2(dx, dz) * DEG, pitchDeg: Math.asin(dy / reach) * DEG, focalMm, focusM: focusM ?? reach, fNumber }
+}
+
+// A view by its name, or one written out as `eye:x,y,z,x,y,z,mm,stop[,focus]`: where the lens is, the point it looks at, the lens and the stop.
+export function viewNamed(name: string): FixedView {
+  if (name in views) return views[name as Exclude<ViewName, 'film'>]
+  if (name.startsWith('eye:')) {
+    const n = name.slice(4).split(',').map(Number)
+    if (n.length >= 8 && n.every(Number.isFinite)) return eyeView(n.slice(0, 3), n.slice(3, 6), n[6], n[7], n[8])
+  }
+  throw new Error(`unknown view "${name}"`)
+}
+
 export interface Shot { id: string; seconds: number; view: ViewName; what: string }
 
 const bar = (b: number): number => barTime(b)

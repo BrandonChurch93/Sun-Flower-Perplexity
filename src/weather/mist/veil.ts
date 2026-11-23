@@ -29,7 +29,7 @@ void main() {
 
 const fragment = /* glsl */ `
 in vec3 vWorld;
-// w: how many times taller than the layer its thickest rolls stand, less one.
+// w: the tongues: how many times taller than the layer they stand, less one. With them the air between is nearly clear.
 uniform vec4 uPlace;
 // x: the depth of this sheet's slab in meters, y: the height at which the air has thinned to a third, z: how much light a meter of it takes at the ground, w: the width of a bank.
 uniform vec4 uAir;
@@ -56,8 +56,10 @@ void main() {
   // A slab deeper than its banks holds several of them: seen through, they even out.
   float told = saturate(1.6 * uAir.w / uAir.x);
   float shape = mix(0.5, 0.62 * bank + 0.38 * wisp, told);
-  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told)) * (1.0 + uPlace.w * smoothstep(0.5, 0.85, bank));
-  float amount = mix(1.0, 2.2 * smoothstep(0.24, 0.8, shape) * (0.35 + 1.3 * broad), uLook.x);
+  // A tongue is narrow and lies long the way the film looks, so it is never lost in the gap between two sheets.
+  float tongue = smoothstep(0.5, 0.78, valueNoise(vec2(p.x, 0.25 * p.y) * 1.25 + vec2(3.7, 11.0)));
+  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told)) * (1.0 + uPlace.w * tongue * tongue);
+  float amount = mix(1.0, 2.2 * smoothstep(0.24, 0.8, shape) * (0.35 + 1.3 * broad), uLook.x) * mix(1.0, 0.15 + 2.6 * tongue, saturate(uPlace.w));
   float across = max(length(v.xz), 0.05);
   float fall = -v.y / across;
   float y = max(vWorld.y, 0.0);
