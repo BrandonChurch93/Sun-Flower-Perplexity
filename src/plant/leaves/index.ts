@@ -5,7 +5,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { RAIN_WEIGHT, bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
+import { RAIN_WEIGHT, bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafOpen, leafOpening, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
 import { createBristles } from '../bristles/index.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
@@ -76,6 +76,9 @@ const YOUNG_TEETH = 0.03
 // Before the bloom a blade keeps this much of its grown shape at most.
 const YOUNG_RIPE = 0.25
 const FALL = 0.8
+// The share of that fall the open plant keeps after the frost.
+const FALL_OPEN = 0.45
+const opening = { lift: 0, droop: 0 }
 const LOW_STANDS = 0.85
 // How far the first pair has parted by the end of the dawn, as a share of its way to open.
 const PART = 0.3
@@ -800,7 +803,8 @@ export function create(options: PartOptions): PlantPart {
     const firm = main ? early : 0.5 * early
     // Once the plant climbs, a blade near the ground stands out from the stem and droops at its tip: it does not hang down the stem into the wet.
     const low = main ? LOW_STANDS * smoothstep(13, 18, time) * (1 - smoothstep(0.08, 0.3, frame.oy)) : 0
-    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm) * (1 - 0.6 * low)
+    leafOpening(i, time, pose.inputs, opening)
+    const droop = (leafDroop(i, pose.inputs, time) - opening.droop) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm) * (1 - 0.6 * low)
     // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
     const stout = smoothstep(22, BUDDED_S, time) * early
     // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
@@ -958,7 +962,7 @@ export function create(options: PartOptions): PlantPart {
     // A leaf held up round the bud bends its tip down.
     const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
-    const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) * (1 - low) : 0
+    const fall = round > 0 ? FALL * lerp(1, FALL_OPEN, leafOpen(time)) * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) * (1 - low) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
     const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
     const lay = (hang: number): number => {
@@ -970,7 +974,8 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep((0.2 + 0.3 * stout) * stalk, 1.15 * stalk + 0.25 * stout, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) - COLD_CURL * chill * grown * tipward * tipward + rock + shiver * bladeShare + trail * bladeShare * bladeShare + (moved ? liftAt(real - late(share)) : 0) - (rain > 0 ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0) - soak * smoothstep(0, stalk, share)
+        const past = smoothstep((0.2 + 0.3 * stout) * stalk, 1.15 * stalk + 0.25 * stout, share)
+        const a = rise * (1 - past) + opening.lift * past + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) - COLD_CURL * chill * grown * tipward * tipward + rock + shiver * bladeShare + trail * bladeShare * bladeShare + (moved ? liftAt(real - late(share)) : 0) - (rain > 0 ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0) - soak * smoothstep(0, stalk, share)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
