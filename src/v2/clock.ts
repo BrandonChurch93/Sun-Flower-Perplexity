@@ -242,8 +242,8 @@ export function flashAt(seconds: number): number {
 const FROST_LEFT = 0.15
 
 export function frostAtBar(b: number): number {
-  if (b < 16.4) return 0
-  if (b < 17) return smooth((b - 16.4) / 0.6)
+  if (b < 16.9) return 0
+  if (b < 18) return smooth((b - 16.9) / 1.1)
   if (b < 22.5) return 1
   if (b < 25) return lerp(1, FROST_LEFT, smooth((b - 22.5) / 2.5))
   return FROST_LEFT * (1 - smooth((b - 25) / 0.4))
