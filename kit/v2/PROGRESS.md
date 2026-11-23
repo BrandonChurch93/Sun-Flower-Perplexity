@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: none yet
-- Last status: 01 · 2026-11-22 23:44 UTC · Phase 2
+- Last status: 02 · 2026-11-23 00:35 UTC · Phase 2
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 00:35 UTC · status 02 · Phase 2 · `status-1.jpg`: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); `status-2.jpg`: Film camera, bars 13 to 28: the frost hold with the stand-in sky; `status-3.jpg`: Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); `status-4.jpg`: Found by the checks: sunset to night to sunrise inside half a second reads as a flicker
 - 2026-11-22 23:44 UTC · status 01 · Phase 2 · `status-1.jpg`: The scaffold at sixteen moments of the film, with a flat stand-in sky and no plant yet. The light is not tuned: this shows the plumbing, not the look; `status-2.jpg`: The nine new reference pictures the build aims at
 
 ## Clock
@@ -29,12 +30,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 0.59 h |
+| 2 | 3.50 h | 1.20 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 1.97 h |
+| Whole build | 30.00 h | 2.59 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -145,4 +146,6 @@ None yet.
 - 2026-11-22 23:23 to 23:45 UTC. Scaffold: one draw path, the look from the sky's light, the stand-in sky, the counter, the bench.
 - Status 01, 2026-11-22 23:44 UTC, Phase 2. The new draw path works end to end: one sky, one place, no cuts, every frame made from the film second. Three agents have started building the real sky from one brief, each alone. Next: tune the light with the stand-in sky, write the briefs for the place, the ground, the plant, rain, frost, the field, the lens and the player, and start those agents. Time used: 1.7 h of 30 h.
   Pictures: The scaffold at sixteen moments of the film, with a flat stand-in sky and no plant yet. The light is not tuned: this shows the plumbing, not the look; The nine new reference pictures the build aims at.
+- Status 02, 2026-11-23 00:35 UTC, Phase 2. The film camera now runs on the new clock: it creeps in during the frost hold and stands back and low for the storm. Rain and frost only show while the plant stands still. The first sky candidate reports complete (not yet judged). The checks found the quick nights flicker, which I am fixing next. Next: Lengthen the quick nights to two beats with a smooth dusk, merge the plant's frost fix, send the new camera to all twelve agents, then judge the three skies blind. Time used: 2.6 h of 30 h.
+  Pictures: Film camera, bars 30.5 to 43: the storm hold with the stand-in sky (no rain or wet ground merged yet); Film camera, bars 13 to 28: the frost hold with the stand-in sky; Sky candidate B, its own 16 judged moments (unverified, judged blind later against A and C); Found by the checks: sunset to night to sunrise inside half a second reads as a flicker.
 
