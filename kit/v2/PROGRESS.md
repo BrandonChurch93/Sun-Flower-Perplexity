@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 47 · 2026-11-23 20:16 UTC · Phase 5
+- Last status: 48 · 2026-11-23 20:33 UTC · Phase 6
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 20:33 UTC · status 48 · Phase 6 · `status-1.jpg`: Frame 1479, the film as drawn here against the export look; `status-2.jpg`: Frame 2957, the opening head; `status-3.jpg`: Frame 2096 at twice size: rain breaks into specks at the export look (a fault, being cured); `status-4.jpg`: Frame 3755, the last frame
 - 2026-11-23 20:16 UTC · status 47 · Phase 5 · `status-1.jpg`: Review page with the drawn film, the bar clock and the check results (built, not yet a link); `status-2.jpg`: Frost hold from a fixed camera, one row a shot (first, middle, last frame), then 45 frames after the hold; `status-3.jpg`: Clouds at frame 1479, three crops at full size, the film on the left and the cure on a side branch on the right
 - 2026-11-23 19:49 UTC · status 46 · Phase 5 · `status-1.jpg`: The sprout at 2.0 s, from the joined film; `status-2.jpg`: Frost against the sun at 35.2 s, the cut on bar 21; `status-3.jpg`: The flower nearly open at 101.7 s, from the last part taken in; `status-4.jpg`: The field at 117.4 s, the pull back
 - 2026-11-23 19:30 UTC · status 45 · Phase 5 · `status-1.jpg`: Frost at first light, frame 940; `status-2.jpg`: The thaw, frame 1234; `status-3.jpg`: The storm, frame 2000 (new part); `status-4.jpg`: The pull back from the flower, frame 3384 (new part)
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 17:20 UTC · status 39 · Phase 5 · `status-1.jpg`: Frozen build: frost close shot in the sun at bar 21 (frame 1055); `status-2.jpg`: Frozen build: the bloom opening at bar 59 (frame 3009); `status-3.jpg`: Bar 41 on the frozen build: the gap in the storm deck opens and beams fan from the sun; `status-4.jpg`: Far ridge before and after the cure, frames 2902 to 2912
 - 2026-11-23 16:57 UTC · status 38 · Phase 4 · `status-1.jpg`: The bloom at bar 61 with the head's rays restored; `status-2.jpg`: Bar 41 after the cure, the tear closes slowly (frames 2082 to 2100); `status-3.jpg`: Far ridge flicker, top 2902, middle 2903 before, bottom 2903 with the cure; `status-4.jpg`: Beams under the tear before and after, frames 2086 to 2089
 - 2026-11-23 16:25 UTC · status 37 · Phase 4 · `status-1.jpg`: Bars 51 to 57 after the cure, leaves open (2620, 2700, 2800, 2900); `status-2.jpg`: Open flower at bar 61, before and after: the leaf now meets the lowest rays; `status-3.jpg`: Storm at 1920 x 1080, frame 2040 (rain owner's machine); `status-4.jpg`: Dawn beads, frames 439 to 447: before above, after below
-- 2026-11-23 16:08 UTC · status 36 · Phase 4 · `status-1.jpg`: The bloom at bars 58 and 61: the key, the head we keep, the head I took out; `status-2.jpg`: Frost comes in along the veins (frame 885): before, after, difference; `status-3.jpg`: The cloud tears on the downbeat of bar 41: frames 2082, 2083, 2084; `status-4.jpg`: Drawn on the pushed tree
 
 ## Clock
 
@@ -43,9 +43,9 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
-| 5 | 3.00 h | 2.97 h |
-| 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 22.28 h |
+| 5 | 3.00 h | 3.08 h |
+| 6 | 4.00 h | 0.18 h |
+| Whole build | 30.00 h | 22.57 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -58,8 +58,8 @@ Continuations and extensions are listed under this table with their own hours.
 | 2 · Sky and blockout | done | every part merged on one draw path under the chosen sky; three blind critics unanimous for sky candidate B; dusk and dawn measured inside the limits; 168 of 168 tests. The first whole film in parts is drawn in phase 3, on the chosen sky | `81e961b` |
 | 3 · Look lock | done | closed at the end of its box (9.2 h of 9.0). Every look of `config/showcase.json` is drawn through the film camera on one tree and judged by the Builder beside its key at 1920: open, sprout, seedling, frost with its three close shots, climb, storm, flash, break, late, bloom opening, bloom hero, field, last. Brandon's message 7 is in the film: hard cuts on bars 19, 21, 23 and 25 to three close shots, one move in for the bloom and the pull back into the field. 199 of 199 tests. No critics yet, they judge in phase 6. The look work that is left is listed under Open items and goes on in phase 4 | `043d0d0` |
 | 4 · Full build | done | closed at the freeze of 17:18 UTC on 23 Nov. Every part of the film is merged on one tree and drawn through the film camera; the look work of phase 3 is closed or listed under Open items; cue lint 47 cues, 0 mismatches; the `cues` check passes; 206 of 206 tests; types clean. The cost of live play is measured on a machine with no graphics card only and is over the limit in 11 of 16 windows there (see Open items) | `d42a869` |
-| 5 · Whole film | in progress | the film at 1920 x 1080, one sample, drawn once on twelve machines from the frozen commit (engine hash `9c62c3b3b10c7180`) | |
-| 6 · Proof and deliver | not started | | |
+| 5 · Whole film | done | closed at the end of its box (3.0 h of 3.0) at 20:23 UTC on 23 Nov. The film is drawn once on twelve machines from the frozen commit at 1920 x 1080 with one sample a frame, the look of live play (engine hash `9c62c3b3b10c7180`): 3,810 frames, 30 a second, 127.0 s. Measured on the joined private copy: the sound is the track from its first sample (lag 0 samples at 5, 60 and 105 s), every frame is 1/30 s after the last, and the four cuts (952, 1055, 1157, 1260), the two strokes of lightning (1672, 1877) and the tear in the cloud (2083) are each on screen while their bar line passes. The export tier (48 samples a frame) is not drawn as a film here: single frames of it are drawn in phase 6 to compare | `eda53dc` |
+| 6 · Proof and deliver | in progress | round 27 (the record round of version 2), the proofs on the whole film, the review page, the wrap | |
 
 ## Units
 
@@ -461,4 +461,6 @@ None yet.
   Pictures: The sprout at 2.0 s, from the joined film; Frost against the sun at 35.2 s, the cut on bar 21; The flower nearly open at 101.7 s, from the last part taken in; The field at 117.4 s, the pull back.
 - Status 47, 2026-11-23 20:16 UTC, Phase 5. Round 27 is in but for one critic. The jury gives the film's frames 16 of 70 against 38 of 65 for the target pictures, and fifteen critics score between 3 and 8. The film was judged at the one sample look, so single frames at the 48 sample export look are being drawn to compare. The holds are proven by the plant's clock; by the picture at most 8 of 691,200 numbers differ inside a hold shot against 255,175 after 45 frames of growth, and the cause of those few is being named. A cloud cure waits on a side branch. The review page is built. Next: The last critic, the remaining proofs (nights, cuts, made on the whole film), the review page as a private link, then the wrap. Time used: 22.3 h of 30 h.
   Pictures: Review page with the drawn film, the bar clock and the check results (built, not yet a link); Frost hold from a fixed camera, one row a shot (first, middle, last frame), then 45 frames after the hold; Clouds at frame 1479, three crops at full size, the film on the left and the cure on a side branch on the right.
+- Status 48, 2026-11-23 20:33 UTC, Phase 6. Every critic of the record round has answered (17 cards with the replacement of the one that was late; the late one scored 4, its replacement 5, the lower counts) and the jury is complete: FAIL, 16 of 70 against the controls' 38 of 65. Six of the fourteen judged frames are now also drawn at the export look (48 samples a frame, 7 to 12 minutes a frame here). It is plainly cleaner on clouds, leaf edges, hairs and lens blur. One fault found in it: in the rain every drop that is out of focus breaks into a cluster of specks. The rain owner is finding the cause and a cure that leaves the drawn film as it is. The crane and dusk (492 frames in a row): nothing made on the graphics card, no hard cut, no wild pixel. Next: The other eight export look frames, then a second jury on those fourteen. The rain cure on a side branch with proof. The summary of the round. The last two play ranges, then nights, cuts and made for the whole film on the review page. Time used: 22.6 h of 30 h.
+  Pictures: Frame 1479, the film as drawn here against the export look; Frame 2957, the opening head; Frame 2096 at twice size: rain breaks into specks at the export look (a fault, being cured); Frame 3755, the last frame.
 
