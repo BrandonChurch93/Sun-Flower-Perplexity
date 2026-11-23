@@ -1,12 +1,12 @@
-# Status 33
+# Status 34
 
-2026-11-23 14:52 UTC
+2026-11-23 15:11 UTC
 
-- Status 33 · Phase 4. Frost section read in motion at 640 x 360: the three close shots cut on bars 19, 21, 23 and the cut back on bar 25 hold, no jump. The thaw drop now falls for six frames, it used to vanish in two. Stem hairs back on the far rim of the crane. Field bloom plan and the older leaves' open pose judged and accepted, merging next. Eleven of thirteen watch parts are in and read.
-- Next: Merge plant pose, field bloom, sprout stem colour and prove them; last two watch parts (rain 318 to 635, climb 1272 to 1430); join the whole film at 640 x 360 on the track; then the cures for live play cost at the bloom and the crane. Time used: 16.9 h of 30 h.
+- Status 34 · Phase 4. The whole film is joined for the first time: 3,810 frames, 127.0 s, on the track, as a 640 x 360 watch draft. MEASURED: the motion reader finds jumps only at the four frost cuts and the two lightning flashes; the sound in the joined file sits 0.00 ms off the track. Merged and proven (206 tests): the older leaves open up, the field blooms a few beats after the hero, the sprout stem is a warm yellow green.
+- Next: A cost table of live play over the whole film on the merged tree (running); merge the storm deck, the lens guard and the faster stem; the sprout's neck gets a round arch; then freeze the look and draw the film at 1920. Time used: 17.2 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop
-- `status-2.jpg`: Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241
-- `status-3.jpg`: Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it
-- `status-4.jpg`: Older leaves open up through the climb, before and after pairs
+- `status-1.jpg`: The whole film, one frame every second bar (640 x 360 watch draft, parts from seven builds)
+- `status-2.jpg`: Bloom on the merged tree, frames 2990, 3030, 3070, 3112: the field opens behind the hero
+- `status-3.jpg`: Older leaves, before and after: 1640 and 1830
+- `status-4.jpg`: Crane at 3440 on the merged tree

@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 33 · 2026-11-23 14:52 UTC · Phase 4
+- Last status: 34 · 2026-11-23 15:11 UTC · Phase 4
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 15:11 UTC · status 34 · Phase 4 · `status-1.jpg`: The whole film, one frame every second bar (640 x 360 watch draft, parts from seven builds); `status-2.jpg`: Bloom on the merged tree, frames 2990, 3030, 3070, 3112: the field opens behind the hero; `status-3.jpg`: Older leaves, before and after: 1640 and 1830; `status-4.jpg`: Crane at 3440 on the merged tree
 - 2026-11-23 14:52 UTC · status 33 · Phase 4 · `status-1.jpg`: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop; `status-2.jpg`: Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241; `status-3.jpg`: Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it; `status-4.jpg`: Older leaves open up through the climb, before and after pairs
 - 2026-11-23 14:33 UTC · status 32 · Phase 4 · `status-1.jpg`: Storm hold on the merged tree, frame 1830; `status-2.jpg`: The break, frame 2090; `status-3.jpg`: Bloom hold, frame 3312, from the watch part at 640 x 360; `status-4.jpg`: The field at the end of the pull back, frame 3492
 - 2026-11-23 14:08 UTC · status 31 · Phase 4 · `status-1.jpg`: Frame 60. The sprout with the merged leaf look; `status-2.jpg`: Frame 951. Wide frost hold, the last frame before the first cut; `status-3.jpg`: Frame 1106. Frost close shot, the right leaf now cool grey; `status-4.jpg`: Frame 2156. Dusk after the storm, the leaves no longer outshine the sky
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 11:28 UTC · status 25 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost is there at the cut and grows. Sparks where a crystal mirrors the sun; `status-2.jpg`: The margin at full size, frame 1054: fans of needles on the edge, rime in chains on the veins. The plates on the blade are still too grey; `status-3.jpg`: Second and third close shots, frames 1106 and 1208: the tip against the sun, then the thaw with the drop about to let go; `status-4.jpg`: Guards, frames 1240, 940 and 1466: the thaw's last frame, the wide frame before the first cut, the climb after it
 - 2026-11-23 11:05 UTC · status 24 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds as grains and sparks. Still too fine and too grey against the reference, larger crystals are next; `status-2.jpg`: Second close shot, the stalk at full size on the hairs owner's bench, before and after: the comb is broken up and the tip carries a fine down; `status-3.jpg`: Third close shot, frames 1208 and 1240: the thawed leaf with its beads and the drop at the tip; `status-4.jpg`: Morning in the time lapse, frame 240: the seedling with dew, after the bead cap
 - 2026-11-23 10:41 UTC · status 23 · Phase 3 · `status-1.jpg`: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling; `status-2.jpg`: Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next; `status-3.jpg`: The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip; `status-4.jpg`: First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet
-- 2026-11-23 10:20 UTC · status 22 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it; `status-2.jpg`: Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next; `status-3.jpg`: Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand
 
 ## Clock
 
@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 2.44 h |
+| 4 | 8.50 h | 2.75 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 16.87 h |
+| Whole build | 30.00 h | 17.18 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -387,4 +387,6 @@ None yet.
   Pictures: Storm hold on the merged tree, frame 1830; The break, frame 2090; Bloom hold, frame 3312, from the watch part at 640 x 360; The field at the end of the pull back, frame 3492.
 - Status 33, 2026-11-23 14:52 UTC, Phase 4. Frost section read in motion at 640 x 360: the three close shots cut on bars 19, 21, 23 and the cut back on bar 25 hold, no jump. The thaw drop now falls for six frames, it used to vanish in two. Stem hairs back on the far rim of the crane. Field bloom plan and the older leaves' open pose judged and accepted, merging next. Eleven of thirteen watch parts are in and read. Next: Merge plant pose, field bloom, sprout stem colour and prove them; last two watch parts (rain 318 to 635, climb 1272 to 1430); join the whole film at 640 x 360 on the track; then the cures for live play cost at the bloom and the crane. Time used: 16.9 h of 30 h.
   Pictures: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop; Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241; Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it; Older leaves open up through the climb, before and after pairs.
+- Status 34, 2026-11-23 15:11 UTC, Phase 4. The whole film is joined for the first time: 3,810 frames, 127.0 s, on the track, as a 640 x 360 watch draft. MEASURED: the motion reader finds jumps only at the four frost cuts and the two lightning flashes; the sound in the joined file sits 0.00 ms off the track. Merged and proven (206 tests): the older leaves open up, the field blooms a few beats after the hero, the sprout stem is a warm yellow green. Next: A cost table of live play over the whole film on the merged tree (running); merge the storm deck, the lens guard and the faster stem; the sprout's neck gets a round arch; then freeze the look and draw the film at 1920. Time used: 17.2 h of 30 h.
+  Pictures: The whole film, one frame every second bar (640 x 360 watch draft, parts from seven builds); Bloom on the merged tree, frames 2990, 3030, 3070, 3112: the field opens behind the hero; Older leaves, before and after: 1640 and 1830; Crane at 3440 on the merged tree.
 
