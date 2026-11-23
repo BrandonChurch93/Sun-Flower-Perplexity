@@ -356,7 +356,7 @@ export class Post {
       g.uSunAt.value.set(at.x, at.y)
       g.uSunLight.value.fromArray(look.sun).multiplyScalar(look.glare)
       g.uSunAir.value.fromArray(look.air)
-      g.uSunCore.value = 1.2 * blurred * (1 + 0.8 * look.warm)
+      g.uSunCore.value = 1.2 * blurred
       g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
       g.uFan.value = look.fan
