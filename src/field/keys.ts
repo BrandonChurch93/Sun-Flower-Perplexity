@@ -63,11 +63,6 @@ vec3 fieldShape(vec3 local) {
 }
 `
 
-// A list of places read as it stands, for a kind that needs nothing more than the mix of its keys.
-export const listPlaceGlsl = /* glsl */ `
-Place fieldPlace() { return Place(aPlace, aVary); }
-${keyGlsl}`
-
 export interface KeyUniforms {
   // The share of the earlier key in the frame.
   uFieldKey: { value: number }
