@@ -1,10 +1,12 @@
 # Looks of player
 
-2026-11-23 02:00 UTC, at commit f8997f7 of agent/player.
+2026-11-23 02:19 UTC, at commit 8f0c202 of agent/player.
 
-02:01. Check at high and at low quality on the merged film (v2 29dab5f, sky-b), 960 x 540 shown at twice its size, idle machine: 4.99 s and 3.96 s a frame in the software renderer. Count with sky-b: PASS. Export proof: pass.
+Three steps with their state, load steps from the film, report opens with one sentence. sky-b at v2 aa7c0b7, 1920 x 1080, software renderer
 
-- `01-check-at-high-quality-offers-low.jpg`: Check at high quality, offers low
-- `02-check-at-low-quality-says-it-plainly.jpg`: Check at low quality, says it plainly
-- `03-export-stopped-frames-kept.jpg`: Export stopped, frames kept
-- `04-export-done-with-the-track.jpg`: Export done with the track
+- `01-step-1-loading.jpg`: step 1 loading
+- `02-step-2-waiting-for-the-track.jpg`: step 2 waiting for the track
+- `03-step-2-done.jpg`: step 2 done
+- `04-step-3-checked.jpg`: step 3 checked
+- `05-recording-film-only.jpg`: recording, film only
+- `06-report-after-the-recording.jpg`: report after the recording
