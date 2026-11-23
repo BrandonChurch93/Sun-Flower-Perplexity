@@ -32,7 +32,7 @@ function coolDay(e: number, over: number, fog: number, evening: number, burst: n
 }
 
 function openingAt(bar: number): number {
-  return 1 - smoothstep(0.71, 1.19, bar)
+  return 1 - smoothstep(0.84, 1.27, bar)
 }
 
 function finaleAt(bar: number): number {
