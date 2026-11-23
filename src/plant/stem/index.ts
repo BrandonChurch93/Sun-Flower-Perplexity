@@ -459,7 +459,7 @@ export function create(options: PartOptions): PlantPart {
         skin2[at * 4] = open
         skin2[at * 4 + 1] = (1 - youth) * (0.3 + 0.7 * sun) * (0.45 + 0.55 * (1 - u))
         skin2[at * 4 + 2] = j >= below && j < below + main ? ringNeck[j - below] : hasHead
-        skin2[at * 4 + 3] = thin * (1 - 1.1 * collared)
+        skin2[at * 4 + 3] = thin * Math.max(0, 1 - 1.1 * collared)
         skin3[at * 4] = joint
         skin3[at * 4 + 1] = ribbed
         skin3[at * 4 + 2] = bald * lerp(0.45 + 0.55 * sun, 0.85 + 0.15 * sun, pale)
