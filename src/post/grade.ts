@@ -95,7 +95,7 @@ vec3 sunGlare(vec2 px) {
   float core = 1.0 / ((1.0 + q) * (1.0 + q) * sqrt(1.0 + q));
   float wide = mix(0.02, 0.05, uHaze);
   float glow = (0.07 + 0.07 * uHaze) * exp(-r / wide) + (0.012 + 0.02 * uHaze) * exp(-r / 0.16);
-  glow += uMist * 0.05 * exp(-r / 0.07) + uWarm * (0.1 * exp(-r / 0.045) + 0.03 * exp(-r / 0.2));
+  glow += uMist * (0.3 * exp(-r / 0.03) + 0.07 * exp(-r / 0.09)) + uWarm * (0.1 * exp(-r / 0.045) + 0.03 * exp(-r / 0.2));
   float veil = uVeilSun * (0.003 + 0.006 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
   vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
   vec3 glass = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm) * (uSunHot * core * seen.a * (1.0 - 0.7 * uFan)) + air * ((glow + veil) * seen.r);
