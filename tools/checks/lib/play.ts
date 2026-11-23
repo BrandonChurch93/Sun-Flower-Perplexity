@@ -7,11 +7,11 @@ import { OUT } from './report.ts'
 // One drawing of the film, frame by frame, small: the pictures and what each frame made. `film` is the film as it is, `broken-<fault>` a film broken on purpose.
 export interface Stamp { hash: string; width: number; height: number; sky: string; only: string; tier: string; quality: string }
 // `numbers` is what the frame holds before the lens: pixels without a number, pixels over the limit, the largest number in order, and where the bad ones are (x, then y from the top). A frame drawn before `play` read it has none.
-export interface Held { none: number; over: number; most: number; where: number[] }
+export interface Held { none: number; over: number; most: number; where: number[]; sparks?: number; ratio?: number }
 export interface Line { frame: number; seconds: number; made: Made; session: string; nth: number; numbers?: Held }
-// A number before the lens above this is counted as too bright. The frame's own target holds nothing above 65504, and a place that has lost its number is kept there as that top.
-// A frame of one sample is drawn at four places in each pixel, so one lost place of the four reads as a quarter of the top, 16376: the limit sits under that.
-export const MOST = 16000
+// A number above this in any sample of a frame, before the lens, is counted as too bright: a sample holds nothing above 65504, and a graphics card that cannot keep a place without a number keeps it as that top. The lens spreads either into a disc.
+// The page reads each sample (`watch`), since in the sum of 48 one lost place is a forty-eighth of the top, and a sample drawn at four places a pixel is read against a quarter of the limit.
+export const MOST = 60000
 
 export const playDir = (run: string): string => path.join(OUT, 'play', run)
 export const framesDir = (run: string): string => path.join(playDir(run), 'frames')

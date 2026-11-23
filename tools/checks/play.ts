@@ -96,6 +96,7 @@ export async function run(args: Args): Promise<void> {
     if (broken) await session.fault(broken, num(args, 'at'))
     const t0 = Date.now()
     await session.warm(tier)
+    await session.watch(MOST)
     console.log(`play · warmed in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
     const log = path.join(dir, `log-${id}.jsonl`)
     const progress = path.join(dir, `progress-${spans ? `spans-${process.pid}` : `${from}-${to}`}.txt`)

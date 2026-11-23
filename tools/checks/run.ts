@@ -29,7 +29,7 @@ const HELP: [string, string, string, string][] = [
   ['play', 'draws the film small and notes what each frame made', 'a browser; --sky, --from, --to, --stride 6', '25 to 30 min a page for a third of a round of stride 6; 3 pages side by side'],
   ['cuts', 'no hard cut: the edges of the picture stay where they are from frame to frame', 'the frames of play', '10 to 40 s'],
   ['made', 'nothing is made on the graphics card after loading', 'the notes of play', '2 s'],
-  ['numbers', 'every pixel of a frame holds a number before the lens and none over 16000: such a pixel becomes a bright disc', 'the notes of play, or draws --frames a,b itself', '2 s; 1 min and 5 s a frame when it draws'],
+  ['numbers', 'every pixel of a frame holds a number before the lens and none over 60000 in any sample: such a pixel becomes a bright disc', 'the notes of play, or draws --frames a,b itself', '2 s; 1 min and 5 s a frame when it draws'],
   ['pure', 'a frame drawn again, in another order, on a fresh page, gives the same bytes', 'draws 12 frames three times on two pages at 960 x 540 (--frames a,b,c)', '10 to 12 min'],
   ['script', 'the page keeps the frame rate: its own script time in a frame, by part, inside tools/checks/limits.json', 'draws 13 windows of 20 to 40 frames in a row itself (--window a-b, --frames 8, --all, --table)', 'about 30 min, 17 min with --frames 20; run it alone'],
   ['writes', 'what one frame writes into what exists, by owner', 'draws 8 frames itself', '6 min'],

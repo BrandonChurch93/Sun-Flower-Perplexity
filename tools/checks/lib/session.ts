@@ -9,7 +9,7 @@ import { computeHashes } from '../../lib/hashes.ts'
 import { recorder } from './recorder.ts'
 import { tracer } from './tracer.ts'
 import { at } from '../../lib/paths.ts'
-import type { ChecksPage, Drawn, FloatDiff, Numbers } from '../page/main.ts'
+import type { ChecksPage, Drawn, FloatDiff, Numbers, Sparks } from '../page/main.ts'
 import type { Made } from '../../../src/v2/counter.ts'
 import { OUT } from './report.ts'
 
@@ -95,6 +95,10 @@ export interface Session {
   cost(): Promise<Record<string, number>>
   lens(): Promise<{ held: number; signs: { owner: string; numbers: number[] }[] }>
   numbers(limit: number): Promise<Numbers>
+  watch(limit: number): Promise<void>
+  plain(on: boolean): Promise<void>
+  note(): Promise<void>
+  sparks(times: number, reach: number): Promise<Sparks>
   only(names: string[]): Promise<void>
   close(): Promise<void>
 }
@@ -152,6 +156,10 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       cost: () => page.evaluate(() => window.checks.cost()),
       lens: () => page.evaluate(() => window.checks.lens()),
       numbers: (limit) => page.evaluate((l) => window.checks.numbers(l), limit),
+      watch: (limit) => page.evaluate((l) => window.checks.watch(l), limit),
+      plain: (on) => page.evaluate((o) => window.checks.plain(o), on),
+      note: () => page.evaluate(() => window.checks.note()),
+      sparks: (times, reach) => page.evaluate(([t, r]) => window.checks.sparks(t, r), [times, reach] as const),
       only: (names) => page.evaluate((n) => window.checks.only(n), names),
       fault: (kind, a = 0, b = 0) => page.evaluate(([k, x, y]) => window.checks.fault(k as string, x as number, y as number), [kind, a, b] as const),
       async close() {

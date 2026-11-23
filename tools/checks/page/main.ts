@@ -12,6 +12,7 @@ import { views, type ViewName } from '../../../src/v2/shots.ts'
 
 export interface Drawn { frame: number; seconds: number; made: Made; png: string | null }
 export interface Numbers { none: number; over: number; most: number; where: number[] }
+export interface Sparks { count: number; worst: number; at: [number, number]; where: number[] }
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
   ready: Promise<void>
@@ -39,6 +40,14 @@ export interface ChecksPage {
   lens(): { held: number; signs: { owner: string; numbers: number[] }[] }
   // The frame last drawn as it is handed to the lens, in the scene's own numbers: how many pixels hold no number, how many hold one over `limit`, the largest number that is in order, and where the bad pixels are (x, then y from the top).
   numbers(limit: number): Numbers
+  // Reads every sample of each frame drawn from now on, against the same limit (0 stops it): what `numbers` says then holds for each sample and not only for their sum.
+  watch(limit: number): void
+  // Draws the frames that follow at one place a pixel where the film draws them at four (false puts the four back): the same frame without the smoothing of its edges.
+  plain(on: boolean): void
+  // Keeps the numbers of the frame last drawn, before the lens, for `sparks`.
+  note(): void
+  // The kept frame against the frame last drawn: a pixel of the kept one is a spark when it holds more than `times` what any pixel within `reach` of it holds in the other, and more than `times` the other's mean. With the kept frame drawn at four places a pixel and the other at one, a spark is a place the smoothing lit by itself.
+  sparks(times: number, reach: number): Sparks
   // Draws only the named parts of the scene from the next frame on (plant, companion, field, ground, sky and each part's name); none named draws them all.
   only(names: string[]): void
 }
@@ -83,6 +92,38 @@ let memory = false
 let moon = 1
 let moonFrom = 0
 let lostAt = -1
+let watching = 0
+let tapped = false
+let marks = new Uint8Array(0)
+let noted = new Float32Array(0)
+let fine: THREE.WebGLRenderTarget | null = null
+let halves = new Uint16Array(0)
+
+// Reads every sample of a frame as it is added to the frame's sum: 1 where a place holds no number, 2 where it holds one over the limit. A sample drawn at four places a pixel is read after they are joined, so one lost place of the four shows as a quarter: the limit is divided by the places.
+function tap(): void {
+  tapped = true
+  const stage = film.stage
+  const add = stage.accumulator.add.bind(stage.accumulator)
+  stage.accumulator.add = (renderer, sample, weight) => {
+    add(renderer, sample, weight)
+    if (watching <= 0) return
+    const { width, height } = stage
+    const target = sample === stage.smooth.texture ? stage.smooth : sample === stage.sample.texture ? stage.sample : null
+    if (!target) return
+    if (marks.length !== width * height) marks = new Uint8Array(width * height)
+    if (halves.length !== width * height * 4) halves = new Uint16Array(width * height * 4)
+    renderer.readRenderTargetPixels(target, 0, 0, width, height, halves)
+    const top = THREE.DataUtils.toHalfFloat(Math.min(65504, watching / Math.max(1, target.samples)))
+    for (let i = 0, p = 0; i < marks.length; i++, p += 4) {
+      const r = halves[p] & 0x7fff
+      const g = halves[p + 1] & 0x7fff
+      const b = halves[p + 2] & 0x7fff
+      const a = halves[p + 3] & 0x7fff
+      if (r >= 0x7c00 || g >= 0x7c00 || b >= 0x7c00 || a >= 0x7c00) marks[i] = 1
+      else if (marks[i] === 0 && (r > top || g > top || b > top)) marks[i] = 2
+    }
+  }
+}
 let brightAt = -1
 // How long a frame spends inside renderer.render: all of it, the part that draws the scene into the frame, and the part that draws the shadow map. It is time and no pixel.
 const drawMs = { draw: 0, drawScene: 0, drawShadow: 0 }
@@ -229,6 +270,7 @@ window.checks = {
     if (dice) film.view.azimuthDeg = 0.4 * Math.random()
     if (memory) film.view.azimuthDeg = 0.05 * drawnBefore
     drawnBefore++
+    marks.fill(0)
     const before = madeSoFar()
     drawMs.draw = drawMs.drawScene = drawMs.drawShadow = 0
     const t0 = performance.now()
@@ -292,19 +334,80 @@ window.checks = {
     signed ??= [...owners].filter(([v, p]) => v instanceof Float64Array && /\.(sign|key)$/.test(p) && !/lenses/.test(p)) as [Float64Array, string][]
     return { held: held.lens, signs: signed.map(([v, p]) => ({ owner: p, numbers: Array.from(v) })) }
   },
+  watch(limit) {
+    watching = limit
+    if (limit > 0 && !tapped) tap()
+  },
+  plain(on) {
+    const stage = film.stage as unknown as { smooth: THREE.WebGLRenderTarget; sample: THREE.WebGLRenderTarget }
+    fine ??= stage.smooth
+    stage.smooth = on ? stage.sample : fine
+  },
+  note() {
+    const { width, height, renderer, accumulator } = film.stage
+    if (noted.length !== width * height * 4) noted = new Float32Array(width * height * 4)
+    renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, noted)
+  },
+  sparks(times, reach) {
+    const { width, height, renderer, accumulator } = film.stage
+    const pixels = new Float32Array(width * height * 4)
+    renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
+    const level = (from: Float32Array, i: number): number => {
+      const v = Math.max(Math.abs(from[4 * i]), Math.abs(from[4 * i + 1]), Math.abs(from[4 * i + 2]))
+      return Number.isFinite(v) ? v : 0
+    }
+    const n = width * height
+    const across = new Float32Array(n)
+    const near = new Float32Array(n)
+    let sum = 0
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let m = 0
+        for (let k = Math.max(0, x - reach); k <= Math.min(width - 1, x + reach); k++) m = Math.max(m, level(pixels, y * width + k))
+        across[y * width + x] = m
+        sum += level(pixels, y * width + x)
+      }
+    }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let m = 0
+        for (let k = Math.max(0, y - reach); k <= Math.min(height - 1, y + reach); k++) m = Math.max(m, across[k * width + x])
+        near[y * width + x] = m
+      }
+    }
+    const mean = sum / n
+    const out: Sparks = { count: 0, worst: 0, at: [0, 0], where: [] }
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x
+        const ratio = level(noted, i) / Math.max(near[i], mean, 1e-9)
+        if (ratio > out.worst) {
+          out.worst = ratio
+          out.at = [x, height - 1 - y]
+        }
+        if (ratio > times) {
+          out.count++
+          if (out.where.length < 8000) out.where.push(x, height - 1 - y)
+        }
+      }
+    }
+    return out
+  },
   numbers(limit) {
     const { width, height, renderer, accumulator } = film.stage
     const pixels = new Float32Array(width * height * 4)
     renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
     const out: Numbers = { none: 0, over: 0, most: 0, where: [] }
+    const seen = marks.length === width * height ? marks : null
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const p = 4 * (y * width + x)
         const r = Math.abs(pixels[p])
         const g = Math.abs(pixels[p + 1])
         const b = Math.abs(pixels[p + 2])
-        const lost = Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(pixels[p + 3])
-        const high = !lost && (r > limit || g > limit || b > limit)
+        const mark = seen ? seen[y * width + x] : 0
+        const lost = mark === 1 || !Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b) || !Number.isFinite(pixels[p + 3])
+        const high = !lost && (mark === 2 || r > limit || g > limit || b > limit)
         if (lost) out.none++
         else if (high) out.over++
         else out.most = Math.max(out.most, r, g, b)
