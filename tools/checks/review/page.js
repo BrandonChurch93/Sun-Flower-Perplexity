@@ -25,11 +25,13 @@ function place(t) {
   return `bar ${bar} beat ${beat}`
 }
 const verdictOf = (r) => (!r ? ['not run', 'none'] : !r.ok ? ['FAIL', 'fail'] : r.complete ? ['PASS', 'pass'] : ['PASS SO FAR', 'sofar'])
+// A check that has not seen every frame yet, and whose coarse run found places to look at, says so.
+const chipOf = (c) => (c.result && c.result.ok && !c.result.complete && c.coarse.some((k) => k && !k.ok) ? ['PLACES TO LOOK AT', 'sofar'] : verdictOf(c.result))
 
 $('title').textContent = `${D.name}: the checks and the film`
 $('stamp').textContent = `Built ${D.built.replace('T', ' ').slice(0, 16)} UTC from what is in out/ · film ${D.engineHash} · ${D.frames} frames, ${D.fps} a second, ${D.seconds} s`
 for (const c of D.checks) {
-  const [word, cls] = verdictOf(c.result)
+  const [word, cls] = chipOf(c)
   const a = el('a', 'chip')
   a.href = `#check-${c.name}`
   a.append(el('span', '', c.name), el('span', cls, word))
@@ -240,7 +242,7 @@ function fold(title, ...inside) {
 for (const c of D.checks) {
   const box = el('article', 'check')
   box.id = `check-${c.name}`
-  const [word, cls] = verdictOf(c.result)
+  const [word, cls] = chipOf(c)
   const h = el('header')
   h.append(el('h3', '', c.name), el('span', `verdict ${cls}`, word))
   box.append(h)
@@ -269,8 +271,10 @@ for (const c of D.checks) {
     for (const k of c.broken) {
       if (!k) continue
       const li = el('li')
-      const caught = !k.ok
-      li.append(el('b', caught ? 'pass' : 'fail', caught ? 'caught' : 'NOT CAUGHT'), ` · ${k.subject} · ${(k.findings.find((f) => !f.ok) || k.findings[0]).what}`)
+      // Where the film itself already fails, a broken film is caught only by a failure the film does not have.
+      const already = new Set(r ? r.findings.filter((f) => !f.ok).map((f) => f.what) : [])
+      const fresh = k.findings.find((f) => !f.ok && !already.has(f.what))
+      li.append(el('b', fresh ? 'pass' : 'fail', fresh ? 'caught' : 'NOT CAUGHT'), ` · ${k.subject} · ${(fresh || k.findings[0]).what}`)
       ul.append(li)
     }
     b.append(ul)

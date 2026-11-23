@@ -22,7 +22,7 @@ const SEAM = 6
 const ROUND = 2
 
 // For every stretch between two frames of the coarse pass, how far the picture moves across it or across a stretch beside it.
-async function coarseSteps(run: string, every: number, from: number, to: number): Promise<Map<number, number>> {
+export async function coarseSteps(run: string, every: number, from: number, to: number): Promise<Map<number, number>> {
   const own = new Map<number, number>()
   let before: Small | null = null
   for (let f = Math.ceil(from / every) * every; f <= to; f += every) {

@@ -16,7 +16,7 @@
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
-html { background: var(--bg); color: var(--text); font: 16px/1.5 var(--sans); scroll-behavior: smooth; scroll-padding-top: 5rem; }
+html { background: var(--bg); color: var(--text); font: 16px/1.5 var(--sans); scroll-behavior: smooth; scroll-padding-top: 7.5rem; }
 body { margin: 0; }
 h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
 h2 { font-size: 1.125rem; margin: 0 0 0.5rem; font-weight: 600; }
