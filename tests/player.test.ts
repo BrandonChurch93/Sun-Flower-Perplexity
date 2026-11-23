@@ -83,9 +83,34 @@ describe('the pacing report', () => {
     const report = pacing.report(facts, 4, false, null)
     expect(report.shown.map((s) => [s.scriptMs, s.cardMs, s.late])).toEqual([[8, 12, false], [40, 50, true]])
     expect(report.frames).toEqual({ due: 4, drawn: 2, skipped: 2, late: 1 })
-    expect(report.scriptMs).toEqual({ mean: 24, p99: 40, longest: 40, longestAtFilm: 0.1 })
+    expect(report.scriptMs).toEqual({ mean: 24, p99: 40, longest: 40, longestAtFilm: 0.1, longestAtFrame: 3 })
     expect(report.cardMs.longest).toBe(50)
     expect(report.partsMs).toEqual({ plant: 18, field: 6 })
+    expect(report.partsWorst).toEqual({ plant: { ms: 30, frame: 3 }, field: { ms: 10, frame: 3 } })
+    expect(report.skippedRuns).toEqual([{ from: 1, to: 2 }])
+    expect(report.stretches).toHaveLength(1)
+    expect(report.stretches[0]).toMatchObject({ from: 0, to: 29, due: 4, shown: 2, skipped: 2, worstScriptAtFrame: 3 })
+  })
+
+  it('names the three seconds of film that went worst, the one with the most frames skipped first', () => {
+    const pacing = new Pacing()
+    let at = 0
+    let position = 0
+    for (let frame = 0; frame < 150; frame++) {
+      const skip = (frame >= 60 && frame < 89 && frame % 2 === 1) || (frame >= 120 && frame % 3 !== 0)
+      if (!skip) pacing.present(frame, position, frame / fps, frame / fps, frame / fps + 0.01, at, frame >= 30 && frame < 60 ? 30 : 10, undefined, { plant: 5, script: 5, wait: 5 })
+      position++
+      at += 1000 / fps
+    }
+    const report = pacing.report(facts, 150, true, null)
+    expect(report.stretches.map((w) => [w.from, w.to, w.skipped])).toEqual([[120, 149, 20], [60, 89, 14], [30, 59, 0]])
+    expect(report.frames.skipped).toBe(34)
+    expect(report.skippedRuns[0]).toEqual({ from: 61, to: 61 })
+    const text = reportText(report)
+    expect(text).toContain('30 frames a second held: NO')
+    expect(text).toContain('the 3 worst seconds of film:')
+    expect(text).toContain('frames 120 to 149: 10 of 30 shown, 20 skipped')
+    expect(text).toContain('skipped: 34 frames in 24 runs, frames 61, 63,')
   })
 
   it('writes the report as text to paste: frames due, shown and late, script mean and worst, longest gap, made', () => {
@@ -95,9 +120,10 @@ describe('the pacing report', () => {
     const made = { programs: 0, shaders: 0, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 4, updateBytes: 64, bufferUpdates: 4, bufferUpdateBytes: 64, textureUpdates: 0, textureUpdateBytes: 0, vertexArrays: 0 }
     const text = reportText(pacing.report(facts, 4, false, made), ['graphics: test card'])
     expect(text).toContain('frames: 4 due, 2 shown, 2 skipped, 1 shown late')
-    expect(text).toContain('script a frame: mean 24 ms, 99th 40 ms, worst 40 ms at 0.1 s')
+    expect(text).toContain('of it script: mean 24 ms, 99th 40 ms, worst 40 ms at frame 3')
     expect(text).toContain('longest 100 ms')
-    expect(text).toContain('script by part, mean ms: plant 18.0, field 6.0')
+    expect(text).toMatch(/plant +mean +18\.0 +worst +30\.0 at frame 3/)
+    expect(text).toContain('skipped: 2 frames in 1 run, frames 1 to 2')
     expect(text).toContain('made after loading: 0')
     expect(text).toContain('graphics: test card')
     expect(text.split('\n')[0]).toMatch(/^Not smooth: 2 frames skipped, 1 shown late, longest gap 0\.10 s at /)
