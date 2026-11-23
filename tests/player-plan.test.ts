@@ -77,6 +77,31 @@ describe('the steadied audio clock', () => {
     }
   })
 
+  it('never goes back when the audio clock arrives unevenly', () => {
+    const steady = new Steady()
+    const step = 1024 / 44100
+    let before = -Infinity
+    let seed = 7
+    const uneven = () => {
+      seed = (seed * 16807) % 2147483647
+      return (seed / 2147483647) * 0.012
+    }
+    let raw = 0
+    let late = 0
+    for (let ms = 0; ms < 8000; ms += 1000 / 60) {
+      const truth = ms / 1000
+      while (raw + step + late <= truth) {
+        raw += step
+        late = uneven()
+      }
+      const read = steady.read(raw, ms + 900)
+      expect(read).toBeGreaterThanOrEqual(before)
+      expect(read).toBeGreaterThanOrEqual(raw)
+      expect(read).toBeLessThanOrEqual(raw + step + 1e-9)
+      before = read
+    }
+  })
+
   it('stands still when the audio clock stands still', () => {
     const steady = new Steady()
     for (let ms = 0; ms < 500; ms += 10) steady.read(ms / 1000, ms)

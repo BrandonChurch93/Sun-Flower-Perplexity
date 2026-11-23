@@ -98,7 +98,9 @@ export class Pacing {
     this.lastPosition = position
   }
 
-  report(facts: RunFacts, due: number, complete: boolean, made: Made | null): Report {
+  // `planned` is the number of frames the whole run would show. A run that was stopped is measured up to the frame it stopped on.
+  report(facts: RunFacts, planned: number, complete: boolean, made: Made | null): Report {
+    const due = complete ? planned : this.lastPosition + 1
     const shown = this.shown
     const gaps = shown.slice(1).map((s) => s.gapMs).sort((a, b) => a - b)
     const draws = shown.map((s) => s.drawMs).sort((a, b) => a - b)
@@ -126,7 +128,7 @@ export class Pacing {
     const film = drawn ? shown[drawn - 1].due - shown[0].due : 0
     let verdict: string
     if (drawn === 0) verdict = 'No frame was drawn.'
-    else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s, with ${drawn} of ${due} frames drawn.`
+    else if (!complete) verdict = `Stopped at ${shown[drawn - 1].film.toFixed(2)} s. Until then ${drawn} of ${due} frames were drawn${skipped ? ` and ${skipped} skipped` : ''}.`
     else if (holds) verdict = `Clean. Every one of the ${due} frames was drawn, and the longest gap between two frames was ${longest.toFixed(1)} ms.`
     else if (skipped === 0) verdict = `Every frame was drawn, with ${this.gaps.length} ${this.gaps.length === 1 ? 'gap' : 'gaps'} over ${GAP_MS} ms. The longest was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s.`
     else if (nearly) verdict = `${skipped} of ${due} frames were skipped. The longest gap was ${longest.toFixed(0)} ms at ${longestAt.toFixed(2)} s. The picture stayed with the sound.`

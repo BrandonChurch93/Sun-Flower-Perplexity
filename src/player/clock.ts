@@ -98,12 +98,14 @@ export class Steady {
   private readonly when = new Float64Array(WINDOW)
   private count = 0
   private last = NaN
+  private told = -Infinity
   // The smallest step of the audio clock seen so far, in seconds. 0 until two readings differ.
   step = 0
 
   reset(): void {
     this.count = 0
     this.last = NaN
+    this.told = -Infinity
     this.step = 0
   }
 
@@ -112,7 +114,10 @@ export class Steady {
     if (raw !== this.last) {
       const d = raw - this.last
       if (d > 0 && (this.step === 0 || d < this.step)) this.step = d
-      if (d < 0) this.count = 0
+      if (d < 0) {
+        this.count = 0
+        this.told = -Infinity
+      }
       this.last = raw
     }
     const i = this.count % WINDOW
@@ -121,6 +126,8 @@ export class Steady {
     this.count++
     let offset = -Infinity
     for (let k = 0; k < Math.min(this.count, WINDOW); k++) if (p - this.when[k] <= KEEP_SECONDS && this.bound[k] > offset) offset = this.bound[k]
-    return Math.min(p + offset, raw + (this.step || FIRST_CAP))
+    // It never goes back while the audio clock goes on, so no frame is ever shown after a later one.
+    this.told = Math.max(this.told, Math.min(p + offset, raw + (this.step || FIRST_CAP)))
+    return this.told
   }
 }
