@@ -81,12 +81,12 @@ void main() {
   vec4 b = texelFetch(uCrystals, at + ivec2(1, 0), 0);
   vec4 c = texelFetch(uCrystals, at + ivec2(2, 0), 0);
   vec4 d = texelFetch(uCrystals, at + ivec2(3, 0), 0);
-  vec3 root = plantWorld(mix(a.xyz, b.xyz, uShutter));
+  vec3 root = plantWorld(mix(a.xyz, b.xyz, plantBlend()));
   // The wearer's number says what the crystal is: 0 to 1 the set chooses, 1 to 2 a low tuft, 2 to 3 a spike.
   float chosen = floor(b.w);
   float own = b.w - chosen;
   float n = float(needle);
-  vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, uShutter)));
+  vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, plantBlend())));
   bool spike = chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74);
   float h5 = hash(own, 5.0);
   grow = normalize(grow + AIR_FROM * 0.3 + (vec3(hash(own, 1.0), hash(own, 2.0), hash(own, 3.0)) - 0.5) * (spike ? 1.8 : 2.2));
