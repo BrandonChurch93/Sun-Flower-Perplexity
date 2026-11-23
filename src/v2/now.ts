@@ -103,9 +103,10 @@ export function blankMoment(): Moment {
   }
 }
 
-// The sun gives way under 1 degree below the horizon and the moon takes over under 5: between them nothing casts a shadow.
-export const SUN_GONE_DEG = -1
+// The sun is the light until it stands 5 degrees under the horizon, by then as the glow it leaves in the sky, and the moon is the light from there.
+// The key is zero at the change, so nothing may jump with the kind of the light.
 export const MOON_FROM_DEG = -5
+const GLOW_DEG = 5
 
 export function dialsAt(seconds: number, out: Dials): Dials {
   const b = barAt(seconds)
@@ -171,15 +172,13 @@ export function momentAt(seconds: number, out: Moment): Moment {
   out.sunAzimuthDeg = sunAzimuthAt(world)
   direction(out.sunAzimuthDeg, out.sunElevationDeg, out.sun)
   out.moon.copy(moonDirection)
-  if (out.sunElevationDeg > SUN_GONE_DEG) {
+  if (out.sunElevationDeg > MOON_FROM_DEG) {
     out.lightKind = 'sun'
-    direction(out.sunAzimuthDeg, Math.max(out.sunElevationDeg, 0.6), out.light)
-  } else if (out.sunElevationDeg < MOON_FROM_DEG) {
+    const under = clamp(out.sunElevationDeg / MOON_FROM_DEG)
+    direction(out.sunAzimuthDeg, Math.max(out.sunElevationDeg, 0.6 + (GLOW_DEG - 0.6) * under * under * (3 - 2 * under)), out.light)
+  } else {
     out.lightKind = 'moon'
     out.light.copy(moonDirection)
-  } else {
-    out.lightKind = 'none'
-    out.light.set(0, 1, 0)
   }
   out.night = smooth(-out.sunElevationDeg / 12)
   out.starTurn = world * 2 * Math.PI

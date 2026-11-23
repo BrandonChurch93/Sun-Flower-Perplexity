@@ -77,7 +77,7 @@ export class Film {
   lastFrame = -1
   quality: Quality | null
   // What the live mode may change: the camera turned about the plant.
-  readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, world: null, fixed: null }
+  readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, fixed: null }
   private readonly only: Set<string>
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
@@ -125,18 +125,29 @@ export class Film {
     return this.only.size === 0 || this.only.has(name)
   }
 
-  load(): Promise<void> {
+  load(onStep?: (done: number, of: number, what: string) => void): Promise<void> {
     if (!this.loaded) {
       this.loaded = (async () => {
         const { renderer } = this.stage
+        const of = 5 + this.parts.length
+        let done = 0
+        const step = (what: string): void => onStep?.(++done, of, what)
         await this.ground.load(this.assets)
+        step('ground')
         await this.plant.load(this.assets)
+        step('plant')
         await this.companion.load(this.assets)
+        step('companion')
         await this.field.load(this.assets)
+        step('field')
         const module = await skyModules[`../${this.skyName}/index.ts`]()
         this.sky = module.make()
         await this.sky.load(renderer, this.assets)
-        for (const { part } of this.parts) await part.load?.(renderer, this.assets)
+        step('sky')
+        for (const { name, part } of this.parts) {
+          await part.load?.(renderer, this.assets)
+          step(name)
+        }
         const total = this.assets.megabytes() + this.sky.megabytes()
         if (total > this.assets.limitMb()) throw new Error(`the ${this.assets.set} asset set needs ${total.toFixed(0)} MB of textures, over its limit`)
       })()
@@ -238,7 +249,7 @@ export class Film {
     this.sun.copy(now.light).lerp(later.light, shutter)
     if (now.dials.flash > 0) this.sun.lerp(now.flashAt, now.dials.flash)
     this.sun.normalize()
-    return now.lightKind !== 'none' && this.sun.y > 0.005 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 1e-4
+    return this.sun.y > 0.005 && def.sun.color[0] + def.sun.color[1] + def.sun.color[2] > 1e-4
   }
 
   private async draw(frameIndex: number, tier: TierId, pause: boolean): Promise<void> {
@@ -426,7 +437,7 @@ export function warmFrames(): number[] {
   return [...frames].sort((a, b) => a - b)
 }
 
-export interface FilmView { azimuthDeg: number; elevationDeg: number; dolly: number; world: string | null; fixed: FixedView | null }
+export interface FilmView { azimuthDeg: number; elevationDeg: number; dolly: number; fixed: FixedView | null }
 
 export interface TexelCheck { frame: number; pixels: number; textured: number; soft: number; texturedOutsideSharpZone: number; softShare: number }
 
