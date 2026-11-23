@@ -50,7 +50,7 @@ const bell = (x: number): number => Math.exp(-x * x)
 
 // How high the hills may stand above the horizon, in degrees seen from the plant, bearing by bearing. The sun comes up between 175 and 187 over the days of the film and goes down between 198 and 226: a wide flat saddle for the mornings, a long ridge that falls to a second saddle for the evenings, the last one lowest.
 const CREST: [number, number][] = [
-  [100, 1.5], [128, 1.7], [150, 2.0], [162, 1.7], [169, 1.05], [174, 0.24], [188, 0.24], [194, 0.8], [201, 0.95], [210, 0.8], [218, 0.42], [223, 0.12], [228.5, 0.12], [235, 0.9], [244, 1.7], [255, 2.0], [275, 1.7], [300, 1.5], [460, 1.5],
+  [100, 1.5], [128, 1.7], [150, 2.0], [160, 1.2], [166, 0.55], [170, 0.45], [174, 0.24], [188, 0.24], [192, 0.42], [197, 0.5], [202, 0.8], [207, 0.95], [212, 0.8], [217, 0.5], [222, 0.4], [226, 0.1], [231, 0.4], [238, 0.5], [246, 1.0], [255, 2.0], [275, 1.7], [300, 1.5], [460, 1.5],
 ]
 
 export function crestDeg(azDeg: number): number {
@@ -66,10 +66,11 @@ export function gateAt(azDeg: number): number {
   return 1 - smooth(0.26, 0.8, crestDeg(azDeg))
 }
 
+// The nearest range is the dark ridge behind the field: it stands highest and most even, the two behind it show over its dips.
 const RANGES = [
-  { radiusM: 2350, widthM: 520, share: 0.7, floorDeg: 0, cells: 13, salt: 100 },
-  { radiusM: 3550, widthM: 660, share: 0.9, floorDeg: 0.24, cells: 10, salt: 200 },
-  { radiusM: 5000, widthM: 740, share: 1.0, floorDeg: 0.42, cells: 8, salt: 300 },
+  { radiusM: 2350, widthM: 520, share: 1.0, even: 0.45, waverDeg: 0.3, floorDeg: 0.1, cells: 30, salt: 100 },
+  { radiusM: 3550, widthM: 660, share: 0.85, even: 0, waverDeg: 0, floorDeg: 0.24, cells: 10, salt: 200 },
+  { radiusM: 5000, widthM: 740, share: 0.95, even: 0, waverDeg: 0, floorDeg: 0.42, cells: 8, salt: 300 },
 ]
 
 export interface LandAt { height: number; wood: number; hill: number }
@@ -105,11 +106,13 @@ function bare(x: number, z: number, out: LandAt): LandAt {
   const wr = Math.hypot(wx, wz)
   for (const range of RANGES) {
     const turn = (az / 360) * range.cells
-    const shape = 0.3 + 1.1 * (0.62 * ring(turn, range.cells, range.salt) + 0.38 * ring(turn * 2.7, Math.round(range.cells * 2.7), range.salt + 1))
+    const rough = 0.3 + 1.1 * (0.62 * ring(turn, range.cells, range.salt) + 0.38 * ring(turn * 2.7, Math.round(range.cells * 2.7), range.salt + 1))
+    const shape = rough + (1 - rough) * range.even
     const radius = range.radiusM * (1 + 0.1 * (ring(turn * 0.6, Math.max(2, Math.round(range.cells * 0.6)), range.salt + 2) - 0.5))
     // The far ranges never sink to nothing: in the saddles they stay as low pale shapes behind the open land.
     const least = range.floorDeg * (0.45 + 0.7 * ring(turn * 5.3, Math.round(range.cells * 5.3), range.salt + 3) + 0.5 * ring(turn * 13.7, Math.round(range.cells * 13.7), range.salt + 4))
-    const top = radius * Math.tan(Math.max(crest * range.share * shape, least) * RAD)
+    const waver = range.waverDeg * (0.4 + 0.6 * smooth(0.2, 0.5, crest)) * (0.65 * Math.sin(az * RAD * 32 + range.salt) + 0.35 * Math.sin(az * RAD * 77 + range.salt * 1.7))
+    const top = radius * Math.tan(Math.max(crest * range.share * shape + waver, least) * RAD)
     const across = (wr - radius) / range.widthM
     const body = across < 0 ? bell(across * 1.15) : bell(across * 1.5)
     hill = Math.max(hill, top * body)
@@ -139,10 +142,12 @@ function ring(turn: number, cells: number, salt: number): number {
 export function woodAt(x: number, z: number, hill: number): number {
   const r = Math.hypot(x, z)
   const patch = fbm2(x / 640, z / 640, 60, 3)
-  const onHill = smooth(14, 42, hill) * smooth(0.3, 0.5, patch + 0.25 * smooth(40, 120, hill))
   const az = (Math.atan2(x, z) / RAD + 360) % 360
+  // The first range is wooded down to its low line: a dark ridge all the way along.
+  const first = 1 - smooth(2900, 3300, r)
+  const onHill = smooth(14 - 13 * first, 42 - 36 * first, hill) * smooth(0.3, 0.5, patch + 0.25 * first + 0.25 * smooth(40, 120, hill))
   const clear = 1 - 0.9 * gateAt(az)
-  const copse = smooth(0.66, 0.72, fbm2(x / 330, z / 330, 70, 2)) * smooth(520, 800, r) * clear
+  const copse = smooth(0.66, 0.72, fbm2(x / 330, z / 330, 70, 2)) * smooth(900, 1300, r) * clear
   return Math.max(onHill, copse)
 }
 

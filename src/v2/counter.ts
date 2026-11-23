@@ -1,8 +1,8 @@
 // Counts what the graphics card is asked to make. After the loading screen every one of these must stay at zero.
 // `uploads` are calls that give a texture, a buffer or a renderbuffer its storage. `updates` write into storage that already exists, which a running film may do.
-export interface Made { programs: number; shaders: number; textures: number; buffers: number; framebuffers: number; renderbuffers: number; uploads: number; uploadBytes: number; updates: number; updateBytes: number; bufferUpdates: number; bufferUpdateBytes: number; textureUpdates: number; textureUpdateBytes: number }
+export interface Made { programs: number; shaders: number; textures: number; buffers: number; framebuffers: number; renderbuffers: number; uploads: number; uploadBytes: number; updates: number; updateBytes: number; bufferUpdates: number; bufferUpdateBytes: number; textureUpdates: number; textureUpdateBytes: number; vertexArrays: number }
 
-const made: Made = { programs: 0, shaders: 0, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 0, updateBytes: 0, bufferUpdates: 0, bufferUpdateBytes: 0, textureUpdates: 0, textureUpdateBytes: 0 }
+const made: Made = { programs: 0, shaders: 0, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 0, updateBytes: 0, bufferUpdates: 0, bufferUpdateBytes: 0, textureUpdates: 0, textureUpdateBytes: 0, vertexArrays: 0 }
 let installed = false
 
 function sizeOf(gl: WebGL2RenderingContext, name: string, args: unknown[]): number {
@@ -51,6 +51,7 @@ export function installCounter(): void {
   count('createBuffer', 'buffers')
   count('createFramebuffer', 'framebuffers')
   count('createRenderbuffer', 'renderbuffers')
+  count('createVertexArray', 'vertexArrays')
   for (const name of ['texImage2D', 'texImage3D', 'texStorage2D', 'texStorage3D', 'compressedTexImage2D', 'compressedTexImage3D', 'bufferData', 'renderbufferStorage', 'renderbufferStorageMultisample', 'copyTexImage2D']) count(name, 'uploads', 'uploadBytes')
   for (const name of ['texSubImage2D', 'texSubImage3D', 'bufferSubData', 'compressedTexSubImage2D']) count(name, 'updates', 'updateBytes')
 }
@@ -66,5 +67,5 @@ export function madeSince(then: Made): Made {
 }
 
 export function nothingMade(m: Made): boolean {
-  return m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads === 0
+  return m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads + m.vertexArrays === 0
 }

@@ -196,7 +196,9 @@ ${farAirGlsl}
 // The heads of the far crop. Near, one disc to a plant. Farther off a plant is smaller than a pixel and the eye sees the heads that stand clear,
 // one to every few plants: the cells double in size as they shrink on the screen, each way on its own, and one size fades into the next.
 float headsAt(vec2 f, out float tone) {
-  vec2 lod = max(log2(max(fwidth(f), vec2(1e-5)) * 2.4), vec2(0.0));
+  vec2 across = max(fwidth(f), vec2(1e-5));
+  vec2 seen = max(vec2(abs(dFdx(f.x)), abs(dFdy(f.y))), vec2(1e-5));
+  vec2 lod = max(log2(across * 2.4), vec2(0.0));
   vec2 lo = floor(lod);
   vec2 t = smoothstep(0.4, 1.0, lod - lo);
   float sum = 0.0;
@@ -208,7 +210,8 @@ float headsAt(vec2 f, out float tone) {
     vec2 c = floor(g) + size * 31.0;
     vec2 o = fract(g) - 0.5 - 0.3 * (vec2(hash21(c + 3.0), hash21(c + 9.0)) - 0.5);
     float first = 1.0 - step(1.5, size.x * size.y);
-    o.y *= mix(1.0, ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)}, first);
+    // A head stands upright: far off it is as wide on the screen as it is high, however flat its place on the ground is seen.
+    o.x *= mix(clamp(size.x * seen.y / (size.y * seen.x), 1.0, 8.0), ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)}, first);
     float w = mix(1.0 - t.x, t.x, up.x) * mix(1.0 - t.y, t.y, up.y);
     float d = (1.0 - smoothstep(0.2, 0.42, length(o))) * step(hash21(c + 5.0), mix(0.55, 0.8, first));
     sum += w * d;
@@ -248,10 +251,12 @@ void main() {
     // The carpet: a share of the plants, each one whole, so it comes in plant by plant.
     float along = -dot(at, uToward);
     float across = at.x * uToward.y - at.y * uToward.x;
-    vec2 cell = floor(vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)}));
+    vec2 cell = floor(vec2(across / ${config.field.rowSpacingM.toFixed(3)}, along / ${config.field.plantSpacingM.toFixed(3)}));
     // Near, the carpet comes in plant by plant. Far off a plant is smaller than a pixel, and the field breaks up in tongues and islands
     // of crop that thin out toward the far land and along its sides: there is no line where it ends.
-    float fine = clamp(1.0 - 0.6 * fwidth(along / ${config.field.rowSpacingM.toFixed(3)}), 0.0, 1.0);
+    float fine = clamp(1.0 - 0.6 * fwidth(along / ${config.field.plantSpacingM.toFixed(3)}), 0.0, 1.0);
+    // The rows run away from the plant: the eye parts them as long as one is wider than a pixel or two.
+    float lined = clamp(1.6 - 2.2 * fwidth(across / ${config.field.rowSpacingM.toFixed(3)}), 0.0, 1.0);
     float gone = length(vWorld.xz);
     float inside = min(uWedge.x + uWedge.y * along + across, uWedge.z + uWedge.w * along - across) / (30.0 + 0.5 * along);
     float lost = max(smoothstep(uEnd.x, uEnd.y, gone), 1.0 - smoothstep(0.0, 1.0, inside));
@@ -268,7 +273,7 @@ void main() {
     color = mix(vMid * 0.32, vTop * 0.72, mix(tops, 0.3 + 0.55 * grain, fine)) * (0.74 + 0.52 * patchy);
     color *= mix(${UNLIT.toFixed(2)}, 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
-    vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
+    vec2 f = vec2(across / ${config.field.rowSpacingM.toFixed(3)}, along / ${config.field.plantSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
     float share = mix(0.04, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
@@ -276,11 +281,12 @@ void main() {
     // The pictures give the head with its dark disc and the leaves round it: the petals alone are brighter, and brighter still with the low sun behind them.
     float into = smoothstep(0.2, 0.9, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
-    color = mix(color, gold, uOpen * share);
-    color = mix(color, gold * (0.9 + 0.6 * tone), uOpen * disc);
+    color = mix(color, gold, uOpen * share * 0.4);
+    // A head that stands clear is the colour of its rays, as the heads of the pictures before it are.
+    color = mix(color, gold * vec3(2.9, 2.3, 1.1) * (0.8 + 0.5 * tone), uOpen * disc);
     // The rows, as far as the eye can part them: the tops in light and the dark between.
-    float row = 0.5 + 0.5 * cos(6.2831853 * along / ${config.field.rowSpacingM.toFixed(3)});
-    color *= 1.0 + 0.22 * fine * (row - 0.5);
+    float row = 0.5 - 0.5 * cos(6.2831853 * across / ${config.field.rowSpacingM.toFixed(3)});
+    color *= 1.0 + 0.7 * lined * (row - 0.5);
     // Where a gust lies on the crop the leaves show their pale undersides.
     color *= 1.0 + 0.3 * uWind * (gust - 0.3);
     color = farAir(color, vWorld);

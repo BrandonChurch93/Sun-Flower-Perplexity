@@ -6,7 +6,6 @@ import type { Loading } from '../player/loading.ts'
 import type { Report, RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
-import { splitOf, type Split } from '../player/split.ts'
 import { readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
@@ -28,9 +27,9 @@ export interface PlayerState {
   report: Report | null
   advice: string | null
   error: string | null
-  // The last frame drawn: the page's own work and the wait for the graphics card, in milliseconds.
-  split: Split
   sky: string
+  // Plays the frames from `first` to `last` against the clock, without a track unless one is loaded, and gives the run's report.
+  range(first: number, last: number): Promise<Report | null>
 }
 
 declare global {
@@ -99,12 +98,14 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let pumping = false
   let dead = false
   let playing: Playing | null = null
+  let until = lastFrame
   let session: Session | null = null
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, split: splitOf(film), sky: film.skyName }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range }
   window.player = state
+  window.showcase.pacing = () => playing?.soFar() ?? state.report
 
   let clockKey = ''
   let clockReady: Promise<FilmClock> | null = null
@@ -385,7 +386,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
 
   async function startPlay(): Promise<void> {
     if (activity !== 'ready' || dead) return
-    if (frame >= lastFrame) frame = 0
+    if (frame >= until) frame = 0
     become('playing', 'Playing')
     if (review) note.textContent = ''
     let run: Run | null = null
@@ -398,7 +399,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       playing = play({
         film,
         tier,
-        plan: filmPlan(frame, lastFrame),
+        plan: filmPlan(frame, until),
         time: run.time,
         facts: (stepMs) => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } }),
         tick(_seconds, cue) {
@@ -426,6 +427,19 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       touch()
       if (resume) void startPlay()
     }
+  }
+
+  async function range(first: number, last: number): Promise<Report | null> {
+    if (activity !== 'ready' || dead) return null
+    frame = Math.max(0, Math.min(lastFrame, Math.round(first)))
+    until = Math.max(frame, Math.min(lastFrame, Math.round(last)))
+    state.report = null
+    try {
+      await startPlay()
+    } finally {
+      until = lastFrame
+    }
+    return state.report
   }
 
   function togglePlay(): void {

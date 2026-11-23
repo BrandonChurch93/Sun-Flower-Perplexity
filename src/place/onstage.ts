@@ -6,9 +6,9 @@ import { makeTerrain } from './terrain.ts'
 import { makeTrees } from './trees.ts'
 
 // Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
-const AIR = { clear: 0.00006, lowSun: 0.00005, overcast: 0.00008, fog: 0.00025, rain: 0.0003 }
+const AIR = { clear: 0.00006, lowSun: -0.00003, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
-const MIST = { perM: 0.004, topM: 12 }
+const MIST = { perM: 0.001, topM: 12 }
 // Stand-in. The shared ground fog in rain is so dense that everything beyond 150 m becomes the fog color, hills and all. Away from the field the land takes this share of it until the shared fog is thinner.
 const RAIN_FOG_SHARE = 0.12
 
@@ -33,6 +33,8 @@ class Place implements Part {
     airUniforms.uMistTopM.value = MIST.topM
     airUniforms.uFogShare.value = 1 - (1 - RAIN_FOG_SHARE) * d.rain
     airUniforms.uFogNear.value = clamp(1.25 * d.fog + d.rain)
+    airUniforms.uFogLow.value = 0.9 * clamp(d.fog)
+    airUniforms.uVeil.value = clamp(d.fog)
     airUniforms.uThrough.value = 0.12 + 0.88 * smoothstep(-5, -1, now.sunElevationDeg)
     airUniforms.uTrueSun.value.copy(now.sun)
     airUniforms.uLandWet.value = d.wet

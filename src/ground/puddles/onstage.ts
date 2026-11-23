@@ -10,7 +10,8 @@ import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { DOT_LIFE_S, dotFragment, dotGeometry, dotVertex } from './dots.ts'
 import { hazeFragment, hazeGeometry, hazeVertex } from './haze.ts'
-import { LANDING_FLOATS, fineLandings, landings } from './landings.ts'
+import { prepareDrops } from '../../weather/rain/drops.ts'
+import { FineRain, LANDING_FLOATS, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
 import { waterFragment, waterVertex } from './water.ts'
 
@@ -18,6 +19,8 @@ const MAX_DROPS = 2048
 const MAX_RINGS = 6144
 const MAX_DOTS = 4096
 const FINE_REACH_M = 0.11
+// How far a drop can land from where it meets the water, whose level is not the ground's.
+const FINE_DRIFT_M = 0.04
 // The largest of the fine drops raise a small crown where they land in the water.
 const FINE_CROWN_M = 0.00025
 // The square of ground whose landings are drawn, as half its side at each quality, and how far toward the lens from the plant its middle lies.
@@ -29,6 +32,9 @@ const BED_M = -furrow.depthM - 0.003
 const FULL_M = 0.0045
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const QUALITY = { film: 0, high: 1, low: 2 } as const
+const boxX = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
+const boxZ = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
+const inFurrow = (x: number, z: number): boolean => nearFurrow(x, z, FINE_REACH_M)
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
 // The water standing on the ground and everything a drop does where it lands: the mirror in the furrow, the rings and crowns on it, the dark spots and the grit on soil, and the spray that hangs over it all.
@@ -60,6 +66,7 @@ class Puddles implements Part {
   private splashDrop: THREE.InstancedBufferAttribute | null = null
   private spotDrop: THREE.InstancedBufferAttribute | null = null
   private ripples: Ripples | null = null
+  private readonly fine: FineRain
 
   constructor() {
     const plane = new THREE.PlaneGeometry(2 * nearRadiusM, 2 * nearRadiusM)
@@ -73,6 +80,9 @@ class Puddles implements Part {
     this.crowns.renderOrder = -9
     this.haze.renderOrder = 40
     this.objects = [this.water, this.dots, this.crowns, this.haze]
+    prepareDrops()
+    const reach = rippleBox.halfM * Math.SQRT2
+    this.fine = new FineRain(boxX - reach, boxZ - reach, boxX + reach, boxZ + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M + FINE_DRIFT_M))
     for (const o of this.objects) {
       o.frustumCulled = false
       o.matrixAutoUpdate = false
@@ -109,7 +119,8 @@ class Puddles implements Part {
     const lit = this.lit
     lit.uMirrorFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 3)
     lit.uMirrorFlashAt.value.copy(now.flashAt)
-    lit.uBlaze.value = d.burst
+    // The deck stays over the break: as long as the sun stands in its tear the water shows the dark of the deck and the sun only as a path under the gap.
+    lit.uBlaze.value = Math.max(d.burst, d.sunThrough * Math.min(1, 2 * d.overcast))
     lit.uStalk.value.set(heightAt(now.tau), Math.max(stemBaseRadius(now.tau), 0.004), 0.3 * heightAt(now.tau), 0.85)
     // The rain keeps the water chopped; once it has passed the face stills and mirrors whole.
     lit.uChop.value = 0.12 + 0.55 * Math.sqrt(rain)
@@ -135,13 +146,12 @@ class Puddles implements Part {
     this.level.value.set(y, Math.min(1, d.puddle / 0.08))
     this.span.value.set(time, close)
     this.stands.value = (close - time) / Math.max(1, view.samples)
-    const cx = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
-    const cz = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
+    const cx = boxX
+    const cz = boxZ
     const reach = rippleBox.halfM * Math.SQRT2
-    const near = (x: number, z: number): boolean => nearFurrow(x, z, FINE_REACH_M)
     if (stands && this.ripples) {
       let count = lands ? landings(cx, cz, reach + 0.2, y, time - RING_LIFE_S, close, this.drops) : 0
-      if (lands && quality < 2) count = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, near, y, time - FINE_RING_LIFE_S, close, this.drops, count)
+      if (lands && quality < 2) count = this.fine.landings(inFurrow, y, time - FINE_RING_LIFE_S, close, this.drops, count)
       this.ripples.set(count, time, close, cx, cz, rippleBox.halfM)
     }
     if (!lands || !this.splashDrop || !this.spotDrop) return
@@ -149,7 +159,7 @@ class Puddles implements Part {
     const mx = eye.x * SPLASH_TOWARD
     const mz = eye.z * SPLASH_TOWARD
     let struck = landings(mx, mz, half, 0, time - SPLASH_LIFE_S, close, this.splashes)
-    if (stands && quality < 2) struck = fineLandings(cx - reach, cz - reach, cx + reach, cz + reach, near, y, time - SPLASH_LIFE_S, close, this.splashes, struck, FINE_CROWN_M)
+    if (stands && quality < 2) struck = this.fine.landings(inFurrow, y, time - SPLASH_LIFE_S, close, this.splashes, struck, FINE_CROWN_M)
     ;(this.crowns.geometry as THREE.InstancedBufferGeometry).instanceCount = struck
     if (struck > 0) {
       this.splashDrop.clearUpdateRanges()
