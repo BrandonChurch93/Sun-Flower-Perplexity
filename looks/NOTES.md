@@ -1,8 +1,8 @@
 # Looks of checks
 
-2026-11-23 09:57 UTC, at commit 9c10f1a0 of agent/checks.
+2026-11-23 12:22 UTC, at commit 022d7029 of agent/checks.
 
-Nights 14 and 15: the stem changes its light in one frame at the handover
+The plant alone through the handover on v2 699f0d2: a notch one frame wide
 
-- `01-night-14-dawn-frames-2696-to-2699-foot-of-the-st.jpg`: night 14 dawn, frames 2696 to 2699, foot of the stem
-- `02-night-15-dusk-frames-2778-to-2781-stem-under-the.jpg`: night 15 dusk, frames 2778 to 2781, stem under the head
+- `01-night-10-dusk-frames-2266-to-2271-the-plant-alon.jpg`: night 10 dusk, frames 2266 to 2271, the plant alone: 2268 is the darkest, 4 of 255 under 2267 and 2.8 under 2269
+- `02-night-8-dawn-frames-1563-to-1568-the-plant-alone.jpg`: night 8 dawn, frames 1563 to 1568, the plant alone: 1565 is 2.8 of 255 under 1564 and 4.8 under 1566
