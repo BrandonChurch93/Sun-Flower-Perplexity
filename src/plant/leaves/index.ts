@@ -52,6 +52,8 @@ const BEADS_A_PIECE = 100
 const LEAF_COST = 2.5
 const UNBORN_COST = 1
 const BEADS_COST = 1.7
+// A leaf not yet born is laid only when it is one of the next few to come, as the point it will open from, so a leaf born between two layings grows out of the earlier one. The rest are neither laid, sent nor drawn.
+const UNBORN_LAID = 3
 const VEIN_ROOTS = 60
 const STALK_ROOTS = 200
 const RIME_VEINS = [1, 2, 3]
@@ -210,6 +212,8 @@ export function create(options: PartOptions): PlantPart {
   const markList: number[] = []
   const planeList: number[] = []
   const index: number[] = []
+  // Where each leaf's share of the triangles ends.
+  const indexEnds: number[] = []
 
   // The companion keeps the narrower folded blades: its leaf at the sun was placed with them and must not cover the sun.
   const main = options.variant === 0
@@ -392,6 +396,7 @@ export function create(options: PartOptions): PlantPart {
     }
     vertices += nu * nv
     tubes += RINGS * (SIDES + 1)
+    indexEnds.push(index.length)
     leaves.push(leaf)
   }
 
@@ -720,6 +725,17 @@ export function create(options: PartOptions): PlantPart {
       const leaf = leaves[spot.leaf]
       const o = k * 4
       const size = lengthAt(leaf.i, pose.time)
+      // A bead on a leaf the slot does not hold has no size: it sits at nothing rather than at what the slot last held.
+      if (spot.leaf >= held[slot]) {
+        form.fill(0, o, o + 4)
+        formUp.fill(0, o, o + 4)
+        mid.fill(0, o, o + 4)
+        end.fill(0, o, o + 4)
+        endUp.fill(0, o, o + 4)
+        gather.fill(0, o, o + 4)
+        form[o + 3] = spot.own
+        continue
+      }
       put(leaf, spot.along, spot.across, form, formUp, o)
       form[o + 3] = spot.own
       // A blade still folded holds no water on its face.
@@ -1424,6 +1440,27 @@ export function create(options: PartOptions): PlantPart {
   const pieces = leaves.length + hairPieces + rimeLeaves + beadPieces
   const costs = new Float64Array(spare ? pieces : 0)
   // The first piece that ends after `cost`.
+  // How many leaves a slot holds, from the first: the born ones and the next few. The neighbors hold all of theirs.
+  const ranged = !options.places
+  const held = [leaves.length, leaves.length, leaves.length]
+  const heldAt = (time: number): number => {
+    if (!ranged) return leaves.length
+    let born = 0
+    while (born < leaves.length && leafLength(leaves[born].i, time) > 0) born++
+    return Math.min(leaves.length, born + UNBORN_LAID)
+  }
+  // Only the leaves a slot holds are sent. Each list has its one range, kept from load.
+  const ranges = new Map<THREE.BufferAttribute, { start: number; count: number }>()
+  const send = (list: THREE.BufferAttribute, count: number): void => {
+    if (ranged) {
+      let range = ranges.get(list)
+      if (!range) ranges.set(list, (range = { start: 0, count: 0 }))
+      range.count = count * list.itemSize
+      if (list.updateRanges.length === 0) list.updateRanges.push(range)
+    }
+    list.needsUpdate = true
+  }
+  if (ranged) for (const list of [position, positionB, ...normalSent, ...tubeAttributes]) if (list) ranges.set(list, { start: 0, count: 0 })
   const pieceAt = (cost: number): number => {
     let p = 0
     while (p < pieces && costs[p] <= cost) p++
@@ -1475,7 +1512,8 @@ export function create(options: PartOptions): PlantPart {
         led[slot] = true
         freshes[slot] = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       }
-      for (const leaf of leaves) fillLeaf(leaf, slot, pose)
+      held[slot] = heldAt(pose.time)
+      for (let p = 0; p < held[slot]; p++) fillLeaf(leaves[p], slot, pose)
       fillHairs(slot, pose)
       if (stateUniforms.uPlantFrost.value > 0) fillRime(slot, pose)
       // The water lies on the blade of each slot, so it rides with the blade between the two.
@@ -1490,17 +1528,20 @@ export function create(options: PartOptions): PlantPart {
       let born = 0
       while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
       const hairy = born > 0 ? hairsUpTo[born - 1] : 0
+      held[2] = heldAt(pose.time)
       let all = 0
       for (let p = 0; p < pieces; p++) {
         const q = p - leaves.length
-        all += q < 0 ? (p < born ? LEAF_COST : UNBORN_COST) : q < hairPieces ? clamp(hairy / HAIRS_A_PIECE - q, 0, 1) : q < hairPieces + rimeLeaves ? (frosted ? 1 : 0) : BEADS_COST
+        all += q < 0 ? (p < born ? LEAF_COST : p < held[2] ? UNBORN_COST : 0) : q < hairPieces ? clamp(hairy / HAIRS_A_PIECE - q, 0, 1) : q < hairPieces + rimeLeaves ? (frosted ? 1 : 0) : BEADS_COST
         costs[p] = all
       }
       const first = from <= 0 ? 0 : pieceAt(from * all)
       const last = to >= 1 ? pieces : pieceAt(to * all)
       for (let p = first; p < last; p++) {
         const q = p - leaves.length
-        if (q < 0) fillLeaf(leaves[p], 2, pose)
+        if (q < 0) {
+          if (p < held[2]) fillLeaf(leaves[p], 2, pose)
+        }
         else if (q < hairPieces) fillHairs(2, pose, q * HAIRS_A_PIECE, (q + 1) * HAIRS_A_PIECE)
         else if (q < hairPieces + rimeLeaves) {
           if (frosted) fillRime(2, pose, q - hairPieces, q - hairPieces + 1)
@@ -1525,21 +1566,30 @@ export function create(options: PartOptions): PlantPart {
       if (frosted) bristles?.root(slot)
       freshes[slot] = freshes[2]
       hairsUp[slot] = hairsUp[2]
+      held[slot] = held[2]
       filled[slot] = true
       led[slot] = true
     },
     finish() {
-      if (filled[0]) position.needsUpdate = true
-      if (filled[1] && positionB) positionB.needsUpdate = true
-      for (let k = 0; k < normalSent.length; k++) if (led[k]) normalSent[k].needsUpdate = true
+      const ends = (k: number): number => (held[k] > 0 ? leaves[held[k] - 1].base + leaves[held[k] - 1].nu * leaves[held[k] - 1].nv : 0)
+      if (filled[0]) send(position, ends(0))
+      if (filled[1] && positionB) send(positionB, ends(1))
+      for (let k = 0; k < normalSent.length; k++) if (led[k]) send(normalSent[k], ends(k))
       if (tubeAttributes.length) {
         for (let k = 0; k < 2; k++) {
-          if (filled[k]) tubeAttributes[k].needsUpdate = true
+          const rings = held[k] * RINGS * (SIDES + 1)
+          if (filled[k]) send(tubeAttributes[k], rings)
           if (led[k]) {
-            tubeAttributes[2 + 2 * k].needsUpdate = true
-            tubeAttributes[3 + 2 * k].needsUpdate = true
+            send(tubeAttributes[2 + 2 * k], rings)
+            send(tubeAttributes[3 + 2 * k], rings)
           }
         }
+      }
+      // A leaf is drawn when both slots hold it.
+      if (ranged) {
+        const drawn = positionB ? Math.min(held[0], held[1]) : held[0]
+        geometry.setDrawRange(0, drawn > 0 ? indexEnds[drawn - 1] : 0)
+        tubeMesh?.geometry.setDrawRange(0, drawn * (RINGS - 1) * SIDES * 6)
       }
       filled.fill(false)
       led.fill(false)
