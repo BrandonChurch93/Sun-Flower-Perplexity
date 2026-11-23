@@ -924,7 +924,7 @@ export function create(options: PartOptions): PlantPart {
     const caught = lapse > 0 ? restless(real, frameNow, leaf.seed) : 0
     const caughtTip = lapse > 0 ? restless(real, frameNow, leaf.seed * 0.61 + 0.23) : 0
     const live = 1 - lapse
-    const twitch = lapse * smoothstep(0.5, 3, age) * (1 - 0.7 * chill) * (1 + 2 * wind)
+    const twitch = lapse * (inputs.twitch ?? 1) * smoothstep(0.5, 3, age) * (1 - 0.7 * chill) * (1 + 2 * wind)
     const rock = wind * (0.04 * gust(real, frame.ox, frame.oz) + 0.025 * flutter(real, leaf.seed)) * live + twitch * TWITCH * caught
     const trail = wind * 0.08 * flutter(real - 0.18, leaf.seed * 0.73 + 0.11) * live + twitch * TWITCH_TIP * caughtTip
     const sway = wind * 0.075 * flutter(real - 0.07, leaf.seed * 0.41 + 0.37) * live + twitch * 0.6 * TWITCH * caughtTip
