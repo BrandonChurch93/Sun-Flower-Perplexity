@@ -22,10 +22,10 @@ import type { Moment, Part, Quality, Sky, SkyLight, View } from '../v2/api.ts'
 import { tauAt } from '../v2/clock.ts'
 import { plantInputsOf } from '../v2/inputs.ts'
 import { blankLook, lookAt } from '../v2/look.ts'
-import { blankMoment, later, momentAt, now, setNow, shutterSeconds } from '../v2/now.ts'
+import { blankMoment, later, momentAt, now, setNow, setStill, shutterSeconds } from '../v2/now.ts'
 import { fixedPose, rigAtFilm } from '../v2/rig.ts'
 import { views, type FixedView, type ViewName } from '../v2/shots.ts'
-import { companionInView, companionMatrix } from './companion.ts'
+import { companionInView, companionMatrix, companionRatio } from './companion.ts'
 import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts'
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame } from './timeline.ts'
@@ -50,6 +50,8 @@ export interface FilmOptions {
   only?: string[]
   view?: ViewName
   quality?: Quality | null
+  // The world at rest, for the checks: no weather, no wind, one fixed sun. Only growth and the camera still change.
+  still?: boolean
 }
 
 export class Film {
@@ -59,6 +61,7 @@ export class Film {
   readonly camera = new THREE.PerspectiveCamera()
   readonly plant = new Plant()
   readonly companion = new Plant({ variant: companionVariant, at: companionPlace() })
+  private readonly companionAt = new THREE.Matrix4()
   readonly field = new Field()
   readonly ground = new Ground()
   readonly shadow = new ShadowMap()
@@ -96,6 +99,7 @@ export class Film {
     this.companion.place(companionMatrix())
     this.only = new Set(options.only ?? [])
     this.quality = options.quality ?? null
+    if (options.still) setStill(true)
     this.view.fixed = options.view && options.view !== 'film' ? views[options.view] : null
     const names = skyNames()
     this.skyName = options.sky && names.includes(options.sky) ? options.sky : names.includes('sky') ? 'sky' : names[0]
@@ -111,6 +115,10 @@ export class Film {
     this.casters = [...this.plant.casters, ...this.ground.casters]
     this.bothCasters = [...this.plant.casters, ...this.companion.casters, ...this.ground.casters]
     shared.uFocusCoc.value = config.detail.focusCocPx
+  }
+
+  setStill(on: boolean): void {
+    setStill(on)
   }
 
   shows(name: string): boolean {
@@ -266,9 +274,13 @@ export class Film {
     const near = this.nearAt(seconds)
     // The companion is drawn when the lens could see a part of it, and once the camera is far enough back to see the ground it stands on.
     const wide = alone ? 0 : smoothstep(1.0, 1.8, distanceM)
-    const beside = !alone && this.shows('companion') && (wide > 0 || companionInView(tau, inputs, first, tanX, tanY, near))
+    const ratio = companionRatio(tau)
+    const beside = !alone && this.shows('companion') && (wide > 0 || companionInView(tau, inputs, first, tanX, tanY, near, ratio))
     this.companion.visible = beside
-    if (beside) this.companion.prepare(tau, tauClose, inputs, inputsClose)
+    if (beside) {
+      this.companion.place(companionMatrix(this.companionAt, companionPlace(), ratio))
+      this.companion.prepare(tau, tauClose, inputs, inputsClose)
+    }
     fieldUniforms.uPlantWind.value = Math.min(inputs.calm ?? inputs.wind, inputs.wind)
     fieldUniforms.uPlantHeight.value = heightAt(tau)
     const fieldOn = !alone && this.shows('field')

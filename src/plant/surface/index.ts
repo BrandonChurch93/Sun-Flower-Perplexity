@@ -1,4 +1,3 @@
-import { segmentStart } from '../../config.ts'
 import { dewGlsl } from './dew/index.ts'
 import { frostGlsl } from './frost/index.ts'
 import { wetGlsl } from './wet/film.ts'
@@ -22,7 +21,7 @@ export const tissueGuide = {
 
 // A part fills a Tissue for the pixel and gives it to shadeTissue. Needs the chunks of `makePartSurface` before it.
 // The field's start in film seconds, as shader text: the evening light begins there.
-const FIELD_FROM_S = segmentStart('field').toFixed(1)
+const FIELD_FROM_S = '52.0'
 export const tissueGlsl = /* glsl */ `
 struct Tissue {
   // The color of the skin.
