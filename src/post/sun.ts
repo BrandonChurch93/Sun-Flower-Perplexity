@@ -96,19 +96,18 @@ void main() {
     return;
   }
   if (gl_FragCoord.x > 1.0) {
-    // The second column: where the sky is brightest round the sun, as an offset from the sun in frame widths, and how open it is there. Under a torn deck that is the tear, and the beams start there and are as strong as it is open.
+    // The second column: where the sky is most open round the sun, as an offset from the sun in frame widths, and how open it is there. Under a torn deck that is the tear, and the beams start there and are as strong as it is open. Each place counts by how open it is and not by how bright: a lit drop of rain is brighter than the tear and a pixel wide, and would pull the start to itself for a frame.
     vec2 base = clamp(uSunAt, 0.03, 0.97);
     vec2 sum = vec2(0.0);
-    float total = 1e-5;
+    float total = 0.05;
     float lit = 0.0;
     for (int i = 0; i < 48; i++) {
       float k = (float(i) + 0.5) / 48.0;
       float a = float(i) * 2.3999632;
       vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * 0.2 / uAspect;
       vec4 c = texture(tBright, base + vec2(o.x, o.y * uAspect));
-      float l = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
       lit = max(lit, c.a * (1.0 - k * k));
-      float w = l * l * (1.0 - k);
+      float w = c.a * c.a * (1.0 - k);
       sum += w * o;
       total += w;
     }
