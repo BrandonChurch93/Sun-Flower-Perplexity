@@ -179,7 +179,7 @@ void main() {
   t.wax = (top ? 0.22 : 0.04) * margin * mix(1.0, 0.25 + 1.5 * pebble, near);
   // A face turned from the sun mirrors only the sky: half the sheen there, and half on the under side.
   t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.06) * margin * mix(0.5, 1.0, smoothstep(0.0, 0.3, dot(top ? face : -face, uSunDir)));
-  t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) * (1.0 - 0.5 * near * thick) : 1.0;
+  t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) * (1.0 - 0.5 * near * thick * (1.0 - uPlantFrost * smoothstep(0.6, 1.0, near))) : 1.0;
   // The skin's states stand thickest at the margin, the tip and along the veins.
   float brim = max(max(smoothstep(0.55, 1.0, abs(vUv.x)), smoothstep(0.85, 1.0, vUv.y)), 0.7 * vein.r);
   frostAlong = vUv.y;
