@@ -12,7 +12,7 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Continuations: 0
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
-- Last push: `18743d8` to `v2`, 2026-11-23 03:16 UTC
+- Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
 - Last status: 09 · 2026-11-23 03:47 UTC · Phase 3
 
 ## Latest pictures
@@ -141,6 +141,15 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 03:00 UTC. More limits for the checks. A part of the frame may move the wrong way by at most 8 of 255 between neighbours in a dusk or a dawn. On frames of the plant alone the mean may not rise toward midnight, and the 90th percentile at midnight may not exceed the handover's.
 - 2026-11-23 03:05 UTC. The lattice of dots on some sheets is not in the pixels. The spectrum of soft areas at draft and review tier has no peak, only grain (1.5 to 3 of 255). It comes from the viewer scaling a large sheet. The pale box upper left at bar 1.25 is real and is the sky's to fix.
 - 2026-11-23 03:10 UTC. The storm stands at a younger plant. `config.growth.stormHold` is 23 (it was 28.3), so the plant is 61 cm in the storm where the approved plan says 90. Why: beside the storm key and beside version 1's rain shot, a thin plant seen from 2.45 m was the weakest picture of the film, and the key shows a young plant with broad leaves close to the lens. The storm lens stands 1.66 m back creeping to 1.48 m, 0.27 m up, 38 mm, f/5.6. The ascent starts lower (0.74 m at bar 43) and ends where it did (1.71 m at bar 57). This departs from the plan Brandon approved and is named in the final message. `kit/v2/PLAN.md` stays as approved; `kit/v2/FILM.md` carries the film as built.
+- 2026-11-23 03:25 UTC. The deck stays over the break. `overcastAtBar` is 0.74 at bar 41 and 0.58 at 42.3 and is gone by 42.92, the sun under a deck is scaled by `UNDER_DECK` 0.6: the sun shines through a tear in a dark deck from the boom of bar 41 to the sunset, as the key shows, and the night takes the deck away.
+- 2026-11-23 03:35 UTC. The frost hold has a lower sun (0 degrees at bar 17, 1.6 at 17.2, 2.4 at 18, 3.6 at 21, 6.5 at 25), so the rime is lit from behind and from the side. The crane ends 6.0 m back and 3.4 m up (it ended further out and the plant was small). The film ends with the sun 2.9 degrees under the horizon (it was 5), so the field can still be read in the last frame.
+- 2026-11-23 03:40 UTC. Rows turn: a row runs away from the lens, a lane lies on the plant's axis, row ends stand 1.5 m behind the plant. The field and the ground's ridges turn together. Neighbours may stand at up to 50 percent of the plant in the storm.
+- 2026-11-23 03:45 UTC. The page's own time in a frame is measured by part (`film.cost`, `npm run bench -- --cost`, `window.showcase.cost()`). MEASURED on this machine at preview, draft, frames in a row: frost hold 19 to 40 ms, time lapse 70 to 147, storm hold 39 to 66, after the break 133 to 145, ascent 162 to 226, bloom 172 to 212, crane 167 to 175, against 33 ms for a whole frame. The largest shares are the plant's fill of every part twice a frame (26 to 128 ms), the companion (20 to 38), the field (28 to 52), the puddles' drop lookup (18 to 43) and the buffer uploads inside the draw (13 to 40). Nothing is made after loading, so version 1's stall at a scene change is gone, but this would still drop frames on a slower machine wherever the plant grows.
+- 2026-11-23 03:50 UTC. The budget for the script time of a frame on this machine: 16 ms in the mean and 25 ms in the worst frame; plant and companion 5 ms, field 3, rain and puddles 2, every other part 1, the scene's draw 6. The way there: key shapes. The plant is filled only at key frames at most 8 frames apart, the shader mixes the two keys round a frame, the next key is filled part by part while the others play, wind and rain weight live in the shader, holds stand on keys. A new check `script` enforces it and goes into the proof.
+- 2026-11-23 03:52 UTC. `Film.load` gives the page a turn after every part, so the loading screen paints its steps (the player measured freezes of about 40 s between steps on this machine).
+- 2026-11-23 03:56 UTC. Rime arrives where it can be seen: `frostAtBar` rises from bar 16.9 to 18 (it rose from 16.4 to 17, in the dark). The frost test now asks for more than 12 s of frost (it asked for 13).
+- 2026-11-23 03:58 UTC. The plant alone check judges a frame only while the frost and the wet on the plant are under 0.02: rime and water may brighten the plant, the moon may not.
+- 2026-11-23 03:58 UTC. Under the moon the wet ground's glints are at most about a seventh of the day's and follow the moon's own strength. A cloud hides the stars behind it. A star is never drawn wider than about 2.5 pixels at 1920 wide.
 
 ## Notes from Brandon
 
@@ -148,10 +157,20 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-- Every moment is still below its reference (the jury and the Builder agree). Phase 3 closes that, moment by moment, against `references/v2/keys/` and `references/approved/`.
-- The break at bars 41 to 43: a sepia wash with a white disc, then a jump to rose. With the sky and the lens.
-- The storm: leaves matte, the puddle too wide, streaks long and bright, the middle distance in stripes, the deck flat between strikes. With plant, rain, ground and sky.
-- The crane: closer and lower, a warmer fill at dusk. The Builder's.
+In the order they cost the film (from the first whole watch beside the keys, 03:33 to 03:50 UTC):
+
+- The processor: script time 2 to 6 times the frame's budget wherever something grows. With the plant (key shapes), the field, the rain (puddles) and the checks (`script` check).
+- pure fails at frame 1700 (the plant's tip differs when the frame is drawn first on a page) and the plant is sent again on some frames of the storm hold (12.4 MB). With the plant.
+- Low sun in the first half is murky brown and beige (bars 1.5, 9.2, 13, 29.1). With the sky and the lens.
+- Midday soil is pale tan (bar 29.7: 135, 110, 75). With the ground.
+- The opening is too bright and pink, with pale caps on the clods, a pale green arch and a black hole. With the sky, the ground and the plant.
+- The frost hold is one flat picture for 13.7 s. With frost (events on bars) and the ground (rime on crests).
+- The end is too magenta. With the sky; the evening's cover is the Builder's.
+- Stars are discs and shine through clouds; the Milky Way is wired in next. With sky B and sky A.
+- The break: the disc shows through the deck one frame early and the tear opens in one frame; beams too clean; the puddle is a white slab. With the sky, the lens and the rain.
+- Storm: leaves hang like sheets, the strike of bar 37 is small, the flash has a hard round edge, wet rims on leaves before the rain. With the plant, the sky and the rain.
+- Night after the storm: glitter under the moon, leaves stepping at frame 2166. With the ground, the rain and the plant.
+- The Builder's own: nights of bars 8.65 and 12.73 near black, saturation at the break, the evening's cover, the flash as a cold rim.
 - The first whole film in parts with the music (private) has not been drawn yet.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
@@ -161,22 +180,22 @@ None.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Round notes of 02:59 to 03:13 UTC name each one's list; all know `v2` stands at `81e961b`.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Round 4 notes went out between 03:52 and 04:00 UTC with the pair pictures; all know `v2` stands at `e5958d2`; reports are due 04:35, heartbeats 04:20.
 
-| Agent | Folder | Branch | State at 03:18 UTC 23 Nov |
+| Agent | Folder | Branch | State at 04:00 UTC 23 Nov |
 | --- | --- | --- | --- |
-| `sky_b_builder` | `src/sky/` | `agent/sky-b` | chosen sky; merged at `90efde7`; storm deck, break, suns, fair clouds, ending, frame 0 |
-| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | watch sheets of frames 0 to 1260, then the night (stars and moon) as a drop in |
-| `sky_c_builder` | none (draws only) | `agent/sky-c` | watch sheets of frames 1275 to 2535, then clips of bars 31.5 to 33.6 and 40.5 to 43 |
-| `place_builder` | `src/place/` | `agent/place` | watch sheets of frames 2550 to 3809, then ridge and hills against the keys |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | wet crumb, stripes in the middle distance, frost soil, opening |
-| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `agent/plant` | merged at `647fc55`; beads, rime, bloom greens, storm leaves, bytes |
-| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `3b0a9a8`; puddle, streaks, water on leaves, break |
-| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `2f74cff`; glow in the mist, thaw, sparkle |
-| `rows_v2_builder` | `src/field/` | `agent/field` | merged; sheet at bar 61, crane, shrinking plants, storm rows |
-| `optics_v2_builder` | `src/post/` | `agent/post` | merged; beams at the break, frost sun, warm bloom |
-| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | merged at `419905c`; pacing report, export, loading |
-| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `87ce628`; nights of bars 1 to 17, `made`, `cuts`, new limits |
+| `sky_b_builder` | `src/sky/` | `agent/sky-b` | merged at `b7f7517`; wiring the night; low sun murk, opening, end, deck, strike, break frames, stars behind clouds |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | merged at `806c873`; dust lane, clean points |
+| `sky_c_builder` | none (draws only) | `agent/sky-c` | clips of the storm's two ends delivered; standing by |
+| `place_builder` | `src/place/` | `agent/place` | ridge and hills against the keys; report due 04:05 |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | merged at `4480f36`; dark midday soil, ridges turned with the field, opening caps, frost rime, moon glints |
+| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `agent/plant` | merged at `3b3bc70`; key shapes first, then frame 0, storm leaves, light through blades |
+| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `27c822c`; puddles' script time first, then the puddle as water, beads, bursts |
+| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `5fcf1f2`; the hold as events on bars, rim light, the melt |
+| `rows_v2_builder` | `src/field/` | `agent/field` | merged at `25cc992`; rows turned, storm stature, far crop, script time; report due 04:25 |
+| `optics_v2_builder` | `src/post/` | `agent/post` | merged at `0e6bd9b`; beams, compact glow, stars, flash |
+| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | merged at `6700678`; one cost counter, pacing meter, loading freezes |
+| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `b59de7d`; the `script` check, whole film nights and made |
 
 ## Rounds
 
@@ -184,7 +203,7 @@ None yet.
 
 ## Push log
 
-- 2026-11-23 03:16 UTC. `18743d8` to `v2` (Status 08). Earlier pushes of this branch are in `git log origin/v2`.
+- 2026-11-23 03:57 UTC. `e5958d2` to `v2` (the brief of 04:00, rime's arrival). Earlier pushes of this branch are in `git log origin/v2`.
 
 ## Session log
 
@@ -210,4 +229,4 @@ None yet.
 - 2026-11-23 02:38 to 03:18 UTC. Jury, sky B chosen and moved to `src/sky/`. Moon light fixed and measured. Rain, frost and the sky's first storm patch merged. The storm hold moved to a 61 cm plant with a closer lens (`81e961b`). Phase 2 closed, phase 3 opened.
 - Status 09, 2026-11-23 03:47 UTC, Phase 3. First whole watch read against the nine keys. The deck now stays over the break and the sun lights through its tear, the frost hold has a lower sun, the crane ends closer, the film ends 3 degrees after sunset. A new counter measures the page's own time in a frame by part: 70 to 210 ms where the plant grows against a budget of 33 ms, so growth moves into the shaders next. Next: round notes to every owner from the watch, the processor work in plant, field and rain, the new night sky wired in, then the whole film in parts. Time used: 5.8 h of 30 h.
   Pictures: Break at bar 41.25: key left, film right (draft, before the newest rain); Storm hold at bar 35: key left, film right (draft, before the newest rain); Bloom at bar 61: approved reference left, film right (draft); Last bars at bar 73 with the closer crane: key left, film right (draft).
-
+- 2026-11-23 03:18 to 04:00 UTC. First whole watch read beside the keys. Deck held over the break, frost sun, crane and film end retuned. Rain `27c822c`, frost `5fcf1f2`, field `25cc992`, lens `0e6bd9b`, ground `4480f36`, plant `3b3bc70`, sky `b7f7517`, night `806c873`, player `6700678`, checks `b59de7d` merged. Script time measured by part: 2 to 6 times the budget where something grows. Budget set, key shapes asked of the plant, round 4 notes to every owner (`e5958d2`).
