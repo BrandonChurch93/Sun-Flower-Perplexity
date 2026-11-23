@@ -78,6 +78,8 @@ const YOUNG_RIPE = 0.25
 const FALL = 0.8
 // The share of that fall the open plant keeps after the frost.
 const FALL_OPEN = 0.45
+// The plant does not wilt before it blooms: over its last days as a bud a blade gives this share of its firmness, and no more.
+const SLACK = 0.5
 const opening = { lift: 0, droop: 0 }
 const LOW_STANDS = 0.85
 // How far the first pair has parted by the end of the dawn, as a share of its way to open.
@@ -800,7 +802,7 @@ export function create(options: PartOptions): PlantPart {
     const stalk = leaf.stalk * lerp(1, Math.max(0.1, smoothstep(0.5, 3.5, age)), early) * (main ? 1 - 0.4 * early * smoothstep(7, 11, i) : 1) * (main && i >= 2 ? 1 - 0.2 * (1 - smoothstep(18, 23, time)) : 1)
     const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
-    const firm = main ? early : 0.5 * early
+    const firm = !main ? 0.5 * early : options.variant === 0 ? Math.max(early, 1 - SLACK * smoothstep(35.5, config.growth.bud, time)) : early
     // Once the plant climbs, a blade near the ground stands out from the stem and droops at its tip: it does not hang down the stem into the wet.
     const low = main ? LOW_STANDS * smoothstep(13, 18, time) * (1 - smoothstep(0.08, 0.3, frame.oy)) : 0
     leafOpening(i, time, pose.inputs, opening)
