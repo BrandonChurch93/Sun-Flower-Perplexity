@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 19 · 2026-11-23 09:04 UTC · Phase 3
+- Last status: 20 · 2026-11-23 09:32 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 09:32 UTC · status 20 · Phase 3 · `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now; `status-3.jpg`: Frame 1054 beside its reference picture; `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
 - 2026-11-23 09:04 UTC · status 19 · Phase 3 · `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835); `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8; `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262); `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)
 - 2026-11-23 08:34 UTC · status 18 · Phase 3 · `status-1.jpg`: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106); `status-2.jpg`: Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940; `status-3.jpg`: Bar 73 in the film (left) beside the key picture for the last shot (right); `status-4.jpg`: Bloom close up into the pull back, frames 3190 to 3497, draft size
 - 2026-11-23 08:13 UTC · status 17 · Phase 3 · `status-1.jpg`: Frost close shot 1: the old angle left, the new angle right (draft). The camera now looks down on the upper face of a leaf; `status-2.jpg`: Frost close shots 2 and 3 with the newest work merged (draft): the tip as the sun comes through, with ice on every stem hair, and the thaw with water beads and the drop just before it falls; `status-3.jpg`: Six nights of the time lapse with thinner cloud at night: stars show through wider gaps (draft); `status-4.jpg`: The end at bar 71, bar 73 and the last frame, beside the reference (draft): a red orange sun under a deep blue sky
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 04:40 UTC · status 11 · Phase 3 · `status-1.jpg`: Frost hold, bar 21: reference left, film right (draft tier); `status-2.jpg`: Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); `status-3.jpg`: Night, bar 46.82: reference left, film right (draft tier); `status-4.jpg`: The field, bar 69: reference left, film right (draft tier)
 - 2026-11-23 04:09 UTC · status 10 · Phase 3 · `status-1.jpg`: With the newest sky (draft): the blue hour of the first frame, sunrise at bar 1.5, low sun at bar 9.2, the night of bar 46.82 with the new star map; `status-2.jpg`: The break at the boom of bar 41, frames 2081 to 2089 (draft, drawn before the newest sky): the last frame of the hold is still, then the tear opens over five frames. The hard white dot on the third frame is gone in the newest sky; `status-3.jpg`: Frost hold at bar 21, storm at 35, the field at bars 69 and 73 with the new far ridge (draft, before the newest sky). The frost is still flat and the end still magenta: both are in work; `status-4.jpg`: Low sun beside the references, drawn by the sky's builder; my own frames at bars 1.5 and 9.2 agree
 - 2026-11-23 03:47 UTC · status 09 · Phase 3 · `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain); `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain); `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft); `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
-- 2026-11-23 03:15 UTC · status 08 · Phase 2 · `status-1.jpg`: The storm: reference, an hour ago, now (draft tier); `status-2.jpg`: Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; `status-3.jpg`: One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; `status-4.jpg`: Frost hold: reference left, the film right (review tier)
 
 ## Clock
 
@@ -41,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 5.81 h |
+| 3 | 9.00 h | 6.28 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 11.07 h |
+| Whole build | 30.00 h | 11.55 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -273,4 +273,6 @@ None yet.
   Pictures: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106); Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940; Bar 73 in the film (left) beside the key picture for the last shot (right); Bloom close up into the pull back, frames 3190 to 3497, draft size.
 - Status 19, 2026-11-23 09:04 UTC, Phase 3. Merged: the saddle in the far ridge under the last sun, the rain owner's update, hairs on the grown stem, a cloud deck that thins over bars 61 to 69. Mine: the bloom's lens opens to f/2.8 and the head turns to face it, the storm's deck is gone by bar 42.6 so the first night after the storm can show stars, three nights clear further. A new owner took the flower head (bud, disc, rays). MEASURED: 30 test files, 180 tests pass; 20 proof frames drawn and read at draft size. FOUND and open: the review tier draws the frost close shots softer than the draft tier and breaks each spark into a cluster of small discs. Next: Merge the plant's facing line, the stars that follow the overcast and the leaf look's frost furrows; close the gap between the draft and review tiers on the close shots and settle the stop of close shot 1; the frost owner's crystal coat on the leaf faces; a new owner for stem and hairs; then the blockout clips of the whole film with the music. Time used: 11.1 h of 30 h.
   Pictures: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835); Bloom close up: the head faces the lens at f/2.8; Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262); Close shot 1, draft tier left and review tier right (1003 above, 1106 below).
+- Status 20, 2026-11-23 09:32 UTC, Phase 3. Frost, ground and rain merged. A close shot can now be sharp over a range of depths: the first frost close shot holds the whole leaf sharp at film size, so the crystals read. Plant found the cause of a small stutter of the head at the bloom and is curing it. Next: The same treatment for the second and third frost shots, the head owner's rays and disc, then the whole film pass. Time used: 11.5 h of 30 h.
+  Pictures: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; The same at 100 percent, frame 1054. Above: before. Below: now; Frame 1054 beside its reference picture; Bloom at bar 61 beside its reference picture, before the new work on rays and disc.
 
