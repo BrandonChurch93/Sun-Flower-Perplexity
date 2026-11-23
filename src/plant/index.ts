@@ -19,6 +19,7 @@ import { create as createStem } from './stem/index.ts'
 import { real as surfaceReal, tissueGlsl } from './surface/index.ts'
 import { cell, restless } from './wind.ts'
 import { HOLD_FRAMES, plantInputsOf } from '../v2/inputs.ts'
+import pace from './pace.json'
 import { blankMoment, momentAt } from '../v2/now.ts'
 
 const vertex = /* glsl */ `
@@ -94,7 +95,7 @@ const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk
 const SLOTS: { name: string; make: PartMaker; pieces: number; turn: number; rigid?: boolean }[] = [
   { name: 'stem', make: createStem, pieces: bit(PART.stem), turn: 0 },
   { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), turn: 2 },
-  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), turn: 4 },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), turn: 6 },
   { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), turn: 4, rigid: true },
   { name: 'disc', make: createDisc, pieces: 0, turn: 4, rigid: true },
   { name: 'petals', make: createPetals, pieces: bit(PART.ray), turn: 4, rigid: true },
@@ -130,11 +131,71 @@ export function keyFrames(every: number): number[] {
   keys.push(frameCount - 1)
   return keys
 }
-// The keys of one part of the film. Every part has its own turn among the frames of each stretch of KEY_EVERY and its keys fall on that turn, so two parts are seldom laid on the same frame. The key that falls last before a hold or first after it is laid as the hold's own end: the clock has all but stopped there, the hold then holds exactly its two ends, and no key is laid inside it.
+// What the plant feels at every frame of the film, in still air: its clock, its lean both ways, the lift of its upper and of its lower leaves, and the cold in it.
+const FELT = 6
+let feltAll: Float64Array | null = null
+function feltAt(): Float64Array {
+  if (feltAll) return feltAll
+  const all = new Float64Array(frameCount * FELT)
+  const m = blankMoment()
+  for (let f = 0; f < frameCount; f++) {
+    const felt = plantInputsOf(momentAt(f / FPS, m))
+    const at = f * FELT
+    all[at] = m.tau
+    all[at + 1] = felt.leanX
+    all[at + 2] = felt.leanZ
+    all[at + 3] = felt.lift
+    all[at + 4] = felt.liftLow ?? felt.lift
+    all[at + 5] = felt.cold ?? 0
+  }
+  feltAll = all
+  return all
+}
+type Pace = { turn: number[]; speed: number[]; lean: number[]; lift: number[]; low: number[]; cold: number[] }
+const PACES = pace.kinds as Record<string, Pace>
+// How far a mix of two keys may stand off the true shape: 1.5 mm, or 0.15 percent of the plant's height where that is more.
+const STRAY_MM = 1.5
+const STRAY_OF_HEIGHT = 0.0015
+// The most a part's mix of two keys strays from its true shape between them, in millimeters, by what the part is known to do: how sharply its shape turns with the clock there, and how far it moves with each thing the plant feels, times how far that thing leaves the straight line between the keys.
+function strays(kind: Pace, atA: number, ofA: number, atB: number, ofB: number): number {
+  const felt = feltAt()
+  const a = ofA * FELT
+  const b = ofB * FELT
+  const off = [0, 0, 0, 0, 0, 0]
+  for (let f = atA + 1; f < atB; f++) {
+    const w = (f - atA) / (atB - atA)
+    for (let c = 0; c < FELT; c++) off[c] = Math.max(off[c], Math.abs(felt[f * FELT + c] - (felt[a + c] + (felt[b + c] - felt[a + c]) * w)))
+  }
+  const from = Math.min(felt[a], felt[b])
+  const to = Math.max(felt[a], felt[b])
+  const last = kind.turn.length - 1
+  let turn = 0
+  let speed = 0
+  let lean = 0
+  let lift = 0
+  let low = 0
+  let cold = 0
+  for (let bin = Math.min(last, Math.floor(from / pace.step)); bin <= Math.min(last, Math.floor(to / pace.step)); bin++) {
+    turn = Math.max(turn, kind.turn[bin])
+    speed = Math.max(speed, kind.speed[bin])
+    lean = Math.max(lean, kind.lean[bin])
+    lift = Math.max(lift, kind.lift[bin])
+    low = Math.max(low, kind.low[bin])
+    cold = Math.max(cold, kind.cold[bin])
+  }
+  const span = to - from
+  return (turn * span * span) / 8 + speed * off[0] + lean * (off[1] + off[2]) + lift * off[3] + low * off[4] + cold * off[5]
+}
+function strayLimit(frame: number): number {
+  const tall = pace.tall[Math.min(pace.tall.length - 1, Math.floor(feltAt()[frame * FELT] / pace.step))]
+  return Math.max(STRAY_MM, STRAY_OF_HEIGHT * 1000 * tall)
+}
+
+// The keys of one part of the film. Every part has its own turn among the frames of each stretch of KEY_EVERY and its keys fall on that turn, so two parts are seldom laid on the same frame. The key that falls last before a hold or first after it is laid as the hold's own end: the clock has all but stopped there, the hold then has one key at each end, and nothing is laid inside it. Where a part's shape would stray from the truth between two keys, a key more is set halfway, and again, down to every frame: a part that moves fast for a moment is laid often for that moment only.
 interface Turn { at: Int32Array; of: Int32Array; held: Uint8Array; index: Int32Array }
-const turns: (Turn | undefined)[] = []
-function turnOf(phase: number): Turn {
-  const known = turns[phase]
+const turns = new Map<string, Turn>()
+function turnOf(phase: number, name: string | null): Turn {
+  const known = turns.get(`${name} ${phase}`)
   if (known) return known
   const last = frameCount - 1
   const at = [0]
@@ -156,16 +217,29 @@ function turnOf(phase: number): Turn {
   }
   at.push(last)
   of.push(last)
+  const inHold = (k: number) => HOLD_FRAMES.some(([start, end]) => of[k] === start && of[k + 1] === end)
+  const kind = name === null ? undefined : PACES[name]
+  if (kind) {
+    for (let k = 0; k + 1 < at.length; ) {
+      if (at[k + 1] - at[k] < 2 || inHold(k) || strays(kind, at[k], of[k], at[k + 1], of[k + 1]) <= strayLimit(of[k])) {
+        k++
+        continue
+      }
+      const half = at[k] + ((at[k + 1] - at[k]) >> 1)
+      at.splice(k + 1, 0, half)
+      of.splice(k + 1, 0, half)
+    }
+  }
   const held = new Uint8Array(at.length)
-  for (let k = 0; k + 1 < at.length; k++) if (HOLD_FRAMES.some(([start, end]) => of[k] === start && of[k + 1] === end)) held[k] = 1
+  for (let k = 0; k + 1 < at.length; k++) if (inHold(k)) held[k] = 1
   // The key at or before each frame. The last key ends the last stretch, so a slot is never left with what an earlier frame laid.
   const index = new Int32Array(frameCount)
   for (let f = 0, k = 0; f < frameCount; f++) {
-    if (k + 2 < at.length && at[k + 1] <= f) k++
+    while (k + 2 < at.length && at[k + 1] <= f) k++
     index[f] = k
   }
   const turn = { at: Int32Array.from(at), of: Int32Array.from(of), held, index }
-  turns[phase] = turn
+  turns.set(`${name} ${phase}`, turn)
   return turn
 }
 
@@ -277,14 +351,14 @@ export class Plant {
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     const turned = this.variant === 0 ? 0 : 1
-    this.plays.set(null, { turn: turnOf(turned), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value })
+    this.plays.set(null, { turn: turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value })
     for (const slot of SLOTS) {
       // Each part mixes its two slots by its own share, since each is laid on its own turn.
       const mix = new THREE.Vector2(0, 1)
       const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid })
       if (part) {
         this.parts.push(part)
-        this.plays.set(part, { turn: turnOf((slot.turn + turned) % KEY_EVERY), film: [newFilmKey(), newFilmKey()], mix })
+        this.plays.set(part, { turn: turnOf((slot.turn + turned) % KEY_EVERY, slot.name), film: [newFilmKey(), newFilmKey()], mix })
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
     }
