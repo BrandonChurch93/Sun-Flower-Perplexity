@@ -1,8 +1,6 @@
 # Looks of field
 
-2026-11-23 14:43 UTC, at commit 238a942b of agent/field.
+2026-11-23 16:03 UTC, at commit 297c2f65 of agent/field.
 
-- `01-bloom-sheet-2934-to-3318-the-field-follows-the-h.jpg`: bloom sheet 2934 to 3318, the field follows the hero
-- `02-crane-3400.jpg`: crane 3400
-- `03-crane-3440.jpg`: crane 3440
-- `04-crane-3492.jpg`: crane 3492
+- `01-part-2984-to-3155-on-fe91b964-every-8th-frame.jpg`: part 2984 to 3155 on fe91b964, every 8th frame
+- `02-nearest-heads-lower-left-3016-to-3038-every-2nd-.jpg`: nearest heads lower left, 3016 to 3038 every 2nd frame, a lay falls on 3026
