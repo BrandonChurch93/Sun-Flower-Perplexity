@@ -84,13 +84,13 @@ export class Post {
   private readonly sunTarget = halfTarget(4, 2)
   private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uDisc: { value: 0.005 }, uRim: { value: 0.005 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
-  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uExposure: { value: 1 }, uDiscScale: { value: 0.5 }, uGrow: { value: 0 } })
+  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uExposure: { value: 1 }, uDiscScale: { value: 0.5 }, uGrow: { value: 0 }, uMixed: { value: 0 }, tPure: { value: null }, uPure: { value: 0 } })
   private readonly fillWide = fillPass(3, true)
   private readonly fillTight = fillPass(2, false)
   private readonly cellLight = new FullscreenPass(cellFragment(false), { ...shared, tRaw: { value: null }, tHeld: { value: null }, uFar: { value: 0 } })
   private readonly cellPlace = new FullscreenPass(cellFragment(true), { ...shared, tRaw: { value: null }, tHeld: { value: null }, uFar: { value: 0 } })
   private readonly discs = new Discs()
-  private readonly join = new FullscreenPass(joinFragment, { tFill: { value: null }, tDiscs: { value: null } })
+  private readonly join = new FullscreenPass(joinFragment, { tFill: { value: null }, tDiscs: { value: null }, tRaw: { value: null }, uMixed: { value: 0 }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 } })
   private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 }, uSkyLevel: { value: 1 } })
   private readonly downPass = new FullscreenPass(downFragment, { tSource: { value: null }, uTexel: { value: new THREE.Vector2() } })
   private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) } })
@@ -204,7 +204,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean, exposure: number): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean, exposure: number, pure: THREE.Texture | null): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0 || !this.warmed) {
       const n = this.near.uniforms
@@ -225,6 +225,11 @@ export class Post {
     const discScale = samples === 1 ? 0.5 : 0.55 / Math.sqrt(samples)
     r.uDiscScale.value = discScale
     r.uGrow.value = samples > 1 ? 1 : 0
+    // The film's own tiers draw a shot that is sharp over a range through the middle of the lens on every sample and tell this pass one sample: such a frame has edge pixels that are part thing and part ground.
+    const mixed = samples === 1 && (pure !== null || this.quality === 'film') ? 1 : 0
+    r.uMixed.value = mixed
+    r.tPure.value = pure ?? frame
+    r.uPure.value = pure ? 1 : 0
     this.reach.render(renderer, this.fillA)
     this.drawDiscs(renderer, frame, this.fillA.texture, farCircle, discScale)
     let from = this.fillA
@@ -257,6 +262,10 @@ export class Post {
     const j = this.join.uniforms
     j.tFill.value = from.texture
     j.tDiscs.value = (this.discTarget as THREE.WebGLRenderTarget).texture
+    j.tRaw.value = frame
+    j.uMixed.value = mixed
+    j.uRadiusScale.value = scale
+    j.uFar.value = farCircle
     this.join.render(renderer, to)
     return to.texture
   }
@@ -338,7 +347,8 @@ export class Post {
   }
 
   // The frame before lens and grade stays in the accumulator. `sun` is where the sun sits in the picture and how wide infinity blurs; without it the glass sees no sun and the sky is filled like everything else.
-  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null): void {
+  // `pure` is one of the pictures the frame was summed from, where they were all drawn through one place on the lens: it tells whose circle a shared edge pixel has.
+  render(renderer: THREE.WebGLRenderer, frame: THREE.Texture, def: WorldDef, frameIndex: number, samples: number, diag: DiagName, sun: SunInFrame | null = null, pure: THREE.Texture | null = null): void {
     const mode = MODES[diag]
     const seed = this.held ? 0 : frameIndex
     const g = this.grade.uniforms
@@ -355,7 +365,7 @@ export class Post {
       const grade = def.grade
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
-      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low, grade.exposure)
+      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low, grade.exposure, pure)
       if (this.unfilled) source = frame
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
