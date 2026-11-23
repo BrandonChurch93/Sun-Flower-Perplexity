@@ -67,8 +67,13 @@ vec3 skyBehind(vec3 dir) {
   // At dusk the air before the high land lies in that land's shadow: the sky lights it from above, not the sun from behind.
   float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun * (1.0 - 0.9 * uDusk);
   float up = saturate(dir.y / (length(dir) * mix(0.07, 0.03, uVeil)));
-  vec3 clear = mix(mix(uAirHorizon, uAirZenith, mix(0.6, 1.0, uVeil) * up), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
+  vec3 clear = mix(mix(uAirHorizon, uAirZenith, max(mix(0.6, 1.0, uVeil) * up, uDusk)), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
+}
+
+// At dusk the faces of the high land look at the dark land before them, not at the band of light on the horizon: the dome lights them from above.
+vec3 landAmbient(vec3 n, vec3 worldPos) {
+  return skyAmbient(normalize(mix(n, vec3(0.0, 1.0, 0.0), uDusk * smoothstep(2.0, 16.0, worldPos.y))));
 }
 
 float sunOnLand(vec3 worldPos) {
