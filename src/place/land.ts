@@ -75,7 +75,7 @@ const RANGES = [
 
 export interface LandAt { height: number; wood: number; hill: number }
 
-// The planted field, as its owner lays it out: a wedge that opens away from the plant toward depthDeg, to endM.
+// The planted field, as its owner lays it out: a wedge that opens away from the plant toward depthDeg, to endM from the plant.
 export const PLANTED = { depthDeg: 200, endM: 290, west: [13, 1.8], east: [10, 1.05], underM: -0.35, rampM: 22, sideM: 30 }
 const DEPTH = { x: Math.sin(PLANTED.depthDeg * RAD), z: Math.cos(PLANTED.depthDeg * RAD) }
 const ACROSS = { x: Math.sin((PLANTED.depthDeg - 90) * RAD), z: Math.cos((PLANTED.depthDeg - 90) * RAD) }
@@ -88,7 +88,19 @@ export function plantedAt(x: number, z: number): number {
   const west = across + PLANTED.west[0] + PLANTED.west[1] * reach
   const east = PLANTED.east[0] + PLANTED.east[1] * reach - across
   const side = Math.min(west / Math.hypot(1, PLANTED.west[1]), east / Math.hypot(1, PLANTED.east[1]))
-  return smooth(-PLANTED.sideM, 0, side) * smooth(-PLANTED.sideM, 0, depth) * (1 - smooth(PLANTED.endM + 2, PLANTED.endM + 2 + PLANTED.rampM, depth))
+  return smooth(-PLANTED.sideM, 0, side) * smooth(-PLANTED.sideM, 0, depth) * (1 - smooth(PLANTED.endM + 2, PLANTED.endM + 2 + PLANTED.rampM, Math.hypot(x, z)))
+}
+
+// Ahead of the lens the sunflowers go on past the planted field to the foot of the ridge, and their edge wanders.
+export const CROP = { toM: 1650, endM: 200, sideM: 120 }
+export const CROP_AXES = { depth: DEPTH, across: ACROSS }
+export function inCrop(x: number, z: number): boolean {
+  const depth = x * DEPTH.x + z * DEPTH.z
+  const across = x * ACROSS.x + z * ACROSS.z
+  const reach = Math.max(depth, 0)
+  const west = (across + PLANTED.west[0] + PLANTED.west[1] * reach) / Math.hypot(1, PLANTED.west[1])
+  const east = (PLANTED.east[0] + PLANTED.east[1] * reach - across) / Math.hypot(1, PLANTED.east[1])
+  return Math.min(west, east, depth) > -CROP.sideM && Math.hypot(x, z) < CROP.toM + CROP.endM
 }
 
 // The bare land, without its woods.

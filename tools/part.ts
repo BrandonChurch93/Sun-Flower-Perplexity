@@ -38,6 +38,15 @@ const file = path.join(dir, `${name}.mp4`)
 const fileOf = (f: number): string => path.join(frames, `${String(f).padStart(5, '0')}.png`)
 const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim()
 
+interface Row {
+  frame: number
+  page: number
+  cost: Record<string, number>
+  writeMb: number
+  made?: Record<string, number>
+}
+const MADE = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays'] as const
+
 const release = await takeRenderSlot('part')
 const sessions: Session[] = []
 try {
@@ -63,11 +72,23 @@ try {
   let seconds = 0
   const started = Date.now()
   let told = Date.now()
-  await Promise.all(sessions.map(async (session) => {
+  // What each frame cost the page's own thread, by part, and what the graphics card was asked to make in it. With one page the frames arrive in film order, as they do when the film plays.
+  const costFile = path.join(dir, `${name}.cost.json`)
+  const kept: Row[] = built === now && fs.existsSync(costFile) ? (JSON.parse(fs.readFileSync(costFile, 'utf8')).rows as Row[]).filter((r) => !todo.includes(r.frame)) : []
+  const rows: Row[] = []
+  await Promise.all(sessions.map(async (session, page) => {
+    await session.page.evaluate(() => window.showcase.cost())
+    let had = await session.page.evaluate(() => window.showcase.made())
     for (;;) {
       const f = todo.shift()
       if (f === undefined) return
       const r = await session.render(f, tier)
+      const [cost, made] = await session.page.evaluate(() => [window.showcase.cost(), window.showcase.made()] as const)
+      const row: Row = { frame: f, page, cost: Object.fromEntries(Object.entries(cost).map(([k, v]) => [k, Math.round(v * 100) / 100])), writeMb: Math.round(((made.updateBytes - had.updateBytes) / 1048576) * 100) / 100 }
+      const fresh = Object.fromEntries(MADE.map((k) => [k, made[k] - had[k]]).filter(([, v]) => v !== 0))
+      if (Object.keys(fresh).length) row.made = fresh
+      had = made
+      rows.push(row)
       fs.writeFileSync(`${fileOf(f)}.tmp`, r.png)
       fs.renameSync(`${fileOf(f)}.tmp`, fileOf(f))
       done++
@@ -84,6 +105,7 @@ try {
   const p = probe(file)
   if (p.frames !== to - from + 1) throw new Error(`${file} has ${p.frames} frames, not ${to - from + 1}`)
   fs.writeFileSync(path.join(dir, `${name}.json`), `${JSON.stringify({ kind: 'part', from, to, frames: p.frames, format, tier, sky, engineHash: info.engineHash, commit, pages: jobs, drawn: total, secondsAFrameOnAPage: total ? seconds / total : 0, secondsAFrameInAll: wall, machine: machine(), at: new Date().toISOString() }, null, 2)}\n`)
+  fs.writeFileSync(costFile, `${JSON.stringify({ kind: 'cost', from, to, format, tier, engineHash: info.engineHash, commit, pages: jobs, machine: machine(), rows: [...kept, ...rows].sort((a, b) => a.frame - b.frame) })}\n`)
   console.log(`part · ${probeLine(file, p)}`)
 } finally {
   for (const s of sessions) await s.close()

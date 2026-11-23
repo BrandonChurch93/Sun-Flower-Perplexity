@@ -37,6 +37,7 @@ export const airUniforms = {
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
+  uLandBloom: { value: 0 },
   uLandWind: { value: 0 },
 }
 
@@ -54,6 +55,7 @@ uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
 uniform float uLandFrost;
+uniform float uLandBloom;
 
 // The sky that lies behind the land in the direction of a point.
 vec3 skyBehind(vec3 dir) {
@@ -86,8 +88,8 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
   vec4 done = finish(aired, worldPos, min(viewDepth, uFocusM / 0.0036), -1.0);
   if (uDiag == 0) {
     float r = length(worldPos.xz);
-    // Where the field ends the land takes the ground fog in gradually, so no line of fog stands at the field's far edge.
-    float near = mix(smoothstep(250.0, 800.0, r), 1.0, uFogNear);
+    // The field's far crop stands in the ground fog to its end, and the land past it takes the same.
+    float near = mix(smoothstep(150.0, 290.0, r), 1.0, uFogNear);
     float high = 1.0 - exp(-max(worldPos.y, 0.0) / 30.0);
     done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * (1.0 - uFogLow * high));
   }
