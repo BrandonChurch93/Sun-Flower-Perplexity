@@ -1,8 +1,7 @@
 # Looks of plant
 
-2026-11-23 12:23 UTC, at commit 0443d327 of agent/plant.
+2026-11-23 13:01 UTC, at commit 0ddb3830 of agent/plant.
 
-Only the leaves that exist are laid, sent and drawn (not pushed yet, proof running). Pictures are from the new build and should match the old build to the byte.
+Twitch of the time lapse drawn by the shader, so every carried frame is laid once. Code for this is not pushed yet.
 
-- `01-1265-first-frame-after-the-frost-hold-with-the-l.jpg`: 1265, first frame after the frost hold, with the leaf range on. Eight leaves born, eleven laid of 24. Still wrong: cost is over the target, the hairs at the stem read coarse at this size.
-- `02-2084-first-frame-of-the-storm-with-the-leaf-rang.jpg`: 2084, first frame of the storm, with the leaf range on. Seventeen leaves born, twenty laid. Still wrong: cost over the target, lower blades read flat in the dim light.
+- `01-frames-1398-to-1401-top-row-is-the-pushed-build-.jpg`: Frames 1398 to 1401. Top row is the pushed build, twitch laid in the keys, two layings a frame. Bottom row has the twitch drawn by the shader, one laying a frame, another throw of the dice of the same size. Still wrong: motion not yet judged on a clip, handover strips at 1266, 1671, 2120, 2904 not drawn yet
