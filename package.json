@@ -32,7 +32,8 @@
     "inline": "tsx tools/inline.ts",
     "bench": "tsx tools/bench.ts",
     "looks": "tsx tools/agentlooks.ts",
-    "filmclock": "tsx tools/filmclock.ts"
+    "filmclock": "tsx tools/filmclock.ts",
+    "checks": "tsx tools/checks/run.ts"
   },
   "dependencies": {
     "gsap": "3.15.1",

@@ -12,7 +12,7 @@ export const END = config.film.durationSeconds
 // The share of a day with the sun up, and the sun's height at noon in degrees.
 export const DAY = 0.86
 export const NOON_DEG = 62
-export const MIDNIGHT_DEG = -18
+export const MIDNIGHT_DEG = -14
 
 export function barTime(bar: number, beat = 1): number {
   return BAR1 + (bar - 1) * BAR + ((beat - 1) * BAR) / BEATS
@@ -96,9 +96,17 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-const W_END = W_LAST + 0.012
+// How long after sunset, in days, the sun stands 5 degrees under the horizon: the film opens and closes there.
+const DUSK = ((1 - DAY) * Math.asin(5 / -MIDNIGHT_DEG)) / Math.PI
+const W_END = W_LAST + DUSK
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
-const LEAD_RATE = 0.012 / (1 - B0)
+const LEAD_RATE = DUSK / (1 - B0)
+// In the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line: a night of two beats.
+// The world runs slower through it and makes the time up across noon.
+const FAST_SET = 0.75
+const FAST_LAG = FAST_SET / 2
+const FAST_GAIN = (DAY - FAST_SET) / (2 * Math.sin(2 * Math.PI * FAST_LAG))
+const BREAK_NIGHT_FROM = 42
 const frostHold = new Monotone(
   [
     [17, 4],
@@ -122,8 +130,8 @@ const evening = new Monotone(
   [[57, BLOOM_RATE]],
 )
 
-// The world clock in days at a bar. The whole part is the day, the fraction its phase, 0 at sunrise.
-export function worldAtBar(b: number): number {
+// The world clock before the nights of the fast time lapse are stretched: it sets the speed of the clouds.
+function evenWorldAtBar(b: number): number {
   if (b < 1) return LEAD_RATE * (b - 1)
   if (b < 5) return hermite(b, 1, 0, LEAD_RATE, 5, 1, 0.25)
   if (b < 17) return (b - 1) / 4
@@ -139,9 +147,33 @@ export function worldAtBar(b: number): number {
   return evening.at(Math.min(b, BEND))
 }
 
+function fastAtBar(b: number): number {
+  if (b < 25) return 0
+  if (b < 26) return smooth(b - 25)
+  if (b < 31) return 1
+  if (b < 32.6) return 1 - smooth((b - 31) / 1.6)
+  if (b < BREAK_NIGHT_FROM) return 0
+  if (b < 43) return smooth((b - BREAK_NIGHT_FROM) / (43 - BREAK_NIGHT_FROM))
+  if (b < 55) return 1
+  if (b < 56.6) return 1 - smooth((b - 55) / 1.6)
+  return 0
+}
+
+// The world clock in days at a bar. The whole part is the day, the fraction its phase, 0 at sunrise.
+export function worldAtBar(b: number): number {
+  const w = evenWorldAtBar(b)
+  const fast = fastAtBar(b)
+  if (fast === 0) return w
+  const u = w - Math.floor(w)
+  return w + fast * FAST_GAIN * (Math.sin(2 * Math.PI * (u - FAST_LAG)) + Math.sin(2 * Math.PI * FAST_LAG))
+}
+
+// A hold begins on the frame that holds its bar line, and that frame opens up to a frame before the line: growth has ended by then.
+const FROST_FROM = hitBar(17)
+const STORM_FROM = hitBar(33)
 const germination = new Monotone(
-  G.germination.map((m) => [m.seconds ?? barTime(m.bar ?? 1), m.tau] as const),
-  [[barTime(17), 0]],
+  G.germination.map((m) => [m.seconds ?? hitTime(m.bar ?? 1), m.tau] as const),
+  [[hitTime(17), 0]],
 )
 const BLOOM_FROM = hitBar(57)
 const settle = new Monotone(
@@ -156,9 +188,9 @@ const settle = new Monotone(
 
 // The plant's clock at a bar. It does not move in the two holds.
 export function tauAtBar(b: number): number {
-  if (b < 17) return germination.at(barTime(b))
+  if (b < FROST_FROM) return germination.at(barTime(b))
   if (b < 25) return G.frostHold
-  if (b < 33) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - 25) / 8, 0.05, 0.14)
+  if (b < STORM_FROM) return G.frostHold + (G.stormHold - G.frostHold) * trapezoid((b - 25) / (STORM_FROM - 25), 0.05, 0.14)
   if (b < 41) return G.stormHold
   if (b < 55.5) return G.stormHold + (G.bud - G.stormHold) * trapezoid((b - 41) / 14.5, 0.07, 0.12)
   if (b < BLOOM_FROM) return G.bud
@@ -185,12 +217,15 @@ export function flashAt(seconds: number): number {
   return clamp(f)
 }
 
+// The frost forms in the last night of the first growth, when the plant has all but stopped, and has melted to a trace before the plant grows again.
+const FROST_LEFT = 0.15
+
 export function frostAtBar(b: number): number {
   if (b < 16.4) return 0
   if (b < 17) return smooth((b - 16.4) / 0.6)
-  if (b < 23) return 1
-  if (b < 25) return lerp(1, 0.6, smooth((b - 23) / 2))
-  return 0.6 * (1 - smooth((b - 25) / 0.4))
+  if (b < 22.5) return 1
+  if (b < 25) return lerp(1, FROST_LEFT, smooth((b - 22.5) / 2.5))
+  return FROST_LEFT * (1 - smooth((b - 25) / 0.4))
 }
 
 export function fogAtBar(b: number): number {
@@ -212,10 +247,28 @@ export function overcastAtBar(b: number): number {
   return 0.74 * (1 - smooth((b - BREAK) / 0.7))
 }
 
+const RAIN_FULL = hitBar(34)
+// The rain thins before the break and its last drops fall into the first sun. They are gone before the plant has grown a centimetre.
+const rainEnd = new Monotone(
+  [
+    [39.5, 1],
+    [40.25, 0.74],
+    [BREAK, 0.45],
+    [41.4, 0.18],
+    [41.8, 0],
+  ],
+  [
+    [39.5, 0],
+    [41.8, 0],
+  ],
+)
+
+// The first drops fall with the lightning and the curtain closes within a bar.
 export function rainAtBar(b: number): number {
   if (b < RAIN_FROM) return 0
-  if (b < 39.5) return smooth((b - RAIN_FROM) / 0.12)
-  if (b < 41.1) return 1 - smooth((b - 39.5) / 1.6)
+  if (b < RAIN_FULL) return smooth((b - RAIN_FROM) / (RAIN_FULL - RAIN_FROM))
+  if (b < 39.5) return 1
+  if (b < 41.8) return rainEnd.at(b)
   return 0
 }
 
@@ -293,6 +346,6 @@ const WORLD_RATE_FASTEST = 0.5 / BAR
 
 export function lapseAt(seconds: number): number {
   const h = 0.5 / FPS
-  const rate = (worldAt(seconds + h) - worldAt(seconds - h)) / (2 * h)
+  const rate = (evenWorldAtBar(barAt(seconds + h)) - evenWorldAtBar(barAt(seconds - h))) / (2 * h)
   return clamp(rate / WORLD_RATE_FASTEST)
 }

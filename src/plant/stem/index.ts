@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { segmentStart } from '../../config.ts'
 import type { Assets } from '../../core/assets.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
@@ -24,9 +23,8 @@ const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
 // The dew on a stem is finer than the shared bead sizes.
-const RAIN_FROM_S = segmentStart('rain')
-const FROST_FROM_S = segmentStart('frost')
-const BLOOM_FROM_S = segmentStart('bloom')
+const FROST_FROM_S = 30
+const BLOOM_FROM_S = 40
 const DEW_FINE = 0.5
 const RAIN_FINE = 1.0
 
@@ -483,7 +481,7 @@ export function create(options: PartOptions): PlantPart {
       const seat = dew.seat(slot)
       const rest = dew.rest(slot)
       if (first) dewDrawn = 0
-      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value) * (time < RAIN_FROM_S ? 1 : smoothstep(RAIN_FROM_S, RAIN_FROM_S + 1.5, time))
+      const rain = smoothstep(0.3, 0.9, stateUniforms.uPlantWet.value)
       const tint = dew.tint()
       const sLow = 0.0015
       const sHigh = Math.max(S[SEED_ANCHOR] - 0.0012, 0.9 * ringS[main - 1])

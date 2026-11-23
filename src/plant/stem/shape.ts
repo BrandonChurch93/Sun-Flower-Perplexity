@@ -1,4 +1,4 @@
-import { config, keyTime } from '../../config.ts'
+import { config } from '../../config.ts'
 import { clamp, smoothstep } from '../../core/curves.ts'
 import { hash01 } from '../../core/random.ts'
 import { heightAt, leafAge, leafCount, leafStemFraction, seedLeafFraction, stemRadius } from '../growth.ts'
@@ -160,7 +160,7 @@ export function wrapAngle(d: number): number {
 }
 
 // The young stem is never an even tube: it tapers from the foot to the hook, is a little stouter where the hook was, and swells and narrows slightly along its length. It has filled out evenly by 6 s.
-const SEEDLING_KEY_S = keyTime('dawn-seedling')
+const SEEDLING_KEY_S = 6.5
 export function youngGirth(time: number, u: number): number {
   const young = 1 - smoothstep(3, 6, time)
   const at = (u - 0.8) / 0.13
