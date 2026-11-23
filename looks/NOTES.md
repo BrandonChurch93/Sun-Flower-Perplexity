@@ -1,16 +1,9 @@
 # Looks of player
 
-2026-11-23 00:59 UTC, at commit a05bcfa of agent/player.
+2026-11-23 01:22 UTC, at commit 6c1842a of agent/player.
 
-The player at the film's own size, 1920 x 1080 in a 1920 x 1080 window, after the merge of v2 at 89f09cc. Headless, software renderer, 440 Hz test tone as the track. Nine seconds a frame here, so nearly every frame is skipped, and every frame drawn was chosen within 31 ms of the audio clock.
+Heartbeat 01:23. Autopilot and play show the film only. Check at low quality at preview, before the last merge. New set with sky-b follows.
 
-- `01-loading.jpg`: loading
-- `02-ready-frame-0-nothing-started.jpg`: ready, frame 0, nothing started
-- `03-track-picked-not-the-film-s-track.jpg`: track picked, not the film's track
-- `04-track-picked-and-matching-hash-stubbed-in-the-te.jpg`: track picked and matching, hash stubbed in the test page
-- `05-check-result.jpg`: check result
-- `06-recording-mode-mid-film-nothing-but-the-film.jpg`: recording mode mid film, nothing but the film
-- `07-report-after-the-recording.jpg`: report after the recording
-- `08-scrubbing-menu-open.jpg`: scrubbing, menu open
-- `09-export-stopped-and-kept.jpg`: export, stopped and kept
-- `10-export-ready.jpg`: export, ready
+- `01-autopilot-mid-run-frames-1800-to-2099-film-only.jpg`: Autopilot mid run, frames 1800 to 2099, film only
+- `02-play-from-the-page-after-the-bar-has-hidden-itse.jpg`: Play from the page after the bar has hidden itself
+- `03-check-at-low-quality-preview-size.jpg`: Check at low quality, preview size
