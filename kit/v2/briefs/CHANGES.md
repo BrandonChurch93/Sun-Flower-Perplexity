@@ -147,3 +147,68 @@ Read by `/root` at full size beside the nine keys and the eight approved picture
 5. The end is too magenta (bar 73: sky top right 107, 81, 115 against the key's 24, 69, 101).
 6. The night's stars are blurred to discs (bar 46.82).
 7. The lightning of bar 37 is a small squiggle; the plant's leaves hang like sheets in the storm.
+
+## 23 Nov, 04:40 UTC: `v2` at `12f8c44`, round 4 of every part merged
+
+### 1. What moved under you
+
+- Noon is lower. The sun stands 40 degrees high at noon (`NOON_DEG` in `src/v2/clock.ts`, was 62) and `LOW_DAY` is 0.5425 (was 0.35), so the sun crosses the horizon at the speed it had. Every mark that is set by sun height is where it was. Reason: at 62 degrees the day was flat, the earth read as terracotta and the leaves as teal; at 40 the clods throw shadows and the plant keeps its back light. About 20 s of the film is high sun (the germination days of 4 bars, the later days of 2).
+- The day is exposed darker: `LEVEL.day` 0.38 (was 0.5); the sun's key is `[25, 3.9], [45, 3.7], [90, 3.5]`; `FILL_HIGH` has the knots `[25, 0.17], [60, 0.15]`; `FILL_COLOUR` is now a curve by sun height, `[[8, 0.45], [30, 0.2]]` (`src/v2/look.ts`).
+- The moon stands at azimuth 177.5, elevation 12.5 (`src/v2/sun.ts`). In 390 night frames it is never near an edge of the frame.
+- `Made` counts vertex arrays (`createVertexArray`) and `nothingMade` fails on one made after loading (`src/v2/counter.ts`).
+- Loading waits for a painted frame after each step: `paint()` in `src/core/yield.ts`, used by `Film.load` and `Film.warm`.
+- The field has a hook into the plant's shader for its kinds: `place?: { glsl, uniforms }`, `struct Place { vec4 place; vec4 vary; }`, `fieldPlace()`.
+
+### 2. Key shapes, as decided
+
+- A low layer `key(slot, tau)` gives a shape for any clock, with the blend as one uniform. The plant's own schedule on film frames sits on top of it. The field drives the low layer for its kinds; its limit is 0.5 percent of a neighbour's height or one pixel at 1920 wide, and at most one kind is keyed in a frame.
+- The plant's keys play only in the two holds until the pop at frame 2472 is gone (`KEYS_WHILE_GROWING` off in `src/plant/index.ts`).
+- Whoever places things on the plant follows the slots through `place()` (frost) or `...wetUniforms` (rain).
+
+### 3. Limits of the script check
+
+`tools/checks/limits.json`: the sum 16 ms in the mean and 25 in the worst frame; plant and companion 5; field 3; rain and puddles 2; the scene's draw 6; the shadow pass 3 (new); every other part 1. Wet plant frames: the mean may rise by at most 1.5 of 255 a frame, the 90th percentile by at most 2. A round of every frame and `script --all` are run once, on the locked film.
+
+### 4. The second watch (pairs at `12f8c44`)
+
+What holds now: the frost hold reads as frost (rime on the edges of the blades, frosted clods, low fog, the hill), the storm, the flash, the rain and the break, the night with the moon inside the frame, the bloom at 58.5 and 61, the crop at the end as heads with the companion's face. What does not, in the order it costs the film:
+
+1. Script time while the plant grows (the checks: 83.8 ms in the mean against 16, 12 of 13 windows fail). With the plant, the field and the Builder (shadow pass, first warmed moment).
+2. Full day (bars 27 to 31, 43 to 52): the leaves read teal and matte, the back light through the blade is weak, the clouds are grainy at the draft tier. With the plant after the processor work; the sky looks at its day cumulus.
+3. Frost: the blade itself is bare green inside its fringe where the key has a dusting over the whole leaf. With frost.
+4. The end (bars 69 to 75): a pale straight band under the ridge; the pair's leaves too bright and yellow green beside the dark crop. The place paints its near strips in the field's far colour; the heights of the pair wait (see below).
+5. The opening: the foreground is close to black.
+
+### 5. Decided at 04:40
+
+- The companion's height stays (`heightRatio` 1.131) until the lists and keys of the field are in the shader. The shorter companion (0.667) is the better ending and is taken up after that, with its leaf holds set again so both bloom frames keep the leaf at the upper left.
+- The crop's tops take the full low sun late in the bloom: one line in `plantSun` under `PLANT_FIELD` (`src/plant/part.ts`), written by the field, put in by the plant.
+- The far end: the place paints its near sunflower strips, from the end of the field's wedge outward, in the field's far colour, from bar 57 to the end. The wedge stays where it is.
+- The ridge may stand between 0.8 and 1.65 degrees beside the hill (the place measured 0.81 to 1.63); it is not held tighter.
+
+
+## 23 Nov, 04:55 UTC
+
+### 1. The break opens on the boom's frame, in the picture too
+
+The dial was right (`burstAtBar` is 0 at frame 2082, 0.33 at 2083, 0.99 at 2088) but the picture showed nothing of the sun before frame 2085 and the whole tear at 2086. The sky makes the sun come through in frame 2083 and rise without a threshold to the open tear at 2088; the lens follows the picture with its beams. Nothing after frame 2088 changes.
+
+### 2. Wet air after the storm
+
+The night of bars 42 to 43 failed its window (a tile went 38 of 255 the wrong way into frame 2179). The sky lays a diffuse veil over the cloud edges while the ground is wet and the sun is low, taken from wetness and sun elevation and from no cue. Merged at `2300d67`.
+
+### 3. Grain stays
+
+The lens measured about 1.2 levels of fine noise on the storm deck. It is the grain of version 1 and stays.
+
+### 4. The first watch in motion is drawn in parts on the builders' machines
+
+One frame costs about 10 s on a builder's machine and here, so the whole film at the draft tier is about ten machine hours. Builders whose work is in draw a part of 318 frames each (`npm run part -- --from F --to T --jobs 1`, preview size, draft tier) and send the clip and its record. The parts are joined here with `npm run join -- --name blockout --mixed`. A blockout may be joined from parts of different commits; the proof may not.
+
+### 5. Sizes
+
+`npm run part` and `npm run join` take `--size WxH`. A smaller picture is no faster on these machines (11.7 s at 640 by 360 against 10 s at 960 by 540), so the blockout stays at the preview size.
+
+### 6. One merge commit without the trailer
+
+`866a003` on `agent/post` (a merge of `v2` into the branch) has no trailer. History is not rewritten for it; the merge of that branch into `v2` (`676e690`) carries the trailer. Later merges carry it.
