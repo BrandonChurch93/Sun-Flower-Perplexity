@@ -438,10 +438,9 @@ class FieldSky implements Sky {
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
     v.uElevation.value = e
-    // Stars need clear air as well as a hole in the cloud. Residual storm
-    // moisture lingers after the rain dial falls, and dims point sources
-    // and the galaxy without relaxing the cloud transmission mask.
-    const starClarity = 1 - 0.985 * smoothstep(0.24, 0.45, d.wet)
+    // The storm deck extinguishes starlight, not moisture on the ground.
+    // The display shader still applies local cloud transmission and fog.
+    const starClarity = 1 - smoothstep(0.12, 0.58, d.overcast)
     v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e))) * starClarity
     v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
