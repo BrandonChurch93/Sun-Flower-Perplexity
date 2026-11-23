@@ -122,7 +122,9 @@ export const KEY_EVERY = 8
 // The parts drawn from keys while the plant grows, each on its own switch. A part that is off has a key on every frame, so it is true to each frame and still moves in the same air as the parts that are on. With none on, a growing plant is laid whole for every frame. In the two holds the keys are one shape, and they are always on.
 export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
 // One laying a frame: every part is laid as it stands when the shutter opens, in the film's own air, and is drawn from there toward the next frame's laying. A growing frame then lays one slot and not both ends of the shutter. It gives way to the keys of a part that is switched on above, which are laid in still air.
-export const once = { on: false }
+export const once = { on: true }
+// In a time lapse the plant sits differently in every frame, so the next frame's laying is not where this frame's shutter closes: above this much of it both ends are laid.
+const ONCE_LAPSE = 0.04
 // The key frames of the film, in order.
 export function keyFrames(every: number): number[] {
   const keys: number[] = []
@@ -719,18 +721,18 @@ export class Plant {
     if (m.tau !== timeOpen) return false
     const here = plantInputsOf(m)
     if (here.leanX !== felt.leanX || here.leanZ !== felt.leanZ || here.lift !== felt.lift || here.wind !== felt.wind || here.real !== felt.real || here.cold !== felt.cold) return false
-    usePlant(this.variant, this.at)
-    this.own.uOwnKeys.value = 1
     // Where every laying carries its own air, the shader moves the plant only as far as its clock stands, and a time lapse is in the laying.
     const carried = this.airInKeys && !inHold
     const held = felt.held ?? 0
+    if (carried && (felt.lapse ?? 0) * (1 - held) > ONCE_LAPSE) return false
+    usePlant(this.variant, this.at)
+    this.own.uOwnKeys.value = 1
     const stood = carried ? held : 1
     this.own.uOwnAir.value.set(stood * Math.min(felt.calm ?? felt.wind, felt.wind), stood * felt.wind, stood * (felt.gust ?? 0), stood * (felt.rain ?? 0))
     const lapse = carried ? 0 : (felt.lapse ?? 0) * (1 - held)
     const real = felt.real ?? timeOpen
     this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
     this.stands.held = carried ? Math.min(held, feltClose.held ?? 0) : 1
-    // In a time lapse every frame is a moment minutes from the last and the plant sits differently in each: the way to the next laying is no motion of the open shutter there.
     this.blur = carried ? 1 - (felt.lapse ?? 0) * (1 - held) : 1
     this.filled.fill(NaN)
     this.turnTo(null, frame, m.dials)
