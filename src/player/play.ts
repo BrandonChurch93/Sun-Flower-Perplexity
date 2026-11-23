@@ -2,7 +2,7 @@ import { config, frameCount, type TierId } from '../config.ts'
 import type { Film } from '../director/film.ts'
 import { madeSince, madeSoFar } from '../v2/counter.ts'
 import { Steady } from './clock.ts'
-import { Pacing, type Report, type RunFacts } from './pacing.ts'
+import { asked, Pacing, type Report, type RunFacts } from './pacing.ts'
 
 const FPS = config.film.fps
 
@@ -96,11 +96,12 @@ export function play(options: PlayOptions): Playing {
       const cue = plan.cue(seconds)
       options.tick?.(seconds, cue)
       if (cue && cue.frame !== onScreen) {
+        const had = madeSoFar()
         const t0 = performance.now()
         await film.renderFrame(cue.frame, options.tier)
         const t1 = performance.now()
         onScreen = cue.frame
-        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp, t1 - t0)
+        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp, t1 - t0, asked(madeSince(had)))
       }
       requestAnimationFrame(turn)
     } catch (error) {

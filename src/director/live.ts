@@ -197,7 +197,8 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   const segmentNodes = segments.map((s) => {
     const node = make('span', css.segment)
     node.style.flexGrow = String(s.frames)
-    node.append(make('span', css.name, s.name))
+    node.title = `${s.name}, bars ${s.fromBar} to ${s.toBar}`
+    if (s.toBar - s.fromBar >= 4) node.append(make('span', css.name, s.name))
     strip.append(node)
     return node
   })

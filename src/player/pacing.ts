@@ -15,6 +15,19 @@ export interface Shown {
   audioDrawn: number
   gapMs: number
   drawMs: number
+  // The page's clock at the animation frame that chose it, in milliseconds. Only for measuring: no pixel depends on it.
+  atMs: number
+  // What drawing this frame asked of the graphics card: things made (must be 0), and writes into storage that exists, with their megabytes.
+  made: number
+  writes: number
+  writeMb: number
+}
+
+// What one frame asked of the graphics card.
+export interface Asked { made: number; writes: number; writeBytes: number }
+
+export function asked(m: Made): Asked {
+  return { made: m.programs + m.shaders + m.textures + m.buffers + m.framebuffers + m.renderbuffers + m.uploads, writes: m.updates, writeBytes: m.updateBytes }
 }
 
 export interface Gap { frame: number; film: number; gapMs: number; skipped: number }
@@ -46,6 +59,9 @@ export interface Report extends RunFacts {
   behindMs: { mean: number; largest: number; largestAtFilm: number; first: number; last: number }
   gaps: Gap[]
   made: Made | null
+  // Writes into existing storage for one frame, and the film seconds of the frames that made something new.
+  writes: { mean: number; largest: number; mbMean: number; mbLargest: number }
+  madeAtFilm: number[]
   holds: boolean
   verdict: string
   shown: Shown[]
@@ -72,12 +88,12 @@ export class Pacing {
 
   // `position` counts the frames of the run in the order they are due, so the frames between two that were shown are the ones skipped.
   // `atMs` is the page's clock at the animation frame that showed it, used only to measure the gaps.
-  present(frame: number, position: number, due: number, audio: number, audioDrawn: number, atMs: number, drawMs: number): void {
+  present(frame: number, position: number, due: number, audio: number, audioDrawn: number, atMs: number, drawMs: number, card: Asked = { made: 0, writes: 0, writeBytes: 0 }): void {
     const first = this.shown.length === 0
     const gapMs = first ? 0 : atMs - this.lastAt
     const skipped = first ? position : Math.max(0, position - this.lastPosition - 1)
     if (!first && gapMs > GAP_MS) this.gaps.push({ frame, film: frame / config.film.fps, gapMs: round(gapMs), skipped })
-    this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs) })
+    this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs), atMs: round(atMs, 1), made: card.made, writes: card.writes, writeMb: round(card.writeBytes / 1048576) })
     this.lastAt = atMs
     this.lastPosition = position
   }
@@ -129,6 +145,13 @@ export class Pacing {
       behindMs: { mean: round(mean(behind)), largest: round(largest), largestAtFilm: round(largestAt, 3), first: round(behind[0] ?? 0), last: round(behind[behind.length - 1] ?? 0) },
       gaps: this.gaps,
       made,
+      writes: {
+        mean: round(mean(shown.map((s) => s.writes)), 1),
+        largest: shown.reduce((a, s) => Math.max(a, s.writes), 0),
+        mbMean: round(mean(shown.map((s) => s.writeMb))),
+        mbLargest: shown.reduce((a, s) => Math.max(a, s.writeMb), 0),
+      },
+      madeAtFilm: shown.filter((s) => s.made > 0).map((s) => s.film),
       holds,
       verdict,
       shown,
