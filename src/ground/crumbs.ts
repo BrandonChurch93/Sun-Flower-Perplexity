@@ -302,7 +302,7 @@ uniform float uFine;
 in vec4 aSeed;
 out vec3 vWorld;
 out float vDepth;
-centroid out vec2 vHere;
+centroid out vec3 vHere;
 out vec3 vBall;
 out vec3 vNormal;
 out vec4 vSeed;
@@ -316,7 +316,7 @@ void main() {
   vSeed = aSeed;
   if (keep <= 0.0) {
     vWorld = place.xyz;
-    vHere = place.xz;
+    vHere = place.xyz;
     vDepth = 1.0;
     vBall = vec3(0.0, 1.0, 0.0);
     vNormal = vBall;
@@ -354,7 +354,7 @@ void main() {
   vec4 world = vec4(c.x + rel.x, place.y + soilHeight(c, soilLod(c)) + rel.y, c.y + rel.z, 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
-  vHere = world.xz;
+  vHere = world.xyz;
   vDepth = -view.z;
   vBall = normalize(ball);
   vNormal = normalize(normal);
@@ -365,7 +365,7 @@ void main() {
 export const crumbFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
-centroid in vec2 vHere;
+centroid in vec3 vHere;
 in vec3 vBall;
 in vec3 vNormal;
 in vec4 vSeed;
@@ -394,6 +394,7 @@ const float CRACK_LIP = 0.8;
 const vec2 DEW_GLINT = vec2(0.1, 0.5);
 ${beadLook}
 void main() {
+  onFace = vHere - vWorld;
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
   if (vSeed.z > 1.5) {
@@ -459,7 +460,7 @@ void main() {
   color += duskGlow(vWorld, v, ball, albedo, 1.0) * (0.3 + 0.7 * open);
   color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit, 0.0, smoothstep(0.0, 0.6, ball.y)) * (0.3 + 0.7 * open);
   color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.4 + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.2 + 0.35 * pow(saturate(-dot(v, uSunDir)), 2.0)));
-  color += sparkLight(vDepth) * sparks(vWorld.xz, vHere, normalize(v + uSunDir), 110.0, cocOf(vDepth), smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, lit * sunOn) * (0.3 + 0.7 * smoothstep(0.15, 0.5, sits)) * (0.4 + 0.6 * lit) / (1.0 + vDepth * vDepth / 64.0));
+  color += sparkLight(vDepth) * sparks(vWorld.xz, normalize(v + uSunDir), 110.0, cocOf(vDepth), smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, lit * sunOn) * (0.3 + 0.7 * smoothstep(0.15, 0.5, sits)) * (0.4 + 0.6 * lit) / (1.0 + vDepth * vDepth / 64.0));
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
 `
