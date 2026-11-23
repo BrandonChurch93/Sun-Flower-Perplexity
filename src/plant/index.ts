@@ -90,13 +90,14 @@ const bit = (part: number) => 1 << part
 const ALL = bit(PART.stem) | bit(PART.leaf) | bit(PART.seedLeaf) | bit(PART.husk) | bit(PART.body) | bit(PART.bract) | bit(PART.ray)
 
 // The real parts, in the order they are drawn, with the stand-in pieces each one draws instead of.
-const SLOTS: { name: string; make: PartMaker; pieces: number; rigid?: boolean }[] = [
-  { name: 'stem', make: createStem, pieces: bit(PART.stem) },
-  { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf) },
-  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk) },
-  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), rigid: true },
-  { name: 'disc', make: createDisc, pieces: 0, rigid: true },
-  { name: 'petals', make: createPetals, pieces: bit(PART.ray), rigid: true },
+// `turn` is the frame of each stretch of keys on which the part is laid: the head is one thing and is laid together.
+const SLOTS: { name: string; make: PartMaker; pieces: number; turn: number; rigid?: boolean }[] = [
+  { name: 'stem', make: createStem, pieces: bit(PART.stem), turn: 0 },
+  { name: 'leaves', make: createLeaves, pieces: bit(PART.leaf), turn: 2 },
+  { name: 'seedling', make: createSeedling, pieces: bit(PART.seedLeaf) | bit(PART.husk), turn: 4 },
+  { name: 'bud', make: createBud, pieces: bit(PART.body) | bit(PART.bract), turn: 4, rigid: true },
+  { name: 'disc', make: createDisc, pieces: 0, turn: 4, rigid: true },
+  { name: 'petals', make: createPetals, pieces: bit(PART.ray), turn: 4, rigid: true },
 ]
 
 export interface PlantOptions {
@@ -129,12 +130,43 @@ export function keyFrames(every: number): number[] {
   keys.push(frameCount - 1)
   return keys
 }
-const KEYS = keyFrames(KEY_EVERY)
-// The key at or before each frame, by its place in KEYS.
-const KEY_OF = new Int32Array(frameCount)
-for (let f = 0, k = 0; f < frameCount; f++) {
-  if (k + 1 < KEYS.length && KEYS[k + 1] <= f) k++
-  KEY_OF[f] = k
+// The keys of one part of the film. Every part has its own turn among the frames of each stretch of KEY_EVERY and its keys fall on that turn, so two parts are seldom laid on the same frame. The key that falls last before a hold or first after it is laid as the hold's own end: the clock has all but stopped there, the hold then holds exactly its two ends, and no key is laid inside it.
+interface Turn { at: Int32Array; of: Int32Array; held: Uint8Array; index: Int32Array }
+const turns: (Turn | undefined)[] = []
+function turnOf(phase: number): Turn {
+  const known = turns[phase]
+  if (known) return known
+  const last = frameCount - 1
+  const at = [0]
+  const of = [0]
+  const up = (v: number) => ((v % KEY_EVERY) + KEY_EVERY) % KEY_EVERY
+  for (let f = 1; f < last; f++) {
+    if (f % KEY_EVERY !== phase) continue
+    let from = f
+    for (const [start, end] of HOLD_FRAMES) {
+      const before = start - up(start - phase)
+      const after = end + up(phase - end)
+      if (f === before) from = start
+      else if (f === after) from = end
+      else if (f > before && f < after) from = -1
+    }
+    if (from < 0) continue
+    at.push(f)
+    of.push(from)
+  }
+  at.push(last)
+  of.push(last)
+  const held = new Uint8Array(at.length)
+  for (let k = 0; k + 1 < at.length; k++) if (HOLD_FRAMES.some(([start, end]) => of[k] === start && of[k + 1] === end)) held[k] = 1
+  // The key at or before each frame. The last key ends the last stretch, so a slot is never left with what an earlier frame laid.
+  const index = new Int32Array(frameCount)
+  for (let f = 0, k = 0; f < frameCount; f++) {
+    if (k + 2 < at.length && at[k + 1] <= f) k++
+    index[f] = k
+  }
+  const turn = { at: Int32Array.from(at), of: Int32Array.from(of), held, index }
+  turns[phase] = turn
+  return turn
 }
 
 // What a slot is laid from: the plant's clock and what it feels there, in still air, and the state of its skin. `serial` names the laying: a part holds a slot's key when it holds its serial.
@@ -152,7 +184,8 @@ function keyAt(frame: number, out: FilmKey): FilmKey {
   const felt = plantInputsOf(m)
   out.frame = frame
   out.time = m.tau
-  out.inputs = felt
+  // A key is laid in still air: the air moves the plant where it is drawn.
+  out.inputs = { leanX: felt.leanX, leanZ: felt.leanZ, lift: felt.lift, liftLow: felt.liftLow, cold: felt.cold, real: felt.real, held: felt.held, stood: felt.stood, steady: felt.steady, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
   out.real = felt.stood ?? m.t
   out.wet = m.dials.wet
   out.frost = m.dials.frost
@@ -160,6 +193,8 @@ function keyAt(frame: number, out: FilmKey): FilmKey {
   return out
 }
 const newFilmKey = (): FilmKey => ({ frame: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, real: 0, wet: 0, frost: 0, dew: 0 })
+// What a part plays the film from: its turn, the two keys round the frame, and its own mix of its two slots.
+interface Play { turn: Turn; film: [FilmKey, FilmKey]; mix: THREE.Vector2 }
 // How far a leaf twitches from frame to frame in the fastest time lapse, in radians.
 const TWITCH = 0.05
 const TAU = 2 * Math.PI
@@ -214,7 +249,10 @@ export class Plant {
   // The key frame each slot of each part holds, and the key the part's unslotted numbers were laid from. The stand-in is listed under null.
   private readonly holds = new Map<PlantPart | null, Int32Array>()
   private readonly keys = [newKey(), newKey()]
-  private readonly film = [newFilmKey(), newFilmKey()]
+  // How each part plays the film. The stand-in is listed under null, and its keys are the ones the stem's end is taken from.
+  private readonly plays = new Map<PlantPart | null, Play>()
+  private readonly tips = [new THREE.Vector3(), new THREE.Vector3()]
+  private readonly tipOf = [-1, -1]
   private serial = 0
   private readonly signing = new Float64Array(KEY_SIGNED)
   private readonly now = blankMoment()
@@ -238,10 +276,15 @@ export class Plant {
     const options: PartOptions = { detail: this.detail, variant: this.variant, places, own: this.own, stands: this.stands, place: places ? o.place : undefined }
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
+    const turned = this.variant === 0 ? 0 : 1
+    this.plays.set(null, { turn: turnOf(turned), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value })
     for (const slot of SLOTS) {
-      const part = slot.make(slot.rigid ? { ...options, rigid: true } : options)
+      // Each part mixes its two slots by its own share, since each is laid on its own turn.
+      const mix = new THREE.Vector2(0, 1)
+      const part = slot.make({ ...options, own: { ...this.own, uOwnMix: { value: mix } }, rigid: slot.rigid })
       if (part) {
         this.parts.push(part)
+        this.plays.set(part, { turn: turnOf((slot.turn + turned) % KEY_EVERY), film: [newFilmKey(), newFilmKey()], mix })
         hide |= slot.pieces
       } else declareStandIn(`${who} ${slot.name}`)
     }
@@ -413,7 +456,7 @@ export class Plant {
     const [first, second] = this.keys
     const frame = shared.uFrame.value
     usePlant(this.variant, this.at)
-    this.own.uOwnMix.value.set(share, shutter)
+    for (const play of this.plays.values()) play.mix.set(share, shutter)
     this.own.uOwnKeys.value = 1
     this.own.uOwnAir.value.set(Math.min(felt.calm ?? felt.wind, felt.wind), felt.wind, felt.gust ?? 0, felt.rain ?? 0)
     this.own.uOwnTip.value.copy(first.tip).lerp(second.tip, share)
@@ -439,7 +482,90 @@ export class Plant {
     this.surface.main.uniforms.uBloom.value = headOpen(time)
   }
 
-  // The film's own schedule of keys: the frame is a mix of the two key frames round it, when it is a frame of the film and the plant feels what the film says it feels there. The shape then depends on the frame's number and on nothing drawn before it.
+  // Lays one slot of one part, or of the stand-in when the part is null, as the plant is at `key`, and notes under `id` what the slot now holds.
+  private layOne(part: PlantPart | null, slot: 0 | 1, key: FilmKey, id: number): void {
+    const real = shared.uReal.value
+    const wet = stateUniforms.uPlantWet.value
+    const frost = stateUniforms.uPlantFrost.value
+    const dew = stateUniforms.uPlantDew.value
+    const heldWas = filling.held
+    shared.uReal.value = key.real
+    stateUniforms.uPlantWet.value = key.wet
+    stateUniforms.uPlantFrost.value = key.frost
+    stateUniforms.uPlantDew.value = key.dew
+    filling.held = 1
+    filling.lead = true
+    if (part === null) {
+      const to = slot === 0 ? this.a : (this.b as THREE.BufferAttribute)
+      buildStandIn(key.time, key.inputs, to.array as Float32Array, this.n.array as Float32Array, this.shape, this.hide)
+      to.needsUpdate = true
+      this.n.needsUpdate = true
+    } else {
+      part.fill(slot, poseAt(key.time, key.inputs))
+      part.finish(key.time, key.inputs)
+    }
+    const held = this.holds.get(part) as Int32Array
+    held[slot] = id
+    held[2] = id
+    shared.uReal.value = real
+    stateUniforms.uPlantWet.value = wet
+    stateUniforms.uPlantFrost.value = frost
+    stateUniforms.uPlantDew.value = dew
+    filling.held = heldWas
+  }
+
+  // Sets one part's mix for a frame of the film from the two keys of its own turn round the frame, and lays the key it lacks. Gives the share of the part's second slot.
+  private turnTo(part: PlantPart | null, frame: number, dials: { frost: number; wet: number; dew: number }): number {
+    const play = this.plays.get(part) as Play
+    const t = play.turn
+    const k = t.index[frame]
+    // Key n lies in slot n mod 2, so the second slot holds the later key of one stretch and the earlier key of the next.
+    const slot = (k & 1) as 0 | 1
+    const other = (1 - slot) as 0 | 1
+    const first = keyAt(t.of[k], play.film[slot])
+    const second = keyAt(t.of[k + 1], play.film[other])
+    let w = 0
+    let dw = 0
+    if (t.held[k]) {
+      // The two ends of a hold are one shape and differ only in what frost, dew and water lay on it, so between them the mix follows the dial that moves most and not the time.
+      const frost = second.frost - first.frost
+      const wet = second.wet - first.wet
+      const dew = second.dew - first.dew
+      const most = Math.max(Math.abs(frost), Math.abs(wet), Math.abs(dew))
+      if (frame > second.frame) w = 1
+      else if (frame > first.frame) {
+        w = (frame - first.frame) / (second.frame - first.frame)
+        if (most > 1e-6) w = Math.abs(frost) === most ? (dials.frost - first.frost) / frost : Math.abs(wet) === most ? (dials.wet - first.wet) / wet : (dials.dew - first.dew) / dew
+        w = Math.min(Math.max(w, 0), 1)
+      }
+    } else {
+      const span = t.at[k + 1] - t.at[k]
+      w = (frame - t.at[k]) / span
+      dw = SHUTTER_SHARE / span
+    }
+    const share = slot === 0 ? w : 1 - w
+    play.mix.set(share, slot === 0 ? dw : -dw)
+    if (part === null) {
+      for (const [at, key] of [[slot, first], [other, second]] as const) {
+        if (this.tipOf[at] === key.frame) continue
+        tipAt(key.time, { ...key.inputs, steady: false }, this.tips[at])
+        this.tipOf[at] = key.frame
+      }
+      this.own.uOwnTip.value.copy(this.tips[0]).lerp(this.tips[1], share)
+      if (this.hide === ALL) return share
+    } else if (!this.showPart(part, part.absent?.(first.time) === true && part.absent(second.time) === true)) return share
+    const held = this.holds.get(part) as Int32Array
+    // A film key is named by its frame, below the names the low layer gives.
+    const a = -2 - first.frame
+    const b = -2 - second.frame
+    if (held[slot] !== a) this.layOne(part, slot, first, a)
+    // What a part keeps once and not for each slot comes from the later key, so that one is laid last.
+    if (held[other] !== b || held[2] !== b) this.layOne(part, other, second, b)
+    part?.settle?.(share)
+    return share
+  }
+
+  // The film's own schedule of keys: every part is drawn as a mix of the two keys of its own turn round the frame, when it is a frame of the film and the plant feels what the film says it feels there. The shape then depends on the frame's number and on nothing drawn before it.
   private play(timeOpen: number, felt: PlantInputs): boolean {
     const frame = shared.uFrame.value
     if (this.at === null || !this.b || !(frame >= 0 && frame < frameCount)) return false
@@ -448,38 +574,26 @@ export class Plant {
     if (m.tau !== timeOpen) return false
     const here = plantInputsOf(m)
     if (here.leanX !== felt.leanX || here.leanZ !== felt.leanZ || here.lift !== felt.lift || here.wind !== felt.wind || here.real !== felt.real || here.cold !== felt.cold) return false
-    // The last key ends the last stretch, so a slot is never left with what an earlier frame laid.
-    const i = Math.min(KEY_OF[frame], KEYS.length - 2)
-    const j = i + 1
-    const first = keyAt(KEYS[i], this.film[i & 1])
-    const second = keyAt(KEYS[j], this.film[j & 1])
-    const span = Math.max(second.frame - first.frame, 1)
-    let w = (frame - first.frame) / span
-    let dw = SHUTTER_SHARE / span
-    if (span > KEY_EVERY) {
-      // The two ends of a hold are one shape and differ only in what frost, dew and water lay on it, so between them the mix follows the dial that moves most and not the time.
-      const d = m.dials
-      const frost = second.frost - first.frost
-      const wet = second.wet - first.wet
-      const dew = second.dew - first.dew
-      const most = Math.max(Math.abs(frost), Math.abs(wet), Math.abs(dew))
-      if (most > 1e-6) w = Math.abs(frost) === most ? (d.frost - first.frost) / frost : Math.abs(wet) === most ? (d.wet - first.wet) / wet : (d.dew - first.dew) / dew
-      w = Math.min(Math.max(w, 0), 1)
-      dw = 0
-    }
-    // Key n lies in slot n mod 2, so the second slot holds the later key of one stretch and the earlier key of the next.
-    const slot = (i & 1) as 0 | 1
-    const other = (1 - slot) as 0 | 1
-    this.key(slot, first.time, first.inputs, first)
-    this.key(other, second.time, second.inputs, second)
-    this.blend(slot === 0 ? w : 1 - w, slot === 0 ? dw : -dw, felt, timeOpen, other)
+    usePlant(this.variant, this.at)
+    this.own.uOwnKeys.value = 1
+    this.own.uOwnAir.value.set(Math.min(felt.calm ?? felt.wind, felt.wind), felt.wind, felt.gust ?? 0, felt.rain ?? 0)
+    const lapse = (felt.lapse ?? 0) * (1 - (felt.held ?? 0))
+    const real = felt.real ?? timeOpen
+    this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
+    this.stands.held = 1
+    this.filled.fill(NaN)
+    this.turnTo(null, frame, m.dials)
+    for (const part of this.parts) this.turnTo(part, frame, m.dials)
+    usePlant(0)
+    this.surface.main.uniforms.uPale.value = paleness(timeOpen)
+    this.surface.main.uniforms.uBloom.value = headOpen(timeOpen)
     return true
   }
 
   prepare(timeOpen: number, timeClose: number, feltOpen: PlantInputs, feltClose: PlantInputs): void {
     if (this.play(timeOpen, feltOpen)) return
     for (const held of this.holds.values()) held.fill(-1)
-    this.own.uOwnMix.value.set(0, 1)
+    for (const play of this.plays.values()) play.mix.set(0, 1)
     this.own.uOwnKeys.value = 0
     this.own.uOwnLapse.value.set(0, 0, 0, 0)
     usePlant(this.variant, this.at)
