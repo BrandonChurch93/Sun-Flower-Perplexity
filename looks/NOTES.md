@@ -1,7 +1,11 @@
 # Looks of place
 
-2026-11-23 04:23 UTC, at commit e6e61de of agent/place.
+2026-11-23 04:54 UTC, at commit 85efc27 of agent/place.
 
-- `01-clip-bars-68-to-75-the-horizon-band-every-21st-f.jpg`: Clip bars 68 to 75, the horizon band every 21st frame at full size
-- `02-clip-bars-68-to-75-every-24th-frame.jpg`: Clip bars 68 to 75, every 24th frame
-- `03-clip-bars-68-to-75-every-third-frame-film-camera.mp4`: Clip bars 68 to 75, every third frame, film camera, all parts
+- `01-strips-before-and-after-bars-67-to-74-5.jpg`: strips before and after bars 67 to 74.5
+- `02-horizon-band-before-three-times-size.jpg`: horizon band before, three times size
+- `03-horizon-band-after-three-times-size.jpg`: horizon band after, three times size
+- `04-frost-storm-noon-before-and-after.jpg`: frost storm noon before and after
+- `05-bloom-and-before-it-after.jpg`: bloom and before it, after
+- `06-bar-69-after.jpg`: bar 69 after
+- `07-bar-73-after.jpg`: bar 73 after
