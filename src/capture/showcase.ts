@@ -41,6 +41,8 @@ export interface Showcase {
   // What the graphics card has been asked to make since the page opened.
   made(): Made
   setView(name: string): void
+  // The world at rest: no weather, no wind, one fixed sun. For the checks that look for growth.
+  setStill(on: boolean): void
   sky(): string
 }
 
@@ -88,6 +90,7 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
       if (name !== 'film' && !(name in views)) throw new Error(`unknown view "${name}"`)
       film.view.fixed = name === 'film' ? null : views[name as Exclude<ViewName, 'film'>]
     },
+    setStill: (on) => film.setStill(on),
     sky: () => film.skyName,
     requirements: () => ({
       extensions: REQUIRED_EXTENSIONS.slice(),
