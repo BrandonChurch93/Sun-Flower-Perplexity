@@ -44,7 +44,9 @@ A draft frame has one sample, so everything out of focus is blurred by the lens 
 
 A window that is measured is kept in `out/work/checks/script/film/` until the film changes, so the check runs in parts: `--window 2070-2110`, `--frames 8` for the first 8 counted frames of each window (a quick look, marked "not whole"), `--all` for the whole film in windows drawn one after the other without a jump, `--again` to measure again. It prints one row a window (mean, worst, the worst frame, the three largest parts there, what is over its limit, PASS or FAIL), writes `out/work/checks/script.json` and exits with 1 on FAIL.
 
-The numbers are wall time on this machine. Anything else that runs beside the check (another page drawing, a build) makes them larger: run it alone.
+The numbers are wall time on this machine, so the check has to run alone: another page drawing or a build beside it makes every number larger. It says so in its first line, counts the browsers that are already drawing when a run begins, marks what it measures beside them "not alone" and is then not complete.
+
+The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070-2110) hold the frames where a hold starts or ends, the worst frames found so far (860, 1260, 1665, 2083, where the boom of the music lands). They are measured whole in every run, whatever `--window` or `--frames` says, and printed first.
 
 ## The whole film in one go
 
@@ -52,7 +54,7 @@ The numbers are wall time on this machine. Anything else that runs beside the ch
 
 ## The plant alone, and what may brighten it
 
-`nights --plant` judges a frame only while the frost dial and the wet dial (how wet the plant is, `look.ground.plantWet`) are both under 0.02: rime and water are allowed to brighten the plant. The table says for each dusk and dawn how many of its frames were left out, and a dusk or dawn with fewer than two frames left reads "left out", not "ok".
+`nights --plant` knows three kinds of frame, by the film's dials. Dry (frost and wet under 0.02): the plant's mean may not rise by more than 0.5 of 255 between drawn frames on the way to midnight, and its mean and 90th percentile at midnight may not be above the handover's. Wet (the wet dial, which is how wet the plant is, at 0.02 or more): the mean may rise by at most 1.5 of 255 from one frame to the next, and every frame of such a dusk or dawn is drawn; the 90th percentile is listed and not judged. Under rime (the frost dial at 0.02 or more): left out, rime may brighten the plant. The table has a column for the frames left out and two for the wet ones, and a dusk or dawn with nothing left to judge reads "left out", not "ok".
 
 ## The holds, to the frame
 

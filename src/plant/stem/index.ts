@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { heightAt, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
 import { SKIN_TILE_M, ribMap, skinMap } from './maps.ts'
@@ -166,7 +166,7 @@ export function create(options: PartOptions): PlantPart {
   function fill(slot: 0 | 1, pose: Pose): void {
     if (slot === 1 && !positionB) return
     const out = slots[slot]
-    const first = slot === 0
+    const first = filling.lead
     const time = pose.time
     const length = pose.length
     const grown = smoothstep(0, 0.006, heightAt(time))

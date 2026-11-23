@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { lumpAt } from '../../ground/crumbs.ts'
 import { soilHeightAt } from '../../ground/soil.ts'
 import { heightAt, huskDrop, huskFall, huskLand, huskLengthM, huskRest, huskSize, paleness, seedLeafAngle, seedLeafFraction, seedLeafLength, stemRadius } from '../growth.ts'
-import { makePartSurface, partGeometry, partMesh, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { roll, seedLeafFrameAt, stemAt, type Pose } from '../skeleton.ts'
 import type { Surface } from '../../core/shading.ts'
@@ -364,7 +364,7 @@ export function create(options: PartOptions): PlantPart | null {
   }
 
   function fill(slot: 0 | 1, pose: Pose): void {
-    const first = slot === 0
+    const first = filling.lead
     const time = pose.time
     const grown = smoothstep(0, 0.006, heightAt(time))
     const pale = paleness(time)

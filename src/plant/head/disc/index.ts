@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, type Pose } from '../../skeleton.ts'
 import { tissueGlsl } from '../../surface/index.ts'
 import { FIRST_OPEN, FIRST_SIDE, RIM_SHARE, SHOWN_FROM, cover, fronts, schedule, youth } from './opening.ts'
@@ -129,8 +129,8 @@ export function create(options: PartOptions): PlantPart | null {
     casters: [],
     fill(slot, pose) {
       setHead(uniforms, slot, pose)
-      if (slot === 1) return
-      const shown = pose.time >= SHOWN_FROM && uniforms.uHS.value[0].x > 0
+      if (!filling.lead) return
+      const shown = pose.time >= SHOWN_FROM && uniforms.uHS.value[slot].x > 0
       for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
       uniforms.uYoung.value = youth(pose.time)
       uniforms.uCover.value = cover(pose.time)
