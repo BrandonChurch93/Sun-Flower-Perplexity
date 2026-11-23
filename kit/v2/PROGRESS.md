@@ -285,6 +285,7 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 17:03 UTC. The lens owner's hold cure is merged (`adf5f05d`, one line in `src/post/fill.ts`): the pure sky is what the rest of the fill counts as wholly sky, a circle within 0.0006 of infinity. Its owner's note, not measured: at 48 samples a pixel with up to 8 of 48 samples on the far hill now counts as pure sky (it was 2 of 48), so the first sixth of that edge's step is held; at one sample there is no such pixel. A form that compares with the circle rounded as the card rounds it is for after the film.
 - 2026-11-23 17:18 UTC. Drawn on the merged build before the freeze (27 frames at 960 x 540, one sample): 2902, 2903, 2904 are the same to the pixel as the one number test, the ridge at one height; 1054 and 3600 keep every pixel; 3009 changes on 67,051 pixels (largest 65 levels) along the ridge, the near leaf's edge and the petals' outline, to the held look the other frames already had; over 100 to 108 the far edge no longer shows in the change from frame to frame. The lens owner's own numbers agree (edge row 145.5 to 146.4 over 100 to 116 with no flip; 444, 3112, 3600 the same, 2300 and 3009 changed to the held look). What is left in the opening is a wander of the far edge inside 1.5 rows of 540, not seen in its strip; a clamp of the circle for far land in `src/core/shading.ts` would change pixels and is not taken.
 - 2026-11-23 17:18 UTC. FROZEN. The film is drawn once at 1920 x 1080, one sample, on the commit that carries this line, engine hash `9c62c3b3b10c7180` (206 tests pass, types clean). Changes to the plan of 16:29: this machine (two cores) draws nothing and keeps reading parts and proving cures; its range 3626 to 3809 goes to the plant owner's machine, which draws it before the keys apart pairs. The frost owner's gather cure (`2935f581`) is not in the frozen build: it goes in after, with pairs drawn here, like every cure for live play (each must leave the captured frames the same to the pixel). The checks owner's test (MEASURED, its machine): script inside the draw runs 1.0 to 1.3 times as slow as outside it, so the cost record's columns stand as written.
+- 2026-11-23 17:21 UTC. The frozen commit is `d42a8692` (the line above plus the checks owner's tools at `49642571`, which do not move the engine hash: still `9c62c3b3b10c7180`, types clean). Sent at 17:20 to the twelve drawing machines with their ranges in three chunks each, and to the checks owner with its five proofs. Read from the owners before the freeze, for the record: the head's `owners` over 2900 to 3120 passes (plant 15.4 ms, companion 7.5 ms, 5.16 MB written a frame); the frost's gather cure as read by the checks owner brings 849 to 26.7 ms from 35.6 and 1260 to 33.4 from 58.0; the player's count has no verdict (38 minutes without reaching frame 200), its own play makes nothing on any frame from 3124 to 3417, and 3418 to 3809 is not measured.
 
 ## Notes from Brandon
 
@@ -292,43 +293,39 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-In the order they cost the film (16:10 UTC, `v2` at `795c7d1c`):
+In the order they cost the film (17:22 UTC, `v2` frozen at `d42a8692`, engine hash `9c62c3b3b10c7180`):
 
-- The bloom's head. The head owner's commit is out of `v2` (see Decisions, 15:50). Until it comes back on the old shapes the wild pixels in the disc (3000, 3072, 3192, 3216) are open and the bloom costs about 58 ms of script a frame. Due 16:40; if the look cannot be put right by then, the clamps and the frames call alone.
-- The wilt of the upper leaves, 2560 to 2760 (plant owner, a 30 minute box from 15:53).
-- Live play. The long frames at 849, 1260 and 3318 (frost owner and hairs owner, 40 minute boxes from 16:10); the level of 37 to 40 ms a frame at 1659 to 1665 and through the time lapse (plant owner: keys apart, then the companion, the leaves on sheet frames). STATED by the head owner on its `19404b5` over 2900 to 3120: script mean 58.5 to 32.9 ms, worst 149.9 to 61.8. A frame has 33.3 ms; his machine is UNKNOWN. The export gives the same film with his track whatever live play does.
-- The next batch, about 16:45: the head, the wilt, the moon rim on the seed leaves (leaf look `0954b34f`), the field's item 31 (`297c2f65`), the rain's point at small sizes and its bead that no longer flashes (`e51c6fe5`, `f972322c`).
-- Watch parts on `795c7d1c` at 640 x 360: 60 to 200 (ground owner, the neck's arch), 836 to 960 (night sky owner, the frost front), 2040 to 2130 (lens owner, the tear), 2900 to 3125 (sky owner, the bloom).
-- The whole standard `script` on `795c7d1c`, all 13 windows (checks owner).
-- Phase 5: the whole film at 1920 x 1080, then the detectors and the spark reader over it, joined with his track privately.
-- One vertex array made in the bloom after loading (3107; 3128 to 3130), unexplained (checks owner).
-- To look for in the 1920 film: the neighbours' rays between lays at 2975 to 3060; a spark at 1249 that the plant, the field and the ground each give alone at 320 x 180; three faint discs at one height on the rows at 1262; the hair rim in the storm.
-- Player: the timing panel is clipped at 1280 x 720; the count; 3124 to 3809 on every frame at high; the checker of a real recording has only ever read its own test file.
-- Version 1's folders that nothing draws any more stay until the cleanup.
+- Phase 5. The film at 1920 x 1080, one sample, is being drawn on twelve machines (see Running agents). Each part is checked as it arrives (engine hash, size, frame count), read by the detectors (`blips.py`, `pops.py`, `sparks.py`) and looked at on a sheet. Then joined with his track, privately.
+- To look for in the 1920 film: the neighbours' rays between lays at 2975 to 3060; a spark at 1249; three faint discs at one height on the rows at 1262; the hair rim in the storm; the glint at 2968; the petals' grain in motion at 3320 to 3340; the soil's shimmer in the opening (one sample in time lapse light); the far ridge, which must stand still.
+- Cures for live play that wait for the film. Each must leave the captured frames the same to the pixel, proven here against the frozen frames: the frost's gather (`2935f581`), keys apart (plant owner, floor and pairs on the frozen commit), the hairs' gathering (hairs owner), bud hairs and leaf hairs on frames (head owner, plant owner), the field's compiles at 3025, 3033, 3047 (field owner).
+- Live play on his machine: UNKNOWN. On a four core machine with no graphics card at 320 x 180, 11 of 16 windows are over a limit (mean 25.6 ms; a frame has 33.3 ms). The export gives the same film with his track whatever live play does.
+- Player: the count has no verdict; 3418 to 3809 on every frame not measured; the checker of a real recording has only ever read its own test file.
+- Phase 6: the proofs on the frozen build (checks owner), cue lint again, the record round, the private review link, the cleanup of version 1's folders.
+- After the film: a finer form of the lens' hold for 48 samples (lens owner).
 
 ## Running jobs
 
-None.
+The film, drawn by the agents below. Nothing is drawn on this machine while parts arrive; it reads them.
 
 ## Running agents
 
-All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Thirteen exist, at most twelve at work. All were sent `v2` at `795c7d1c` at 16:10.
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Thirteen exist; twelve draw, one proves. All are detached at `d42a8692` since 17:20.
 
-| Agent | Folder | Branch | State at 16:10 UTC 23 Nov |
+| Agent | Folder | Branch | Frames of the film (three chunks each) |
 | --- | --- | --- | --- |
-| `sky_b_builder` | `src/sky/` | `agent/sky` | `b979f425` merged; draws the bloom 2900 to 3125 for the watch |
-| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | draws 836 to 960 for the watch |
-| `rows_v2_builder` | `src/field/` | `agent/field` | item 31 at `297c2f65` waits for the batch; the warmed cost of 2970 to 3115 |
-| `plant_builder` | plant (see Modules) | `agent/plant` | `eaa923e3` merged; the wilt, then keys apart |
-| `place_builder` | `src/plant/hairs/`, `src/plant/stem/`, `src/place/` | `agent/hairs` | `5759fa43` merged; the far coat's choosing at 1260 and 3318 |
-| `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | `19404b5` out of `v2`; the clamps and the frames call on the old shapes |
-| `frost_builder` | frost (see Modules) | `agent/frost` | `c6a26e63` merged; the crystals' choosing at 849 and 1260 |
-| `rain_builder` | rain (see Modules) | `agent/rain` | `c5507675` merged; `f972322c` waits for the batch; proofs on the new hash |
-| `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | `87e94a58` merged; `0954b34f` waits for the batch |
-| `optics_v2_builder` | `src/post/` | `agent/post` | `e8d19dcf` merged; draws 2040 to 2130 for the watch |
-| `player_builder` | player (see Modules) | `agent/player` | `a1165b6a` merged; the panel, the count, 3124 to 3809 at high |
-| `checks_builder` | `tools/checks/` | `agent/checks` | `a86a469d` merged; `worked` pushed; the whole `script` |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | `fb9ab936` merged; draws 60 to 200 for the watch |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | 0 to 289 |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | 290 to 561 |
+| `frost_builder` | frost (see Modules) | `agent/frost` | 562 to 985; `2935f581` waits for the film |
+| `leaf_look_builder` | leaf look (see Modules) | `agent/leaf-look` | 986 to 1303 |
+| `place_builder` | `src/plant/hairs/`, `src/plant/stem/`, `src/place/` | `agent/hairs` | 1304 to 1678 |
+| `rain_builder` | rain (see Modules) | `agent/rain` | 1679 to 2040 |
+| `optics_v2_builder` | `src/post/` | `agent/post` | 2041 to 2350 |
+| `sky_b_builder` | `src/sky/` | `agent/sky` | 2351 to 2777 |
+| `sky_c_builder` | `src/plant/head/`, `src/plant/look/{bud,disc,ray}.ts` | `agent/head` | 2778 to 3107 |
+| `rows_v2_builder` | `src/field/` | `agent/field` | 3108 to 3414 |
+| `player_builder` | player (see Modules) | `agent/player` | 3415 to 3625 |
+| `plant_builder` | plant (see Modules) | `agent/plant` | 3626 to 3809, then the keys apart pairs |
+| `checks_builder` | `tools/checks/` | `agent/checks` | none; `script --again`, `made`, `play`, the count, `pure` on the frozen commit |
 
 ## Rounds
 
