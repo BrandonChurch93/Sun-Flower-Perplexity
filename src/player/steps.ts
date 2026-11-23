@@ -8,7 +8,7 @@ import { launch } from '../../tools/lib/browser.ts'
 import { at } from '../../tools/lib/paths.ts'
 import { serve } from '../../tools/lib/server.ts'
 import { config } from '../config.ts'
-import { inOrder, type OwnerCost, type StateReport } from './state.ts'
+import { inOrder, longestOver, overText, type OwnerCost, type StateReport } from './state.ts'
 
 const arg = (name: string, fallback: string): string => {
   const i = process.argv.indexOf(`--${name}`)
@@ -41,7 +41,7 @@ function table(saved: Saved): string {
     const r = quiet(s)
     lines.push('', `## Frames ${s.from} to ${s.to}`, '', '| owner | mean ms | worst ms | at frame | MB sent a frame | most MB | at frame |', '| --- | ---: | ---: | ---: | ---: | ---: | ---: |')
     for (const c of rowsOf(r)) lines.push(`| ${c.owner} | ${n1(c.meanMs)} | ${n1(c.worstMs)} | ${c.worstAtFrame} | ${mb(c.meanBytes)} | ${mb(c.worstBytes)} | ${c.worstBytesAtFrame < 0 ? '' : c.worstBytesAtFrame} |`)
-    lines.push('', `Over ${FRAME_MS.toFixed(1)} ms of script: ${r.overFrame} of ${r.frames} frames. Made on the graphics card: ${r.made === 0 ? 'nothing' : `${r.made} things`}. Not in the sums, pictures kept for later frames and really drawn: ${n1(r.drawnMs.mean)} ms a frame, the most ${n1(r.drawnMs.worst)} ms.`)
+    lines.push('', `Over ${FRAME_MS.toFixed(1)} ms of script: ${overText(r)}. Made on the graphics card: ${r.made === 0 ? 'nothing' : `${r.made} things`}. Not in the sums, pictures kept for later frames and really drawn: ${n1(r.drawnMs.mean)} ms a frame, the most ${n1(r.drawnMs.worst)} ms.`)
     lines.push(`Script mean of each pass: ${s.passes.map((p) => n1(p.script.meanMs)).join(', ')} ms; worst of each pass: ${s.passes.map((p) => `${n1(p.script.worstMs)} at ${p.script.worstAtFrame}`).join(', ')}.`)
   }
   return lines.join('\n')
@@ -66,6 +66,7 @@ function beside(names: string[]): string {
       lines.push(`| ${owner} | ${cells.join(' | ')} |`)
     }
     lines.push(`| frames over ${FRAME_MS.toFixed(1)} ms | ${reports.map((r) => (r ? `${r.overFrame} of ${r.frames}` : 'none')).join(' | ')} |`)
+    lines.push(`| longest run of them | ${reports.map((r) => { const run = r ? r.overRun ?? longestOver(r.rows ?? []) : null; return run ? `${run.frames}, ${run.from} to ${run.to}` : 'none' }).join(' | ')} |`)
   }
   return lines.join('\n')
 }

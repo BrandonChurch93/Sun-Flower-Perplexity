@@ -88,6 +88,11 @@
   font-weight: 600;
 }
 
+.felt {
+  margin: 0;
+  font-size: 13px;
+}
+
 .hint {
   margin: 0;
   color: #a59f90;
@@ -106,7 +111,8 @@
   background: #0d0f0e;
   color: #ece7db;
   font: 12px/1.5 ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   user-select: text;
   scrollbar-width: thin;
   scrollbar-color: #3a362b transparent;

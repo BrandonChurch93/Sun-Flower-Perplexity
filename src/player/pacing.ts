@@ -50,6 +50,8 @@ const SHOWN_RUNS = 30
 // `atEnd` marks the time the last frame drawn stood in place of the frames that were due after it.
 export interface Gap { frame: number; film: number; gapMs: number; skipped: number; atEnd?: boolean }
 
+export interface Slow { frames: number; longest: { from: number; to: number; shown: number } | null }
+
 export interface RunFacts {
   kind: RunKind
   quality: string
@@ -80,6 +82,8 @@ export interface Report extends RunFacts {
   // The frames that were due and never shown, as runs of film frames, and the three seconds of film that went worst.
   skippedRuns: { from: number; to: number }[]
   stretches: Stretch[]
+  // The frames shown that took longer than one frame of time, and the longest row of them: `to` is the last frame that row stood in for.
+  slow: Slow
   // The audio clock minus the film second on screen, when each frame was drawn. Above one frame the picture is late.
   // `pickedMs`: the audio clock minus the frame's own second when the frame was chosen. `behindMs`: the same when it had been drawn.
   pickedMs: { mean: number; largest: number }
@@ -116,6 +120,7 @@ export class Pacing {
   private readonly worst: Record<string, { ms: number; frame: number }> = {}
   private readonly costs: Cost[] = []
   private readonly runs: { from: number; to: number }[] = []
+  private readonly before: number[] = []
 
   // `position` counts the frames of the run in the order they are due, so the frames between two that were shown are the ones skipped.
   // `atMs` is the page's clock at the animation frame that showed it, used only to measure the gaps.
@@ -126,6 +131,7 @@ export class Pacing {
     if (!first && gapMs > GAP_MS) this.gaps.push({ frame, film: frame / config.film.fps, gapMs: round(gapMs), skipped })
     this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs), scriptMs: round(cost.script ?? 0), cardMs: round(cost.wait ?? 0), late: (audioDrawn - due) * 1000 > FRAME_MS, atMs: round(atMs, 1), made: card.made, writes: card.writes, writeMb: round(card.writeBytes / 1048576) })
     if (skipped > 0) this.runs.push({ from: frame - skipped, to: frame - 1 })
+    this.before.push(first ? 0 : skipped)
     const kept: Cost = {}
     for (const key of Object.keys(cost)) {
       if (key === 'script' || key === 'wait') continue
@@ -220,6 +226,7 @@ export class Pacing {
       partsWorst: { ...this.worst },
       skippedRuns,
       stretches: this.stretches(skippedRuns),
+      slow: slowFrames(shown, this.before, after),
       pickedMs: { mean: round(mean(picked)), largest: round(picked.reduce((a, b) => Math.max(a, Math.abs(b)), 0)) },
       behindMs: { mean: round(mean(behind)), largest: round(largest), largestAtFilm: round(largestAt, 3), first: round(behind[0] ?? 0), last: round(behind[behind.length - 1] ?? 0) },
       gaps: all,
@@ -238,6 +245,43 @@ export class Pacing {
       shown,
     }
   }
+}
+
+// `before[i]` is the number of frames skipped just before the i-th frame shown, `after` the number skipped after the last one.
+export function slowFrames(shown: { frame: number; drawMs: number }[], before: number[], after: number): Slow {
+  let frames = 0
+  let longest: Slow['longest'] = null
+  let run: { from: number; to: number; shown: number } | null = null
+  const close = (): void => {
+    if (run && (!longest || run.to - run.from > longest.to - longest.from)) longest = run
+    run = null
+  }
+  for (let i = 0; i < shown.length; i++) {
+    if (shown[i].drawMs <= FRAME_MS) {
+      close()
+      continue
+    }
+    frames++
+    const stoodFor = i + 1 < shown.length ? before[i + 1] ?? 0 : after
+    if (run) {
+      run.to = shown[i].frame + stoodFor
+      run.shown++
+    } else run = { from: shown[i].frame, to: shown[i].frame + stoodFor, shown: 1 }
+  }
+  close()
+  return { frames, longest }
+}
+
+// One plain line: how many frames took longer than one frame of time, and the longest row of them.
+export function slowLine(report: Report): string {
+  const one = `one frame of time (${FRAME_MS.toFixed(1)} ms)`
+  const f = report.frames
+  if (f.drawn === 0) return 'slow frames: nothing measured'
+  if (report.slow.frames === 0 || !report.slow.longest) return `slow frames: none, each of the ${f.drawn} frames shown took less than ${one}`
+  const w = report.slow.longest
+  const span = w.to - w.from + 1
+  const row = w.shown === 1 ? `one frame, ${w.from}, which stood for ${span === 1 ? 'itself only' : `frames ${w.from} to ${w.to}`}` : `${w.shown} in a row, frames ${w.from} to ${w.to}`
+  return `slow frames: ${report.slow.frames} of the ${f.drawn} shown took longer than ${one}; the longest run of them was ${row}, ${(span / config.film.fps).toFixed(1)} s of film`
 }
 
 // The seconds of film that went worst: most frames skipped, then the longest gap, then the dearest to draw.
@@ -301,6 +345,7 @@ export function reportText(report: Report, machine: string[] = []): string {
     first,
     `${config.name}, pacing report, ${report.at}`,
     held,
+    slowLine(report),
     report.verdict,
     `run: ${report.kind}, ${report.format}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
     ...machine,

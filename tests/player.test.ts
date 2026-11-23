@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount } from '../src/config.ts'
-import { GAP_MS, Pacing, reportText, type RunFacts } from '../src/player/pacing.ts'
+import { GAP_MS, Pacing, reportText, slowLine, type RunFacts } from '../src/player/pacing.ts'
 
 const fps = config.film.fps
 const facts: RunFacts = {
@@ -111,6 +111,32 @@ describe('the pacing report', () => {
     expect(text).toContain('the 3 worst seconds of film:')
     expect(text).toContain('frames 120 to 149: 10 of 30 shown, 20 skipped')
     expect(text).toContain('skipped: 34 frames in 24 runs, frames 61, 63,')
+  })
+
+  it('says in one line how many frames took longer than one frame of time, and the longest run of them with the frames it stood for', () => {
+    const pacing = new Pacing()
+    const shown = [0, 1, 2, 3, 5, 7, 10, 11, 12, 13]
+    const slow = new Set([1, 3, 5, 7, 12])
+    let last = -1
+    for (const frame of shown) {
+      pacing.present(frame, frame, frame / fps, frame / fps, frame / fps + 0.01, (frame * 1000) / fps, slow.has(frame) ? 70 : 10, undefined, { plant: 5, script: 5, wait: 5 })
+      last = frame
+    }
+    const report = pacing.report(facts, last + 3, true, null)
+    expect(report.slow).toEqual({ frames: 5, longest: { from: 3, to: 9, shown: 3 } })
+    const line = slowLine(report)
+    expect(line).toBe('slow frames: 5 of the 10 shown took longer than one frame of time (33.3 ms); the longest run of them was 3 in a row, frames 3 to 9, 0.2 s of film')
+    expect(reportText(report).split('\n')[3]).toBe(line)
+
+    const quick = new Pacing()
+    for (let frame = 0; frame < 4; frame++) quick.present(frame, frame, frame / fps, frame / fps, frame / fps + 0.01, (frame * 1000) / fps, 10)
+    expect(slowLine(quick.report(facts, 4, true, null))).toBe('slow frames: none, each of the 4 frames shown took less than one frame of time (33.3 ms)')
+
+    const stuck = new Pacing()
+    stuck.present(20, 0, 20 / fps, 20 / fps, 20 / fps + 6, 0, 6000)
+    const one = stuck.report(facts, 36, true, null)
+    expect(one.slow).toEqual({ frames: 1, longest: { from: 20, to: 55, shown: 1 } })
+    expect(slowLine(one)).toContain('the longest run of them was one frame, 20, which stood for frames 20 to 55, 1.2 s of film')
   })
 
   it('writes the report as text to paste: frames due, shown and late, script mean and worst, longest gap, made', () => {
