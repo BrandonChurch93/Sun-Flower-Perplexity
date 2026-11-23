@@ -31,6 +31,7 @@ const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes, and under the coat a far lens sees. The wearer reads it after it has asked for the crust.
 const float FROST_SHUT_LEAST = 0.75;
 const float FROST_SHUT_FAR = 0.9;
+const float FROST_SHUT_SHADE = 0.9;
 float frostShut = FROST_SHUT_LEAST;
 #define FROST_SHUT frostShut
 // Far from the lens the coat runs ahead of the cold: at this much frost the whole plant wears it.
@@ -62,7 +63,7 @@ const float FROST_FACE_SUN = 0.09;
 const float FROST_SKY_SHARE = 0.2;
 const float FROST_SKY_UP = 0.5;
 const float FROST_SKY_THAW = 0.8;
-const float FROST_SKY_SHADE = 7.0;
+const float FROST_SKY_SHADE = 2.0;
 const vec3 FROST_SKY_SPARK = vec3(0.88, 0.95, 1.12);
 const float FROST_FOOT = 0.3;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
@@ -356,7 +357,10 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   float ahead = smoothstep(0.05, FROST_FAR_WHOLE, uPlantFrost);
   float going = smoothstep(0.0, 0.15, uPlantDew);
   float lead = mix(ahead / max(uPlantFrost, 1e-4), 1.0, close);
-  frostShut = max(FROST_SHUT_LEAST, FROST_SHUT_FAR * lead * (1.0 - going));
+  // A face that looks down and away from the sun is seen against the sun through its blade: under a close coat that light is all but shut.
+  float shaded = smoothstep(0.35, 0.75, -dot(F, uSunDir)) * (1.0 - smoothstep(-0.1, 0.4, F.y));
+  frostShut = mix(FROST_SHUT_LEAST, mix(FROST_SHUT_FAR * ahead / max(uPlantFrost, 1e-4), FROST_SHUT_SHADE * shaded, close), 1.0 - going);
+  frostShut = max(frostShut, FROST_SHUT_LEAST);
   float front = mix(1.2 - 2.0 * mix(ahead, uPlantFrost, close), -0.8, going) - FROST_CLOSE_AHEAD * close;
   float come = smoothstep(front, front + 0.3, ragged);
   // It goes first where the sun is on it and where it is thin, and the thick fringe is the last ice on the leaf.
@@ -431,7 +435,7 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
     crust.y += close * (FROST_COAT_FLASH * laid.y + FROST_FACE_SUN * laid.w * smoothstep(-0.1, 0.12, dot(F, uSunDir)) * (1.0 - saturate(dot(N, uSunDir))));
     float thawing = smoothstep(0.0, 0.15, uPlantDew);
     // A face that looks down and away from the sun looks at the frozen ground: its coat is lit by that white, and reads as rime there too.
-    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * (1.0 + FROST_SKY_SHADE * smoothstep(0.35, 0.75, -dot(F, uSunDir)) * (1.0 - smoothstep(-0.1, 0.4, F.y))) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
+    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * (1.0 + FROST_SKY_SHADE * shaded) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
     // One flash in five is a face that mirrors the sky: white to pale blue, not the sun's gold.
     frostSpark = mix(vec3(1.0), FROST_SKY_SPARK * dot(uSunColor, vec3(0.2126, 0.7152, 0.0722)) / max(uSunColor, vec3(1e-4)), saturate(close * FROST_COAT_FLASH * laid.z / max(crust.y, 1e-6)));
   }
