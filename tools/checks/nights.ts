@@ -82,12 +82,12 @@ export async function run(args: Args): Promise<void> {
   }
   if (plant) {
     findings.push(...plant.findings)
-    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'under rime, left out', 'wet frames', 'largest rise a frame in the wet', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, `${x.leftOut ?? 0} of ${x.frames.length}`, x.wet ?? 0, x.wet ? `${(x.wetRise ?? 0).toFixed(2)}${(x.wetRise ?? 0) > 0 ? ` into ${x.wetRiseAt}` : ''}` : '', x.empty >= 0 ? 'not measured' : !judgedOf(x) ? 'left out' : x.ok ? 'ok' : 'FAIL'])) + '\n')
+    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'under rime, left out', 'wet frames', 'mean rises most a frame in the wet', '90th rises most a frame in the wet', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, `${x.leftOut ?? 0} of ${x.frames.length}`, x.wet ?? 0, x.wet ? `${(x.wetRise ?? 0).toFixed(2)}${(x.wetRise ?? 0) > 0 ? ` into ${x.wetRiseAt}` : ''}` : '', x.wet ? `${(x.wetHigh ?? 0).toFixed(1)}${(x.wetHigh ?? 0) > 0 ? ` into ${x.wetHighAt}` : ''}` : '', x.empty >= 0 ? 'not measured' : !judgedOf(x) ? 'left out' : x.ok ? 'ok' : 'FAIL'])) + '\n')
   }
   finish({
     check: 'nights',
     sentence: SENTENCE,
-    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : broken === 'picture-blink' ? 'a film whose middle goes dark for one frame of each night' : broken === 'plant-moon' ? 'a film whose moon is 2.4 times as strong' : film.name,
+    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : broken === 'picture-blink' ? 'a film whose middle goes dark for one frame of each night' : broken === 'plant-moon' ? 'a film whose moon is 2.4 times as strong' : broken === 'plant-wet' ? 'a film whose moon steps up in the middle of a wet dusk' : film.name,
     broken,
     complete: (proof ? proof.complete : true) && (plant ? plant.complete : true),
     pictures: [...(proof?.pictures ?? []), ...(plant?.pictures ?? [])],

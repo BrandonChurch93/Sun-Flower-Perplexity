@@ -25,7 +25,7 @@ export interface ChecksPage {
   differ(a: string, b: string): FloatDiff
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
   // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames,
-  // 'moon' makes the night's key `a` times as strong, 'slow' makes the field's turn last `a` ms longer in frame `b` or, with b under 0, in every frame.
+  // 'moon' makes the night's key `a` times as strong from frame `b` on, 'slow' makes the field's turn last `a` ms longer in frame `b` or, with b under 0, in every frame.
   fault(kind: string, a: number, b: number): void
   // Which pixels of the last frame the scene drew into, row by row from the top: '1' where the scene's own numbers, before the lens and the grain, hold any light, '0' where the frame was left empty.
   covered(): string
@@ -71,6 +71,7 @@ let madeAt = -1
 let dice = false
 let memory = false
 let moon = 1
+let moonFrom = 0
 let slowMs = 0
 let slowAt = -1
 // The fault of a part that takes too long: the field's turn in a frame lasts `slowMs` longer, in every frame or in one. It is time and no pixel.
@@ -86,7 +87,7 @@ film.field.show = (on: boolean): void => {
 const key = film.look.sun as { color: number[] }
 key.color = new Proxy(key.color, {
   set(target, name, value) {
-    target[name as unknown as number] = typeof value === 'number' && now.lightKind === 'moon' ? value * moon : value
+    target[name as unknown as number] = typeof value === 'number' && now.lightKind === 'moon' && now.frame >= moonFrom ? value * moon : value
     return true
   },
 })
@@ -223,7 +224,10 @@ window.checks = {
     else if (kind === 'dice') dice = true
     else if (kind === 'memory') memory = true
     else if (kind === 'grow') grow = { from: a, to: b, rate: 0.05 }
-    else if (kind === 'moon') moon = a
+    else if (kind === 'moon') {
+      moon = a
+      moonFrom = b
+    }
     else if (kind === 'slow') {
       slowMs = a
       slowAt = b

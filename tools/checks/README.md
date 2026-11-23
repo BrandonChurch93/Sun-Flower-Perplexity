@@ -10,7 +10,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- play --stride 6` | draws the film small for `nights`, `cuts` and `made` | 1,432 frames | about 1 hour in three runs side by side |
 | `npm run checks -- play` | the same, every frame | 3,810 frames | 2 to 3 hours |
 | `npm run checks -- cuts` | no hard cuts: the edges of the picture stay where they are from one frame to the next | reads `play` | 10 to 40 s |
-| `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading; what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s |
+| `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading, a vertex array included, which is made when something is drawn for the first time; what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s |
 | `npm run checks -- script` | no frame rate drop: the page's own script time in a frame, by part, inside the limits of `tools/checks/limits.json` | 13 windows of frames in a row, about 490 frames | about 30 min, 17 min with --frames 20; run it alone |
 | `npm run checks -- film` | the whole film small in one go: `play` on three pages, then `nights`, `cuts` and `made` in one table | 1,432 frames | 80 to 100 min |
 | `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61 | 8 frames | 4 min |
@@ -54,7 +54,7 @@ The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070
 
 ## The plant alone, and what may brighten it
 
-`nights --plant` knows three kinds of frame, by the film's dials. Dry (frost and wet under 0.02): the plant's mean may not rise by more than 0.5 of 255 between drawn frames on the way to midnight, and its mean and 90th percentile at midnight may not be above the handover's. Wet (the wet dial, which is how wet the plant is, at 0.02 or more): the mean may rise by at most 1.5 of 255 from one frame to the next, and every frame of such a dusk or dawn is drawn; the 90th percentile is listed and not judged. Under rime (the frost dial at 0.02 or more): left out, rime may brighten the plant. The table has a column for the frames left out and two for the wet ones, and a dusk or dawn with nothing left to judge reads "left out", not "ok".
+`nights --plant` knows three kinds of frame, by the film's dials. Dry (frost and wet under 0.02): the plant's mean may not rise by more than 0.5 of 255 between drawn frames on the way to midnight, and its mean and 90th percentile at midnight may not be above the handover's. Wet (the wet dial, which is how wet the plant is, at 0.02 or more): from one frame to the next the mean may rise by at most 1.5 of 255 and the 90th percentile by at most 2, and every frame of such a dusk or dawn is drawn. Under rime (the frost dial at 0.02 or more): left out, rime may brighten the plant. The table has a column for the frames left out and two for the wet ones, and a dusk or dawn with nothing left to judge reads "left out", not "ok".
 
 ## The holds, to the frame
 
@@ -79,6 +79,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
 | `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
+| `nights --plant --break plant-wet --night 9` | the moon steps up to 2.4 times as strong in the middle of the wet dusk of night 9, over the limit for a wet plant |
 | `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails, the mean of the sum passes |
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
