@@ -84,40 +84,42 @@ When your brief's work is done, or at the time your brief gives, send one messag
 
 ## The film second by second
 
-From `out/work/filmclock.csv`. Sun height and compass direction in degrees. The camera looks toward about 185 at the start and toward about 222 at the bloom, so the sun rises and sets in front of the lens. A larger azimuth lies further left in the frame.
+From `out/work/filmclock.csv`. Sun height and compass direction in degrees. The camera looks toward about 186 at the start, 193 in the storm hold, 206 at the bloom and 204 at the end of the crane, so the sun rises right of centre and sets left of centre, in the left third of the frame at the bloom. A larger azimuth lies further left in the frame. In the fast time lapse (bars 25 to 33 and 41 to 57) the sun sets on beat 3 of every second bar and rises on the next bar line: every night of the film lasts 0.83 to 0.97 s, the sun goes 14 degrees under the horizon and no deeper, and a glow stays on the horizon all night.
 
 | Bar | Second | Plant clock | Sun height | Sun azimuth | What is happening | Dials that are not at rest |
 | --- | --- | --- | --- | --- | --- | --- |
-| lead-in | 0.0 | 0 | -4.8 | 175 | blue hour over bare soil | dew 1, cover 0.1 |
+| lead-in | 0.0 | 0 | -5 | 175 | blue hour over bare soil | dew 1, cover 0.1 |
 | 1 | 0.88 | 0.6 | 0 | 175 | the first sunrise, slow | dew 1 |
 | 3 | 4.3 | 3.4 | 61 | 185 | noon of day 1 | lapse 0.6 |
-| 4.3 | 6.6 | 5.2 | 5 | 197 | the first sunset | |
-| 4.7 | 7.3 | 5.7 | -18 | | the first night: the moon, stars, 0.8 s of darkness | |
+| 4.3 | 6.5 | 5.2 | 6 | 196 | the first sunset | |
+| 4.7 | 7.3 | 5.7 | -14 | | the first night: the moon, stars, 0.9 s with the sun down | |
 | 5, 9, 13 | 7.7, 14.6, 21.5 | 6, 8.8, 10.5 | 0 | 176 | sunrises, a day every 4 bars | cover 0.14 to 0.26, lapse 0.5 |
-| 16.5 | 27.5 | 12 | -6.6 | | the frost night | cold and frost rising |
+| 16.7 | 27.8 | 12 | -14 | | the frost night | cold 0.5, frost 0.5, fog 0.28, all rising from bar 16.4 |
 | 17 | 28.3 | 12 | -0.7 | 177 | FROST HOLD begins: first light on frost | fog 0.8, frost 1, cold 1, sunThrough 0.2, lapse 0.02 |
 | 21 | 35.2 | 12 | 5.5 | 178 | the sun stands in the mist | the same |
-| 23 | 38.6 | 12 | 6.8 | 179 | the sun clears the mist, the melt begins | fog 0.57, sunThrough 0.54 |
-| 25 | 42.0 | 12 | 9 | 179 | the thaw: the hold ends, the days start | fog 0.35, frost 0.6, dew 1, wet 0.45 |
-| 26 | 43.7 | 13.8 | 59 | 190 | full time lapse, a day every 2 bars | lapse 1 |
+| 23 | 38.6 | 12 | 6.7 | 179 | the sun clears the mist; the frost has been melting since bar 22.5 | fog 0.57, sunThrough 0.54, frost 0.91 |
+| 25 | 42.0 | 12 | 9 | 179 | the thaw: the hold ends, the days start | fog 0.35, frost 0.15 (gone at bar 25.4), dew 1, wet 0.45 |
+| 26 | 43.7 | 13.8 | 42 | 193 | full time lapse, a day every 2 bars | lapse 1 |
+| 26.5, 28.5, 30.5 | 44.6, 48.0, 51.4 | 15 to 24 | 0 | 200 to 202 | sunsets on beat 3, then a night of two beats | |
 | 27, 29, 31 | 45.5, 48.9, 52.3 | 16 to 25 | 0 | 178 to 180 | sunrises | cover 0.2 to 0.42 |
-| 32 | 54.0 | 27.3 | 60 | 193 | the storm front races in | cover 0.69, overcast 0.23, wind 0.26 |
-| 32.5 | 54.9 | 28 | 31 | 198 | the deck closes | cover 0.92, overcast 0.76, sunThrough 0.14 |
+| 32 | 54.0 | 27.3 | 56 | 194 | the storm front races in | cover 0.68, overcast 0.23, wind 0.26 |
+| 32.5 | 54.9 | 28.1 | 30 | 198 | the deck closes | cover 0.92, overcast 0.77, sunThrough 0.13 |
 | 33 | 55.7 | 28.3 | 16 | 200 | STORM HOLD begins: lightning | cover 1, overcast 1, sunThrough 0, flash 1, wind 0.54 |
-| 34 | 57.5 | 28.3 | 15.4 | 200 | the rain is down | rain 1, wet 0.26, puddle 0.1 |
+| 34 | 57.5 | 28.3 | 15.4 | 200 | the rain is down: it rose smoothly from the lightning at bar 33 | rain 1, wet 0.26, puddle 0.1 |
 | 36 | 60.9 | 28.3 | 14.3 | 200 | everything wet, the puddle full | wet 1, puddle 0.93 |
 | 37 | 62.6 | 28.3 | 13.7 | 200 | lightning again | flash 0.82 |
-| 40 | 67.7 | 28.3 | 12 | 200 | the rain thins | rain 0.77 falling to 0 at bar 41 |
-| 41 | 69.5 | 28.3 | 11.5 | 201 | THE BREAK: the sun tears through | burst 1, sunThrough 0.51, cover 0.91, overcast 0.74 |
+| 40 | 67.7 | 28.3 | 12 | 200 | the rain thins from bar 39.5 | rain 0.85, then 0.74 at bar 40.25 |
+| 41 | 69.5 | 28.3 | 11.5 | 201 | THE BREAK: the sun tears through the last rain | burst 1, sunThrough 0.41, cover 0.91, overcast 0.74, rain 0.45 (0.18 at bar 41.4, 0 at 41.8) |
 | 42 | 71.2 | 28.9 | 9.3 | 201 | the deck is gone, the days start | burst 0.41, cover 0.4, wet 0.8 |
-| 43 to 55, odd | 72.9 to 93.5 | 30 to 43.4 | 0 | 181 to 187 | seven sunrises, a day every 2 bars | lapse 1, cover 0.2 to 0.37 |
-| 56 | 95.2 | 43.5 | 57 | 211 | the last day slows down | evening 0.5 |
+| 42.5 | 72.0 | 29.4 | -2 | 203 | the first sunset after the storm, a night of 0.9 s | wet 0.62, puddle 0.69 |
+| 43 to 55, odd | 72.9 to 93.5 | 30 to 43.4 | 0 | 181 to 187 | seven sunrises, a day every 2 bars; sunsets at 44.5 to 54.5 | lapse 1, cover 0.2 to 0.37 |
+| 56 | 95.2 | 43.5 | 52 | 212 | the last day slows down | evening 0.5 |
 | 57 | 96.9 | 43.5 | 8 | 223 | THE BLOOM begins, low gold sun ahead | evening 1, lapse 0.02 |
 | 61 | 103.7 | 51 | 5 | 224 | the flower is fully open | wind 0.48 |
 | 65 | 110.6 | 52 | 3 | 225 | the crane up begins | |
 | 69 | 117.5 | 58.5 | 1.5 | 226 | the whole field | |
 | 73 | 124.3 | 59.9 | 0 | 226 | the sun touches the horizon | |
-| end | 127.0 | 60 | -4.7 | 226 | afterglow, the last frame | |
+| end | 127.0 | 60 | -5 | 226 | afterglow, the last frame | |
 
 ## What version 1 left behind
 

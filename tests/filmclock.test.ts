@@ -64,6 +64,23 @@ describe('the film clock', () => {
     expect(longest / fps).toBeLessThanOrEqual(0.8)
   })
 
+  it('lets the sun down for two beats in the fast time lapse and for under a second every night', () => {
+    const nights: [number, number][] = []
+    let from = -1
+    for (let f = 1; f < frameCount; f++) {
+      const before = elevation((f - 1) / fps)
+      const here = elevation(f / fps)
+      if (before >= 0 && here < 0) from = f
+      if (before < 0 && here >= 0 && from > 0) nights.push([from, f])
+    }
+    expect(nights.length).toBe(14)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeGreaterThan(0.8)
+    for (const [a, b] of nights) expect((b - a) / fps).toBeLessThan(1)
+    const fast = nights.map(([a]) => barAt(a / fps)).filter((b) => (b > 26 && b < 31) || b > 44)
+    expect(fast.length).toBe(9)
+    for (const b of fast) expect(Math.abs(b - Math.floor(b) - 0.5) * BAR).toBeLessThan(1.5 / fps)
+  })
+
   it('holds the sun where the film needs it', () => {
     expect(elevation(barTime(25))).toBeCloseTo(SUN.frostEnd, 3)
     expect(elevation(barTime(33))).toBeCloseTo(SUN.stormFrom, 3)
@@ -79,7 +96,32 @@ describe('the film clock', () => {
     expect(flashAt(hitTime(33))).toBe(1)
     expect(flashAt(hitTime(37))).toBe(1)
     expect(rainAtBar(barAt((hitFrame(33) - 1) / fps))).toBe(0)
-    expect(rainAtBar(barAt((hitFrame(33) + 8) / fps))).toBe(1)
+    expect(rainAtBar(barAt((hitFrame(33) + 3) / fps))).toBeGreaterThan(0)
+    expect(rainAtBar(barAt(hitTime(34)))).toBe(1)
+  })
+
+  it('lets the plant grow only when the frost and the rain have all but gone', () => {
+    const m = blankMoment()
+    const grown = (from: number, to: number): number => heightAt(tauAt(to / fps)) / heightAt(tauAt(from / fps)) - 1
+    let frostFrom = -1
+    let frostTo = -1
+    let rainFrom = -1
+    let rainTo = -1
+    for (const f of frames) {
+      momentAt(f / fps, m)
+      if (m.dials.frost >= 0.2) {
+        if (frostFrom < 0) frostFrom = f
+        frostTo = f
+      }
+      if (m.dials.rain >= 0.2) {
+        if (rainFrom < 0) rainFrom = f
+        rainTo = f
+      }
+    }
+    expect(grown(frostFrom, frostTo)).toBeLessThan(0.01)
+    expect(grown(rainFrom, rainTo)).toBeLessThan(0.01)
+    expect((frostTo - frostFrom) / fps).toBeGreaterThan(13)
+    expect((rainTo - rainFrom) / fps).toBeGreaterThan(13)
   })
 
   it('runs in real time in the holds and fastest in the climbs', () => {
