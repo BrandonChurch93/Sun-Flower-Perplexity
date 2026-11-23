@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 10 · 2026-11-23 04:09 UTC · Phase 3
+- Last status: 11 · 2026-11-23 04:40 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 04:40 UTC · status 11 · Phase 3 · `status-1.jpg`: Frost hold, bar 21: reference left, film right (draft tier); `status-2.jpg`: Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); `status-3.jpg`: Night, bar 46.82: reference left, film right (draft tier); `status-4.jpg`: The field, bar 69: reference left, film right (draft tier)
 - 2026-11-23 04:09 UTC · status 10 · Phase 3 · `status-1.jpg`: With the newest sky (draft): the blue hour of the first frame, sunrise at bar 1.5, low sun at bar 9.2, the night of bar 46.82 with the new star map; `status-2.jpg`: The break at the boom of bar 41, frames 2081 to 2089 (draft, drawn before the newest sky): the last frame of the hold is still, then the tear opens over five frames. The hard white dot on the third frame is gone in the newest sky; `status-3.jpg`: Frost hold at bar 21, storm at 35, the field at bars 69 and 73 with the new far ridge (draft, before the newest sky). The frost is still flat and the end still magenta: both are in work; `status-4.jpg`: Low sun beside the references, drawn by the sky's builder; my own frames at bars 1.5 and 9.2 agree
 - 2026-11-23 03:47 UTC · status 09 · Phase 3 · `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain); `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain); `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft); `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
 - 2026-11-23 03:15 UTC · status 08 · Phase 2 · `status-1.jpg`: The storm: reference, an hour ago, now (draft tier); `status-2.jpg`: Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; `status-3.jpg`: One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; `status-4.jpg`: Frost hold: reference left, the film right (review tier)
@@ -39,11 +40,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 0.90 h |
+| 3 | 9.00 h | 1.41 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.16 h |
+| Whole build | 30.00 h | 6.68 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -233,4 +234,6 @@ None yet.
 - 2026-11-23 03:18 to 04:00 UTC. First whole watch read beside the keys. Deck held over the break, frost sun, crane and film end retuned. Rain `27c822c`, frost `5fcf1f2`, field `25cc992`, lens `0e6bd9b`, ground `4480f36`, plant `3b3bc70`, sky `b7f7517`, night `806c873`, player `6700678`, checks `b59de7d` merged. Script time measured by part: 2 to 6 times the budget where something grows. Budget set, key shapes asked of the plant, round 4 notes to every owner (`e5958d2`).
 - Status 10, 2026-11-23 04:09 UTC, Phase 3. Round 4 is out to every builder with the findings of the first whole watch. The sky's first answer is in: low sun is blue grey away from the sun instead of murky brown, the opening is a deep blue hour, and the new star map with the Milky Way is wired in with stars as points. The far land has a low dark ridge in place of the row of trees. The break now opens on the frame that holds the boom of bar 41, the puddle soaks away before the night, and rime arrives where it can be seen (bars 17 to 18). The processor budget is set (16 ms of script a frame on this machine) and the plant's builder is moving growth to key shapes mixed in the shader. Next: Merge the turned rows and ridges, the dark midday soil, the frost hold as events, the puddle as water. Take the first numbers of the key shapes and the new script check. Then draw the whole film in parts for the second watch. Time used: 6.2 h of 30 h.
   Pictures: With the newest sky (draft): the blue hour of the first frame, sunrise at bar 1.5, low sun at bar 9.2, the night of bar 46.82 with the new star map; The break at the boom of bar 41, frames 2081 to 2089 (draft, drawn before the newest sky): the last frame of the hold is still, then the tear opens over five frames. The hard white dot on the third frame is gone in the newest sky; Frost hold at bar 21, storm at 35, the field at bars 69 and 73 with the new far ridge (draft, before the newest sky). The frost is still flat and the end still magenta: both are in work; Low sun beside the references, drawn by the sky's builder; my own frames at bars 1.5 and 9.2 agree.
+- Status 11, 2026-11-23 04:40 UTC, Phase 3. Round 4 of every part is merged and drawn again beside the references (v2 12f8c44, 169 tests pass). Frost now sits on the leaf edges and the clods, the noon sun stands at 40 degrees so the day has shadows, the moon stays inside the frame, the crop at the end reads as heads and the companion shows its face. Next: processor time per frame while the plant grows (measured far over the limit, the plant and the field are moving that work to the graphics card), rime over the whole leaf, deeper greens in full day, the pale band under the ridge at the end. Time used: 6.7 h of 30 h.
+  Pictures: Frost hold, bar 21: reference left, film right (draft tier); Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); Night, bar 46.82: reference left, film right (draft tier); The field, bar 69: reference left, film right (draft tier).
 
