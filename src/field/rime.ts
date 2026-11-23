@@ -14,12 +14,14 @@ const WIDEST = 0.1
 // A facet is small: past this distance it sends the lens less light, by the square of the distance, and fewer of them are large enough to send any.
 const FULL_M = 2.6
 // The share of the places on a blade that carry a facet large enough to be seen, near the lens.
-const SHARE = 0.35
+const SHARE = 0.1
 // A neighbor that stands small in the frame, far off or before a wide lens, seldom has a facet that finds the lens: this share of them do, each with a strength of its own
 // down to the weakest, and none brighter than one that stands large. How large a neighbor stands is counted in heights of the frame to a meter.
 const SMALL = [0.9, 1.8]
-const FEW = 0.35
+const FEW = 0.7
 const WEAKEST = 0.3
+// The most a facet in focus may show, in times white on the screen.
+const GLINT_WHITE = 18
 // The most a pixel may hold: a brighter point is spread over more pixels.
 const MOST = 16000
 
@@ -44,7 +46,7 @@ void main() {
   vec3 q = normalize(vec3(hash11(own + 1.0), hash11(own + 2.0), hash11(own + 3.0)) * 2.0 - 1.0 + vec3(1e-4, 0.0, 0.0));
   float lit = pow(0.5 + 0.5 * cos(140.0 * dot(q, normalize(toEye + uSunDir)) + 6.2832 * hash11(own + 4.0)), 16.0);
   float behind = 0.3 + 0.7 * saturate(dot(-toEye, uSunDir));
-  float coc = max(min(uCocScale * abs(1.0 / max(depth, 1e-4) - 1.0 / uFocusM), 2048.0), ${SHARP_PX.toFixed(1)});
+  float coc = max(cocOf(depth), ${SHARP_PX.toFixed(1)});
   float far = min(1.0, ${(FULL_M * FULL_M).toFixed(3)} / max(depth * depth, 1e-4));
   // The air between dims it as it dims the leaf it stands on.
   vec3 ray = world - uCamPos;
@@ -58,8 +60,10 @@ void main() {
   float carried = smoothstep(0.0, 0.3 * few, few - plant) * mix(1.0, ${WEAKEST.toFixed(3)} + ${(1 - WEAKEST).toFixed(3)} * hash11(plant + 9.0), away);
   float facet = smoothstep(0.0, 0.25 * keep, keep - hash11(own + 7.0));
   float held = min(coc, ${WIDEST.toFixed(3)} * uSize.y);
-  float sum = ${LEVEL.toFixed(3)} * (0.4 + 0.6 * hash11(own + 6.0)) * lit * behind * 0.785 * held * held * far * exp(-thick) * there * facet * carried;
-  vec3 light = uSunColor * sum;
+  float sum = ${LEVEL.toFixed(3)} * (0.08 + 0.92 * pow(hash11(own + 6.0), 2.0)) * lit * behind * 0.785 * held * held * sqrt(far) * exp(-thick) * there * facet * carried;
+  // The sun a facet throws is never over GLINT_WHITE times white on the screen where the facet is in focus, as with the sparks of the ground.
+  float most = max(max(uSunColor.r, uSunColor.g), max(uSunColor.b, 1e-4));
+  vec3 light = uSunColor * (sum * min(1.0, ${(GLINT_WHITE / (LEVEL * 0.785 * SHARP_PX * SHARP_PX)).toFixed(3)} / (most * max(uWorldExposure, 1e-3))));
   // What a pixel may hold is bounded: a brighter point takes more pixels, and its sum stays.
   float wide = clamp(sqrt(max(light.r, max(light.g, light.b)) / ${MOST.toFixed(1)}), 1.0, 4.0);
   vLight = light / (wide * wide);
