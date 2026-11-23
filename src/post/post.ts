@@ -18,10 +18,7 @@ const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backli
 const fillGain = 2.3
 // With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
 const soloGain = 0.9
-// How many times brighter than the direct light the sky draws the sun's disc. The reading of how much of the disc shows is measured against it.
-const DISC_GAIN = 90
-// The pyramid level the sun is read from, and the one the shafts are cast through.
-const HOT_LEVEL = 2
+// The pyramid level the shafts are cast through.
 const OPEN_LEVEL = 1
 
 function halfTarget(width: number, height: number): THREE.WebGLRenderTarget {
@@ -76,7 +73,7 @@ export class Post {
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
-  private readonly sunRead = new FullscreenPass(sunReadFragment, { tHot: { value: null }, tRaw: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uExpect: { value: 1 }, uFar: { value: 0 } })
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
   private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 } })
   private readonly fillWide = fillPass(3)
@@ -113,6 +110,7 @@ export class Post {
     uSunCore: { value: 0.01 },
     uSunHot: { value: 0 },
     uFan: { value: 0 },
+    uShaftLevel: { value: 0 },
     uBloomCap: { value: 0 },
     uHaze: { value: 0 },
     uVeilSun: { value: 0 },
@@ -165,7 +163,7 @@ export class Post {
     this.quality = quality
   }
 
-  // For the proofs of a world at rest: the grain and the stipple of the fill stop following the frame, so nothing of the lens changes from frame to frame.
+  // For the proofs of a world at rest: the grain stops following the frame, so nothing of the lens changes from frame to frame.
   setStill(on: boolean): void {
     this.held = on
   }
@@ -177,7 +175,7 @@ export class Post {
   }
 
   // Closes the gaps between the copies of an out of focus thing that the lens samples leave. Returns the filled frame.
-  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, frameIndex: number, scale: number, samples: number, farCircle: number, low: boolean): THREE.Texture {
+  private fillGaps(renderer: THREE.WebGLRenderer, frame: THREE.Texture, scale: number, samples: number, farCircle: number, low: boolean): THREE.Texture {
     const near = this.nearTarget as THREE.WebGLRenderTarget
     if (farCircle > 0 || !this.warmed) {
       const n = this.near.uniforms
@@ -213,7 +211,8 @@ export class Post {
       u.tFrame.value = from.texture
       u.uSpread.value = rounds[i].spread
       u.uEdge.value = rounds[i].edge
-      u.uSeed.value = frameIndex + 0.25 * i
+      // The stipple of the fill is a fixed pattern: one that followed the frame made far things a little sharper in some frames than in others.
+      u.uSeed.value = 0.25 * i
       rounds[i].pass.render(renderer, to)
       const swap = from
       from = to
@@ -293,7 +292,7 @@ export class Post {
       const grade = def.grade
       const farCircle = sun ? sun.farCircle : 0
       const scale = samples === 1 ? 0.5 * soloGain : (0.5 * fillGain) / Math.sqrt(samples)
-      source = this.fillGaps(renderer, frame, seed, scale, samples, farCircle, low)
+      source = this.fillGaps(renderer, frame, scale, samples, farCircle, low)
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
       const bloom = this.scatter(renderer, source, grade, skyLevel)
@@ -302,15 +301,12 @@ export class Post {
       const disc = at.disc ?? 0.005
       const blurred = Math.hypot(disc, (0.5 * farCircle) / width)
       if (light > 0 || !this.warmed) {
-        const hot = this.down[HOT_LEVEL]
-        const patch = Math.max(2.2 * blurred, 1.5 / hot.width)
         const r = this.sunRead.uniforms
-        r.tHot.value = hot.texture
         r.tRaw.value = frame
         r.uSunAt.value.set(at.x, at.y)
+        r.uTrack.value.set(at.dx ?? 0, at.dy ?? 0)
         r.uAspect.value = aspect
-        r.uPatch.value = patch
-        r.uExpect.value = (DISC_GAIN * light * disc * disc) / (patch * patch)
+        r.uPatch.value = Math.max(blurred, 1 / width)
         r.uFar.value = farCircle
         this.sunRead.render(renderer, this.sunTarget)
       }
@@ -343,6 +339,8 @@ export class Post {
       g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
       g.uFan.value = look.fan
+      // Under a deck that has just torn the sun itself is still thin, and the beams carry the light of the gap: the level between the two.
+      g.uShaftLevel.value = Math.sqrt(Math.max(look.sun[0], look.sun[1], look.sun[2]) * look.glare * skyLevel)
       g.uBloomCap.value = look.cap
       g.uVeilSun.value = look.veilSun
       g.uShafts.value = cast ? look.shafts : 0

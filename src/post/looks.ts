@@ -99,8 +99,8 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   const edge = 1 - smoothstep(0, 0.6, out01)
   out.glare = 1
   out.veilSun = edge * edge
-  // The shafts stand in the frame only with the sun: they are gone a sixth of a frame height past the edge.
-  const near = 1 - smoothstep(0, 0.16, out01)
+  // The shafts stand in the frame only with the sun: they open over the first tenth of a frame height inside the edge and are gone at it.
+  const near = sun ? smoothstep(0, 0.1, Math.min(sun.x * aspect, (1 - sun.x) * aspect, sun.y, 1 - sun.y)) : 0
   out.shafts = near * clamp(Math.max(d.burst, 0.6 * d.fog, 0.45 * low * (0.3 + 0.7 * d.evening)))
   out.fan = d.burst
   out.cap = 0.7 * d.flash

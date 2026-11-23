@@ -4,9 +4,9 @@ export const maxFillPx = 96
 
 export const skyness = /* glsl */ `
 uniform float uFar;
-// The sky arrives already blurred, with exactly the circle of infinity in alpha: it has no copies to join.
+// The sky arrives already blurred, with exactly the circle of infinity in alpha: it has no copies to join. The frame holds that circle in sixteen bits, which is good to one part in two thousand, so land is told from sky up to about a thousand times the focus distance and no further.
 float sky(float a) {
-  return uFar > 0.0 ? 1.0 - smoothstep(0.001, 0.003, abs(a / uFar - 1.0)) : 0.0;
+  return uFar > 0.0 ? 1.0 - smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) : 0.0;
 }
 `
 
