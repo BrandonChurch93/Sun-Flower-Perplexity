@@ -127,8 +127,8 @@ void main() {
   float air = mix(min(1.0, (2.0 * most + 0.02) / max(own, 1e-6)), 1.0, uSpecks * smoothstep(1.5, 3.0, c.a));
   rgb *= mix(land, air, sky(c.a));
   float reach = min(wide, ${maxFillPx.toFixed(1)});
-  // A held sky pixel carries its reach with the sign turned: the fill reads that as a place that gathers but is never gathered. Only pure sky is held: one lens sample of a far hill in the pixel and it is the first step of that hill's edge, which has to be smoothed.
-  outColor = vec4(rgb, uSkyHold > 0.5 && uFar > 0.0 && abs(c.a / uFar - 1.0) < 0.0002 ? -reach : reach);
+  // A held sky pixel carries its reach with the sign turned: the fill reads that as a place that gathers but is never gathered. Only pure sky is held: one lens sample of a far hill in the pixel and it is the first step of that hill's edge, which has to be smoothed. Pure sky is what counts as wholly sky everywhere else in the fill: the frame keeps the circle as a half float, which is off by up to one part in two thousand, more on some frames than on others, and a finer test held the sky on some frames only.
+  outColor = vec4(rgb, uSkyHold > 0.5 && sky(c.a) >= 1.0 ? -reach : reach);
 }
 `
 
