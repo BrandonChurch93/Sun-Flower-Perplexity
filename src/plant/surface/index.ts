@@ -98,6 +98,8 @@ const float TISSUE_SPREAD_FAR_M = 0.012;
 const float TISSUE_HID = 0.35;
 // The share of the high sky that the down of a sheet scatters to the eye.
 const float TISSUE_SLATE = 0.21;
+// The share of the high sky that the ice over a frozen face scatters to the eye, close by, where it is seen.
+const float FROST_GLAZE = 0.35;
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
 // The share of the open sky a blade does not see: its own plant stands in front of it.
@@ -215,7 +217,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
     vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink, world);
-    bloom = frost * crust.x;
+    bloom = mix(frost, 1.0, smoothstep(0.0, 0.3, frostThaw())) * crust.x;
     flash = frost * crust.y;
   }
   // The down of a round body holds rime all over: a frosted stem is paler than its skin. A sheet has its own crust.
@@ -386,6 +388,10 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float up = saturate(0.5 + 0.5 * N.y);
   float spare = 1.0 - keep * max(total.r, max(total.g, total.b));
   color += uSkyZenith * pale * (TISSUE_SLATE * (1.0 - dusk) * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
+  // Close by, the ice on a frozen face scatters the high sky too, undyed: against the light, where the blade itself is dark, the face is the sky's cold grey.
+  vec3 ray = world - uCamPos;
+  float close = smoothstep(12.0, 24.0, 1.08 / max(length(ray) * length(dFdy(normalize(ray))) * uSize.y, 1e-9));
+  color += uSkyZenith * (FROST_GLAZE * frost * (1.0 - frostThaw()) * sheet * close * spare * open * (0.5 + 0.5 * up) * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
