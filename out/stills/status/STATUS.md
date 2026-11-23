@@ -1,12 +1,12 @@
-# Status 55
+# Status 56
 
-2026-11-23 22:43 UTC
+2026-11-23 23:09 UTC
 
-- Status 55 · Phase 6. The site for Vercel is committed and pushed: the page plays the film by itself, muted, and links to the live version. A fresh clone builds it with npm ci and npm run site under Node 26.13.1, 24.22.3 and 22.23.5 (MEASURED); the three builds match the one I checked in the browser byte for byte, apart from the build time stamp. Card frames at the export tier: 46 of 208 in, none bad.
-- Next: Rewrite the README for version 2, rebuild the review page, merge the rain cure, write round 27's wrap, tag v1 and open the pull request into main. The card still and clip are encoded when all 208 frames are in, about 01:15 UTC. Time used: 24.7 h of 30 h.
+- Status 56 · Phase 6. The summary of round 27 is complete: the machine checks as they printed, the tier the round judged, the supplement and what happens next; every number in the new sections was read again from its file. The rain cure is merged (one line; the film's frames stay the same to the pixel; 213 of 213 tests pass, types clean) and v2 is pushed. The review page is rebuilt from the film's last checks and put up again at the same private link: holds PASS, nights PASS SO FAR, cuts PASS, made PASS, script FAIL, cues PASS, pure PASS. Card clip: 82 of 208 frames at the export tier are in, each checked on arrival, none bad; the sheet shows twelve of them.
+- Next: The rest of the card frames, due about 01:20 UTC; then the still and the clip are encoded and the clip's first frame is proven to be the still. Before that: the log's open items, the tag v1, the pull request of v2 into main and its merge, and a check that main builds the site. Time used: 25.2 h of 30 h.
 - Review page, private preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 
-- `status-1.jpg`: The page at 1920 x 1080: the film starts by itself, muted
-- `status-2.jpg`: A phone upright and on its side: it gets the 720p file
-- `status-3.jpg`: Open the live version leads to the app that draws the film live
-- `status-4.jpg`: Card frame 2957 at the export tier: the rays are opening
+- `status-1.jpg`: Card clip at the export tier, twelve of the 82 frames that are in (2905 is the still)
+- `status-2.jpg`: Card frame 2987 at the export tier, 48 samples a frame
+- `status-3.jpg`: Card frame 2952 at the export tier: the rays open from the left
+- `status-4.jpg`: The review page, rebuilt with the film's last checks
