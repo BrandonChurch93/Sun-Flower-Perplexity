@@ -1,12 +1,12 @@
-# Status 35
+# Status 36
 
-2026-11-23 15:39 UTC
+2026-11-23 16:08 UTC
 
-- Status 35 · Phase 4. Ten branches are merged and their proof is drawing now. In: the storm deck with hanging bellies in place of the flat slab (seen in motion over 1630 to 1720: it eases in without a pop and the flash at 1672 reads through it), a frost front that breaks up along teeth and veins, the rain's spray as a low mist behind the plant, cool dim beads under the moon, a round neck on the sprout, the disc's wild pixels held at their source, a cheaper stem. MEASURED here, live play script time before these merges at 320 x 180 (wanted: mean 16 ms, worst 25): frost entry mean 16.1, worst 62.0 at frame 849; thaw cut 26.7 and 74.3 at 1260; storm entry 22.0 and 63.9 at 1662; storm exit 36.5 and 65.9 at 2083. So the entries of the weather scenes still cost two frames each on this machine. MEASURED by the frost owner: one frame at 1920 takes 23.5 s here and a second page does not help.
-- Next: Prove and push the batch. Name what the long frames at 849, 1260, 1662, 2083 and 3318 do and cure them. The plant laid on key frames in live play. One wild pixel on the far tree line at 3499. Freeze the look about 17:00, then draw the film at 1920 on twelve machines, about 2.3 hours. Time used: 17.7 h of 30 h.
+- Status 36 · Phase 4. The proof of the ten merges found one fault and I took it out before pushing: the head's last change made the opening flower plainer (every ray short and alike, the head frontal at bar 58 where the key has it unfolding on one side). The cause was my own order to the head's owner, not its work; the flower keeps the look you see in the middle column, and the owner brings its fixes for stray bright pixels and its speed gain back on the old ray shapes. New in the film and drawn here: frost now creeps in along the leaf veins as pale lines, the stray bright pixel in the far land of the last shot is cured at its source, the seed leaves are a soft green. MEASURED by the checks owner: the three long frames of live play (849, 1260, 3318) are the frost crystals and the far hairs sorting their pieces again on the one frame the lens jumps, 9 to 37 ms; their owners now make them sort ahead. MEASURED by the frost owner: a 1920 frame takes 21 to 30 s on one machine with two pages, so the whole film is about two and a half hours on twelve machines. Also found on a strip of the ascent: the upper leaves droop like a wilting plant over 2560 to 2760; the plant owner is putting the open pose back.
+- Next: Second merge batch at about 16:45 (the head on the old ray shapes, the leaf pose, a softer moonlit rim on the seed leaves, a bead that no longer flashes at dawn, the field's guard), then the look is frozen at about 17:00 and the whole film is drawn at 1920 x 1080 while the live play cures go on underneath without changing a pixel. Time used: 18.1 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The storm deck coming in, every sixth frame of 1630 to 1720, with the first flash at 1672 (640 x 360)
-- `status-2.jpg`: The frost front at 885, 888, 891: before above, after below. It now runs in along the veins
-- `status-3.jpg`: Rain at 2000: before above, after below. The spray is a low mist behind the plant
-- `status-4.jpg`: Night at 216 with the new beads under the moon
+- `status-1.jpg`: The bloom at bars 58 and 61: the key, the head we keep, the head I took out
+- `status-2.jpg`: Frost comes in along the veins (frame 885): before, after, difference
+- `status-3.jpg`: The cloud tears on the downbeat of bar 41: frames 2082, 2083, 2084
+- `status-4.jpg`: Drawn on the pushed tree
