@@ -66,7 +66,7 @@ vec2 plantBlow(vec2 at, float y, float size) {
   if (uPlantWind <= 0.0) return vec2(0.0);
   float tall = max(uPlantHeight * size, 0.001);
   float k = clamp((y / tall - 0.3) / 0.7, 0.0, 1.0);
-  float lean = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uTime + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, at));
+  float lean = uPlantWind * (${STEM_LEAN.toFixed(4)} + ${STEM_SWING.toFixed(4)} * plantSway(uReal + uShutter * ${SHUTTER_SECONDS.toFixed(6)}, at));
   return vec2(${windToward.x.toFixed(4)}, ${windToward.z.toFixed(4)}) * (lean * tall * 0.7 * (k * k * k - 0.5 * k * k * k * k));
 }
 #endif
