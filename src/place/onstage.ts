@@ -6,7 +6,7 @@ import { makeTerrain } from './terrain.ts'
 import { makeTrees } from './trees.ts'
 
 // Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
-const AIR = { clear: 0.00006, lowSun: 0.00005, overcast: 0.00008, fog: 0.00025, rain: 0.00045 }
+const AIR = { clear: 0.00006, lowSun: 0.00005, overcast: 0.00008, fog: 0.00025, rain: 0.0003 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
 const MIST = { perM: 0.004, topM: 12 }
 // Stand-in. The shared ground fog in rain is so dense that everything beyond 150 m becomes the fog color, hills and all. Away from the field the land takes this share of it until the shared fog is thinner.
