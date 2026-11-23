@@ -3,9 +3,9 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { reportFile, reportName, reportText, slowLine, type Report, type RunFacts } from '../player/pacing.ts'
+import { reportFile, reportName, reportText, scriptBound, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
-import { check, measure, pictureSize, record, type Deck, type Measured } from '../player/session.ts'
+import { check, CHECK_SECONDS, measure, pictureSize, record, timing, timingScript, type Deck, type Measured } from '../player/session.ts'
 import { createSheet } from '../player/sheet.ts'
 import { stateRun, stateText, type StateReport } from '../player/state.ts'
 import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
@@ -28,6 +28,7 @@ export interface PlayerState {
   picture: { width: number; height: number; exact: boolean }
   report: Report | null
   advice: string | null
+  timed: Timed[]
   error: string | null
   sky: string
   // Plays the frames from `first` to `last` against the clock, without a track unless one is loaded, and gives the run's report.
@@ -114,10 +115,12 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let playing: Playing | null = null
   let until = lastFrame
   let session: { stop(): void } | null = null
+  // Whether the quality was named by the address or by hand. A quality the timing chose is not written into the address, so the next loading times again.
+  let named = options.quality !== null
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every, script, measure: (first, last) => startMeasure(clampFrame(first), clampFrame(last)) }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, timed: [], error: null, sky: film.skyName, range, every, script, measure: (first, last) => startMeasure(clampFrame(first), clampFrame(last)) }
   window.player = state
   window.showcase.pacing = () => playing?.soFar() ?? state.report
 
@@ -154,7 +157,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         track: track ? { name: track.name, sha256: track.sha256, matches: track.matches } : null,
         avMs: av,
         marks,
-        audio: { sampleRate: ctx.sampleRate, baseLatencyMs: Number((ctx.baseLatency * 1000).toFixed(2)), outputLatencyMs: Number(((ctx.outputLatency || 0) * 1000).toFixed(2)), stepMs: 0 },
+        audio: ctx ? { sampleRate: ctx.sampleRate, baseLatencyMs: Number((ctx.baseLatency * 1000).toFixed(2)), outputLatencyMs: Number(((ctx.outputLatency || 0) * 1000).toFixed(2)), stepMs: 0 } : { sampleRate: 0, baseLatencyMs: 0, outputLatencyMs: 0, stepMs: 0 },
         screen: { width: window.innerWidth, height: window.innerHeight, pixelRatio: ratio, fullScreen: document.fullscreenElement !== null, pictureWidth: Math.round(box.width * ratio), pictureHeight: Math.round(box.height * ratio) },
         browser: navigator.userAgent,
       }
@@ -187,6 +190,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       `screen: ${window.innerWidth} x ${window.innerHeight} at ${window.devicePixelRatio}, ${navigator.hardwareConcurrency} processor threads`,
       `browser: ${navigator.userAgent}`,
       `graphics: ${cardName(film.stage.gl)}`,
+      ...(state.timed.length ? [`timed at loading: ${state.timed.map(timedText).join('; ')}`] : []),
       `loading: ${window.loadingLog?.readyMs ? `ready ${(window.loadingLog.readyMs / 1000).toFixed(1)} s after the page opened` : 'not measured'}`,
       ...(exported ? [exported] : []),
     ]
@@ -278,7 +282,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   host.append(bar)
 
   function current(): Options {
-    return { ...options, mode: review ? 'review' : 'live', frame, diag, quality: quality === 'high' && !options.quality ? null : quality, av, marks, az: clampAzimuth(view.az), el: clampElevation(view.el), dolly: clampDolly(view.dolly), hold: false, loop: false }
+    return { ...options, mode: review ? 'review' : 'live', frame, diag, quality: named ? quality : null, av, marks, az: clampAzimuth(view.az), el: clampElevation(view.el), dolly: clampDolly(view.dolly), hold: false, loop: false }
   }
 
   function linkTo(mode: MenuMode): string {
@@ -613,9 +617,55 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     return { live, script, text }
   }
 
+  // The timing at the end of loading: twenty seconds at the quality the film would play at. If that does not hold the rate, the same frames are set in a row with nothing drawn.
+  // If the script alone is over the frame, low quality cures nothing and nothing is warmed twice. If it is the picture that is slow, the film is made ready at low quality and timed again.
+  async function timeLevels(): Promise<void> {
+    become('check', 'Timing this machine')
+    const found: Timed[] = []
+    let last: Report | null = null
+    try {
+      await drawing
+      filmView()
+      for (;;) {
+        const level = quality
+        const run = timing(deck, (seconds) => loading?.timing(level, seconds, CHECK_SECONDS))
+        session = run
+        const report = await run.finished
+        session = null
+        last = report
+        if (!report.complete) break
+        const one: Timed = { quality: level, held: report.nearly, due: report.frames.due, shown: report.frames.drawn, skipped: report.frames.skipped, longestGapMs: report.gapMs.longest, slow: report.slow.frames, script: null }
+        found.push(one)
+        if (report.nearly || level === 'low') break
+        loading?.script(level, 0, report.frames.due)
+        const alone = timingScript(deck, (done, of) => loading?.script(level, done, of))
+        session = alone
+        one.script = await alone.finished
+        session = null
+        if (one.script === null || scriptBound(one)) break
+        loading?.again(`High quality did not hold ${config.film.fps} frames a second here, and it is the picture that is slow. Getting ready at low quality`)
+        film.quality = 'low'
+        await film.warm(tier, loading?.step)
+        quality = 'low'
+        state.quality = 'low'
+        desk.quality('low')
+      }
+    } catch (error) {
+      session = null
+      loading?.fail(`The film could not be made ready. ${error instanceof Error ? error.message : String(error)}`)
+      dead = true
+      return
+    }
+    state.timed = found
+    loading?.done()
+    become('ready', 'Ready')
+    if (last) show(last, last.complete ? { text: timedAdvice(found, CHECK_SECONDS), tryLow: false } : { text: 'The timing at loading was stopped. Check this machine before recording.', tryLow: false })
+  }
+
   // Another quality is another set of programs: the film is made ready again before anything plays, with the track kept.
   async function setQuality(next: Quality, thenCheck: boolean): Promise<void> {
     if (activity !== 'ready' || dead) return
+    named = true
     if (next === quality) {
       if (thenCheck) void startCheck()
       return
@@ -842,10 +892,19 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   desk.track(null)
   if (review) note.textContent = 'Space plays and pauses. Drop the track on the page to hear it.'
   fit()
-  loading?.done()
-  become('ready', 'Ready')
   syncMenu()
-  stir()
-  touch()
-  void clockFor()
+  // A page that a tool drives is not timed unless the address asks for it, so its pictures and its numbers stay at the quality they name.
+  const asked = new URLSearchParams(location.search).get('timing')
+  const timedHere = loading !== null && !review && options.quality === null && asked !== 'off' && (asked === 'on' || !navigator.webdriver)
+  const open = (): void => {
+    stir()
+    touch()
+    void clockFor()
+  }
+  if (timedHere) void timeLevels().then(() => (dead ? undefined : open()))
+  else {
+    loading?.done()
+    become('ready', 'Ready')
+    open()
+  }
 }
