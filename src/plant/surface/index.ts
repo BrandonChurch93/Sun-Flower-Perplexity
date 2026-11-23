@@ -78,6 +78,8 @@ vec3 reliefSlope(vec3 n, vec3 world, vec2 at, vec2 slope, float strength) {
 const float TISSUE_THROUGH = 0.17;
 const float TISSUE_FORWARD = 0.55;
 const float TISSUE_BEAM = 5.5;
+// Under a closed deck no sun stands behind a blade: the share of what it passes that is left.
+const float TISSUE_DECK = 0.3;
 // Wax: a dielectric of index 1.45.
 const float TISSUE_F0 = 0.0337;
 const float TISSUE_FUZZ = 0.22;
@@ -317,6 +319,9 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   vec3 passed = through * mix(vec3(1.0), hue, 0.85 + 0.15 * slant) * (1.0 - 0.3 * slant);
   // A soaked blade is evenly clear between its veins: what it passes of the sky no longer follows its thin and thick places.
   vec3 evened = (hue * hue * (WET_PASS * smoothstep(0.0, WET_VEIN, peak)) - passed) * (wet * sheet);
+  float deck = mix(TISSUE_DECK, 1.0, tissueClearSun());
+  passed *= deck;
+  evened *= deck;
   float a4 = against * against;
   a4 *= a4;
   a4 *= a4;
@@ -328,7 +333,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   // What it passes then is the low sun hardly dyed, most where the face stands square to it: gold on one blade, green on the next.
   // Never more than the blade has left after what it returns.
   float room = max((1.0 - max(room3.r, max(room3.g, room3.b))) / max(peak, 1e-4) - 1.0, 0.0);
-  vec3 lamp = through * uSunColor * (min(TISSUE_LATE * dusk * 1.6 * wrap * saturate(-ndl), room) * wrap * lobe * crossed);
+  vec3 lamp = through * uSunColor * (deck * min(TISSUE_LATE * dusk * 1.6 * wrap * saturate(-ndl), room) * wrap * lobe * crossed);
   if (dew > 0.0) skyBack *= 1.0 + min(mix(DEW_SHEER, DEW_SHEER_DRY, saturate(1.0 - 4.0 * wet)) * dew * sheet, room);
 
 #ifdef PLANT_FIELD

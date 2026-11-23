@@ -67,10 +67,11 @@ export const stemMain = /* glsl */ `void main() {
   albedo = mix(albedo, mix(vec3(0.028, 0.07, 0.018), vec3(0.11, 0.05, 0.04), smoothstep(0.55, 0.9, dust)) * (0.7 + 0.6 * tone), 0.7 * fleck);
   albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot * (1.0 - 0.85 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
-  // The sprout: pale yellow green where it has seen the light, clear pink red below, near white where it leaves the soil.
-  vec3 sprout = mix(vec3(0.36, 0.34, 0.22), vec3(0.13, 0.21, 0.04), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
+  // The sprout: one pale whitish green, a soft pink streaked in below, near white where it leaves the soil.
+  vec3 sprout = mix(vec3(0.42, 0.58, 0.25), vec3(0.6, 0.6, 0.45), saturate(foot * 1.4)) * (0.9 + 0.2 * tone);
+  float blush = smoothstep(0.4, 0.75, streak);
   albedo = mix(albedo, sprout, 0.92 * saturate(1.5 * pale));
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.3, 0.03, 0.055), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.8 + 0.12 * streak + 0.08 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.45, 0.2, 0.22), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, (0.3 + 0.55 * blush) * (1.0 - 0.8 * foot), pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   // The side the sun stands on all day, the south, flushes purple red in streaks, and a bloom of wax pales the rest at the outline.
   float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
@@ -85,7 +86,7 @@ export const stemMain = /* glsl */ `void main() {
   float limb = 1.0 - abs(dot(face, view));
   Tissue t;
   t.albedo = albedo;
-  t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.07 - 0.45 * smoothstep(0.004, 0.032, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.34, 0.51, 0.33), vec3(0.33, 0.08, 0.07), saturate(vSkin3.z * 1.2)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.04 + 0.42 * limb * limb * limb, pale) * thin);
+  t.through = mix(mix(vec3(0.4, 0.7, 0.2), mix(vec3(0.47, 0.64, 0.27), vec3(0.51, 0.64, 0.3) * (1.07 - 0.45 * smoothstep(0.004, 0.032, vCoord.z * ${TOP_M.toFixed(4)})), fresh), tender), mix(vec3(0.36, 0.52, 0.24), vec3(0.42, 0.22, 0.22), saturate(vSkin3.z * 1.2) * (0.35 + 0.45 * blush)), pale) * (mix(0.25 * (1.0 - 0.64 * tender * (1.0 - limb * limb)), 0.1 + 0.4 * limb * limb * limb, pale) * thin);
   t.through = mix(t.through, t.through.g * vec3(1.2, 0.4, 0.32), 0.35 * flush);
   t.through *= mix(1.0, mix(0.45, 1.75, smoothstep(-0.5, 0.7, dot(face, uSunDir))), max(pale, fresh));
   t.face = face;
