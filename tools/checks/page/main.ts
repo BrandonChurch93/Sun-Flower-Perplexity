@@ -26,6 +26,8 @@ export interface ChecksPage {
   // Faults: 'cut' swaps the camera from a frame on, 'made' builds a mesh with a new texture and a new program at a frame,
   // 'dice' turns the camera by a throw of Math.random, 'memory' turns it by how many frames were drawn before, 'grow' moves the plant's clock inside a stretch of frames.
   fault(kind: string, a: number, b: number): void
+  // Which pixels of the last frame the scene drew into, row by row from the top: '1' where something was drawn, '0' where the frame was left empty.
+  covered(): string
 }
 
 declare global {
@@ -65,6 +67,15 @@ let cutFrom = -1
 let madeAt = -1
 let dice = false
 let memory = false
+let moon = 1
+// The night's key light, written by the film into its look on every frame, comes out `moon` times as strong: the fault of a moon brighter than the dusk.
+const key = film.look.sun as { color: number[] }
+key.color = new Proxy(key.color, {
+  set(target, name, value) {
+    target[name as unknown as number] = typeof value === 'number' && now.lightKind === 'moon' ? value * moon : value
+    return true
+  },
+})
 let drawnBefore = 0
 const kept = new Map<string, Float32Array>()
 
@@ -173,12 +184,25 @@ window.checks = {
     const values = (x.length / 4) * 3
     return { values, differing, largest, mean: sum / values }
   },
+  covered() {
+    const { width, height, renderer, accumulator } = film.stage
+    const pixels = new Float32Array(width * height * 4)
+    renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
+    const rows: string[] = []
+    for (let y = height - 1; y >= 0; y--) {
+      let row = ''
+      for (let x = 0; x < width; x++) row += pixels[4 * (y * width + x) + 3] > 0.5 ? '1' : '0'
+      rows.push(row)
+    }
+    return rows.join('')
+  },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
     else if (kind === 'dice') dice = true
     else if (kind === 'memory') memory = true
     else if (kind === 'grow') grow = { from: a, to: b, rate: 0.05 }
+    else if (kind === 'moon') moon = a
     else throw new Error(`unknown fault "${kind}"`)
   },
 }

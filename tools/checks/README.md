@@ -58,6 +58,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `nights --break picture-quick` | every dusk and dawn three times as fast |
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
+| `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
@@ -74,6 +75,8 @@ For the picture proof of the holds the page turns on the film's own switch for t
 
 `npm run checks -- review` writes `out/work/checks/review/index.html`: every look beside its reference, every section's clip, every check's result, and the whole film with a timeline in bars. It is built from what is in `out/` and says what is missing. It holds no audio. Its viewer picks the track from their own disk and the page plays it in step with the picture.
 
+In a round of stride 6 most frames are not drawn, and the film on the page stands the last drawn frame in for them. The line under the film names the picture: `frame 1728` when that frame is drawn, `frame 1728 is not drawn: the picture is frame 1547` when it is not. Stretches of more than half a second without a drawn frame are hatched on the timeline.
+
 ## What a cut is
 
 `cuts` does not read brightness. It reads where the edges of the picture lie: the slopes of the luminance on a grid of 80 x 45, with the brightest 2 percent of the frame held down so that a sun's disc is not an edge, in the upper half of the frame and in the lower half apart. Between two frames the edges of a half move 0 when they lie where they lay and about 1 when the two have nothing in common. A step is a hard cut when either half moves more than 0.5 and more than 4 times the median of the 12 steps round it. A half without edges (a clear night sky) has no say, and the frames of a stroke of lightning, which the film's own clock names, are listed and not judged.
@@ -81,3 +84,5 @@ For the picture proof of the holds the page turns on the film's own switch for t
 Measured: a camera put elsewhere at frame 1000 moves both halves 1.0 (50 times the steps round it). The rising sun behind the plant's top leaf for two frames (frames 1372 and 1373 of the film at b587656), which took 26 of 255 off the whole frame, moves the sky half 0.20 and the land half 0.08: not a cut. A whole frame shifted sideways by 8 of 320 pixels moves the land half 0.6 to 1.0, by 4 pixels 0.3 to 0.6, so a jump of the camera under about 2 percent of the frame's width is not caught. In the film the largest step measured so far outside a fault is 0.33.
 
 The step of the brightness is listed beside it and judges nothing in `cuts`. `nights` holds every dusk and dawn to a step of the frame's mean of at most 14 of 255 a frame and to no more than 2 of 255 the wrong way (`--step` for another limit). It also cuts the frame into 16 by 9 parts and lists the largest move the wrong way in any one part, and how many parts move the wrong way in one frame: the mean of the whole frame hides a plant that goes dark between the sun's light and the night's while the sky round it fades as it should. A part may move the wrong way by at most 8 of 255 a frame: wider than the limit for the whole frame, because a plant that grows across a part moves it too.
+
+`nights --plant` draws the plant with nothing else in the frame, from the frame where the sun hands the light over to the moon (the sun 5 degrees under) to midnight, on both sides of each night, at 640 x 360, every second frame (`--every 1` for every frame, `--night 6,7` for some nights). It measures the mean and the 90th percentile of the luminance over the pixels the plant covers. Toward midnight the mean may not rise by more than half a level of 255 between drawn frames, and at midnight neither the mean nor the 90th percentile may be above the handover's. `nights` without `--plant` reads the last drawing and says when it is from an older film.
