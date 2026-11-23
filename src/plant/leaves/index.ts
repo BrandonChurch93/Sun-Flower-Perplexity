@@ -501,6 +501,15 @@ export function create(options: PartOptions): PlantPart {
     for (let k = leafAt; k < leaves.length; k++) hairsUpTo[k] = hairs.count
   }
   const crystals = hero ? createCrystals(options, crystalSlots, 'leaf crystals') : null
+  if (crystals) {
+    // Where each crystal stands along its leaf's edge, from just over 0 at the base to 1 at the tip. A grain of the face stands on no edge.
+    const place = crystals.place()
+    for (let h = 0; h < plan.length; h++) {
+      const hair = plan[h]
+      if (hair.kind === 0) place.fill(Math.max(hair.a / (leaves[hair.leaf].nu - 1), 0.001), crystalAt[h], crystalAt[h] + FRINGE)
+      else if (crystalAt[h + 1] > crystalAt[h]) place[crystalAt[h]] = -1
+    }
+  }
 
   const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 600 : 200, 'leaf beads') : null
   const beadSpots: { leaf: number; own: number; along: number; across: number; plan: BeadPlan }[] = []

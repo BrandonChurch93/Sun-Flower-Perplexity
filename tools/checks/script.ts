@@ -6,7 +6,7 @@ import type { Args } from '../lib/args.ts'
 import { flag, num, str } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { barText, FRAMES, secondsOf } from './lib/film.ts'
-import { engineHash, finish, OUT, type Finding } from './lib/report.ts'
+import { engineHash, finish, OUT, table, type Finding } from './lib/report.ts'
 import { openSession, type Session } from './lib/session.ts'
 
 const SENTENCE = "whenever there's a scene change we have a huge frame rate drop ... we need to make sure that doesn't happen"
@@ -27,7 +27,8 @@ interface Share { name: string; parts: string[]; meanMs: number }
 interface Limits { meanMs: number; worstMs: number; shares: Share[]; everyOtherPartMeanMs: number; first: string[]; windows: string[]; allEvery: number }
 interface Row { frame: number; cost: Record<string, number> }
 interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; busy: number; rows: Row[] }
-interface Judged { from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
+interface Hitch { frame: number; ms: number; around: number; parts: string }
+interface Judged { hitches: Hitch[]; from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
 
 const LIMITS = at('tools', 'checks', 'limits.json')
 const NOT_PARTS = new Set(['script', 'wait'])
@@ -42,6 +43,20 @@ const span = (text: string): [number, number] => {
   const [a, b] = text.split('-').map(Number)
   if (!Number.isInteger(a) || !Number.isInteger(b) || b <= a) throw new Error(`a window is written first-last, as in 2070-2110: "${text}"`)
   return [a, Math.min(b, FRAMES - 1)]
+}
+
+// A hitch is a frame that costs far more than the frames around it, which a viewer sees as a stutter whatever the level:
+// over the limit of any frame and over three times the median of the frames around it, eight before and eight after. The rule is the one of tools/costs.ts.
+const AROUND = 8
+const TIMES = 3
+export function hitchesOf(rows: Row[], limits: Limits): Hitch[] {
+  return rows.flatMap((r, i) => {
+    const near = rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).map((x) => x.cost.script).sort((x, y) => x - y)
+    const around = near[Math.floor(near.length / 2)]
+    if (r.cost.script <= Math.max(limits.worstMs, TIMES * around)) return []
+    const parts = Object.entries(r.cost).filter(([key, v]) => !NOT_PARTS.has(key) && v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
+    return [{ frame: r.frame, ms: r.cost.script, around, parts }]
+  })
 }
 
 export function judge(k: Kept, limits: Limits): Judged {
@@ -65,7 +80,7 @@ export function judge(k: Kept, limits: Limits): Judged {
     if (shares[p] > limits.everyOtherPartMeanMs) over.push(`${p} ${shares[p].toFixed(1)} over ${limits.everyOtherPartMeanMs}`)
   }
   const top = Object.entries(worstRow.cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-  return { from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
+  return { hitches: hitchesOf(rows, limits), from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
 }
 
 const dirOf = (run: string): string => path.join(OUT, 'script', run)
@@ -147,7 +162,7 @@ async function picture(judged: Judged[], limits: Limits, file: string): Promise<
     svg += text(x + bar / 2, base + 20, `${j.from}-${j.to}`, 13, 'middle')
     svg += text(x + bar / 2, base + 38, `bar ${barText(secondsOf(j.from)).slice(4)}`, 12, 'middle', '#9aa0a8')
     svg += text(x + bar / 2, base + 56, `mean ${j.mean.toFixed(0)}`, 13, 'middle')
-    svg += text(x + bar / 2, base + 76, j.ok ? 'PASS' : 'FAIL', 13, 'middle', j.ok ? '#6fcf7f' : '#ff8d83') + (j.whole ? '' : text(x + bar / 2, base + 94, `first ${j.frames} of ${j.to - j.from}`, 12, 'middle', '#9aa0a8'))
+    svg += text(x + bar / 2, base + 76, j.ok ? 'PASS' : 'FAIL', 13, 'middle', j.ok ? '#6fcf7f' : '#ff8d83') + (j.whole ? '' : text(x + bar / 2, base + 94, `first ${j.frames} of ${j.to - j.from}`, 12, 'middle', '#9aa0a8')) + (j.hitches.length ? text(x + bar / 2, base + 110, `${j.hitches.length} ${j.hitches.length === 1 ? 'hitch' : 'hitches'}: ${j.hitches.slice(0, 2).map((h) => h.frame).join(', ')}${j.hitches.length > 2 ? '...' : ''}`, 12, 'middle', '#ffb347') : '')
   })
   svg += '</svg>'
   await sharp(Buffer.from(svg)).jpeg({ quality: 92 }).toFile(file)
@@ -171,6 +186,11 @@ async function proof(args: Args, broken: string, limits: Limits): Promise<void> 
     findings.push({ ok: true, expected: true, what: `before the fault, the film drawn with its sky alone, frames ${from + 1} to ${to}: mean ${control.mean.toFixed(1)} ms, worst ${control.worst.toFixed(1)} ms${control.ok ? ', inside every limit: the check can pass' : `: ${control.over.join('; ')}, so this proof shows nothing`}` })
     const what = broken === 'slow-frame' ? `${SLOW_FRAME_MS} ms more in the field's turn of frame ${slowAt}` : `${SLOW_PART_MS} ms more in the field's turn of every frame`
     findings.push({ ok: faulty.ok, what: faulty.ok ? `with ${what} the window still passes: mean ${faulty.mean.toFixed(1)} ms, worst ${faulty.worst.toFixed(1)} ms` : `with ${what}: ${faulty.over.join('; ')} (worst frame ${faulty.worstAt}: ${faulty.top})` })
+    if (broken === 'slow-frame') {
+      const hit = faulty.hitches.find((h) => h.frame === slowAt)
+      findings.push(hit ? { ok: false, what: `named as a hitch: frame ${hit.frame}, ${hit.ms.toFixed(1)} ms against ${hit.around.toFixed(1)} around it (${hit.parts})` } : { ok: true, expected: true, what: `frame ${slowAt} is NOT named as a hitch` })
+      if (control.hitches.length) findings.push({ ok: true, expected: true, what: `before the fault the window already has ${control.hitches.length} hitches, so the hitch above shows less` })
+    }
     finish({
       check: 'script',
       sentence: SENTENCE,
@@ -241,6 +261,11 @@ export async function run(args: Args): Promise<void> {
     findings.push({ ok: failing.length === 0, what: `${failing.length} of ${judged.length} windows are over a limit (${frames} frames drawn in a row at ${sizes}; limits from tools/checks/limits.json: ${limits.meanMs} ms in the mean of a window, ${limits.worstMs} ms in any frame, ${limits.shares.map((s) => `${s.name} ${s.meanMs}`).join(', ')}, every other part ${limits.everyOtherPartMeanMs}): the page's own script time is ${mean.toFixed(1)} ms a frame over all of them, the worst frame ${worst.worst.toFixed(1)} ms at frame ${worst.worstAt} (${worst.top})` })
     for (const j of failing.slice(0, 40)) findings.push({ ok: false, what: `frames ${j.from} to ${j.to} (${barText(secondsOf(j.from))}): ${j.over.join('; ')}` })
   }
+  const hitches = judged.flatMap((j) => j.hitches).sort((a, b) => b.ms - a.ms)
+  if (judged.length) {
+    findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} hitches, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
+    if (hitches.length) console.log(`script · every hitch, the dearest first\n${table(['frame', 'bar', 'ms', 'median around', 'times', 'its parts over 1 ms'], hitches.map((h) => [h.frame, barText(secondsOf(h.frame)).slice(4), h.ms.toFixed(1), h.around.toFixed(1), (h.ms / Math.max(0.1, h.around)).toFixed(1), h.parts]))}\n`)
+  }
   if (missing > 0) findings.push({ ok: true, expected: true, what: `${missing} of ${spans.length} windows are not measured yet on this film` })
   if (partly > 0) findings.push({ ok: true, expected: true, what: `${partly} windows are measured only in their first frames` })
   const notAlone = judged.filter((j) => j.busy).length
@@ -258,6 +283,6 @@ export async function run(args: Args): Promise<void> {
     complete: missing === 0 && partly === 0 && notAlone === 0,
     findings,
     table: judged.length ? tableOf(judged) : undefined,
-    data: { run, limits, windows: judged },
+    data: { run, limits, windows: judged, hitches },
   })
 }
