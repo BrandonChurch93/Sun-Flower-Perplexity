@@ -7,7 +7,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
-import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
+import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
 import { beadPlan, createBeads, type BeadPlan, type BeadSet } from '../surface/wet/index.ts'
 import { RAIN_STANDS } from '../../v2/inputs.ts'
@@ -886,7 +886,7 @@ export function create(options: PartOptions): PlantPart {
       }
     }
 
-    if (slot === 0) {
+    if (filling.lead) {
       bladeNormals(out, normals, leaf)
       state[i * 4] = size
       state[i * 4 + 1] = leaf.yellows * smoothstep(20, 44, age)
@@ -952,7 +952,7 @@ export function create(options: PartOptions): PlantPart {
         tube[o] = cx + (wx * c + nx * top) * radius
         tube[o + 1] = cy + (wy * c + ny * top) * radius
         tube[o + 2] = cz + (wz * c + nz * top) * radius
-        if (slot === 0) {
+        if (filling.lead) {
           const lift = e > 0 ? 0.6 * e : e
           const l = norm(c, lift) || 1
           tubeNormals[o] = (wx * c + nx * lift) / l
@@ -976,7 +976,7 @@ export function create(options: PartOptions): PlantPart {
     let born = 0
     while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
     const count = born > 0 ? hairsUpTo[born - 1] : 0
-    if (slot === 0) hairsShown = count
+    if (filling.lead) hairsShown = count
     const frosted = stateUniforms.uPlantFrost.value > 0
     // The ice grows after the cut to the frost: at the cut the edge is the one the night left.
     const rime = 1
@@ -1150,11 +1150,11 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
-      if (slot === 0) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
+      if (filling.lead) uniforms.uGlow.value = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
+      if (filling.lead) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
-      if (slot === 0) fillBeads(pose)
+      if (filling.lead) fillBeads(pose)
     },
     finish() {
       position.needsUpdate = true
