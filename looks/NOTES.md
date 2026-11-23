@@ -1,10 +1,8 @@
 # Looks of leaf-look
 
-2026-11-23 11:25 UTC, at commit 7c861f3 of agent/leaf-look.
+2026-11-23 12:05 UTC, at commit a2cd4c6 of agent/leaf-look.
 
-- `01-1054-frost-face-v2-f0dd054.jpg`: 1054 frost face v2 f0dd054
-- `02-1054-frost-face-7c861f3.jpg`: 1054 frost face 7c861f3
-- `03-1208-v2-f0dd054.jpg`: 1208 v2 f0dd054
-- `04-1208-7c861f3.jpg`: 1208 7c861f3
-- `05-1240-wet-v2-f0dd054.jpg`: 1240 wet v2 f0dd054
-- `06-1240-wet-7c861f3.jpg`: 1240 wet 7c861f3
+- `01-1452-moon-v2-770ef42.jpg`: 1452 moon v2 770ef42
+- `02-1452-moon-a2cd4c6.jpg`: 1452 moon a2cd4c6
+- `03-1208-wet-a2cd4c6.jpg`: 1208 wet a2cd4c6
+- `04-1240-wet-a2cd4c6.jpg`: 1240 wet a2cd4c6
