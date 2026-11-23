@@ -54,7 +54,7 @@ const float POINT_TURNS = 45.0;
 const float POINT_SHARP = 16.0;
 const float POINT_PX = 7.0;
 // Of the points a crystal could carry, the share it does.
-const float POINT_SHARE = 0.14;
+const float POINT_SHARE = 0.1;
 const float POINT_OPEN = 0.0004;
 // Out of focus the discs of neighbors lie over one another and close into a band, so fewer of the points are kept the wider the circle.
 const float POINT_FEWER = 0.15;
@@ -270,7 +270,7 @@ void main() {
     float circle = min(uCocScale * abs(1.0 / max(depth, 1e-4) - 1.0 / uFocusM), POINT_CIRCLE_MOST);
     float share = POINT_SHARE * (c.w < -0.5 ? 0.12 : 1.0) / (1.0 + POINT_FEWER * circle);
     float mass = hash(own, 81.0 + g);
-    float amount = POINT * (0.15 + 1.7 * mass * mass) * (1.0 + POINT_OPEN * circle * circle) * lit * close * stays * (1.0 - melt) * (0.06 + 0.94 * behind) * saturate((share - hash(own, 78.0 + g)) / (0.3 * share));
+    float amount = POINT * (0.06 + 2.6 * mass * mass * mass) * (1.0 + POINT_OPEN * circle * circle) * lit * close * stays * (1.0 - melt) * (0.06 + 0.94 * behind) * saturate((share - hash(own, 78.0 + g)) / (0.3 * share));
     vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), toEye));
     vec3 up = cross(toEye, right);
     float spin = 1.5708 * hash(own, 75.0 + g);

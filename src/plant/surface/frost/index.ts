@@ -13,21 +13,21 @@ const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes.
 const float FROST_SHUT = 0.4;
 // The coat a close lens sees. The cells of its two sizes of crystal and of the two sizes of grain under them, in meters; how high a crystal stands, for its shadow; the share of the crystals that are plates and not tufts of needles.
-const float FROST_FORM_M = 0.0016;
-const float FROST_FORM_FINE_M = 0.0007;
-const float FROST_FINE_M = 0.0003;
-const float FROST_DUST_M = 0.00012;
+const float FROST_FORM_M = 0.0022;
+const float FROST_FORM_FINE_M = 0.001;
+const float FROST_FINE_M = 0.0004;
+const float FROST_DUST_M = 0.00016;
 const float FROST_FORM_HIGH_M = 0.0002;
 const float FROST_PLATES = 0.25;
 // How sharply a crystal's face mirrors the sun, and how bright against the flash of a grain.
 const float FROST_CHIP_SHARP = 600.0;
 const float FROST_CHIP_FLASH = 2.0;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
-const float FROST_COAT_FIELD = 0.4;
-const float FROST_COAT_EDGE = 0.8;
-const float FROST_COAT_BED = 0.85;
+const float FROST_COAT_FIELD = 0.5;
+const float FROST_COAT_EDGE = 0.85;
+const float FROST_COAT_BED = 0.72;
 // How far the coat has come where the close lens first sees it, and the share of the far veil that still lies under it there.
-const float FROST_COAT_FIRST = 0.25;
+const float FROST_COAT_FIRST = 0.4;
 const float FROST_COAT_UNDER = 0.4;
 const float FROST_FORM_SHADE = 0.8;
 
@@ -85,7 +85,7 @@ vec3 frostForm(vec2 g, float reach, float chance, float grown, vec3 N, vec3 view
       vec2 dir = vec2(cos(angle), sin(angle));
       float span = most * (i == 0 ? 1.0 : 0.45 + 0.55 * hash21(cell + 433.0 + 17.0 * n));
       float t = clamp(dot(p, dir) / span, 0.0, 1.0);
-      float wide = (0.035 + 0.055 * size) * (1.0 - 0.8 * t);
+      float wide = (0.045 + 0.06 * size) * (1.0 - 0.8 * t);
       float c = (1.0 - smoothstep(wide - 0.5 * reach, wide + 0.5 * reach, length(p - dir * (span * t)))) * min(1.0, 2.0 * wide / max(reach, 1e-5));
       // A needle has a ridge: the side of it turned from the light is grey.
       float tone = (dot(p, vec2(-dir.y, dir.x)) > 0.0 ? 1.0 : 0.5) * (0.8 + 0.2 * hash21(cell + 457.0 + 19.0 * n));
@@ -109,11 +109,11 @@ vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 s
   vec2 q1 = vec2(0.8 * q.x + 0.6 * q.y, 0.8 * q.y - 0.6 * q.x);
   vec2 q2 = vec2(0.6 * q.x - 0.8 * q.y, 0.6 * q.y + 0.8 * q.x);
   float n = 0.6 * valueNoise(q1 * (1.0 / FROST_FINE_M) + 37.0) + 0.4 * valueNoise(q2 * (1.0 / FROST_DUST_M) + 11.0);
-  float share = want * smoothstep(0.0, 0.7, grown);
+  float share = want * smoothstep(0.0, 1.0, grown);
   float cut = 0.5 - 0.55 * (share - 0.5);
-  float soft = 0.03 + 0.35 * px / FROST_DUST_M;
-  float grains = smoothstep(cut - soft, cut + soft, n) * (0.5 + 0.5 * valueNoise(q2 * (1.3 / FROST_DUST_M) + 5.0));
-  grains = mix(grains, 0.75 * share, smoothstep(0.7, 1.8, px / FROST_DUST_M));
+  float soft = 0.02 + 0.25 * px / FROST_DUST_M;
+  float grains = smoothstep(cut - soft, cut + soft, n) * (0.7 + 0.3 * valueNoise(q2 * (1.3 / FROST_DUST_M) + 5.0));
+  grains = mix(grains, 0.85 * share, smoothstep(0.7, 1.8, px / FROST_DUST_M));
   // On it stand the crystals a lens can tell apart, two sizes of them, each with its shadow on the sugar beside it.
   float far = 1.0 - smoothstep(0.25, 0.7, px / FROST_FORM_M);
   vec3 big = vec3(0.0);
@@ -122,8 +122,8 @@ vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 s
   if (far > 0.0) {
     vec2 b = q2 * (1.0 / FROST_FORM_M) + 91.0;
     vec2 f = q1 * (1.0 / FROST_FORM_FINE_M) + 37.0;
-    float many = 0.3 + 0.6 * want;
-    float more = 0.45 + 0.5 * want;
+    float many = 0.45 + 0.5 * want;
+    float more = 0.55 + 0.4 * want;
     big = frostForm(b, px / FROST_FORM_M, many, grown, N, view);
     small = frostForm(f, px / FROST_FORM_FINE_M, more, grown, N, view);
     vec2 turned = vec2(0.6 * off.x - 0.8 * off.y, 0.6 * off.y + 0.8 * off.x);
@@ -199,10 +199,10 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   vec3 wy = dFdy(world);
   if (close > 0.0) {
     // A close lens tells the coat apart. It hides most of the skin at an edge and along a vein and a third of it in the middle of a field, in banks, so the veins read through it as lines of thicker grain.
-    float want = saturate(mix(FROST_COAT_FIELD, FROST_COAT_EDGE, smoothstep(0.0, 0.75, gather)) + 0.3 * (bank - 0.45)) * (0.45 + 0.55 * smoothstep(-0.3, 0.2, F.y));
+    float want = saturate(mix(FROST_COAT_FIELD, FROST_COAT_EDGE, smoothstep(0.0, 0.75, gather)) + 0.3 * (bank - 0.45)) * (0.85 + 0.15 * smoothstep(-0.3, 0.2, F.y));
     // It is the last of the frost to come, over the last third of the freeze: from the edge and the veins inward, and the fields between the veins last.
     float late = mix(mix(FROST_COAT_FIRST, 1.0, saturate((uPlantFrost - 0.7) / 0.3)), 1.0, smoothstep(0.0, 0.15, uPlantDew));
-    float grown = saturate((late - 0.38 * saturate(1.0 - smoothstep(0.0, 0.75, gather) + 0.5 * (bank - 0.5))) / 0.55);
+    float grown = saturate((late - 0.45 * saturate(1.0 - smoothstep(0.0, 0.75, gather) + 0.5 * (bank - 0.5))) / 0.55);
     // The skin is measured as the grown blade's: on a young one a meter of it is a fraction of a true meter. The crystals keep their true size, so they are laid on the size of cell nearest to it, and between two sizes on both.
     float level = 0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20));
     float lower = exp2(floor(level));
