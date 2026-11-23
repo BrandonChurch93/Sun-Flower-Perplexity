@@ -1,0 +1,70 @@
+{
+  "critic": "R3",
+  "score": 6,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "major",
+      "file": "set-C-01.png",
+      "where": "far field and horizon, full width at about y 370-400",
+      "what": "the far field ends in a flat, even pink-brown band with a straight top edge and a hard line where field detail stops; with the hill silhouette above it, the background reads as a flat painted backdrop, not land going away into haze",
+      "fix": "let plant rows carry on into the distance and thin out into depth-based haze that rises gradually; break up the band's straight edges and give it variation in tone"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "crop 4, left of the stem under the leaf (also seen in set-C-03.png at about x 850, y 650-788)",
+      "what": "a bright vertical white streak sits behind the stem with nothing in the scene to cause it; it looks like a light leak or a lit card edge",
+      "fix": "find and remove the stray lit geometry or rim-light bleed behind the stem, or occlude it"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1-2, the bud's bracts and the inner straps",
+      "what": "the bracts are near copies of each other in shape, size and spacing, and every edge has the same thin white outline of the same width; the inner strap leaves are flat, evenly dark cards with no translucency against the sky",
+      "fix": "vary each bract's length, width, curl and twist; make the backlit hair fringe vary in density and brightness; add light through the thin strap tips"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "crops 1-3 and 8, the bracts",
+      "what": "the hairs on the bracts are an even bright fringe that follows every edge exactly, like an outline effect; the bracts repeat in shape and fan out with regular spacing",
+      "fix": "put hair density and length on a random map, let some hairs stray off the edge, and change each bract's shape and angle"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crop 2, the disc",
+      "what": "the florets are one repeated bump on a perfect phyllotaxis grid with matching size, shading and specular dots, and no florets at different stages from the rim to the centre; it reads as procedural instancing",
+      "fix": "vary floret scale, tilt and colour, add open florets with pollen near the rim, and break up the regularity"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "long green bracts lying across the front of the disc, centre of the head",
+      "what": "narrow green straps pass in front of the disc and look pasted over it, with no contact shadow where they meet the florets; they read as geometry cutting through",
+      "fix": "pull these bracts back behind the ray ring, or give them proper contact and occlusion where they touch the disc"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-04.png",
+      "where": "crop 6, the sun",
+      "what": "the sun is a flat, evenly filled disc with a hard rim and almost no scatter, even though it sits inside thick cloud; it looks laid on top of the sky",
+      "fix": "soften the edge, add glow and scatter that match the density of the cloud, and let the cloud partly cover the disc"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-06.png",
+      "where": "crops 1 and 3, the rays",
+      "what": "the ray veins are faint, regular painted lines, and the petal edges are very clean, with little crinkle or tearing",
+      "fix": "add slight waviness, small tears and uneven vein relief to the rays"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-02.png",
+      "where": "crops 4 and 8, the leaf edges",
+      "what": "the yellowed serrated edges are evenly spaced and the leaf is a thin sheet with no visible edge thickness or curl",
+      "fix": "break up the serration rhythm and add a little edge curl and thickness"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "critic": "R1",
+  "score": 3,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "whole frame, sky and background",
+      "what": "-a is a warm, hazy sunrise backlit from upper left with a bright cream-peach misty sky and low contrast; -b is a cool, clear dusk with a blue-grey sky, a hard hill line and no haze. Light reads as hard side light from the left, not soft backlight into the lens",
+      "fix": "move the sun to upper left behind the leaf, lift the sky to warm cream-peach, fill the distance with low-lying mist that hides the horizon, and lower overall contrast"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "framing of the leaf and stem",
+      "what": "in -a a stem rises at the left edge and the leaf comes in from it, pointing right and down, tip near the center at about x 990, y 550; in -b there is no stem, the leaf enters from the top-left corner, sits higher and is larger, and a second leaf at upper left is missing",
+      "fix": "reframe so the stem runs up the left edge, the leaf attaches to it at about one third of the height, and the tip sits just below the center; add the upper leaf at the top-left corner and the soft leaf at bottom left"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-01-b.png",
+      "where": "frost on the leaf, regions 2 and 4 of set-A-02.png",
+      "what": "-a has a thick white frost rim of ice crystals along the upper left half of the leaf and frost dusting on the face; -b has none, and its upper left is a smooth, glossy, grey plastic-looking surface",
+      "fix": "add the crystalline frost along the leaf's upper edge and across its left half, and replace the glossy sheen with a matte, frosted surface"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "the drop, region 1 of set-A-02.png",
+      "what": "-a has a small, flattened drop hanging under the tip, with a second small drop falling below; -b has a large, perfectly round, milky white sphere on a narrow neck, about twice the size, with no falling drop",
+      "fix": "shrink the drop to about half its size, make it clear and flattened, catching the sun as a point, and add the small falling drop below it"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "leaf color and edge, regions 2 and 3 of set-A-02.png",
+      "what": "-b's leaf is a saturated yellow-green with orange patches and long white hairs, lit from the front; in -a the leaf is a dark, cool, blue-green backlit leaf with fine serrations and beaded dew, no long hairs",
+      "fix": "darken and cool the leaf toward deep blue-green, take out the yellow and orange, shorten the hairs to fine fuzz, and add dew beads with backlit rims along the edge"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-01-b.png",
+      "where": "the ground, region 5 of set-A-02.png",
+      "what": "-a's ground is a grey, frosted field with many small, bright, cool bokeh discs; -b's ground is near black, with large, dim, orange bokeh blobs",
+      "fix": "lift the ground to a mid grey with frost, and change the bokeh to smaller, brighter, neutral-white discs"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "whole frame, light and sky",
+      "what": "-a has a deep blue sky with dark storm clouds and sun rays breaking through at upper right, with strong contrast and deep shadows; -b has a pale, washed-out sky with flat, thin cloud and a soft sun behind the plant at center right, so the frame is low in contrast and much brighter. The settled time-lapse streaks do not explain the change in sky color or cloud mass",
+      "fix": "deepen the sky to saturated blue at the top, build the dark grey cumulus masses at left and right, put the sun at upper right with rays, and darken the foreground"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-03-b.png",
+      "where": "ground and field, region 5 of set-A-04.png",
+      "what": "-a's foreground is a dense, dark, out-of-focus field of leafy plants and grass; -b's foreground is bare, sharp, cracked brown soil with only small seedlings in the distance",
+      "fix": "replace the bare soil with the dark, soft-focus crop and grass in front, and fill the middle distance with full-grown plants"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "plant shape, regions 1 to 4 of set-A-04.png",
+      "what": "-a's plant has a compact cluster of broad, serrated leaves at the top and its widest, largest leaves low, reaching the lower left and right; -b's top is two thin, pointed leaves, the leaves are spread higher and to the side, the stem sits to the right of center, and the low leaves are missing. The leaves are also a yellow-green with yellow edges, not the deep backlit green of -a",
+      "fix": "rebuild the crown as a cluster of broad leaves, add the two big low leaves at lower left and right, move the stem to x about 830, and grade the leaves to a deeper, cooler green"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-03-b.png",
+      "where": "horizon",
+      "what": "-a has a low, hazy line of distant blue hills with air between them and the field; -b has a near, sharp, brown hill at left with little haze",
+      "fix": "push the hills back, make them blue-grey and soft with haze"
+    },
+    {
+      "severity": "severe",
+      "file": "set-A-05-b.png",
+      "where": "sky and light, region 6 of set-A-06.png",
+      "what": "-a has a dark storm sky with a broad bright white band of cloud across the middle behind the plant, which backlights the leaves; -b has no bright band, only a dim grey strip low over the hills, so there is no backlight and the frame is flat and evenly dark",
+      "fix": "open a bright white-grey band of cloud across the middle of the frame, from left of center to the right edge, behind the plant, and use it to rim the leaves"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "framing and horizon",
+      "what": "-a's horizon sits at about y 450 with the field rising to it; -b's horizon is at about y 380 and the hills are larger and sharper, so the camera sits higher and the field looks deeper",
+      "fix": "lower the camera and lift the horizon line to around y 450, with soft, distant tree lines instead of a near hill"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "the plant, regions 1 to 3 of set-A-06.png",
+      "what": "-a's plant has narrower, darker, backlit leaves that read as near silhouettes with a bright rim and hanging drops; -b's leaves are broad, front-lit and a lighter, saturated green with crumpled texture, the stem is left of the -a position, and the lowest leaves are larger",
+      "fix": "darken the leaves toward silhouette, add rim light and water drops on the edges, narrow the leaf shapes, and move the stem right to about x 885"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "ground and water, region 4 of set-A-06.png",
+      "what": "-a has a mound of dark, wet soil around the stem with a bright, glinting stream running to the lower left and splash from falling rain; -b's stem stands in a dull, flat puddle without splash, and the soil is lumpy grey clods, with less sparkle",
+      "fix": "pile the dark soil up around the stem, move the stream to the left of the stem running toward the lower left, and add splashes and bright highlights on the water"
+    },
+    {
+      "severity": "major",
+      "file": "set-A-05-b.png",
+      "where": "rain",
+      "what": "-a's rain is long, fine streaks of motion; -b's rain is short dashes and dots, which reads as snow or sleet",
+      "fix": "stretch the drops into long, thin motion streaks with the same slant as -a"
+    },
+    {
+      "severity": "minor",
+      "file": "set-A-05-b.png",
+      "where": "the plant at left, region 5 of set-A-06.png",
+      "what": "-b's plant at left is set lower and further in, and is front-lit and sharp, while -a's is backlit and dark against the bright sky band",
+      "fix": "darken it to a silhouette and raise it so its top meets the bright band"
+    }
+  ]
+}

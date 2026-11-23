@@ -1,0 +1,84 @@
+{
+  "critic": "R3",
+  "score": 4,
+  "pass": false,
+  "issues": [
+    {
+      "severity": "severe",
+      "file": "set-C-06.png",
+      "where": "crop 1, the sun, shafts, and cloud break (and upper-left sky of set-C-05.png)",
+      "what": "the sun shafts are flat, hard-edged orange cones sitting on top of the sky rather than light inside the air, and the dark clouds framing the opening are blurry cutouts with muddy brown halos against flat blue sky",
+      "fix": "render volumetric crepuscular rays scattered through three-dimensional cloud density with soft optical falloff and crisp multi-scale cloud detail along backlit edges"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-01.png",
+      "where": "foreground soil across the bottom half of the frame (also in set-C-03.png and set-C-05.png)",
+      "what": "the wet soil is made of glossy, bulbous black tar-like mounds with stretched displacement lines and plastic highlights instead of granular earth",
+      "fix": "replace smooth displaced blobs with fine clod, crumb, grit, and organic debris detail and vary specular roughness so the mud reads as porous wet dirt"
+    },
+    {
+      "severity": "severe",
+      "file": "set-C-05.png",
+      "where": "rain streaks across the dark clouds and field (and set-C-06.png crops 1, 2, 7, and 8)",
+      "what": "raindrops appear as thick, opaque beige spindle shapes sitting on top of unlit black clouds and blurred background areas rather than inside the scene's light and depth",
+      "fix": "render refractive, motion-blurred raindrops that take local illumination from the sky and sun angle, dim against dark unlit clouds, and follow depth-of-field blur"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "crop 6, upper left of the lit cloud (and top center-left sky of set-C-03.png)",
+      "what": "concentric stepped contour rings sit across the bright storm cloud like wood grain or sliced volume layers",
+      "fix": "increase volume step rate and sampling jitter, and break up low-frequency procedural noise so cloud density grades smoothly without concentric banding"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-06.png",
+      "where": "crops 2, 3, 4, and 6, backlit leaves (and set-C-04.png crops 1, 2, 3, and 6)",
+      "what": "backlit leaf blades show coarse black-speckle render noise at native size, veins read as wide blurry dark painted stripes rather than raised vascular ridges, and an abrupt bright yellow rim band rings every leaf margin at 69.9 s",
+      "fix": "increase subsurface and translucency sampling until noise-free, model raised primary and secondary vein relief with thickness variation, and remove the uniform yellow edge-shader ramp"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 2, 4, and 5, leaf edges, folds, and top of the main stem (also in set-C-04.png and set-C-06.png)",
+      "what": "leaves read as zero-thickness flat cards with straight polygon segments, a sharp triangular cutout notch on the upper-right leaf, and black faceted creases at folds, while the main stem top ends in a flat chopped-off cylinder cap with no apical bud",
+      "fix": "give leaf blades slight thickness, subdivide and organically curl margins and notches, fix self-intersecting fold normals, and model a closed apical shoot bud at the stem tip"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-02.png",
+      "where": "crops 1, 2, and 3, moisture patches on leaf surfaces",
+      "what": "surface water on the leaves renders as crusty, pixelated white clusters that look like salt crystals or broken specular noise instead of clear droplets",
+      "fix": "replace noisy white surface splotches with clear refractive water beads of varied size and smooth wet-film specular sheen"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-04.png",
+      "where": "crop 4, puddle splashes and stem base (and left plant base in set-C-03.png and set-C-05.png)",
+      "what": "puddle impacts form stiff straight white needle spikes at fixed angles, identical tiny white starburst splash meshes sit on solid mud clods in set-C-02.png crop 4, and stems meet the flat puddle in a hard cutout line with no meniscus or contact shadow",
+      "fix": "replace spiky splash lines with curved liquid crowns and droplets, restrict water crown splashes to puddles, and add a curved meniscus and dark root-collar contact shading where stems enter water and mud"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-03.png",
+      "where": "mid-air just left of the main plant's large lower-left leaf and rain streaks hitting foreground mud",
+      "what": "an oversized bright-rimmed spherical bubble floats in mid-air beside the leaf while nearby rain streaks stick straight out of mud clods like glowing blue-white pins",
+      "fix": "remove stray oversized mid-air droplet spheres and blend rain streak endpoints cleanly into surface mist and micro-splashes on impact"
+    },
+    {
+      "severity": "major",
+      "file": "set-C-05.png",
+      "where": "background crop rows and far horizon (and set-C-06.png crops 3 and 7)",
+      "what": "mid-ground rows repeat the same plant silhouettes and leaf postures, and the distant horizon reads as a flat hazy band with repetitive blurry dark tree blobs",
+      "fix": "vary plant geometry, rotation, height, and leaf droop across the field and replace the flat horizon band with layered atmospheric terrain and varied distant foliage"
+    },
+    {
+      "severity": "minor",
+      "file": "set-C-06.png",
+      "where": "crop 1 right edge and crop 3 leaf tip silhouette",
+      "what": "a dark stair-stepped 1-pixel fringe outlines the brightly backlit leaf margin against the warm sky haze when zoomed past delivery size",
+      "fix": "refine anti-aliasing and alpha premultiplication on high-contrast backlit leaf edges to remove dark fringe halos"
+    }
+  ]
+}
