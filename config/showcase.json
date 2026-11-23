@@ -96,7 +96,7 @@
     "container": "mp4",
     "videoCodec": "h264",
     "bitrateMbps": 20,
-    "audio": "none",
+    "audio": "none unless the box is ticked",
     "proofSeconds": 1,
     "memoryTestSeconds": 4,
     "files": {

@@ -11,7 +11,7 @@
  *
  * time() is negative during the lead, 0 at the first frame, and runs past duration during the tail.
  */
-export async function createFilmClock({ url, arrayBuffer, duration, lead = 2, tail = 2, markAt = 1, markHoldMs = 50, blipHz = 1000, avMs = 0 }) {
+export async function createFilmClock({ url, arrayBuffer, duration, lead = 2, tail = 2, markAt = 1, markHoldMs = 50, blipHz = 1000, blips = true, avMs = 0 }) {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   const ctx = new Ctx({ latencyHint: 'playback' });
   const data = arrayBuffer || (await (await fetch(url)).arrayBuffer());
@@ -49,7 +49,7 @@ export async function createFilmClock({ url, arrayBuffer, duration, lead = 2, ta
       source.buffer = buffer;
       source.connect(ctx.destination);
       source.start(zero);
-      for (const m of marks()) blip(zero + m);
+      if (blips) for (const m of marks()) blip(zero + m);
     },
     stop() {
       if (source) { try { source.stop(); } catch (e) { /* already ended */ } }
