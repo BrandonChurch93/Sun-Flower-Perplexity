@@ -101,6 +101,7 @@ class FieldSky implements Sky {
       uNight: { value: 0 },
       uFrostFog: { value: 0 },
       uRainFog: { value: 0 },
+      uBreak: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
@@ -148,8 +149,8 @@ class FieldSky implements Sky {
       const s = out.horizonSun[c]
       const tint = this.deck[c]
       const cap = lerp(z * 0.88 + 0.11 * h, tint * 0.90, blend)
-      const far = lerp(h * 0.96 + 0.08 * z, tint * (3.75 + (1 - d.rain) * 0.19), blend)
-      const facing = lerp(s * 0.94 + h * 0.11, tint * 5.12 + burst * 0.46 * s, blend)
+      const far = lerp(h * 0.96 + 0.08 * z, tint * (3.15 + (1 - d.rain) * 0.24), blend)
+      const facing = lerp(s * 0.94 + h * 0.11, tint * 4.45 + burst * 0.46 * s, blend)
       out.zenith[c] = lerp(lerp(z, cap, blend + fair), z * 0.53 + h * 0.47, cold * 0.61)
       out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), z * 0.33 + h * 0.67, cold * 0.63)
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), z * 0.29 + h * 0.44 + s * 0.27, cold * 0.76)
@@ -192,7 +193,7 @@ class FieldSky implements Sky {
     u.uDeck.value.fromArray(this.deck)
     u.uFlash.value.copy(now.flashAt)
     // The sun clears a local tear before the rest of the front moves off.
-    const deckShape = d.overcast + 0.48 * d.burst * (1 - d.overcast)
+    const deckShape = d.overcast + 0.81 * d.burst * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
@@ -211,6 +212,7 @@ class FieldSky implements Sky {
     v.uNight.value = night
     v.uFrostFog.value = d.fog
     v.uRainFog.value = d.rain * d.overcast
+    v.uBreak.value = d.burst
     v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)
     v.uSunFace.value.y += RAD * 0.33 * (1 - smoothstep(-0.6, 3.8, e))

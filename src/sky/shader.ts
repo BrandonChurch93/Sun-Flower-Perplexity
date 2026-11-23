@@ -69,20 +69,26 @@ float toGap(vec3 p, vec3 d, float rough) {
   // volume instead of cutting the same silhouette at every depth.
   float level = heightAt(p);
   q += vec2(0.031, -0.018) * clamp(level - 2.0, -1.0, 2.0) * uEffects.w;
-  vec2 seam = vec2(0.79 * q.x + 0.61 * q.y, -0.61 * q.x + 0.79 * q.y);
+  vec2 seam = vec2(0.91 * q.x + 0.41 * q.y, -0.41 * q.x + 0.91 * q.y);
   float width = 0.047 + 0.028 * uEffects.w;
   float crag = sin(49.0 * seam.x + 12.0 * seam.y) * sin(19.0 * seam.y + 2.4 * level);
   float lip = sin(31.0 * seam.x + 42.0 * seam.y + 0.82 * level) * (0.023 * uEffects.w);
   float notch = (rough - 0.48) * min(1.0, 5.0 * length(q));
-  float outline = length(vec2(seam.x / (2.9 * width), (seam.y + lip) / width));
-  outline += min(1.0, 10.0 * length(q)) * (0.29 * crag + 2.70 * notch);
-  float torn = 1.0 - smoothstep(0.15, 1.62, outline);
+  float wavering = 0.011 * sin(86.0 * seam.x - 7.0 * seam.y + level)
+    + 0.020 * sin(41.0 * seam.x - 9.0 * seam.y - level * 1.9);
+  float slashed = abs(seam.y + lip + wavering) / width;
+  float tail = abs(seam.x + 0.071) / (4.65 * width);
+  float outline = slashed + pow(tail, 1.9);
+  outline += min(1.0, 13.0 * length(q)) * (0.44 * crag + 4.4 * notch);
+  outline += (0.17 + 0.27 * smoothstep(0.03, 0.20, abs(seam.x))) * sin(137.0 * seam.x + 23.0 * seam.y + 3.2 * level);
+  float torn = 1.0 - smoothstep(0.27, 1.30, outline);
   return max(ordinary, torn * smoothstep(0.0, 0.67, uEffects.w));
 }
 
 float profile(vec4 field, float tv, float storm) {
   float roll = smoothstep(0.34, 0.68, 0.55 * field.r + 0.34 * field.g + 0.11 * field.b);
-  float floorShape = 0.009 + storm * (0.47 * roll + 0.13 * field.r);
+  float fold = smoothstep(0.22, 0.73, 0.53 * field.g + 0.47 * field.b);
+  float floorShape = 0.009 + storm * (0.40 * roll + 0.13 * field.r + 0.16 * fold);
   float cap = smoothstep(0.29, 0.67, field.r + 0.23 * (field.g - 0.5) + 0.15 * (field.b - 0.5));
   float tower = mix(0.29 + 0.76 * cap, 0.77 + 0.31 * field.g, storm);
   float bottom = smoothstep(floorShape, floorShape + mix(0.045, 0.073, storm), tv);
@@ -136,7 +142,7 @@ float densityAt(vec3 p, vec3 d, float t, float base, float dep, out float gap, o
   textureValue.y = 0.32 * textureValue.y + 0.68 * small;
   float contrast = max(uWeather.y, smoothstep(0.12, 0.40, uWeather.x));
   float bite = (mix(0.41, 0.32, uWeather.y) + 0.34 * nearCloud * contrast) * max(0.06, 0.94 - 1.22 * small);
-  float body = max(0.0, sc - bite + (small - 0.48) * 0.73 * nearCloud * contrast) * profileWeight;
+  float body = max(0.0, sc - bite + (small - 0.48) * (0.73 + 0.84 * uWeather.y) * nearCloud * contrast) * profileWeight;
   float sunFilter = mix(1.0, 0.009 + 0.99 * (1.0 - uWeather.z) * (1.0 - uWeather.z), gap * (0.84 + 0.16 * uEffects.w));
   float fog = 1.0 - 0.87 * smoothstep(0.14, 0.85, uWeather.w);
   return (body + 1.35 * body * body) * sunFilter * fog * mix(6.2, 3.7, uWeather.y);
@@ -192,15 +198,17 @@ void main() {
   float blueWindow = dayTower * (1.0 - st) * smoothstep(0.027, 0.23, d.y) * (1.0 - smoothstep(0.89, 0.998, mu));
   clear *= mix(vec3(1.0), vec3(0.38, 0.59, 0.68), blueWindow);
   vec2 around = normalize(d.xz + vec2(1e-7));
-  float hazeStrength = exp(-max(0.0, d.y) * 14.0);
+  float hazeStrength = exp(-max(0.0, d.y) * 20.0);
   vec4 heads = f(vec3(around.x * 0.82 - 0.032 * uTravel.x, 0.21 + around.y * 0.68, 0.41 + 0.023 * uEvolve));
-  float distantSlot = smoothstep(0.32, 0.73, 0.76 * heads.r + 0.24 * heads.g);
-  vec3 slateHaze = uDeck * (0.48 + (2.7 + 2.4 * distantSlot) * hazeStrength);
-  float crest = 0.058 + 0.046 * distantSlot + 0.053 * (heads.b - 0.44);
-  float opening = 1.0 - smoothstep(crest - 0.039, crest + 0.048, d.y);
-  float distantLight = 0.64 + 0.36 * exp(-max(0.0, 1.0 - mu) * 9.8);
-  float patchHaze = opening * (13.0 + 19.5 * distantSlot) * distantLight * mix(0.72, 1.0, uEffects.y) * (1.0 - 0.28 * sunBreak);
-  vec3 gradedGap = dot(uDeck, vec3(0.2126, 0.7152, 0.0722)) * vec3(1.17, 1.11, 1.02);
+  vec4 scallops = f(vec3(around.x * 1.86 - 0.035 * uTravel.x, 0.46 + around.y * 1.38, 0.54 + 0.031 * uEvolve));
+  float distantSlot = smoothstep(0.26, 0.77, 0.57 * heads.r + 0.26 * heads.g + 0.17 * scallops.r);
+  vec3 slateHaze = uDeck * (0.43 + (1.54 + 1.55 * distantSlot) * hazeStrength);
+  float crest = 0.030 + 0.035 * distantSlot + 0.053 * (heads.b - 0.44) + 0.035 * (scallops.g - 0.43);
+  float opening = 1.0 - smoothstep(crest - 0.014, crest + 0.028, d.y);
+  float distantLight = 0.31 + 0.69 * exp(-angle * 11.0);
+  float patchHaze = opening * (7.8 + 24.0 * distantSlot * distantSlot) * distantLight * (0.79 + 0.49 * scallops.r)
+    * mix(0.87, 1.0, uEffects.y) * (1.0 - 0.47 * sunBreak);
+  vec3 gradedGap = dot(uDeck, vec3(0.2126, 0.7152, 0.0722)) * vec3(1.24, 1.18, 1.12);
   vec3 air = mix(clear, slateHaze, min(1.0, st * 1.01));
   float broad = exp(-max(0.0, d.y) * 19.0);
   vec3 sky = thinClouds(d, air, mu);
@@ -213,21 +221,14 @@ void main() {
   float span = stop - start;
   float dt = 1.0 / float(uSteps);
   float flashDot = max(0.0, 1.0 - dot(d, uFlash));
-  float flashHalo = 0.0;
-  float flashCore = 0.0;
-  float flashDepth = 0.0;
-  if (uEffects.z > 0.0004 && flashDot < 0.095) {
-    // A source inside the deck, at the shared strike direction. Fractured
-    // bright cloud faces around it, not a bolt or a painted circle.
-    flashDepth = foot(2.05, uFlash);
-    vec3 crossFlash = normalize(vec3(uFlash.z, 0.0, -uFlash.x));
-    vec2 q = vec2(dot(d, crossFlash), dot(d, cross(uFlash, crossFlash)));
-    vec2 slant = vec2(0.91 * q.x + 0.42 * q.y, -0.42 * q.x + 0.91 * q.y);
-    vec4 corona = f(d * 2.9 + vec3(0.31, 0.21, uEvolve * 0.02 + 0.17));
-    float fray = smoothstep(0.33, 0.70, 0.60 * corona.r + 0.25 * corona.g + 0.15 * corona.b);
-    float radius = length(slant * vec2(38.0, 50.0));
-    flashHalo = uEffects.z * exp(-flashDot * 126.0) * (0.42 + 0.53 * fray);
-    flashCore = uEffects.z * exp(-radius * radius / (0.72 + 0.72 * fray));
+  bool strike = uEffects.z > 0.0004 && flashDot < 0.065;
+  vec3 source = vec3(0.0);
+  vec3 strikeSide = vec3(0.0);
+  vec3 strikeUp = vec3(0.0);
+  if (strike) {
+    source = uFlash * foot(2.16, uFlash);
+    strikeSide = normalize(vec3(uFlash.z, 0.0, -uFlash.x));
+    strikeUp = cross(uFlash, strikeSide);
   }
 
   if (span > 0.0 && d.y > -0.018) {
@@ -252,15 +253,17 @@ void main() {
     vec2 deckPos = rotateCloud(pocketPos.xz - uTravel);
     vec4 pocket = f(vec3(deckPos.x * 0.053 + 0.32, heightAt(pocketPos) * 0.18 + 0.08, deckPos.y * 0.073 - 0.19));
     float well = smoothstep(0.27, 0.66, 0.58 * pocket.r + 0.42 * pocket.g);
-    float ceilingLight = 0.09 + 2.4 * well * well + 0.49 * smoothstep(0.29, 0.69, belly.g);
+    float ceilingLight = 0.14 + 2.38 * well * well + 0.46 * smoothstep(0.29, 0.69, belly.g);
     vec3 sunSide = normalize(vec3(uSun.z, 0.0, -uSun.x) + vec3(1e-7));
-    float lowerDistance = (d.y - uSun.y + 0.133 + 0.031 * (pocket.g - 0.5)) * 28.0;
+    float lowerDistance = (d.y - uSun.y + 0.122 + 0.035 * (pocket.g - 0.5)) * 31.0;
     float sideDistance = (dot(d, sunSide) - 0.102) * 11.0;
     float roseLight = sunBreak * exp(-lowerDistance * lowerDistance - sideDistance * sideDistance)
       * smoothstep(0.17, 0.60, 0.55 * belly.r + 0.45 * pocket.g);
     for (int i = 0; i < 60; i++) {
       if (i >= uSteps || through < 0.009) break;
-      float offset = mix(0.13 + 0.73 * region, 0.04 + 0.92 * fract(jitter + float(i) * 0.61803399), mix(0.70, 0.96, st));
+      float dither = fract(jitter + float(i) * 0.61803399);
+      float offset = mix(0.13 + 0.73 * region, 0.04 + 0.92 * dither, mix(0.70, 0.96, st));
+      offset = mix(offset, 0.27 + 0.46 * dither, (strike ? 0.70 : 0.0) * smoothstep(0.17, 0.65, uEffects.z));
       float k = (float(i) + offset) * dt;
       float at = start + span * (k * (1.0 - concentrated) + k * k * concentrated);
       float center = (float(i) + 0.5) * dt;
@@ -281,15 +284,17 @@ void main() {
       float sheltered = 1.0 - smoothstep(0.038, 0.30, d.y);
       float buried = exp(-density * 0.18) * (0.40 + 0.60 * occlusion);
       float rollDepth = smoothstep(0.25, 0.61, 0.57 * relief.x + 0.43 * relief.y);
-      float bellyShade = 0.12 + (2.33 * rollDepth * rollDepth + 0.37 * hanging + 0.08 * top) * buried;
+      float froth = smoothstep(0.28, 0.68, 0.58 * relief.y + 0.42 * relief.x);
+      float bellyShade = 0.068 + (3.60 * rollDepth * rollDepth + 0.26 * hanging + 0.10 * top) * buried;
+      bellyShade *= (0.53 + 0.88 * froth) * (0.69 + 0.59 * well);
       vec3 enclosed = uDeck * bellyShade * (0.76 + 0.64 * sheltered) * ceilingLight;
-      enclosed *= mix(vec3(1.0), vec3(0.72, 0.99, 1.22), sunBreak);
+      enclosed *= mix(vec3(1.0), vec3(0.70, 0.91, 1.09), sunBreak);
       vec3 beforeSun = highHint * (0.49 + 0.97 * top) * (0.61 + 0.91 * vein) * occlusion;
       vec3 daylight = (uUpper * vec3(0.086, 0.13, 0.193) + ambientGrey * 0.036 + 0.026 * uLower) * (0.51 + 0.60 * vein) * (0.49 + 0.51 * occlusion);
       daylight += ambientGrey * crown * (0.10 + 0.40 * occlusion);
       vec3 dome = mix(mix(beforeSun, daylight, dayTower), enclosed, st);
       vec3 bounce = uLower * vec3(0.143, 0.124, 0.109) * (1.0 - st) * (1.0 - top) * (1.0 - 0.67 * dayTower);
-      float sunVisible = mix(1.0, 0.017 + 0.86 * sunBreak * gap, st);
+      float sunVisible = mix(1.0, 0.016 + 1.16 * sunBreak * gap, st) * (1.0 - 0.68 * sunBreak * (1.0 - gap));
       vec3 beam = uCloudLight * (side + forward) * lit * powder * sunVisible * mix(1.0, 0.31 + 0.69 * crown, dayTower * (1.0 - st));
       beam += uCloudLight * (1.0 - st) * dayTower * (0.008 + 0.48 * crown) * (0.86 + 0.23 * vein) * pow(lit, 0.72) * exp(-0.23 * density);
       float underside = (1.0 - smoothstep(0.008, 0.31, uSun.y)) * (1.0 - top);
@@ -300,20 +305,36 @@ void main() {
         float skin = exp(-0.38 * density) * (0.38 + 0.62 * vein);
         float softLit = 0.25 * lit + 0.75 * exp(-0.36 * shade);
         vec3 gold = uCloudLight * vec3(1.04, 0.77, 0.54);
-        beam += gold * skin * softLit * (0.29 * breakGlow + 0.31 * goldenAir * (0.56 + 0.44 * underside));
-        beam += uCloudLight * vec3(0.73, 0.15, 0.21) * (0.44 * roseLight * skin * softLit);
+        float facingRim = (0.44 + 0.56 * smoothstep(0.19, 0.66, relief.x));
+        float rim = gap * (0.11 + 1.68 * vein * vein) * (1.0 - exp(-1.8 * density)) * facingRim;
+        beam += gold * (0.55 * sunBreak * rim * softLit + skin * softLit * (0.31 * goldenAir * (0.56 + 0.44 * underside)));
+        beam += uCloudLight * vec3(0.82, 0.16, 0.25) * (0.74 * roseLight * skin * (0.37 + 0.63 * softLit));
         dome *= mix(vec3(1.0), vec3(0.76, 0.93, 1.15), uGolden * (1.0 - 0.58 * goldenAir));
       }
       vec3 cloud = dome * powder + bounce + beam;
-      if (flashDepth > 0.0) {
-        float nearStrike = exp(-0.17 * abs(at - flashDepth));
-        float channel = smoothstep(0.34, 0.66, 0.47 * relief.x + 0.53 * relief.y);
-        float litFace = (0.48 + 1.25 * channel) * (0.49 + 0.51 * exp(-0.55 * density));
-        cloud += nearStrike * (vec3(0.36, 0.65, 1.0) * flashHalo * (0.23 + 0.72 * litFace)
-          + vec3(0.77, 0.90, 1.0) * flashCore * (1.10 + 4.2 * litFace));
+      if (strike) {
+        // Two buried segments light different faces. Both are behind the
+        // first layer and neither is drawn directly.
+        vec3 delta = p - source;
+        vec3 local = vec3(dot(delta, strikeSide), dot(delta, strikeUp), dot(delta, uFlash));
+        float x = 0.83 * local.x + 0.55 * local.y;
+        float y = -0.55 * local.x + 0.83 * local.y;
+        float veinY = y + 0.16 * x * x - 0.31;
+        float mainLight = 0.53 * x * x + 3.88 * veinY * veinY + 0.18 * local.z * local.z;
+        vec3 branch = vec3((x - 0.91) * 0.91, (y + 0.74) * 1.7, (local.z + 0.16) * 0.43);
+        float spread = exp(-0.81 * mainLight) + 0.70 * exp(-dot(branch, branch));
+        if (spread > 0.016) {
+          vec3 mid = p - delta * 0.28;
+          vec4 blocker = weatherField(mid, heightAt(mid));
+          float fold = smoothstep(0.41, 0.65, 0.47 * blocker.r + 0.31 * blocker.g + 0.22 * blocker.b);
+          float transport = exp(-(0.36 + 1.65 * fold) * min(length(delta) * 0.46, 1.9));
+          float face = (0.18 + 3.01 * froth * (0.34 + 0.66 * froth)) * exp(-0.40 * density);
+          float spill = 0.18 * exp(-mainLight * 0.31);
+          cloud += uEffects.z * (vec3(0.29, 0.64, 0.91) * spill + vec3(0.69, 0.91, 1.08) * spread * transport * face * 4.3);
+        }
       }
       float haze = 1.0 - exp(-at * acrossAir);
-      vec3 lost = mix(clear * (0.66 + 0.21 * forward), slateHaze * (0.35 + 0.50 * broad) + gradedGap * patchHaze * 0.39, st);
+      vec3 lost = mix(clear * (0.66 + 0.21 * forward), slateHaze * (0.35 + 0.50 * broad) + gradedGap * patchHaze * 0.22, st);
       cloud = mix(cloud, lost, haze);
       float stepA = 1.0 - exp(-density * ds);
       radiation += through * stepA * cloud;
@@ -326,21 +347,23 @@ void main() {
     }
   }
   // Warm air seen beyond the tear, only where the volume transmits it.
-  sky = mix(sky, clear * vec3(0.95, 0.73, 0.52), breakGlow * 0.91);
+  sky = mix(sky, clear * vec3(1.30, 0.93, 0.60), breakGlow * 0.82);
   vec3 result = radiation + through * sky;
-  result += gradedGap * patchHaze * st * (0.35 + 0.57 * through);
+  result += gradedGap * patchHaze * st * (0.23 + 0.66 * through);
   if (uEffects.y > 0.01 && d.y < 0.29 && d.y > -0.009) {
     float tilt = d.y * 0.25;
     vec2 slant = around + tilt * vec2(around.y, -around.x);
     vec3 adv = vec3(slant.x * 1.21 - 0.027 * uTravel.x, 0.247 + 0.009 * uRealSky, 0.071 * uEvolve + slant.y * 0.85);
     vec4 veil = f(adv);
-    float band = smoothstep(0.41, 0.65, 0.67 * veil.r + 0.33 * veil.g);
+    float band = smoothstep(0.31, 0.72, 0.63 * veil.r + 0.37 * veil.g);
     vec4 strands = f(vec3(slant.x * 2.63 + d.y * (veil.b - 0.5) * 0.085, 0.181 + d.y * 0.11, 0.71 + uRealSky * 0.012 + slant.y * 1.4));
     float streaks = 0.68 * strands.g + 0.32 * strands.b;
-    band *= 0.43 + 0.72 * smoothstep(0.27, 0.73, streaks);
-    float ceiling = 1.0 - smoothstep(0.082 + 0.14 * veil.g, 0.118 + 0.16 * veil.g, d.y);
-    float rain = band * ceiling * uEffects.y * (0.38 + 0.19 * opening) * smoothstep(-0.012, 0.021, d.y);
-    vec3 curtain = uDeck * (0.30 + 0.58 * veil.g);
+    band *= 0.24 + 1.02 * smoothstep(0.26, 0.76, streaks);
+    float lengthOfRain = 0.051 + 0.16 * veil.g * veil.g + 0.065 * streaks;
+    float ceiling = 1.0 - smoothstep(lengthOfRain - 0.023, lengthOfRain + 0.048, d.y);
+    float trailing = 0.35 + 0.65 * smoothstep(0.014 + 0.040 * strands.g, 0.073 + 0.045 * strands.b, d.y);
+    float rain = band * ceiling * trailing * uEffects.y * (0.60 + 0.34 * opening) * smoothstep(-0.014, 0.018, d.y);
+    vec3 curtain = uDeck * (0.43 + 1.15 * veil.g);
     result = mix(result, curtain, rain);
   }
   if (sunBreak > 0.0) {
@@ -373,6 +396,7 @@ uniform float uElevation;
 uniform float uNight;
 uniform float uFrostFog;
 uniform float uRainFog;
+uniform float uBreak;
 uniform float uMarchFilter;
 uniform vec3 uSunFace;
 uniform vec3 uMoon;
@@ -438,7 +462,10 @@ vec3 sunAt(vec3 d, float blur) {
   float limb = mix(0.62 + 0.38 * sqrt(max(0.0, 1.0 - x * x)), 0.89, smoothstep(0.002, 0.015, blur));
   float energy = squash * sr * sr / (r.x * r.y);
   vec3 center = textureLod(tSky, where(uSunFace), 0.0).aaa;
-  return uDisc * center * energy * disk * limb * smoothstep(-0.003, 0.0011, d.y);
+  float rupture = smoothstep(0.06, 0.85, uBreak);
+  float broken = exp(-dot(p, p) * 0.34);
+  float glow = mix(disk * limb, 0.042 * broken, rupture);
+  return uDisc * center * energy * glow * smoothstep(-0.003, 0.0011, d.y);
 }
 
 vec3 moonAt(vec3 d, vec3 air, float blur, float visible) {
