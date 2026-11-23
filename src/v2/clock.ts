@@ -377,8 +377,19 @@ function fairAt(world: number): number {
   return lerp(FAIR[i], FAIR[i + 1], smooth(w - i))
 }
 
+// By night the fair weather cloud thins to half and closes again by sunrise, so that the stars stand in more than the gaps of a day's sky.
+const NIGHT_CLEAR = 0.5
+
+function nightClear(world: number): number {
+  const phase = world - Math.floor(world)
+  if (phase <= DAY) return 1
+  const s = Math.sin((Math.PI * (phase - DAY)) / (1 - DAY))
+  return 1 - NIGHT_CLEAR * s * s
+}
+
 export function coverAtBar(b: number): number {
-  const fair = fairAt(worldAtBar(b))
+  const world = worldAtBar(b)
+  const fair = fairAt(world) * nightClear(world)
   const frost = fogAtBar(b)
   const over = overcastAtBar(b)
   return Math.max(lerp(fair, 0.12, frost), lerp(fair, 1, Math.pow(over, 0.55)))
