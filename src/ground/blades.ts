@@ -249,7 +249,7 @@ ${beadLook}
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec2 p = vWorld.xz;
-  vec3 n = normalize(vNormal);
+  vec3 n = unit(vNormal);
   if (vKind > 1.5) {
     float shadow = lowSun(sunShadow(vWorld, n, uShadowTexelM * 1.5), 1.0, vWorld.y) * cropLight(p, -dot(p, uToward));
     outColor = finish(beadColor(n, v, shadow), vWorld, vDepth, -1.0);
