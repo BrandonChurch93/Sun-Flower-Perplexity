@@ -270,6 +270,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       const more = gaps.length > SHOWN_GAPS ? `, and ${gaps.length - SHOWN_GAPS} more in the file` : ''
       list.append(make('span', css.value, gaps.length ? `${gaps.length}: ${shown.join(', ')}${more}` : 'none'))
       reportBody.append(list)
+      reportGroup.scrollIntoView({ block: 'start' })
     },
     busy(on) {
       for (const b of [choose, record, check, tryLow]) b.disabled = on

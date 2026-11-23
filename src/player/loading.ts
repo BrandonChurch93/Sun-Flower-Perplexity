@@ -98,7 +98,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   let beat = performance.now()
   const sceneText = (): string => {
     const made = madeSoFar()
-    return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures${made.programs > 0 ? ` and ${made.programs} programs` : ''} made`
+    return `${part}${files} ${files === 1 ? 'file' : 'files'}, ${(bytes / 1048576).toFixed(1)} MB fetched, ${made.textures} textures made`
   }
   let watching = true
   const watch = (now: number) => {
@@ -146,7 +146,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${of}`, scriptMs: Math.round(film.cost.script ?? 0) })
       warmCount.textContent = `${done} of ${of}`
       warmFill.style.setProperty('--at', String(done / of))
-      state.textContent = done >= of ? 'Ready' : `Warming the film, ${done + 1} of ${of}`
+      state.textContent = done >= of ? 'One last pass over the whole scene' : `Warming the film, ${done + 1} of ${of}`
     },
     again(text) {
       warmCount.textContent = 'waiting'
