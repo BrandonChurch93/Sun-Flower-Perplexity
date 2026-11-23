@@ -27,6 +27,9 @@ export interface Place { name: string; frame: number; rows: WriteRow[]; drawSeco
 // The path from the film to an array, cut into the object that owns it and the part of it that is written.
 export function owned(owner: string): { object: string; part: string } {
   const s = owner.replace(/^film\./, '').replace(/\.array$/, '').replace(/\.children\[/g, '[').replace(/\.parts\[([^\]]+)\]\.meshes\[/g, ' $1 [')
+  // The hairs chosen for one held lens are kept as a set of two textures, which the uniforms uHairs and uPicks are pointed at while that lens is held.
+  const lens = /^(.*?)\.lenses\[(\d+)\]\.(texture|pickTexture)\b/.exec(s)
+  if (lens) return { object: `${lens[1]} lens ${lens[2]}`, part: lens[3] === 'texture' ? 'uHairs' : 'uPicks' }
   const uniform = /^(.*?)\.(?:material\.)?uniforms\.(\w+)\.value\b/.exec(s)
   if (uniform) return { object: uniform[1], part: uniform[2] }
   const attribute = /^(.*?)\.geometry\.(?:attributes\.(\w+)|(index))/.exec(s)
