@@ -81,7 +81,7 @@ export async function run(args: Args): Promise<void> {
   finish({
     check: 'made',
     sentence: SENTENCE,
-    subject: broken ? `a film that makes a texture and a program at one frame (${run})` : 'the film',
+    subject: broken === 'first-draw' ? `a film that draws a mesh for the first time at one frame, with nothing left to compile or send: only a vertex array is made (${run})` : broken ? `a film that makes a texture and a program at one frame (${run})` : 'the film',
     broken,
     complete,
     findings,

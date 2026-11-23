@@ -85,6 +85,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
+| `play --break first-draw --at 900 --from 890 --to 910`, then `made --break first-draw --from 890 --to 910` | a mesh is drawn for the first time at frame 900, its geometry and material already drawn on others: only a vertex array is made |
 | `pure --break dice --frames 159,1429,2699,3651` | the camera turns by a throw of `Math.random` |
 | `pure --break memory --frames 159,1429,2699,3651` | the camera turns by how many frames were drawn before |
 

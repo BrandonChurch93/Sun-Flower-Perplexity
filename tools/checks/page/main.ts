@@ -105,6 +105,27 @@ function lateMesh(): THREE.Mesh {
   return mesh
 }
 
+// The fault of a first draw the warming missed: a mesh whose geometry and whose material have both been drawn while warming, on other meshes, and which is itself hidden until its frame.
+// Nothing is left to compile or to send when it shows; only its vertex array is made.
+let firstAt = -1
+let hidden: THREE.Mesh | null = null
+function hideOne(): void {
+  const shape = new THREE.PlaneGeometry(0.02, 0.02)
+  const plain = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide })
+  const other = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide })
+  const place = (m: THREE.Mesh, x: number): THREE.Mesh => {
+    m.frustumCulled = false
+    m.position.set(x, 0.3, 0)
+    m.updateMatrixWorld(true)
+    film.scene.add(m)
+    return m
+  }
+  place(new THREE.Mesh(shape, plain), -0.03)
+  place(new THREE.Mesh(new THREE.PlaneGeometry(0.02, 0.02), other), 0.03)
+  hidden = place(new THREE.Mesh(shape, other), 0)
+  hidden.visible = false
+}
+
 // Whose array is this: the path from the film to it, through the film's own objects.
 let owners: Map<object, string> | null = null
 function ownersOf(): Map<object, string> {
@@ -159,6 +180,7 @@ window.checks = {
   async draw(frame, tier, png) {
     if (cutFrom >= 0) film.view.fixed = frame >= cutFrom ? views.crane : base
     if (madeAt === frame) film.scene.add(lateMesh())
+    if (hidden) hidden.visible = frame >= firstAt
     if (dice) film.view.azimuthDeg = 0.4 * Math.random()
     if (memory) film.view.azimuthDeg = 0.05 * drawnBefore
     drawnBefore++
@@ -221,6 +243,10 @@ window.checks = {
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
     else if (kind === 'made') madeAt = a
+    else if (kind === 'first-draw') {
+      firstAt = a
+      hideOne()
+    }
     else if (kind === 'dice') dice = true
     else if (kind === 'memory') memory = true
     else if (kind === 'grow') grow = { from: a, to: b, rate: 0.05 }
