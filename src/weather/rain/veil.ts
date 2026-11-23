@@ -83,6 +83,8 @@ export class Veil {
   constructor(lit: Record<string, THREE.IUniform>) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+    this.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
     this.geometry.instanceCount = SHEETS_M.length
     const surface = makeSurface({ name: 'rain veil', vertex, fragment, uniforms: lit, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false })
     this.mesh = new THREE.Mesh(this.geometry, surface.main)

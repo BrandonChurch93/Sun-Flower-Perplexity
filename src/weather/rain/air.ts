@@ -180,7 +180,9 @@ float streak() {
   float swing = 0.72 + 0.28 * sin(vWhen * (9.0 + 22.0 * vSeed) + 40.0 * vSeed);
   float core = exp(-3.0 * u / max(vSeen, 0.08));
   float body = (1.0 - u) * (1.0 - u);
-  return saturate(vCover * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
+  // A falling drop shows the sky only while it is flat to the lens: the middle of its path is lit and both ends fade, each drop over its own share.
+  float lit = exp(-pow((vWhen - 0.5) / (0.16 + 0.2 * fract(vSeed * 3.7)), 2.0));
+  return saturate(vCover * lit * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
 }
 `
 
@@ -248,6 +250,8 @@ export class AirLayer {
   constructor(readonly spec: LayerSpec, lit: Record<string, THREE.IUniform>) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+    this.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
     this.geometry.instanceCount = spec.count[0]
     this.uniforms = {
       ...lit,
@@ -297,6 +301,8 @@ export class HeavyLayer {
   constructor(lit: Record<string, THREE.IUniform>, gain: number) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
     this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    // The renderer asks every mesh for a sphere to sort it by and cannot make one from a position of two numbers.
+    this.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1)
     this.drop = new THREE.InstancedBufferAttribute(this.data, 4)
     this.drop.setUsage(THREE.DynamicDrawUsage)
     this.geometry.setAttribute('drop', this.drop)
