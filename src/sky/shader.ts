@@ -247,7 +247,7 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
   float drift = 0.0042 * (0.69 * uTravel.x - 0.31 * uTravel.y);
   float along = az - drift;
   float lit = smoothstep(-12.0, -5.5, uElevation) * (1.0 - smoothstep(6.0, 17.0, uElevation));
-  vec3 red = vec3(0.29, 0.055, 0.028) * lit * (0.30 + 0.70 * exp(-16.0 * theta));
+  vec3 red = vec3(0.32, 0.083, 0.037) * lit * (0.35 + 0.65 * exp(-15.0 * theta));
   float clearDisk = 1.0 - 0.80 * exp(-1840.0 * theta) * smoothstep(-1.0, 0.0, uElevation);
   vec3 outAir = air;
   float transmission = 1.0;
@@ -258,18 +258,22 @@ vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
     float strip = (along - centre) / span;
     if (abs(strip) > 1.13) continue;
     vec4 flow = f(vec3(0.68 * along + 0.217 * k, 0.24 + 0.141 * k + 0.022 * uEvolve, 0.58 + k * 0.83));
-    float run = 1.0 - smoothstep(0.32, 1.03, abs(strip + 0.18 * (flow.a - 0.5)));
+    float run = 1.0 - smoothstep(0.19, 1.03, abs(strip + 0.28 * (flow.a - 0.5)));
+    vec3 ribs = f(vec3(2.68 * along - 0.48 * k, 0.41 + k * 0.29 + 0.023 * uEvolve, flow.a * 0.26 + 0.87)).rgb;
+    float clumps = smoothstep(0.27, 0.67, 0.39 * flow.r + 0.61 * ribs.r);
     float level = (i == 0 ? 0.028 : (i == 1 ? mix(0.073, 0.060, uFinale) : mix(0.131, 0.094, uFinale)))
-      + (0.017 - 0.003 * k) * (flow.g - 0.5) + 0.006 * sin(6.1 * along + 2.41 * k);
-    float width = (0.0105 + 0.0025 * flow.b) * (1.0 - 0.09 * k) * mix(1.0, 0.78, uFinale);
+      + (0.028 - 0.003 * k) * (flow.g - 0.5) + 0.015 * (ribs.b - 0.5)
+      + (0.012 + 0.005 * k) * sin(6.1 * along + 2.41 * k) + 0.006 * sin(13.5 * along - 1.64 * k);
+    float width = (0.0065 + 0.012 * clumps) * (0.59 + 0.41 * run) * (1.0 - 0.073 * k) * mix(1.0, 0.78, uFinale);
     float y = (d.y - level) / width;
     if (abs(y) > 2.2) continue;
     float wisp = f(vec3(1.46 * along + 0.77 * k, 0.11 + 0.057 * y, 0.43 + 0.19 * k + 0.024 * uEvolve)).g;
-    float cloud = exp(-0.90 * squared(y + 0.24 * (wisp - 0.5))) * run * (0.29 + 0.71 * smoothstep(0.27, 0.68, flow.r));
-    cloud *= (0.80 + 0.20 * wisp) * clearDisk * (1.0 - smoothstep(limit - 0.020, limit, d.y));
-    float underside = exp(-2.2 * squared(y + 0.62));
+    float mass = (0.21 + 0.79 * clumps) * run * clearDisk * (1.0 - smoothstep(limit - 0.019, limit, d.y));
+    float ragged = 0.66 * (wisp - 0.5) + 0.32 * (ribs.g - 0.5);
+    float cloud = exp(-1.08 * squared(y - 0.32 + ragged)) * mass * (0.69 + 0.31 * wisp);
+    float underside = exp(-3.6 * squared(y + 0.55 + 1.25 * ragged)) * mass;
     vec3 body = air * vec3(0.26, 0.38, 0.58) + vec3(0.003, 0.006, 0.010);
-    outAir = mix(outAir, body, 0.85 * cloud) + red * cloud * (0.10 + 1.32 * underside) * (0.59 + 0.41 * wisp);
+    outAir = mix(outAir, body, 0.94 * cloud) + red * (0.018 * cloud + 1.13 * underside) * (0.34 + 0.66 * wisp);
     transmission *= 1.0 - 0.88 * cloud;
   }
   return vec4(outAir, transmission);
