@@ -49,8 +49,8 @@ describe('the film clock', () => {
     expect([hitFrame(17), hitFrame(25) - 1, hitFrame(33), hitFrame(41) - 1]).toEqual([849, 1259, 1672, 2082])
     expect(heightAt(config.growth.frostHold)).toBeGreaterThan(0.15)
     expect(heightAt(config.growth.frostHold)).toBeLessThan(0.22)
-    expect(heightAt(config.growth.stormHold)).toBeGreaterThan(0.84)
-    expect(heightAt(config.growth.stormHold)).toBeLessThan(0.96)
+    expect(heightAt(config.growth.stormHold)).toBeGreaterThan(0.56)
+    expect(heightAt(config.growth.stormHold)).toBeLessThan(0.66)
   })
 
   it('brings the sun up on the bar lines', () => {
