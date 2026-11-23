@@ -11,12 +11,12 @@ import { twilights, type Twilight } from './lib/stride.ts'
 
 // The proof by the picture that a night does not flicker. Through each dusk the mean luminance of the frame may only fall, through each dawn only rise,
 // and from one frame to the next it may not move by more than a set step. Read from the frames that `play` drew.
-//   npm run checks -- nights --step 14                 another limit on the step, in 0 to 255
+//   npm run checks -- nights --step 20                 another limit on the step, in 0 to 255
 //   npm run checks -- nights --break picture-quick     every night three times as fast (every third of its frames): must fail on the step
 //   npm run checks -- nights --break picture-bounce    two frames of a dusk the wrong way round: must fail on the direction
 
-// Measured on sky-0 at 320 x 180: the steepest frame of a dusk or dawn moves the mean luminance by 10.5 to 17.7 of 255.
-export const DUSK_STEP = 20
+// The Builder's limit for the time lapse. Measured at 320 x 180: the steepest frame of a dusk or dawn moved the mean luminance by 10.5 to 17.7 of 255 on sky-0 and 27.6 on sky-b before the sun was slowed at the horizon.
+export const DUSK_STEP = 14
 // A move the wrong way smaller than this is the grain of a draft frame, whose blur comes from the lens fill and its stipple alone: measured up to 1.5 of 255 where the far background is out of focus, under 0.3 elsewhere.
 // The direction is judged from the frame of the sunset to the last frame before the sunrise. The eight frames of day on either side are held to the step only: on sky-0 the frame brightens toward a sunset.
 const WRONG_WAY = 2
