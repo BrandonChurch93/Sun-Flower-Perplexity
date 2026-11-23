@@ -6,7 +6,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | --- | --- | --- | --- |
 | `npm run checks -- nights` | day and night pass while it grows, and no night lasts or flickers | reads `play` for the dusks | 5 s |
 | `npm run checks -- holds` | in the frost and the storm the flower does not grow | 20 frames | 4 to 6 min |
-| `npm run checks -- cues` | everything lands on the music | no | 1 s |
+| `npm run checks -- cues` | everything lands on the music: each sunrise and sunset, each stroke of lightning, both holds, the rain, the bloom and each listed cut on its bar line. The last sun does not go under the horizon in the film: it sets behind the far ridge, so the last sunset is the moment the sun comes down to `SUN.last` of `src/v2/clock.ts`, its lower edge on the ridge | no | 1 s |
 | `npm run checks -- play --stride 6` | draws the film small for `nights`, `cuts` and `made` | 1,432 frames | about 1 hour in three runs side by side |
 | `npm run checks -- play` | the same, every frame | 3,810 frames | 2 to 3 hours |
 | `npm run checks -- cuts` | no hard cuts: the edges of the picture stay where they are from one frame to the next | reads `play` | 10 to 40 s |
@@ -14,6 +14,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- script` | no frame rate drop: the page's own script time in a frame, by part, inside the limits of `tools/checks/limits.json` | 13 windows of frames in a row, about 490 frames | about 30 min, 17 min with --frames 20; run it alone |
 | `npm run checks -- film` | the whole film small in one go: `play` on three pages, then `nights`, `cuts` and `made` in one table | 1,432 frames | 80 to 100 min |
 | `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61, or at `--frames 1688,1689,1690` | 8 frames | 4 min |
+| `npm run checks -- writes --from 849 --to 1262` | in a hold the flower does not grow, so nothing of it is written again: every frame of the stretch drawn in a row after the film's warming, and no frame inside a hold but its first, and no frame the film cuts on, may write into `uHairs` or `uPicks` (`--watch` names others) | every frame of the stretch | 414 frames in 45 to 75 min |
 | `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels: drawn in order, again backwards, and on a fresh page that has warmed as the film does before it plays (the first page draws without warming, so the warming may leave nothing behind that changes a pixel) | 42 frames and the warming | 12 to 15 min |
 | `npm run checks -- all` | one line for each check | no, or `--draw` | 5 s |
 | `npm run checks -- review` | the review page | `--draw` for the looks | 1 min |
@@ -102,6 +103,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `nights --plant --break plant-wet --night 9` | the moon steps up to 2.4 times as strong half way from the handover to midnight in the wet dusk of night 9, when the dusk's own fall no longer hides it: over the limit for a wet plant |
 | `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails, the mean of the sum passes |
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
+| `writes --from 1680 --to 1692 --break grow` | the plant's clock runs on inside the storm hold, so its hairs are written again |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
 | `cuts --break cut --from 984 --to 1016 --meant 1001` | the same broken film with a cut listed one frame beside its jump: the listed frame is left out and the jump at 1000 is still a hard cut. With `--meant 1000` it is left out, and said so. With `--meant 990` the list names a frame where the film does not cut: that fails too |

@@ -11,6 +11,7 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
+import { Keyed, keyGlsl, keyUniforms } from './keys.ts'
 import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
@@ -392,6 +393,13 @@ function quads(places: Float32Array): THREE.BufferGeometry {
 
 // The far field. Pictures of the simpler plants, drawn once a frame from the plants themselves as the camera sees them, stand in rows
 // past the last real plant. Past the pictures one carpet carries their color on. Under both lies the dark of the leaves.
+// A plant of the pictures stands across the lens: its list says how far across, and where that is on the ground is worked out as it is drawn,
+// so that a lens that turns writes no list.
+const picturePlaceGlsl = /* glsl */ `
+uniform vec3 uFarRight;
+Place fieldPlace() { return Place(vec4(uFarRight.xz * aPlace.x, aPlace.zw), aVary); }
+${keyGlsl}`
+
 export class FarField {
   readonly count: number
   readonly pictures: THREE.Mesh
@@ -404,6 +412,9 @@ export class FarField {
   private readonly sent: Float32Array[] = []
   private readonly sentStill: Float32Array[] = []
   private readonly shaped: Shaped[] = []
+  private readonly keyed: Keyed[] = []
+  // How many shapes the last frame laid.
+  laid = 0
   private readonly atlas: THREE.WebGLRenderTarget
   private readonly scene = new THREE.Scene()
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, 0, 0.1, 200)
@@ -444,7 +455,7 @@ export class FarField {
   private above = false
   private readonly local = farVariants.map(() => 0)
 
-  constructor(places: Float32Array) {
+  constructor(places: Float32Array, turns: number[]) {
     this.atlas = new THREE.WebGLRenderTarget(TILE_W * pictureCount, TILE_H, {
       type: THREE.HalfFloatType,
       format: THREE.RGBAFormat,
@@ -456,10 +467,12 @@ export class FarField {
     })
     this.atlas.texture.colorSpace = THREE.NoColorSpace
     this.uniforms.uAtlas.value = this.atlas.texture
-    farVariants.forEach((variant) => {
+    farVariants.forEach((variant, i) => {
       const spot = new THREE.InstancedInterleavedBuffer(new Float32Array(pictureTurns * PLACE), PLACE)
       spot.setUsage(THREE.DynamicDrawUsage)
-      const plant = new Plant({ detail: 'far', variant, places: spot })
+      const key = keyUniforms()
+      const plant = new Plant({ detail: 'far', variant, places: spot, place: { glsl: picturePlaceGlsl, uniforms: { ...key, uFarRight: this.uniforms.uRight } } })
+      this.keyed.push(new Keyed(plant, i, 'pictures', turns[i], key))
       plant.show(pictureTurns)
       this.spots.push(spot)
       this.stills.push(leavesApart(plant, pictureTurns))
@@ -497,12 +510,24 @@ export class FarField {
     for (const plant of this.plants) await plant.load(assets)
   }
 
-  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, felt: string, eyeHeightM: number, canopy: number, stand: number): void {
+  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, felt: string, eyeHeightM: number, canopy: number, stand: number, played: boolean): void {
     this.time = timeOpen
+    this.laid = 0
     this.plants.forEach((plant, i) => {
       const clock = kindTime(timeOpen, i, 'pictures')
+      const keyed = this.keyed[i]
+      if (played) {
+        keyed.set(now.t, clock)
+        this.shaped[i].forget()
+        this.laid += keyed.laid
+        this.local[i] = Math.atan2(keyed.axis.x, keyed.axis.z)
+        return
+      }
       const clockClose = kindTime(timeClose, i, 'pictures')
-      if (this.shaped[i].again(clock, clockClose, felt)) plant.prepare(clock, clockClose, open, close)
+      if (this.shaped[i].again(clock, clockClose, felt)) {
+        keyed.off()
+        plant.prepare(clock, clockClose, open, close)
+      }
       usePlant(plant.variant, null)
       const axis = headAt(clock, open).axis
       this.local[i] = Math.atan2(axis.x, axis.z)
@@ -550,7 +575,7 @@ export class FarField {
         const base = 0.25 + (j === 0 ? -0.5 : 0.7)
         // The last number is what a neighbor's carries: before the bloom its stalk, leaves, droop and bud, after it the nod and the size of its head.
         const code = early > 0 ? EARLY_CODE : Math.round(PICTURE_NODS[i * pictureTurns + j] * 64) + 0.5 * PICTURE_HEADS[i * pictureTurns + j]
-        placeTurned([rx * across, rz * across, base, 1, 0, 0, 0.5, code], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
+        placeTurned([across, 0, base, 1, 0, 0, 0.5, code], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
       }
       send(spot, this.sent[i], pictureTurns * PLACE)
       send(still, this.sentStill[i], pictureTurns * PLACE)
