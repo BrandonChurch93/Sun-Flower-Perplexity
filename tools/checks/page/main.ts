@@ -3,6 +3,7 @@ import type { Format, TierId } from '../../../src/config.ts'
 import { Film } from '../../../src/director/film.ts'
 import type { Moment, Quality } from '../../../src/v2/api.ts'
 import { installCounter, madeSince, madeSoFar, type Made } from '../../../src/v2/counter.ts'
+import { held } from '../../../src/v2/held.ts'
 import { later, now } from '../../../src/v2/now.ts'
 import { views, type ViewName } from '../../../src/v2/shots.ts'
 
@@ -32,6 +33,8 @@ export interface ChecksPage {
   // Where the page's own time went in the last frame drawn, in milliseconds by part: the film's own laps (film.cost), and beside them the time inside renderer.render
   // (draw), with the scene's and the shadow map's share of it. The first call hands the film its clock and starts that timer.
   cost(): Record<string, number>
+  // The lens the film holds for the frame last drawn (-1 where the plant grows), and the numbers each coat of hairs last chose its hairs by: a coat sends its hairs again when one of them changes.
+  lens(): { held: number; signs: { owner: string; numbers: number[] }[] }
 }
 
 declare global {
@@ -152,6 +155,7 @@ function hideOne(): void {
 
 // Whose array is this: the path from the film to it, through the film's own objects.
 let owners: Map<object, string> | null = null
+let signed: [Float64Array, string][] | null = null
 function ownersOf(): Map<object, string> {
   const out = new Map<object, string>()
   const seen = new Set<object>()
@@ -191,9 +195,17 @@ function ownersOf(): Map<object, string> {
   }
   return out
 }
+// An array the film made after the owners were last listed has no name yet: they are listed again, once a frame at the most.
+let listedFor = -1
 ;(window as unknown as { __owner: (src: object) => string | null }).__owner = (src) => {
   owners ??= ownersOf()
-  return owners.get(src) ?? (ArrayBuffer.isView(src) ? (owners.get(src.buffer) ?? null) : null)
+  const find = (): string | null => (owners as Map<object, string>).get(src) ?? (ArrayBuffer.isView(src) ? ((owners as Map<object, string>).get(src.buffer) ?? null) : null)
+  const found = find()
+  if (found || listedFor === drawnBefore) return found
+  listedFor = drawnBefore
+  owners = ownersOf()
+  signed = null
+  return find()
 }
 
 window.checks = {
@@ -265,6 +277,11 @@ window.checks = {
     if (!film.clock) film.clock = () => performance.now()
     timeDraws()
     return { ...film.cost, ...drawMs }
+  },
+  lens() {
+    owners ??= ownersOf()
+    signed ??= [...owners].filter(([v, p]) => v instanceof Float64Array && /\.(sign|key)$/.test(p) && !/lenses/.test(p)) as [Float64Array, string][]
+    return { held: held.lens, signs: signed.map(([v, p]) => ({ owner: p, numbers: Array.from(v) })) }
   },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a
