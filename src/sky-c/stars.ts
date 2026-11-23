@@ -167,7 +167,7 @@ export function buildStarAssets(renderer: THREE.WebGLRenderer): StarAssets {
       bv = -0.15 + Math.pow(rand(), 1.5) * 1.6
     }
     const [wx, wy, wz] = eqToCelestial(raH * 15 * RAD, decD * RAD)
-    const flux = 1.35 * Math.pow(10, -0.25 * vmag)
+    const flux = 2.05 * Math.pow(10, -0.25 * vmag)
     const [cr, cg, cb] = bvToRgb(bv)
     starDirsAndFlux[i * 4] = wx
     starDirsAndFlux[i * 4 + 1] = wy
