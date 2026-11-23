@@ -10,7 +10,7 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, gustGlsl, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward, windWay } from './layout.ts'
+import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, gustGlsl, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward, windWay } from './layout.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -26,6 +26,12 @@ const HEAD_AT = 0.9
 const RAY_DEEP = [0.82, 0.25]
 const LEAF_SKY = 1.2
 const HEAD_GROWS = 0.35
+// How far the head of each picture nods, in radians, and its size beside the size of its kind.
+const PICTURE_NODS = [0.25, 0.45, 0.3, 0.7, 0.35, 0.2, 0.55, 0.4]
+const PICTURE_HEADS = [1.05, 0.95, 1.1, 0.9, 1.0, 1.15, 0.95, 1.05]
+const EARLY_CODE = earlyCode({ turn: 0, tall: 1, head: 1, nod: 0, low: 0, young: 1, stalk: 1, leaf: 1.1, droop: 0.2, bud: 1.4, leanX: 0, leanZ: 0 })
+// The carpet comes in under the last of the real plants, so there is crop under every picture.
+const CARPET_FROM_M = fieldFarM - 8
 
 const pictureVertex = /* glsl */ `
 in vec2 aCorner;
@@ -87,7 +93,8 @@ uniform sampler2D uAtlas;
 void main() {
   vec4 t = texture(uAtlas, vUv);
   float cover = 1.0 - t.a;
-  if (cover < 0.42) discard;
+  // Far off a head is a few pixels of a small picture: it is kept on less of its cover, so it does not thin away to nothing.
+  if (cover < mix(0.42, 0.14, smoothstep(40.0, 90.0, vDepth))) discard;
   vec3 color = t.rgb / cover;
   // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
   float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
@@ -106,8 +113,15 @@ out vec3 vWorld;
 out float vDepth;
 out vec3 vTop;
 out vec3 vMid;
+out vec3 vHead;
 uniform sampler2D uAtlas;
 uniform float uHeight;
+// The colour of the heads in the pictures, as the frame's light leaves them.
+vec3 heads() {
+  vec4 sum = vec4(0.0);
+  for (int i = 0; i < ${pictureCount}; i++) sum += textureLod(uAtlas, vec2((float(i) + 0.5) / ${pictureCount.toFixed(1)}, ${HEAD_AT.toFixed(2)}), 3.0);
+  return sum.rgb / max(${pictureCount.toFixed(1)} - sum.a, 0.02);
+}
 vec3 band(float v) {
   vec4 sum = vec4(0.0);
   for (int i = 0; i < 4; i++) sum += textureLod(uAtlas, vec2((float(i) + 0.5) * 0.25, v), 5.0);
@@ -120,6 +134,7 @@ void main() {
   vDepth = -view.z;
   vTop = band(0.875);
   vMid = band(0.625);
+  vHead = heads();
   gl_Position = projectionMatrix * view;
 }
 `
@@ -129,7 +144,9 @@ in vec3 vWorld;
 in float vDepth;
 in vec3 vTop;
 in vec3 vMid;
+in vec3 vHead;
 uniform vec2 uToward;
+uniform float uOpen;
 uniform vec2 uStart;
 uniform float uCover;
 uniform float uAbove;
@@ -182,6 +199,15 @@ void main() {
     float grain = valueNoise(vec2(across, along) * 1.7);
     float patchy = 0.6 * valueNoise(at * 0.028) + 0.4 * valueNoise(at * 0.0093 + 5.0);
     color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * mix(0.5, grain, fine)) * (0.74 + 0.52 * patchy);
+    // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
+    vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
+    float both = clamp(1.0 - 0.7 * max(fwidth(f.x), fwidth(f.y)), 0.0, 1.0);
+    float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
+    float share = mix(0.16, 0.5, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    vec2 off = fract(f) - 0.5 - 0.2 * (vec2(hash21(cell + 3.0), hash21(cell + 9.0)) - 0.5);
+    float disc = (1.0 - smoothstep(0.2, 0.42, length(off * vec2(1.0, ${(config.field.rowSpacingM / config.field.plantSpacingM).toFixed(3)})))) * step(hash21(cell + 5.0), 0.8);
+    vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (0.8 + 0.5 * hash21(cell + 13.0) * both);
+    color = mix(color, gold, uOpen * mix(share, disc, both));
     // The rows, as far as the eye can part them: the tops in light and the dark between.
     float row = 0.5 + 0.5 * cos(6.2831853 * along / ${config.field.rowSpacingM.toFixed(3)});
     color *= 1.0 + 0.22 * fine * (row - 0.5);
@@ -290,7 +316,6 @@ export class FarField {
   private time = 0
   private above = false
   private readonly local = farVariants.map(() => 0)
-  quality: Quality = 'high'
 
   constructor(places: Float32Array) {
     this.atlas = new THREE.WebGLRenderTarget(TILE_W * pictureCount, TILE_H, {
@@ -326,7 +351,7 @@ export class FarField {
       const uniforms = { ...this.uniforms, uHeight: height, uLevel: { value: level }, uStart: { value: new THREE.Vector2(startM, bandM) } }
       return plain(sheetGeometry(depths), makeSurface({ name: level > 0 ? 'field leaf layer' : 'field carpet', vertex: sheetVertex, fragment: sheetFragment, side: THREE.DoubleSide, castShadow: false, uniforms }))
     }
-    this.carpet = sheet(0, this.carpetHeight, fieldPicturesM - carpetBandM, carpetBandM, [fieldPicturesM - carpetBandM - 2, fieldEndM[1]])
+    this.carpet = sheet(0, this.carpetHeight, CARPET_FROM_M, carpetBandM, [CARPET_FROM_M - 2, fieldEndM[1]])
     this.under = UNDER_LEVELS.map((level, i) => sheet(level, this.underHeights[i], UNDER_FROM_M, UNDER_BAND_M, [UNDER_FROM_M - 2.5, fieldFarM, fieldPicturesM]))
 
     // The pictures are made just before the first surface that reads them is drawn.
@@ -353,7 +378,6 @@ export class FarField {
       usePlant(0)
     })
     this.uniforms.uWind.value = now.dials.wind
-    this.uniforms.uFarthest.value = this.quality === 'low' ? fieldPicturesM : 1000
     this.uniforms.uAhead.value = plantAhead(timeOpen)
     this.uniforms.uLag.value = lagAt(timeOpen)
     // Moonlight does not glow green through a leaf; the sun does.
@@ -367,7 +391,7 @@ export class FarField {
     const rise = THREE.MathUtils.smoothstep(over, 0.02, 0.27)
     this.uniforms.uCover.value = THREE.MathUtils.smoothstep(canopy, 0.06, 0.55) * rise
     this.uniforms.uAbove.value = THREE.MathUtils.smoothstep(over, 0.4, 1.0)
-    this.carpetHeight.value = canopy * 0.97
+    this.carpetHeight.value = canopy * 0.92
     UNDER_LEVELS.forEach((level, i) => (this.underHeights[i].value = canopy * level))
     const grown = THREE.MathUtils.smoothstep(canopy, 0.3, 0.9)
     this.uniforms.uCrop.value.set(THREE.MathUtils.lerp(1, 0.46, THREE.MathUtils.smoothstep(over, 0.02, 0.5)), THREE.MathUtils.lerp(1, 0.3, grown * THREE.MathUtils.smoothstep(over, 0.02, 0.15)))
@@ -384,6 +408,7 @@ export class FarField {
     const rz = fx
     this.uniforms.uRight.value.set(rx, 0, rz)
     const tile = this.uniforms.uTile.value
+    const early = earlyAt(this.time)
     this.spots.forEach((spot, i) => {
       const a = spot.array as Float32Array
       const still = this.stills[i]
@@ -391,7 +416,9 @@ export class FarField {
         const across = (i * pictureTurns + j - (pictureCount - 1) / 2) * tile.x
         const id = 1 + i * pictureTurns + j
         const base = 0.25 + (j === 0 ? -0.5 : 0.7)
-        placeTurned([rx * across, rz * across, base, 1, 0, 0, 0.5, id], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
+        // The last number is what a neighbor's carries: before the bloom its stalk, leaves, droop and bud, after it the nod and the size of its head.
+        const code = early > 0 ? EARLY_CODE : Math.round(PICTURE_NODS[i * pictureTurns + j] * 64) + 0.5 * PICTURE_HEADS[i * pictureTurns + j]
+        placeTurned([rx * across, rz * across, base, 1, 0, 0, 0.5, code], 0, a, still.array as Float32Array, j * PLACE, settled(kindTime(this.time, i, 'pictures'), id) * shortWay(pictureFace(i, j) - this.local[i] - base))
       }
       spot.needsUpdate = true
       still.needsUpdate = true
@@ -408,6 +435,11 @@ export class FarField {
     cam.matrixWorld.copy(cam.matrix)
     cam.matrixWorldInverse.copy(cam.matrixWorld).invert()
     this.eye.set(-fx * back, pose.position.y, -fz * back)
+  }
+
+  // At the low quality the thinned pictures past the last full row are left out: the carpet stands for them.
+  use(quality: Quality): void {
+    this.uniforms.uFarthest.value = quality === 'low' ? fieldPicturesM : 1000
   }
 
   show(on: boolean): void {

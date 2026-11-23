@@ -157,7 +157,7 @@ export class Field {
   // The frame's quality arrives after `look`: when it differs from what was filled, the lists are filled again before anything is drawn.
   use(quality: Quality): void {
     this.quality = quality
-    this.far.quality = quality
+    this.far.use(quality)
     if (this.pose && this.filled !== quality) this.fill()
   }
 

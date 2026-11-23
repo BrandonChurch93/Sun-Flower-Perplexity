@@ -311,8 +311,8 @@ export function fieldPlaces(): FieldPlaces {
     const phase = hash01(SEED, 1, k)
     for (let n = -Math.floor(fieldWest(depth) / plantSpacingM); n <= Math.floor(fieldEast(depth) / plantSpacingM); n++) {
       id++
-      // Past the last full row the pictures thin out: three in five at first, one in six at the end.
-      if (depth > fieldPicturesM && hash01(SEED, 6, id) > 0.6 - 0.44 * step(fieldPicturesM, fieldThinM, depth)) continue
+      // Past the last full row the pictures thin out: most of them at first, one in four at the end.
+      if (depth > fieldPicturesM && hash01(SEED, 6, id) > 0.85 - 0.6 * step(fieldPicturesM, fieldThinM, depth)) continue
       // Past the near rows the plants stand off their lines, so no row can be followed to the horizon.
       const out = Math.hypot(depth, n * plantSpacingM)
       const across = (n + phase) * plantSpacingM + (hash01(SEED, 2, id) - 0.5) * (0.12 + 0.3 * step(8, 40, out))
