@@ -141,8 +141,8 @@ float density(vec3 p, float h, bool detail, vec2 smear) {
   float ov2 = uOvercast * uOvercast;
   c = mix(c, saturate(remap(w, 0.1, 0.75, 0.45, 1.0)) * saturate(coverHere * 1.4 - 0.2), ov2);
   deckWeather = w;
-  vec4 lumps = textureLod(uShape, vec3(xz.x / 3.2, 0.31 + uEvolve * 0.05, xz.y / 3.2), 0.0);
-  float fine = textureLod(uShape, vec3(xz.x / 1.1 + 0.4, 0.73 + uEvolve * 0.08, xz.y / 1.1), 0.0).g;
+  vec4 lumps = textureLod(uShape, vec3(xz.x / 3.2, 0.31 + uEvolve * 0.05 + max(h - cloudBase, 0.0) / 2.4, xz.y / 3.2), 0.0);
+  float fine = textureLod(uShape, vec3(xz.x / 1.1 + 0.4, 0.73 + uEvolve * 0.08 + max(h - cloudBase, 0.0) / 0.9, xz.y / 1.1), 0.0).g;
   deckLumps = saturate(lumps.r * 0.65 + fine * 0.5 - 0.05);
   float under = ((lumps.r - 0.55) * 1.2 + (fine - 0.5) * 0.5 + (w - 0.5) * 0.9) * uOvercast;
   float hn = (h - cloudBase - under) / (cloudTop - cloudBase);
@@ -192,13 +192,13 @@ void main() {
   cloudTop = cloudBase + mix(2.2, 6.0, uOvercast);
   float toward = dot(d, uSun);
   float rag = textureLod(uShape, vec3(d.x * 3.0, d.y * 3.0 + uEvolve * 0.05, d.z * 3.0), 0.0).r;
-  nearSun = smoothstep(cos(radians(4.2)), cos(radians(0.8)), toward + (rag - 0.5) * 0.002);
+  nearSun = smoothstep(cos(radians(2.6)), cos(radians(0.5)), toward + (rag - 0.5) * 0.0008);
   float open = max(uSunThrough, uBurst);
   float closing = smoothstep(0.05, 0.35, uCover);
   coverHere = mix(0.26, 1.08, pow(uCover, 0.75));
-  coverHere = mix(coverHere, mix(coverHere, 0.7 + 0.4 * (1.0 - uSunThrough), closing) * (1.0 - open * 0.85), nearSun);
+  coverHere = mix(coverHere, mix(coverHere, 0.7 + 0.4 * (1.0 - uSunThrough), closing) * (1.0 - open * 0.6), nearSun);
   float rag2 = textureLod(uShape, vec3(d.x * 9.0 + 0.3, d.y * 9.0, d.z * 9.0 + uEvolve * 0.08), 0.0).g;
-  float tear = mix(1.6, 9.0, smoothstep(0.0, 0.04, 1.0 - uBurst));
+  float tear = mix(1.2, 6.0, smoothstep(0.0, 0.04, 1.0 - uBurst));
   float gap = uBurst * smoothstep(cos(radians(tear * 1.5)), cos(radians(tear * 0.2)), toward + ((rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003) * (1.0 - cos(radians(tear))) / 0.0123);
   coverHere *= 1.0 - 0.3 * gap;
 
@@ -206,7 +206,9 @@ void main() {
   vec2 hb = sphere(o, d, RG + cloudBase - 0.3);
   vec2 ht = sphere(o, d, RG + cloudTop);
   float t0 = max(hb.y, 0.0);
-  farThin = (1.0 - 0.9 * uOvercast * smoothstep(10.0, 48.0, t0 + (rag - 0.5) * 10.0)) * (1.0 - 0.85 * gap);
+  vec2 at0 = (d.xz * t0 - uShift) / 9.0;
+  float farRag = textureLod(uShape, vec3(at0.x, 0.17 + uEvolve * 0.03, at0.y), 0.0).g;
+  farThin = (1.0 - 0.9 * uOvercast * smoothstep(10.0, 48.0, t0 + (farRag - 0.5) * 14.0)) * (1.0 - 0.75 * gap);
   float t1 = ht.y;
   float span = min(t1 - t0, mix(12.0, 22.0, uOvercast));
   float far = mix(110.0, 70.0, uOvercast);
