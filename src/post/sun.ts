@@ -65,7 +65,7 @@ void main() {
   }
   float sky = outer / max(outerN, 1.0);
   float excess = max(inner - sky * innerN, 0.0) / 36.0;
-  float read = excess / (excess + 0.06 * uExpect + 1e-5);
+  float read = min(1.25 * excess / (excess + 0.25 * uExpect + 1e-5), 1.0);
   vec2 edge = clamp(uSunAt, 0.0, 1.0);
   vec2 along = abs(uSunAt.x - edge.x) > abs(uSunAt.y - edge.y) * uAspect ? vec2(0.0, uAspect) : vec2(1.0, 0.0);
   float open = (openAt(edge) + openAt(edge + along * uPatch) + openAt(edge - along * uPatch) + openAt(edge + 2.0 * along * uPatch) + openAt(edge - 2.0 * along * uPatch)) / 5.0;

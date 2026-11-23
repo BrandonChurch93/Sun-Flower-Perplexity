@@ -89,7 +89,10 @@ const float BEAD_LENS = 1.5;
 // The world as a bead shows it: the dome, and the bright band low over the horizon that gives a bead its window.
 vec3 beadSky(vec3 d) {
   float band = exp(-(d.y - 0.12) * (d.y - 0.12) * 22.0);
-  return skyAmbient(d) + uSkyHorizon * (1.2 * band);
+  float t = d.y * 0.5 + 0.5;
+  // A bead shows the sky as the sky draws itself, not the fill that lands on the leaf.
+  vec3 dome = mix(uGroundBounce, mix(uAirHorizon, uAirZenith, smoothstep(0.55, 1.0, t)), smoothstep(0.15, 0.6, t));
+  return dome + uAirHorizon * (1.2 * band);
 }
 
 void main() {

@@ -84,7 +84,8 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
 
   const e = def.grade.exposure
   const counts = sun && now.lightKind === 'sun' ? sun.weight : 0
-  for (let i = 0; i < 3; i++) out.sun[i] = def.sun.color[i] * e * counts
+  const sky = def.air ? def.air.sun : def.sun.color
+  for (let i = 0; i < 3; i++) out.sun[i] = sky[i] * e * counts
   const toSun = shared.uSkyHorizonSun.value
   const top = Math.max(toSun.x, toSun.y, toSun.z, 1e-6)
   out.air[0] = toSun.x / top
