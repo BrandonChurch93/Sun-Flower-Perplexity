@@ -247,3 +247,24 @@ At bar 29.7 the grown leaves read dark teal with white ribs against the key `cli
 ### 8. The moon may not blink
 
 Rule for every quick night: between the first and the last frame at which the moon's disc is at half its peak, its level may not fall and come back by more than 12 of 255 inside any five frames. Frame 2179 broke it (153, 46, 123, 77 over frames 2178 to 2181).
+
+### 9. The lens follows the drawn sun
+
+At bar 71 the glow of the lens sat 8 pixels (of 960) under the sun's disc. The sky lifts the drawn disc for the bending of light in low air; the lens used the sun where it stands without the lift. `Sky` in `src/v2/api.ts` has a new optional `face(now, later, out)`: where the middle of the disc is drawn at the middle of the shutter. `src/director/film.ts` passes it to the lens when the sky has it. The light of the scene does not move. Limit for the sky's proof: the two centres within 1 pixel at 960 wide.
+
+### 10. The far land is judged by the picture
+
+The limit of 6 of 255 between the carpet's last rows and the land behind is dropped. The place's table of 20 knots stays; the measure is the picture at film size at bars 67 to 74.5: no line, the plain under the ridge never paler than the carpet's last rows. The place refits once after the field's carpet has no rim line.
+
+### 11. The field's count by frame
+
+The field puts each list once, at load, in the order the film's own lens first sees its plants, and sets only an instance count per frame from a table. A lens that is not the film's own draws the lists whole. 2 to 7 percent of what is sent is outside the frame at the three measured bars (stated by the field), against 19 to 54 before.
+
+### 12. Frost: the fringe breaks up as it thaws
+
+At bars 23 and 24 the whole bright fringe on green leaves reads as a drawn outline. The light through the needles is held at its bar 21 level, and from bar 23 the needles go in patches, the sun's side and the tips first; about half of the margin's length carries needles at bar 24 and none at bar 25.
+
+### 13. Two frames of more than a second in the shadow pass
+
+The checks found frames 2617 and 2621 at 1.8 and 1.5 seconds of script, all of it in the shadow pass (neighbours 2.5 ms), and frame 1689 at 36.7 ms in the Storm hold. Being found; the film may not ship with them.
+

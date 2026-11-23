@@ -1,4 +1,4 @@
-import { leafMain } from '../look/leaf.ts'
+import { leafFieldMain, leafMain } from '../look/leaf.ts'
 import { stalkMain } from '../look/body.ts'
 import { tissueGlsl } from '../surface/index.ts'
 
@@ -8,6 +8,7 @@ export const bladeVertex = /* glsl */ `
 in vec3 position;
 #ifndef PLANT_FIELD
 in vec3 positionB;
+in vec3 normalB;
 in vec4 aMark;
 in vec2 aPlane;
 out vec4 vMark;
@@ -40,7 +41,11 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
+#ifdef PLANT_FIELD
   vNormal = plantDirection(normal);
+#else
+  vNormal = plantDirection(mix(normal, normalB, plantLead()));
+#endif
   vUv = uv;
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
@@ -83,26 +88,7 @@ in float vDepth;
 ${tissueGlsl}
 ${serrationGlsl}
 #ifdef PLANT_FIELD
-void main() {
-  vec3 view = normalize(uCamPos - vWorld);
-  vec3 face = normalize(vNormal);
-  bool top = dot(face, view) > 0.0;
-  if (!top) face = -face;
-  float rib = smoothstep(0.1, 0.0, abs(vUv.x));
-  float shade = 0.8 + 0.4 * vLeaf.z;
-  Tissue t;
-  t.albedo = (top ? vec3(0.045, 0.1, 0.022) : vec3(0.06, 0.11, 0.034)) * shade;
-  t.albedo = mix(t.albedo, vec3(0.17, 0.15, 0.04), vState.y * 0.7);
-  t.through = vec3(0.11, 0.2, 0.01) * (1.0 - 0.4 * rib) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * shade;
-  t.face = face;
-  t.normal = face;
-  t.rough = top ? 0.82 : 0.9;
-  t.wax = top ? 0.3 : 0.12;
-  t.sheen = top ? 0.6 : 0.85;
-  t.occlusion = 1.0;
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
-}
-#else
+${leafFieldMain}#else
 in vec4 vMark;
 in vec2 vPlane;
 uniform sampler2D uVeins;
@@ -139,7 +125,9 @@ export const stalkVertex = /* glsl */ `
 in vec3 position;
 in vec3 positionB;
 in vec3 normal;
+in vec3 normalB;
 in vec2 uv;
+in vec2 uvB;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
@@ -148,8 +136,8 @@ void main() {
   vec4 world = vec4(plantWorld(mix(position, positionB, plantBlend())), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
-  vNormal = plantDirection(normal);
-  vUv = uv;
+  vNormal = plantDirection(mix(normal, normalB, plantLead()));
+  vUv = mix(uv, uvB, plantLead());
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
