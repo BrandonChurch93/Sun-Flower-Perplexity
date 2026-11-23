@@ -82,7 +82,7 @@ export async function run(args: Args): Promise<void> {
   }
   if (plant) {
     findings.push(...plant.findings)
-    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, x.ok ? 'ok' : 'FAIL'])) + '\n')
+    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, x.empty >= 0 ? 'not measured' : x.ok ? 'ok' : 'FAIL'])) + '\n')
   }
   finish({
     check: 'nights',
