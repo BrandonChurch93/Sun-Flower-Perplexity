@@ -14,7 +14,7 @@ const PER_M = 0.3
 const PER_M_LIFTED = 0.2
 const BANK_M = 1.5
 const CLEAR_TO_M = 1.6
-// The thickest rolls of fog stand up out of the layer as tongues, so a breath of it is seen crossing the soil.
+// The fog near the lens stands in a few separate tongues, so a breath of it is seen crossing the soil.
 const TONGUES = 1.5
 // Before the hairs and crystals of the plant (18 to 21), and after them.
 const ORDER_BEHIND = 12
