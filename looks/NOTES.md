@@ -1,6 +1,12 @@
 # Looks of checks
 
-2026-11-23 01:13 UTC, at commit 5e249b68 of agent/checks.
+2026-11-23 01:46 UTC, at commit 0cbfcfc3 of agent/checks.
+
+## Found on v2 b587656 with sky-b, 01:47 UTC
+
+The sun goes out for two frames just after the sunrise of bar 27: frames 1372 and 1373 (45.733 and 45.767 s) have no sun disc, no glow and no warm light, frame 1374 has it back. Mean luminance 119.7, 93.9, 95.9, 117.0 of 255. Frame 1372 gives the same bytes on a fresh page, so it is the film and not the order of drawing. `cuts` calls it a hard cut (25.95 of 255, 6.2 times its neighbours). The dusk before it falls 27.6 of 255 into frame 1339 (the ground goes from sunlit to dark in one frame), over the limit of 20 measured on sky-0.
+
+This replaces the caption on 53b0045 that said the lead-in frames differ by "one point of the lens": they differ by the stipple of the lens fill, which follows the frame number.
 
 ## Writes to the graphics card, a frame, by owner
 
@@ -92,7 +98,12 @@ v1 is a 60 s film of six scenes with cuts, so its places are the middle of each 
 
 v1 writes the same hair textures whole every frame (2048 x 274, 2048 x 110, 2048 x 106, 2048 x 82 of four floats: 8.56, 3.44, 3.31, 2.56 MB), so the steady 25 to 42 MB a frame is not new in v2 and is not what dropped frames at the scene changes. What v1 does at a scene change and v2 does not is give objects new storage: 933 objects and 315 MB at the first frame the page draws at all, 70 objects and 19 MB entering the rain, 213 objects and 36 MB entering the night, 65 to 136 objects after. On v2 `made` finds no frame of the film that gives anything new storage.
 
-- `01-night-7-of-the-fast-time-lapse-every-second-fram.jpg`: Night 7 of the fast time lapse, every second frame, 320 x 180 draft: luminance falls 117 to 34 and rises to 122, steepest frame 17.7 of 255, never the wrong way
-- `02-lead-in-draft-frames-12-13-14-and-the-difference.jpg`: Lead-in, draft frames 12, 13, 14 and the difference 12 to 13 times eight: a draft frame is drawn through one point of the lens, so the horizon and the far plant jump from frame to frame. Not a fault of the film, but draft frames cannot judge flicker finer than 2 of 255
-- `03-frost-hold-wide-camera-frames-849-850-1054-1259-.jpg`: Frost hold, wide camera, frames 849, 850, 1054, 1259 identical in every number, 1304 differs
-- `04-storm-hold-low-camera-frames-1672-1673-1877-2082.jpg`: Storm hold, low camera, frames 1672, 1673, 1877, 2082 identical in every number, 2127 differs
+- `01-b587656-sky-b-frames-1370-to-1376-the-sun-goes-o.jpg`: b587656 sky-b frames 1370 to 1376 the sun goes out in 1372 and 1373 and is back in 1374
+- `02-b587656-sky-b-night-6-every-second-frame-the-dus.jpg`: b587656 sky-b night 6 every second frame the dusk falls 27.6 of 255 into frame 1339
+- `03-cuts-on-b587656-sky-b-the-step-into-frame-1372.jpg`: cuts on b587656 sky-b the step into frame 1372
+- `04-cuts-on-b587656-sky-b-the-step-into-frame-1339-a.jpg`: cuts on b587656 sky-b the step into frame 1339 at sunset
+- `05-holds-on-b587656-sky-b-frost-hold-wide-camera-fo.jpg`: holds on b587656 sky-b frost hold wide camera four frames identical and the control after
+- `06-holds-on-b587656-sky-b-storm-hold-low-camera-fou.jpg`: holds on b587656 sky-b storm hold low camera four frames identical and the control after
+- `07-review-page-the-checks-with-their-broken-films.jpg`: review page the checks with their broken films
+- `08-review-page-the-film-player-212-frames-drawn.jpg`: review page the film player 212 frames drawn
+- `09-review-page-the-sections.jpg`: review page the sections
