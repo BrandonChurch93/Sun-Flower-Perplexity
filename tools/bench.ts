@@ -69,18 +69,29 @@ try {
     const before = await session.page.evaluate(() => window.showcase.made())
     let slowest = 0
     let total = 0
+    const kinds = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays'] as const
+    const at: { frame: number; made: Partial<Made> }[] = []
+    let last = before
     for (const f of frames) {
       const s = await session.time(f, tier)
       total += s
       slowest = Math.max(slowest, s)
+      const now = await session.page.evaluate(() => window.showcase.made())
+      const here: Partial<Made> = {}
+      for (const k of kinds) if (now[k] !== last[k]) here[k] = now[k] - last[k]
+      if (Object.keys(here).length) {
+        at.push({ frame: f, made: here })
+        console.log(`count · frame ${f} (${(f / fps).toFixed(2)} s) made ${JSON.stringify(here)}`)
+      }
+      last = now
     }
-    const after = await session.page.evaluate(() => window.showcase.made())
+    const after = last
     const made = { ...after } as Made
     for (const key of Object.keys(made) as (keyof Made)[]) made[key] -= before[key]
     console.log(`count · 200 frames after loading · mean ${(total / frames.length).toFixed(2)} s, slowest ${slowest.toFixed(2)} s a frame here (software rendering)`)
     console.log(`count · made after loading: ${JSON.stringify(made)}`)
     console.log(nothingMade(made) ? 'count · PASS: nothing was made after loading' : 'count · FAIL: the graphics card was asked to make something after loading')
-    fs.writeFileSync(path.join(dir, 'count.json'), JSON.stringify({ sky, format, tier, frames: frames.length, made, meanSeconds: total / frames.length, slowestSeconds: slowest }, null, 2))
+    fs.writeFileSync(path.join(dir, 'count.json'), JSON.stringify({ sky, format, tier, frames: frames.length, made, at, meanSeconds: total / frames.length, slowestSeconds: slowest }, null, 2))
     if (!nothingMade(made)) process.exitCode = 1
   } else if (flag(args, 'cost')) {
     const frames = typeof args.frames === 'string' ? args.frames.split(',').flatMap((x) => {
