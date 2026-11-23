@@ -45,7 +45,8 @@ float heightAt(vec3 p) {
 vec4 weatherField(vec3 p, float h) {
   vec2 w = rotateCloud(p.xz - uTravel + vec2(0.28, 0.12) * h);
   float shape = uWeather.y;
-  vec2 field = w * vec2(0.074 - 0.023 * shape, 0.089 - 0.016 * shape);
+  float towers = smoothstep(0.16, 0.38, uWeather.x);
+  vec2 field = w * vec2(mix(0.074 - 0.017 * towers, 0.045, shape), mix(0.089 - 0.019 * towers, 0.081, shape));
   return f(vec3(field.x + 0.37, 0.13 * h + 0.055 * uEvolve, field.y + 0.68));
 }
 
@@ -68,10 +69,12 @@ float toGap(vec3 p, vec3 d, float rough) {
 }
 
 float profile(vec4 field, float tv, float storm) {
-  float floorShape = 0.007 + storm * (0.42 * smoothstep(0.37, 0.67, field.g) + 0.18 * field.b);
-  float tower = mix(0.31 + 0.69 * smoothstep(0.34, 0.65, field.r + 0.091 * (field.b - 0.5)), 0.78 + 0.32 * field.g, storm);
-  float bottom = smoothstep(floorShape, floorShape + mix(0.049, 0.11, storm), tv);
-  float top = 1.0 - smoothstep(tower - 0.29, tower, tv);
+  float roll = smoothstep(0.34, 0.68, 0.55 * field.r + 0.34 * field.g + 0.11 * field.b);
+  float floorShape = 0.009 + storm * (0.47 * roll + 0.13 * field.r);
+  float cap = smoothstep(0.29, 0.67, field.r + 0.23 * (field.g - 0.5) + 0.15 * (field.b - 0.5));
+  float tower = mix(0.29 + 0.76 * cap, 0.77 + 0.31 * field.g, storm);
+  float bottom = smoothstep(floorShape, floorShape + mix(0.045, 0.073, storm), tv);
+  float top = 1.0 - smoothstep(tower - mix(0.18, 0.29, storm), tower, tv);
   float middle = mix(1.1 - 0.43 * tv, 0.95 + 0.32 * tv, storm);
   return bottom * top * middle;
 }
@@ -84,7 +87,7 @@ float scaffold(vec3 p, vec3 eyeRay, float base, float depth, out vec4 shape, out
   floorWeight = profile(shape, tv, st);
   float synoptic = mix(shape.r, 0.72 * shape.r + 0.28 * shape.g, st);
   float nightThinning = 0.084 * (1.0 - smoothstep(-13.0, -4.5, uElevation)) * (1.0 - st);
-  float cutoff = mix(0.617 - 0.38 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x + nightThinning, 0.273 - 0.09 * uWeather.x, st);
+  float cutoff = mix(0.629 - 0.35 * pow(uWeather.x, 1.2) - 0.031 * uEffects.x + nightThinning, 0.273 - 0.09 * uWeather.x, st);
   gap = toGap(p, eyeRay, 0.38 * shape.g + 0.62 * shape.b);
   float clear = uWeather.z;
   float aperture = smoothstep(0.58, 1.0, clear + 0.21 * uEffects.w);
@@ -101,24 +104,27 @@ float densityAt(vec3 p, vec3 d, float t, float base, float dep, out float gap, o
   if (sc < 0.012 || profileWeight < 0.004) return 0.0;
   float at = heightAt(p);
   vec2 q = rotateCloud(p.xz - uTravel);
-  vec2 motion = rotateCloud(uSmear) * 0.48;
-  vec3 w = vec3(q.x * 0.48, 0.56 * at - uEvolve * 0.067, q.y * 0.48) + vec3(0.16, 0.07, 0.15);
-  float small = 0.55;
-  if (t < 40.0) {
+  float nearCloud = 1.0 - smoothstep(13.0, 38.0, t);
+  float billowScale = mix(0.229, 0.285, uWeather.y);
+  vec2 motion = rotateCloud(uSmear) * billowScale;
+  vec3 w = vec3(q.x * billowScale, 0.29 * at - uEvolve * 0.067, q.y * billowScale) + vec3(0.16, 0.07, 0.15);
+  float small = 0.49;
+  if (t < 49.0) {
     vec2 fine = f(w - vec3(motion.x, 0.0, motion.y) * 0.34).ba;
     if (dot(motion, motion) > 0.000001) fine = 0.5 * (fine + f(w + vec3(motion.x, 0.0, motion.y) * 0.34).ba);
-    small = 0.73 * fine.x + 0.27 * fine.y;
-    if (t < 30.0 && sc < 0.59) {
+    small = mix(small, 0.88 * fine.x + 0.12 * fine.y, 1.0 - smoothstep(15.0, 49.0, t));
+    if (t < 32.0 && sc < 0.83) {
       float grit = f(w * 2.38 + vec3(0.31, 0.12, 0.52)).a;
-      small += (grit - 0.49) * 0.31 * (1.0 - smoothstep(15.0, 30.0, t));
+      small += (grit - 0.47) * 0.13 * nearCloud * (1.0 - smoothstep(0.53, 0.83, sc));
     }
   }
-  textureValue.y = 0.49 * textureValue.y + 0.51 * small;
-  float bite = mix(0.40, 0.29, uWeather.y) * max(0.06, 0.92 - 1.1 * small);
-  float body = max(0.0, sc - bite) * profileWeight;
+  textureValue.y = 0.32 * textureValue.y + 0.68 * small;
+  float contrast = max(uWeather.y, smoothstep(0.12, 0.40, uWeather.x));
+  float bite = (mix(0.42, 0.32, uWeather.y) + 0.38 * nearCloud * contrast) * max(0.06, 0.94 - 1.22 * small);
+  float body = max(0.0, sc - bite + (small - 0.48) * 0.73 * nearCloud * contrast) * profileWeight;
   float sunFilter = mix(1.0, 0.009 + 0.99 * (1.0 - uWeather.z) * (1.0 - uWeather.z), gap * (0.84 + 0.16 * uEffects.w));
   float fog = 1.0 - 0.87 * smoothstep(0.14, 0.85, uWeather.w);
-  return (body + 1.05 * body * body) * sunFilter * fog * mix(6.2, 3.3, uWeather.y);
+  return (body + 1.35 * body * body) * sunFilter * fog * mix(6.2, 3.7, uWeather.y);
 }
 
 float shadowAt(vec3 p, vec3 d, float base, float dep) {
@@ -162,14 +168,19 @@ void main() {
   float st = uWeather.y;
   float mu = dot(d, uSun);
   vec3 clear = airAt(d);
+  float dayTower = smoothstep(0.102, 0.29, uSun.y);
+  float blueWindow = dayTower * (1.0 - st) * smoothstep(0.027, 0.23, d.y) * (1.0 - smoothstep(0.89, 0.998, mu));
+  clear *= mix(vec3(1.0), vec3(0.46, 0.72, 0.89), blueWindow);
   vec2 around = normalize(d.xz + vec2(1e-7));
-  float hazeStrength = exp(-max(0.0, d.y) * 17.5);
+  float hazeStrength = exp(-max(0.0, d.y) * 14.0);
   vec4 heads = f(vec3(around.x * 0.82 - 0.032 * uTravel.x, 0.21 + around.y * 0.68, 0.41 + 0.023 * uEvolve));
   float distantSlot = smoothstep(0.32, 0.73, 0.76 * heads.r + 0.24 * heads.g);
-  vec3 slateHaze = uDeck * (0.70 + (2.05 + 2.23 * distantSlot) * hazeStrength);
-  float crest = 0.083 + 0.125 * distantSlot + 0.032 * (heads.b - 0.44);
-  float opening = 1.0 - smoothstep(crest - 0.052, crest + 0.063, d.y);
-  float patchHaze = opening * (0.73 + 2.69 * distantSlot) * smoothstep(0.008, 0.03, d.y);
+  vec3 slateHaze = uDeck * (0.48 + (2.7 + 2.4 * distantSlot) * hazeStrength);
+  float crest = 0.106 + 0.084 * distantSlot + 0.068 * (heads.b - 0.44);
+  float opening = 1.0 - smoothstep(crest - 0.055, crest + 0.050, d.y);
+  float distantLight = 0.46 + 0.54 * exp(-max(0.0, 1.0 - mu) * 9.8);
+  float patchHaze = opening * (6.7 + 15.2 * distantSlot) * distantLight;
+  vec3 gradedGap = dot(uDeck, vec3(0.2126, 0.7152, 0.0722)) * vec3(1.17, 1.10, 1.00);
   vec3 air = mix(clear, slateHaze, min(1.0, st * 1.01));
   float broad = exp(-max(0.0, d.y) * 19.0);
   vec3 sky = thinClouds(d, air, mu);
@@ -177,7 +188,7 @@ void main() {
   vec3 radiation = vec3(0.0);
   float sunBreak = uEffects.w;
   float base = mix(1.38, 0.86, st);
-  float dep = mix(1.65, 3.55, st);
+  float dep = mix(1.65 + 1.61 * smoothstep(0.13, 0.40, uWeather.x), 3.55, st);
   float start = foot(base, d);
   float stop = min(foot(base + dep, d), mix(109.0, 119.0, st));
   float span = stop - start;
@@ -193,16 +204,16 @@ void main() {
     float angle = max(0.0, 1.0 - mu);
     float forward = 0.25 / (1.0 + 89.0 * angle) + 0.53 / ((1.0 + 550.0 * angle) * (1.0 + 550.0 * angle));
     float sunHigh = smoothstep(0.037, 0.33, uSun.y);
-    float side = (0.037 + 0.13 * sunHigh) * (0.70 + 0.30 * sat(0.5 + 0.5 * mu));
+    float side = (0.037 + 0.065 * sunHigh) * (0.70 + 0.30 * sat(0.5 + 0.5 * mu));
     vec3 ambientGrey = vec3(dot(uUpper, vec3(0.2126, 0.7152, 0.0722)));
     vec3 highHint = mix(uUpper, ambientGrey, 0.44) * 0.55 + 0.16 * uLower;
     float acrossAir = mix(0.0105, 0.016, st) + uWeather.w * 0.045;
     float horizonD = 0.001;
-    float concentrated = mix(0.21, 0.45, st);
+    float concentrated = mix(0.29, 0.6, st);
     float lowDeck = start + min(4.8, span * 0.24);
     vec3 lobe = d * lowDeck;
     vec4 belly = weatherField(lobe, heightAt(lobe));
-    float ceilingLight = 0.60 + 0.92 * smoothstep(0.35, 0.66, 0.65 * belly.g + 0.35 * belly.b);
+    float ceilingLight = 0.18 + 2.6 * smoothstep(0.24, 0.71, 0.61 * belly.r + 0.30 * belly.g + 0.09 * belly.b);
     for (int i = 0; i < 60; i++) {
       if (i >= uSteps || through < 0.009) break;
       float k = (float(i) + offset) * dt;
@@ -218,14 +229,21 @@ void main() {
       float top = sat((heightAt(p) - base) / dep);
       float powder = 0.44 + 0.56 * exp(-0.52 * density);
       float occlusion = 0.45 + 0.55 * exp(-0.59 * shade);
-      float vein = smoothstep(0.29, 0.69, 0.55 * relief.x + 0.45 * relief.y);
-      float hanging = 1.0 - smoothstep(0.32, 0.68, relief.x);
-      vec3 enclosed = uDeck * (0.08 + 0.72 * vein + 0.44 * hanging + 0.14 * top) * (0.51 + 0.49 * occlusion) * ceilingLight;
-      vec3 dome = mix(highHint * (0.49 + 0.97 * top) * (0.61 + 0.91 * vein) * occlusion, enclosed, st);
-      vec3 bounce = uLower * vec3(0.143, 0.124, 0.109) * (1.0 - st) * (1.0 - top);
+      float vein = smoothstep(0.33, 0.65, 0.45 * relief.x + 0.55 * relief.y);
+      float hanging = 1.0 - smoothstep(0.30, 0.71, relief.x);
+      float crown = smoothstep(0.13, 0.64, top);
+      float sheltered = 1.0 - smoothstep(0.038, 0.30, d.y);
+      float buried = exp(-density * 0.23) * (0.38 + 0.62 * occlusion);
+      float bellyShade = 0.09 + (1.98 * vein * vein + 0.46 * hanging + 0.15 * top) * buried;
+      vec3 enclosed = uDeck * bellyShade * (0.66 + 0.70 * sheltered) * ceilingLight;
+      vec3 beforeSun = highHint * (0.49 + 0.97 * top) * (0.61 + 0.91 * vein) * occlusion;
+      vec3 daylight = (uUpper * vec3(0.105, 0.165, 0.255) + ambientGrey * 0.048 + 0.035 * uLower) * (0.51 + 0.60 * vein) * (0.49 + 0.51 * occlusion);
+      daylight += ambientGrey * crown * (0.10 + 0.40 * occlusion);
+      vec3 dome = mix(mix(beforeSun, daylight, dayTower), enclosed, st);
+      vec3 bounce = uLower * vec3(0.143, 0.124, 0.109) * (1.0 - st) * (1.0 - top) * (1.0 - 0.67 * dayTower);
       float sunVisible = mix(1.0, 0.017 + 0.86 * sunBreak * gap, st);
-      vec3 beam = uCloudLight * (side + forward) * lit * powder * sunVisible;
-      beam += uCloudLight * (1.0 - st) * sunHigh * 0.065 * lit * exp(-0.68 * density);
+      vec3 beam = uCloudLight * (side + forward) * lit * powder * sunVisible * mix(1.0, 0.31 + 0.69 * crown, dayTower * (1.0 - st));
+      beam += uCloudLight * (1.0 - st) * dayTower * (0.021 + 0.39 * crown) * (0.74 + 0.48 * vein) * pow(lit, 0.69) * exp(-0.24 * density);
       float underside = (1.0 - smoothstep(0.008, 0.31, uSun.y)) * (1.0 - top);
       beam *= 1.0 + 0.49 * underside * (0.21 + 0.79 * pow(sat(mu), 12.0));
       float torn = sunBreak * exp(-pow((gap - 0.64) * 5.5, 2.0));
@@ -237,7 +255,7 @@ void main() {
       vec3 emission = vec3(0.44, 0.69, 1.0) * struck;
       vec3 cloud = dome * powder + bounce + beam + emission;
       float haze = 1.0 - exp(-at * acrossAir);
-      vec3 lost = mix(clear * (0.72 + 0.21 * forward), slateHaze * (0.44 + 0.64 * broad) + uDeck * patchHaze, st);
+      vec3 lost = mix(clear * (0.66 + 0.21 * forward), slateHaze * (0.42 + 0.63 * broad) + gradedGap * patchHaze * 0.46, st);
       cloud = mix(cloud, lost, haze);
       float stepA = 1.0 - exp(-density * ds);
       radiation += through * stepA * cloud;
@@ -250,19 +268,20 @@ void main() {
     }
   }
   vec3 result = radiation + through * sky;
-  result += uDeck * patchHaze * st * (0.64 + 0.36 * through);
+  result += gradedGap * patchHaze * st * (0.36 + 0.64 * through);
   if (uEffects.y > 0.01 && d.y < 0.29 && d.y > -0.009) {
-    float tilt = d.y * 0.39;
+    float tilt = d.y * 0.25;
     vec2 slant = around + tilt * vec2(around.y, -around.x);
     vec3 adv = vec3(slant.x * 1.21 - 0.027 * uTravel.x, 0.247 + 0.009 * uRealSky, 0.071 * uEvolve + slant.y * 0.85);
     vec4 veil = f(adv);
-    float band = smoothstep(0.40, 0.65, 0.67 * veil.r + 0.33 * veil.g);
-    float streaks = f(vec3(slant.x * 4.05, 0.181 + d.y * 0.078, 0.71 + uRealSky * 0.012 + slant.y * 2.6)).b;
-    band *= 0.66 + 0.42 * streaks;
-    float ceiling = 1.0 - smoothstep(0.061 + 0.098 * veil.g, 0.121 + 0.152 * veil.g, d.y);
-    float rain = band * ceiling * uEffects.y * 0.77;
-    vec3 curtain = mix(slateHaze * (0.38 + 0.28 * veil.g), uDeck * 0.41, smoothstep(0.02, 0.16, d.y));
-    result = mix(result, curtain, rain) + uDeck * rain * (0.11 + 0.51 * streaks) * opening;
+    float band = smoothstep(0.41, 0.65, 0.67 * veil.r + 0.33 * veil.g);
+    vec4 strands = f(vec3(slant.x * 2.63 + d.y * (veil.b - 0.5) * 0.085, 0.181 + d.y * 0.11, 0.71 + uRealSky * 0.012 + slant.y * 1.4));
+    float streaks = 0.68 * strands.g + 0.32 * strands.b;
+    band *= 0.43 + 0.72 * smoothstep(0.27, 0.73, streaks);
+    float ceiling = 1.0 - smoothstep(0.082 + 0.14 * veil.g, 0.118 + 0.16 * veil.g, d.y);
+    float rain = band * ceiling * uEffects.y * (0.74 + 0.24 * opening) * smoothstep(-0.012, 0.021, d.y);
+    vec3 curtain = uDeck * (0.30 + 0.58 * veil.g);
+    result = mix(result, curtain, rain);
   }
   if (sunBreak > 0.0) {
     float nearSun = exp(-max(0.0, 1.0 - mu) * 140.0);
@@ -333,7 +352,7 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   float darkRiver = exp(-pow((g - 0.018 * sin(47.0 * longitude) - 0.021 * clouds) * 32.0, 2.0));
   float milky = exp(-g * g * 115.0) * pow(clouds, 1.9) * (1.0 - 0.65 * darkRiver);
   float extinction = exp(-0.022 / max(0.019, d.y)) * smoothstep(0.002, 0.03, d.y);
-  float wash = 1.0 - smoothstep(0.006, 0.042, dot(air, vec3(0.21, 0.72, 0.07)));
+  float wash = 1.0 - smoothstep(0.008, 0.058, dot(air, vec3(0.21, 0.72, 0.07)));
   return (stars * 0.20 + vec3(0.0145, 0.0145, 0.021) * milky) * extinction * wash * visible * uNight;
 }
 
@@ -358,7 +377,7 @@ vec3 sunAt(vec3 d, float blur) {
   return uDisc * center * energy * disk * limb * smoothstep(-0.003, 0.0011, d.y);
 }
 
-vec3 moonAt(vec3 d, float blur, float visible) {
+vec3 moonAt(vec3 d, vec3 air, float blur, float visible) {
   float n = dot(d, uMoon);
   if (uNight < 0.001 || n < 0.968) return vec3(0.0);
   vec3 u = normalize(cross(uMoon, vec3(0.0, 1.0, 0.0)));
@@ -370,7 +389,8 @@ vec3 moonAt(vec3 d, float blur, float visible) {
   float phase = smoothstep(-0.11, 0.15, 0.64 * xy.x + 0.26 * xy.y + 0.62 * sqrt(max(0.0, 1.0 - radius * radius)));
   float detail = 0.75 + 0.25 * valueNoise(xy * 5.1 + 0.52);
   float glow = 0.0084 * exp(-(1.0 - n) * 127.0) + 0.035 * exp(-(1.0 - n) * 1760.0);
-  return uMoonDisc * visible * (phase * detail * edge * (0.0054 * 0.0054 / (r * r)) + glow);
+  float wash = 1.0 - smoothstep(0.015, 0.093, dot(air, vec3(0.21, 0.72, 0.07)));
+  return uMoonDisc * visible * wash * (phase * detail * edge * (0.0054 * 0.0054 / (r * r)) + glow);
 }
 
 void main() {
@@ -380,7 +400,7 @@ void main() {
   float coc = min(uCocScale / uFocusM, 2048.0);
   float blur = 0.5 * coc * uPixelAngle;
   vec4 sky = skyLookup(d, blur);
-  vec3 color = sky.rgb + starsAt(d, sky.rgb, sky.a, blur) + moonAt(d, blur, sky.a) + sunAt(d, blur);
+  vec3 color = sky.rgb + starsAt(d, sky.rgb, sky.a, blur) + moonAt(d, sky.rgb, blur, sky.a) + sunAt(d, blur);
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = d.y > 1e-3 ? a / (uFogFalloff * d.y) : 1e6;
   float fog = 1.0 - exp(-depth);

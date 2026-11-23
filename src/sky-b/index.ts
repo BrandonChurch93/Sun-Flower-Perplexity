@@ -11,8 +11,8 @@ import { CLOUD_SIZE, STAR_HEIGHT, STAR_WIDTH, cloudNoise, starMap } from './nois
 import { cloudFragment, displayFragment } from './shader.ts'
 
 const levels = {
-  film: { width: 832, height: 512, steps: 57, light: 6 },
-  high: { width: 464, height: 288, steps: 41, light: 4 },
+  film: { width: 832, height: 512, steps: 60, light: 6 },
+  high: { width: 464, height: 288, steps: 46, light: 4 },
   low: { width: 232, height: 144, steps: 27, light: 3 },
 }
 
@@ -145,8 +145,8 @@ class FieldSky implements Sky {
       const s = out.horizonSun[c]
       const tint = this.deck[c]
       const cap = lerp(z * 0.88 + 0.11 * h, tint * 0.90, blend)
-      const far = lerp(h * 0.96 + 0.08 * z, tint * (2.65 + (1 - d.rain) * 0.17), blend)
-      const facing = lerp(s * 0.94 + h * 0.11, tint * 2.74 + burst * 0.46 * s, blend)
+      const far = lerp(h * 0.96 + 0.08 * z, tint * (3.75 + (1 - d.rain) * 0.19), blend)
+      const facing = lerp(s * 0.94 + h * 0.11, tint * 5.12 + burst * 0.46 * s, blend)
       out.zenith[c] = lerp(lerp(z, cap, blend + fair), z * 0.53 + h * 0.47, cold * 0.61)
       out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), z * 0.33 + h * 0.67, cold * 0.63)
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), z * 0.29 + h * 0.44 + s * 0.27, cold * 0.76)
@@ -173,7 +173,7 @@ class FieldSky implements Sky {
     this.air.sunAt(e, this.cloudSun, true)
     this.air.moonAt(e, this.moon)
     this.air.deckAt(e, this.deck)
-    const night = smoothstep(-4.3, -13, e)
+    const night = smoothstep(-2.6, -12.6, e)
     const u = this.cloud.uniforms
     u.uElevation.value = e
     u.uEyeKm.value = 0.001 * pose.position.y
