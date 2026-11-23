@@ -1,6 +1,7 @@
 # Looks of ground
 
-2026-11-23 03:30 UTC, at commit 4480f36 of agent/ground.
+2026-11-23 04:09 UTC, at commit dfe0776 of agent/ground.
 
-- `01-storm-new-frame-before-after-keys.jpg`: storm new frame before after keys
-- `02-storm-bar-39-middle-distance-after.jpg`: storm bar 39 middle distance after
+- `01-round-4-keys-beside-film-dfe0776.jpg`: round 4 keys beside film dfe0776
+- `02-round-4-before-after.jpg`: round 4 before after
+- `03-turned-ridges-ground-only.jpg`: turned ridges ground only
