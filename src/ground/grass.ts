@@ -281,7 +281,7 @@ void main() {
   vec3 v = normalize(uCamPos - vWorld);
   vec3 n = normalize(vNormal);
   n *= sign(dot(n, v) + 1e-6);
-  float t = vAlong.x;
+  float t = saturate(vAlong.x);
   float weed = step(2.0, vTuft.z);
   vec3 albedo = mix(vec3(0.03, 0.046, 0.018), mix(vec3(0.075, 0.12, 0.036), vec3(0.11, 0.14, 0.045), vTuft.y), t);
   albedo = mix(albedo, albedo * vec3(0.85, 1.05, 1.25), weed);

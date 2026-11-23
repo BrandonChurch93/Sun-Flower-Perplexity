@@ -441,7 +441,8 @@ float dusted(vec3 world, float lies, float frost, float sunny) {
 // Each is drawn two pixels wide wherever it lies, so what it sends to the lens does not change as it passes over the pixels.
 // Where the lens opens them into discs (circle, in pixels) there is room for one in each patch of ground as wide as half a disc.
 // amount is the share of the places that carry one: each place has its own threshold, so they go out one by one as it falls. A few are bright and most are faint.
-float sparks(vec2 p, vec3 hv, float sharp, float circle, float amount) {
+// p is the ground under the pixel's middle and gives the size of a pixel on it; at is a place the surface really covers, so that on an edge pixel no face lights that lies beside the surface.
+float sparks(vec2 p, vec2 at, vec3 hv, float sharp, float circle, float amount) {
   vec2 across = dFdx(p);
   vec2 down = dFdy(p);
   float det = across.x * down.y - across.y * down.x;
@@ -451,7 +452,7 @@ float sparks(vec2 p, vec3 hv, float sharp, float circle, float amount) {
   float lit = 0.0;
   for (int k = 0; k < 2; k++) {
     float cellM = exp2(whole + float(k));
-    vec2 q = p / cellM;
+    vec2 q = at / cellM;
     vec2 cell = floor(q);
     float share = k == 0 ? 1.0 - fract(size) : fract(size);
     float a = hash31(vec3(cell, whole + float(k)));
@@ -508,6 +509,7 @@ export const soilVertex = /* glsl */ `
 in vec3 position;
 out vec3 vWorld;
 out float vDepth;
+centroid out vec2 vHere;
 #ifdef NEAR
 ${soilHeight}
 #endif
@@ -519,6 +521,7 @@ void main() {
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
   vDepth = -view.z;
+  vHere = world.xz;
   gl_Position = projectionMatrix * view;
 }
 `
@@ -526,6 +529,7 @@ void main() {
 export const soilFragment = /* glsl */ `
 in vec3 vWorld;
 in float vDepth;
+centroid in vec2 vHere;
 uniform sampler2D tColor;
 uniform sampler2D tLitter;
 uniform vec2 uColorSize;
@@ -757,7 +761,7 @@ void main() {
   float icy = smoothstep(0.0, 0.3, uFrost) * kept * (0.3 + 0.7 * smoothstep(0.15, 0.5, sits));
   float beads = 0.8 * thaw * uDew * (1.0 - rime);
   float reach = 1.0 / (1.0 + vDepth * vDepth / 64.0);
-  color += sparkLight(vDepth) * (sparks(p, hv, mix(110.0, 200.0, beads / max(icy + beads, 1e-3)), cocOf(vDepth), (icy + beads) * sunward * reach * (0.4 + 0.6 * lit) * (1.0 - 0.8 * under) * (1.0 - thatch)));
+  color += sparkLight(vDepth) * (sparks(p, vHere, hv, mix(110.0, 200.0, beads / max(icy + beads, 1e-3)), cocOf(vDepth), (icy + beads) * sunward * reach * (0.4 + 0.6 * lit) * (1.0 - 0.8 * under) * (1.0 - thatch)));
   outColor = finish(color, vWorld, vDepth, density);
 #ifndef NEAR
   if (uDiag == 0) outColor.rgb = mix(outColor.rgb, color, 0.9 * smoothstep(250.0, 900.0, r));
