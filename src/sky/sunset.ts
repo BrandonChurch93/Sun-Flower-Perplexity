@@ -3,6 +3,7 @@ import type { RGB } from '../core/world.ts'
 import type { SkyLight } from '../v2/api.ts'
 
 export const sunsetAmount = (bar: number): number => smoothstep(65, 67, bar)
+export const finaleCloudDecay = (bar: number): number => smoothstep(61, 69, bar)
 // The last sun sets behind the ridge, while it is still above the
 // mathematical horizon. Deep evening is lit by that lower sun.
 export const sunsetDuskAt = (elevation: number): number => 1 - smoothstep(0.95, 2.04, elevation)
