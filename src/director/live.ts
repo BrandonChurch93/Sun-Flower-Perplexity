@@ -383,6 +383,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     if (activity !== 'ready' || dead) return
     if (frame >= lastFrame) frame = 0
     become('playing', 'Playing')
+    if (review) note.textContent = ''
     let run: Run | null = null
     try {
       const clock = await clockFor()
