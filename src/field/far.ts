@@ -18,10 +18,8 @@ const TILE_W = 64
 const PICTURE_UNDER = 0.94
 // How much of its light a far leaf keeps when nothing but the sky lights it.
 const UNLIT = 0.3
-// How much of the sky behind it the far crop takes by 220 m, how much at its very end, and from where that comes in.
+// How much of the sky behind it the far crop takes by 220 m. Past its end the land carries the same crop on, so it does not fade into the sky there.
 const FAR_AIR = 0.1
-const END_AIR = 0.3
-const END_AIR_FROM_M = 210
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -58,9 +56,8 @@ vec3 farAir(vec3 color, vec3 world) {
   float mist = uMist * exp(-max(uCamPos.y, 0.0) / uMistTopM) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
   float land = 1.0 - exp(-d * uAir - mist);
   float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
-  float last = ${END_AIR.toFixed(2)} * smoothstep(${END_AIR_FROM_M.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, length(world.xz));
   // Near, the crop has the air its neighbors have. The land's own air comes in toward the far end, where the crop meets the land.
-  return mix(color, behind, max(land * smoothstep(100.0, 290.0, length(world.xz)), max(own, last)));
+  return mix(color, behind, max(land * smoothstep(100.0, 290.0, length(world.xz)), own));
 }
 `
 
