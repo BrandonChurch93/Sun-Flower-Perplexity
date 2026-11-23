@@ -37,7 +37,7 @@ export const airUniforms = {
   uTrueSun: { value: new THREE.Vector3(0, 1, 0) },
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
-  uLandBloom: { value: 0 },
+  uLandCrop: { value: new THREE.Vector3(0.03, 0.052, 0.018) },
   uLandWind: { value: 0 },
 }
 
@@ -55,7 +55,7 @@ uniform float uThrough;
 uniform vec3 uTrueSun;
 uniform float uLandWet;
 uniform float uLandFrost;
-uniform float uLandBloom;
+uniform vec3 uLandCrop;
 
 // The sky that lies behind the land in the direction of a point.
 vec3 skyBehind(vec3 dir) {

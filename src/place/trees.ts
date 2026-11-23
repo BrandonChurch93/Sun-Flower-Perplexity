@@ -146,6 +146,8 @@ const HEDGE_FROM_M = 125
 const TREES_FROM_M = 760
 const BOUND_TREES_FROM_M = 760
 const LINES_TO_M = 2500
+// Bearing, distance and trees of each small wood in the crop.
+const COPSES = [[239.5, 1320, 22], [168.5, 1480, 18], [147, 1150, 16]]
 
 export function plantList(): Tree[] {
   const rnd = stream('place trees')
@@ -277,15 +279,17 @@ export function plantList(): Tree[] {
       tree(x, z, tall, false)
     }
   }
-  // Lone trees on the open land.
-  for (let i = 0; i < 46; i++) {
-    const az = rnd.range(SEEN.fromDeg, SEEN.toDeg) * RAD
-    const r = rnd.range(760, 1900)
-    const x = Math.sin(az) * r
-    const z = Math.cos(az) * r
-    const tall = rnd.range(9, 15)
-    if (woodAt(x, z, landHill(x, z)) > 0.3) continue
-    tree(x, z, tall, false)
+  // Out in the crop the trees stand together, in small woods of their own.
+  for (const [bearing, far, count] of COPSES) {
+    const az = bearing * RAD
+    for (let i = 0; i < count; i++) {
+      const along = rnd.range(-1, 1)
+      const deep = rnd.range(-1, 1)
+      const x = Math.sin(az) * far + Math.cos(az) * along * 60 + Math.sin(az) * deep * 24
+      const z = Math.cos(az) * far - Math.sin(az) * along * 60 + Math.cos(az) * deep * 24
+      tree(x, z, rnd.range(10.5, 16) * (1 - 0.4 * along * along), false)
+      if (rnd.next() < 0.7) hedge(x + rnd.range(-5, 5), z + rnd.range(-5, 5))
+    }
   }
   return trees
 }
