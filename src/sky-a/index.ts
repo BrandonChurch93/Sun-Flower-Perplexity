@@ -29,6 +29,8 @@ const SHAPE_N = 64
 const DETAIL_N = 32
 const POLE = new THREE.Vector3(0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4))
 
+// Twilight is lifted above what the single scattering of the model gives, so that the blue hour reads brighter than the moonlit night.
+const gainAt = (e: number): number => GAIN * Math.pow(10, 2 * smoothstep(0.5, -6, e))
 const lum = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
 function halfTexture(data: Float32Array, w: number, h: number): THREE.DataTexture {
@@ -194,10 +196,11 @@ class PhysicalSky implements Sky {
     row(rows.zenith, e, out.zenith)
     row(rows.horizon, e, out.horizon)
     row(rows.horizonSun, e, out.horizonSun)
+    const g = gainAt(e)
     for (let i = 0; i < 3; i++) {
-      out.zenith[i] = out.zenith[i] * GAIN + NIGHT_ZENITH[i]
-      out.horizon[i] = out.horizon[i] * GAIN + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
-      out.horizonSun[i] = out.horizonSun[i] * GAIN + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
+      out.zenith[i] = out.zenith[i] * g + NIGHT_ZENITH[i]
+      out.horizon[i] = out.horizon[i] * g + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
+      out.horizonSun[i] = out.horizonSun[i] * g + NIGHT_HORIZON[i] * 0.95 + NIGHT_ZENITH[i] * 0.05
     }
     if (m.lightKind === 'moon') for (let i = 0; i < 3; i++) out.direct[i] = MOON[i] * smoothstep(5, 9, -e)
     return out
@@ -235,6 +238,8 @@ class PhysicalSky implements Sky {
     const lit = this.light(now, this.lit)
     const sv = this.skyViewPass as FullscreenPass
     sv.uniforms.uSun.value.copy(now.sun)
+    const g = gainAt(now.sunElevationDeg)
+    sv.uniforms.uGain.value = g
     sv.render(renderer, this.skyViewTarget)
 
     const plan = PLAN[view.quality]
@@ -267,13 +272,14 @@ class PhysicalSky implements Sky {
     u.uEvening.value = d.evening
     u.uFog.value = d.fog
     const sunY = Math.max(now.sun.y, 0)
-    u.uAmbTop.value.set(0.5 * (clear.zenith[0] + clear.horizon[0]), 0.5 * (clear.zenith[1] + clear.horizon[1]), 0.5 * (clear.zenith[2] + clear.horizon[2]))
+    u.uAmbTop.value.set(0.45 * clear.zenith[0] + 0.35 * clear.horizon[0] + 0.2 * clear.horizonSun[0], 0.45 * clear.zenith[1] + 0.35 * clear.horizon[1] + 0.2 * clear.horizonSun[1], 0.45 * clear.zenith[2] + 0.35 * clear.horizon[2] + 0.2 * clear.horizonSun[2])
     const ground = 0.18
     u.uAmbBottom.value.set(
       ground * (clear.direct[0] * sunY / Math.PI + lit.horizon[0]),
       ground * (clear.direct[1] * sunY / Math.PI + lit.horizon[1]),
       ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]),
     )
+    u.uGain.value = g
     u.uSteps.value = plan.steps
     u.uLightSteps.value = plan.light
     ;(this.cloudPass as FullscreenPass).render(renderer, cloudTarget)
