@@ -428,11 +428,11 @@ float dusted(vec3 world, float lies, float frost, float sunny) {
   float fine = mix(0.6 * valueNoise(world.xz * 610.0 + world.y * 300.0) + 0.4 * valueNoise(world.zx * 1700.0), 0.5, smoothstep(0.0004, 0.002, pixel));
   return 0.2 * smoothstep(0.25, 0.9, frost) * frostKept(frost, sunny) * smoothstep(0.04, 0.4, lies) * (0.45 + 1.1 * fine * fine);
 }
-// Single faces of ice, or beads of water, that throw the sun straight at the lens. Each lies at its own place on the ground and faces its own way: it lights when lens, face and sun line up, and nothing in it runs on time.
+// Single faces of ice, or beads of water, that throw the sun straight at the lens. Each lies at its own place on the ground and faces its own way, leaning a little to the sun and whatever the soil under it does: it lights when lens, face and sun line up, and nothing in it runs on time.
 // Each is drawn two pixels wide wherever it lies, so what it sends to the lens does not change as it passes over the pixels.
 // Where the lens opens them into discs (circle, in pixels) there is room for one in each patch of ground as wide as half a disc.
 // amount is the share of the places that carry one: each place has its own threshold, so they go out one by one as it falls. A few are bright and most are faint.
-float sparks(vec2 p, vec3 n, vec3 hv, float sharp, float circle, float amount) {
+float sparks(vec2 p, vec3 hv, float sharp, float circle, float amount) {
   vec2 across = dFdx(p);
   vec2 down = dFdy(p);
   float det = across.x * down.y - across.y * down.x;
@@ -450,7 +450,7 @@ float sparks(vec2 p, vec3 n, vec3 hv, float sharp, float circle, float amount) {
     float c = fract(b * 3407.3);
     vec2 d = (fract(q) - 0.25 - 0.5 * vec2(b, fract(b * 61.7))) * cellM;
     vec2 px = vec2(d.x * down.y - d.y * down.x, d.y * across.x - d.x * across.y) / det;
-    vec3 facet = normalize(n + 0.75 * (vec3(a, fract(a * 61.7), fract(a * 3407.3)) - 0.5));
+    vec3 facet = normalize(vec3(0.0, 1.0, 0.0) + vec3(1.1, 0.5, 1.1) * (vec3(a, fract(a * 61.7), fract(a * 3407.3)) - 0.5) + 0.2 * vec3(uLowSun.x, 0.0, uLowSun.y));
     float there = smoothstep(0.0, 0.12, amount - fract(a * 173.3));
     lit += smoothstep(0.2, 0.7, pow(max(dot(facet, hv), 0.0), sharp)) * there * (0.12 + 0.88 * c * c * c) * exp(-dot(px, px) / 1.5) * share;
   }
@@ -739,9 +739,10 @@ void main() {
   vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
   color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.1 * hollow + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.06 + 0.4 * ndl + 0.1 * pow(saturate(-dot(v, uSunDir)), 2.0))) * (1.0 + 0.45 * crust);
   float sunward = mix(0.3, 1.0, pow(saturate(dot(-normalize(v.xz), uLowSun.xy)), 6.0));
-  float icy = smoothstep(0.0, 0.3, uFrost) * kept * (0.3 + 0.7 * saturate(2.5 * rime)) * smoothstep(-0.5, 0.2, dot(n.xz, uLowSun.xy));
+  float icy = smoothstep(0.0, 0.3, uFrost) * kept * (0.3 + 0.7 * smoothstep(0.15, 0.5, sits));
   float beads = 0.8 * thaw * uDew * (1.0 - rime);
-  color += sparkLight(vDepth) * (sparks(p, n, hv, mix(60.0, 200.0, beads / max(icy + beads, 1e-3)), cocOf(vDepth), (icy + beads) * sunward * (0.4 + 0.6 * lit) * (1.0 - 0.8 * under) * (1.0 - thatch)));
+  float reach = 1.0 / (1.0 + vDepth * vDepth / 64.0);
+  color += sparkLight(vDepth) * (sparks(p, hv, mix(110.0, 200.0, beads / max(icy + beads, 1e-3)), cocOf(vDepth), (icy + beads) * sunward * reach * (0.4 + 0.6 * lit) * (1.0 - 0.8 * under) * (1.0 - thatch)));
   outColor = finish(color, vWorld, vDepth, density);
 #ifndef NEAR
   if (uDiag == 0) outColor.rgb = mix(outColor.rgb, color, 0.9 * smoothstep(250.0, 900.0, r));
