@@ -123,19 +123,21 @@ const tableOf = (judged: Judged[]): { head: string[]; rows: (string | number)[][
   rows: judged.map((j) => [`${j.from}-${j.to}`, barText(secondsOf(j.from)).slice(4), `${j.frames}${j.whole ? '' : ' (not whole)'}`, j.mean.toFixed(1), j.worst.toFixed(1), j.worstAt, j.top, j.over.length ? j.over.join('; ') : 'nothing', `${j.ok ? 'PASS' : 'FAIL'}${j.busy ? ', not alone' : ''}`]),
 })
 
-const COLOURS = ['#3f8f4f', '#c9a227', '#3b78c2', '#8a8f98', '#b4532a']
+const COLOURS = ['#3f8f4f', '#c9a227', '#3b78c2', '#8a8f98', '#b4532a', '#7a5fb0', '#4aa3a3']
 
 // One bar a window: the mean script time of a frame, stacked by the groups of the limit file, with the worst frame as a tick and the two limits as lines.
 async function picture(judged: Judged[], limits: Limits, file: string): Promise<void> {
   const groups = [...limits.shares.map((s) => s.name), 'every other part']
   const named = new Set(groups.slice(0, -1))
   const parts = (j: Judged): number[] => [...limits.shares.map((s) => j.shares[s.name] ?? 0), Object.entries(j.shares).filter(([k]) => !named.has(k)).reduce((a, [, v]) => a + v, 0)]
-  const top = Math.max(limits.worstMs * 1.5, ...judged.map((j) => j.worst)) * 1.05
+  // One frame far above the rest would flatten every bar: the axis ends a little above the largest mean and the median worst frame, and a worst frame above it is drawn at the top edge with an arrow and its number.
+  const worsts = judged.map((j) => j.worst).sort((a, b) => a - b)
+  const top = Math.max(limits.worstMs * 1.5, 1.6 * Math.max(...judged.map((j) => j.mean)), 1.25 * worsts[Math.floor(worsts.length / 2)]) * 1.05
   const left = 70
   const width = 1500
   const height = 664
   const base = height - 116
-  const head = 86
+  const head = 112
   const y = (ms: number): number => base - ((base - head) * ms) / top
   const slot = (width - left - 30) / judged.length
   const bar = Math.min(64, slot * 0.6)
@@ -143,22 +145,28 @@ async function picture(judged: Judged[], limits: Limits, file: string): Promise<
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="#15171a"/>`
   svg += text(20, 30, `The page's own script time in a frame, by window of frames drawn in a row: the bar is the mean, the white tick the worst frame`, 18)
   groups.forEach((g, i) => {
-    svg += `<rect x="${20 + i * 215}" y="46" width="14" height="14" fill="${COLOURS[i]}"/>` + text(40 + i * 215, 58, g, 14)
+    svg += `<rect x="${20 + i * 205}" y="46" width="14" height="14" fill="${COLOURS[i % COLOURS.length]}"/>` + text(40 + i * 205, 58, g, 14)
   })
-  const stepMs = top > 160 ? 50 : top > 60 ? 20 : 10
+  const stepMs = [5, 10, 20, 50, 100, 200, 500, 1000].find((x) => top / x <= 12) ?? 2000
   for (let ms = 0; ms <= top; ms += stepMs) svg += `<line x1="${left}" x2="${width - 30}" y1="${y(ms)}" y2="${y(ms)}" stroke="#2a2e33"/>` + text(left - 8, y(ms) + 5, `${ms}`, 13, 'end', '#9aa0a8')
   svg += text(16, head - 14, 'ms', 13, 'start', '#9aa0a8')
   for (const [ms, name] of [[limits.meanMs, `limit of the mean ${limits.meanMs} ms`], [limits.worstMs, `limit of any frame ${limits.worstMs} ms`]] as [number, string][]) svg += `<line x1="${left}" x2="${width - 30}" y1="${y(ms)}" y2="${y(ms)}" stroke="#ff6b5e" stroke-dasharray="6 4"/>` + (name ? '' : '')
-  svg += `<line x1="${width - 420}" x2="${width - 380}" y1="53" y2="53" stroke="#ff6b5e" stroke-dasharray="6 4"/>` + text(width - 372, 58, `the limits: ${limits.meanMs} ms in the mean, ${limits.worstMs} ms in any frame`, 14, 'start', '#ff8d83')
+  svg += `<line x1="20" x2="60" y1="77" y2="77" stroke="#ff6b5e" stroke-dasharray="6 4"/>` + text(68, 82, `the limits: ${limits.meanMs} ms in the mean, ${limits.worstMs} ms in any frame`, 14, 'start', '#ff8d83')
   judged.forEach((j, i) => {
     const x = left + i * slot + (slot - bar) / 2
     let sum = 0
     parts(j).forEach((v, k) => {
-      svg += `<rect x="${x.toFixed(1)}" y="${y(sum + v).toFixed(1)}" width="${bar.toFixed(1)}" height="${Math.max(0, y(sum) - y(sum + v)).toFixed(1)}" fill="${COLOURS[k]}"/>`
+      svg += `<rect x="${x.toFixed(1)}" y="${y(sum + v).toFixed(1)}" width="${bar.toFixed(1)}" height="${Math.max(0, y(sum) - y(sum + v)).toFixed(1)}" fill="${COLOURS[k % COLOURS.length]}"/>`
       sum += v
     })
-    svg += `<line x1="${(x - 6).toFixed(1)}" x2="${(x + bar + 6).toFixed(1)}" y1="${y(j.worst).toFixed(1)}" y2="${y(j.worst).toFixed(1)}" stroke="#ffffff" stroke-width="2"/>`
-    svg += text(x + bar / 2, y(j.worst) - 7, j.worst.toFixed(0), 13, 'middle')
+    if (j.worst <= top) {
+      svg += `<line x1="${(x - 6).toFixed(1)}" x2="${(x + bar + 6).toFixed(1)}" y1="${y(j.worst).toFixed(1)}" y2="${y(j.worst).toFixed(1)}" stroke="#ffffff" stroke-width="2"/>`
+      svg += text(x + bar / 2, y(j.worst) - 7, j.worst.toFixed(0), 13, 'middle')
+    } else {
+      const mid = x + bar / 2
+      svg += `<path d="M ${(mid - 7).toFixed(1)} ${(head + 10).toFixed(1)} L ${mid.toFixed(1)} ${head.toFixed(1)} L ${(mid + 7).toFixed(1)} ${(head + 10).toFixed(1)} Z" fill="#ffb347"/>`
+      svg += text(mid, head - 8, `${j.worst.toFixed(0)}, above the axis`, 13, 'middle', '#ffb347')
+    }
     svg += text(x + bar / 2, base + 20, `${j.from}-${j.to}`, 13, 'middle')
     svg += text(x + bar / 2, base + 38, `bar ${barText(secondsOf(j.from)).slice(4)}`, 12, 'middle', '#9aa0a8')
     svg += text(x + bar / 2, base + 56, `mean ${j.mean.toFixed(0)}`, 13, 'middle')
