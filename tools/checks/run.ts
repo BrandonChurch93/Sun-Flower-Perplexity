@@ -17,15 +17,16 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- all               every check that does not draw, then what the drawn ones have so far
 //   npm run checks -- proof             every check run on a film broken on purpose: each has to fail
 //   npm run checks -- review            builds the review page from what is in out/
+//   npm run checks -- pack              one tar of the results and their pictures, to read on another machine
 // --break <name> puts a film broken on purpose in the film's place, to show that the check fails. tools/checks/README.md lists them.
 
-const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'numbers', 'pure', 'script', 'writes', 'owners', 'worked', 'film', 'all', 'proof', 'review'] as const
+const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'numbers', 'pure', 'script', 'writes', 'owners', 'worked', 'film', 'all', 'proof', 'review', 'pack'] as const
 
 // What each check needs and what it costs, measured on four cores without a graphics card, four pages drawing at once.
 const HELP: [string, string, string, string][] = [
   ['nights', 'no night longer than 1.2 s, by the clock; no step or flicker through a dusk or dawn, by the picture', 'nothing; the picture part reads the frames of play', '3 s'],
   ['nights --plant', 'the plant alone does not get brighter from the handover to the moon toward midnight', 'draws about 140 frames itself at 640 x 360 with the plant alone', '7 to 9 min'],
-  ['holds', 'nothing grows in the two holds, by the clock and by the picture', 'draws 20 frames itself at 640 x 360 (--no-pictures: none)', '3 s by the clock, 4 to 6 min with the pictures'],
+  ['holds', 'nothing grows in the two holds, by the clock and by the picture: of every shot of a hold the first, middle and last frame are the same', 'draws 34 frames itself at 640 x 360 (--no-pictures: none)', '3 s by the clock, 6 to 9 min with the pictures'],
   ['cues', 'sunrises, holds and lightning sit on the bar lines of config/music/cues.json', 'nothing', '3 s'],
   ['play', 'draws the film small and notes what each frame made', 'a browser; --sky, --from, --to, --stride 6', '25 to 30 min a page for a third of a round of stride 6; 3 pages side by side'],
   ['cuts', 'no hard cut: the edges of the picture stay where they are from frame to frame', 'the frames of play', '10 to 40 s'],
@@ -40,6 +41,7 @@ const HELP: [string, string, string, string][] = [
   ['all', 'every check that does not draw, then what the drawn ones have so far', 'nothing', '1 min'],
   ['proof', 'every check on a film broken on purpose: each has to fail', 'nothing for the clock breaks; reads the last run of the drawn ones', '30 s'],
   ['review', 'builds the review page from what is in out/', 'what the checks wrote; --film file.mp4 --looks-from dir --live path --out dir for the film drawn at its own size; --shot takes pictures of the page', '10 s, 40 s with --shot, 3 to 8 min with --film'],
+  ['pack', 'one tar of the results and the pictures they name, for the review page on another machine', 'what the checks wrote; --checks a,b --to file.tar', '2 s']
 ]
 
 const name = process.argv[2]

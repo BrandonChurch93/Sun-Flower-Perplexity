@@ -24,6 +24,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels: drawn in order, again backwards, and on a fresh page that has warmed as the film does before it plays (the first page draws without warming, so the warming may leave nothing behind that changes a pixel) | 42 frames and the warming | 12 to 15 min |
 | `npm run checks -- all` | one line for each check | no, or `--draw` | 5 s |
 | `npm run checks -- review` | the review page | `--draw` for the looks | 1 min |
+| `npm run checks -- pack` | one tar (`out/work/checks-results.tar`) of the results the review page reads and the pictures they name; unpack it at the root of the repo on the machine that builds the page | nothing; `--checks a,b`, `--to file.tar` | 2 s |
 
 `npm run checks` alone, or `npm run -s checks -- --help`, prints this table with what each check needs.
 
