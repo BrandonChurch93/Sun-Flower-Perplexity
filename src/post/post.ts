@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { smoothstep } from '../core/curves.ts'
 import { FullscreenPass } from '../core/fullscreen.ts'
 import { shared, type DiagName } from '../core/shading.ts'
 import type { WorldDef } from '../core/world.ts'
@@ -130,6 +131,7 @@ export class Post {
     uSeed: { value: 0 },
     uDrift: { value: 0 },
     uTight: { value: 0 },
+    uHorizon: { value: 0 },
     uMode: { value: 0 },
   })
 
@@ -329,7 +331,7 @@ export class Post {
         this.sunRead.render(renderer, this.sunTarget)
       }
       const cast = light * look.shafts > 0 || !this.warmed
-      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, look.fan) : (this.shaftA as THREE.WebGLRenderTarget).texture
+      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, smoothstep(0, 0.3, look.fan)) : (this.shaftA as THREE.WebGLRenderTarget).texture
       const tone = toneConstants(grade.contrast, grade.white)
       g.tBloom.value = bloom
       g.tShafts.value = shafts
@@ -364,6 +366,7 @@ export class Post {
       g.uMist.value = look.mist
       g.uWarm.value = look.warm
       g.uTight.value = look.tight
+      g.uHorizon.value = at.horizon ?? 0
       g.tRaw.value = frame
       g.uFar.value = farCircle
       g.uShafts.value = cast ? look.shafts : 0
