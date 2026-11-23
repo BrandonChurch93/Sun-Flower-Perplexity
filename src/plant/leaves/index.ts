@@ -10,7 +10,7 @@ import { createBristles } from '../bristles/index.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
-import { beadPlan, createBeads, type BeadPlan, type BeadSet } from '../surface/wet/index.ts'
+import { THAW_BEADS, beadPlan, createBeads, thawSpot, type BeadPlan, type BeadSet } from '../surface/wet/index.ts'
 import { RAIN_STANDS } from '../../v2/inputs.ts'
 import { createCrystals } from '../../weather/frost/index.ts'
 import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/rain/drops.ts'
@@ -610,7 +610,8 @@ export function create(options: PartOptions): PlantPart {
     }
   }
 
-  const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 600 : 200, 'leaf beads') : null
+  const thawBeads = hero && options.variant === 0 ? THAW_BEADS : 0
+  const beads: BeadSet | null = hero ? createBeads(options, (options.variant === 0 ? 600 : 200) + thawBeads, 'leaf beads', thawBeads) : null
   const beadSpots: { leaf: number; own: number; along: number; across: number; plan: BeadPlan }[] = []
   if (beads) {
     const tint = beads.tint()
@@ -622,6 +623,17 @@ export function create(options: PartOptions): PlantPart {
     usePlant(inUse)
     const whole = share.reduce((a, b) => a + b, 0)
     for (let k = 0; k < beads.count; k++) {
+      if (k >= beads.count - thawBeads) {
+        const first = leaves[0]
+        const onVein = (vein: number, across: number): number => {
+          const c = (0.5 + 0.5 * clamp(across, -1, 1)) * (HERO_COLS.length - 1.001)
+          const w = HERO_COLS[Math.floor(c)] + (HERO_COLS[Math.floor(c) + 1] - HERO_COLS[Math.floor(c)]) * (c - Math.floor(c))
+          return veinAt(veinSets[first.set][first.mirror > 0 === w >= 0 ? 1 : 0][vein], Math.abs(w))
+        }
+        beadSpots.push({ leaf: 0, ...thawSpot(k - (beads.count - thawBeads), onVein) })
+        tint.set([0.05, 0.1, 0.026], k * 3)
+        continue
+      }
       const r = (c: number) => hash01(seed, 9000 + k, c)
       // Water gathers along the pressed midrib and in the troughs between the side veins.
       const side = r(3) < 0.5 ? -1 : 1
