@@ -221,9 +221,10 @@ export class Post {
     r.uSpecks.value = this.look.specks
     r.uSkyHold.value = 1
     r.uExposure.value = exposure
-    r.uDiscScale.value = samples === 1 ? 0.5 : scale
+    const discScale = samples === 1 ? 0.5 : 0.55 / Math.sqrt(samples)
+    r.uDiscScale.value = discScale
     this.reach.render(renderer, this.fillA)
-    this.drawDiscs(renderer, frame, this.fillA.texture, farCircle, samples === 1 ? 0.5 : scale)
+    this.drawDiscs(renderer, frame, this.fillA.texture, farCircle, discScale)
     let from = this.fillA
     let to = this.fillB
     // One sample has no copies to join: the whole blur circle is drawn here, so its rim is weighted as the sampler weights the rim of the lens.

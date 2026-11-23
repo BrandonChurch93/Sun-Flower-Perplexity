@@ -165,8 +165,12 @@ ${taps}
 ${inner}
   vec4 result = vec4(sum / total, radius);
   // Where a nearer thing covers the pixel the pixel is from now on as blurred as that thing, so the rounds that follow smooth it no wider.
-  if (cover > 0.0) result = mix(result, before / cover, min(cover, 1.0));
-  outColor = vec4(result.rgb, (held ? -1.0 : 1.0) * result.a / uSpread);
+  // A held sky pixel that is covered stops being held and takes the covering thing's reach, so the cover is smoothed like any other.
+  if (cover > 0.0) {
+    result = mix(result, before / cover, min(cover, 1.0));
+    if (held) result.a = before.a / cover;
+  }
+  outColor = vec4(result.rgb, (held && cover <= 0.0 ? -1.0 : 1.0) * result.a / uSpread);
 }
 `
 }
