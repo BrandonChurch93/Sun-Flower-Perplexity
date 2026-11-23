@@ -10,7 +10,7 @@ float sky(float a) {
 }
 `
 
-// The radius over which each pixel is spread, with the sharp zone grown by one pixel so the soft edge pixels of a sharp thing keep their own color.
+// The radius over which each pixel is spread. Where the frame is the sum of several places on the lens the sharp zone is grown by one pixel, so the soft edge pixels of a sharp thing keep their own color; a frame drawn through one place has no such pixels, and there the growth would leave a ring of unblurred ground round every hair.
 export const reachFragment = /* glsl */ `${glslCommon}
 uniform sampler2D tFrame;
 uniform sampler2D tNear;
@@ -19,6 +19,7 @@ uniform float uSpecks;
 uniform float uSkyHold;
 uniform float uExposure;
 uniform float uDiscScale;
+uniform float uGrow;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 ${skyness}
@@ -33,10 +34,12 @@ void main() {
   vec4 c = texelFetch(tFrame, p, 0);
   float near = uFar > 0.0 ? texture(tNear, vUv).r : 1.0;
   float a = circle(p, near);
-  a = min(a, circle(min(p + ivec2(1, 0), top), near));
-  a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
-  a = min(a, circle(min(p + ivec2(0, 1), top), near));
-  a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
+  if (uGrow > 0.5) {
+    a = min(a, circle(min(p + ivec2(1, 0), top), near));
+    a = min(a, circle(max(p - ivec2(1, 0), ivec2(0)), near));
+    a = min(a, circle(min(p + ivec2(0, 1), top), near));
+    a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
+  }
   // A lone pixel far brighter than everything round it is a sampling accident, not a light: no lens draws a point one pixel wide. In focus it is held to twice its brightest neighbor, so it neither sits as a hard dot nor blooms.
   vec3 rgb = max(c.rgb, 0.0);
   float most = 0.0;

@@ -84,7 +84,7 @@ export class Post {
   private readonly sunTarget = halfTarget(4, 2)
   private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uDisc: { value: 0.005 }, uRim: { value: 0.005 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
-  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uExposure: { value: 1 }, uDiscScale: { value: 0.5 } })
+  private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 }, uExposure: { value: 1 }, uDiscScale: { value: 0.5 }, uGrow: { value: 0 } })
   private readonly fillWide = fillPass(3, true)
   private readonly fillTight = fillPass(2, false)
   private readonly cellLight = new FullscreenPass(cellFragment(false), { ...shared, tRaw: { value: null }, tHeld: { value: null }, uFar: { value: 0 } })
@@ -224,6 +224,7 @@ export class Post {
     r.uExposure.value = exposure
     const discScale = samples === 1 ? 0.5 : 0.55 / Math.sqrt(samples)
     r.uDiscScale.value = discScale
+    r.uGrow.value = samples > 1 ? 1 : 0
     this.reach.render(renderer, this.fillA)
     this.drawDiscs(renderer, frame, this.fillA.texture, farCircle, discScale)
     let from = this.fillA
