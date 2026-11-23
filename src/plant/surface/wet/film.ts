@@ -54,6 +54,6 @@ vec3 wetBehind(vec3 d) {
 // What a film of water mirrors: the bright band low in the sky where it faces it. The dark cloud over that and the ground under it are broken up by the rain on the film and all but gone.
 vec3 wetSky(vec3 d) {
   float band = smoothstep(-0.08, 0.04, d.y) * (1.0 - smoothstep(0.12, 0.4, d.y));
-  return mix(WET_DARK * mix(uGroundBounce, uSkyZenith, smoothstep(-0.05, 0.05, d.y)), uSkyHorizon, band);
+  return mix(WET_DARK * mix(uGroundBounce, uAirZenith, smoothstep(-0.05, 0.05, d.y)), uAirHorizon, band);
 }
 `

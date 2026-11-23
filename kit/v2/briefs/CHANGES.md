@@ -33,3 +33,11 @@ Newest first. Merge with `git fetch origin v2 && git merge FETCH_HEAD` (never re
 8. The companion (at x -0.651, z 0.322) stays smaller than the plant through the storm: `companionRatio(tau)` in `src/director/companion.ts` is 0.7 of the plant's height until tau 29 and rises to 1.131 by tau 42. In the storm frame it stands at about 0.28 of the width with its top at about a third of the height, as in `references/v2/keys/storm.png`.
 9. The plant is merged (to f05ace8): `PlantInputs` has new optional fields (`real`, `liftLow`, `lapse`, `cold`, `rain`, `gust`, `steady`, `calm`), filled by `src/v2/inputs.ts`.
 10. Found by the checks: after warming, a frame writes about 400 buffers that already exist, about 30 MB in all. Do not rewrite a buffer whose content did not change (in a hold nothing grows), and say in your report how many buffers and megabytes a frame of yours writes in a hold and in the time lapse.
+
+## 23 Nov, 01:45 UTC: `v2` at the commit named in the Builder's mail
+
+- Rain at `6e7e32e`, the lens at `64a7963`, sky B at `7164c7f`, the ground at `237f485`, the plant at `d6677a8`, the field at `56988c5`, the place at `95c908e` and the frost at `6517c3b` are all on `v2`. Merge it before your next sheet.
+- A part whose `objects` is empty adds nothing to the scene (`src/director/film.ts`).
+- Tests may take up to a minute each (`testTimeout` in `vite.config.ts`), so a machine that is drawing beside them does not fail them.
+- MEASURED on the merged film: bar 61 drawn after fifteen other bars, alone, and after bar 29.29 gives the same picture to the last pixel.
+- A quad whose `position` has two components must set `mesh.frustumCulled = false` (three.js cannot make its bounding sphere and prints an error on every load).
