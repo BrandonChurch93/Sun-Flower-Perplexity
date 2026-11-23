@@ -1,12 +1,12 @@
-# Status 17
+# Status 18
 
-2026-11-23 08:13 UTC
+2026-11-23 08:34 UTC
 
-- Status 17 · Phase 3. Eleven branches of work are merged and pushed (v2 de7042a; 178 tests passed on the tree before the last three small merges, a full run is going now). The first frost close shot has a new angle: the camera looks down on a whole leaf, so the frost on its face, the veins and the ice fringe show together. The thaw shot now has water beads and the hanging drop. The end has a red orange sun sinking under a deep blue sky. The stutter on the lightning frame is found: the plant rewrote its hair textures in the middle of the hold (8 MB in one frame, measured), and the fix is with its owner. Clouds now thin at night so more stars show.
-- Next: Set the moving camera for the new first shot and hand its frames to the frost, leaf, rain and ground owners. Give the plant one fixed lens per shot so that a cut writes nothing to the graphics card. Draw and merge the new frozen ground and the refitted far ridge. Time used: 10.2 h of 30 h.
+- Status 18 · Phase 3. Merged and pushed as a0e376a: the plant's keyed switches, the rain owner's clear beads and hanging drop, the ground owner's frozen band and fixed sparks, the far ridge refitted under the last sun. The new first close shot of the frost section (looking down on a leaf) now stands in the film. MEASURED: 30 test files, 180 tests pass; 14 proof frames drawn and read. Frames 3180 to 3497 drawn as a clip (older hash).
+- Next: Merge the plant's hold fix together with the frost owner's reader; the frost coat on the leaf faces as real crystals (faces are still bare); the bloom close up gets its own owner; check the clouds that clear too fast just after bar 65; thin the row of white beads on the wide shot after the thaw. Time used: 10.6 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost close shot 1: the old angle left, the new angle right (draft). The camera now looks down on the upper face of a leaf
-- `status-2.jpg`: Frost close shots 2 and 3 with the newest work merged (draft): the tip as the sun comes through, with ice on every stem hair, and the thaw with water beads and the drop just before it falls
-- `status-3.jpg`: Six nights of the time lapse with thinner cloud at night: stars show through wider gaps (draft)
-- `status-4.jpg`: The end at bar 71, bar 73 and the last frame, beside the reference (draft): a red orange sun under a deep blue sky
+- `status-1.jpg`: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106)
+- `status-2.jpg`: Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940
+- `status-3.jpg`: Bar 73 in the film (left) beside the key picture for the last shot (right)
+- `status-4.jpg`: Bloom close up into the pull back, frames 3190 to 3497, draft size
