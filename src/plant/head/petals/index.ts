@@ -232,8 +232,14 @@ export function create(options: PartOptions): PlantPart | null {
 
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
-  const normals = new Float32Array(count * 3)
-  const state = new Float32Array(count * 4)
+  // What a slot carries beside the shape, of its own moment: the normals and each vertex's numbers. The neighbors keep one.
+  const both = options.places ? [0] : [0, 1]
+  const normalSets = both.map(() => new Float32Array(count * 3))
+  const stateSets = both.map(() => new Float32Array(count * 4))
+  let normals = normalSets[0]
+  let state = stateSets[0]
+  const filled = [false, false]
+  const led = [false, false]
   const uv = new Float32Array(count * 2)
   const info = new Float32Array(count * 4)
   const index: number[] = []
@@ -267,12 +273,13 @@ export function create(options: PartOptions): PlantPart | null {
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const normal = dynamic(normals, 3)
-  const states = dynamic(state, 4)
+  const carried = both.map((k) => [dynamic(normalSets[k], 3), dynamic(stateSets[k], 4)])
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
-  geometry.setAttribute('normal', normal)
-  geometry.setAttribute('aState', states)
+  carried.forEach(([n, st], k) => {
+    geometry.setAttribute(k === 1 ? 'normalB' : 'normal', n)
+    geometry.setAttribute(k === 1 ? 'aStateB' : 'aState', st)
+  })
   geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
   geometry.setAttribute('aRay', new THREE.BufferAttribute(info, 4))
   geometry.setIndex(index)
@@ -624,16 +631,22 @@ export function create(options: PartOptions): PlantPart | null {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       const out = slots[slot]
+      const of = filling.lead ? slot : 0
+      normals = normalSets[of]
+      state = stateSets[of]
+      filled[slot] = true
+      if (filling.lead) led[slot] = true
       for (let k = 0; k < total; k++) layRay(out, k, pose, slot)
       if (filling.lead) layNormals(out)
       if (hairs && where) layHairs(hairs, where, out, slot, pose.time)
     },
     absent: (time) => rayLength(0, time) <= 0,
     finish() {
-      position.needsUpdate = true
-      if (positionB) positionB.needsUpdate = true
-      normal.needsUpdate = true
-      states.needsUpdate = true
+      if (filled[0]) position.needsUpdate = true
+      if (filled[1] && positionB) positionB.needsUpdate = true
+      for (let k = 0; k < carried.length; k++) if (led[k]) for (const a of carried[k]) a.needsUpdate = true
+      filled.fill(false)
+      led.fill(false)
       hairs?.finish()
     },
   }

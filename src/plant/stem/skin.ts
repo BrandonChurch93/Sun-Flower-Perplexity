@@ -14,6 +14,13 @@ in vec3 aCoord;
 in vec4 aSkin;
 in vec4 aSkin2;
 in vec4 aSkin3;
+#ifndef PLANT_FIELD
+in vec3 normalB;
+in vec3 aCoordB;
+in vec4 aSkinB;
+in vec4 aSkin2B;
+in vec4 aSkin3B;
+#endif
 out vec3 vWorld;
 out vec3 vNormal;
 out vec3 vCoord;
@@ -30,11 +37,20 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
+#ifdef PLANT_FIELD
   vNormal = plantDirection(normal);
   vCoord = aCoord;
   vSkin = aSkin;
   vSkin2 = aSkin2;
   vSkin3 = aSkin3;
+#else
+  float lead = plantLead();
+  vNormal = plantDirection(mix(normal, normalB, lead));
+  vCoord = mix(aCoord, aCoordB, lead);
+  vSkin = mix(aSkin, aSkinB, lead);
+  vSkin2 = mix(aSkin2, aSkin2B, lead);
+  vSkin3 = mix(aSkin3, aSkin3B, lead);
+#endif
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
@@ -55,12 +71,14 @@ in float vDepth;
 uniform sampler2D uSkin;
 uniform sampler2D uRibs;
 #endif
+// How tender the skin is: 0 to 64 for the young stem, and up to 16 more for the sprout.
+uniform float uStemAge;
 ${tissueGlsl}
 void main() {
   vec3 view = normalize(uCamPos - vWorld);
   vec3 face = normalize(vNormal);
-  float age = floor(vSkin.y * 0.25);
-  float youth = saturate(vSkin.y - 4.0 * age - 1.0);
+  float age = uStemAge;
+  float youth = saturate(vSkin.y - 1.0);
   float fresh = saturate((age - 64.0) * 0.0625);
   float tender = min(age, 64.0) * 0.015625;
   float pale = vSkin.z;

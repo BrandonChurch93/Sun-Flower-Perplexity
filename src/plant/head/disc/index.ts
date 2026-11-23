@@ -123,6 +123,17 @@ export function create(options: PartOptions): PlantPart | null {
     meshes.push(partMesh(geometry, surface))
   }
 
+  // What each slot was filled with beside the head's frame: whether the florets show, how young they are and how far the cover has drawn back.
+  const kept = [new Float32Array(3), new Float32Array(3)]
+  const settle = (share: number): void => {
+    const a = kept[0]
+    const b = kept[share > 0 ? 1 : 0]
+    const shown = a[0] > 0 || b[0] > 0
+    for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
+    uniforms.uYoung.value = a[1] + (b[1] - a[1]) * share
+    uniforms.uCover.value = a[2] + (b[2] - a[2]) * share
+  }
+
   return {
     name: 'disc',
     meshes,
@@ -130,11 +141,11 @@ export function create(options: PartOptions): PlantPart | null {
     fill(slot, pose) {
       setHead(uniforms, slot, pose)
       if (!filling.lead) return
-      const shown = pose.time >= SHOWN_FROM && uniforms.uHS.value[slot].x > 0
-      for (const g of geometries) g.geometry.instanceCount = shown ? g.count : 0
-      uniforms.uYoung.value = youth(pose.time)
-      uniforms.uCover.value = cover(pose.time)
+      kept[slot].set([pose.time >= SHOWN_FROM && uniforms.uHS.value[slot].x > 0 ? 1 : 0, youth(pose.time), cover(pose.time)])
     },
-    finish() {},
+    finish() {
+      settle(0)
+    },
+    settle,
   }
 }

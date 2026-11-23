@@ -8,6 +8,7 @@ export const bladeVertex = /* glsl */ `
 in vec3 position;
 #ifndef PLANT_FIELD
 in vec3 positionB;
+in vec3 normalB;
 in vec4 aMark;
 in vec2 aPlane;
 out vec4 vMark;
@@ -40,7 +41,11 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
+#ifdef PLANT_FIELD
   vNormal = plantDirection(normal);
+#else
+  vNormal = plantDirection(mix(normal, normalB, plantLead()));
+#endif
   vUv = uv;
   vLeaf = aLeaf;
   vState = uLeafState[int(aLeaf.x + 0.5)];
@@ -139,7 +144,9 @@ export const stalkVertex = /* glsl */ `
 in vec3 position;
 in vec3 positionB;
 in vec3 normal;
+in vec3 normalB;
 in vec2 uv;
+in vec2 uvB;
 out vec3 vWorld;
 out vec3 vNormal;
 out vec2 vUv;
@@ -148,8 +155,8 @@ void main() {
   vec4 world = vec4(plantWorld(mix(position, positionB, plantBlend())), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
-  vNormal = plantDirection(normal);
-  vUv = uv;
+  vNormal = plantDirection(mix(normal, normalB, plantLead()));
+  vUv = mix(uv, uvB, plantLead());
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
