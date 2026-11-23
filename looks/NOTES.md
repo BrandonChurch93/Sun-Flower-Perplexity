@@ -1,7 +1,7 @@
 # Looks of checks
 
-2026-11-23 07:26 UTC, at commit bcd1e274 of agent/checks.
+2026-11-23 08:40 UTC, at commit a0d6ef37 of agent/checks.
 
-2966ba1: the four cuts the film means, three frames either side, as cuts measures them
+script on de7042a with the time inside renderer.render beside it: the plant and its companion are 104 to 111 ms a frame late in the film; frame 1689 is a hitch because the plant uploads 8 MB of hair textures there
 
-- `01-the-four-cuts-at-frames-952-1055-1157-1260-on-29.jpg`: the four cuts at frames 952, 1055, 1157, 1260 on 2966ba1
+- `01-script-time-by-window-de7042a.jpg`: script time by window, de7042a
