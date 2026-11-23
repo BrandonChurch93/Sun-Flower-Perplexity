@@ -12,7 +12,7 @@ import { views, type ViewName } from '../../../src/v2/shots.ts'
 
 export interface Drawn { frame: number; seconds: number; made: Made; png: string | null }
 export interface Numbers { none: number; over: number; most: number; at: [number, number]; where: number[] }
-export interface Sparks { count: number; worst: number; at: [number, number]; where: number[] }
+export interface Sparks { count: number; worst: number; at: [number, number]; value: number; near: number; mean: number; where: number[] }
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
   ready: Promise<void>
@@ -376,7 +376,7 @@ window.checks = {
       }
     }
     const mean = sum / n
-    const out: Sparks = { count: 0, worst: 0, at: [0, 0], where: [] }
+    const out: Sparks = { count: 0, worst: 0, at: [0, 0], value: 0, near: 0, mean, where: [] }
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = y * width + x
@@ -384,6 +384,8 @@ window.checks = {
         if (ratio > out.worst) {
           out.worst = ratio
           out.at = [x, height - 1 - y]
+          out.value = level(noted, i)
+          out.near = near[i]
         }
         if (ratio > times) {
           out.count++

@@ -25,9 +25,14 @@ const TIMES = 4
 const REACH = 4
 const FOLDER: Record<string, string> = { plant: 'src/plant', companion: 'src/plant', field: 'src/field (its plants take their look from src/plant/surface)', ground: 'src/ground', sky: 'the sky in use' }
 
+// A part drawn alone is named only where it gives a bad pixel within two pixels of one the whole frame has: alone, a part stands against an empty frame and has edges the film never shows.
+const close = (a: number[], b: number[]): boolean => {
+  for (let i = 0; i < a.length; i += 2) for (let k = 0; k < b.length; k += 2) if (Math.abs(a[i] - b[k]) <= 2 && Math.abs(a[i + 1] - b[k + 1]) <= 2) return true
+  return false
+}
 const wrong = (h: Held): number => h.none + h.over + (h.sparks ?? 0)
 const place = (h: Held): string => (h.at ? ` at column ${h.at[0]}, row ${h.at[1]} from the top` : '')
-const said = (h: Held, most: number): string => `${h.none} pixels without a number, ${h.over} over ${most}${h.sparks === undefined ? '' : `, ${h.sparks} sparks (the most a pixel holds of what is near it, ${(h.ratio ?? 0).toFixed(1)} times)`}`
+const said = (h: Held, most: number): string => `${h.none} pixels without a number, ${h.over} over ${most}${h.sparks === undefined ? '' : `, ${h.sparks} sparks (the most a pixel holds of what is near it, ${(h.ratio ?? 0).toFixed(1)} times${h.spark ? `: ${h.spark.value.toPrecision(3)} at column ${h.spark.at[0]}, row ${h.spark.at[1]} against ${h.spark.near.toPrecision(3)} near it and a mean of ${h.spark.mean.toPrecision(3)}` : ''})`}`
 
 interface Row { frame: number; held: Held; alone: string[] | null; picture: string | null }
 
@@ -68,7 +73,7 @@ export async function run(args: Args): Promise<void> {
   const frames = named ?? (ranged ? Array.from({ length: Math.floor((to - from) / every) + 1 }, (_, i) => from + i * every) : null)
   if (broken && !frames) throw new Error('a broken film is drawn here, not read from play: name the frames with --frames a,b')
   const most = num(args, 'most', MOST)
-  const dir = path.join(OUT, 'numbers', broken ? `broken-${broken}` : 'film')
+  const dir = path.join(OUT, 'numbers', broken ? `broken-${broken}` : frames && ranged ? `film.${from}-${to}` : 'film')
   const rows: Row[] = []
   const findings: Finding[] = []
   let unread = 0
@@ -96,6 +101,7 @@ export async function run(args: Args): Promise<void> {
           await session.plain(false)
           held.sparks = s.count
           held.ratio = s.worst
+          held.spark = { at: s.at, value: s.value, near: s.near, mean: s.mean }
           held.where.push(...s.where)
         }
         return { held, png: (d.png as Buffer | undefined) ?? null }
@@ -113,7 +119,8 @@ export async function run(args: Args): Promise<void> {
             alone = []
             for (const part of [...new Set(parts)]) {
               await session.only([part])
-              if (wrong((await read(f)).held) > 0) alone.push(part)
+              const by = (await read(f)).held
+              if (wrong(by) > 0 && close(by.where, held.where)) alone.push(part)
             }
             await session.only([])
           }
@@ -167,6 +174,6 @@ export async function run(args: Args): Promise<void> {
     findings,
     table: { head: ['frame', 'bar', 'without a number', `over ${most}`, 'sparks', 'times what is near', 'largest in order', 'where', 'alone'], rows: (bad.length ? bad.slice(0, 60) : rows.length ? [top] : []).map((r) => [r.frame, barText(secondsOf(r.frame)), r.held.none, r.held.over, r.held.sparks ?? '', r.held.ratio === undefined ? '' : r.held.ratio.toFixed(1), r.held.most.toFixed(1), box(r.held.where), r.alone ? r.alone.join(', ') || 'none' : '']) },
     pictures: bad.filter((r) => r.picture).slice(0, SHOWN).map((r) => ({ file: r.picture as string, caption: `frame ${r.frame}: the pixels without a number, over ${most} or a spark before the lens, in magenta` })),
-    data: { most, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, most: r.held.most, at: r.held.at ?? null, alone: r.alone })) },
+    data: { most, frames: rows.map((r) => ({ frame: r.frame, none: r.held.none, over: r.held.over, sparks: r.held.sparks ?? null, ratio: r.held.ratio ?? null, spark: r.held.spark ?? null, most: r.held.most, at: r.held.at ?? null, alone: r.alone })) },
   })
 }
