@@ -1,12 +1,12 @@
-# Status 29
+# Status 30
 
-2026-11-23 13:13 UTC
+2026-11-23 13:42 UTC
 
-- Status 29 · Phase 4. Merged and proven here: the reworked frost, the cure of the bright discs at its source, and the player's timing at loading, which now tells a slow picture from slow page work before it picks a quality. Every program is asked of the graphics card at once at loading; measured here, none is built after loading at five checked frames. The storm's key light is down: leaf highlights at 1830 fell from 84 to 74 (storm key 54, rain key 75). The storm's onset was drawn frame by frame after that change and holds, with the first flash on bar 33.
-- Next: The soaked soil in the storm is twice as light as the keys on the left: with the ground owner. The storm leaves hang too far and pass too much light: with the plant and leaf look owners. First whole watch with the music: 2 of 12 parts in, 10 drawing, all due about 14:30. Live play cost: the plant, hairs and head owners' cures, then a new measure of the five hardest spans. Time used: 15.2 h of 30 h.
+- Status 30 · Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil.
+- Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down
-- `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet
-- `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33
-- `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
+- `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976
+- `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208
+- `status-3.jpg`: The tip shot at 1106, 1920 wide, draft
+- `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009

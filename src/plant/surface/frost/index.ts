@@ -29,7 +29,7 @@ const float FROST_DOWN = 0.3;
 const float FROST_MATT = 0.8;
 const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes.
-const float FROST_SHUT = 0.4;
+const float FROST_SHUT = 0.75;
 // The coat a close lens sees. The cells of its two sizes of crystal and of the two sizes of grain under them, in meters; how high a crystal stands, for its shadow; the share of the crystals that are plates and not tufts of needles.
 const float FROST_FORM_FINE_M = 0.001;
 const float FROST_FINE_M = 0.0005;
@@ -57,6 +57,7 @@ const float FROST_FACE_SUN = 0.09;
 const float FROST_SKY_SHARE = 0.2;
 const float FROST_SKY_UP = 0.5;
 const float FROST_SKY_THAW = 0.8;
+const float FROST_SKY_SHADE = 7.0;
 const vec3 FROST_SKY_SPARK = vec3(0.88, 0.95, 1.12);
 const float FROST_FOOT = 0.3;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
@@ -72,7 +73,7 @@ const float FROST_COAT_UNDER = 0.2;
 // The banks the coat lies in on an open field, in meters across.
 const float FROST_BANK_M = 0.0035;
 const float FROST_TONGUE_M = 0.011;
-const float FROST_FORM_SHADE = 0.45;
+const float FROST_FORM_SHADE = 0.3;
 // How pale the side of a grain turned from the light is against the lit side, and how sharply its face mirrors the sun.
 const float FROST_GRIT_SHADE = 0.4;
 // Heaped on a ridge the grains lie on grains, and the dark side of one is the pale of another.
@@ -146,7 +147,7 @@ vec4 frostChip(vec2 g, float reach, float chance, float grown, float packed, flo
   float soft = 0.5 * reach * thin.y / (r * cos(3.1416 / sides));
   float inside = frostSided(q * thin, r, sides);
   float cover = 1.0 - smoothstep(1.0 - soft, 1.0 + soft, inside);
-  float foot = (1.0 - smoothstep(1.0 - soft, 1.0 + soft, frostSided(q * thin + to * (FROST_FOOT * r + reach), r, sides))) * (1.0 - cover);
+  float foot = (1.0 - smoothstep(0.7, 1.0 + soft, frostSided(q * thin + to * (FROST_FOOT * r + reach), r, sides))) * (1.0 - cover);
   if (cover <= 0.0) return vec4(0.0, 0.0, 0.0, foot);
   float seg = 6.2832 / sides;
   float face = floor((atan(q.y * thin.y, q.x) + 3.1416) / seg);
@@ -165,7 +166,7 @@ vec4 frostChip(vec2 g, float reach, float chance, float grown, float packed, flo
   vec2 spot = 0.35 * r * (2.0 * vec2(hash21(cell + 541.0), hash21(cell + 577.0)) - 1.0);
   vec2 off = (q * thin - spot) * (1.0 / r);
   flash *= cover * (0.03 + 0.97 * exp(-5.0 * dot(off, off))) * smoothstep(2.0, 3.0, r / max(reach, 1e-6));
-  more = vec2(hash21(cell + 521.0) < FROST_SKY_SHARE ? flash : 0.0, cover * turned * (0.5 + 0.5 * own));
+  more = vec2(hash21(cell + 521.0) < FROST_SKY_SHARE ? flash : 0.0, cover * (0.4 + 0.6 * turned) * (0.5 + 0.5 * own));
   return vec4(cover, tone, flash, foot);
 }
 
@@ -252,8 +253,8 @@ vec4 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float
   float least = 1.0 - smoothstep(0.7, 1.4, px / FROST_MOTE_M);
   float mean = 0.3 * local * (0.6 + 0.8 * packed);
   float grains = max(max(mix(mean, one.x * one.y, told), mix(mean, two.x * two.y, fine)), mix(0.6 * mean, three.x * three.y, least));
-  // Of the sugar only the largest grains flash: a spark is two pixels and more.
-  float spark = FROST_GRIT_FLASH * one.z * told;
+  // Of the sugar only the largest grains flash: a spark is two pixels and more. Seen along the face the grains hide each other, and only the crystals that stand above them flash.
+  float spark = FROST_GRIT_FLASH * one.z * told * smoothstep(0.1, 0.45, abs(dot(N, view)));
   // On the sugar lie the crystals a lens tells apart: grains with flat faces, a third to half a millimeter across, wherever the coat has any body, and plates and stubby blades of a millimeter where it is thick. Each shades the sugar at its foot.
   float far = 1.0 - smoothstep(0.25, 0.7, px / FROST_CHIP_M);
   // Under the grains lies a bloom of rime too fine to tell, thin enough for the green to show through: no skin a coat has reached reads as bare.
@@ -275,7 +276,7 @@ vec4 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float
     vec2 b = q3 * (1.0 / FROST_PLATE_M) + 17.0;
     vec4 plate = frostChip(b, px / FROST_PLATE_M, min(0.85, smoothstep(0.2, 0.7, share) * (0.08 + 0.85 * clumps) * (0.6 + 0.6 * patchy) + 0.3 * closed * clumps), grown, closed, 0.5, lit3, N, view, plateMore);
     body = max(body, far * closed * (0.62 + 0.3 * valueNoise(q1 * (1.0 / FROST_GRIT_M) + 53.0)));
-    body *= 1.0 - FROST_FORM_SHADE * far * max(chip.w, plate.w);
+    body *= 1.0 - FROST_FORM_SHADE * far * chip.w;
     body = mix(body, chip.y, chip.x * far);
     body = max(body, fan.x * fan.y * far);
     body = mix(body * (1.0 - FROST_FORM_SHADE * far * plate.w), plate.y, plate.x * far);
@@ -329,6 +330,10 @@ float frostLeft(vec2 at, float gather, vec3 N) {
 // 'at' is in meters on the skin. 'gather' is where frost grows first: 0 in the middle of a face to 1 at an edge, a tip or the ridge of a vein.
 // 'world' is the place in the world, for the true size of a pixel on the skin; 'near' is 0 for a caller that cannot say it.
 vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world, float near) {
+  // On a pixel the skin only partly covers, what the skin hands down is carried on past its edge.
+  gather = saturate(gather);
+  sheen = saturate(sheen);
+  rim = saturate(rim);
   float up = saturate(F.y);
   // Round a stalk the place on the skin runs one way only: the way the skin faces breaks the rings that would give.
   vec2 round = at + 0.003 * vec2(N.x + N.y, N.z - N.y);
@@ -379,7 +384,7 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   vec3 wy = dFdy(world);
   if (close > 0.0) {
     // A close lens tells the coat apart. It hides most of the skin at an edge and along a vein and a third of it in the middle of a field, in banks, so the veins read through it as lines of thicker grain.
-    float level = 0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20));
+    float level = clamp(0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(wx, wy)), 1e-20)), -6.0, 6.0);
     // Where the close lens first sees it the leaf is frosted already. Over the last third of the freeze the coat thickens, its crystals grow and its front creeps in from the edge and the veins over the green that is left.
     float came = mix(saturate((uPlantFrost - 0.7) / 0.3), 1.0, smoothstep(0.0, 0.15, uPlantDew));
     float late = mix(FROST_COAT_FIRST, 1.0, came);
@@ -416,7 +421,8 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
     // A crystal stands up from the skin: where the sun only grazes the blade, the faces it turns to the sun are lit full.
     crust.y += close * (FROST_COAT_FLASH * laid.y + FROST_FACE_SUN * laid.w * smoothstep(-0.1, 0.12, dot(F, uSunDir)) * (1.0 - saturate(dot(N, uSunDir))));
     float thawing = smoothstep(0.0, 0.15, uPlantDew);
-    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
+    // A face that looks down and away from the sun looks at the frozen ground: its coat is lit by that white, and reads as rime there too.
+    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * (1.0 + FROST_SKY_SHADE * smoothstep(0.35, 0.75, -dot(F, uSunDir)) * (1.0 - smoothstep(-0.1, 0.4, F.y))) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
     // One flash in five is a face that mirrors the sky: white to pale blue, not the sun's gold.
     frostSpark = mix(vec3(1.0), FROST_SKY_SPARK * dot(uSunColor, vec3(0.2126, 0.7152, 0.0722)) / max(uSunColor, vec3(1e-4)), saturate(close * FROST_COAT_FLASH * laid.z / max(crust.y, 1e-6)));
   }

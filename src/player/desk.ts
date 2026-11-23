@@ -26,7 +26,8 @@ export interface Desk {
   exportLink(href: string): void
 }
 
-export interface Advice { text: string; tryLow: boolean }
+// `text` is the one plain sentence. `numbers` is what was measured, set smaller under it, and `last` a line of its own after that.
+export interface Advice { text: string; numbers?: string; last?: string; tryLow: boolean }
 
 const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report', timing: 'Timed at loading' } as const
 const SHOWN_GAPS = 4
@@ -113,7 +114,12 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   check.addEventListener('click', () => actions.check())
   const checkText = make('p', css.small, 'Twenty seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
   const adviceText = make('p', css.advice)
+  adviceText.dataset.role = 'advice'
   adviceText.hidden = true
+  const adviceNumbers = make('p', css.small)
+  adviceNumbers.dataset.role = 'advice-numbers'
+  const adviceLast = make('p', css.small)
+  adviceLast.dataset.role = 'advice-last'
   const tryLow = button('Check at low quality', null)
   tryLow.hidden = true
   tryLow.addEventListener('click', () => actions.checkLow())
@@ -124,7 +130,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   measure.dataset.role = 'measure'
   measure.addEventListener('click', () => actions.measure())
   const measureText = make('p', css.small, 'Once on this machine: the whole film plays without sound, then every frame is set with nothing drawn. A few minutes. The result opens as one page to copy and send. Esc stops it.')
-  goStep.body.append(check, checkText, adviceText, tryLow, record, recordText, measure, measureText)
+  goStep.body.append(check, checkText, adviceText, adviceNumbers, adviceLast, tryLow, record, recordText, measure, measureText)
 
   const more = make('details', css.more)
   more.append(make('summary', css.summary, 'More settings'))
@@ -238,6 +244,8 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       adviceText.hidden = !advice
       checkText.hidden = !!advice
       adviceText.textContent = advice?.text ?? ''
+      adviceNumbers.textContent = advice?.numbers ?? ''
+      adviceLast.textContent = advice?.last ?? ''
       tryLow.hidden = !advice?.tryLow
       reportBody.replaceChildren()
       if (!report) {
