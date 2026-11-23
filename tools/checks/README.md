@@ -38,6 +38,16 @@ npm run checks -- play --stride 6 --from 2540 --to 3809
 
 A draft frame has one sample, so everything out of focus is blurred by the lens fill alone (`src/post/post.ts`), whose stipple follows the frame number: far things are a little sharper in some frames than in others. That is the draft, not the film, and each frame is still a function of its number (`pure` passes on them). It sets how fine these picture checks can be: `nights` allows a dusk to move 2 of 255 the wrong way (measured up to 1.5 on sky-0), and fails a step of more than 14 of 255 a frame (the Builder's limit; before the sun was slowed at the horizon the steepest measured was 17.7 on sky-0 and 27.6 on sky-b).
 
+`play --spans 940-1272,2800-3430` draws stretches of frames on one page with one warming, in the order given, where a round is not wanted.
+
+## Who made it
+
+`made` says that a frame made something. `made --trace --from 300 --to 640` says who: it draws those frames in a row on a page built with a source map, wraps every call that makes a thing on the graphics card, and prints for each thing the frame, its size or the shader's name, and the chain of calls in the film's own files, with the folder that owns the first of them. It warms as the film does before the first frame. `--cold` leaves the warming out, which is how `tools/part.ts` starts a part: what a cold run makes and a warmed run does not is covered by the warming, what both make the warming misses. `--break made --at 330` makes a texture in that frame on purpose and the trace must name it. Result: `out/work/checks/made.trace-<from>-<to>[.cold].json`.
+
+## Every dusk and dawn, one list
+
+`nights --list` reads the frames of `play` and gives one row for each dusk and each dawn: the mean and the worst step of the frame's mean from one frame to the next against the limit of 14 of 255, with the frame, then how much the picture itself changes from frame to frame (the mean difference of two blurred frames: its median, its mean, its worst with the frame), and every frame that stands out by more than four times the median and 8 of 255. The first number is the rule. The second finds what the mean hides, a layout that changes while the brightness stays. The table is also written to `out/work/checks/nights/dusks.tsv`.
+
 ## The page's own time
 
 `script` draws frames in a row, as the film plays them, and reads after each one the film's own laps (`film.cost`, the same numbers `window.showcase.cost()` gives): the milliseconds of script by part, with the time the drawing itself takes left out. The first frame of a window comes after a jump and is not counted. The limits are in `tools/checks/limits.json` and nowhere else: the mean of a window, the worst frame, a mean for each named group of parts, one mean for every other part, the windows, and how long a window is with `--all`. Change a number there and run `npm run checks -- script --table`: nothing is drawn again.
