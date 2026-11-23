@@ -25,6 +25,8 @@ uniform float uGolden;
 uniform float uLate;
 uniform float uStreaks;
 uniform float uSideBanks;
+uniform float uWetHaze;
+uniform vec3 uWetDome;
 uniform float uDawn;
 uniform float uOpening;
 uniform float uFirstBlue;
@@ -580,6 +582,12 @@ void main() {
     quiet = mix(quiet, uMist * vec3(1.45, 1.22, 0.97), toward * (1.0 - 0.51 * high));
     float hazeGlow = 0.036 * exp(-angle * 94.0) + 0.106 * exp(-angle * 970.0);
     result = mix(result, quiet, frost * 0.96) + uCloudLight.r * vec3(1.0, 0.61, 0.38) * hazeGlow * frost;
+  }
+  // Low light in the wet air is predominantly diffuse. It softens both
+  // faces of the receding cloud but cannot open a hole in its opacity.
+  if (uWetHaze > 0.0) {
+    vec3 mist = uWetDome * (0.32 + 0.85 * exp(-16.0 * up)) * (0.96 + 0.04 * through);
+    result = mix(result, mist, uWetHaze);
   }
   outColor = vec4(result, clamp(mix(through * sheetTransmission, 1.0, uFirstBlue * 0.93), 0.0, 1.0));
 }
