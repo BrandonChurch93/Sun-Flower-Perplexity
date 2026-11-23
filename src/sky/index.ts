@@ -234,13 +234,13 @@ class FieldSky implements Sky {
     v.uEnding.value = ending
     v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)
-    const refraction = (0.33 + 0.31 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
+    const refraction = (0.33 + 0.64 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
     v.uSunFace.value.y += RAD * refraction
     v.uSunFace.value.normalize()
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3)
     const visibleDisk = smoothstep(0, 0.025, d.sunThrough)
-    const glancing = ending * smoothstep(-1.08, -0.36, e) * (1 - smoothstep(0.2, 1.4, e))
+    const glancing = ending * smoothstep(-0.79, -0.23, e) * (1 - smoothstep(0.2, 1.4, e))
     const disc = v.uDisc.value.fromArray(this.groundSun).multiplyScalar(49 * (1 - 0.44 * d.fog) * visibleDisk)
     const peach = (0.35 * dawn + 0.40 * d.evening + 0.58 * d.fog) * disc.x
     disc.y += peach * 0.44 + 4.2 * glancing
