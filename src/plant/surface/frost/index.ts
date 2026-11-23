@@ -1,3 +1,20 @@
+// The thaw's front on a blade, for any shader that has uPlantFrost and uPlantDew: it needs no texture and no normal, so the seat of a bead can ask it.
+export const frostFrontGlsl = /* glsl */ `
+// How far the front has to travel from the tip to the stalk, and how much longer the thick coat by the stalk lasts, in the measure of the thaw.
+const float FROST_TRAVEL = 0.75;
+const float FROST_LASTS = 0.15;
+
+// How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The dew comes up with the thaw and never with the freeze.
+float frostThaw() {
+  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost);
+}
+
+// How far the front has come past a place along a blade, 0 at the stalk and 1 at the tip, in the middle of what the grain of the coat does to it: under 0 the ice holds there. The ice itself may hold up to 0.24 past this and is gone 0.12 after that.
+float frostPastAlong(float along) {
+  return frostThaw() - FROST_TRAVEL * (1.0 - along) - 0.675 * FROST_LASTS * (1.0 - smoothstep(0.1, 0.45, along));
+}
+`
+
 // Frost on the skin: a thin veil, grains of ice that stand apart, frozen beads, and the flash of a grain turned to the sun.
 export const frostGlsl = /* glsl */ `
 const float FROST_GRAIN_M = 0.0012;
@@ -27,7 +44,7 @@ const float FROST_CHIP_FLASH = 2.0;
 const float FROST_COAT_FIELD = 0.45;
 const float FROST_COAT_EDGE = 0.92;
 const float FROST_COAT_BED = 1.0;
-const float FROST_GRIT_FLASH = 4.0;
+const float FROST_GRIT_FLASH = 7.0;
 // How far the coat has come where the close lens first sees it, and the share of the far veil that still lies under it there.
 const float FROST_COAT_FIRST = 0.4;
 const float FROST_COAT_UNDER = 0.2;
@@ -37,9 +54,10 @@ const float FROST_TONGUE_M = 0.011;
 const float FROST_FORM_SHADE = 0.45;
 // How pale the side of a grain turned from the light is against the lit side, and how sharply its face mirrors the sun.
 const float FROST_GRIT_SHADE = 0.3;
-const float FROST_GRIT_SHARP = 260.0;
+// Heaped on a ridge the grains lie on grains, and the dark side of one is the pale of another.
+const float FROST_GRIT_HEAPED = 0.62;
+const float FROST_GRIT_SHARP = 450.0;
 // How far behind the thaw's front the skin is still wet, and where it is dry again, in the measure of the thaw.
-const float FROST_LASTS = 0.15;
 const float FROST_WET_FROM = 0.3;
 const float FROST_WET_UNTIL = 0.7;
 
@@ -91,7 +109,7 @@ vec3 frostForm(vec2 g, float reach, float chance, float grown, vec3 N, vec3 view
     float wide = (0.03 + 0.035 * size) * (1.0 - 0.8 * t);
     float c = (1.0 - smoothstep(wide - 0.5 * reach, wide + 0.5 * reach, length(p - dir * (span * t)))) * min(1.0, 2.0 * wide / max(reach, 1e-5));
     // A needle has a ridge: the side of it turned from the light is grey.
-    float tone = (dot(p, vec2(-dir.y, dir.x)) > 0.0 ? 1.0 : 0.66) * (0.8 + 0.2 * hash21(cell + 457.0 + 19.0 * n));
+    float tone = (dot(p, vec2(-dir.y, dir.x)) > 0.0 ? 1.0 : 0.5) * (0.8 + 0.2 * hash21(cell + 457.0 + 19.0 * n));
     if (c * tone > cover * pale) {
       cover = c;
       pale = tone;
@@ -103,12 +121,12 @@ vec3 frostForm(vec2 g, float reach, float chance, float grown, vec3 N, vec3 view
 }
 
 // A grain of the sugar, one to a cell and whole inside it, with corners, a side to the light and a side away. x: its share of the pixel. y: how pale it is there. z: the flash of its face, for the few that mirror the sun to the eye. 'lit' is the way to the light along the skin.
-vec3 frostGrit(vec2 g, float reach, float chance, float packed, vec2 lit, vec3 N, vec3 view) {
+vec3 frostGrit(vec2 g, float reach, float chance, float packed, float heaped, vec2 lit, vec3 N, vec3 view) {
   vec2 cell = floor(g);
   float h = hash21(cell + 23.0);
   if (h >= chance) return vec3(0.0);
   // Where they pack close the grains are larger, and still each stands alone.
-  float r = min(0.46, (0.15 + 0.3 * hash21(cell + 41.0) * hash21(cell + 47.0)) * (0.85 + 0.95 * packed)) * smoothstep(0.0, 0.12, chance - h);
+  float r = min(0.34, (0.15 + 0.3 * hash21(cell + 41.0) * hash21(cell + 47.0)) * (0.85 + 0.95 * packed)) * smoothstep(0.0, 0.12, chance - h);
   vec2 p = g - cell - vec2(r) - (1.0 - 2.0 * r) * vec2(hash21(cell + 67.0), hash21(cell + 109.0));
   float spin = 6.2832 * hash21(cell + 251.0);
   vec2 q = vec2(p.x * cos(spin) - p.y * sin(spin), p.x * sin(spin) + p.y * cos(spin)) * vec2(1.0, 0.7 + 0.7 * hash21(cell + 307.0));
@@ -116,28 +134,32 @@ vec3 frostGrit(vec2 g, float reach, float chance, float packed, vec2 lit, vec3 N
   // Its face looks its own way, fixed on the skin: it flashes while it mirrors the sun to the eye and goes out as the eye moves on.
   vec3 facet = normalize(N + 3.0 * (vec3(hash21(cell + 163.0), hash21(cell + 211.0), hash21(cell + 239.0)) - 0.5));
   float flash = pow(saturate(dot(facet, normalize(uSunDir + view))), FROST_GRIT_SHARP);
-  return vec3(cover, mix(FROST_GRIT_SHADE, 1.0, smoothstep(-0.4 * r, 0.4 * r, dot(p, lit))) * (0.7 + 0.3 * hash21(cell + 353.0)), cover * flash * 3.0 * hash21(cell + 379.0) * hash21(cell + 397.0));
+  return vec3(cover, mix(mix(FROST_GRIT_SHADE, FROST_GRIT_HEAPED, heaped), 1.0, smoothstep(-0.4 * r, 0.4 * r, dot(p, lit))) * (0.7 + 0.3 * hash21(cell + 353.0)), cover * flash * 3.0 * hash21(cell + 379.0) * hash21(cell + 397.0));
 }
 
 // The coat at a place: x how pale the skin is under it, y its flash. 'skin' is how many meters of the skin's own measure a true meter is, 'want' the share of the skin the coat hides, 'grown' how far it has come, 'shade' the step on the skin toward the sun that a crystal's height throws its shadow back along.
-vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 shade, vec3 N, vec3 view) {
+vec2 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float grown, vec2 shade, vec3 N, vec3 view) {
   vec2 q = at * (1.0 / skin);
   vec2 off = shade * (1.0 / skin);
   float px = pixel / skin;
+  // The grains do not stand in rows: the ground they are laid on is pulled about by a grain's width.
+  q += FROST_GRIT_M * 0.9 * (vec2(valueNoise(q * (1.0 / 0.00045) + 3.0), valueNoise(q * (1.0 / 0.00045) + 29.0)) - 0.5);
   // The coat is a sugar of grains one can count, the skin between them: three sizes on grids turned against each other, packed where the coat is thick and fewer where it thins, so it ends in single grains. Nowhere is it a closed white.
   vec2 q1 = vec2(0.8 * q.x + 0.6 * q.y, 0.8 * q.y - 0.6 * q.x);
   vec2 q2 = vec2(0.6 * q.x - 0.8 * q.y, 0.6 * q.y + 0.8 * q.x);
   float share = want * smoothstep(0.0, 1.0, grown);
   float patchy = valueNoise(q1 * (1.0 / FROST_FINE_M) + 37.0);
   // Fewer than one grain to a cell, or the cells show as a lattice.
-  float local = min(share * (0.45 + 1.1 * patchy), 0.88);
-  float packed = smoothstep(0.25, 0.75, share);
+  float heap = heaped * smoothstep(0.0, 1.0, grown);
+  float local = min(share * (0.45 + 1.1 * patchy) + 0.3 * heap, 0.78);
+  float packed = max(smoothstep(0.25, 0.75, share), heap);
   vec2 lit = normalize(off + vec2(1e-9, 0.0));
   vec2 lit1 = vec2(0.8 * lit.x + 0.6 * lit.y, 0.8 * lit.y - 0.6 * lit.x);
   vec2 lit2 = vec2(0.6 * lit.x - 0.8 * lit.y, 0.6 * lit.y + 0.8 * lit.x);
-  vec3 one = frostGrit(q1 * (1.0 / FROST_GRIT_M) + 37.0, px / FROST_GRIT_M, local, packed, lit1, N, view);
-  vec3 two = frostGrit(q2 * (1.0 / FROST_DUST_M) + 11.0, px / FROST_DUST_M, 0.9 * local, packed, lit2, N, view);
-  vec3 three = frostGrit(q.yx * (1.0 / FROST_MOTE_M) + 71.0, px / FROST_MOTE_M, 0.8 * local, packed, lit.yx, N, view);
+  vec3 one = frostGrit(q1 * (1.0 / FROST_GRIT_M) + 37.0, px / FROST_GRIT_M, local, packed, heap, lit1, N, view);
+  vec3 two = frostGrit(q2 * (1.0 / FROST_DUST_M) + 11.0, px / FROST_DUST_M, 0.9 * local, packed, heap, lit2, N, view);
+  vec2 q3 = vec2(0.28 * q.x + 0.96 * q.y, 0.28 * q.y - 0.96 * q.x);
+  vec3 three = frostGrit(q3 * (1.0 / FROST_MOTE_M) + 71.0, px / FROST_MOTE_M, 0.8 * local, packed, heap, vec2(0.28 * lit.x + 0.96 * lit.y, 0.28 * lit.y - 0.96 * lit.x), N, view);
   // A grain smaller than a pixel is its share of the pixel.
   float told = 1.0 - smoothstep(0.7, 1.4, px / FROST_GRIT_M);
   float fine = 1.0 - smoothstep(0.7, 1.4, px / FROST_DUST_M);
@@ -152,8 +174,8 @@ vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 s
   if (far > 0.0) {
     vec2 b = q2 * (1.0 / FROST_FORM_M) + 91.0;
     vec2 f = q1 * (1.0 / FROST_FORM_FINE_M) + 37.0;
-    float many = 0.08 + 0.9 * want;
-    float more = 0.1 + 0.9 * want;
+    float many = min(1.0, 0.08 + 0.9 * want + 0.4 * heap);
+    float more = min(1.0, 0.1 + 0.9 * want + 0.4 * heap);
     big = frostForm(b, px / FROST_FORM_M, many, grown, N, view);
     small = frostForm(f, px / FROST_FORM_FINE_M, more, grown, N, view);
     vec2 turned = vec2(0.6 * off.x - 0.8 * off.y, 0.6 * off.y + 0.8 * off.x);
@@ -170,16 +192,12 @@ vec2 frostCoat(vec2 at, float pixel, float skin, float want, float grown, vec2 s
 // How far along its blade the skin being shaded lies, 0 at the stalk and 1 at the tip. A wearer that knows sets it before it shades; under 0 it is not known.
 float frostAlong = -1.0;
 
-// How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The dew comes up with the thaw and never with the freeze.
-float frostThaw() {
-  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost);
-}
-
+${frostFrontGlsl}
 // How far the thaw's front has come past a place on a blade, in the measure of the thaw: under 0 the ice holds there.
 float frostPast(float bank, float fine, float gather, vec3 N, float thaw) {
   // By the stalk the coat is thick, and thickest at the edge and along the veins: there a trace outlasts the front.
   float lasts = FROST_LASTS * (1.0 - smoothstep(0.1, 0.45, frostAlong)) * (0.35 + 0.65 * smoothstep(0.1, 0.5, gather + 0.3 * (bank - 0.5)));
-  return thaw + (0.16 * (bank - 0.5) + 0.1 * (fine - 0.5) + 0.06 * dot(N, uSunDir)) * smoothstep(0.0, 0.1, thaw) - 0.75 * (1.0 - frostAlong) - lasts;
+  return thaw + (0.16 * (bank - 0.5) + 0.1 * (fine - 0.5) + 0.06 * dot(N, uSunDir)) * smoothstep(0.0, 0.1, thaw) - FROST_TRAVEL * (1.0 - frostAlong) - lasts;
 }
 
 // How far the thaw has come past a place on any skin, in the measure of the thaw: under 0 the ice holds there. The crust keeps the same front.
@@ -285,8 +303,10 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
     vec2 toSun = ((yy * dot(wx, low) - xy * dot(wy, low)) * ax + (xx * dot(wy, low) - xy * dot(wx, low)) * ay) / max(xx * yy - xy * xy, 1e-24);
     vec2 shade = toSun * (FROST_FORM_HIGH_M / max(abs(dot(F, uSunDir)), 0.3));
     vec2 laid = vec2(0.0);
-    if (upper < 1.0) laid += (1.0 - upper) * frostCoat(at, reach * FROST_GRAIN_M, lower, want, grown, shade, N, view);
-    if (upper > 0.0) laid += upper * frostCoat(at, reach * FROST_GRAIN_M, 2.0 * lower, want, grown, shade, N, view);
+    // On the ridge of a vein and at the very margin the rime is a chain of heaps: its width swings, it has gaps, and it breaks up where it thins.
+    float heaped = smoothstep(0.38, 0.6, gather + 0.3 * (fine - 0.5) + 0.22 * (isles - 0.5) + 0.16 * (bank - 0.5)) * smoothstep(0.25, 0.5, valueNoise(round * (1.0 / 0.0021) + 61.0));
+    if (upper < 1.0) laid += (1.0 - upper) * frostCoat(at, reach * FROST_GRAIN_M, lower, want, heaped, grown, shade, N, view);
+    if (upper > 0.0) laid += upper * frostCoat(at, reach * FROST_GRAIN_M, 2.0 * lower, want, heaped, grown, shade, N, view);
     crust.x = mix(crust.x, laid.x, close);
     crust.y += close * FROST_CHIP_FLASH * laid.y;
   }
