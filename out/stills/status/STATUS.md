@@ -1,12 +1,11 @@
-# Status 57
+# Status 58
 
-2026-11-23 23:35 UTC
+2026-11-23 23:44 UTC
 
-- Status 57 · Phase 6. Answer to the question of 23:28 UTC. Done and attached since 22:27: the film with the prompt opening, with typing sounds and with a silent opening. Done: the site for Vercel; main now holds version 2 (pull request 1), and a fresh clone from GitHub builds and plays the film by itself in headless Chrome. New now: the card still and the 6.93 s clip, cut straight from the film he signed off, are attached (still 1920 x 1080; clip 1080p 16.4 MB and 720p 4.5 MB, no sound, first frame is the still). The slow part, by the Builder's choice: the same 208 frames drawn again clean at 48 samples, about 700 s a frame on twelve machines; 106 of 208 are in, none bad.
-- Next: Left: the last 102 clean frames (due about 01:25 UTC, hands off), the clean still and clip swapped in under the same names, one last merge into main, the final summary. Nothing new is started. Time used: 25.6 h of 30 h.
+- Status 58 · Phase 6. A loop version of the card clip is made and attached beside the play once clip: the same 208 frames and a dissolve of 20 frames from the open flower back to the bud, 228 frames, 7.6 s. MEASURED: its last frame stands at 42.0 dB against its first (1.3 levels of 255), so the repeat is not seen. One script now makes the still, both clips and both loop cuts and checks them (tools/card.py); it ran on the film's frames in 4 min. Clean redraw: 106 of 208 frames in, none bad, 700 s a frame, last one expected about 01:20 UTC. Frames drawn for this status: 0.
+- Next: Take in the clean frames as they arrive. When all 208 are in: encode the still, the clips and the loop cuts from them, check them, replace the interim files under the same names, commit them, merge into main, final summary. Time used: 25.7 h of 30 h.
 - Review page, private preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 
-- `status-1.jpg`: The card still, cut from the signed off film (frame 2905)
-- `status-2.jpg`: The card clip, nine of its 208 frames, cut from the signed off film
-- `status-3.jpg`: The site built from a fresh clone of main, playing by itself
-- `status-4.jpg`: A frame of the clean redraw at 48 samples (3006)
+- `status-1.jpg`: The loop cut: its last 16 of 22 frames, the open flower dissolves back to the bud
+- `status-2.jpg`: Frame 3009 at full size: left the film at one sample, right the clean redraw at 48 samples
+- `status-3.jpg`: Clean redraw, frame 3013: the flower nearly open

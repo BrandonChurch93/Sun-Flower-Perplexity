@@ -103,6 +103,7 @@ Live play has one open item of its own. On the machine this was built on, which 
 | `assets-src/` | The recipe of every generated map and sky the app ships |
 | `ASSETS.md` | The ledger of third party files |
 | `out/` | The kept stills and the status pictures. `out/preview.mp4`, `out/roughcut.mp4` and `out/clips/` are version 1's |
+| `out/card/` | The still and the clips for a project card: the bud right before it opens, and the 6.93 s in which it opens. `tools/card.py` encodes and checks them |
 | `cut/` | Version 1's shot list and sound cues |
 | `AGENTS.md` | Rules for the Builder |
 
