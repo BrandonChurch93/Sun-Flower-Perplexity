@@ -287,7 +287,7 @@ vec3 beadColor(vec3 nb, vec3 v, float shadow) {
   vec3 drop = mix(below, beadSky(through, shadow), smoothstep(-0.05, 0.12, through.y)) * (1.0 - skim) * 0.9;
   drop += mix(below, beadSky(back, shadow), smoothstep(-0.05, 0.12, back.y)) * skim;
   drop += uSunColor * shadow * (pow(max(dot(nb, normalize(v + uSunDir)), 0.0), 140.0) * 9.0 + pow(max(dot(through, uSunDir), 0.0), 90.0) * 3.0 + pow(max(dot(through, uSunDir), 0.0), 24.0) * 0.5);
-  return drop;
+  return heldGlint(drop);
 }
 `
 

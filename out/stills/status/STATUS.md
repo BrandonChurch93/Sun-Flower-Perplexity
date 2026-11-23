@@ -1,12 +1,12 @@
-# Status 23
+# Status 24
 
-2026-11-23 10:41 UTC
+2026-11-23 11:05 UTC
 
-- Status 23 · Phase 3. The flicker at every dusk and dawn of the time lapse is cured: the plant no longer flashes for three frames while the sun hands over to the moon (measured on frames 204 to 214, and a new test proves no other frame changed). The stem now ends in a slender growing point, the pale dome is gone. The thaw drop hangs as a pear on its neck with the sky in it, lets go and falls as one streak. The ground loses its white as it thaws. Merged and proved: ground, plant, frost, hairs, lens, rain. Measured: 33 test files, 189 tests pass.
-- Next: The frost band along the leaf margin is still a flat plate and the veins are even lines: both are back with the frost owner to be made of grains and needles that sparkle. Then a darker leaf under the frost, a deep glossy leaf where it has melted, finer hairs on the stalk, and the cost of a frame in live play, which is now the largest risk. Time used: 12.7 h of 30 h.
+- Status 24 · Phase 3. The frost on the leaf is no longer a flat white plate: it is grains with a ragged front and a few hundred sparks where a crystal mirrors the sun (merged and proved on eight frames at full size). On the stalk the even comb of hairs is broken up and the growing point carries a fine down (on the hairs owner's bench, merge follows its checks). The dew beads on the soil are held under the same brightness as the sparks. The cost of the plant in live play is now measured part by part: hair roots laid by script are half of it, and the first cure, laying every part once a frame instead of twice, is being built. Measured: 33 test files, 189 tests pass on 4f47e02.
+- Next: The frost crystals are still too small to read as crystals in the close shot: larger faceted grains and plates, a closed white fringe on the margin, rimed veins and a darker leaf under the frost are with their owners. Then the open head's fourth pass, the sun's short wink behind the neighbor at bar 66, and the frame cost of live play, which stays the largest risk. Time used: 13.1 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling
-- `status-2.jpg`: Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next
-- `status-3.jpg`: The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip
-- `status-4.jpg`: First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet
+- `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds as grains and sparks. Still too fine and too grey against the reference, larger crystals are next
+- `status-2.jpg`: Second close shot, the stalk at full size on the hairs owner's bench, before and after: the comb is broken up and the tip carries a fine down
+- `status-3.jpg`: Third close shot, frames 1208 and 1240: the thawed leaf with its beads and the drop at the tip
+- `status-4.jpg`: Morning in the time lapse, frame 240: the seedling with dew, after the bead cap
