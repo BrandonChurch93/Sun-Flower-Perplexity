@@ -19,6 +19,11 @@ const scratch = new Float32Array(TEXELS * 4)
 const GONE_AT = 0.15
 // In the freeze no crystal has started under this much frost: until then a set is neither drawn nor sent, so a wearer that still moves sends nothing.
 const FIRST_AT = 0.008
+// Under this much frost in the freeze the largest crystal of a set that melts is a thousandth of its length and changes no pixel. Until then the set is not drawn, and it is sent a share a frame: the frame a wearer lays a new shape on does not carry the whole of it.
+const SHOWN_AT = 0.015
+const SHARES = 2
+// In the thaw a set that melts is put away once what is left of its beads is under a hundredth of their size.
+const GONE_UNDER = 0.009
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
@@ -466,6 +471,8 @@ export class CrystalSet {
   private shown: number
   private stale = true
   private kept = 0
+  // How many of the crystals shown the texture holds as their wearer last laid them.
+  private sentTo = 0
 
   constructor(options: PartOptions, readonly count: number, name: string, private readonly melts = true, private readonly dewToo = false) {
     if (options.places) throw new Error('crystals are worn by the plant, the companion and the ground only')
@@ -502,7 +509,7 @@ export class CrystalSet {
   }
 
   // Each crystal keeps its own place in the texture whatever the lens sees, so a plant that stands still sends nothing: what is already on the graphics card is not sent again.
-  private gather(): void {
+  private gather(upTo: number): void {
     const [ra, rb] = this.roots
     const [la, lb] = this.leans
     const out = this.data
@@ -510,7 +517,7 @@ export class CrystalSet {
     const places = this.places
     const [ea, eb] = this.edges
     let rows = 0
-    for (let i = 0; i < this.shown; i++) {
+    for (let i = this.sentTo; i < upTo; i++) {
       const o = i * 4
       const q = i * TEXELS * 4
       const e = i * 3
@@ -569,19 +576,26 @@ export class CrystalSet {
       this.sent = true
       this.texture.needsUpdate = true
     }
+    this.sentTo = upTo
+    if (upTo < this.shown) return
     this.kept = this.shown
     this.stale = false
   }
 
   private choose(camera: THREE.Camera): void {
     const worn = stateUniforms.uPlantFrost.value > 0 || (this.dewToo && stateUniforms.uPlantDew.value > 0)
-    const gone = this.melts && !this.dewToo && stateUniforms.uPlantDew.value >= 0.15 && stateUniforms.uPlantFrost.value <= GONE_AT
+    const gone = this.melts && !this.dewToo && stateUniforms.uPlantDew.value >= 0.15 && stateUniforms.uPlantFrost.value <= GONE_AT + GONE_UNDER
     const early = stateUniforms.uPlantDew.value <= 0 && stateUniforms.uPlantFrost.value < FIRST_AT
     if (!worn || gone || early || shared.uDiag.value >= 4) {
       this.geometry.instanceCount = 0
       return
     }
-    if (this.stale) this.gather()
+    if (this.melts && stateUniforms.uPlantDew.value <= 0 && stateUniforms.uPlantFrost.value < SHOWN_AT) {
+      if (this.stale) this.gather(Math.min(this.shown, this.sentTo + Math.ceil(this.shown / SHARES)))
+      this.geometry.instanceCount = 0
+      return
+    }
+    if (this.stale) this.gather(this.shown)
     // The strips that only a close lens sees are not drawn for a far one. The nearest a crystal can be is the lens's distance to the wearer's foot less the wearer's height.
     const foot = this.meshes[0].matrixWorld.elements
     const e = camera.matrixWorld.elements
@@ -620,6 +634,7 @@ export class CrystalSet {
   finish(shown = this.count): void {
     this.shown = Math.max(0, Math.min(shown, this.count))
     this.stale = true
+    this.sentTo = 0
   }
 }
 
