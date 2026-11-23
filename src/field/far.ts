@@ -15,6 +15,8 @@ import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
 const PICTURE_UNDER = 0.94
+// How much of its light a far leaf keeps when nothing but the sky lights it.
+const UNLIT = 0.3
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -101,6 +103,8 @@ void main() {
   // At this distance a head is the color of light through its rays: deeper than the lemon of a ray seen near.
   float ray = smoothstep(1.0, 1.25, color.r / max(color.g, 1e-4));
   color.gb *= mix(vec2(1.0), vec2(${RAY_DEEP[0].toFixed(2)}, ${RAY_DEEP[1].toFixed(2)}), ray);
+  // With no sun or moon on it the crop is dark between its heads, as the real rows before it are.
+  color *= mix(mix(${UNLIT.toFixed(2)}, 1.0, ray), 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
   if (uDiag == 7) {
     outColor = vec4(color, cocOf(vDepth));
     return;
@@ -228,6 +232,7 @@ void main() {
     float parted = clamp(1.0 - 0.7 * max(fwidth(clumps.x), fwidth(clumps.y)), 0.0, 1.0);
     float tops = mix(0.42, smoothstep(0.25, 0.8, valueNoise(clumps + 7.0)), parted);
     color = mix(vMid * 0.32, vTop * 0.72, mix(tops, 0.3 + 0.55 * grain, fine)) * (0.74 + 0.52 * patchy);
+    color *= mix(${UNLIT.toFixed(2)}, 1.0, smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1))));
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
