@@ -22,6 +22,10 @@ export const shared = {
   // The sky low toward the sun, as the sky itself says: the far land and the air take their warm side from it.
   uSkyHorizonSun: { value: new THREE.Vector3(0.6, 0.6, 0.6) },
   uGroundBounce: { value: new THREE.Vector3(0.05, 0.04, 0.03) },
+  // The sky's own light as it draws itself, for what floats in the air and for mirror images of the sky: the sun where cloud and land let it through, the sky overhead and the sky at the horizon.
+  uAirSun: { value: new THREE.Vector3(1, 1, 1) },
+  uAirZenith: { value: new THREE.Vector3(0.2, 0.3, 0.5) },
+  uAirHorizon: { value: new THREE.Vector3(0.6, 0.6, 0.6) },
   uFogColor: { value: new THREE.Vector3(0.5, 0.5, 0.5) },
   uFogSunTint: { value: new THREE.Vector3(0, 0, 0) },
   uFogDensity: { value: 0 },
@@ -59,6 +63,9 @@ uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 uniform vec3 uSkyHorizonSun;
 uniform vec3 uGroundBounce;
+uniform vec3 uAirSun;
+uniform vec3 uAirZenith;
+uniform vec3 uAirHorizon;
 uniform vec3 uFogColor;
 uniform vec3 uFogSunTint;
 uniform float uFogDensity;
