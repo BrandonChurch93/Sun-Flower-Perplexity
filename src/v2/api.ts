@@ -105,6 +105,8 @@ export interface Sky {
   // Once a sample, behind everything. Writes the colour and, in alpha, the blur circle in pixels.
   render(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget, camera: THREE.PerspectiveCamera, pixelX: number, pixelY: number, width: number, height: number): void
   light(moment: Moment, out: SkyLight): SkyLight
+  // Where the sun's disc is drawn when the air lifts a low sun above where it stands. The lens puts its glow there; the light of the scene does not move.
+  face?(now: Moment, later: Moment, out: THREE.Vector3): THREE.Vector3
   megabytes(): number
 }
 
