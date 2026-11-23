@@ -1,12 +1,12 @@
-# Status 18
+# Status 19
 
-2026-11-23 08:34 UTC
+2026-11-23 09:04 UTC
 
-- Status 18 · Phase 3. Merged and pushed as a0e376a: the plant's keyed switches, the rain owner's clear beads and hanging drop, the ground owner's frozen band and fixed sparks, the far ridge refitted under the last sun. The new first close shot of the frost section (looking down on a leaf) now stands in the film. MEASURED: 30 test files, 180 tests pass; 14 proof frames drawn and read. Frames 3180 to 3497 drawn as a clip (older hash).
-- Next: Merge the plant's hold fix together with the frost owner's reader; the frost coat on the leaf faces as real crystals (faces are still bare); the bloom close up gets its own owner; check the clouds that clear too fast just after bar 65; thin the row of white beads on the wide shot after the thaw. Time used: 10.6 h of 30 h.
+- Status 19 · Phase 3. Merged: the saddle in the far ridge under the last sun, the rain owner's update, hairs on the grown stem, a cloud deck that thins over bars 61 to 69. Mine: the bloom's lens opens to f/2.8 and the head turns to face it, the storm's deck is gone by bar 42.6 so the first night after the storm can show stars, three nights clear further. A new owner took the flower head (bud, disc, rays). MEASURED: 30 test files, 180 tests pass; 20 proof frames drawn and read at draft size. FOUND and open: the review tier draws the frost close shots softer than the draft tier and breaks each spark into a cluster of small discs.
+- Next: Merge the plant's facing line, the stars that follow the overcast and the leaf look's frost furrows; close the gap between the draft and review tiers on the close shots and settle the stop of close shot 1; the frost owner's crystal coat on the leaf faces; a new owner for stem and hairs; then the blockout clips of the whole film with the music. Time used: 11.1 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frost close shot 1 in the film (frames 952, 1003, 1054) and close shot 2 (1106)
-- `status-2.jpg`: Close shot 3, the thaw: beads, the drop hangs and lets go (1208, 1234, 1240); wide frost at 940
-- `status-3.jpg`: Bar 73 in the film (left) beside the key picture for the last shot (right)
-- `status-4.jpg`: Bloom close up into the pull back, frames 3190 to 3497, draft size
+- `status-1.jpg`: Bloom, pull back and end with the new stop and deck (3112, 3277, 3359, 3442, 3524, 3729) and two nights (2173 before the star change, 835)
+- `status-2.jpg`: Bloom close up: the head faces the lens at f/2.8
+- `status-3.jpg`: Frost close shots as they stand (952, 1106, 1208, 1234, 1250, 1262)
+- `status-4.jpg`: Close shot 1, draft tier left and review tier right (1003 above, 1106 below)

@@ -32,16 +32,16 @@ const CROP_AMONG: Knot[] = [
 const CROP_OVER: Knot[] = [
   ...CROP_YOUNG,
   [60, 0.1845, 0.0783, 0.002096],
-  [67, 0.1365, 0.0681, 0.0021],
-  [69, 0.2187, 0.1112, 0.004153],
-  [71, 0.2624, 0.1277, 0.007634],
-  [73, 0.2907, 0.1317, 0.0089],
-  [74.5, 0.3822, 0.1476, 0.0105],
+  [67, 0.1272, 0.06373, 0.002],
+  [69, 0.2332, 0.1481, 0.005008],
+  [71, 0.3152, 0.1909, 0.01076],
+  [73, 0.4646, 0.1549, 0.003313],
+  [74.5, 0.6, 0.1647, 0.003737],
 ]
 // The lens's height over the tops, in heights of the tops, between which the far crop turns from its side to its heads.
 const OVER = { from: -0.06, to: 0.09 }
 // And between which it looks down into the crop: its heads toward the sun, its shaded sides away from it.
-const DOWN = { from: 0.06, to: 0.3 }
+const DOWN = { from: -0.02, to: 0.3 }
 function knotAt(table: Knot[], bar: number, out: Knot): Knot {
   let i = 0
   while (i < table.length - 2 && bar > table[i + 1][0]) i++

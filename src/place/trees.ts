@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, cellAt, inCrop, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, sillAt, sillLineM, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, cellAt, inCrop, fieldEdge, fieldHash, fromFields, gateAt, isHome, noise2, ownHillAt, ownSoilAt, plantedAt, sillAt, sillLineM, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -174,43 +174,51 @@ export function plantList(): Tree[] {
     const r = Math.hypot(x, z)
     const az = (Math.atan2(x, z) / RAD + 360) % 360
     const capDeg = 3.2 - 2.45 * gateAt(az)
-    // On the sill of the last sun every crown stays under the line the lens sees along.
+    return r * Math.tan(capDeg * RAD) - Math.max(0, soil)
+  }
+  // On the sill of the last sun every crown stays under the line the lens sees along.
+  const underSill = (x: number, z: number, soil: number, h: number): number => {
+    const az = (Math.atan2(x, z) / RAD + 360) % 360
     const sill = sillAt(az)
-    const top = r * Math.tan(capDeg * RAD)
-    return top + (Math.min(top, sillLineM(r, az) - SILL_CLEAR_M) - top) * sill - Math.max(0, soil)
+    if (sill <= 0) return h
+    return h + (Math.min(h, sillLineM(Math.hypot(x, z), az) - SILL_CLEAR_M - Math.max(0, soil)) - h) * sill
   }
   const seen = (x: number, z: number): boolean => {
     const az = (Math.atan2(x, z) / RAD + 360) % 360
     return az > SEEN.fromDeg && az < SEEN.toDeg
   }
+  // What stands where is rolled on the ground as it lay before the sill, and then cut down to the sill.
   const tree = (x: number, z: number, tall: number, poplar: boolean): void => {
     if (plantedAt(x, z) > 0.9) return
-    const soil = soilAt(x, z)
-    const allowed = room(x, z, soil)
+    const allowed = room(x, z, ownSoilAt(x, z))
     let h = tall
     if (allowed < 0.75 * h) {
       if (allowed < 2.2) return
       h = Math.max(allowed, 0.45 * tall)
       if (h > allowed * 1.25) return
     }
-    const r = Math.hypot(x, z)
-    const az = (Math.atan2(x, z) / RAD + 360) % 360
-    const under = h + (Math.min(h, sillLineM(r, az) - SILL_CLEAR_M - Math.max(0, soil)) - h) * sillAt(az)
-    if (under < h) {
-      if (under < 2.2) return
-      h = under
-    }
     const variant = poplar ? POPLAR : TALL[rnd.int(TALL.length)]
-    trees.push({ x, y: soil - 0.25, z, w: h * (variant === 5 ? 0.95 : 1), h, variant, flip: rnd.next() < 0.5 ? -1 : 1, phase: rnd.next(), tint: tint(1) })
+    const flip = rnd.next() < 0.5 ? -1 : 1
+    const phase = rnd.next()
+    const color = tint(1)
+    const soil = soilAt(x, z)
+    const under = underSill(x, z, soil, h)
+    if (under < 2.2) return
+    trees.push({ x, y: soil - 0.25, z, w: under * (variant === 5 ? 0.95 : 1), h: under, variant, flip, phase, tint: color })
   }
   const hedge = (x: number, z: number): number => {
     if (plantedAt(x, z) > 0.9) return 2.5
-    const soil = soilAt(x, z)
     const r = Math.hypot(x, z)
-    const h = Math.min(rnd.range(2.1, 3.5), r * Math.tan(1.15 * RAD), room(x, z, soil))
+    const h = Math.min(rnd.range(2.1, 3.5), r * Math.tan(1.15 * RAD), room(x, z, ownSoilAt(x, z)))
     if (h < 1.1) return 2.5
     const w = h * rnd.range(1.9, 2.5)
-    trees.push({ x, y: soil - 0.15, z, w, h, variant: HEDGES[rnd.int(2)], flip: rnd.next() < 0.5 ? -1 : 1, phase: rnd.next(), tint: tint(0.9) })
+    const variant = HEDGES[rnd.int(2)]
+    const flip = rnd.next() < 0.5 ? -1 : 1
+    const phase = rnd.next()
+    const color = tint(0.9)
+    const soil = soilAt(x, z)
+    const under = underSill(x, z, soil, h)
+    if (under >= 1.1) trees.push({ x, y: soil - 0.15, z, w: (w * under) / h, h: under, variant, flip, phase, tint: color })
     return w
   }
   const line = (kind: number, from: { u: number; v: number }, to: { u: number; v: number }, salt: number): void => {
@@ -241,7 +249,7 @@ export function plantList(): Tree[] {
       const p = fromFields(from.u + (to.u - from.u) * k + rnd.range(-1.2, 1.2), from.v + (to.v - from.v) * k + rnd.range(-1.2, 1.2))
       const r = Math.hypot(p.x, p.z)
       const inSight = seen(p.x, p.z)
-      const wooded = r > 400 && woodAt(p.x, p.z, landHill(p.x, p.z)) > 0.45
+      const wooded = r > 400 && woodAt(p.x, p.z, ownHillAt(p.x, p.z)) > 0.45
       if (r < HEDGE_FROM_M || r > LINES_TO_M || wooded || inCrop(p.x, p.z) || (!inSight && !trees_ && !bound)) {
         s += 6
         continue
@@ -295,7 +303,7 @@ export function plantList(): Tree[] {
       const tall = rnd.range(13, 19.5)
       const r = Math.hypot(x, z)
       if (r < 760 || r > reach || !seen(x, z)) continue
-      const wood = woodAt(x, z, landHill(x, z))
+      const wood = woodAt(x, z, ownHillAt(x, z))
       if (wood < 0.36) continue
       if (chance > (wood < 0.62 ? 0.85 : 0.3) * (r > 1800 ? 0.6 : 1)) continue
       tree(x, z, tall, false)
@@ -377,7 +385,9 @@ void main() {
   float low = 1.0 - smoothstep(0.2, 0.55, uSunDir.y);
   float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low * uThrough * (1.0 - smoothstep(300.0, 1400.0, length(uCamPos - vWorld)));
   // Leaves let the low sun through: the crown's thin edge glows when the sun stands behind it.
-  vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * thin);
+  // A crown a few pixels tall is all edge to the lens: its rim is not seen apart from it, and at dusk it stands dark with the land.
+  float rim = thin * (1.0 - smoothstep(0.015, 0.06, fwidth(vCard.y))) * (1.0 - uDusk);
+  vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * rim);
   vec3 color = albedo * (uSunColor * sunOnLand(vWorld) * (ndl * mix(1.0, open, 0.75) + glow) + landAmbient(n, vWorld) * open);
   outColor = landFinish(color, vWorld, vDepth);
 }

@@ -65,13 +65,13 @@ float openAt(vec2 uv) {
 }
 void main() {
   if (gl_FragCoord.x > 3.0) {
-    // The fourth column: how far the disc stands clear of the far land under it, from 0 with its lower edge on the land to 1 three and a half of its radii above. Only land near infinity counts: a leaf under the sun is in the glass with it.
+    // The fourth column: how far the disc stands clear of the far land under it, from 0 with its lower edge within a radius of the land to 1 five radii above. Only land near infinity counts: a leaf under the sun is in the glass with it.
     float clear = 0.0;
     for (int i = 0; i < 16; i++) {
       float k = (float(i) + 0.5) / 16.0;
-      vec2 p = uSunAt + vec2((fract(float(i) * 0.618034) - 0.5) * uRim, -(1.0 + 3.5 * k) * uRim * uAspect);
+      vec2 p = uSunAt + vec2((fract(float(i) * 0.618034) - 0.5) * uRim, -(2.0 + 4.0 * k) * uRim * uAspect);
       float a = texture(tRaw, clamp(p, 0.002, 0.998)).a;
-      float land = uFar > 0.0 ? smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) * smoothstep(0.8, 0.95, a / uFar) : 0.0;
+      float land = uFar > 0.0 ? smoothstep(0.0006, 0.0012, 1.0 - a / uFar) * smoothstep(0.8, 0.95, a / uFar) : 0.0;
       clear += 1.0 - land;
     }
     outColor = vec4(clear / 16.0);
