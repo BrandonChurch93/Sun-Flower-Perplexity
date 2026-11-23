@@ -171,10 +171,6 @@ void main() {
   albedo = mix(albedo, vec3(0.03, 0.04, 0.02), 0.6 * hairs.y);
   albedo = mix(albedo, vec3(0.5, 0.55, 0.56), hairs.x);
   through = mix(through, vec3(0.5, 0.52, 0.45), hairs.x);
-  // Frozen and seen against the sun a blade passes little and that little grey: only the thin margin keeps a warm line.
-  float rimLine = smoothstep(0.9, 0.99, min(1.0, abs(vUv.x) + bay));
-  float iced = uPlantFrost * smoothstep(0.6, 1.0, near) * smoothstep(0.3, 0.8, dot(-view, uSunDir)) * (1.0 - rimLine) * (1.0 - brown) * (1.0 - smoothstep(0.0, 0.3, frostThaw()));
-  through = mix(through, dot(through, vec3(0.3, 0.6, 0.1)) * vec3(0.85, 1.0, 1.1), 0.7 * iced) * (1.0 - 0.45 * iced);
   t.albedo = albedo * (0.3 + 0.7 * margin);
   t.through = through + vec3(0.2, 0.22, 0.05) * (near * thin * (1.0 - brown) * smoothstep(0.965, 0.995, min(1.0, abs(vUv.x) + bay)));
   t.face = face;

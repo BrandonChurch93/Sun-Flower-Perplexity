@@ -98,8 +98,8 @@ const float TISSUE_SPREAD_FAR_M = 0.012;
 const float TISSUE_HID = 0.35;
 // The share of the high sky that the down of a sheet scatters to the eye.
 const float TISSUE_SLATE = 0.21;
-// The share of the high sky that the ice over a frozen face scatters to the eye, close by, where it is seen.
-const float FROST_GLAZE = 0.25;
+// The hue of a frozen blade's own face close by, at unit luminance: a cold teal.
+const vec3 FROST_TEAL = vec3(0.62, 1.05, 1.2);
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
 // The share of the open sky a blade does not see: its own plant stands in front of it.
@@ -209,6 +209,15 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float soft = gf * gf * inside * blade;
 
   float frost = uPlantFrost;
+  float melt = 0.0;
+  float ice = frost;
+#ifndef PLANT_FIELD
+  // Where the ice has gone the skin is wet, and no longer cold.
+  if (margin >= 0.0 && frostThaw() > 0.0) {
+    melt = frostGone(at, margin, N) * sheet;
+    ice *= frostLeft(at, margin, N);
+  }
+#endif
   // Rime is seen thick where the eye looks along the face itself, not along each fold of its relief.
   float brink = gf * gf;
   brink *= brink * gf;
@@ -225,8 +234,13 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   bloom = min(1.0, bloom + frost * FROST_DOWN * smoothstep(0.4, 0.8, t.sheen) * body);
 #endif
   float grey = dot(albedo, vec3(0.3, 0.6, 0.1));
+  vec3 own = albedo;
   // A frozen tissue is a cold dark green: its yellow goes and the thin ice over it is blue.
-  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, frost);
+  // Close by, a frozen blade's own face is a dark cold teal under the white of its crystals, and only what it returns: the light through it keeps its color.
+  vec3 ray = world - uCamPos;
+  float close = sheet * smoothstep(12.0, 24.0, 1.08 / max(length(ray) * length(dFdy(normalize(ray))) * uSize.y, 1e-9));
+  albedo = mix(albedo, mix(albedo, FROST_COLD * grey, 0.7) * 0.9, ice);
+  albedo = mix(albedo, FROST_TEAL * (0.3 * grey), ice * close);
   albedo = mix(albedo, FROST_RIME, bloom);
   // Rime on the sun's side sends most of the sun back before it reaches the blade. Rime on the side turned from the sun takes what crossed the blade and sends it on every way, pale.
   float crossing = dot(through, vec3(0.3, 0.6, 0.1)) * (1.0 - FROST_SHUT * frost);
@@ -235,7 +249,17 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   rough = mix(rough, 1.0, bloom);
   fuzz = max(fuzz, bloom);
   // Hoar breaks the mirror of the wax: a frozen skin is matt.
-  wax *= 1.0 - FROST_MATT * frost;
+  wax *= 1.0 - FROST_MATT * ice * (1.0 - melt);
+  // The water fills the fine relief: the skin is darker and deeper in color, and its wax is a narrow mirror that lights only the ridges and swells that face the sun or the bright sky.
+  albedo = mix(albedo, max(mix(vec3(grey), own, 1.2), 0.0) * 0.6, melt);
+  rough = mix(rough, min(rough, 0.25), melt);
+  wax = mix(wax, max(wax, 0.3), melt);
+  fuzz *= 1.0 - 0.7 * melt;
+  if (melt > 0.0) {
+    N = normalize(mix(N, F, 0.3 * melt));
+    ndl = dot(N, L);
+    ndv = min(abs(dot(N, view)) + 0.002, 1.0);
+  }
 
   float peak = max(through.r, max(through.g, through.b));
   // A thin part is asked on the sun's side, a thick one on the side that is seen.
@@ -388,10 +412,6 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float up = saturate(0.5 + 0.5 * N.y);
   float spare = 1.0 - keep * max(total.r, max(total.g, total.b));
   color += uSkyZenith * pale * (TISSUE_SLATE * (1.0 - dusk) * spare * open * fuzz * up * up * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
-  // Close by, the ice on a frozen face scatters the high sky too, undyed: against the light, where the blade itself is dark, the face is the sky's cold grey.
-  vec3 ray = world - uCamPos;
-  float close = smoothstep(12.0, 24.0, 1.08 / max(length(ray) * length(dFdy(normalize(ray))) * uSize.y, 1e-9));
-  color += uSkyZenith * (FROST_GLAZE * frost * mix(1.0, smoothstep(0.02, 0.2, bloom), smoothstep(0.0, 0.3, frostThaw())) * sheet * close * spare * open * (0.5 + 0.5 * up) * (1.0 - rim) * cover * (peak > 0.0 ? 1.0 : 0.0));
   // Set by the angle, not the pixel: on a stem a few pixels wide it is thinner than a pixel and gone.
   color += direct * (TISSUE_EDGE * fuzz * catches * (1.0 - blade) * (1.0 - smoothstep(0.05, 0.4, fv)));
   color += direct * (FROST_FLASH * flash);
