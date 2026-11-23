@@ -9,7 +9,7 @@ import { ShadowMap, type Caster } from '../core/shadow.ts'
 import { Stage } from '../core/stage.ts'
 import { samplesOf } from '../core/tiers.ts'
 import { applyWorld, type WorldDef } from '../core/world.ts'
-import { breathe } from '../core/yield.ts'
+import { breathe, paint } from '../core/yield.ts'
 import { Field } from '../field/index.ts'
 import { companionPlace, companionVariant } from '../field/layout.ts'
 import { Ground } from '../ground/index.ts'
@@ -138,7 +138,7 @@ export class Film {
         // After each part the page gets a turn, so the loading screen can paint the step.
         const step = async (what: string): Promise<void> => {
           onStep?.(++done, of, what)
-          await breathe()
+          await paint()
         }
         await this.ground.load(this.assets)
         await step('ground')
@@ -173,7 +173,7 @@ export class Film {
     for (let i = 0; i < frames.length; i++) {
       await this.renderFrame(frames[i], tier)
       onStep?.(i + 1, frames.length)
-      await breathe()
+      await paint()
     }
   }
 
