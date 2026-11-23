@@ -11,7 +11,7 @@ vec3 sound(vec3 c) {
 // A circle that is not a number or is infinite is taken as sharp. Said in two ways as well.
 float circleOf(float a) {
   if (isnan(a) || isinf(a)) return 0.0;
-  return a >= 0.0 && a <= 65504.0 ? a : 0.0;
+  return a >= 0.0 && a < 65504.0 ? a : 0.0;
 }
 `
 
