@@ -98,6 +98,7 @@ export class Ground {
       uFieldLight: { value: new THREE.Vector3(fieldLight.rightM, fieldLight.aheadM, fieldLight.reachM) },
       uLowSun: { value: new THREE.Vector3(0, 1, 0) },
       uAir: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uDusk: { value: 0 },
       uStems: { value: new THREE.Vector4(0, 0, companion.x, companion.z) },
       uLane: { value: new THREE.Vector2(laneDir.x, laneDir.z) },
       uScales: { value: new THREE.Vector2(detailScale, 1 / clodScale) },
@@ -196,6 +197,7 @@ export class Ground {
     const low = 1 - smoothstep(0.1, 0.45, now.sun.y)
     ;(u.uLowSun.value as THREE.Vector3).set(now.sun.x / Math.max(flat, 1e-5), now.sun.z / Math.max(flat, 1e-5), low * (1 - now.night))
     ;(u.uFlashAt.value as THREE.Vector3).copy(now.flashAt)
+    u.uDusk.value = 1 - smoothstep(-0.05, 0.02, now.sun.y)
     ;(u.uAir.value as THREE.Vector4).set(now.dials.wind, now.dials.flash, now.dials.burst, now.dials.cold)
     u.uCover.value = cover
     u.uCrop.value.set(config.field.plantAheadOfRowM, cover * CROP_HEIGHT_M, cover)

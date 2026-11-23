@@ -1,12 +1,12 @@
-# Status 04
+# Status 05
 
-2026-11-23 01:17 UTC
+2026-11-23 01:41 UTC
 
-- Status 04 · Phase 2. Every part of the film is now in one picture for the first time: the land, the ground, the field, the plant, rain, frost and the lens, under sky candidate B. The light on the plant is retuned so it no longer stands as a dark cut-out, and the storm has bare wet soil and small neighbours as in the references. Meeting for the first time, the rain, the mist and the lens glare came out too bright (washed frost, pale storm, white lightning frame): the cause is found and the three owners are fixing it now. The checks found both holds ending one frame late; fixed.
-- Next: Get the washed frames right as the three fixes land, bring sky candidates A and C to their second reports, then judge the three skies blind. Time used: 3.3 h of 30 h.
+- Status 05 · Phase 2. The washed frames are fixed in the storm: rain, the puddle and the lens glare now take their light from the sky itself, so the storm is dark again with the plant lit and the lightning frame reads. The opening frame shows soil and the first hook instead of a black band. Drawing bar 61 three ways gave the same picture to the last pixel, so a frame depends only on its number there. The frost hold is still washed; its owner is switching the mist over now.
+- Next: Get the frost hold right, take the second reports of sky candidates A and C, judge the three skies blind, then merge the player and the checks and run the film against the music. Time used: 3.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: All parts merged, sky candidate B, sixteen moments through the film camera. Good: sunrise, day, the lapse, the pink ascent, the last frame. Wrong and being fixed: frost and break washed, storm too pale, the lightning frame white
-- `status-2.jpg`: The retuned light on its own, before rain, frost and lens were merged: the plant reads in the storm and the lightning lights it
-- `status-3.jpg`: Sky candidate A in the same film frames (first round, unverified): flat storm, lumpy clouds
-- `status-4.jpg`: Sky candidate C in the same film frames (first round, unverified): sparse clouds, flat storm
+- `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed
+- `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel)
+- `status-3.jpg`: The open flower at bar 61 (draft tier)
+- `status-4.jpg`: Opening frame: reference left, the film right
