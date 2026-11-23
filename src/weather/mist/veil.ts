@@ -70,12 +70,16 @@ void main() {
   float alpha = (1.0 - exp(-depth) * (1.0 - high)) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y));
   // Dawn mist is a breath over the soil: it never hides what stands on the horizon and ends a degree and a half above it.
   alpha = mix(alpha, (1.0 - exp(-uDawn.y * (1.0 - exp(-depth / uDawn.y)))) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y)) * (1.0 - smoothstep(0.008, 0.026, v.y)), uDawn.x);
+  float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
+  // The disc is many times brighter than the mist before it, so it is seen through a depth of mist that hides everything else.
+  alpha *= 1.0 - 0.8 * exp(-theta * theta / (0.011 * 0.011));
   if (alpha < 0.002) discard;
   float toSun = dot(v, uGlowDir);
   float wide = saturate(toSun);
   wide *= wide * wide;
   wide *= wide;
-  float theta = acos(clamp(dot(v, uSunDir), -1.0, 1.0));
+  wide *= wide;
+  wide *= wide;
   // Shafts: the banks between the sun and the eye shade the air behind them, in a fan round the sun.
   vec3 e1 = normalize(cross(uGlowDir, vec3(0.0, 1.0, 0.0)));
   vec3 e2 = cross(uGlowDir, e1);
@@ -96,7 +100,7 @@ void main() {
   peach *= paleness / max(dot(peach, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
   float aside = acos(clamp(dot(normalize(v.xz + vec2(1e-6)), normalize(uGlowDir.xz + vec2(1e-6))), -1.0, 1.0));
   float lying = exp(-max(v.y, 0.0) / 0.07);
-  float bloom = uLook.y * wide * (0.25 + 0.7 * lying) + uLook.w * (0.9 * exp(-theta / 0.16) + 1.3 * exp(-aside / 0.35) * lying);
+  float bloom = uLook.y * wide * (0.25 + 0.7 * lying) + uLook.w * (0.7 * exp(-theta / 0.16) + 1.2 * exp(-aside / 0.16) * lying);
   vec3 color = air + peach * (bloom * max(shafts, 0.0));
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);

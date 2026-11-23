@@ -143,11 +143,11 @@ interface Tree { x: number; y: number; z: number; w: number; h: number; variant:
 // The bearings the lens can look along through the film, with a margin.
 const SEEN = { fromDeg: 128, toDeg: 282 }
 const HEDGE_FROM_M = 125
-const TREES_FROM_M = 340
-const BOUND_TREES_FROM_M = 230
+const TREES_FROM_M = 760
+const BOUND_TREES_FROM_M = 760
 const LINES_TO_M = 2500
 
-function plant(): Tree[] {
+export function plantList(): Tree[] {
   const rnd = stream('place trees')
   const trees: Tree[] = []
   const tint = (dark: number): [number, number, number] => {
@@ -233,7 +233,7 @@ function plant(): Tree[] {
       }
       if (rnd.next() < 0.035) gap = 2 + rnd.int(5)
       if (bound ? run && r > BOUND_TREES_FROM_M : trees_ && r > TREES_FROM_M) {
-        const young = !poplars && rnd.next() < 0.22
+        const young = !poplars && rnd.next() < 0.38
         const tall = poplars ? rnd.range(15, 21) : young ? rnd.range(5.5, 9) : rnd.range(9.5, 16.5) * (0.85 + 0.3 * fieldHash(salt, Math.floor(s / 90), 9))
         if (inSight || rnd.next() < 0.5) tree(p.x, p.z, tall, poplars)
         // Thorn and bramble at the foot of a tree line.
@@ -241,7 +241,7 @@ function plant(): Tree[] {
         s += (poplars ? 0.3 : 0.5) * tall * rnd.range(0.55, 1.35)
       } else {
         const w = hedge(p.x, p.z)
-        if (rnd.next() < 0.05 && r > TREES_FROM_M * 0.8) tree(p.x, p.z, rnd.range(6, 10), false)
+        if (rnd.next() < 0.05 && r > TREES_FROM_M) tree(p.x, p.z, rnd.range(6, 10), false)
         s += 0.42 * w
       }
     }
@@ -270,7 +270,7 @@ function plant(): Tree[] {
       const chance = rnd.next()
       const tall = rnd.range(13, 19.5)
       const r = Math.hypot(x, z)
-      if (r < 450 || r > reach || !seen(x, z)) continue
+      if (r < 760 || r > reach || !seen(x, z)) continue
       const wood = woodAt(x, z, landHill(x, z))
       if (wood < 0.36) continue
       if (chance > (wood < 0.62 ? 0.85 : 0.3) * (r > 1800 ? 0.6 : 1)) continue
@@ -280,7 +280,7 @@ function plant(): Tree[] {
   // Lone trees on the open land.
   for (let i = 0; i < 46; i++) {
     const az = rnd.range(SEEN.fromDeg, SEEN.toDeg) * RAD
-    const r = rnd.range(380, 1700)
+    const r = rnd.range(760, 1900)
     const x = Math.sin(az) * r
     const z = Math.cos(az) * r
     const tall = rnd.range(9, 15)
@@ -349,10 +349,10 @@ void main() {
   albedo = mix(albedo, vec3(0.7, 0.76, 0.82), uLandFrost * 0.42 * smoothstep(-0.2, 0.7, n.y) * (0.5 + 0.5 * open));
   float ndl = max(dot(n, uSunDir), 0.0);
   float low = 1.0 - smoothstep(0.2, 0.55, uSunDir.y);
-  float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low * uThrough;
+  float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low * uThrough * (1.0 - smoothstep(300.0, 1400.0, length(uCamPos - vWorld)));
   // Leaves let the low sun through: the crown's thin edge glows when the sun stands behind it.
   vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * thin);
-  vec3 color = albedo * (uSunColor * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open);
+  vec3 color = albedo * (uSunColor * sunOnLand(vWorld) * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open);
   outColor = landFinish(color, vWorld, vDepth);
 }
 `
@@ -360,7 +360,7 @@ void main() {
 export interface Trees { mesh: THREE.Mesh; atlas: THREE.DataTexture; count: number }
 
 export function makeTrees(): Trees {
-  const list = plant()
+  const list = plantList()
   const count = list.length
   const at = new Float32Array(count * 4)
   const size = new Float32Array(count * 4)

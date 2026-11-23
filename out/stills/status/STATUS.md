@@ -1,12 +1,12 @@
-# Status 09
+# Status 10
 
-2026-11-23 03:47 UTC
+2026-11-23 04:09 UTC
 
-- Status 09 · Phase 3. First whole watch read against the nine keys. The deck now stays over the break and the sun lights through its tear, the frost hold has a lower sun, the crane ends closer, the film ends 3 degrees after sunset. A new counter measures the page's own time in a frame by part: 70 to 210 ms where the plant grows against a budget of 33 ms, so growth moves into the shaders next.
-- Next: round notes to every owner from the watch, the processor work in plant, field and rain, the new night sky wired in, then the whole film in parts. Time used: 5.8 h of 30 h.
+- Status 10 · Phase 3. Round 4 is out to every builder with the findings of the first whole watch. The sky's first answer is in: low sun is blue grey away from the sun instead of murky brown, the opening is a deep blue hour, and the new star map with the Milky Way is wired in with stars as points. The far land has a low dark ridge in place of the row of trees. The break now opens on the frame that holds the boom of bar 41, the puddle soaks away before the night, and rime arrives where it can be seen (bars 17 to 18). The processor budget is set (16 ms of script a frame on this machine) and the plant's builder is moving growth to key shapes mixed in the shader.
+- Next: Merge the turned rows and ridges, the dark midday soil, the frost hold as events, the puddle as water. Take the first numbers of the key shapes and the new script check. Then draw the whole film in parts for the second watch. Time used: 6.2 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain)
-- `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain)
-- `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft)
-- `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
+- `status-1.jpg`: With the newest sky (draft): the blue hour of the first frame, sunrise at bar 1.5, low sun at bar 9.2, the night of bar 46.82 with the new star map
+- `status-2.jpg`: The break at the boom of bar 41, frames 2081 to 2089 (draft, drawn before the newest sky): the last frame of the hold is still, then the tear opens over five frames. The hard white dot on the third frame is gone in the newest sky
+- `status-3.jpg`: Frost hold at bar 21, storm at 35, the field at bars 69 and 73 with the new far ridge (draft, before the newest sky). The frost is still flat and the end still magenta: both are in work
+- `status-4.jpg`: Low sun beside the references, drawn by the sky's builder; my own frames at bars 1.5 and 9.2 agree

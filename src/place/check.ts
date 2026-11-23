@@ -10,16 +10,22 @@ export interface Rule { name: string; ok: boolean; detail: string }
 const RAD = Math.PI / 180
 const at = { height: 0, wood: 0, hill: 0 }
 
+let skylineWood = 0
+
 function skylineDeg(azDeg: number): number {
   let best = -90
   for (let r = LAND_FROM_M + 6; r < LAND_TO_M; r *= 1.015) {
     landAt(Math.sin(azDeg * RAD) * r, Math.cos(azDeg * RAD) * r, at)
-    best = Math.max(best, Math.atan2(at.height, r) / RAD)
+    const e = Math.atan2(at.height, r) / RAD
+    if (e > best) {
+      best = e
+      skylineWood = at.wood
+    }
   }
   return best
 }
 
-// The sun meets the land low in its saddles, morning and last evening.
+// The sun rises over low land and sets on the low wooded line of the ridge. The ridge is one long low line that wanders, with one hill at the left of the storm's frame.
 export function checkPlace(): Rule[] {
   const rules: Rule[] = []
   const rule = (name: string, ok: boolean, detail: string): void => {
@@ -28,18 +34,42 @@ export function checkPlace(): Rule[] {
   const moment = blankMoment()
   let morning = 0
   let evening = 0
-  let flanks = 90
+  let eveningLow = 90
+  let eveningWood = 1
   for (let s = 0; s <= 127; s += 0.25) {
     momentAt(s, moment)
     if (moment.sunElevationDeg < -1 || moment.sunElevationDeg > 2.5) continue
     const az = (Math.atan2(moment.sun.x, moment.sun.z) / RAD + 360) % 360
     if (az < 190) morning = Math.max(morning, skylineDeg(az))
-    if (az > 220) evening = Math.max(evening, skylineDeg(az))
+    if (az > 220) {
+      const e = skylineDeg(az)
+      evening = Math.max(evening, e)
+      eveningLow = Math.min(eveningLow, e)
+      eveningWood = Math.min(eveningWood, skylineWood)
+    }
   }
-  for (const az of [150, 160, 240, 250, 260]) flanks = Math.min(flanks, skylineDeg(az))
-  rule('saddle of the mornings', morning < 0.95, `the land under the rising sun stands ${morning.toFixed(2)} degrees at most`)
-  rule('saddle of the last evening', evening < 0.95, `the land under the last setting sun stands ${evening.toFixed(2)} degrees at most`)
-  rule('hills beside the saddles', flanks > 1.5, `the lowest of the flanks stands ${flanks.toFixed(2)} degrees`)
+  const line: number[] = []
+  for (let az = 165; az <= 245; az += 0.5) line.push(skylineDeg(az))
+  const lineAt = (az: number): number => line[Math.round((az - 165) * 2)]
+  let lineLow = 90
+  let lineHigh = 0
+  for (let az = 190; az <= 240; az += 0.5) {
+    if ((az > 200 && az < 214) || (az > 222 && az < 230)) continue
+    lineLow = Math.min(lineLow, lineAt(az))
+    lineHigh = Math.max(lineHigh, lineAt(az))
+  }
+  let hill = 0
+  for (let az = 203; az <= 211; az += 0.5) hill = Math.max(hill, lineAt(az))
+  let flattest = 90
+  for (let i = 0; i + 20 < line.length; i++) {
+    const span = line.slice(i, i + 21)
+    flattest = Math.min(flattest, Math.max(...span) - Math.min(...span))
+  }
+  rule('the mornings', morning < 0.95, `the land under the rising sun stands ${morning.toFixed(2)} degrees at most`)
+  rule('the last evening', eveningLow > 0.5 && evening < 0.8 && eveningWood > 0.5, `the line the last sun sets on stands ${eveningLow.toFixed(2)} to ${evening.toFixed(2)} degrees and is wooded (${eveningWood.toFixed(2)})`)
+  rule('one long low line', lineLow > 0.7 && lineHigh < 1.7, `beside the hill the ridge stands ${lineLow.toFixed(2)} to ${lineHigh.toFixed(2)} degrees from bearing 190 to 240`)
+  rule('the hill at the left of the storm', hill > 1.8 && hill < 2.3, `it stands ${hill.toFixed(2)} degrees`)
+  rule('a line that wanders', flattest > 0.08, `over any 10 degrees of bearing from 165 to 245 the skyline moves by ${flattest.toFixed(2)} degrees or more`)
 
   // Where the land takes over from the soil: under the soil plane at its first ring, above it from 82 m to where it takes its own depth, except under the planted field.
   let low = 9

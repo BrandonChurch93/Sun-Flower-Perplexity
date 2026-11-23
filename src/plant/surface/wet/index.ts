@@ -10,7 +10,7 @@ export const real = true
 export const BEAD_ORDER = 19
 
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
-const beadUniforms = { uBeadLee: { value: 0 } }
+const beadUniforms = { uBeadLee: { value: 0 }, uBeadRain: { value: 0 } }
 
 const G = 9.81
 const SIT = 0.4
@@ -63,6 +63,7 @@ in vec4 aMid;
 in vec4 aEnd;
 in vec4 aEndUp;
 in vec4 aGather;
+in vec4 aLimit;
 in vec3 aTint;
 uniform float uBeadLee;
 uniform float uBeadPaths;
@@ -86,14 +87,14 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
     float wet = sqrt(uPlantWet);
     if (own2(own, 53.3) < ${STAY}) {
       // A small bead forms and stays: most are fine, few are not.
-      r = (0.0003 + 0.0023 * fine * fine) * wet * smoothstep(0.0, 1.5, since - 3.0 * own2(own, 311.7)) * margin;
+      r = (0.0006 + 0.0034 * fine * fine) * wet * smoothstep(0.0, 1.5, since - 3.0 * own2(own, 311.7)) * margin;
     } else {
       // A large one swells where it formed, slides to the end of its path in fits and starts, hangs there and falls: once or twice in a shower.
       float period = 7.0 + 6.0 * fine;
       float t = since - 5.0 * own2(own, 311.7) + 3.0;
       float turn = t / period;
       float p = fract(turn);
-      float full = (0.0014 + 0.0012 * own2(own + floor(turn) * 0.618, 74.7)) * wet * smoothstep(0.0, 1.5, since) * step(0.0, t);
+      float full = (0.0022 + 0.0018 * own2(own + floor(turn) * 0.618, 74.7)) * wet * smoothstep(0.0, 1.5, since) * step(0.0, t);
       if (p < ${SIT}) {
         r = full * pow(p / ${SIT}, 1.0 / 3.0) * smoothstep(0.0, 0.06, p);
       } else if (p < ${RUN}) {
@@ -108,8 +109,8 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
         float q = min(1.0, (p - ${RUN}) / (${HANG} - ${RUN}));
         at = aEnd.xyz;
         up = aEndUp.xyz;
-        if (aMid.w < 0.5) {
-          // One that does not reach the tip spreads into the film where it stops.
+        if (aMid.w < 0.5 || aLimit.w > 0.5) {
+          // One that does not reach the tip, or has none to hang from, spreads into the film where it stops.
           r = full * 1.3 * (1.0 - q) * (1.0 - q);
         } else {
           hang = q * q * (3.0 - 2.0 * q);
@@ -127,7 +128,7 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
     float dry = 1.0 - min(1.0, 4.0 * uPlantWet);
     float large = max(0.0, (own - 0.85) / 0.15);
     float deep = sqrt(uPlantDew);
-    r = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * deep * margin;
+    r = (own > 0.85 ? 0.0005 + 0.0009 * large * large : 0.00015 + 0.0011 * fine * fine) * deep * margin * (aLimit.z > 0.0 ? aLimit.z : 1.0);
     if (aGather.w > 0.5) {
       bool tip = aGather.w > 1.5;
       at = mix(aForm.xyz, aGather.xyz, dry);
@@ -135,7 +136,11 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
       r = mix(r, (tip ? 0.0028 + 0.001 * fine : 0.0016 + 0.0014 * fine) * deep, dry);
     }
   }
-  seat = vec4(at, r * aFormUp.w);
+  r *= aFormUp.w;
+  // A part can say how large a bead may stand on it: on a stem, never wider than a share of the stem there.
+  float most = mix(aLimit.y, aLimit.x, smoothstep(0.3, 0.9, uPlantWet));
+  if (aLimit.x > 0.0 && aLimit.y > 0.0) r = min(r, most);
+  seat = vec4(at, r);
   rest = vec4(up, hang);
 }
 out vec3 vWorld;
@@ -244,7 +249,7 @@ void main() {
   float ndv = saturate(dot(n, view));
   float f = 1.0 - ndv;
   float f2 = f * f;
-  float fresnel = 0.02 + 0.6 * f2 * f2 * f;
+  float fresnel = 0.04 + 0.6 * f2 * f2 * f;
   vec3 mirror = reflect(ray, n);
   float sun = sunShadow(vMiddle + up * vShape.x, up, uShadowTexelM * 2.5);
   // One highlight: the sun itself where it is clear, a soft window where it stands in cloud.
@@ -266,7 +271,7 @@ void main() {
   farSun *= farSun;
   farSky *= farSky;
   // Under a bead on a face turned from the sun the skin is lit through the blade.
-  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.55 + 2.2 * farSky);
+  vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * farSky * farSky);
   // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
   vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
   // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
@@ -287,12 +292,96 @@ void main() {
   lens *= lens;
   body += uSunColor * (BEAD_LENS * clear * sun * clearOfSkin * lens * lens);
 
-  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * glint);
+  // Under a closed sky the bead's one highlight is the sky itself over the lens: a small soft window near its top.
+  float window = saturate(dot(mirror, normalize(vec3(0.0, 0.8, 0.0) - 0.6 * normalize(vec3(ray.x, 0.0, ray.z)))));
+  window *= window;
+  window *= window;
+  window *= window;
+  // Water on a hairy skin rests on air held between the hairs, and that floor is a mirror from inside: the bead is silver on the side away from the light.
+  vec3 closed = (uAirHorizon + uAirZenith) * smoothstep(0.0, 0.5, uPlantWet);
+  body += closed * (0.3 * farSky * (1.0 - vHang));
+  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * glint) + closed * (1.2 * window);
   outColor = finish(color, p, vDepth, -1.0);
 }
 `
 
-const PATH_NAMES = ['aForm', 'aFormUp', 'aMid', 'aEnd', 'aEndUp', 'aGather']
+const PATH_NAMES = ['aForm', 'aFormUp', 'aMid', 'aEnd', 'aEndUp', 'aGather', 'aLimit']
+
+// A drop that hits a blade bursts: a low crown of spray that opens and is gone in a few frames. Each bead's path is struck now and then, at a new place each time.
+const BURST_LIFE_S = 0.17
+const burstVertex = /* glsl */ `
+in vec2 aCorner;
+in vec4 aForm;
+in vec4 aFormUp;
+in vec4 aMid;
+in vec4 aEnd;
+uniform float uBeadRain;
+uniform float uPlantWet;
+out vec2 vAt;
+out vec3 vWorld;
+out float vAge;
+out float vSeed;
+void main() {
+  float own = aForm.w;
+  float every = 1.3 + 2.6 * hash11(own * 61.7 + 201.3);
+  float t = (uReal + ${SHUTTER_GLSL} * uShutter - ${RAIN_FROM_GLSL}) / every + hash11(own * 61.7 + 77.1);
+  float turn = floor(t);
+  float age = (t - turn) * every / ${BURST_LIFE_S.toFixed(3)};
+  float pick = hash11(own * 17.3 + turn * 0.618);
+  // In thin rain few of the turns bring a drop.
+  bool struck = t > 0.0 && age < 1.0 && aFormUp.w > 0.0 && pick < uBeadRain * sqrt(uBeadRain) && uPlantWet > 0.0;
+  float e = hash11(own * 29.1 + turn * 0.381);
+  vec3 bend = 2.0 * aMid.xyz - 0.5 * (aForm.xyz + aEnd.xyz);
+  vec3 at = (1.0 - e) * (1.0 - e) * aForm.xyz + 2.0 * e * (1.0 - e) * bend + e * e * aEnd.xyz;
+  vec3 base = plantWorld(at);
+  vec3 up = plantDirection(normalize(aFormUp.xyz + vec3(0.0, 1e-6, 0.0)));
+  float wide = (0.004 + 0.016 * sqrt(age)) * (0.7 + 0.6 * pick) * plantSize();
+  // The spray leaves the blade along its face and lifts off it a little: it is drawn as a low dish on the skin.
+  vec3 toEye = normalize(uCamPos - base);
+  vec3 side = normalize(cross(up, toEye) + vec3(1e-6, 0.0, 0.0));
+  vec3 lie = cross(side, up);
+  vec3 world = base + (side * aCorner.x + lie * aCorner.y) * wide + up * (0.35 * wide * (0.3 + length(aCorner))) + toEye * 0.002;
+  vAt = aCorner;
+  vWorld = world;
+  vAge = age;
+  vSeed = pick + turn * 0.137;
+  gl_Position = struck ? projectionMatrix * viewMatrix * vec4(world, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
+}
+`
+
+const burstFragment = /* glsl */ `
+in vec2 vAt;
+in vec3 vWorld;
+in float vAge;
+in float vSeed;
+void main() {
+  if (uDiag > 1) discard;
+  float far = length(vAt);
+  if (far > 1.0) discard;
+  float turn = atan(vAt.y, vAt.x);
+  // The crown breaks into a few jets of spray and fine drops thrown clear of them.
+  float jets = smoothstep(0.45, 0.8, valueNoise(vec2(turn * 1.9 + vSeed * 31.0, vSeed * 7.0)));
+  float reach = 0.45 + 0.4 * valueNoise(vec2(turn * 3.1 + vSeed * 13.0, 2.0));
+  float ring = exp(-pow((far - reach) / 0.16, 2.0)) * jets;
+  // Past the jets fine drops fly on, each a point.
+  float fine = smoothstep(0.72, 0.86, valueNoise(vec2(turn * 5.0, far * 4.0 - 2.5 * vAge) + vSeed * 53.0)) * smoothstep(1.0, 0.8, far);
+  float mist = (1.0 - far) * (1.0 - far) * (1.0 - vAge);
+  float fade = (1.0 - vAge) * (1.0 - vAge);
+  float cover = saturate((0.6 * ring + 0.6 * fine + 0.15 * mist) * fade * smoothstep(0.0, 0.08, vAge));
+  if (cover < 0.004) discard;
+  vec3 light = 0.75 * uSkyHorizonSun + 0.45 * uAirHorizon + 0.15 * uAirZenith;
+  outColor = vec4(applyFog(light, vWorld), cover);
+}
+`
+
+// Every set that runs by paths, for the rain to say how hard it falls.
+const bursts: THREE.InstancedBufferGeometry[] = []
+
+// Called by the rain once a frame: the bursts on the blades follow it and are not drawn when none falls.
+export function rainOnBeads(rain: number): void {
+  beadUniforms.uBeadRain.value = rain
+  for (const g of bursts) g.instanceCount = rain > 0 && g.userData.paths.value > 0 ? g.userData.count : 0
+}
 
 // Small clear beads. The part that wears them gives each bead its seat on the skin at both ends of the shutter, as it gives a hair its root.
 export class BeadSet {
@@ -327,7 +416,17 @@ export class BeadSet {
     this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths } })
     const mesh = partMesh(this.geometry, this.surface)
     mesh.renderOrder = BEAD_ORDER
-    this.meshes = [mesh]
+    const struck = new THREE.InstancedBufferGeometry()
+    struck.setAttribute('aCorner', this.geometry.getAttribute('aCorner'))
+    struck.setIndex(this.geometry.getIndex())
+    for (const n of ['aForm', 'aFormUp', 'aMid', 'aEnd']) struck.setAttribute(n, this.geometry.getAttribute(n))
+    struck.instanceCount = 0
+    struck.userData = { paths: this.onPaths, count }
+    bursts.push(struck)
+    const spray = makePartSurface(options, { name: `${name} bursts`, vertex: burstVertex, fragment: burstFragment, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false, uniforms: beadUniforms })
+    const burst = partMesh(struck, spray)
+    burst.renderOrder = BEAD_ORDER + 0.5
+    this.meshes = [mesh, burst]
   }
 
   // Four numbers a bead: where it touches the skin (x, y, z in the plant's own space, meters) and its radius in meters. Radius 0 is no bead.
@@ -370,6 +469,11 @@ export class BeadSet {
   // The skin point its dew gathers at through a dry night, and `dewKind` of its plan.
   gather(): Float32Array {
     return this.paths[5]
+  }
+
+  // What the part allows a bead, for a part that needs it: the largest radius in meters in the rain and as dew (both 0: no limit), the scale of its radius as dew against rain (0: as it comes), and 1 when it has no tip to hang from, so it spreads where its slide ends.
+  limit(): Float32Array {
+    return this.paths[6]
   }
 
   // Three numbers a bead: the color of the skin under it, which is seen through the water.
@@ -448,7 +552,7 @@ function rainBead(own: number, along: number, across: number, since: number, wet
     // A small bead forms and stays: most are fine, few are not.
     const t = since - 3 * own2(own, 311.7)
     const fine = own2(own, 127.1)
-    out.radiusM = (0.0003 + 0.0023 * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
+    out.radiusM = (0.0006 + 0.0034 * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
     return
   }
   // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
@@ -457,7 +561,7 @@ function rainBead(own: number, along: number, across: number, since: number, wet
   if (t < 0) return
   const turn = t / period
   const p = turn - Math.floor(turn)
-  const full = (0.0014 + 0.0012 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet * ease(0, 1.5, since)
+  const full = (0.0022 + 0.0018 * own2(own + Math.floor(turn) * 0.618, 74.7)) * wet * ease(0, 1.5, since)
   if (p < SIT) {
     out.radiusM = full * Math.cbrt(p / SIT) * ease(0, 0.06, p)
   } else if (p < RUN) {

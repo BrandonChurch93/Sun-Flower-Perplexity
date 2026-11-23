@@ -4,9 +4,9 @@ import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_WIND } from './drops.ts'
 
 // Past the reach of the streaks the rain is a grey veil: sheets that stand round the lens at set distances, each thicker than the one before, with shafts of heavier rain drifting across them.
 const SHEETS_M = [900, 260, 70, 22, 9]
-const THICK = [0.62, 0.5, 0.34, 0.2, 0.1]
+const THICK = [0.42, 0.34, 0.34, 0.2, 0.1]
 const SHAFT_M = [140, 60, 22, 9, 4]
-const SHAFTS = [0.9, 0.8, 0.6, 0.45, 0.35]
+const SHAFTS = [1.0, 0.95, 0.6, 0.45, 0.35]
 const DECK_M = 900
 
 const list = (v: number[]): string => v.map((x) => x.toFixed(2)).join(', ')
@@ -60,7 +60,7 @@ void main() {
   float wide = valueNoise(vec2(across * 0.37 + drift * 0.6 + float(vSheet) * 17.3, high * 0.8 + float(vSheet) * 3.1));
   float fine = valueNoise(vec2(across + drift + float(vSheet) * 41.7, high * 2.3 - drift * 0.4));
   float shaft = smoothstep(0.3, 0.8, 0.6 * wide + 0.4 * fine);
-  float heavy = mix(1.0 - 0.6 * SHAFTS[vSheet], 1.0 + 0.9 * SHAFTS[vSheet], shaft);
+  float heavy = mix(1.0 - 0.75 * SHAFTS[vSheet], 1.0 + 0.9 * SHAFTS[vSheet], shaft);
   // Under the cloud the rain has only begun to fall together.
   float body = 1.0 - smoothstep(0.55, 1.0, high);
   float cover = (1.0 - exp(-THICK[vSheet] * heavy * 0.4)) * body * uRain;

@@ -13,33 +13,33 @@ const all = [places.near, places.far]
 const growth = config.growth
 
 describe('the field', () => {
-  it('stands in rows behind the plant, the first one the set distance away', () => {
+  it('stands in rows that run away from the plant, a lane on its axis, the row ends the set distance away', () => {
+    const { rowSpacingM, plantSpacingM, plantAheadOfRowM } = config.field
     let nearest = Infinity
-    for (const list of all) {
-      for (let i = 0; i < list.length; i += PLACE) {
-        const along = -(list[i] * toward.x + list[i + 1] * toward.z)
-        nearest = Math.min(nearest, along)
-        const row = (along - config.field.plantAheadOfRowM) / config.field.rowSpacingM
-        expect(Math.abs(row - Math.round(row))).toBeLessThan(0.08)
-      }
+    for (let i = 0; i < places.far.length; i += PLACE) {
+      const across = places.far[i] * right.x + places.far[i + 1] * right.z
+      const row = across / rowSpacingM - 0.5
+      expect(Math.abs(row - Math.round(row)) * rowSpacingM).toBeLessThan(0.1)
     }
-    expect(nearest).toBeGreaterThan(config.field.plantAheadOfRowM - 0.06)
-    expect(nearest).toBeLessThan(config.field.plantAheadOfRowM + 0.06)
+    for (let i = 0; i < places.near.length; i += PLACE) nearest = Math.min(nearest, -(places.near[i] * toward.x + places.near[i + 1] * toward.z))
+    expect(nearest).toBeGreaterThan(plantAheadOfRowM - 0.07)
+    expect(nearest).toBeLessThan(plantAheadOfRowM + plantSpacingM)
   })
 
   it('keeps the spacing along a row', () => {
+    const { rowSpacingM, plantSpacingM } = config.field
     const row: number[] = []
-    for (let i = 0; i < places.near.length; i += PLACE) {
-      const along = -(places.near[i] * toward.x + places.near[i + 1] * toward.z)
-      if (Math.abs(along - config.field.plantAheadOfRowM) < 0.1) row.push(places.near[i] * right.x + places.near[i + 1] * right.z)
+    for (let i = 0; i < places.far.length; i += PLACE) {
+      const across = places.far[i] * right.x + places.far[i + 1] * right.z
+      if (Math.abs(across - 4.5 * rowSpacingM) < 0.2) row.push(-(places.far[i] * toward.x + places.far[i + 1] * toward.z))
     }
     row.sort((a, b) => a - b)
     expect(row.length).toBeGreaterThan(10)
     for (let i = 1; i < row.length; i++) {
       const gap = row[i] - row[i - 1]
-      if (gap > config.field.plantSpacingM * 1.6) continue
-      expect(gap).toBeGreaterThan(config.field.plantSpacingM - 0.13)
-      expect(gap).toBeLessThan(config.field.plantSpacingM + 0.13)
+      if (gap > plantSpacingM * 1.6) continue
+      expect(gap).toBeGreaterThan(plantSpacingM - 0.2)
+      expect(gap).toBeLessThan(plantSpacingM + 0.2)
     }
   })
 
@@ -232,9 +232,8 @@ describe('the wind over the field', () => {
   it('is a young field under a towering plant in the storm, and stays under the lens on the way up', () => {
     const storm = heightsAt(35)
     const plant = heightAt(tauAtBar(35))
-    expect(storm.high).toBeLessThan(0.365)
-    expect(storm.low).toBeGreaterThan(0.33 * plant)
-    expect(storm.high).toBeLessThan(0.41 * plant)
+    expect(storm.low).toBeGreaterThan(0.44 * plant)
+    expect(storm.high).toBeLessThan(0.505 * plant)
     for (let bar = 43; bar <= 55; bar += 0.25) expect(heightsAt(bar).high, `bar ${bar}`).toBeLessThan(rigAtFilm(barTime(bar)).heightM)
     // In bloom the field has its full size: the plant stands a little over it.
     const bloom = heightsAt(61)

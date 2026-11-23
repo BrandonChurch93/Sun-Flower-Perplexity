@@ -275,9 +275,9 @@ export class Air {
     this.skyAt(e, 0.055, Math.PI * 0.7, this.tap)
     const value = lum(this.tap)
     const level = 0.033 + value * 0.13
-    out[0] = level * 0.41
-    out[1] = level * 0.86
-    out[2] = level * 0.97
+    out[0] = level * 0.43
+    out[1] = level * 0.82
+    out[2] = level * 1.08
     return out
   }
 }
