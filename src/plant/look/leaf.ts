@@ -129,7 +129,7 @@ void main() {
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - 2.0 * near) * (1.0 - smoothstep(4.0, 9.0, texels)) + mix((fine - 1.0) * 0.0002, (1.0 - fineHeight) * 0.0003, near) * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) - (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + mix(1.0 - fine, 1.0 - fineHeight, near) * 0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
   // Close by the same relief is sloped from the maps a pixel either side and laid along the flat blade, not differenced across the screen's blocks of two by two, which print a lattice in the glint of the sun.
   vec2 aReach = 2.0 * reliefReach(a);
@@ -144,7 +144,7 @@ void main() {
   vec2 fSlope = vec2(dot(texture(uDetail, fUv + vec2(fStep.x, 0.0), 0.6).rgb - texture(uDetail, fUv - vec2(fStep.x, 0.0), 0.6).rgb, lumOf), dot(texture(uDetail, fUv + vec2(0.0, fStep.y), 0.6).rgb - texture(uDetail, fUv - vec2(0.0, fStep.y), 0.6).rgb, lumOf)) / (2.0 * pReach);
   float lift = vState.x * 4.0 * (top ? 1.0 : -1.0);
   vec2 aSlope = vSlope * (0.0016 * (1.0 + 4.0 * near) * (1.0 - smoothstep(3.0, 7.0, veinTexels)) * lift);
-  vec2 pSlope = (lSlope * (0.00018 * (1.0 - 2.0 * near) * (1.0 - smoothstep(4.0, 9.0, texels))) + fSlope * (mix(0.0002, -0.0003, near) * (1.0 - smoothstep(24.0, 70.0, texels * 2.29)))) * lift;
+  vec2 pSlope = (lSlope * (-0.00018 * (1.0 - smoothstep(4.0, 9.0, texels))) + fSlope * (-0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29)))) * lift;
   vec2 px = dFdx(vPlane);
   vec2 py = dFdy(vPlane);
   float pd = px.x * py.y - px.y * py.x;
