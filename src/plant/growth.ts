@@ -70,7 +70,7 @@ const FPS = config.film.fps
 // How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
 export const GUST_LEAN = 0.3
 // How far the water lying on a blade lets it hang for as long as it rains, in radians.
-export const RAIN_WEIGHT = 0.07
+export const RAIN_WEIGHT = 0.1
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
 // How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.
@@ -93,6 +93,9 @@ const LEAFY_S = 14
 const STOUT_S = 36
 // From here the open head only settles.
 const SETTLE_S = config.growth.crane
+// How far an old leaf of the open plant has settled below where it opened, in degrees, and the share of its hang in the dark that it keeps.
+const SETTLE_OPEN = 8
+const DARK_OPEN = 0.5
 
 export const leafCount = config.plant.leafCount
 export const rayCount = config.plant.rayFlorets
@@ -590,6 +593,25 @@ export function leafLift(i: number, time: number, inputs: PlantInputs): number {
   const born = leavesBorn(time)
   const down = born > 1 ? clamp((born - 1 - i) / (born - 1) + 0.3 * (rnd(14, i) - 0.5)) : 0
   return lerp(inputs.lift, low, down)
+}
+
+// From the thaw until it blooms the plant stands open, 0 to 1: its older leaves settle less far, hang less in the dark and their blades fall less from their stalks.
+export function leafOpen(time: number): number {
+  return smoothstep(config.growth.frostHold + 0.1, LEAFY_S + 2, time) * (1 - smoothstep(STOUT_S, BLOOM_S, time))
+}
+
+// How far the open plant holds a blade above where it would have settled, in radians, and how much less it droops along its length.
+export function leafOpening(i: number, time: number, inputs: PlantInputs, out: { lift: number; droop: number }): void {
+  const opened = leafOpen(time)
+  out.lift = 0
+  out.droop = 0
+  if (opened <= 0) return
+  const age = Math.max(0, leafAge(i, time))
+  const grown = smoothstep(2, 14, age)
+  const dark = (1 - DARK_OPEN) * (1 - leafLift(i, time, inputs))
+  const deep = inputs.liftLow === undefined ? 4 + 9 * grown : 5 + (13 + 8 * rnd(15, i)) * grown
+  out.lift = opened * smoothstep(0, 5.5, age) * ((26 - SETTLE_OPEN) * smoothstep(5, 30, age) + dark * deep) * RAD
+  out.droop = opened * (inputs.liftLow === undefined ? 0.22 : 0.3) * dark
 }
 
 // Leaves open upward, settle outward and hang when the light is gone or the cold is in them.

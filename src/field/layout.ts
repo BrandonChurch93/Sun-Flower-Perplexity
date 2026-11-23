@@ -1,5 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
+import { barAt, tauAtBar } from '../v2/clock.ts'
 import { gustAt, windWay } from '../v2/wind.ts'
 import { heightAt, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
@@ -41,13 +42,12 @@ for (const leaf of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) setLeafHold(companionVari
 export const nearVariants = [41, 53, 67, 71, 83, 97, 113]
 export const farVariants = [131, 149, 157, 173]
 
-// Every kind of neighbor runs on the plant's clock, each a little behind it or ahead of it, so no two kinds are at the same stage.
-// While the crop is young every kind is behind the plant, which stands in the open. Through the bloom a few open with it and most are still buds;
-// by the last frame all have caught up. Each clock only ever runs forward.
+// Every kind of neighbor runs on the plant's clock, each a little behind it, so no two kinds are at the same stage.
+// While the crop is young every kind is behind the plant, which stands in the open. Each clock only ever runs forward.
 export type Tier = 'near' | 'far' | 'pictures'
 const AHEAD_T: Record<Tier, number[]> = {
   near: [-4.5, -0.6, 0.8, -1.5, -3.5, 0.4, -2.5],
-  far: [-4.5, 1.5, -3, -4],
+  far: [-4.5, 0.3, -3, -4],
   pictures: [-4.6, -2.5, -4.2, -3.5],
 }
 const EARLY_T = 3
@@ -65,13 +65,75 @@ const BEHIND_T: Record<Tier, number[]> = {
 // As seedlings the rows are close behind the plant; they fall back as it shoots up, and catch up by the bud.
 const youngLag = (time: number): number => ramp(1.5, 9, time) * (0.35 + 0.65 * ramp(12, 20, time)) * (1 - ramp(36, BUD_T + 2.5, time))
 export const fieldAge = (time: number): number => time - 2.4 * youngLag(time)
-// One kind of the near rows is a slow grower: it falls further and further behind and is still in bud when the rest of the field is open.
+// One kind of the near rows is a slow grower: it falls further and further behind and is the last of the field to open.
 const SLOW_KIND = 4
 const SLOW_T = -12.5
-export const kindTime = (time: number, index: number, tier: Tier): number =>
-  time +
-  BEHIND_T[tier][index] * youngLag(time) +
-  (tier === 'near' && index === SLOW_KIND ? SLOW_T * ramp(30, 57, time) : AHEAD_T[tier][index] * ramp(BUD_T - 3.5, OPEN_T - 1, time) * (1 - ramp(56, END_T, time)))
+const budTime = (time: number, index: number, tier: Tier): number =>
+  time + BEHIND_T[tier][index] * youngLag(time) + (tier === 'near' && index === SLOW_KIND ? SLOW_T * ramp(30, 57, time) : AHEAD_T[tier][index] * ramp(BUD_T - 3.5, OPEN_T - 1, time))
+
+// The bloom. The plant opens first and the field follows it as a second wave: a few kinds early, most of them together, the last stragglers well after.
+// Each kind has the bar of the film at which its first ray shows and the bar at which it stands open, no two alike.
+// A kind's clock is still a number of the plant's clock alone: the bar is read back from the plant's clock, which rises all the way from the bud to the end.
+export const OPENS: Record<Tier, [number, number][]> = {
+  near: [[60.14, 61.7], [58.88, 60.3], [58.38, 59.83], [59.11, 60.51], [61.19, 62.9], [58.63, 60.07], [59.35, 60.75]],
+  far: [[59.23, 60.63], [58.49, 59.95], [59.0, 60.42], [59.99, 61.54]],
+  pictures: [[59.29, 60.69], [58.74, 60.18], [59.52, 60.88], [59.06, 60.48]],
+}
+// A neighbor's clock where its first ray lifts off the bud, and where its last has opened.
+export const FIRST_RAY_T = 43.6
+export const ALL_OPEN_T = 49.5
+const BAR_STEP = 1 / 64
+let risen: { from: number; taus: Float64Array } | null = null
+function risenTable(): { from: number; taus: Float64Array } {
+  if (risen) return risen
+  const last = barAt(config.film.durationSeconds)
+  let from = Math.floor(last)
+  while (from > 0 && tauAtBar(from) > BUD_T) from--
+  while (tauAtBar(from + BAR_STEP) <= BUD_T) from += BAR_STEP
+  const taus = new Float64Array(Math.ceil((last - from) / BAR_STEP) + 1)
+  for (let i = 0; i < taus.length; i++) taus[i] = Math.max(tauAtBar(Math.min(last, from + i * BAR_STEP)), i > 0 ? taus[i - 1] : BUD_T)
+  risen = { from, taus }
+  return risen
+}
+// The bar of the film at which the plant's clock, past the bud, stands at `time`.
+export function barOfTime(time: number): number {
+  const { from, taus } = risenTable()
+  let lo = 0
+  let hi = taus.length - 1
+  if (time <= taus[0]) return from
+  if (time >= taus[hi]) return from + hi * BAR_STEP
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (taus[mid] <= time) lo = mid
+    else hi = mid
+  }
+  const span = taus[hi] - taus[lo]
+  return from + (lo + (span > 0 ? (time - taus[lo]) / span : 0)) * BAR_STEP
+}
+// The plant's clock at a bar, read off the same table, so that the two are each other's inverse to the last digit.
+function timeOfBar(bar: number): number {
+  const { from, taus } = risenTable()
+  const at = Math.min(taus.length - 1, Math.max(0, (bar - from) / BAR_STEP))
+  const lo = Math.min(taus.length - 2, Math.floor(at))
+  return taus[lo] + (taus[lo + 1] - taus[lo]) * (at - lo)
+}
+const opened: Record<Tier, { bud: number; first: number; open: number }[]> = { near: [], far: [], pictures: [] }
+export const kindTime = (time: number, index: number, tier: Tier): number => {
+  if (time <= BUD_T) return budTime(time, index, tier)
+  const [first, open] = OPENS[tier][index]
+  const own = (opened[tier][index] ??= { bud: budTime(BUD_T, index, tier), first: timeOfBar(first), open: timeOfBar(open) })
+  // Open, it ages as the plant does, and has the plant's own age at the end.
+  if (time >= own.open) return ALL_OPEN_T + ((END_T - ALL_OPEN_T) * (time - own.open)) / (END_T - own.open)
+  const bar = barOfTime(time)
+  if (time >= own.first) {
+    const x = Math.min(1, Math.max(0, (bar - first) / (open - first)))
+    return FIRST_RAY_T + (ALL_OPEN_T - FIRST_RAY_T) * (0.5 * x + 0.5 * x * x * (3 - 2 * x))
+  }
+  // The bud fills out and stands closed until its turn: slowly at first, as the plant's own clock starts again.
+  const from = risenTable().from
+  const x = Math.min(1, Math.max(0, (bar - from) / (first - from)))
+  return own.bud + (FIRST_RAY_T - own.bud) * x * x * (1.5 - 0.5 * x)
+}
 
 // Young, every neighbor is nearly as tall as the plant. The rows are sown thick and stop sooner: each keeps the height it has
 // while the plant, out in the open, goes on to its own. From the bloom on a neighbor has its own size.

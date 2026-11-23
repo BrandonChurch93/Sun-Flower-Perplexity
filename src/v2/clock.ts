@@ -273,10 +273,10 @@ export function fogAtBar(b: number): number {
   return FOG_THIN * (1 - smooth((b - 25) / 0.5))
 }
 
-// The one drop at the tip of the thawing leaf. It lets go in the quietest eighth of the hold and falls as a real drop does: the hold runs in real time, so it is a streak for two frames and gone.
+// The one drop at the tip of the thawing leaf. It lets go in the quietest eighth of the hold. A real drop is out of the close shot in two frames and reads as a flash, so this one falls as a lens at about a hundred frames a second shows it: a twelfth of the pull, six frames of a round drop on its way down.
 const DROP_FROM = 23.3
 const DROP_GOES = hitBar(24, 3) - 1e-9
-const DROP_PULL = 9.81
+const DROP_PULL = 9.81 / 12
 const DROP_OVER = 26
 
 // How full the drop at the tip hangs. The one that follows the fallen drop stays small.
