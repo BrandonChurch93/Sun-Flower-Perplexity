@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `210e25d` to `v2`, 2026-11-23 12:26 UTC
-- Last status: 37 · 2026-11-23 16:25 UTC · Phase 4
+- Last status: 38 · 2026-11-23 16:57 UTC · Phase 4
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 16:57 UTC · status 38 · Phase 4 · `status-1.jpg`: The bloom at bar 61 with the head's rays restored; `status-2.jpg`: Bar 41 after the cure, the tear closes slowly (frames 2082 to 2100); `status-3.jpg`: Far ridge flicker, top 2902, middle 2903 before, bottom 2903 with the cure; `status-4.jpg`: Beams under the tear before and after, frames 2086 to 2089
 - 2026-11-23 16:25 UTC · status 37 · Phase 4 · `status-1.jpg`: Bars 51 to 57 after the cure, leaves open (2620, 2700, 2800, 2900); `status-2.jpg`: Open flower at bar 61, before and after: the leaf now meets the lowest rays; `status-3.jpg`: Storm at 1920 x 1080, frame 2040 (rain owner's machine); `status-4.jpg`: Dawn beads, frames 439 to 447: before above, after below
 - 2026-11-23 16:08 UTC · status 36 · Phase 4 · `status-1.jpg`: The bloom at bars 58 and 61: the key, the head we keep, the head I took out; `status-2.jpg`: Frost comes in along the veins (frame 885): before, after, difference; `status-3.jpg`: The cloud tears on the downbeat of bar 41: frames 2082, 2083, 2084; `status-4.jpg`: Drawn on the pushed tree
 - 2026-11-23 15:39 UTC · status 35 · Phase 4 · `status-1.jpg`: The storm deck coming in, every sixth frame of 1630 to 1720, with the first flash at 1672 (640 x 360); `status-2.jpg`: The frost front at 885, 888, 891: before above, after below. It now runs in along the veins; `status-3.jpg`: Rain at 2000: before above, after below. The spray is a low mist behind the plant; `status-4.jpg`: Night at 216 with the new beads under the moon
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 13:13 UTC · status 29 · Phase 4 · `status-1.jpg`: Storm hold at frame 1830, 1920, with the key light down; `status-2.jpg`: Ours at 1830, the storm key and the rain key: the soil and the leaves are not there yet; `status-3.jpg`: The storm's onset, frames 1630 to 1690: the deck closes, the first flash lands on bar 33; `status-4.jpg`: Loading screen while this machine is timed (player owner's page, software rendering)
 - 2026-11-23 12:50 UTC · status 28 · Phase 4 · `status-1.jpg`: Frost close shot at frame 1054, bar 21 (frost owner's branch 2535db9, merged next); `status-2.jpg`: Frost, the tip of the shoot at 1106 against the sun in the mist; `status-3.jpg`: Thaw at 1208: the melt front, beads, and the drop that lets go on 1235; `status-4.jpg`: First whole watch, frames 756 to 870 every sixth: day, dusk, the quick night, the frost morning (old tree 1a4ee27)
 - 2026-11-23 12:25 UTC · status 27 · Phase 3 · `status-1.jpg`: Frost close shot, frame 952 at full size: four samples a pixel, the hairs are smooth; `status-2.jpg`: Storm hold, frame 2000 (bar 39); `status-3.jpg`: Time lapse, frames 1452 and 1479: under the moon the leaves pass a dim teal, and a second later it is full day; `status-4.jpg`: The opening, frames 60 and 258
-- 2026-11-23 11:54 UTC · status 26 · Phase 3 · `status-1.jpg`: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; `status-2.jpg`: Frost close shot, frame 1106 (bar 22): the tip against the low sun; `status-3.jpg`: Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; `status-4.jpg`: Storm hold, frame 1830 (bar 36): one puddle in the furrow
 
 ## Clock
 
@@ -42,10 +42,10 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
 | 3 | 9.00 h | 9.17 h |
-| 4 | 8.50 h | 4.31 h |
+| 4 | 8.50 h | 4.52 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 18.75 h |
+| Whole build | 30.00 h | 18.96 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -419,4 +419,6 @@ None yet.
   Pictures: The bloom at bars 58 and 61: the key, the head we keep, the head I took out; Frost comes in along the veins (frame 885): before, after, difference; The cloud tears on the downbeat of bar 41: frames 2082, 2083, 2084; Drawn on the pushed tree.
 - Status 37, 2026-11-23 16:25 UTC, Phase 4. Six more merges are in and drawn here (v2 at 8e330a8a). The wilt is cured: from bar 50 to the bloom the plant keeps its leaves open and only settles a little, where they hung like a thirsty plant an hour ago; at the open flower the leaf under the lowest rays now stands where the key picture has one. The beads on the seed leaves at dawn hold their small highlights from frame to frame (they flashed on a different bead each frame), the moonlit rim on the seed leaves is softer, the field takes frost at the same pace as the hero, the player's panel says when there is more below. MEASURED by the rain owner at 1920 x 1080: the storm's far band stays under its limit at 2040 and 2075 and the far rows read through the rain. The frost close shot at 1054 is the same to the pixel as before these merges. Still out: the head's speed gain and its cure for stray bright pixels, coming back on the old ray shapes. Next: The head comes in next, then I read the four small watch clips that are still drawing (the neck's arch, the frost front, the storm's tear, the bloom). At about 17:00 the look is frozen and the whole film is drawn at 1920 x 1080 on twelve machines, about three hours, each machine sending its range in three pieces so I can read them for sparks and stumbles as they arrive. The live play cures for the three long frames follow after, proven to leave every frame the same to the pixel. Time used: 18.4 h of 30 h.
   Pictures: Bars 51 to 57 after the cure, leaves open (2620, 2700, 2800, 2900); Open flower at bar 61, before and after: the leaf now meets the lowest rays; Storm at 1920 x 1080, frame 2040 (rain owner's machine); Dawn beads, frames 439 to 447: before above, after below.
+- Status 38, 2026-11-23 16:57 UTC, Phase 4. The head's rays are back in their approved shapes and merged. Two faults found by watching film parts: the tear in the storm deck snapped from a wide gap to a small hole in one frame (cured by the sky owner, merged), and the far ridge flickered between two heights in the time lapse (cause proven in the lens pass, cure with its owner). The beams under the tear now stay at the sun. Cue sheet lint: 47 cues, 0 mismatches. Next: Merge the ridge cure, then freeze the look and draw the whole film at 1920 x 1080 on twelve machines. Time used: 19.0 h of 30 h.
+  Pictures: The bloom at bar 61 with the head's rays restored; Bar 41 after the cure, the tear closes slowly (frames 2082 to 2100); Far ridge flicker, top 2902, middle 2903 before, bottom 2903 with the cure; Beams under the tear before and after, frames 2086 to 2089.
 
