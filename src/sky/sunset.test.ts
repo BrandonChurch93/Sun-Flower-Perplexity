@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { SkyLight } from '../v2/api.ts'
 import type { RGB } from '../core/world.ts'
 import { afterSunset, sunsetAmount, SunsetMeter, sunsetSkyAt } from './sunset.ts'
 
@@ -28,15 +27,23 @@ describe('final sunset air', () => {
   })
 
   it('meters the drawn clear-air model, not a separate lighting grade', () => {
-    const out: SkyLight = { direct: [1, 2, 3], zenith: rgb(), horizon: rgb(), horizonSun: rgb() }
+    const direct: RGB = [1, 2, 3]
+    const out = { direct, zenith: rgb(), horizon: rgb(), horizonSun: rgb(), band: rgb() }
     const meter = new SunsetMeter()
     const away = Math.cos(Math.PI * 0.79)
     for (const time of [0, 0.131, 0.483, 0.911, 1]) {
-      meter.blend(time, 1, out)
-      const expected = [sunsetSkyAt(1, 0, time, rgb()), sunsetSkyAt(0.023, away, time, rgb()), sunsetSkyAt(0.027, 1, time, rgb())]
-      for (const [i, sample] of [out.zenith, out.horizon, out.horizonSun].entries()) {
+      meter.blend(time, 1, out, out.band)
+      const mean = rgb()
+      for (let a = 0; a < 256; a++) {
+        const sample = sunsetSkyAt(0.10, Math.cos(a * 2 * Math.PI / 256), time, rgb())
+        for (let c = 0; c < 3; c++) mean[c] += sample[c] / 256
+      }
+      const expected = [sunsetSkyAt(1, 0, time, rgb()), mean, sunsetSkyAt(0.027, 1, time, rgb()), sunsetSkyAt(0.023, away, time, rgb())]
+      for (const [i, sample] of [out.zenith, out.horizon, out.horizonSun, out.band].entries()) {
         for (let c = 0; c < 3; c++) expect(sample[c]).toBeCloseTo(expected[i][c], 5)
       }
+      expect(out.horizon[2]).toBeGreaterThan(out.horizon[0])
+      expect(out.band[0] / out.band[2]).toBeGreaterThan(out.horizon[0] / out.horizon[2])
     }
     expect(out.direct).toEqual([1, 2, 3])
   })

@@ -13,7 +13,7 @@ import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
-import { afterSunset, sunsetAmount, SunsetMeter } from './sunset.ts'
+import { afterSunset, sunsetAmount, SunsetMeter, type SkyWithBand } from './sunset.ts'
 
 const levels = {
   film: { width: 832, height: 512, steps: 60, light: 6 },
@@ -44,8 +44,8 @@ const WET_NORM = 0.5 * WET_HORIZON + 0.2 * WET_SUNWARD + 0.3 * WET_ZENITH
 const wetHazeAt = (wet: number, e: number): number =>
   0.95 * smoothstep(0.25, 0.38, wet) * (1 - smoothstep(-0.9, 5.8, e))
 const wetBlueAt = (e: number): number => 1 - smoothstep(-11, -3, e)
-const diffuse = (light: SkyLight): number =>
-  (0.5 * luminance(light.horizon) + 0.2 * luminance(light.horizonSun) + 0.3 * luminance(light.zenith)) / WET_NORM
+const diffuse = (light: SkyWithBand): number =>
+  (0.5 * luminance(light.band ?? light.horizon) + 0.2 * luminance(light.horizonSun) + 0.3 * luminance(light.zenith)) / WET_NORM
 const wetColour = (b: number, c: number): number => lerp(WET_SLATE[c], WET_BLUE[c], b)
 
 function coolDay(e: number, over: number, fog: number, evening: number, burst: number): number {
@@ -180,6 +180,7 @@ class FieldSky implements Sky {
       uNight: { value: 0 },
       uLunarNight: { value: 0 },
       uFrostFog: { value: 0 },
+      uFrostPhoto: { value: new THREE.Vector3() },
       uRainFog: { value: 0 },
       uBreak: { value: 0 },
       uSolarDeck: { value: 0 },
@@ -263,7 +264,7 @@ class FieldSky implements Sky {
     }
   }
 
-  light(m: Moment, out: SkyLight): SkyLight {
+  light(m: Moment, out: SkyWithBand): SkyWithBand {
     const e = m.sunElevationDeg
     const d = m.dials
     const wetHaze = wetHazeAt(d.wet, e)
@@ -291,6 +292,7 @@ class FieldSky implements Sky {
       * Math.exp(-((0.027 * 37) ** 2) - 21 * (1 - Math.cos(Math.asin(0.027) - e * RAD)))
     const zLum = Y[0] * out.zenith[0] + Y[1] * out.zenith[1] + Y[2] * out.zenith[2]
     const hLum = Y[0] * out.horizon[0] + Y[1] * out.horizon[1] + Y[2] * out.horizon[2]
+    const band = out.band ??= rgb()
     for (let c = 0; c < 3; c++) {
       out.direct[c] = this.groundSun[c] + this.moon[c] * moonClarity
       const z = out.zenith[c] + lunar * this.moon[c] * moonClarity
@@ -313,8 +315,9 @@ class FieldSky implements Sky {
       out.zenith[c] = lerp(out.zenith[c], OPEN_DOME[c] * 0.56, first)
       out.horizon[c] = lerp(out.horizon[c], OPEN_DOME[c] * 1.7, first)
       out.horizonSun[c] = lerp(out.horizonSun[c], OPEN_DOME[c] * (c === 0 ? 3.0 : 1.95), 0.75 * first)
+      band[c] = out.horizon[c]
     }
-    if (last > 0) this.sunsetMeter.blend(afterSunset(e), last, out)
+    if (last > 0) this.sunsetMeter.blend(afterSunset(e), last, out, band)
     if (wetHaze > 0) {
       const b = wetBlueAt(e)
       const energy = diffuse(out) / (
@@ -325,6 +328,7 @@ class FieldSky implements Sky {
         out.zenith[c] = lerp(out.zenith[c], haze * WET_ZENITH, wetHaze)
         out.horizon[c] = lerp(out.horizon[c], haze * WET_HORIZON, wetHaze)
         out.horizonSun[c] = lerp(out.horizonSun[c], haze * WET_SUNWARD, wetHaze)
+        band[c] = lerp(band[c], haze * WET_HORIZON, wetHaze)
       }
     }
     return out
@@ -433,6 +437,13 @@ class FieldSky implements Sky {
     v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e))) * starClarity
     v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
+    // Only the close glass resolves the scattered sun as a separate soft
+    // image in the mist. Select it optically, not by film time or shot ID.
+    const close = smoothstep(76, 92, pose.focalMm) * (1 - smoothstep(0.265, 0.40, pose.focusM))
+    const mistPhoto = close * smoothstep(0.15, 0.35, d.fog) * (1 - smoothstep(0.25, 0.55, d.overcast))
+    const thinning = smoothstep(0.20, 0.88, d.sunThrough)
+    const pale = u.uMist.value
+    v.uFrostPhoto.value.set(mistPhoto, thinning, Y[0] * pale.x + Y[1] * pale.y + Y[2] * pale.z)
     v.uRainFog.value = d.rain * d.overcast
     v.uBreak.value = tear
     v.uSolarDeck.value = smoothstep(0.26, 0.49, d.overcast)
