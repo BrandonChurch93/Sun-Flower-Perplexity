@@ -1,18 +1,16 @@
 # Looks of sky-b
 
-2026-11-23 03:49 UTC, at commit 8519c50 of agent/sky-b.
+2026-11-23 04:12 UTC, at commit f620a0e of agent/sky-b.
 
-First four entries are all-layer QA against v2 b6200a3 (night unchanged), except frame 0 and wide 50.42, rendered against the preceding v2 at 37837d9 with the same sky. Key comparisons and transition strips use the earlier lens/rain as noted; the twilight check covered only frames 2151 to 2195.
+Round 4 day, dusk, night and cue sheets from e794121 on v2 656eb24; storm frames 1660–1663 are eight-sample review. The diffuse held-break rerender is at 2c38411. Current f620a0e adds conditional dark deck mip filtering.
 
-- `01-integrated-film-frost-storms-break-and-last-ligh.jpg`: Integrated film frost, storms, break and last light
-- `02-integrated-blue-tear-at-41-25.jpg`: Integrated blue tear at 41.25
-- `03-integrated-ridge-sun-at-73.jpg`: Integrated ridge sun at 73
-- `04-opening-frame-zero.jpg`: Opening frame zero
-- `05-wide-at-50-42.jpg`: Wide at 50.42
-- `06-lightning-against-the-key-previous-lens.jpg`: Lightning against the key, previous lens
-- `07-storm-deck-against-the-key-previous-rain.jpg`: Storm deck against the key, previous rain
-- `08-the-break-against-the-key-previous-lens.jpg`: The break against the key, previous lens
-- `09-frames-2082-to-2090-and-2100-to-2160-by-six-prev.jpg`: Frames 2082 to 2090 and 2100 to 2160 by six, previous lens
-- `10-first-light-frost-bloom-and-sunset-beside-keys.jpg`: First light, frost, bloom and sunset beside keys
-- `11-fair-clouds-in-the-wide-camera.jpg`: Fair clouds in the wide camera
-- `12-post-break-twilight-2151-to-2195-max-step-9-8.jpg`: Post-break twilight 2151 to 2195, max step 9.8
+- `01-early-low-sun-reference-pairs.jpg`: Early low-sun reference pairs
+- `02-climb-low-sun-reference-pairs.jpg`: Climb low-sun reference pairs
+- `03-opening-night-and-sunset-beside-keys.jpg`: Opening night and sunset beside keys
+- `04-slate-blue-opening-and-first-sunrise.jpg`: Slate blue opening and first sunrise
+- `05-star-atlas-from-early-ground-to-bud.jpg`: Star atlas from early ground to bud
+- `06-last-light-against-the-low-ridge.jpg`: Last light against the low ridge
+- `07-storm-deck-and-both-lightning-strikes.jpg`: Storm deck and both lightning strikes
+- `08-break-lit-through-a-held-deck-with-diffuse-disc.jpg`: Break lit through a held deck with diffuse disc
+- `09-strike-1672-to-1684-break-2082-to-2089-and-stars.jpg`: Strike 1672 to 1684 break 2082 to 2089 and stars 2169 to 2175
+- `10-unlit-storm-1660-to-1663-at-review-tier.jpg`: Unlit storm 1660 to 1663 at review tier
