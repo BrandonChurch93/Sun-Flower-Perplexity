@@ -12,6 +12,13 @@ const float FROST_MATT = 0.8;
 const float FROST_BLOOM = 0.6;
 // The share of the sun a frozen blade no longer passes.
 const float FROST_SHUT = 0.4;
+// The sugar a close lens sees: the cells of its two sizes of chip in meters, how sharply a chip's face mirrors the sun, and how bright against the flash of a grain.
+const float FROST_CHIP_M = 0.00052;
+const float FROST_FINE_M = 0.00023;
+const float FROST_CHIP_SHARP = 600.0;
+const float FROST_CHIP_FLASH = 4.0;
+// A chip is clear ice: the sun goes through it from any side and it stands pale on a face the sun does not reach. Its light as a share of the flash of a grain.
+const float FROST_CHIP_LIT = 0.07;
 
 // One grain to a cell, whole inside it. x: its share of the pixel, y: the flash of its face when it mirrors the sun to the eye.
 vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3 N, vec3 view) {
@@ -37,6 +44,29 @@ vec2 frostGrain(vec2 g, float reach, float chance, float least, float most, vec3
   return vec2(grain, grain * flash * flash);
 }
 
+// Seen close the sugar is chips of ice, each with its own tilt: x its share of the pixel, y the flash of the one face that mirrors the sun to the eye.
+vec2 frostChip(vec2 g, float reach, float chance, vec3 N, vec3 view) {
+  vec2 cell = floor(g);
+  if (hash21(cell + 19.0) >= chance) return vec2(0.0);
+  float r = mix(0.16, 0.44, hash21(cell + 43.0) * hash21(cell + 59.0));
+  vec2 p = g - cell - (vec2(r) + (1.0 - 2.0 * r) * vec2(hash21(cell + 77.0), hash21(cell + 131.0)));
+  float spin = 6.2832 * hash21(cell + 263.0);
+  p = vec2(p.x * cos(spin) - p.y * sin(spin), p.x * sin(spin) + p.y * cos(spin)) * vec2(1.0, 0.55 + 0.9 * hash21(cell + 317.0));
+  // A chip has corners and a slope: thick and white on one side, thin and clear on the other.
+  float d = mix(length(p), 1.3 * max(abs(p.x), abs(p.y)), 0.6);
+  float chip = (1.0 - smoothstep(r - 0.5 * reach - 0.15 * r, r + 0.5 * reach, d)) * (0.3 + 0.7 * saturate(0.5 + 0.7 * p.x / r)) * (0.4 + 0.6 * hash21(cell + 409.0));
+  vec3 facet = normalize(N + 1.8 * (vec3(hash21(cell + 157.0), hash21(cell + 199.0), hash21(cell + 233.0)) - 0.5));
+  float flash = pow(saturate(dot(facet, normalize(uSunDir + view))), FROST_CHIP_SHARP);
+  return vec2(chip, flash * (1.0 - smoothstep(0.0, 0.5 * r + reach, d)));
+}
+
+// Both sizes of chip at a place: x their share of the pixel, y their flash. 'skin' is how many meters of the skin's own measure a true meter is.
+vec3 frostSugar(vec2 at, float pixel, float skin, float lie, vec3 N, vec3 view) {
+  vec2 chips = frostChip(at * (1.0 / (FROST_CHIP_M * skin)) + 91.0, pixel / (FROST_CHIP_M * skin), 0.85 * lie, N, view);
+  vec2 sugar = frostChip(at * (1.0 / (FROST_FINE_M * skin)) + 37.0, pixel / (FROST_FINE_M * skin), 0.2 + 0.7 * lie, N, view);
+  return vec3(1.0 - (1.0 - 0.9 * chips.x) * (1.0 - 0.75 * sugar.x), chips.y + 0.6 * sugar.y, 0.0);
+}
+
 // How far the thaw has come: 0 while the frost holds, 1 when the last of it is water. The dew comes up with the thaw and never with the freeze.
 float frostThaw() {
   return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost);
@@ -44,7 +74,8 @@ float frostThaw() {
 
 // x: the share of the pixel that is ice. y: the flash of the ice in it.
 // 'at' is in meters on the skin. 'gather' is where frost grows first: 0 in the middle of a face to 1 at an edge, a tip or the ridge of a vein.
-vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim) {
+// 'world' is the place in the world, for the true size of a pixel on the skin; 'near' is 0 for a caller that cannot say it.
+vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world, float near) {
   float up = saturate(F.y);
   // Round a stalk the place on the skin runs one way only: the way the skin faces breaks the rings that would give.
   vec2 round = at + 0.003 * vec2(N.x + N.y, N.z - N.y);
@@ -82,6 +113,32 @@ vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, f
   vec2 bead = frostGrain(g * wide + 53.0, reach * wide, lone, 0.04, 0.1, N, view);
   float still = 1.0 - smoothstep(0.35, 1.1, reach * wide);
   float ice = 0.85 * mix(mean, dust.x, sharp) + mix(lone * 0.014, bead.x, still);
-  return vec2(saturate(veil + ice + fringe + 0.3 * rim * (0.55 + 0.45 * sheen)), dust.y * sharp + 2.0 * bead.y * still + 0.02 * fringe * fine) * held;
+  vec2 crust = vec2(veil + ice + fringe + 0.3 * rim * (0.55 + 0.45 * sheen), dust.y * sharp + 2.0 * bead.y * still + 0.02 * fringe * fine);
+  // A close lens tells the sugar apart: chips that lie thickest beside the veins and at the margin and thin out toward the middle of each field, where the green shows between them.
+  float close = near * smoothstep(8.0, 16.0, 1.08 / max(length(fwidth(world)) * uSize.y, 1e-9));
+  if (close > 0.0) {
+    float lie = saturate(0.1 + 1.15 * gather + 0.5 * (bank - 0.42) + 0.15 * up);
+    // The skin is measured as the grown blade's: on a young one a meter of it is a fraction of a true meter. The chips keep their true size, so they are laid on the size of cell nearest to it, and between two sizes on both.
+    vec2 ax = dFdx(at);
+    vec2 ay = dFdy(at);
+    float level = 0.5 * log2(max(abs(ax.x * ay.y - ax.y * ay.x), 1e-20) / max(length(cross(dFdx(world), dFdy(world))), 1e-20));
+    float lower = exp2(floor(level));
+    float upper = smoothstep(0.3, 0.7, fract(level));
+    vec3 laid = vec3(0.0);
+    if (upper < 1.0) laid += (1.0 - upper) * frostSugar(at, reach * FROST_GRAIN_M, lower, lie, N, view);
+    if (upper > 0.0) laid += upper * frostSugar(at, reach * FROST_GRAIN_M, 2.0 * lower, lie, N, view);
+    float bed = 0.3 * smoothstep(0.45, 0.95, lie) * (0.5 + 0.5 * fine);
+    crust.x += close * (bed + (1.0 - bed) * laid.x * (0.35 + 0.65 * lie));
+    crust.y += close * (FROST_CHIP_FLASH * laid.y + FROST_CHIP_LIT * laid.x * (0.35 + 0.65 * lie));
+  }
+  return vec2(saturate(crust.x), crust.y) * held;
+}
+
+vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world) {
+  return frostCrustOn(at, gather, N, F, view, sheen, rim, world, 1.0);
+}
+
+vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim) {
+  return frostCrustOn(at, gather, N, F, view, sheen, rim, vec3(0.0), 0.0);
 }
 `

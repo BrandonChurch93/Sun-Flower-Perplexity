@@ -13,6 +13,7 @@ import { openSession } from './lib/session.ts'
 // What one frame writes into buffers and textures that already exist, and whose they are.
 //   npm run checks -- writes                          the frost hold, the fast time lapse, the storm hold and the bloom
 //   npm run checks -- writes --bars 21,29,35,61       the frames at these bars
+//   npm run checks -- writes --frames 1688,1689,1690  these frames, in a row
 //   npm run checks -- writes --tier review            with the samples of the export
 //   npm run checks -- writes --read writes.main       prints a table measured before, without drawing
 //   npm run checks -- writes --root ../main --seconds 4,14,25,35,46,56     another checkout of the film (version 1), at these film seconds
@@ -173,17 +174,22 @@ export async function run(args: Args): Promise<void> {
     places = await another(root, str(args, 'seconds', '4').split(',').map(Number), tier, str(args, 'format', 'preview'))
   } else {
     const bars = str(args, 'bars', '21,29,35,61').split(',').map(Number)
+    // --frames 1688,1689,1690: those frames instead, in a row where they follow each other, to see what one frame writes and the next does not.
+    const asked = typeof args.frames === 'string' || typeof args.frames === 'number' ? String(args.frames).split(',').map(Number) : null
+    if (asked) name = `writes.frames-${asked[0]}-${asked[asked.length - 1]}`
     const NAMES: Record<number, string> = { 21: 'the frost hold', 29: 'the fast time lapse', 35: 'the storm hold', 61: 'the bloom' }
     const session = await openSession({ width: num(args, 'width', 320), height: num(args, 'height', 180), sky: typeof args.sky === 'string' ? args.sky : undefined, record: true })
     try {
       await session.warm(tier)
-      for (const b of bars) {
-        const frame = Math.round(barTime(b) * FPS)
-        await session.draw(frame - 1, tier, false)
+      let last = -2
+      for (const b of asked ?? bars) {
+        const frame = asked ? b : Math.round(barTime(b) * FPS)
+        if (last !== frame - 1) await session.draw(frame - 1, tier, false)
+        last = frame
         await session.page.evaluate(startRecording)
         const d = await session.draw(frame, tier, false)
         const rows = await session.page.evaluate(stopRecording)
-        places.push({ name: `${NAMES[b] ?? 'the film'}, ${barText(secondsOf(frame))}`, frame, rows, drawSeconds: d.seconds })
+        places.push({ name: `${asked ? `frame ${frame}` : (NAMES[b] ?? 'the film')}, ${barText(secondsOf(frame))}`, frame, rows, drawSeconds: d.seconds })
         print(places[places.length - 1])
       }
     } finally {

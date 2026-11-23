@@ -8,6 +8,7 @@ import { flag, num, str } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { barText, FRAMES, secondsOf } from './lib/film.ts'
 import { meantCuts } from './lib/meant.ts'
+import { keeper } from './lib/play.ts'
 import { engineHash, finish, OUT, table, type Finding } from './lib/report.ts'
 import { openSession, type Session } from './lib/session.ts'
 
@@ -31,10 +32,11 @@ interface Row { frame: number; cost: Record<string, number>; made?: string; firs
 interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; busy: number; rows: Row[] }
 interface Hitch { frame: number; ms: number; around: number; parts: string }
 interface Behind { frame: number; firstMs: number; lap: string; againMs: number }
-interface Judged { behind: Behind[]; hitches: Hitch[]; from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
+interface Judged { behind: Behind[]; hitches: Hitch[]; from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; draw: number | null; drawScene: number; drawShadow: number; worstDraw: number | null; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
 
 const LIMITS = at('tools', 'checks', 'limits.json')
-const NOT_PARTS = new Set(['script', 'wait'])
+// The time inside renderer.render is measured by the checks' page across the film's laps, beside them: it is no part of its own.
+const NOT_PARTS = new Set(['script', 'wait', 'draw', 'drawScene', 'drawShadow'])
 const SLOW_FRAME_MS = 40
 const SLOW_PART_MS = 4
 
@@ -59,7 +61,8 @@ export function hitchesOf(rows: Row[], limits: Limits): Hitch[] {
     const around = near[Math.floor(near.length / 2)]
     if (r.cost.script <= Math.max(limits.worstMs, TIMES * around)) return []
     const parts = Object.entries(r.cost).filter(([key, v]) => !NOT_PARTS.has(key) && v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-    return [{ frame: r.frame, ms: r.cost.script, around, parts: r.made ? `${parts}; made in it: ${r.made}` : parts }]
+    const inside = r.cost.draw === undefined ? '' : `; ${r.cost.draw.toFixed(1)} ms of the frame inside renderer.render`
+    return [{ frame: r.frame, ms: r.cost.script, around, parts: (r.made ? `${parts}; made in it: ${r.made}` : parts) + inside }]
   })
 }
 
@@ -83,8 +86,9 @@ export function judge(k: Kept, limits: Limits): Judged {
     shares[p] = meanOf([p])
     if (shares[p] > limits.everyOtherPartMeanMs) over.push(`${p} ${shares[p].toFixed(1)} over ${limits.everyOtherPartMeanMs}`)
   }
+  const timed = rows.length > 0 && rows.every((r) => r.cost.draw !== undefined)
   const top = Object.entries(worstRow.cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-  return { behind: rows.filter((r) => r.first).map((r) => ({ frame: r.frame, firstMs: (r.first as Record<string, number>).script, lap: r.firstLap ?? '', againMs: r.cost.script })), hitches: hitchesOf(rows, limits), from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
+  return { behind: rows.filter((r) => r.first).map((r) => ({ frame: r.frame, firstMs: (r.first as Record<string, number>).script, lap: r.firstLap ?? '', againMs: r.cost.script })), hitches: hitchesOf(rows, limits), from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, draw: timed ? meanOf(['draw']) : null, drawScene: meanOf(['drawScene']), drawShadow: meanOf(['drawShadow']), worstDraw: timed ? worstRow.cost.draw : null, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
 }
 
 const dirOf = (run: string): string => path.join(OUT, 'script', run)
@@ -114,14 +118,16 @@ const AGAIN_MOST = 6
 const largest = (cost: Record<string, number>): string => Object.entries(cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 1).map(([key, v]) => `${key} ${v.toFixed(1)}`)[0] ?? ''
 const madeText = (m: Made): string => (nothingMade(m) ? '' : (Object.entries(m) as [string, number][]).filter(([key, v]) => v > 0 && !/pdate|Bytes/.test(key)).map(([key, v]) => `${v} ${key}`).join(', '))
 
-async function measure(session: Session, run: string, from: number, to: number, tier: string, only: string, jump: boolean, upTo: number, busy = 0): Promise<Kept> {
+async function measure(session: Session, run: string, from: number, to: number, tier: string, only: string, jump: boolean, upTo: number, busy = 0, keep: ReturnType<typeof keeper> | null = null): Promise<Kept> {
   const rows: Row[] = []
   const last = Math.min(to, from + (jump ? upTo : upTo - 1))
   const t0 = Date.now()
   for (let f = from; f <= last; f++) {
-    const d = await session.draw(f, tier, false)
+    const d = await session.draw(f, tier, keep !== null)
     const cost = await session.cost()
     const made = madeText(d.made)
+    // A frame after a jump is not the film played in a row: it is measured by no check and not kept.
+    if (keep && d.png && (f > from || !jump)) keep(f, d.seconds, d.made, d.png)
     if (f > from || !jump) rows.push(made ? { frame: f, cost, made } : { frame: f, cost })
   }
   const limits = limitsOf()
@@ -154,8 +160,8 @@ async function measure(session: Session, run: string, from: number, to: number, 
 }
 
 const tableOf = (judged: Judged[]): { head: string[]; rows: (string | number)[][] } => ({
-  head: ['window', 'bar', 'frames counted', 'mean ms', 'worst ms', 'worst frame', 'the three largest parts there', 'over its limit', 'verdict'],
-  rows: judged.map((j) => [`${j.from}-${j.to}`, barText(secondsOf(j.from)).slice(4), `${j.frames}${j.whole ? '' : ' (not whole)'}`, j.mean.toFixed(1), j.worst.toFixed(1), j.worstAt, j.top, j.over.length ? j.over.join('; ') : 'nothing', `${j.ok ? 'PASS' : 'FAIL'}${j.busy ? ', not alone' : ''}`]),
+  head: ['window', 'bar', 'frames counted', 'mean ms', 'draw', 'of it scene, shadow map', 'without draw', 'worst ms', 'draw there', 'worst frame', 'the three largest parts there', 'over its limit', 'verdict'],
+  rows: judged.map((j) => [`${j.from}-${j.to}`, barText(secondsOf(j.from)).slice(4), `${j.frames}${j.whole ? '' : ' (not whole)'}`, j.mean.toFixed(1), j.draw === null ? 'not timed' : j.draw.toFixed(1), j.draw === null ? '' : `${j.drawScene.toFixed(1)}, ${j.drawShadow.toFixed(1)}`, j.draw === null ? '' : (j.mean - j.draw).toFixed(1), j.worst.toFixed(1), j.worstDraw === null ? '' : j.worstDraw.toFixed(1), j.worstAt, j.top, j.over.length ? j.over.join('; ') : 'nothing', `${j.ok ? 'PASS' : 'FAIL'}${j.busy ? ', not alone' : ''}`]),
 })
 
 const COLOURS = ['#3f8f4f', '#c9a227', '#3b78c2', '#8a8f98', '#b4532a', '#7a5fb0', '#4aa3a3']
@@ -265,7 +271,7 @@ export async function run(args: Args): Promise<void> {
   const cutFrames = meantCuts()
   for (const c of cutFrames) if (!first.some(([a, b]) => a + AROUND <= c && c + AROUND <= b)) first.push([Math.max(0, c - CUT_ROOM), Math.min(FRAMES - 1, c + CUT_ROOM)])
   const isFirst = ([a, b]: [number, number]): boolean => first.some(([x, y]) => x === a && y === b)
-  const rest: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]) : limits.windows.map(span)
+  const rest: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]).filter(([x, y]) => y >= num(args, 'from', 0) && x <= num(args, 'to', FRAMES - 1)) : limits.windows.map(span)
   const spans: [number, number][] = [...first, ...rest.filter((w) => !isFirst(w))]
   const have = (w: [number, number]): Kept | null => {
     const k = kept(run, w[0], w[1])
@@ -281,12 +287,14 @@ export async function run(args: Args): Promise<void> {
       const t0 = Date.now()
       await session.warm(tier)
       await session.cost()
+      // --keep: each frame's picture and what it made go where `play` keeps them, so the one drawing in a row also serves nights, cuts and made.
+      const keep = flag(args, 'keep') && run === 'film' ? keeper('film', { hash: engineHash(), width: session.info.width, height: session.info.height, sky: session.info.sky, only, tier, quality: '' }) : null
       console.log(`script · ${session.info.width} x ${session.info.height} · ${tier} · ${only || 'everything'} · ${todo.length} of ${spans.length} windows to measure · loaded in ${session.startSeconds.toFixed(1)} s, warmed in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
       let before = -2
       for (const w of todo) {
         const [a, b] = w
         const frames = isFirst(w) ? FRAMES : upTo
-        await measure(session, run, a, b, tier, only, !(all && !isFirst(w) && a === before + 1), frames, busy)
+        await measure(session, run, a, b, tier, only, !(all && !isFirst(w) && a === before + 1), frames, busy, keep)
         before = frames >= b - a && !isFirst(w) ? b : -2
       }
     } finally {
@@ -307,7 +315,8 @@ export async function run(args: Args): Promise<void> {
     findings.push({ ok: failing.length === 0, what: `${failing.length} of ${judged.length} windows are over a limit (${frames} frames drawn in a row at ${sizes}; limits from tools/checks/limits.json: ${limits.meanMs} ms in the mean of a window, ${limits.worstMs} ms in any frame, ${limits.shares.map((s) => `${s.name} ${s.meanMs}`).join(', ')}, every other part ${limits.everyOtherPartMeanMs}): the page's own script time is ${mean.toFixed(1)} ms a frame over all of them, the worst frame ${worst.worst.toFixed(1)} ms at frame ${worst.worstAt} (${worst.top})` })
     for (const j of failing.slice(0, 40)) findings.push({ ok: false, what: `frames ${j.from} to ${j.to} (${barText(secondsOf(j.from))}): ${j.over.join('; ')}` })
   }
-  const hitches = judged.flatMap((j) => j.hitches).sort((a, b) => b.ms - a.ms)
+  // A frame that two windows hold is one hitch: the dearer measurement of it is the one listed.
+  const hitches = judged.flatMap((j) => j.hitches).sort((a, b) => b.ms - a.ms).filter((h, i, all) => all.findIndex((x) => x.frame === h.frame) === i)
   if (judged.length) {
     findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} ${hitches.length === 1 ? 'hitch' : 'hitches'}, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
     if (hitches.length) console.log(`script · every hitch, the dearest first\n${table(['frame', 'bar', 'ms', 'median around', 'times', 'its parts over 1 ms'], hitches.map((h) => [h.frame, barText(secondsOf(h.frame)).slice(4), h.ms.toFixed(1), h.around.toFixed(1), (h.ms / Math.max(0.1, h.around)).toFixed(1), h.parts]))}\n`)

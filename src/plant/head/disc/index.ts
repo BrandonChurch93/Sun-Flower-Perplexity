@@ -99,7 +99,7 @@ export function create(options: PartOptions): PlantPart | null {
     const theta = n * GOLDEN
     const ragged = (hash01(seed, 1, n) - 0.5) * 0.085 + 0.022 * Math.sin(3 * theta + wave) + 0.014 * Math.sin(7 * theta + wave * 2.3) + 0.06 * Math.cos(theta - FIRST_SIDE)
     const when = schedule(rho + ragged)
-    when.start = Math.max(FIRST_OPEN, when.start + (hash01(seed, 6, n) - 0.5) * 1.4)
+    when.start = Math.max(FIRST_OPEN, when.start + (hash01(seed, 6, n) - 0.5) * 0.9)
     when.length *= 0.75 + 0.6 * hash01(seed, 7, n)
     each.set([rho, theta, when.start, when.length, hash01(seed, 2, n), hash01(seed, 3, n) * Math.PI * 2, 0.9 + 0.2 * hash01(seed, 4, n), hash01(seed, 5, n)], n * 8)
     sets[when.start > config.growth.seconds + 0.25 ? 1 : 0].florets.push(n)

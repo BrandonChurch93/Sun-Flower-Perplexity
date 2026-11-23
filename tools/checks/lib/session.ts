@@ -7,6 +7,7 @@ import { build } from 'vite'
 import { launch, openPage } from '../../lib/browser.ts'
 import { computeHashes } from '../../lib/hashes.ts'
 import { recorder } from './recorder.ts'
+import { tracer } from './tracer.ts'
 import { at } from '../../lib/paths.ts'
 import type { ChecksPage, Drawn, FloatDiff } from '../page/main.ts'
 import type { Made } from '../../../src/v2/counter.ts'
@@ -14,6 +15,8 @@ import { OUT } from './report.ts'
 
 const PAGE = at('tools', 'checks', 'page')
 const DIST = path.join(OUT, 'page')
+// The same page built with its names kept and a map back to the sources, for `made --trace`: a stack in it names the file that made a thing.
+export const TRACED = path.join(OUT, 'page-traced')
 
 declare global {
   interface Window { checks: ChecksPage }
@@ -27,18 +30,19 @@ function pageHash(): string {
 }
 
 // Builds the checks' page when the film or the page has changed. Returns the hash of what was built.
-export async function ensurePage(): Promise<string> {
+export async function ensurePage(traced = false): Promise<string> {
   const hash = pageHash()
-  const stamp = path.join(DIST, 'built.txt')
+  const dist = traced ? TRACED : DIST
+  const stamp = path.join(dist, 'built.txt')
   if (fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8').trim() === hash) return hash
-  const lock = path.join(OUT, 'page.lock')
+  const lock = path.join(OUT, traced ? 'page-traced.lock' : 'page.lock')
   fs.mkdirSync(OUT, { recursive: true })
   while (fs.existsSync(lock) && Date.now() - fs.statSync(lock).mtimeMs < 120000) await new Promise((r) => setTimeout(r, 500))
   if (fs.existsSync(stamp) && fs.readFileSync(stamp, 'utf8').trim() === hash) return hash
   fs.writeFileSync(lock, String(process.pid))
   try {
     console.log('building the checks page')
-    await build({ configFile: false, root: PAGE, base: './', publicDir: false, logLevel: 'error', build: { outDir: DIST, emptyOutDir: true, target: 'es2022', sourcemap: false, chunkSizeWarningLimit: 4000 } })
+    await build({ configFile: false, root: PAGE, base: './', publicDir: false, logLevel: 'error', build: { outDir: dist, emptyOutDir: true, target: 'es2022', sourcemap: traced, minify: !traced, chunkSizeWarningLimit: 4000 } })
     fs.writeFileSync(stamp, hash + '\n')
   } finally {
     fs.rmSync(lock, { force: true })
@@ -49,8 +53,8 @@ export async function ensurePage(): Promise<string> {
 const TYPES: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif', '.ktx2': 'image/ktx2', '.bin': 'application/octet-stream', '.wasm': 'application/wasm' }
 
 // The page is served from its own build, and the film's assets from public/ where they already lie.
-function serve(): Promise<{ url: string; close: () => Promise<void> }> {
-  const roots = [DIST, at('public')]
+function serve(traced: boolean): Promise<{ url: string; close: () => Promise<void> }> {
+  const roots = [traced ? TRACED : DIST, at('public')]
   const server = http.createServer((req, res) => {
     const rel = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname)
     for (const root of roots) {
@@ -72,7 +76,7 @@ function serve(): Promise<{ url: string; close: () => Promise<void> }> {
   })
 }
 
-export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean }
+export interface SessionOptions { width?: number; height?: number; sky?: string; only?: string; view?: string; quality?: string; record?: boolean; trace?: boolean }
 
 export interface Session {
   page: Page
@@ -93,9 +97,9 @@ export interface Session {
 }
 
 export async function openSession(options: SessionOptions = {}): Promise<Session> {
-  const hash = await ensurePage()
+  const hash = await ensurePage(options.trace === true)
   const started = Date.now()
-  const served = await serve()
+  const served = await serve(options.trace === true)
   let browser: Browser | null = null
   try {
     browser = await launch()
@@ -106,6 +110,7 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       if (m.type() === 'error') errors.push(m.text())
     })
     if (options.record) await page.addInitScript(recorder)
+    if (options.trace) await page.addInitScript(tracer)
     const query = new URLSearchParams({ w: String(options.width ?? 320), h: String(options.height ?? 180) })
     if (options.sky) query.set('sky', options.sky)
     if (options.only) query.set('only', options.only)

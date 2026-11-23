@@ -19,13 +19,14 @@ export interface Loading {
 export interface LoadingLog {
   // `scriptMs` is the page's own work in drawing a moment, apart from the graphics card.
   // `cost` is the film's own table of that moment, milliseconds by part, `wait` the graphics card.
-  steps: { atMs: number; what: string; scriptMs?: number; cost?: Record<string, number> }[]
+  steps: { atMs: number; what: string; frame?: number; scriptMs?: number; cost?: Record<string, number> }[]
   freezes: { fromMs: number; ms: number }[]
   readyMs: number | null
 }
 
 const FREEZE_MS = 250
-const warming = `Warming the film, 1 of ${warmFrames().length}`
+const frames = warmFrames()
+const warming = `Warming the film, 1 of ${frames.length}`
 const building = (name: string | undefined): string => (name ? `Building the ${name}` : 'Building the scene')
 
 declare global {
@@ -149,7 +150,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       else if (done <= moments) {
         const cost: Record<string, number> = {}
         for (const [key, ms] of Object.entries(film.cost)) cost[key] = Math.round(ms * 10) / 10
-        log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${moments}`, scriptMs: Math.round(film.cost.script ?? 0), cost })
+        log.steps.push({ atMs: Math.round(performance.now()), what: `moment ${done} of ${moments}`, frame: frames[done - 1], scriptMs: Math.round(film.cost.script ?? 0), cost })
       } else log.steps.push({ atMs: Math.round(performance.now()), what: 'every shape drawn once' })
       warmCount.textContent = `${Math.min(done, moments)} of ${moments}`
       warmFill.style.setProperty('--at', String(done / of))

@@ -78,7 +78,10 @@ export async function run(args: Args): Promise<void> {
     const round = stride > 0 ? ranker(stride) : null
     let there = 0
     let skipped = 0
-    for (let f = from; f <= to; f++) {
+    // --spans 198-241,409-438 draws those stretches alone, in the order given, on one page with one warming.
+    const spans = typeof args.spans === 'string' ? args.spans.split(',').map((x) => x.split('-').map(Number)) : null
+    const asked = spans ? spans.flatMap(([a, b = a]) => Array.from({ length: Math.max(0, Math.min(to, b) - Math.max(from, a) + 1) }, (_, i) => Math.max(from, a) + i)) : Array.from({ length: to - from + 1 }, (_, i) => from + i)
+    for (const f of asked) {
       if (round && round(f) >= 3) skipped++
       else if (have.has(f)) there++
       else wanted.push(f)
@@ -95,7 +98,7 @@ export async function run(args: Args): Promise<void> {
     await session.warm(tier)
     console.log(`play · warmed in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
     const log = path.join(dir, `log-${id}.jsonl`)
-    const progress = path.join(dir, `progress-${from}-${to}.txt`)
+    const progress = path.join(dir, `progress-${spans ? `spans-${process.pid}` : `${from}-${to}`}.txt`)
     let total = 0
     let done = 0
     let sorted = first <= 1
