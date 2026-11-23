@@ -1,6 +1,7 @@
 import { config } from '../../../src/config.ts'
 import { nightsOf } from '../nights.ts'
 import { FPS, FRAMES, filmClock, hitFrame, lightningFrames } from './film.ts'
+import { meantCuts } from './meant.ts'
 
 // The frames a review round draws: every frame through each dusk, night and dawn, every `stride`th frame of the whole film,
 // and every frame inside `CUE_FRAMES` frames of a bar line that carries a cue.
@@ -18,12 +19,13 @@ export function twilights(): Twilight[] {
   })
 }
 
-// The frames that hold a bar line with a cue on it: each section's first bar, each stroke of lightning, each sunrise.
+// The frames that hold a bar line with a cue on it: each section's first bar, each stroke of lightning, each sunrise, each hard cut the film means.
 export function cueFrames(): number[] {
   const out = new Set<number>()
   for (const s of config.sections) out.add(hitFrame(s.fromBar))
   for (const f of lightningFrames()) out.add(f)
   for (const t of twilights()) if (t.sunrise < FRAMES - 1) out.add(t.sunrise)
+  for (const f of meantCuts()) out.add(f)
   return [...out].filter((f) => f >= 0 && f < FRAMES).sort((a, b) => a - b)
 }
 

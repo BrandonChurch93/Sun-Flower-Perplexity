@@ -89,6 +89,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
+| `cuts --break cut --from 984 --to 1016 --meant 1001` | the same broken film with a cut listed one frame beside its jump: the listed frame is left out and the jump at 1000 is still a hard cut. With `--meant 1000` it is left out, and said so |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |
 | `play --break first-draw --at 900 --from 890 --to 910`, then `made --break first-draw --from 890 --to 910` | a mesh is drawn for the first time at frame 900, its geometry and material already drawn on others: only a vertex array is made |
 | `pure --break dice --frames 159,1429,2699,3651` | the camera turns by a throw of `Math.random` |
@@ -117,3 +118,12 @@ The step of the brightness is listed beside it and judges nothing in `cuts`. `ni
 The moon may not blink. `nights` works out where the film's camera puts the moon in each frame of a night (`lib/moon.ts`, as the film works out its camera, nothing drawn), takes the mean of the nine brightest pixels within four pixels of that place as the disc and the median of a ring six to ten pixels out as the sky round it, and judges the disc less the ring. Between the first and the last frame at which that level is at half its peak, it may not fall and come back by more than 12 of 255 inside any five frames. The dusk fading, or a veil that lifts disc and sky alike, does not move the level. A cloud's edge that takes the disc alone out of the picture does, and counts: beside every fail stands how far the ring moved in the same frame, so the reader sees whether the disc changed alone or something crossed disc and sky. On a steady moon the measure itself moves by 4 to 6 of 255 from frame to frame (the disc is four pixels across at 320 wide). A night in which the disc never stands 20 over its ring is listed as not judged: the moon is out of the frame or behind cloud all night.
 
 `nights --plant` draws the plant with nothing else in the frame, from the frame where the sun hands the light over to the moon (the sun 5 degrees under) to midnight, on both sides of each night, at 640 x 360, every second frame (`--every 1` for every frame, `--night 6,7` for some nights). It measures the mean and the 90th percentile of the luminance over the pixels the plant covers. Toward midnight the mean may not rise by more than half a level of 255 between drawn frames, and at midnight neither the mean nor the 90th percentile may be above the handover's. `nights` without `--plant` reads the last drawing and says when it is from an older film.
+
+## The cuts the film means
+
+The film may cut hard on the frames the Builder lists in `tools/checks/limits.json` under `cuts`, and nowhere else. The list is not read from the film, so the film cannot excuse a cut of its own. Exactly those frames are left out, each printed with what was measured there:
+
+- `cuts` does not judge the step into a listed frame and does not count it among the steps round its neighbours. It prints how far the edges moved there, and says so when the picture does not cut where the list says it does.
+- `nights` does not judge the step into a listed frame by the step of the frame's mean nor by its direction.
+- `play --stride 6` and `film` draw every frame within 12 of a listed frame, as round every cue.
+- `script` measures a window of 10 frames either side of each listed frame whole in every run, and fails when the cut's own frame is a long frame or makes anything: a cut must cost nothing. The hitch rule leaves no frame out.

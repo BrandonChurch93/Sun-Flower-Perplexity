@@ -7,6 +7,7 @@ import type { Args } from '../lib/args.ts'
 import { flag, num, str } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
 import { barText, FRAMES, secondsOf } from './lib/film.ts'
+import { meantCuts } from './lib/meant.ts'
 import { engineHash, finish, OUT, table, type Finding } from './lib/report.ts'
 import { openSession, type Session } from './lib/session.ts'
 
@@ -51,6 +52,7 @@ const span = (text: string): [number, number] => {
 // over the limit of any frame and over three times the median of the frames around it, eight before and eight after. The rule is the one of tools/costs.ts.
 const AROUND = 8
 const TIMES = 3
+const CUT_ROOM = 10
 export function hitchesOf(rows: Row[], limits: Limits): Hitch[] {
   return rows.flatMap((r, i) => {
     const near = rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).map((x) => x.cost.script).sort((x, y) => x - y)
@@ -259,6 +261,9 @@ export async function run(args: Args): Promise<void> {
   const every = Math.max(8, limits.allEvery)
   // The windows where a hold starts or ends come first in every run and are always measured whole.
   const first = limits.first.map(span)
+  // A cut the film means must cost nothing: a window round each is measured whole in every run too, unless one of the windows above already holds it with room on both sides.
+  const cutFrames = meantCuts()
+  for (const c of cutFrames) if (!first.some(([a, b]) => a + AROUND <= c && c + AROUND <= b)) first.push([Math.max(0, c - CUT_ROOM), Math.min(FRAMES - 1, c + CUT_ROOM)])
   const isFirst = ([a, b]: [number, number]): boolean => first.some(([x, y]) => x === a && y === b)
   const rest: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]) : limits.windows.map(span)
   const spans: [number, number][] = [...first, ...rest.filter((w) => !isFirst(w))]
@@ -306,6 +311,20 @@ export async function run(args: Args): Promise<void> {
   if (judged.length) {
     findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} ${hitches.length === 1 ? 'hitch' : 'hitches'}, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
     if (hitches.length) console.log(`script · every hitch, the dearest first\n${table(['frame', 'bar', 'ms', 'median around', 'times', 'its parts over 1 ms'], hitches.map((h) => [h.frame, barText(secondsOf(h.frame)).slice(4), h.ms.toFixed(1), h.around.toFixed(1), (h.ms / Math.max(0.1, h.around)).toFixed(1), h.parts]))}\n`)
+  }
+  for (const c of cutFrames) {
+    const w = first.find(([a, b]) => a + AROUND <= c && c + AROUND <= b)
+    const k = w ? kept(run, w[0], w[1]) : null
+    const i = k ? k.rows.findIndex((r) => r.frame === c) : -1
+    if (!k || i < 0) {
+      findings.push({ ok: true, expected: true, what: `the cut into frame ${c} (${barText(secondsOf(c))}) is not measured yet on this film` })
+      continue
+    }
+    const near = k.rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).filter((r) => r.frame !== c).map((r) => r.cost.script).sort((x, y) => x - y)
+    const around = near[Math.floor(near.length / 2)]
+    const r = k.rows[i]
+    const long = r.cost.script > Math.max(limits.worstMs, TIMES * around)
+    findings.push({ ok: !long && !r.made, what: `a cut must cost nothing: the cut into frame ${c} (${barText(secondsOf(c))}) costs ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it${long ? `, a long frame (${largest(r.cost)})` : ''}, and ${r.made ? `makes ${r.made}` : 'makes nothing'}` })
   }
   const behind = judged.flatMap((j) => j.behind)
   if (behind.length) {
