@@ -1,6 +1,5 @@
 # Looks of leaf-look
 
-2026-11-23 14:29 UTC, at commit 2221e638 of agent/leaf-look.
+2026-11-23 14:42 UTC, at commit 2221e638 of agent/leaf-look.
 
-- `01-stem-60-150-strip-before-the-warm-change-f7eb9b4.jpg`: stem 60-150 strip before the warm change (f7eb9b4 merge)
-- `02-120-stem-4x-as-is-albedo-off.jpg`: 120 stem 4x: as is, albedo off
+- `01-stem-96-150-strip-warm-stem-trial-vk-not-committ.jpg`: stem 96-150 strip, warm stem trial VK (not committed)
