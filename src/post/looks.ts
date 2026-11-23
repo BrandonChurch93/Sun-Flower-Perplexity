@@ -33,13 +33,15 @@ interface Stock {
   grain: number
   // How much of small lights out of focus is drawn as discs, against held down as noise.
   specks: number
+  // The glow a light smaller than a few pixels gets on top of its share of the scattered light, as times that light.
+  sparks: number
 }
 
-const DAY: Stock = { veil: 1, core: 1, halation: 0.3, keep: 0.25, punch: 0.1, pale: 0.03, greens: 0.8, knee: 0.88, top: 0.09, whiten: 0.35, black: [0.5, 0.5, 0.5], grain: 1, specks: 0.5 }
-const WARM: Stock = { veil: 1.2, core: 1.2, halation: 0.5, keep: 0.3, punch: 0.16, pale: 0.05, greens: 0.5, knee: 0.88, top: 0.07, whiten: 0.45, black: [1, 0.55, 1], grain: 1.2, specks: 1 }
-const STORM: Stock = { veil: 0.9, core: 1, halation: 0.2, keep: 0.25, punch: 0.1, pale: 0, greens: 0.8, knee: 0.88, top: 0.1, whiten: 0.3, black: [0.6, 0.6, 0.6], grain: 1.2, specks: 0.5 }
-const FROST: Stock = { veil: 1.4, core: 1, halation: 0.15, keep: 0.15, punch: 0.06, pale: 0.02, greens: 0.8, knee: 0.82, top: 0.07, whiten: 0.5, black: [0.4, 0.4, 0.4], grain: 1.3, specks: 1 }
-const NIGHT: Stock = { veil: 0.3, core: 1, halation: 0.2, keep: 0.25, punch: 0.04, pale: 0, greens: 1, knee: 0.88, top: 0.1, whiten: 0.2, black: [0.3, 0.3, 0.3], grain: 1.3, specks: 0.5 }
+const DAY: Stock = { veil: 1, core: 1, halation: 0.3, keep: 0.25, punch: 0.1, pale: 0.03, greens: 0.8, knee: 0.88, top: 0.09, whiten: 0.35, black: [0.5, 0.5, 0.5], grain: 1, specks: 0.5, sparks: 0 }
+const WARM: Stock = { veil: 1.2, core: 1.2, halation: 0.5, keep: 0.3, punch: 0.16, pale: 0.05, greens: 0.5, knee: 0.88, top: 0.07, whiten: 0.45, black: [1, 0.55, 1], grain: 1.2, specks: 1, sparks: 4 }
+const STORM: Stock = { veil: 0.9, core: 1, halation: 0.2, keep: 0.25, punch: 0.1, pale: 0, greens: 0.8, knee: 0.88, top: 0.1, whiten: 0.3, black: [0.6, 0.6, 0.6], grain: 1.2, specks: 0.5, sparks: 0 }
+const FROST: Stock = { veil: 1.4, core: 1, halation: 0.15, keep: 0.15, punch: 0.06, pale: 0.02, greens: 0.8, knee: 0.82, top: 0.07, whiten: 0.5, black: [0.4, 0.4, 0.4], grain: 1.3, specks: 1, sparks: 4 }
+const NIGHT: Stock = { veil: 0.3, core: 1, halation: 0.2, keep: 0.25, punch: 0.04, pale: 0, greens: 1, knee: 0.88, top: 0.1, whiten: 0.2, black: [0.3, 0.3, 0.3], grain: 1.3, specks: 0.5, sparks: 0 }
 
 export interface LensLook extends Stock {
   // Times the grade's bloom: the lightning opens it for a few frames.
@@ -70,7 +72,7 @@ export interface LensLook extends Stock {
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 const weights: LookWeights = { day: 1, warm: 0, storm: 0, frost: 0, night: 0 }
 const kinds: [keyof LookWeights, Stock][] = [['day', DAY], ['warm', WARM], ['storm', STORM], ['frost', FROST], ['night', NIGHT]]
-const scalars = ['veil', 'core', 'halation', 'keep', 'punch', 'pale', 'greens', 'knee', 'top', 'whiten', 'grain', 'specks'] as const
+const scalars = ['veil', 'core', 'halation', 'keep', 'punch', 'pale', 'greens', 'knee', 'top', 'whiten', 'grain', 'specks', 'sparks'] as const
 
 export function blankLens(): LensLook {
   return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, mist: 0, warm: 0, tight: 0, evening: 0, glare: 0, veilSun: 0, shafts: 0, fan: 0, cap: 0 }

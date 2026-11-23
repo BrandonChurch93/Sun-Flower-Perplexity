@@ -13,7 +13,7 @@ import { fragment, vertex } from './skin.ts'
 interface Shape { us: number[]; vs: number[]; hairs: number; count: number }
 
 const heroRows = 19
-const HERO_RAYS = 46
+const HERO_RAYS = 38
 const SHAPE: Record<PartDetail, Shape> = {
   hero: { us: Array.from({ length: heroRows }, (_, i) => 1 - Math.pow(1 - i / (heroRows - 1), 1.3)), vs: [-1, -0.92, -0.62, -0.34, 0, 0.34, 0.62, 0.92, 1], hairs: 2000, count: HERO_RAYS },
   near: { us: [0, 0.18, 0.38, 0.62, 0.84, 1], vs: [-1, 0, 1], hairs: 0, count: HERO_RAYS },
@@ -23,7 +23,7 @@ const SHAPE: Record<PartDetail, Shape> = {
 const FOLD_OPEN = [0.42, 0.88, -0.52, 0.52, -0.88, -0.42]
 const FOLD_BUD = [-0.15, -0.85, -0.2, 0.2, 0.85, 0.15]
 const FOLD_LIFT = [-0.88, 0.22, -0.68, 0.68, -0.22, 0.88]
-const STRAP_FILL = 2.05
+const STRAP_FILL = 2.75
 const SHINGLE = 0.13
 const RANK_PITCH = 0.56
 const RANK_UP = 0.0
@@ -47,9 +47,9 @@ const LATE_FROM_S = config.growth.open
 const DRAWN_FROM_S = 53.55
 
 const TEETH = [
-  [-0.0025, -0.0012, 0.0, 0.0008, 0.0018, 0.0008, 0.0, -0.0012, -0.0025],
-  [-0.003, -0.0015, 0.0, 0.0012, 0.0006, 0.0012, 0.0, -0.0015, -0.003],
-  [-0.0028, -0.0014, 0.0, 0.0006, 0.0018, 0.001, 0.0, -0.0012, -0.0024],
+  [-0.0028, -0.0014, 0.0, 0.001, 0.0022, 0.001, 0.0, -0.0014, -0.0028],
+  [-0.016, -0.003, 0.011, 0.02, -0.022, 0.02, 0.011, -0.003, -0.016],
+  [-0.018, -0.004, 0.01, 0.022, -0.02, 0.017, 0.008, -0.005, -0.018],
 ]
 
 const smooth = (a: number, b: number, x: number): number => {
@@ -71,6 +71,7 @@ interface Ray {
   hard: number
   hardAt: number
   twist: number
+  tipTwist: number
   yaw: number
   tipSweep: number
   lagExtra: number
@@ -91,6 +92,7 @@ interface Ray {
   waveFreq: number
   wavePhase: number
   crumple: number
+  tipShape: number
   teeth: number
   nickRow: number
   nickSide: number
@@ -107,17 +109,17 @@ interface Ray {
 }
 
 function outline(u: number): number {
-  const peak = 0.43
-  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.66)
+  const peak = 0.38
+  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.65)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.22 + 0.78 * rise) * (0.015 + 0.985 * Math.pow(1 - Math.pow(s, 1.82), 0.94))
+  return (0.22 + 0.78 * rise) * (0.014 + 0.986 * Math.pow(1 - Math.pow(s, 1.44), 1.12))
 }
 
 function lance(u: number): number {
-  const peak = 0.41
-  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.68)
+  const peak = 0.36
+  const rise = Math.pow(Math.sin((Math.PI / 2) * Math.min(1, u / peak)), 0.67)
   const s = Math.max(0, (u - peak) / (1 - peak))
-  return (0.22 + 0.78 * rise) * (0.015 + 0.985 * Math.pow(1 - Math.pow(s, 1.68), 0.96))
+  return (0.22 + 0.78 * rise) * (0.014 + 0.986 * Math.pow(1 - Math.pow(s, 1.34), 1.15))
 }
 
 function makeRays(seed: number, total: number): Ray[] {
@@ -126,35 +128,49 @@ function makeRays(seed: number, total: number): Ray[] {
     Array.from({ length: total }, (_, k) => k)
       .filter(pick)
       .sort((a, b) => r(i, a) - r(i, b))
-  const hard = order(20, (k) => k % 2 === 1).slice(0, 4)
-  const half = order(21, (k) => !hard.includes(k)).slice(0, 4)
-  const lagged = order(42, (k) => k % 2 === 1).slice(0, 4)
+  const hard = order(20, () => true).slice(0, 8)
+  const twistedTips = order(51, () => true).slice(0, 11)
+  const half = order(21, (k) => !hard.includes(k)).slice(0, 6)
+  const lagged = order(42, (k) => k % 2 === 1).slice(0, 5)
   const nick = order(22, (k) => !hard.includes(k) && !half.includes(k))[0]
   return Array.from({ length: total }, (_, k) => {
     const rank = k % 2
     const folded = half.includes(k)
+    const raySeed = r(12, k)
+    const tipShape = raySeed < 0.34 ? 1 : raySeed < 0.64 ? 2 : 0
+    const lenPick = r(37, k)
+    const short =
+      lenPick < 0.24
+        ? 0.64 + 0.14 * r(38, k)
+        : lenPick < 0.54
+          ? 0.8 + 0.12 * r(38, k)
+          : lenPick < 0.8
+            ? 0.95 + 0.12 * r(38, k)
+            : (rank ? 1.07 : 1.12) + 0.13 * r(38, k)
+    const tipSign = r(4, k) < 0.5 ? -1 : 1
     return {
       rank,
       deep: r(48, k),
       cut: rank * 0.24 * r(49, k) * r(49, k),
-      short: r(37, k) < 0.14 ? 0.79 + 0.09 * r(38, k) : r(37, k) < 0.34 ? 0.89 + 0.08 * r(38, k) : 0.96 + 0.13 * r(38, k),
-      nod: r(39, k) < 0.26 ? 0.18 + 0.26 * r(46, k) : 0,
-      width: (rank ? 0.33 : 0.36) + 0.105 * r(1, k),
-      droop: rank ? 0.12 + 0.20 * r(2, k) : 0.06 + 0.17 * r(2, k),
-      tipCurl: (r(3, k) - 0.42) * 0.42,
-      hard: hard.includes(k) ? 0.26 + 0.22 * r(13, k) : 0,
-      hardAt: 0.46 + 0.24 * r(14, k),
-      twist: (r(4, k) < 0.5 ? -1 : 1) * ((folded ? 0.34 : 0.11) + 0.32 * r(36, k)),
-      yaw: (r(6, k) - 0.5) * 0.22,
-      tipSweep: (r(5, k) - 0.5) * 0.30,
-      lagExtra: lagged.includes(k) ? 0.08 + 0.06 * r(43, k) : 0,
-      lean: 0.03 * Math.sin(k * 2.1 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.075,
-      clump: 0.08 * Math.sin(k * 1.9 + 6.283 * r(26, 0)) + (r(27, k) - 0.5) * 0.12,
+      short,
+      nod: r(39, k) < 0.3 ? 0.22 + 0.3 * r(46, k) : 0,
+      width: (rank ? 0.245 : 0.285) + 0.105 * r(1, k),
+      droop: rank ? 0.14 + 0.24 * r(2, k) : 0.06 + 0.21 * r(2, k),
+      tipCurl: (r(3, k) - 0.42) * 1.05,
+      hard: hard.includes(k) ? (r(52, k) < 0.44 ? -1 : 1) * (0.42 + 0.38 * r(13, k)) : 0,
+      hardAt: 0.44 + 0.26 * r(14, k),
+      twist: tipSign * ((folded ? 0.36 : 0.15) + 0.32 * r(36, k)),
+      tipTwist: twistedTips.includes(k) ? tipSign * (1.02 + 0.62 * r(53, k)) : tipSign * 0.24 * r(53, k),
+      yaw: (r(6, k) - 0.5) * 0.4,
+      tipSweep: r(50, k) < 0.4 ? (r(5, k) < 0.5 ? -1 : 1) * (0.44 + 0.46 * r(5, k)) : (r(5, k) - 0.5) * 0.4,
+      lagExtra: lagged.includes(k) ? 0.1 + 0.1 * r(43, k) : 0,
+      lean: 0.048 * Math.sin(k * 2.1 + 6.283 * r(24, 0)) + (r(25, k) - 0.5) * 0.125,
+      clump: 0.11 * Math.sin(k * 1.9 + 6.283 * r(26, 0)) + (r(27, k) - 0.5) * 0.18,
       arch: r(28, k),
       cup: rank ? 0.03 + 0.08 * r(47, k) : 0.06 + 0.11 * r(47, k),
       hook: (r(29, k) - 0.45) * 0.52,
-      pleat: folded ? 1.38 : 0.76 + 0.38 * r(7, k),
-      trough: folded ? 0.86 : 0.18 + 0.38 * r(8, k),
+      pleat: folded ? 0.2 : 0.72 + 0.38 * r(7, k),
+      trough: folded ? (r(54, k) < 0.45 ? -1.55 : 1.75) + 0.25 * r(8, k) : 0.22 + 0.42 * r(8, k),
       lay: rank ? -0.19 + (r(9, k) - 0.5) * 0.12 : 0.05 + (r(9, k) - 0.5) * 0.11,
       roll: 0.02 + (r(10, k) - 0.5) * 0.24,
       buckle: 0.015 + 0.032 * r(30, k),
@@ -166,11 +182,12 @@ function makeRays(seed: number, total: number): Ray[] {
       waveFreq: 4.5 + 3.5 * r(16, k),
       wavePhase: 6.283 * r(17, k),
       crumple: 0.005 + 0.008 * r(18, k),
-      teeth: r(11, k) < 0.65 ? 0 : r(11, k) < 0.88 ? 1 : 2,
+      tipShape,
+      teeth: tipShape === 1 ? (r(11, k) < 0.5 ? 1 : 2) : 0,
       nickRow: k === nick ? 8 + Math.floor(4 * r(19, k)) : -1,
       nickSide: r(23, k) < 0.5 ? -1 : 1,
-      seed: r(12, k),
-      jitter: (r(81, k) - 0.5) * 0.16,
+      seed: raySeed,
+      jitter: (r(81, k) - 0.5) * 0.48,
       lateLong: 0.03 + 0.06 * r(60, k),
       lateWide: 0.04 * r(61, k),
       lateDrawn: 0.04 + 0.05 * r(60, k),
@@ -296,7 +313,9 @@ export function create(options: PartOptions): PlantPart | null {
     const around = ((k + ray.jitter) / total) * Math.PI * 2
     const fk = (((k + ray.jitter) / total) * rayCount + rayCount) % rayCount
     const awayShare = 0.5 * (1 - Math.cos(around - RAY_FIRST))
-    const lag = (hero ? 0.13 * ray.rank + 0.15 * awayShare + ray.lagExtra : 0.12 * ray.rank)
+    const awayFlank = 0.5 + 0.5 * Math.sin(around - RAY_FIRST)
+    const latePeel = smooth(0.22, 0.94, awayShare) * (0.20 * awayFlank + 0.52 * hash01(seed, 64, k >> 1) + 0.24 * ray.rank)
+    const lag = hero ? 0.14 * ray.rank + 0.14 * awayShare + latePeel + ray.lagExtra : 0.12 * ray.rank
     const g = growthAt(fk, time, lag)
     const full = g.full
     const grown = full > 0 ? g.len / full : 0
@@ -338,7 +357,10 @@ export function create(options: PartOptions): PlantPart | null {
     const comb = GAP_COMB * (side(2) - side(-2))
     const tuck = (1 - smooth(0.1, 0.5, across)) * smooth(0.9, 1, ray.short) * (1 - smooth(0.02, 0.1, ray.cut)) * (1 - smooth(0, 0.1, open)) * (1 - smooth(0, 0.3, Math.abs(comb) / GAP_COMB))
     const openReach = (FOOT_SHUT - FOOT_OPEN) * h.radius + (ray.rank ? 0.15 : 0.11) * full
-    const length = (g.len + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.8, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - g.len, openReach, lifted)) * ray.short * (1 + ray.lateLong * longer + ray.lateDrawn * drawn)
+    const standUp = smooth(0.06, 0.48, headOpen(time)) * (1 - smooth(0.55, 0.95, open))
+    const standYaw = standUp * (hash01(seed, 62, k) - 0.5) * 0.30
+    const standTwist = standUp * (hash01(seed, 63, k) - 0.5) * 0.44
+    const length = (g.len + mix(mix(1.13 - 0.03 * swirl + reach - ray.cut, 0.96, alone) * (0.95 + 0.1 * ray.arch) * h.radius * Math.min(1, grown / 0.72) - g.len, openReach, lifted)) * ray.short * (1 + ray.lateLong * longer + ray.lateDrawn * drawn)
 
     const frame = setFrame(
       h.cx + h.ax * (0.5 * h.depth) + ox * (h.radius * 0.95),
@@ -397,14 +419,15 @@ export function create(options: PartOptions): PlantPart | null {
       const e = (u0 + u) * 0.5
       const along = smooth(0, 1, open * 2.7 - 0.22 * Math.pow(e, 1.5))
       const flat = smooth(0, 1, unfold * 1.25 - 0.22 * u)
-      const shut = 1.58 + 0.52 * smooth(0, 0.15, e) + 1.15 * e + 0.12 * (ray.arch - 0.5) - 0.35 * alone * smooth(0.1, 0.6, e) + (0.2 * ray.hook + TIP_TUCK * tuck) * smooth(0.75, 1, e) + RANK_PITCH * (0.5 - ray.rank) * smooth(0.15, 0.6, e)
-      const openPitch = ray.lay + ray.lateLay * sunk + ray.cup * unfold + young - shaped * ((ray.droop + ray.lateDroop * sunk) * Math.pow(e, 1.35) - ray.nod * smooth(0.25, 0.9, e) + (ray.tipCurl + ray.lateCurl * curled) * Math.pow(smooth(0.7, 1, e), 1.4) + ray.hard * (1 + 0.3 * curled) * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.28 * (1 - unfold) * smooth(0.7, 1, e)
+      const standLift = standUp * (0.84 + 0.34 * ray.arch + 0.14 * ray.rank) * (1 - 0.36 * e)
+      const shut = 1.52 + 0.50 * smooth(0, 0.15, e) + 1.16 * e - 0.10 * Math.sin(Math.PI * e) + 0.12 * (ray.arch - 0.5) - standLift + (0.2 * ray.hook + TIP_TUCK * tuck) * smooth(0.75, 1, e) + RANK_PITCH * (0.5 - ray.rank) * smooth(0.15, 0.6, e)
+      const openPitch = ray.lay + ray.lateLay * sunk + ray.cup * unfold + young - shaped * ((ray.droop + ray.lateDroop * sunk) * Math.pow(e, 1.35) - ray.nod * smooth(0.25, 0.9, e) + (ray.tipCurl + ray.lateCurl * curled) * Math.pow(smooth(0.62, 1, e), 1.3) + ray.hard * (1 + 0.3 * curled) * smooth(ray.hardAt, ray.hardAt + 0.3, e)) - 0.48 * (1 - unfold) * smooth(0.68, 1, e)
       const sag = SAG * along * Math.pow(e, 1.5)
       const tipward = surplus > 0 ? Math.pow(e, 1.8) : 0
       const ripple = along * smooth(0.1, 0.4, e)
       const pitch = mix(shut - rise, openPitch, along) - sag * frame.ny + 0.03 * wind * e * e + ripple * ray.buckle * Math.sin(e * ray.buckleFreq + ray.wavePhase) + flap * tipward
-      const yaw = mix((0.08 + 0.62 * e) * swirl + 0.8 * ray.clump * e + 0.08 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + ray.yaw * Math.pow(e, 1.35) + ray.tipSweep * Math.pow(smooth(0.32, 1, e), 1.55), along) - 0.4 * sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.1 + ray.wavePhase * 1.7) + wag * tipward
-      const twist = mix(SHINGLE, ray.roll + (ray.twist + ray.lateTwist * twisted) * Math.pow(e, 1.2), along) + 0.02 * wind * e * e + 0.75 * (ray.hook - 0.05) * cupped * e + roll * tipward
+      const yaw = mix((0.08 + 0.62 * e) * (1 - 0.55 * standUp) * swirl + standYaw * (0.35 + 0.65 * e) + 0.8 * ray.clump * e + 0.08 * Math.sin(e * 6 + ray.wavePhase) * smooth(0.2, 0.6, e) + comb * smooth(0.05, 0.7, e), ray.lean + 0.62 * ray.clump * smooth(0, 0.52, e) + ray.yaw * Math.pow(e, 1.35) + ray.tipSweep * Math.pow(smooth(0.36, 1, e), 1.45), along) - 0.4 * sag * frame.wy + ripple * ray.sway * Math.sin(e * 4.1 + ray.wavePhase * 1.7) + wag * tipward
+      const twist = mix(SHINGLE * (1 - 0.5 * standUp) + standTwist * (0.3 + 0.7 * e), ray.roll + (ray.twist + ray.lateTwist * twisted) * Math.pow(e, 1.2) + ray.tipTwist * Math.pow(smooth(0.52, 1, e), 1.35), along) + 0.02 * wind * e * e + 0.75 * (ray.hook - 0.05) * cupped * e + roll * tipward
 
       let d = pitch - pitch0
       let c = Math.cos(d)
@@ -452,12 +475,15 @@ export function create(options: PartOptions): PlantPart | null {
       u0 = u
 
       const strap = mix(1.08 * (0.05 + 0.95 * Math.pow(1 - Math.pow(u, 1.5), 0.9)), 0.85 * lance(u), smooth(0.28, 0.62, open))
-      const place = h.radius * (Math.PI / total) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * (0.88 + 1.4 * (ray.width - 0.35)) * Math.min(1, grown / 0.72)
-      const halfWidth = mix(mix(place, wide * strap, along * smooth(0.2, 0.5, open)), wide * mix(outline(u), lance(u), 0.65 * cupped), flat)
+      const place = h.radius * (Math.PI / total) * (0.95 - 0.7 * u) * (1 - 0.92 * smooth(0.55, 1, u)) * STRAP_FILL * mix(1, 0.5, standUp) * (0.94 + 1.55 * (ray.width - 0.245)) * Math.min(1, grown / 0.72)
+      const baseBlade = mix(outline(u), lance(u), 0.65 * cupped)
+      const openBlade = ray.tipShape === 1 ? baseBlade + 0.2 * smooth(0.76, 1, u) : ray.tipShape === 2 ? baseBlade * (1 - 0.46 * smooth(0.6, 0.94, u)) : baseBlade
+      const halfWidth = mix(mix(place, wide * strap, along * smooth(0.2, 0.5, open)), wide * openBlade, flat)
       const ragged = 0.016 * smooth(0.05, 0.3, u)
       const left = 1 + ragged * (Math.sin(u * 7.1 + ray.seed * 53) + 0.45 * Math.sin(u * 15.3 + ray.seed * 97))
       const right = 1 + ragged * (Math.sin(u * 6.7 + ray.seed * 31) + 0.45 * Math.sin(u * 14.7 + ray.seed * 11))
-      const trough = mix(0.75 * along, ray.trough, flat) + 0.95 * (1 - smooth(0, 0.22, u)) * flat
+      const trough = mix(0.75 * along + 0.62 * standUp, ray.trough, flat) + 0.95 * (1 - smooth(0, 0.22, u)) * flat
+      const rimPinch = ray.tipShape === 2 ? 0.55 * flat * smooth(0.62, 0.96, u) : 0
       cx[0] = 0
       cy[0] = 0
       for (let j = 0; j < nv - 1; j++) {
@@ -467,8 +493,8 @@ export function create(options: PartOptions): PlantPart | null {
           foldAngle = mix(mix(FOLD_BUD[strip], FOLD_LIFT[strip], along), mix(FOLD_OPEN[strip] * ray.pleat * (1.55 - 0.65 * smooth(0.15, 0.75, u)), FOLD_LIFT[strip] * 1.1, 0.75 * cupped), flat) + trough * (vs[strip + 1] + vs[strip + 2]) * 0.5
           const mid = (vs[strip + 1] + vs[strip + 2]) * 0.5
           if (mid * ray.edgeSide > 0.4) foldAngle += ray.edgeSide * ray.edgeCurl * flat * smooth(0.15, 0.65, u) * (Math.abs(mid) > 0.7 ? 1 : 0.45)
-          if (j === 0) foldAngle += RIM_TURN * (1 - 0.45 * smooth(0.75, 1, u))
-          if (j === nv - 2) foldAngle -= RIM_TURN * (1 - 0.45 * smooth(0.75, 1, u))
+          if (j === 0) foldAngle += RIM_TURN * (1 - 0.45 * smooth(0.75, 1, u)) + rimPinch
+          if (j === nv - 2) foldAngle -= RIM_TURN * (1 - 0.45 * smooth(0.75, 1, u)) + rimPinch
         }
         const run = (vs[j + 1] - vs[j]) * halfWidth
         cx[j + 1] = cx[j] + Math.cos(foldAngle) * run
@@ -544,13 +570,19 @@ export function create(options: PartOptions): PlantPart | null {
     }
   }
 
-  const layHairs = (set: HairSet, at: Float32Array, pos: Float32Array, slot: 0 | 1, time: number): void => {
-    const root = set.root(slot)
-    const lean = set.lean(slot)
-    for (let n = 0; n < set.count; n++) {
-      const k = at[n * 4]
-      const u = at[n * 4 + 1]
-      const v = at[n * 4 + 2]
+  const hairA = where ? new Int32Array(hairs!.count) : null
+  const hairB = where ? new Int32Array(hairs!.count) : null
+  const hairW = where ? new Float32Array(hairs!.count * 4) : null
+  const hairG = where ? new Int32Array(hairs!.count) : null
+  const hairFull = where ? new Float32Array(hairs!.count) : null
+  const hairScale = where ? new Float32Array(hairs!.count) : null
+  const hairLeanW = where ? new Float32Array(hairs!.count) : null
+  if (where && hairs && hairA && hairB && hairW && hairG && hairFull && hairScale && hairLeanW) {
+    for (let n = 0; n < hairs.count; n++) {
+      const k = where[n * 4]
+      const u = where[n * 4 + 1]
+      const v = where[n * 4 + 2]
+      const w = where[n * 4 + 3]
       let i = 0
       while (i < nu - 2 && us[i + 1] < u) i++
       let j = 1
@@ -558,33 +590,61 @@ export function create(options: PartOptions): PlantPart | null {
       const fu = Math.min(1, Math.max(0, (u - us[i]) / (us[i + 1] - us[i])))
       const fv = Math.min(1, Math.max(0, (v - vs[j]) / (vs[j + 1] - vs[j])))
       const a = (k * per + i * nv + j) * 3
-      const b = a + nv * 3
-      const p = (o: number) => mix(mix(pos[a + o], pos[a + 3 + o], fv), mix(pos[b + o], pos[b + 3 + o], fv), fu)
+      hairA[n] = a
+      hairB[n] = a + nv * 3
+      const o = n * 4
+      hairW[o] = (1 - fu) * (1 - fv)
+      hairW[o + 1] = (1 - fu) * fv
+      hairW[o + 2] = fu * (1 - fv)
+      hairW[o + 3] = fu * fv
+      const g = Math.floor((k * rayCount) / total) % rayCount
+      const full = rayLength(g, 1e3)
+      hairG[n] = g
+      hairFull[n] = full
+      hairScale[n] = (0.0005 + 0.0008 * w) * (full / 0.07) * (1 - 0.5 * u)
+      hairLeanW[n] = w
+    }
+  }
+
+  const layHairs = (set: HairSet, pos: Float32Array, slot: 0 | 1, time: number): void => {
+    if (!hairA || !hairB || !hairW || !hairG || !hairFull || !hairScale || !hairLeanW) return
+    const root = set.root(slot)
+    const lean = set.lean(slot)
+    for (let n = 0; n < set.count; n++) {
+      const a = hairA[n]
+      const b = hairB[n]
+      const o = n * 4
+      const w00 = hairW[o]
+      const w01 = hairW[o + 1]
+      const w10 = hairW[o + 2]
+      const w11 = hairW[o + 3]
+      const px = pos[a] * w00 + pos[a + 3] * w01 + pos[b] * w10 + pos[b + 3] * w11
+      const py = pos[a + 1] * w00 + pos[a + 4] * w01 + pos[b + 1] * w10 + pos[b + 4] * w11
+      const pz = pos[a + 2] * w00 + pos[a + 5] * w01 + pos[b + 2] * w10 + pos[b + 5] * w11
       const ux = pos[b] - pos[a]
       const uy = pos[b + 1] - pos[a + 1]
       const uz = pos[b + 2] - pos[a + 2]
       const vx = pos[a + 3] - pos[a]
       const vy = pos[a + 4] - pos[a + 1]
       const vz = pos[a + 5] - pos[a + 2]
-      const lu = norm(ux, uy, uz) || 1
+      const lu = Math.sqrt(ux * ux + uy * uy + uz * uz) || 1
       let x = uy * vz - uz * vy
       let y = uz * vx - ux * vz
       let z = ux * vy - uy * vx
-      const l = norm(x, y, z) || 1
+      const l = Math.sqrt(x * x + y * y + z * z) || 1
       x /= l
       y /= l
       z /= l
-      const g = Math.floor((k * rayCount) / total) % rayCount
-      const full = rayLength(g, 1e3)
-      const grown = full > 0 ? rayLength(g, time) / full : 0
-      root[n * 4] = p(0) - x * 0.00005
-      root[n * 4 + 1] = p(1) - y * 0.00005
-      root[n * 4 + 2] = p(2) - z * 0.00005
-      root[n * 4 + 3] = (0.0005 + 0.0008 * at[n * 4 + 3]) * (full / 0.07) * smooth(0, 0.5, grown) * (1 - 0.5 * u)
-      lean[n * 4] = -x + (ux / lu) * 0.6
-      lean[n * 4 + 1] = -y + (uy / lu) * 0.6
-      lean[n * 4 + 2] = -z + (uz / lu) * 0.6
-      lean[n * 4 + 3] = at[n * 4 + 3]
+      const full = hairFull[n]
+      const grown = full > 0 ? rayLength(hairG[n], time) / full : 0
+      root[o] = px - x * 0.00005
+      root[o + 1] = py - y * 0.00005
+      root[o + 2] = pz - z * 0.00005
+      root[o + 3] = hairScale[n] * smooth(0, 0.5, grown)
+      lean[o] = -x + (ux / lu) * 0.6
+      lean[o + 1] = -y + (uy / lu) * 0.6
+      lean[o + 2] = -z + (uz / lu) * 0.6
+      lean[o + 3] = hairLeanW[n]
     }
   }
 
@@ -611,7 +671,7 @@ export function create(options: PartOptions): PlantPart | null {
       if (filling.lead) led[slot] = true
       for (let k = 0; k < total; k++) layRay(out, k, pose, slot)
       if (filling.lead) layNormals(out)
-      if (hairs && where) layHairs(hairs, where, out, slot, pose.time)
+      if (hairs && where) layHairs(hairs, out, slot, pose.time)
     },
     absent: (time) => rayLength(0, time) <= 0,
     finish() {

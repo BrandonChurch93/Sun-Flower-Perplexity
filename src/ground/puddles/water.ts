@@ -1,3 +1,4 @@
+import { nearRadiusM } from '../geometry.ts'
 import { basin } from './basin.ts'
 import { skyMirror } from './mirror.ts'
 
@@ -59,7 +60,8 @@ ${chop}
 void main() {
   vec2 p = vWorld.xz;
   float depth = waterDepth(p);
-  float cover = smoothstep(0.0, 0.0035, depth);
+  // Toward the rim of its own sheet the water thins away, and the soil's standing water under it carries on alone.
+  float cover = smoothstep(0.0, 0.0035, depth) * (1.0 - smoothstep(${(0.8 * nearRadiusM).toFixed(2)}, ${nearRadiusM.toFixed(2)}, max(abs(p.x), abs(p.y))));
   if (cover <= 0.0) discard;
   vec2 q = boxPlace(p);
   vec2 edge = smoothstep(vec2(1.0), vec2(0.85), abs(q));

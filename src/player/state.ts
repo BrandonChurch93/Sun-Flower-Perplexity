@@ -35,6 +35,8 @@ export interface StateReport {
   // The whole of the page's own work on a frame, every owner together.
   script: OwnerCost
   overFrame: number
+  // The longest row of frames in which each took more script than one frame of time.
+  overRun?: { from: number; to: number; frames: number } | null
   owners: OwnerCost[]
   // The three seconds of film whose frames cost the most script, the dearest first.
   stretches: StateStretch[]
@@ -116,6 +118,25 @@ function summed(name: string, rows: StateRow[], pick: (r: StateRow) => { ms: num
   return out
 }
 
+export function longestOver(rows: StateRow[]): { from: number; to: number; frames: number } | null {
+  let best: { from: number; to: number; frames: number } | null = null
+  let run: { from: number; to: number; frames: number } | null = null
+  for (const r of rows) {
+    if (r.ms > FRAME_MS && run && r.frame === run.to + 1) {
+      run.to = r.frame
+      run.frames++
+    } else run = r.ms > FRAME_MS ? { from: r.frame, to: r.frame, frames: 1 } : null
+    if (run && (!best || run.frames > best.frames)) best = { ...run }
+  }
+  return best
+}
+
+export function overText(report: StateReport): string {
+  const run = report.overRun ?? longestOver(report.rows ?? [])
+  const row = run ? `, the longest run of them ${run.frames === 1 ? `one frame, ${run.from}` : `${run.frames} in a row, frames ${run.from} to ${run.to}`}` : ''
+  return `${report.overFrame} of ${report.frames} frames${report.overFrame > 0 ? row : ''}`
+}
+
 export function summarize(rows: StateRow[], facts: { from: number; to: number; tier: string; format: string; quality: string }, complete = true, made = 0): StateReport {
   const names = new Set<string>()
   for (const r of rows) for (const name of Object.keys(r.byOwner)) names.add(name)
@@ -126,6 +147,7 @@ export function summarize(rows: StateRow[], facts: { from: number; to: number; t
     frames: rows.length,
     script: summed('script', rows, (r) => r),
     overFrame: rows.filter((r) => r.ms > FRAME_MS).length,
+    overRun: longestOver(rows),
     owners,
     stretches: worstStretches(rows),
     complete,
@@ -156,7 +178,7 @@ export function stateText(report: StateReport): string {
     `${'owner'.padEnd(10)} ${'mean ms'.padStart(7)} ${'worst'.padStart(7)} ${'at'.padStart(6)} ${'sent'.padStart(10)} ${'worst'.padStart(10)} ${'writes'.padStart(7)}`,
     line(report.script),
     ...inOrder([...by.keys()]).map((name) => by.get(name) as OwnerCost).filter((c) => c.meanMs >= 0.005 || c.meanBytes > 0).map(line),
-    `over ${FRAME_MS.toFixed(1)} ms of script: ${report.overFrame} of ${report.frames} frames`,
+    `over ${FRAME_MS.toFixed(1)} ms of script, with nothing drawn: ${overText(report)}`,
     `made on the graphics card during the run: ${report.made === 0 ? 'nothing' : `${report.made} things`}`,
     ...(report.drawnMs.worst > 0 ? [`not in the sums: pictures kept for later frames were really drawn, ${n1(report.drawnMs.mean)} ms a frame, the most ${n1(report.drawnMs.worst)} ms at frame ${report.drawnMs.worstAtFrame}`] : []),
     `the ${report.stretches.length === 1 ? 'dearest second' : `${report.stretches.length} dearest seconds`} of film:`,
