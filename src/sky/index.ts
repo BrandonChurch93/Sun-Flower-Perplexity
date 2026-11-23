@@ -7,7 +7,8 @@ import { shared } from '../core/shading.ts'
 import type { RGB } from '../core/world.ts'
 import type { Moment, Quality, Sky, SkyLight, View } from '../v2/api.ts'
 import { Air } from './air.ts'
-import { CLOUD_SIZE, STAR_HEIGHT, STAR_WIDTH, cloudNoise, starMap } from './noise.ts'
+import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
+import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
 
 const levels = {
@@ -22,6 +23,27 @@ const rgb = (): RGB => [0, 0, 0]
 const RAD = Math.PI / 180
 const FROST = [0.82, 0.94, 1.11] as const
 const Y = [0.2126, 0.7152, 0.0722] as const
+const LOW_COOL = [0.67, 1.08, 1.46] as const
+const OPEN_DOME = [0.014, 0.058, 0.108] as const
+const LAST_DOME = [0.012, 0.047, 0.083] as const
+
+function coolDay(e: number, over: number, fog: number, evening: number, burst: number): number {
+  return smoothstep(-0.65, 1.7, e) * (1 - smoothstep(13, 21, e)) * (1 - evening) * (1 - over) * (1 - fog) * (1 - burst)
+}
+
+function openingAt(bar: number): number {
+  return 1 - smoothstep(0.84, 1.27, bar)
+}
+
+function finaleAt(bar: number): number {
+  return smoothstep(70.55, 71.75, bar)
+}
+
+// Under a remaining deck, high sun transmission means a local opening
+// persists after the lens burst falls, not that the whole deck goes clear.
+function tearAt(overcast: number, through: number, burst: number): number {
+  return Math.max(burst, 0.69 * smoothstep(0.18, 0.51, overcast) * smoothstep(0.80, 0.90, through))
+}
 
 function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTarget {
   return new THREE.WebGLRenderTarget(width, height, {
@@ -89,6 +111,9 @@ class FieldSky implements Sky {
       uLate: { value: 0 },
       uDawn: { value: 0 },
       uOpening: { value: 0 },
+      uFirstBlue: { value: 0 },
+      uCoolDay: { value: 0 },
+      uFinale: { value: 0 },
       uMist: { value: new THREE.Vector3() },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
@@ -106,9 +131,11 @@ class FieldSky implements Sky {
       uPixelAngle: { value: 0.001 },
       uElevation: { value: 25 },
       uNight: { value: 0 },
+      uLunarNight: { value: 0 },
       uFrostFog: { value: 0 },
       uRainFog: { value: 0 },
       uBreak: { value: 0 },
+      uSolarDeck: { value: 0 },
       uEnding: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
@@ -148,9 +175,14 @@ class FieldSky implements Sky {
     const blend = smoothstep(0.40, 1, over)
     const fair = 0.21 * d.cover * (1 - blend)
     const cold = smoothstep(0.25, 0.84, d.fog)
-    const burst = d.burst
+    const burst = tearAt(over, d.sunThrough, d.burst)
     const lunar = m.moon.y * 0.018
     const mistLevel = 0.59 * (out.horizonSun[0] * Y[0] + out.horizonSun[1] * Y[1] + out.horizonSun[2] * Y[2])
+    const lowCool = coolDay(e, over, d.fog, d.evening, burst)
+    const first = openingAt(m.bar)
+    const last = finaleAt(m.bar)
+    const zLum = Y[0] * out.zenith[0] + Y[1] * out.zenith[1] + Y[2] * out.zenith[2]
+    const hLum = Y[0] * out.horizon[0] + Y[1] * out.horizon[1] + Y[2] * out.horizon[2]
     for (let c = 0; c < 3; c++) {
       out.direct[c] = this.groundSun[c] + this.moon[c]
       const z = out.zenith[c] + lunar * this.moon[c]
@@ -163,6 +195,11 @@ class FieldSky implements Sky {
       out.zenith[c] = lerp(lerp(z, cap, blend + fair), mistLevel * FROST[c] * 0.91, cold * 0.64)
       out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), mistLevel * FROST[c] * 0.88, cold * 0.60)
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), mistLevel * (c === 0 ? 1.39 : c === 1 ? 1.19 : 1.07), cold * 0.76)
+      out.zenith[c] = lerp(out.zenith[c], zLum * LOW_COOL[c] * 1.12, 0.54 * lowCool)
+      out.horizon[c] = lerp(out.horizon[c], hLum * LOW_COOL[c] * 1.16, 0.65 * lowCool)
+      out.zenith[c] = lerp(lerp(out.zenith[c], OPEN_DOME[c] * 0.56, first), LAST_DOME[c] * 0.69, last)
+      out.horizon[c] = lerp(lerp(out.horizon[c], OPEN_DOME[c] * 1.7, first), LAST_DOME[c] * 1.8, last)
+      out.horizonSun[c] = lerp(out.horizonSun[c], OPEN_DOME[c] * (c === 0 ? 3.0 : 1.95), 0.75 * first)
     }
     return out
   }
@@ -172,6 +209,7 @@ class FieldSky implements Sky {
     const pose = view.pose
     const e = (now.sunElevationDeg + later.sunElevationDeg) * 0.5
     const d = now.dials
+    const tear = tearAt(d.overcast, d.sunThrough, d.burst)
     const target = this.maps[view.quality]
     const level = levels[view.quality]
     this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize()
@@ -207,13 +245,16 @@ class FieldSky implements Sky {
     u.uDeck.value.fromArray(this.deck)
     u.uFlash.value.copy(now.flashAt)
     // The sun clears a local tear before the rest of the front moves off.
-    const deckShape = d.overcast + 0.81 * d.burst * (1 - d.overcast)
+    const deckShape = d.overcast + 0.81 * tear * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
-    u.uEffects.value.set(d.evening, d.rain, d.flash, d.burst)
+    u.uEffects.value.set(d.evening, d.rain, d.flash, tear)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
     u.uDawn.value = dawn
     u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
+    u.uFirstBlue.value = openingAt(now.bar)
+    u.uCoolDay.value = coolDay(e, d.overcast, d.fog, d.evening, d.burst)
+    u.uFinale.value = finaleAt(now.bar)
     u.uMist.value.set(mistLevel * FROST[0], mistLevel * FROST[1], mistLevel * FROST[2])
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
@@ -227,10 +268,12 @@ class FieldSky implements Sky {
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
     v.uElevation.value = e
-    v.uNight.value = night
+    v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e)))
+    v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
     v.uRainFog.value = d.rain * d.overcast
-    v.uBreak.value = d.burst
+    v.uBreak.value = tear
+    v.uSolarDeck.value = smoothstep(0.26, 0.49, d.overcast)
     v.uEnding.value = ending
     v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)
@@ -260,7 +303,7 @@ class FieldSky implements Sky {
 
   megabytes(): number {
     const area = qualities.reduce((n, q) => n + levels[q].width * levels[q].height, 0)
-    return (this.air.bytes + CLOUD_SIZE ** 3 * 4 + (STAR_WIDTH * STAR_HEIGHT * 4 + area * 8) * 4 / 3 + 16 * 16 * 8) / (1024 * 1024)
+    return (this.air.bytes + CLOUD_SIZE ** 3 * 4 + STAR_MAP_WIDTH * STAR_MAP_HEIGHT * 4 + area * 8 * 4 / 3 + 16 * 16 * 8) / (1024 * 1024)
   }
 }
 
