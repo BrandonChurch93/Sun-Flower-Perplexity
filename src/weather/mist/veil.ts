@@ -65,8 +65,8 @@ void main() {
   float lift = y / height;
   float run = abs(x) > 1e-3 ? reach * (exp(min(x - lift, 0.0)) - exp(-lift)) / x : reach * exp(-lift);
   float depth = uAir.z * amount * run / across;
-  // Above a few degrees the sky is the sky's own.
-  float high = uHigh.x * exp(-max(v.y, 0.0) / uHigh.y) * (1.0 - smoothstep(0.06, 0.13, v.y));
+  // Above a few degrees the sky is the sky's own, a little paler for the thin air that stands over the banks.
+  float high = uHigh.x * (exp(-max(v.y, 0.0) / uHigh.y) * (1.0 - smoothstep(0.06, 0.13, v.y)) + 0.5 * (1.0 - smoothstep(0.1, 0.45, v.y)));
   float alpha = (1.0 - exp(-depth) * (1.0 - high)) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y));
   // Dawn mist is a breath over the soil: it never hides what stands on the horizon and ends a degree and a half above it.
   alpha = mix(alpha, (1.0 - exp(-uDawn.y * (1.0 - exp(-depth / uDawn.y)))) * (1.0 - smoothstep(0.7, 1.0, vWorld.y / uPlace.y)) * (1.0 - smoothstep(0.008, 0.026, v.y)), uDawn.x);
@@ -84,8 +84,9 @@ void main() {
   // A shaft is soft at its sides, starts a little way off the sun and dies out away from it.
   float shafts = 1.0 + uLook.z * (smoothstep(0.1, 0.9, beam) * 1.3 - 0.5) * smoothstep(0.02, 0.12, theta) * exp(-theta / 0.4);
   // Mist is lit by the whole sky, so it is paler than the strip of sky behind it.
-  vec3 air = 0.52 * uAirHorizon + 0.46 * uAirZenith;
-  air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.75) * 1.3;
+  float pale = dot(0.52 * uAirHorizon + 0.46 * uAirZenith, vec3(0.2126, 0.7152, 0.0722));
+  vec3 air = 0.3 * uAirHorizon + 0.7 * uAirZenith;
+  air = mix(air * (pale / max(dot(air, vec3(0.2126, 0.7152, 0.0722)), 1e-4)), vec3(pale), 0.6) * 1.3;
   // The sun's own light is many times the sky's. What the mist throws on is a share of the mist's own brightness, in the sun's color: it glows and never burns out.
   vec3 warm = min(max(uSkyHorizonSun - uAirHorizon, vec3(0.0)), air);
   vec3 sun = uAirSun / max(dot(uAirSun, vec3(0.2126, 0.7152, 0.0722)), 1.0) * dot(air, vec3(0.2126, 0.7152, 0.0722));
