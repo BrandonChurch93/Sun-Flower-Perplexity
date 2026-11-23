@@ -3,6 +3,7 @@ import { config } from '../../../config.ts'
 import { barTime, hitTime, rainAtBar } from '../../../v2/clock.ts'
 import { shared, type Surface } from '../../../core/shading.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../../part.ts'
+import { frostFrontGlsl } from '../frost/index.ts'
 import { wetUniforms } from './film.ts'
 
 // Beads of water on the skin: rain that sits, swells, runs to the tip and falls, and dew that stays where it formed.
@@ -80,14 +81,15 @@ vec4 keyed(vec4 a, vec4 b) {
 // The thaw as the bead and the light it throws both need it.
 const THAW = /* glsl */ `
 uniform float uPlantFrost;
-// How far the ice at a place has gone to water, by the rule shared with the frost: the front runs from the tip (along 1) back to the stalk (along 0) as the frost goes. Ice only at 0 and under, water only from 0.2.
+${frostFrontGlsl}
+// How far the ice at a place has gone to water, by the frost's own front: it runs from the tip (along 1) back to the stalk (along 0) as the frost goes. The grain of the coat can hold the ice until 0.26, and by the stalk that much longer.
 float thawFront(float along) {
-  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost) - 0.05 - 0.75 * (1.0 - along);
+  return frostPastAlong(along) - 0.05 - 0.05 * (1.0 - smoothstep(0.1, 0.45, along));
 }
-// A bead of the thaw is no wider than half a millimeter while ice still stands at its place, then swells to its own size.
+// A bead of the thaw is no wider than half a millimeter while ice can still stand at its place, then swells to its own size.
 float thawRadius(float full, float front) {
   float small = min(full, 0.00025);
-  float t = saturate((front - 0.2) / 0.25);
+  float t = saturate((front - 0.26) / 0.25);
   return small * pow(saturate(front / 0.2), 0.7) + (full - small) * t * t * (3.0 - 2.0 * t);
 }
 // Where a bead of the thaw stands and how wide, in the plant's own space. Two neighbours that grow until they touch run together: one takes the other.
