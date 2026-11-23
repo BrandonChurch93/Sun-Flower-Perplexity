@@ -456,10 +456,17 @@ float sparks(vec2 p, vec3 n, vec3 hv, float sharp, float circle, float amount) {
   }
   return lit;
 }
-// How bright one such face is: SPARK times the sun in focus, and more by the area of the circle the lens opens it into, so the disc it becomes is as bright whatever its size.
+// The sun as a face of ice or a bead of water throws it at the lens: paler than the sun on soil, and held under about 20 times white on the screen.
+// The lens' exposure is not known here. The light from the zenith lands at about a fifth of white whenever there is frost, and is the measure.
+vec3 glintSun() {
+  vec3 pale = mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.65);
+  float most = max(max(pale.r, pale.g), max(pale.b, 1e-4));
+  return pale * min(SPARK, 90.0 * dot(uSkyZenith, vec3(0.3, 0.6, 0.1)) / most);
+}
+// How bright one such face is in focus, and more by the area of the circle the lens opens it into, so the disc it becomes is as bright whatever its size.
 vec3 sparkLight(float depth) {
   float circle = cocOf(depth) / 15.0;
-  return mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.65) * (SPARK * (1.0 + circle * circle));
+  return glintSun() * (1.0 + circle * circle);
 }
 `
 // The shadows the clods throw on each other and on the soil between them, found by walking toward the light over the clod map.
@@ -696,7 +703,7 @@ void main() {
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
   float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
-  float brow = pow(1.0 - saturate(dot(n, normalize(uCamPos - vWorld))), 2.0) * smoothstep(0.0, 0.5, n.y) * mix(0.3, 1.0, stand) * (1.0 - 0.75 * rowAmt);
+  float brow = pow(1.0 - saturate(dot(n, normalize(uCamPos - vWorld))), 2.0) * smoothstep(0.0, 0.5, n.y) * mix(0.3, 1.0, stand) * (1.0 - 0.75 * rowAmt) * (1.0 - 0.45 * smoothstep(0.22, 0.06, normalize(uCamPos - vWorld).y));
   float sits = saturate(0.6 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) + 0.7 * brow + 0.3 * smoothstep(0.5, 1.0, ridge) * rowAmt - 0.1) * mix(1.0, 0.1 + 1.15 * smoothstep(0.3, 0.9, ridge), rowAmt) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
   float lies = saturate(sits + 0.22 * hollow * smoothstep(0.08, 0.45, mix(h, lumpy.a, stand)) * (1.0 - 0.7 * under) * (1.0 - pool)) * (1.0 - 0.4 * saturate(2.0 * dot(n.xz, uLowSun.xy)));
   float rime = max(rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8)), dusted(vWorld, lies, uFrost, lit * saturate(ndl * 1.8)));

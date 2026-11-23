@@ -454,7 +454,7 @@ void main() {
   color += duskSheen(vWorld, v, n) * (0.3 + 0.7 * open);
   color += duskGlow(vWorld, v, ball, albedo, 1.0) * (0.3 + 0.7 * open);
   color += wetAnswer(vWorld, v, normalize(smoothN + 0.35 * (n - smoothN)), uWet * uWet, lit, 0.0) * (0.3 + 0.7 * open);
-  color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.4 + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += FROST_WHITE * rime * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.4 + mix(uSunColor, vec3(dot(uSunColor, vec3(0.3, 0.6, 0.1))), 0.6) * lit * (0.2 + 0.35 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += sparkLight(vDepth) * sparks(vWorld.xz, n, normalize(v + uSunDir), 60.0, cocOf(vDepth), smoothstep(0.0, 0.3, uFrost) * (0.3 + 0.7 * saturate(2.5 * rime)) * smoothstep(-0.3, 0.3, dot(n.xz, uLowSun.xy)) * (0.3 + 0.7 * lit));
   outColor = finish(color, vWorld, vDepth, texelDensity(uv, uColorSize));
 }
