@@ -2,11 +2,11 @@ import { config, frameCount, type Format, type TierId } from '../config.ts'
 import type { Film } from '../director/film.ts'
 import { keys, segments } from '../director/timeline.ts'
 import { MARK_HOLD_SECONDS, markSeconds, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
-import type { Report, RunFacts } from './pacing.ts'
+import type { Report, RunFacts, ScriptAlone } from './pacing.ts'
 import { filmPlan, play, stretchPlan, type Plan, type Playing } from './play.ts'
 import { stateRun, type StateReport } from './state.ts'
 
-const CHECK_SECONDS = 10
+export const CHECK_SECONDS = 20
 const CHECK_STRETCHES = 3
 
 export interface Deck {
@@ -15,7 +15,7 @@ export interface Deck {
   root: HTMLElement
   stage: HTMLElement
   curtain: HTMLElement
-  facts(kind: RunFacts['kind'], ctx: AudioContext): RunFacts
+  facts(kind: RunFacts['kind'], ctx: AudioContext | null): RunFacts
 }
 
 const stepped = (facts: RunFacts, stepMs: number): RunFacts => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } })
@@ -155,7 +155,7 @@ export function record(deck: Deck, clockReady: Promise<FilmClock>, marks: boolea
   return { stop, finished: run() }
 }
 
-// The check before recording: ten seconds over the film's hardest moments, on the audio clock with the sound off.
+// The check before recording: twenty seconds over the film's hardest moments, on the audio clock with the sound off.
 export function check(deck: Deck, clock: FilmClock): Session {
   const fps = config.film.fps
   const each = Math.round((CHECK_SECONDS * fps) / CHECK_STRETCHES)
@@ -168,7 +168,7 @@ export function check(deck: Deck, clock: FilmClock): Session {
       await deck.film.renderFrame(starts[0], deck.tier)
       const clockRun = await runFrom(clock, 0, false, 0)
       const facts = deck.facts('check', clock.ctx)
-      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: clockRun.time, facts: (stepMs) => stepped(facts, stepMs) })
+      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: clockRun.time, seat: true, facts: (stepMs) => stepped(facts, stepMs) })
       if (stopped) playing.stop()
       return await playing.finished
     } finally {
@@ -179,6 +179,101 @@ export function check(deck: Deck, clock: FilmClock): Session {
     stop() {
       stopped = true
       playing?.stop()
+    },
+    finished: run(),
+  }
+}
+
+// The timing at the end of loading: the same twenty seconds on the page's own clock, since no sound may start before a click.
+// A page that is not in view draws nothing, so the timing waits until it is, and starts again if the page was hidden while it ran.
+// `say` is told the seconds timed so far, or null while it waits for the page to be in view.
+export function timing(deck: Deck, say: (seconds: number | null) => void): Session {
+  const fps = config.film.fps
+  const each = Math.round((CHECK_SECONDS * fps) / CHECK_STRETCHES)
+  const starts = checkStarts(each)
+  let stopped = false
+  let playing: Playing | null = null
+  const inView = (): boolean => document.visibilityState === 'visible'
+  const seen = (): Promise<void> =>
+    new Promise<void>((resolve) => {
+      if (inView()) {
+        resolve()
+        return
+      }
+      say(null)
+      const look = (): void => {
+        if (!inView() && !stopped) return
+        document.removeEventListener('visibilitychange', look)
+        resolve()
+      }
+      document.addEventListener('visibilitychange', look)
+    })
+  const once = async (): Promise<{ report: Report; hidden: boolean }> => {
+    let hidden = false
+    const hide = (): void => {
+      if (inView()) return
+      hidden = true
+      playing?.stop()
+    }
+    document.addEventListener('visibilitychange', hide)
+    try {
+      await deck.film.renderFrame(starts[0], deck.tier)
+      const zero = performance.now()
+      const facts = deck.facts('timing', null)
+      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: () => (performance.now() - zero) / 1000, raw: true, seat: true, facts: () => facts, tick: (seconds) => say(Math.min(CHECK_SECONDS, Math.max(0, seconds))) })
+      if (stopped) playing.stop()
+      return { report: await playing.finished, hidden }
+    } finally {
+      document.removeEventListener('visibilitychange', hide)
+    }
+  }
+  const run = async (): Promise<Report> => {
+    for (;;) {
+      await seen()
+      const { report, hidden } = await once()
+      if (!hidden || stopped) return report
+    }
+  }
+  return {
+    stop() {
+      stopped = true
+      playing?.stop()
+      document.dispatchEvent(new Event('visibilitychange'))
+    },
+    finished: run(),
+  }
+}
+
+// The page's own work on the frames of the timing, set in a row with every draw call left out.
+// A frame that is skipped makes the next one dearer, so only frames set in a row say whether the script alone is over the frame.
+export function timingScript(deck: Deck, say: (done: number, of: number) => void): { stop(): void; finished: Promise<ScriptAlone | null> } {
+  const each = Math.round((CHECK_SECONDS * config.film.fps) / CHECK_STRETCHES)
+  const starts = checkStarts(each)
+  const of = each * starts.length
+  let stopped = false
+  const run = async (): Promise<ScriptAlone | null> => {
+    const found: ScriptAlone = { frames: 0, over: 0, meanMs: 0, worstMs: 0 }
+    let sum = 0
+    for (const [i, start] of starts.entries()) {
+      const part = await stateRun(deck.film, start, start + each - 1, deck.tier, {
+        stopped: () => stopped,
+        onFrame(frame) {
+          const done = i * each + frame - start + 1
+          if (done % 10 === 0 || done === of) say(done, of)
+        },
+      })
+      if (!part.complete) return null
+      found.frames += part.frames
+      found.over += part.overFrame
+      sum += part.script.meanMs * part.frames
+      found.worstMs = Math.max(found.worstMs, part.script.worstMs)
+    }
+    found.meanMs = found.frames ? sum / found.frames : 0
+    return found
+  }
+  return {
+    stop() {
+      stopped = true
     },
     finished: run(),
   }

@@ -7,8 +7,8 @@ import { asked, Pacing, type Report, type RunFacts } from './pacing.ts'
 const FPS = config.film.fps
 
 // What a run shows at one moment of its clock: a film frame and its place in the run, or nothing, which is the dark screen.
-// `due` is the second of the run's clock the frame belongs to.
-export interface Cue { frame: number; position: number; due: number }
+// `due` is the second of the run's clock the frame belongs to. `stretch` numbers the stretches of a run that jumps in the film.
+export interface Cue { frame: number; position: number; due: number; stretch?: number }
 
 export interface Plan {
   // Frames the run would show on a machine that holds the rate.
@@ -37,7 +37,7 @@ export function stretchPlan(starts: number[], framesEach: number): Plan {
       const position = Math.floor(seconds * FPS + 1e-9)
       if (position < 0 || position >= starts.length * framesEach) return null
       const stretch = Math.floor(position / framesEach)
-      return { frame: Math.min(frameCount - 1, starts[stretch] + (position - stretch * framesEach)), position, due: position / FPS }
+      return { frame: Math.min(frameCount - 1, starts[stretch] + (position - stretch * framesEach)), position, due: position / FPS, stretch }
     },
     done: (seconds) => seconds >= (starts.length * framesEach) / FPS,
   }
@@ -54,6 +54,9 @@ export interface PlayOptions {
   tick?(seconds: number, cue: Cue | null): void
   // Reads the audio clock as it is, without moving between its steps.
   raw?: boolean
+  // A run that jumps in the film: the first frame shown of each stretch is drawn once before it is timed, and the clock stands still meanwhile.
+  // A jump costs what the film never pays in play, where every frame follows its neighbour.
+  seat?: boolean
 }
 
 export interface Playing {
@@ -73,6 +76,9 @@ export function play(options: PlayOptions): Playing {
   const before = madeSoFar()
   let stopped = false
   let onScreen = -1
+  let stretch = -1
+  let paused = 0
+  let pausedMs = 0
   let settle: (report: Report) => void = () => undefined
   let refuse: (error: unknown) => void = () => undefined
   const finished = new Promise<Report>((resolve, reject) => {
@@ -82,7 +88,7 @@ export function play(options: PlayOptions): Playing {
 
   const read = (): number => {
     const raw = options.time()
-    return options.raw ? raw : steady.read(raw, performance.now())
+    return (options.raw ? raw : steady.read(raw, performance.now())) - paused
   }
 
   const end = (complete: boolean) => {
@@ -99,12 +105,21 @@ export function play(options: PlayOptions): Playing {
       const cue = plan.cue(seconds)
       options.tick?.(seconds, cue)
       if (cue && cue.frame !== onScreen) {
+        const seatedBefore = pausedMs
+        if (options.seat && cue.stretch !== undefined && cue.stretch !== stretch) {
+          const from = read()
+          const fromMs = performance.now()
+          await film.renderFrame(cue.frame, options.tier)
+          paused += read() - from
+          pausedMs += performance.now() - fromMs
+          stretch = cue.stretch
+        }
         const had = madeSoFar()
         const t0 = performance.now()
         await film.renderFrame(cue.frame, options.tier)
         const t1 = performance.now()
         onScreen = cue.frame
-        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp, t1 - t0, asked(madeSince(had)), film.cost)
+        pacing.present(cue.frame, cue.position, cue.due, seconds, read(), stamp - seatedBefore, t1 - t0, asked(madeSince(had)), film.cost)
       }
       requestAnimationFrame(turn)
     } catch (error) {
