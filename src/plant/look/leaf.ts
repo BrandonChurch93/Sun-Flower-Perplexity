@@ -79,24 +79,29 @@ export const leafMain = /* glsl */ `void main() {
   through = mix(through, vec3(0.02, 0.01, 0.003), brown);
   // The neighbor's blades stand before the sun: the light comes through close round it and the rest of the face stays dark.
   if (uGlow < 0.5) through *= 0.6 + 1.4 * smoothstep(0.9975, 0.9998, dot(-view, uSunDir));
+  // Seen from a hand's breadth the glow is warm, and the margin, a single layer of cells, is a bright line.
+  float near = 1.0 - smoothstep(0.3, 0.7, vDepth);
+  through *= mix(vec3(1.0), vec3(1.3, 1.08, 0.75), 0.7 * near * (1.0 - brown));
 
   // Relief finer than about three pixels is left out: it would only sparkle.
   float texels = texelDensity(dUv, uDetailSize);
   float veinTexels = length(fwidth(a) * vec2(768.0, 1024.0));
-  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) + (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) + (fine - 1.0) * 0.0002 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
+  float high = ((vein.g - 0.55) * 0.0016 * (1.0 - smoothstep(3.0, 7.0, veinTexels)) - (lum - 1.0) * 0.00018 * (1.0 - smoothstep(4.0, 9.0, texels)) - (fine - 1.0) * 0.0003 * (1.0 - smoothstep(24.0, 70.0, texels * 2.29))) * vState.x * 4.0;
   if (!top) high = -high;
   float fold = vState.z;
 
   // The margin takes little light of its own, so the lit edge breaks into teeth and hairs and is not a drawn line.
   float bay = serration(vUv, vKey, vCut);
   float margin = 1.0 - smoothstep(0.86, 0.98, min(1.0, abs(vUv.x) + bay)) * (0.6 - 0.4 * smoothstep(0.6, 0.9, mark.g));
+  // The wax lies over a pebbled skin: close by, its sheen breaks into grains and is never one smooth light.
+  float pebble = saturate((fine - 0.82) * 2.5);
   Tissue t;
   t.albedo = albedo * (0.3 + 0.7 * margin);
-  t.through = through;
+  t.through = through + vec3(0.2, 0.22, 0.05) * (near * thin * (1.0 - brown) * smoothstep(0.965, 0.995, min(1.0, abs(vUv.x) + bay)));
   t.face = face;
   t.normal = reliefNormal(face, vWorld, high, 1.0);
-  t.rough = top ? 0.82 : 0.95;
-  t.wax = (top ? 0.22 : 0.04) * margin;
+  t.rough = (top ? 0.82 : 0.95) + 0.08 * near * (1.0 - pebble);
+  t.wax = (top ? 0.22 : 0.04) * margin * mix(1.0, 0.25 + 1.5 * pebble, near);
   // A face turned from the sun mirrors only the sky: half the sheen there, and half on the under side.
   t.sheen = (top ? 0.6 * mix(0.25, 1.0, vRipe) : 0.06) * margin * mix(0.5, 1.0, smoothstep(0.0, 0.3, dot(top ? face : -face, uSunDir)));
   t.occlusion =  top ? mix(1.0, 0.4 + 0.6 * abs(vUv.x), fold) : 1.0;
