@@ -1,12 +1,8 @@
 # Looks of sky-a
 
-2026-11-23 01:49 UTC, at commit 7242e56 of agent/sky-a.
+2026-11-23 03:46 UTC, at commit 806c873 of agent/sky-a.
 
-- `01-review-sheet-7242e56.jpg`: review sheet 7242e56
-- `02-low-sheet-7242e56.jpg`: low sheet 7242e56
-- `03-film-view-sheet-everything-on.jpg`: film view sheet everything on
-- `04-08-lapse.jpg`: 08 lapse
-- `05-03-morning.jpg`: 03 morning
-- `06-13-evening.jpg`: 13 evening
-- `07-10-storm.jpg`: 10 storm
-- `08-night-strip.jpg`: night strip
+- `01-night-film-before-after.jpg`: night film before after
+- `02-night-wide-before-after.jpg`: night wide before after
+- `03-night-three-frames-2379-to-2381-full-size-crops.jpg`: night three frames 2379 to 2381 full size crops
+- `04-night-frame-2379-16x9.jpg`: night frame 2379 16x9
