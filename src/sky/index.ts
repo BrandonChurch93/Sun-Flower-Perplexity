@@ -13,6 +13,7 @@ import { lunarShutter, MOON_SHUTTER, quickMoonFrames } from './moon.ts'
 import { STAR_MAP_HEIGHT, STAR_MAP_WIDTH, starMap } from './night/index.ts'
 import { CLOUD_SIZE, cloudNoise } from './noise.ts'
 import { cloudFragment, displayFragment } from './shader.ts'
+import { afterSunset, sunsetAmount, SunsetMeter } from './sunset.ts'
 
 const levels = {
   film: { width: 832, height: 512, steps: 60, light: 6 },
@@ -28,7 +29,6 @@ const FROST = [0.82, 0.94, 1.11] as const
 const Y = [0.2126, 0.7152, 0.0722] as const
 const LOW_COOL = [0.67, 1.08, 1.46] as const
 const OPEN_DOME = [0.014, 0.058, 0.108] as const
-const LAST_DOME = [0.012, 0.047, 0.083] as const
 const EVENING_DOME = [0.61, 1.04, 1.64] as const
 const EVENING_GLOW = [0.24, 0.056, 0.011] as const
 const WET_SLATE = [0.74, 1.038, 1.39] as const
@@ -54,10 +54,6 @@ function coolDay(e: number, over: number, fog: number, evening: number, burst: n
 
 function openingAt(bar: number): number {
   return 1 - smoothstep(0.84, 1.27, bar)
-}
-
-function finaleAt(bar: number): number {
-  return smoothstep(70.55, 71.75, bar)
 }
 
 function lastLightAt(elevation: number, evening: number): number {
@@ -98,6 +94,7 @@ function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTa
 
 class FieldSky implements Sky {
   private air!: Air
+  private sunsetMeter!: SunsetMeter
   private cloud!: FullscreenPass
   private display!: FullscreenPass
   private maps!: Record<Quality, THREE.WebGLRenderTarget>
@@ -116,10 +113,12 @@ class FieldSky implements Sky {
   private readonly cloudSun = rgb()
   private readonly deck = rgb()
   private readonly moon = rgb()
+  private readonly photo = rgb()
   private readonly lunarVisibility = new Float32Array(frameCount).fill(-1)
 
   async load(renderer: THREE.WebGLRenderer, _assets: Assets): Promise<void> {
     this.air = new Air()
+    this.sunsetMeter = new SunsetMeter()
     const density = cloudNoise()
     const stars = starMap()
     this.maps = {
@@ -161,6 +160,7 @@ class FieldSky implements Sky {
       uFirstBlue: { value: 0 },
       uCoolDay: { value: 0 },
       uFinale: { value: 0 },
+      uFinaleDusk: { value: 0 },
       uMist: { value: new THREE.Vector3() },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
@@ -184,6 +184,7 @@ class FieldSky implements Sky {
       uBreak: { value: 0 },
       uSolarDeck: { value: 0 },
       uEnding: { value: 0 },
+      uPhotoMix: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
@@ -284,7 +285,7 @@ class FieldSky implements Sky {
     const mistLevel = 0.59 * (out.horizonSun[0] * Y[0] + out.horizonSun[1] * Y[1] + out.horizonSun[2] * Y[2])
     const lowCool = coolDay(e, over, d.fog, d.evening, burst)
     const first = openingAt(m.bar)
-    const last = finaleAt(m.bar)
+    const last = sunsetAmount(m.bar)
     const sheetCool = sheets * (1 - last)
     const reflected = sheetCool * (1 - smoothstep(-3.1, -0.20, e))
       * Math.exp(-((0.027 * 37) ** 2) - 21 * (1 - Math.cos(Math.asin(0.027) - e * RAD)))
@@ -309,10 +310,11 @@ class FieldSky implements Sky {
       out.zenith[c] = lerp(out.zenith[c], zLum * EVENING_DOME[c], 0.57 * sheetCool)
       out.horizon[c] = lerp(out.horizon[c], hLum * EVENING_DOME[c], 0.20 * sheetCool)
       out.horizonSun[c] += EVENING_GLOW[c] * reflected
-      out.zenith[c] = lerp(lerp(out.zenith[c], OPEN_DOME[c] * 0.56, first), LAST_DOME[c] * 0.69, last)
-      out.horizon[c] = lerp(lerp(out.horizon[c], OPEN_DOME[c] * 1.7, first), LAST_DOME[c] * 1.8, last)
+      out.zenith[c] = lerp(out.zenith[c], OPEN_DOME[c] * 0.56, first)
+      out.horizon[c] = lerp(out.horizon[c], OPEN_DOME[c] * 1.7, first)
       out.horizonSun[c] = lerp(out.horizonSun[c], OPEN_DOME[c] * (c === 0 ? 3.0 : 1.95), 0.75 * first)
     }
+    if (last > 0) this.sunsetMeter.blend(afterSunset(e), last, out)
     if (wetHaze > 0) {
       const b = wetBlueAt(e)
       const energy = diffuse(out) / (
@@ -389,7 +391,8 @@ class FieldSky implements Sky {
     u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
     u.uFirstBlue.value = openingAt(now.bar)
     u.uCoolDay.value = coolDay(e, d.overcast, d.fog, d.evening, d.burst)
-    u.uFinale.value = finaleAt(now.bar)
+    u.uFinale.value = sunsetAmount(now.bar)
+    u.uFinaleDusk.value = afterSunset(e)
     u.uMist.value.set(mistLevel * FROST[0], mistLevel * FROST[1], mistLevel * FROST[2])
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
@@ -434,6 +437,8 @@ class FieldSky implements Sky {
     v.uBreak.value = tear
     v.uSolarDeck.value = smoothstep(0.26, 0.49, d.overcast)
     v.uEnding.value = ending
+    const finale = sunsetAmount(now.bar)
+    v.uPhotoMix.value = finale
     const darkDeck = smoothstep(0.42, 0.84, d.overcast) * (1 - d.flash) * (1 - tear)
     v.uMarchFilter.value = (view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast)
       + 0.46 * darkDeck
@@ -448,6 +453,11 @@ class FieldSky implements Sky {
     disc.y += peach * 0.44 + 4.2 * glancing
     disc.z += peach * 0.18 + 0.70 * glancing
     disc.x += 13.5 * glancing
+    if (finale > 0) {
+      this.air.photographedSunAt(Math.asin(v.uSunFace.value.y) / RAD, this.photo)
+      const gain = 3.15 * visibleDisk
+      disc.set(lerp(disc.x, gain * this.photo[0], finale), lerp(disc.y, gain * this.photo[1], finale), lerp(disc.z, gain * this.photo[2], finale))
+    }
     this.stellar.setFromMatrix4(this.turn.makeRotationAxis(north, -now.starTurn - 0.18))
   }
 

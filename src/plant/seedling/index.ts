@@ -48,9 +48,10 @@ interface Body {
 interface Group {
   bodies: Body[]
   slots: Float32Array[]
-  normals: Float32Array
-  state: Float32Array
-  live: (THREE.BufferAttribute | null)[]
+  normals: Float32Array[]
+  state: Float32Array[]
+  shapes: (THREE.BufferAttribute | null)[]
+  carried: THREE.BufferAttribute[][]
   mesh: THREE.Mesh
   surface: Surface
   casts: boolean
@@ -85,11 +86,14 @@ interface Crumbs {
   local: Float32Array
   localNormal: Float32Array
   slots: Float32Array[]
-  normals: Float32Array
-  live: (THREE.BufferAttribute | null)[]
+  normals: Float32Array[]
+  shapes: (THREE.BufferAttribute | null)[]
+  carried: THREE.BufferAttribute[][]
   mesh: THREE.Mesh
   surface: Surface
 }
+
+const HUSK_LAST = 0.06
 
 function unit(x: number, y: number, z: number): [number, number, number] {
   const l = norm(x, y, z) || 1
@@ -236,18 +240,21 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
   }
   const geometry = partGeometry(options)
   const slots = [new Float32Array(count * each * 3), new Float32Array(count * each * 3)]
-  const normals = new Float32Array(count * each * 3)
+  const both = options.places ? [0] : [0, 1]
+  const normals = both.map(() => new Float32Array(count * each * 3))
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const normal = dynamic(normals, 3)
+  const carried = both.map((k) => [dynamic(normals[k], 3)])
+  const still = new THREE.BufferAttribute(state, 4)
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
-  geometry.setAttribute('normal', normal)
+  carried.forEach(([n], k) => geometry.setAttribute(k === 1 ? 'normalB' : 'normal', n))
   geometry.setAttribute('aCoord', new THREE.BufferAttribute(coords, 4))
-  geometry.setAttribute('aState', new THREE.BufferAttribute(state, 4))
+  geometry.setAttribute('aState', still)
+  if (positionB) geometry.setAttribute('aStateB', still)
   const surface = makePartSurface(options, { name: 'seedling crumbs', vertex, fragment, side: THREE.FrontSide, castShadow: true })
-  return { list, each, local, localNormal, slots, normals, live: [position, positionB, normal], mesh: partMesh(geometry, surface), surface }
+  return { list, each, local, localNormal, slots, normals, shapes: [position, positionB], carried, mesh: partMesh(geometry, surface), surface }
 }
 
 export function create(options: PartOptions): PlantPart | null {
@@ -271,9 +278,10 @@ export function create(options: PartOptions): PlantPart | null {
     }
     const geometry = partGeometry(options)
     const slots = [new Float32Array(count * 3), new Float32Array(count * 3)]
-    const normals = new Float32Array(count * 3)
+    const both = options.places ? [0] : [0, 1]
+    const normals = both.map(() => new Float32Array(count * 3))
     const coords = new Float32Array(count * 4)
-    const state = new Float32Array(count * 4)
+    const state = both.map(() => new Float32Array(count * 4))
     const index: number[] = []
     bodies.forEach((b, id) => {
       const row = b.loop + 1
@@ -305,13 +313,14 @@ export function create(options: PartOptions): PlantPart | null {
     const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
     const position = dynamic(slots[0], 3)
     const positionB = options.places ? null : dynamic(slots[1], 3)
-    const normal = dynamic(normals, 3)
-    const sent = dynamic(state, 4)
+    const carried = both.map((k) => [dynamic(normals[k], 3), dynamic(state[k], 4)])
     geometry.setAttribute('position', position)
     if (positionB) geometry.setAttribute('positionB', positionB)
-    geometry.setAttribute('normal', normal)
+    carried.forEach(([n, st], k) => {
+      geometry.setAttribute(k === 1 ? 'normalB' : 'normal', n)
+      geometry.setAttribute(k === 1 ? 'aStateB' : 'aState', st)
+    })
     geometry.setAttribute('aCoord', new THREE.BufferAttribute(coords, 4))
-    geometry.setAttribute('aState', sent)
     geometry.setIndex(index)
     const surface = makePartSurface(options, {
       name,
@@ -325,7 +334,8 @@ export function create(options: PartOptions): PlantPart | null {
       slots,
       normals,
       state,
-      live: [position, positionB, normal, sent],
+      shapes: [position, positionB],
+      carried,
       mesh: partMesh(geometry, surface),
       surface,
       casts,
@@ -363,8 +373,14 @@ export function create(options: PartOptions): PlantPart | null {
     }
   }
 
+  const filled = [false, false]
+  const led = [false, false]
+
   function fill(slot: 0 | 1, pose: Pose): void {
     const first = filling.lead
+    const of = first && !options.places ? slot : 0
+    filled[slot] = true
+    if (first) led[of] = true
     const time = pose.time
     const grown = smoothstep(0, 0.006, heightAt(time))
     const pale = paleness(time)
@@ -453,8 +469,8 @@ export function create(options: PartOptions): PlantPart | null {
 
     for (const g of groups) {
       const out = g.slots[slot]
-      const state = g.state
-      const normals = g.normals
+      const state = g.state[of]
+      const normals = g.normals[of]
       for (const b of g.bodies) {
         const row = b.loop + 1
         if (!b.husk) {
@@ -507,7 +523,8 @@ export function create(options: PartOptions): PlantPart | null {
           const oy = py * b.side * cg - B[1] * sg
           const oz = pz * b.side * cg - B[2] * sg
           const arc = b.loop / 2
-          const shown = kept > 0 ? 1 : 0
+          // The husk is nearly under the soil by then: it shrinks to nothing over its last second and does not go out in one frame.
+          const shown = smoothstep(0, HUSK_LAST, kept)
           const inside = lerp(0.3, 1, smoothstep(0.12, 0.33, gape))
           const shell = huskLength * (1 + 0.3 * smoothstep(0, 1, loose))
           for (let a = 0; a < b.rings; a++) {
@@ -580,7 +597,7 @@ export function create(options: PartOptions): PlantPart | null {
 
     if (beads && leaves) {
       const out = leaves.slots[slot]
-      const normals = leaves.normals
+      const normals = leaves.normals[of]
       const seat = beads.seat(slot)
       const rest = beads.rest(slot)
       const rain = smoothstep(0.3, 0.9, wetFelt())
@@ -702,9 +719,9 @@ export function create(options: PartOptions): PlantPart | null {
         const my = crumbs.localNormal[at + 1]
         const mz = crumbs.localNormal[at + 2]
         const e = (kx * mx + ky * my + kz * mz) * (1 - cs)
-        crumbs.normals[at] = mx * cs + (ky * mz - kz * my) * sn + kx * e
-        crumbs.normals[at + 1] = my * cs + (kz * mx - kx * mz) * sn + ky * e
-        crumbs.normals[at + 2] = mz * cs + (kx * my - ky * mx) * sn + kz * e
+        crumbs.normals[of][at] = mx * cs + (ky * mz - kz * my) * sn + kx * e
+        crumbs.normals[of][at + 1] = my * cs + (kz * mx - kx * mz) * sn + ky * e
+        crumbs.normals[of][at + 2] = mz * cs + (kx * my - ky * mx) * sn + kz * e
       }
     }
   }
@@ -716,8 +733,15 @@ export function create(options: PartOptions): PlantPart | null {
     fill,
     absent: (time) => time >= CRUMBS_GONE_S && seedLeafLength(time) <= 0 && huskSize(time) <= 0,
     finish() {
-      for (const g of groups) for (const a of g.live) if (a) a.needsUpdate = true
-      if (crumbs) for (const a of crumbs.live) if (a) a.needsUpdate = true
+      for (const g of crumbs ? [...groups, crumbs] : groups) {
+        for (let k = 0; k < 2; k++) {
+          const shape = g.shapes[k]
+          if (filled[k] && shape) shape.needsUpdate = true
+          if (led[k] && g.carried[k]) for (const a of g.carried[k]) a.needsUpdate = true
+        }
+      }
+      filled.fill(false)
+      led.fill(false)
       if (beads) beads.finish()
     },
   }

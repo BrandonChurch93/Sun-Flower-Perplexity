@@ -148,7 +148,10 @@ try {
       const step = Math.max(1, Number(stride ?? 1))
       return Array.from({ length: Math.floor(((b ?? a) - a) / step) + 1 }, (_, i) => a + i * step)
     }) : null
-    const list: Shot[] = atFrames ? atFrames.map((f) => ({ id: `frame-${String(f).padStart(5, '0')}`, seconds: f / fps, view: 'film', what: '' })) : atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
+    const probes = typeof args.probes === 'string' ? (JSON.parse(fs.readFileSync(args.probes, 'utf8')) as { id: string; bar?: number; frame?: number; eye?: number[]; at?: number[]; mm?: number; f?: number; focus?: number; view?: string }[]) : null
+    const probeView = new Map<string, string>()
+    if (probes) for (const p of probes) probeView.set(p.id, p.view ?? (p.eye && p.at ? `eye:${[...p.eye, ...p.at, p.mm ?? 60, p.f ?? 8, ...(p.focus ? [p.focus] : [])].join(',')}` : 'film'))
+    const list: Shot[] = probes ? probes.map((p) => ({ id: p.id, seconds: p.frame !== undefined ? p.frame / fps : Math.max(0, barTime(p.bar ?? 21)), view: 'film', what: '' })) : atFrames ? atFrames.map((f) => ({ id: `frame-${String(f).padStart(5, '0')}`, seconds: f / fps, view: 'film', what: '' })) : atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
       const s = shots.find((x) => x.id === id || x.id.startsWith(`${id}-`) || x.id.slice(3) === id)
       if (!s) throw new Error(`unknown shot "${id}"`)
       return s
@@ -156,16 +159,17 @@ try {
     const viewOver = typeof args.view === 'string' ? args.view : null
     const files: { file: string; label: string }[] = []
     for (const s of list) {
-      const view = viewOver ?? s.view
+      const view = probeView.get(s.id) ?? viewOver ?? s.view
       await setView(session, view)
       const { png, seconds } = await session.render(frameAt(s.seconds), tier)
       const file = path.join(dir, `${s.id}${viewOver ? `-${viewOver}` : ''}-${format}-${tier}.png`)
       fs.writeFileSync(file, png)
-      files.push({ file, label: `${s.id} · ${clock(s.seconds)} · ${view}` })
-      console.log(`shot · ${s.id} · ${clock(s.seconds)} · ${view} · ${seconds.toFixed(1)} s · ${path.relative(process.cwd(), file)}`)
+      const shown = view.startsWith('eye:') ? 'probe' : view
+      files.push({ file, label: `${s.id} · ${clock(s.seconds)} · ${shown}` })
+      console.log(`shot · ${s.id} · ${clock(s.seconds)} · ${shown} · ${seconds.toFixed(1)} s · ${path.relative(process.cwd(), file)}`)
     }
     if (files.length > 1) {
-      const out = path.join(dir, `${str(args, 'name', atFrames ? 'frames' : atBars ? 'bars' : 'sheet')}-${format}-${tier}.jpg`)
+      const out = path.join(dir, `${str(args, 'name', probes ? 'probes' : atFrames ? 'frames' : atBars ? 'bars' : 'sheet')}-${format}-${tier}.jpg`)
       await sheet(files, out, num(args, 'cols', 4))
       console.log(`sheet · ${path.relative(process.cwd(), out)}`)
     }

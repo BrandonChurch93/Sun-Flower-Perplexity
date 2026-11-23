@@ -27,7 +27,7 @@ export async function readTrack(file: File): Promise<Track> {
 export function trackLine(track: Track | null): string {
   if (!track) return 'No track. The film plays silent, on the same clock.'
   if (track.matches) return `${track.name} is the track the film was timed to.`
-  return `${track.name} is not the file the film was timed to. It will play, and the picture may not sit on its beats.`
+  return `${track.name} is not the file the film was timed to. It can be used, and the picture may not sit on its beats.`
 }
 
 // The first audio file of a drop or a file choice.
