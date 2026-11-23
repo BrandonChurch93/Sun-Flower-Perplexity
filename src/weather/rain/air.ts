@@ -174,14 +174,14 @@ in float vSeen;
 in vec3 vWorld;
 in float vDepth;
 // The drop swings as it falls, so the line it leaves swells and thins along its length.
-float streak() {
+float streak(float low) {
   float cap = max(0.0, 1.0 - min(vEnds.x, vEnds.y));
   float u = min(1.0, vAcross * vAcross + cap * cap);
   float swing = 0.72 + 0.28 * sin(vWhen * (9.0 + 22.0 * vSeed) + 40.0 * vSeed);
   float core = exp(-3.0 * u / max(vSeen, 0.08));
   float body = (1.0 - u) * (1.0 - u);
-  // A falling drop shows the sky only while it is flat to the lens: the middle of its path is lit and both ends fade, each drop over its own share.
-  float lit = exp(-pow((vWhen - 0.5) / (0.16 + 0.2 * fract(vSeed * 3.7)), 2.0));
+  // A falling drop shows the sky only while it is flat to the lens: the middle of its path is lit and both ends fade, each drop over its own share. A low sun behind it lights far more of the path.
+  float lit = exp(-pow((vWhen - 0.5) / ((0.16 + 0.2 * fract(vSeed * 3.7)) * (1.0 + 2.5 * low)), 2.0));
   return saturate(vCover * lit * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
 }
 `
@@ -193,7 +193,7 @@ uniform vec3 uFlashAt;
 uniform float uSpark;
 void main() {
   if (uDiag > 1) discard;
-  float cover = streak();
+  float cover = streak(uSpark);
   if (cover < 0.003) discard;
   vec3 ray = normalize(vWorld - uCamPos);
   // A drop is a lens: it shows the brightest of the sky all round it, so it glints against the dark deck and is lost against the bright gap.
@@ -221,7 +221,7 @@ const sharp = /* glsl */ `
 ${shape}
 void main() {
   if (uDiag > 1) discard;
-  if (streak() < 0.05) discard;
+  if (streak(0.0) < 0.05) discard;
   outColor = vec4(0.0, 0.0, 0.0, cocOf(vDepth));
 }
 `
