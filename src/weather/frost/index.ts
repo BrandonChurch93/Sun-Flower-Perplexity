@@ -17,6 +17,8 @@ const TEXELS = 6
 const scratch = new Float32Array(TEXELS * 4)
 // In the thaw the last of a set that melts is gone at this much frost: from there it is neither drawn nor sent, though its wearer moves again.
 const GONE_AT = 0.15
+// In the freeze no crystal has started under this much frost: until then a set is neither drawn nor sent, so a wearer that still moves sends nothing.
+const FIRST_AT = 0.008
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
 const crystal = /* glsl */ `
@@ -94,6 +96,7 @@ const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z)
 const float BEAD_SHARE = 0.34;
 const float STAY_SHARE = 0.45;
 const float GONE_AT = ${GONE_AT.toFixed(2)};
+const float FIRST_AT = ${FIRST_AT.toFixed(3)};
 const float NEEDLE_PX = 0.7;
 const float NEEDLE_LEAST = 0.2;
 const float TUFT_MOST_M = 0.0034;
@@ -151,8 +154,8 @@ void main() {
   // The dew comes up with the thaw and never with the freeze, so it tells the two apart. Freezing, each crystal starts at its own moment and grows. Thawing, each gives way at its own moment.
   float thawing = uMelts * smoothstep(0.0, 0.15, uPlantDew);
   float thaw = thawing * (1.0 - uPlantFrost);
-  float born = 0.45 * hash(own, 24.0);
-  float timed = mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : uPlantFrost, 1.0, thawing);
+  float born = FIRST_AT + 0.44 * hash(own, 24.0);
+  float timed = mix(uMelts > 0.5 ? smoothstep(born, born + 0.55, uPlantFrost) : saturate((uPlantFrost - FIRST_AT) / (1.0 - FIRST_AT)), 1.0, thawing);
   // What only a close lens sees comes last: over the last third of the freeze a crystal lengthens by half, its side blades come out and small crystals rise between the large.
   float late = mix(saturate((uPlantFrost - LATE_FROM) / (1.0 - LATE_FROM)), 1.0, max(thawing, 1.0 - uMelts));
   timed *= mix(1.0, 0.667 + 0.333 * late, close);
@@ -171,7 +174,7 @@ void main() {
   float cluster = c.w > 0.0 && !spike ? close : 0.0;
   float h28 = hash(own, 28.0);
   // Where the close lens first sees them they stand at half their length already, every one of them, and lengthen from there.
-  float risen = mix(uMelts > 0.5 ? smoothstep(0.0, 0.6, uPlantFrost) : uPlantFrost, 1.0, thawing) * (0.7 + 0.3 * late) * (fill ? 0.6 + 0.4 * smoothstep(0.0, 0.3, 1.4 * late - hash(own, 26.0)) : 1.0);
+  float risen = mix(uMelts > 0.5 ? smoothstep(FIRST_AT, 0.6, uPlantFrost) : saturate((uPlantFrost - FIRST_AT) / (1.0 - FIRST_AT)), 1.0, thawing) * (0.7 + 0.3 * late) * (fill ? 0.6 + 0.4 * smoothstep(0.0, 0.3, 1.4 * late - hash(own, 26.0)) : 1.0);
   size = mix(size, (FAN_LEAST_M + (FAN_MOST_M - FAN_LEAST_M) * h28 * h28) * (0.65 + 0.5 * tuft) * plantSize() * risen, cluster);
   vec3 stretch6 = a.xyz * (6.2832 / THAW_PATCH_M);
   float patch6 = smoothstep(0.2, 0.8, 0.5 + 0.25 * (sin(stretch6.x + 1.9 * sin(stretch6.z * 0.57 + 1.1)) + sin(stretch6.y * 0.79 + 1.4 * sin(stretch6.x * 0.43 + 0.7))));
@@ -573,7 +576,8 @@ export class CrystalSet {
   private choose(camera: THREE.Camera): void {
     const worn = stateUniforms.uPlantFrost.value > 0 || (this.dewToo && stateUniforms.uPlantDew.value > 0)
     const gone = this.melts && !this.dewToo && stateUniforms.uPlantDew.value >= 0.15 && stateUniforms.uPlantFrost.value <= GONE_AT
-    if (!worn || gone || shared.uDiag.value >= 4) {
+    const early = stateUniforms.uPlantDew.value <= 0 && stateUniforms.uPlantFrost.value < FIRST_AT
+    if (!worn || gone || early || shared.uDiag.value >= 4) {
       this.geometry.instanceCount = 0
       return
     }

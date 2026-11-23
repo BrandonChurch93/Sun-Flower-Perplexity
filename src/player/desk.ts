@@ -2,7 +2,7 @@ import { config } from '../config.ts'
 import type { Quality } from '../v2/api.ts'
 import css from './desk.module.css'
 import { LEAD_SECONDS, SETTLE_SECONDS, TAIL_SECONDS } from './clock.ts'
-import { GAP_MS, reportFile, reportName, type Report } from './pacing.ts'
+import { clockName, GAP_MS, reportFile, reportName, type Report } from './pacing.ts'
 import { fileOf, trackLine, type Track } from './track.ts'
 
 export interface DeskActions {
@@ -28,7 +28,7 @@ export interface Desk {
 
 export interface Advice { text: string; tryLow: boolean }
 
-const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report' } as const
+const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report', timing: 'Timed at loading' } as const
 const SHOWN_GAPS = 4
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -111,7 +111,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   goStep.set('wait', 'Not checked yet')
   const check = button('Check this machine', 'C')
   check.addEventListener('click', () => actions.check())
-  const checkText = make('p', css.small, 'Ten seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
+  const checkText = make('p', css.small, 'Twenty seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
   const adviceText = make('p', css.advice)
   adviceText.hidden = true
   const tryLow = button('Check at low quality', null)
@@ -255,14 +255,14 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       top.append(make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`), link)
       reportBody.append(top)
       reportBody.append(make('p', css.verdict, report.verdict))
-      if (report.kind === 'check' && report.complete) {
+      if ((report.kind === 'check' || report.kind === 'timing') && report.complete) {
         checkedAt = report.quality
         if (report.holds) goStep.set('done', 'Checked: ready to record')
         else goStep.set('warn', 'Checked: does not keep up')
       }
       reportBody.append(
         line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped, ${f.late} shown late`),
-        line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
+        line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of ${clockName(report)}`),
         line('Between frames', `longest ${ms(report.gapMs.longest)} at ${at(report.gapMs.longestAtFilm)}, 99th percentile ${ms(report.gapMs.p99)}, mean ${ms(report.gapMs.mean)}`),
         line('Picture behind sound', `when chosen mean ${ms(report.pickedMs.mean)}, largest ${ms(report.pickedMs.largest)}. When drawn mean ${ms(report.behindMs.mean)}, largest ${ms(report.behindMs.largest)} at ${at(report.behindMs.largestAtFilm)}`),
         line('Drawing a frame', `mean ${ms(report.drawMs.mean)}, 99th percentile ${ms(report.drawMs.p99)}. Of that the page's own work mean ${ms(report.scriptMs.mean)}, longest ${ms(report.scriptMs.longest)}, and the wait for the picture mean ${ms(report.cardMs.mean)}`),
