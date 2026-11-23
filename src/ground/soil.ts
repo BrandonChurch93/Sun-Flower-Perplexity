@@ -421,7 +421,7 @@ vec3 frozen(vec3 albedo, float frost) {
 }
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
-  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.38, 1.0, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
+  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.3, 0.8, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
 }
 // Under the crystals the soil itself is dusted pale wherever it lies open to the sky, thinner than the hoar and gone sooner as the frost dial falls.
 float dusted(vec3 world, float lies, float frost, float sunny) {
@@ -515,6 +515,7 @@ const vec3 DAMP_FILL = vec3(${dampFill.join(', ')});
 const vec3 DEW_SHADE = vec3(${dewShade.join(', ')});
 const mat2 TURN_B = mat2(0.788, 0.616, -0.616, 0.788);
 const mat2 TURN_W = mat2(0.454, -0.891, 0.891, 0.454);
+const float HEAVY = 0.4;
 
 void main() {
   vec2 p = vWorld.xz;
@@ -600,6 +601,25 @@ void main() {
   float hollow = mix(1.0, smoothstep(-0.1, 0.7, lumpy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, lumpy.a)), stand);
   float crest = mix(smoothstep(0.45, 0.8, h), smoothstep(0.3, 0.75, lumpy.a) * smoothstep(0.4, 0.8, lumpy.b), stand * (1.0 - smoothstep(0.0, 3.0, lodPix)));
 
+  vec2 uvG = TURN_B * uvL * HEAVY + vec2(0.57, 0.11);
+  float thin = min(length(dFdx(uvG)), length(dFdy(uvG))) * uClods.z / uClods.x;
+  float lodG = log2(max(min(max(length(dFdx(uvG)), length(dFdy(uvG))) * uClods.z / uClods.x, 4.0 * thin), 1.0));
+  float heavyOn = smoothstep(0.5, 2.5, lodPix) * (1.0 - smoothstep(2.0, 4.5, log2(max(thin, 1.0))));
+  vec4 heavy = textureLod(tClods, uvG, lodG);
+  tilt -= (((heavy.rg * 2.0 - 1.0) * ${(0.7 * clodSlopeMost).toFixed(1)}) * TURN_B) * TURN_L * heavyOn;
+  float heavyShade = 0.0;
+  float level = length(uSunDir.xz);
+  if (heavyOn > 0.01 && level > 0.02) {
+    vec2 sunStep = TURN_B * (TURN_L * (uSunDir.xz / level)) * (uClods.x * HEAVY);
+    float rise = uSunDir.y / level * HEAVY / uClods.y;
+    for (int i = 0; i < 3; i++) {
+      float s = 0.025 * exp2(float(i));
+      heavyShade = max(heavyShade, smoothstep(0.0, 0.06, textureLod(tClods, uvG + sunStep * s, lodG).a - heavy.a - 0.03 - s * rise));
+    }
+  }
+  hollow *= mix(1.0, smoothstep(-0.1, 0.7, heavy.b) * (0.3 + 0.7 * smoothstep(0.0, 0.45, heavy.a)), heavyOn);
+  crest = mix(crest, smoothstep(0.3, 0.75, heavy.a) * smoothstep(0.4, 0.8, heavy.b), heavyOn);
+
   vec3 n = normalize(vec3(tilt.x * (1.0 - 0.9 * pool), 1.0, tilt.y * (1.0 - 0.9 * pool)));
   float thatch = grassMask(p, uToward) * grassSeason() * smoothstep(0.12, 0.5, 0.55 * patchy(p * 4.3 + vec2(3.0, 1.0)) + 0.45 * h);
   float under = uCover * smoothstep(0.9, 1.7, d);
@@ -628,6 +648,7 @@ void main() {
   lit *= mix(1.0, smoothstep(0.4, 0.72, h), low * mapped * soilMatt());
   float sunny = uDay * (1.0 - smoothstep(0.1, 0.8, uWet));
   lit *= mix(1.0, smoothstep(0.3, 0.58, h) * mix(1.0, smoothstep(0.06, 0.38, lumpy.a), stand * (1.0 - smoothstep(0.0, 3.0, lodPix))), 0.9 * sunny);
+  lit *= 1.0 - heavyOn * mix(0.5, 0.9, sunny) * max(heavyShade, 1.0 - smoothstep(0.06, 0.38, heavy.a));
   albedo *= 1.0 + 0.45 * crest * sunny;
   float open = (0.35 + 0.65 * h) * mix(1.0, 0.72 + 0.28 * ridge, rowAmt) * hollow;
 #ifdef NEAR
@@ -661,7 +682,7 @@ void main() {
   float rime = max(rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8)), dusted(vWorld, lies, uFrost, lit * saturate(ndl * 1.8)));
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
-  albedo = mix(albedo, FROST_WHITE, 0.85 * rime);
+  albedo = mix(albedo, FROST_WHITE, 0.95 * rime);
   open = mix(open, max(open, 0.85), rime);
   vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) * (1.0 - 0.8 * uDusk * uDew) * underFlash(smoothstep(0.1, 0.8, uWet)) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew * (1.0 - uBlueHour)));
 
@@ -688,7 +709,7 @@ void main() {
   color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5 * lying)), soaked, lit, lying) * mix(0.4, 1.0, stand) * mix(0.2, 1.0, max(seen, pool)) + wetSky(v, n) * (1.6 * soaked * edged * mix(0.3, 1.0, seen)) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.04 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under);
   vec3 over = groundAmbient(vec3(0.0, 1.0, 0.0));
   float toSun = pow(saturate(dot(normalize(-v.xz), uLowSun.xy)), 160.0) * uLowSun.z;
-  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.0 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
+  color += FROST_WHITE * rime * rime * (mix(over, vec3(dot(over, vec3(0.3, 0.6, 0.1))), 0.6) * 1.8 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime * (1.0 + 5.0 * toSun);
   color += warmGlint() * (toSun * smoothstep(0.0, 0.3, uFrost) * frostKept(uFrost, 0.4) * 2.0 * grains(vWorld + 1.7, 0.1) * (0.3 + 0.7 * crest) * hollow * (1.0 - thatch));
   outColor = finish(color, vWorld, vDepth, density);
