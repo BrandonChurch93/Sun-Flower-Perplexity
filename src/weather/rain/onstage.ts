@@ -29,6 +29,7 @@ class Rain implements Part {
     uRain: { value: 0 },
     uWind: { value: 0 },
     uPixelAngle: { value: 0.001 },
+    // Stays one at every tier: each sample draws the whole streak as wide as the blur circle asks of a single sample, and the samples' own lens offsets close them into one soft streak. Given a piece of the path each, the samples scatter the pieces over the blur circle as specks.
     uSamples: { value: 1 },
     uLeast: { value: 1 },
     uFlash: { value: new THREE.Vector3() },
@@ -62,7 +63,6 @@ class Rain implements Part {
     u.uRain.value = rain
     u.uWind.value = now.dials.wind
     u.uPixelAngle.value = (2 * tanX) / view.width
-    u.uSamples.value = view.samples
     u.uLeast.value = Math.max(0.75, (1.1 * view.width) / MASTER_WIDTH)
     const flash = 0.5 * (now.dials.flash + later.dials.flash)
     const sky = Math.max(lum(view.light.band ?? view.light.horizon), lum(view.light.zenith), 1e-4)
