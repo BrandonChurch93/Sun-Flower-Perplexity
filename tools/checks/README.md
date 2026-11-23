@@ -13,7 +13,7 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading, a vertex array included, which is made when something is drawn for the first time; each frame that made something is listed with what it made by the counter's own names, and for a vertex array or a program `tools/made-where.mts` draws the first six such frames again and names the program and the first draw (`--no-where` leaves that out); what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s, some minutes more when something was made |
 | `npm run checks -- script` | no frame rate drop: the page's own script time in a frame, by part, inside the limits of `tools/checks/limits.json` | 13 windows of frames in a row, about 490 frames | about 30 min, 17 min with --frames 20; run it alone |
 | `npm run checks -- film` | the whole film small in one go: `play` on three pages, then `nights`, `cuts` and `made` in one table | 1,432 frames | 80 to 100 min |
-| `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61 | 8 frames | 4 min |
+| `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61, or at `--frames 1688,1689,1690` | 8 frames | 4 min |
 | `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels: drawn in order, again backwards, and on a fresh page that has warmed as the film does before it plays (the first page draws without warming, so the warming may leave nothing behind that changes a pixel) | 42 frames and the warming | 12 to 15 min |
 | `npm run checks -- all` | one line for each check | no, or `--draw` | 5 s |
 | `npm run checks -- review` | the review page | `--draw` for the looks | 1 min |
@@ -55,6 +55,10 @@ A draft frame has one sample, so everything out of focus is blurred by the lens 
 A window that is measured is kept in `out/work/checks/script/film/` until the film changes, so the check runs in parts: `--window 2070-2110`, `--frames 8` for the first 8 counted frames of each window (a quick look, marked "not whole"), `--all` for the whole film in windows drawn one after the other without a jump, `--again` to measure again. It prints one row a window (mean, worst, the worst frame, the three largest parts there, what is over its limit, PASS or FAIL), writes `out/work/checks/script.json` and exits with 1 on FAIL.
 
 The numbers are wall time on this machine, so the check has to run alone: another page drawing or a build beside it makes every number larger. It says so in its first line, counts the browsers that are already drawing when a run begins, marks what it measures beside them "not alone" and is then not complete.
+
+The table has a column `draw` beside the mean: the time inside `renderer.render`, which the checks' page measures across the film's laps, with the scene's and the shadow map's share of it, then the mean without it, and the same for the worst frame. On a machine without a graphics card the rasterising itself is done after the calls are queued and falls in the lap `wait`, so `draw` is three's walk of the scene, its writes of uniforms and buffers and the queueing. The limits stay on the whole sum.
+
+`--all --keep` also keeps each frame's picture and what it made where `play` keeps them, so the one drawing in a row is the every frame round for `nights`, `cuts` and `made` too. `--all --from 2800 --to 3430` measures only the windows that hold those frames.
 
 Besides the level it names every hitch: a frame over 25 ms that is also over three times the median of the sixteen frames around it, with its parts. That is the stutter a viewer sees whatever the level, and the rule is the one of `tools/costs.ts`.
 
