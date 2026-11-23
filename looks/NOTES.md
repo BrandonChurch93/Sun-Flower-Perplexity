@@ -1,9 +1,8 @@
 # Looks of rain
 
-2026-11-23 01:15 UTC, at commit 2ad3483 of agent/rain.
+2026-11-23 01:31 UTC, at commit 6e7e32e of agent/rain.
 
-- `01-film-view-bars-33-5-35-37-02-39-41-25-41-6-at-8-.jpg`: film view bars 33.5 35 37.02 39 41.25 41.6 at 8 samples
-- `02-storm-bar-35.jpg`: storm bar 35
-- `03-flash-bar-37-02.jpg`: flash bar 37.02
-- `04-break-bar-41-25.jpg`: break bar 41.25
-- `05-puddle-view-bar-37.jpg`: puddle view bar 37
+- `01-sky-b-film-view-bars-35-37-02-39-41-0-41-25-41-6.jpg`: sky B film view bars 35 37.02 39 41.0 41.25 41.6 after the air light change
+- `02-flash-bar-37-02-sky-b.jpg`: flash bar 37.02 sky B
+- `03-break-bar-41-25-sky-b.jpg`: break bar 41.25 sky B
+- `04-storm-bar-35-sky-b.jpg`: storm bar 35 sky B
