@@ -85,9 +85,18 @@ function tearAt(overcast: number, through: number, burst: number): number {
   return Math.max(burst, 0.69 * smoothstep(0.18, 0.51, overcast) * smoothstep(0.80, 0.90, through))
 }
 
-// Expose clear paths alongside the obscured volume during its opening.
+// Keep the sun-facing meter on the original opening cue.
 function tearAttack(through: number, burst: number): number {
   return Math.min(burst, through / 0.90) * (1 - smoothstep(0.75, 0.899, through))
+}
+
+// The extra ragged paths open on the existing rise. Their optical depth
+// returns on the beat, not on the rapidly changing direct sun transmission.
+function tearWindow(through: number, burst: number, bar: number): number {
+  const rise = Math.min(burst, through / 0.90)
+  const knee = Math.min(1, (rise - 0.80) / 0.10)
+  const open = rise <= 0.80 ? rise : 0.85 - 0.05 * (1 - knee) ** 2
+  return open * (1 - smoothstep(41.10, 41.80, bar))
 }
 
 function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTarget {
@@ -399,7 +408,7 @@ class FieldSky implements Sky {
     // deck, keep the lightning spill, and hand back before the first tear.
     u.uClosedDeck.value = smoothstep(1640, 1690, now.frame) * (1 - smoothstep(2054, 2082, now.frame))
       * (1 - smoothstep(0.04, 0.62, d.flash))
-    u.uTearAttack.value = tearAttack(d.sunThrough, d.burst)
+    u.uTearAttack.value = tearWindow(d.sunThrough, d.burst, now.bar)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
     u.uStreaks.value = shortStreaksAt(now)
