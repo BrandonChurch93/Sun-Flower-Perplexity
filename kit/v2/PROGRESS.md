@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 25 · 2026-11-23 11:28 UTC · Phase 3
+- Last status: 26 · 2026-11-23 11:54 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 11:54 UTC · status 26 · Phase 3 · `status-1.jpg`: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; `status-2.jpg`: Frost close shot, frame 1106 (bar 22): the tip against the low sun; `status-3.jpg`: Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; `status-4.jpg`: Storm hold, frame 1830 (bar 36): one puddle in the furrow
 - 2026-11-23 11:28 UTC · status 25 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost is there at the cut and grows. Sparks where a crystal mirrors the sun; `status-2.jpg`: The margin at full size, frame 1054: fans of needles on the edge, rime in chains on the veins. The plates on the blade are still too grey; `status-3.jpg`: Second and third close shots, frames 1106 and 1208: the tip against the sun, then the thaw with the drop about to let go; `status-4.jpg`: Guards, frames 1240, 940 and 1466: the thaw's last frame, the wide frame before the first cut, the climb after it
 - 2026-11-23 11:05 UTC · status 24 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds as grains and sparks. Still too fine and too grey against the reference, larger crystals are next; `status-2.jpg`: Second close shot, the stalk at full size on the hairs owner's bench, before and after: the comb is broken up and the tip carries a fine down; `status-3.jpg`: Third close shot, frames 1208 and 1240: the thawed leaf with its beads and the drop at the tip; `status-4.jpg`: Morning in the time lapse, frame 240: the seedling with dew, after the bead cap
 - 2026-11-23 10:41 UTC · status 23 · Phase 3 · `status-1.jpg`: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling; `status-2.jpg`: Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next; `status-3.jpg`: The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip; `status-4.jpg`: First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 08:13 UTC · status 17 · Phase 3 · `status-1.jpg`: Frost close shot 1: the old angle left, the new angle right (draft). The camera now looks down on the upper face of a leaf; `status-2.jpg`: Frost close shots 2 and 3 with the newest work merged (draft): the tip as the sun comes through, with ice on every stem hair, and the thaw with water beads and the drop just before it falls; `status-3.jpg`: Six nights of the time lapse with thinner cloud at night: stars show through wider gaps (draft); `status-4.jpg`: The end at bar 71, bar 73 and the last frame, beside the reference (draft): a red orange sun under a deep blue sky
 - 2026-11-23 07:42 UTC · status 16 · Phase 3 · `status-1.jpg`: Frost close shot 1 on bar 19, a leaf edge in the mist. Fringe dense now. The angle changes next: the sun hides behind the left leaf and the right half is empty; `status-2.jpg`: Frost close shot 2 on bar 21, the tip as the sun comes through; `status-3.jpg`: Frost close shot 3 on bar 23, the thaw. The leaf face is still bare; `status-4.jpg`: The end with its new look, bars 69 and 73. The sun is still a pale dot at the left third of the ridge
 - 2026-11-23 06:59 UTC · status 15 · Phase 3 · `status-1.jpg`: Targets for the three frost close shots, new reference pictures: a leaf edge with the dim sun in the mist, the tip as the sun comes through, the thaw; `status-2.jpg`: The same three shots in the film now, from the cut cameras, draft quality. The framing is set, the ice is not at the target yet; `status-3.jpg`: The camera in close for the bloom: bars 57, 58.5 and 61, draft quality; `status-4.jpg`: Bars 55 to 67 on one sheet: in toward the bud, the bloom, back out to the field
-- 2026-11-23 06:14 UTC · status 14 · Phase 3 · `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5; `status-2.jpg`: Bar 67: the pull back begins; `status-3.jpg`: Bar 73: the sun touches the ridge
 
 ## Clock
 
@@ -41,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 8.22 h |
+| 3 | 9.00 h | 8.64 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 13.48 h |
+| Whole build | 30.00 h | 13.90 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -296,4 +296,6 @@ None yet.
   Pictures: First close shot, frames 952, 1003 and 1054: the frost builds as grains and sparks. Still too fine and too grey against the reference, larger crystals are next; Second close shot, the stalk at full size on the hairs owner's bench, before and after: the comb is broken up and the tip carries a fine down; Third close shot, frames 1208 and 1240: the thawed leaf with its beads and the drop at the tip; Morning in the time lapse, frame 240: the seedling with dew, after the bead cap.
 - Status 25, 2026-11-23 11:28 UTC, Phase 3. The frost in the first close shot is now built from crystals of three sizes: fine sugar, faced grains up to 0.6 mm and plates up to 1.6 mm, with a closed fringe of crystal fans along the margin and rime in chains along the veins (merged and proved on eight frames at full size). The lens pass now reads the edge of a hair from one clean sample. The far glints of the field take the same blur circle as the ground's sparks. New tools: a cost table by owner and a pacing report as one page. Measured: type check clean, 34 test files, 195 tests pass on 42ea2ba. Measured cost of live play on software cores (not a real graphics card): the plant's script is 26 ms a frame after the frost, 41 after the storm and 76 through the bloom against a limit of 10, so the frame cost stays the largest risk and three owners are on it. Next: A dark cold teal leaf under the frost so the white stands out (built by its owner, on the bench next), brighter plates with a shadow foot, thinner rime sleeves on the stalk, the melt; antialiased hairs in live play; one laying of the plant a frame; the open head's fourth pass; the sun's short wink behind the neighbor at bar 66. Time used: 13.5 h of 30 h.
   Pictures: First close shot, frames 952, 1003 and 1054: the frost is there at the cut and grows. Sparks where a crystal mirrors the sun; The margin at full size, frame 1054: fans of needles on the edge, rime in chains on the veins. The plates on the blade are still too grey; Second and third close shots, frames 1106 and 1208: the tip against the sun, then the thaw with the drop about to let go; Guards, frames 1240, 940 and 1466: the thaw's last frame, the wide frame before the first cut, the climb after it.
+- Status 26, 2026-11-23 11:54 UTC, Phase 3. Frost close shots whiter with ice fans on the rim and soft star sparks; bloom head pass 4 with rays of unequal length; storm puddle fixed; Milky Way holds through the night. All in v2 699f0d2, 199 tests pass. Next: merge one laying a frame for the plant, hair roots laid once and the cut by size for live play cost, then the first whole watch in motion (parts being drawn on three machines). Time used: 13.9 h of 30 h.
+  Pictures: Frost close shot, frame 1054 (bar 21): white coat, ice fans on the rim, each spark a small soft star; Frost close shot, frame 1106 (bar 22): the tip against the low sun; Bloom, frame 3112 (bar 61): rays of unequal length, head pass 4; Storm hold, frame 1830 (bar 36): one puddle in the furrow.
 
