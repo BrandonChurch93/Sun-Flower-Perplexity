@@ -60,7 +60,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 
 `tools/checks/page/` is a page of its own that builds the real `Film` from `src/director/film.ts` at any size and reads `src/v2/counter.ts` round every frame. Nothing in it is a copy of the film. The faults live in that page and in `lib/film.ts`, never in `src/`.
 
-For the picture proof of the holds the page pins the film's `now` and `later` so that the wind is at rest, no weather shows, and the sun and the clouds stand still. That is a stand-in for a switch on `Film`.
+For the picture proof of the holds the page turns on the film's own switch for the world at rest (`film.setStill`): no weather, no wind, one fixed sun. It draws the ground, the plant, the companion and the field from two fixed cameras and reads the numbers before the lens and the grain.
 
 ## The review page
 

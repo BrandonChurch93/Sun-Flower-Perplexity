@@ -40,7 +40,7 @@ export function finish(given: Omit<Result, 'ok' | 'engineHash' | 'at'> & { ok?: 
   const result: Result = { ...r, ok, engineHash: engineHash(), at: new Date().toISOString() }
   if (result.table) console.log(table(result.table.head, result.table.rows) + '\n')
   for (const f of result.findings) console.log(`${result.check} · ${f.ok ? (f.expected ? 'expected' : 'ok') : 'FAIL'} · ${f.what}`)
-  const verdict = ok ? (result.complete ? 'PASS' : 'PASS SO FAR (not every frame is in yet)') : 'FAIL'
+  const verdict = ok ? (result.complete ? 'PASS' : 'PASS SO FAR (part of the check is not run yet)') : 'FAIL'
   console.log(`${result.check} · ${verdict} · ${result.subject}`)
   fs.mkdirSync(OUT, { recursive: true })
   const file = path.join(OUT, `${name ?? result.check}${result.broken ? `.broken-${result.broken}` : ''}.json`)
