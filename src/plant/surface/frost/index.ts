@@ -73,7 +73,7 @@ const float FROST_COAT_UNDER = 0.2;
 // The banks the coat lies in on an open field, in meters across.
 const float FROST_BANK_M = 0.0035;
 const float FROST_TONGUE_M = 0.011;
-const float FROST_FORM_SHADE = 0.45;
+const float FROST_FORM_SHADE = 0.3;
 // How pale the side of a grain turned from the light is against the lit side, and how sharply its face mirrors the sun.
 const float FROST_GRIT_SHADE = 0.4;
 // Heaped on a ridge the grains lie on grains, and the dark side of one is the pale of another.
@@ -147,7 +147,7 @@ vec4 frostChip(vec2 g, float reach, float chance, float grown, float packed, flo
   float soft = 0.5 * reach * thin.y / (r * cos(3.1416 / sides));
   float inside = frostSided(q * thin, r, sides);
   float cover = 1.0 - smoothstep(1.0 - soft, 1.0 + soft, inside);
-  float foot = (1.0 - smoothstep(1.0 - soft, 1.0 + soft, frostSided(q * thin + to * (FROST_FOOT * r + reach), r, sides))) * (1.0 - cover);
+  float foot = (1.0 - smoothstep(0.7, 1.0 + soft, frostSided(q * thin + to * (FROST_FOOT * r + reach), r, sides))) * (1.0 - cover);
   if (cover <= 0.0) return vec4(0.0, 0.0, 0.0, foot);
   float seg = 6.2832 / sides;
   float face = floor((atan(q.y * thin.y, q.x) + 3.1416) / seg);
@@ -276,7 +276,7 @@ vec4 frostCoat(vec2 at, float pixel, float skin, float want, float heaped, float
     vec2 b = q3 * (1.0 / FROST_PLATE_M) + 17.0;
     vec4 plate = frostChip(b, px / FROST_PLATE_M, min(0.85, smoothstep(0.2, 0.7, share) * (0.08 + 0.85 * clumps) * (0.6 + 0.6 * patchy) + 0.3 * closed * clumps), grown, closed, 0.5, lit3, N, view, plateMore);
     body = max(body, far * closed * (0.62 + 0.3 * valueNoise(q1 * (1.0 / FROST_GRIT_M) + 53.0)));
-    body *= 1.0 - FROST_FORM_SHADE * far * max(chip.w, plate.w);
+    body *= 1.0 - FROST_FORM_SHADE * far * chip.w;
     body = mix(body, chip.y, chip.x * far);
     body = max(body, fan.x * fan.y * far);
     body = mix(body * (1.0 - FROST_FORM_SHADE * far * plate.w), plate.y, plate.x * far);
