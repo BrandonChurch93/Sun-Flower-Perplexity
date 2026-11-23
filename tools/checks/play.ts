@@ -5,13 +5,13 @@ import type { Args } from '../lib/args.ts'
 import { num, str } from '../lib/args.ts'
 import { segments } from '../../src/director/timeline.ts'
 import { FRAMES, lightningFrames } from './lib/film.ts'
-import { frameFile, framesDir, playDir, readLines, readStamp, runName, type Line, type Stamp } from './lib/play.ts'
+import { frameFile, framesDir, MOST, playDir, readLines, readStamp, runName, type Line, type Stamp } from './lib/play.ts'
 import { engineHash } from './lib/report.ts'
 import { openSession } from './lib/session.ts'
 import { mad, small, type Small } from './lib/steps.ts'
 import { ranker } from './lib/stride.ts'
 
-// Draws frames of the film small, in order, after loading and warming as the film does before it plays. Keeps each picture and what each frame made.
+// Draws frames of the film small, in order, after loading and warming as the film does before it plays. Keeps each picture, what each frame made, and whether every pixel of it held a number before the lens.
 //   npm run checks -- play                         every frame, 320 x 180, one sample, the whole scene
 //   npm run checks -- play --from 0 --to 1269      a range, so that several can run side by side
 //   npm run checks -- play --minutes 8             stops by itself after 8 minutes; run it again and it carries on
@@ -96,6 +96,7 @@ export async function run(args: Args): Promise<void> {
     if (broken) await session.fault(broken, num(args, 'at'))
     const t0 = Date.now()
     await session.warm(tier)
+    await session.watch(MOST)
     console.log(`play · warmed in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
     const log = path.join(dir, `log-${id}.jsonl`)
     const progress = path.join(dir, `progress-${spans ? `spans-${process.pid}` : `${from}-${to}`}.txt`)
@@ -115,8 +116,10 @@ export async function run(args: Args): Promise<void> {
       // Another run may have drawn it since this one began.
       if (fs.existsSync(frameFile(run, f))) continue
       const d = await session.draw(f, tier)
+      const numbers = await session.numbers(MOST)
       fs.writeFileSync(frameFile(run, f), d.png as Buffer)
-      const line: Line = { frame: f, seconds: d.seconds, made: d.made, session: id, nth: done }
+      const line: Line = { frame: f, seconds: d.seconds, made: d.made, session: id, nth: done, numbers }
+      if (numbers.none + numbers.over > 0) console.log(`play · frame ${f} holds ${numbers.none} pixels without a number and ${numbers.over} over ${MOST} before the lens`)
       fs.appendFileSync(log, JSON.stringify(line) + '\n')
       total += d.seconds
       done++

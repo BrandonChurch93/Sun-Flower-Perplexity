@@ -6,7 +6,12 @@ import { OUT } from './report.ts'
 
 // One drawing of the film, frame by frame, small: the pictures and what each frame made. `film` is the film as it is, `broken-<fault>` a film broken on purpose.
 export interface Stamp { hash: string; width: number; height: number; sky: string; only: string; tier: string; quality: string }
-export interface Line { frame: number; seconds: number; made: Made; session: string; nth: number }
+// `numbers` is what the frame holds before the lens: pixels without a number, pixels over the limit, the largest number in order, and where the bad ones are (x, then y from the top). A frame drawn before `play` read it has none.
+export interface Held { none: number; over: number; most: number; at?: [number, number]; where: number[]; sparks?: number; ratio?: number }
+export interface Line { frame: number; seconds: number; made: Made; session: string; nth: number; numbers?: Held }
+// A number above this in any sample of a frame, before the lens, is counted as too bright: a sample holds nothing above 65504, and a graphics card that cannot keep a place without a number keeps it as that top. The lens spreads either into a disc.
+// The page reads each sample (`watch`), since in the sum of 48 one lost place is a forty-eighth of the top, and a sample drawn at four places a pixel is read against a quarter of the limit.
+export const MOST = 60000
 
 export const playDir = (run: string): string => path.join(OUT, 'play', run)
 export const framesDir = (run: string): string => path.join(playDir(run), 'frames')
@@ -43,7 +48,7 @@ export function readLines(run: string): Map<number, Line> {
 }
 
 // Lets another check that draws the film in a row keep its frames where `play` keeps them, so that one drawing serves both. Frames of another film or size are thrown away first, as `play` does.
-export function keeper(run: string, stamp: Stamp): (frame: number, seconds: number, made: Made, png: Buffer) => void {
+export function keeper(run: string, stamp: Stamp): (frame: number, seconds: number, made: Made, png: Buffer, numbers?: Held) => void {
   const dir = playDir(run)
   const old = readStamp(run)
   if (old && JSON.stringify(old) !== JSON.stringify(stamp)) fs.rmSync(dir, { recursive: true, force: true })
@@ -52,9 +57,9 @@ export function keeper(run: string, stamp: Stamp): (frame: number, seconds: numb
   const session = `${process.pid}-${Date.now()}`
   const log = path.join(dir, `log-${session}.jsonl`)
   let nth = 0
-  return (frame, seconds, made, png) => {
+  return (frame, seconds, made, png, numbers) => {
     fs.writeFileSync(frameFile(run, frame), png)
-    const line: Line = { frame, seconds, made, session, nth: nth++ }
+    const line: Line = { frame, seconds, made, session, nth: nth++, numbers }
     fs.appendFileSync(log, JSON.stringify(line) + '\n')
   }
 }
