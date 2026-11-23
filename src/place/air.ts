@@ -40,6 +40,10 @@ export const airUniforms = {
   uLandWet: { value: 0 },
   uLandFrost: { value: 0 },
   uLandCrop: { value: new THREE.Vector3(0.03, 0.052, 0.018) },
+  // How high the far crop's tops stand over its ground when the lens looks down on them: the air is counted to the tops, as it is on the field's own far rows.
+  uLandCropTopM: { value: 0 },
+  // How far the lens looks down into the far crop: 0 level with its tops, 1 well over them.
+  uLandOver: { value: 0 },
   uLandWind: { value: 0 },
 }
 
@@ -59,6 +63,8 @@ uniform vec3 uTrueSun;
 uniform float uLandWet;
 uniform float uLandFrost;
 uniform vec3 uLandCrop;
+uniform float uLandCropTopM;
+uniform float uLandOver;
 
 // How far a direction leans toward the bearing of the sun.
 float sunward(vec3 dir) {
