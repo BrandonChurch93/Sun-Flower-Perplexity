@@ -2,7 +2,7 @@ import { config, frameCount, type Format, type TierId } from '../config.ts'
 import type { Film } from '../director/film.ts'
 import { keys, segments } from '../director/timeline.ts'
 import { MARK_HOLD_SECONDS, markSeconds, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
-import type { Report, RunFacts } from './pacing.ts'
+import type { Report, RunFacts, ScriptAlone } from './pacing.ts'
 import { filmPlan, play, stretchPlan, type Plan, type Playing } from './play.ts'
 import { stateRun, type StateReport } from './state.ts'
 
@@ -239,6 +239,41 @@ export function timing(deck: Deck, say: (seconds: number | null) => void): Sessi
       stopped = true
       playing?.stop()
       document.dispatchEvent(new Event('visibilitychange'))
+    },
+    finished: run(),
+  }
+}
+
+// The page's own work on the frames of the timing, set in a row with every draw call left out.
+// A frame that is skipped makes the next one dearer, so only frames set in a row say whether the script alone is over the frame.
+export function timingScript(deck: Deck, say: (done: number, of: number) => void): { stop(): void; finished: Promise<ScriptAlone | null> } {
+  const each = Math.round((CHECK_SECONDS * config.film.fps) / CHECK_STRETCHES)
+  const starts = checkStarts(each)
+  const of = each * starts.length
+  let stopped = false
+  const run = async (): Promise<ScriptAlone | null> => {
+    const found: ScriptAlone = { frames: 0, over: 0, meanMs: 0, worstMs: 0 }
+    let sum = 0
+    for (const [i, start] of starts.entries()) {
+      const part = await stateRun(deck.film, start, start + each - 1, deck.tier, {
+        stopped: () => stopped,
+        onFrame(frame) {
+          const done = i * each + frame - start + 1
+          if (done % 10 === 0 || done === of) say(done, of)
+        },
+      })
+      if (!part.complete) return null
+      found.frames += part.frames
+      found.over += part.overFrame
+      sum += part.script.meanMs * part.frames
+      found.worstMs = Math.max(found.worstMs, part.script.worstMs)
+    }
+    found.meanMs = found.frames ? sum / found.frames : 0
+    return found
+  }
+  return {
+    stop() {
+      stopped = true
     },
     finished: run(),
   }

@@ -12,6 +12,7 @@ export interface Loading {
   again(title: string): void
   // The machine is being timed at `quality`: `seconds` of `of` done, or null while the timing waits for the page to be in view.
   timing(quality: string, seconds: number | null, of: number): void
+  script(quality: string, done: number, of: number): void
   done(): void
   fail(text: string): void
 }
@@ -196,6 +197,12 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       timedCount.textContent = waits ? 'waiting for the page to be in view' : `${Math.floor(seconds)} of ${of} s at ${quality} quality`
       timedFill.style.setProperty('--at', String(waits ? 0 : seconds / of))
       const text = waits ? 'The timing starts when this page is in view' : `Timing this machine at ${quality} quality: ${of} seconds of the film's hardest parts`
+      if (state.textContent !== text) state.textContent = text
+    },
+    script(quality, done, of) {
+      timedCount.textContent = `${done} of ${of} frames with nothing drawn`
+      timedFill.style.setProperty('--at', String(done / of))
+      const text = `${quality === 'high' ? 'High' : 'Low'} quality did not hold ${config.film.fps} frames a second here. Timing the page's own work alone, to see which half is slow`
       if (state.textContent !== text) state.textContent = text
     },
     again(text) {

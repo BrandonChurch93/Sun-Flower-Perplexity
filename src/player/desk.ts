@@ -2,7 +2,7 @@ import { config } from '../config.ts'
 import type { Quality } from '../v2/api.ts'
 import css from './desk.module.css'
 import { LEAD_SECONDS, SETTLE_SECONDS, TAIL_SECONDS } from './clock.ts'
-import { GAP_MS, reportFile, reportName, type Report } from './pacing.ts'
+import { clockName, GAP_MS, reportFile, reportName, type Report } from './pacing.ts'
 import { fileOf, trackLine, type Track } from './track.ts'
 
 export interface DeskActions {
@@ -262,7 +262,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       }
       reportBody.append(
         line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped, ${f.late} shown late`),
-        line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
+        line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of ${clockName(report)}`),
         line('Between frames', `longest ${ms(report.gapMs.longest)} at ${at(report.gapMs.longestAtFilm)}, 99th percentile ${ms(report.gapMs.p99)}, mean ${ms(report.gapMs.mean)}`),
         line('Picture behind sound', `when chosen mean ${ms(report.pickedMs.mean)}, largest ${ms(report.pickedMs.largest)}. When drawn mean ${ms(report.behindMs.mean)}, largest ${ms(report.behindMs.largest)} at ${at(report.behindMs.largestAtFilm)}`),
         line('Drawing a frame', `mean ${ms(report.drawMs.mean)}, 99th percentile ${ms(report.drawMs.p99)}. Of that the page's own work mean ${ms(report.scriptMs.mean)}, longest ${ms(report.scriptMs.longest)}, and the wait for the picture mean ${ms(report.cardMs.mean)}`),

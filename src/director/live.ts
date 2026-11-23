@@ -3,9 +3,9 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { reportFile, reportName, reportText, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
+import { reportFile, reportName, reportText, scriptBound, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
-import { check, CHECK_SECONDS, measure, pictureSize, record, timing, type Deck, type Measured } from '../player/session.ts'
+import { check, CHECK_SECONDS, measure, pictureSize, record, timing, timingScript, type Deck, type Measured } from '../player/session.ts'
 import { createSheet } from '../player/sheet.ts'
 import { stateRun, stateText, type StateReport } from '../player/state.ts'
 import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
@@ -617,7 +617,8 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     return { live, script, text }
   }
 
-  // The timing at the end of loading: twenty seconds at the quality the film would play at. If that does not hold the rate the film is made ready at low quality and timed again.
+  // The timing at the end of loading: twenty seconds at the quality the film would play at. If that does not hold the rate, the same frames are set in a row with nothing drawn.
+  // If the script alone is over the frame, low quality cures nothing and nothing is warmed twice. If it is the picture that is slow, the film is made ready at low quality and timed again.
   async function timeLevels(): Promise<void> {
     become('check', 'Timing this machine')
     const found: Timed[] = []
@@ -633,9 +634,16 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         session = null
         last = report
         if (!report.complete) break
-        found.push({ quality: level, held: report.nearly, due: report.frames.due, shown: report.frames.drawn, skipped: report.frames.skipped, longestGapMs: report.gapMs.longest, slow: report.slow.frames })
+        const one: Timed = { quality: level, held: report.nearly, due: report.frames.due, shown: report.frames.drawn, skipped: report.frames.skipped, longestGapMs: report.gapMs.longest, slow: report.slow.frames, script: null }
+        found.push(one)
         if (report.nearly || level === 'low') break
-        loading?.again(`High quality did not hold ${config.film.fps} frames a second here. Getting ready at low quality`)
+        loading?.script(level, 0, report.frames.due)
+        const alone = timingScript(deck, (done, of) => loading?.script(level, done, of))
+        session = alone
+        one.script = await alone.finished
+        session = null
+        if (one.script === null || scriptBound(one)) break
+        loading?.again(`High quality did not hold ${config.film.fps} frames a second here, and it is the picture that is slow. Getting ready at low quality`)
         film.quality = 'low'
         await film.warm(tier, loading?.step)
         quality = 'low'
