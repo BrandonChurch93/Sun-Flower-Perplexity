@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { hash32, stream } from '../core/random.ts'
 import { makeSurface } from '../core/shading.ts'
 import { airGlsl, airUniforms, farDepth } from './air.ts'
-import { FIELDS, cellAt, inCrop, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, soilAt, stripEdge, woodAt } from './land.ts'
+import { FIELDS, cellAt, inCrop, fieldEdge, fieldHash, fromFields, gateAt, isHome, landHill, noise2, plantedAt, sillAt, sillLineM, soilAt, stripEdge, woodAt } from './land.ts'
 
 // Trees, copses and hedges: each one a card that turns to the lens, cut out and lit by a crown drawn at load. One crown is some eighty balls of leaves on a trunk, seen from the side, kept as its surface direction, how deep each leaf sits in the crown, and where the sky shows through.
 const CELL = 256
@@ -146,8 +146,20 @@ const HEDGE_FROM_M = 125
 const TREES_FROM_M = 760
 const BOUND_TREES_FROM_M = 760
 const LINES_TO_M = 2500
+const SILL_CLEAR_M = 1.5
 // Bearing, distance and trees of each small wood in the crop.
-const COPSES = [[239.5, 1320, 22], [168.5, 1480, 18], [147, 1150, 16]]
+const COPSES = [
+  [239.5, 1320, 22],
+  [168.5, 1480, 18],
+  [147, 1150, 16],
+  [199.5, 860, 9],
+  [204.5, 1420, 20],
+  [210.5, 1040, 12],
+  [216.5, 1380, 16],
+  [236, 1020, 11],
+  [246, 1500, 18],
+  [171.2, 1120, 13],
+]
 
 export function plantList(): Tree[] {
   const rnd = stream('place trees')
@@ -162,7 +174,10 @@ export function plantList(): Tree[] {
     const r = Math.hypot(x, z)
     const az = (Math.atan2(x, z) / RAD + 360) % 360
     const capDeg = 3.2 - 2.45 * gateAt(az)
-    return r * Math.tan(capDeg * RAD) - Math.max(0, soil)
+    // On the sill of the last sun every crown stays under the line the lens sees along.
+    const sill = sillAt(az)
+    const top = r * Math.tan(capDeg * RAD)
+    return top + (Math.min(top, sillLineM(r, az) - SILL_CLEAR_M) - top) * sill - Math.max(0, soil)
   }
   const seen = (x: number, z: number): boolean => {
     const az = (Math.atan2(x, z) / RAD + 360) % 360
@@ -177,6 +192,13 @@ export function plantList(): Tree[] {
       if (allowed < 2.2) return
       h = Math.max(allowed, 0.45 * tall)
       if (h > allowed * 1.25) return
+    }
+    const r = Math.hypot(x, z)
+    const az = (Math.atan2(x, z) / RAD + 360) % 360
+    const under = h + (Math.min(h, sillLineM(r, az) - SILL_CLEAR_M - Math.max(0, soil)) - h) * sillAt(az)
+    if (under < h) {
+      if (under < 2.2) return
+      h = under
     }
     const variant = poplar ? POPLAR : TALL[rnd.int(TALL.length)]
     trees.push({ x, y: soil - 0.25, z, w: h * (variant === 5 ? 0.95 : 1), h, variant, flip: rnd.next() < 0.5 ? -1 : 1, phase: rnd.next(), tint: tint(1) })
