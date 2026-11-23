@@ -96,7 +96,7 @@ export class Field {
     this.seconds = now.t
     this.wind = now.dials.wind
     this.leafWind = Math.max(open.wind, now.dials.wind)
-    // The neighbors are swayed here, one by one, on the film second: the swell a shape takes on the plant's clock would stand still in a hold.
+    // The neighbors are swayed as they are drawn, on the film second: the swell a shape takes on the plant's clock would stand still in a hold.
     fieldUniforms.uPlantWind.value = 0
     const still = shapeInputs(open)
     const stillClose = shapeInputs(close)
