@@ -9,7 +9,8 @@ import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBroadeni
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
 import { leafFrameAt, type Pose } from '../skeleton.ts'
-import { beadAt, createBeads, type Bead, type BeadSet } from '../surface/wet/index.ts'
+import { beadPlan, createBeads, type BeadPlan, type BeadSet } from '../surface/wet/index.ts'
+import { RAIN_STANDS } from '../../v2/inputs.ts'
 import { createCrystals } from '../../weather/frost/index.ts'
 import { fallDir, landingsNear, rainStrength, type Drop } from '../../weather/rain/drops.ts'
 import { flutter, gust, restless, squall, windToward } from '../wind.ts'
@@ -27,7 +28,7 @@ const FACING = 1.2
 const FRINGE = 4
 const DAWN_GLOW = 0.35
 const RAIN_GLOW = 0.5
-const NIGHT_GLOW = 0.65
+const NIGHT_GLOW = 0.32
 // The first second of the bloom: from here on a neighbor's leaves are the bloom's own.
 const BLOOM = 40
 // The other marks on the plant's clock the leaves are timed to: where the first pair opens, where the plant is set, where its bud is formed, and where the seedling and the shoot are at their fullest.
@@ -48,6 +49,7 @@ const YOUNG_TEETH = 0.03
 // Before the bloom a blade keeps this much of its grown shape at most.
 const YOUNG_RIPE = 0.25
 const FALL = 0.8
+const LOW_STANDS = 0.85
 // How far the first pair has parted by the end of the dawn, as a share of its way to open.
 const PART = 0.3
 const ASKEW = 0.7
@@ -495,71 +497,95 @@ export function create(options: PartOptions): PlantPart {
   }
   const crystals = hero ? createCrystals(options, crystalSlots, 'leaf crystals') : null
 
-  const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 280 : 90, 'leaf beads') : null
-  const beadPlan: { leaf: number; own: number; along: number; across: number }[] = []
-  const bead: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
+  const beads: BeadSet | null = hero ? createBeads(options, options.variant === 0 ? 600 : 200, 'leaf beads') : null
+  const beadSpots: { leaf: number; own: number; along: number; across: number; plan: BeadPlan }[] = []
   if (beads) {
     const tint = beads.tint()
+    // The water is shared out by the face each blade shows where the plant stands in the rain, and a tenth evenly for the blades that come later.
+    const share = leaves.map((leaf) => lengthAt(leaf.i, RAIN_STANDS) ** 2)
+    const whole = share.reduce((a, b) => a + b, 0)
     for (let k = 0; k < beads.count; k++) {
       const r = (c: number) => hash01(seed, 9000 + k, c)
-      // Water gathers along the pressed midrib and in the troughs between the side veins; the first leaves carry most of it in the rain.
+      // Water gathers along the pressed midrib and in the troughs between the side veins.
       const side = r(3) < 0.5 ? -1 : 1
       const across = r(4) < 0.4 ? side * 0.1 * r(5) : side * (0.12 + 0.76 * r(5))
-      beadPlan.push({ leaf: Math.floor(Math.pow(r(0), 1.6) * leaves.length), own: r(1), along: 0.1 + 0.84 * r(2), across })
+      let leaf = Math.min(leaves.length - 1, Math.floor(r(6) * leaves.length))
+      if (whole > 0 && r(7) < 0.9) {
+        let left = r(0) * whole
+        leaf = 0
+        while (leaf < leaves.length - 1 && left > share[leaf]) left -= share[leaf++]
+      }
+      const along = 0.1 + 0.84 * r(2)
+      beadSpots.push({ leaf, own: r(1), along, across, plan: beadPlan(r(1), along, across, { midAlong: 0, midAcross: 0, endAlong: 0, endAcross: 0, reaches: 0, dewAlong: 0, dewAcross: 0, dewKind: 0 }) })
       tint.set([0.05, 0.1, 0.026], k * 3)
     }
   }
 
-  const fillBeads = (slot: 0 | 1, pose: Pose): void => {
+  // A place on a blade's skin and the normal of the face that holds water there.
+  const put = (leaf: Leaf, along: number, across: number, to: Float32Array, up: Float32Array | null, o: number): void => {
+    const out = slots[0]
+    const b0 = leaf.hem ? 1 : 0
+    const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
+    const s = clamp(along, 0, 1)
+    const fa = s * (leaf.nu - 1.001)
+    let fb = b0 + (0.5 + 0.5 * clamp(across, -1, 1)) * (b1 - b0 - 0.001)
+    if (leaf.hem) {
+      // A bead keeps to the skin: it does not sit in the bay between two teeth.
+      const k0 = Math.floor(fb) - 1
+      const w = HERO_COLS[k0] + (HERO_COLS[k0 + 1] - HERO_COLS[k0]) * (fb - 1 - k0)
+      const sd = combine(seed, leaf.i * 2 + (w < 0 ? 0 : 1))
+      const reach = 0.97 - bayAt(s, sd, leaf.teeth, toothKey(sd)) * cut[leaf.i * 4 + 1]
+      if (Math.abs(w) > reach) {
+        const edge = Math.sign(w) * reach
+        let c = 0
+        while (c < HERO_COLS.length - 2 && HERO_COLS[c + 1] < edge) c++
+        fb = 1 + c + (edge - HERO_COLS[c]) / (HERO_COLS[c + 1] - HERO_COLS[c])
+      }
+    }
+    const a = Math.floor(fa)
+    const b = Math.floor(fb)
+    const ta = fa - a
+    const tb = fb - b
+    const v00 = (leaf.base + a * leaf.nv + b) * 3
+    const v10 = v00 + leaf.nv * 3
+    for (let c = 0; c < 3; c++) {
+      const low = out[v00 + c] + (out[v00 + 3 + c] - out[v00 + c]) * tb
+      const high = out[v10 + c] + (out[v10 + 3 + c] - out[v10 + c]) * tb
+      to[o + c] = low + (high - low) * ta
+    }
+    if (up) {
+      const turned = normals[v00 + 1] < 0 ? -1 : 1
+      up[o] = normals[v00] * turned
+      up[o + 1] = normals[v00 + 1] * turned
+      up[o + 2] = normals[v00 + 2] * turned
+    }
+  }
+
+  // Each bead's path is laid on the skin as it stands: where it forms, where its slide ends and where its dew gathers. The running is in the bead's own shader.
+  const fillBeads = (pose: Pose): void => {
     if (!beads) return
-    const seat = beads.seat(slot)
-    const rest = beads.rest(slot)
-    const out = slots[slot]
+    const form = beads.form()
+    const formUp = beads.formUp()
+    const mid = beads.mid()
+    const end = beads.end()
+    const endUp = beads.endUp()
+    const gather = beads.gather()
     for (let k = 0; k < beads.count; k++) {
-      const spot = beadPlan[k]
+      const spot = beadSpots[k]
       const leaf = leaves[spot.leaf]
       const o = k * 4
-      seat[o + 3] = 0
       const size = lengthAt(leaf.i, pose.time)
+      put(leaf, spot.along, spot.across, form, formUp, o)
+      form[o + 3] = spot.own
       // A blade still folded holds no water on its face.
-      if (size <= 0 || leafFold(leaf.i, pose.time) > 0.25) continue
-      beadAt(spot.own, spot.along, spot.across, pose.time, bead)
-      if (bead.radiusM <= 0) continue
-      const b0 = leaf.hem ? 1 : 0
-      const b1 = leaf.hem ? leaf.nv - 2 : leaf.nv - 1
-      const fa = clamp(bead.along, 0, 1) * (leaf.nu - 1.001)
-      let fb = b0 + (0.5 + 0.5 * clamp(bead.across, -1, 1)) * (b1 - b0 - 0.001)
-      if (leaf.hem) {
-        // A bead keeps to the skin: it does not sit in the bay between two teeth.
-        const k0 = Math.floor(fb) - 1
-        const w = HERO_COLS[k0] + (HERO_COLS[k0 + 1] - HERO_COLS[k0]) * (fb - 1 - k0)
-        const sd = combine(seed, leaf.i * 2 + (w < 0 ? 0 : 1))
-        const reach = 0.97 - bayAt(clamp(bead.along, 0, 1), sd, leaf.teeth, toothKey(sd)) * cut[leaf.i * 4 + 1]
-        if (Math.abs(w) > reach) {
-          const to = Math.sign(w) * reach
-          let k = 0
-          while (k < HERO_COLS.length - 2 && HERO_COLS[k + 1] < to) k++
-          fb = 1 + k + (to - HERO_COLS[k]) / (HERO_COLS[k + 1] - HERO_COLS[k])
-        }
-      }
-      const a = Math.floor(fa)
-      const b = Math.floor(fb)
-      const ta = fa - a
-      const tb = fb - b
-      const v00 = (leaf.base + a * leaf.nv + b) * 3
-      const v10 = v00 + leaf.nv * 3
-      for (let c = 0; c < 3; c++) {
-        const low = out[v00 + c] + (out[v00 + 3 + c] - out[v00 + c]) * tb
-        const high = out[v10 + c] + (out[v10 + 3 + c] - out[v10 + c]) * tb
-        seat[o + c] = low + (high - low) * ta
-      }
-      const up = normals[v00 + 1] < 0 ? -1 : 1
-      rest[o] = normals[v00] * up
-      rest[o + 1] = normals[v00 + 1] * up
-      rest[o + 2] = normals[v00 + 2] * up
-      rest[o + 3] = bead.hang
-      seat[o + 1] -= bead.fallM
-      seat[o + 3] = seat[o + 1] > 0 ? bead.radiusM * 0.65 * clamp(size / 0.07, 0.3, 1) : 0
+      formUp[o + 3] = size <= 0 || leafFold(leaf.i, pose.time) > 0.25 ? 0 : 0.65 * clamp(size / 0.07, 0.3, 1)
+      put(leaf, spot.plan.midAlong, spot.plan.midAcross, mid, null, o)
+      mid[o + 3] = spot.plan.reaches
+      put(leaf, spot.plan.endAlong, spot.plan.endAcross, end, endUp, o)
+      end[o + 3] = spot.across
+      endUp[o + 3] = 0
+      put(leaf, spot.plan.dewAlong, spot.plan.dewAcross, gather, null, o)
+      gather[o + 3] = spot.plan.dewKind
     }
   }
 
@@ -612,7 +638,9 @@ export function create(options: PartOptions): PlantPart {
     const blade = total * (1 - stalk)
     // A neighbor is held less firmly than the plant: its leaves reach less far out.
     const firm = main ? early : 0.5 * early
-    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm)
+    // Once the plant climbs, a blade near the ground stands out from the stem and droops at its tip: it does not hang down the stem into the wet.
+    const low = main ? LOW_STANDS * smoothstep(13, 18, time) * (1 - smoothstep(0.08, 0.3, frame.oy)) : 0
+    const droop = leafDroop(i, pose.inputs, time) * lerp(1, 0.6 + 0.2 * smoothstep(3, 14, age), firm) * (1 - 0.6 * low)
     // From the night to the bloom the plant is set: stout stalks stand at their angle to the end, and every blade is tilted a little toward the lens, upper face first.
     const stout = smoothstep(22, BUDDED_S, time) * early
     // The first pair stands shut on the stem's end, face to face and square to the seed leaves. It opens in the rain and swings to its own place.
@@ -769,7 +797,7 @@ export function create(options: PartOptions): PlantPart {
     // A leaf held up round the bud bends its tip down.
     const nod = i < 2 ? (main ? 0.7 * smoothstep(5.8, 8.5, time) * (1 - smoothstep(9.5, 12, time)) : 0) : 0.45 * crown * smoothstep(2, 7, age)
     // Before the bloom a blade falls away from the end of its stalk, the more the farther it stands under the tip.
-    const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) : 0
+    const fall = round > 0 ? FALL * lerp(1.35, 1, smoothstep(17, 22, time)) * round * smoothstep(1.5, 6, age) * smoothstep(0, 0.07, (1 - leafStemFraction(i, time)) * heightAt(time)) * (1 - low) : 0
     // A blade that hangs is seen from its side, not turned flat to the lens.
     const facing = fall > 0 ? faced * (1 - 0.55 * fall / FALL) : faced
     const lay = (hang: number): number => {
@@ -1126,7 +1154,7 @@ export function create(options: PartOptions): PlantPart {
       if (slot === 0) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)
-      fillBeads(slot, pose)
+      if (slot === 0) fillBeads(pose)
     },
     finish() {
       position.needsUpdate = true
