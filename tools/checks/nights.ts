@@ -2,6 +2,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { barText, clockOf, crossing, FRAME, FRAMES, holds, secondsOf } from './lib/film.ts'
 import { duskProof } from './dusks.ts'
+import { moonProof } from './moonblink.ts'
 import { judgedOf, plantProof } from './plantalone.ts'
 import { finish, table, type Finding } from './lib/report.ts'
 
@@ -43,7 +44,7 @@ export function nightsOf(film: ReturnType<typeof clockOf>): Night[] {
 
 export async function run(args: Args): Promise<void> {
   const broken = typeof args.break === 'string' ? args.break : null
-  const drawnBreak = broken !== null && (broken.startsWith('picture-') || broken.startsWith('plant-'))
+  const drawnBreak = broken !== null && (broken.startsWith('picture-') || broken.startsWith('plant-') || broken === 'moon-blink')
   const film = clockOf(broken && !drawnBreak ? broken : null)
   const limit = num(args, 'limit', 1.2)
   const nights = nightsOf(film)
@@ -73,12 +74,17 @@ export async function run(args: Args): Promise<void> {
   findings.push({ ok: true, what: `the sun is under the horizon for ${total.toFixed(2)} s of ${secondsOf(FRAMES).toFixed(0)} in all, and more than ${-DARK_DEG} degrees under for ${dark.toFixed(2)} s, never longer than ${longestDark.toFixed(2)} s at a time` })
   const proof = broken && !broken.startsWith('picture-') ? null : await duskProof(args, broken)
   const plant = broken && !broken.startsWith('plant-') ? null : await plantProof(args, broken)
+  const moon = broken && broken !== 'moon-blink' ? null : await moonProof(broken)
   if (proof) {
     findings.push(...proof.findings)
     if (proof.rows.length) {
       const f1 = (x: number): string => x.toFixed(1)
       console.log(table(['night', 'frames', 'midnight', 'before', 'darkest', 'after', 'largest fall', 'into', 'largest rise', 'into', 'wrong way', 'in a part', 'into', 'parts at once', 'dusk frames', 'dawn frames', 'verdict'], proof.rows.map((r) => [r.night, `${r.first} to ${r.last}`, r.midnight, f1(r.day), f1(r.dark), f1(r.after), f1(r.fall), r.fallAt, f1(r.rise), r.riseAt, r.wrong.toFixed(2), f1(r.part), r.partAt, r.partsAtOnce, r.duskFrames, r.dawnFrames, r.ok ? 'ok' : 'FAIL'])) + '\n')
     }
+  }
+  if (moon) {
+    findings.push(...moon.findings)
+    if (moon.rows.length) console.log(table(['night', 'frames', 'moon in frame', 'peak over its ring', 'at', 'judged from', 'to', 'falls and comes back', 'at', 'between', 'ring moves there', 'verdict'], moon.rows.map((r) => [r.night, `${r.first} to ${r.last}`, `${r.inFrame} of ${r.last - r.first + 1}`, r.peak.toFixed(0), r.peakAt < 0 ? '' : r.peakAt, r.seen ? r.from : '', r.seen ? r.to : '', r.seen ? r.dip.toFixed(1) : '', r.dipAt < 0 ? '' : r.dipAt, r.dipAt < 0 ? '' : `${r.before} and ${r.after}`, r.dipAt < 0 ? '' : r.ringMoved.toFixed(1), !r.seen ? 'no moon to judge' : r.ok ? 'ok' : 'FAIL'])) + '\n')
   }
   if (plant) {
     findings.push(...plant.findings)
@@ -87,12 +93,12 @@ export async function run(args: Args): Promise<void> {
   finish({
     check: 'nights',
     sentence: SENTENCE,
-    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : broken === 'picture-blink' ? 'a film whose middle goes dark for one frame of each night' : broken === 'plant-moon' ? 'a film whose moon is 2.4 times as strong' : broken === 'plant-wet' ? 'a film whose moon steps up in the middle of a wet dusk' : film.name,
+    subject: broken === 'picture-quick' ? 'a film whose nights run three times as fast' : broken === 'picture-bounce' ? 'a film with two frames of each dusk the wrong way round' : broken === 'picture-blink' ? 'a film whose middle goes dark for one frame of each night' : broken === 'plant-moon' ? 'a film whose moon is 2.4 times as strong' : broken === 'plant-wet' ? 'a film whose moon steps up in the middle of a wet dusk' : broken === 'moon-blink' ? 'a film whose moon is gone for one frame of each night' : film.name,
     broken,
-    complete: (proof ? proof.complete : true) && (plant ? plant.complete : true),
-    pictures: [...(proof?.pictures ?? []), ...(plant?.pictures ?? [])],
+    complete: (proof ? proof.complete : true) && (plant ? plant.complete : true) && (moon ? moon.complete : true),
+    pictures: [...(proof?.pictures ?? []), ...(moon?.pictures ?? []), ...(plant?.pictures ?? [])],
     findings,
     table: { head: ['night', 'sunset s', 'bar', 'sunrise s', 'bar', 'length s', 'deepest deg', `under ${DARK_DEG} deg s`, 'plant clock moved', 'where', 'verdict'], rows },
-    data: { limit, nights, step: proof?.step, dusks: proof?.rows, plant: plant?.sides },
+    data: { limit, nights, step: proof?.step, dusks: proof?.rows, plant: plant?.sides, moon: moon?.rows },
   })
 }

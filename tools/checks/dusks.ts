@@ -5,6 +5,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { canvas, cropped, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, secondsOf } from './lib/film.ts'
+import { meantCuts } from './lib/meant.ts'
 import { frameFile, olderFilm, runName } from './lib/play.ts'
 import { OUT, type Finding } from './lib/report.ts'
 import { twilights, type Twilight } from './lib/stride.ts'
@@ -128,6 +129,8 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
   fs.mkdirSync(dir, { recursive: true })
   const cacheFile = path.join(OUT, 'play', run, 'parts.json')
   const cache: Record<string, number[]> = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : {}
+  const meant = new Set(meantCuts())
+  const leftOut: number[] = []
   for (const t of twilights()) {
     let series: { frame: number; l: number; parts: number[] }[] = []
     let missing = 0
@@ -174,6 +177,10 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     let partIn = 0
     let partsAtOnce = 0
     for (let i = 1; i < series.length; i++) {
+      if (meant.has(series[i].frame)) {
+        leftOut.push(series[i].frame)
+        continue
+      }
       const d = series[i].l - series[i - 1].l
       const dusk = series[i].frame <= midnight
       if (dusk && -d > fall) [fall, fallAt] = [-d, series[i].frame]
@@ -225,6 +232,7 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
       pictures.push({ file: path.relative(process.cwd(), file), caption })
     }
   }
+  if (leftOut.length) findings.push({ ok: true, expected: true, what: `left out: the ${leftOut.length === 1 ? 'step' : 'steps'} into ${leftOut.length === 1 ? 'frame' : 'frames'} ${leftOut.join(', ')}, ${leftOut.length === 1 ? 'a cut' : 'cuts'} the film means (tools/checks/limits.json), ${leftOut.length === 1 ? 'is' : 'are'} not judged by the step of the frame's mean nor by its direction` })
   const older = olderFilm(run)
   if (older && drawn > 0) {
     findings.push({ ok: true, expected: true, what: older })
