@@ -77,8 +77,8 @@ void main() {
   float mirror = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
   vec3 r = reflect(-v, n);
   vec3 up = vec3(r.x, abs(r.y), r.z);
-  vec3 glitter = skyMirror(normalize(vec3(up.x, up.y * 0.35, up.z)), 6.0);
-  vec3 sky = mix(mix(uGroundBounce * 0.25, skyMirror(normalize(up), 1.0), smoothstep(-0.06, 0.02, r.y)), glitter, ${ROUGH.toFixed(2)});
+  vec3 glitter = skyMirror(normalize(vec3(up.x, up.y * 0.35, up.z)), 6.0, 1.0 - uBlaze);
+  vec3 sky = mix(mix(uGroundBounce * 0.25, skyMirror(normalize(up), 1.0, 1.0), smoothstep(-0.06, 0.02, r.y)), glitter, ${ROUGH.toFixed(2)});
   float banked = max(max(bankOver(p, up, 0.035), bankOver(p, up, 0.09)), bankOver(p, up, 0.2));
   sky = mix(sky, uGroundBounce * 0.25, banked);
   sky = mix(sky, uGroundBounce * 0.2, stalkOver(vWorld, up));

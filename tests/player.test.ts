@@ -60,7 +60,7 @@ describe('the pacing report', () => {
   })
 
   it('does not call a run clean when the graphics card was asked to make something', () => {
-    const made = { programs: 1, shaders: 2, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 0, updateBytes: 0, bufferUpdates: 0, bufferUpdateBytes: 0, textureUpdates: 0, textureUpdateBytes: 0 }
+    const made = { programs: 1, shaders: 2, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 0, updateBytes: 0, bufferUpdates: 0, bufferUpdateBytes: 0, textureUpdates: 0, textureUpdateBytes: 0, vertexArrays: 0 }
     const report = run(60, 4, 1000 / 60).report(facts, 60, true, made)
     expect(report.holds).toBe(false)
     expect(report.verdict).toContain('graphics card')

@@ -11,6 +11,8 @@ Each check stands for one sentence of Brandon's. It is a command that prints wha
 | `npm run checks -- play` | the same, every frame | 3,810 frames | 2 to 3 hours |
 | `npm run checks -- cuts` | no hard cuts: the edges of the picture stay where they are from one frame to the next | reads `play` | 10 to 40 s |
 | `npm run checks -- made` | no frame rate drop at a scene change: nothing is made after loading; what a hold writes is reported against a goal of 12 MB a frame | reads `play` | 2 s |
+| `npm run checks -- script` | no frame rate drop: the page's own script time in a frame, by part, inside the limits of `tools/checks/limits.json` | 13 windows of frames in a row, about 490 frames | about 30 min, 17 min with --frames 20; run it alone |
+| `npm run checks -- film` | the whole film small in one go: `play` on three pages, then `nights`, `cuts` and `made` in one table | 1,432 frames | 80 to 100 min |
 | `npm run checks -- writes` | what each owner writes to the graphics card a frame, at bars 21, 29, 35 and 61 | 8 frames | 4 min |
 | `npm run checks -- pure` | any frame can be drawn alone and gives the same pixels | 42 frames | 10 to 12 min |
 | `npm run checks -- all` | one line for each check | no, or `--draw` | 5 s |
@@ -36,6 +38,24 @@ npm run checks -- play --stride 6 --from 2540 --to 3809
 
 A draft frame has one sample, so everything out of focus is blurred by the lens fill alone (`src/post/post.ts`), whose stipple follows the frame number: far things are a little sharper in some frames than in others. That is the draft, not the film, and each frame is still a function of its number (`pure` passes on them). It sets how fine these picture checks can be: `nights` allows a dusk to move 2 of 255 the wrong way (measured up to 1.5 on sky-0), and fails a step of more than 14 of 255 a frame (the Builder's limit; before the sun was slowed at the horizon the steepest measured was 17.7 on sky-0 and 27.6 on sky-b).
 
+## The page's own time
+
+`script` draws frames in a row, as the film plays them, and reads after each one the film's own laps (`film.cost`, the same numbers `window.showcase.cost()` gives): the milliseconds of script by part, with the time the drawing itself takes left out. The first frame of a window comes after a jump and is not counted. The limits are in `tools/checks/limits.json` and nowhere else: the mean of a window, the worst frame, a mean for each named group of parts, one mean for every other part, the windows, and how long a window is with `--all`. Change a number there and run `npm run checks -- script --table`: nothing is drawn again.
+
+A window that is measured is kept in `out/work/checks/script/film/` until the film changes, so the check runs in parts: `--window 2070-2110`, `--frames 8` for the first 8 counted frames of each window (a quick look, marked "not whole"), `--all` for the whole film in windows drawn one after the other without a jump, `--again` to measure again. It prints one row a window (mean, worst, the worst frame, the three largest parts there, what is over its limit, PASS or FAIL), writes `out/work/checks/script.json` and exits with 1 on FAIL.
+
+The numbers are wall time on this machine, so the check has to run alone: another page drawing or a build beside it makes every number larger. It says so in its first line, counts the browsers that are already drawing when a run begins, marks what it measures beside them "not alone" and is then not complete.
+
+The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070-2110) hold the frames where a hold starts or ends, the worst frames found so far (860, 1260, 1665, 2083, where the boom of the music lands). They are measured whole in every run, whatever `--window` or `--frames` says, and printed first.
+
+## The whole film in one go
+
+`film` draws what a round of stride 6 still needs on three pages side by side (`--pages`), then runs `nights`, `cuts --stride 6` and `made --stride 6` and prints one table: a row for every night and a row for every day between two nights, with the frames drawn, the largest fall and rise of the frame's mean, the mean and the part that move the wrong way, the largest move of the edges, the hard cuts, the frames that made something, and a verdict. It carries on where it stopped, so it can be started again after a stop. `--stride 1` draws and judges every frame. `--no-draw` prints the table of what is there. Start it in the background and send its output to a file: it runs longer than a sandbox step.
+
+## The plant alone, and what may brighten it
+
+`nights --plant` knows three kinds of frame, by the film's dials. Dry (frost and wet under 0.02): the plant's mean may not rise by more than 0.5 of 255 between drawn frames on the way to midnight, and its mean and 90th percentile at midnight may not be above the handover's. Wet (the wet dial, which is how wet the plant is, at 0.02 or more): the mean may rise by at most 1.5 of 255 from one frame to the next, and every frame of such a dusk or dawn is drawn; the 90th percentile is listed and not judged. Under rime (the frost dial at 0.02 or more): left out, rime may brighten the plant. The table has a column for the frames left out and two for the wet ones, and a dusk or dawn with nothing left to judge reads "left out", not "ok".
+
 ## The holds, to the frame
 
 A hold begins on the frame that holds its first bar line and growth resumes on the frame that holds its last, so the last still frame is the one before it: Frost 849 to 1259, Storm 1672 to 2082. A frame is still when the plant's clock reads the hold's value at the open shutter and at its close. `holds` and `cues` fail a hold that is a frame short or a frame long.
@@ -59,6 +79,8 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
 | `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
+| `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails, the mean of the sum passes |
+| `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
 | `play --break made --at 900 --from 890 --to 910`, then `made --break made --from 890 --to 910` | a texture and a program are made at frame 900 |

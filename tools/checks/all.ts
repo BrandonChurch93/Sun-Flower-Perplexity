@@ -20,6 +20,7 @@ export async function run(args: Args): Promise<void> {
     ['cuts', [], 'cuts'],
     ['made', [], 'made'],
     ['pure', draw ? pass : ['--search'], draw ? 'pure' : 'pure.search'],
+    ['script', draw ? [] : ['--table'], 'script'],
   ]
   const rows: (string | number)[][] = []
   let failed = 0

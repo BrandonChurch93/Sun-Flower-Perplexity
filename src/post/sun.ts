@@ -6,7 +6,7 @@ import { later, now, shutterSeconds } from '../v2/now.ts'
 const clampTo = (v: number, most: number): number => Math.min(most, Math.max(-most, v))
 
 // Where the sun sits in the picture: x from the left and y from the bottom as shares of the frame (it may lie outside it), and how much it counts, 0 when it is behind the camera or far off frame. With it comes the blur circle of things at infinity, in pixels, which is what the sky carries, the radius of the sun's own disc at this lens as a share of the frame width, and how far the sun moves in the frame from one frame to the next.
-export interface SunInFrame { x: number; y: number; weight: number; farCircle: number; disc?: number; dx?: number; dy?: number }
+export interface SunInFrame { x: number; y: number; weight: number; farCircle: number; disc?: number; dx?: number; dy?: number; horizon?: number }
 
 // The sun's radius seen from the ground, in radians.
 const SUN_RADIUS = 0.00465
@@ -31,7 +31,11 @@ export function sunInFrame(pose: CameraPose, toSun: THREE.Vector3, gateMm: numbe
     dx = clampTo((later.sun.dot(pose.right) / to - now.sun.dot(pose.right) / from) * scale * frames, 0.5)
     dy = clampTo((later.sun.dot(pose.up) / to - now.sun.dot(pose.up) / from) * scale * aspect * frames, 0.5)
   }
-  return { x, y, weight: t * t * (3 - 2 * t), farCircle, disc, dx, dy }
+  // Where the horizon stands in the frame under the sun, as a share of its height.
+  const flat = Math.hypot(toSun.x, toSun.z)
+  const level = flat > 1e-4 ? (toSun.x * pose.forward.x + toSun.z * pose.forward.z) / flat : 0
+  const horizon = level > 0.05 ? 0.5 + ((toSun.x * pose.up.x + toSun.z * pose.up.z) / flat / level) * scale * aspect : 0
+  return { x, y, weight: t * t * (3 - 2 * t), farCircle, disc, dx, dy, horizon }
 }
 
 // The sun's disc as a share of the frame width at the bloom's lens.

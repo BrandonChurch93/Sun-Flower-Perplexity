@@ -119,7 +119,8 @@ class Puddles implements Part {
     const lit = this.lit
     lit.uMirrorFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 3)
     lit.uMirrorFlashAt.value.copy(now.flashAt)
-    lit.uBlaze.value = d.burst
+    // The deck stays over the break: as long as the sun stands in its tear the water shows the dark of the deck and the sun only as a path under the gap.
+    lit.uBlaze.value = Math.max(d.burst, d.sunThrough * Math.min(1, 2 * d.overcast))
     lit.uStalk.value.set(heightAt(now.tau), Math.max(stemBaseRadius(now.tau), 0.004), 0.3 * heightAt(now.tau), 0.85)
     // The rain keeps the water chopped; once it has passed the face stills and mirrors whole.
     lit.uChop.value = 0.12 + 0.55 * Math.sqrt(rain)

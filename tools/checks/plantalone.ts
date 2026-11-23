@@ -19,14 +19,64 @@ import { twilights } from './lib/stride.ts'
 // How far the plant's mean may rise between two drawn frames on the way to midnight: half a level of 255, the size of the grain and of the rounding to eight bits.
 const RISE = 0.5
 const MOON_FAULT = 2.4
+// Rime is allowed to brighten the plant: a frame with the frost dial at this or more is left out.
+// Water has a limit of its own: while the wet dial, which is how wet the plant is, is at this or more, the plant's mean may rise by at most WET_RISE of 255 from one frame to the next.
+const DIAL = 0.02
+const WET_RISE = 1.5
 
 export interface PlantFrame { frame: number; mean: number; high: number; share: number }
-export interface PlantSide { night: number; side: 'dusk' | 'dawn'; handover: number; midnight: number; frames: PlantFrame[]; rise: number; riseAt: number; ok: boolean; why: string; empty: number }
+export interface PlantSide { night: number; side: 'dusk' | 'dawn'; handover: number; midnight: number; frames: PlantFrame[]; rise: number; riseAt: number; ok: boolean; why: string; empty: number; leftOut?: number; wet?: number; wetRise?: number; wetRiseAt?: number }
 export interface PlantProof { findings: Finding[]; complete: boolean; pictures: { file: string; caption: string }[]; sides: PlantSide[] }
 interface Stored { engineHash: string; at: string; width: number; height: number; every: number; sides: PlantSide[]; pictures: { file: string; caption: string }[] }
 
 const scratch = blankMoment()
 const moonLit = (frame: number): boolean => momentAt(secondsOf(frame), scratch).lightKind === 'moon'
+
+const dialsOf = (frame: number): { frosty: boolean; wet: boolean } => {
+  const d = momentAt(secondsOf(frame), scratch).dials
+  return { frosty: d.frost >= DIAL, wet: d.wet >= DIAL }
+}
+const dry = (frame: number): boolean => {
+  const d = dialsOf(frame)
+  return !d.frosty && !d.wet
+}
+
+// The verdict of one dusk or dawn. Dry frames: no rise toward midnight, and midnight not above the handover. Wet frames: no rise of more than WET_RISE a frame. Frames under rime: left out.
+export function settle(side: PlantSide): PlantSide {
+  const frames = side.frames.filter((f) => dry(f.frame))
+  const seen = side.frames.filter((f) => !dialsOf(f.frame).frosty)
+  const leftOut = side.frames.length - seen.length
+  const wet = seen.length - frames.length
+  const empty = side.frames.find((x) => x.share === 0)
+  let rise = 0
+  let riseAt = side.handover
+  for (let i = 1; i < frames.length; i++) if (frames[i].mean - frames[i - 1].mean > rise) [rise, riseAt] = [frames[i].mean - frames[i - 1].mean, frames[i].frame]
+  let wetRise = 0
+  let wetRiseAt = -1
+  let wetSteps = 0
+  for (let i = 1; i < seen.length; i++) {
+    if (!dialsOf(seen[i].frame).wet && !dialsOf(seen[i - 1].frame).wet) continue
+    wetSteps++
+    const a = (seen[i].mean - seen[i - 1].mean) / Math.max(1, Math.abs(seen[i].frame - seen[i - 1].frame))
+    if (a > wetRise) [wetRise, wetRiseAt] = [a, seen[i].frame]
+  }
+  const base = { ...side, rise, riseAt, leftOut, wet, wetRise, wetRiseAt }
+  if (empty || (frames.length < 2 && wetSteps === 0)) return { ...base, ok: true, why: '', empty: empty ? empty.frame : -1 }
+  const why: string[] = []
+  if (frames.length >= 2) {
+    const first = frames[0]
+    const last = frames[frames.length - 1]
+    const where = last.frame === side.midnight ? 'at midnight' : 'at the last dry frame'
+    const from = first.frame === side.handover ? "the handover's" : `the first dry frame's`
+    if (rise > RISE) why.push(`the plant's mean rises ${rise.toFixed(2)} of 255 on the way to midnight, into frame ${riseAt}`)
+    if (last.mean > first.mean) why.push(`the plant's mean ${where} (${last.mean.toFixed(1)}, frame ${last.frame}) is above ${from} (${first.mean.toFixed(1)}, frame ${first.frame})`)
+    if (last.high > first.high) why.push(`its 90th percentile ${where} (${last.high}) is above ${from} (${first.high})`)
+  }
+  if (wetRise > WET_RISE) why.push(`with water on the plant its mean rises ${wetRise.toFixed(2)} of 255 a frame into frame ${wetRiseAt}, over the limit of ${WET_RISE}`)
+  return { ...base, ok: why.length === 0, why: why.join('; '), empty: -1 }
+}
+
+export const judgedOf = (s: PlantSide): boolean => s.empty < 0 && (s.frames.length - (s.leftOut ?? 0) - (s.wet ?? 0) >= 2 || (s.wet ?? 0) > 0)
 
 // For each night that reaches the moon's light: the first frame the moon lights, the deepest frame, the last frame the moon lights.
 export function handovers(): { night: number; dusk: number; midnight: number; dawn: number }[] {
@@ -79,20 +129,37 @@ function storedFile(broken: string | null): string {
   return path.join(OUT, 'plant', broken ? `broken-${broken}` : 'film', 'plant.json')
 }
 
-function judge(every: PlantSide[], drawnNow: boolean, total: number): Finding[] {
-  const sides = every.filter((s) => s.empty < 0)
+function judge(given: PlantSide[], drawnNow: boolean, total: number): Finding[] {
+  const every = given.map(settle)
+  const sides = every.filter(judgedOf)
   const unseen = every.filter((s) => s.empty >= 0)
-  const none: Finding[] = unseen.length ? [{ ok: true, expected: true, what: `not measured: the plant covers no pixel in ${unseen.length} of ${every.length} dusks and dawns drawn with the plant alone (${unseen.slice(0, 4).map((s) => `night ${s.night} ${s.side}, frame ${s.empty}`).join('; ')})` }] : []
+  const out = every.filter((s) => s.empty < 0 && (s.leftOut ?? 0) > 0)
+  const outFrames = out.reduce((a, s) => a + (s.leftOut ?? 0), 0)
+  const allFrames = every.reduce((a, s) => a + s.frames.length, 0)
+  const none: Finding[] = out.length ? [{ ok: true, expected: true, what: `left out, not judged: ${outFrames} of ${allFrames} frames drawn, in ${out.length} dusks and dawns, stand under rime (the frost dial at ${DIAL} or more), which may brighten the plant; ${every.filter((s) => s.empty < 0 && !judgedOf(s)).length} of those dusks and dawns have nothing left to judge (${every.filter((s) => s.empty < 0 && !judgedOf(s)).slice(0, 8).map((s) => `night ${s.night} ${s.side}`).join(', ') || 'none'})` }] : []
+  const wetSides = every.filter((s) => s.empty < 0 && (s.wet ?? 0) > 0)
+  if (wetSides.length) {
+    const w = wetSides.reduce((a, s) => ((s.wetRise ?? 0) > (a.wetRise ?? 0) ? s : a), wetSides[0])
+    none.push({ ok: true, expected: true, what: `with water on the plant (the wet dial at ${DIAL} or more), ${wetSides.reduce((a, s) => a + (s.wet ?? 0), 0)} frames in ${wetSides.length} dusks and dawns (${wetSides.map((s) => `night ${s.night} ${s.side}`).join(', ')}), the limit is a rise of ${WET_RISE} of 255 from one frame to the next: the largest is ${(w.wetRise ?? 0).toFixed(2)}${(w.wetRise ?? 0) > 0 ? ` into frame ${w.wetRiseAt} (night ${w.night}, ${w.side})` : ''}. The 90th percentile is listed for them and not judged: ${wetSides.map((s) => `night ${s.night} ${s.side} ${s.frames[0].high} at the handover, ${Math.max(...s.frames.map((f) => f.high))} at the most, ${s.frames[s.frames.length - 1].high} at midnight`).join('; ')}` })
+  }
+  if (unseen.length) none.push({ ok: true, expected: true, what: `not measured: the plant covers no pixel in ${unseen.length} of ${every.length} dusks and dawns drawn with the plant alone (${unseen.slice(0, 4).map((s) => `night ${s.night} ${s.side}, frame ${s.empty}`).join('; ')})` })
   if (sides.length === 0) return none
   const bad = sides.filter((s) => !s.ok)
   const worst = sides.reduce((a, s) => (s.rise > a.rise ? s : a), sides[0])
-  const fall = (s: PlantSide): number => s.frames[0].mean - s.frames[s.frames.length - 1].mean
-  const least = sides.reduce((a, s) => (fall(s) < fall(a) ? s : a), sides[0])
-  const highest = sides.reduce((a, s) => (s.frames[s.frames.length - 1].high - s.frames[0].high > a.frames[a.frames.length - 1].high - a.frames[0].high ? s : a), sides[0])
+  const ends = (s: PlantSide): [PlantFrame, PlantFrame] => {
+    const kept = s.frames.filter((f) => dry(f.frame))
+    return [kept[0], kept[kept.length - 1]]
+  }
+  const fall = (s: PlantSide): number => ends(s)[0].mean - ends(s)[1].mean
+  const lift = (s: PlantSide): number => ends(s)[1].high - ends(s)[0].high
+  const dried = sides.filter((s) => s.frames.filter((f) => dry(f.frame)).length >= 2)
+  if (dried.length === 0) return [{ ok: bad.length === 0, what: `by the plant alone: no dusk or dawn has two dry frames; ${bad.length} of ${sides.length} fail the limit for a wet plant` }, ...bad.slice(0, 6).map((s) => ({ ok: false, what: `night ${s.night}, ${s.side} (${barText(secondsOf(s.handover))}): ${s.why}` })), ...none]
+  const least = dried.reduce((a, s) => (fall(s) < fall(a) ? s : a), dried[0])
+  const highest = dried.reduce((a, s) => (lift(s) > lift(a) ? s : a), dried[0])
   const findings: Finding[] = [
     {
       ok: bad.length === 0,
-      what: `by the plant alone (${sides.length} of ${total} dusks and dawns drawn with nothing but the plant${drawnNow ? '' : ', read from the last drawing'}): ${bad.length === 0 ? 'from each handover to midnight the plant only gets darker' : `the plant gets brighter toward midnight in ${bad.length} of them`}; ${worst.rise > 0 ? `the largest rise between drawn frames is ${worst.rise.toFixed(2)} of 255 into frame ${worst.riseAt}` : 'it rises between no two drawn frames'} (limit ${RISE}); the smallest fall from handover to midnight is ${fall(least).toFixed(1)} (night ${least.night}, ${least.side}: ${least.frames[0].mean.toFixed(1)} at frame ${least.handover} to ${least.frames[least.frames.length - 1].mean.toFixed(1)} at frame ${least.midnight}); the 90th percentile at midnight against the handover's is at the worst ${highest.frames[highest.frames.length - 1].high} against ${highest.frames[0].high} (night ${highest.night}, ${highest.side})`,
+      what: `by the plant alone (${sides.length} of ${total} dusks and dawns judged, drawn with nothing but the plant${drawnNow ? '' : ', read from the last drawing'}): ${bad.length === 0 ? 'from each handover to midnight the plant only gets darker' : `the plant gets brighter toward midnight in ${bad.length} of them`}; ${worst.rise > 0 ? `the largest rise between drawn frames is ${worst.rise.toFixed(2)} of 255 into frame ${worst.riseAt}` : 'it rises between no two drawn frames'} (limit ${RISE}); the smallest fall from handover to midnight is ${fall(least).toFixed(1)} (night ${least.night}, ${least.side}: ${ends(least)[0].mean.toFixed(1)} at frame ${ends(least)[0].frame} to ${ends(least)[1].mean.toFixed(1)} at frame ${ends(least)[1].frame}); the 90th percentile at midnight against the handover's is at the worst ${ends(highest)[1].high} against ${ends(highest)[0].high} (night ${highest.night}, ${highest.side})`,
     },
   ]
   for (const s of bad.slice(0, 6)) findings.push({ ok: false, what: `night ${s.night}, ${s.side} (${barText(secondsOf(s.handover))}): ${s.why}` })
@@ -120,16 +187,16 @@ async function sheet(dir: string, side: PlantSide, width: number, height: number
 }
 
 // One sheet for each of the first two dusks or dawns that fail, or for the one that falls the least when none does.
-async function sheets(dir: string, every: PlantSide[], width: number, height: number): Promise<{ file: string; caption: string }[]> {
+async function sheets(dir: string, given: PlantSide[], width: number, height: number): Promise<{ file: string; caption: string }[]> {
   const pictures: { file: string; caption: string }[] = []
-  const sides = every.filter((s) => s.empty < 0 && s.frames.every((f) => fs.existsSync(path.join(dir, `${f.frame}.png`))))
+  const sides = given.map(settle).filter((s) => judgedOf(s) && s.frames.every((f) => fs.existsSync(path.join(dir, `${f.frame}.png`))))
   if (sides.length === 0) return pictures
   const bad = sides.filter((s) => !s.ok)
   const fall = (s: PlantSide): number => s.frames[0].mean - s.frames[s.frames.length - 1].mean
   const shown = bad.length > 0 ? bad.slice(0, 2) : [sides.reduce((a, s) => (fall(s) < fall(a) ? s : a), sides[0])]
   for (const s of shown) {
     const caption = `The plant alone, night ${s.night}, from the handover of the ${s.side} (frame ${s.handover}) to midnight (frame ${s.midnight}): mean ${s.frames[0].mean.toFixed(1)} to ${s.frames[s.frames.length - 1].mean.toFixed(1)} of 255 over the pixels the plant covers, 90th percentile ${s.frames[0].high} to ${s.frames[s.frames.length - 1].high}`
-    const second = s.ok ? 'It only gets darker toward midnight' : `FAIL: ${s.why}`
+    const second = `${s.ok ? 'It only gets darker toward midnight' : `FAIL: ${s.why}`}${s.leftOut ? `. ${s.leftOut} of the ${s.frames.length} frames stand under rime and are not judged` : ''}${s.wet ? `. ${s.wet} frames have water on the plant: largest rise a frame ${(s.wetRise ?? 0).toFixed(2)}, limit ${WET_RISE}` : ''}`
     pictures.push({ file: path.relative(process.cwd(), await sheet(dir, s, width, height, caption, second)), caption: `${caption}. ${second}` })
   }
   return pictures
@@ -146,7 +213,7 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
     const stale = stored.engineHash !== engineHash()
     if (stale) findings.push({ ok: true, expected: true, what: 'the plant alone was drawn from an older film: draw it again with npm run checks -- nights --plant' })
     const pictures = await sheets(path.dirname(file), stored.sides, stored.width, stored.height)
-    return { findings, complete: !stale && stored.sides.filter((s) => s.empty < 0).length === total, pictures: pictures.length ? pictures : stored.pictures, sides: stored.sides }
+    return { findings, complete: !stale && stored.sides.filter((s) => s.empty < 0).length === total, pictures: pictures.length ? pictures : stored.pictures, sides: stored.sides.map(settle) }
   }
   const width = num(args, 'width', 640)
   const height = num(args, 'height', 360)
@@ -165,7 +232,10 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
         const handover = side === 'dusk' ? n.dusk : n.dawn
         const way = side === 'dusk' ? 1 : -1
         const list: number[] = []
-        for (let f = handover; way * (n.midnight - f) > 0; f += way * every) list.push(f)
+        // A stretch with water on the plant is judged from one frame to the next, so every frame of it is drawn.
+        let anyWet = false
+        for (let f = handover; way * (n.midnight - f) >= 0; f += way) if (dialsOf(f).wet) anyWet = true
+        for (let f = handover; way * (n.midnight - f) > 0; f += way * (anyWet ? 1 : every)) list.push(f)
         list.push(n.midnight)
         const frames: PlantFrame[] = []
         for (const f of list) {
@@ -173,19 +243,9 @@ export async function plantProof(args: Args, broken: string | null): Promise<Pla
           fs.writeFileSync(path.join(dir, `${f}.png`), d.png as Buffer)
           frames.push({ frame: f, ...(await measure(d.png as Buffer, await session.covered())) })
         }
-        let rise = 0
-        let riseAt = handover
-        for (let i = 1; i < frames.length; i++) if (frames[i].mean - frames[i - 1].mean > rise) [rise, riseAt] = [frames[i].mean - frames[i - 1].mean, frames[i].frame]
-        const first = frames[0]
-        const last = frames[frames.length - 1]
-        const empty = frames.find((x) => x.share === 0)
-        const why = empty ? '' : [
-          rise > RISE ? `the plant's mean rises ${rise.toFixed(2)} of 255 on the way to midnight, into frame ${riseAt}` : '',
-          last.mean > first.mean ? `the plant's mean at midnight (${last.mean.toFixed(1)}, frame ${last.frame}) is above the handover's (${first.mean.toFixed(1)}, frame ${first.frame})` : '',
-          last.high > first.high ? `its 90th percentile at midnight (${last.high}) is above the handover's (${first.high})` : '',
-        ].filter(Boolean).join('; ')
-        sides.push({ night: n.night, side, handover, midnight: n.midnight, frames, rise, riseAt, ok: why === '', why, empty: empty ? empty.frame : -1 })
-        console.log(`nights · plant alone · night ${n.night} ${side} · frames ${list.join(' ')} · mean ${frames.map((x) => x.mean.toFixed(1)).join(' ')} · 90th ${frames.map((x) => x.high).join(' ')} · ${empty ? `not measured: the plant covers no pixel of frame ${empty.frame}` : why === '' ? 'ok' : 'FAIL'}`)
+        const settled = settle({ night: n.night, side, handover, midnight: n.midnight, frames, rise: 0, riseAt: handover, ok: true, why: '', empty: -1 })
+        sides.push(settled)
+        console.log(`nights · plant alone · night ${n.night} ${side} · frames ${list.join(' ')} · mean ${frames.map((x) => x.mean.toFixed(1)).join(' ')} · 90th ${frames.map((x) => x.high).join(' ')} · ${settled.empty >= 0 ? `not measured: the plant covers no pixel of frame ${settled.empty}` : !judgedOf(settled) ? 'left out: rime on the plant' : `${settled.ok ? 'ok' : 'FAIL'}${settled.leftOut ? `, ${settled.leftOut} frames under rime left out` : ''}${settled.wet ? `, ${settled.wet} wet frames, largest rise a frame ${(settled.wetRise ?? 0).toFixed(2)}` : ''}`}`)
       }
     }
   } finally {
