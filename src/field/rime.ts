@@ -60,7 +60,7 @@ void main() {
   float carried = smoothstep(0.0, 0.3 * few, few - plant) * mix(1.0, ${WEAKEST.toFixed(3)} + ${(1 - WEAKEST).toFixed(3)} * hash11(plant + 9.0), away);
   float facet = smoothstep(0.0, 0.25 * keep, keep - hash11(own + 7.0));
   float held = min(coc, ${WIDEST.toFixed(3)} * uSize.y);
-  float sum = ${LEVEL.toFixed(3)} * (0.08 + 0.92 * pow(hash11(own + 6.0), 2.0)) * lit * behind * 0.785 * held * held * far * exp(-thick) * there * facet * carried;
+  float sum = ${LEVEL.toFixed(3)} * (0.08 + 0.92 * pow(hash11(own + 6.0), 2.0)) * lit * behind * 0.785 * held * held * sqrt(far) * exp(-thick) * there * facet * carried;
   // The sun a facet throws is never over GLINT_WHITE times white on the screen where the facet is in focus, as with the sparks of the ground.
   float most = max(max(uSunColor.r, uSunColor.g), max(uSunColor.b, 1e-4));
   vec3 light = uSunColor * (sum * min(1.0, ${(GLINT_WHITE / (LEVEL * 0.785 * SHARP_PX * SHARP_PX)).toFixed(3)} / (most * max(uWorldExposure, 1e-3))));
