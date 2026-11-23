@@ -114,9 +114,9 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-// The film opens and closes with the sun 5 degrees under the horizon.
+// The film opens with the sun 5 degrees under the horizon and closes with it 3 under, while the field can still be read.
 const DUSK = sinceSunset(5)
-const W_END = W_LAST + DUSK
+const W_END = W_LAST + sinceSunset(3)
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
 const LEAD_RATE = DUSK / (1 - B0)
 // In the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line: a night of two beats.
@@ -128,7 +128,7 @@ const BREAK_NIGHT_FROM = 42
 const frostHold = new Monotone(
   [
     [17, 4],
-    [17.35, W_FROST_FROM],
+    [17.2, W_FROST_FROM],
     [21, W_FROST_MID],
     [25, W_FROST_END],
   ],

@@ -8,7 +8,7 @@ type Grade = WorldDef['grade']
 const DAY: Grade = { exposure: 1, contrast: 1.25, white: 8, saturation: 1.0, gain: [1, 1, 1], lift: [0.001, 0.002, 0.003], bloom: 0.08, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 }
 const WARM: Grade = { exposure: 1, contrast: 1.29, white: 9, saturation: 1.05, gain: [1.03, 1, 0.96], lift: [0.0012, 0.003, 0.0036], bloom: 0.12, bloomKnee: 1.1, vignette: 0.3, grain: 0.012 }
 const STORM: Grade = { exposure: 1, contrast: 1.42, white: 4.5, saturation: 0.84, gain: [1.01, 1, 1], lift: [0.0003, 0.0006, 0.0015], bloom: 0.06, bloomKnee: 1.2, vignette: 0.34, grain: 0.014 }
-const FROST: Grade = { exposure: 1, contrast: 1.16, white: 6, saturation: 0.95, gain: [1, 1, 1.02], lift: [0.0015, 0.003, 0.002], bloom: 0.1, bloomKnee: 1.0, vignette: 0.28, grain: 0.013 }
+const FROST: Grade = { exposure: 1, contrast: 1.24, white: 6, saturation: 1.0, gain: [0.98, 1, 1.04], lift: [0.0015, 0.003, 0.002], bloom: 0.1, bloomKnee: 1.0, vignette: 0.28, grain: 0.013 }
 const NIGHT: Grade = { exposure: 1, contrast: 1.4, white: 5, saturation: 0.92, gain: [0.92, 1, 0.98], lift: [0.0012, 0.0028, 0.0028], bloom: 0.07, bloomKnee: 0.9, vignette: 0.36, grain: 0.016 }
 
 // How bright the open sky lands on the screen in each kind of light, before the curve: the camera's exposure follows the light as a time-lapse camera does, and gives way in the dark.
@@ -38,7 +38,7 @@ const FILL_HIGH: Knots = [[-14, 0.095], [-10, 0.105], [-6, 0.14], [-3, 0.15], [0
 // How much of the sky near the sun colours the fill from the horizon: none in the blue hour, when the glow is a thin band and the dome lights the soil.
 const FILL_WARMTH = 0.25
 // How much of the dome's own colour the fill from above keeps: at full strength a shaded leaf reads blue grey under a clear sky.
-const FILL_COLOUR = 0.65
+const FILL_COLOUR = 0.45
 const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
 const FILL_FROST = { low: 0.3, high: 0.22 }
 const FLASH = { key: 2.4, fill: 1.2, color: [0.86, 0.94, 1.22] as RGB }
@@ -148,7 +148,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   out.sky.even = clamp(Math.max(d.fog, 0.8 * d.overcast, 0.6 * now.night))
 
   const thick = d.fog * d.fog
-  out.fog.density = 0.0016 + 0.0115 * thick + 0.012 * d.rain
+  out.fog.density = 0.0016 + 0.0115 * thick + 0.006 * d.rain
   out.fog.falloff = lerp(lerp(0.6, 1.7, clamp(d.fog * 1.25)), 0.25, d.rain)
   const veil = lerp(0.42, 0.72, clamp(d.fog))
   const toLight = now.lightKind === 'sun' ? smoothstep(-5, -2, el) : 0.2 * smoothstep(5, 9, -el)
