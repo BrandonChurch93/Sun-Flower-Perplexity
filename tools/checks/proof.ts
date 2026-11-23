@@ -23,7 +23,7 @@ const QUICK: [string, string, string[]][] = [
   ['nights', 'picture-blink', []],
   ['nights', 'moon-blink', []],
 ]
-const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], ['made', 'made'], ['made', 'first-draw'], ['pure', 'dice'], ['pure', 'memory'], ['nights', 'plant-moon'], ['nights', 'plant-wet'], ['script', 'slow-frame'], ['script', 'slow-part']]
+const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], ['made', 'made'], ['made', 'first-draw'], ['pure', 'dice'], ['pure', 'memory'], ['nights', 'plant-moon'], ['nights', 'plant-wet'], ['script', 'slow-frame'], ['script', 'slow-part'], ['writes', 'grow']]
 
 export async function run(_args: Args): Promise<void> {
   const rows: (string | number)[][] = []
