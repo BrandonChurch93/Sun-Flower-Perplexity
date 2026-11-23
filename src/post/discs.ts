@@ -101,15 +101,20 @@ void main() {
     if (abs(c.a) < 0.6 && own * uRadiusScale > 0.6 && sky(own) < 0.5) {
       ivec2 top = textureSize(tRaw, 0) - 1;
       float most = own;
-      ivec2 at = p;
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) most = max(most, texelFetch(tRaw, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+      vec3 was = vec3(0.0);
+      vec3 now = vec3(0.0);
+      float n = 0.0;
       for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
         ivec2 q = clamp(p + ivec2(i, j), ivec2(0), top);
-        float n = texelFetch(tRaw, q, 0).a;
-        if (n > most) { most = n; at = q; }
+        vec4 r = texelFetch(tRaw, q, 0);
+        if (r.a < 0.85 * most) continue;
+        was += max(r.rgb, 0.0);
+        now += texelFetch(tFill, q, 0).rgb;
+        n += 1.0;
       }
       float share = clamp(own / max(most, 1e-3), 0.0, 1.0);
-      vec3 change = share * (texelFetch(tFill, at, 0).rgb - max(texelFetch(tRaw, at, 0).rgb, 0.0));
-      rgb = max(rgb + change, (1.0 - share) * rgb);
+      if (n > 0.0) rgb = max(rgb + share * (now - was) / n, share * now / n);
     }
   }
   outColor = vec4(rgb + texelFetch(tDiscs, p, 0).rgb, c.a);

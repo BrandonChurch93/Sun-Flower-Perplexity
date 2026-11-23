@@ -14,6 +14,8 @@ const SIDES = 96
 export const DAWN_DEPTH = -Math.log(0.75)
 // How much of its glow round the sun the fog has while the disc is still on the horizon.
 const SUN_UNDER = 0.3
+// How much of the fog stands before the frost starts to form.
+const FOG_FIRST = 0.3
 
 export const DRIFT = { x: windWay.x * DRIFT_M_PER_S, z: windWay.z * DRIFT_M_PER_S }
 
@@ -169,7 +171,7 @@ export interface Air {
 // The fog of one instant, from the fog dial alone: with the dial at 0 there is none.
 export function fogAt(m: Moment, out: Air): Air {
   const d = m.dials
-  out.amount = clamp(d.fog)
+  out.amount = clamp(d.fog) * settled(m)
   out.lifted = smoothstep(0.25, 1, d.sunThrough)
   out.dawn = 0
   return lit(m, out)
@@ -180,10 +182,17 @@ export function airAt(m: Moment, out: Air): Air {
   const d = m.dials
   const low = 1 - smoothstep(2, 11, m.sunElevationDeg)
   const dawn = 0.4 * d.dew * low * (1 - d.wet)
-  out.amount = clamp(Math.max(d.fog, dawn))
-  out.dawn = dawn > d.fog ? 1 - d.fog / dawn : 0
+  const fog = d.fog * settled(m)
+  out.amount = clamp(Math.max(fog, dawn))
+  out.dawn = dawn > fog ? 1 - fog / dawn : 0
   out.lifted = lerp(smoothstep(0.25, 1, d.sunThrough), smoothstep(0, 9, m.sunElevationDeg), out.dawn)
   return lit(m, out)
+}
+
+// Fog does not stand in the field at once: a thin air comes first, in the dark, and thickens into banks as the cold sets in. Once the thaw has begun it is whole until it lifts.
+function settled(m: Moment): number {
+  const d = m.dials
+  return lerp(FOG_FIRST, 1, Math.max(smoothstep(0, 0.3, d.frost), smoothstep(0, 0.15, d.dew)))
 }
 
 function lit(m: Moment, out: Air): Air {
