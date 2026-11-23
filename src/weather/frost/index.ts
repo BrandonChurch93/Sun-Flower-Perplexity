@@ -49,13 +49,13 @@ const float THAW_PATCH_M = 0.022;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 // Seen close, a crystal carries points that throw the sun at the lens. Each answers the angle between the lens, its own face and the sun, and nothing else: a turn of the lens by a degree lights some and puts others out.
-const float POINT = 45.0;
+const float POINT = 18.0;
 const float POINT_TURNS = 45.0;
 const float POINT_SHARP = 16.0;
 const float POINT_PX = 7.0;
 // Of the points a crystal could carry, the share it does.
 const float POINT_SHARE = 0.1;
-const float POINT_OPEN = 0.0004;
+const float POINT_OPEN = 0.002;
 // Out of focus the discs of neighbors lie over one another and close into a band, so fewer of the points are kept the wider the circle.
 const float POINT_FEWER = 0.15;
 const float POINT_CIRCLE_MOST = 80.0;
@@ -76,6 +76,8 @@ const float LIT_LEAST = 0.12;
 const float TUFTS = 56.0;
 // No crystal is longer than this, seen close.
 const float CLOSE_MOST_M = 0.0026;
+// On a face and on the ridge of a vein the crystals are short: no longer than this, seen close.
+const float FACE_MOST_M = 0.0009;
 // Of the crystals, the share that carry side blades.
 const float FEATHER_SHARE = 0.22;
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
@@ -148,9 +150,10 @@ void main() {
   // The wearer's roots move with the air, so the tufts are told by how far along the edge a crystal stands, which does not.
   float tuft = c.w == 0.0 || bristle ? hash(own, 33.0) : 0.5 + 0.5 * sin(along * TUFTS + 1.7 * sin(along * 0.3 * TUFTS + 0.9)) * sin(along * 0.55 * TUFTS + 1.1 * sin(along * 0.2 * TUFTS + 2.3));
   if (!bristle) {
-    size *= mix(1.0, (0.45 + 1.15 * tuft * tuft) * (0.55 + 0.9 * hash(own, 28.0)), close);
+    size *= mix(1.0, (0.6 + 1.0 * tuft * tuft) * (0.55 + 0.9 * hash(own, 28.0)), close);
     float most = CLOSE_MOST_M * plantSize();
     size = mix(size, most * (1.0 - exp(-size / most)), close);
+    if (c.w < -0.5) size = mix(size, min(size, FACE_MOST_M * plantSize() * (0.3 + 0.7 * hash(own, 34.0))), close);
   }
   vec3 stretch6 = a.xyz * (6.2832 / THAW_PATCH_M);
   float patch6 = smoothstep(0.2, 0.8, 0.5 + 0.25 * (sin(stretch6.x + 1.9 * sin(stretch6.z * 0.57 + 1.1)) + sin(stretch6.y * 0.79 + 1.4 * sin(stretch6.x * 0.43 + 0.7))));
@@ -206,9 +209,9 @@ void main() {
     if (bristle) {
       // Rime on a bristle is rough: short spurs stand out of the sleeve all round it.
       float round = 6.2832 * hb;
-      foot = root + grow * (size * (float(blade) + hb) / 8.0);
-      axis = normalize(grow * 0.4 + e1 * cos(round) + e2 * sin(round));
-      reach = SLEEVE_M * plantSize() * (1.2 + 2.2 * hash(own, 50.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
+      foot = root + grow * (size * fract(hb * 7.31 + 0.11 * float(blade)));
+      axis = normalize(grow * (1.6 * hash(own, 52.0 + float(blade)) - 0.8) + e1 * cos(round) + e2 * sin(round));
+      reach = SLEEVE_M * plantSize() * (0.4 + 1.0 * hash(own, 50.0 + float(blade)) * hash(own, 51.0 + float(blade))) * close * smoothstep(0.0, 0.6, late) * (1.0 - smoothstep(0.0, 0.5, melt));
       wide = 0.6 * SLEEVE_M * plantSize();
     }
   }
@@ -222,7 +225,7 @@ void main() {
   float kept = fill || bristle ? 1.0 : thin * mix(spike ? SPIKE_LEAST : PATCH_LEAST, spike ? SPIKE_MOST : PATCH_MOST, lush);
   float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept)) * (fill || bristle || ridge ? close : 1.0);
   // Between two tufts the edge is all but bare.
-  if (!bristle) stays *= mix(1.0, smoothstep(0.03, 0.2, tuft + 0.3 * (hash(own, 32.0) - 0.5)), close);
+  if (!bristle) stays *= mix(1.0, smoothstep(-0.08, 0.1, tuft + 0.3 * (hash(own, 32.0) - 0.5)), close);
   wide /= thin;
 
   vec3 here = foot + axis * (reach * end);
@@ -293,10 +296,10 @@ void main() {
   // The water of a melted crystal draws back into a small bead where the crystal stood. Behind the front the water is its owner's: there this bead gives way, but for the few that stay as the fine dew of the morning.
   float pick = hash(own, 19.0) / BEAD_SHARE;
   if (strip == 4 && melt > 0.0 && pick < 1.0 && a.w > 0.0 && !bristle) {
-    bool stays = pick > 1.0 - STAY_SHARE;
+    bool stays = pick > 1.0 - STAY_SHARE * smoothstep(0.25, 0.6, tuft);
     float h21 = hash(own, 21.0);
     float thawed = saturate((thaw - front) / 0.2);
-    float radius = stays ? 0.00012 + 0.00013 * h21 : (0.00014 + 0.00011 * h21) * (1.0 - thawed);
+    float radius = stays ? 0.00007 + 0.00022 * h21 * h21 : (0.00014 + 0.00011 * h21) * (1.0 - thawed);
     // A wearer that goes on wearing its set in the dew keeps the beads that stay. One that puts the set away with the frost loses them as the frost goes.
     radius *= plantSize() * melt * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
     vec3 center = root - vec3(0.0, 0.7 * radius, 0.0);
@@ -363,9 +366,9 @@ void main() {
   if (vBall.z > 0.5) cover = saturate(r - length(vec2(vAcross, vBall.x)) + 0.5) * (vBall.y * vBall.y / (r * r));
   float star = 0.0;
   if (vMore.x > 1.5) {
-    star = exp(-dot(vAt, vAt) / 1.2) + 0.3 * (exp(-1.4 * abs(vAt.x) - vAt.y * vAt.y / 16.0) + exp(-1.4 * abs(vAt.y) - vAt.x * vAt.x / 16.0));
+    star = exp(-dot(vAt, vAt) / 0.8) + 0.3 * (exp(-1.4 * abs(vAt.x) - vAt.y * vAt.y / 16.0) + exp(-1.4 * abs(vAt.y) - vAt.x * vAt.x / 16.0));
     // It fades to nothing inside its card, however bright it is.
-    float inside = 1.0 - smoothstep(0.45, 1.0, max(abs(vAt.x), abs(vAt.y)) / POINT_PX);
+    float inside = 1.0 - smoothstep(0.4, 1.0, length(vAt) / POINT_PX);
     star *= inside * inside;
     cover = saturate(star) * saturate(vLight.w / 8.0);
   }
