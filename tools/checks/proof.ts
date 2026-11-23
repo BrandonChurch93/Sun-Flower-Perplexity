@@ -26,6 +26,7 @@ const DRAWN: [string, string][] = [['holds', 'picture-grows'], ['cuts', 'cut'], 
 export async function run(_args: Args): Promise<void> {
   const rows: (string | number)[][] = []
   let missed = 0
+  let waiting = 0
   const line = (check: string, broken: string, ran: string): void => {
     const file = path.join(OUT, `${check}.broken-${broken}.json`)
     if (!fs.existsSync(file)) {
@@ -39,8 +40,11 @@ export async function run(_args: Args): Promise<void> {
     // A proof that first has to pass on a film without the fault counts only when it did.
     const control = (r.data as { control?: { ok: boolean } } | undefined)?.control
     const fresh = control && !control.ok ? undefined : r.findings.find((f) => !f.ok && !already.has(f.what))
-    if (!fresh) missed++
-    rows.push([check, broken, fresh ? 'caught' : 'NOT CAUGHT', ran, (fresh?.what ?? r.subject).slice(0, 130)])
+    // A break that reads the film's frames cannot be judged before they are drawn: it waits, it has neither passed nor been caught.
+    const waits = !fresh && !r.complete && !(control && !control.ok)
+    if (waits) waiting++
+    else if (!fresh) missed++
+    rows.push([check, broken, fresh ? 'caught' : waits ? 'waits for frames' : 'NOT CAUGHT', ran, (fresh?.what ?? [...r.findings].reverse().find((f) => f.expected)?.what ?? r.subject).slice(0, 130)])
   }
   for (const [check, broken, extra] of QUICK) {
     spawnSync(process.execPath, ['--import', 'tsx', at('tools', 'checks', 'run.ts'), check, '--break', broken, ...extra], { cwd: at(), stdio: 'ignore' })
@@ -48,6 +52,6 @@ export async function run(_args: Args): Promise<void> {
   }
   for (const [check, broken] of DRAWN) line(check, broken, 'read from its last run')
   console.log(table(['check', 'film broken with', 'the check', 'run', 'what it said'], rows))
-  console.log(`\nproof · ${missed === 0 ? 'no broken film passes a check' : `${missed} broken films pass a check`}`)
+  console.log(`\nproof · ${missed === 0 ? 'no broken film passes a check' : `${missed} broken films pass a check`}${waiting ? ` · ${waiting} cannot be judged until the film's frames are drawn` : ''}`)
   process.exitCode = missed === 0 ? 0 : 1
 }

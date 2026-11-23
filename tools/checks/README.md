@@ -77,7 +77,7 @@ A check that passes on a film that breaks its rule is worse than no check. `--br
 | `nights --break picture-bounce` | two frames of each dusk the wrong way round |
 | `nights --break picture-blink` | eight parts in the middle of the frame at half their light for one frame of each night: the whole frame passes, the part fails |
 | `nights --plant --break plant-moon --night 6,7` | the moon 2.4 times as strong, so the plant alone brightens toward midnight |
-| `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails |
+| `script --break slow-frame` | the film with its sky alone, which passes; then one frame whose field takes 40 ms longer: the worst frame fails, the mean of the sum passes |
 | `script --break slow-part` | the same film with 4 ms more in the field's turn of every frame: the field's share fails, the sum and the worst frame pass |
 | `made --strict` | the goal for the holds as a rule: a film that writes more than 12 MB a frame in a hold fails |
 | `play --break cut --at 1000 --from 984 --to 1016`, then `cuts --break cut --from 984 --to 1016` | the camera jumps to another place at frame 1000 |
