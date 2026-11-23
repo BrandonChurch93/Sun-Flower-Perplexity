@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { basin } from './basin.ts'
 import { config } from '../../config.ts'
-import { skyMirror } from './water.ts'
+import { skyMirror } from './mirror.ts'
 
 // Half the master frame's height in pixels, as shader text: a crown is sized by how large it stands in the finished frame.
 const MASTER_HALF_HEIGHT_PX = (config.formats.master.height / 2).toFixed(1)

@@ -1,0 +1,303 @@
+{
+  "schema": "beat-sync/cues 1",
+  "fps": 30,
+  "scenes": [
+    {
+      "id": 1,
+      "name": "Germination, bars 1 to 17",
+      "cues": [
+        {
+          "at_s": 0.0,
+          "do": "Frame 0: blue hour, the sun 5 degrees under the horizon",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-01",
+          "at": "1.1",
+          "do": "Sunrise of day 1: light reaches the soil",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-02",
+          "at": "5.1",
+          "do": "Sunrise of day 2: the hook has broken the soil",
+          "expect": "kick"
+        },
+        {
+          "id": "sunrise-03",
+          "at": "9.1",
+          "do": "Sunrise of day 3: the seed leaves spread",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-04",
+          "at": "13.1",
+          "do": "Sunrise of day 4: the first true leaves",
+          "expect": "kick"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Freeze, bars 17 to 25",
+      "cues": [
+        {
+          "id": "sunrise-05",
+          "at": "17.1",
+          "do": "Sunrise into mist",
+          "expect": "none"
+        },
+        {
+          "id": "frost-hold-in",
+          "at": "17.1",
+          "do": "The frost hold begins: the plant stops growing",
+          "expect": "none"
+        },
+        {
+          "at": "21.1",
+          "do": "The camera is half way in and the disc of the sun sharpens",
+          "expect": "soft"
+        },
+        {
+          "at": "22.3",
+          "do": "The frost starts to melt",
+          "expect": "none"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Climb, bars 25 to 33",
+      "cues": [
+        {
+          "id": "frost-hold-out",
+          "at": "25.1",
+          "do": "The frost hold ends: the plant grows again on this bar line",
+          "expect": "none"
+        },
+        {
+          "id": "sunset-06",
+          "at": "26.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-06",
+          "at": "27.1",
+          "do": "Sunrise",
+          "expect": "none"
+        },
+        {
+          "id": "sunset-07",
+          "at": "28.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-07",
+          "at": "29.1",
+          "do": "Sunrise",
+          "expect": "soft"
+        },
+        {
+          "id": "sunset-08",
+          "at": "30.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-08",
+          "at": "31.1",
+          "do": "Sunrise",
+          "expect": "none"
+        },
+        {
+          "at": "32.1",
+          "do": "The front closes over the sun",
+          "expect": "none"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Storm, bars 33 to 41",
+      "cues": [
+        {
+          "id": "strike-1",
+          "at": "33.1",
+          "do": "Lightning to the left of the plant",
+          "expect": "none"
+        },
+        {
+          "id": "storm-hold-in",
+          "at": "33.1",
+          "do": "The storm hold begins: the plant stops growing",
+          "expect": "none"
+        },
+        {
+          "id": "rain-in",
+          "at": "33.1",
+          "do": "The rain begins",
+          "expect": "none"
+        },
+        {
+          "id": "strike-2",
+          "at": "37.1",
+          "do": "Lightning to the right of the plant",
+          "expect": "kick"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Ascent, bars 41 to 57",
+      "cues": [
+        {
+          "id": "break",
+          "at": "41.1",
+          "do": "The sun breaks through the deck",
+          "expect": "kick"
+        },
+        {
+          "id": "storm-hold-out",
+          "at": "41.1",
+          "do": "The storm hold ends: the plant grows again on this bar line",
+          "expect": "kick"
+        },
+        {
+          "id": "sunrise-09",
+          "at": "43.1",
+          "do": "Sunrise",
+          "expect": "hat"
+        },
+        {
+          "id": "sunset-10",
+          "at": "44.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-10",
+          "at": "45.1",
+          "do": "Sunrise",
+          "expect": "kick"
+        },
+        {
+          "id": "sunset-11",
+          "at": "46.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-11",
+          "at": "47.1",
+          "do": "Sunrise",
+          "expect": "hat"
+        },
+        {
+          "id": "sunset-12",
+          "at": "48.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-12",
+          "at": "49.1",
+          "do": "Sunrise",
+          "expect": "hat"
+        },
+        {
+          "id": "sunset-13",
+          "at": "50.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-13",
+          "at": "51.1",
+          "do": "Sunrise",
+          "expect": "hat"
+        },
+        {
+          "id": "sunset-14",
+          "at": "52.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-14",
+          "at": "53.1",
+          "do": "Sunrise",
+          "expect": "kick"
+        },
+        {
+          "id": "sunset-15",
+          "at": "54.3",
+          "do": "Sunset",
+          "expect": "none"
+        },
+        {
+          "id": "sunrise-15",
+          "at": "55.1",
+          "do": "Sunrise",
+          "expect": "hat"
+        },
+        {
+          "at": "56.1",
+          "do": "The time lapse slows into the golden evening",
+          "expect": "none"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Flower, bars 57 to 65",
+      "cues": [
+        {
+          "id": "bloom-in",
+          "at": "57.1",
+          "do": "The bud begins to open (bloom)",
+          "expect": "none"
+        },
+        {
+          "at": "61.1",
+          "do": "The flower is fully open",
+          "expect": "hat"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Crane, bars 65 to 73",
+      "cues": [
+        {
+          "at": "65.1",
+          "do": "The camera starts to pull away from the flower",
+          "expect": "kick"
+        },
+        {
+          "at": "69.1",
+          "do": "The camera rises over the field",
+          "expect": "hat"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Dusk, bars 73 to the end",
+      "cues": [
+        {
+          "id": "sunset-last",
+          "at": "73.1",
+          "do": "Sunset: the sun touches the horizon as the drums drop out",
+          "expect": "quiet"
+        },
+        {
+          "at": "74.3",
+          "do": "The last frames: afterglow",
+          "expect": "none"
+        }
+      ]
+    }
+  ]
+}
