@@ -3,6 +3,8 @@ import { config } from '../config.ts'
 
 export const LEAD_SECONDS = 2
 export const TAIL_SECONDS = 2
+// The browser shows its own notice for a few seconds after it goes full screen. The screen stays dark until it is gone.
+export const SETTLE_SECONDS = 4
 const START_AHEAD = 0.08
 // The sync mark sits this long after the start of the lead and before the end of the tail, and its flash stays this long.
 export const MARK_AT_SECONDS = 1

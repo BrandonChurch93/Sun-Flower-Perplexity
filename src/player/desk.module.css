@@ -242,10 +242,28 @@
   color: #e8b77a;
 }
 
+.top {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 6px;
+}
+
+.top .link {
+  flex: none;
+  margin: 0;
+  font-size: 12px;
+}
+
 .kind {
-  margin: 0 0 4px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
   color: #a59f90;
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .verdict {

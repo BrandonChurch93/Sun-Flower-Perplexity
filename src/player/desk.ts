@@ -1,6 +1,7 @@
 import { config } from '../config.ts'
 import type { Quality } from '../v2/api.ts'
 import css from './desk.module.css'
+import { LEAD_SECONDS, SETTLE_SECONDS, TAIL_SECONDS } from './clock.ts'
 import { GAP_MS, reportFile, reportName, type Report } from './pacing.ts'
 import { fileOf, trackLine, type Track } from './track.ts'
 
@@ -86,7 +87,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   const recordGroup = group('Record')
   const record = button('Record', 'R', true)
   record.addEventListener('click', () => actions.record())
-  const recordText = make('p', css.small, 'Full screen, two seconds of dark, the film, two seconds of dark. Esc stops it.')
+  const recordText = make('p', css.small, `Full screen. ${SETTLE_SECONDS + LEAD_SECONDS} seconds of dark, the film, ${TAIL_SECONDS} seconds of dark. Esc stops it.`)
   const row = make('div', css.row)
   const marksLabel = make('label', css.check)
   const marks = make('input')
@@ -208,9 +209,16 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       }
       const f = report.frames
       reportBody.dataset.holds = report.holds ? 'yes' : 'no'
+      url = URL.createObjectURL(reportFile(report))
+      const link = make('a', css.link, 'Download the report')
+      link.href = url
+      link.download = reportName(report)
+      link.dataset.report = 'yes'
+      const top = make('div', css.top)
+      top.append(make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`), link)
+      reportBody.append(top)
+      if (!advice) reportBody.append(make('p', css.verdict, report.verdict))
       reportBody.append(
-        make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`),
-        make('p', css.verdict, report.verdict),
         line('Frames', `${f.due} due, ${f.drawn} drawn, ${f.skipped} skipped`),
         line('Time', `${report.seconds.film.toFixed(2)} s of picture in ${report.seconds.audio.toFixed(2)} s of the audio clock`),
         line('Between frames', `longest ${ms(report.gapMs.longest)} at ${at(report.gapMs.longestAtFilm)}, 99th percentile ${ms(report.gapMs.p99)}, mean ${ms(report.gapMs.mean)}`),
@@ -225,12 +233,6 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       const more = gaps.length > SHOWN_GAPS ? `, and ${gaps.length - SHOWN_GAPS} more in the file` : ''
       list.append(make('span', css.value, gaps.length ? `${gaps.length}: ${shown.join(', ')}${more}` : 'none'))
       reportBody.append(list)
-      url = URL.createObjectURL(reportFile(report))
-      const link = make('a', css.link, 'Download the report')
-      link.href = url
-      link.download = reportName(report)
-      link.dataset.report = 'yes'
-      reportBody.append(link)
     },
     busy(on) {
       for (const b of [choose, record, check, tryLow]) b.disabled = on

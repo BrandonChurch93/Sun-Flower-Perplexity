@@ -1,12 +1,10 @@
 import { config, frameCount, type Format, type TierId } from '../config.ts'
 import type { Film } from '../director/film.ts'
 import { keys, segments } from '../director/timeline.ts'
-import { markAt, runFrom, TAIL_SECONDS, type FilmClock } from './clock.ts'
+import { markAt, runFrom, SETTLE_SECONDS, TAIL_SECONDS, type FilmClock } from './clock.ts'
 import type { Report, RunFacts } from './pacing.ts'
 import { filmPlan, play, stretchPlan, type Playing } from './play.ts'
 
-// The browser shows its own notice for a few seconds after it goes full screen. The screen stays dark until it is gone.
-const SETTLE_MS = 4000
 const CHECK_SECONDS = 10
 const CHECK_STRETCHES = 3
 
@@ -77,7 +75,7 @@ export function record(deck: Deck, clockReady: Promise<FilmClock>, marks: boolea
       clock = await clockReady
       const running = clock
       await film.renderFrame(0, deck.tier)
-      if (full) await wait(SETTLE_MS)
+      if (full) await wait(SETTLE_SECONDS * 1000)
       const facts = deck.facts('recording', running.ctx)
       if (!stopped) await running.start()
       let dark = true
