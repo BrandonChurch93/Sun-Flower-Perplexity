@@ -1,19 +1,38 @@
+import { gustAt, gustGlsl, windWay } from '../v2/wind.ts'
+
 // The wind as a closed-form function of time and place. Film seconds are real seconds for the weather.
 // A part scales what it does with these by `pose.inputs.wind`, which is 0 in still air.
-const TOWARD = { x: 0.92, z: 0.39 }
+// Its direction and its gust front are the film's own, so the plant leans with the field, the grass and the rain.
+const TOWARD = windWay
 const SPEED_M_PER_S = 1.6
+// A stem is heavy: it answers the front this many seconds late, and what it feels is rounded off over the time between.
+const HEAVY_LAGS = [0.05, 0.15, 0.25, 0.35, 0.45]
+// A leaf is light and answers sooner.
+const LIGHT_LAGS = [0.04, 0.12, 0.2]
+
+const front = (lags: number[], time: number, x: number, z: number): number => {
+  let sum = 0
+  for (const lag of lags) sum += gustAt(x, z, time - lag)
+  return sum / lags.length
+}
 
 // The slow wave that crosses the field, about -1 to 1, at a place in meters.
 export function gust(time: number, x: number, z: number): number {
   const along = x * TOWARD.x + z * TOWARD.z - time * SPEED_M_PER_S
   const across = z * TOWARD.x - x * TOWARD.z
-  return 0.55 * Math.sin(along * 0.9 + 0.6 * Math.sin(across * 0.31 + time * 0.13)) + 0.3 * Math.sin(along * 2.3 + 1.7 + across * 0.9) + 0.15 * Math.sin(along * 5.1 + 4.2 - across * 1.7)
+  return 0.55 * (2 * gustAt(x, z, time) - 1) + 0.3 * Math.sin(along * 2.3 + 1.7 + across * 0.9) + 0.15 * Math.sin(along * 5.1 + 4.2 - across * 1.7)
 }
 
 // The part of that wave a whole plant follows, about -1 to 1: its slowest swell alone, because a stem with a head on it is too heavy for the rest.
 export function sway(time: number, x: number, z: number): number {
-  const along = x * TOWARD.x + z * TOWARD.z - time * SPEED_M_PER_S
-  const across = z * TOWARD.x - x * TOWARD.z
+  return 2 * front(HEAVY_LAGS, time, x, z) - 1
+}
+
+// The swell of the first film, for inputs that carry no film second. The checks in `tests/` still pose the plant with those.
+export const firstWay = { x: 0.92, z: 0.39 }
+export function swell(time: number, x: number, z: number): number {
+  const along = x * firstWay.x + z * firstWay.z - time * SPEED_M_PER_S
+  const across = z * firstWay.x - x * firstWay.z
   return Math.sin(along * 0.9 + 0.6 * Math.sin(across * 0.31 + time * 0.13))
 }
 
@@ -22,11 +41,9 @@ export const STEM_LEAN = 0.03
 export const STEM_SWING = 0.05
 
 // The same swell for a shader, as `plantSway(time, place)`.
-export const swayGlsl = /* glsl */ `
+export const swayGlsl = /* glsl */ `${gustGlsl.replace(/gustPulse/g, 'plantGustPulse').replace(/gustAt/g, 'plantGust')}
 float plantSway(float time, vec2 at) {
-  float along = at.x * ${TOWARD.x.toFixed(4)} + at.y * ${TOWARD.z.toFixed(4)} - time * ${SPEED_M_PER_S.toFixed(4)};
-  float across = at.y * ${TOWARD.x.toFixed(4)} - at.x * ${TOWARD.z.toFixed(4)};
-  return sin(along * 0.9 + 0.6 * sin(across * 0.31 + time * 0.13));
+  return 2.0 * (${HEAVY_LAGS.map((lag) => `plantGust(at, time - ${lag.toFixed(2)})`).join(' + ')}) / ${HEAVY_LAGS.length.toFixed(1)} - 1.0;
 }
 `
 
@@ -41,12 +58,10 @@ export const windToward = TOWARD
 
 // A storm's gusts at a place, 0 to about 1: each one rises fast, holds unevenly and lets go slower, and no two are alike.
 export function squall(time: number, x: number, z: number): number {
-  const t = time - (x * TOWARD.x + z * TOWARD.z) / 6
-  const slow = 0.5 + 0.5 * Math.sin(t * 1.9 + 1.2 * Math.sin(t * 0.53 + 0.7) + 1.7)
-  const quick = 0.5 + 0.5 * Math.sin(t * 2.7 + 1.3 * Math.sin(t * 0.83 + 2.1))
-  // Between two gusts the storm still leans on everything.
-  const push = (0.22 + 0.78 * slow * slow) * (0.65 + 0.35 * quick)
-  return push + 0.12 * slow * Math.sin(t * 7.3 + 2 * quick)
+  const push = front(LIGHT_LAGS, time, x, z)
+  const quick = 0.5 + 0.5 * Math.sin(time * 2.7 + 1.3 * Math.sin(time * 0.83 + 2.1))
+  // Between two gusts the storm still leans on everything, and inside one the air is torn.
+  return (0.2 + 0.8 * push) * (0.8 + 0.2 * quick) + 0.1 * push * Math.sin(time * 7.3 + 2 * quick)
 }
 
 const cell = (n: number, seed: number): number => {

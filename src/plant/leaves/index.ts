@@ -124,10 +124,11 @@ function ownAt(own: number[], k: number, t: number): number {
 
 // How far a storm's gust throws a leaf, in radians: up or down by how it points to the wind, and round its stalk.
 const THROW_UP = 0.5
+const RAIN_WEIGHT = 0.14
 const THROW_ROUND = 0.42
 // How far a leaf twitches from frame to frame in the fastest time lapse, in radians, and how much of that its tip adds.
-const TWITCH = 0.03
-const TWITCH_TIP = 0.05
+const TWITCH = 0.04
+const TWITCH_TIP = 0.065
 // What the cold does to a blade, in radians: it cups along its midrib and its tip curls down.
 const COLD_CUP = 0.3
 const COLD_CURL = 0.35
@@ -725,6 +726,8 @@ export function create(options: PartOptions): PlantPart {
     const dip = rain > 0 ? rain * dipAt(real, frame.ox + frame.mx * mid, frame.oy + frame.my * mid, frame.oz + frame.mz * mid, 0.3 * blade) : 0
     // Under the heaviest bursts every leaf is pressed down a little.
     const press = rain > 0 ? 0.07 * rain * smoothstep(0.82, 1, rainStrength(real - 0.12)) : 0
+    // Water lies on every blade for as long as it rains: they hang lower, and lift again when it stops.
+    const soak = RAIN_WEIGHT * (inputs.rain ?? 0) * grown
     // In real time a leaf rides the air. In a time lapse every frame catches it somewhere else, and it shifts and settles as it grows.
     const frameNow = Math.floor(real * FPS + 1e-6)
     const caught = lapse > 0 ? restless(real, frameNow, leaf.seed) : 0
@@ -735,7 +738,7 @@ export function create(options: PartOptions): PlantPart {
     const trail = wind * 0.08 * flutter(real - 0.18, leaf.seed * 0.73 + 0.11) * live + twitch * TWITCH_TIP * caughtTip
     const sway = wind * 0.075 * flutter(real - 0.07, leaf.seed * 0.41 + 0.37) * live + twitch * 0.6 * TWITCH * caughtTip
     // The cold is a faint tremble at most.
-    const shiver = chill > 0 ? 0.004 * chill * flutter(real * 2.6, leaf.seed * 0.29 + 0.5) : 0
+    const shiver = chill > 0 ? chill * (0.006 * flutter(real * 2.6, leaf.seed * 0.29 + 0.5) + 0.011 * Math.sin(real * (0.8 + 0.5 * leaf.seed) + 6.2832 * leaf.seed)) : 0
 
     // The stalk leads, the blade trails it and the tip comes last.
     const air = hero ? live * clamp(3 * Math.min(inputs.calm ?? inputs.wind, inputs.wind)) * (1 - chill) : 0
@@ -777,7 +780,7 @@ export function create(options: PartOptions): PlantPart {
         const share = k / PATH
         const bladeShare = Math.max(0, (share - stalk) / (1 - stalk))
         const tipward = smoothstep(0.68, 1, share)
-        const a = rise * (1 - smoothstep((0.2 + 0.3 * stout) * stalk, 1.15 * stalk + 0.25 * stout, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) - COLD_CURL * chill * grown * tipward * tipward + rock + shiver * bladeShare + trail * bladeShare * bladeShare + (moved ? liftAt(real - late(share)) : 0) - (rain > 0 ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0)
+        const a = rise * (1 - smoothstep((0.2 + 0.3 * stout) * stalk, 1.15 * stalk + 0.25 * stout, share)) + leaf.bow * Math.sin(6.2832 * Math.min(1, share / stalk)) + Math.atan(-2 * droop * (total > 0 ? x / total : 0)) - hang * grown * stiff * (leaf.kink * smoothstep(stalk * 0.8, stalk + 0.14, share) + leaf.tipCurl * tipward * tipward) - nod * tipward * tipward - fall * smoothstep(0.85 * stalk, stalk + 0.22, share) - tilt * smoothstep(stalk * 0.8, stalk + 0.14, share) - COLD_CURL * chill * grown * tipward * tipward + rock + shiver * bladeShare + trail * bladeShare * bladeShare + (moved ? liftAt(real - late(share)) : 0) - (rain > 0 ? press * smoothstep(0, stalk, share) + dip * smoothstep(0.3 * stalk, stalk + 0.3, share) : 0) - soak * smoothstep(0, stalk, share)
         pathX[k] = x
         pathZ[k] = z
         pathA[k] = a
