@@ -164,7 +164,7 @@ vec4 frostChip(vec2 g, float reach, float chance, float grown, float packed, flo
   // The face is brightest at one point of it and falls off toward its edge.
   vec2 spot = 0.35 * r * (2.0 * vec2(hash21(cell + 541.0), hash21(cell + 577.0)) - 1.0);
   vec2 off = (q * thin - spot) * (1.0 / r);
-  flash *= cover * (0.03 + 0.97 * exp(-5.0 * dot(off, off)));
+  flash *= cover * (0.03 + 0.97 * exp(-5.0 * dot(off, off))) * smoothstep(2.0, 3.0, r / max(reach, 1e-6));
   more = vec2(hash21(cell + 521.0) < FROST_SKY_SHARE ? flash : 0.0, cover * turned * (0.5 + 0.5 * own));
   return vec4(cover, tone, flash, foot);
 }
@@ -218,7 +218,7 @@ vec3 frostGrit(vec2 g, float reach, float chance, float packed, float heaped, ve
   // Its face looks its own way, fixed on the skin: it flashes while it mirrors the sun to the eye and goes out as the eye moves on.
   vec3 facet = normalize(N + 3.0 * (vec3(hash21(cell + 163.0), hash21(cell + 211.0), hash21(cell + 239.0)) - 0.5));
   float flash = pow(saturate(dot(facet, normalize(uSunDir + view))), FROST_GRIT_SHARP);
-  return vec3(cover, mix(mix(FROST_GRIT_SHADE, FROST_GRIT_HEAPED, heaped), 1.0, smoothstep(-0.4 * r, 0.4 * r, dot(p, lit))) * (0.7 + 0.3 * hash21(cell + 353.0)), cover * flash * 6.0 * smoothstep(0.82, 0.95, hash21(cell + 379.0)) * (0.4 + 0.6 * hash21(cell + 397.0)) * smoothstep(0.9, 1.2, r / max(reach, 1e-6)));
+  return vec3(cover, mix(mix(FROST_GRIT_SHADE, FROST_GRIT_HEAPED, heaped), 1.0, smoothstep(-0.4 * r, 0.4 * r, dot(p, lit))) * (0.7 + 0.3 * hash21(cell + 353.0)), cover * flash * 6.0 * smoothstep(0.82, 0.95, hash21(cell + 379.0)) * (0.4 + 0.6 * hash21(cell + 397.0)) * smoothstep(1.3, 1.7, r / max(reach, 1e-6)));
 }
 
 // The coat at a place: x how pale the skin is under it, y its flash, z the part of the flash that mirrors the sky, w the share of the place that is ice turned to the sun. 'skin' is how many meters of the skin's own measure a true meter is, 'want' the share of the skin the coat hides, 'grown' how far it has come, 'shade' the step on the skin toward the sun that a crystal's height throws its shadow back along.
