@@ -502,7 +502,11 @@ export function create(options: PartOptions): PlantPart {
   if (beads) {
     const tint = beads.tint()
     // The water is shared out by the face each blade shows where the plant stands in the rain, and a tenth evenly for the blades that come later.
-    const share = leaves.map((leaf) => lengthAt(leaf.i, RAIN_STANDS) ** 2)
+    // Asked of the plant itself and past the store of lengths: a length stored here under another plant's name would be read back in the rain.
+    const inUse = plantVariant()
+    usePlant(options.variant)
+    const share = leaves.map((leaf) => lengthOf(leaf.i, RAIN_STANDS) ** 2)
+    usePlant(inUse)
     const whole = share.reduce((a, b) => a + b, 0)
     for (let k = 0; k < beads.count; k++) {
       const r = (c: number) => hash01(seed, 9000 + k, c)
