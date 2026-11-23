@@ -2,7 +2,7 @@ import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
 import { barText, clockOf, crossing, FRAME, FRAMES, holds, secondsOf } from './lib/film.ts'
 import { duskProof } from './dusks.ts'
-import { plantProof } from './plantalone.ts'
+import { judgedOf, plantProof } from './plantalone.ts'
 import { finish, table, type Finding } from './lib/report.ts'
 
 // "we shouldn't have a super long night stage either because it looks weird that the sunflower is growing at night"
@@ -82,7 +82,7 @@ export async function run(args: Args): Promise<void> {
   }
   if (plant) {
     findings.push(...plant.findings)
-    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'frames left out', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, `${x.leftOut ?? 0} of ${x.frames.length}`, x.empty >= 0 ? 'not measured' : x.frames.length - (x.leftOut ?? 0) < 2 ? 'left out' : x.ok ? 'ok' : 'FAIL'])) + '\n')
+    if (plant.sides.length) console.log(table(['night', 'side', 'handover', 'midnight', 'mean at handover', 'at midnight', 'largest rise', 'into', '90th at handover', 'at midnight', 'plant covers', 'under rime, left out', 'wet frames', 'largest rise a frame in the wet', 'verdict'], plant.sides.map((x) => [x.night, x.side, x.handover, x.midnight, x.frames[0].mean.toFixed(1), x.frames[x.frames.length - 1].mean.toFixed(1), x.rise.toFixed(2), x.rise > 0 ? x.riseAt : '', x.frames[0].high, x.frames[x.frames.length - 1].high, `${(100 * x.frames[0].share).toFixed(1)} %`, `${x.leftOut ?? 0} of ${x.frames.length}`, x.wet ?? 0, x.wet ? `${(x.wetRise ?? 0).toFixed(2)}${(x.wetRise ?? 0) > 0 ? ` into ${x.wetRiseAt}` : ''}` : '', x.empty >= 0 ? 'not measured' : !judgedOf(x) ? 'left out' : x.ok ? 'ok' : 'FAIL'])) + '\n')
   }
   finish({
     check: 'nights',
