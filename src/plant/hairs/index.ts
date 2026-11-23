@@ -140,6 +140,7 @@ vec3 hairBend;
 float hairOwn;
 float hairShare;
 float hairWide;
+float hairRime;
 float hairBead;
 float hairSlim;
 float hairCoat;
@@ -196,6 +197,7 @@ void readHair(int k) {
   hairDir = normalize(hairDir + aside * ((0.35 + 0.95 * reach) * sqrt(h7)) + vec3(0.0, 0.2 * h6, 0.0));
   hairBend = (e1 * cos(turn + 2.1) + e2 * sin(turn + 2.1)) * ((0.08 + 0.3 * h2 * h2) * (0.4 + 1.2 * reach)) + vec3(0.0, -0.05, 0.0);
   hairWide = 1.0;
+  hairRime = 0.0;
   // Most hairs are short and a few are long, and they do not stand evenly: there are stretches with few, and those few are short. Down is even.
   float coat = smoothstep(0.0008, 0.002, hairRoot.w);
   hairCoat = coat;
@@ -214,7 +216,8 @@ void readHair(int k) {
     hairRoot.w *= mix(1.0, mix(1.3 + 0.4 * h2, 0.35 + 0.95 * h2 * h2, coat), uPlantFrost);
     float skew = 6.2832 * fract(hairOwn * 173.31 + 0.21);
     hairDir = normalize(hairDir + (e1 * cos(skew) + e2 * sin(skew)) * (uPlantFrost * (0.25 + 0.75 * sqrt(fract(hairOwn * 61.17 + 0.83)))));
-    hairWide += uPlantFrost * RIME_M * (0.6 + 0.8 * h4) / uHairWidth * hairSlim;
+    // The ice on a hair is never wider than a seventh of the hair is long.
+    hairRime = uPlantFrost * min(RIME_M * (0.6 + 0.8 * h4), hairRoot.w / 7.0) / uHairWidth * hairSlim;
     // Ice grows straight.
     hairBend *= 1.0 - 0.75 * uPlantFrost;
     // Rime grows on a hair, not on the felt a strand of down stands for.
@@ -294,7 +297,9 @@ Strand strandAt(float t) {
   vec4 view = viewMatrix * vec4(s.world, 1.0);
   s.depth = -view.z;
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1));
+  // Rime gathers toward the tip of a hair, where the air passes: the foot stays a fine line and the ice is widest three quarters of the way out.
+  float club = smoothstep(0.1, 0.75, t) * (1.0 - 0.7 * smoothstep(0.75, 1.0, t));
+  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * (hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1)) + hairRime * club);
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
