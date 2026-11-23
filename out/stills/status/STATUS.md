@@ -1,12 +1,12 @@
-# Status 30
+# Status 31
 
-2026-11-23 13:42 UTC
+2026-11-23 14:08 UTC
 
-- Status 30 · Phase 4. Merged: frost (dark patches at 1054 gone, FROST_SHUT 0.75), player (export encodes the track first, desk advice), stem and hairs (roots laid once, cut by size on screen). Three more watch parts are in and read: 2544 to 2861 and 2862 to 3179 show no jump, notch or lone spark. Rulings: frost must show on the plant in the wide hold, the tip shot's right leaf goes cool, the hero leads the field into flower, the storm spray leaves the near soil.
-- Next: Prove and push the plant merge (the time lapse twitch in the shader). Collect the eight parts still drawing, join the first whole watch with the music at about 14:35, list what it shows. Wake the night sky owner at 14:13. Time used: 15.7 h of 30 h.
+- Status 31 · Phase 4. On v2 b9c889d, merged and proven (204 tests, 16 frames drawn and seen): the lens no longer takes a broken pixel for a light; the wide frost hold shows frost on the whole plant before the first cut; the frosted ground throws a cool light up into the close shots; a low sun behind the last storm cloud no longer lights the leaves lemon yellow (leaf p90 at 2150, 2156, 2160 from 148, 144, 102 down to 98, 86, 68 of 255, MEASURED). The checks read every 24th frame of the film: no pixel without a number, but wild pixels in the flower's disc on four frames, now first on the head owner's list. Six of twelve watch parts read.
+- Next: The other six watch parts, then the first whole film at 640 by 360 on the music; the disc's wild pixels; live play cost on the merged tree (five spans being measured now); the pose of the storm leaves; then the whole film at 1920. Time used: 16.1 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The bloom close, first watch part, every sixth frame 2862 to 2976
-- `status-2.jpg`: Frost shots on the merged tree: 900, 952, 1054, 1106, 1157, 1208
-- `status-3.jpg`: The tip shot at 1106, 1920 wide, draft
-- `status-4.jpg`: After the stem and hairs merge: 240, 774, 1106, 1920, 2300, 3009
+- `status-1.jpg`: Frame 60. The sprout with the merged leaf look
+- `status-2.jpg`: Frame 951. Wide frost hold, the last frame before the first cut
+- `status-3.jpg`: Frame 1106. Frost close shot, the right leaf now cool grey
+- `status-4.jpg`: Frame 2156. Dusk after the storm, the leaves no longer outshine the sky
