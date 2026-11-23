@@ -20,6 +20,7 @@ const MIE: RGB = [0.023, 0.0245, 0.0265]
 const OZONE: RGB = [0.00056, 0.0015, 0.00022]
 const AIRGLOW: RGB = [0.00155, 0.00240, 0.00455]
 const CAL: RGB = [0.72, 0.92, 1.19]
+const LOW_AEROSOL: RGB = [1.02, 0.84, 1.26]
 
 const rgb = (): RGB => [0, 0, 0]
 const lum = (a: RGB): number => a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722
@@ -176,11 +177,13 @@ export class Air {
       const muSun = Math.sin(e * RAD)
       const flatSun = Math.cos(e * RAD)
       this.transmission(EYE, Math.sin(Math.max(e, 0.23) * RAD), trans)
-      for (let c = 0; c < 3; c++) this.directTable[s * 3 + c] = SUN * trans[c] * smoothstep(-0.91, 0.20, e)
+      const surfaceSlant = Math.exp(-Math.max(0.0, e) / 3.6)
+      for (let c = 0; c < 3; c++) this.directTable[s * 3 + c] = SUN * trans[c] * Math.exp(-LOW_AEROSOL[c] * surfaceSlant) * smoothstep(-0.91, 0.20, e)
       this.transmission(2.1, muSun, trans)
       for (let c = 0; c < 3; c++) this.cloudTable[s * 3 + c] = SUN * trans[c]
       const dusk = smoothstep(-13.8, -2.3, e)
       const high = smoothstep(-1.2, 19, e)
+      const scatterUnit = 1 + 2.82 * smoothstep(7, 56, e)
       for (let y = 0; y < SKY_Y; y++) {
         const mu = (y / (SKY_Y - 1)) ** 2.25
         const flat = Math.sqrt(1 - mu * mu)
@@ -189,7 +192,7 @@ export class Air {
           const az = Math.PI * (x / (SKY_X - 1)) ** 1.72
           const nu = clamp(mu * muSun + flat * flatSun * Math.cos(az), -1, 1)
           const rp = phaseR(nu)
-          const mp = phaseM(nu)
+          const mp = phaseM(nu) * (0.43 + 0.30 * high)
           through.fill(1)
           radiance.fill(0)
           for (let i = 0; i < steps; i++) {
@@ -215,12 +218,12 @@ export class Air {
           const i = ((s * SKY_Y + y) * SKY_X + x) * 3
           const nightRise = 1 + 1.35 * Math.exp(-mu * 12)
           const after = dusk * (1 - high)
-          const blue = after * Math.exp(-mu * 3.0) * (0.55 + 0.45 * Math.cos(az / 2) ** 2)
-          const dawn = after * Math.exp(-mu * (9.5 + 1.85 * Math.max(0, -e))) * Math.exp(-az * az * 0.72)
+          const blue = after * Math.exp(-mu * 2.9) * (0.66 + 0.34 * Math.cos(az / 2) ** 2)
+          const dawn = after * Math.exp(-mu * (13.9 + 3.75 * Math.max(0, -e))) * Math.exp(-az * az * (1.5 + 0.64 * Math.max(-e, 0)))
           const belt = after * Math.exp(-(((mu - Math.max(0.045, 0.108 - 0.012 * e)) / 0.065) ** 2)) * Math.sin(az / 2) ** 5
-          const corrective: RGB = [0.98 * dawn + 0.085 * belt + 0.008 * blue, 0.255 * dawn + 0.034 * belt + 0.028 * blue, 0.09 * dawn + 0.057 * belt + 0.071 * blue]
+          const corrective: RGB = [0.67 * dawn + 0.085 * belt + 0.012 * blue, 0.192 * dawn + 0.034 * belt + 0.059 * blue, 0.078 * dawn + 0.057 * belt + 0.159 * blue]
           for (let c = 0; c < 3; c++) {
-            this.sky[i + c] = radiance[c] * SUN * CAL[c] + AIRGLOW[c] * nightRise + corrective[c]
+            this.sky[i + c] = radiance[c] * SUN * CAL[c] * scatterUnit + AIRGLOW[c] * nightRise + corrective[c]
           }
         }
       }
@@ -264,8 +267,8 @@ export class Air {
     this.skyAt(e, 0.055, Math.PI * 0.7, this.tap)
     const value = lum(this.tap)
     const level = 0.033 + value * 0.13
-    out[0] = level * 0.72
-    out[1] = level * 0.86
+    out[0] = level * 0.57
+    out[1] = level * 0.81
     out[2] = level
     return out
   }

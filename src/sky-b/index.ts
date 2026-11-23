@@ -81,6 +81,7 @@ class FieldSky implements Sky {
       uSmear: { value: new THREE.Vector2() },
       uEvolve: { value: 0 },
       uEyeKm: { value: 0.001 },
+      uRealSky: { value: 0 },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
     })
@@ -144,8 +145,8 @@ class FieldSky implements Sky {
       const s = out.horizonSun[c]
       const tint = this.deck[c]
       const cap = lerp(z * 0.88 + 0.11 * h, tint * 0.90, blend)
-      const far = lerp(h * 0.96 + 0.08 * z, tint * (1.32 + (1 - d.rain) * 0.15), blend)
-      const facing = lerp(s * 0.94 + h * 0.11, tint * 1.61 + burst * 0.46 * s, blend)
+      const far = lerp(h * 0.96 + 0.08 * z, tint * (2.65 + (1 - d.rain) * 0.17), blend)
+      const facing = lerp(s * 0.94 + h * 0.11, tint * 2.74 + burst * 0.46 * s, blend)
       out.zenith[c] = lerp(lerp(z, cap, blend + fair), z * 0.53 + h * 0.47, cold * 0.61)
       out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), z * 0.33 + h * 0.67, cold * 0.63)
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), z * 0.29 + h * 0.44 + s * 0.27, cold * 0.76)
@@ -192,6 +193,7 @@ class FieldSky implements Sky {
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
     u.uEvolve.value = 0.5 * (now.cloud.evolve + later.cloud.evolve)
+    u.uRealSky.value = 0.5 * (now.t + later.t)
     u.uSteps.value = level.steps
     u.uLightSteps.value = level.light
     this.cloud.render(renderer, target)
@@ -207,7 +209,7 @@ class FieldSky implements Sky {
     v.uSunFace.value.normalize()
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3)
-    v.uDisc.value.fromArray(this.groundSun).multiplyScalar(86 * (1 - 0.22 * d.fog))
+    v.uDisc.value.fromArray(this.groundSun).multiplyScalar(87 * (1 - 0.22 * d.fog) * smoothstep(0, 0.025, d.sunThrough))
     this.stellar.setFromMatrix4(this.turn.makeRotationAxis(north, -now.starTurn - 0.18))
   }
 
