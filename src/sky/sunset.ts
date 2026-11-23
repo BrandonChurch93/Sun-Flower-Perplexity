@@ -13,11 +13,12 @@ const DEEP = [0.010, 0.026, 0.038] as const
 const BLUE = [0.0025, 0.011, 0.029] as const
 const LOW = [0.045, 0.064, 0.069] as const
 const COOL = [0.016, 0.037, 0.062] as const
+const ATTENUATED = [0.78, 0.10, 0.06] as const
 const GOLD = [0.37, 0.166, 0.057] as const
-const EMBER = [0.195, 0.035, 0.008] as const
+const EMBER = [0.172, 0.018, 0.005] as const
 const HAZE = [0.179, 0.109, 0.052] as const
-const AUBURN = [0.078, 0.014, 0.003] as const
-const GLOW = [0.219, 0.041, 0.0026] as const
+const AUBURN = [0.072, 0.0075, 0.0017] as const
+const GLOW = [0.215, 0.021, 0.0026] as const
 const PEACH = [0.067, 0.041, 0.032] as const
 const ROSE = [0.058, 0.024, 0.037] as const
 
@@ -34,11 +35,15 @@ export function sunsetSkyAt(up: number, cosAzimuth: number, dusk: number, out: R
   const glow = dusk * Math.exp(-274 * az - ((up - 0.020) / 0.051) ** 2)
   const seamY = lerp(0.058, 0.043, dusk) + 0.008 * towards
   const seamW = lerp(0.031, 0.025, dusk)
-  const rose = (0.25 + 0.75 * Math.exp(-8 * az)) * (1 - 0.42 * dusk * Math.exp(-155 * az))
+  const rose = (0.25 + 0.75 * Math.exp(-8 * az)) * (1 - 0.82 * dusk * Math.exp(-46 * az))
     * Math.exp(-(((up - seamY) / seamW) ** 2))
   const lift = Math.exp(-9.7 * up)
+  // The longest, warmest paths screen the blue fill in the belt,
+  // without taking the rose edge off the clouds or darkening the dome.
+  const path = dusk * Math.exp(-29 * az - (up / 0.063) ** 2)
   for (let c = 0; c < 3; c++) {
     const dome = lerp(lerp(DEEP[c], BLUE[c], dusk), lerp(LOW[c], COOL[c], dusk), lift)
+      * lerp(1, ATTENUATED[c], path)
     out[c] = dome + lerp(GOLD[c], EMBER[c], dusk) * band + lerp(HAZE[c], AUBURN[c], dusk) * haze
       + GLOW[c] * glow + lerp(PEACH[c], ROSE[c], dusk) * rose
   }
@@ -106,9 +111,11 @@ vec3 sunsetSkyAt(float up, float cosAzimuth, float dusk) {
   float glow = dusk * exp(-274.0 * az - squared((up - 0.020) / 0.051));
   float seamY = mix(0.058, 0.043, dusk) + 0.008 * towards;
   float seamW = mix(0.031, 0.025, dusk);
-  float rose = (0.25 + 0.75 * exp(-8.0 * az)) * (1.0 - 0.42 * dusk * exp(-155.0 * az))
+  float rose = (0.25 + 0.75 * exp(-8.0 * az)) * (1.0 - 0.82 * dusk * exp(-46.0 * az))
     * exp(-squared((up - seamY) / seamW));
-  vec3 dome = mix(mix(${gl(DEEP)}, ${gl(BLUE)}, dusk), mix(${gl(LOW)}, ${gl(COOL)}, dusk), exp(-9.7 * up));
+  float path = dusk * exp(-29.0 * az - squared(up / 0.063));
+  vec3 dome = mix(mix(${gl(DEEP)}, ${gl(BLUE)}, dusk), mix(${gl(LOW)}, ${gl(COOL)}, dusk), exp(-9.7 * up))
+    * mix(vec3(1.0), ${gl(ATTENUATED)}, path);
   return dome + mix(${gl(GOLD)}, ${gl(EMBER)}, dusk) * band + mix(${gl(HAZE)}, ${gl(AUBURN)}, dusk) * haze
     + ${gl(GLOW)} * glow + mix(${gl(PEACH)}, ${gl(ROSE)}, dusk) * rose;
 }
