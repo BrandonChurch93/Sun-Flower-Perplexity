@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { config, frameCount } from '../src/config.ts'
-import { GAP_MS, Pacing, type RunFacts } from '../src/player/pacing.ts'
+import { GAP_MS, Pacing, reportText, type RunFacts } from '../src/player/pacing.ts'
 
 const fps = config.film.fps
 const facts: RunFacts = {
@@ -86,6 +86,21 @@ describe('the pacing report', () => {
     expect(report.scriptMs).toEqual({ mean: 24, p99: 40, longest: 40, longestAtFilm: 0.1 })
     expect(report.cardMs.longest).toBe(50)
     expect(report.partsMs).toEqual({ plant: 18, field: 6 })
+  })
+
+  it('writes the report as text to paste: frames due, shown and late, script mean and worst, longest gap, made', () => {
+    const pacing = new Pacing()
+    pacing.present(0, 0, 0, 0, 0.02, 0, 20, undefined, { plant: 6, field: 2, script: 8, wait: 12 })
+    pacing.present(3, 3, 3 / fps, 3 / fps, 3 / fps + 0.09, 100, 90, undefined, { plant: 30, field: 10, script: 40, wait: 50 })
+    const made = { programs: 0, shaders: 0, textures: 0, buffers: 0, framebuffers: 0, renderbuffers: 0, uploads: 0, uploadBytes: 0, updates: 4, updateBytes: 64, bufferUpdates: 4, bufferUpdateBytes: 64, textureUpdates: 0, textureUpdateBytes: 0, vertexArrays: 0 }
+    const text = reportText(pacing.report(facts, 4, false, made), ['graphics: test card'])
+    expect(text).toContain('frames: 4 due, 2 shown, 2 skipped, 1 shown late')
+    expect(text).toContain('script a frame: mean 24 ms, 99th 40 ms, worst 40 ms at 0.1 s')
+    expect(text).toContain('longest 100 ms')
+    expect(text).toContain('script by part, mean ms: plant 18.0, field 6.0')
+    expect(text).toContain('made after loading: 0')
+    expect(text).toContain('graphics: test card')
+    expect(text).not.toMatch(/[\u2014!]/)
   })
 
   it('says where a stopped run stopped', () => {
