@@ -1,6 +1,6 @@
 # Cue sheet
 
-Compiled from bars and beats against the map. 43 cues, 0 mismatches.
+Compiled from bars and beats against the map. 47 cues, 0 mismatches.
 
 ## Cues
 
@@ -13,9 +13,12 @@ Compiled from bars and beats against the map. 43 cues, 0 mismatches.
 | 1 | 13.1 | 21.455 | 643 | kick | kick | Sunrise of day 4: the first true leaves |
 | 2 | 17.1 | 28.312 | 849 | none | nothing new | Sunrise into mist |
 | 2 | 17.1 | 28.312 | 849 | none | nothing new | The frost hold begins: the plant stops growing |
-| 2 | 21.1 | 35.169 | 1055 | soft | soft low hit | The camera is half way in and the disc of the sun sharpens |
-| 2 | 22.3 | 37.740 | 1132 | none | nothing new | The frost starts to melt |
-| 3 | 25.1 | 42.026 | 1260 | none | nothing new | The frost hold ends: the plant grows again on this bar line |
+| 2 | 19.1 | 31.740 | 952 | none | nothing new | Cut to the first close shot: the edge of a leaf, the ice still growing |
+| 2 | 21.1 | 35.169 | 1055 | soft | soft low hit | Cut to the growing tip: the mist thins and the sun comes through |
+| 2 | 22.4 | 38.169 | 1145 | none | nothing new | The frost starts to melt |
+| 2 | 23.1 | 38.597 | 1157 | none | nothing new | Cut to the lowest leaf: the ice goes to water |
+| 2 | 24.3 | 41.169 | 1235 | none | nothing new | The drop at the tip of the leaf lets go |
+| 3 | 25.1 | 42.026 | 1260 | none | nothing new | Cut back to the wide shot. The frost hold ends: the plant grows again on this bar line |
 | 3 | 26.3 | 44.597 | 1337 | none | nothing new | Sunset |
 | 3 | 27.1 | 45.455 | 1363 | none | nothing new | Sunrise |
 | 3 | 28.3 | 48.026 | 1440 | none | nothing new | Sunset |
@@ -42,13 +45,14 @@ Compiled from bars and beats against the map. 43 cues, 0 mismatches.
 | 5 | 53.1 | 90.026 | 2700 | kick | kick | Sunrise |
 | 5 | 54.3 | 92.597 | 2777 | none | nothing new | Sunset |
 | 5 | 55.1 | 93.455 | 2803 | hat | hat | Sunrise |
+| 5 | 55.1 | 93.455 | 2803 | hat | hat | The camera starts in toward the bud |
 | 5 | 56.1 | 95.169 | 2855 | none | nothing new | The time lapse slows into the golden evening |
-| 6 | 57.1 | 96.883 | 2906 | none | nothing new | The bud begins to open (bloom) |
+| 6 | 57.1 | 96.883 | 2906 | none | nothing new | The camera is half a metre from the head and the bud begins to open (bloom) |
 | 6 | 61.1 | 103.740 | 3112 | hat | hat | The flower is fully open |
-| 7 | 65.1 | 110.597 | 3317 | kick | kick | The camera starts to pull away from the flower |
+| 7 | 65.1 | 110.597 | 3317 | kick | kick | The camera starts to pull away from the flower over the field |
 | 7 | 69.1 | 117.455 | 3523 | hat | hat | The camera rises over the field |
-| 8 | 73.1 | 124.312 | 3729 | quiet | nothing new | Sunset: the sun touches the horizon as the drums drop out |
-| 8 | 74.3 | 126.883 | 3806 | none | nothing new | The last frames: afterglow |
+| 8 | 73.1 | 124.312 | 3729 | quiet | nothing new | Sunset: the sun's lower edge stands on the far ridge as the drums drop out |
+| 8 | 74.3 | 126.883 | 3806 | none | nothing new | The last sliver of the sun goes behind the ridge; the last frame is a finished picture |
 
 ## Captions
 
