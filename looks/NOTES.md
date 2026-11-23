@@ -1,8 +1,8 @@
 # Looks of plant
 
-2026-11-23 10:17 UTC, at commit be9384a1 of agent/plant.
+2026-11-23 11:12 UTC, at commit 96c45aec of agent/plant.
 
-be9384a1: the stem narrows to a growing point while it has true leaves and no bud
+One laying a frame, first try through the keyed path. Left today, middle one laying a frame, right the difference times four. Not on in the film: the air of the keyed path is drawn by the shader and stands off the film's air by a millimeter on the hero and by far more on the companion's leaf at the left edge. Being rebuilt so that each frame's laying carries the film's own air.
 
-- `01-frame-1106-at-the-film-s-lens-1920-enlarged-twic.jpg`: Frame 1106 at the film's lens, 1920, enlarged twice. Left before: a pale dome like a cut pipe on the stalk under the top pair. Right after be9384a1: the stalk narrows into the youngest leaves' stalks, no dome, no sky between stalk and leaf 6. Still wrong: the tuft of large pale blades on the narrow end (hairs and rime sized for the full stalk, the hairs owner's pointed cap comes on top)
-- `02-close-views-of-the-stem-s-tip-after-be9384a1-at-.jpg`: Close views of the stem's tip after be9384a1 at 1106, 1474, 1560, 1640 (narrow growing tip) and 1800, 2150 (the wrapped bud, unchanged). Still wrong: at 1474 the tip is a smooth green wedge with no small leaves on it
+- `01-3000-today-one-laying-difference-the-companion-s.jpg`: 3000 today, one laying, difference: the companion's leaf at the left edge and the hero's lower leaf stand elsewhere
+- `02-2300-today-one-laying-difference-the-leaves-twit.jpg`: 2300 today, one laying, difference: the leaves twitch differently in the time lapse
