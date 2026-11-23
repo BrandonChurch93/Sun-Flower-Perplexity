@@ -36,9 +36,17 @@ describe('the film clock', () => {
   })
 
   it('does not grow the plant in a hold', () => {
+    const shutter = config.film.shutterDegrees / 360 / fps
     for (const [from, to, tau] of [[17, 25, config.growth.frostHold], [33, 41, config.growth.stormHold]] as const) {
-      for (let b = from; b < to; b += 0.01) expect(tauAt(barTime(b))).toBe(tau)
+      for (let f = hitFrame(from); f < hitFrame(to); f++) {
+        expect(tauAt(f / fps)).toBe(tau)
+        expect(tauAt(f / fps + shutter)).toBe(tau)
+      }
+      expect(tauAt((hitFrame(from) - 1) / fps)).toBeLessThan(tau)
+      expect(tauAt(hitFrame(to) / fps)).toBe(tau)
+      expect(tauAt(hitFrame(to) / fps + shutter)).toBeGreaterThan(tau)
     }
+    expect([hitFrame(17), hitFrame(25) - 1, hitFrame(33), hitFrame(41) - 1]).toEqual([849, 1259, 1672, 2082])
     expect(heightAt(config.growth.frostHold)).toBeGreaterThan(0.15)
     expect(heightAt(config.growth.frostHold)).toBeLessThan(0.22)
     expect(heightAt(config.growth.stormHold)).toBeGreaterThan(0.84)

@@ -1,7 +1,8 @@
 import { config } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { combine, hash01, streamSeed } from '../core/random.ts'
-import { STEM_LEAN, STEM_SWING, restless, squall, sway, windToward } from './wind.ts'
+import { STEM_LEAN, STEM_SWING, firstWay, restless, squall, sway, swell as swellOf, windToward } from './wind.ts'
+import { norm } from './norm.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
 export interface PlantInputs {
@@ -61,7 +62,7 @@ const rnd = (i: number, j = 0): number => hash01(seedNow, i, j)
 const TAU = Math.PI * 2
 const FPS = config.film.fps
 // How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
-const GUST_LEAN = 0.2
+const GUST_LEAN = 0.3
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
 // How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.
@@ -211,17 +212,20 @@ const neckLength = new Monotone([
   [tiltStart, 0.07],
   [turnStart, 0.07],
   [turnEnd, 0.17],
+  [config.growth.seconds, 0.2],
 ])
 
 // The bud is a ball. It flattens into the disc as it opens.
 export function bodyHalfDepth(time: number): number {
   return bodyRadius(time) * depthShare.at(time)
 }
+// The open head fills with seed and bows: where its face points at the end, in degrees above the level.
+const HEAD_BOWED = -3
 const elevationCurve = new Monotone([
   [tiltStart, 90],
   [turnStart, 34],
   [turnEnd, 9],
-  [config.growth.seconds, 5],
+  [config.growth.seconds, HEAD_BOWED],
 ])
 const FACE_AZIMUTH = (config.field.companion.fromAzimuthDeg - 27) * RAD
 const EARLY_TURN = 6 * RAD
@@ -625,14 +629,18 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   let blow = 0
   let across = 0
   let nod = 0
+  // Inputs without a film second are the first film's, and keep its wind.
+  const first = inputs.real === undefined
+  const way = first ? firstWay : windToward
   if (standsAt && (steady > 0 || (inputs.gust ?? 0) > 0)) {
     // In real time the stem rides the swell. In a time lapse each frame catches it somewhere else on that swell.
-    const swell = lapse < 1 ? sway(real, standsAt.x, standsAt.z) : 0
+    const ride = first ? swellOf : sway
+    const swell = lapse < 1 ? ride(real, standsAt.x, standsAt.z) : 0
     const caught = lapse > 0 ? restless(real, Math.floor(real * FPS + 1e-6), 0.37 + 0.11 * variant) : 0
     blow = steady * (STEM_LEAN + STEM_SWING * lerp(swell, 0.5 * caught, lapse))
     // A bud or a head has weight: it comes after the stem that carries it and passes it on the way back.
     const heavy = smoothstep(bud0 + 6, bloom1, time)
-    if (heavy > 0 && lapse < 1) nod = HEAD_NOD * heavy * steady * (1 - lapse) * (sway(real - HEAD_LATE_S, standsAt.x, standsAt.z) - swell)
+    if (heavy > 0 && lapse < 1) nod = HEAD_NOD * heavy * steady * (1 - lapse) * (ride(real - HEAD_LATE_S, standsAt.x, standsAt.z) - swell)
     const gust = inputs.gust ?? 0
     if (gust > 0) {
       const push = squall(real, standsAt.x, standsAt.z)
@@ -646,19 +654,19 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const dance = h < 0.5 ? (0.012 + 0.058 * (1 - smoothstep(0.03, 0.3, h))) * (1 - smoothstep(0.3, 0.5, h)) : 0
   const turn = dance > 0 ? TAU * (time / DANCE_SECONDS + (variant === 0 ? DANCE_PHASE : rnd(3))) : 0
   return {
-    leanX: inputs.leanX * lean + Math.sin(phase) * circle + windToward.x * blow - windToward.z * across + (dance > 0 ? Math.sin(turn) * dance : 0),
-    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle + windToward.z * blow + windToward.x * across + (dance > 0 ? 0.5 * Math.cos(turn) * dance : 0),
+    leanX: inputs.leanX * lean + Math.sin(phase) * circle + way.x * blow - way.z * across + (dance > 0 ? Math.sin(turn) * dance : 0),
+    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle + way.z * blow + way.x * across + (dance > 0 ? 0.5 * Math.cos(turn) * dance : 0),
     hook: hookAngle(time),
     hookShare: hookShare(time),
     back: HOOK_BACK * (hookAngle(time) / HOOK_MAX),
-    tiltX: Math.sin(az) * tilt + windToward.x * nod,
-    tiltZ: Math.cos(az) * tilt + windToward.z * nod,
+    tiltX: Math.sin(az) * tilt + way.x * nod,
+    tiltZ: Math.cos(az) * tilt + way.z * nod,
     neckShare: h > 0 ? clamp(neckLength.at(time) / h, 0, 0.5) : 0.5,
   }
 }
 
 function fromTilt(ax: number, az: number, out: Vec3): Vec3 {
-  const a = Math.hypot(ax, az)
+  const a = norm(ax, az)
   if (a < 1e-9) {
     out.x = 0
     out.y = 1

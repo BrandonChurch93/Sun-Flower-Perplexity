@@ -17,6 +17,26 @@ const LEVEL = { day: 0.5, warm: 0.42, storm: 0.26, frost: 0.52, night: 0.05 }
 const SOIL: RGB = [0.2, 0.15, 0.1]
 const lum = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
+type Knots = readonly (readonly [number, number])[]
+function along(knots: Knots, x: number): number {
+  if (x <= knots[0][0]) return knots[0][1]
+  for (let i = 1; i < knots.length; i++) {
+    if (x <= knots[i][0]) return lerp(knots[i - 1][1], knots[i][1], smoothstep(knots[i - 1][0], knots[i][0], x))
+  }
+  return knots[knots.length - 1][1]
+}
+
+// How bright the light lands on what it lights, on the screen and before the curve, by how high the sun stands. The sky gives the colour of the light and the look gives its level: a low sun is a weak lamp beside its own sky, and a camera that held the sky would lose the plant.
+const KEY: Knots = [[-1, 0], [0, 1.5], [1, 3.1], [2.5, 4.2], [10, 4.2], [25, 3.4], [45, 2.9], [90, 2.7]]
+const MOON_KEY = 1.3
+const FILL_LOW: Knots = [[-14, 0.08], [-10, 0.09], [-6, 0.14], [-3, 0.25], [0, 0.42], [5, 0.5], [25, 0.55]]
+const FILL_HIGH: Knots = [[-14, 0.045], [-6, 0.065], [-3, 0.1], [0, 0.14], [5, 0.16], [25, 0.2]]
+const FILL_STORM = { low: 0.8, high: 0.24, key: 0.24 }
+const FILL_FROST = { low: 0.3, high: 0.22 }
+const FLASH = { key: 7, fill: 2.5, color: [0.86, 0.94, 1.22] as RGB }
+// The redder the sun, the less a green leaf has to give back: the key keeps at least this much green and blue beside its red.
+const KEY_FLOOR = { green: 0.45, blue: 0.14 }
+
 export interface LookWeights { day: number; warm: number; storm: number; frost: number; night: number }
 
 export function weightsAt(now: Moment, out: LookWeights): LookWeights {
@@ -41,6 +61,7 @@ export function blankLook(): WorldDef {
     standIn: false,
     sun: { azimuthDeg: 180, elevationDeg: 45, color: [1, 1, 1], softnessDeg: 1.2, lean: 1, lift: 1 },
     sky: { zenith: [0, 0, 0], horizon: [0, 0, 0], bounce: [0, 0, 0], ambient: 1, glow: [0, 0, 0], glowPower: 8, disc: 0, even: 0 },
+    air: { sun: [0, 0, 0], zenith: [0, 0, 0], horizon: [0, 0, 0] },
     backdrop: { file: null, key: '', sunAt: null, gain: 1, blur: 0.25 },
     fog: { color: [0, 0, 0], sunTint: [0, 0, 0], density: 0, falloff: 1 },
     grade: { ...DAY, gain: [1, 1, 1], lift: [0, 0, 0] },
@@ -50,6 +71,8 @@ export function blankLook(): WorldDef {
 }
 
 const w: LookWeights = { day: 1, warm: 0, storm: 0, frost: 0, night: 0 }
+const tint: RGB = [0, 0, 0]
+const round: RGB = [0, 0, 0]
 const mix = (pick: (g: Grade) => number): number => w.day * pick(DAY) + w.warm * pick(WARM) + w.storm * pick(STORM) + w.frost * pick(FROST) + w.night * pick(NIGHT)
 
 // The settings of one frame, from the instant and from what the sky says about its own light. The sky and the light on the plant are one thing.
@@ -63,21 +86,50 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   w.frost /= total
   w.night /= total
 
-  const lit = now.lightKind === 'none' ? 0 : now.lightKind === 'sun' ? d.sunThrough * smoothstep(-1, 0.6, now.sunElevationDeg) : smoothstep(5, 9, -now.sunElevationDeg) * (1 - 0.85 * d.overcast)
+  const level = w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night
+  // What the meter reads: the open sky away from the sun, with a share of the sky near it and of the sun itself.
+  const meter = 0.5 * lum(sky.horizon) + 0.2 * lum(sky.horizonSun) + 0.3 * lum(sky.zenith) + 0.02 * lum(sky.direct) * Math.max(now.light.y, 0) * (now.lightKind === 'sun' ? d.sunThrough : 0)
+  const exposure = level / Math.max(meter, 1e-5)
+
+  const el = now.sunElevationDeg
+  const closed = d.overcast * (1 - d.sunThrough)
+  const through = Math.max(d.sunThrough, FILL_STORM.key * closed)
+  const key = now.lightKind === 'none' ? 0 : now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
+  const flash = d.flash
   out.sun.azimuthDeg = (Math.atan2(now.light.x, now.light.z) * 180) / Math.PI
   out.sun.elevationDeg = (Math.asin(clamp(now.light.y, -1, 1)) * 180) / Math.PI
-  for (let i = 0; i < 3; i++) out.sun.color[i] = sky.direct[i] * lit
-  out.sun.softnessDeg = lerp(1.2, 20, clamp(Math.max(d.fog * 1.1, d.overcast, 1 - d.sunThrough)))
+  // The colour of the key: the sun with a share of the bright sky round it, and under a closed deck the bright gap alone.
+  for (let i = 0; i < 3; i++) tint[i] = lerp(sky.direct[i] + 0.3 * sky.horizonSun[i], sky.horizonSun[i], now.lightKind === 'sun' ? closed : 0)
+  if (now.lightKind === 'sun') {
+    tint[1] = Math.max(tint[1], KEY_FLOOR.green * tint[0])
+    tint[2] = Math.max(tint[2], KEY_FLOOR.blue * tint[0])
+  }
+  const tintLum = Math.max(lum(tint), 1e-6)
+  for (let i = 0; i < 3; i++) out.sun.color[i] = ((tint[i] / tintLum) * key * (1 - flash) + FLASH.color[i] * FLASH.key * flash) / exposure
+  out.sun.softnessDeg = lerp(lerp(1.2, 20, clamp(Math.max(d.fog * 1.1, d.overcast, 1 - d.sunThrough))), 5, flash)
   out.sun.lean = 1
   out.sun.lift = 1
 
-  const sunLum = lum(out.sun.color) * Math.max(now.light.y, 0)
+  const day = w.day + w.warm + w.night
+  const low = (day * along(FILL_LOW, el) + w.storm * FILL_STORM.low + w.frost * FILL_FROST.low) * (1 + FLASH.fill * flash)
+  const high = (day * along(FILL_HIGH, el) + w.storm * FILL_STORM.high + w.frost * FILL_FROST.high) * (1 + FLASH.fill * flash)
+  for (let i = 0; i < 3; i++) round[i] = lerp(sky.horizon[i], sky.horizonSun[i], 0.25)
+  const roundLum = Math.max(lum(round), 1e-6)
+  const zenithLum = Math.max(lum(sky.zenith), 1e-6)
   for (let i = 0; i < 3; i++) {
-    out.sky.zenith[i] = sky.zenith[i]
-    out.sky.horizon[i] = sky.horizon[i]
-    out.sky.bounce[i] = SOIL[i] * (0.5 * (sky.horizon[i] + sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
+    out.sky.zenith[i] = ((sky.zenith[i] / zenithLum) * high) / exposure
+    out.sky.horizon[i] = ((round[i] / roundLum) * low) / exposure
+    out.sky.bounce[i] = SOIL[i] * (0.5 * (out.sky.horizon[i] + out.sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
   }
   out.sky.ambient = 1
+  // The air keeps the sky's own light, so that rain, mist and the glass sit in the sky's picture whatever the look does to the plant.
+  const air = out.air as NonNullable<WorldDef['air']>
+  const shows = now.lightKind === 'none' ? 0 : now.lightKind === 'sun' ? d.sunThrough * smoothstep(-1, 0.6, el) : smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)
+  for (let i = 0; i < 3; i++) {
+    air.sun[i] = sky.direct[i] * shows
+    air.zenith[i] = sky.zenith[i]
+    air.horizon[i] = sky.horizon[i]
+  }
   out.sky.even = clamp(Math.max(d.fog, 0.8 * d.overcast, 0.6 * now.night))
 
   const thick = d.fog * d.fog
@@ -101,10 +153,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
     g.gain[i] = mix((x) => x.gain[i])
     g.lift[i] = mix((x) => x.lift[i])
   }
-  const level = w.day * LEVEL.day + w.warm * LEVEL.warm + w.storm * LEVEL.storm + w.frost * LEVEL.frost + w.night * LEVEL.night
-  // What the meter reads: the open sky away from the sun, with a share of the sky near it and of the sunlit ground.
-  const meter = 0.5 * lum(sky.horizon) + 0.2 * lum(sky.horizonSun) + 0.3 * lum(sky.zenith) + 0.02 * sunLum
-  g.exposure = level / Math.max(meter, 1e-5)
+  g.exposure = exposure
 
   out.ground.wet = d.wet
   out.ground.frost = d.frost
