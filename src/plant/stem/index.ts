@@ -547,7 +547,7 @@ export function create(options: PartOptions): PlantPart {
           const f = k * (SUB + 1) + i
           const o = f * WIDE
           if (!out) {
-            data[o + 3] = 0
+            data.fill(0, o, o + WIDE)
             continue
           }
           const at = S[k] + steps[i] * span
