@@ -1,10 +1,10 @@
 # Looks of plant
 
-2026-11-23 14:07 UTC, at commit a7caea39 of agent/plant.
+2026-11-23 14:45 UTC, at commit a9a9d331 of agent/plant.
 
-Storm hold droop: rain weight on a blade 0.14 to 0.07 rad and the light under the storm's cloud 0.75 to 0.875. Code is pushed.
+a9a9d331: the leaves stand open from the frost to the stout bud
 
-- `01-frame-1830-at-1920-crop-of-the-plant-before-on-t.jpg`: Frame 1830 at 1920, crop of the plant, before on the left and after on the right. The blades stand a little higher, not half as far below their stalks: most of the hang is the plant's own pose at this age, which this does not touch
-- `02-frame-2000-at-1920-crop-before-and-after-same-fi.jpg`: Frame 2000 at 1920, crop, before and after. Same finding
-- `03-every-sixth-frame-of-1640-to-1700-and-2076-to-21.jpg`: Every sixth frame of 1640 to 1700 and 2076 to 2130 after the change, preview size, crop. The way into the hold and out of it. Judge the motion on a clip, these are stills
-- `04-the-same-frames-before-the-change.jpg`: The same frames before the change
+- `01-before-and-after-at-1466-1640-1830-2000-2200-250.jpg`: Before and after at 1466, 1640, 1830, 2000, 2200, 2500, 2800. Open plant from 1290 to about 2520. Still wrong: the opening fades out again between 2520 and 2700 so the bloom stays as approved
+- `02-1272-to-1320-every-sixth-frame-the-opening-begin.jpg`: 1272 to 1320 every sixth frame: the opening begins with no step
+- `03-2500-to-2800-every-60th-frame-the-leaves-settle-.jpg`: 2500 to 2800 every 60th frame: the leaves settle back to the old pose under the bud. Still wrong: reads as a second droop if watched for
+- `04-into-the-storm-hold-1669-to-1674-and-out-2081-to.jpg`: Into the storm hold 1669 to 1674 and out 2081 to 2086: the pose stands, the light steps at 1672
