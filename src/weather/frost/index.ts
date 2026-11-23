@@ -36,7 +36,7 @@ out vec3 vUp;
 const vec3 ICE = vec3(0.93, 0.96, 1.0);
 const vec3 ICE_SHADE = vec3(0.86, 0.93, 1.06);
 const float MATT = 0.15;
-const float THROUGH = 4.0;
+const float THROUGH = 1.8;
 const float GLINT = 22.0;
 const float GLINT_SHARP = 700.0;
 const float SKY = 1.6;

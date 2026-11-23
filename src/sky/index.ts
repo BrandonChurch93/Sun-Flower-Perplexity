@@ -73,6 +73,11 @@ function tearAt(overcast: number, through: number, burst: number): number {
   return Math.max(burst, 0.69 * smoothstep(0.18, 0.51, overcast) * smoothstep(0.80, 0.90, through))
 }
 
+// Expose clear paths alongside the obscured volume during its opening.
+function tearAttack(through: number, burst: number): number {
+  return Math.min(burst, through / 0.90) * (1 - smoothstep(0.75, 0.899, through))
+}
+
 function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTarget {
   return new THREE.WebGLRenderTarget(width, height, {
     type: THREE.HalfFloatType,
@@ -130,6 +135,7 @@ class FieldSky implements Sky {
       uFlash: { value: this.sun.clone() },
       uWeather: { value: new THREE.Vector4(0.2, 0.0, 1.0, 0.0) },
       uEffects: { value: new THREE.Vector4() },
+      uTearAttack: { value: 0 },
       uTravel: { value: new THREE.Vector2() },
       uSmear: { value: new THREE.Vector2() },
       uEvolve: { value: 0 },
@@ -216,6 +222,7 @@ class FieldSky implements Sky {
     const fair = 0.21 * d.cover * (1 - blend) * (1 - 0.82 * sheets)
     const cold = smoothstep(0.25, 0.84, d.fog)
     const burst = tearAt(over, d.sunThrough, d.burst)
+    const exposed = tearAttack(d.sunThrough, d.burst)
     const lunar = m.moon.y * 0.018
     const mistLevel = 0.59 * (out.horizonSun[0] * Y[0] + out.horizonSun[1] * Y[1] + out.horizonSun[2] * Y[2])
     const lowCool = coolDay(e, over, d.fog, d.evening, burst)
@@ -238,6 +245,8 @@ class FieldSky implements Sky {
       out.zenith[c] = lerp(lerp(z, cap, blend + fair), mistLevel * FROST[c] * 0.91, cold * 0.64)
       out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), mistLevel * FROST[c] * 0.88, cold * 0.60)
       out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), mistLevel * (c === 0 ? 1.39 : c === 1 ? 1.19 : 1.07), cold * 0.76)
+      // Only the sun-facing sector sees this extra clear air and warm edge.
+      out.horizonSun[c] += exposed * blend * (0.043 * s + 0.014 * this.groundSun[c])
       out.zenith[c] = lerp(out.zenith[c], zLum * LOW_COOL[c] * 1.12, 0.54 * lowCool)
       out.horizon[c] = lerp(out.horizon[c], hLum * LOW_COOL[c] * 1.16, 0.65 * lowCool)
       out.zenith[c] = lerp(out.zenith[c], zLum * EVENING_DOME[c], 0.57 * sheetCool)
@@ -308,6 +317,7 @@ class FieldSky implements Sky {
     const deckShape = d.overcast + 0.81 * tear * (1 - d.overcast)
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, tear)
+    u.uTearAttack.value = tearAttack(d.sunThrough, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
     u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
     u.uStreaks.value = eveningStreaksAt(now, e)

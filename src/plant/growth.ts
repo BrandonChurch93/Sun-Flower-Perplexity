@@ -500,7 +500,16 @@ export function leafStemFraction(i: number, time: number): number {
   return (j.at[i] = jointAt(i, time))
 }
 
+// A leaf that is not born yet waits where it will leave the tip, so nothing of it moves at its birth.
+const waits = new Map<number, Float64Array>()
+function waitingAt(i: number): number {
+  let w = waits.get(variant)
+  if (!w) waits.set(variant, (w = new Float64Array(leafCount).fill(NaN)))
+  return Number.isNaN(w[i]) ? (w[i] = jointAt(i, leafBirth(i) + 1e-6)) : w[i]
+}
+
 function jointAt(i: number, time: number): number {
+  if (leafAge(i, time) <= 0 && heightAt(leafBirth(i)) > 0) return waitingAt(i)
   const fraction = jointFraction(i, time)
   if (variant !== 0 || time <= CROWD_START || time >= CROWD_END || leafAge(i, time) <= 0) return fraction
   const h = heightAt(time)
