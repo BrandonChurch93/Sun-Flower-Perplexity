@@ -51,8 +51,8 @@ Compiled from bars and beats against the map. 47 cues, 0 mismatches.
 | 6 | 61.1 | 103.740 | 3112 | hat | hat | The flower is fully open |
 | 7 | 65.1 | 110.597 | 3317 | kick | kick | The camera starts to pull away from the flower over the field |
 | 7 | 69.1 | 117.455 | 3523 | hat | hat | The camera rises over the field |
-| 8 | 73.1 | 124.312 | 3729 | quiet | nothing new | Sunset: the sun touches the horizon as the drums drop out |
-| 8 | 74.3 | 126.883 | 3806 | none | nothing new | The last frames: afterglow |
+| 8 | 73.1 | 124.312 | 3729 | quiet | nothing new | Sunset: the sun's lower edge stands on the far ridge as the drums drop out |
+| 8 | 74.3 | 126.883 | 3806 | none | nothing new | The last sliver of the sun goes behind the ridge; the last frame is a finished picture |
 
 ## Captions
 

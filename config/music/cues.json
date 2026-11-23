@@ -314,12 +314,12 @@
         {
           "id": "sunset-last",
           "at": "73.1",
-          "do": "Sunset: the sun touches the horizon as the drums drop out",
+          "do": "Sunset: the sun's lower edge stands on the far ridge as the drums drop out",
           "expect": "quiet"
         },
         {
           "at": "74.3",
-          "do": "The last frames: afterglow",
+          "do": "The last sliver of the sun goes behind the ridge; the last frame is a finished picture",
           "expect": "none"
         }
       ]

@@ -14,8 +14,8 @@ Bar n begins at 0.883143 + (n - 1) x 1.714286 seconds. Every number here is read
 | Storm | 33 to 41 | 55.7 to 69.5 | Stands still in wind and rain | Real time under a closed deck. Lightning on bars 33 and 37 | Low, 1.66 m back creeping to 1.48 m, 0.27 to 0.30 m up: the young plant fills the frame |
 | Ascent | 41 to 57 | 69.5 to 96.9 | 61 cm to 1.71 m with a closed bud | The deck tears open on bar 41. Then fast time lapse: six whole days with sunrises on bars 43, 45, 47, 49, 51 and 53, and the last sunrise on bar 55; the time lapse slows from bar 56 | Closes to 0.75 m and rises to 1.56 m; from bar 55 it goes in on the bud |
 | Flower | 57 to 65 | 96.9 to 110.6 | The bud opens; the flower is fully open on bar 61 | One golden evening in real time, the sun 8 degrees up sinking to 3 | Close on the head. The lens closes from 0.77 m to 0.50 m off the stem over bars 55 to 57, eases back as the head opens (0.67 m at bar 59, 0.73 m at 61) and stands at 0.80 m on bar 65. 35 mm at f/5.6, the sun in the left of the frame |
-| Crane | 65 to 73 | 110.6 to 124.3 | The plant among its field | The sun sinks to the horizon | Pulls back from 0.80 m to 4.5 m and rises from 1.70 m to 2.46 m over bars 65 to 69, then drifts on to 5.1 m back and 2.74 m up at the end |
-| Dusk | 73 to the end | 124.3 to 127.0 | The field | The sun touches the horizon on bar 73; afterglow | Still rising, slowly |
+| Crane | 65 to 73 | 110.6 to 124.3 | The plant among its field | The sun sinks from 3 degrees to the far ridge | Pulls back from 0.80 m to 4.5 m and rises from 1.70 m to 2.46 m over bars 65 to 69, then drifts on to 5.1 m back and 2.74 m up at the end |
+| Dusk | 73 to the end | 124.3 to 127.0 | The field | The sun's lower edge stands on the far ridge on bar 73 (1.1 degrees up); it sinks behind the ridge and its last sliver goes a quarter of a second before the end (0.42 degrees) | Still rising, slowly |
 
 ## Rules of the film
 
@@ -48,7 +48,7 @@ Bar n begins at 0.883143 + (n - 1) x 1.714286 seconds. Every number here is read
 | 61 | Hat on the downbeat | The flower is fully open |
 | 65 | Kick | The camera starts to pull away over the field |
 | 69 | Hat | The camera rises over the field |
-| 73 | The drums drop out | The sun touches the horizon |
+| 73 | The drums drop out | The sun's lower edge stands on the far ridge |
 
 MEASURED: the cue sheet compiles against the map with 47 cues and 0 mismatches (`python3 tools/beat/cues.py config/music/cues.json config/music/map.json --fps 30`). MEASURED: every sunrise and every fast sunset crosses the horizon within 0.1 ms of its position (`out/work/tmp/cross.ts`).
 

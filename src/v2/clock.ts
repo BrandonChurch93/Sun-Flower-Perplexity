@@ -101,7 +101,7 @@ export function phaseOfElevation(degrees: number, afternoon: boolean): number {
 }
 
 // The sun's height at the marks the film is built on, in degrees.
-export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
+export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 1.1, end: 0.42 } as const
 
 const W_FROST_FROM = 4 + phaseOfElevation(SUN.frostFrom, false)
 const W_FROST_MID = 4 + phaseOfElevation(SUN.frostMid, false)
@@ -114,9 +114,10 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-// The film opens with the sun 5 degrees under the horizon and closes with it 3 under, while the field can still be read.
+// The film opens with the sun 5 degrees under the horizon. On bar 73 the sun's lower edge stands on the far ridge, which is three quarters of a degree high there,
+// and its last sliver goes under a quarter of a second before the film closes.
 const DUSK = sinceSunset(5)
-const W_END = W_LAST + sinceSunset(3)
+const W_END = 14 + phaseOfElevation(SUN.end, true)
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
 const LEAD_RATE = DUSK / (1 - B0)
 // In the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line: a night of two beats.
