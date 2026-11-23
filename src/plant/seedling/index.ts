@@ -714,6 +714,7 @@ export function create(options: PartOptions): PlantPart | null {
     meshes: [...groups.map((g) => g.mesh), ...(crumbs ? [crumbs.mesh] : []), ...(beads ? beads.meshes : [])],
     casters: [...groups.filter((g) => g.casts).map((g) => ({ mesh: g.mesh, surface: g.surface })), ...(crumbs ? [{ mesh: crumbs.mesh, surface: crumbs.surface }] : [])],
     fill,
+    absent: (time) => time >= CRUMBS_GONE_S && seedLeafLength(time) <= 0 && huskSize(time) <= 0,
     finish() {
       for (const g of groups) for (const a of g.live) if (a) a.needsUpdate = true
       if (crumbs) for (const a of crumbs.live) if (a) a.needsUpdate = true

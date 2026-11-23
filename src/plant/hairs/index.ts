@@ -565,6 +565,9 @@ export class HairSet {
   private readonly texture: THREE.DataTexture
   private shown: number
   private stale = true
+  private sent = false
+  private readonly rows: number
+  private readonly views = new Map<number, Float32Array>()
   private kept = 0
   private nearest = 1
   private longest = 0
@@ -588,6 +591,10 @@ export class HairSet {
     this.texture.magFilter = THREE.NearestFilter
     this.texture.generateMipmaps = false
     this.texture.needsUpdate = true
+    this.texture.onUpdate = () => {
+      this.sent = true
+    }
+    this.rows = rows
     // The vertices carry nothing: a vertex knows its hair and its place on it from its number.
     const lineIndex = new Uint32Array(count * 6)
     const ribbonIndex = new Uint32Array(count * 36)
@@ -778,10 +785,22 @@ export class HairSet {
       this.pickTexture.needsUpdate = true
     }
     this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : picked * 24)
+    // Only the rows that hold hairs are sent, and nothing when there were none before and are none now.
+    if (n > 0 || this.kept > 0 || !this.sent) {
+      const rows = this.sent ? Math.max(1, Math.ceil(n / ROW)) : this.rows
+      let view = this.views.get(rows)
+      if (!view) {
+        view = rows === this.rows ? this.data : this.data.subarray(0, rows * ROW * 16)
+        this.views.set(rows, view)
+      }
+      const image = this.texture.image as { data: Float32Array; height: number }
+      image.data = view
+      image.height = rows
+      this.texture.needsUpdate = true
+    }
     this.kept = n
     this.nearest = nearest
     this.longest = longest
-    this.texture.needsUpdate = true
     this.stale = false
     this.eye.setFromMatrixPosition(camera.matrixWorld)
   }
