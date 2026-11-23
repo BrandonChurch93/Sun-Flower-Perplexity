@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { barTime, rainAtBar } from '../../../v2/clock.ts'
-import type { Surface } from '../../../core/shading.ts'
+import { shared, type Surface } from '../../../core/shading.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../../part.ts'
 
 // Beads of water on the skin: rain that sits, swells, runs to the tip and falls, and dew that stays where it formed.
@@ -235,13 +235,13 @@ export interface Bead {
 }
 
 const G = 9.81
-const SIT = 0.5
-const RUN = 0.88
-const HANG = 0.94
+const SIT = 0.4
+const RUN = 0.78
+const HANG = 0.93
 // The share of the beads that stay where they formed in the rain: small ones, far more than those large enough to run.
-const STAY = 0.8
+const STAY = 0.72
 // How far a bead slides in one go, as a share of the part's length.
-const REACH = 0.3
+const REACH = 0.4
 // The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
 const DEW_MARGIN = 0.4
 const DEW_TIP = 0.035
@@ -273,7 +273,7 @@ function rainBead(own: number, along: number, across: number, since: number, wet
     // A small bead forms and stays: most are fine, few are not.
     const t = since - 3 * own2(own, 311.7)
     const fine = own2(own, 127.1)
-    out.radiusM = (0.0003 + 0.0022 * fine * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
+    out.radiusM = (0.0003 + 0.0023 * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
     return
   }
   // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
@@ -340,7 +340,9 @@ export function beadAt(own: number, along: number, across: number, time: number,
   out.fallM = 0
   const wet = stateUniforms.uPlantWet.value
   const dew = stateUniforms.uPlantDew.value
-  const since = time - RAIN_FROM_S
+  // The part hands over its own clock, which stands still in a hold: water runs on the film second.
+  const real = shared.uReal.value + (time - shared.uTime.value)
+  const since = real - RAIN_FROM_S
   const rained = since >= 0 && wet > 0
   beadUniforms.uBeadLee.value = rained ? ease(0, 0.6, wet) : 0
   // Beads run only in the rain and on what it leaves: a skin that is merely damp, as at dawn and in the thaw, keeps its dew where it formed.

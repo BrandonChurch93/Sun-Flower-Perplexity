@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
-import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST } from './drops.ts'
+import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, fallDir, landingsNear, type Drop } from './drops.ts'
 
 // The rain in the air. Every drop is worked out on the graphics card from its own number and the film second: where it is at the open shutter and at the close,
 // and the strip between the two is the streak the exposure leaves. A layer is a box of drops that wraps round the lens, fixed to the world.
@@ -71,9 +71,43 @@ Drop dropOf(int index) {
 }
 `
 
-const vertex = /* glsl */ `
+// The heavy drops are the ones that land: each is read from the list of landings near the plant, so the streak ends where its splash stands up.
+export const heavyGlsl = /* glsl */ `
+in vec4 drop;
+uniform vec2 uSpan;
+uniform vec4 uRange;
+uniform float uSamples;
+uniform float uPixelAngle;
+uniform float uGain;
+uniform float uLeast;
+
+struct Drop {
+  vec3 open;
+  vec3 close;
+  float radius;
+  float seed;
+  float size;
+  float there;
+};
+
+Drop dropOf(int index) {
+  Drop d;
+  d.radius = drop.w;
+  d.size = saturate((drop.w - 0.0005) / 0.0017);
+  d.seed = hash21(drop.xy * 53.3 + 0.37);
+  float speed = 9.65 - 10.3 * exp(-1200.0 * d.radius);
+  vec3 way = vec3(${fallDir[0].toFixed(6)}, ${fallDir[1].toFixed(6)}, ${fallDir[2].toFixed(6)}) * speed;
+  vec3 land = vec3(drop.x, 0.0, drop.y);
+  d.open = land + way * min(uSpan.x - drop.z, 0.0);
+  d.close = land + way * min(uSpan.y - drop.z, 0.0);
+  d.there = uSpan.x < drop.z ? 1.0 : 0.0;
+  return d;
+}
+`
+
+const vertexOf = (drops: string): string => /* glsl */ `
 in vec2 position;
-${airGlsl}
+${drops}
 out vec2 vEnds;
 out float vAcross;
 out float vWhen;
@@ -97,7 +131,7 @@ void main() {
   // No two drops catch the sky alike: most are dim and a few flare.
   float catchLight = mix(0.14, 2.6, pow(fract(drop.seed * 13.7 + 0.31), 4.0));
   float range = smoothstep(uRange.x, uRange.y, depth) * (1.0 - smoothstep(uRange.z, uRange.w, depth));
-  float cover = min(0.6, uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there * mix(0.3, 1.0, smoothstep(0.8, 2.0, depth));
+  float cover = min(mix(0.6, 0.32, smoothstep(3.0, 8.0, depth)), uGain * catchLight * 3.14159 * r * r / (2.0 * halfM * (lengthM + 2.0 * halfM))) * range * drop.there * mix(0.3, 1.0, smoothstep(0.8, 2.0, depth));
   // With several samples each draws the drop where it is at its own instant, over as much of the path as keeps the frame's sum equal to the one streak.
   float share = uSamples > 1.5 ? clamp(max(1.0 / uSamples, cover), 0.0, 1.0) : 1.0;
   float middle = uSamples > 1.5 ? uShutter : 0.5;
@@ -124,6 +158,9 @@ void main() {
   if (cover < 0.002 || -a.z < 0.03 || -b.z < 0.03) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
 }
 `
+
+const vertex = vertexOf(airGlsl)
+const heavyVertex = vertexOf(heavyGlsl)
 
 const shape = /* glsl */ `
 in vec2 vEnds;
@@ -163,14 +200,15 @@ void main() {
   float t32 = t8 * t8 * t8 * t8;
   float glint = pow(fract(vSeed * 71.3 + 0.17), 3.0);
   // Backlit, a drop throws the sun forward through itself: the low sun's colour, deepened by the water's own path.
-  vec3 gold = uSunColor * uSunColor / max(max(uSunColor.r, uSunColor.g), max(uSunColor.b, 1e-4));
+  float sunPeak = max(max(uSunColor.r, uSunColor.g), max(uSunColor.b, 1e-4));
+  vec3 gold = uSunColor * uSunColor * uSunColor / (sunPeak * sunPeak);
   // The drop swings as it falls and throws the sun at the lens for an instant of its path: a spark, not a line.
-  float flare = exp(-pow((vWhen - 0.2 - 0.6 * fract(vSeed * 9.1)) / 0.09, 2.0));
-  light += uSunColor * (0.05 + 0.9 * t8 + 5.0 * t32) + gold * uSpark * (0.5 * t8 + flare * (0.6 + 9.0 * glint) * (1.0 + 12.0 * t8));
+  float flare = exp(-pow((vWhen - 0.25 - 0.5 * fract(vSeed * 9.1)) / 0.2, 2.0));
+  light += uSunColor * (0.03 + (0.9 * t8 + 5.0 * t32) * (1.0 - 0.75 * uSpark)) + gold * uSpark * flare * (0.5 + 9.0 * glint) * (1.0 + 12.0 * t8);
   // Lightning is over in a thousandth of a second: it shows each drop where it hung, not the path it fell.
   float toFlash = 0.35 + 0.65 * saturate(dot(ray, uFlashAt));
-  float hung = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 5.3)) / 0.07, 2.0));
-  light += uFlash * toFlash * (0.5 + 9.0 * hung);
+  float hung = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 5.3)) / 0.06, 2.0));
+  light += uFlash * toFlash * (0.35 + 12.0 * hung);
   outColor = vec4(applyFog(light, vWorld), cover);
 }
 `
@@ -239,5 +277,59 @@ export class AirLayer {
     this.geometry.instanceCount = s.count[quality]
     this.meshes[0].visible = on
     this.meshes[1].visible = on && samples === 1
+  }
+}
+
+const HEAVY_MAX = 4096
+// How long before its landing a heavy drop is drawn: the time it takes to fall through the frame.
+const HEAVY_AHEAD_S = 0.55
+
+// The heavy drops near the plant, each on its way to the place and the instant it lands.
+export class HeavyLayer {
+  readonly meshes: THREE.Mesh[]
+  private readonly geometry = new THREE.InstancedBufferGeometry()
+  private readonly data = new Float32Array(HEAVY_MAX * 4)
+  private readonly drop: THREE.InstancedBufferAttribute
+  private readonly found: Drop[] = []
+
+  constructor(lit: Record<string, THREE.IUniform>, gain: number) {
+    this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 1, 0, -1, 1, 1, 1]), 2))
+    this.geometry.setIndex([0, 1, 2, 2, 1, 3])
+    this.drop = new THREE.InstancedBufferAttribute(this.data, 4)
+    this.drop.setUsage(THREE.DynamicDrawUsage)
+    this.geometry.setAttribute('drop', this.drop)
+    this.geometry.instanceCount = 0
+    const uniforms = { ...lit, uRange: { value: new THREE.Vector4(0.25, 0.45, 7, 8) }, uGain: { value: gain } }
+    const main = makeSurface({ name: 'rain heavy', vertex: heavyVertex, fragment, uniforms, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false })
+    const keep = makeSurface({ name: 'rain heavy sharp', vertex: heavyVertex, fragment: sharp, uniforms, side: THREE.DoubleSide, transparent: true, depthWrite: false, cocOnly: true, castShadow: false })
+    const streaks = new THREE.Mesh(this.geometry, main.main)
+    const focus = new THREE.Mesh(this.geometry, keep.main)
+    streaks.renderOrder = 44
+    focus.renderOrder = 45
+    this.meshes = [streaks, focus]
+    for (const m of this.meshes) {
+      m.frustumCulled = false
+      m.matrixAutoUpdate = false
+      m.visible = false
+    }
+  }
+
+  // The drops that land within `half` metres of (x, z) from the open shutter on.
+  place(x: number, z: number, half: number, open: number, samples: number, on: boolean): void {
+    this.meshes[0].visible = on
+    this.meshes[1].visible = on && samples === 1
+    if (!on) return
+    this.found.length = 0
+    landingsNear(x, z, half, open, open + HEAVY_AHEAD_S, this.found)
+    const n = Math.min(this.found.length, HEAVY_MAX)
+    for (let i = 0; i < n; i++) {
+      const d = this.found[i]
+      this.data[i * 4] = d.x
+      this.data[i * 4 + 1] = d.z
+      this.data[i * 4 + 2] = d.time
+      this.data[i * 4 + 3] = d.radius
+    }
+    this.geometry.instanceCount = n
+    this.drop.needsUpdate = true
   }
 }

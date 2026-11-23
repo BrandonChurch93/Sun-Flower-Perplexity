@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../config.ts'
 import type { Moment, Part, Quality, View } from '../../v2/api.ts'
-import { AirLayer, type LayerSpec } from './air.ts'
+import { AirLayer, HeavyLayer, type LayerSpec } from './air.ts'
 import { rainAt } from './drops.ts'
 import { Veil } from './veil.ts'
 
@@ -14,6 +14,11 @@ const LAYERS: LayerSpec[] = [
   { name: 'plant', seed: 2, box: [7, 3.8, 7], ahead: 2.9, onGround: true, range: [0.8, 1.1, 4.6, 5.6], radii: [0.00035, 0.0022], gain: 13, count: [36000, 24000, 10000] },
   { name: 'far', seed: 3, box: [18, 6.5, 18], ahead: 8.5, onGround: true, range: [4.6, 5.6, 13, 17], radii: [0.0005, 0.0022], gain: 26, count: [70000, 40000, 14000] },
 ]
+
+// The drops that land where the lens can see them land: the square round the plant they are drawn in, as half its side at each quality.
+const HEAVY_HALF_M = [2.1, 2.1, 1.4]
+const HEAVY_TOWARD = 0.3
+const HEAVY_GAIN = 16
 
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
@@ -33,11 +38,13 @@ class Rain implements Part {
   }
   private readonly layers: AirLayer[]
   private readonly veil: Veil
+  private readonly heavy: HeavyLayer
 
   constructor() {
     this.layers = LAYERS.map((spec) => new AirLayer(spec, this.lit))
     this.veil = new Veil(this.lit)
-    this.objects = [this.veil.mesh, ...this.layers.flatMap((l) => l.meshes)]
+    this.heavy = new HeavyLayer(this.lit, HEAVY_GAIN)
+    this.objects = [this.veil.mesh, ...this.layers.flatMap((l) => l.meshes), ...this.heavy.meshes]
   }
 
   prepare(now: Moment, later: Moment, view: View): void {
@@ -46,6 +53,7 @@ class Rain implements Part {
     const quality = QUALITY[view.quality]
     this.veil.show(on, quality)
     for (const layer of this.layers) layer.place(view.pose.position, view.pose.forward, quality, view.samples, on)
+    this.heavy.place(view.pose.position.x * HEAVY_TOWARD, view.pose.position.z * HEAVY_TOWARD, HEAVY_HALF_M[quality], now.t, view.samples, on)
     if (!on) return
     const u = this.lit
     const tanX = config.camera.gateWidthMm / (2 * view.pose.focalMm)

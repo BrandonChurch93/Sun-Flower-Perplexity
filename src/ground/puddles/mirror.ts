@@ -13,7 +13,7 @@ vec3 skyMirror(vec3 d, float blur) {
   vec3 sky = mix(low, uSkyZenith, 1.0 - exp(-3.2 * up));
   float aim = dot(d, uSunDir) - 1.0;
   float wide = 0.0005 * (1.0 + 24.0 * blur);
-  sky += uSunColor * (exp(aim / wide) * (3.0 / (1.0 + 3.0 * blur)) + exp(aim / (0.02 + 0.02 * blur)) * (0.25 + 1.4 * uBlaze) + exp(aim / 0.22) * 0.12 * uBlaze);
+  sky += uSunColor * (exp(aim / wide) * (3.0 / (1.0 + 3.0 * blur)) + exp(aim / (0.012 + 0.008 * blur)) * (0.25 + 1.4 * uBlaze) + exp(aim / 0.22) * 0.05 * uBlaze);
   float lit = dot(d, uMirrorFlashAt) - 1.0;
   sky += uMirrorFlash * (0.3 + 1.6 * exp(lit / 0.1) + 3.0 * exp(lit / 0.012));
   return sky;
