@@ -31,6 +31,7 @@ export const shared = {
   uFogDensity: { value: 0 },
   uFogFalloff: { value: 0.5 },
   uSkyEven: { value: 0 },
+  uKeyClear: { value: -1 },
   uCamPos: { value: new THREE.Vector3() },
   uShadowMatrix: { value: new THREE.Matrix4() },
   uShadowMap: { value: null as THREE.Texture | null },
@@ -73,6 +74,7 @@ uniform vec3 uFogSunTint;
 uniform float uFogDensity;
 uniform float uFogFalloff;
 uniform float uSkyEven;
+uniform float uKeyClear;
 uniform vec3 uCamPos;
 uniform float uFocusM;
 uniform float uFocusNear;
