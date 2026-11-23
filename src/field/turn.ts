@@ -28,26 +28,6 @@ export function placeTurned(from: ArrayLike<number>, at: number, turned: Float32
   turned[to + 5] = c * from[at + 5] + s * from[at + 4]
 }
 
-// Turns one neighbor of a list round its own stem's line, its lean with it.
-export function turnBy(list: Float32Array, at: number, turn: number): void {
-  if (turn === 0) return
-  const c = Math.cos(turn)
-  const s = Math.sin(turn)
-  const x = list[at + 4]
-  const z = list[at + 5]
-  list[at + 2] += turn
-  list[at + 4] = c * x - s * z
-  list[at + 5] = c * z + s * x
-}
-
-// Leans one neighbor of a list by a slope given in the field's own directions, whichever way it is turned.
-export function leanBy(list: Float32Array, at: number, x: number, z: number): void {
-  const c = Math.cos(list[at + 2])
-  const s = Math.sin(list[at + 2])
-  list[at + 4] += c * x - s * z
-  list[at + 5] += c * z + s * x
-}
-
 // Hands the graphics card the part of a list that is not what it already has. In still air that is nothing.
 export function send(buffer: THREE.InstancedInterleavedBuffer, sent: Float32Array, length: number): void {
   const list = buffer.array as Float32Array

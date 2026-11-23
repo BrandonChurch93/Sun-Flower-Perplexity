@@ -5,6 +5,7 @@ import type { Caster } from '../core/shadow.ts'
 import type { PlantInputs } from './growth.ts'
 import type { Pose } from './skeleton.ts'
 import { STEM_LEAN, STEM_SWING, swayGlsl, windToward } from './wind.ts'
+import { wetUniforms } from './surface/wet/film.ts'
 import { GUST_LEAN } from './growth.ts'
 import { config } from '../config.ts'
 
@@ -281,6 +282,8 @@ float plantSun(vec3 world, vec3 offsetDir) {
   if (uMoon > 0.0) lit = mix(lit, exp(-2.5 * under), uMoon);
   // In the night's own frames the moon is too weak to show a leaf lit: a third of it is left.
   if (uDark > 0.0) lit *= 0.33;
+  // Late in the bloom the tops of the crop stand in the whole of the low sun.
+  lit = max(lit, smoothstep(0.6, 0.95, uLate) * (1.0 - uMoon) * (1.0 - smoothstep(0.12, 0.4, under)));
   return lit;
 #else
   return sunShadow(world, offsetDir, uShadowTexelM * 2.5);
@@ -332,7 +335,7 @@ export function makePartSurface(options: PartOptions, o: SurfaceOptions): Surfac
     vertex: `${define}${plantVertexGlsl.replace(FIELD_PLACE, options.place?.glsl ?? PLACE_FROM_LIST)}\n${o.vertex}`,
     fragment: `${define}${plantFragmentGlsl}\n${o.fragment}`,
     castShadow: options.places ? false : o.castShadow,
-    uniforms: { ...stateUniforms, ...(options.places ? { ...fieldUniforms, ...(options.place?.uniforms ?? {}) } : (options.own ?? {})), ...(o.uniforms ?? {}) },
+    uniforms: { ...stateUniforms, ...wetUniforms, ...(options.places ? { ...fieldUniforms, ...(options.place?.uniforms ?? {}) } : (options.own ?? {})), ...(o.uniforms ?? {}) },
   })
 }
 
