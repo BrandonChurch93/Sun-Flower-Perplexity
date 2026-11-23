@@ -1,30 +1,20 @@
 # Looks of checks
 
-2026-11-23 02:42 UTC, at commit 87ce6289 of agent/checks.
+2026-11-23 02:56 UTC, at commit a5fa7913 of agent/checks.
 
-## The checks on v2 aa7c0b7 with sky-b, 02:45 UTC
+## The checks on v2 aa7c0b7 with sky-b, 02:57 UTC
 
-Every sunset and sunrise of the time lapse from bar 26.5 to bar 55 is drawn frame by frame (ten nights, 432 frames, 320 x 180, draft). The frame's mean luminance only falls through each dusk and only rises through each dawn. Largest step 13.5 of 255 into frame 1464 (sunrise of bar 29) against the limit of 14; largest move the wrong way 0.24 against 2. The sunset step into frame 1339 is 4.5 now (was 27.6 on b587656).
+Correction to the note on 812fc88: the ten time lapse nights are 430 frames, not 432.
 
-Found by eye on the night sheets, and not caught by the frame mean: the leaves of the plant blink dark at every dusk and dawn. The leaves are lit warm in the night, and for one or two frames between the sun's light and the night's light they have neither. Night of bar 28.5: leaves 40.9, 31.7, 35.7, 40.6, 42.1 of 255 on frames 1444 to 1448 (darkest at the handover, brighter again in the night), and 40.0, 34.8, 30.4, 39.3, 48.2 on frames 1460 to 1464. Night of bar 26.5: 42.3, 37.8, 37.9, 34.2, 34.0, then 43.6 at midnight; dawn 35.4, 32.0, 27.6, 33.5. Measured on the pixels that are leaf in the midnight frame.
+`nights` now cuts the frame into 16 by 9 parts and lists the largest move the wrong way in any one part. On aa7c0b7 the whole frame passes (largest step 13.5 of 255 against 14, wrong way 0.24 against 2) and a part does not: 18.9 of 255 the wrong way into frame 1462 (a lit leaf: 51.6, 48.9, 35.2, 16.4, 27.1, 37.4, 47.1 on frames 1459 to 1465), 17.1 into frame 1359, and 6.9 to 11.0 in every later night; up to 28 of 144 parts move more than 2 the wrong way in one frame. Listed, not judged, until it has a limit.
 
-The sun passing behind the top leaf at frames 1371 and 1372 is not read as a cut: `cuts` now reads where the edges of the picture lie in the sky half and the land half, with the brightest 2 percent held down. 496 steps measured, largest 0.36 of 1 (stars moving in the night sky), limit 0.5 and 4 times the steps round it.
+The frames after the sun passes behind the top leaf: the frame's mean moves +2.5, -2.7, +2.1, +7.1 into frames 1371 to 1374; the edges move 0.04 of 1 at the most, no cut.
 
-Holds by the picture: frames 849, 850, 1054, 1259 and 1672, 1673, 1877, 2082 are the same in every one of 691,200 numbers from two cameras. With the film broken on purpose (the plant drawn at the film second in place of its clock) the same check fails: 39,295 to 177,410 numbers differ in the Frost hold.
+## Writes a frame by owner, true bytes
 
-`pure`: frames 400, 1054, 1372, 1466, 1877, 2500, 3112, 3500, 3780 at 960 x 540 give the same bytes drawn again backwards and on a fresh page: 18 comparisons, 0 differ.
+**the frost hold, bar 21.00, frame 1055**: 103 writes into what exists, 7.58 MB. By owner: plant casters 4.46 MB (0 texture writes 0.000 MB, 21 buffer writes 4.46 MB); plant leaves 2.39 MB (47 texture writes 2.37 MB, 5 buffer writes 0.020 MB); plant stem 0.61 MB (6 texture writes 0.60 MB, 5 buffer writes 0.007 MB); plant seedling 0.13 MB (0 texture writes 0.000 MB, 9 buffer writes 0.13 MB); field 0.001 MB (0 texture writes 0.000 MB, 10 buffer writes 0.001 MB).
+**the fast time lapse, bar 28.99, frame 1466**: 361 writes into what exists, 7.32 MB. By owner: plant casters 4.46 MB (0 texture writes 0.000 MB, 21 buffer writes 4.46 MB); plant leaves 1.68 MB (1 texture writes 1.66 MB, 5 buffer writes 0.020 MB); field 0.65 MB (0 texture writes 0.000 MB, 318 buffer writes 0.65 MB); plant stem 0.41 MB (2 texture writes 0.41 MB, 5 buffer writes 0.007 MB); plant seedling 0.13 MB (0 texture writes 0.000 MB, 9 buffer writes 0.13 MB).
+**the storm hold, bar 35.00, frame 1775**: 151 writes into what exists, 19.93 MB. By owner: plant casters 5.44 MB (0 texture writes 0.000 MB, 24 buffer writes 5.44 MB); companion casters 3.31 MB (0 texture writes 0.000 MB, 24 buffer writes 3.31 MB); plant bud 3.28 MB (4 texture writes 3.28 MB, 0 buffer writes 0.000 MB); plant leaves 2.93 MB (2 texture writes 2.91 MB, 5 buffer writes 0.020 MB); plant stem 2.05 MB (6 texture writes 2.04 MB, 5 buffer writes 0.007 MB); companion bud 0.91 MB (4 texture writes 0.91 MB, 0 buffer writes 0.000 MB); companion leaves 0.84 MB (2 texture writes 0.84 MB, 5 buffer writes 0.007 MB); companion stem 0.68 MB (6 texture writes 0.68 MB, 5 buffer writes 0.002 MB); field 0.20 MB (0 texture writes 0.000 MB, 38 buffer writes 0.20 MB); plant seedling 0.13 MB (0 texture writes 0.000 MB, 9 buffer writes 0.13 MB); parts[puddles] 0.081 MB (0 texture writes 0.000 MB, 2 buffer writes 0.081 MB); companion seedling 0.047 MB (0 texture writes 0.000 MB, 9 buffer writes 0.047 MB); parts[rain] 0.034 MB (0 texture writes 0.000 MB, 1 buffer writes 0.034 MB).
+**the bloom, bar 61.00, frame 3112**: 387 writes into what exists, 18.68 MB. By owner: plant bud 6.00 MB (2 texture writes 6.00 MB, 0 buffer writes 0.000 MB); plant casters 4.45 MB (0 texture writes 0.000 MB, 21 buffer writes 4.45 MB); companion casters 3.55 MB (0 texture writes 0.000 MB, 21 buffer writes 3.55 MB); plant stem 2.94 MB (2 texture writes 2.94 MB, 5 buffer writes 0.007 MB); plant leaves 0.71 MB (1 texture writes 0.69 MB, 5 buffer writes 0.020 MB); field 0.67 MB (0 texture writes 0.000 MB, 318 buffer writes 0.67 MB); companion leaves 0.23 MB (1 texture writes 0.22 MB, 5 buffer writes 0.007 MB); plant petals 0.13 MB (1 texture writes 0.13 MB, 0 buffer writes 0.000 MB); companion stem 0.002 MB (0 texture writes 0.000 MB, 5 buffer writes 0.002 MB).
 
-Writes a frame with true bytes (a part of a texture counts its rectangle): frost hold frame 1055 103 writes, 7.58 MB; time lapse frame 1466 361 writes, 7.32 MB; storm hold frame 1775 151 writes, 19.93 MB (hair textures 9.94 MB written whole, plant and companion mesh buffers 8.75 MB); bloom frame 3112 387 writes, 18.68 MB (hair textures 9.97 MB).
-
-Not drawn yet at this hour: the nights of bars 1 to 17 and the ending.
-
-- `01-aa7c0b7-sky-b-the-plant-alone-at-the-dusk-and-da.jpg`: aa7c0b7 sky-b, the plant alone at the dusk and dawn of bar 28.5: the leaves go dark for one or two frames between the sun's light and the night's light (frames 1445 and 1462), then are lit again in the night
-- `02-aa7c0b7-sky-b-the-night-of-bar-28-5-every-second.jpg`: aa7c0b7 sky-b, the night of bar 28.5, every second frame: the largest step of the frame's mean in the ten time lapse nights, 13.5 of 255 into frame 1464, limit 14
-- `03-aa7c0b7-sky-b-frames-1365-to-1372-at-the-sunrise.jpg`: aa7c0b7 sky-b, frames 1365 to 1372 at the sunrise of bar 27: the sun passes behind the top leaf, the cut check reads no cut
-- `04-aa7c0b7-sky-b-dawn-of-bar-29-frames-1461-to-1466.jpg`: aa7c0b7 sky-b, dawn of bar 29, frames 1461 to 1466 as drawn
-- `05-aa7c0b7-sky-b-the-cut-check-s-strip-at-the-large.jpg`: aa7c0b7 sky-b, the cut check's strip at the largest brightness step, into frame 1464: edges move 0.05 of 1, no cut
-- `06-aa7c0b7-sky-b-the-frost-hold-from-the-low-camera.jpg`: aa7c0b7 sky-b, the Frost hold from the low camera, frames 849, 850, 1054, 1259 identical and 1304 after it
-- `07-aa7c0b7-sky-b-the-storm-hold-from-the-wide-camer.jpg`: aa7c0b7 sky-b, the Storm hold from the wide camera, frames 1672, 1673, 1877, 2082 identical and 2127 after it
-- `08-film-broken-on-purpose-picture-grows-the-frost-h.jpg`: film broken on purpose (picture-grows): the Frost hold from the low camera, the check fails on it
-- `09-the-review-page-the-checks-built-02-41-from-aa7c.jpg`: the review page, the checks, built 02:41 from aa7c0b7
-- `10-the-review-page-the-film-player-at-bar-34-in-the.jpg`: the review page, the film player at bar 34 in the Storm hold
+- `01-aa7c0b7-sky-b-the-part-of-the-frame-that-moves-m.jpg`: aa7c0b7 sky-b, the part of the frame that moves most the wrong way: a leaf lit in the night goes dark at frame 1462 before the sun's light reaches it; the frame's mean hides it
