@@ -100,6 +100,8 @@ describe('the pacing report', () => {
     expect(text).toContain('script by part, mean ms: plant 18.0, field 6.0')
     expect(text).toContain('made after loading: 0')
     expect(text).toContain('graphics: test card')
+    expect(text.split('\n')[0]).toMatch(/^Not smooth: 2 frames skipped, 1 shown late, longest gap 0\.10 s at /)
+    expect(reportText(run(60, 4, 1000 / 60).report(facts, 60, true, null)).split('\n')[0]).toBe('Smooth: 60 of 60 frames shown, none late')
     expect(text).not.toMatch(/[\u2014!]/)
   })
 

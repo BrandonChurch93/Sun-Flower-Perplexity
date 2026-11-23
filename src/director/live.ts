@@ -6,7 +6,7 @@ import type { Loading } from '../player/loading.ts'
 import { reportText, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
-import { readTrack, trackLine, type Track } from '../player/track.ts'
+import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
 import type { Film } from './film.ts'
@@ -166,7 +166,11 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       const report = playing?.soFar() ?? state.report
       if (!report) return null
       const canvas = film.stage.canvas
-      return reportText(report, [`picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`, `browser: ${navigator.userAgent}`, `graphics: ${cardName(film.stage.gl)}`])
+      let exported: string | null = null
+      try {
+        exported = localStorage.getItem(EXPORT_NOTE)
+      } catch {}
+      return reportText(report, [`picture: ${canvas.width} x ${canvas.height}, sky ${film.skyName}`, `browser: ${navigator.userAgent}`, `graphics: ${cardName(film.stage.gl)}`, ...(exported ? [exported] : [])])
     },
   })
 

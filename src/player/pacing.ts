@@ -210,7 +210,15 @@ export function reportText(report: Report, machine: string[] = []): string {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
     .map(([name, v]) => `${name} ${v.toFixed(1)}`)
+  const faults: string[] = []
+  if (f.skipped > 0) faults.push(`${f.skipped} ${f.skipped === 1 ? 'frame' : 'frames'} skipped`)
+  if (f.late > 0) faults.push(`${f.late} shown late`)
+  if (f.skipped > 0 || f.late > 0 || report.gaps.length > 0) faults.push(`longest gap ${(report.gapMs.longest / 1000).toFixed(2)} s at ${report.gapMs.longestAtFilm.toFixed(1)} s`)
+  if (things !== null && things > 0) faults.push(`${things} ${things === 1 ? 'thing' : 'things'} made on the graphics card`)
+  const stopped = report.complete ? '' : `, stopped at ${(report.stoppedAtFilm ?? 0).toFixed(1)} s`
+  const first = f.drawn === 0 ? 'Nothing measured: no frame was shown' : faults.length === 0 ? `Smooth: ${f.drawn} of ${f.due} frames shown, none late${stopped}` : `Not smooth: ${faults.join(', ')}${stopped}`
   return [
+    first,
     `${config.name}, pacing report, ${report.at}`,
     `run: ${report.kind}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}, ${report.complete ? 'to the end' : `stopped at ${(report.stoppedAtFilm ?? 0).toFixed(2)} s`}`,
     `frames: ${f.due} due, ${f.drawn} shown, ${f.skipped} skipped, ${f.late} shown late`,

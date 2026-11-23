@@ -5,14 +5,14 @@ import { breathe } from '../core/yield.ts'
 import type { Film } from '../director/film.ts'
 import type { Options } from '../director/modes.ts'
 import { clampFrame, keys, segments } from '../director/timeline.ts'
-import { fileOf, readTrack, trackLine, type Track } from '../player/track.ts'
+import { EXPORT_NOTE, fileOf, readTrack, trackLine, type Track } from '../player/track.ts'
 import css from './export.module.css'
-import { encodeSound, pickSound, SOUND_RATE, type SoundKind } from './sound.ts'
+import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
 import { describe as describeBytes, Store, storeId, undescribe, type StoredChunk } from './store.ts'
 
 declare const __ENGINE_HASH__: string
 
-export interface ExportResult { ok: boolean; frames: number; fileName: string; codec: string; seconds: number; error: string | null; resumedFrames: number; sound: string | null }
+export interface ExportResult { ok: boolean; frames: number; fileName: string; codec: string; seconds: number; error: string | null; resumedFrames: number; sound: string | null; soundCheck: SoundCheck | null }
 export interface ExportProgress { done: number; total: number; textureMb: number }
 
 declare global {
@@ -324,8 +324,11 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   const remainingStat = stat('Remaining')
   const saved = make('p', css.saved)
   saved.hidden = true
+  const soundLine = make('p', css.caption)
+  soundLine.dataset.role = 'sound-check'
+  soundLine.hidden = true
   checksPanel.append(make('h2', css.heading, 'Checks'), list)
-  runPanel.append(make('h2', css.heading, 'Export'), actions, status, bar, stats, saved)
+  runPanel.append(make('h2', css.heading, 'Export'), actions, status, bar, stats, saved, soundLine)
 
   left.append(previewPanel, runPanel)
   middle.append(settings, trackPanel)
@@ -365,7 +368,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
 
   const refuse = (line: string) => {
     say(line)
-    if (auto && !window.exportResult) window.exportResult = { ok: false, frames: 0, fileName: fileName(), codec: picked?.codec ?? '', seconds: 0, error: line, resumedFrames: 0, sound: null }
+    if (auto && !window.exportResult) window.exportResult = { ok: false, frames: 0, fileName: fileName(), codec: picked?.codec ?? '', seconds: 0, error: line, resumedFrames: 0, sound: null, soundCheck: null }
   }
 
   const openStore = async (): Promise<Store | null> => {
@@ -422,7 +425,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       refuse(line)
       return
     }
-    codecCheck.set('ok', `${picked.label}, at ${size}. ${sound ? `Sound as ${sound.label}.${sound.container === 'opus' ? ' This browser has no AAC encoder. Opus plays in browsers and may not play in QuickTime.' : ''}` : 'This browser cannot encode sound, so the file is made without it.'}`)
+    codecCheck.set('ok', `${picked.label}, ${picked.codec}, at ${size}, ${config.export.bitrateMbps} Mbit a second, ${fps} frames a second, a key frame every second. ${sound ? `Sound: ${sound.label}, ${sound.kbps} kbit a second, ${SOUND_RATE / 1000} kHz stereo.${sound.container === 'opus' ? ' This browser has no AAC encoder. Opus plays in browsers and may not play in QuickTime.' : ''}` : 'This browser cannot encode sound, so the file is made without it.'}`)
 
     assetCheck.set('busy', `Loading the ${assetSet} asset set.`)
     try {
@@ -498,6 +501,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     start.textContent = 'Export running'
     stop.hidden = false
     saved.hidden = true
+    soundLine.hidden = true
     delete window.exportResult
     window.exportProgress = { done: 0, total: n, textureMb: film.textureMb() }
     bar.value = 0
@@ -516,6 +520,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     let pending: StoredChunk[] = []
     let description: string | null | undefined
     let wanted: string | null | undefined
+    let soundCheck: SoundCheck | null = null
     let colour: VideoColorSpaceInit | null = null
     const target = new ArrayBufferTarget()
     const muxer = new Muxer({
@@ -636,9 +641,20 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       let soundChunks = 0
       if (voice) {
         say('Encoding the track.')
-        soundChunks = await encodeSound(voice.bytes, voice.kind, from / fps, n / fps, (chunk, meta) => muxer.addAudioChunk(chunk, meta))
-      }
-      muxer.finalize()
+        const heard = await decodeSound(voice.bytes)
+        const made = await makeSound(heard, voice.kind, from / fps, n / fps)
+        soundChunks = addSound(muxer, made.sound, n / fps)
+        muxer.finalize()
+        say('Listening to the file: where its sound sits against the track.')
+        await breathe()
+        soundCheck = await checkSound(target.buffer, heard, from / fps, made.mendedMs)
+        const mended = made.mendedMs !== 0 ? ` The encoder had moved the sound by ${made.mendedMs.toFixed(1)} ms. It was encoded again, moved back.` : ''
+        soundLine.textContent = soundCheck
+          ? `Sound against the track: ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms. ${soundCheck.pass ? 'PASS' : 'FAIL'}: ${soundCheck.pass ? 'within' : 'more than'} ${SOUND_PASS_MS} ms.${mended}`
+          : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
+        soundLine.dataset.pass = soundCheck ? (soundCheck.pass ? 'yes' : 'no') : 'unknown'
+        soundLine.hidden = false
+      } else muxer.finalize()
       const blob = new Blob([target.buffer], { type: 'video/mp4' })
       if (fileUrl) URL.revokeObjectURL(fileUrl)
       fileUrl = URL.createObjectURL(blob)
@@ -649,6 +665,10 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       saved.hidden = false
       link.click()
       await store?.clear()
+      try {
+        const heardLine = !voice ? 'no sound' : soundCheck ? `sound ${voice.kind.label}, ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms against the track, ${soundCheck.pass ? 'PASS' : 'FAIL'}` : `sound ${voice.kind.label}, not measured against the track`
+        localStorage.setItem(EXPORT_NOTE, `last export: ${name}, ${n} frames at ${size.width} x ${size.height}, ${choice.codec}, ${heardLine}, ${new Date().toISOString()}`)
+      } catch {}
       say(`Done. ${n} ${n === 1 ? 'frame' : 'frames'} are in ${name}, in your downloads folder${soundChunks > 0 ? ', with the track' : ''}.`)
     } catch (caught) {
       const message = words(caught)
@@ -673,7 +693,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
       start.textContent = 'Start the export'
       setControls(true)
       start.disabled = !ready || lost()
-      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : done, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voice ? voice.kind.label : null }
+      if (!again) window.exportResult = { ok: error === null, frames: error === null ? n : done, fileName: name, codec: choice.codec, seconds: seconds(), error, resumedFrames: resumed, sound: error === null && voice ? voice.kind.label : null, soundCheck }
       await lookForKept()
     }
     if (again) await run()
