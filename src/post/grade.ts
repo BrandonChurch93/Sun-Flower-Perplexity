@@ -115,7 +115,8 @@ vec3 sunGlare(vec2 px) {
   float open = texture(tShafts, vUv).r;
   // Under a deck that has just torn the beams start where the tear is brightest, and they stand in the air behind the plant: what is in focus in front of them takes almost none.
   float fanned = smoothstep(0.0, 0.3, uFan);
-  vec2 off = away - fanned * texelFetch(tSun, ivec2(1, 0), 0).xy;
+  vec3 tear = texelFetch(tSun, ivec2(1, 0), 0).xyz;
+  vec2 off = away - fanned * tear.xy;
   float back = uFar > 0.5 ? smoothstep(0.1, 0.5, texelFetch(tRaw, ivec2(px), 0).a / uFar) : 1.0;
   float here = mix(mix(0.14, 1.0, texture(tOpen, vUv).a), back, fanned);
   float ra = length(off);
@@ -131,7 +132,7 @@ vec3 sunGlare(vec2 px) {
   float torn = exp(-ra / 0.16) * (1.0 - smoothstep(0.45 * span, span, -off.y)) * smoothstep(0.0, 0.07, (px.y / uSize.y - uHorizon) * uSize.y / uSize.x);
   float reach = mix(0.4 * exp(-ra / mix(0.14, 0.1, uTight)) + 0.6 * (1.0 - uTight) * exp(-ra / 0.55), torn, fanned);
   float standing = reach * mix(open * sqrt(open), mix(0.6, 1.0, open), fanned) * here * beams * under * smoothstep(mix(0.015, 0.0, fanned), mix(0.12, 0.03, fanned), ra);
-  float lit = uShafts * mix(0.8 + 1.6 * uWarm, 1.4, fanned) * standing;
+  float lit = uShafts * mix(0.8 + 1.6 * uWarm, 1.4 * smoothstep(0.1, 0.7, tear.z), fanned) * standing;
   // The beams under the tear carry the sun's own colour, deepened: the air between them is the storm's and stays cold.
   vec3 own = uSunLight / peak;
   vec3 tint = mix(mix(own, uSunAir, 0.4), own * own, fanned);
