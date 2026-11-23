@@ -5,7 +5,7 @@ import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
 import { heightAt, leafAge, leafAzimuth, leafCount, leafLength, paleness, seedLeafLength, stemBend, stemRadius } from '../growth.ts'
 import { createBristles } from '../bristles/index.ts'
-import { createHairs, type HairSet } from '../hairs/index.ts'
+import { createHairFrames, createHairs, packWay, type HairFrames, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, wetFelt, type PartOptions, type PlantPart } from '../part.ts'
 import { beadAt, createBeads, type Bead } from '../surface/wet/index.ts'
 import { NECK_FLARE, stemAt, type Pose } from '../skeleton.ts'
@@ -25,6 +25,10 @@ const DOWN_WIDTH_M = 0.00016
 const HAIR_WIDTH_M = 0.00014
 const DOWN_PER_HAIR = 12
 const SPROUT_WIDTH_M = 0.00005
+// The hairs of the sprout come out from this second on, the last of them this much later than the first, each over a quarter of a second.
+const SPROUT_FROM_S = 0.3
+const SPROUT_SPREAD_S = 0.2
+const SPROUT_OUT = 0.88
 // The dew on a stem is finer than the shared bead sizes.
 const FROST_FROM_S = 30
 const BLOOM_FROM_S = 40
@@ -43,9 +47,16 @@ const TIP_WIDTH_M = 0.00003
 const TIP_LEAN = 2
 const TIP_BELOW = 0.6
 const tipGirth = (q: number): number => (1 - q) ** 0.8 * (1 + 0.5 * q)
+// A hair sits between two stations that stay on their tissue: each stretch between two anchors has this many steps, shorter toward the anchors where the leaves swell the skin. The hairs of the shoot sit on its rings and on this many stations under it.
+const SUB = 13
+const STATIONS = (ANCHORS - 1) * (SUB + 1)
+const TIP_LOW = 4
+const WIDE = 32
+// How far a hair stands on a rib is kept in its seat as this share of the rib's height.
+const RIB_SEAT = 0.25
 
 // `hairs` is how many stand on a square meter of grown skin.
-interface Coat { set: HairSet; low: number; high: number; seg: Uint8Array; at: Float32Array; thick: Float32Array; own: Float32Array; drawn: number[]; sprout: boolean; down: boolean }
+interface Coat { set: HairSet; frames: HairFrames; from: number; to: number; upTo: Uint32Array; drawn: number[] }
 interface Shape { main: number; sides: number; below: number; cap: number; hairs: number; sprout: number; beads: number; full: boolean }
 
 function shapeOf(options: PartOptions): Shape {
@@ -108,14 +119,42 @@ export function create(options: PartOptions): PlantPart {
     hairTable[c + 1] = hairTable[c] + patch * (1 + 3 * smoothstep(0.45, 0.8, x) + 2 * smoothstep(0.9, 0.985, x))
   }
   const fixed = fixedLabels()
-  // A hair belongs to a stretch of tissue between two anchors and keeps its share of that stretch for the whole film.
+  const steps = new Float64Array(SUB + 1)
+  for (let i = 0; i <= SUB; i++) steps[i] = lerp(i / SUB, 0.5 - 0.5 * Math.cos((Math.PI * i) / SUB), 0.6)
+  const thick = new Float32Array(STATIONS)
+  for (let f = 0; f < STATIONS; f++) {
+    const k = Math.floor(f / (SUB + 1))
+    thick[f] = finalRadius(lerp(fixed[k], fixed[k + 1], steps[f % (SUB + 1)]))
+  }
+  const coatFrames = shape.hairs ? createHairFrames(STATIONS, true) : null
+  const downFrames = shape.hairs ? createHairFrames(STATIONS, true) : null
+  // A hair belongs to a stretch of tissue between two anchors and keeps its share of that stretch for the whole film: it is seated once, between the two stations it stands between.
   // The hairs are kept in order from the foot up, so the ones on tissue that has not grown out yet are the last and are left undrawn.
-  const coat = (perM2: number, name: string, widthM: number, salt: number, low: number, high: number): Coat | null => {
+  const seated = (set: HairSet, frames: HairFrames, low: number, high: number, from: number, to: number, place: (i: number, at: { k: number; share: number }) => void, salt: number, born: (own: number) => number): Coat => {
+    const seats = set.bindFrames(frames, 0.5 * (low + high))
+    const upTo = new Uint32Array(STATIONS)
+    const at = { k: 0, share: 0 }
+    for (let i = 0; i < set.count; i++) {
+      place(i, at)
+      let i0 = Math.min(SUB - 1, Math.floor(at.share * SUB))
+      while (i0 > 0 && steps[i0] > at.share) i0--
+      while (i0 < SUB - 1 && steps[i0 + 1] <= at.share) i0++
+      const f = at.k * (SUB + 1) + i0
+      const a = hash01(seed, salt + 2, i) * TAU
+      ribsAt(ribs, lerp(fixed[at.k], fixed[at.k + 1], at.share))
+      const far = 1 + RIB_SEAT * ribProfile(ribs, a)
+      seats.set([f, f + 1, clamp((at.share - steps[i0]) / (steps[i0 + 1] - steps[i0])), lerp(low, high, hash01(seed, salt + 3, i)), Math.cos(a) * far, Math.sin(a) * far, 1, hash01(seed, salt + 1, i), 0, 0, 1, born(hash01(seed, salt + 7, i))], i * 12)
+      upTo[f] = i + 1
+    }
+    for (let f = 1; f < STATIONS; f++) upTo[f] = Math.max(upTo[f], upTo[f - 1])
+    set.sealSeats()
+    return { set, frames, from: from * (SUB + 1), to: to * (SUB + 1), upTo, drawn: [0, 0] }
+  }
+  const coat = (perM2: number, name: string, widthM: number, salt: number, low: number, high: number, frames: HairFrames | null): Coat | null => {
     const set = perM2 ? createHairs(options, Math.round(perM2 * hairTable[CELLS]), name, undefined, widthM) : null
-    if (!set) return null
+    if (!set || !frames) return null
     const n = set.count
-    const c: Coat = { set, low, high, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: [0, 0], sprout: false, down: high < 0.002 }
-    for (let i = 0; i < n; i++) {
+    return seated(set, frames, low, high, SEED_ANCHOR, ANCHORS - 1, (i, at) => {
       const want = ((i + hash01(seed, salt, i)) / n) * hairTable[CELLS]
       let cell = Math.min(CELLS - 1, Math.floor((i / n) * CELLS))
       while (cell > 0 && hairTable[cell] > want) cell--
@@ -123,37 +162,37 @@ export function create(options: PartOptions): PlantPart {
       const label = hairFrom + ((cell + (want - hairTable[cell]) / (hairTable[cell + 1] - hairTable[cell])) / CELLS) * (TOP_M - hairFrom)
       let k = SEED_ANCHOR
       while (k < ANCHORS - 2 && label >= fixed[k + 1]) k++
-      c.seg[i] = k
-      c.at[i] = clamp((label - fixed[k]) / (fixed[k + 1] - fixed[k]))
-      c.thick[i] = finalRadius(label)
-      const a = hash01(seed, salt + 2, i) * TAU
-      c.own.set([hash01(seed, salt + 1, i), a, Math.cos(a), Math.sin(a), hash01(seed, salt + 3, i), 0.78 * hash01(seed, salt + 7, i)], i * 6)
-    }
-    return c
+      at.k = k
+      at.share = clamp((label - fixed[k]) / (fixed[k + 1] - fixed[k]))
+    }, salt, (own) => Math.max(0.78 * own, 1e-4))
   }
   // The young stem below the seed leaves wears a few very fine short hairs, evenly from the foot to the joint. They are what the low sun lights on its outline, and they are shed before the stem is a stalk.
-  const sproutCoat = (count: number, salt: number): Coat | null => {
+  const sproutCoat = (count: number, salt: number, frames: HairFrames | null): Coat | null => {
     const set = count ? createHairs(options, count, 'sprout hairs', undefined, SPROUT_WIDTH_M) : null
-    if (!set) return null
+    if (!set || !frames) return null
     const n = set.count
-    const c: Coat = { set, low: 0.0001, high: 0.00028, seg: new Uint8Array(n), at: new Float32Array(n), thick: new Float32Array(n), own: new Float32Array(n * 6), drawn: [0, 0], sprout: true, down: false }
-    for (let i = 0; i < n; i++) {
+    return seated(set, frames, 0.0001, 0.00028, 0, SEED_ANCHOR, (i, at) => {
       const x = (i + hash01(seed, salt, i)) / n
-      c.seg[i] = x < 0.5 ? 0 : 1
-      c.at[i] = x < 0.5 ? 2 * x : 2 * x - 1
-      const a = hash01(seed, salt + 2, i) * TAU
-      c.own.set([hash01(seed, salt + 1, i), a, Math.cos(a), Math.sin(a), hash01(seed, salt + 3, i), hash01(seed, salt + 7, i)], i * 6)
-    }
-    return c
+      at.k = x < 0.5 ? 0 : 1
+      at.share = x < 0.5 ? 2 * x : 2 * x - 1
+    }, salt, (own) => SPROUT_OUT * SPROUT_SPREAD_S * own + 1e-4)
   }
-  const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009), sproutCoat(shape.sprout, 100)].filter((c): c is Coat => c !== null)
+  const coats = [coat(shape.hairs, 'stem hairs', HAIR_WIDTH_M, 80, 0.0035, 0.005, coatFrames), coat(shape.hairs * DOWN_PER_HAIR, 'stem down', DOWN_WIDTH_M, 90, 0.0004, 0.0009, downFrames), sproutCoat(shape.sprout, 100, coatFrames)].filter((c): c is Coat => c !== null)
 
   const tipSet = cap > 0 ? createHairs(options, options.variant === 0 ? TIP_HAIRS : TIP_HAIRS / 4, 'stem tip', undefined, TIP_WIDTH_M) : null
-  const tipOwn = new Float32Array((tipSet ? tipSet.count : 0) * 5)
+  const tipFrames = tipSet ? createHairFrames(TIP_LOW + cap + 1, true) : null
   const tipDrawn = [0, 0]
-  for (let i = 0; tipSet && i < tipSet.count; i++) {
-    const a = ((i * 0.618034 + 0.2 * hash01(seed, 111, i)) % 1) * TAU
-    tipOwn.set([(0.9 + TIP_BELOW) * ((i + hash01(seed, 110, i)) / tipSet.count) ** 1.2 - TIP_BELOW, Math.cos(a), Math.sin(a), hash01(seed, 112, i), a], i * 5)
+  if (tipSet && tipFrames) {
+    const seats = tipSet.bindFrames(tipFrames, 0.5 * (TIP_HAIR_M[0] + TIP_HAIR_M[1]))
+    for (let i = 0; i < tipSet.count; i++) {
+      const a = ((i * 0.618034 + 0.2 * hash01(seed, 111, i)) % 1) * TAU
+      const up = (0.9 + TIP_BELOW) * ((i + hash01(seed, 110, i)) / tipSet.count) ** 1.2 - TIP_BELOW
+      const x = up < 0 ? (up / TIP_BELOW + 1) * TIP_LOW : cap * up
+      const f = Math.min((up < 0 ? TIP_LOW : cap) - 1, Math.floor(x))
+      const q = hash01(seed, 112, i)
+      seats.set([(up < 0 ? 0 : TIP_LOW) + f, (up < 0 ? 0 : TIP_LOW) + f + 1, x - f, lerp(TIP_HAIR_M[0], TIP_HAIR_M[1], q), Math.cos(a), Math.sin(a), 1, q, 0, TIP_LEAN * (0.6 + 0.8 * q), 1, 0], i * 12)
+    }
+    tipSet.sealSeats()
   }
 
   const crystals = createCrystals(options, shape.full && options.variant === 0 ? RIME_ROOTS : 0, 'stem crystals')
@@ -192,6 +231,7 @@ export function create(options: PartOptions): PlantPart {
   const ringNeck = new Float32Array(main)
   const grid = new Float32Array((main + cap) * row)
   const capOff = new Float32Array(cap + 1)
+  const capGirth = new Float32Array(cap + 1).fill(1)
   const nodeS = new Float64Array(NODES)
   const nodeA = new Float64Array(NODES)
   const nodeAmp = new Float64Array(NODES)
@@ -310,6 +350,32 @@ export function create(options: PartOptions): PlantPart {
     const rEnd = base(1, length)
     const collar = collarAt(time)
     const seedS = anchors.s[SEED_ANCHOR]
+    // How much the skin is swollen at a height: by the collar under the seed leaves and by the cushion under each leaf, whose places round the stem are listed as it goes.
+    let active = 0
+    let collared = 0
+    const swellAt = (at: number): number => {
+      collared = collar * smoothstep(seedS - COLLAR_M, seedS - 0.0005, at) ** 1.5
+      // Above the seed leaves the shoot is still a thin tip: the swell ends in a shoulder under their bases.
+      const tip = smoothstep(seedS - 0.0006, seedS + 0.0016, at)
+      let swell = (collared + STURDY * collar) * (1 - tip) - collar * tip
+      active = 0
+      for (let k = 0; k < nodes; k++) {
+        const rn = nodeR[k]
+        const d = at - nodeS[k]
+        if (d < -18 * rn || d > 3.6 * rn) continue
+        // The stalk leaves upward, so it comes out of the skin a little above its node and the cushion under it runs on down the stem.
+        const e = d - 0.6 * rn
+        const above = e / (1.1 * rn)
+        const under = e / (1.8 * rn)
+        const along = e >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(e / (5 * rn))
+        actA[active] = nodeA[k]
+        actAmp[active] = (0.6 * nodeAmp[k] * along) / BUMP_MAX
+        active++
+        const wide = d / (2.2 * rn)
+        swell += 0.1 * nodeAmp[k] * Math.exp(-wide * wide)
+      }
+      return swell
+    }
     const slopeEnd = length > 0 ? (flareTo / (0.03 * length)) * smoothstep(1, 1.3, flareTo / Math.max(stemRadius(time, 1) * grown, 1e-6)) : 0
     for (let j = 0; j < rings; j++) {
       let s = 0
@@ -324,6 +390,7 @@ export function create(options: PartOptions): PlantPart {
         off = lerp(rEnd * lerp(0.9 * Math.sin(turn), (TIP_TALL * k) / cap, young), deep, hasHead)
         scale = lerp(lerp(Math.cos(turn), tipGirth(k / cap), young), k < cap ? 1 + (0.8 * slopeEnd * deep) / Math.max(rEnd, 1e-6) : 0, hasHead)
         capOff[k] = off
+        capGirth[k] = scale
         s = length
       }
       const u = length > 0 ? s / length : 0
@@ -339,26 +406,7 @@ export function create(options: PartOptions): PlantPart {
       const ribbed = full ? smoothstep(0.0028, 0.0085, whole) * (1 - flared) * scale : 0
       const ribHeight = RIB_HEIGHT * Math.min(whole, 0.02) * ribbed
       if (full) ribsAt(ribs, label)
-      const collared = collar * smoothstep(seedS - COLLAR_M, seedS - 0.0005, s + off) ** 1.5
-      // Above the seed leaves the shoot is still a thin tip: the swell ends in a shoulder under their bases.
-      const tip = smoothstep(seedS - 0.0006, seedS + 0.0016, s + off)
-      let swell = (collared + STURDY * collar) * (1 - tip) - collar * tip
-      let active = 0
-      for (let k = 0; k < nodes; k++) {
-        const rn = nodeR[k]
-        const d = s + off - nodeS[k]
-        if (d < -18 * rn || d > 3.6 * rn) continue
-        // The stalk leaves upward, so it comes out of the skin a little above its node and the cushion under it runs on down the stem.
-        const e = d - 0.6 * rn
-        const above = e / (1.1 * rn)
-        const under = e / (1.8 * rn)
-        const along = e >= 0 ? Math.exp(-above * above) : 0.7 * Math.exp(-under * under) + 0.3 * Math.exp(e / (5 * rn))
-        actA[active] = nodeA[k]
-        actAmp[active] = (0.6 * nodeAmp[k] * along) / BUMP_MAX
-        active++
-        const wide = d / (2.2 * rn)
-        swell += 0.1 * nodeAmp[k] * Math.exp(-wide * wide)
-      }
+      const swell = swellAt(s + off)
       if (j >= below && j < below + main) {
         ringR[j - below] = whole
         ringNeck[j - below] = hasHead * smoothstep(1 - neckShare * 1.3, 0.99, u)
@@ -459,108 +507,84 @@ export function create(options: PartOptions): PlantPart {
     const S = anchors.s
     const M = anchors.m
     const shed = 1 - smoothstep(18, FROST_FROM_S, time)
-    for (const c of coats) {
-      const root = c.set.root(slot)
-      const lean = c.set.lean(slot)
-      c.drawn[slot] = 0
-      let j = 0
-      for (let i = 0; i < c.set.count; i++) {
-        const k = c.seg[i]
-        const span = S[k + 1] - S[k]
-        // Tissue that has not stretched out yet holds its hairs folded away.
-        const stretched = span / (M[k + 1] - M[k])
-        const o = i * 4
-        lean[o] = 0
-        lean[o + 1] = 1
-        lean[o + 2] = 0
-        const w = i * 6
-        lean[o + 3] = c.own[w]
-        // A hair on tissue that has not stretched out, or a sprout hair after they are shed, has no size: its place is not worked out.
-        if (length <= 0 || (c.sprout ? shed <= 0 : stretched <= 0.03)) {
-          root[o] = 0
-          root[o + 1] = 0
-          root[o + 2] = 0
-          root[o + 3] = 0
-          continue
-        }
-        const s = S[k] + c.at[i] * span
-        // The hairs come in order from the foot up, so the ring under each is the last one's or one further on.
-        if (s < ringS[j]) j = 0
-        while (j < main - 2 && ringS[j + 1] <= s) j++
-        const step = Math.max(1e-9, ringS[j + 1] - ringS[j])
-        const fr = clamp((s - ringS[j]) / step)
-        const col = (c.own[w + 1] / TAU) * sides
-        const c0 = Math.min(sides - 1, Math.floor(col))
-        const fc = col - c0
-        const low = lerp(grid[j * row + c0], grid[j * row + c0 + 1], fc)
-        const high = lerp(grid[(j + 1) * row + c0], grid[(j + 1) * row + c0 + 1], fc)
-        const radius = lerp(low, high, fr)
-        const slope = clamp((high - low) / step, -1.5, 1.5)
-        const r0 = lerp(ringR[j], ringR[j + 1], fr)
-        const p = j * 12
-        const ca = c.own[w + 2]
-        const sa = c.own[w + 3]
-        const ox = lerp(ringAt[p + 3], ringAt[p + 15], fr) * ca + lerp(ringAt[p + 6], ringAt[p + 18], fr) * sa
-        const oy = lerp(ringAt[p + 4], ringAt[p + 16], fr) * ca + lerp(ringAt[p + 7], ringAt[p + 19], fr) * sa
-        const oz = lerp(ringAt[p + 5], ringAt[p + 17], fr) * ca + lerp(ringAt[p + 8], ringAt[p + 20], fr) * sa
-        const q = c.own[w + 4]
-        const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, r0)
-        // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
-        const patch = stretched * Math.min(1, r0 / c.thick[i])
-        const own = c.own[w + 5]
-        const shown = c.sprout ? shed * smoothstep(0.3 + 0.2 * own, 0.55 + 0.2 * own, time) * smoothstep(0.0005, 0.0025, S[SEED_ANCHOR] - s) : smoothstep(own, own + 0.22, patch) * smoothstep(0.03, 0.2, stretched)
-        const reach = shown > 0 ? radius : 0
-        root[o] = lerp(ringAt[p + 0], ringAt[p + 12], fr) + ox * reach
-        root[o + 1] = lerp(ringAt[p + 1], ringAt[p + 13], fr) + oy * reach
-        root[o + 2] = lerp(ringAt[p + 2], ringAt[p + 14], fr) + oz * reach
-        if (shown > 0) c.drawn[slot] = i + 1
-        root[o + 3] = Math.min(0.9 * r0, lerp(c.low, c.high, q)) * mature * shown * (c.down ? 1 + stateUniforms.uPlantFrost.value : 1) * (1 - stateUniforms.uPlantFrost.value * hasHead * (1 - smoothstep(0.005, 0.02, length - s)))
-        lean[o] = ox - lerp(ringAt[p + 9], ringAt[p + 21], fr) * slope
-        lean[o + 1] = oy - lerp(ringAt[p + 10], ringAt[p + 22], fr) * slope
-        lean[o + 2] = oz - lerp(ringAt[p + 11], ringAt[p + 23], fr) * slope
+    const frost = stateUniforms.uPlantFrost.value
+    // A station of the hairs: where the ring of skin is at a height, how long the hairs on it are, how far its skin has grown, and the swellings on it.
+    const station = (data: Float32Array, o: number, n: ReturnType<typeof stemAt>, rise: number, ring: number, swell: number, long: number, grown: number, most: number, rib: number): void => {
+      data[o] = n.x + n.tx * rise
+      data[o + 1] = n.y + n.ty * rise
+      data[o + 2] = n.z + n.tz * rise
+      data[o + 3] = long
+      data[o + 4] = n.rx * ring
+      data[o + 5] = n.ry * ring
+      data[o + 6] = n.rz * ring
+      data[o + 8] = n.bx * ring
+      data[o + 9] = n.by * ring
+      data[o + 10] = n.bz * ring
+      packWay(data, o + 7, o + 11, n.tx, n.ty, n.tz)
+      data[o + 12] = grown
+      data[o + 13] = most
+      data[o + 14] = rib
+      for (let q = 0; q < 8; q++) {
+        let best = -1
+        for (let b = 0; b < active; b++) if (actAmp[b] > 0 && (best < 0 || actAmp[b] > actAmp[best])) best = b
+        const h = best < 0 ? 0 : (BUMP_MAX * actAmp[best]) / (1 + swell)
+        data[o + 16 + q * 2] = best < 0 ? 0 : Math.cos(actA[best]) * h
+        data[o + 17 + q * 2] = best < 0 ? 0 : Math.sin(actA[best]) * h
+        if (best >= 0) actAmp[best] = 0
       }
     }
-    if (tipSet) {
-      const root = tipSet.root(slot)
-      const lean = tipSet.lean(slot)
-      const risen = length > 0 ? (1 - hasHead) * young : 0
-      const p = (main - 1) * 12
-      tipDrawn[slot] = risen > 0 ? tipSet.count : 0
-      for (let i = 0; i < tipSet.count; i++) {
-        const o = i * 4
-        const w = i * 5
-        const up = cap * Math.max(0, tipOwn[w])
-        const k0 = Math.min(cap - 1, Math.floor(up))
-        const fr = up - k0
-        const col = (tipOwn[w + 4] / TAU) * sides
-        const c0 = Math.min(sides - 1, Math.floor(col))
-        const fc = col - c0
-        const g = (main - 1 + k0) * row + c0
-        const low = lerp(grid[g], grid[g + 1], fc)
-        const high = lerp(grid[g + row], grid[g + row + 1], fc)
-        const slope = clamp((high - low) / Math.max(1e-9, capOff[k0 + 1] - capOff[k0]), -1.5, 1.5)
-        let radius = lerp(low, high, fr)
-        let rise = lerp(capOff[k0], capOff[k0 + 1], fr)
-        if (tipOwn[w] < 0) {
-          rise = tipOwn[w] * capOff[cap]
-          let j = main - 2
-          while (j > 0 && ringS[j] > length + rise) j--
-          const fj = clamp((length + rise - ringS[j]) / Math.max(1e-9, ringS[j + 1] - ringS[j]))
-          radius = lerp(lerp(grid[j * row + c0], grid[j * row + c0 + 1], fc), lerp(grid[(j + 1) * row + c0], grid[(j + 1) * row + c0 + 1], fc), fj)
+    if (coatFrames && downFrames) {
+      const data = coatFrames.slot(slot)
+      const down = downFrames.slot(slot)
+      for (const c of coats) c.drawn[slot] = 0
+      for (let k = 0; k < ANCHORS - 1; k++) {
+        const span = S[k + 1] - S[k]
+        // Tissue that has not stretched out yet holds its hairs folded away, and the hairs of the sprout are shed.
+        const stretched = span / Math.max(1e-12, M[k + 1] - M[k])
+        const low = k < SEED_ANCHOR
+        const out = length > 0 && (low ? shed > 0 : stretched > 0.03)
+        for (let i = 0; i <= SUB; i++) {
+          const f = k * (SUB + 1) + i
+          const o = f * WIDE
+          if (!out) {
+            data[o + 3] = 0
+            continue
+          }
+          const at = S[k] + steps[i] * span
+          const u = at / length
+          const whole = base(u, at)
+          const swell = swellAt(at)
+          const ribbed = full ? smoothstep(0.0028, 0.0085, whole) * (1 - hasHead * smoothstep(0.972, 0.996, u)) : 0
+          const mature = 0.7 + 0.3 * smoothstep(0.0018, 0.006, whole)
+          const long = mature * (low ? shed * smoothstep(0.0005, 0.0025, S[SEED_ANCHOR] - at) : smoothstep(0.03, 0.2, stretched)) * (1 - frost * hasHead * (1 - smoothstep(0.005, 0.02, length - at)))
+          // A hair stands for a patch of grown skin: young skin is a fraction of that, so only that fraction of its hairs is out.
+          const patch = low ? SPROUT_OUT * (time - SPROUT_FROM_S) : stretched * Math.min(1, whole / thick[f])
+          station(data, o, stemAt(pose, u), 0, whole * (1 + swell), swell, long, patch, 0.9 * whole, (RIB_HEIGHT * Math.min(whole, 0.02) * ribbed) / Math.max(1e-9, whole * (1 + swell) * RIB_SEAT))
+          if (long > 0) for (const c of coats) if (c.frames === coatFrames && f >= c.from && f < c.to) c.drawn[slot] = c.upTo[f]
         }
-        const ox = ringAt[p + 3] * tipOwn[w + 1] + ringAt[p + 6] * tipOwn[w + 2]
-        const oy = ringAt[p + 4] * tipOwn[w + 1] + ringAt[p + 7] * tipOwn[w + 2]
-        const oz = ringAt[p + 5] * tipOwn[w + 1] + ringAt[p + 8] * tipOwn[w + 2]
-        root[o] = ringAt[p] + ringAt[p + 9] * rise + ox * radius
-        root[o + 1] = ringAt[p + 1] + ringAt[p + 10] * rise + oy * radius
-        root[o + 2] = ringAt[p + 2] + ringAt[p + 11] * rise + oz * radius
-        const q = tipOwn[w + 3]
-        root[o + 3] = risen * lerp(TIP_HAIR_M[0], TIP_HAIR_M[1], q)
-        const along = TIP_LEAN * (0.6 + 0.8 * q) - slope
-        lean[o] = ox + ringAt[p + 9] * along
-        lean[o + 1] = oy + ringAt[p + 10] * along
-        lean[o + 2] = oz + ringAt[p + 11] * along
-        lean[o + 3] = q
+      }
+      // Under frost the down stands for the rime on it and is twice as long.
+      down.set(data)
+      for (const c of coats) {
+        if (c.frames !== downFrames) continue
+        for (let f = c.from; f < c.to; f++) {
+          if (down[f * WIDE + 3] > 0) c.drawn[slot] = c.upTo[f]
+          down[f * WIDE + 3] *= 1 + frost
+        }
+      }
+    }
+    if (tipSet && tipFrames) {
+      const data = tipFrames.slot(slot)
+      const risen = length > 0 ? (1 - hasHead) * young : 0
+      tipDrawn[slot] = risen > 0 ? tipSet.count : 0
+      const top = stemAt(pose, 1)
+      for (let f = 0; f <= TIP_LOW + cap; f++) {
+        const k = f - TIP_LOW
+        const rise = k < 0 ? (k / TIP_LOW) * TIP_BELOW * capOff[cap] : capOff[k]
+        const at = Math.max(0, length + rise)
+        const whole = k < 0 ? base(length > 0 ? at / length : 0, at) : rEnd * capGirth[k]
+        const swell = swellAt(length + rise)
+        station(data, f * WIDE, top, rise, whole * (1 + swell), swell, risen, 0, 0, 0)
       }
     }
     if (crystals && stateUniforms.uPlantFrost.value > 0) {
@@ -701,6 +725,9 @@ export function create(options: PartOptions): PlantPart {
       for (let k = 0; k < sent.length; k++) if (led[k]) for (const a of sent[k]) a.needsUpdate = true
       filled.fill(false)
       led.fill(false)
+      coatFrames?.finish()
+      downFrames?.finish()
+      tipFrames?.finish()
       for (const c of coats) c.set.finish(Math.max(c.drawn[0], c.drawn[1]))
       tipSet?.finish(Math.max(tipDrawn[0], tipDrawn[1]))
       if (dew) dew.finish(Math.max(dewDrawn[0], dewDrawn[1]))
