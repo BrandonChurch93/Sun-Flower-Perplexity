@@ -18,10 +18,7 @@ const MODES: Record<DiagName, Mode> = { beauty: 0, ungraded: 1, plant: 1, backli
 const fillGain = 2.3
 // With one sample the three rounds together draw the whole blur circle, and this keeps their sum at its size.
 const soloGain = 0.9
-// How many times brighter than the direct light the sky draws the sun's disc. The reading of how much of the disc shows is measured against it.
-const DISC_GAIN = 90
-// The pyramid level the sun is read from, and the one the shafts are cast through.
-const HOT_LEVEL = 2
+// The pyramid level the shafts are cast through.
 const OPEN_LEVEL = 1
 
 function halfTarget(width: number, height: number): THREE.WebGLRenderTarget {
@@ -76,7 +73,7 @@ export class Post {
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
-  private readonly sunRead = new FullscreenPass(sunReadFragment, { tHot: { value: null }, tRaw: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uExpect: { value: 1 }, uFar: { value: 0 } })
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
   private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 } })
   private readonly fillWide = fillPass(3)
@@ -304,15 +301,12 @@ export class Post {
       const disc = at.disc ?? 0.005
       const blurred = Math.hypot(disc, (0.5 * farCircle) / width)
       if (light > 0 || !this.warmed) {
-        const hot = this.down[HOT_LEVEL]
-        const patch = Math.max(2.2 * blurred, 1.5 / hot.width)
         const r = this.sunRead.uniforms
-        r.tHot.value = hot.texture
         r.tRaw.value = frame
         r.uSunAt.value.set(at.x, at.y)
+        r.uTrack.value.set(at.dx ?? 0, at.dy ?? 0)
         r.uAspect.value = aspect
-        r.uPatch.value = patch
-        r.uExpect.value = (DISC_GAIN * light * disc * disc) / (patch * patch)
+        r.uPatch.value = Math.max(blurred, 1 / width)
         r.uFar.value = farCircle
         this.sunRead.render(renderer, this.sunTarget)
       }
