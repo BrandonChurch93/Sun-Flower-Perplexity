@@ -10,6 +10,9 @@ export interface Loading {
   step(done: number, of: number, next: 'moment' | 'every shape' | null): void
   // Shows the screen again for a second preparation, at another quality.
   again(title: string): void
+  // The machine is being timed at `quality`: `seconds` of `of` done, or null while the timing waits for the page to be in view.
+  timing(quality: string, seconds: number | null, of: number): void
+  script(quality: string, done: number, of: number): void
   done(): void
   fail(text: string): void
 }
@@ -71,6 +74,13 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
   const warmBar = make('div', css.bar)
   const warmFill = make('i', css.fill)
   warmBar.append(warmFill)
+  const timedLine = make('p', css.line)
+  const timedCount = make('span', css.count, 'after that')
+  timedCount.dataset.role = 'loading-timed'
+  timedLine.append(make('span', css.what, 'This machine timed'), timedCount)
+  const timedBar = make('div', css.bar)
+  const timedFill = make('i', css.fill)
+  timedBar.append(timedFill)
   const state = make('p', css.state, building(film.steps()[0]))
   state.dataset.role = 'loading-now'
   // Nothing here has a time limit: a slow machine takes longer and still gets there. The line says how long it has been and how long the last step took.
@@ -86,7 +96,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
     item.append(make('span', css.num, String(i + 1)), make('span', undefined, text), make('span', css.stepState, i === 0 ? 'Loading' : 'Next'))
     steps.append(item)
   }
-  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, state, pace, pulse)
+  box.append(title, size, steps, sceneLine, sceneBar, warmLine, warmBar, timedLine, timedBar, state, pace, pulse)
   root.append(box)
   host.append(root)
 
@@ -182,9 +192,24 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       state.textContent = next === 'moment' ? momentText(done) : next === null ? 'Ready' : 'One last pass over the whole scene'
       if (done > 0) stepped(done <= moments ? `the picture at ${filmTime(frames[done - 1])}` : 'the last pass')
     },
+    timing(quality, seconds, of) {
+      const waits = seconds === null
+      timedCount.textContent = waits ? 'waiting for the page to be in view' : `${Math.floor(seconds)} of ${of} s at ${quality} quality`
+      timedFill.style.setProperty('--at', String(waits ? 0 : seconds / of))
+      const text = waits ? 'The timing starts when this page is in view' : `Timing this machine at ${quality} quality: ${of} seconds of the film's hardest parts`
+      if (state.textContent !== text) state.textContent = text
+    },
+    script(quality, done, of) {
+      timedCount.textContent = `${done} of ${of} frames with nothing drawn`
+      timedFill.style.setProperty('--at', String(done / of))
+      const text = `${quality === 'high' ? 'High' : 'Low'} quality did not hold ${config.film.fps} frames a second here. Timing the page's own work alone, to see which half is slow`
+      if (state.textContent !== text) state.textContent = text
+    },
     again(text) {
       warmCount.textContent = 'waiting'
       warmFill.style.setProperty('--at', '0')
+      timedCount.textContent = 'after that'
+      timedFill.style.setProperty('--at', '0')
       state.textContent = text
       lastStep = ''
       opened = performance.now()
