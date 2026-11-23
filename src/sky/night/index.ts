@@ -97,8 +97,8 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   ivec2 c = clamp(ivec2(floor(cell)), ivec2(0), ivec2(int(N) - 1));
   ivec2 origin = ivec2(face - (face / 3) * 3, face / 3) * int(N);
   float px = uPixelAngle;
-  float lens = min(blur, 2.2 * px);
-  float base = 0.66 * px;
+  float lens = min(blur, 2.6 * px);
+  float base = 0.58 * px;
   vec3 stars = vec3(0.0);
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
@@ -116,7 +116,7 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
       vec3 e = w - normalize(p);
       float flux = exp2(-9.83 * (1.0 - s.b));
       float shown = pow(flux, 0.72);
-      float size = base * (1.0 + 0.85 * sqrt(flux));
+      float size = base * (1.0 + 0.7 * sqrt(flux));
       float spread = size * size + px * px / 12.0 + 0.25 * lens * lens;
       float glow = exp(-0.5 * dot(e, e) / spread) * (base * base + px * px / 12.0) / spread;
       float t = s.a;
@@ -130,24 +130,32 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   vec2 g = vec2(lon, lat);
   float core = exp(-lon * lon * 1.6);
   float spine = 0.018 * sin(2.3 * lon + 0.4) + 0.03 * (valueNoise(g * vec2(3.0, 1.0) + 7.1) - 0.5);
-  float wide = 0.075 + 0.07 * core;
+  float wide = 0.055 + 0.065 * core;
   float body = exp(-pow((lat - spine) / wide, 2.0));
-  float bulge = exp(-(lon * lon * 9.0 + pow(lat - spine * 0.5, 2.0) * 140.0));
+  float bulge = exp(-(lon * lon * 7.0 + pow(lat - spine * 0.4, 2.0) * 120.0));
   float clouds = 0.42 * valueNoise(g * 9.0 + 1.3) + 0.26 * valueNoise(g * 23.0 + 4.7)
     + 0.18 * valueNoise(g * 61.0 + 2.9) + 0.14 * valueNoise(g * 157.0 + 8.3);
-  float grain = valueNoise(g * 420.0 + 3.1);
-  float laneAt = spine + 0.016 * sin(5.0 * lon) + 0.06 * (valueNoise(g * vec2(5.0, 1.5) + 12.4) - 0.5) + 0.03 * (valueNoise(g * vec2(17.0, 5.0) + 2.2) - 0.5);
-  float laneWidth = (0.018 + 0.03 * valueNoise(g * 11.0 + 5.5)) * (0.5 + 0.8 * core);
-  float lane = exp(-pow((lat - laneAt) / laneWidth, 2.0)) * smoothstep(0.15, 0.7, valueNoise(vec2(lon * 13.0, lat * 26.0) + 4.4));
-  float knots = smoothstep(0.5, 0.85, valueNoise(g * vec2(9.0, 38.0) + 9.2)) * body;
-  float dust = clamp(lane * (0.55 + 0.45 * valueNoise(g * 40.0 + 6.0)) + 0.5 * knots, 0.0, 1.0);
-  float lumps = smoothstep(0.32, 0.86, clouds);
-  float light = (body * (0.3 + 0.7 * core) * lumps * lumps * (0.6 + 0.8 * grain) + 1.4 * bulge * (0.5 + 0.8 * clouds))
-    * (1.0 - 0.92 * dust) + 0.1 * exp(-lat * lat * 30.0) * (0.4 + 0.6 * core);
-  vec3 milkyTone = mix(vec3(0.55, 0.68, 1.0), vec3(1.0, 0.80, 0.60), clamp(core * lumps * 0.7 + bulge, 0.0, 1.0));
-  float faint = 0.55 + 0.45 * (1.0 - dust);
+  float grain = 0.6 * valueNoise(g * 420.0 + 3.1) + 0.4 * valueNoise(r * 230.0 + 8.8);
+  float lumps = smoothstep(0.36, 0.8, clouds);
+  vec2 r = mat2(0.82, 0.57, -0.57, 0.82) * g;
+  float ragged = 0.012 * (valueNoise(r * vec2(55.0, 110.0) + 1.7) - 0.5) + 0.006 * (valueNoise(r * vec2(140.0, 280.0) + 6.6) - 0.5);
+  float laneAt = spine + 0.012 * sin(5.0 * lon) + 0.04 * (valueNoise(g * vec2(5.0, 1.5) + 12.4) - 0.5) + 0.016 * (valueNoise(g * vec2(17.0, 5.0) + 2.2) - 0.5);
+  float laneWidth = (0.012 + 0.02 * valueNoise(g * vec2(6.0, 3.0) + 5.5)) * (0.6 + 0.9 * core);
+  float rift = 1.0 - smoothstep(0.35 * laneWidth, laneWidth, abs(lat - laneAt + ragged));
+  rift *= smoothstep(0.18, 0.5, valueNoise(vec2(lon * 8.0, lat * 12.0) + 4.4));
+  float split = smoothstep(-0.05, 0.35, lon) * exp(-lon * lon * 1.5);
+  float branchAt = laneAt + 0.05 * split + 0.012 * (valueNoise(g * vec2(9.0, 4.0) + 3.3) - 0.5);
+  float branch = (1.0 - smoothstep(0.3 * laneWidth, 0.8 * laneWidth, abs(lat - branchAt - ragged))) * split;
+  float knots = smoothstep(0.58, 0.78, 0.7 * valueNoise(r * vec2(14.0, 30.0) + 9.2) + 0.3 * valueNoise(r * vec2(37.0, 61.0) + 2.4)) * body;
+  float dust = clamp(max(rift, branch) + 0.8 * knots, 0.0, 1.0);
+  float clump = body * (0.25 + 0.75 * core) * lumps * sqrt(lumps) * (0.35 + 1.3 * grain * grain);
+  float heart = 1.7 * bulge * (0.45 + 0.9 * clouds);
+  float light = (clump + heart) * (1.0 - 0.95 * dust) + 0.08 * exp(-lat * lat * 30.0) * (0.4 + 0.6 * core) * (1.0 - 0.5 * dust);
+  float warm = clamp(1.5 * bulge + 0.25 * core * (1.0 - lumps) + 0.4 * dust * core, 0.0, 1.0);
+  vec3 milkyTone = mix(vec3(0.62, 0.76, 1.0), vec3(1.0, 0.72, 0.48), warm);
+  float faint = 0.3 + 0.7 * (1.0 - dust);
   float extinction = exp(-0.03 / max(0.016, d.y)) * smoothstep(0.0, 0.035, d.y);
   float wash = 1.0 - smoothstep(0.006, 0.05, dot(air, vec3(0.21, 0.72, 0.07)));
-  return (stars * 0.75 * faint + 0.024 * light * milkyTone) * extinction * wash * visible * uNight;
+  return (stars * 0.75 * faint + 0.022 * light * milkyTone) * extinction * wash * visible * uNight;
 }
 `
