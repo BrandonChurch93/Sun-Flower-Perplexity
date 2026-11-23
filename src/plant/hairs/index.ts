@@ -745,11 +745,11 @@ void main() {
   float turn = iceTurn();
   if (vShape.x < 0.5) {
     float x = abs(vAt.x);
-    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z) * turn;
-    color = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * max(vShape.z, 0.0)) * turn;
+    color = max(vSun, 0.0) * sun + max(vSky, 0.0) * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   } else {
     float r = max(vShape.y, 0.5);
-    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z * turn;
+    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * max(vShape.z, 0.0) * turn;
     color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost, vShape.y);
   }
 #ifdef BLUR_CIRCLE
@@ -782,15 +782,15 @@ ${turn}
 void main() {
 #ifdef RIBBON
   float x = abs(vAcross);
-  float cover = max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * vShare;
+  float cover = max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * max(vShare, 0.0);
 #else
-  float cover = vCover;
+  float cover = max(vCover, 0.0);
 #endif
 #ifdef FADE
   cover *= uHairFade * rimeTurn();
 #endif
   float sun = plantSun(vLitAt, uSunDir);
-  vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+  vec3 light = max(vSun, 0.0) * sun + max(vSky, 0.0) * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   vec3 color = light * cover;
   // With frost on it a hair is part clear and part rime: its light is added by the clear share and what is behind is covered by the rimed share, so the coat follows the dial.
   if (uPlantFrost > 0.0) {
