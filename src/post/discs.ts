@@ -28,6 +28,7 @@ void main() {
     ivec2 q = p + ivec2(i, j);
     if (q.x > top.x || q.y > top.y) continue;
     vec4 raw = texelFetch(tRaw, q, 0);
+    raw.a = circleOf(raw.a);
     vec4 held = texelFetch(tHeld, q, 0);
     vec3 e = max(sound(raw.rgb) - held.rgb, 0.0) * smoothstep(2.0, 4.0, held.a) * (1.0 - sky(raw.a));
     float l = dot(e, vec3(0.2126, 0.7152, 0.0722));
@@ -75,10 +76,11 @@ in vec3 vLight;
 in float vRadius;
 in float vCircle;
 layout(location = 0) out vec4 outColor;
+${sound}
 void main() {
   float d = length(vAt);
   float shape = (1.0 - smoothstep(vRadius - 0.5, vRadius + 0.5, d)) * (1.0 + ${RIM.toFixed(2)} * smoothstep(0.8, 0.97, d / vRadius));
-  float here = texelFetch(tRaw, ivec2(gl_FragCoord.xy), 0).a;
+  float here = circleOf(texelFetch(tRaw, ivec2(gl_FragCoord.xy), 0).a);
   float open = smoothstep(0.4, 0.75, here / max(vCircle, 1e-3));
   outColor = vec4(vLight * (shape * open), 1.0);
 }
@@ -98,18 +100,18 @@ void main() {
   vec4 c = texelFetch(tFill, p, 0);
   vec3 rgb = c.rgb;
   if (uMixed > 0.5) {
-    float own = texelFetch(tRaw, p, 0).a;
+    float own = circleOf(texelFetch(tRaw, p, 0).a);
     if (abs(c.a) < 0.6 && own * uRadiusScale > 0.6 && sky(own) < 0.5) {
       ivec2 top = textureSize(tRaw, 0) - 1;
       float most = own;
-      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) most = max(most, texelFetch(tRaw, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) most = max(most, circleOf(texelFetch(tRaw, clamp(p + ivec2(i, j), ivec2(0), top), 0).a));
       vec3 was = vec3(0.0);
       vec3 now = vec3(0.0);
       float n = 0.0;
       for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
         ivec2 q = clamp(p + ivec2(i, j), ivec2(0), top);
         vec4 r = texelFetch(tRaw, q, 0);
-        if (r.a < 0.85 * most) continue;
+        if (circleOf(r.a) < 0.85 * most) continue;
         was += sound(r.rgb);
         now += texelFetch(tFill, q, 0).rgb;
         n += 1.0;
