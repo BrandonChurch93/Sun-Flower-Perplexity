@@ -443,6 +443,18 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
   return vec2(saturate(crust.x), crust.y) * (held * mix(lead, 1.0 / max(uPlantFrost, FROST_WHOLE_LEAST), going));
 }
 
+// The weight of the coat on a wearer that does not ask for the crust. On the plant it is the frost in the air. A neighbor is always far: its coat runs ahead as the plant's far coat does, and shuts its blade as much.
+float frostFar() {
+#ifdef PLANT_FIELD
+  float ahead = smoothstep(0.05, FROST_FAR_WHOLE, uPlantFrost);
+  float going = smoothstep(0.0, 0.15, uPlantDew);
+  frostShut = max(FROST_SHUT_LEAST, FROST_SHUT_FAR * ahead / max(uPlantFrost, 1e-4) * (1.0 - going));
+  return mix(ahead, uPlantFrost, going);
+#else
+  return uPlantFrost;
+#endif
+}
+
 vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world) {
   return frostCrustOn(at, gather, N, F, view, sheen, rim, world, 1.0);
 }
