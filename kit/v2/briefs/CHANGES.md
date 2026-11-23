@@ -186,3 +186,29 @@ What holds now: the frost hold reads as frost (rime on the edges of the blades, 
 - The far end: the place paints its near sunflower strips, from the end of the field's wedge outward, in the field's far colour, from bar 57 to the end. The wedge stays where it is.
 - The ridge may stand between 0.8 and 1.65 degrees beside the hill (the place measured 0.81 to 1.63); it is not held tighter.
 
+
+## 23 Nov, 04:55 UTC
+
+### 1. The break opens on the boom's frame, in the picture too
+
+The dial was right (`burstAtBar` is 0 at frame 2082, 0.33 at 2083, 0.99 at 2088) but the picture showed nothing of the sun before frame 2085 and the whole tear at 2086. The sky makes the sun come through in frame 2083 and rise without a threshold to the open tear at 2088; the lens follows the picture with its beams. Nothing after frame 2088 changes.
+
+### 2. Wet air after the storm
+
+The night of bars 42 to 43 failed its window (a tile went 38 of 255 the wrong way into frame 2179). The sky lays a diffuse veil over the cloud edges while the ground is wet and the sun is low, taken from wetness and sun elevation and from no cue. Merged at `2300d67`.
+
+### 3. Grain stays
+
+The lens measured about 1.2 levels of fine noise on the storm deck. It is the grain of version 1 and stays.
+
+### 4. The first watch in motion is drawn in parts on the builders' machines
+
+One frame costs about 10 s on a builder's machine and here, so the whole film at the draft tier is about ten machine hours. Builders whose work is in draw a part of 318 frames each (`npm run part -- --from F --to T --jobs 1`, preview size, draft tier) and send the clip and its record. The parts are joined here with `npm run join -- --name blockout --mixed`. A blockout may be joined from parts of different commits; the proof may not.
+
+### 5. Sizes
+
+`npm run part` and `npm run join` take `--size WxH`. A smaller picture is no faster on these machines (11.7 s at 640 by 360 against 10 s at 960 by 540), so the blockout stays at the preview size.
+
+### 6. One merge commit without the trailer
+
+`866a003` on `agent/post` (a merge of `v2` into the branch) has no trailer. History is not rewritten for it; the merge of that branch into `v2` (`676e690`) carries the trailer. Later merges carry it.
