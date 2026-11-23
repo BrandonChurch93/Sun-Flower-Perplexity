@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
-import type { Surface } from '../../../core/shading.ts'
+import { barTime, rainAtBar } from '../../../v2/clock.ts'
+import { shared, type Surface } from '../../../core/shading.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../../part.ts'
 
 // Beads of water on the skin: rain that sits, swells, runs to the tip and falls, and dew that stays where it formed.
@@ -234,13 +235,13 @@ export interface Bead {
 }
 
 const G = 9.81
-const SIT = 0.5
-const RUN = 0.88
-const HANG = 0.94
+const SIT = 0.4
+const RUN = 0.78
+const HANG = 0.93
 // The share of the beads that stay where they formed in the rain: small ones, far more than those large enough to run.
-const STAY = 0.8
+const STAY = 0.72
 // How far a bead slides in one go, as a share of the part's length.
-const REACH = 0.3
+const REACH = 0.4
 // The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
 const DEW_MARGIN = 0.4
 const DEW_TIP = 0.035
@@ -255,27 +256,15 @@ function ease(a: number, b: number, x: number): number {
   return t * t * (3 - 2 * t)
 }
 
-// How long what stood on the skin before a cut takes to become what the new weather makes of it.
-const CARRY = 1.5
-
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-let worldStart = 0
-let worldBefore = -1
-
-// When the world of a film time began, and when the one before it began: -1 for the first.
-function worldAt(time: number): void {
-  worldStart = 0
-  worldBefore = -1
-  for (const s of config.segments) {
-    if (s.start <= time && s.start > worldStart) {
-      worldBefore = worldStart
-      worldStart = s.start
-    }
-  }
-}
+// The film second the rain starts to fall: the beads of the shower count their lives from it.
+const RAIN_FROM_S = ((): number => {
+  for (let b = 30; b < 60; b += 1 / 64) if (rainAtBar(b) > 0) return barTime(b)
+  return Infinity
+})()
 
 // Rain: `since` is the time the rain has fallen.
 function rainBead(own: number, along: number, across: number, since: number, wet: number, out: Bead): void {
@@ -284,7 +273,7 @@ function rainBead(own: number, along: number, across: number, since: number, wet
     // A small bead forms and stays: most are fine, few are not.
     const t = since - 3 * own2(own, 311.7)
     const fine = own2(own, 127.1)
-    out.radiusM = (0.0003 + 0.0022 * fine * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
+    out.radiusM = (0.0003 + 0.0023 * fine * fine) * wet * ease(0, 1.5, t) * (1 - 0.6 * across * across)
     return
   }
   // A large one swells where it formed, slides to the tip in fits and starts, hangs there and falls: once or twice in a shower.
@@ -342,8 +331,6 @@ function dewBead(own: number, along: number, across: number, dew: number, dry: n
   }
 }
 
-const carried: Bead = { along: 0, across: 0, radiusM: 0, hang: 0, fallM: 0 }
-
 // Where a bead is at a film time, in closed form. `own` is the bead's own number from 0 to 1; `along` and `across` are where it forms.
 export function beadAt(own: number, along: number, across: number, time: number, out: Bead): Bead {
   out.along = along
@@ -353,54 +340,13 @@ export function beadAt(own: number, along: number, across: number, time: number,
   out.fallM = 0
   const wet = stateUniforms.uPlantWet.value
   const dew = stateUniforms.uPlantDew.value
-  const frost = stateUniforms.uPlantFrost.value
-  worldAt(time)
-  const since = time - worldStart
-  const settled = worldBefore < 0 ? 1 : ease(0, CARRY, since)
-  beadUniforms.uBeadLee.value = wet > 0.5 ? settled : dew > 0 ? 1 - settled : 0
-  // Beads run only where it rains: a skin that is merely damp, as at dawn and at night, keeps its dew.
-  if (wet > 0.5) rainBead(own, along, across, since, wet, out)
+  // The part hands over its own clock, which stands still in a hold: water runs on the film second.
+  const real = shared.uReal.value + (time - shared.uTime.value)
+  const since = real - RAIN_FROM_S
+  const rained = since >= 0 && wet > 0
+  beadUniforms.uBeadLee.value = rained ? ease(0, 0.6, wet) : 0
+  // Beads run only in the rain and on what it leaves: a skin that is merely damp, as at dawn and in the thaw, keeps its dew where it formed.
+  if (rained) rainBead(own, along, across, since, Math.sqrt(wet), out)
   else if (dew > 0) dewBead(own, along, across, dew, 1 - Math.min(1, 4 * wet), out)
-  else if (!(frost > 0)) return out
-  if (worldBefore < 0 || since >= CARRY) return out
-  // What reacts to the weather reacts after the cut: the water that stood on the skin one frame before is still there, in its place, and turns into the new weather's in its first moments. Rain comes over a damp dawn, dew and then frost over what the weather before them left.
-  const was = carried
-  was.along = along
-  was.across = across
-  was.radiusM = 0
-  was.hang = 0
-  was.fallM = 0
-  if (wet > 0.5) dewBead(own, along, across, 1, 0, was)
-  else if (dew > 0) rainBead(own, along, across, worldStart - worldBefore, 1, was)
-  else dewBead(own, along, across, 1, 1, was)
-  if (was.fallM > 0) {
-    // A drop in the air at the cut goes on falling; the bead that follows it grows in after.
-    const fell = Math.sqrt((2 * was.fallM) / G) + since
-    const next = out.radiusM * ease(0.5 * CARRY, CARRY, since)
-    if (since < 0.5 * CARRY) {
-      out.along = was.along
-      out.across = was.across
-      out.hang = was.hang
-      out.radiusM = was.radiusM
-      out.fallM = 0.5 * G * fell * fell
-    } else {
-      out.radiusM = next
-    }
-    return out
-  }
-  const k = ease(0, CARRY, since)
-  if (was.radiusM <= 0) {
-    out.radiusM *= k
-  } else if (out.radiusM <= 0) {
-    out.along = was.along
-    out.across = was.across
-    out.hang = was.hang
-    out.radiusM = was.radiusM * (1 - k)
-  } else {
-    out.along = lerp(was.along, out.along, k)
-    out.across = lerp(was.across, out.across, k)
-    out.hang = lerp(was.hang, out.hang, k)
-    out.radiusM = lerp(was.radiusM, out.radiusM, k)
-  }
   return out
 }

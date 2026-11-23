@@ -111,9 +111,9 @@ void main() {
   albedo = mix(albedo, vec3(0.45, 0.32, 0.21) * (0.75 + 0.5 * tone), 0.5 * foot * (1.0 - 0.85 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.25, 0.18, 0.12) * (0.7 + 0.6 * tone), 0.8 * foot * foot * foot * smoothstep(0.3, 0.75, dust + 0.4 * foot));
   // The sprout: pale yellow green where it has seen the light, clear pink red below, near white where it leaves the soil.
-  vec3 sprout = mix(vec3(0.36, 0.34, 0.22), vec3(0.085, 0.15, 0.125), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
+  vec3 sprout = mix(vec3(0.36, 0.34, 0.22), vec3(0.13, 0.21, 0.04), saturate(1.0 - foot * 1.4)) * (0.9 + 0.2 * tone);
   albedo = mix(albedo, sprout, 0.92 * saturate(1.5 * pale));
-  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.22, 0.04, 0.065), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.8 + 0.12 * streak + 0.08 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
+  albedo = mix(albedo, mix(vec3(0.23, 0.045, 0.075), vec3(0.3, 0.03, 0.055), pale) * (0.55 + 0.9 * tone), vSkin3.z * mix(0.1 + 0.34 * streak * dust, 0.8 + 0.12 * streak + 0.08 * dust, pale) * (1.0 - 0.8 * smoothstep(0.3, 0.9, uPlantWet)));
   albedo = mix(albedo, vec3(0.2, 0.3, 0.09), vSkin3.x);
   float rough = mix(${GUIDE.rough}, 0.5, thin);
   float wax = mix(${GUIDE.wax}, 0.45, thin);
