@@ -129,15 +129,22 @@ export class Film {
     return this.only.size === 0 || this.only.has(name)
   }
 
-  load(onStep?: (done: number, of: number, what: string) => void): Promise<void> {
+  // The order in which load() builds the film, by the names it reports.
+  steps(): string[] {
+    return ['ground', 'plant', 'companion', 'field', 'sky', ...this.parts.map((p) => p.name)]
+  }
+
+  load(onStep?: (done: number, of: number, what: string, next: string | null) => void): Promise<void> {
     if (!this.loaded) {
       this.loaded = (async () => {
         const { renderer } = this.stage
-        const of = 5 + this.parts.length
+        const order = this.steps()
+        const of = order.length
         let done = 0
-        // After each part the page gets a turn, so the loading screen can paint the step.
+        // After each part the page gets a turn, so the loading screen can paint the step. It is told what comes next, so it can name the step that is running.
         const step = async (what: string): Promise<void> => {
-          onStep?.(++done, of, what)
+          done += 1
+          onStep?.(done, of, what, order[done] ?? null)
           await paint()
         }
         await this.ground.load(this.assets)
