@@ -23,6 +23,7 @@ uniform float uEyeKm;
 uniform float uRealSky;
 uniform float uGolden;
 uniform float uLate;
+uniform float uStreaks;
 uniform float uDawn;
 uniform float uOpening;
 uniform float uFirstBlue;
@@ -232,6 +233,48 @@ vec3 lateCirrus(vec3 d, vec3 sky, float theta) {
   return air;
 }
 
+// Three advecting banks of shallow, nearly horizontal cloud, lit along
+// their lower faces. Elevation and azimuth are world directions, not UVs.
+vec4 eveningStreaks(vec3 d, vec3 sky, float theta) {
+  float elevation = max(0.0, d.y);
+  float cool = 0.60 * (1.0 - uFinale) * (1.0 - exp(-17.0 * elevation)) * smoothstep(0.016, 0.10, theta);
+  vec3 air = mix(sky, dot(sky, LUMA) * vec3(0.61, 1.04, 1.64), cool);
+  float afterglow = (1.0 - uFinale) * (1.0 - smoothstep(-3.1, -0.20, uElevation));
+  air += vec3(0.24, 0.056, 0.011) * exp(-squared(elevation * 37.0) - 21.0 * theta) * afterglow;
+  float limit = mix(0.171, 0.119, uFinale);
+  if (d.y < 0.006 || d.y > limit) return vec4(air, 1.0);
+  float az = atan(d.x, -d.z);
+  float drift = 0.0042 * (0.69 * uTravel.x - 0.31 * uTravel.y);
+  float along = az - drift;
+  float lit = smoothstep(-12.0, -5.5, uElevation) * (1.0 - smoothstep(6.0, 17.0, uElevation));
+  vec3 red = vec3(0.29, 0.055, 0.028) * lit * (0.30 + 0.70 * exp(-16.0 * theta));
+  float clearDisk = 1.0 - 0.80 * exp(-1840.0 * theta) * smoothstep(-1.0, 0.0, uElevation);
+  vec3 outAir = air;
+  float transmission = 1.0;
+  for (int i = 0; i < 3; i++) {
+    float k = float(i);
+    float centre = i == 1 ? -0.20 : (i == 0 ? -0.69 : -0.61);
+    float span = i == 0 ? 0.49 : (i == 1 ? 0.37 : 0.30);
+    float strip = (along - centre) / span;
+    if (abs(strip) > 1.13) continue;
+    vec4 flow = f(vec3(0.68 * along + 0.217 * k, 0.24 + 0.141 * k + 0.022 * uEvolve, 0.58 + k * 0.83));
+    float run = 1.0 - smoothstep(0.32, 1.03, abs(strip + 0.18 * (flow.a - 0.5)));
+    float level = (i == 0 ? 0.028 : (i == 1 ? mix(0.073, 0.060, uFinale) : mix(0.131, 0.094, uFinale)))
+      + (0.017 - 0.003 * k) * (flow.g - 0.5) + 0.006 * sin(6.1 * along + 2.41 * k);
+    float width = (0.0105 + 0.0025 * flow.b) * (1.0 - 0.09 * k) * mix(1.0, 0.78, uFinale);
+    float y = (d.y - level) / width;
+    if (abs(y) > 2.2) continue;
+    float wisp = f(vec3(1.46 * along + 0.77 * k, 0.11 + 0.057 * y, 0.43 + 0.19 * k + 0.024 * uEvolve)).g;
+    float cloud = exp(-0.90 * squared(y + 0.24 * (wisp - 0.5))) * run * (0.29 + 0.71 * smoothstep(0.27, 0.68, flow.r));
+    cloud *= (0.80 + 0.20 * wisp) * clearDisk * (1.0 - smoothstep(limit - 0.020, limit, d.y));
+    float underside = exp(-2.2 * squared(y + 0.62));
+    vec3 body = air * vec3(0.26, 0.38, 0.58) + vec3(0.003, 0.006, 0.010);
+    outAir = mix(outAir, body, 0.85 * cloud) + red * cloud * (0.10 + 1.32 * underside) * (0.59 + 0.41 * wisp);
+    transmission *= 1.0 - 0.88 * cloud;
+  }
+  return vec4(outAir, transmission);
+}
+
 void main() {
   vec3 d = normalize(uBore * vec3((vUv * 2.0 - 1.0) * uExtent, 1.0));
   float st = uWeather.y;
@@ -306,8 +349,17 @@ void main() {
     float breadth = 0.077 + 0.172 * ridge.g + 0.060 * (mass.b - 0.44);
     riftLight = exp(-squared((d.y - breadth) * (18.0 + 9.0 * apron.r))) * smoothstep(0.30, 0.68, 0.53 * apron.b + 0.47 * mass.g);
   }
-  vec3 sky = thinClouds(d, air, mu);
-  if (uLate > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uLate);
+  vec3 sky = air;
+  if (uStreaks < 0.999) {
+    sky = thinClouds(d, air, mu);
+    if (uLate > 0.001) sky = mix(sky, lateCirrus(d, sky, angle), uLate);
+  }
+  float sheetTransmission = 1.0;
+  if (uStreaks > 0.001) {
+    vec4 sheets = eveningStreaks(d, air, angle);
+    sky = mix(sky, sheets.rgb, uStreaks);
+    sheetTransmission = mix(1.0, sheets.a, uStreaks);
+  }
   float through = 1.0;
   vec3 radiation = vec3(0.0);
   float base = mix(1.38, 0.86, st);
@@ -335,7 +387,7 @@ void main() {
     strikeUp = cross(uFlash, strikeSide);
   }
 
-  if (span > 0.0 && d.y > -0.018) {
+  if (uStreaks < 0.999 && span > 0.0 && d.y > -0.018) {
     float region = f(d * 0.24 + vec3(0.13, 0.02, 0.59)).g;
     // Stratified depth jitter removes coherent contours without a repeated
     // screen tile. Spatial only: no history or frame-dependent seed.
@@ -361,7 +413,8 @@ void main() {
     vec3 sunSide = normalize(vec3(uSun.z, 0.0, -uSun.x) + vec3(1e-7));
     float lowerDistance = (d.y - uSun.y + 0.122 + 0.035 * (pocket.g - 0.5)) * 31.0;
     float sideDistance = (dot(d, sunSide) - 0.102) * 11.0;
-    float roseLight = sunBreak * exp(-lowerDistance * lowerDistance - sideDistance * sideDistance)
+    float roseLight = sunBreak * (1.0 - smoothstep(3.1, 8.0, uElevation))
+      * exp(-lowerDistance * lowerDistance - sideDistance * sideDistance)
       * smoothstep(0.17, 0.60, 0.55 * belly.r + 0.45 * pocket.g);
     for (int i = 0; i < 146; i++) {
       if (i >= steps || through < 0.009) break;
@@ -377,6 +430,7 @@ void main() {
       vec2 relief;
       float density = densityAt(p, d, at, base, dep, gap, relief);
       density *= 1.0 - uFinale * (0.73 + 0.27 * smoothstep(0.04, 0.112, d.y));
+      density *= 1.0 - uStreaks;
       if (density < 0.009) continue;
       float shade = shadowAt(p, d, base, dep);
       float lit = 0.82 * exp(-shade) + 0.18 * exp(-0.51 * shade);
@@ -519,7 +573,7 @@ void main() {
     float hazeGlow = 0.036 * exp(-angle * 94.0) + 0.106 * exp(-angle * 970.0);
     result = mix(result, quiet, frost * 0.96) + uCloudLight.r * vec3(1.0, 0.61, 0.38) * hazeGlow * frost;
   }
-  outColor = vec4(result, clamp(mix(through, 1.0, uFirstBlue * 0.93), 0.0, 1.0));
+  outColor = vec4(result, clamp(mix(through * sheetTransmission, 1.0, uFirstBlue * 0.93), 0.0, 1.0));
 }
 `
 

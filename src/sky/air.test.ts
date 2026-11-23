@@ -37,12 +37,15 @@ describe('sky air transport', () => {
     assert.deepEqual(air.skyAt(-4.8, 0.047, 0.12, rgb()), a)
   })
 
-  it('keeps a directional horizon glow at fourteen degrees below and eases through twilight', () => {
+  it('keeps a faint blue directional horizon at midnight and eases through twilight', () => {
     const rim = air.skyAt(-14, 0.025, 0, rgb())
     const away = air.skyAt(-14, 0.025, 0.5, rgb())
     const above = air.skyAt(-14, 0.2, 0, rgb())
-    assert.ok(rim[1] > 1.8 * away[1])
-    assert.ok(rim[1] > 4 * above[1])
+    assert.ok(rim[2] > 1.4 * away[2])
+    assert.ok(rim[2] > 2.7 * above[2])
+    assert.ok(rim[2] < 0.018)
+    const lateNight = air.skyAt(-12.1, 0.025, 0, rgb())
+    assert.ok(lateNight[0] < lateNight[1] && lateNight[1] < lateNight[2])
     for (let e = -13.5; e <= 0; e += 0.5) {
       assert.ok(air.skyAt(e, 0.025, 0, rgb())[1] > air.skyAt(e - 0.5, 0.025, 0, rgb())[1])
       assert.ok(air.moonAt(e, rgb())[0] <= air.moonAt(e - 0.5, rgb())[0])
