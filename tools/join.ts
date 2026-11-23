@@ -11,6 +11,7 @@ import { joinChunks, probe, probeLine } from './lib/video.ts'
 //   npm run join -- --name blockout
 //   npm run join -- --name blockout --music /path/to/track.mp3   also writes a private copy with the track under out/work/private/, which is never committed and never published
 //   npm run join -- --name blockout --mixed                      allows parts from different builds, and says so
+//   npm run join -- --name blockout --size 640x360               joins the parts drawn at that size
 
 interface Part { from: number; to: number; frames: number; format: string; tier: string; sky: string; engineHash: string; commit: string; file: string }
 
@@ -19,7 +20,8 @@ const format = formatById(str(args, 'format', 'preview')).id
 const tier = str(args, 'tier', 'draft')
 if (!isTier(tier)) throw new Error(`unknown tier "${tier}"`)
 const name = str(args, 'name', 'film')
-const dir = path.join(WORK, 'parts', `${format}-${tier}`)
+const size = typeof args.size === 'string' && /^\d+x\d+$/.test(args.size) ? args.size : ''
+const dir = path.join(WORK, 'parts', `${size || format}-${tier}`)
 const parts: Part[] = fs.readdirSync(dir).filter((f) => /^part-\d+-\d+\.json$/.test(f)).map((f) => ({ ...(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Part), file: path.join(dir, f.replace(/\.json$/, '.mp4')) })).sort((a, b) => a.from - b.from)
 if (!parts.length) throw new Error(`no parts in ${dir}`)
 
@@ -36,7 +38,7 @@ const builds = [...new Set(parts.map((p) => `${p.engineHash} ${p.sky}`))]
 if (builds.length > 1 && !flag(args, 'mixed')) problems.push(`the parts come from ${builds.length} builds: ${builds.join(', ')}`)
 if (problems.length) throw new Error(`the parts do not make one film:\n${problems.join('\n')}`)
 
-const out = path.join(WORK, `${name}-${format}-${tier}.mp4`)
+const out = path.join(WORK, `${name}-${size || format}-${tier}.mp4`)
 joinChunks(parts.map((p) => p.file), out)
 const p = probe(out)
 if (p.frames !== frameCount) throw new Error(`${out} has ${p.frames} frames, not ${frameCount}`)
@@ -46,7 +48,7 @@ console.log(`join · ${parts.length} parts · ${builds.length === 1 ? `one build
 if (typeof args.music === 'string') {
   const priv = path.join(WORK, 'private')
   fs.mkdirSync(priv, { recursive: true })
-  const withMusic = path.join(priv, `${name}-${format}-${tier}-with-music.mp4`)
+  const withMusic = path.join(priv, `${name}-${size || format}-${tier}-with-music.mp4`)
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-i', args.music, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', withMusic])
   console.log(`join · private copy with the track (not committed, not published): ${path.relative(process.cwd(), withMusic)}`)
 }
