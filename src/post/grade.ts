@@ -79,16 +79,16 @@ vec3 sunGlare(vec2 px) {
   float r = length(d);
   float q = r * r / (uSunCore * uSunCore);
   float core = 1.0 / ((1.0 + q) * sqrt(1.0 + q));
-  float wide = mix(0.018, 0.04, uHaze);
+  float wide = mix(0.02, 0.05, uHaze);
   float glow = exp(-r / wide) + 0.1 / (1.0 + r * r / 0.012);
   float veil = 0.35 + 0.65 * exp(-r / 0.5);
   vec3 air = mix(uSunLight, peak * uSunAir, 0.5);
-  vec3 glass = mix(uSunLight, vec3(peak), 0.7) * (uSunHot * core) + air * ((0.16 + 0.3 * uHaze) * glow) + air * (uVeilSun * (0.004 + 0.012 * uHaze) * veil);
+  vec3 glass = mix(uSunLight, vec3(peak), 0.7) * (uSunHot * core) + air * ((0.22 + 0.4 * uHaze) * glow) + air * (uVeilSun * (0.004 + 0.012 * uHaze) * veil);
   float open = texture(tShafts, vUv).r;
-  float here = mix(0.2, 1.0, texture(tOpen, vUv).a);
+  float here = mix(0.35, 1.0, texture(tOpen, vUv).a);
   float ra = length(away);
-  float standing = (0.3 * exp(-ra / 0.1) + 0.7 * exp(-ra / 0.42)) * open * sqrt(open) * here;
-  return glass * seen.r + air * (uShafts * 0.12 * standing);
+  float standing = (0.45 * exp(-ra / 0.12) + 0.55 * exp(-ra / 0.45)) * open * sqrt(open) * here;
+  return glass * seen.r + air * (uShafts * 0.2 * standing);
 }
 vec3 three(vec3 p) {
   uint h = hashU(floatBitsToUint(p.x) ^ hashU(floatBitsToUint(p.y) ^ hashU(floatBitsToUint(p.z))));

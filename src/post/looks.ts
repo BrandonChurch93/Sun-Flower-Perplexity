@@ -34,7 +34,7 @@ interface Stock {
 }
 
 const DAY: Stock = { veil: 1, core: 1, halation: 0.3, keep: 0.25, punch: 0.1, pale: 0.03, greens: 0.8, knee: 0.88, top: 0.09, whiten: 0.35, black: [0.5, 0.5, 0.5], grain: 1, specks: 0.5 }
-const WARM: Stock = { veil: 1.2, core: 1.2, halation: 0.5, keep: 0.3, punch: 0.23, pale: 0.075, greens: 0.45, knee: 0.88, top: 0.05, whiten: 0.7, black: [1, 0.55, 1], grain: 1.2, specks: 1 }
+const WARM: Stock = { veil: 1.2, core: 1.2, halation: 0.5, keep: 0.3, punch: 0.16, pale: 0.05, greens: 0.5, knee: 0.88, top: 0.07, whiten: 0.45, black: [1, 0.55, 1], grain: 1.2, specks: 1 }
 const STORM: Stock = { veil: 0.9, core: 1, halation: 0.2, keep: 0.25, punch: 0.1, pale: 0, greens: 0.8, knee: 0.88, top: 0.1, whiten: 0.3, black: [0.6, 0.6, 0.6], grain: 1.2, specks: 0.5 }
 const FROST: Stock = { veil: 1.4, core: 1, halation: 0.15, keep: 0.15, punch: 0.06, pale: 0.02, greens: 0.8, knee: 0.82, top: 0.07, whiten: 0.5, black: [0.4, 0.4, 0.4], grain: 1.3, specks: 1 }
 const NIGHT: Stock = { veil: 0.3, core: 1, halation: 0.2, keep: 0.25, punch: 0.04, pale: 0, greens: 1, knee: 0.88, top: 0.1, whiten: 0.2, black: [0.3, 0.3, 0.3], grain: 1.3, specks: 0.5 }
