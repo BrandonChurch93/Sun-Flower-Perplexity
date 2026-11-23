@@ -15,6 +15,8 @@ export interface Shown {
   audioDrawn: number
   gapMs: number
   drawMs: number
+  // The part of `drawMs` the page itself worked, before it waited for the graphics card.
+  scriptMs: number
   // The page's clock at the animation frame that chose it, in milliseconds. Only for measuring: no pixel depends on it.
   atMs: number
   // What drawing this frame asked of the graphics card: things made (must be 0), and writes into storage that exists, with their megabytes.
@@ -54,6 +56,8 @@ export interface Report extends RunFacts {
   seconds: { film: number; audio: number }
   gapMs: { mean: number; p50: number; p99: number; longest: number; longestAtFilm: number }
   drawMs: { mean: number; p99: number; longest: number }
+  // Of that, the page's own work on the processor. The rest is the graphics card.
+  scriptMs: { mean: number; p99: number; longest: number }
   // The audio clock minus the film second on screen, when each frame was drawn. Above one frame the picture is late.
   // `pickedMs`: the audio clock minus the frame's own second when the frame was chosen. `behindMs`: the same when it had been drawn.
   pickedMs: { mean: number; largest: number }
@@ -89,12 +93,12 @@ export class Pacing {
 
   // `position` counts the frames of the run in the order they are due, so the frames between two that were shown are the ones skipped.
   // `atMs` is the page's clock at the animation frame that showed it, used only to measure the gaps.
-  present(frame: number, position: number, due: number, audio: number, audioDrawn: number, atMs: number, drawMs: number, card: Asked = { made: 0, writes: 0, writeBytes: 0 }): void {
+  present(frame: number, position: number, due: number, audio: number, audioDrawn: number, atMs: number, drawMs: number, card: Asked = { made: 0, writes: 0, writeBytes: 0 }, scriptMs = 0): void {
     const first = this.shown.length === 0
     const gapMs = first ? 0 : atMs - this.lastAt
     const skipped = first ? position : Math.max(0, position - this.lastPosition - 1)
     if (!first && gapMs > GAP_MS) this.gaps.push({ frame, film: frame / config.film.fps, gapMs: round(gapMs), skipped })
-    this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs), atMs: round(atMs, 1), made: card.made, writes: card.writes, writeMb: round(card.writeBytes / 1048576) })
+    this.shown.push({ frame, film: round(frame / config.film.fps, 4), due: round(due, 4), audio: round(audio, 4), audioDrawn: round(audioDrawn, 4), gapMs: round(gapMs), drawMs: round(drawMs), scriptMs: round(scriptMs), atMs: round(atMs, 1), made: card.made, writes: card.writes, writeMb: round(card.writeBytes / 1048576) })
     this.lastAt = atMs
     this.lastPosition = position
   }
@@ -105,6 +109,7 @@ export class Pacing {
     const shown = this.shown
     const gaps = shown.slice(1).map((s) => s.gapMs).sort((a, b) => a - b)
     const draws = shown.map((s) => s.drawMs).sort((a, b) => a - b)
+    const scripts = shown.map((s) => s.scriptMs).sort((a, b) => a - b)
     const behind = shown.map((s) => (s.audioDrawn - s.due) * 1000)
     const picked = shown.map((s) => (s.audio - s.due) * 1000)
     let longest = 0
@@ -158,6 +163,7 @@ export class Pacing {
       seconds: { film: round(film, 3), audio: round(drawn ? shown[drawn - 1].audio - shown[0].audio : 0, 3) },
       gapMs: { mean: round(mean(gaps)), p50: round(percentile(gaps, 0.5)), p99: round(percentile(gaps, 0.99)), longest: round(longest), longestAtFilm: round(longestAt, 3) },
       drawMs: { mean: round(mean(draws)), p99: round(percentile(draws, 0.99)), longest: round(draws.length ? draws[draws.length - 1] : 0) },
+      scriptMs: { mean: round(mean(scripts)), p99: round(percentile(scripts, 0.99)), longest: round(scripts.length ? scripts[scripts.length - 1] : 0) },
       pickedMs: { mean: round(mean(picked)), largest: round(picked.reduce((a, b) => Math.max(a, Math.abs(b)), 0)) },
       behindMs: { mean: round(mean(behind)), largest: round(largest), largestAtFilm: round(largestAt, 3), first: round(behind[0] ?? 0), last: round(behind[behind.length - 1] ?? 0) },
       gaps: all,

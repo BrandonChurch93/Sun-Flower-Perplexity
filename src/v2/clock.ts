@@ -101,7 +101,7 @@ export function phaseOfElevation(degrees: number, afternoon: boolean): number {
 }
 
 // The sun's height at the marks the film is built on, in degrees.
-export const SUN = { frostFrom: 3, frostMid: 5.5, frostEnd: 9, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
+export const SUN = { frostFrom: 1.6, frostMid: 3.6, frostEnd: 6.5, stormFrom: 16, stormTo: 11.5, bloom: 8, open: 5, crane: 3, last: 0 } as const
 
 const W_FROST_FROM = 4 + phaseOfElevation(SUN.frostFrom, false)
 const W_FROST_MID = 4 + phaseOfElevation(SUN.frostMid, false)
@@ -114,9 +114,9 @@ const W_BLOOM = 14 + phaseOfElevation(SUN.bloom, true)
 const W_OPEN = 14 + phaseOfElevation(SUN.open, true)
 const W_CRANE = 14 + phaseOfElevation(SUN.crane, true)
 const W_LAST = 14 + phaseOfElevation(SUN.last, true)
-// The film opens and closes with the sun 5 degrees under the horizon.
+// The film opens with the sun 5 degrees under the horizon and closes with it 3 under, while the field can still be read.
 const DUSK = sinceSunset(5)
-const W_END = W_LAST + DUSK
+const W_END = W_LAST + sinceSunset(3)
 const BLOOM_RATE = (W_OPEN - W_BLOOM) / 4
 const LEAD_RATE = DUSK / (1 - B0)
 // In the fast time lapse the sun sets on beat 3 of every second bar and rises on the next bar line: a night of two beats.
@@ -128,7 +128,7 @@ const BREAK_NIGHT_FROM = 42
 const frostHold = new Monotone(
   [
     [17, 4],
-    [17.35, W_FROST_FROM],
+    [17.2, W_FROST_FROM],
     [21, W_FROST_MID],
     [25, W_FROST_END],
   ],
@@ -260,12 +260,16 @@ export function fogAtBar(b: number): number {
 const BREAK = hitBar(41)
 const RAIN_FROM = hitBar(33)
 
+// The deck stays over the break: the sun comes through a tear in it and sets under it, and the night takes the deck away.
+const DECK_GOES = 42.3
+
 export function overcastAtBar(b: number): number {
   if (b < 31.6) return 0
   if (b < 32.9) return smooth((b - 31.6) / 1.3)
   if (b < 40) return 1
   if (b < BREAK) return lerp(1, 0.74, smooth((b - 40) / (BREAK - 40)))
-  return 0.74 * (1 - smooth((b - BREAK) / 0.7))
+  if (b < DECK_GOES) return lerp(0.74, 0.58, smooth((b - BREAK) / (DECK_GOES - BREAK)))
+  return 0.58 * (1 - smooth((b - DECK_GOES) / 0.62))
 }
 
 const RAIN_FULL = hitBar(34)

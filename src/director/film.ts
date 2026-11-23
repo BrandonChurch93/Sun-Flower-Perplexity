@@ -218,6 +218,18 @@ export class Film {
     return stateAt(frameIndex)
   }
 
+  // Where the page's own time in a frame went, in milliseconds by part, once a clock has been handed in. It measures and changes no pixel.
+  clock: (() => number) | null = null
+  readonly cost: Record<string, number> = {}
+  private lapAt = 0
+
+  private lap(name: string): void {
+    if (!this.clock) return
+    const t = this.clock()
+    this.cost[name] = (this.cost[name] ?? 0) + t - this.lapAt
+    this.lapAt = t
+  }
+
   renderFrame(frameIndex: number, tier: TierId, pause = false): Promise<void> {
     const job = this.busy.then(() => this.draw(frameIndex, tier, pause))
     this.busy = job.catch(() => undefined)
@@ -266,6 +278,10 @@ export class Film {
     const count = samplesOf(tier)
     const alone = this.diag === 'plant' || this.diag === 'backlight'
     this.lastTier = tier
+    if (this.clock) {
+      for (const key of Object.keys(this.cost)) this.cost[key] = 0
+      this.lapAt = this.clock()
+    }
     setNow(frame)
     const seconds = now.t
     const tau = now.tau
@@ -289,7 +305,9 @@ export class Film {
     const inputsClose = plantInputsOf(later)
     const plantOn = this.shows('plant')
     this.plant.visible = plantOn
+    this.lap('setup')
     if (plantOn) this.plant.prepare(tau, tauClose, inputs, inputsClose)
+    this.lap('plant')
     const first = this.poseAt(seconds)
     const fixed = this.view.fixed
     const eye = this.rigOf(seconds)
@@ -307,6 +325,7 @@ export class Film {
       this.companion.place(companionMatrix(this.companionAt, companionPlace(), ratio))
       this.companion.prepare(tau, tauClose, inputs, inputsClose)
     }
+    this.lap('companion')
     fieldUniforms.uPlantWind.value = Math.min(inputs.calm ?? inputs.wind, inputs.wind)
     fieldUniforms.uPlantHeight.value = heightAt(tau)
     const fieldOn = !alone && this.shows('field')
@@ -315,6 +334,7 @@ export class Film {
       this.field.look(first, tanX, stage.width / stage.height, quality)
     }
     this.field.show(fieldOn)
+    this.lap('field')
     const view: View = { pose: first, width: stage.width, height: stage.height, quality, samples: count, light: this.skyLight }
     for (const { name, part } of this.parts) {
       if (alone || !this.shows(name)) {
@@ -322,9 +342,11 @@ export class Film {
         continue
       }
       part.prepare(now, later, view)
+      this.lap(name)
     }
     const skyOn = !alone && this.shows('sky')
     if (skyOn) sky.prepare(renderer, now, later, view)
+    this.lap('sky')
     const height = heightAt(tauClose)
     const reach = Math.max(0.012, 0.5 * height + plantReach(tauClose) + 0.004)
     // Once the camera is far enough back to see the ground round the plant, the shadow map takes in both plants whole.
@@ -355,20 +377,31 @@ export class Film {
       shared.uCocScale.value = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
       if (lit && plantOn) this.shadow.render(renderer, this.scene, casters, this.sun, alone ? 1 : def.sun.softnessDeg, s.lightX, s.lightY, this.center, radius, span, s.index)
       else this.shadow.off()
+      this.lap('shadow')
       renderer.setRenderTarget(stage.sample)
       renderer.setClearColor(alone ? GREY : BLACK, 0)
       renderer.clear(true, true, false)
       for (const { name, part } of this.parts) if (!alone && this.shows(name)) part.sample?.(camera, s.shutter)
+      this.lap('samples')
       if (skyOn) sky.render(renderer, stage.sample, camera, s.pixelX, s.pixelY, stage.width, stage.height)
+      this.lap('skydraw')
       renderer.render(this.scene, camera)
       stage.accumulator.add(renderer, stage.sample.texture, s.weight)
+      this.lap('scene')
       if (pause) await breathe()
     }
     // The lens pass needs the blur circle of the sky in every frame that shows it, so the sky it gets already blurred is not blurred again. The sun itself counts only while it is the light.
     const sunAt = skyOn ? sunInFrame(this.poseAt(seconds + 0.5 * shutterSeconds), this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize(), config.camera.gateWidthMm, stage.width, stage.height) : null
     if (sunAt && now.lightKind !== 'sun') sunAt.weight = 0
     this.post.render(renderer, stage.accumulator.texture, def, frame, count, this.diag, sunAt)
+    this.lap('post')
+    if (this.clock) {
+      let script = 0
+      for (const key of Object.keys(this.cost)) if (key !== 'script' && key !== 'wait') script += this.cost[key]
+      this.cost.script = script
+    }
     stage.finish()
+    this.lap('wait')
     if (stage.lost) throw new Error('the WebGL context was lost')
     this.lastFrame = frame
   }

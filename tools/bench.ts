@@ -82,6 +82,23 @@ try {
     console.log(nothingMade(made) ? 'count · PASS: nothing was made after loading' : 'count · FAIL: the graphics card was asked to make something after loading')
     fs.writeFileSync(path.join(dir, 'count.json'), JSON.stringify({ sky, format, tier, frames: frames.length, made, meanSeconds: total / frames.length, slowestSeconds: slowest }, null, 2))
     if (!nothingMade(made)) process.exitCode = 1
+  } else if (flag(args, 'cost')) {
+    const frames = typeof args.frames === 'string' ? args.frames.split(',').flatMap((x) => {
+      const [span, stride] = x.split(':')
+      const [a, b] = span.split('-').map(Number)
+      const step = Math.max(1, Number(stride ?? 1))
+      return Array.from({ length: Math.floor(((b ?? a) - a) / step) + 1 }, (_, i) => a + i * step)
+    }) : [900, 901, 902, 1400, 1401, 1402, 1900, 1901, 1902, 2100, 2101, 2102, 2700, 2701, 2702, 3100, 3101, 3102, 3500, 3501, 3502]
+    await session.page.evaluate(() => window.showcase.cost())
+    const rows: { frame: number; cost: Record<string, number> }[] = []
+    for (const f of frames) {
+      await session.page.evaluate(([n, t]) => window.showcase.renderFrame(n as number, t as string), [f, tier] as const)
+      const cost = await session.page.evaluate(() => window.showcase.cost())
+      rows.push({ frame: f, cost })
+      const parts = Object.entries(cost).filter(([k, v]) => k !== 'script' && k !== 'wait' && v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(', ')
+      console.log(`cost · frame ${f} · script ${cost.script.toFixed(1)} ms · ${parts} · wait ${(cost.wait / 1000).toFixed(1)} s`)
+    }
+    fs.writeFileSync(path.join(dir, `cost-${str(args, 'name', 'frames')}.json`), JSON.stringify({ format, tier, rows }, null, 2))
   } else if (typeof args.clip === 'string') {
     const [from, to] = args.clip.split(',').map(Number)
     const view = str(args, 'view', 'wide')

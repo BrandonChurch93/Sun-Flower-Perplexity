@@ -4,7 +4,9 @@ const float WET_SHEET_M = 0.006;
 const float WET_ROUGH_THIN = 0.3;
 const float WET_ROUGH_DEEP = 0.08;
 const float WET_WAX = 0.8;
-const float WET_DARK = 0.5;
+const float WET_DARK = 0.8;
+// What a film of water over a skin sends back seen square on: more than the wax under it, since every small rise of it is turned its own way.
+const float WET_F0 = 0.1;
 const float WET_SHEER = 1.0;
 // How far the water levels the relief under it: little where the skin is damp, more under a standing sheet.
 const float WET_LEVEL_THIN = 0.25;
@@ -53,7 +55,7 @@ vec3 wetBehind(vec3 d) {
 
 // What a film of water mirrors: the bright band low in the sky where it faces it. The dark cloud over that and the ground under it are broken up by the rain on the film and all but gone.
 vec3 wetSky(vec3 d) {
-  float band = smoothstep(-0.08, 0.04, d.y) * (1.0 - smoothstep(0.12, 0.4, d.y));
+  float band = smoothstep(-0.08, 0.04, d.y) * (1.0 - smoothstep(0.2, 0.7, d.y));
   return mix(WET_DARK * mix(uGroundBounce, uAirZenith, smoothstep(-0.05, 0.05, d.y)), uAirHorizon, band);
 }
 `

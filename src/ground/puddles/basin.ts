@@ -17,12 +17,12 @@ export const basin = /* glsl */ `
 ${soilHeight}
 uniform vec2 uLevel;
 ${course}
-// The furrow gathers the water: the dips of the ground more than a stride from its course drain into it and hold none.
+// The furrow gathers the water: the dips of the ground more than a foot from its course drain into it and hold none.
 float drained(vec2 p) {
   float a = dot(p, uFurrowAxes.xy);
   float d = -dot(p, uFurrowAxes.zw);
   float dc = clamp(d, uFurrow.z, uFurrow.w);
-  return 0.03 * smoothstep(0.3, 0.55, length(vec2(a + uFurrow.x - uFurrow.y * dc, d - dc)));
+  return 0.03 * smoothstep(0.13, 0.33, length(vec2(a + uFurrow.x - uFurrow.y * dc, d - dc)));
 }
 float waterDepthOver(float height, vec2 p) {
   return uLevel.x - height - drained(p);

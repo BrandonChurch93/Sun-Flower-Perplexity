@@ -46,6 +46,7 @@ button { font: 0.875rem var(--sans); color: var(--text); background: #222528; bo
 button:hover { background: #2b2f33; }
 :focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
 #readout { margin-left: 0.5rem; color: var(--text); }
+#readout.stand-in { color: var(--wait); }
 .timeline-wrap { overflow-x: auto; }
 #timeline { display: block; width: 100%; min-width: 900px; height: 84px; cursor: pointer; touch-action: none; user-select: none; }
 #timeline text { font: 11px var(--mono); fill: var(--quiet); }

@@ -17,6 +17,8 @@ const UNDER_KINDS = [0, 3, 4, 6]
 // At the low quality the simpler plants thin out from here to there, to this share of them, and the leaves in the gaps stop early.
 const THIN_M = [12, 30]
 const THIN_TO: Record<Quality, number> = { film: 1, high: 1, low: 0.3 }
+// The leaves in the gaps stay under the heads of the crop.
+const UNDER_SIZE = 0.74
 const UNDER_REACH_M: Record<Quality, number> = { film: 1000, high: 1000, low: 11 }
 
 interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; all: Float32Array; own: Own[]; face: Float32Array; order: Float32Array; sent: Float32Array; sentStill: Float32Array; shaped: Shaped; spin: Float32Array; seen: THREE.InstancedInterleavedBuffer; still: THREE.InstancedInterleavedBuffer; count: number; index: number; tier: Tier; plant: Plant }
@@ -212,7 +214,7 @@ export class Field {
         const face = late > 0 ? faceAt(id, Math.hypot(all[i], all[i + 1])) : 0
         const round = early ? 1 : settled(clock, id)
         placeTurned(all, i, seen, still, n, round > 0 ? round * shortWay(g.face[k] - local - all[i + 2]) : 0)
-        seen[n + 3] = still[n + 3] = sizeOf(this.stature, all[i + 3], all[i + 6], own, kindTall, Math.hypot(all[i], all[i + 1])) * (g.bare ? this.rise : 1)
+        seen[n + 3] = still[n + 3] = sizeOf(this.stature, all[i + 3], all[i + 6], own, kindTall, Math.hypot(all[i], all[i + 1])) * (g.bare ? this.rise * UNDER_SIZE : 1)
         if (before > 0) {
           seen[n + 4] += before * own.leanX
           seen[n + 5] += before * own.leanZ

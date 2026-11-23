@@ -242,11 +242,13 @@ describe('the wind over the field', () => {
     expect(bloom.high).toBeLessThan(heightAt(tauAtBar(61)))
   })
 
-  it('no neighbor gets shorter by more than a few millimeters between two looks', () => {
-    let before = heightsAt(5).each
-    for (let bar = 5.5; bar <= 75; bar += 0.5) {
+  it('no neighbor ever gets shorter: every one of them, at every eighth of a bar', () => {
+    let before = heightsAt(0).each
+    for (let bar = 0.125; bar <= 75; bar += 0.125) {
       const now = heightsAt(bar).each
-      for (let i = 0; i < now.length; i += 7) expect(now[i], `bar ${bar}`).toBeGreaterThan(before[i] - 0.008)
+      let worst = 0
+      for (let i = 0; i < now.length; i++) worst = Math.max(worst, before[i] - now[i])
+      expect(worst, `bar ${bar}`).toBeLessThan(1e-6)
       before = now
     }
   })

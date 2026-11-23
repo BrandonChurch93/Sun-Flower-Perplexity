@@ -40,7 +40,7 @@ class Banks implements Part {
       s.high.set(last ? 0.45 * air.amount * lerp(1, 0.4, air.lifted) : 0, 0.06)
       s.center.set(0, 0)
       s.air.set(r * (Math.exp(step) - 1), height, lerp(0.6, 0.16, far) * air.amount * lerp(1, 0.75, air.lifted), lerp(5, 40, far))
-      s.look.set(lerp(0.6, 0.35, far), air.glow, last ? 0 : air.shafts, (last ? 2 * air.amount : 0.3) * air.glow)
+      s.look.set(lerp(0.6, 0.35, far), air.glow, last ? 0 : air.shafts, 1.1 * air.amount * air.glow)
       s.mesh.renderOrder = ORDER + (count - i) * 0.1
     }
   }

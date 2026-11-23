@@ -48,6 +48,9 @@ export interface LensLook extends Stock {
   air: RGB
   // How thick the air is between the lens and the sun, 0 clear to 1.
   haze: number
+  // The light the mist has taken out of the sun's beam and holds close round the disc, and the warm bloom of a low evening sun, both as times the glow.
+  mist: number
+  warm: number
   // The glass round the sun: the core and its glow, the veil over the whole frame, and the light standing in the air.
   glare: number
   veilSun: number
@@ -64,7 +67,7 @@ const kinds: [keyof LookWeights, Stock][] = [['day', DAY], ['warm', WARM], ['sto
 const scalars = ['veil', 'core', 'halation', 'keep', 'punch', 'pale', 'greens', 'knee', 'top', 'whiten', 'grain', 'specks'] as const
 
 export function blankLens(): LensLook {
-  return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, glare: 0, veilSun: 0, shafts: 0, fan: 0, cap: 0 }
+  return { ...DAY, black: [0, 0, 0], bloom: 1, sun: [0, 0, 0], air: [1, 1, 1], haze: 0, mist: 0, warm: 0, glare: 0, veilSun: 0, shafts: 0, fan: 0, cap: 0 }
 }
 
 // The lens of one instant: the stock from the kinds of light, the sun from the frame's own light and from where it stands.
@@ -93,7 +96,9 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   out.air[2] = toSun.z / top
   // A low sun shines through many times the air of a high one, and the evening of the bloom is hazier than the mornings.
   const low = 1 - smoothstep(2, 16, now.sunElevationDeg)
-  out.haze = clamp(Math.max(d.fog, 0.7 * d.rain, d.burst, low * (0.3 + 0.7 * d.evening)))
+  out.haze = clamp(Math.max(d.fog, 0.7 * d.rain, low * (0.3 + 0.7 * d.evening)))
+  out.mist = (d.fog * (1 - d.sunThrough)) / Math.max(d.sunThrough, 0.15)
+  out.warm = low * (0.3 + 0.7 * d.evening) * (1 - d.fog)
   // Once the disc has left the frame the veil and the shafts thin out over half a frame height, so a sun that crosses the edge in one frame of the time lapse takes ten to leave the glass.
   const out01 = sun ? outside(sun.x, sun.y, aspect) : 0
   const edge = 1 - smoothstep(0, 0.6, out01)
@@ -101,7 +106,7 @@ export function lensAt(now: Moment, def: WorldDef, sun: SunInFrame | null, aspec
   out.veilSun = edge * edge
   // The shafts stand in the frame only with the sun: they open over the first tenth of a frame height inside the edge and are gone at it.
   const near = sun ? smoothstep(0, 0.1, Math.min(sun.x * aspect, (1 - sun.x) * aspect, sun.y, 1 - sun.y)) : 0
-  out.shafts = near * clamp(Math.max(d.burst, 0.6 * d.fog, 0.45 * low * (0.3 + 0.7 * d.evening)))
+  out.shafts = near * clamp(Math.max(d.burst, 0.6 * d.fog, 0.7 * low * (0.3 + 0.7 * d.evening)))
   out.fan = d.burst
   out.cap = 0.7 * d.flash
   return out
