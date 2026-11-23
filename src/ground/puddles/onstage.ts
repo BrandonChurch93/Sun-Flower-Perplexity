@@ -10,6 +10,7 @@ import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { DOT_LIFE_S, dotFragment, dotGeometry, dotVertex } from './dots.ts'
 import { hazeFragment, hazeGeometry, hazeVertex } from './haze.ts'
+import { puffFragment, puffGeometry, puffVertex } from './puffs.ts'
 import { prepareDrops, rainSpan } from '../../weather/rain/drops.ts'
 import { FineRain, LANDING_FLOATS, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
@@ -44,6 +45,7 @@ class Puddles implements Part {
   private readonly water: THREE.Mesh
   private readonly crowns: THREE.Mesh
   private readonly dots: THREE.Mesh
+  private readonly puffs: THREE.Mesh
   private readonly haze: THREE.Mesh
   private readonly span = { value: new THREE.Vector2() }
   private readonly stands = { value: 0 }
@@ -60,6 +62,7 @@ class Puddles implements Part {
     uHazeFlash: { value: new THREE.Vector3() },
     uHazeFlashAt: { value: new THREE.Vector3(0, 1, 0) },
     uHazeStrike: { value: 0 },
+    uPuffLight: { value: new THREE.Vector3() },
   }
   private readonly splashes = new Float32Array(MAX_DROPS * LANDING_FLOATS)
   private readonly drops = new Float32Array(MAX_RINGS * LANDING_FLOATS)
@@ -75,12 +78,14 @@ class Puddles implements Part {
     this.water = new THREE.Mesh(plane)
     this.crowns = new THREE.Mesh()
     this.dots = new THREE.Mesh()
+    this.puffs = new THREE.Mesh()
     this.haze = new THREE.Mesh(hazeGeometry())
     this.water.renderOrder = -10
     this.dots.renderOrder = -9.5
     this.crowns.renderOrder = -9
+    this.puffs.renderOrder = 39
     this.haze.renderOrder = 40
-    this.objects = [this.water, this.dots, this.crowns, this.haze]
+    this.objects = [this.water, this.dots, this.crowns, this.puffs, this.haze]
     prepareDrops()
     const reach = rippleBox.halfM * Math.SQRT2
     this.fine = new FineRain(boxX - reach, boxZ - reach, boxX + reach, boxZ + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M + FINE_DRIFT_M))
@@ -114,6 +119,8 @@ class Puddles implements Part {
     this.crowns.geometry = crown.geometry
     this.crowns.material = makeSurface({ name: 'splash crowns', vertex: crownVertex, fragment: crownFragment, uniforms, side: THREE.DoubleSide, transparent: true, castShadow: false }).main
     this.splashDrop = crown.drop
+    this.puffs.geometry = puffGeometry(crown.drop)
+    this.puffs.material = makeSurface({ name: 'splash puffs', vertex: puffVertex, fragment: puffFragment, uniforms, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false }).main
     const dot = dotGeometry(this.spots, LANDING_FLOATS)
     this.dots.geometry = dot.geometry
     this.dots.material = makeSurface({ name: 'drop marks', vertex: dotVertex, fragment: dotFragment, uniforms, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false }).main
@@ -140,6 +147,7 @@ class Puddles implements Part {
     lit.uHazeFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 2)
     lit.uHazeFlashAt.value.copy(now.flashAt)
     lit.uHazeStrike.value = Math.min(1, 2 * (d.flash + later.dials.flash))
+    lit.uPuffLight.value.fromArray(view.light.band ?? view.light.horizon)
     this.haze.visible = rain > 0.2 && quality < 2
 
     const time = now.t
@@ -148,6 +156,7 @@ class Puddles implements Part {
     const lands = rain > 0 && !!this.ripples
     this.water.visible = stands
     this.crowns.visible = lands
+    this.puffs.visible = lands && quality < 2
     const dry = lands ? 1 - Math.min(1, d.wet / 0.6) : 0
     this.dots.visible = dry > 0
     this.dry.value = dry
@@ -172,6 +181,7 @@ class Puddles implements Part {
     let struck = landings(mx, mz, half, 0, time - SPLASH_LIFE_S, close, this.splashes)
     if (stands && quality < 2) struck = this.fine.landings(inFurrow, y, time - SPLASH_LIFE_S, close, this.splashes, struck, FINE_CROWN_M)
     ;(this.crowns.geometry as THREE.InstancedBufferGeometry).instanceCount = struck
+    ;(this.puffs.geometry as THREE.InstancedBufferGeometry).instanceCount = struck
     if (struck > 0) {
       this.splashDrop.clearUpdateRanges()
       this.splashDrop.addUpdateRange(0, struck * LANDING_FLOATS)
