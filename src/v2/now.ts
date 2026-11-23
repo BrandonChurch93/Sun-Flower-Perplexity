@@ -24,6 +24,7 @@ import {
   worldAtBar,
 } from './clock.ts'
 import { direction, moonDirection, sunAzimuthAt, sunElevationAt } from './sun.ts'
+import { windWay } from './wind.ts'
 
 const FPS = config.film.fps
 export const shutterSeconds = config.film.shutterDegrees / 360 / FPS
@@ -33,10 +34,9 @@ const smooth = (x: number): number => {
   return t * t * (3 - 2 * t)
 }
 
-// The clouds travel toward this azimuth: toward the lens and to its right.
-const DRIFT_TOWARD_DEG = 42
-const DRIFT_X = Math.sin((DRIFT_TOWARD_DEG * Math.PI) / 180)
-const DRIFT_Z = Math.cos((DRIFT_TOWARD_DEG * Math.PI) / 180)
+// The clouds travel with the wind: toward the lens and to its right.
+const DRIFT_X = windWay.x
+const DRIFT_Z = windWay.z
 // Kilometres a second at the cloud base: in real time, added by the wind dial, and added by the fastest time lapse.
 const DRIFT_REAL = 0.012
 const DRIFT_WIND = 0.03
