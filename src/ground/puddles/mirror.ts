@@ -10,10 +10,15 @@ vec3 skyMirror(vec3 d, float blur) {
   float flat2 = max(dot(d.xz, d.xz) * dot(uSunDir.xz, uSunDir.xz), 1e-8);
   float toSun = 0.5 + 0.5 * dot(d.xz, uSunDir.xz) * inversesqrt(flat2);
   vec3 low = mix(uAirHorizon, uSkyHorizonSun, toSun * toSun);
-  vec3 sky = mix(low, uAirZenith, 1.0 - exp(-3.2 * up));
+  // When the deck tears the water shows the hole and its gold, and the rest of the sky in it stays dark beside that.
+  vec3 sky = mix(low, uAirZenith, 1.0 - exp(-3.2 * up)) * (1.0 - 0.82 * uBlaze);
   float aim = dot(d, uSunDir) - 1.0;
   float wide = 0.0005 * (1.0 + 24.0 * blur);
-  sky += uAirSun * (exp(aim / wide) * (3.0 / (1.0 + 3.0 * blur)) + exp(aim / (0.012 + 0.008 * blur)) * (0.25 + 1.4 * uBlaze) + exp(aim / 0.22) * 0.05 * uBlaze);
+  // The sun in the hole lies on the water as a path under it: narrow from side to side, so the water beside the path keeps the dark of the deck.
+  float path = mix(1.0, exp((2.0 * toSun - 2.0) / 0.006), uBlaze);
+  sky += uAirSun * path * (exp(aim / wide) * (3.0 / (1.0 + 3.0 * blur)) + exp(aim / (0.012 + 0.008 * blur)) * (0.25 + 0.5 * uBlaze) + exp(aim / 0.22) * 0.05 * uBlaze);
+  float peak = max(max(uAirSun.r, uAirSun.g), max(uAirSun.b, 1e-4));
+  sky += uAirSun * uAirSun / peak * (path * exp(aim / 0.02) * 0.5 * uBlaze);
   float lit = dot(d, uMirrorFlashAt) - 1.0;
   sky += uMirrorFlash * (0.1 + 1.6 * exp(lit / 0.1) + 3.0 * exp(lit / 0.012));
   return sky;

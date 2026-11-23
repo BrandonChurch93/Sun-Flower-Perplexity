@@ -26,7 +26,7 @@ const SPLASH_TOWARD = 0.3
 const HAZE_HALF_M = 2.2
 const BED_M = -furrow.depthM - 0.003
 // Full, the water stands a little over the mean ground: it floods the dips beside the furrow and leaves the clods as islands.
-const FULL_M = 0.008
+const FULL_M = 0.0045
 const FLASH_TINT = [1.0, 1.15, 1.45]
 const QUALITY = { film: 0, high: 1, low: 2 } as const
 const lum = (c: readonly number[]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]

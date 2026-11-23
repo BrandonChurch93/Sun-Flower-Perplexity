@@ -9,8 +9,8 @@ const MASTER_WIDTH = config.formats.master.width
 
 // The rain in three depths: a few heavy drops just off the lens, far out of focus; the body of the rain round the plant, sharp where the lens is; and the fine rain beyond, which thins into the veil.
 const LAYERS: LayerSpec[] = [
-  { name: 'near', seed: 1, box: [2.4, 2.2, 2.4], ahead: 0.9, onGround: false, range: [0.3, 0.45, 1.3, 1.7], radii: [0.0018, 0.0036], gain: 300, count: [1500, 1000, 400] },
-  { name: 'plant', seed: 2, box: [7, 3.8, 7], ahead: 2.9, onGround: true, range: [0.8, 1.1, 4.6, 5.6], radii: [0.00035, 0.0022], gain: 13, count: [36000, 24000, 10000] },
+  { name: 'near', seed: 1, box: [2.4, 2.2, 2.4], ahead: 0.9, onGround: false, range: [0.3, 0.45, 1.3, 1.7], radii: [0.0018, 0.0036], gain: 170, count: [1500, 1000, 400] },
+  { name: 'plant', seed: 2, box: [7, 3.8, 7], ahead: 2.9, onGround: true, range: [0.8, 1.1, 4.6, 5.6], radii: [0.00035, 0.0022], gain: 14, count: [36000, 24000, 10000] },
   { name: 'far', seed: 3, box: [18, 6.5, 18], ahead: 8.5, onGround: true, range: [4.6, 5.6, 13, 17], radii: [0.0005, 0.0022], gain: 26, count: [70000, 40000, 14000] },
 ]
 
