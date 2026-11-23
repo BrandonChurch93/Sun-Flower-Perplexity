@@ -180,8 +180,8 @@ float streak(float low) {
   float swing = 0.72 + 0.28 * sin(vWhen * (9.0 + 22.0 * vSeed) + 40.0 * vSeed);
   float core = exp(-3.0 * u / max(vSeen, 0.08));
   float body = (1.0 - u) * (1.0 - u);
-  // A falling drop shows the sky only while it is flat to the lens: the middle of its path is lit and both ends fade, each drop over its own share. A low sun behind it lights far more of the path.
-  float lit = exp(-pow((vWhen - 0.5) / ((0.16 + 0.2 * fract(vSeed * 3.7)) * (1.0 + 2.5 * low)), 2.0));
+  // A falling drop shows the sky only while it is flat to the lens: a short piece of its path is lit, each drop its own, and the rest is not seen. A low sun behind it lights more of the path.
+  float lit = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 17.9)) / ((0.05 + 0.08 * fract(vSeed * 3.7)) * (1.0 + 1.2 * low)), 2.0));
   return saturate(vCover * lit * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
 }
 `
@@ -209,7 +209,10 @@ void main() {
   vec3 gold = uAirSun * uAirSun / sunPeak;
   // The drop throws the sun at the lens over the middle of its path, brightest where it swings square to it: a lit line, not a spark.
   float flare = exp(-pow((vWhen - 0.25 - 0.5 * fract(vSeed * 9.1)) / 0.45, 2.0));
-  light += uAirSun * (0.03 + (0.9 * t8 + 5.0 * t32) * (1.0 - 0.75 * uSpark)) + gold * uSpark * flare * (0.25 + 1.6 * glint) * (1.0 + 4.0 * t8);
+  // Only the drops that fall through the beams catch the sun: the rest keep the cool of the deck and are all but lost.
+  float beam = t8 * t8;
+  light += uAirSun * (0.03 + (0.9 * t8 + 5.0 * t32) * (1.0 - 0.75 * uSpark)) + gold * uSpark * flare * (0.3 + 1.6 * glint) * (0.02 + 3.0 * beam);
+  cover *= mix(1.0, 0.3 + 0.7 * min(1.0, 3.0 * beam), uSpark);
   // A strike is several strokes over a few hundredths of a second: it catches each drop as a brighter dash inside its streak, most toward the strike, and never more than two and a half times the storm's own light.
   float toFlash = 0.3 + 0.7 * saturate(dot(ray, uFlashAt));
   float dash = exp(-pow((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14, 2.0));
