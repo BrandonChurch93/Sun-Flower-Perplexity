@@ -3,7 +3,8 @@ import path from 'node:path'
 import { nothingMade } from '../../src/v2/counter.ts'
 import type { Args } from '../lib/args.ts'
 import { num, str } from '../lib/args.ts'
-import { FRAMES } from './lib/film.ts'
+import { segments } from '../../src/director/timeline.ts'
+import { FRAMES, lightningFrames } from './lib/film.ts'
 import { frameFile, framesDir, playDir, readLines, readStamp, runName, type Line, type Stamp } from './lib/play.ts'
 import { openSession } from './lib/session.ts'
 
@@ -11,9 +12,12 @@ import { openSession } from './lib/session.ts'
 //   npm run checks -- play                         every frame, 320 x 180, one sample, the whole scene
 //   npm run checks -- play --from 0 --to 1269      a range, so that several can run side by side
 //   npm run checks -- play --minutes 8             stops by itself after 8 minutes; run it again and it carries on
+//   npm run checks -- play --first 4               every fourth frame first, so the whole film is seen early, then the frames round each seam, then the rest
 //   npm run checks -- play --break cut --at 1000 --from 970 --to 1030      a film whose camera jumps at frame 1000
 //   npm run checks -- play --break made --at 900 --from 880 --to 920       a film that builds a texture and a program at frame 900
 // A frame that is already there is not drawn again. A change of the film or of the size throws the old frames away.
+
+const SEAM = 14
 
 export async function run(args: Args): Promise<void> {
   const broken = typeof args.break === 'string' ? args.break : null
@@ -22,6 +26,7 @@ export async function run(args: Args): Promise<void> {
   const from = Math.max(0, num(args, 'from', 0))
   const to = Math.min(FRAMES - 1, num(args, 'to', FRAMES - 1))
   const minutes = num(args, 'minutes', 0)
+  const first = num(args, 'first', 1)
   const tier = str(args, 'tier', 'draft')
   const width = num(args, 'width', 320)
   const height = num(args, 'height', 180)
@@ -46,6 +51,12 @@ export async function run(args: Args): Promise<void> {
     const have = readLines(run)
     const wanted: number[] = []
     for (let f = from; f <= to; f++) if (!have.has(f)) wanted.push(f)
+    if (first > 1) {
+      // Then the frames round every seam, where a hard cut or a late build is most likely: each section's first frame and each stroke of lightning.
+      const seams = [...segments.map((s) => s.firstFrame), ...lightningFrames()]
+      const rank = (f: number): number => (f % first === 0 ? 0 : seams.some((x) => Math.abs(f - x) <= SEAM) ? 1 : 2)
+      wanted.sort((a, b) => rank(a) - rank(b) || a - b)
+    }
     console.log(`play · ${run} · sky ${session.info.sky} · ${width} x ${height} · ${tier} · ${only || 'everything'} · frames ${from} to ${to}: ${wanted.length} to draw, ${to - from + 1 - wanted.length} already there · loaded in ${session.startSeconds.toFixed(1)} s`)
     if (wanted.length === 0) return
     if (broken) await session.fault(broken, num(args, 'at'))

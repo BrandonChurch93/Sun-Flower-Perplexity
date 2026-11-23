@@ -34,7 +34,8 @@ export function engineHash(): string {
 }
 
 // Prints a check's result, writes it where the review page reads it, and sets the exit code. A film broken on purpose writes beside the real result, never over it.
-export function finish(r: Omit<Result, 'ok' | 'engineHash' | 'at'> & { ok?: boolean }): Result {
+export function finish(given: Omit<Result, 'ok' | 'engineHash' | 'at'> & { ok?: boolean; name?: string }): Result {
+  const { name, ...r } = given
   const ok = r.ok ?? r.findings.every((f) => f.ok)
   const result: Result = { ...r, ok, engineHash: engineHash(), at: new Date().toISOString() }
   if (result.table) console.log(table(result.table.head, result.table.rows) + '\n')
@@ -42,7 +43,7 @@ export function finish(r: Omit<Result, 'ok' | 'engineHash' | 'at'> & { ok?: bool
   const verdict = ok ? (result.complete ? 'PASS' : 'PASS SO FAR (not every frame is in yet)') : 'FAIL'
   console.log(`${result.check} · ${verdict} · ${result.subject}`)
   fs.mkdirSync(OUT, { recursive: true })
-  const file = path.join(OUT, `${result.check}${result.broken ? `.broken-${result.broken}` : ''}.json`)
+  const file = path.join(OUT, `${name ?? result.check}${result.broken ? `.broken-${result.broken}` : ''}.json`)
   fs.writeFileSync(file, JSON.stringify(result, null, 2) + '\n')
   console.log(`${result.check} · written to ${path.relative(process.cwd(), file)}`)
   process.exitCode = ok ? 0 : 1

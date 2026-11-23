@@ -116,3 +116,12 @@ export const nearestBar = (seconds: number): number => Math.round(barAt(seconds)
 export const clockText = (seconds: number): string => `${seconds.toFixed(3)} s`
 export const barText = (seconds: number): string => `bar ${barAt(seconds).toFixed(2)}`
 export { barAt, barTime, hitFrame }
+
+export const FLASH_STEP = 0.2
+
+// The frames on which the film's own lightning dial jumps: there the picture is meant to jump.
+export function lightningFrames(): Set<number> {
+  const out = new Set<number>()
+  for (let f = 1; f < FRAMES; f++) if (Math.abs(filmClock.at(secondsOf(f)).flash - filmClock.at(secondsOf(f - 1)).flash) > FLASH_STEP) out.add(f)
+  return out
+}
