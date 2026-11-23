@@ -214,7 +214,7 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   float flash = 0.0;
 #ifndef PLANT_FIELD
   if (frost > 0.0 && margin >= 0.0) {
-    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink);
+    vec2 crust = frostCrust(at, margin, N, F, view, t.sheen, brink, world);
     bloom = frost * crust.x;
     flash = frost * crust.y;
   }
