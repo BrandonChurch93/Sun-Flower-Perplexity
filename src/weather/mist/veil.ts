@@ -57,9 +57,9 @@ void main() {
   float told = saturate(1.6 * uAir.w / uAir.x);
   float shape = mix(0.5, 0.62 * bank + 0.38 * wisp, told);
   // A tongue is narrow and lies long the way the film looks, so it is never lost in the gap between two sheets.
-  float tongue = smoothstep(0.56, 0.7, valueNoise(vec2(p.x, 0.25 * p.y) * 1.25 + vec2(3.7, 11.0)));
-  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told)) * (1.0 + uPlace.w * tongue);
-  float amount = mix(1.0, 2.2 * smoothstep(0.24, 0.8, shape) * (0.35 + 1.3 * broad), uLook.x) * mix(1.0, 0.2 + 2.6 * tongue, saturate(uPlace.w));
+  float tongue = smoothstep(0.5, 0.78, valueNoise(vec2(p.x, 0.25 * p.y) * 1.25 + vec2(3.7, 11.0)));
+  float height = uAir.y * (0.45 + 0.7 * broad + 0.5 * mix(0.5, bank, told)) * (1.0 + uPlace.w * tongue * tongue);
+  float amount = mix(1.0, 2.2 * smoothstep(0.24, 0.8, shape) * (0.35 + 1.3 * broad), uLook.x) * mix(1.0, 0.15 + 2.6 * tongue, saturate(uPlace.w));
   float across = max(length(v.xz), 0.05);
   float fall = -v.y / across;
   float y = max(vWorld.y, 0.0);
