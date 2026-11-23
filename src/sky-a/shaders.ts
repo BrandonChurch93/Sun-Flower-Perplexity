@@ -192,12 +192,14 @@ void main() {
   float closing = smoothstep(0.05, 0.35, uCover);
   coverHere = mix(0.26, 1.08, pow(uCover, 0.75));
   coverHere = mix(coverHere, mix(coverHere, 0.7 + 0.4 * (1.0 - uSunThrough), closing) * (1.0 - open * 0.85), nearSun);
-  coverHere *= 1.0 - uBurst * smoothstep(cos(radians(10.0)), cos(radians(2.5)), toward + (rag - 0.5) * 0.025);
+  float rag2 = textureLod(uShape, vec3(d.x * 9.0 + 0.3, d.y * 9.0, d.z * 9.0 + uEvolve * 0.08), 0.0).g;
+  coverHere *= 1.0 - uBurst * 0.68 * smoothstep(cos(radians(9.0)), cos(radians(1.2)), toward + (rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003);
 
   vec3 o = vec3(0.0, RG + CAM_KM, 0.0);
   vec2 hb = sphere(o, d, RG + cloudBase - 0.3);
   vec2 ht = sphere(o, d, RG + cloudTop);
   float t0 = max(hb.y, 0.0);
+  coverHere *= 1.0 - 0.6 * uOvercast * smoothstep(9.0, 30.0, t0 + (rag - 0.5) * 6.0);
   float t1 = ht.y;
   float span = min(t1 - t0, mix(12.0, 22.0, uOvercast));
   float far = mix(110.0, 70.0, uOvercast);
@@ -239,7 +241,7 @@ void main() {
     float g = dot(d, uSun);
     float phase = 0.55 * phaseHG(g, 0.55) + 0.12 * phaseHG(g, 0.92) + 0.33 * phaseHG(g, -0.2);
     float phase2 = mix(phaseHG(g, 0.4), phaseHG(g, -0.15), 0.4);
-    float stormDark = mix(1.0, 0.25, uOvercast);
+    float stormDark = mix(1.0, 0.25, uOvercast * (1.0 - uBurst * smoothstep(cos(radians(18.0)), cos(radians(5.0)), g)));
     vec3 flashP = vec3(0.0);
     if (uFlash > 0.0) {
       vec2 fh = sphere(o, uFlashAt, RG + cloudBase + 2.2);
