@@ -1,8 +1,6 @@
 # Looks of ground
 
-2026-11-23 07:56 UTC, at commit 84fddfa4 of agent/ground.
+2026-11-23 08:12 UTC, at commit 495d60d2 of agent/ground.
 
-- `01-round-9-on-v2-ee86b16-review-tier-frames-940-105.jpg`: round 9 on v2 ee86b16 review tier, frames 940 1055 1106 1157 1208 1259 1262
-- `02-tip-frame-1106-beside-key-frost-sun.jpg`: tip frame 1106 beside key-frost-sun
-- `03-thaw-frame-1157-beside-key-frost-thaw.jpg`: thaw frame 1157 beside key-frost-thaw
-- `04-ground-alone-frames-1106-and-1157.jpg`: ground alone, frames 1106 and 1157
+- `01-on-v2-de7042a-draft-margin-1000-and-1030-wide-12.jpg`: on v2 de7042a draft, margin 1000 and 1030, wide 1262, thaw 1259
+- `02-wide-shots-940-and-1262-ground-cropped-and-enlar.jpg`: wide shots 940 and 1262, ground cropped and enlarged
