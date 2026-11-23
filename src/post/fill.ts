@@ -2,6 +2,19 @@ import { glslCommon } from '../core/shading.ts'
 
 export const maxFillPx = 96
 
+// A channel of the frame that is not a number or is infinite is taken as nothing. Said in two ways, because a driver may drop either.
+export const sound = /* glsl */ `
+vec3 sound(vec3 c) {
+  bvec3 lost = bvec3(isnan(c.r) || isinf(c.r), isnan(c.g) || isinf(c.g), isnan(c.b) || isinf(c.b));
+  return min(max(mix(c, vec3(0.0), lost), 0.0), 65504.0);
+}
+// A circle that is not a number or is infinite is taken as sharp. Said in two ways as well.
+float circleOf(float a) {
+  if (isnan(a) || isinf(a)) return 0.0;
+  return a >= 0.0 && a < 65504.0 ? a : 0.0;
+}
+`
+
 export const skyness = /* glsl */ `
 uniform float uFar;
 // The sky arrives already blurred, with exactly the circle of infinity in alpha: it has no copies to join. The frame holds that circle in sixteen bits, which is good to one part in two thousand, so land is told from sky up to about a thousand times the focus distance and no further.
@@ -25,16 +38,17 @@ uniform sampler2D tPure;
 uniform float uPure;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
-${skyness}
+${skyness}${sound}
 float circle(ivec2 q, float near) {
-  float a = texelFetch(tFrame, q, 0).a;
+  float a = circleOf(texelFetch(tFrame, q, 0).a);
   return a * max(1.0 - sky(a), near);
 }
-#define RING(o) { ivec2 q = p + o; if (q == clamp(q, ivec2(0), top)) { vec3 n = texelFetch(tFrame, q, 0).rgb; ring = max(ring, max(n.r, max(n.g, n.b))); } }
+#define RING(o) { ivec2 q = p + o; if (q == clamp(q, ivec2(0), top)) { vec3 n = sound(texelFetch(tFrame, q, 0).rgb); ring = max(ring, max(n.r, max(n.g, n.b))); } }
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   ivec2 top = ivec2(uSize) - 1;
   vec4 c = texelFetch(tFrame, p, 0);
+  c.a = circleOf(c.a);
   float near = uFar > 0.0 ? texture(tNear, vUv).r : 1.0;
   float a = circle(p, near);
   if (uMixed > 0.5) {
@@ -42,7 +56,7 @@ void main() {
     float most = c.a;
     ivec2 way = ivec2(0);
     for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-      float n = texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a;
+      float n = circleOf(texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
       if (n > most) { most = n; way = ivec2(i, j); }
     }
     float dip = (most - c.a) / max(most, 1e-3);
@@ -50,25 +64,34 @@ void main() {
       float thing = c.a;
       if (uPure > 0.5) {
         // One of the pictures alone has no shared pixels: the least circle it holds round here is the thing's own.
-        for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) thing = min(thing, texelFetch(tPure, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+        for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) thing = min(thing, circleOf(texelFetch(tPure, clamp(p + ivec2(i, j), ivec2(0), top), 0).a));
       } else {
-        // Without such a picture: away from the widest circle lies the thing itself. Where it goes on for two pixels at one circle that circle is its own.
-        float o1 = texelFetch(tFrame, clamp(p - way, ivec2(0), top), 0).a;
-        float o2 = texelFetch(tFrame, clamp(p - 2 * way, ivec2(0), top), 0).a;
-        if (abs(o1 - o2) <= 0.1 * o1 + 0.25 && o1 <= 1.1 * c.a + 0.25) thing = min(c.a, o1);
+        // Without such a picture: away from the widest circle lies the thing itself. Where it goes on for two pixels at one circle, straight in and to both sides of that, the circle is its own. A hair seen along its length goes on straight in but not to the sides.
+        float o1 = circleOf(texelFetch(tFrame, clamp(p - way, ivec2(0), top), 0).a);
+        float o2 = circleOf(texelFetch(tFrame, clamp(p - 2 * way, ivec2(0), top), 0).a);
+        float o3 = circleOf(texelFetch(tFrame, clamp(p - 2 * clamp(ivec2(way.x - way.y, way.x + way.y), ivec2(-1), ivec2(1)), ivec2(0), top), 0).a);
+        float o4 = circleOf(texelFetch(tFrame, clamp(p - 2 * clamp(ivec2(way.x + way.y, way.y - way.x), ivec2(-1), ivec2(1)), ivec2(0), top), 0).a);
+        if (abs(o1 - o2) <= 0.1 * o1 + 0.25 && o1 <= 1.1 * c.a + 0.25 && max(o3, o4) <= 1.1 * o1 + 0.25) thing = min(c.a, o1);
         else {
           // Where it does not, the thing is thinner than the pixel. The least circle round here is the most its own can be, and what it would be if the thing filled at least half of a pixel is the least. A hair stands on a body: with a sharp one close by it is taken for sharp, and without one for as soft as the least circle says.
           float least = c.a;
-          for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) least = min(least, texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+          float under = 0.0;
+          for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+            float n = circleOf(texelFetch(tFrame, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+            least = min(least, n);
+            under += step(n, 0.92 * most);
+          }
           float body = least;
           for (int k = 0; k < 8; k++) {
             vec2 d = vec2(cos(0.7853982 * float(k)), sin(0.7853982 * float(k)));
-            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(5.0 * d)), ivec2(0), top), 0).a);
-            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(9.0 * d)), ivec2(0), top), 0).a);
-            body = min(body, texelFetch(tFrame, clamp(p + ivec2(round(14.0 * d)), ivec2(0), top), 0).a);
+            body = min(body, circleOf(texelFetch(tFrame, clamp(p + ivec2(round(5.0 * d)), ivec2(0), top), 0).a));
+            body = min(body, circleOf(texelFetch(tFrame, clamp(p + ivec2(round(9.0 * d)), ivec2(0), top), 0).a));
+            body = min(body, circleOf(texelFetch(tFrame, clamp(p + ivec2(round(14.0 * d)), ivec2(0), top), 0).a));
           }
           float sharp = 1.0 - smoothstep(1.0, 2.5, body * uRadiusScale);
-          thing = mix(least, clamp(2.0 * least - most, 0.0, least), sharp);
+          // One thin thing is a line and stands in ten of these pixels at most. More of them under the ground's circle, and none of them sharp, is a tangle of several soft things, each at its own distance: there the least circle is another thing's, and the pixel keeps its own.
+          float tangle = smoothstep(10.0, 15.0, under) * smoothstep(1.0, 2.5, least * uRadiusScale);
+          thing = mix(mix(least, clamp(2.0 * least - most, 0.0, least), sharp), c.a, tangle);
         }
       }
       a = mix(a, thing, smoothstep(0.08, 0.2, dip));
@@ -81,13 +104,13 @@ void main() {
     a = min(a, circle(max(p - ivec2(0, 1), ivec2(0)), near));
   }
   // A lone pixel far brighter than everything round it is a sampling accident, not a light: no lens draws a point one pixel wide. In focus it is held to twice its brightest neighbor, so it neither sits as a hard dot nor blooms.
-  vec3 rgb = max(c.rgb, 0.0);
+  vec3 rgb = sound(c.rgb);
   float most = 0.0;
   for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
     ivec2 q = p + ivec2(i, j);
     // A place past the border of the frame is nobody's neighbor: read as the border pixel again, a light on the border row would be its own surround and never be held.
     if ((i == 0 && j == 0) || q != clamp(q, ivec2(0), top)) continue;
-    vec3 n = texelFetch(tFrame, q, 0).rgb;
+    vec3 n = sound(texelFetch(tFrame, q, 0).rgb);
     most = max(most, max(n.r, max(n.g, n.b)));
   }
   float ring = 0.0;
@@ -133,9 +156,9 @@ uniform float uRadiusScale;
 uniform float uReach;
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
-${skyness}
+${skyness}${sound}
 float needs(vec2 at, ivec2 top) {
-  float a = texelFetch(tFrame, clamp(ivec2(at), ivec2(0), top), 0).a;
+  float a = circleOf(texelFetch(tFrame, clamp(ivec2(at), ivec2(0), top), 0).a);
   return (1.0 - sky(a)) * smoothstep(0.5, 1.5, a * uRadiusScale);
 }
 #define TAP(o, len) near = max(near, needs(center + o * uReach, top) * (1.0 - smoothstep(0.6, 1.0, len)));

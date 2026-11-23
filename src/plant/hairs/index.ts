@@ -60,6 +60,14 @@ const LOOKS_DOWN = 0.3
 // A wet hair long enough may carry a drop: six in a hundred do.
 const DROP_FROM_M = 0.0005
 const DROP_SHARE = 0.06
+// A set of hairs whose usual hair is shorter than the first of these on the screen, in pixels, is not drawn at all. From there to the second its hairs come in by their width, so nothing appears at once.
+const CUT_FROM_PX = 0.6
+const CUT_FULL_PX = 1.2
+// Hairs that sit on frames: this many frames in a row of the texture, and a hair that is born comes out over this much of what its frame has grown.
+const FRAME_ROW = 128
+const BORN_EASE = 0.22
+// A swelling on a ring of a wide frame stands out within about this angle of where it points, in radians.
+const SWELL_WIDE = 0.52
 
 // A hair is a clear fiber. Sunlight goes through it and leaves in a cone about the fiber, strongest straight on (the lobe called TT), with a weak mirror of the sun on its near side (R) and next to nothing scattered evenly.
 const strand = /* glsl */ `
@@ -130,6 +138,17 @@ struct Strand {
   float share;
 };
 
+uniform sampler2D uHairFramesA;
+uniform sampler2D uHairFramesB;
+uniform mat4 uHairPoseA;
+uniform mat4 uHairPoseB;
+// x is 1 when the hairs sit on frames, y how many texels a frame is, z how many hairs there are, w is 1 where the frost's grains stand for the rime of the hairs on a face.
+uniform vec4 uHairSeats;
+// How much of its width a hair of this set has: 0 where its usual hair is too short on the screen to see.
+uniform float uHairCut;
+
+bool hairGone;
+float hairLaid;
 vec4 hairRoot;
 vec3 hairDir;
 vec3 hairStand;
@@ -161,22 +180,237 @@ vec3 hairWay(vec2 e) {
   return normalize(v);
 }
 
+vec3 hairUnit(vec3 v) {
+  float l = length(v);
+  return l > 1e-12 ? v / l : vec3(0.0, 1.0, 0.0);
+}
+
+// How far a swelling lifts the skin at a place on its ring.
+float hairSwell(vec2 rim, vec2 at) {
+  float h = length(at);
+  return h > 1e-9 ? h * exp(-2.0 * (1.0 - dot(rim, at) / h) / ${(SWELL_WIDE * SWELL_WIDE).toFixed(4)}) : 0.0;
+}
+
+float hairRise(sampler2D frames, ivec2 f, vec2 rim) {
+  float rise = 0.0;
+  for (int k = 4; k < 8; k++) {
+    vec4 at = texelFetch(frames, f + ivec2(k, 0), 0);
+    rise += hairSwell(rim, at.xy) + hairSwell(rim, at.zw);
+  }
+  return rise;
+}
+
+// Where a hair sits in one slot: its root, the way it grows, the way its skin faces, its length, how many hairs stand on a square meter there and how wide the body is.
+struct Seat {
+  vec3 root;
+  vec3 way;
+  vec3 skin;
+  float reach;
+  float dense;
+  float girth;
+};
+
+// A frame is a place on the body: a middle and two arms. A hair on a ring stands rim the middle, c1 along the first arm and c2 along the second. A hair on a ribbon stands on one of the two halves the arms span.
+Seat hairSeat(sampler2D frames, mat4 pose, vec4 s0, vec4 s1, vec4 s2) {
+  int n = int(uHairSeats.y + 0.5);
+  int i0 = int(s0.x + 0.5);
+  int i1 = int(s0.y + 0.5);
+  if (n == 1) {
+    // A sheet: a point a texel. The hair stands in the cell between its two points and the next of each, as far across as c1 says, and the cell's own edges say which way is along and which way the skin faces.
+    vec4 p00 = texelFetch(frames, ivec2(i0 & ${FRAME_ROW - 1}, i0 / ${FRAME_ROW}), 0);
+    vec4 p01 = texelFetch(frames, ivec2((i0 + 1) & ${FRAME_ROW - 1}, (i0 + 1) / ${FRAME_ROW}), 0);
+    vec4 p10 = texelFetch(frames, ivec2(i1 & ${FRAME_ROW - 1}, i1 / ${FRAME_ROW}), 0);
+    vec4 p11 = texelFetch(frames, ivec2((i1 + 1) & ${FRAME_ROW - 1}, (i1 + 1) / ${FRAME_ROW}), 0);
+    vec4 low = mix(p00, p01, s1.x);
+    vec4 high = mix(p10, p11, s1.x);
+    vec3 run = high.xyz - low.xyz;
+    vec3 span = mix(p01.xyz - p00.xyz, p11.xyz - p10.xyz, s0.z);
+    vec3 on = hairUnit(run);
+    vec3 face = hairUnit(cross(on, span));
+    mat3 turned = mat3(pose);
+    Seat sheet;
+    sheet.root = (pose * vec4(mix(low.xyz, high.xyz, s0.z), 1.0)).xyz;
+    sheet.way = hairUnit(turned * (hairUnit(span) * s2.x + on * s2.y + face * s2.z));
+    sheet.skin = hairUnit(turned * face);
+    sheet.reach = s0.w * mix(low.w, high.w, s0.z);
+    sheet.girth = length(span);
+    float area = length(cross(run, span));
+    sheet.dense = area > 1e-12 ? float(int(s1.z + 0.5) >> 2) / area : 0.0;
+    return sheet;
+  }
+  ivec2 f0 = ivec2((i0 & ${FRAME_ROW - 1}) * n, i0 / ${FRAME_ROW});
+  ivec2 f1 = ivec2((i1 & ${FRAME_ROW - 1}) * n, i1 / ${FRAME_ROW});
+  vec4 o0 = texelFetch(frames, f0, 0);
+  vec4 a0 = texelFetch(frames, f0 + ivec2(1, 0), 0);
+  vec4 b0 = texelFetch(frames, f0 + ivec2(2, 0), 0);
+  vec4 o1 = texelFetch(frames, f1, 0);
+  vec4 a1 = texelFetch(frames, f1 + ivec2(1, 0), 0);
+  vec4 b1 = texelFetch(frames, f1 + ivec2(2, 0), 0);
+  vec4 o = mix(o0, o1, s0.z);
+  vec4 a = mix(a0, a1, s0.z);
+  vec4 b = mix(b0, b1, s0.z);
+  vec3 along = hairUnit(mix(hairWay(vec2(a0.w, b0.w)), hairWay(vec2(a1.w, b1.w)), s0.z));
+  int flags = int(s1.z + 0.5);
+  bool ring = (flags & 1) == 1;
+  vec3 off = s1.x * a.xyz + s1.y * b.xyz;
+  float reach = s0.w * o.w;
+  float share = 1.0;
+  float slope = 0.0;
+  if (n > 3) {
+    // A wide frame also says how far its skin has grown, how long a hair on it may be at most, how high its ribs stand and where up to eight swellings stand on its ring.
+    vec4 g0 = texelFetch(frames, f0 + ivec2(3, 0), 0);
+    vec4 g1 = texelFetch(frames, f1 + ivec2(3, 0), 0);
+    vec4 g = mix(g0, g1, s0.z);
+    float far = length(s1.xy);
+    vec2 rim = s1.xy / max(far, 1e-9);
+    float rise0 = 1.0 + g0.z * (far - 1.0) + hairRise(frames, f0, rim);
+    float rise1 = 1.0 + g1.z * (far - 1.0) + hairRise(frames, f1, rim);
+    vec3 off0 = (rim.x * a0.xyz + rim.y * b0.xyz) * rise0;
+    vec3 off1 = (rim.x * a1.xyz + rim.y * b1.xyz) * rise1;
+    off = mix(off0, off1, s0.z);
+    // The skin of a ring that widens or narrows along the body does not face straight out.
+    slope = clamp((length(off1) - length(off0)) / max(length(o1.xyz - o0.xyz), 1e-9), -1.5, 1.5);
+    if (g.y > 0.0) reach = min(s0.w, g.y) * o.w;
+    if (s2.w > 0.0) {
+      reach *= smoothstep(s2.w, s2.w + ${BORN_EASE.toFixed(2)}, g.x);
+      share = saturate(g.x);
+    }
+  }
+  vec3 across;
+  vec3 skin;
+  vec3 lift;
+  if (ring) {
+    lift = hairUnit(off) - along * slope;
+    skin = hairUnit(lift);
+    across = hairUnit(cross(along, skin));
+  } else if (s1.x >= s1.y) {
+    across = hairUnit(a.xyz);
+    skin = hairUnit(cross(along, a.xyz));
+    lift = skin;
+  } else {
+    across = -hairUnit(b.xyz);
+    skin = hairUnit(cross(b.xyz, along));
+    lift = skin;
+  }
+  mat3 turn = mat3(pose);
+  Seat s;
+  s.root = (pose * vec4(o.xyz + off, 1.0)).xyz;
+  s.way = hairUnit(turn * (across * s2.x + along * s2.y + lift * s2.z));
+  s.skin = hairUnit(turn * skin);
+  s.reach = reach;
+  float la = length(a.xyz);
+  float lb = length(b.xyz);
+  s.girth = ring ? 0.5 * (la + lb) : la + lb;
+  float area = length(o1.xyz - o0.xyz) * (ring ? 6.2832 * s.girth : s.girth);
+  s.dense = area > 1e-12 ? share * float(flags >> 2) / area : 0.0;
+  return s;
+}
+
+// A hair that sits on frames: three texels that never change say where on its part it sits, and the frames the part lays for each slot say where that is now. What the script used to work out for every hair on every frame is worked out here: which hairs stand for the coat far from focus and in the wide shot, and how they dim where they crowd.
+void seatHair(int k, out vec4 a, out vec4 b, out vec4 c, out vec3 wayB, out float reachB, out float place, out float crowd) {
+  ivec2 at = ivec2((k & 511) * 3, k >> 9);
+  vec4 s0 = texelFetch(uHairs, at, 0);
+  vec4 s1 = texelFetch(uHairs, at + ivec2(1, 0), 0);
+  vec4 s2 = texelFetch(uHairs, at + ivec2(2, 0), 0);
+  Seat sa = hairSeat(uHairFramesA, uHairPoseA, s0, s1, s2);
+  Seat sb = hairSeat(uHairFramesB, uHairPoseB, s0, s1, s2);
+  float own = s1.w;
+  bool keyed = uOwnKeys > 0.5;
+  bool here = sa.reach > 0.0;
+  bool second = sb.reach > 0.0;
+  float full = keyed ? max(sa.reach, sb.reach) : sa.reach;
+  vec3 ra = here ? sa.root : sb.root;
+  vec3 skin = here ? sa.skin : sb.skin;
+  float size = plantSize();
+  vec3 world = (modelMatrix * vec4(ra, 1.0)).xyz;
+  float w = -(viewMatrix * vec4(world, 1.0)).z;
+  place = min(float(k) / uHairSeats.z, 0.9999);
+  crowd = 1.0;
+  a = vec4(ra, 0.0);
+  b = vec4(ra, own);
+  c = vec4(0.0, 1.0, 0.0, 0.0);
+  wayB = c.xyz;
+  reachB = 0.0;
+  if (!(full > 0.0) || w < full * size) {
+    hairGone = true;
+    return;
+  }
+  float scale = size * projectionMatrix[1][1] * uSize.y * 0.5 / w;
+  float wide = smoothstep(WIDE_FROM_S, WIDE_FULL_S, uTime);
+  float thick = (1.0 + RIME_M / max(uHairWidth, 1e-7) * uPlantFrost) * (1.0 + 2.0 * uPlantWet);
+  float coc = cocOf(w);
+  // A hair too short on the screen to show as a strand stands for itself, so a part with short hairs loses none of their light.
+  float close = saturate((full * scale - ${STRAND_FROM_PX.toFixed(1)}) / ${STRAND_FROM_PX.toFixed(1)});
+  float brief = close + (1.0 - close) * wide;
+  float widthPx = uHairWidth * thick * scale;
+  float fine = min(1.0, widthPx / mix(${STRAND_PX.toFixed(3)}, ${WIDE_STRAND_PX.toFixed(3)}, wide));
+  // In the wide shot none is left out for being fine: every hair is a faint soft stroke and the coat sums to an even line that holds still.
+  float thin = fine + (1.0 - fine) * wide * min(1.0, widthPx / ${FAR_FROM_PX.toFixed(5)});
+  float part = (1.0 - brief * (1.0 - thin)) * (coc > ${THIN_FROM_PX.toFixed(1)} ? max(${THIN_FROM_PX.toFixed(1)} / coc, ${THIN_LEAST.toFixed(3)}) : 1.0);
+  float share = 1.0;
+  if (part < 1.0) {
+    float keep = part * ${(1 + THIN_EASE).toFixed(3)};
+    float s = min(1.0, (keep - fract(own * 151.37 + 0.11)) / (${THIN_EASE.toFixed(3)} * keep));
+    if (s <= 0.0) {
+      hairGone = true;
+      return;
+    }
+    float whole = keep * ${(1 - THIN_EASE).toFixed(3)};
+    share = s / (keep <= 1.0 ? keep * ${(1 - 0.5 * THIN_EASE).toFixed(4)} : whole + 0.5 * (1.0 - whole) * (1.0 + (keep - 1.0) / (${THIN_EASE.toFixed(3)} * keep)));
+  }
+  // A hair there is drawn long enough to stand off the outline, with the light of its true length and a little more.
+  float least = wide * ${WIDE_LONG_PX.toFixed(1)} * (0.6 + 0.8 * fract(own * 59.31 + 0.19)) / scale;
+  float stands = max(full, least);
+  share *= (full / stands) * (1.0 + ${(WIDE_GAIN - 1).toFixed(2)} * wide * (1.0 - fine));
+  // Hairs hide one another. How many of this coat lie over a pixel here follows from how close they stand on the skin, how large the skin is on the screen and how far it is turned from the eye; a ring is seen through twice, and nothing on the screen is finer than the cell the cover is counted in.
+  int flags = int(s1.z + 0.5);
+  float dense = here ? sa.dense : sb.dense;
+  float girthPx = max((here ? sa.girth : sb.girth) * scale, 1e-3);
+  float facing = abs(dot(plantDirection(skin), normalize(uCamPos - world)));
+  float cell = ${CROWD_CELL_PX.toFixed(1)};
+  float lies = (flags & 1) == 1 ? 2.0 / max(facing, max(cell / (3.1416 * girthPx), min(0.64, 2.0 / sqrt(girthPx)))) : 1.0 / max(facing, cell / girthPx);
+  float cover = dense / (scale * scale) * lies * share * uHairWidth * scale * min(full * scale, cell);
+  if (cover > CROWD_COVER) crowd = min(cover / CROWD_COVER, 250.0);
+  a.w = keyed ? (here ? max(sa.reach, least) : 0.0) : stands;
+  if (second) b.xyz = sb.root;
+  c = vec4(here ? sa.way : sb.way, (flags & 2) == 2 && uHairSeats.w > 0.5 ? -share : share);
+  wayB = second ? sb.way : c.xyz;
+  reachB = keyed ? (second ? max(sb.reach, least) : 0.0) : stands;
+}
+
 // Four texels a hair: its root and length in the first slot, its root in the second and its own number, its direction and how many hairs it stands for (below nothing for a hair that shows no rime of its own), its direction in the second slot in two numbers with its length there and its place among the hairs.
 void readHair(int k) {
-  ivec2 at = ivec2((k & 511) * 4, k >> 9);
-  vec4 a = texelFetch(uHairs, at, 0);
-  vec4 b = texelFetch(uHairs, at + ivec2(1, 0), 0);
-  vec4 c = texelFetch(uHairs, at + ivec2(2, 0), 0);
-  vec4 d = texelFetch(uHairs, at + ivec2(3, 0), 0);
-  float laid = mix(a.w, d.z, plantLead());
+  vec4 a;
+  vec4 b;
+  vec4 c;
+  vec3 wayB;
+  float reachB;
+  float place;
+  float crowd;
+  hairGone = false;
+  if (uHairSeats.x > 0.5) {
+    seatHair(k, a, b, c, wayB, reachB, place, crowd);
+  } else {
+    ivec2 at = ivec2((k & 511) * 4, k >> 9);
+    a = texelFetch(uHairs, at, 0);
+    b = texelFetch(uHairs, at + ivec2(1, 0), 0);
+    c = texelFetch(uHairs, at + ivec2(2, 0), 0);
+    vec4 d = texelFetch(uHairs, at + ivec2(3, 0), 0);
+    wayB = hairWay(d.xy);
+    reachB = d.z;
+    place = fract(d.w);
+    crowd = exp2(floor(d.w) / CROWD_STEPS);
+  }
+  hairLaid = max(a.w, reachB);
+  float laid = mix(a.w, reachB, plantLead());
   hairRoot = vec4(mix(a.xyz, b.xyz, plantBlend()), laid);
-  hairDir = normalize(mix(c.xyz, hairWay(d.xy), plantBlend()));
+  hairDir = normalize(mix(c.xyz, wayB, plantBlend()));
   hairStand = hairDir;
   hairOwn = b.w;
   // A share kept below nothing marks a hair whose rime the frost's grains stand for: it shows no needle of its own.
   hairShare = c.w < 0.0 && uPlantFrost > 0.5 ? 0.0 : abs(c.w);
   // Where hairs crowd all of them dim alike instead of burning. Rime is matt and does not burn: a crust of it may stand as close as it grows.
-  float crowd = exp2(floor(d.w) / CROWD_STEPS) / (1.0 + 15.0 * uPlantFrost);
+  crowd /= 1.0 + 15.0 * uPlantFrost;
   if (crowd > 1.0) {
     float some = saturate((1.0 - crowd * fract(b.w * 97.13 + 0.37)) / 0.3);
     hairShare *= mix(some, 0.85 / crowd, smoothstep(WIDE_FROM_S, WIDE_FULL_S, uTime));
@@ -244,7 +478,7 @@ void readHair(int k) {
     hairBead = one * 3.0 * uPlantWet * step(h5, 0.06);
     // Rain gathers wet hairs into tufts. The tufts belong to the tissue: a hair knows its place by its number in the coat, which runs from the foot up, and by the way it points round the stem. It leans toward the nearest tuft so neighbors meet in a point; a tuft is long, and between tufts the hairs are short and some are beaten flat and do not show.
     float rain = smoothstep(0.3, 0.9, uPlantWet);
-    vec2 tq = vec2(fract(d.w) * TUFT_BANDS, atan(hairStand.z, hairStand.x));
+    vec2 tq = vec2(place * TUFT_BANDS, atan(hairStand.z, hairStand.x));
     float t0 = tuftField(tq);
     float rise = (tuftField(tq + vec2(0.2, 0.0)) - t0) * 5.0;
     float round = (tuftField(tq + vec2(0.0, 0.04)) - t0) * 5.0;
@@ -299,7 +533,7 @@ Strand strandAt(float t) {
   s.pixel = s.depth * 2.0 / (projectionMatrix[1][1] * uSize.y);
   // Rime gathers toward the tip of a hair, where the air passes: the foot stays a fine line and the ice is widest three quarters of the way out.
   float club = smoothstep(0.1, 0.75, t) * (1.0 - 0.7 * smoothstep(0.75, 1.0, t));
-  s.width = uHairWidth * plantSize() * (0.5 + h3) * hairSlim * (hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1)) + hairRime * club);
+  s.width = uHairCut * uHairWidth * plantSize() * (0.5 + h3) * hairSlim * (hairWide * mix(1.0, mix(0.6, 0.2 - 0.08 * uPlantFrost, hairSlim), pow(t, 1.3 + h1)) + hairRime * club);
   s.share = hairShare / hairSlim;
   float reach = length(s.world - uCamPos);
   float fog = exp(-uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0)) * reach) * (1.0 - 0.5 * uPlantWet);
@@ -344,6 +578,10 @@ out float vCover;
 ${strand}
 void main() {
   readHair(gl_VertexID / 3);
+  if (hairGone) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   int j = gl_VertexID % 3;
   Strand s = strandAt(0.5 * float(j));
   vec4 here = projectionMatrix * viewMatrix * vec4(s.world, 1.0);
@@ -376,6 +614,10 @@ uniform float uHairLeast;
 ${strand}
 void main() {
   readHair(gl_VertexID / 10);
+  if (hairGone) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   int j = gl_VertexID % 10;
   Strand s = strandAt(0.25 * float(j >> 1));
   vec3 side = normalize(cross(s.along, s.toEye));
@@ -446,6 +688,11 @@ void main() {
   float sx = float(j & 1) * 2.0 - 1.0;
   float end = float((j >> 1) & 1);
   readHair(int(texelFetch(uPicks, ivec2(p & 2047, p >> 11), 0).r + 0.5));
+  // The lists of hairs that sit on frames are made once, of every hair that can ever carry ice or water: one that is not long enough yet carries none.
+  if (hairGone || (uHairSeats.x > 0.5 && hairLaid * plantSize() < (uPlantFrost > 0.5 ? ${EXTRA_FROM_M.toFixed(5)} : ${DEW_FROM_M.toFixed(5)}))) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   float n = float(piece);
   float hA = fract(hairOwn * (419.3 + 61.7 * n) + 0.13 * n);
   float hB = fract(hairOwn * (523.9 + 37.1 * n) + 0.41);
@@ -521,11 +768,11 @@ void main() {
   float turn = iceTurn();
   if (vShape.x < 0.5) {
     float x = abs(vAt.x);
-    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * vShape.z) * turn;
-    color = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+    cover = saturate(max(0.0, min(vShape.y, x + 0.5) - max(-vShape.y, x - 0.5)) * max(vShape.z, 0.0)) * turn;
+    color = max(vSun, 0.0) * sun + max(vSky, 0.0) * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   } else {
     float r = max(vShape.y, 0.5);
-    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * vShape.z * turn;
+    cover = saturate(r - length(vAt) + 0.5) * (vShape.y * vShape.y / (r * r)) * max(vShape.z, 0.0) * turn;
     color = ballLight(vAt / r, vRight, vUp, vWorld, sun, uPlantFrost, vShape.y);
   }
 #ifdef BLUR_CIRCLE
@@ -558,15 +805,15 @@ ${turn}
 void main() {
 #ifdef RIBBON
   float x = abs(vAcross);
-  float cover = max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * vShare;
+  float cover = max(0.0, min(vHalf, x + 0.5) - max(-vHalf, x - 0.5)) * max(vShare, 0.0);
 #else
-  float cover = vCover;
+  float cover = max(vCover, 0.0);
 #endif
 #ifdef FADE
   cover *= uHairFade * rimeTurn();
 #endif
   float sun = plantSun(vLitAt, uSunDir);
-  vec3 light = vSun * sun + vSky * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
+  vec3 light = max(vSun, 0.0) * sun + max(vSky, 0.0) * skyAmbient(vec3(0.0, vSkyY, 0.0)) * plantSky(vWorld);
   vec3 color = light * cover;
   // With frost on it a hair is part clear and part rime: its light is added by the clear share and what is behind is covered by the rimed share, so the coat follows the dial.
   if (uPlantFrost > 0.0) {
@@ -616,12 +863,133 @@ function stepped(v: number): number {
   return v > 0 ? 2 ** (Math.round(Math.log2(v) * STEPS_PER_DOUBLING) / STEPS_PER_DOUBLING) : 0
 }
 
+// A direction in the two numbers a frame keeps it in: the first is written at `at`, the second at `at2`.
+export function packWay(out: Float32Array, at: number, at2: number, x: number, y: number, z: number): void {
+  const l = Math.abs(x) + Math.abs(y) + Math.abs(z) || 1
+  const ex = x / l
+  const ey = y / l
+  out[at] = z < 0 ? (1 - Math.abs(ey)) * (ex >= 0 ? 1 : -1) : ex
+  out[at2] = z < 0 ? (1 - Math.abs(ex)) * (ey >= 0 ? 1 : -1) : ey
+}
+
+// The frames a part lays for the hairs that sit on it: places on its body, for each of the two slots. Every set of hairs on the part reads the same frames.
+export interface HairFrames {
+  readonly count: number
+  // The frames of a slot, to be written: 12 numbers a frame (its middle and how long the hairs on it are, as a share of their full length; its first arm and the first number of its way along the body; its second arm and the second), or 32 for a wide one (then how far its skin has grown, the most a hair on it may be long or 0 for any, how high its ribs stand as a share of its radius, one spare, and eight swellings on its ring, each the way it points in the ring's own two arms times how far it stands out as a share of the radius; on a wide ring how far the two numbers of a hair's seat are from 1 is how high the hair stands on a rib, and its skin leans as the ring widens or narrows along the body). A sheet has 4 numbers a point: where it is, and how long the hairs round it are; a hair between point f0, the next after it, point f1 and the next after that stands as far from f0 to f1 as its share says and as far toward the next as c1 says. Asking marks the slot as laid, from frame `from` up to `to` when they are given: only those are sent.
+  slot(slot: 0 | 1, from?: number, to?: number): Float32Array
+  // How the part stands in the plant in a slot. Left alone, as it lies.
+  pose(slot: 0 | 1, matrix: THREE.Matrix4): void
+  // Sends the slots that were laid since the last time, and no other.
+  finish(): void
+}
+
+class Frames implements HairFrames {
+  readonly texels: number
+  readonly stride: number
+  readonly textures: [THREE.DataTexture, THREE.DataTexture]
+  readonly poses: [THREE.Matrix4, THREE.Matrix4] = [new THREE.Matrix4(), new THREE.Matrix4()]
+  // The longest any hair is drawn, as a share of its full length.
+  reach = 0
+  private readonly views: [Float32Array, Float32Array]
+  private readonly from = [Infinity, Infinity]
+  private readonly to = [0, 0]
+  private readonly whole = [true, true]
+  private readonly most = [0, 0]
+  private readonly turned = new THREE.Matrix4()
+  private readonly key = new Float64Array(9).fill(NaN)
+  private laid = 0
+  private nearest = Infinity
+
+  constructor(readonly count: number, kind: boolean | 'sheet') {
+    this.texels = kind === 'sheet' ? 1 : kind ? 8 : 3
+    this.stride = this.texels * 4
+    const rows = Math.max(1, Math.ceil(count / FRAME_ROW))
+    const make = (): THREE.DataTexture => hairTexture(new Float32Array(rows * FRAME_ROW * this.stride), FRAME_ROW * this.texels, THREE.RGBAFormat)
+    this.textures = [make(), make()]
+    this.views = [0, 1].map((k) => (this.textures[k].image.data as Float32Array).subarray(0, count * this.stride)) as [Float32Array, Float32Array]
+    for (let k = 0; k < 2; k++) this.textures[k].onUpdate = () => void (this.whole[k] = false)
+  }
+
+  slot(slot: 0 | 1, from = 0, to = this.count): Float32Array {
+    if (from < this.from[slot]) this.from[slot] = Math.max(0, from)
+    if (to > this.to[slot]) this.to[slot] = Math.min(this.count, to)
+    return this.views[slot]
+  }
+
+  pose(slot: 0 | 1, matrix: THREE.Matrix4): void {
+    this.poses[slot].copy(matrix)
+    this.laid++
+  }
+
+  finish(): void {
+    for (let k = 0; k < 2; k++) {
+      const from = this.from[k]
+      const to = this.to[k]
+      if (!(from < to)) continue
+      this.from[k] = Infinity
+      this.to[k] = 0
+      const texture = this.textures[k]
+      const first = Math.floor(from / FRAME_ROW)
+      const last = Math.floor((to - 1) / FRAME_ROW)
+      // Only the rows that were laid are sent, once the whole has been: the whole waits until something draws it, and ranges that pile up meanwhile give way to it.
+      if (this.whole[k] || (from === 0 && to === this.count) || texture.updateRanges.length > 2 * Math.ceil(this.count / FRAME_ROW)) {
+        texture.clearUpdateRanges()
+        this.whole[k] = true
+      } else for (let r = first; r <= last; r++) texture.addUpdateRange(Math.max(from, r * FRAME_ROW) * this.stride, (Math.min(to, (r + 1) * FRAME_ROW) - Math.max(from, r * FRAME_ROW)) * this.stride)
+      texture.needsUpdate = true
+      const data = this.views[k]
+      let most = 0
+      for (let f = 0; f < this.count; f++) if (data[f * this.stride + 3] > most) most = data[f * this.stride + 3]
+      this.most[k] = most
+      this.laid++
+    }
+    this.reach = Math.max(this.most[0], this.most[1])
+  }
+
+  // How far the nearest frame that bears hairs is from the lens, along its axis. Worked out again only when the frames or the view have changed.
+  near(camera: THREE.Camera, object: THREE.Object3D): number {
+    const v = camera.matrixWorldInverse.elements
+    const m = object.matrixWorld.elements
+    const key = this.key
+    if (key[0] === this.laid && key[1] === v[2] && key[2] === v[6] && key[3] === v[10] && key[4] === v[14] && key[5] === m[12] && key[6] === m[13] && key[7] === m[14] && key[8] === m[0]) return this.nearest
+    key[0] = this.laid
+    key[1] = v[2]
+    key[2] = v[6]
+    key[3] = v[10]
+    key[4] = v[14]
+    key[5] = m[12]
+    key[6] = m[13]
+    key[7] = m[14]
+    key[8] = m[0]
+    let nearest = Infinity
+    const step = Math.max(1, Math.floor(this.count / 1024))
+    for (let k = 0; k < 2; k++) {
+      const e = this.turned.multiplyMatrices(camera.matrixWorldInverse, object.matrixWorld).multiply(this.poses[k]).elements
+      const data = this.views[k]
+      for (let f = 0; f < this.count; f += step) {
+        const o = f * this.stride
+        if (!(data[o + 3] > 0)) continue
+        const w = -(e[2] * data[o] + e[6] * data[o + 1] + e[10] * data[o + 2] + e[14])
+        if (w < nearest) nearest = w
+      }
+    }
+    this.nearest = Math.max(nearest, 1e-4)
+    return this.nearest
+  }
+}
+
+export function createHairFrames(count: number, kind: boolean | 'sheet' = false): HairFrames {
+  return new Frames(count, kind)
+}
+
+let blank: THREE.DataTexture | null = null
+
 export class HairSet {
   readonly surface: Surface
   // The two forms of the hairs. One of them is drawn in any sample. A part that wears hairs adds all of them to its own meshes.
   readonly meshes: THREE.Mesh[]
-  private readonly roots: [Float32Array, Float32Array]
-  private readonly leans: [Float32Array, Float32Array]
+  private roots: [Float32Array, Float32Array]
+  private leans: [Float32Array, Float32Array]
   private readonly lines = new THREE.BufferGeometry()
   private readonly ribbons = new THREE.BufferGeometry()
   private readonly linesSharp = new THREE.BufferGeometry()
@@ -633,8 +1001,8 @@ export class HairSet {
   private readonly extras = new THREE.BufferGeometry()
   private readonly picks: Float32Array
   private readonly pickFrom = { value: 0 }
-  private readonly data: Float32Array
-  private readonly main: Gathered
+  private data: Float32Array
+  private main: Gathered
   // While the plant's clock stands each shot has one lens, and what was gathered for it is kept: a cut only changes which textures are read.
   private readonly lenses: (Gathered | null)[] = []
   private now: Gathered
@@ -656,9 +1024,23 @@ export class HairSet {
   private readonly views = new Map<number, Float32Array>()
   private readonly eye = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
-  private readonly at: Float32Array
+  private at: Float32Array
   private crowd = new Float32Array(0)
   private faces: Uint8Array | null = null
+  // The hairs of a set that sits on frames: where each sits, written once.
+  private frames: Frames | null = null
+  private seats: Float32Array | null = null
+  private fixed: Gathered | null = null
+  private typical = 0
+  private fullest = 0
+  private pickedFor = -1
+  private faced = false
+  private readonly framesA: { value: THREE.DataTexture }
+  private readonly framesB: { value: THREE.DataTexture }
+  private readonly poseA = { value: new THREE.Matrix4() }
+  private readonly poseB = { value: new THREE.Matrix4() }
+  private readonly seatsAt = { value: new THREE.Vector4(0, 3, 1, 0) }
+  private readonly cut = { value: 1 }
 
   constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00004) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
@@ -690,7 +1072,10 @@ export class HairSet {
     }
     this.lines.setIndex(new THREE.BufferAttribute(lineIndex, 1))
     this.ribbons.setIndex(new THREE.BufferAttribute(ribbonIndex, 1))
-    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: this.hairsAt }
+    blank ??= hairTexture(new Float32Array(4), 1, THREE.RGBAFormat)
+    this.framesA = { value: blank }
+    this.framesB = { value: blank }
+    const own = { uHairColor: { value: new THREE.Vector3(...color) }, uHairWidth: { value: widthM }, uHairs: this.hairsAt, uHairFramesA: this.framesA, uHairFramesB: this.framesB, uHairPoseA: this.poseA, uHairPoseB: this.poseB, uHairSeats: this.seatsAt, uHairCut: this.cut }
     const make = (label: string, vertex: string, define: string, sharp = false, fade?: { value: number }, soft = ''): Surface =>
       makePartSurface(options, { name: label, vertex: `${soft}${vertex}`, fragment: `${define}${fragment}`, side: THREE.DoubleSide, transparent: true, additive: !sharp, cocOnly: sharp, castShadow: false, uniforms: fade ? { ...own, uHairFade: fade, uHairLeast: this.softLeast } : own })
     this.surface = make(name, lineVertex, '#define FADE 1\n', false, this.lineFade)
@@ -970,7 +1355,106 @@ export class HairSet {
     return set
   }
 
+  // How long the usual hair of the set is on the screen, in pixels, and with it how much of their width its hairs have. Of a set that is not on frames a few hairs are asked.
+  private size(camera: THREE.Camera, object: THREE.Object3D): number {
+    const m = object.matrixWorld.elements
+    const size = norm(m[0], m[1], m[2])
+    const perM = (camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2
+    let usual = 0
+    let nearest = Infinity
+    if (this.frames) {
+      usual = this.typical * this.frames.reach
+      nearest = this.frames.near(camera, object)
+    } else {
+      const e = this.clip.multiplyMatrices(camera.matrixWorldInverse, object.matrixWorld).elements
+      const [ra, rb] = this.roots
+      const step = Math.max(1, Math.floor(this.shown / 64))
+      let some = 0
+      for (let i = 0; i < this.shown; i += step) {
+        const o = i * 4
+        const from = ra[o + 3] > 0 ? ra : rb
+        if (!(from[o + 3] > 0)) continue
+        usual += from[o + 3]
+        some++
+        const w = -(e[2] * from[o] + e[6] * from[o + 1] + e[10] * from[o + 2] + e[14])
+        if (w < nearest) nearest = w
+      }
+      if (some) usual /= some
+      // None of the few that were asked is out: the set is gathered as ever, and that says what shows.
+      else {
+        this.cut.value = 1
+        return 1
+      }
+    }
+    // In the wide shot a hair is drawn long enough to stand off the outline, and that is its size there.
+    const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
+    const px = nearest < Infinity ? Math.max((usual * size * perM) / Math.max(nearest, 1e-4), ease * ease * (3 - 2 * ease) * WIDE_LONG_PX) : 0
+    const t = Math.min(1, Math.max(0, (px - CUT_FROM_PX) / (CUT_FULL_PX - CUT_FROM_PX)))
+    this.cut.value = t * t * (3 - 2 * t)
+    return this.cut.value
+  }
+
+  // The hairs of a set on frames that can carry ice or water, listed once: the rimed first and then the damp in three runs, as a gathering lists them.
+  private list(size: number): void {
+    const fixed = this.fixed as Gathered
+    const seats = this.seats as Float32Array
+    const room = this.extras.getIndex()!.count / 24
+    const picks = this.picks
+    const picked = fixed.picked.fill(0)
+    for (let pass = 0; pass < 2; pass++) {
+      let rime = 0
+      let damp = 0
+      let drops = picked[0]
+      let both = drops + picked[1]
+      let dews = both + picked[2]
+      for (let k = 0; k < this.count; k++) {
+        const long = seats[k * 12 + 3] * size
+        const own = seats[k * 12 + 7]
+        const turn = (own * 211.31 + 0.77) % 1
+        if (long >= EXTRA_FROM_M && turn <= EXTRA_SHARE && rime < room) {
+          if (pass) picks[rime] = k
+          rime++
+        }
+        const drop = long >= DROP_FROM_M && (own * 71.93 + 0.5) % 1 < DROP_SHARE
+        const dew = long >= DEW_FROM_M && turn <= DEW_SHARE
+        if ((!drop && !dew) || damp >= room) continue
+        damp++
+        if (!pass) picked[drop ? (dew ? 2 : 1) : 3]++
+        else if (!dew) picks[drops++] = k
+        else if (drop) picks[both++] = k
+        else picks[dews++] = k
+      }
+      picked[0] = rime
+    }
+    fixed.pickTexture.needsUpdate = true
+    this.pickedFor = size
+  }
+
   private choose(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft = false): void {
+    const shows = this.size(camera, object) > 0
+    if (this.frames && this.fixed) {
+      const fixed = this.fixed
+      const m = object.matrixWorld.elements
+      const size = norm(m[0], m[1], m[2])
+      if (this.pickedFor !== size) this.list(size)
+      fixed.nearest = this.frames.near(camera, object)
+      fixed.kept = shows && fixed.nearest < Infinity && this.frames.reach > 0 ? this.shown : 0
+      fixed.longest = this.fullest * this.frames.reach * size
+      this.seatsAt.value.w = this.faced && this.stands.held >= 1 && held.lens >= 0 && (held.focusM * shared.uSize.value.x) / held.perTan < CLOSE_FRAME_M && held.forward.y < -LOOKS_DOWN ? 1 : 0
+      this.now = fixed
+      this.draw(camera, object, ribbon, soft, true)
+      return
+    }
+    if (!shows) {
+      // Nothing is gathered for a set that is not drawn. What it needs is gathered when it shows again.
+      this.extras.setDrawRange(0, 0)
+      if (soft) this.ribbonsSoft.setDrawRange(0, 0)
+      else {
+        ;(ribbon ? this.ribbons : this.lines).setDrawRange(0, 0)
+        ;(ribbon ? this.ribbonsSharp : this.linesSharp).setDrawRange(0, 0)
+      }
+      return
+    }
     // A plant that is laid again on every frame has its hairs gathered for that frame's lens. One whose clock stands in a hold of the film keeps what was gathered for the lens of the shot, and reads nothing of the camera. One that stands otherwise keeps what was gathered for the stepped view until a step is crossed.
     if (this.stands.held >= 1 && held.lens >= 0) {
       if (this.signed !== this.laid) {
@@ -1034,11 +1518,16 @@ export class HairSet {
       }
       this.now = this.main
     }
+    this.draw(camera, object, ribbon, soft, false)
+  }
+
+  // Which form of the hairs is drawn, and how many of them.
+  private draw(camera: THREE.Camera, object: THREE.Object3D, ribbon: boolean, soft: boolean, seated: boolean): void {
     const now = this.now
     this.hairsAt.value = now.texture
     this.picksAt.value = now.pickTexture
     // A pixel at the nearest hair, in meters.
-    const pixel = now.nearest / (this.stands.held >= 1 && held.lens >= 0 ? held.perTan : (camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2)
+    const pixel = now.nearest / (!seated && this.stands.held >= 1 && held.lens >= 0 ? held.perTan : (camera.projectionMatrix.elements[5] * shared.uSize.value.y) / 2)
     const ease = Math.min(1, Math.max(0, (shared.uTime.value - WIDE_FROM_S) / (WIDE_FULL_S - WIDE_FROM_S)))
     const wide = ease * ease * (3 - 2 * ease)
     this.lineFade.value = 1 - wide
@@ -1051,7 +1540,7 @@ export class HairSet {
     const dewy = !rimed && stateUniforms.uPlantDew.value * (1 - stateUniforms.uPlantWet.value) > 0
     const picked = now.picked
     this.pickFrom.value = rimed ? 0 : picked[0] + (rained ? 0 : picked[1])
-    this.extras.setDrawRange(0, shared.uDiag.value >= 4 ? 0 : 24 * (rimed ? picked[0] : (rained ? picked[1] : 0) + (rained || dewy ? picked[2] : 0) + (dewy ? picked[3] : 0)))
+    this.extras.setDrawRange(0, shared.uDiag.value >= 4 || now.kept === 0 ? 0 : 24 * (rimed ? picked[0] : (rained ? picked[1] : 0) + (rained || dewy ? picked[2] : 0) + (dewy ? picked[3] : 0)))
     const iced = stateUniforms.uPlantFrost.value > 0
     const material = (object as THREE.Mesh).material as THREE.Material
     material.blendSrc = THREE.OneFactor
@@ -1121,6 +1610,51 @@ export class HairSet {
   // Four numbers a hair: the direction it grows in, and a number from 0 to 1 that is its own.
   lean(slot: 0 | 1): Float32Array {
     return this.leans[slot]
+  }
+
+  // Seats the hairs of this set on the frames of its part, for good. What is given back takes 12 numbers a hair, written once: the two frames it sits between, how far from the first to the second, and its full length in meters; c1, c2, a number that is 1 for a ring and 0 for a ribbon with 2 more for a hair on a face, and its own number from 0 to 1; how far it leans across, along and out; and, on a wide frame, how far the skin must have grown for it to be out, or 0. `typicalLengthM` is how long its usual hair is.
+  bindFrames(frames: HairFrames, typicalLengthM: number): Float32Array {
+    this.frames = frames as Frames
+    this.typical = typicalLengthM
+    this.seats = new Float32Array(this.count * 12)
+    return this.seats
+  }
+
+  // Takes the seats as written. From here on the script touches no hair of this set.
+  sealSeats(): void {
+    const frames = this.frames
+    const seats = this.seats
+    if (!frames || !seats) throw new Error('hairs are sealed after they are bound to frames')
+    const rows = Math.max(1, Math.ceil(this.count / ROW))
+    const data = new Float32Array(rows * ROW * 12)
+    data.set(seats)
+    // How many hairs sit on each frame goes with a hair, above its two flags: the shader works out from it how the coat crowds.
+    const sitting = new Uint32Array(frames.count)
+    for (let i = 0; i < this.count; i++) sitting[Math.min(frames.count - 1, Math.max(0, Math.round(seats[i * 12])))]++
+    let fullest = 0
+    for (let i = 0; i < this.count; i++) {
+      const o = i * 12
+      data[o + 6] = (Math.round(seats[o + 6]) & 3) + 4 * Math.min(sitting[Math.min(frames.count - 1, Math.max(0, Math.round(seats[o])))], 1 << 20)
+      if (seats[o + 3] > fullest) fullest = seats[o + 3]
+      if (Math.round(seats[o + 6]) & 2) this.faced = true
+    }
+    this.fullest = fullest
+    const texture = hairTexture(data, ROW * 3, THREE.RGBAFormat)
+    this.fixed = { texture, pickTexture: this.picksAt.value, picked: new Int32Array(4), kept: 0, nearest: Infinity, longest: 0, sign: new Float64Array(SIGNS).fill(NaN) }
+    this.hairsAt.value = texture
+    this.framesA.value = frames.textures[0]
+    this.framesB.value = frames.textures[1]
+    this.poseA.value = frames.poses[0]
+    this.poseB.value = frames.poses[1]
+    this.seatsAt.value.set(1, frames.texels, this.count, 0)
+    this.now = this.fixed
+    // What a gathering works on is let go.
+    const none = new Float32Array(0)
+    this.roots = [none, none]
+    this.leans = [none, none]
+    this.at = none
+    this.data = none
+    this.main = this.fixed
   }
 
   // How many of the hairs are drawn. They are packed for the shader when the first sample of the frame is drawn, once the camera is known.

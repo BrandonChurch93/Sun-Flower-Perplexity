@@ -3,7 +3,7 @@ import type { DiagName } from '../core/shading.ts'
 import { makeClock, runFrom, type FilmClock, type Run } from '../player/clock.ts'
 import { createDesk, type Advice } from '../player/desk.ts'
 import type { Loading } from '../player/loading.ts'
-import { reportFile, reportName, reportText, scriptBound, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
+import { reportFile, reportName, advisedText, reportText, scriptBound, slowLine, timedAdvice, timedText, type Report, type RunFacts, type Timed } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, CHECK_SECONDS, measure, pictureSize, record, timing, timingScript, type Deck, type Measured } from '../player/session.ts'
 import { createSheet } from '../player/sheet.ts'
@@ -191,6 +191,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       `browser: ${navigator.userAgent}`,
       `graphics: ${cardName(film.stage.gl)}`,
       ...(state.timed.length ? [`timed at loading: ${state.timed.map(timedText).join('; ')}`] : []),
+      `programs built at loading: ${film.built ? `${film.built.programs}, beside the page: ${film.built.beside ? 'yes' : 'no'}` : 'not built'}`,
       `loading: ${window.loadingLog?.readyMs ? `ready ${(window.loadingLog.readyMs / 1000).toFixed(1)} s after the page opened` : 'not measured'}`,
       ...(exported ? [exported] : []),
     ]
@@ -421,7 +422,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
 
   function show(report: Report, advice: Advice | null = null): void {
     state.report = report
-    state.advice = advice?.text ?? null
+    state.advice = advice ? advisedText({ text: advice.text, numbers: advice.numbers ?? '', last: advice.last ?? '' }) : null
     desk.report(report, advice)
   }
 
@@ -645,6 +646,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
         if (one.script === null || scriptBound(one)) break
         loading?.again(`High quality did not hold ${config.film.fps} frames a second here, and it is the picture that is slow. Getting ready at low quality`)
         film.quality = 'low'
+        await loading?.programs()
         await film.warm(tier, loading?.step)
         quality = 'low'
         state.quality = 'low'
@@ -659,7 +661,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
     state.timed = found
     loading?.done()
     become('ready', 'Ready')
-    if (last) show(last, last.complete ? { text: timedAdvice(found, CHECK_SECONDS), tryLow: false } : { text: 'The timing at loading was stopped. Check this machine before recording.', tryLow: false })
+    if (last) show(last, last.complete ? { ...timedAdvice(found, CHECK_SECONDS), tryLow: false } : { text: 'The timing at loading was stopped. Check this machine before recording.', tryLow: false })
   }
 
   // Another quality is another set of programs: the film is made ready again before anything plays, with the track kept.
@@ -675,6 +677,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       await drawing
       loading?.again(`Getting ready at ${next} quality`)
       film.quality = next
+      await loading?.programs()
       await film.warm(tier, loading?.step)
       quality = next
       state.quality = next

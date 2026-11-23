@@ -192,9 +192,15 @@ export function stemNode(u: number, length: number): Node {
   const f = clamp(u) * (STEM_RINGS - 1)
   const i = Math.min(STEM_RINGS - 2, Math.floor(f))
   const k = f - i
-  node.x = lerp(sx[i], sx[i + 1], k) * length
-  node.y = lerp(sy[i], sy[i + 1], k) * length - sunk
-  node.z = lerp(sz[i], sz[i + 1], k) * length
+  // Between two stations the place runs on the curve that leaves each along its own direction, so the line has no corner at a station.
+  const k2 = k * k
+  const k3 = k2 * k
+  const h1 = 3 * k2 - 2 * k3
+  const g0 = (k3 - 2 * k2 + k) / (STEM_RINGS - 1)
+  const g1 = (k3 - k2) / (STEM_RINGS - 1)
+  node.x = (lerp(sx[i], sx[i + 1], h1) + g0 * tx[i] + g1 * tx[i + 1]) * length
+  node.y = (lerp(sy[i], sy[i + 1], h1) + g0 * ty[i] + g1 * ty[i + 1]) * length - sunk
+  node.z = (lerp(sz[i], sz[i + 1], h1) + g0 * tz[i] + g1 * tz[i + 1]) * length
   let ax = lerp(tx[i], tx[i + 1], k)
   let ay = lerp(ty[i], ty[i + 1], k)
   let az = lerp(tz[i], tz[i + 1], k)

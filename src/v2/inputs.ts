@@ -22,6 +22,8 @@ const LIFT_TOP = [0.08, 0.2]
 const LIFT_LOW = [0.5, 0.72]
 // How far the tip leans at night, as a share of its lean toward a low sun: it rests, and it is turned to the dawn before the dawn comes.
 const NIGHT_REST = 0.45
+// The light the leaves stand in under a storm's cloud, as a share of a fair day's.
+const RAIN_LIGHT = 0.875
 
 function noonAzimuth(world: number): number {
   const day = Math.floor(world)
@@ -36,7 +38,7 @@ function lightAt(seconds: number): number {
   const up = smoothstep(-6, 8, sunElevationAt(worldAt(seconds)))
   const over = overcastAtBar(b)
   const cloud = 1 - 0.3 * clamp(coverAtBar(b) - 0.1) * (1 - over)
-  return lerp(lerp(lerp(0.1, 1, up * cloud), 0.75, over * up), 0.45, coldAtBar(b))
+  return lerp(lerp(lerp(0.1, 1, up * cloud), RAIN_LIGHT, over * up), 0.45, coldAtBar(b))
 }
 
 const mean = (lags: number[], seconds: number): number => {

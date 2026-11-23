@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { glslCommon } from '../core/shading.ts'
-import { maxFillPx, skyness } from './fill.ts'
+import { remember } from '../core/programs.ts'
+import { maxFillPx, skyness, sound } from './fill.ts'
 
 // The side of the square of pixels whose lights are summed into one disc.
 export const CELL = 8
@@ -18,7 +19,7 @@ export function cellFragment(place: boolean): string {
 uniform sampler2D tRaw;
 uniform sampler2D tHeld;
 layout(location = 0) out vec4 outColor;
-${skyness}
+${skyness}${sound}
 void main() {
   ivec2 p = ${CELL} * ivec2(gl_FragCoord.xy);
   ivec2 top = textureSize(tRaw, 0) - 1;
@@ -27,8 +28,9 @@ void main() {
     ivec2 q = p + ivec2(i, j);
     if (q.x > top.x || q.y > top.y) continue;
     vec4 raw = texelFetch(tRaw, q, 0);
+    raw.a = circleOf(raw.a);
     vec4 held = texelFetch(tHeld, q, 0);
-    vec3 e = max(max(raw.rgb, 0.0) - held.rgb, 0.0) * smoothstep(2.0, 4.0, held.a) * (1.0 - sky(raw.a));
+    vec3 e = max(sound(raw.rgb) - held.rgb, 0.0) * smoothstep(2.0, 4.0, held.a) * (1.0 - sky(raw.a));
     float l = dot(e, vec3(0.2126, 0.7152, 0.0722));
     ${place ? 'sum += vec4(l * (vec2(i, j) + 0.5), l, 0.0);' : 'sum += vec4(e, l * raw.a);'}
   }
@@ -74,10 +76,11 @@ in vec3 vLight;
 in float vRadius;
 in float vCircle;
 layout(location = 0) out vec4 outColor;
+${sound}
 void main() {
   float d = length(vAt);
   float shape = (1.0 - smoothstep(vRadius - 0.5, vRadius + 0.5, d)) * (1.0 + ${RIM.toFixed(2)} * smoothstep(0.8, 0.97, d / vRadius));
-  float here = texelFetch(tRaw, ivec2(gl_FragCoord.xy), 0).a;
+  float here = circleOf(texelFetch(tRaw, ivec2(gl_FragCoord.xy), 0).a);
   float open = smoothstep(0.4, 0.75, here / max(vCircle, 1e-3));
   outColor = vec4(vLight * (shape * open), 1.0);
 }
@@ -91,25 +94,25 @@ uniform sampler2D tRaw;
 uniform float uMixed;
 uniform float uRadiusScale;
 layout(location = 0) out vec4 outColor;
-${skyness}
+${skyness}${sound}
 void main() {
   ivec2 p = ivec2(gl_FragCoord.xy);
   vec4 c = texelFetch(tFill, p, 0);
   vec3 rgb = c.rgb;
   if (uMixed > 0.5) {
-    float own = texelFetch(tRaw, p, 0).a;
+    float own = circleOf(texelFetch(tRaw, p, 0).a);
     if (abs(c.a) < 0.6 && own * uRadiusScale > 0.6 && sky(own) < 0.5) {
       ivec2 top = textureSize(tRaw, 0) - 1;
       float most = own;
-      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) most = max(most, texelFetch(tRaw, clamp(p + ivec2(i, j), ivec2(0), top), 0).a);
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) most = max(most, circleOf(texelFetch(tRaw, clamp(p + ivec2(i, j), ivec2(0), top), 0).a));
       vec3 was = vec3(0.0);
       vec3 now = vec3(0.0);
       float n = 0.0;
       for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
         ivec2 q = clamp(p + ivec2(i, j), ivec2(0), top);
         vec4 r = texelFetch(tRaw, q, 0);
-        if (r.a < 0.85 * most) continue;
-        was += max(r.rgb, 0.0);
+        if (circleOf(r.a) < 0.85 * most) continue;
+        was += sound(r.rgb);
         now += texelFetch(tFill, q, 0).rgb;
         n += 1.0;
       }
@@ -133,7 +136,7 @@ export class Discs {
   constructor() {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3))
     this.geometry.setIndex([0, 1, 2, 0, 2, 3])
-    this.material = new THREE.RawShaderMaterial({
+    this.material = remember(new THREE.RawShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: discVertex,
       fragmentShader: discFragment,
@@ -146,7 +149,7 @@ export class Discs {
       blendDst: THREE.OneFactor,
       blendSrcAlpha: THREE.OneFactor,
       blendDstAlpha: THREE.OneFactor,
-    })
+    }))
     this.mesh = new THREE.Mesh(this.geometry, this.material)
     this.mesh.frustumCulled = false
   }

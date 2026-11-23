@@ -12,7 +12,9 @@ import { views, type ViewName } from '../../../src/v2/shots.ts'
 
 export interface Drawn { frame: number; seconds: number; made: Made; png: string | null }
 export interface Numbers { none: number; over: number; most: number; at: [number, number]; where: number[] }
-export interface Sparks { count: number; worst: number; at: [number, number]; where: number[] }
+export interface Sparks { count: number; worst: number; at: [number, number]; value: number; near: number; mean: number; where: number[]; wild: number[] }
+// `wild` holds x, y from the top and the value of each pixel over `fail` times what is near it.
+export interface Spot { worst: number; wild: number; value: number; at: [number, number]; size: number; plain: number }
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
   ready: Promise<void>
@@ -47,7 +49,9 @@ export interface ChecksPage {
   // Keeps the numbers of the frame last drawn, before the lens, for `sparks`.
   note(): void
   // The kept frame against the frame last drawn: a pixel of the kept one is a spark when it holds more than `times` what any pixel within `reach` of it holds in the other, and more than `times` the other's mean. With the kept frame drawn at four places a pixel and the other at one, a spark is a place the smoothing lit by itself.
-  sparks(times: number, reach: number): Sparks
+  sparks(times: number, reach: number, fail: number): Sparks
+  // After `sparks`, the square of `r` pixels round a place (x, then y from the top): the most a pixel in it holds of what is near it, how many of its pixels hold over `fail` times that, the largest value in it and where, how many pixels of the square hold at least half that value, and the largest value the frame at one place a pixel holds in it.
+  spot(x: number, y: number, r: number, fail: number): Spot
   // Draws only the named parts of the scene from the next frame on (plant, companion, field, ground, sky and each part's name); none named draws them all.
   only(names: string[]): void
 }
@@ -96,6 +100,8 @@ let watching = 0
 let tapped = false
 let marks = new Uint8Array(0)
 let noted = new Float32Array(0)
+let ratios = new Float32Array(0)
+let plains = new Float32Array(0)
 let fine: THREE.WebGLRenderTarget | null = null
 let halves = new Uint16Array(0)
 
@@ -348,7 +354,7 @@ window.checks = {
     if (noted.length !== width * height * 4) noted = new Float32Array(width * height * 4)
     renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, noted)
   },
-  sparks(times, reach) {
+  sparks(times, reach, fail) {
     const { width, height, renderer, accumulator } = film.stage
     const pixels = new Float32Array(width * height * 4)
     renderer.readRenderTargetPixels(accumulator.target, 0, 0, width, height, pixels)
@@ -376,14 +382,21 @@ window.checks = {
       }
     }
     const mean = sum / n
-    const out: Sparks = { count: 0, worst: 0, at: [0, 0], where: [] }
+    const out: Sparks = { count: 0, worst: 0, at: [0, 0], value: 0, near: 0, mean, where: [], wild: [] }
+    ratios = new Float32Array(n)
+    plains = new Float32Array(n)
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = y * width + x
         const ratio = level(noted, i) / Math.max(near[i], mean, 1e-9)
+        ratios[i] = ratio
+        plains[i] = level(pixels, i)
+        if (ratio > fail && out.wild.length < 600) out.wild.push(x, height - 1 - y, level(noted, i))
         if (ratio > out.worst) {
           out.worst = ratio
           out.at = [x, height - 1 - y]
+          out.value = level(noted, i)
+          out.near = near[i]
         }
         if (ratio > times) {
           out.count++
@@ -391,6 +404,30 @@ window.checks = {
         }
       }
     }
+    return out
+  },
+  spot(x, y, r, fail) {
+    const { width, height } = film.stage
+    const out: Spot = { worst: 0, wild: 0, value: 0, at: [x, y], size: 0, plain: 0 }
+    const level = (i: number): number => {
+      const v = Math.max(Math.abs(noted[4 * i]), Math.abs(noted[4 * i + 1]), Math.abs(noted[4 * i + 2]))
+      return Number.isFinite(v) ? v : 0
+    }
+    const each = (visit: (i: number, px: number, py: number) => void): void => {
+      for (let py = Math.max(0, y - r); py <= Math.min(height - 1, y + r); py++) for (let px = Math.max(0, x - r); px <= Math.min(width - 1, x + r); px++) visit((height - 1 - py) * width + px, px, py)
+    }
+    each((i, px, py) => {
+      out.worst = Math.max(out.worst, ratios[i])
+      if (ratios[i] > fail) out.wild++
+      out.plain = Math.max(out.plain, plains[i])
+      if (level(i) > out.value) {
+        out.value = level(i)
+        out.at = [px, py]
+      }
+    })
+    each((i) => {
+      if (level(i) >= 0.5 * out.value) out.size++
+    })
     return out
   },
   numbers(limit) {
