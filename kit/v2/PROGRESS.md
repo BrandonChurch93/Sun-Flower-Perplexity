@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 11 · 2026-11-23 04:40 UTC · Phase 3
+- Last status: 12 · 2026-11-23 05:06 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 05:06 UTC · status 12 · Phase 3 · `status-1.jpg`: The merged film at twelve moments (draft tier, drawn here); `status-2.jpg`: The break at the boom of bar 41, frames 2080 to 2090: the tear opens on frame 2083 (draft tier, drawn here); `status-3.jpg`: The night after the storm, frames 2150 to 2196, every second frame (draft tier, drawn here); `status-4.jpg`: Frost hold, bar 21, at the review tier (drawn by the frost builder)
 - 2026-11-23 04:40 UTC · status 11 · Phase 3 · `status-1.jpg`: Frost hold, bar 21: reference left, film right (draft tier); `status-2.jpg`: Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); `status-3.jpg`: Night, bar 46.82: reference left, film right (draft tier); `status-4.jpg`: The field, bar 69: reference left, film right (draft tier)
 - 2026-11-23 04:09 UTC · status 10 · Phase 3 · `status-1.jpg`: With the newest sky (draft): the blue hour of the first frame, sunrise at bar 1.5, low sun at bar 9.2, the night of bar 46.82 with the new star map; `status-2.jpg`: The break at the boom of bar 41, frames 2081 to 2089 (draft, drawn before the newest sky): the last frame of the hold is still, then the tear opens over five frames. The hard white dot on the third frame is gone in the newest sky; `status-3.jpg`: Frost hold at bar 21, storm at 35, the field at bars 69 and 73 with the new far ridge (draft, before the newest sky). The frost is still flat and the end still magenta: both are in work; `status-4.jpg`: Low sun beside the references, drawn by the sky's builder; my own frames at bars 1.5 and 9.2 agree
 - 2026-11-23 03:47 UTC · status 09 · Phase 3 · `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain); `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain); `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft); `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
@@ -40,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 1.41 h |
+| 3 | 9.00 h | 1.85 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 6.68 h |
+| Whole build | 30.00 h | 7.11 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -241,3 +242,6 @@ None yet.
 - Status 11, 2026-11-23 04:40 UTC, Phase 3. Round 4 of every part is merged and drawn again beside the references (v2 12f8c44, 169 tests pass). Frost now sits on the leaf edges and the clods, the noon sun stands at 40 degrees so the day has shadows, the moon stays inside the frame, the crop at the end reads as heads and the companion shows its face. Next: processor time per frame while the plant grows (measured far over the limit, the plant and the field are moving that work to the graphics card), rime over the whole leaf, deeper greens in full day, the pale band under the ridge at the end. Time used: 6.7 h of 30 h.
   Pictures: Frost hold, bar 21: reference left, film right (draft tier); Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); Night, bar 46.82: reference left, film right (draft tier); The field, bar 69: reference left, film right (draft tier).
 - 2026-11-23 04:40 to 04:55 UTC. Sky B `2300d67` (wet air, night 9 passes its window as stated by the sky; my own frames are drawing), frost `9ab696e` and the lens `866a003` merged, v2 `b062a20`, 169 tests pass. Found on the lens's sheet: the break shows in the picture two to three frames after the boom; sent to the sky and the lens. The first watch in motion is being drawn in parts on two free machines (frames 0 to 317 and 1272 to 1589). One merge commit on `agent/post` has no trailer and is not rewritten.
+- Status 12, 2026-11-23 05:06 UTC, Phase 3. Round 5 of eight parts is merged (v2 bc51ddc, 169 tests pass). The break of bar 41 now opens in the picture on the frame of the boom (it was two to three frames late). The night after the storm no longer flickers at its cloud edges. The crop now runs on to the foot of the ridge with no hedge line. The field's neighbours cost 0.5 to 0.7 ms a frame in the two holds (stated by its builder). Each part of the film that is drawn for the first watch now writes down its script time per frame. Next: Script time while the plant grows (the largest open item: 26 to 110 ms a frame per part against a budget of 16 in all), the pale band under the ridge at the end, then the first whole watch in motion joined from parts. Time used: 7.1 h of 30 h.
+  Pictures: The merged film at twelve moments (draft tier, drawn here); The break at the boom of bar 41, frames 2080 to 2090: the tear opens on frame 2083 (draft tier, drawn here); The night after the storm, frames 2150 to 2196, every second frame (draft tier, drawn here); Frost hold, bar 21, at the review tier (drawn by the frost builder).
+
