@@ -75,13 +75,19 @@ export async function run(args: Args): Promise<void> {
     const have = readLines(run)
     const wanted: number[] = []
     const round = stride > 0 ? ranker(stride) : null
-    for (let f = from; f <= to; f++) if (!have.has(f) && (!round || round(f) < 3)) wanted.push(f)
+    let there = 0
+    let skipped = 0
+    for (let f = from; f <= to; f++) {
+      if (round && round(f) >= 3) skipped++
+      else if (have.has(f)) there++
+      else wanted.push(f)
+    }
     if (round) wanted.sort((a, b) => round(a) - round(b) || a - b)
     // Every `first`th frame first. Then the frames round every seam, where a hard cut or a late build is most likely: each section's first frame and each stroke of lightning.
     const seams = [...segments.map((s) => s.firstFrame), ...lightningFrames()]
     const rank = (f: number): number => (f % first === 0 ? 0 : seams.some((x) => Math.abs(f - x) <= SEAM) ? 1 : 2)
     if (first > 1) wanted.sort((a, b) => rank(a) - rank(b) || a - b)
-    console.log(`play · ${run} · sky ${session.info.sky} · ${width} x ${height} · ${tier} · ${only || 'everything'} · frames ${from} to ${to}: ${wanted.length} to draw, ${to - from + 1 - wanted.length} already there · loaded in ${session.startSeconds.toFixed(1)} s`)
+    console.log(`play · ${run} · sky ${session.info.sky} · ${width} x ${height} · ${tier} · ${only || 'everything'} · frames ${from} to ${to}: ${wanted.length} to draw, ${there} already there${round ? `, ${skipped} not in a round of stride ${stride}` : ''} · loaded in ${session.startSeconds.toFixed(1)} s`)
     if (wanted.length === 0) return
     if (broken) await session.fault(broken, num(args, 'at'))
     const t0 = Date.now()
