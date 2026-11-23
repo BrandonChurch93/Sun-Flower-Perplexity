@@ -1,10 +1,11 @@
 # Looks of sky-b
 
-2026-11-23 04:39 UTC, at commit 0efdaba of agent/sky-b.
+2026-11-23 04:58 UTC, at commit 25f71f7 of agent/sky-b.
 
-Round 5: 0efdaba on 12f8c44 for the four 40-degree noon shots and the two extra crane banks; the earlier approved evening and night sheets retain their revision labels.
+Bar 41 every frame matched from c48f9b6 to 25f71f7; the 2083 core is 50.17% of the 2088 rise over held 2082. Frames 2080–2082 and 2088–2090 are RGB-identical. The day, evening, and wet night plates are from their named earlier checks.
 
-- `01-forty-degree-noon-and-low-crane-sun-after-v2-mer.jpg`: Forty degree noon and low crane sun after v2 merge
-- `02-two-low-banks-on-either-side-of-the-sun-at-bars-.jpg`: Two low banks on either side of the sun at bars 67 69 71
-- `03-approved-six-evening-bars-beside-late-and-last-k.jpg`: Approved six evening bars beside late and last keys
-- `04-moon-placement-night-horizons-break-and-cumulus.jpg`: Moon placement night horizons break and cumulus
+- `01-bar-41-matched-proof-all-parts.jpg`: Bar 41 matched proof all parts
+- `02-bar-41-frame-2083-at-preview-size.jpg`: Bar 41 frame 2083 at preview size
+- `03-40-degree-day-cumulus-and-evening-from-0efdaba.jpg`: 40 degree day cumulus and evening from 0efdaba
+- `04-two-low-bars-beside-the-sun-from-0efdaba.jpg`: Two low bars beside the sun from 0efdaba
+- `05-wet-night-9-from-2300d67.jpg`: Wet night 9 from 2300d67
