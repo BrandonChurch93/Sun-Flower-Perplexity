@@ -338,3 +338,21 @@ Judge the close shots at 1920 and 100 percent (`npm run bench -- --only all --fr
 
 Also new: the shared uniform `uWorldExposure`, the exposure of the grade at this moment (`def.grade.exposure`), set in `applyWorld`, for glints that must be capped in times white.
 
+
+### 23. The stem's rest length is a smooth curve
+
+The plant owner's stem no longer takes its length from the height curve frame by frame: the rest length follows a soft highest point, so the head rises without corners. The top may leave the height curve by up to 5 mm (measured: 4.3 mm at frame 1429) and stands exactly still in both holds. Measured over the whole film: frames on which the tip turns by more than 0.25 mm fell from 33 to 1. `heightAt` and `plantReach` are unchanged, so nothing that reads them moves.
+
+### 24. A look of its own for each frost close shot
+
+A close shot may carry `look` (`src/v2/cuts.ts`): factors on the sky's level, the key, the fill, contrast, saturation, bloom, vignette, and a gain for each colour. `lookAt` applies them on every frame of that shot and on no other. The picture cuts hard to these shots, so the look changes on the cut frame and nowhere else; the film's own camera before bar 19 and from bar 25 is untouched.
+
+What it means for owners: the light on your surfaces in a close shot is not the light of the wide frost shot beside it. Judge frost, beads, hairs and the ground's glints in the close shots on frames drawn after this item, and do not cancel the look in your own shader. The level and the exposure still reach you the same way (`uWorldExposure`, the world's light).
+
+The looks as they stand: `margin` key 1.3, fill 1.35, contrast 1.06, bloom 1.6, vignette 1.2, gain (0.97, 1, 1.05); `tip` level 0.8, key 1.2, fill 0.62, contrast 1.08, saturation 0.92, bloom 1.5, vignette 1.4, gain (0.92, 1, 1.13); `thaw` key 1.1, fill 0.75, contrast 1.08, bloom 1.3, vignette 1.25, gain (1.03, 1, 0.97).
+
+### 25. The first close shot is reframed, and the drop falls as a real one
+
+`margin`: eye and aim moved together across the picture (8 mm right and 7.5 mm up at the cut in, 18 mm right and 7.5 mm up at the cut out), so the whole leaf sits in the middle and no longer leaves by the right edge. The angle, the push in (210 to 185 mm) and the focus range are as they were. New values in `src/v2/cuts.ts`.
+
+`thaw`: `DROP_PULL` is 9.81 (`src/v2/clock.ts`). The hold runs in real time, so the drop that lets go on frame 1235 is a streak for two frames and gone; the rain owner draws its path over the open shutter.
