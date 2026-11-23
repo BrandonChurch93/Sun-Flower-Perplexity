@@ -35,7 +35,8 @@
     "filmclock": "tsx tools/filmclock.ts",
     "checks": "tsx tools/checks/run.ts",
     "part": "tsx tools/part.ts",
-    "join": "tsx tools/join.ts"
+    "join": "tsx tools/join.ts",
+    "costs": "tsx tools/costs.ts"
   },
   "dependencies": {
     "gsap": "3.15.1",
