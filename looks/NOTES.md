@@ -1,7 +1,6 @@
 # Looks of ground
 
-2026-11-23 04:09 UTC, at commit dfe0776 of agent/ground.
+2026-11-23 04:34 UTC, at commit 632b814 of agent/ground.
 
-- `01-round-4-keys-beside-film-dfe0776.jpg`: round 4 keys beside film dfe0776
-- `02-round-4-before-after.jpg`: round 4 before after
-- `03-turned-ridges-ground-only.jpg`: turned ridges ground only
+- `01-round-5-day-arc-632b814.jpg`: round 5 day arc 632b814
+- `02-round-5-keys-beside-film.jpg`: round 5 keys beside film
