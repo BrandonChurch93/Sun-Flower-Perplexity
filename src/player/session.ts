@@ -49,9 +49,9 @@ export function pictureSize(format: Format, windowWidth: number, windowHeight: n
 const MARK_REFRESHES = 2
 
 // The white flash of the two sync marks, on a loop of its own beside the film's. Each mark goes on at its second of the clock, or at the first refresh after it,
-// and stays for its length and for at least two refreshes. The run does not end before the second one has been shown.
+// and stays for its whole length from then on and for at least two refreshes. The run does not end before the second one has been shown.
 export function flasher(time: () => number, set: (on: boolean) => void): { shown(): boolean; stop(): void } {
-  const marks = markSeconds().map((at) => ({ at, refreshes: 0, over: false }))
+  const marks = markSeconds().map((at) => ({ at, since: NaN, refreshes: 0, over: false }))
   let on = false
   let live = true
   const turn = (): void => {
@@ -60,7 +60,8 @@ export function flasher(time: () => number, set: (on: boolean) => void): { shown
     let next = false
     for (const m of marks) {
       if (m.over || seconds < m.at) continue
-      if (m.refreshes >= MARK_REFRESHES && seconds >= m.at + MARK_HOLD_SECONDS) m.over = true
+      if (m.refreshes === 0) m.since = seconds
+      if (m.refreshes >= MARK_REFRESHES && seconds >= m.since + MARK_HOLD_SECONDS - 1e-9) m.over = true
       else {
         m.refreshes++
         next = true

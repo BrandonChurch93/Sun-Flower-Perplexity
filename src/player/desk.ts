@@ -98,8 +98,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   const dropHint = make('span', css.hint, 'or drop it anywhere on the page')
   drop.append(choose, dropHint, input)
   const trackText = make('p', css.text)
-  const trackSize = make('p', css.small)
-  trackStep.body.append(drop, trackText, trackSize)
+  trackStep.body.append(drop, trackText)
   choose.addEventListener('click', () => input.click())
   input.addEventListener('change', () => {
     const file = fileOf(input.files)
@@ -213,7 +212,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
     track(track, reading) {
       trackText.textContent = reading ?? trackLine(track)
       trackText.dataset.state = reading ? 'reading' : !track ? 'none' : track.matches ? 'match' : 'other'
-      trackSize.textContent = track && !reading ? `${track.megabytes.toFixed(1)} MB, kept in this page only` : ''
+      trackText.title = track && !reading ? `${track.megabytes.toFixed(1)} MB, kept in this page only` : ''
       choose.firstElementChild!.textContent = track ? 'Choose another file' : 'Choose the track'
       if (reading) trackStep.set('now', 'Reading')
       else if (!track) trackStep.set('now', 'Waiting for the file')

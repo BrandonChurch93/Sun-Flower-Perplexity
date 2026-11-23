@@ -89,15 +89,16 @@ describe('the flash of the sync marks', () => {
       expect(list.length).toBeGreaterThanOrEqual(2)
       expect(list[0]).toBeGreaterThanOrEqual(at)
       expect(list[0]).toBeLessThan(at + 1 / 60 + 1e-9)
-      expect(list[list.length - 1]).toBeLessThan(at + MARK_HOLD_SECONDS + 1 / 60)
+      expect(list[list.length - 1] - list[0]).toBeLessThan(MARK_HOLD_SECONDS)
+      expect(list[list.length - 1] - list[0]).toBeGreaterThanOrEqual(MARK_HOLD_SECONDS - 1 / 60 - 1e-9)
     }
     expect(shownAt).toBeLessThan(tail + MARK_HOLD_SECONDS + 2 / 60)
   })
 
-  it('still shows the last mark for two refreshes when the last frame took longer than the tail', () => {
+  it('still shows the last mark for its whole length when the last frame took longer than the tail', () => {
     const late = tail + 7
-    const { on, shownAt } = watch([head - 0.1, head, head + 1 / 60, head + 0.1, 30, late, late + 1 / 60, late + 2 / 60, late + 3 / 60])
-    expect(on.filter((m) => m >= late)).toHaveLength(2)
-    expect(shownAt).toBeCloseTo(late + 2 / 60, 6)
+    const { on, shownAt } = watch([head - 0.1, head, head + 1 / 60, head + 0.1, 30, late, late + 0.004, late + 0.008, late + 0.03, late + 0.049, late + 0.051, late + 0.07])
+    expect(on.filter((m) => m >= late)).toEqual([late, late + 0.004, late + 0.008, late + 0.03, late + 0.049])
+    expect(shownAt).toBeCloseTo(late + 0.051, 6)
   })
 })
