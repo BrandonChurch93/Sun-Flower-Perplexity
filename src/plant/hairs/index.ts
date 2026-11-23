@@ -53,6 +53,9 @@ const TUFT_BANDS = 350
 const TUFT_LEAN = 1.1
 // A soft stroke loses none of its light to the pixel grid as a line does. This holds the rim at the light it had as lines.
 const SOFT_LIGHT = 0.85
+// A held lens whose frame is narrower than this at its focus, and which looks down by more than this share of its way, looks onto the upper face of a leaf from close by: there the frost's grains stand for the rime on the hairs of that face.
+const CLOSE_FRAME_M = 0.2
+const LOOKS_DOWN = 0.3
 // A wet hair long enough may carry a drop: six in a hundred do.
 const DROP_FROM_M = 0.0005
 const DROP_SHARE = 0.06
@@ -156,7 +159,7 @@ vec3 hairWay(vec2 e) {
   return normalize(v);
 }
 
-// Four texels a hair: its root and length in the first slot, its root in the second and its own number, its direction and how many hairs it stands for, its direction in the second slot in two numbers with its length there and its place among the hairs.
+// Four texels a hair: its root and length in the first slot, its root in the second and its own number, its direction and how many hairs it stands for (below nothing for a hair that shows no rime of its own), its direction in the second slot in two numbers with its length there and its place among the hairs.
 void readHair(int k) {
   ivec2 at = ivec2((k & 511) * 4, k >> 9);
   vec4 a = texelFetch(uHairs, at, 0);
@@ -168,7 +171,8 @@ void readHair(int k) {
   hairDir = normalize(mix(c.xyz, hairWay(d.xy), plantBlend()));
   hairStand = hairDir;
   hairOwn = b.w;
-  hairShare = c.w;
+  // A share kept below nothing marks a hair whose rime the frost's grains stand for: it shows no needle of its own.
+  hairShare = c.w < 0.0 && uPlantFrost > 0.5 ? 0.0 : abs(c.w);
   // Where hairs crowd all of them dim alike instead of burning. Rime is matt and does not burn: a crust of it may stand as close as it grows.
   float crowd = exp2(floor(d.w) / CROWD_STEPS) / (1.0 + 15.0 * uPlantFrost);
   if (crowd > 1.0) {
@@ -648,6 +652,7 @@ export class HairSet {
   private readonly clip = new THREE.Matrix4()
   private readonly at: Float32Array
   private crowd = new Float32Array(0)
+  private faces: Uint8Array | null = null
 
   constructor(options: PartOptions, readonly count: number, name: string, color: [number, number, number] = [0.9, 0.95, 0.8], private readonly widthM = 0.00004) {
     if (options.places) throw new Error('hairs are worn by the plant and the companion only')
@@ -781,6 +786,7 @@ export class HairSet {
     let longest = 0
     // When both slots are keys a hair is as long as the mix of them says, and it is kept when it has a length in either.
     const keyed = this.keyed.value > 0
+    const faces = lens && (held.focusM * width) / held.perTan < CLOSE_FRAME_M && fy < -LOOKS_DOWN ? this.faces : null
     for (let i = 0; i < this.shown; i++) {
       const o = i * 4
       const here = ra[o + 3] > 0
@@ -861,7 +867,8 @@ export class HairSet {
       out[q + 8] = wa[o] / la2
       out[q + 9] = wa[o + 1] / la2
       out[q + 10] = wa[o + 2] / la2
-      out[q + 11] = share
+      const bare = faces !== null && faces[i] === 1 && (m[0] * wa[o] + m[4] * wa[o + 1] + m[8] * wa[o + 2]) * fx + (m[1] * wa[o] + m[5] * wa[o + 1] + m[9] * wa[o + 2]) * fy + (m[2] * wa[o] + m[6] * wa[o + 1] + m[10] * wa[o + 2]) * fz < 0
+      out[q + 11] = bare ? -share : share
       out[q + 12] = fold ? (1 - Math.abs(by)) * (bx >= 0 ? 1 : -1) : bx
       out[q + 13] = fold ? (1 - Math.abs(bx)) * (by >= 0 ? 1 : -1) : by
       out[q + 14] = keyed ? (second ? Math.max(rb[o + 3], least) : 0) : stands
@@ -1091,6 +1098,12 @@ export class HairSet {
       sum += ra[o] + 2 * ra[o + 1] + 3 * ra[o + 2] + 5 * ra[o + 3] + 7 * rb[o] + 11 * rb[o + 1] + 13 * rb[o + 2] + 17 * rb[o + 3]
     }
     return sum
+  }
+
+  // A wearer names, once at load, a hair that stands on a face of its body and not on an edge.
+  onFace(i: number): void {
+    this.faces ??= new Uint8Array(this.count)
+    this.faces[i] = 1
   }
 
   // Four numbers a hair: where it is rooted (x, y, z in the plant's own space, meters) and how long it is.
