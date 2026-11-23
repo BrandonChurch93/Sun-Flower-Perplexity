@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 2.42 h |
-| Whole build | 30.00 h | 24.81 h |
+| 6 | 4.00 h | 2.58 h |
+| Whole build | 30.00 h | 24.97 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -356,6 +356,7 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 22:42 UTC. The site from a fresh clone (MEASURED): `npm ci` and `npm run site` on a clone of `v2` under Node 26.13.1, 24.22.3 and 22.23.5, the three versions Vercel offers. All three build in about ten seconds, the site tests pass, and the built site is the same as the one checked in the browser byte for byte apart from the time stamp in `live/build.json`. 213 of 213 tests pass under Node 26. So `package.json` names no Node version and Vercel's own setting decides. UNKNOWN until Brandon deploys: the build on Vercel's machines, and how the film plays from Vercel's network.
 - 2026-11-23 22:47 UTC. The README is rewritten for version 2 (it still described the 60 second film): what the film is, how to host the site on Vercel, the keys of the live version, how to draw the film, how it was checked and judged, and that version 1 is under the tag `v1`. `FLOWS.md` lists what a visitor can do on the two pages.
 - 2026-11-23 22:50 UTC. The card frames, evened out: 58 of 208 are in, none bad, about 706 s a frame. The leaf look owner's machine started late and lost one try (frame 2940 stopped by a signal after 544 s, cause unknown, second try running), so its last two frames went to the field owner's and the player owner's machines, and the sky owner B's last frame to the rain owner's. Every machine now has at most 13 frames left; the last should be in about 01:30 UTC.
+- 2026-11-23 22:59 UTC. Round 27's summary is complete (`scorecards/round-027/SUMMARY.md`): the machine checks as they printed on the head, the tier the round judged, the supplement (14 of 70 at the export look against 16 of 70 on record, outside the record) and what happens next. Each number in the four new sections was read again from its file or from this log before it went in; two that could not be found again were replaced by ones that can (the cost of a draft frame is now the mean of the film's own drawing, about 28 s; the cuts check counts 1,402 steps on 1,816 play frames). `kit/v2/FILM.md` said 9.2 s of deep night and never more than 0.70 s; the nights check on the film's own clock says 7.5 s and 0.57 s, fourteen nights of 0.86 to 0.96 s, and FILM.md now says that.
 
 ## Notes from Brandon
 

@@ -39,6 +39,24 @@ The new target pictures before the same jury: `open.png` 5 of 5; `frost.png` 3 o
 
 A judged frame fails when its share of votes for (a) is more than 0.2 under the share of its own target picture. The letters: (a) a frame from a top budget film, a AAA game cinematic or a cinema nature documentary, (b) a stock photograph, (c) a seed catalog or textbook picture, (d) amateur generated art, (e) a real time web 3D demo. The 70 votes on the judged frames: 41 (e), 16 (a), 12 (d), 1 (b). The 40 votes on the eight failing frames: 31 (e), 9 (d). The 40 votes on the eight new target pictures: 23 (a), 10 (d), 7 (b). The reasons the jurors gave most often against (a) are stair stepped edges, repeated shapes (grass blades, frost needles, heads in the field) and smooth, simple geometry; they are word for word in `R2-JURORS.md`.
 
+### Machine checks
+
+Run on the head of `v2`, engine `4598d2d351869e22`. The head draws the frozen film's frames the same to the pixel (MEASURED at 1920 x 1080: frames 848 to 851 and 1259 to 1261 on one machine, 849, 850 and 1260 again on a second). Everything here is MEASURED on machines with four cores and a software renderer. Brandon's machine is UNKNOWN.
+
+| Check | Result | What it measured |
+| --- | --- | --- |
+| cues | PASS | The cue sheet compiles against the map of the track with 47 cues and 0 mismatches. The 37 cues of a kind the check can find in the film sit on their bar lines |
+| holds | PASS | The plant's clock stands on all 822 frames of the two holds (849 to 1259 and 1672 to 2082), and the picture pairs of every held shot are the same. A film broken on purpose fails |
+| cuts | PASS | On 1,402 steps from one frame to the next, taken from 1,816 frames of live play spread over the whole film: the four meant cuts (952, 1055, 1157, 1260) and no other |
+| made | PASS | Nothing is made on the graphics card on any frame after loading: the 1,816 play frames, 200 of 200 counted frames spread over the film, a traced run of 313 frames and the crane's 492 |
+| pure | PASS | 18 frames, each drawn again in two ways (backwards after six other frames, and on a fresh page): 36 of 36 give the same bytes |
+| nights | PASS SO FAR | By the clock: fourteen nights of 0.86 to 0.96 s against a limit of 1.2 s (the check counts 15, with the blue hour that opens the film). The proof by the picture is not run, and the proof by the plant alone was read from an earlier drawing, not drawn again on this film |
+| script | FAIL | The page's own script time in live play is over a limit in 11 of 16 measured stretches: 20.1 ms a frame in the mean, where a frame has 33.3 ms (25.6 before the cures). The four frost close shots and the storm's flash pass at 5.6 to 7.5 ms. Every stretch in which the plant grows fails on the plant and its companion. One hitch: frame 3771, 129.2 ms. Measured at 320 x 180 |
+
+The `made` check is the one against the frame rate drops of version 1 at a change of scene: those came from programs and textures made at the cut, and version 2 makes nothing after loading. The three cuts into the close shots cost 4.1 to 5.5 ms of script; the cut back to the wide shot on 1260 costs 34.7 ms against 21.0 around it, the plant's first frame after the hold.
+
+The script result is about live play only. The film file is drawn frame by frame, not in real time, so it is not touched by it.
+
 ## By part of the film
 
 - The opening and the seedling (frames 0, 60, 236): R1-1 4, R3-1 6, R6 7; R2 fails on 0, 60; R2 passes on 236. Not at the bar.
@@ -65,9 +83,23 @@ Round 26 judged the first film, on frames drawn at its final tier. The seats are
 | R7, compression | 6 | 7 |
 | R2 jury, votes for (a) | 26 of 50 against the controls' 24 of 40, three frames fail | 16 of 70 against the controls' 38 of 65, 8 frames fail |
 
+## The tier the round judged
+
+The round judged the film as it was drawn: the draft tier, one sample a frame, which is also the look of live play. The export tier draws 48 samples a frame. Against a frame at 48 samples the film's own frame stands at 30.5 to 31.0 dB (MEASURED on frames 2907 and 3050): the 48 sample frame is cleaner on clouds, leaf edges, hairs and lens blur, and the content is the same.
+
+The whole film at the export tier was outside the build's time: about 700 s a frame on four cores (MEASURED on 58 frames, mean 706 s) against about 28 s at one sample in the mean, which is about sixty hours on the twelve machines that drew the film in two and a half (17:21 to 19:48 UTC on 23 November).
+
+One fault was found at the export tier and cured: a falling drop out of focus broke into a cluster of specks. The cure is one line in `src/weather/rain/onstage.ts` (branch `agent/rain-final-cure`). It leaves the draft tier the same to the pixel (MEASURED on frames 1700, 1775, 1877, 2000 and 2096 at 1920 x 1080), and the three judged rain frames are right at 48 samples with it.
+
 ## Supplement: the same fourteen frames at the export look
 
-Not run yet.
+Outside the record. The fourteen judged frames were drawn again at the export tier, 48 samples a frame, from the frozen commit (the three rain frames with the rain cure), and a second jury of 70 was asked the same question about them.
+
+14 of 70 took the film's frame for a frame from a top budget film, a AAA game cinematic or a cinema nature documentary, against 16 of 70 on record at one sample and 38 of 65 for the control pictures. So the tier does not move the jury. The reasons the jurors give name what is drawn, not noise; one of them: "repeated jagged alpha-cutout grass and flat petal cards".
+
+Frames that fail in the supplement: 0, 1055, 1479, 1775, 2096, 2780, 2880, 3523 and 3755. The two frames of the open flower, 2957 and 3112, get 3 of 5 each, level with their controls.
+
+The cards: `R2-SUPPLEMENT.json` and `R2-SUPPLEMENT-JURORS.md`.
 
 ## Open issues, in the critics' words
 
@@ -219,4 +251,13 @@ Minor issues: R1-1 0, R1-2 1, R1-3 1, R1-4 0, R1-5 1, R1-6 0, R3-1 2, R3-2 0, R3
 
 ## What happens next
 
-Nothing is fixed after this round without Brandon. Every severe and major issue above is logged under "Open items" in `kit/v2/PROGRESS.md`.
+Brandon watched the film with the track several times and signed it off on 23 November 2026 at 21:19 UTC. Nothing is fixed after this round without him. Every severe and major issue above is logged under "Open items" in `kit/v2/PROGRESS.md`.
+
+Made after the round, at his request: a still of the bud right before it opens and a clip of it opening that starts on that still, both at the export tier from the frozen commit; a second version of the film with the prompt being written in front of it; and a site that plays the film, for Vercel.
+
+Merged after the round: the rain cure of the export tier, which leaves the drawn film the same to the pixel.
+
+Offered to him, each on its own branch, not merged:
+
+- `agent/plant-keys-apart` (`c28ce9af`): the plant lays its keys two frames apart, and one apart round a hold. STATED by its owner: it saves 9 to 11 ms of script time a frame in two stretches of live play, and three lone slow frames stay unexplained. It may move pixels of the drawn film by small amounts (the bound is in the entry of 20:46 UTC on 23 November in `kit/v2/PROGRESS.md`), so it waits for his word.
+- `agent/sky-cloud-cure` (`46f2fab5`): lowers the clouds' stipple at one sample by 33 to 42 percent (MEASURED at frame 1479). It touches 1,544 fair daylight frames and 24 flash frames, which would have to be drawn again. At the export tier the stipple is gone without it.

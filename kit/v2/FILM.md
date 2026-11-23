@@ -23,7 +23,7 @@ Bar n begins at 0.883143 + (n - 1) x 1.714286 seconds. Every number here is read
 - The plant grows only in the time lapse. While `frost` or `rain` is 0.2 or more its clock stands, to the frame: frames 849 to 1259 and 1672 to 2082.
 - The frost and the rain arrive and leave inside their holds, so the time lapse never shows them.
 - Every sunrise crosses the horizon on a bar line. In the fast time lapse every sunset crosses it on beat 3 of the bar before.
-- Every night lasts 0.83 to 0.97 seconds and the sun goes no deeper than 14 degrees, so a glow stays on the horizon. There are fourteen nights; the sun is more than 6 degrees under the horizon for 9.2 seconds of the film in all, and never for longer than 0.70 seconds at a time.
+- Every night lasts 0.86 to 0.96 seconds and the sun goes no deeper than 14 degrees, so a glow stays on the horizon. There are fourteen nights; the sun is more than 6 degrees under the horizon for 7.5 seconds of the film in all, and never for longer than 0.57 seconds at a time (MEASURED by `npm run checks -- nights` on the film's own clock).
 - Nothing is made after loading. Every program, texture and buffer of the film exists before frame 0, and a counter fails the build if a frame makes one.
 - Every frame is a pure function of its number.
 
