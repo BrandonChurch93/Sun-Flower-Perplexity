@@ -46,6 +46,12 @@ const FPS = config.film.fps
 const SPIKES = 0.1
 // Where ice can root on a leaf that lives through the frost, beside its hairs: at even steps along each cut edge, along the midrib and three side veins of each half, and round the stalk.
 const EDGE = 120
+const HAIRS_A_PIECE = 400
+const BEADS_A_PIECE = 100
+// What a leaf, a leaf not yet born and a hundred beads cost to lay, in the time four hundred hairs take.
+const LEAF_COST = 2.5
+const UNBORN_COST = 1
+const BEADS_COST = 1.7
 const VEIN_ROOTS = 60
 const STALK_ROOTS = 200
 const RIME_VEINS = [1, 2, 3]
@@ -129,6 +135,7 @@ interface Leaf {
 
 interface Hair { leaf: number; kind: number; a: number; b: number; r1: number; r2: number; r3: number; r4: number; spike: boolean; bay: number }
 
+type Slot = 0 | 1 | 2
 const frame = { ox: 0, oy: 0, oz: 0, mx: 1, my: 0, mz: 0, wx: 0, wy: 0, wz: 1, nx: 0, ny: 1, nz: 0 }
 const pathX = new Float64Array(PATH + 1)
 const pathZ = new Float64Array(PATH + 1)
@@ -390,17 +397,20 @@ export function create(options: PartOptions): PlantPart {
 
   const dynamic = (array: Float32Array, size: number) => new THREE.BufferAttribute(array, size).setUsage(THREE.DynamicDrawUsage)
   const geometry = partGeometry(options)
-  const slots = [new Float32Array(vertices * 3), new Float32Array(vertices * 3)]
+  // A third shape of everything a slot holds, on the processor only: the next key is laid in it a share a frame.
+  const spare = options.ahead === true && !options.places
+  const more = spare ? [2] : []
+  const slots = [new Float32Array(vertices * 3), new Float32Array(vertices * 3), ...more.map(() => new Float32Array(vertices * 3))]
   // What a slot carries beside the shape, of its own moment: the normals here, and below each leaf's numbers and the stalks' skin. The neighbors keep one.
   const both = options.places ? [0] : [0, 1]
-  const normalSets = both.map(() => new Float32Array(vertices * 3))
+  const normalSets = [...both, ...more].map(() => new Float32Array(vertices * 3))
   let normals = normalSets[0]
   let blade = slots[0]
-  const filled = [false, false]
-  const led = [false, false]
+  const filled = [false, false, false]
+  const led = [false, false, false]
   const position = dynamic(slots[0], 3)
   const positionB = options.places ? null : dynamic(slots[1], 3)
-  const normalSent = normalSets.map((set) => dynamic(set, 3))
+  const normalSent = both.map((k) => dynamic(normalSets[k], 3))
   geometry.setAttribute('position', position)
   if (positionB) geometry.setAttribute('positionB', positionB)
   normalSent.forEach((a, k) => geometry.setAttribute(k === 1 ? 'normalB' : 'normal', a))
@@ -414,15 +424,15 @@ export function create(options: PartOptions): PlantPart {
   const state = new Float32Array(LEAVES * 4)
   const ripeness = new Float32Array(LEAVES)
   const cut = new Float32Array(LEAVES * 4)
-  const stateSets = both.map(() => new Float32Array(LEAVES * 4))
-  const ripeSets = both.map(() => new Float32Array(LEAVES))
+  const stateSets = [...both, ...more].map(() => new Float32Array(LEAVES * 4))
+  const ripeSets = [...both, ...more].map(() => new Float32Array(LEAVES))
   // How deep each leaf's teeth are cut at the slot's moment.
-  const depthSets = both.map(() => new Float32Array(LEAVES))
+  const depthSets = [...both, ...more].map(() => new Float32Array(LEAVES))
   let stateNow = stateSets[0]
   let ripeNow = ripeSets[0]
   let depthNow = depthSets[0]
-  const freshes = [0, 0]
-  const hairsUp = [0, 0]
+  const freshes = [0, 0, 0]
+  const hairsUp = [0, 0, 0]
   const edges = new Float32Array(LEAVES * 4)
   for (const leaf of leaves) {
     cut[leaf.i * 4] = leaf.teeth
@@ -451,9 +461,9 @@ export function create(options: PartOptions): PlantPart {
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
   const mesh = partMesh(geometry, surface)
 
-  const tubeSlots = hero ? [new Float32Array(tubes * 3), new Float32Array(tubes * 3)] : null
-  const tubeNormalSets = hero ? [new Float32Array(tubes * 3), new Float32Array(tubes * 3)] : null
-  const tubeUvSets = hero ? [new Float32Array(tubes * 2), new Float32Array(tubes * 2)] : null
+  const tubeSlots = hero ? [0, 1, ...more].map(() => new Float32Array(tubes * 3)) : null
+  const tubeNormalSets = hero ? [0, 1, ...more].map(() => new Float32Array(tubes * 3)) : null
+  const tubeUvSets = hero ? [0, 1, ...more].map(() => new Float32Array(tubes * 2)) : null
   let tubeNormals = tubeNormalSets ? tubeNormalSets[0] : null
   let tubeUv = tubeUvSets ? tubeUvSets[0] : null
   let tubeMesh: THREE.Mesh | null = null
@@ -614,6 +624,11 @@ export function create(options: PartOptions): PlantPart {
   const thawBeads = hero && options.variant === 0 ? THAW_BEADS : 0
   const beads: BeadSet | null = hero ? createBeads(options, (options.variant === 0 ? 600 : 200) + thawBeads, 'leaf beads', thawBeads) : null
   const beadSpots: { leaf: number; own: number; along: number; across: number; plan: BeadPlan }[] = []
+  // What the hair, ice, bristle and bead sets hold for each slot, in one order, and a spare of each.
+  const runOf = (slot: 0 | 1): Float32Array | undefined => (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array } | null)?.along?.(slot)
+  const worn = (slot: 0 | 1): (Float32Array | undefined)[] => [hairs?.root(slot), hairs?.lean(slot), crystals?.root(slot), crystals?.lean(slot), runOf(slot), bristles?.root(slot), bristles?.lean(slot), beads?.form(slot), beads?.formUp(slot), beads?.mid(slot), beads?.end(slot), beads?.endUp(slot), beads?.gather(slot)]
+  const wornSets = [worn(0), worn(1), ...more.map(() => worn(0).map((a) => (a ? new Float32Array(a.length) : undefined)))]
+  const wornAt = (slot: Slot, k: number): Float32Array => wornSets[slot][k] as Float32Array
   if (beads) {
     const tint = beads.tint()
     // The water is shared out by the face each blade shows where the plant stands in the rain, and a tenth evenly for the blades that come later.
@@ -692,15 +707,15 @@ export function create(options: PartOptions): PlantPart {
   }
 
   // Each bead's path is laid on the skin as it stands: where it forms, where its slide ends and where its dew gathers. The running is in the bead's own shader.
-  const fillBeads = (slot: 0 | 1, pose: Pose): void => {
+  const fillBeads = (slot: Slot, pose: Pose, from = 0, to = Infinity): void => {
     if (!beads) return
-    const form = beads.form(slot)
-    const formUp = beads.formUp(slot)
-    const mid = beads.mid(slot)
-    const end = beads.end(slot)
-    const endUp = beads.endUp(slot)
-    const gather = beads.gather(slot)
-    for (let k = 0; k < beads.count; k++) {
+    const form = wornAt(slot, 7)
+    const formUp = wornAt(slot, 8)
+    const mid = wornAt(slot, 9)
+    const end = wornAt(slot, 10)
+    const endUp = wornAt(slot, 11)
+    const gather = wornAt(slot, 12)
+    for (let k = from; k < Math.min(beads.count, to); k++) {
       const spot = beadSpots[k]
       const leaf = leaves[spot.leaf]
       const o = k * 4
@@ -738,7 +753,7 @@ export function create(options: PartOptions): PlantPart {
     return dip
   }
 
-  const fillLeaf = (leaf: Leaf, slot: 0 | 1, pose: Pose): void => {
+  const fillLeaf = (leaf: Leaf, slot: Slot, pose: Pose): void => {
     const i = leaf.i
     const time = pose.time
     const inputs = pose.inputs
@@ -1099,10 +1114,10 @@ export function create(options: PartOptions): PlantPart {
     }
   }
 
-  const fillHairs = (slot: 0 | 1, pose: Pose): void => {
+  const fillHairs = (slot: Slot, pose: Pose, from = 0, to = Infinity): void => {
     if (!hairs || !tubeSlots) return
-    const root = hairs.root(slot)
-    const lean = hairs.lean(slot)
+    const root = wornAt(slot, 0)
+    const lean = wornAt(slot, 1)
     const out = slots[slot]
     const tube = tubeSlots[slot]
     let born = 0
@@ -1112,7 +1127,7 @@ export function create(options: PartOptions): PlantPart {
     const frosted = stateUniforms.uPlantFrost.value > 0
     // The ice grows after the cut to the frost: at the cut the edge is the one the night left.
     const rime = 1
-    for (let h = 0; h < count; h++) {
+    for (let h = from; h < Math.min(count, to); h++) {
       const hair = plan[h]
       const leaf = leaves[hair.leaf]
       const size = lengthAt(leaf.i, pose.time)
@@ -1213,9 +1228,9 @@ export function create(options: PartOptions): PlantPart {
       lean[o + 2] = dz
       lean[o + 3] = hair.r4
       if (crystals && frosted) {
-        const cr = crystals.root(slot)
-        const cl = crystals.lean(slot)
-        const ca = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
+        const cr = wornAt(slot, 2)
+        const cl = wornAt(slot, 3)
+        const ca = wornSets[slot][4]
         const sn = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1
         let q = crystalAt[h] * 4
         if (ca) {
@@ -1266,16 +1281,17 @@ export function create(options: PartOptions): PlantPart {
     }
   }
 
-  const fillRime = (slot: 0 | 1, pose: Pose): void => {
+  const fillRime = (slot: Slot, pose: Pose, from = 0, to = rimeLeaves): void => {
     if (!crystals || !tubeSlots || rimeSlots === 0) return
-    const cr = crystals.root(slot)
-    const cl = crystals.lean(slot)
-    const run = (crystals as unknown as { along?: (slot: 0 | 1) => Float32Array }).along?.(slot)
-    const br = bristles ? bristles.root(slot) : null
-    const bl = bristles ? bristles.lean(slot) : null
+    const cr = wornAt(slot, 2)
+    const cl = wornAt(slot, 3)
+    const run = wornSets[slot][4]
+    const br = bristles ? wornAt(slot, 5) : null
+    const bl = bristles ? wornAt(slot, 6) : null
+    if (bristles && slot < 2) bristles.root(slot as 0 | 1)
     const out = slots[slot]
     const tube = tubeSlots[slot]
-    for (let li = 0, q = 0; li < rimeLeaves; li++) {
+    for (let li = from, q = from * RIME_EACH; li < to; li++) {
       const leaf = leaves[li]
       const size = lengthAt(leaf.i, pose.time)
       const scale = size <= 0 ? 0 : clamp(size / 0.07, 0.35, 1)
@@ -1402,6 +1418,31 @@ export function create(options: PartOptions): PlantPart {
   if (crystals) meshes.push(...crystals.meshes)
   if (bristles) meshes.push(...bristles.meshes)
 
+  // A shape in pieces: each leaf, then the hairs and each leaf's ice, then the water. `costs` is what the pieces up to each one cost to lay, in the time a few hundred hairs take.
+  const hairPieces = hairs ? Math.ceil(plan.length / HAIRS_A_PIECE) : 0
+  const beadPieces = beads ? Math.ceil(beads.count / BEADS_A_PIECE) : 0
+  const pieces = leaves.length + hairPieces + rimeLeaves + beadPieces
+  const costs = new Float64Array(spare ? pieces : 0)
+  // The first piece that ends after `cost`.
+  const pieceAt = (cost: number): number => {
+    let p = 0
+    while (p < pieces && costs[p] <= cost) p++
+    return p
+  }
+  // What the next fill writes: the shape of a slot, and with `lead` that slot's own normals, skin and numbers.
+  const aim = (slot: Slot, lead: boolean): void => {
+    const of = lead ? slot : 0
+    normals = normalSets[of]
+    stateNow = stateSets[of]
+    ripeNow = ripeSets[of]
+    depthNow = depthSets[of]
+    if (tubeNormalSets && tubeUvSets) {
+      tubeNormals = tubeNormalSets[of]
+      tubeUv = tubeUvSets[of]
+    }
+    blade = slots[slot]
+  }
+
   const settle = (share: number): void => {
     const to = share > 0 ? 1 : 0
     const a = stateSets[0]
@@ -1428,19 +1469,9 @@ export function create(options: PartOptions): PlantPart {
     },
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
-      const lead = filling.lead
-      const of = lead ? slot : 0
-      normals = normalSets[of]
-      stateNow = stateSets[of]
-      ripeNow = ripeSets[of]
-      depthNow = depthSets[of]
-      if (tubeNormalSets && tubeUvSets) {
-        tubeNormals = tubeNormalSets[of]
-        tubeUv = tubeUvSets[of]
-      }
-      blade = slots[slot]
+      aim(slot, filling.lead)
       filled[slot] = true
-      if (lead) {
+      if (filling.lead) {
         led[slot] = true
         freshes[slot] = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       }
@@ -1449,6 +1480,53 @@ export function create(options: PartOptions): PlantPart {
       if (stateUniforms.uPlantFrost.value > 0) fillRime(slot, pose)
       // The water lies on the blade of each slot, so it rides with the blade between the two.
       fillBeads(slot, pose)
+    },
+    spare,
+    ahead(pose, from, to) {
+      if (!spare) return
+      aim(2, true)
+      freshes[2] = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
+      const frosted = stateUniforms.uPlantFrost.value > 0
+      let born = 0
+      while (born < leaves.length && leafLength(leaves[born].i, pose.time) > 0) born++
+      const hairy = born > 0 ? hairsUpTo[born - 1] : 0
+      let all = 0
+      for (let p = 0; p < pieces; p++) {
+        const q = p - leaves.length
+        all += q < 0 ? (p < born ? LEAF_COST : UNBORN_COST) : q < hairPieces ? clamp(hairy / HAIRS_A_PIECE - q, 0, 1) : q < hairPieces + rimeLeaves ? (frosted ? 1 : 0) : BEADS_COST
+        costs[p] = all
+      }
+      const first = from <= 0 ? 0 : pieceAt(from * all)
+      const last = to >= 1 ? pieces : pieceAt(to * all)
+      for (let p = first; p < last; p++) {
+        const q = p - leaves.length
+        if (q < 0) fillLeaf(leaves[p], 2, pose)
+        else if (q < hairPieces) fillHairs(2, pose, q * HAIRS_A_PIECE, (q + 1) * HAIRS_A_PIECE)
+        else if (q < hairPieces + rimeLeaves) {
+          if (frosted) fillRime(2, pose, q - hairPieces, q - hairPieces + 1)
+        } else fillBeads(2, pose, (q - hairPieces - rimeLeaves) * BEADS_A_PIECE, (q - hairPieces - rimeLeaves + 1) * BEADS_A_PIECE)
+      }
+    },
+    take(slot) {
+      if (!spare) return
+      slots[slot].set(slots[2])
+      normalSets[slot].set(normalSets[2])
+      stateSets[slot].set(stateSets[2])
+      ripeSets[slot].set(ripeSets[2])
+      depthSets[slot].set(depthSets[2])
+      if (tubeSlots && tubeNormalSets && tubeUvSets) {
+        tubeSlots[slot].set(tubeSlots[2])
+        tubeNormalSets[slot].set(tubeNormalSets[2])
+        tubeUvSets[slot].set(tubeUvSets[2])
+      }
+      const to = wornSets[slot]
+      const frosted = stateUniforms.uPlantFrost.value > 0
+      for (let k = 0; k < to.length; k++) if (to[k] && (frosted || k < 2 || k > 6)) (to[k] as Float32Array).set(wornAt(2, k))
+      if (frosted) bristles?.root(slot)
+      freshes[slot] = freshes[2]
+      hairsUp[slot] = hairsUp[2]
+      filled[slot] = true
+      led[slot] = true
     },
     finish() {
       if (filled[0]) position.needsUpdate = true

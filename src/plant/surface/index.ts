@@ -100,6 +100,7 @@ const float TISSUE_HID = 0.35;
 const float TISSUE_SLATE = 0.21;
 // The hue of a frozen blade's own face close by, at unit luminance: a cold teal.
 const vec3 FROST_TEAL = vec3(0.62, 1.05, 1.2);
+const vec3 NIGHT_TEAL = vec3(0.74, 1.11, 1.11);
 // The share of the sun a clear, moist body sends on from its outline on the sun's side.
 const float TISSUE_CLEAR = 0.6;
 // The share of the open sky a blade does not see: its own plant stands in front of it.
@@ -255,7 +256,12 @@ vec3 tissueShade(Tissue t, vec3 world, vec3 view, vec2 at, float margin, float c
   wax *= 1.0 - FROST_MATT * frost * (1.0 - melt);
   // The water fills the fine relief: the skin is darker and deeper in color, and its wax is a narrow mirror that lights only the ridges and swells that face the sun or the bright sky.
   albedo = mix(albedo, max(mix(vec3(grey), own, 1.2), 0.0) * 0.6, melt);
-  through = max(mix(vec3(dot(through, vec3(0.3, 0.6, 0.1))), through, 1.0 + 0.2 * melt), 0.0);
+  float most = max(through.r, max(through.g, through.b));
+  vec3 deep = most * pow(through / max(most, 1e-6), vec3(1.0 + melt));
+  through = deep * (dot(through, vec3(0.3, 0.6, 0.1)) / max(dot(deep, vec3(0.3, 0.6, 0.1)), 1e-6));
+  // Under the cold moon the eye sees what a blade passes as a dim teal: the light stays on its edges and its sheen.
+  float moon = smoothstep(0.1, 0.2, (uSunColor.b - uSunColor.r) / max(uSunColor.b, 1e-6)) * smoothstep(0.1, 0.3, 1.0 - uSkyEven);
+  through = mix(through, NIGHT_TEAL * (0.5 * dot(through, vec3(0.3, 0.6, 0.1))), moon);
   rough = mix(rough, min(rough, 0.25), melt);
   wax = mix(wax, max(wax, 0.3), melt);
   fuzz *= 1.0 - 0.7 * melt;
