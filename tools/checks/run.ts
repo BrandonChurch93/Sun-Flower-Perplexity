@@ -26,7 +26,7 @@ const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'numbers', 'pu
 const HELP: [string, string, string, string][] = [
   ['nights', 'no night longer than 1.2 s, by the clock; no step or flicker through a dusk or dawn, by the picture', 'nothing; the picture part reads the frames of play', '3 s'],
   ['nights --plant', 'the plant alone does not get brighter from the handover to the moon toward midnight', 'draws about 140 frames itself at 640 x 360 with the plant alone', '7 to 9 min'],
-  ['holds', 'nothing grows in the two holds, by the clock and by the picture: of every shot of a hold the first, middle and last frame are the same', 'draws 34 frames itself at 640 x 360 (--no-pictures: none)', '3 s by the clock, 6 to 9 min with the pictures'],
+  ['holds', 'nothing grows in the two holds, by the clock and by the picture: of every shot of a hold the first, middle and last frame are the same', 'draws 60 frames itself at 640 x 360, each pair once as the film blends it and once with the blend pinned (--no-pictures: none)', '3 s by the clock, 10 to 15 min with the pictures'],
   ['cues', 'sunrises, holds and lightning sit on the bar lines of config/music/cues.json', 'nothing', '3 s'],
   ['play', 'draws the film small and notes what each frame made', 'a browser; --sky, --from, --to, --stride 6', '25 to 30 min a page for a third of a round of stride 6; 3 pages side by side'],
   ['cuts', 'no hard cut: the edges of the picture stay where they are from frame to frame', 'the frames of play', '10 to 40 s'],
