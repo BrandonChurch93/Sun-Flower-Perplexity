@@ -184,7 +184,18 @@ export function create(options: PartOptions): PlantPart {
   // The companion keeps the narrower folded blades: its leaf at the sun was placed with them and must not cover the sun.
   const main = options.variant === 0
   // Before the bloom a leaf near the tip is small: the stem carries the height, not the leaves standing over it.
+  // Every hair of a leaf asks how long the leaf is: it is worked out once for each moment.
+  const lengths = Array.from({ length: 4 }, () => ({ time: NaN, at: new Float64Array(leafCount) }))
+  let lengthsNext = 0
   const lengthAt = (i: number, time: number): number => {
+    for (const l of lengths) if (l.time === time) return Number.isNaN(l.at[i]) ? (l.at[i] = lengthOf(i, time)) : l.at[i]
+    const l = lengths[lengthsNext]
+    lengthsNext = (lengthsNext + 1) % lengths.length
+    l.time = time
+    l.at.fill(NaN)
+    return (l.at[i] = lengthOf(i, time))
+  }
+  const lengthOf = (i: number, time: number): number => {
     if (i < 2 || time >= BLOOM) return leafLength(i, time)
     // Beside the bud it is no wider than the bud: it lengthens as the stem carries it down.
     const under = (1 - leafStemFraction(i, time)) * heightAt(time)

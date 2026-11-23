@@ -130,6 +130,15 @@ export function stemRadius(time: number, u: number): number {
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u))
 }
 
+// How much of the stem is still under the soil, in meters. The arch is as large under the ground as over it: it comes up through the soil in three heaves, held and let go, and does not grow from a small arch into a large one.
+const SUNK_M = 0.011
+const HEAVES = [[0, 0.24, 0.3], [0.34, 0.6, 0.3], [0.7, 1.02, 0.4]]
+export function stemSunk(time: number): number {
+  let up = 0
+  for (const [from, to, share] of HEAVES) up += share * smoothstep(from, to, time)
+  return SUNK_M * (1 - up)
+}
+
 // The seedling comes up as an arch and straightens once it is in the light.
 export function hookAngle(time: number): number {
   const settle = 5 * RAD * smoothstep(seed0 + 0.9, seed0 + 1.5, time) * (1 - smoothstep(seed0 + 1.5, seed0 + 2.6, time))
@@ -392,8 +401,9 @@ export function huskSize(time: number): number {
 export const huskRest: Vec3 = { x: -0.0095, y: 0.0028, z: 0.006 }
 
 // When a leaf leaves the tip for good and grows at its own pace.
+const leafStarts = Float64Array.from({ length: leafCount }, (_, i) => leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6))
 function leafStart(i: number): number {
-  return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
+  return leafStarts[i]
 }
 
 // The first pair shows early, small and upright between the seed leaves, and waits there for the rain.
@@ -465,7 +475,21 @@ function jointFraction(i: number, time: number): number {
 }
 
 // From the night to the frost the plant's upper internodes stay short: a joint rides close under the tip, the leaves above it crowded round the bud, until it reaches the height it will have at the bloom.
+// Every part asks for the same joints at the same few moments of a frame: they are worked out once for each.
+interface Joints { variant: number; time: number; at: Float64Array }
+const joints: Joints[] = Array.from({ length: 6 }, () => ({ variant: -1, time: NaN, at: new Float64Array(leafCount) }))
+let jointsNext = 0
 export function leafStemFraction(i: number, time: number): number {
+  for (const j of joints) if (j.variant === variant && j.time === time) return Number.isNaN(j.at[i]) ? (j.at[i] = jointAt(i, time)) : j.at[i]
+  const j = joints[jointsNext]
+  jointsNext = (jointsNext + 1) % joints.length
+  j.variant = variant
+  j.time = time
+  j.at.fill(NaN)
+  return (j.at[i] = jointAt(i, time))
+}
+
+function jointAt(i: number, time: number): number {
   const fraction = jointFraction(i, time)
   if (variant !== 0 || time <= CROWD_START || time >= CROWD_END || leafAge(i, time) <= 0) return fraction
   const h = heightAt(time)

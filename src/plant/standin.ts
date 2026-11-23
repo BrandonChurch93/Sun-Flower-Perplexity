@@ -36,6 +36,7 @@ import {
   stemBend,
   stemDirection,
   stemRadius,
+  stemSunk,
   type PlantInputs,
   type StemBend,
   type Vec3,
@@ -140,8 +141,10 @@ const rz = new Float64Array(STEM_RINGS)
 const dir: Vec3 = { x: 0, y: 1, z: 0 }
 let bend: StemBend = stemBend(0, { leanX: 0, leanZ: 0, lift: 1, wind: 0 })
 
+let sunk = 0
 export function layStem(time: number, inputs: PlantInputs): void {
   bend = stemBend(time, inputs)
+  sunk = stemSunk(time)
   let x = 0
   let y = 0
   let z = 0
@@ -188,7 +191,7 @@ export function stemNode(u: number, length: number): Node {
   const i = Math.min(STEM_RINGS - 2, Math.floor(f))
   const k = f - i
   node.x = lerp(sx[i], sx[i + 1], k) * length
-  node.y = lerp(sy[i], sy[i + 1], k) * length
+  node.y = lerp(sy[i], sy[i + 1], k) * length - sunk
   node.z = lerp(sz[i], sz[i + 1], k) * length
   let ax = lerp(tx[i], tx[i + 1], k)
   let ay = lerp(ty[i], ty[i + 1], k)
@@ -561,9 +564,10 @@ export function stemLength(time: number, inputs: PlantInputs): number {
   let length = 0
   if (target > 0) {
     measureStem(true)
-    let l0 = target
+    const under = stemSunk(time)
+    let l0 = target + under
     let f0 = place(time, still, l0, scratch, null) - target
-    let l1 = Math.max(1e-7, (l0 * target) / (f0 + target))
+    let l1 = Math.max(1e-7, (l0 * (target + under)) / (f0 + target + under))
     let f1 = place(time, still, l1, scratch, null) - target
     for (let i = 0; i < 8 && Math.abs(f1) > 1e-7 && l1 !== l0; i++) {
       const slope = (f1 - f0) / (l1 - l0)
