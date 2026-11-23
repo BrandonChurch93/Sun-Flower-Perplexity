@@ -131,6 +131,18 @@ For the picture proof of the holds the page turns on the film's own switch for t
 
 `npm run checks -- review` writes `out/work/checks/review/index.html`: every look beside its reference, every section's clip, every check's result, and the whole film with a timeline in bars. It is built from what is in `out/` and says what is missing. It holds no audio. Its viewer picks the track from their own disk and the page plays it in step with the picture.
 
+With the film drawn at its own size and joined into one silent file, the page shows that film:
+
+`npm run checks -- review --film out/work/film-16x9-draft.mp4 --looks-from <folder of frames> --live live/index.html --out <folder>`
+
+- `--film`: the whole film is coded again from the file (h264, yuv420p, faststart, a key frame every 15 frames so the timeline scrubs, 1920 wide at most, no audio stream) and every section's clip is cut from it by frame numbers, counted and not timed. The note under the film is read from the file with ffprobe: frames, width, height, and the tier named with `--tier-name` (draft unless said), the build with `--film-build`.
+- `--looks-from`: lossless frames named by frame number, five digits (`00236.png`). A look whose frame is there uses it; with a film file and no such frame the look is cut from the film file; else the looks drawn with `--draw`, else the small frames of `play`.
+- `--live`: a path beside the page. The top of the page links to it, "Play the film live", with one line that the live film is drawn by the viewer's own machine.
+- `--out`: where the site is written (emptied first). `--shot` takes its pictures of that folder.
+- The site stays under 400 MB (`--limit-mb`): the size is printed at the end. Over it, the clips are made 960 wide; still over, the film is coded at the rate the rest leaves, and when narrow clips alone leave the film under three fifths of the room, the clips get a rate too. Tried on a 3,810 frame film at 1920 x 1080 with `--limit-mb 60`: 58.8 MB.
+
+The results can come from another machine: copy `out/work/checks/<check>.json`, `<check>.broken-*.json`, `<check>.every-*.json`, any other `<check>.<run>.json` of the same film, and the pictures they name, to the same places under `out/work/checks/`. A picture named by a path of the other machine is looked for under `out/work/checks/` here, then by its file name beside the result. Other runs of a check on the film of the page (the same engine hash) are listed under it as "Another run".
+
 In a round of stride 6 most frames are not drawn, and the film on the page stands the last drawn frame in for them. The line under the film names the picture: `frame 1728` when that frame is drawn, `frame 1728 is not drawn: the picture is frame 1547` when it is not. Stretches of more than half a second without a drawn frame are hatched on the timeline.
 
 ## What a cut is
