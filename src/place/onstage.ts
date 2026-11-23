@@ -32,14 +32,16 @@ const CROP_AMONG: Knot[] = [
 const CROP_OVER: Knot[] = [
   ...CROP_YOUNG,
   [60, 0.1845, 0.0783, 0.002096],
-  [67, 0.1845, 0.0783, 0.002096],
-  [69, 0.186, 0.1033, 0.006511],
-  [71, 0.1898, 0.1042, 0.008675],
-  [73, 0.2405, 0.1075, 0.01215],
-  [74.5, 0.3034, 0.08611, 0.0124],
+  [67, 0.1365, 0.0681, 0.0021],
+  [69, 0.2187, 0.1112, 0.004153],
+  [71, 0.2624, 0.1277, 0.007634],
+  [73, 0.2907, 0.1317, 0.0089],
+  [74.5, 0.3822, 0.1476, 0.0105],
 ]
 // The lens's height over the tops, in heights of the tops, between which the far crop turns from its side to its heads.
 const OVER = { from: -0.06, to: 0.09 }
+// And between which it looks down into the crop: its heads toward the sun, its shaded sides away from it.
+const DOWN = { from: 0.06, to: 0.3 }
 function knotAt(table: Knot[], bar: number, out: Knot): Knot {
   let i = 0
   while (i < table.length - 2 && bar > table[i + 1][0]) i++
@@ -57,7 +59,11 @@ function cropAt(bar: number, tau: number, eyeM: number, out: THREE.Vector3): voi
   knotAt(CROP_AMONG, bar, among)
   knotAt(CROP_OVER, bar, over)
   out.set(among[1] + (over[1] - among[1]) * k, among[2] + (over[2] - among[2]) * k, among[3] + (over[3] - among[3]) * k)
+  airUniforms.uLandCropTopM.value = k * top
+  airUniforms.uLandOver.value = smoothstep(DOWN.from, DOWN.to, (eyeM - top) / top)
 }
+// The sun's height at which the evening's last light begins on the land, and at which it is whole. The last sun stands on the ridge and does not set: its light is whole while the disc still rests there.
+const DUSK = { fromDeg: 2.2, fullDeg: 0.9 }
 // Per meter. Clear air lets the far range through, the frost mist takes the ranges one after another, the rain takes them all.
 const AIR = { clear: 0.00006, lowSun: -0.00003, dusk: 0.00002, overcast: 0.00008, fog: 0.0001, rain: 0.0002 }
 // The mist of the cold morning: per meter at the foot of the land, and how high it stands.
@@ -79,7 +85,7 @@ class Place implements Part {
     const d = now.dials
     for (const o of this.objects) o.visible = true
     const low = 1 - smoothstep(4, 24, now.sunElevationDeg)
-    const dusk = (1 - smoothstep(0.3, 1.5, now.sunElevationDeg)) * smoothstep(0.5, 0.8, now.phase) * (1 - smoothstep(0.89, 0.93, now.phase))
+    const dusk = (1 - smoothstep(DUSK.fullDeg, DUSK.fromDeg, now.sunElevationDeg)) * smoothstep(0.5, 0.8, now.phase) * (1 - smoothstep(0.89, 0.93, now.phase))
     airUniforms.uAir.value = AIR.clear + AIR.lowSun * low + AIR.dusk * dusk + AIR.overcast * d.overcast + AIR.fog * d.fog * d.fog + AIR.rain * d.rain
     airUniforms.uAirToSun.value = clamp(1 - 0.5 * d.overcast) * (1 - 0.6 * d.fog)
     airUniforms.uAirRain.value = d.rain

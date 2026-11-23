@@ -66,6 +66,20 @@ export function gateAt(azDeg: number): number {
   return 1 - smooth(0.26, 0.8, crestDeg(azDeg))
 }
 
+// The sill the last sun stands on. Seen from the crane's lens the top of the ridge lies at one height across these bearings, so the disc rests on it and sinks behind it. eyeM is how high that lens stands.
+export const SILL = { fromDeg: 222.6, toDeg: 229.4, easeDeg: 2.4, deg: 0.75, wanderDeg: 0.015, eyeM: 2.72, fromM: 1700, onM: 2250, toM: 2600, goneM: 3400 }
+
+// One where the sill lies, nothing where the ridge is its own.
+export function sillAt(azDeg: number): number {
+  return smooth(SILL.fromDeg - SILL.easeDeg, SILL.fromDeg, azDeg) * (1 - smooth(SILL.toDeg, SILL.toDeg + SILL.easeDeg, azDeg))
+}
+
+// The height of the line of sight that grazes the sill, at a distance from the plant.
+export function sillLineM(r: number, azDeg: number): number {
+  const deg = SILL.deg + SILL.wanderDeg * (0.6 * Math.sin(azDeg * RAD * 47 + 0.8) + 0.4 * Math.sin(azDeg * RAD * 113 + 2.1))
+  return SILL.eyeM + r * Math.tan(deg * RAD)
+}
+
 // The nearest range is the dark ridge behind the field: it stands highest and most even, the two behind it show over its dips.
 const RANGES = [
   { radiusM: 2350, widthM: 520, share: 1.0, even: 0.45, waverDeg: 0.3, floorDeg: 0.1, cells: 30, salt: 100 },
@@ -130,11 +144,16 @@ function bare(x: number, z: number, out: LandAt): LandAt {
     hill = Math.max(hill, top * body)
   }
   hill *= 0.7 + 0.6 * fbm2(x / 640, z / 640, 50, 4)
-  out.hill = hill
+  const sill = sillAt(az)
+  const line = sill > 0 ? sillLineM(r, az) : 0
+  const bank = line * smooth(SILL.fromM, SILL.onM, r) * (1 - smooth(SILL.toM, SILL.goneM, r))
+  out.hill = hill + (Math.max(hill, bank) - hill) * sill
   // Out to where the land takes its own depth it stays above the flat soil, so the soil never shows through a dip.
   const rise = basin + roll * (1 - 0.6 * smooth(10, 60, hill)) + hill
   const kept = 0.5 * (rise - 0.1 + Math.sqrt((rise + 0.1) * (rise + 0.1) + 0.04))
-  const natural = verge + rise + (kept - rise) * (1 - smooth(420, 620, r))
+  let natural = verge + rise + (kept - rise) * (1 - smooth(420, 620, r))
+  // On the sill nothing stands above the line of sight, and the ridge's own bank reaches it.
+  if (sill > 0) natural += (Math.max(Math.min(natural, line), bank) - natural) * sill
   // Under the planted field the land lies under the soil, so the field and its soil are all there is to see.
   out.height = natural + (PLANTED.underM - natural) * plantedAt(x, z)
   out.wood = 0
@@ -175,6 +194,12 @@ export function landAt(x: number, z: number, out: LandAt = scratch): LandAt {
   // Far off a wood is a soft swell on the ridge, not a step.
   const far = smooth(2600, 4600, Math.hypot(x, z))
   out.height += CANOPY_M * (1 - 0.5 * far) * smooth(0.4 - 0.25 * far, 0.6 + 0.3 * far, out.wood) * (crowns + (1 - crowns) * far)
+  const r = Math.hypot(x, z)
+  if (r > SILL.fromM) {
+    const az = (Math.atan2(x, z) / RAD + 360) % 360
+    const sill = sillAt(az)
+    if (sill > 0) out.height += (Math.min(out.height, sillLineM(r, az)) - out.height) * sill
+  }
   return out
 }
 
