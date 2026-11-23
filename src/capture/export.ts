@@ -355,7 +355,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
   const describe = () => {
     const n = total()
     const parts = [`${n} ${n === 1 ? 'frame' : 'frames'} at ${fps} frames a second`, `${samplesOf(tier)} ${samplesOf(tier) === 1 ? 'sample' : 'samples'} a frame`, `${config.export.bitrateMbps} Mbit a second`, wantsSound() ? `with the track as ${sound?.label}` : 'without sound', `saved as ${fileName()}`]
-    if (secondsPerSample > 0) parts.push(`${about(secondsPerSample * samplesOf(tier) * (n - kept))} on this machine`)
+    if (secondsPerSample > 0) parts.push(`${about(secondsPerSample * samplesOf(tier) * (n - kept))} on this machine, a guess from one test frame`)
     summary.textContent = `${parts.join(' · ')}.`
   }
 
