@@ -24,6 +24,7 @@ import { plantInputsOf } from '../v2/inputs.ts'
 import { blankLook, lookAt } from '../v2/look.ts'
 import { blankMoment, later, momentAt, now, setNow, setStill, shutterSeconds } from '../v2/now.ts'
 import { closeAt, closeFrames, cutFrames } from '../v2/cuts.ts'
+import { held, heldFrames, heldLensAt } from '../v2/held.ts'
 import { fixedPose, rigAtFilm } from '../v2/rig.ts'
 import { views, type FixedView, type ViewName } from '../v2/shots.ts'
 import { companionInView, companionMatrix, companionRatio } from './companion.ts'
@@ -31,6 +32,7 @@ import { eyeOf, farPlane, nearPlane, orbited, poseOf, type Rig } from './pose.ts
 import { stateAt, type FrameState } from './state.ts'
 import { clampFrame } from './timeline.ts'
 
+const HELD_EVERY = 4
 const GREY = new THREE.Color().setRGB(0.18, 0.18, 0.18)
 const BLACK = new THREE.Color().setRGB(0, 0, 0)
 
@@ -79,6 +81,8 @@ export class Film {
   quality: Quality | null
   // What the live mode may change: the camera turned about the plant.
   readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, fixed: null }
+  private readonly heldPoses: (CameraPose | null)[] = heldFrames.map(() => null)
+  private readonly heldFor: FilmView = { azimuthDeg: NaN, elevationDeg: 0, dolly: 1, fixed: null }
   private readonly only: Set<string>
   private readonly casters: Caster[]
   private readonly bothCasters: Caster[]
@@ -178,6 +182,7 @@ export class Film {
     const { renderer } = this.stage
     this.sky?.warm(renderer)
     for (const { part } of this.parts) part.warm?.(renderer)
+    for (let i = 0; i < heldFrames.length; i++) this.heldPose(i)
     const frames = warmFrames()
     const of = frames.length + 1
     onStep?.(0, of, 'moment')
@@ -250,6 +255,30 @@ export class Film {
     const tau = tauAt(seconds)
     focusAt(tau, inputs, eyeOf(rig, this.eye), this.tip)
     return poseOf(rig, this.tip, carrierAt(tau, inputs, this.tip, this.carrier))
+  }
+
+  // The pose a held shot is thinned for: of all the frames it stands on, the one that shows the plant largest.
+  private heldPose(lens: number): CameraPose {
+    const v = this.view
+    const h = this.heldFor
+    if (h.fixed !== v.fixed || h.azimuthDeg !== v.azimuthDeg || h.elevationDeg !== v.elevationDeg || h.dolly !== v.dolly) {
+      this.heldPoses.fill(null)
+      Object.assign(h, v)
+    }
+    let best = this.heldPoses[lens]
+    if (best) return best
+    const frames = heldFrames[lens]
+    let most = -1
+    for (let k = 0; k < frames.length; k = k + HELD_EVERY < frames.length || k === frames.length - 1 ? k + HELD_EVERY : frames.length - 1) {
+      const pose = this.poseAt(timeOf(frames[k]))
+      const size = pose.focalMm / pose.focusM
+      if (size > most) {
+        most = size
+        best = pose
+      }
+    }
+    this.heldPoses[lens] = best
+    return best as CameraPose
   }
 
   private nearAt(seconds: number): number {
@@ -348,6 +377,15 @@ export class Film {
     stateUniforms.uPlantWet.value = def.ground.plantWet ?? def.ground.wet
     stateUniforms.uPlantFrost.value = def.ground.frost
     stateUniforms.uPlantDew.value = def.ground.dew
+    held.lens = heldLensAt(frame)
+    if (held.lens >= 0) {
+      const pose = this.heldPose(held.lens)
+      held.eye.copy(pose.position)
+      held.forward.copy(pose.forward)
+      held.perTan = (stage.width * pose.focalMm) / config.camera.gateWidthMm
+      held.focusM = pose.focusM
+      held.cocScale = cocScalePx(pose, config.camera.gateWidthMm, stage.width)
+    }
     const inputs = plantInputsOf(now)
     const inputsClose = plantInputsOf(later)
     const plantOn = this.shows('plant')
