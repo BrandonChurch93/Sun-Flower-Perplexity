@@ -268,3 +268,25 @@ At bars 23 and 24 the whole bright fringe on green leaves reads as a drawn outli
 
 The checks found frames 2617 and 2621 at 1.8 and 1.5 seconds of script, all of it in the shadow pass (neighbours 2.5 ms), and frame 1689 at 36.7 ms in the Storm hold. Being found; the film may not ship with them.
 
+
+### 14. Four cuts in the frost hold, three close shots
+
+Brandon, 23 November: "I think it would look really good if we got some zoomed in shots of our sunflowers showing the crystallization on various parts of it ... make sure that the camera angles on frost are really good and show the best parts of the flower. You want to see like frost glistening in the sunlight and just the high detail on it." He left the choice between a move and hard cuts to us and leaned to cuts on the music.
+
+The film now cuts four times, and only there: on frames 952, 1055, 1157 and 1260, the frames that hold the downbeats of bars 19, 21, 23 and 25. Bars 17 to 25 of the track have no drums; bar 21 has the one low hit of the hold. Between the cuts stand three close shots of two bars each (3.43 s), all at about 100 mm and f/8, 17 to 23 cm from the seedling, all looking toward the sun as the wide shot does. They are in `src/v2/cuts.ts` (`closeShots`, `cutFrames`, `closeAt`), and the film asks `fixedAt(seconds)` for them:
+
+| Shot | Bars | Frames | What it shows |
+|---|---|---|---|
+| `margin` | 19 to 21 | 952 to 1054 | The edge of leaf 5 in profile, rising to the upper right, the youngest leaf soft behind it, the dim sun as a soft disc in the mist at the upper left. The ice is still growing |
+| `tip` | 21 to 23 | 1055 to 1156 | The growing tip and the furred stem, a leaf on each side, the sun coming through at the upper left, the frozen field below as a dark band of soft discs |
+| `thaw` | 23 to 25 | 1157 to 1259 | Leaf 0 in profile sloping down to its tip at the right, the ice going to water: beads, and one drop at the tip that falls |
+
+The wide shot stands before and after, unchanged. Each close shot's lens drifts at one speed, about a centimetre in all. One frame from the middle of each is in the film's warming, so a cut may make nothing and may not cost a long frame.
+
+### 15. The dials of the hold follow the cuts
+
+`frost` now grows through the wide shot and on into the first close shot (0.47 at bar 17.94, 0.70 at bar 19, 0.95 at bar 20, 1 from bar 20.5), stands whole to bar 22.7, and melts to 0.15 at bar 25 (0.82 at 23.4, 0.42 at 24.3). `fog` is 0.8 to the cut of bar 21, steps to 0.62 on that cut and thins from there (0.50 at bar 22, 0.42 at 23, 0.35 at 25), so `sunThrough` steps from 0.20 to 0.44 on the cut and reaches 0.89 at bar 23. `dew` rises from bar 22.7 (0.50 at 23.5, 1 from 24.3). Two new dials, `drop` and `dropFall`: how full the one drop at the tip of leaf 0 hangs (0 before bar 23.3, 1 as it lets go), and how far the drop that let go has fallen, in metres (0 while it hangs; it lets go on the frame of beat 3 of bar 24, frame 1235, and falls slower than a real drop, 0.8 m/s²). After it a smaller drop gathers (0.25 to 0.5).
+
+### 16. The camera goes in for the bloom
+
+Brandon: "on the scene before the last one, when the bloom happens, it would be awesome if the camera zooms in on the actual sunflower, showing the bloom happen, and then it will start backing out for the final shot, revealing the whole field". One unbroken move at 35 mm, in `src/v2/rig.ts` (`BLOOM`): from bar 55 the lens closes from 0.77 m to 0.50 m off the stem at bar 57, holds the head at about a third of the frame's width while it opens (bars 57 to 60), and is back at 0.80 m by bar 65, where the crane begins as before. The sun stays in the frame on the left. Aperture f/5.6 from bar 57 to 65. Reference pictures `references/v2/keys/bloom-close-opening.png` and `bloom-close.png`.

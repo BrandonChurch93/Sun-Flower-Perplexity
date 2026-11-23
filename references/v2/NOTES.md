@@ -40,6 +40,12 @@ In `keys/`. The contact sheet is `contact-sheet.jpg`.
 | `late` | 1 of 1 | Bar 56: dusk, the closed bud against a banded sky, rim light on the stem hairs, the field of buds behind | Darker than the bloom that follows it one bar later. Take the sky and the rim, not the exposure |
 | `last` | 1 of 2 | The last frame: the sun on the horizon, the whole field with every head lit from behind, the two plants in front with long shadows toward the camera | A heavy dark vignette. The grass strip in front is wider than our field's edge |
 
+| `frost-margin` | 1 of 1 | Close shot 1 of the frost hold (bars 19 to 21): one leaf, a dense fringe of feathered ice blades along its edge, sugar on its face thickest on the veins, the dim sun as a soft disc in the mist behind it. Cold | The leaf is longer and narrower than ours. Take the ice, the light and the depth of field |
+| `frost-sun` | 1 of 1 | Close shot 2 (bars 21 to 23): the growing tip and the furred stem as the sun comes through: every edge and hair burning white gold, glints as points in focus and soft discs out of it, the frozen field behind as a dark band of warm discs | Two young leaves stand as a pair; ours has one tall and one tiny at the tip, with the pair below rising beside them |
+| `frost-thaw` | 1 of 1 | Close shot 3 (bars 23 to 25): the thaw on one leaf: ice still standing near the stalk, clear beads on veins and teeth toward the tip, one full drop at the tip with the sun in it and one in the air below | The sun's rays through the leaf are a photographic flare; ours need not copy them |
+| `bloom-close-opening` | 1 of 1 | The bloom seen close (bars 57 to 59): the rays free on the lit side, still folded under the bracts on the other, the disc a tight green gold spiral | Made on our own frame as the layout, so the framing is the film's |
+| `bloom-close` | 1 of 1 | The open flower close (bars 61 to 65): the head at 85 percent of the frame height, the outer rings of the disc open with a gold fringe of pollen, the middle still green and closed, every ray veined and none flat | The sun sits on the horizon; in the film it is still 5 degrees up on bar 61 |
+
 ## The other takes
 
 In `takes/`, as JPEG.

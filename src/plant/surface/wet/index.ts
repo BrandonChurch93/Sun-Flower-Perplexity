@@ -11,7 +11,7 @@ export const real = true
 export const BEAD_ORDER = 19
 
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
-const beadUniforms = { uBeadLee: { value: 0 }, uBeadRain: { value: 0 }, ...wetUniforms }
+const beadUniforms = { uBeadRain: { value: 0 }, ...wetUniforms }
 
 const G = 9.81
 const SIT = 0.4
@@ -75,7 +75,7 @@ in vec4 aLimit;
 in vec4 aEndUpB;
 in vec4 aGatherB;
 in vec3 aTint;
-uniform float uBeadLee;
+uniform vec4 uBeadWetTint;
 uniform float uBeadPaths;
 uniform float uBeadKeys;
 ${KEYED}
@@ -176,7 +176,7 @@ void main() {
   vec4 seatB = aSeatB;
   vec4 restA = aRestA;
   vec4 restB = aRestB;
-  float lee = uBeadLee;
+  float lee = uReal >= ${RAIN_FROM_GLSL} ? smoothstep(0.0, 0.6, uPlantWet) : 0.0;
   float share = plantBlend();
   if (uBeadPaths > 0.5) {
     // A set on paths keeps its second key where a placed set keeps its seats.
@@ -189,7 +189,6 @@ void main() {
     share = uShutter;
     beadOnPath(uReal, seatA, restA);
     beadOnPath(uReal + ${SHUTTER_GLSL}, seatB, restB);
-    lee = uReal >= ${RAIN_FROM_GLSL} ? smoothstep(0.0, 0.6, uPlantWet) : 0.0;
   }
   vec4 seat = mix(seatA, seatB, share);
   vec4 rest = mix(restA, restB, share);
@@ -219,7 +218,7 @@ void main() {
   vBase = base;
   vUp = up;
   vDown = down;
-  vTint = aTint;
+  vTint = mix(aTint, uBeadWetTint.rgb, uBeadWetTint.w * smoothstep(0.3, 0.9, uPlantWet));
   vShape = vec3(r, high * r, longM * r);
   vHang = hang;
   vDepth = -view.z;
@@ -435,6 +434,7 @@ export class BeadSet {
   private readonly second: Float32Array[]
   private readonly onPaths = { value: 0 }
   private readonly keys = { value: 0 }
+  private readonly rained = { value: new THREE.Vector4(0, 0, 0, 0) }
   private readonly geometry = new THREE.InstancedBufferGeometry()
   private readonly sent: THREE.InstancedBufferAttribute[]
 
@@ -456,7 +456,7 @@ export class BeadSet {
     const names = ['aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aTint', ...PATH_NAMES, ...SECOND_NAMES]
     names.forEach((n, i) => this.geometry.setAttribute(n, this.sent[i]))
     this.geometry.instanceCount = 0
-    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths, uBeadKeys: this.keys } })
+    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths, uBeadKeys: this.keys, uBeadWetTint: this.rained } })
     const mesh = partMesh(this.geometry, this.surface)
     mesh.renderOrder = BEAD_ORDER
     const struck = new THREE.InstancedBufferGeometry()
@@ -522,6 +522,11 @@ export class BeadSet {
   }
 
   // Three numbers a bead: the color of the skin under it, which is seen through the water.
+  // The colour the set's beads take in the rain, mixed in by the shader as the wet comes on, so a part lays its dry tint once.
+  wetTint(r: number, g: number, b: number): void {
+    this.rained.value.set(r, g, b, 1)
+  }
+
   tint(): Float32Array {
     return this.tints
   }
@@ -669,9 +674,20 @@ export function beadAt(own: number, along: number, across: number, time: number,
   const real = shared.uReal.value + (time - shared.uTime.value)
   const since = real - RAIN_FROM_S
   const rained = since >= 0 && wet > 0
-  beadUniforms.uBeadLee.value = rained ? ease(0, 0.6, wet) : 0
   // Beads run only in the rain and on what it leaves: a skin that is merely damp, as at dawn and in the thaw, keeps its dew where it formed.
   if (rained) rainBead(own, along, across, since, Math.sqrt(wet), out)
   else if (dew > 0) dewBead(own, along, across, dew, 1 - Math.min(1, 4 * wet), out)
+  return out
+}
+
+// The dew alone, whatever the rain does: for a part that lays its dew once and leaves the rain to the shader.
+export function dewBeadAt(own: number, along: number, across: number, _time: number, out: Bead): Bead {
+  out.along = along
+  out.across = across
+  out.radiusM = 0
+  out.hang = 0
+  out.fallM = 0
+  const dew = stateUniforms.uPlantDew.value
+  if (dew > 0) dewBead(own, along, across, dew, 1, out)
   return out
 }

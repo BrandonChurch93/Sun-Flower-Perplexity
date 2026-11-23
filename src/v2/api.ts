@@ -15,6 +15,9 @@ export interface Dials {
   cold: number
   frost: number
   dew: number
+  // The one drop at the tip of the thawing leaf: how full it hangs, and how far the one that let go has fallen, in metres.
+  drop: number
+  dropFall: number
   rain: number
   wet: number
   puddle: number

@@ -238,23 +238,60 @@ export function flashAt(seconds: number): number {
   return clamp(f)
 }
 
-// The frost forms in the last night of the first growth, when the plant has all but stopped, and has melted to a trace before the plant grows again.
+// The frost forms in the last night of the first growth, when the plant has all but stopped. It is still growing in the first close shot,
+// stands whole while the sun comes through in the second, goes to water in the third, and is a trace before the plant grows again.
 const FROST_LEFT = 0.15
+const FROST_FULL = 20.5
+const FROST_GOES = 22.7
+const frostRise = new Monotone([[16.9, 0], [17.9, 0.46], [19, 0.7], [FROST_FULL, 1]], [[16.9, 0], [FROST_FULL, 0]])
+const frostMelt = new Monotone([[FROST_GOES, 1], [23.4, 0.82], [24.3, 0.42], [25, FROST_LEFT]], [[FROST_GOES, 0]])
 
 export function frostAtBar(b: number): number {
   if (b < 16.9) return 0
-  if (b < 18) return smooth((b - 16.9) / 1.1)
-  if (b < 22.5) return 1
-  if (b < 25) return lerp(1, FROST_LEFT, smooth((b - 22.5) / 2.5))
+  if (b < FROST_FULL) return frostRise.at(b)
+  if (b < FROST_GOES) return 1
+  if (b < 25) return frostMelt.at(b)
   return FROST_LEFT * (1 - smooth((b - 25) / 0.4))
 }
 
+// The mist thins in one step on the cut of bar 21, where the music has its one low hit of the hold, and goes on thinning from there:
+// the sun is through in the second close shot.
+const SUN_CUT = hitBar(21) - 1e-9
+const FOG_THICK = 0.8
+const FOG_CUT = 0.62
+const FOG_THIN = 0.35
+
 export function fogAtBar(b: number): number {
   if (b < 16.5) return 0
-  if (b < 17) return 0.8 * smooth((b - 16.5) / 0.5)
-  if (b < 21) return 0.8
-  if (b < 25) return lerp(0.8, 0.35, smooth((b - 21) / 4))
-  return 0.35 * (1 - smooth((b - 25) / 0.5))
+  if (b < 17) return FOG_THICK * smooth((b - 16.5) / 0.5)
+  if (b < SUN_CUT) return FOG_THICK
+  if (b < 25) {
+    const u = clamp((b - SUN_CUT) / (25 - SUN_CUT))
+    return lerp(FOG_CUT, FOG_THIN, 1 - (1 - u) * (1 - u))
+  }
+  return FOG_THIN * (1 - smooth((b - 25) / 0.5))
+}
+
+// The one drop at the tip of the thawing leaf. It lets go in the quietest eighth of the hold and falls slower than a real drop would, so that it can be seen.
+const DROP_FROM = 23.3
+const DROP_GOES = hitBar(24, 3) - 1e-9
+const DROP_PULL = 0.8
+
+// How full the drop at the tip hangs. The one that follows the fallen drop stays small.
+export function dropAtBar(b: number): number {
+  if (b < DROP_FROM) return 0
+  if (b < DROP_GOES) {
+    const u = (b - DROP_FROM) / (DROP_GOES - DROP_FROM)
+    return 1 - (1 - u) * (1 - u)
+  }
+  return lerp(0.25, 0.5, smooth((b - DROP_GOES) / 0.6)) * (1 - smooth((b - 25.2) / 0.8))
+}
+
+// How far the drop that let go has fallen, in metres. 0 while it hangs.
+export function dropFallAtBar(b: number): number {
+  if (b < DROP_GOES) return 0
+  const s = (b - DROP_GOES) * BAR
+  return Math.min(1, 0.5 * DROP_PULL * s * s)
 }
 
 const BREAK = hitBar(41)
@@ -362,7 +399,7 @@ export function dewAtBar(b: number): number {
   const phase = w - Math.floor(w)
   const morning = Math.max(1 - smooth(phase / 0.3), smooth((phase - 0.88) / 0.12))
   const early = 1 - smooth((b - 14) / 2.4)
-  const thaw = b >= 23 && b < 27 ? smooth((b - 23) / 2) * (1 - smooth((b - 25.2) / 1.6)) : 0
+  const thaw = b >= FROST_GOES && b < 27 ? smooth((b - FROST_GOES) / 1.6) * (1 - smooth((b - 25.2) / 1.6)) : 0
   return clamp(Math.max(morning * early, thaw))
 }
 

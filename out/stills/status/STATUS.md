@@ -1,11 +1,12 @@
-# Status 14
+# Status 15
 
-2026-11-23 06:14 UTC
+2026-11-23 06:59 UTC
 
-- Status 14 · Phase 3. The crane now ends lower and nearer, so the pair stands larger against the field, the horizon sits a third from the top and the sun on the left third. The far field is one sea of heads to the mist (the ruled line, the yellow dashes and the holes are gone). The lens glow sits on the drawn sun. The one shape that was still made in play (frame 3350) is mended: frames 3331 to 3351 make nothing after loading. The plant's bud and constant glow, the place's two tables and the field's hold fix are merged; 175 tests pass.
-- Next: Your note is in the plan: frost close ups on hard cuts at bars 19, 21 and 23 (each lands on a chord, back to the wide on 25), and the lens closes in on the opening head from bar 55 and pulls out on 65. Reference pictures for those shots come first. Also in work: the last sunset (narrow orange band, red disc, darker land), the leaf look, the plant's cost while growing. Time used: 8.2 h of 30 h.
+- Status 15 · Phase 3. Your new notes are in the film: three close shots inside the frost hold, cut hard on bars 19, 21, 23 and 25 (the only cuts in the film), and one unbroken move in toward the bud from bar 55 that holds on the bloom and backs out into the final reveal. The three frost angles were picked from 30 test angles; five new reference pictures made.
+- Next: Bring the ice up to the reference pictures at this distance (crystals with form, a closed fringe, glints that open into soft discs, the thaw with one falling drop), then the end look and the first whole pass of the film. Time used: 9.0 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5
-- `status-2.jpg`: Bar 67: the pull back begins
-- `status-3.jpg`: Bar 73: the sun touches the ridge
+- `status-1.jpg`: Targets for the three frost close shots, new reference pictures: a leaf edge with the dim sun in the mist, the tip as the sun comes through, the thaw
+- `status-2.jpg`: The same three shots in the film now, from the cut cameras, draft quality. The framing is set, the ice is not at the target yet
+- `status-3.jpg`: The camera in close for the bloom: bars 57, 58.5 and 61, draft quality
+- `status-4.jpg`: Bars 55 to 67 on one sheet: in toward the bud, the bloom, back out to the field
