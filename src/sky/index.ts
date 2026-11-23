@@ -163,9 +163,14 @@ class FieldSky implements Sky {
     for (const quality of qualities) renderer.initRenderTarget(this.maps[quality])
     renderer.initRenderTarget(this.primer)
     renderer.setRenderTarget(old)
+    this.prime(renderer)
   }
 
-  warm(renderer: THREE.WebGLRenderer): void {
+  // Both programs, the screen triangle and the atlas mip chains already
+  // exist when load resolves, even for a caller that skips film warm-up.
+  warm(_renderer: THREE.WebGLRenderer): void {}
+
+  private prime(renderer: THREE.WebGLRenderer): void {
     const old = renderer.getRenderTarget()
     const u = this.cloud.uniforms
     u.uSteps.value = 3
