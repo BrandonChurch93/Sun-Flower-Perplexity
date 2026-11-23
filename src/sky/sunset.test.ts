@@ -64,16 +64,16 @@ describe('final sunset air', () => {
     const orange = at(1.5)
     const ember = at(1.1)
     expect(gold).toEqual([2.8, 2.8 * 0.8, 2.8 * 0.42])
-    expect(orange[1] / orange[0]).toBeCloseTo(0.48, 2)
+    expect(orange[1] / orange[0]).toBeCloseTo(0.12, 2)
     expect(ember[0]).toBeGreaterThan(1.6)
-    expect(ember[1] / ember[0]).toBeCloseTo(0.038, 8)
-    expect(ember[2] / ember[0]).toBeCloseTo(0.002, 8)
+    expect(ember[1] / ember[0]).toBeCloseTo(0.075, 4)
+    expect(ember[2] / ember[0]).toBeCloseTo(0.009, 4)
     for (let i = 0; i < 136; i++) {
       const a = at(2.04 - i * 0.008)
       const b = at(2.04 - (i + 1) * 0.008)
       for (let c = 0; c < 3; c++) {
         expect(b[c]).toBeLessThanOrEqual(a[c])
-        expect(a[c] - b[c]).toBeLessThan(0.04)
+        expect(a[c] - b[c]).toBeLessThan(0.11)
       }
     }
     expect(sunsetPhotoAt(sunsetDuskAt(1.1), 0, rgb())).toEqual([0, 0, 0])

@@ -12,11 +12,12 @@ export function sunsetPhotoAt(dusk: number, transmission: number, out: RGB): RGB
   // The low air takes green and blue out of the photosphere, while its
   // red channel stays over white. This is radiance for the lens, not a
   // display swatch; the diffuse air has its own angular colours.
-  const ember = smoothstep(0.56, 0.94, dusk)
+  const lowAir = smoothstep(0.30, 0.48, dusk)
+  const ember = smoothstep(0.48, 0.95, dusk)
   const red = lerp(2.8, 1.60, dusk) * transmission
   out[0] = red
-  out[1] = red * lerp(lerp(0.80, 0.15, dusk), 0.038, ember)
-  out[2] = red * lerp(lerp(0.42, 0.019, dusk), 0.002, ember)
+  out[1] = red * lerp(lerp(0.80, 0.15, dusk), lerp(0.12, 0.075, ember), lowAir)
+  out[2] = red * lerp(lerp(0.42, 0.019, dusk), lerp(0.032, 0.009, ember), lowAir)
   return out
 }
 
