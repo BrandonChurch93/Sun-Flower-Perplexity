@@ -9,7 +9,7 @@ import { furrow } from '../soil.ts'
 import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { DOT_LIFE_S, dotFragment, dotGeometry, dotVertex } from './dots.ts'
-import { hazeFragment, hazeGeometry, hazeVertex } from './haze.ts'
+import { HAZE_BEHIND_M, HAZE_FROM_M, hazeFragment, hazeGeometry, hazeVertex } from './haze.ts'
 import { puffFragment, puffGeometry, puffVertex } from './puffs.ts'
 import { prepareDrops, rainSpan } from '../../weather/rain/drops.ts'
 import { FineRain, LANDING_FLOATS, landings } from './landings.ts'
@@ -27,7 +27,6 @@ const FINE_CROWN_M = 0.00025
 // The square of ground whose landings are drawn, as half its side at each quality, and how far toward the lens from the plant its middle lies.
 const SPLASH_HALF_M = [1.5, 1.5, 1.0]
 const SPLASH_TOWARD = 0.3
-const HAZE_HALF_M = 2.2
 const BED_M = -furrow.depthM - 0.003
 // Full, the water stands a little over the mean ground: it floods the dips beside the furrow and leaves the clods as islands.
 const FULL_M = 0.0045
@@ -142,8 +141,8 @@ class Puddles implements Part {
     lit.uStalk.value.set(heightAt(now.tau), Math.max(stemBaseRadius(now.tau), 0.004), 0.3 * heightAt(now.tau), 0.85)
     // The rain keeps the water chopped; once it has passed the face stills and mirrors whole.
     lit.uChop.value = 0.12 + 0.55 * Math.sqrt(rain)
-    lit.uHaze.value = 0.16 * rain * rain
-    lit.uHazeAt.value.set(eye.x * 0.45, eye.z * 0.45, HAZE_HALF_M)
+    lit.uHaze.value = 0.24 * rain * rain
+    lit.uHazeAt.value.set(eye.x, eye.z, Math.max(HAZE_FROM_M, Math.hypot(eye.x, eye.z) + HAZE_BEHIND_M))
     lit.uHazeFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 2)
     lit.uHazeFlashAt.value.copy(now.flashAt)
     lit.uHazeStrike.value = Math.min(1, 2 * (d.flash + later.dials.flash))

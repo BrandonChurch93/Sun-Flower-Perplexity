@@ -70,15 +70,15 @@ void main() {
   float lot = hash11(one * 3.3 + vSeed * 71.0);
   float runs = (0.35 + 0.65 * span) * vOpen;
   float tail = runs * (0.3 + 0.4 * lot);
-  float stroke = exp(-off * off / 0.05) * smoothstep(tail - 0.1, tail, far) * (1.0 - smoothstep(runs - 0.12, runs, far)) * step(0.3, lot) * smoothstep(1.35, 1.0, abs(turn));
-  float mist = 0.3 * (1.0 - smoothstep(0.0, 0.2 + 0.4 * vOpen, length(vec2(from.x, from.y * 1.7))));
+  float stroke = exp(-off * off / 0.05) * smoothstep(tail - 0.1, tail, far) * (1.0 - smoothstep(runs - 0.12, runs, far)) * step(0.3, lot) * (1.0 - smoothstep(1.0, 1.35, abs(turn)));
+  float mist = 0.3 * (1.0 - smoothstep(0.0, 0.2 + 0.4 * saturate(vOpen), length(vec2(from.x, from.y * 1.7))));
   float grain = valueNoise(vAt * 2.6 + vSeed * 57.0);
   float cover = min(0.85, ${COVER.toFixed(2)} * vShow * (stroke + mist * (0.5 + 0.5 * grain)));
   if (cover < 0.004) discard;
   vec3 ray = normalize(vWorld - uCamPos);
   float toSun = saturate(dot(ray, uSunDir));
   float t4 = toSun * toSun * toSun * toSun;
-  float toStrike = max(dot(normalize(ray.xz), normalize(uHazeFlashAt.xz + vec2(1e-5))), 0.0);
+  float toStrike = max(dot(normalize(ray.xz + vec2(1e-5, 0.0)), normalize(uHazeFlashAt.xz + vec2(1e-5))), 0.0);
   float t2 = toStrike * toStrike;
   float reach = t2 * t2 * t2 * t2 * mix(1.0, 0.3, smoothstep(1.5, 6.0, distance(uCamPos, vWorld)));
   // Fine drops throw on the light that comes from behind them: over the soil the puff is the pale of the sky's foot.
