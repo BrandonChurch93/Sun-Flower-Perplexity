@@ -370,6 +370,7 @@ void main() {
     cover = saturate(star) * saturate(vLight.w / 8.0);
   }
 #ifdef BLUR_CIRCLE
+  if (cover < 0.004) discard;
   outColor = vec4(0.0, 0.0, 0.0, cover > 0.2 ? cocOf(vDepth) : 4096.0);
 #else
   float sun = plantSun(vLitAt, uSunDir);
