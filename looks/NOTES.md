@@ -1,10 +1,10 @@
 # Looks of rain
 
-2026-11-23 00:32 UTC, at commit 029eaa3 of agent/rain.
+2026-11-23 00:57 UTC, at commit 2ad3483 of agent/rain.
 
-- `01-storm-bar-35-film-view-heavy-drops-now-end-at-th.jpg`: storm bar 35 film view, heavy drops now end at their landings
-- `02-flash-bar-37-film-view.jpg`: flash bar 37 film view
-- `03-break-bar-41-25-film-view-sparks-still-too-round.jpg`: break bar 41.25 film view, sparks still too round
-- `04-storm-from-a-low-test-camera-puddle-and-haze.jpg`: storm from a low test camera, puddle and haze
-- `05-break-from-the-test-camera-puddle-too-flat-and-w.jpg`: break from the test camera, puddle too flat and white
-- `06-arrival-clip-55-5-to-59-5-s-1-sample.mp4`: arrival clip 55.5 to 59.5 s, 1 sample
+- `01-storm-bar-37-5-the-film-s-new-camera-the-puddle-.jpg`: storm bar 37.5 the film's new camera, the puddle now in frame
+- `02-break-bar-41-25-film-camera-last-rain-as-gold-li.jpg`: break bar 41.25 film camera, last rain as gold lines, puddle takes the glare
+- `03-flash-bar-37-02-from-the-puddle-view.jpg`: flash bar 37.02 from the puddle view
+- `04-break-from-the-puddle-view.jpg`: break from the puddle view
+- `05-clip-62-to-65-s-old-camera-1-sample.mp4`: clip 62 to 65 s old camera, 1 sample
+- `06-clip-67-5-to-71-5-s-old-camera-1-sample.mp4`: clip 67.5 to 71.5 s old camera, 1 sample
