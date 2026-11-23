@@ -73,7 +73,7 @@ export async function run(args: Args): Promise<void> {
   const frames = named ?? (ranged ? Array.from({ length: Math.floor((to - from) / every) + 1 }, (_, i) => from + i * every) : null)
   if (broken && !frames) throw new Error('a broken film is drawn here, not read from play: name the frames with --frames a,b')
   const most = num(args, 'most', MOST)
-  const dir = path.join(OUT, 'numbers', broken ? `broken-${broken}` : frames && ranged ? `film.${from}-${to}` : 'film')
+  const dir = path.join(OUT, 'numbers', broken ? `broken-${broken}` : frames && ranged ? `film.${from}-${to}` : named ? `film.${named.join('.')}` : 'film')
   const rows: Row[] = []
   const findings: Finding[] = []
   let unread = 0
