@@ -10,7 +10,8 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { leavesApart, placeTurned } from './turn.ts'
-import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, gustGlsl, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward, windWay } from './layout.ts'
+import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
 const PICTURE_SIZE = 0.72
@@ -48,13 +49,14 @@ uniform float uOpen;
 uniform float uCount;
 uniform float uWind;
 uniform float uAhead;
+uniform float uStand;
 uniform float uSquat;
 uniform float uFarthest;
 ${gustGlsl}
 ${sizeGlsl}
 void main() {
   float across = aCorner.x;
-  float size = sizeAt(aPlace.w, aVary.z, uAhead);
+  float size = sizeAt(aPlace.w, aVary.z, uAhead) * uStand;
   // Far off, over a grown field, only the head and the leaves beside it clear the rows in front.
   float v = mix(1.0 - mix(uCrop.x, uCrop.y, smoothstep(35.0, 66.0, length(aPlace.xy - uCamPos.xz))), 1.0, aCorner.y);
   // Far off no two heads are the same: each picture is drawn larger or smaller about its head, tipped to one side, and half of them the other way round.
@@ -327,6 +329,7 @@ export class FarField {
     uOpen: { value: 0 },
     uAbove: { value: 0 },
     uAhead: { value: 1 },
+    uStand: { value: 1 },
     uLag: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
@@ -390,7 +393,7 @@ export class FarField {
     for (const plant of this.plants) await plant.load(assets)
   }
 
-  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number): void {
+  prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number, canopy: number, stand: number): void {
     this.time = timeOpen
     this.plants.forEach((plant, i) => {
       const clock = kindTime(timeOpen, i, 'pictures')
@@ -402,6 +405,7 @@ export class FarField {
     })
     this.uniforms.uWind.value = now.dials.wind
     this.uniforms.uAhead.value = plantAhead(timeOpen)
+    this.uniforms.uStand.value = stand
     this.uniforms.uLag.value = lagAt(timeOpen)
     // Moonlight does not glow green through a leaf; the sun does.
     this.uniforms.uThrough.value = now.lightKind === 'sun' ? 1 - now.night : 0

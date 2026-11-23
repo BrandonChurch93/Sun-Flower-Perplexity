@@ -1,5 +1,6 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
+import { gustAt, windWay } from '../v2/wind.ts'
 import { heightAt, setHeadKeep, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
@@ -80,6 +81,51 @@ const SETTLED_T = 45
 const KNEE = 12
 const softMin = (a: number, b: number): number => -Math.log(Math.exp(-KNEE * a) + Math.exp(-KNEE * b)) / KNEE
 export const plantAhead = (time: number): number => Math.min(4, Math.max(1, heightAt(SETTLED_T) / Math.max(heightAt(time), 0.001)))
+// The plant towers over a young field. As seedlings the rows are its size; through the climb and the storm they stand at two fifths of it,
+// and on the way up to the bud they stay under the lens that rises with the plant. By the bud they have their full size.
+// Each pair is a mark of the plant's clock and the share of its full height the tallest neighbor stands at.
+const STAND: [number, number][] = [[9, 1], [12, 0.66], [16, 0.43], [20, 0.405], [29.2, 0.405], [30.03, 0.41], [31.19, 0.5], [32.35, 0.62], [33.5, 0.72], [34.66, 0.76], [38.14, 0.8], [41.6, 0.84], [BUD_T, 1]]
+// While the field is low its plants are nearly of a height: how much of each one's own size shows, as a power of it.
+// It comes back no faster than the field grows, so no neighbor ever gets shorter.
+const EVEN: [number, number][] = [[9, 1], [12, 0.12], [29.2, 0.12], [34.66, 0.6], [41.6, 0.86], [BUD_T, 1]]
+// A curve through the marks that never turns back between two of them.
+function curve(marks: [number, number][]): (time: number) => number {
+  const n = marks.length
+  const d = marks.slice(1).map((p, i) => (p[1] - marks[i][1]) / (p[0] - marks[i][0]))
+  const m = marks.map((_, i) => (i === 0 || i === n - 1 ? 0 : d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2))
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) {
+      m[i] = 0
+      m[i + 1] = 0
+      continue
+    }
+    const a = m[i] / d[i]
+    const b = m[i + 1] / d[i]
+    const r = Math.hypot(a, b)
+    if (r > 3) {
+      m[i] = (3 * a * d[i]) / r
+      m[i + 1] = (3 * b * d[i]) / r
+    }
+  }
+  return (time: number): number => {
+    if (time <= marks[0][0]) return marks[0][1]
+    if (time >= marks[n - 1][0]) return marks[n - 1][1]
+    let i = 0
+    while (time > marks[i + 1][0]) i++
+    const h = marks[i + 1][0] - marks[i][0]
+    const t = (time - marks[i][0]) / h
+    const t2 = t * t
+    const t3 = t2 * t
+    return (2 * t3 - 3 * t2 + 1) * marks[i][1] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * marks[i + 1][1] + (t3 - t2) * h * m[i + 1]
+  }
+}
+export const standAt = curve(STAND)
+export const evenAt = curve(EVEN)
+// The rows nearest the plant are the tallest of the young field: by how much the far ones are shorter.
+export const farShortAt = (time: number): number => 0.05 * ramp(9, 14, time) * (1 - ramp(36, BUD_T, time))
+// What a neighbor's size is multiplied by: `share` is its height as a share of the plant's, `reach` how far from the plant it stands.
+export const standOf = (share: number, reach: number, stand: number, even: number, farShort: number): number =>
+  stand * Math.pow(Math.max(share, 0.05), even - 1) * (1 - farShort * step(2, 9, reach))
 // Before the bloom the rows are uneven: the plants in poorer ground are well behind, and catch up as the buds fill.
 export const lagAt = (time: number): number => 0.3 * ramp(12, 22, time) * (1 - ramp(35, 40, time))
 export const youngOf = (tone: number, lag = 0): number => 0.9 + 0.1 * tone - lag * (1 - step(0.25, 0.55, tone))
@@ -150,38 +196,6 @@ float sizeAt(float size, float tone, float ahead) {
 }
 `
 
-// The wind. A gust crosses the field as a wave: a front that strikes, holds and lets go, one every few seconds, travelling toward azimuth 42.
-// It runs on the film second, so it keeps moving in a hold.
-export const WIND_TOWARD_DEG = 42
-export const windWay = { x: Math.sin(WIND_TOWARD_DEG * RAD), z: Math.cos(WIND_TOWARD_DEG * RAD) }
-const WAVE_M = 27
-const WAVE_SPEED = 7.5
-const RIPPLE_M = 8.5
-const RIPPLE_SPEED = 5
-const pulse = (f: number): number => {
-  const x = f - Math.floor(f)
-  const rise = Math.min(1, x / 0.12)
-  return rise * rise * (3 - 2 * rise) * Math.exp(-3.2 * Math.max(x - 0.12, 0))
-}
-// How hard the air pushes at a place and a second, 0 to about 1.
-export function gustAt(x: number, z: number, seconds: number): number {
-  const along = x * windWay.x + z * windWay.z
-  const across = z * windWay.x - x * windWay.z
-  const front = (along - WAVE_SPEED * seconds) / WAVE_M + 0.22 * Math.sin(across * 0.045 + 1.3) + 0.1 * Math.sin(across * 0.13 - seconds * 0.21)
-  return 0.85 * pulse(-front) + 0.15 * (0.5 + 0.5 * Math.sin((2 * Math.PI * (along - RIPPLE_SPEED * seconds)) / RIPPLE_M + across * 0.4))
-}
-export const gustGlsl = /* glsl */ `
-float gustPulse(float f) {
-  float x = fract(f);
-  return smoothstep(0.0, 0.12, x) * exp(-3.2 * max(x - 0.12, 0.0));
-}
-float gustAt(vec2 at, float seconds) {
-  float along = at.x * ${windWay.x.toFixed(4)} + at.y * ${windWay.z.toFixed(4)};
-  float across = at.y * ${windWay.x.toFixed(4)} - at.x * ${windWay.z.toFixed(4)};
-  float front = (along - ${WAVE_SPEED.toFixed(2)} * seconds) / ${WAVE_M.toFixed(2)} + 0.22 * sin(across * 0.045 + 1.3) + 0.1 * sin(across * 0.13 - seconds * 0.21);
-  return 0.85 * gustPulse(-front) + 0.15 * (0.5 + 0.5 * sin(6.2831853 * (along - ${RIPPLE_SPEED.toFixed(2)} * seconds) / ${RIPPLE_M.toFixed(2)} + across * 0.4));
-}
-`
 // How far a stem leans under the wind at full strength, as a slope: a steady lean and the gust on top of it.
 export const LEAN_STEADY = 0.08
 export const LEAN_GUST = 0.56
@@ -226,6 +240,26 @@ export const pictureCount = farVariants.length * pictureTurns
 export const meanTurn = 0.25
 const TURN_SCATTER = 0.8
 const SIDEWAYS = 0.2
+// How tall the neighbors stand at one moment of the plant's clock, and the size of one of them: what its copy of the plant is multiplied by.
+export interface Stature { ahead: number; lag: number; uneven: number; behind: number; stand: number; even: number; farShort: number; plantTall: number; young: boolean }
+export function statureAt(time: number, into: Stature = { ahead: 1, lag: 0, uneven: 0, behind: 0, stand: 1, even: 1, farShort: 0, plantTall: 1, young: false }): Stature {
+  into.ahead = plantAhead(time)
+  into.lag = lagAt(time)
+  // From knee height on no two neighbors stand as tall: the spread of their heights comes in as they grow.
+  into.uneven = Math.max(lateAt(time), ramp(14, 30, time))
+  into.behind = behindAt(time)
+  into.stand = standAt(time)
+  into.even = evenAt(time)
+  into.farShort = farShortAt(time)
+  into.plantTall = Math.max(heightAt(time), 1e-4)
+  into.young = into.stand < 1 || into.even < 1 || into.farShort > 0
+  return into
+}
+// `kindTall` is the height of the neighbor's kind at its own clock, `reach` how far from the plant it stands.
+export function sizeOf(s: Stature, size: number, tone: number, own: Own, kindTall: number, reach: number): number {
+  const full = sizeAt(size, youngOf(tone, s.lag), s.ahead) * (1 + s.uneven * (own.tall - 1)) * (1 + s.behind * (own.young - 1))
+  return s.young ? full * standOf((full * kindTall) / s.plantTall, reach, s.stand, s.even, s.farShort) : full
+}
 const BEHIND = 0.22
 const SHORT = 0.1
 const STRAGGLERS = 0.05

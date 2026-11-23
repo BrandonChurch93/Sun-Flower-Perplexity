@@ -9,7 +9,7 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { FarField } from './far.ts'
 import { leanBy, leavesApart, placeTurned, turnBy } from './turn.ts'
-import { PLACE, thinOrder, behindAt, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
+import { PLACE, thinOrder, statureAt, sizeOf, standOf, blownOf, earlyAt, earlyCode, faceAt, faceToward, farVariants, fieldAge, fieldPlaces, frontM, kindTime, lagAt, lateAt, lateLean, lateLeafCode, leafShort, leafSpin, nearVariants, opensEarly, ownCode, ownOf, plantAhead, settled, shareOf, shortWay, sizeAt, squatAt, hangAt, STIFF_LEAF, stiffAt, toward, wideAt, youngOf, type Own, type Tier } from './layout.ts'
 
 // A neighbor stands 0.70 to 0.85 as tall as the plant: the tops of the field are at the middle of that.
 const CANOPY = 0.72
@@ -62,6 +62,7 @@ export class Field {
   private rise = 0
   private ahead = 1
   private lag = 0
+  private readonly stature = statureAt(0)
   private seconds = 0
   private wind = 0
   private leafWind = 0
@@ -124,7 +125,10 @@ export class Field {
     const squat = squatAt(timeOpen)
     this.lag = lagAt(timeOpen)
     const tall = heightAt(fieldAge(timeOpen))
-    const spread = tall * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
+    const st = statureAt(timeOpen, this.stature)
+    const full = tall * sizeAt(CANOPY, youngOf(0.5, this.lag), this.ahead)
+    const low = standOf(full / st.plantTall, 9, st.stand, st.even, st.farShort)
+    const spread = full * low
     const canopy = spread * (1 - squat)
     fieldUniforms.uSquat.value = squat
     fieldUniforms.uHang.value = hangAt(timeOpen)
@@ -140,7 +144,7 @@ export class Field {
     fieldUniforms.uDeep.value = THREE.MathUtils.smoothstep(tall * CANOPY, 0.7, 1.25)
     // The leaves in the gaps come up as the crop closes over them.
     this.rise = THREE.MathUtils.smoothstep(spread, 0.15, 0.6)
-    this.far.prepare(timeOpen, timeClose, still, stillClose, eyeHeightM, canopy)
+    this.far.prepare(timeOpen, timeClose, still, stillClose, eyeHeightM, canopy, low)
   }
 
   show(on: boolean): void {
@@ -149,7 +153,11 @@ export class Field {
   }
 
   // Leaves out every neighbor that stands wholly to one side of the frame or behind the lens. `tanHalfWidth` is half the gate over the focal length.
-  look(pose: CameraPose, tanHalfWidth: number, aspect: number): number {
+  look(pose: CameraPose, tanHalfWidth: number, aspect: number, quality?: Quality): number {
+    if (quality) {
+      this.quality = quality
+      this.far.use(quality)
+    }
     this.pose = pose
     this.tanHalfWidth = tanHalfWidth
     this.aspect = aspect
@@ -174,9 +182,6 @@ export class Field {
     const reach = 0.9
     const late = lateAt(this.time)
     const before = earlyAt(this.time)
-    const behind = behindAt(this.time)
-    // From knee height on no two neighbors stand as tall: the spread of their heights comes in as they grow.
-    const uneven = Math.max(late, THREE.MathUtils.smoothstep(this.time, 14, 30))
     const stiff = stiffAt(this.time)
     const windy = this.wind > 0 || this.leafWind > 0
     this.filled = this.quality
@@ -185,6 +190,7 @@ export class Field {
       const all = g.all
       const clock = kindTime(this.time, g.index, g.tier)
       const early = opensEarly(g.index, g.tier)
+      const kindTall = heightAt(clock)
       const local = Math.atan2(g.axis.value.x, g.axis.value.z)
       const most = g.bare ? UNDER_REACH_M[this.quality] : 1000
       const thin = g.tier === 'far' && !g.bare ? THIN_TO[this.quality] : 1
@@ -205,7 +211,7 @@ export class Field {
         const face = late > 0 ? faceAt(id, Math.hypot(all[i], all[i + 1])) : 0
         const round = early ? 1 : settled(clock, id)
         placeTurned(all, i, seen, still, n, round > 0 ? round * shortWay(g.face[k] - local - all[i + 2]) : 0)
-        seen[n + 3] = still[n + 3] = sizeAt(all[i + 3], youngOf(all[i + 6], this.lag), this.ahead) * (g.bare ? this.rise : 1) * (1 + uneven * (own.tall - 1)) * (1 + behind * (own.young - 1))
+        seen[n + 3] = still[n + 3] = sizeOf(this.stature, all[i + 3], all[i + 6], own, kindTall, Math.hypot(all[i], all[i + 1])) * (g.bare ? this.rise : 1)
         if (before > 0) {
           seen[n + 4] += before * own.leanX
           seen[n + 5] += before * own.leanZ

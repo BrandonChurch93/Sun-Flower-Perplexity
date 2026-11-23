@@ -2,7 +2,11 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { config } from '../src/config.ts'
 import { hash01, streamSeed } from '../src/core/random.ts'
-import { PLACE, WIND_TOWARD_DEG, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, gustAt, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, toward, windWay } from '../src/field/layout.ts'
+import { PLACE, blownOf, companionPlace, faceToward, fieldAge, fieldEast, fieldPicturesM, fieldPlaces, fieldWest, kindTime, lateAt, nearVariants, farVariants, ownOf, right, settled, shareOf, sizeOf, statureAt, toward } from '../src/field/layout.ts'
+import { heightAt } from '../src/plant/growth.ts'
+import { barTime, tauAtBar } from '../src/v2/clock.ts'
+import { rigAtFilm } from '../src/v2/rig.ts'
+import { WIND_TOWARD_DEG, gustAt, windWay } from '../src/v2/wind.ts'
 
 const places = fieldPlaces()
 const all = [places.near, places.far]
@@ -199,6 +203,52 @@ describe('the wind over the field', () => {
     }
     expect(most).toBeGreaterThan(0.1)
     expect(most).toBeLessThan(0.4)
+  })
+
+  // Every full neighbor's height at one bar of the film, lowest and highest. The few that are far behind in their rows are left out of the lowest.
+  const heightsAt = (bar: number): { low: number; high: number; each: number[] } => {
+    const tau = tauAtBar(bar)
+    const st = statureAt(tau)
+    const each: number[] = []
+    let low = Infinity
+    let high = 0
+    const tiers = [{ tier: 'near' as const, list: places.near, kinds: nearVariants.length }, { tier: 'far' as const, list: places.far, kinds: farVariants.length }]
+    for (const { tier, list, kinds } of tiers) {
+      for (let k = 0; k < kinds; k++) {
+        const mine = shareOf(list, k, kinds)
+        const kindTall = heightAt(kindTime(tau, k, tier))
+        for (let i = 0; i < mine.length; i += PLACE) {
+          const own = ownOf(mine[i + 7])
+          const h = sizeOf(st, mine[i + 3], mine[i + 6], own, kindTall, Math.hypot(mine[i], mine[i + 1])) * kindTall
+          each.push(h)
+          high = Math.max(high, h)
+          if (own.young > 0.7) low = Math.min(low, h)
+        }
+      }
+    }
+    return { low, high, each }
+  }
+
+  it('is a young field under a towering plant in the storm, and stays under the lens on the way up', () => {
+    const storm = heightsAt(35)
+    const plant = heightAt(tauAtBar(35))
+    expect(storm.high).toBeLessThan(0.365)
+    expect(storm.low).toBeGreaterThan(0.33 * plant)
+    expect(storm.high).toBeLessThan(0.41 * plant)
+    for (let bar = 43; bar <= 55; bar += 0.25) expect(heightsAt(bar).high, `bar ${bar}`).toBeLessThan(rigAtFilm(barTime(bar)).heightM)
+    // In bloom the field has its full size: the plant stands a little over it.
+    const bloom = heightsAt(61)
+    expect(bloom.high).toBeGreaterThan(0.8 * heightAt(tauAtBar(61)))
+    expect(bloom.high).toBeLessThan(heightAt(tauAtBar(61)))
+  })
+
+  it('no neighbor gets shorter by more than a few millimeters between two looks', () => {
+    let before = heightsAt(5).each
+    for (let bar = 5.5; bar <= 75; bar += 0.5) {
+      const now = heightsAt(bar).each
+      for (let i = 0; i < now.length; i += 7) expect(now[i], `bar ${bar}`).toBeGreaterThan(before[i] - 0.008)
+      before = now
+    }
   })
 })
 
