@@ -20,6 +20,8 @@ const qualities = ['low', 'high', 'film'] as const
 const north = new THREE.Vector3(0, Math.SQRT1_2, Math.SQRT1_2)
 const rgb = (): RGB => [0, 0, 0]
 const RAD = Math.PI / 180
+const FROST = [0.82, 0.94, 1.11] as const
+const Y = [0.2126, 0.7152, 0.0722] as const
 
 function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTarget {
   return new THREE.WebGLRenderTarget(width, height, {
@@ -47,6 +49,7 @@ class FieldSky implements Sky {
   private readonly sun = new THREE.Vector3(0, 0.4, -0.9165)
   private readonly upper = rgb()
   private readonly lower = rgb()
+  private readonly mist = rgb()
   private readonly groundSun = rgb()
   private readonly cloudSun = rgb()
   private readonly deck = rgb()
@@ -83,6 +86,10 @@ class FieldSky implements Sky {
       uEyeKm: { value: 0.001 },
       uRealSky: { value: 0 },
       uGolden: { value: 0 },
+      uLate: { value: 0 },
+      uDawn: { value: 0 },
+      uOpening: { value: 0 },
+      uMist: { value: new THREE.Vector3() },
       uSteps: { value: 3 },
       uLightSteps: { value: 2 },
     })
@@ -102,6 +109,7 @@ class FieldSky implements Sky {
       uFrostFog: { value: 0 },
       uRainFog: { value: 0 },
       uBreak: { value: 0 },
+      uEnding: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
       uMoon: { value: new THREE.Vector3(0, 0.6, -0.8) },
@@ -142,6 +150,7 @@ class FieldSky implements Sky {
     const cold = smoothstep(0.25, 0.84, d.fog)
     const burst = d.burst
     const lunar = m.moon.y * 0.018
+    const mistLevel = 0.59 * (out.horizonSun[0] * Y[0] + out.horizonSun[1] * Y[1] + out.horizonSun[2] * Y[2])
     for (let c = 0; c < 3; c++) {
       out.direct[c] = this.groundSun[c] + this.moon[c]
       const z = out.zenith[c] + lunar * this.moon[c]
@@ -151,9 +160,9 @@ class FieldSky implements Sky {
       const cap = lerp(z * 0.88 + 0.11 * h, tint * 0.90, blend)
       const far = lerp(h * 0.96 + 0.08 * z, tint * (3.15 + (1 - d.rain) * 0.24), blend)
       const facing = lerp(s * 0.94 + h * 0.11, tint * 4.45 + burst * 0.46 * s, blend)
-      out.zenith[c] = lerp(lerp(z, cap, blend + fair), z * 0.53 + h * 0.47, cold * 0.61)
-      out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), z * 0.33 + h * 0.67, cold * 0.63)
-      out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), z * 0.29 + h * 0.44 + s * 0.27, cold * 0.76)
+      out.zenith[c] = lerp(lerp(z, cap, blend + fair), mistLevel * FROST[c] * 0.91, cold * 0.64)
+      out.horizon[c] = lerp(lerp(h, far, blend + fair * 0.5), mistLevel * FROST[c] * 0.88, cold * 0.60)
+      out.horizonSun[c] = lerp(lerp(s, facing, blend * (1 - 0.45 * burst)), mistLevel * (c === 0 ? 1.39 : c === 1 ? 1.19 : 1.07), cold * 0.76)
     }
     return out
   }
@@ -173,11 +182,16 @@ class FieldSky implements Sky {
     this.extent.set(Math.max(tanX * 1.23, tanX + 0.12), Math.max(tanY * 1.23, tanY + 0.12))
     this.air.skyAt(e, 1, Math.PI * 0.5, this.upper)
     this.air.skyAt(e, 0.03, Math.PI * 0.67, this.lower)
+    this.air.skyAt(e, 0.027, 0, this.mist)
+    const mistLevel = 0.59 * (this.mist[0] * Y[0] + this.mist[1] * Y[1] + this.mist[2] * Y[2])
     this.air.sunAt(e, this.groundSun)
     this.air.sunAt(e, this.cloudSun, true)
     this.air.moonAt(e, this.moon)
     this.air.deckAt(e, this.deck)
     const night = smoothstep(-2.6, -12.6, e)
+    const ending = d.evening * (1 - smoothstep(0.4, 2.7, e))
+    const dawn = (1 - smoothstep(0.22, 0.68, d.lapse)) * (1 - d.evening) * (1 - d.overcast) * (1 - d.fog)
+      * smoothstep(-3.2, 0.7, e) * (1 - smoothstep(2.9, 10.5, e))
     const u = this.cloud.uniforms
     u.uElevation.value = e
     u.uEyeKm.value = 0.001 * pose.position.y
@@ -197,6 +211,10 @@ class FieldSky implements Sky {
     u.uWeather.value.set(d.cover, deckShape, d.sunThrough, d.fog)
     u.uEffects.value.set(d.evening, d.rain, d.flash, d.burst)
     u.uGolden.value = d.evening * smoothstep(-0.015, 0.035, this.sun.y) * (1 - smoothstep(0.15, 0.26, this.sun.y))
+    u.uLate.value = ending * smoothstep(-10.0, -3.9, e)
+    u.uDawn.value = dawn
+    u.uOpening.value = 1 - smoothstep(1.34, 1.92, now.t)
+    u.uMist.value.set(mistLevel * FROST[0], mistLevel * FROST[1], mistLevel * FROST[2])
     u.uTravel.value.set((now.cloud.shiftX + later.cloud.shiftX) * 0.5, (now.cloud.shiftZ + later.cloud.shiftZ) * 0.5)
     u.uSmear.value.set(later.cloud.shiftX - now.cloud.shiftX, later.cloud.shiftZ - now.cloud.shiftZ)
     u.uEvolve.value = 0.5 * (now.cloud.evolve + later.cloud.evolve)
@@ -213,13 +231,21 @@ class FieldSky implements Sky {
     v.uFrostFog.value = d.fog
     v.uRainFog.value = d.rain * d.overcast
     v.uBreak.value = d.burst
+    v.uEnding.value = ending
     v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)
-    v.uSunFace.value.y += RAD * 0.33 * (1 - smoothstep(-0.6, 3.8, e))
+    const refraction = (0.33 + 0.31 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
+    v.uSunFace.value.y += RAD * refraction
     v.uSunFace.value.normalize()
     v.uMoon.value.copy(now.moon)
     v.uMoonDisc.value.fromArray(this.moon).multiplyScalar(2.3)
-    v.uDisc.value.fromArray(this.groundSun).multiplyScalar(87 * (1 - 0.22 * d.fog) * smoothstep(0, 0.025, d.sunThrough))
+    const visibleDisk = smoothstep(0, 0.025, d.sunThrough)
+    const glancing = ending * smoothstep(-1.08, -0.36, e) * (1 - smoothstep(0.2, 1.4, e))
+    const disc = v.uDisc.value.fromArray(this.groundSun).multiplyScalar(49 * (1 - 0.44 * d.fog) * visibleDisk)
+    const peach = (0.35 * dawn + 0.40 * d.evening + 0.58 * d.fog) * disc.x
+    disc.y += peach * 0.44 + 4.2 * glancing
+    disc.z += peach * 0.18 + 0.70 * glancing
+    disc.x += 13.5 * glancing
     this.stellar.setFromMatrix4(this.turn.makeRotationAxis(north, -now.starTurn - 0.18))
   }
 
