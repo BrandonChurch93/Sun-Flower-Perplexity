@@ -166,11 +166,11 @@ in float vMud;
 in float vFlute;
 ${skyMirror}
 vec3 seen(vec3 d) {
-  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y), d.z)), 0.0, 1.0), smoothstep(-0.06, 0.04, d.y));
+  return mix(uGroundBounce * 0.3, skyMirror(normalize(vec3(d.x, abs(d.y) + 1e-5, d.z)), 0.0, 1.0), smoothstep(-0.06, 0.04, d.y));
 }
 void main() {
   vec3 v = normalize(uCamPos - vWorld);
-  vec3 n = normalize(vNormal);
+  vec3 n = normalize(vNormal + vec3(0.0, 1e-6, 0.0));
   n = dot(n, v) < 0.0 ? -n : n;
   vec3 color;
   float alpha = 1.0;
@@ -180,7 +180,7 @@ void main() {
   } else {
     float facing = max(dot(n, v), 0.0);
     if (vKind > 0.5) {
-      float mirror = 0.03 + 0.97 * pow(1.0 - facing, 5.0);
+      float mirror = 0.03 + 0.97 * pow(saturate(1.0 - facing), 5.0);
       vec3 inside = refract(-v, n, 0.75);
       vec3 leaves = refract(inside, 2.0 * dot(n, inside) * inside - n, 1.333);
       alpha = saturate(mirror + 0.92) * vTop;
@@ -189,7 +189,7 @@ void main() {
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.35 * smoothstep(0.5, 1.0, vTop) + 0.5 * sin(17.0 * vTop + 2.3 * vFlute)));
-      float one = mix(0.03, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), mix(5.0, 4.0, vMud));
+      float one = mix(0.03, 0.04, vMud) + 0.93 * pow(saturate(1.0 - dot(n, v)), mix(5.0, 4.0, saturate(vMud)));
       float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.6 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
       // A crown on water is a thin sheet of it: what stands behind shows through, the puddle with the sky in it, and only its foot carries the mud. On mud the crown is mud.
@@ -200,7 +200,7 @@ void main() {
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
-  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, alpha);
+  outColor = vec4(finish(color, vWorld, vDepth, -1.0).rgb, saturate(alpha));
 }
 `
 

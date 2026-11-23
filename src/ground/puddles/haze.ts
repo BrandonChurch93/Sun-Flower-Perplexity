@@ -46,7 +46,7 @@ void main() {
   float toSun = saturate(dot(ray, uSunDir));
   float t4 = toSun * toSun * toSun * toSun;
   // A strike lights the spray on its own side and near at hand, and leaves the rest of it dark over the soil.
-  float toStrike = max(dot(normalize(ray.xz), normalize(uHazeFlashAt.xz + vec2(1e-5))), 0.0);
+  float toStrike = max(dot(normalize(ray.xz + vec2(1e-5, 0.0)), normalize(uHazeFlashAt.xz + vec2(1e-5))), 0.0);
   float t2 = toStrike * toStrike;
   float reach = t2 * t2 * t2 * t2 * mix(1.0, 0.3, smoothstep(1.5, 6.0, distance(uCamPos, vWorld)));
   vec3 light = (0.4 * uAirHorizon + 0.25 * uAirZenith + 0.15 * uSkyHorizonSun + uAirSun * (0.006 + 0.1 * t4)) * mix(1.0, 0.06 + 0.94 * reach, uHazeStrike) + uHazeFlash * reach;

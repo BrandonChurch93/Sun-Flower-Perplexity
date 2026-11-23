@@ -173,6 +173,9 @@ in float vSeed;
 in float vSeen;
 in vec3 vWorld;
 in float vDepth;
+float squared(float x) {
+  return x * x;
+}
 // The drop swings as it falls, so the line it leaves swells and thins along its length.
 float streak(float low, float strike) {
   float cap = max(0.0, 1.0 - min(vEnds.x, vEnds.y));
@@ -181,9 +184,9 @@ float streak(float low, float strike) {
   float core = exp(-3.0 * u / max(vSeen, 0.08));
   float body = (1.0 - u) * (1.0 - u);
   // A falling drop shows the sky only while it is flat to the lens: a short piece of its path is lit, each drop its own, and the rest is not seen. A low sun behind it lights more of the path.
-  float lit = exp(-pow((vWhen - 0.3 - 0.4 * fract(vSeed * 17.9)) / ((0.05 + 0.08 * fract(vSeed * 3.7)) * (1.0 + 1.2 * low)), 2.0));
+  float lit = exp(-squared((vWhen - 0.3 - 0.4 * fract(vSeed * 17.9)) / ((0.05 + 0.08 * fract(vSeed * 3.7)) * (1.0 + 1.2 * low))));
   // A strike lights every drop where it hangs at that instant, whichever way it is turned.
-  lit = max(lit, strike * exp(-pow((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14, 2.0)));
+  lit = max(lit, strike * exp(-squared((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14)));
   return saturate(vCover * lit * (1.0 + strike) * mix(1.6 * core * swing + 0.25 * body, 1.5 * body * body, vSeen));
 }
 `
@@ -211,13 +214,13 @@ void main() {
   float sunPeak = max(max(uAirSun.r, uAirSun.g), max(uAirSun.b, 1e-4));
   vec3 gold = uAirSun * uAirSun / sunPeak;
   // The drop throws the sun at the lens over the middle of its path, brightest where it swings square to it: a lit line, not a spark.
-  float flare = exp(-pow((vWhen - 0.25 - 0.5 * fract(vSeed * 9.1)) / 0.45, 2.0));
+  float flare = exp(-squared((vWhen - 0.25 - 0.5 * fract(vSeed * 9.1)) / 0.45));
   // Only the drops that fall through the beams catch the sun: the rest keep the cool of the deck and are all but lost.
   float beam = t8 * t8;
   light += uAirSun * (0.03 + (0.9 * t8 + 5.0 * t32) * (1.0 - 0.75 * uSpark)) + gold * uSpark * flare * (0.3 + 1.6 * glint) * (0.02 + 3.0 * beam);
   cover *= mix(1.0, 0.3 + 0.7 * min(1.0, 3.0 * beam), uSpark);
   // A strike is several strokes over a few hundredths of a second: it catches each drop as a brighter dash inside its streak, most toward the strike, and never more than two and a half times the storm's own light.
-  float dash = exp(-pow((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14, 2.0));
+  float dash = exp(-squared((vWhen - 0.42 - 0.16 * fract(vSeed * 5.3)) / 0.14));
   vec3 struck = uFlash / max(max(uFlash.r, uFlash.g), max(uFlash.b, 1e-5));
   light *= mix(vec3(1.0), struck * (1.0 + 1.5 * toFlash * (0.35 + 0.65 * dash)), uStrike);
   // Close to the lens a drop is a blur that holds back part of the bright sky behind it.

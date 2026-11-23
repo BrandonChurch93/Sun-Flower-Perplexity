@@ -24,7 +24,7 @@ const float WET_FORWARD = 0.6;
 
 // Water in a tissue keeps the light inside it for longer: each color is taken again, so the dark deepens and the hue grows.
 vec3 wetAlbedo(vec3 albedo) {
-  return pow(albedo, vec3(1.4)) * 0.9;
+  return pow(max(albedo, vec3(0.0)), vec3(1.4)) * 0.9;
 }
 
 // How deep the water stands at a place on the skin, 0 a damp skin to 1 a standing sheet. 'at' is in meters, 'gather' rises to 1 where water collects before it falls.
