@@ -180,8 +180,10 @@ export type Landing = (x: number, z: number, time: number, radius: number, speed
 // Every heavy drop that reaches y = 0 inside the square from (x0, z0) to (x1, z1) with from <= time < to is handed to `visit`. No drop is made for it.
 export function scanLandings(x0: number, z0: number, x1: number, z1: number, from: number, to: number, visit: Landing): void {
   const t = (table ??= buildTable())
-  const [i0, j0] = cellOf(x0, z0)
-  const [i1, j1] = cellOf(x1, z1)
+  const i0 = Math.floor(x0 / RAIN_CELL_M)
+  const j0 = Math.floor(z0 / RAIN_CELL_M)
+  const i1 = Math.floor(x1 / RAIN_CELL_M)
+  const j1 = Math.floor(z1 / RAIN_CELL_M)
   for (let j = j0; j <= j1; j++) {
     for (let i = i0; i <= i1; i++) {
       if (i < -TABLE_HALF_CELLS || i >= TABLE_HALF_CELLS || j < -TABLE_HALF_CELLS || j >= TABLE_HALF_CELLS) {
