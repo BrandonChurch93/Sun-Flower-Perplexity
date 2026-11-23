@@ -22,7 +22,7 @@ export const stemMain = /* glsl */ `void main() {
   float tender = min(age, 64.0) * 0.015625;
   float pale = vSkin.z;
   float foot = vSkin.w;
-  float thin = vSkin2.w;
+  float thin = max(vSkin2.w, 0.0);
   float ribbed = vSkin3.y;
 #ifdef PLANT_FIELD
   float rib = vSkin.x;
