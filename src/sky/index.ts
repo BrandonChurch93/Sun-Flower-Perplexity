@@ -275,7 +275,9 @@ class FieldSky implements Sky {
     v.uBreak.value = tear
     v.uSolarDeck.value = smoothstep(0.26, 0.49, d.overcast)
     v.uEnding.value = ending
-    v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
+    const darkDeck = smoothstep(0.42, 0.84, d.overcast) * (1 - d.flash) * (1 - tear)
+    v.uMarchFilter.value = (view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast)
+      + 0.46 * darkDeck
     v.uSunFace.value.copy(this.sun)
     const refraction = (0.33 + 0.64 * ending) * smoothstep(-1.7, -0.6, e) * (1 - smoothstep(-0.6, 3.8, e))
     v.uSunFace.value.y += RAD * refraction
