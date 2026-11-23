@@ -1,12 +1,13 @@
 # Looks of sky-b
 
-2026-11-23 01:13 UTC, at commit 38cd519 of agent/sky-b.
+2026-11-23 01:29 UTC, at commit 7164c7f of agent/sky-b.
 
-- `01-film-camera-all-layers-21-key-bars-through-final.jpg`: Film camera, all layers, 21 key bars through final afterglow
-- `02-night-afterglow-moves-from-sunset-to-sunrise-sky.jpg`: Night: afterglow moves from sunset to sunrise; sky and ground only
-- `03-06-early-night-stars-moon-and-afterglow.jpg`: 06: early night stars, moon and afterglow
-- `04-08-sunlit-cumulus-and-blue-grey-bases-some-grazi.jpg`: 08: sunlit cumulus and blue-grey bases; some grazing march bands persist
-- `05-10-dark-rolling-underside-and-rain-curtains-in-f.jpg`: 10: dark rolling underside and rain curtains in front of a pale horizon; a few bands remain overhead
-- `06-12-storm-tear-no-shafts-baked-into-the-sky.jpg`: 12: storm tear, no shafts baked into the sky
-- `07-13-twilight-from-the-shared-wide-framing.jpg`: 13: twilight from the shared wide framing
-- `08-41-consecutive-frames-of-sunset-through-sunrise-.mp4`: 41 consecutive frames of sunset through sunrise, 30 fps; moon is out of this camera
+Round-three sky review; the diagnostic composite explicitly omits the shared rain layer. The final all-layer sheet follows after integration checks.
+
+- `01-storm-diagnostic-composite-with-rain-omitted.jpg`: Storm diagnostic composite with rain omitted
+- `02-film-quality-sky-proof-for-the-storm-and-both-li.jpg`: Film-quality sky proof for the storm and both lightning strikes
+- `03-cloud-deck-opens-at-the-sun-break.jpg`: Cloud deck opens at the sun break
+- `04-first-lightning-core-at-exact-bar-33.jpg`: First lightning core at exact bar 33
+- `05-dark-underside-and-lit-horizon-gap-at-bar-35.jpg`: Dark underside and lit horizon gap at bar 35
+- `06-second-lightning-core-at-bar-37-02.jpg`: Second lightning core at bar 37.02
+- `07-daylight-clouds-at-bar-29-29.jpg`: Daylight clouds at bar 29.29
