@@ -32,16 +32,17 @@ function coolDay(e: number, over: number, fog: number, evening: number, burst: n
 }
 
 function openingAt(bar: number): number {
-  return 1 - smoothstep(0.58, 1.06, bar)
+  return 1 - smoothstep(0.71, 1.19, bar)
 }
 
 function finaleAt(bar: number): number {
   return smoothstep(70.55, 71.75, bar)
 }
 
-// The lens burst ends before the held storm ceiling has moved on.
-function tearAt(bar: number, burst: number): number {
-  return Math.max(burst, 0.72 * smoothstep(41.05, 41.42, bar) * (1 - smoothstep(42.43, 42.72, bar)))
+// Under a remaining deck, high sun transmission means a local opening
+// persists after the lens burst falls, not that the whole deck goes clear.
+function tearAt(overcast: number, through: number, burst: number): number {
+  return Math.max(burst, 0.69 * smoothstep(0.18, 0.51, overcast) * smoothstep(0.80, 0.90, through))
 }
 
 function atlas(width: number, height: number, mip: boolean): THREE.WebGLRenderTarget {
@@ -130,9 +131,11 @@ class FieldSky implements Sky {
       uPixelAngle: { value: 0.001 },
       uElevation: { value: 25 },
       uNight: { value: 0 },
+      uLunarNight: { value: 0 },
       uFrostFog: { value: 0 },
       uRainFog: { value: 0 },
       uBreak: { value: 0 },
+      uSolarDeck: { value: 0 },
       uEnding: { value: 0 },
       uMarchFilter: { value: 0 },
       uSunFace: { value: this.sun.clone() },
@@ -172,7 +175,7 @@ class FieldSky implements Sky {
     const blend = smoothstep(0.40, 1, over)
     const fair = 0.21 * d.cover * (1 - blend)
     const cold = smoothstep(0.25, 0.84, d.fog)
-    const burst = tearAt(m.bar, d.burst)
+    const burst = tearAt(over, d.sunThrough, d.burst)
     const lunar = m.moon.y * 0.018
     const mistLevel = 0.59 * (out.horizonSun[0] * Y[0] + out.horizonSun[1] * Y[1] + out.horizonSun[2] * Y[2])
     const lowCool = coolDay(e, over, d.fog, d.evening, burst)
@@ -206,7 +209,7 @@ class FieldSky implements Sky {
     const pose = view.pose
     const e = (now.sunElevationDeg + later.sunElevationDeg) * 0.5
     const d = now.dials
-    const tear = tearAt(now.bar, d.burst)
+    const tear = tearAt(d.overcast, d.sunThrough, d.burst)
     const target = this.maps[view.quality]
     const level = levels[view.quality]
     this.sun.copy(now.sun).lerp(later.sun, 0.5).normalize()
@@ -265,10 +268,12 @@ class FieldSky implements Sky {
     v.tSky.value = target.texture
     v.uMapSize.value.set(level.width, level.height)
     v.uElevation.value = e
-    v.uNight.value = night
+    v.uNight.value = Math.max(night, 0.20 * u.uFirstBlue.value * (1 - smoothstep(-5, -3, e)))
+    v.uLunarNight.value = night
     v.uFrostFog.value = d.fog
     v.uRainFog.value = d.rain * d.overcast
     v.uBreak.value = tear
+    v.uSolarDeck.value = smoothstep(0.26, 0.49, d.overcast)
     v.uEnding.value = ending
     v.uMarchFilter.value = view.quality === 'film' ? 0.42 + 0.42 * d.overcast : 0.20 + 0.33 * d.overcast
     v.uSunFace.value.copy(this.sun)

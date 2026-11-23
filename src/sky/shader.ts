@@ -223,7 +223,7 @@ vec3 lateCirrus(vec3 d, vec3 sky, float theta) {
     float filaments = f(q * vec3(2.27, 1.0, 2.8) + vec3(0.59, 0.17, 0.49)).g;
     float textureValue = 0.74 * roll.r + 0.26 * filaments;
     float shape = smoothstep(0.49 + 0.028 * k, 0.71, textureValue) * smoothstep(0.24, 0.66, broad.r) * smoothstep(0.018, 0.065, d.y);
-    shape *= mix(1.0, low * smoothstep(0.48, 0.65, textureValue), uFinale);
+    shape *= mix(1.0, low * (1.0 - smoothstep(0.046, 0.108, d.y)) * smoothstep(0.48, 0.65, textureValue), uFinale);
     float edge = exp(-squared((textureValue - mix(0.53, 0.56, uFinale) - 0.025 * k) * mix(14.0, 20.0, uFinale)));
     vec3 shaded = air * mix(vec3(0.27, 0.39, 0.59), vec3(0.45, 0.53, 0.69), uFinale)
       + reflected * edge * mix(0.93 + 0.87 * low, 0.32 + 0.44 * low, uFinale);
@@ -251,17 +251,17 @@ void main() {
   float dayTower = smoothstep(0.102, 0.29, uSun.y);
   float blueWindow = dayTower * (1.0 - st) * smoothstep(0.027, 0.23, d.y) * (1.0 - smoothstep(0.89, 0.998, mu));
   clear *= mix(vec3(1.0), vec3(0.38, 0.59, 0.68), blueWindow);
-  float coolSide = uCoolDay * smoothstep(0.012, 0.094, angle) * (0.52 + 0.48 * smoothstep(-0.005, 0.12, d.y));
+  float coolSide = uCoolDay * smoothstep(0.004, 0.080, angle) * (0.71 + 0.29 * smoothstep(-0.005, 0.12, d.y));
   vec3 sideColour = mix(vec3(0.82, 1.10, 1.28), vec3(0.59, 1.09, 1.47), smoothstep(0.015, 0.19, d.y));
-  clear = mix(clear, sideColour * dot(clear, LUMA) * 1.23, coolSide);
-  vec3 firstBlue = vec3(0.014, 0.058, 0.108) * (0.70 + 0.30 * exp(-7.0 * up));
+  clear = mix(clear, sideColour * dot(clear, LUMA) * 1.43, coolSide);
+  vec3 firstBlue = vec3(0.008, 0.046, 0.090) * (0.70 + 0.30 * exp(-7.0 * up));
   firstBlue += vec3(0.025, 0.042, 0.048) * exp(-19.0 * up);
-  firstBlue += vec3(0.18, 0.074, 0.050) * exp(-49.0 * up - 53.0 * angle);
+  firstBlue += vec3(0.25, 0.091, 0.057) * exp(-squared((d.y - 0.017) * 47.0) - 125.0 * angle);
   clear = mix(clear, firstBlue, uFirstBlue);
   float ridge = exp(-16.0 * up - 37.0 * angle);
-  vec3 lastBlue = vec3(0.012, 0.047, 0.083) * (0.66 + 0.34 * exp(-7.0 * up));
+  vec3 lastBlue = vec3(0.009, 0.036, 0.071) * (0.66 + 0.34 * exp(-7.0 * up));
   lastBlue += vec3(0.029, 0.036, 0.039) * exp(-20.0 * up);
-  lastBlue += vec3(0.78, 0.189, 0.031) * ridge * mix(0.24, 1.0, smoothstep(-4.0, 0.20, uElevation));
+  lastBlue += vec3(0.77, 0.151, 0.017) * ridge * mix(0.32, 1.0, smoothstep(-4.0, 0.20, uElevation));
   clear = mix(clear, lastBlue, uFinale);
   vec2 around = normalize(d.xz + vec2(1e-7));
   float hazeStrength = exp(-max(0.0, d.y) * 20.0);
@@ -318,7 +318,8 @@ void main() {
   float span = stop - start;
   float flashDot = max(0.0, 1.0 - dot(d, uFlash));
   float lateStrike = smoothstep(-0.29, -0.06, uFlash.x);
-  bool strike = uEffects.z > 0.0004 && flashDot < mix(0.065, 0.087, lateStrike);
+  float envelope = 1.0 - smoothstep(mix(0.023, 0.037, lateStrike), mix(0.073, 0.093, lateStrike), flashDot);
+  bool strike = uEffects.z > 0.0004 && envelope > 0.0;
   // Refine the integration only round a strong stroke. At ten degrees up,
   // a normal cloud step crosses the lit layer in too few samples and its
   // edge shows a succession of nearly horizontal march contours.
@@ -365,8 +366,8 @@ void main() {
     for (int i = 0; i < 146; i++) {
       if (i >= steps || through < 0.009) break;
       float dither = fract(jitter + float(i) * 0.61803399);
-      float offset = mix(0.13 + 0.73 * region, 0.04 + 0.92 * dither, mix(0.70, 0.96, st));
-      offset = mix(offset, 0.36 + 0.28 * dither, (strike ? 0.87 : 0.0) * smoothstep(0.17, 0.65, uEffects.z));
+      float offset = mix(0.29 + 0.43 * region, 0.15 + 0.70 * dither, mix(0.70, 0.67, st));
+      offset = mix(offset, 0.36 + 0.28 * dither, envelope * 0.87 * smoothstep(0.17, 0.65, uEffects.z));
       float k = (float(i) + offset) * dt;
       float at = start + span * (k * (1.0 - concentrated) + k * k * concentrated);
       float center = (float(i) + 0.5) * dt;
@@ -375,6 +376,7 @@ void main() {
       float gap;
       vec2 relief;
       float density = densityAt(p, d, at, base, dep, gap, relief);
+      density *= 1.0 - uFinale * (0.73 + 0.27 * smoothstep(0.04, 0.112, d.y));
       if (density < 0.009) continue;
       float shade = shadowAt(p, d, base, dep);
       float lit = 0.82 * exp(-shade) + 0.18 * exp(-0.51 * shade);
@@ -426,7 +428,8 @@ void main() {
       }
       vec3 cloud = dome * powder + bounce + beam;
       float cream = smoothstep(0.026, 0.24, dot(beam, LUMA)) * (1.0 - 0.51 * smoothstep(0.015, 0.095, angle));
-      vec3 cooled = dot(cloud, LUMA) * mix(vec3(0.76, 1.04, 1.36), vec3(1.12, 1.04, 0.87), cream) * (1.09 + 0.32 * cream);
+      float bright = mix(dot(cloud, LUMA), dot(clear, LUMA) * 0.86, (0.28 + 0.13 * coolSide) * (1.0 - 0.66 * cream));
+      vec3 cooled = bright * mix(vec3(0.73, 1.04, 1.30), vec3(1.11, 1.04, 0.87), cream) * (1.43 + 0.28 * cream);
       cloud = mix(cloud, cooled, uCoolDay * (0.73 + 0.27 * smoothstep(0.010, 0.079, angle)));
       cloud *= mix(vec3(1.0), vec3(0.73, 0.61, 0.91), uLate * (1.0 - uFinale));
       if (uLate > 0.001) {
@@ -445,14 +448,15 @@ void main() {
         float mainLight = 0.72 * x * x + 4.35 * veinY * veinY + 0.23 * local.z * local.z;
         vec3 branch = vec3((x - 0.82) * 1.07, (y + 0.67) * 1.9, (local.z + 0.16) * 0.49);
         float spread = exp(-0.94 * mainLight) + 0.64 * exp(-dot(branch, branch));
-        if (spread > 0.016) {
+        if (spread > 0.003) {
           vec3 mid = p - delta * 0.28;
           vec4 blocker = weatherField(mid, heightAt(mid));
           float fold = smoothstep(0.41, 0.65, 0.47 * blocker.r + 0.31 * blocker.g + 0.22 * blocker.b);
           float transport = exp(-(0.36 + 1.65 * fold) * min(length(delta) * 0.46, 1.9));
           float face = (0.18 + 3.01 * froth * (0.34 + 0.66 * froth)) * exp(-0.40 * density);
           float spill = mix(0.08, 0.15, lateStrike) * exp(-mainLight * 0.45);
-          cloud += uEffects.z * (vec3(0.29, 0.64, 0.91) * spill + vec3(0.69, 0.91, 1.08) * spread * transport * face * mix(4.3, 5.2, lateStrike));
+          cloud += uEffects.z * envelope * smoothstep(0.003, 0.035, spread)
+            * (vec3(0.29, 0.64, 0.91) * spill + vec3(0.69, 0.91, 1.08) * spread * transport * face * mix(4.3, 5.2, lateStrike));
         }
       }
       float haze = 1.0 - exp(-at * acrossAir);
@@ -515,8 +519,7 @@ void main() {
     float hazeGlow = 0.036 * exp(-angle * 94.0) + 0.106 * exp(-angle * 970.0);
     result = mix(result, quiet, frost * 0.96) + uCloudLight.r * vec3(1.0, 0.61, 0.38) * hazeGlow * frost;
   }
-  float direct = mix(through, uWeather.z, smoothstep(0.992, 0.99992, mu) * (1.0 - st) * (1.0 - 0.96 * sunBreak));
-  outColor = vec4(result, clamp(direct, 0.0, 1.0));
+  outColor = vec4(result, clamp(mix(through, 1.0, uFirstBlue * 0.93), 0.0, 1.0));
 }
 `
 
@@ -532,9 +535,11 @@ uniform vec4 uRay;
 uniform float uPixelAngle;
 uniform float uElevation;
 uniform float uNight;
+uniform float uLunarNight;
 uniform float uFrostFog;
 uniform float uRainFog;
 uniform float uBreak;
+uniform float uSolarDeck;
 uniform float uEnding;
 uniform float uMarchFilter;
 uniform vec3 uSunFace;
@@ -581,17 +586,19 @@ vec3 sunAt(vec3 d, float blur) {
   float disk = 1.0 - smoothstep(0.98 - spread, 1.0 + spread, x);
   float limb = mix(0.62 + 0.38 * sqrt(max(0.0, 1.0 - x * x)), 0.89, smoothstep(0.002, 0.015, blur));
   float energy = squash * sr * sr / (r.x * r.y);
-  vec3 center = textureLod(tSky, where(uSunFace), 0.0).aaa;
+  float local = textureLod(tSky, where(d), 0.44).a;
+  float center = textureLod(tSky, where(uSunFace), 0.5).a;
   float rupture = smoothstep(0.06, 0.85, uBreak);
   float broken = exp(-dot(p, p) * 0.34);
   float mist = exp(-0.89 * dot(p, p));
   float glow = mix(mix(disk * limb, 0.30 * mist, frost), 0.003 * broken, rupture);
-  return uDisc * center * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
+  float visible = mix(center, local * smoothstep(0.12, 0.81, local) * smoothstep(0.17, 0.80, uBreak), uSolarDeck);
+  return uDisc * visible * energy * glow * smoothstep(-0.003, 0.0011, d.y) * smoothstep(-1.35, -0.20, uElevation);
 }
 
 vec3 moonAt(vec3 d, vec3 air, float blur, float visible) {
   float n = dot(d, uMoon);
-  if (uNight < 0.001 || n < 0.968) return vec3(0.0);
+  if (uLunarNight < 0.001 || n < 0.968) return vec3(0.0);
   vec3 u = normalize(cross(uMoon, vec3(0.0, 1.0, 0.0)));
   vec3 v = cross(uMoon, u);
   float r = sqrt(0.0054 * 0.0054 + blur * blur);
@@ -613,7 +620,9 @@ void main() {
   float blur = 0.5 * coc * uPixelAngle;
   vec4 sky = skyLookup(d, blur);
   float stellarBlur = min(blur, 0.52 * uPixelAngle);
-  vec3 color = sky.rgb + starsAt(d, sky.rgb, sky.a, stellarBlur) + moonAt(d, sky.rgb, blur, sky.a) + sunAt(d, blur);
+  float cloudTransmission = textureLod(tSky, where(d), 0.0).a;
+  float stellarTransmission = cloudTransmission * smoothstep(0.08, 0.78, cloudTransmission);
+  vec3 color = sky.rgb + starsAt(d, sky.rgb, stellarTransmission, stellarBlur) + moonAt(d, sky.rgb, blur, sky.a) + sunAt(d, blur);
   float a = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float depth = d.y > 1e-3 ? a / (uFogFalloff * d.y) : 1e6;
   // The atlas already contains the lit rain curtain. Keep the shared
