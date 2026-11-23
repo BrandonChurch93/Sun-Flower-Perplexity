@@ -20,6 +20,8 @@ const fillGain = 2.3
 const soloGain = 0.9
 // The pyramid level the shafts are cast through.
 const OPEN_LEVEL = 1
+// The level the tear in the deck is looked for in.
+const HOLE_LEVEL = 3
 
 function halfTarget(width: number, height: number): THREE.WebGLRenderTarget {
   const t = new THREE.WebGLRenderTarget(width, height, {
@@ -73,7 +75,7 @@ export class Post {
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
-  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uFar: { value: 0 } })
+  private readonly sunRead = new FullscreenPass(sunReadFragment, { tRaw: { value: null }, tBright: { value: null }, uSunAt: { value: new THREE.Vector2(0.5, 0.5) }, uTrack: { value: new THREE.Vector2(0, 0) }, uAspect: { value: 1 }, uPatch: { value: 0.02 }, uFar: { value: 0 } })
   private readonly near = new FullscreenPass(nearFragment(), { ...shared, tFrame: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uReach: { value: 0 } })
   private readonly reach = new FullscreenPass(reachFragment, { ...shared, tFrame: { value: null }, tNear: { value: null }, uRadiusScale: { value: 0.5 }, uFar: { value: 0 }, uSpecks: { value: 0 }, uSkyHold: { value: 0 } })
   private readonly fillWide = fillPass(3)
@@ -81,7 +83,7 @@ export class Post {
   private readonly bright = new FullscreenPass(brightFragment, { tFrame: { value: null }, uExposure: { value: 1 }, uKnee: { value: 1 }, uSkyLevel: { value: 1 } })
   private readonly downPass = new FullscreenPass(downFragment, { tSource: { value: null }, uTexel: { value: new THREE.Vector2() } })
   private readonly upPass = new FullscreenPass(upFragment, { tSource: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uSourceGain: { value: new THREE.Vector3(1, 1, 1) }, uBaseGain: { value: new THREE.Vector3(1, 1, 1) } })
-  private readonly shaft = new FullscreenPass(shaftFragment, { tSource: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.5) }, uRatio: { value: 1 }, uAlpha: { value: 0 } })
+  private readonly shaft = new FullscreenPass(shaftFragment, { tSource: { value: null }, tSun: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.5) }, uRatio: { value: 1 }, uAspect: { value: 1 }, uFan: { value: 0 }, uAlpha: { value: 0 } })
   private readonly grade = new FullscreenPass(gradeFragment, {
     ...shared,
     tFrame: { value: null },
@@ -114,6 +116,10 @@ export class Post {
     uBloomCap: { value: 0 },
     uHaze: { value: 0 },
     uVeilSun: { value: 0 },
+    uMist: { value: 0 },
+    uWarm: { value: 0 },
+    tRaw: { value: null },
+    uFar: { value: 0 },
     uShafts: { value: 0 },
     uSaturation: { value: 1 },
     uVignette: { value: 0 },
@@ -253,11 +259,14 @@ export class Post {
   }
 
   // How open the way to the sun is from every place in the frame, at a quarter of its size.
-  private castShafts(renderer: THREE.WebGLRenderer, sun: SunInFrame, rounds: number): THREE.Texture {
+  private castShafts(renderer: THREE.WebGLRenderer, sun: SunInFrame, rounds: number, aspect: number, fan: number): THREE.Texture {
     const a = this.shaftA as THREE.WebGLRenderTarget
     const b = this.shaftB as THREE.WebGLRenderTarget
     const u = this.shaft.uniforms
     u.uSun.value.set(sun.x, sun.y)
+    u.tSun.value = this.sunTarget.texture
+    u.uAspect.value = aspect
+    u.uFan.value = fan
     // The last reading stands at a twelfth of the way from the sun, whatever the count.
     const total = Math.pow(SHAFT_TAPS, rounds) - 1
     let ratio = Math.exp(Math.log(1 / 12) / total)
@@ -303,6 +312,7 @@ export class Post {
       if (light > 0 || !this.warmed) {
         const r = this.sunRead.uniforms
         r.tRaw.value = frame
+        r.tBright.value = this.down[Math.min(HOLE_LEVEL, this.down.length - 1)].texture
         r.uSunAt.value.set(at.x, at.y)
         r.uTrack.value.set(at.dx ?? 0, at.dy ?? 0)
         r.uAspect.value = aspect
@@ -311,7 +321,7 @@ export class Post {
         this.sunRead.render(renderer, this.sunTarget)
       }
       const cast = light * look.shafts > 0 || !this.warmed
-      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3) : (this.shaftA as THREE.WebGLRenderTarget).texture
+      const shafts = cast ? this.castShafts(renderer, at, low ? 2 : 3, aspect, look.fan) : (this.shaftA as THREE.WebGLRenderTarget).texture
       const tone = toneConstants(grade.contrast, grade.white)
       g.tBloom.value = bloom
       g.tShafts.value = shafts
@@ -335,7 +345,7 @@ export class Post {
       g.uSunAt.value.set(at.x, at.y)
       g.uSunLight.value.fromArray(look.sun).multiplyScalar(look.glare)
       g.uSunAir.value.fromArray(look.air)
-      g.uSunCore.value = 1.2 * blurred
+      g.uSunCore.value = 1.2 * blurred * (1 + 0.8 * look.warm)
       g.uSunHot.value = (8 * disc * disc) / (blurred * blurred)
       g.uHaze.value = look.haze
       g.uFan.value = look.fan
@@ -343,6 +353,10 @@ export class Post {
       g.uShaftLevel.value = Math.sqrt(Math.max(look.sun[0], look.sun[1], look.sun[2]) * look.glare * skyLevel)
       g.uBloomCap.value = look.cap
       g.uVeilSun.value = look.veilSun
+      g.uMist.value = look.mist
+      g.uWarm.value = look.warm
+      g.tRaw.value = frame
+      g.uFar.value = farCircle
       g.uShafts.value = cast ? look.shafts : 0
       g.uSaturation.value = grade.saturation
       g.uVignette.value = grade.vignette
