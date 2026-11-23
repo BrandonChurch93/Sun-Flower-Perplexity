@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { makeSurface } from '../../core/shading.ts'
 import { gustGlsl } from '../../v2/wind.ts'
-import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, SLANT_WIND, fallDir, prepareDrops, scanLandings } from './drops.ts'
+import { LEAN_X, LEAN_Z, SLANT_CALM, SLANT_GUST, SLANT_WIND, fallDir, prepareDrops, rainSpan, scanLandings } from './drops.ts'
 
 // The rain in the air. Every drop is worked out on the graphics card from its own number and the film second: where it is at the open shutter and at the close,
 // and the strip between the two is the streak the exposure leaves. A layer is a box of drops that wraps round the lens, fixed to the world.
@@ -338,6 +338,19 @@ export class HeavyLayer {
       m.matrixAutoUpdate = false
       m.visible = false
     }
+    // Run through the whole shower once at load, so the page has made the lookup fast before the first frame of rain.
+    const [from, to] = rainSpan()
+    for (let k = 0; k < 240 && to > from; k++) this.find(0, 0, 2.1, from + ((to - from) * k) / 240)
+  }
+
+  private find(x: number, z: number, half: number, open: number): number {
+    const at = this.at
+    at.x = x
+    at.z = z
+    at.reach = half
+    at.n = 0
+    scanLandings(x - half, z - half, x + half, z + half, open, open + HEAVY_AHEAD_S, this.take)
+    return at.n
   }
 
   // The drops that land within `half` metres of (x, z) from the open shutter on.
@@ -345,13 +358,7 @@ export class HeavyLayer {
     this.meshes[0].visible = on
     this.meshes[1].visible = on && samples === 1
     if (!on) return
-    const at = this.at
-    at.x = x
-    at.z = z
-    at.reach = half
-    at.n = 0
-    scanLandings(x - half, z - half, x + half, z + half, open, open + HEAVY_AHEAD_S, this.take)
-    const n = at.n
+    const n = this.find(x, z, half, open)
     this.geometry.instanceCount = n
     if (n === 0) return
     this.drop.clearUpdateRanges()

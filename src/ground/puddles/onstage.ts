@@ -10,7 +10,7 @@ import { nearFurrow, rippleBox } from './basin.ts'
 import { SPLASH_LIFE_S, crownFragment, crownGeometry, crownVertex } from './crowns.ts'
 import { DOT_LIFE_S, dotFragment, dotGeometry, dotVertex } from './dots.ts'
 import { hazeFragment, hazeGeometry, hazeVertex } from './haze.ts'
-import { prepareDrops } from '../../weather/rain/drops.ts'
+import { prepareDrops, rainSpan } from '../../weather/rain/drops.ts'
 import { FineRain, LANDING_FLOATS, landings } from './landings.ts'
 import { FINE_RING_LIFE_S, RING_LIFE_S, Ripples } from './ripples.ts'
 import { waterFragment, waterVertex } from './water.ts'
@@ -31,6 +31,7 @@ const BED_M = -furrow.depthM - 0.003
 // Full, the water stands a little over the mean ground: it floods the dips beside the furrow and leaves the clods as islands.
 const FULL_M = 0.0045
 const FLASH_TINT = [1.0, 1.15, 1.45]
+const WARM_RUNS = 240
 const QUALITY = { film: 0, high: 1, low: 2 } as const
 const boxX = right.x * rippleBox.acrossM - toward.x * rippleBox.awayM
 const boxZ = right.z * rippleBox.acrossM - toward.z * rippleBox.awayM
@@ -83,6 +84,16 @@ class Puddles implements Part {
     prepareDrops()
     const reach = rippleBox.halfM * Math.SQRT2
     this.fine = new FineRain(boxX - reach, boxZ - reach, boxX + reach, boxZ + reach, (x, z) => nearFurrow(x, z, FINE_REACH_M + FINE_DRIFT_M))
+    // The lookups are run through the whole shower once at load: the page has then made them fast before the first frame of rain asks for them.
+    const [from, to] = rainSpan()
+    for (let k = 0; k < WARM_RUNS && to > from; k++) {
+      const t = from + ((to - from) * k) / WARM_RUNS
+      const count = landings(boxX, boxZ, reach + 0.2, 0, t - RING_LIFE_S, t, this.drops)
+      this.fine.landings(inFurrow, 0, t - FINE_RING_LIFE_S, t, this.drops, count)
+      const struck = landings(0, 0, SPLASH_HALF_M[0], 0, t - SPLASH_LIFE_S, t, this.splashes)
+      this.fine.landings(inFurrow, 0, t - SPLASH_LIFE_S, t, this.splashes, struck, FINE_CROWN_M)
+      landings(0, 0, nearRadiusM, 0, t - DOT_LIFE_S, t, this.spots)
+    }
     for (const o of this.objects) {
       o.frustumCulled = false
       o.matrixAutoUpdate = false
