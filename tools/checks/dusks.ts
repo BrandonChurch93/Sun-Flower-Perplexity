@@ -3,7 +3,7 @@ import path from 'node:path'
 import sharp from 'sharp'
 import type { Args } from '../lib/args.ts'
 import { num } from '../lib/args.ts'
-import { canvas, scaled, strip, type Placed } from '../lib/layout.ts'
+import { canvas, cropped, scaled, strip, type Placed } from '../lib/layout.ts'
 import { barText, filmClock, secondsOf } from './lib/film.ts'
 import { frameFile, olderFilm, runName } from './lib/play.ts'
 import { OUT, type Finding } from './lib/report.ts'
@@ -24,7 +24,7 @@ const WRONG_WAY = 2
 const ACROSS = 16
 const DOWN = 9
 
-export interface DuskRow { night: number; first: number; last: number; midnight: number; frames: number; missing: number; day: number; dark: number; after: number; fall: number; fallAt: number; rise: number; riseAt: number; part: number; partAt: number; partColumn: number; partRow: number; partsAtOnce: number; wrong: number; wrongAt: number; duskFrames: number; dawnFrames: number; ok: boolean }
+export interface DuskRow { night: number; first: number; last: number; midnight: number; frames: number; missing: number; day: number; dark: number; after: number; fall: number; fallAt: number; rise: number; riseAt: number; part: number; partAt: number; partColumn: number; partRow: number; partsAtOnce: number; partTrail: { frame: number; l: number }[]; wrong: number; wrongAt: number; duskFrames: number; dawnFrames: number; ok: boolean }
 export interface DuskProof { findings: Finding[]; complete: boolean; rows: DuskRow[]; pictures: { file: string; caption: string }[]; step: number }
 
 // The mean luminance of the frame, then of each of its parts, row by row.
@@ -85,6 +85,31 @@ async function sheetOf(run: string, t: Twilight, file: string, caption: string):
     parts.push({ input: strip(w, bar, `${frames[i]}${frames[i] === t.sunset || frames[i] === t.sunset + 1 ? ' sunset' : frames[i] === t.sunrise || frames[i] === t.sunrise + 1 ? ' sunrise' : ''}`), left, top: top + h })
   }
   await canvas(cols * (w + gap) + gap, bar + 2 + 2 * gap + rows * (h + bar + gap), parts).jpeg({ quality: 88 }).toFile(file)
+}
+
+// The frames round the largest move the wrong way in a part, cut to the parts round it and enlarged, the part itself framed.
+async function partSheet(run: string, r: DuskRow, file: string, caption: string): Promise<void> {
+  const first = await sharp(frameFile(run, r.partTrail[0].frame)).metadata()
+  const cw = Math.floor((first.width ?? 320) / ACROSS)
+  const ch = Math.floor((first.height ?? 180) / DOWN)
+  const round = 5
+  const left = Math.max(0, Math.min(ACROSS - round, r.partColumn - 1 - 2)) * cw
+  const top = Math.max(0, Math.min(DOWN - round, r.partRow - 1 - 2)) * ch
+  const scale = 3
+  const w = round * cw * scale
+  const h = round * ch * scale
+  const gap = 4
+  const bar = 20
+  const parts: Placed[] = [{ input: strip(r.partTrail.length * (w + gap) - gap, bar + 2, caption), left: gap, top: gap }]
+  const frame = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect x="${((r.partColumn - 1) * cw - left) * scale}" y="${((r.partRow - 1) * ch - top) * scale}" width="${cw * scale}" height="${ch * scale}" fill="none" stroke="#ffffff" stroke-width="2"/></svg>`)
+  for (let i = 0; i < r.partTrail.length; i++) {
+    const x = gap + i * (w + gap)
+    const y = bar + 2 + 2 * gap
+    parts.push({ input: await scaled(await cropped(frameFile(run, r.partTrail[i].frame), left, top, round * cw, round * ch), w, h), left: x, top: y })
+    parts.push({ input: frame, left: x, top: y })
+    parts.push({ input: strip(w, bar, `${r.partTrail[i].frame} · ${r.partTrail[i].l.toFixed(1)} of 255${r.partTrail[i].frame === r.partAt ? ' · lands here' : ''}`), left: x, top: y + h })
+  }
+  await canvas(r.partTrail.length * (w + gap) + gap, bar + 2 + 2 * gap + h + bar + gap, parts).jpeg({ quality: 88 }).toFile(file)
 }
 
 export async function duskProof(args: Args, broken: string | null): Promise<DuskProof> {
@@ -157,7 +182,7 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     const after = series[series.length - 1].l
     const dark = series.reduce((a, s) => Math.min(a, s.l), Infinity)
     const ok = fall <= step && rise <= step && wrong <= WRONG_WAY
-    rows.push({ night: t.night, first: t.first, last: t.last, midnight, frames: series.length, missing, day, dark, after, fall, fallAt, rise, riseAt, part, partAt, partColumn: 1 + (partIn % ACROSS), partRow: 1 + Math.floor(partIn / ACROSS), partsAtOnce, wrong, wrongAt, duskFrames: crossing(series.filter((s) => s.frame <= midnight), day, dark), dawnFrames: crossing(series.filter((s) => s.frame >= midnight), dark, after), ok })
+    rows.push({ night: t.night, first: t.first, last: t.last, midnight, frames: series.length, missing, day, dark, after, fall, fallAt, rise, riseAt, part, partAt, partColumn: 1 + (partIn % ACROSS), partRow: 1 + Math.floor(partIn / ACROSS), partsAtOnce, partTrail: series.filter((x) => Math.abs(x.frame - partAt) <= 3).map((x) => ({ frame: x.frame, l: x.parts[partIn] })), wrong, wrongAt, duskFrames: crossing(series.filter((s) => s.frame <= midnight), day, dark), dawnFrames: crossing(series.filter((s) => s.frame >= midnight), dark, after), ok })
     if (!ok) {
       const why = [fall > step ? `the dusk falls ${fall.toFixed(1)} of 255 into frame ${fallAt}` : '', rise > step ? `the dawn rises ${rise.toFixed(1)} of 255 into frame ${riseAt}` : '', wrong > WRONG_WAY ? `the luminance moves ${wrong.toFixed(2)} the wrong way into frame ${wrongAt}` : ''].filter(Boolean).join(', ')
       findings.push({ ok: false, what: `night ${t.night} (frames ${t.first} to ${t.last}, ${barText(secondsOf(t.sunset))} to ${barText(secondsOf(t.sunrise))}): ${why}; the limit is ${step} a frame one way and ${WRONG_WAY} the other` })
@@ -173,6 +198,12 @@ export async function duskProof(args: Args, broken: string | null): Promise<Dusk
     findings.unshift({ ok: bad.length === 0, what: `by the picture (${drawn} of ${total} nights with every frame drawn, 320 x 180): ${bad.length === 0 ? 'through every dusk the luminance of the frame only falls and through every dawn it only rises' : `${bad.length} nights flicker`}; the largest step is ${Math.max(worst.fall, worst.rise).toFixed(1)} of 255 a frame in night ${worst.night} against a limit of ${step}, the largest move the wrong way ${rows.reduce((a, r) => Math.max(a, r.wrong), 0).toFixed(2)} against ${WRONG_WAY}` })
     const part = rows.reduce((x, r) => (r.part > x.part ? r : x), rows[0])
     if (part.part > WRONG_WAY) findings.push({ ok: true, expected: true, what: `listed, not judged yet: with the frame cut into ${ACROSS} by ${DOWN} parts, one part moves the wrong way by ${part.part.toFixed(1)} of 255 into frame ${part.partAt} (night ${part.night}, column ${part.partColumn} of ${ACROSS}, row ${part.partRow} of ${DOWN}), and up to ${rows.reduce((x, r) => Math.max(x, r.partsAtOnce), 0)} of ${ACROSS * DOWN} parts move more than ${WRONG_WAY} the wrong way in one frame. The mean of the whole frame hides this. It is something in the frame that gets brighter while the sun sinks or darker while it rises; a plant that grows across a part moves it a little too, so the number needs a limit of its own before it can fail` })
+    if (part.part > WRONG_WAY && part.partTrail.length > 1) {
+      const file = path.join(dir, `part-${String(part.night).padStart(2, '0')}.jpg`)
+      const caption = `Night ${part.night}: the framed part moves ${part.part.toFixed(1)} of 255 the wrong way into frame ${part.partAt}, while the whole frame moves the right way. Under each frame: its number, and the luminance of the framed part`
+      await partSheet(run, part, file, caption)
+      pictures.push({ file: path.relative(process.cwd(), file), caption })
+    }
     if (drawn < total) findings.push({ ok: true, expected: true, what: `${total - drawn} of ${total} nights do not have every frame drawn yet` })
     for (const r of [worst, ...bad.filter((b) => b !== worst).slice(0, 2)]) {
       const t = twilights()[r.night - 1]
