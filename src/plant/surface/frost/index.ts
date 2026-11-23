@@ -57,6 +57,7 @@ const float FROST_FACE_SUN = 0.09;
 const float FROST_SKY_SHARE = 0.2;
 const float FROST_SKY_UP = 0.5;
 const float FROST_SKY_THAW = 0.8;
+const float FROST_SKY_SHADE = 4.0;
 const vec3 FROST_SKY_SPARK = vec3(0.88, 0.95, 1.12);
 const float FROST_FOOT = 0.3;
 // The share of the skin the coat hides at the hold, seen close: in the middle of a field of the blade, and at its edge and along a vein. How pale the sugar under the crystals is, and how much of that a crystal's shadow takes.
@@ -165,7 +166,7 @@ vec4 frostChip(vec2 g, float reach, float chance, float grown, float packed, flo
   vec2 spot = 0.35 * r * (2.0 * vec2(hash21(cell + 541.0), hash21(cell + 577.0)) - 1.0);
   vec2 off = (q * thin - spot) * (1.0 / r);
   flash *= cover * (0.03 + 0.97 * exp(-5.0 * dot(off, off))) * smoothstep(2.0, 3.0, r / max(reach, 1e-6));
-  more = vec2(hash21(cell + 521.0) < FROST_SKY_SHARE ? flash : 0.0, cover * turned * (0.5 + 0.5 * own));
+  more = vec2(hash21(cell + 521.0) < FROST_SKY_SHARE ? flash : 0.0, cover * (0.4 + 0.6 * turned) * (0.5 + 0.5 * own));
   return vec4(cover, tone, flash, foot);
 }
 
@@ -416,7 +417,8 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
     // A crystal stands up from the skin: where the sun only grazes the blade, the faces it turns to the sun are lit full.
     crust.y += close * (FROST_COAT_FLASH * laid.y + FROST_FACE_SUN * laid.w * smoothstep(-0.1, 0.12, dot(F, uSunDir)) * (1.0 - saturate(dot(N, uSunDir))));
     float thawing = smoothstep(0.0, 0.15, uPlantDew);
-    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
+    // A face that looks down and away from the sun looks at the frozen ground: its coat is lit by that white, and reads as rime there too.
+    frostSky = close * mix(FROST_SKY_UP, FROST_SKY_THAW, thawing) * (1.0 + FROST_SKY_SHADE * smoothstep(0.35, 0.75, -dot(F, uSunDir)) * (1.0 - smoothstep(-0.1, 0.4, F.y))) * laid.x * held / mix(1.0, max(uPlantFrost, FROST_WHOLE_LEAST), thawing);
     // One flash in five is a face that mirrors the sky: white to pale blue, not the sun's gold.
     frostSpark = mix(vec3(1.0), FROST_SKY_SPARK * dot(uSunColor, vec3(0.2126, 0.7152, 0.0722)) / max(uSunColor, vec3(1e-4)), saturate(close * FROST_COAT_FLASH * laid.z / max(crust.y, 1e-6)));
   }
