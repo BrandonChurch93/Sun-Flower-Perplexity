@@ -86,3 +86,64 @@ Why: beside `references/v2/keys/storm.png` and beside version 1's rain shot the 
 - At the break (bar 41) the sun stands at 0.38 of the width and 0.14 from the top.
 - The table of moments in `COMMON.md` carries the new plant clock for bars 26 to 42.5.
 - For whoever tuned to the old frame: the puddle (it must not grow past about a third of the frame's width: the key has a stream of water running to the lower left), drops and marks near the lens, the relief disc of the soil, the neighbours and the companion in the hold (the companion stands at the left edge now), the rain's far veil.
+
+## 23 Nov, 04:00 UTC: the page's own time is the film's frame rate
+
+On `v2` now: the sky `b7f7517`, the night sky `806c873` (not wired in yet), the lens `0e6bd9b`, the plant `3b3bc70`, the ground `4480f36`, rain `27c822c`, frost `5fcf1f2`, the field `25cc992`, the player `6700678`, the checks `b59de7d`. Merge it before your next sheet. 168 tests pass.
+
+### 1. The processor (the most important line of this round)
+
+He asked for one thing besides the look: no drop of the frame rate. Nothing is made after loading any more, but the page's own script time in a frame is far over the frame's 33 ms wherever something grows. MEASURED by `/root` on `v2` (preview, draft, frames in a row, this machine, software drawing left out of the number):
+
+| Where | Script a frame | Largest shares |
+|---|---|---|
+| Frost hold, frames 1001 to 1003 | 19 to 40 ms | scene 8 to 16, field 3 to 9 |
+| Time lapse, 1401 to 1404 | 70 to 147 ms | field 30 to 52, plant 26 to 46 |
+| Storm hold, 1901 to 1903 | 39 to 66 ms | puddles 28 to 43, field 4 to 13 |
+| After the break, 2102 to 2104 | 133 to 145 ms | plant 41, field 35, companion 20, puddles 18, scene 13 to 18 |
+| Ascent, 2601 to 2603 | 163 to 226 ms | plant 77 to 128, companion 32 to 38, field 28 to 37 |
+| Bloom, 3051 to 3053 | 172 to 212 ms | plant 76 to 83, companion 30 to 38, field 28 to 48, scene 31 to 40 |
+| Crane, 3501 to 3503 | 167 to 175 ms | plant 72 to 74, companion 30 to 33, field 30 to 33, scene 26 to 32 |
+
+His machine is faster than this one by a factor nobody has measured, so the budget is set on this machine and is hard:
+
+- The whole script time of a frame: at most 16 ms in the mean and 25 ms in the worst frame, anywhere in the film, with frames drawn in a row.
+- Shares: plant and companion together 5 ms, field 3 ms, rain and puddles together 2 ms, every other part 1 ms, the scene's own draw (`scene`, which also carries the buffer uploads) 6 ms.
+- Measure it yourself: `npm run bench -- --only all --cost --frames 2100-2104,3050-3053 --name mine`. It prints one line a frame with the shares by part (`plant`, `companion`, `field`, each part by its folder name, `sky`, `shadow`, `samples`, `skydraw`, `scene`, `post`) and writes `out/work/bench/sky/cost-mine.json`. The first frame after a jump is dearer and does not count. `window.showcase.cost()` gives the same table in the page.
+
+How the plant gets there (owner: the plant; the field's neighbours are the same class and follow):
+
+- Key shapes. The plant's shape is a pure function of the frame. Fill it only at key frames, at most 8 frames apart, and let the vertex shader draw every frame as a mix of the two keys round it. Three slots of position and normal for each part (`position`, `positionB`, `positionC`, and the same for the normal) and one weight vector as a uniform: two slots carry the keys of the stretch being played, the third is filled with the next key while they play, one part a frame, so no frame carries more than one large fill. Nothing is bound again and nothing is made: only the weights change at a key.
+- A key frame stands on every frame where a hold starts or ends (849, 1259, 1672, 2082) and on the film's first and last frame, so a hold stays exact and growth starts on its frame. Between them keys are at most 8 frames apart.
+- A key is filled for still air. Wind, gusts, the rain's weight and the lean with the tip are added in the vertex shader in every frame, growing or not, the way they already are while the plant's clock stands (`uOwnAir`, `uOwnTip`).
+- The shutter needs no second fill: the shader mixes at the frame's time plus its share of the shutter.
+- The frame comes from `shared.uFrame`. What the plant feels at a key frame comes from `momentAt` of that frame (`src/v2/now.ts`) and `plantInputsOf`. A frame never depends on the frame drawn before it: when the two keys round a frame are not in the slots (a jump, an export from the middle), both are filled at once, and the picture is the same to the bit as when they were filled ahead.
+- Whoever places things on the plant (hairs, beads, crystals, dew) follows the same slots or sits in the shader on top of them. Agree it with the plant's owner before you write it.
+
+The rain's share is the drop lookup of the puddles and marks (`src/weather/rain/drops.ts` called for every cell and slot each frame, 18 to 43 ms): it belongs in a shader or in a table made at load. The field's share is the refill of the neighbours' shapes (the keys above) and the lists of who stands in the frame (`fill()` in `src/field/index.ts`): the lists may be refilled when the lens has moved by more than a set angle or distance, not in every frame, as long as no plant pops at the frame's edge.
+
+The checks get a `script` check with these limits and it goes into the proof.
+
+### 2. What changed in the film
+
+- The deck stays over the break. `overcastAtBar` is 0.74 at bar 41, 0.58 at 42.3 and gone by 42.92, so the night takes the deck away and the sun shines through a tear in a dark deck from bar 41 to the sunset of 42.45. Under a deck the sun's key and `air.sun` are scaled by `1 - 0.6 * overcast` (`UNDER_DECK` in `src/v2/look.ts`). The sky must be looked at again from bar 41.5 to 42.5.
+- Lightning lights the ground less: `FLASH` key 2.4 and fill 1.2 (were 5 and 1.6).
+- The frost hold has a lower sun: 0 degrees at bar 17, 1.6 at 17.2, 2.4 at 18, 3.6 at 21, 6.5 at 25 (were 3, 5.5 and 9 at 17.35, 21 and 25). In the frame it stands at 0.415 of the height at bar 17.2, 0.338 at 21 and 0.223 at 25, at 0.76 to 0.79 of the width.
+- The crane is smaller: the last frame is 6.0 m back and 3.4 m up (`CRANE` in `src/v2/rig.ts`: riseM 0.3, backM 0.2, aimM 0.6). The plant stands between 0.59 and 0.92 of the frame's height at the end, the horizon at 0.28.
+- The film ends with the sun 2.9 degrees under the horizon (was 5), so the field can still be read in the last frame. At bar 74 it is at -1.4.
+- Frost grade: contrast 1.24, saturation 1.0, a little cooler. Shade takes less of the dome's blue (`FILL_COLOUR` 0.45, was 0.65). Rain thickens the air half as much (0.006, was 0.012).
+- Rows turn. A row is now a line that runs away from the lens: `rowSpacingM` 0.75 is the distance between rows across the view, `plantSpacingM` 0.45 the distance between plants along a row, `plantAheadOfRowM` 1.5 the distance from the plant to the row ends. A lane, not a row, lies on the plant's axis. The field and the ground's ridges turn together and are merged together.
+- The neighbours may stand at up to 50 percent of the plant in the storm (was 45).
+- `Film.load` gives the page a turn after every part, so the loading screen can paint its steps.
+
+### 3. The first whole watch
+
+Read by `/root` at full size beside the nine keys and the eight approved pictures (`python3 out/work/tmp/beside.py` on the root's machine; the pairs are sent with the notes). What holds: the bloom at bar 61 and its opening at 58.5 are close to their references, the field at bar 69 is good, the middays of the ascent are good, the storm hold is in its key's family, the break now has a tear, beams and a dark deck. What does not, in the order it costs the film:
+
+1. Low sun in the first half is murky brown and beige (bars 1.5, 9.2, 13, 29.1): away from the sun the sky is warm grey where the keys are blue grey, clouds are lit dark orange and shaded brown.
+2. Midday soil is pale tan, close to straw (bar 29.7: mean 135, 110, 75 of 255 where dark earth belongs).
+3. The opening is too bright and too pink (bar 0.48: sky top 116, 142, 194 against the key's 29, 90, 127), the soil wears pale pink caps, a pale green arch already stands out of it beside a black hard edged hole.
+4. The frost hold is still one flat picture for 13.7 s: its soil is grey green where the key's is dark with white rime on the crests.
+5. The end is too magenta (bar 73: sky top right 107, 81, 115 against the key's 24, 69, 101).
+6. The night's stars are blurred to discs (bar 46.82).
+7. The lightning of bar 37 is a small squiggle; the plant's leaves hang like sheets in the storm.

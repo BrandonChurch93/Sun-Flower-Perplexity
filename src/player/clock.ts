@@ -95,7 +95,7 @@ export async function makeClock(track: ArrayBuffer | null, options: ClockOptions
     markAt: MARK_AT_SECONDS,
     markHoldMs: MARK_HOLD_SECONDS * 1000,
     avMs: options.avMs,
-    blipHz: 0,
+    blips: false,
   })
   const { ctx } = inner
   let sound: AudioBuffer | null = null

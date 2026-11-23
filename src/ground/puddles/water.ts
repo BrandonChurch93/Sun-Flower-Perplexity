@@ -82,8 +82,9 @@ void main() {
   float banked = max(max(bankOver(p, up, 0.035), bankOver(p, up, 0.09)), bankOver(p, up, 0.2));
   sky = mix(sky, uGroundBounce * 0.25, banked);
   sky = mix(sky, uGroundBounce * 0.2, stalkOver(vWorld, up));
-  float clear = exp(-depth / 0.008) * (1.0 - mirror);
-  vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.008));
+  // Storm water carries the field's mud: a finger deep it hides its bed.
+  float clear = exp(-depth / 0.0025) * (1.0 - mirror);
+  vec3 murk = vec3(0.05, 0.043, 0.036) * skyAmbient(vec3(0.0, 1.0, 0.0)) * (1.0 - mirror) * (1.0 - exp(-depth / 0.0025));
   float alpha = 1.0 - clear;
   vec4 done = finish((sky * mirror + murk) / max(alpha, 1e-3), vWorld, vDepth, -1.0);
   outColor = vec4(done.rgb, alpha * cover * uLevel.y);
