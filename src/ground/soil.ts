@@ -246,8 +246,8 @@ float soilHeight(vec2 p, float lod) {
 
 // With its gloss gone, damp soil under dew takes this much more of the cool sky as plain light.
 export const dampFill = [1, 1.12, 1.1]
-export const dayEarth = [0.16, 0.16, 0.16]
-export const humus = [0.9, 1.04, 1.45]
+export const dayEarth = [0.22, 0.22, 0.22]
+export const humus = [0.88, 1.04, 1.7]
 export const cropFar = [0.05, 0.04, 0.012]
 export const dawnSky = [0.85, 0.78, 0.66]
 export const dewShade = [0.6, 0.54, 1.18]
