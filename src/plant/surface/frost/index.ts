@@ -14,8 +14,9 @@ const float FROST_BLOOM = 0.6;
 const float FROST_SHUT = 0.4;
 // The sugar a close lens sees: the cells of its two sizes of chip in meters, how sharply a chip's face mirrors the sun, and how bright against the flash of a grain.
 const float FROST_CHIP_M = 0.00052;
-const float FROST_FINE_M = 0.00023;
-const float FROST_DUST_M = 0.00011;
+const float FROST_CHIP_FINE_M = 0.00023;
+const float FROST_FINE_M = 0.00016;
+const float FROST_DUST_M = 0.00007;
 const float FROST_CHIP_SHARP = 600.0;
 const float FROST_CHIP_FLASH = 4.0;
 // A chip is clear ice: the sun goes through it from any side and it stands pale on a face the sun does not reach. Its light as a share of the flash of a grain.
@@ -70,12 +71,22 @@ vec2 frostChip(vec2 g, float reach, float chance, vec3 N, vec3 view) {
   return vec2(mix(mean, chip, sharp), sharp * flash * (1.0 - smoothstep(0.0, 0.5 * r + reach, d)));
 }
 
-// The three sizes of grain at a place: x their share of the pixel, y their flash. 'skin' is how many meters of the skin's own measure a true meter is, 'want' the share of the skin the coat should hide.
+// The coat at a place: x its share of the pixel, y its flash. 'skin' is how many meters of the skin's own measure a true meter is, 'want' the share of the skin the coat should hide.
 vec3 frostSugar(vec2 at, float pixel, float skin, float want, vec3 N, vec3 view) {
-  vec2 chips = frostChip(at * (1.0 / (FROST_CHIP_M * skin)) + 91.0, pixel / (FROST_CHIP_M * skin), 0.55 * want, N, view);
-  vec2 sugar = frostChip(at * (1.0 / (FROST_FINE_M * skin)) + 37.0, pixel / (FROST_FINE_M * skin), saturate(1.1 * want), N, view);
-  vec2 dust = frostChip(at * (1.0 / (FROST_DUST_M * skin)) + 11.0, pixel / (FROST_DUST_M * skin), saturate(1.5 * want), N, view);
-  return vec3(1.0 - (1.0 - chips.x) * (1.0 - sugar.x) * (1.0 - dust.x), chips.y + 0.6 * sugar.y + 0.3 * dust.y, 0.0);
+  vec2 q = at * (1.0 / skin);
+  float px = pixel / skin;
+  // Most of it is grains too small and too many to stand in rows: two sizes of them, turned against each other, cut off where the coat thins.
+  vec2 q1 = vec2(0.8 * q.x + 0.6 * q.y, 0.8 * q.y - 0.6 * q.x);
+  vec2 q2 = vec2(0.6 * q.x - 0.8 * q.y, 0.6 * q.y + 0.8 * q.x);
+  float n = 0.55 * valueNoise(q1 * (1.0 / FROST_FINE_M) + 37.0) + 0.45 * valueNoise(q2 * (1.0 / FROST_DUST_M) + 11.0);
+  float cut = 0.5 - 0.6 * (want - 0.5);
+  float soft = 0.05 + 0.6 * px / FROST_DUST_M;
+  float grains = smoothstep(cut - soft, cut + soft, n) * (0.72 + 0.28 * valueNoise(q1 * (1.7 / FROST_DUST_M) + 5.0));
+  grains = mix(grains, 0.86 * want, smoothstep(0.6, 1.6, px / FROST_DUST_M));
+  // And on it lie the chips a lens can tell apart, few enough that their cells never show.
+  vec2 chips = frostChip(q2 * (1.0 / FROST_CHIP_M) + 91.0, px / FROST_CHIP_M, 0.3 * want, N, view);
+  vec2 sugar = frostChip(q * (1.0 / FROST_CHIP_FINE_M) + 37.0, px / FROST_CHIP_FINE_M, 0.45 * want, N, view);
+  return vec3(1.0 - (1.0 - grains) * (1.0 - chips.x) * (1.0 - sugar.x), chips.y + 0.6 * sugar.y, 0.0);
 }
 
 // How far along its blade the skin being shaded lies, 0 at the stalk and 1 at the tip. A wearer that knows sets it before it shades; under 0 it is not known.
