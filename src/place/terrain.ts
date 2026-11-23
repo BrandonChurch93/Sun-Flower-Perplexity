@@ -200,7 +200,7 @@ ${fieldsGlsl}
 const vec3 CROPS[${CROPS.length}] = vec3[${CROPS.length}](${CROPS.map((c) => `vec3(${c.join(', ')})`).join(', ')});
 
 // What the shaded sides of the far crop give back to the sky's light.
-const vec3 CROP_SHADE = vec3(0.05, 0.09, 0.105);
+const vec3 CROP_SHADE = vec3(0.06, 0.085, 0.08);
 
 float cropAt(vec2 p, float px) {
   float depth = dot(p, vec2(${CROP_AXES.depth.x.toFixed(6)}, ${CROP_AXES.depth.z.toFixed(6)}));
@@ -288,7 +288,7 @@ void main() {
   float through = uThrough * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * mix(lobe * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * farOff, upright, crop * (1.0 - wood));
   // From over its tops the far crop shows its lit heads toward the sun and its shaded sides away from it, and the sky lights the shade.
   float over = uLandOver * crop * (1.0 - wood);
-  float toward = pow(0.5 + 0.5 * dot(normalize(-v.xz), normalize(uTrueSun.xz + vec2(1e-6))), 4.0);
+  float toward = pow(0.5 + 0.5 * dot(normalize(-v.xz), normalize(uTrueSun.xz + vec2(1e-6))), 9.0);
   vec3 shaded = mix(albedo, CROP_SHADE * (0.72 + 0.56 * mottle), over);
   vec3 color = albedo * uSunColor * sunOnLand(vWorld) * (ndl * shade + through) * mix(1.0, toward, over) + shaded * landAmbient(n, vWorld) * nook;
   outColor = landFinish(color, vWorld + vec3(0.0, uLandCropTopM * crop * (1.0 - wood), 0.0), vDepth);

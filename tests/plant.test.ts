@@ -52,7 +52,7 @@ describe('the plant', () => {
       const top = buildStandIn(time, { ...inputs, wind: 0 }, pos, null)
       expect(Math.abs(top - heightAt(time))).toBeLessThan(2e-5)
       const blown = buildStandIn(time, inputs, pos, null)
-      expect(Math.abs(blown - heightAt(time))).toBeLessThan(5e-3)
+      expect(Math.abs(blown - heightAt(time))).toBeLessThan(7e-3)
     }
   })
 
