@@ -1,11 +1,12 @@
 # Looks of post
 
-2026-11-23 11:12 UTC, at commit 80deff5 of agent/post.
+2026-11-23 11:43 UTC, at commit 7e8c28c of agent/post.
 
-- `01-1054-sparks-before-and-with-the-small-glow-twice.jpg`: 1054 sparks before and with the small glow, twice size
-- `02-1106-sparks-before-and-with-the-small-glow-twice.jpg`: 1106 sparks before and with the small glow, twice size
-- `03-1240-sparks-before-and-with-the-small-glow-twice.jpg`: 1240 sparks before and with the small glow, twice size
-- `04-1054-discs-draft-beside-review.jpg`: 1054 discs, draft beside review
-- `05-1106-discs-draft-beside-review.jpg`: 1106 discs, draft beside review
-- `06-3112-left-at-draft-and-review.jpg`: 3112 left at draft and review
-- `07-the-sun-at-1106-and-3729-key-now-and-two-stronge.jpg`: The sun at 1106 and 3729, key, now, and two stronger blooms
+- `01-1054-sparks-at-100-percent-before-with-the-small.jpg`: 1054 sparks at 100 percent, before, with the small glow at draft, at review
+- `02-1106-sparks-at-100-percent-before-draft-review.jpg`: 1106 sparks at 100 percent, before, draft, review
+- `03-1240-beads-at-100-percent-before-draft-review.jpg`: 1240 beads at 100 percent, before, draft, review
+- `04-1106-discs-at-100-percent-before-draft-review.jpg`: 1106 discs at 100 percent, before, draft, review
+- `05-1106-sun-stretched-no-bands.jpg`: 1106 sun, stretched, no bands
+- `06-1054-review-at-1920.jpg`: 1054 review at 1920
+- `07-1106-review-at-1920.jpg`: 1106 review at 1920
+- `08-1240-review-at-1920.jpg`: 1240 review at 1920
