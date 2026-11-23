@@ -54,13 +54,32 @@
           "expect": "none"
         },
         {
+          "id": "cut-margin",
+          "at": "19.1",
+          "do": "Cut to the first close shot: the edge of a leaf, the ice still growing",
+          "expect": "none"
+        },
+        {
+          "id": "cut-tip",
           "at": "21.1",
-          "do": "The camera is half way in and the disc of the sun sharpens",
+          "do": "Cut to the growing tip: the mist thins and the sun comes through",
           "expect": "soft"
         },
         {
-          "at": "22.3",
+          "at": "22.4",
           "do": "The frost starts to melt",
+          "expect": "none"
+        },
+        {
+          "id": "cut-thaw",
+          "at": "23.1",
+          "do": "Cut to the lowest leaf: the ice goes to water",
+          "expect": "none"
+        },
+        {
+          "id": "drop",
+          "at": "24.3",
+          "do": "The drop at the tip of the leaf lets go",
           "expect": "none"
         }
       ]
@@ -72,7 +91,7 @@
         {
           "id": "frost-hold-out",
           "at": "25.1",
-          "do": "The frost hold ends: the plant grows again on this bar line",
+          "do": "Cut back to the wide shot. The frost hold ends: the plant grows again on this bar line",
           "expect": "none"
         },
         {
@@ -243,6 +262,12 @@
           "expect": "hat"
         },
         {
+          "id": "bloom-move-in",
+          "at": "55.1",
+          "do": "The camera starts in toward the bud",
+          "expect": "hat"
+        },
+        {
           "at": "56.1",
           "do": "The time lapse slows into the golden evening",
           "expect": "none"
@@ -256,7 +281,7 @@
         {
           "id": "bloom-in",
           "at": "57.1",
-          "do": "The bud begins to open (bloom)",
+          "do": "The camera is half a metre from the head and the bud begins to open (bloom)",
           "expect": "none"
         },
         {
@@ -272,7 +297,7 @@
       "cues": [
         {
           "at": "65.1",
-          "do": "The camera starts to pull away from the flower",
+          "do": "The camera starts to pull away from the flower over the field",
           "expect": "kick"
         },
         {

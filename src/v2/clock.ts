@@ -276,6 +276,7 @@ export function fogAtBar(b: number): number {
 const DROP_FROM = 23.3
 const DROP_GOES = hitBar(24, 3) - 1e-9
 const DROP_PULL = 0.8
+const DROP_OVER = 26
 
 // How full the drop at the tip hangs. The one that follows the fallen drop stays small.
 export function dropAtBar(b: number): number {
@@ -284,12 +285,12 @@ export function dropAtBar(b: number): number {
     const u = (b - DROP_FROM) / (DROP_GOES - DROP_FROM)
     return 1 - (1 - u) * (1 - u)
   }
-  return lerp(0.25, 0.5, smooth((b - DROP_GOES) / 0.6)) * (1 - smooth((b - 25.2) / 0.8))
+  return lerp(0.25, 0.5, smooth((b - DROP_GOES) / 0.6)) * (1 - smooth((b - 25.2) / (DROP_OVER - 25.2)))
 }
 
 // How far the drop that let go has fallen, in metres. 0 while it hangs.
 export function dropFallAtBar(b: number): number {
-  if (b < DROP_GOES) return 0
+  if (b < DROP_GOES || b >= DROP_OVER) return 0
   const s = (b - DROP_GOES) * BAR
   return Math.min(1, 0.5 * DROP_PULL * s * s)
 }
