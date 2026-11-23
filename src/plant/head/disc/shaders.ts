@@ -16,7 +16,7 @@ Floor floorAt(float rho, float theta) {
 #ifdef PLANT_FIELD
   float s = 0.0;
 #else
-  float s = uShutter;
+  float s = plantBlend();
 #endif
   vec3 c = mix(uHC[0], uHC[1], s);
   vec3 a = normalize(mix(uHA[0], uHA[1], s));
