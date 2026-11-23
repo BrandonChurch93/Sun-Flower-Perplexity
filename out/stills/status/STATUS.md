@@ -1,11 +1,12 @@
-# Status 22
+# Status 23
 
-2026-11-23 10:20 UTC
+2026-11-23 10:41 UTC
 
-- Status 22 · Phase 3. Each of the three frost close shots now has a grade of its own, and the first is reframed so the whole leaf sits in the middle of the picture. In the second the sky falls to a steel blue behind the lit fringe and the sun has a hot core through the mist. In the third the ground is darker behind the lit blade. The drop in the third shot now falls at real speed. Measured: 32 test files, 186 tests pass, among them a new one that proves the grades touch no frame outside the close shots.
-- Next: Break up the comb of hairs on the stalk and give the stem a slender end, grain in the frost banks, keep the green between the banks on the first leaf, take the frost off the ground as it thaws, then the blockout of the whole film. Time used: 12.3 h of 30 h.
+- Status 23 · Phase 3. The flicker at every dusk and dawn of the time lapse is cured: the plant no longer flashes for three frames while the sun hands over to the moon (measured on frames 204 to 214, and a new test proves no other frame changed). The stem now ends in a slender growing point, the pale dome is gone. The thaw drop hangs as a pear on its neck with the sky in it, lets go and falls as one streak. The ground loses its white as it thaws. Merged and proved: ground, plant, frost, hairs, lens, rain. Measured: 33 test files, 189 tests pass.
+- Next: The frost band along the leaf margin is still a flat plate and the veins are even lines: both are back with the frost owner to be made of grains and needles that sparkle. Then a darker leaf under the frost, a deep glossy leaf where it has melted, finer hairs on the stalk, and the cost of a frame in live play, which is now the largest risk. Time used: 12.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it
-- `status-2.jpg`: Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next
-- `status-3.jpg`: Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand
+- `status-1.jpg`: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling
+- `status-2.jpg`: Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next
+- `status-3.jpg`: The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip
+- `status-4.jpg`: First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet
