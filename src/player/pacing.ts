@@ -3,7 +3,7 @@ import type { Made } from '../v2/counter.ts'
 
 export const GAP_MS = 50
 
-export type RunKind = 'recording' | 'check' | 'play' | 'measure'
+export type RunKind = 'recording' | 'check' | 'play' | 'measure' | 'timing'
 
 export interface Shown {
   frame: number
@@ -94,6 +94,8 @@ export interface Report extends RunFacts {
   writes: { mean: number; largest: number; mbMean: number; mbLargest: number; mbLargestAtFrame: number; mbTotal: number }
   madeAtFilm: number[]
   holds: boolean
+  // A few frames skipped at most and no long gap: the eye does not see it.
+  nearly: boolean
   verdict: string
   shown: Shown[]
 }
@@ -241,6 +243,7 @@ export class Pacing {
       },
       madeAtFilm: shown.filter((s) => s.made > 0).map((s) => s.film),
       holds,
+      nearly: holds || nearly,
       verdict,
       shown,
     }
@@ -372,4 +375,23 @@ export function reportFile(report: Report): Blob {
 
 export function reportName(report: Report): string {
   return `${config.slug}-${report.kind}-${report.at.replace(/[:.]/g, '-')}.json`
+}
+
+// What the timing at the end of loading found at one quality.
+export interface Timed { quality: string; held: boolean; due: number; shown: number; skipped: number; longestGapMs: number; slow: number }
+
+export const timedText = (t: Timed): string => `${t.quality} ${t.held ? 'held' : 'did not hold'} ${config.film.fps} frames a second (${t.shown} of ${t.due} frames shown, longest gap ${t.longestGapMs.toFixed(0)} ms, ${t.slow} slow)`
+
+// What the timing at the end of loading says, and the quality the film now plays at. `found` holds the qualities in the order they were timed.
+export function timedAdvice(found: Timed[], seconds: number): string {
+  const last = found[found.length - 1]
+  const rate = `${config.film.fps} frames a second`
+  const lost = (t: Timed): string => `${t.skipped} of ${t.due} frames skipped, the longest gap ${t.longestGapMs.toFixed(0)} ms`
+  const skips = 'A recording stays with the music and skips frames. The export makes a file with every frame at any speed.'
+  if (!last) return ''
+  if (found.length === 1 && last.held) return `Timed at loading: this machine held ${rate} at ${last.quality} quality over ${seconds} seconds of the film's hardest parts. Record at ${last.quality} quality.`
+  if (found.length === 1) return `Timed at loading: ${last.quality} quality did not hold ${rate} (${lost(last)}). ${skips}`
+  const first = found[0]
+  if (last.held) return `Timed at loading: ${first.quality} quality did not hold ${rate} on this machine (${lost(first)}), ${last.quality} quality held. The film now plays at ${last.quality} quality. Record at ${last.quality} quality.`
+  return `Timed at loading: neither quality held ${rate} on this machine (${first.quality}: ${lost(first)}; ${last.quality}: ${lost(last)}). The film now plays at ${last.quality} quality. ${skips}`
 }

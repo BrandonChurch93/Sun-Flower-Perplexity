@@ -6,7 +6,7 @@ import type { Report, RunFacts } from './pacing.ts'
 import { filmPlan, play, stretchPlan, type Plan, type Playing } from './play.ts'
 import { stateRun, type StateReport } from './state.ts'
 
-const CHECK_SECONDS = 10
+export const CHECK_SECONDS = 20
 const CHECK_STRETCHES = 3
 
 export interface Deck {
@@ -15,7 +15,7 @@ export interface Deck {
   root: HTMLElement
   stage: HTMLElement
   curtain: HTMLElement
-  facts(kind: RunFacts['kind'], ctx: AudioContext): RunFacts
+  facts(kind: RunFacts['kind'], ctx: AudioContext | null): RunFacts
 }
 
 const stepped = (facts: RunFacts, stepMs: number): RunFacts => ({ ...facts, audio: { ...facts.audio, stepMs: Number(stepMs.toFixed(2)) } })
@@ -155,7 +155,7 @@ export function record(deck: Deck, clockReady: Promise<FilmClock>, marks: boolea
   return { stop, finished: run() }
 }
 
-// The check before recording: ten seconds over the film's hardest moments, on the audio clock with the sound off.
+// The check before recording: twenty seconds over the film's hardest moments, on the audio clock with the sound off.
 export function check(deck: Deck, clock: FilmClock): Session {
   const fps = config.film.fps
   const each = Math.round((CHECK_SECONDS * fps) / CHECK_STRETCHES)
@@ -168,7 +168,7 @@ export function check(deck: Deck, clock: FilmClock): Session {
       await deck.film.renderFrame(starts[0], deck.tier)
       const clockRun = await runFrom(clock, 0, false, 0)
       const facts = deck.facts('check', clock.ctx)
-      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: clockRun.time, facts: (stepMs) => stepped(facts, stepMs) })
+      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: clockRun.time, seat: true, facts: (stepMs) => stepped(facts, stepMs) })
       if (stopped) playing.stop()
       return await playing.finished
     } finally {
@@ -179,6 +179,66 @@ export function check(deck: Deck, clock: FilmClock): Session {
     stop() {
       stopped = true
       playing?.stop()
+    },
+    finished: run(),
+  }
+}
+
+// The timing at the end of loading: the same twenty seconds on the page's own clock, since no sound may start before a click.
+// A page that is not in view draws nothing, so the timing waits until it is, and starts again if the page was hidden while it ran.
+// `say` is told the seconds timed so far, or null while it waits for the page to be in view.
+export function timing(deck: Deck, say: (seconds: number | null) => void): Session {
+  const fps = config.film.fps
+  const each = Math.round((CHECK_SECONDS * fps) / CHECK_STRETCHES)
+  const starts = checkStarts(each)
+  let stopped = false
+  let playing: Playing | null = null
+  const inView = (): boolean => document.visibilityState === 'visible'
+  const seen = (): Promise<void> =>
+    new Promise<void>((resolve) => {
+      if (inView()) {
+        resolve()
+        return
+      }
+      say(null)
+      const look = (): void => {
+        if (!inView() && !stopped) return
+        document.removeEventListener('visibilitychange', look)
+        resolve()
+      }
+      document.addEventListener('visibilitychange', look)
+    })
+  const once = async (): Promise<{ report: Report; hidden: boolean }> => {
+    let hidden = false
+    const hide = (): void => {
+      if (inView()) return
+      hidden = true
+      playing?.stop()
+    }
+    document.addEventListener('visibilitychange', hide)
+    try {
+      await deck.film.renderFrame(starts[0], deck.tier)
+      const zero = performance.now()
+      const facts = deck.facts('timing', null)
+      playing = play({ film: deck.film, tier: deck.tier, plan: stretchPlan(starts, each), time: () => (performance.now() - zero) / 1000, raw: true, seat: true, facts: () => facts, tick: (seconds) => say(Math.min(CHECK_SECONDS, Math.max(0, seconds))) })
+      if (stopped) playing.stop()
+      return { report: await playing.finished, hidden }
+    } finally {
+      document.removeEventListener('visibilitychange', hide)
+    }
+  }
+  const run = async (): Promise<Report> => {
+    for (;;) {
+      await seen()
+      const { report, hidden } = await once()
+      if (!hidden || stopped) return report
+    }
+  }
+  return {
+    stop() {
+      stopped = true
+      playing?.stop()
+      document.dispatchEvent(new Event('visibilitychange'))
     },
     finished: run(),
   }

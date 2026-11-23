@@ -28,7 +28,7 @@ export interface Desk {
 
 export interface Advice { text: string; tryLow: boolean }
 
-const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report' } as const
+const KIND = { recording: 'Recording', check: 'Check', play: 'Playback', measure: 'Pacing report', timing: 'Timed at loading' } as const
 const SHOWN_GAPS = 4
 
 function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -111,7 +111,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
   goStep.set('wait', 'Not checked yet')
   const check = button('Check this machine', 'C')
   check.addEventListener('click', () => actions.check())
-  const checkText = make('p', css.small, 'Ten seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
+  const checkText = make('p', css.small, 'Twenty seconds of the hardest parts of the film, without sound. It says whether this machine keeps up.')
   const adviceText = make('p', css.advice)
   adviceText.hidden = true
   const tryLow = button('Check at low quality', null)
@@ -255,7 +255,7 @@ export function createDesk(host: HTMLElement, start: { quality: Quality; av: num
       top.append(make('p', css.kind, `${KIND[report.kind]}, ${report.quality} quality, ${report.track ? report.track.name : 'no track'}`), link)
       reportBody.append(top)
       reportBody.append(make('p', css.verdict, report.verdict))
-      if (report.kind === 'check' && report.complete) {
+      if ((report.kind === 'check' || report.kind === 'timing') && report.complete) {
         checkedAt = report.quality
         if (report.holds) goStep.set('done', 'Checked: ready to record')
         else goStep.set('warn', 'Checked: does not keep up')
