@@ -10,11 +10,11 @@ import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
-import { LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
 import { gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
-const PICTURE_SIZE = 0.72
+const PICTURE_UNDER = 0.94
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -223,11 +223,15 @@ void main() {
     if (lost > 0.0 && island < lost * 1.15 - 0.05) discard;
     float grain = valueNoise(vec2(across, along) * 1.7);
     float patchy = 0.6 * valueNoise(at * 0.028) + 0.4 * valueNoise(at * 0.0093 + 5.0);
-    color = mix(vMid * 0.7, vTop, 0.3 + 0.55 * mix(0.5, grain, fine)) * (0.74 + 0.52 * patchy);
+    // Past the last picture the crop keeps their look: tops in the light, one plant wide, over the dark between them, as far as the eye can part them.
+    vec2 clumps = vec2(across * 2.2, along * 0.12);
+    float parted = clamp(1.0 - 0.7 * max(fwidth(clumps.x), fwidth(clumps.y)), 0.0, 1.0);
+    float tops = mix(0.42, smoothstep(0.25, 0.8, valueNoise(clumps + 7.0)), parted);
+    color = mix(vMid * 0.32, vTop * 0.72, mix(tops, 0.3 + 0.55 * grain, fine)) * (0.74 + 0.52 * patchy);
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
-    float share = mix(0.06, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    float share = mix(0.03, 0.12, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
     float disc = headsAt(f, tone);
     vec3 gold = vHead * vec3(1.25, 1.0, 0.55);
@@ -495,8 +499,8 @@ export class FarField {
     shared.uCocScale.value = 0
     shared.uShadowOn.value = 0
     fieldUniforms.uPlantWind.value = 0
-    // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as a neighbor of middle height is.
-    fieldUniforms.uCanopy.value = keep.canopy / PICTURE_SIZE
+    // The pictures are drawn of plants at full size and stand at a neighbor's: they are lit as the last real rows before them are, a little under the tops.
+    fieldUniforms.uCanopy.value = keep.canopy / (CANOPY_SIZE * PICTURE_UNDER)
     fieldUniforms.uEdge.value.z = -1000
     renderer.setRenderTarget(this.atlas)
     renderer.setClearColor(0x000000, 1)
