@@ -307,15 +307,25 @@ float sparkle(vec3 world, vec3 v, vec3 n) {
   float skim = 1.0 - max(dot(n, v), 0.0);
   return grains(world, 0.38) * skim * skim * smoothstep(0.3, -0.5, dot(v, uSunDir)) * uLowSun.z;
 }
+// The sky as it draws itself, for whatever shows its mirror image.
+vec3 skyImage(vec3 d) {
+  return mix(uAirHorizon, uAirZenith, smoothstep(0.1, 1.0, d.y));
+}
+// Before the sun is up, dewy soil is a dark mirror of the dusk above it: this is all that tells one crumb from the next.
+uniform float uDusk;
+vec3 duskSheen(vec3 v, vec3 n) {
+  float skim = 1.0 - saturate(dot(n, v));
+  return skyImage(reflect(-v, n)) * (uDusk * uDew * (0.02 + 0.17 * skim * skim) * smoothstep(-0.2, 0.3, n.y));
+}
 // Wet grains each mirror the bright sky low over the horizon.
 vec3 wetGlints(vec3 world, vec3 v, vec3 n, float wet) {
   float skim = 1.0 - max(dot(n, v), 0.0);
-  return uSkyHorizon * (grains(world + 0.37, 0.16) * wet * wet * (0.15 + 0.85 * skim) * mix(0.9, 0.5, smoothstep(0.3, 1.0, wet)));
+  return uAirHorizon * (grains(world + 0.37, 0.16) * wet * wet * (0.15 + 0.85 * skim) * mix(0.9, 0.5, smoothstep(0.3, 1.0, wet)));
 }
 // A wet shoulder mirrors the sky it faces as one soft sheen, strongest where the lens skims it.
 vec3 wetSheen(vec3 v, vec3 n, float wet) {
   float skim = 1.0 - max(dot(n, v), 0.0);
-  return skyAmbient(reflect(-v, n)) * (smoothstep(0.3, 1.0, wet) * (0.03 + 0.97 * skim * skim * skim) * 0.09);
+  return skyImage(reflect(-v, n)) * (smoothstep(0.3, 1.0, wet) * (0.03 + 0.97 * skim * skim * skim) * 0.09);
 }
 // How strongly a damp surface throws the sun back: several times more when the light skims it toward the lens.
 float glare(vec3 v, vec3 hv) {
@@ -334,7 +344,7 @@ vec3 sunGlow(vec3 world, vec3 v, vec3 n, float dew) {
   float toSun = saturate(dot(normalize(r.xz + vec2(1e-5, 0.0)), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
   float skim = 1.0 - max(v.y, 0.0);
   float far = smoothstep(0.14, 0.5, length(uCamPos - world));
-  return uSunColor * (low * dew * pow(toSun, 48.0) * pow(skim, 16.0) * far * 0.1);
+  return uAirSun * (low * dew * pow(toSun, 48.0) * pow(skim, 16.0) * far * 0.1);
 }
 // Until the film lets the ground cast shadows, a low sun's glints are held back, as most of the soil would lie in the shade of its own crumbs.
 float selfShade() {
@@ -348,7 +358,7 @@ float frostKept(float frost, float sunny) {
   float from = 0.7 * sunny;
   return smoothstep(from, from + 0.3, frost);
 }
-const vec3 FROST_WHITE = vec3(0.7, 0.73, 0.78);
+const vec3 FROST_WHITE = vec3(0.58, 0.62, 0.69);
 // The lightning's light on the ground at its full strength, and how many times brighter the wet soil throws the sun back when it bursts through the deck.
 const vec3 FLASH_LIGHT = vec3(1.6, 1.9, 2.6);
 const float BURST_BLAZE = 3.0;
@@ -356,22 +366,23 @@ uniform vec3 uFlashAt;
 const float WET_MIRROR = 0.8;
 vec3 wetSky(vec3 v, vec3 n) {
   vec3 r = reflect(-v, n);
-  return skyAmbient(r) * (WET_MIRROR * (0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0)) * smoothstep(-0.05, 0.2, r.y));
+  return skyImage(r) * (WET_MIRROR * (0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0)) * smoothstep(-0.05, 0.2, r.y));
 }
-// What the film of water on a soaked face adds: the sky it mirrors, the sun thrown at the lens, and the lightning.
-vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit) {
+// What water adds to a soaked face: the sky it mirrors, the sun thrown at the lens, and the lightning. Only where water lies as a film (lying, 0 to 1: the low places) is it one mirror; on the crumbs' tops it is single wet grains.
+vec3 wetAnswer(vec3 world, vec3 v, vec3 n, float soaked, float lit, float lying) {
   vec3 r = reflect(-v, n);
   float fres = 0.03 + 0.97 * pow(1.0 - saturate(dot(n, v)), 3.0);
-  vec3 sky = wetSky(v, n) * (0.3 + 1.1 * grains(world + 0.11, 0.22));
+  vec3 sky = wetSky(v, n) * (0.9 * lying + 2.2 * grains(world + 0.11, 0.1));
   vec3 hs = normalize(v + uSunDir);
   float off = 1.0 - saturate(dot(n, hs));
-  vec3 sun = (uSunColor + 2.0 * uAir.z * uSkyHorizonSun) * ((2.0 * exp(-off / 0.006) + 0.1 * exp(-off / 0.1) + 2.5 * grains(world + 0.37, 0.5 * exp(-off / 0.1))) * max(lit, 0.6 * uAir.z) * (1.0 + BURST_BLAZE * uAir.z));
+  vec3 sun = (uAirSun + 2.0 * uAir.z * uSkyHorizonSun) * ((2.0 * exp(-off / 0.006) + 0.1 * exp(-off / 0.1) + 2.5 * grains(world + 0.37, 0.5 * exp(-off / 0.1))) * max(lit, 0.6 * uAir.z) * (1.0 + BURST_BLAZE * uAir.z));
   vec3 hf = normalize(v + uFlashAt);
-  vec3 flash = FLASH_LIGHT * (uAir.y * (0.8 * pow(saturate(dot(n, hf)), 30.0) + 0.16 * fres));
+  vec3 flash = FLASH_LIGHT * (uAir.y * ((0.8 * pow(saturate(dot(n, hf)), 30.0) + 0.16 * fres) * (lying + 1.5 * grains(world + 0.11, 0.1))));
   return (sky + sun + flash) * soaked;
 }
-vec3 flashOn(vec3 albedo, vec3 n) {
-  return FLASH_LIGHT * albedo * (uAir.y * (0.25 + 0.75 * saturate(dot(n, uFlashAt))));
+// The lightning is in the key, and soil faces must stay dark under it: this much of the key reaches a soaked face while it strikes.
+float underFlash(float soaked) {
+  return 1.0 - 0.8 * uAir.y * soaked;
 }
 // Frozen soil is darker and greyer than the same soil thawed.
 vec3 frozen(vec3 albedo, float frost) {
@@ -379,7 +390,7 @@ vec3 frozen(vec3 albedo, float frost) {
 }
 // The hoar grows as crystals on what stands up into the air, never as a coat: the share of white on a place that offers this much of an edge.
 float rimed(vec3 world, float sits, float frost, float sunny) {
-  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.2, 0.62, sits * (0.5 + 1.0 * grains(world + 3.1, 0.6)));
+  return smoothstep(0.0, 0.3, frost) * frostKept(frost, sunny) * smoothstep(0.2, 0.95, sits * (0.45 + 1.1 * grains(world + 3.1, 0.6)));
 }
 // The crystals each face their own way, and one that throws the sun at the lens flares and dies as the light or the lens moves.
 float frostSpark(vec3 world, vec3 n, vec3 v, vec3 l) {
@@ -599,30 +610,32 @@ void main() {
   shade *= mix(vec3(1.0), proud(vWorld.y, uDew), fade);
 #endif
   float kept = frostKept(uFrost, lit * saturate(ndl * 1.8));
-  float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.9 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
+  float sits = saturate(0.5 * crest + 0.35 * smoothstep(0.5, 0.85, h) * hollow + 0.3 * top + 0.5 * smoothstep(0.006, 0.03, vWorld.y) - 0.1) * (0.3 + 0.7 * smoothstep(0.1, 0.6, n.y)) * (1.0 - 0.7 * under) * (1.0 - 0.5 * thatch) * (1.0 - pool);
   float rime = rimed(vWorld, sits, uFrost, lit * saturate(ndl * 1.8));
   float thaw = smoothstep(0.0, 0.3, uFrost) * (1.0 - kept) * sits;
   albedo = frozen(albedo, uFrost) * (1.0 - 0.5 * thaw);
-  albedo = mix(albedo, FROST_WHITE, 0.94 * rime);
+  albedo = mix(albedo, FROST_WHITE, 0.85 * rime);
   open = mix(open, max(open, 0.85), rime);
-  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew));
+  vec3 color = albedo * (uSunColor * ndl * lit * (1.0 - 0.97 * under) * underFlash(smoothstep(0.1, 0.8, uWet)) + groundAmbient(n) * open * shade * mix(vec3(1.0), DEW_SHADE, uDew) * mix(vec3(1.0), DAMP_FILL, dull * uDew) * mix(vec3(1.0), DAWN_SKY, dawnOnly() * uDew));
 
   vec3 v = normalize(uCamPos - vWorld);
   vec3 hv = normalize(v + uSunDir);
   float gloss = sheen(max(uWet, 0.8 * thaw), uDew) * (1.0 - rime) * (1.3 - rough) * (1.0 - pool) / (1.0 + 0.7 * max(density - 1.0, 0.0));
-  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(1.0, 0.3, dull) * (1.0 + BURST_BLAZE * uAir.z * uWet);
+  color += uSunColor * pow(max(dot(n, hv), 0.0), mix(24.0, 160.0, uWet)) * gloss * glare(v, hv) * lit * selfShade() * mix(1.0, 0.3, dull) * (1.0 + BURST_BLAZE * uAir.z * uWet) * underFlash(1.0);
   float graze = pow(1.0 - max(dot(n, v), 0.0), 5.0);
   color += groundAmbient(reflect(-v, n)) * (0.03 + graze) * mix(selfShade(), 1.0, uDew) * gloss * mix(0.35, 0.1, uWet) * open * (1.0 - 0.8 * under) * mix(1.0, 0.45, dull);
-  color += (skyAmbient(reflect(-v, n)) * (0.02 + 0.22 * graze) + uSunColor * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
+  color += (skyImage(reflect(-v, n)) * (0.02 + 0.22 * graze) + uAirSun * pow(max(dot(n, hv), 0.0), 300.0) * 2.0 * lit) * pool * (1.0 - thatch) * (1.0 - 0.8 * under);
 
   color += sunGlow(vWorld, v, n, uDew) * open * (1.0 - thatch) * (1.0 - 0.8 * under);
 #ifdef NEAR
   color += (wetGlints(vWorld, v, n, uWet) * mix(1.0, 0.35, dull) + wetSheen(v, n, uWet) * smoothstep(0.5, 0.85, h)) * open * fade * (1.0 - pool) * (1.0 - thatch);
 #endif
+  color += duskSheen(v, n) * open * (1.0 - thatch);
   float soaked = max(smoothstep(0.1, 0.8, uWet), pool);
   vec3 film = normalize(vec3(sleek.x, 1.0, sleek.y));
-  color *= 1.0 - 0.7 * soaked * (1.0 - pool);
-  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5)), soaked, lit) * mix(0.4, 1.0, stand) + wetSky(v, film) * pool + wetSky(v, film) * max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) + flashOn(albedo, n)) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
+  color *= 1.0 - 0.72 * soaked * (1.0 - pool);
+  float lying = max(pool, stand * (1.0 - smoothstep(0.1, 0.4, lumpy.a)));
+  color += (wetAnswer(vWorld, v, normalize(mix(n, film, 0.5)), soaked, lit, lying) * mix(0.4, 1.0, stand) + wetSky(v, film) * pool + wetSky(v, film) * (max(0.3 * uDew - soaked, 0.0) * (1.0 - pool) * stand * (0.3 + 1.5 * grains(vWorld + 0.11, 0.22)))) * hollow * (1.0 - thatch) * (1.0 - 0.6 * under * (1.0 - uAir.z));
   color += FROST_WHITE * rime * (groundAmbient(vec3(0.0, 1.0, 0.0)) * 0.7 * hollow + uSunColor * lit * (0.2 + 0.6 * pow(saturate(-dot(v, uSunDir)), 2.0)));
   color += (uSunColor * lit * 7.0 * frostSpark(vWorld, n, v, uSunDir) + uSkyHorizonSun * 1.2 * frostSpark(vWorld + 0.5, n, v, normalize(vec3(uLowSun.x, 0.3, uLowSun.y)))) * rime;
   outColor = finish(color, vWorld, vDepth, density);

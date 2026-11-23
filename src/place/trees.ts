@@ -352,7 +352,7 @@ void main() {
   float behind = pow(saturate(dot(-v, uSunDir)), 4.0) * low * uThrough;
   // Leaves let the low sun through: the crown's thin edge glows when the sun stands behind it.
   vec3 glow = vec3(1.5, 1.7, 0.7) * behind * (0.06 + 0.9 * thin);
-  vec3 color = albedo * (uSunColor * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open + flashLight(n));
+  vec3 color = albedo * (uSunColor * (ndl * mix(1.0, open, 0.75) + glow) + skyAmbient(n) * open);
   outColor = landFinish(color, vWorld, vDepth);
 }
 `

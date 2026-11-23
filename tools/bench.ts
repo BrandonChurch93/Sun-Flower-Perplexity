@@ -17,6 +17,7 @@ import { openSession, type Session } from './lib/render.ts'
 //   npm run bench -- --sky sky-a --only all              the whole scene
 //   npm run bench -- --sky sky-a --clip 73,85 --view wide   a clip of film seconds 73 to 85 from one camera
 //   npm run bench -- --sky sky-a --only all --bars 17,21,25 --name frost   the film's own camera at those bars, on one sheet
+//   npm run bench -- --sky sky-a --only all --frames 1368-1376,1400 --name dawn   the film's own camera at those frames
 //   npm run bench -- --sky sky-a --count                 plays 200 frames across the film and says what the graphics card was asked to make after loading
 //   npm run bench -- --sky sky-0 --only ground,plant,field --still --view wide --shots 07   the world at rest: no weather, no wind, one fixed sun
 
@@ -105,7 +106,11 @@ try {
   } else {
     const wanted = str(args, 'shots', 'all')
     const atBars = typeof args.bars === 'string' ? args.bars.split(',').map(Number) : null
-    const list: Shot[] = atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
+    const atFrames = typeof args.frames === 'string' ? args.frames.split(',').flatMap((x) => {
+      const [a, b] = x.split('-').map(Number)
+      return Array.from({ length: (b ?? a) - a + 1 }, (_, i) => a + i)
+    }) : null
+    const list: Shot[] = atFrames ? atFrames.map((f) => ({ id: `frame-${String(f).padStart(5, '0')}`, seconds: f / fps, view: 'film', what: '' })) : atBars ? atBars.map((b) => ({ id: `bar-${b.toFixed(2)}`, seconds: Math.max(0, barTime(b)), view: 'film', what: '' })) : wanted === 'all' ? shots : wanted.split(',').map((id) => {
       const s = shots.find((x) => x.id === id || x.id.startsWith(`${id}-`) || x.id.slice(3) === id)
       if (!s) throw new Error(`unknown shot "${id}"`)
       return s
@@ -122,7 +127,7 @@ try {
       console.log(`shot · ${s.id} · ${clock(s.seconds)} · ${view} · ${seconds.toFixed(1)} s · ${path.relative(process.cwd(), file)}`)
     }
     if (files.length > 1) {
-      const out = path.join(dir, `${str(args, 'name', atBars ? 'bars' : 'sheet')}-${format}-${tier}.jpg`)
+      const out = path.join(dir, `${str(args, 'name', atFrames ? 'frames' : atBars ? 'bars' : 'sheet')}-${format}-${tier}.jpg`)
       await sheet(files, out, num(args, 'cols', 4))
       console.log(`sheet · ${path.relative(process.cwd(), out)}`)
     }

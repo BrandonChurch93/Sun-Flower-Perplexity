@@ -42,7 +42,7 @@ void main() {
   float turn = sin(t * (0.3 + 0.5 * fract(own * 7.13)) + 40.0 * own);
   float flash = pow(turn * turn, 24.0);
   float against = pow(saturate(dot(-toEye, uSunDir)), 4.0);
-  vec3 light = (uSkyZenith + uSkyHorizon) * 1.5 + uSunColor * (1.0 + 4.0 * against + 28.0 * flash);
+  vec3 light = (uAirZenith + uAirHorizon) * 1.5 + uAirSun * (1.0 + 4.0 * against + 28.0 * flash);
   vLight = light * (uCold * seen * grainPx * grainPx / (radius * radius));
   vAt = side;
   view.xy += side * (radius * pixel);
