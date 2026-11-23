@@ -1,12 +1,12 @@
-# Status 42
+# Status 43
 
-2026-11-23 18:21 UTC
+2026-11-23 18:39 UTC
 
-- Status 42 · Phase 5. Fourteen of 36 chunks of the 1920 film are in (1,406 of 3,810 frames), all on the frozen build, each read by eye and by the three detectors: nothing to cure so far. The record round is ready to run: its plan and its tool are in the repo and a layout test built the packs for three of its critics. One finding on the way: the picture for the late key shows dusk, but the film has afternoon on that key's bar; the dusk with the closed bud is one day earlier (frame 2780), so the round pairs the picture with that frame and still puts both frames before the jurors. Three ranges were moved to machines that end early.
-- Next: Take in the other 22 chunks (the last is now due about 19:27 UTC in place of 19:45), start the proofs on the first free machine, join the film with the track for a private watch, then run the record round once. Time used: 20.4 h of 30 h.
+- Status 43 · Phase 5. Twenty of 36 chunks of the 1920 film are in (2,070 of 3,810 frames), all on the frozen build and all read: nothing to cure. The frost close shots are in at full size and show what message 7 asked for, the rime lit from behind and the thaw starting at a leaf tip. The round's asking tool is written and tested, and its eight target pictures for the jury are ready. One thing found at native size: the clouds carry a fine stipple where the sky is near focus (2.7 levels in the grey clouds of the climb against 0.8 in clear sky); it is logged as an open item for the critics to weigh, because a cure would mean drawing the film a second time.
+- Next: Take in the other 16 chunks (the last due about 19:27 UTC), start the proofs when the first machine is free, ask the jury on the target pictures in the free slots, then join the film with the track and run the record round once. Time used: 20.7 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frame 3112 of the 1920 film: the open flower at bar 61
-- `status-2.jpg`: Frame 3523 of the 1920 film: the field at bar 69
-- `status-3.jpg`: The key picture for late (left) and frame 2780 of the film: the closed bud at dusk
-- `status-4.jpg`: The last dusk over the field, frames 3688 to 3748, every eighth
+- `status-1.jpg`: Frame 1120 of the 1920 film: the frost close shot against the sun
+- `status-2.jpg`: Frame 1190: the thaw starting at the leaf tip
+- `status-3.jpg`: Frame 2630: the bud on the last days of the climb
+- `status-4.jpg`: Frame 1479 of the 1920 film, lossless: the climb
