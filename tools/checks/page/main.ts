@@ -15,6 +15,17 @@ export interface Numbers { none: number; over: number; most: number; at: [number
 export interface Sparks { count: number; worst: number; at: [number, number]; value: number; near: number; mean: number; where: number[]; wild: number[] }
 // `wild` holds x, y from the top and the value of each pixel over `fail` times what is near it.
 export interface Spot { worst: number; wild: number; value: number; at: [number, number]; size: number; plain: number }
+// What three.js and the graphics card were asked in the frames since the last call, beside the plain drawing.
+// `programs`: each program drawn with, how often, and whether a draw with it was its first since the page loaded. `asks`: each question put to the card that the page stands still for, by name and by the program asked about, with the time inside it.
+// `materials`: each material three.js worked through again (its program looked up afresh), how often, and which of its marks changed since the last call. `owners`: who holds a material of that name in the film.
+export interface Worked {
+  programs: { name: string; draws: number; first: boolean }[]
+  asks: { name: string; about: string; calls: number; ms: number }[]
+  materials: { name: string; kind: string; calls: number; changed: string[] }[]
+  // Every call into the graphics card by name, with the page's time inside it: what the card is handed costs the page the copying.
+  calls: { name: string; calls: number; ms: number }[]
+  owners: Record<string, string>
+}
 export interface FloatDiff { values: number; differing: number; largest: number; mean: number }
 export interface ChecksPage {
   ready: Promise<void>
@@ -54,6 +65,8 @@ export interface ChecksPage {
   spot(x: number, y: number, r: number, fail: number): Spot
   // Draws only the named parts of the scene from the next frame on (plant, companion, field, ground, sky and each part's name); none named draws them all.
   only(names: string[]): void
+  // Only on a page opened with work=1: what the frames since the last call asked of three.js and of the card, and starts the next count.
+  worked(): Worked
 }
 
 declare global {
@@ -154,6 +167,87 @@ function timeDraws(): void {
     if (scene === film.scene) drawMs[renderer.getRenderTarget() === film.stage.sample ? 'drawScene' : 'drawShadow'] += ms
   }
 }
+// The work a frame can cost with nothing made and nothing written: a program used for the first time (three.js asks the card for its uniforms and places, and the page waits), a material looked up afresh, any question the page waits on.
+const SIGNS = ['__version', 'lightsStateVersion', 'needsLights', 'outputColorSpace', 'toneMapping', 'batching', 'instancing', 'instancingColor', 'instancingMorph', 'skinning', 'morphTargets', 'morphNormals', 'morphColors', 'morphTargetsCount', 'envMap', 'fog', 'numClippingPlanes', 'numIntersection', 'vertexAlphas', 'vertexTangents', 'currentProgram']
+const WAITS = ['readPixels', 'finish', 'checkFramebufferStatus', 'clientWaitSync']
+const DRAWS = ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced', 'drawRangeElements']
+const working = q.get('work') === '1'
+const workDraws = new Map<WebGLProgram, number>()
+const workFirst = new Set<WebGLProgram>()
+const workDrawn = new WeakSet<WebGLProgram>()
+const workAsks = new Map<string, { name: string; program: WebGLProgram | null; calls: number; ms: number }>()
+const workCalls = new Map<string, { calls: number; ms: number }>()
+const workLooked = new Map<THREE.Material, number>()
+const workMarks = new Map<THREE.Material, unknown[]>()
+let workCurrent: WebGLProgram | null = null
+const marksOf = (m: THREE.Material): unknown[] => {
+  const p = film.stage.renderer.properties.get(m) as Record<string, unknown>
+  return [m.version, JSON.stringify(m.defines ?? null), ...SIGNS.map((k) => p[k])]
+}
+function workTaps(): void {
+  const gl = film.stage.renderer.getContext() as unknown as Record<string, (...a: unknown[]) => unknown>
+  const names = new Set<string>()
+  for (let o: object | null = gl; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) for (const k of Object.getOwnPropertyNames(o)) names.add(k)
+  for (const name of names) {
+    const asks = /^(get|is)[A-Z]/.test(name) || WAITS.includes(name)
+    const draws = DRAWS.includes(name)
+    let inner: (...a: unknown[]) => unknown
+    try {
+      if (typeof gl[name] !== 'function') continue
+      inner = gl[name].bind(gl)
+    } catch {
+      continue
+    }
+    if (name === 'useProgram') {
+      gl[name] = (p) => {
+        workCurrent = p as WebGLProgram | null
+        return inner(p)
+      }
+    } else if (!asks) {
+      const line = { calls: 0, ms: 0 }
+      gl[name] = (...a) => {
+        if (draws && workCurrent) {
+          workDraws.set(workCurrent, (workDraws.get(workCurrent) ?? 0) + 1)
+          if (!workDrawn.has(workCurrent)) {
+            workDrawn.add(workCurrent)
+            workFirst.add(workCurrent)
+          }
+        }
+        const t = performance.now()
+        const out = inner(...a)
+        line.ms += performance.now() - t
+        if (line.calls++ === 0) workCalls.set(name, line)
+        return out
+      }
+    } else {
+      gl[name] = (...a) => {
+        const program = a[0] instanceof WebGLProgram ? a[0] : null
+        const t = performance.now()
+        const out = inner(...a)
+        const ms = performance.now() - t
+        const key = `${name} ${program ? idOf(program) : ''}`
+        const line = workAsks.get(key) ?? { name, program, calls: 0, ms: 0 }
+        line.calls++
+        line.ms += ms
+        workAsks.set(key, line)
+        return out
+      }
+    }
+  }
+  const key = THREE.Material.prototype.customProgramCacheKey
+  THREE.Material.prototype.customProgramCacheKey = function (this: THREE.Material) {
+    workLooked.set(this, (workLooked.get(this) ?? 0) + 1)
+    return key.call(this)
+  }
+}
+let workCount = 0
+const workNumbers = new WeakMap<WebGLProgram, number>()
+function idOf(p: WebGLProgram): number {
+  let n = workNumbers.get(p)
+  if (n === undefined) workNumbers.set(p, (n = workCount++))
+  return n
+}
+if (working) workTaps()
 let slowMs = 0
 let slowAt = -1
 // The fault of a part that takes too long: the field's turn in a frame lasts `slowMs` longer, in every frame or in one. It is time and no pixel.
@@ -460,6 +554,60 @@ window.checks = {
     const set = (film as unknown as { only: Set<string> }).only
     set.clear()
     for (const n of names) set.add(n)
+  },
+  worked() {
+    if (!working) throw new Error('open the page with work=1')
+    const { renderer } = film.stage
+    const named = new Map<WebGLProgram, string>()
+    for (const p of (renderer.info.programs ?? []) as unknown as { program: WebGLProgram; name: string; type: string; id: number }[]) named.set(p.program, `${p.name || p.type || 'no name'} (program ${p.id})`)
+    const nameOf = (p: WebGLProgram | null): string => (p ? (named.get(p) ?? 'a program three.js does not list') : '')
+    const owners: Record<string, string> = {}
+    const groups: [string, THREE.Object3D[]][] = [['plant', film.plant.meshes], ['companion', film.companion.meshes], ['field', film.field.meshes], ['ground', [film.ground.mesh, ...film.ground.casters.map((c) => c.mesh)]], ...film.parts.map((p): [string, THREE.Object3D[]] => [p.name, p.part.objects])]
+    const mine = new Set<THREE.Material>()
+    const hold = (owner: string, o: THREE.Object3D): void => {
+      const x = o as unknown as { material?: THREE.Material | THREE.Material[]; customDepthMaterial?: THREE.Material; customDistanceMaterial?: THREE.Material }
+      for (const m of [x.material, x.customDepthMaterial, x.customDistanceMaterial].flat()) {
+        if (!m) continue
+        mine.add(m)
+        const key = m.name || m.type
+        const path = `${owner}: ${o.name || o.type}`
+        if (!owners[key]) owners[key] = path
+        else if (!owners[key].split(' | ').includes(path) && owners[key].length < 160) owners[key] += ` | ${path}`
+      }
+    }
+    for (const [owner, list] of groups) for (const top of list) top.traverse((o) => hold(owner, o))
+    film.scene.traverse((o) => {
+      const x = o as unknown as { material?: THREE.Material | THREE.Material[] }
+      if ([x.material].flat().some((m) => m && !mine.has(m))) hold('film', o)
+    })
+    const materials: Worked['materials'] = []
+    for (const m of new Set([...mine, ...workLooked.keys()])) {
+      const now = marksOf(m)
+      const before = workMarks.get(m)
+      workMarks.set(m, now)
+      const calls = workLooked.get(m) ?? 0
+      if (!calls) continue
+      const changed: string[] = []
+      const keys = ['version', 'defines', ...SIGNS]
+      const say = (v: unknown): string => (v === undefined ? 'unset' : v === null ? 'none' : typeof v === 'object' ? ((v as { id?: number }).id !== undefined ? `number ${(v as { id: number }).id}` : 'set') : String(v).slice(0, 80))
+      if (!before) changed.push('first met here')
+      else for (let i = 0; i < now.length; i++) if (now[i] !== before[i]) changed.push(`${keys[i]}: ${say(before[i])} to ${say(now[i])}`)
+      materials.push({ name: m.name || 'no name', kind: m.type, calls, changed })
+    }
+    const out: Worked = {
+      programs: [...workDraws].map(([p, draws]) => ({ name: nameOf(p), draws, first: workFirst.has(p) })),
+      asks: [...workAsks.values()].map((a) => ({ name: a.name, about: nameOf(a.program), calls: a.calls, ms: a.ms })),
+      materials,
+      calls: [...workCalls].map(([name, c]) => ({ name, calls: c.calls, ms: c.ms })),
+      owners,
+    }
+    for (const c of workCalls.values()) c.calls = c.ms = 0
+    workCalls.clear()
+    workDraws.clear()
+    workFirst.clear()
+    workAsks.clear()
+    workLooked.clear()
+    return out
   },
   fault(kind, a, b) {
     if (kind === 'cut') cutFrom = a

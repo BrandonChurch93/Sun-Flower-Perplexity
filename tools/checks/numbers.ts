@@ -209,11 +209,11 @@ export async function run(args: Args): Promise<void> {
   else {
     findings.unshift({ ok: false, what: `${bad.length} of ${rows.length} frames hold a pixel without a number, over ${most} or over ${times} times what is near it before the lens: ${bad.slice(0, 40).map((r) => r.frame).join(', ')}${bad.length > 40 ? ' and more' : ''}` })
     for (const r of bad.slice(0, SHOWN)) {
-      const owner = r.alone?.length ? ` Drawn alone, ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} such pixels. Owner: ${[...new Set(r.alone.map((a) => FOLDER[a] ?? `the part ${a}`))].join(', ')}` : r.alone ? ' No part gives such a pixel when drawn alone: it takes two of them.' : ''
+      const owner = r.alone?.length ? ` Drawn alone, ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} such pixels. Owner: ${[...new Set(r.alone.map((a) => FOLDER[a] ?? `src/${a}`))].join(', ')}` : r.alone ? ' No part gives such a pixel when drawn alone: it takes two of them.' : ''
       findings.push({ ok: false, what: `frame ${r.frame} (${barText(secondsOf(r.frame))}): ${said(r.held, most)}, in ${box(r.held.where)}.${owner}${r.held.large ? ` Read again at ${LARGE[0]} x ${LARGE[1]}: ${told(r.held)}.` : ''}` })
     }
   }
-  const owned = (r: Row): string => (r.alone?.length ? `, drawn alone ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} it (${[...new Set(r.alone.map((a) => FOLDER[a] ?? `the part ${a}`))].join(', ')})` : r.alone ? ', no part gives it alone' : '')
+  const owned = (r: Row): string => (r.alone?.length ? `, drawn alone ${r.alone.join(', ')} ${r.alone.length === 1 ? 'gives' : 'give'} it (${[...new Set(r.alone.map((a) => FOLDER[a] ?? `src/${a}`))].join(', ')})` : r.alone ? ', no part gives it alone' : '')
   if (real.length) findings.push({ ok: true, expected: true, what: `bright points on real things, not failed: ${real.length} frames failed at the small size and hold, at ${LARGE[0]} x ${LARGE[1]}, a shape of several pixels in each place. ${real.map((r) => `${r.frame}: ${told(r.held)}`).join('. ')}` })
   if (soft.length) findings.push({ ok: true, expected: true, what: `to look at, not failed: ${soft.length} of ${rows.length} frames hold a pixel from ${LOOK} to ${times} times what is near it. ${soft.slice(0, 60).map((r) => `${r.frame}: ${r.held.spark ? `${r.held.spark.value.toPrecision(3)} at ${r.held.spark.at[0]},${r.held.spark.at[1]} against ${r.held.spark.near.toPrecision(3)}, ` : ''}${(r.held.ratio ?? 0).toFixed(1)} times${owned(r)}`).join('; ')}${soft.length > 60 ? '; and more' : ''}` })
   finish({

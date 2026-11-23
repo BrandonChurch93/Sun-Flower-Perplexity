@@ -40,7 +40,7 @@ export const seedlingMain = /* glsl */ `void main() {
   float lens = 1.0 - across * across;
   vec3 glow = mix(vec3(0.08, 0.1, 0.06), vec3(0.012, 0.03, 0.016), smoothstep(0.0, 0.45, lens)) * (1.0 - 0.5 * mid) * (1.0 - 0.25 * vein) * (0.6 + 0.8 * patchy) * mix(1.0, mix(1.8, 0.5, smoothstep(0.1, 0.8, along)), 1.0 - wither);
   // The thin margin of the leaf passes the sun almost whole.
-  glow = mix(glow, vec3(0.3, 0.27, 0.1), 0.5 * smoothstep(0.955, 1.0, abs(across)));
+  glow = mix(glow, vec3(0.3, 0.27, 0.1), 0.5 * smoothstep(1.0 - max(0.045, 3.0 * fwidth(across)), 1.0, abs(across)));
   glow = mix(glow, vec3(0.1, 0.14, 0.07), 0.7 * pale);
   glow = mix(glow, vec3(0.5, 0.36, 0.08), wither);
   glow *= (1.0 - 0.6 * uPlantWet) / (1.0 + WET_SHEER * uPlantWet);
