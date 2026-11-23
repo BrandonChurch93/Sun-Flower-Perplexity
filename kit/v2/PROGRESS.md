@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
-- Last status: 22 · 2026-11-23 10:20 UTC · Phase 3
+- Last status: 23 · 2026-11-23 10:41 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 10:41 UTC · status 23 · Phase 3 · `status-1.jpg`: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling; `status-2.jpg`: Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next; `status-3.jpg`: The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip; `status-4.jpg`: First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet
 - 2026-11-23 10:20 UTC · status 22 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it; `status-2.jpg`: Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next; `status-3.jpg`: Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand
 - 2026-11-23 10:02 UTC · status 21 · Phase 3 · `status-1.jpg`: First close shot, frames 952, 1003 and 1054: the frost builds on the blade. The leaf still sits too high and drifts out, the framing is next; `status-2.jpg`: Frames 1054 and 1208 on the left, their reference pictures on the right: the gap that is left to close; `status-3.jpg`: Second close shot, frame 1106, against the sun. The pale dome on the stalk and the weak sun are with their owners; `status-4.jpg`: The bud opening, bars 57 to 61, from the head owner's bench (its third pass is on mine now)
 - 2026-11-23 09:32 UTC · status 20 · Phase 3 · `status-1.jpg`: First frost close shot at film size, frames 952, 1003 and 1054. Above: before. Below: now, sharp over the whole leaf; `status-2.jpg`: The same at 100 percent, frame 1054. Above: before. Below: now; `status-3.jpg`: Frame 1054 beside its reference picture; `status-4.jpg`: Bloom at bar 61 beside its reference picture, before the new work on rays and disc
@@ -30,7 +31,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 06:14 UTC · status 14 · Phase 3 · `status-1.jpg`: The last stretch on the lower crane, bars 67 to 74.5; `status-2.jpg`: Bar 67: the pull back begins; `status-3.jpg`: Bar 73: the sun touches the ridge
 - 2026-11-23 05:33 UTC · status 13 · Phase 3 · `status-1.jpg`: The break at the boom of bar 41, frames 2081 to 2090, with the lens merged (draft tier, drawn here); `status-2.jpg`: The end of a quick night, frames 2174 to 2184: the moon fades once and does not come back (draft tier, drawn here); `status-3.jpg`: The end of the film at bars 67, 69, 71 and 73 with the new far crop (draft tier, drawn here); `status-4.jpg`: The held tear after the storm at bars 42.19 and 42.33, and two days at bars 29.7 and 43.75 (draft tier, drawn here)
 - 2026-11-23 05:06 UTC · status 12 · Phase 3 · `status-1.jpg`: The merged film at twelve moments (draft tier, drawn here); `status-2.jpg`: The break at the boom of bar 41, frames 2080 to 2090: the tear opens on frame 2083 (draft tier, drawn here); `status-3.jpg`: The night after the storm, frames 2150 to 2196, every second frame (draft tier, drawn here); `status-4.jpg`: Frost hold, bar 21, at the review tier (drawn by the frost builder)
-- 2026-11-23 04:40 UTC · status 11 · Phase 3 · `status-1.jpg`: Frost hold, bar 21: reference left, film right (draft tier); `status-2.jpg`: Full day, bar 29.7, with the lower noon sun: reference left, film right (draft tier); `status-3.jpg`: Night, bar 46.82: reference left, film right (draft tier); `status-4.jpg`: The field, bar 69: reference left, film right (draft tier)
 
 ## Clock
 
@@ -41,11 +41,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 7.08 h |
+| 3 | 9.00 h | 7.43 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 12.34 h |
+| Whole build | 30.00 h | 12.69 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -290,4 +290,6 @@ None yet.
   Pictures: First close shot, frames 952, 1003 and 1054: the frost builds on the blade. The leaf still sits too high and drifts out, the framing is next; Frames 1054 and 1208 on the left, their reference pictures on the right: the gap that is left to close; Second close shot, frame 1106, against the sun. The pale dome on the stalk and the weak sun are with their owners; The bud opening, bars 57 to 61, from the head owner's bench (its third pass is on mine now).
 - Status 22, 2026-11-23 10:20 UTC, Phase 3. Each of the three frost close shots now has a grade of its own, and the first is reframed so the whole leaf sits in the middle of the picture. In the second the sky falls to a steel blue behind the lit fringe and the sun has a hot core through the mist. In the third the ground is darker behind the lit blade. The drop in the third shot now falls at real speed. Measured: 32 test files, 186 tests pass, among them a new one that proves the grades touch no frame outside the close shots. Next: Break up the comb of hairs on the stalk and give the stem a slender end, grain in the frost banks, keep the green between the banks on the first leaf, take the frost off the ground as it thaws, then the blockout of the whole film. Time used: 12.3 h of 30 h.
   Pictures: First close shot, frames 952, 1003 and 1054: the leaf sits whole in the picture and the frost builds on it; Second close shot, frame 1106, against the sun: a cooler, deeper sky and a hot sun. The comb of hairs and the stout stem end are next; Third close shot, frame 1208: the thaw. The ground still carries its frost here, the ground owner's cure is in hand.
+- Status 23, 2026-11-23 10:41 UTC, Phase 3. The flicker at every dusk and dawn of the time lapse is cured: the plant no longer flashes for three frames while the sun hands over to the moon (measured on frames 204 to 214, and a new test proves no other frame changed). The stem now ends in a slender growing point, the pale dome is gone. The thaw drop hangs as a pear on its neck with the sky in it, lets go and falls as one streak. The ground loses its white as it thaws. Merged and proved: ground, plant, frost, hairs, lens, rain. Measured: 33 test files, 189 tests pass. Next: The frost band along the leaf margin is still a flat plate and the veins are even lines: both are back with the frost owner to be made of grains and needles that sparkle. Then a darker leaf under the frost, a deep glossy leaf where it has melted, finer hairs on the stalk, and the cost of a frame in live play, which is now the largest risk. Time used: 12.7 h of 30 h.
+  Pictures: Dusk in the time lapse, frames 204 to 215: the light falls without the flash on the seedling; Second close shot, frame 1106, before and after: the stem ends in a growing point. The even comb of hairs on the stalk is next; The drop on frames 1234 to 1238 at full size: it necks, lets go, falls as a streak, and a bead stays at the tip; First close shot, frame 1054: the grains on the blade are right, the white band along the margin and the even veins are not yet.
 
