@@ -169,8 +169,4 @@ vec2 frostCrustOn(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen,
 vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim, vec3 world) {
   return frostCrustOn(at, gather, N, F, view, sheen, rim, world, 1.0);
 }
-
-vec2 frostCrust(vec2 at, float gather, vec3 N, vec3 F, vec3 view, float sheen, float rim) {
-  return frostCrustOn(at, gather, N, F, view, sheen, rim, vec3(0.0), 0.0);
-}
 `

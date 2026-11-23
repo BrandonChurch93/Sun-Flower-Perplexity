@@ -121,9 +121,10 @@ void main() {
   float own = b.w - chosen;
   float n = float(needle);
   vec3 grow = plantDirection(normalize(mix(c.xyz, d.xyz, plantBlend())));
-  // Where the wearer says it stands: over 0 on an edge, that far along it; -1 to -2 on a face or a vein, that far along the blade; -3 on a bristle of a stalk or the stem.
-  bool bristle = c.w < -2.5;
-  float along = c.w > 0.0 ? c.w : c.w < -0.5 && !bristle ? saturate(-1.0 - c.w) : 0.5;
+  // Where the wearer says it stands: over 0 on an edge, that far along it; -1 to -2 on a face, that far along the blade; -3 on a bristle of a stalk or the stem; -4 to -5 on the ridge of a vein, that far along the blade.
+  bool bristle = c.w < -2.5 && c.w > -3.5;
+  bool ridge = c.w < -3.5;
+  float along = c.w > 0.0 ? c.w : ridge ? saturate(-4.0 - c.w) : c.w < -0.5 && !bristle ? saturate(-1.0 - c.w) : 0.5;
   bool fill = a.w < 0.0;
   bool spike = !fill && !bristle && (chosen > 1.5 || (chosen < 0.5 && hash(own, 4.0) > 0.74));
   float rootPx = -(viewMatrix * vec4(root, 1.0)).z * 2.0 / (projectionMatrix[1][1] * uSize.y);
@@ -219,7 +220,7 @@ void main() {
   // A needle thinner than a pixel cannot be seen as a needle, and a row of them is a white band. There one crystal in a few is drawn, as wide as those it stands for together.
   float thin = clamp(max((spike && !feather ? 0.075 : 0.09) * size, 0.0002 * plantSize()) / (NEEDLE_PX * rootPx), NEEDLE_LEAST, 1.0);
   float kept = fill || bristle ? 1.0 : thin * mix(spike ? SPIKE_LEAST : PATCH_LEAST, spike ? SPIKE_MOST : PATCH_MOST, lush);
-  float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept)) * (fill || bristle ? close : 1.0);
+  float stays = saturate((kept - hash(own, 22.0)) / (0.2 * kept)) * (fill || bristle || ridge ? close : 1.0);
   // Between two tufts the edge is all but bare.
   if (!bristle) stays *= mix(1.0, smoothstep(0.03, 0.2, tuft + 0.3 * (hash(own, 32.0) - 0.5)), close);
   wide /= thin;
@@ -548,7 +549,7 @@ export class CrystalSet {
     return this.edges[slot]
   }
 
-  // One number a crystal that never changes: where it stands. Over 0, on an edge, that far along it from the base to 1 at the tip. From -1 to -2, on a face or a vein, that far along the blade (-1 at the base, -2 at the tip). -3, on a bristle of a stalk or the stem. 0 says it is not known.
+  // One number a crystal that never changes: where it stands. Over 0, on an edge, that far along it from the base to 1 at the tip. From -1 to -2, on a face, that far along the blade (-1 at the base, -2 at the tip). -3, on a bristle of a stalk or the stem, and from -4 to -5, on the ridge of a vein, that far along the blade: both are drawn for a close lens only. 0 says it is not known.
   place(): Float32Array {
     return this.places
   }
