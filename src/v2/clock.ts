@@ -260,6 +260,11 @@ export function fogAtBar(b: number): number {
 const BREAK = hitBar(41)
 const RAIN_FROM = hitBar(33)
 
+// The break opens on the frame that holds the boom: the last still frame of the hold shows none of it, the next shows a third, and it is open six frames on.
+const BREAK_STILL = barAt((Math.floor(hitTime(41) * FPS + 1e-6) - 1) / FPS)
+const BREAK_OPEN = barAt(6 / FPS) - barAt(0)
+const breakRise = (b: number): number => 1 - Math.pow(1 - clamp((b - BREAK_STILL) / BREAK_OPEN), 2.2)
+
 // The deck stays over the break: the sun comes through a tear in it and sets under it, and the night takes the deck away.
 const DECK_GOES = 42.3
 
@@ -311,12 +316,12 @@ export function puddleAtBar(b: number): number {
   if (b < 33.4) return 0
   if (b < 36.5) return smooth((b - 33.4) / 3.1)
   if (b < 41) return 1
-  return 1 - smooth((b - 41) / 4)
+  return 1 - smooth((b - 41) / 1.4)
 }
 
-// The burst comes up over four frames with its middle on the bar line, so the lens does not step and the hit still reads on the beat.
+// The burst comes up with the break, on the same frames.
 export function burstAtBar(b: number): number {
-  const rise = smooth((b - BREAK + 0.04) / 0.08)
+  const rise = breakRise(b)
   return b < BREAK ? rise : rise * (1 - smooth((b - BREAK) / 1.8))
 }
 
@@ -343,8 +348,8 @@ export function coverAtBar(b: number): number {
 export function sunThroughAtBar(b: number): number {
   const mist = 1 - 0.8 * smooth((fogAtBar(b) - 0.3) / 0.5)
   let storm = 1
-  if (b >= 31.8 && b < BREAK - 0.04) storm = 1 - smooth((b - 31.8) / 0.9)
-  else if (b >= BREAK - 0.04) storm = lerp(0.9, 1, smooth((b - BREAK) / 2)) * smooth((b - BREAK + 0.04) / 0.1)
+  if (b >= 31.8 && b < BREAK_STILL) storm = 1 - smooth((b - 31.8) / 0.9)
+  else if (b >= BREAK_STILL) storm = lerp(0.9, 1, smooth((b - BREAK) / 2)) * breakRise(b)
   return clamp(mist * storm)
 }
 
