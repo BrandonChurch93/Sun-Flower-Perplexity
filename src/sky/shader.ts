@@ -17,6 +17,7 @@ uniform vec3 uDeck;
 uniform vec3 uFlash;
 uniform vec4 uWeather;
 uniform vec4 uEffects;
+uniform float uClosedDeck;
 uniform float uTearAttack;
 uniform float uLunarMeter;
 uniform vec2 uTravel;
@@ -346,6 +347,7 @@ void main() {
   float seamLight = 0.0;
   float lowBank = 0.0;
   float riftLight = 0.0;
+  float closedShadow = 0.0;
   if (st > 0.01) {
     vec2 a = rotateCloud(d.xz * min(72.0, foot(1.39, d)) - uTravel);
     vec2 b = rotateCloud(d.xz * min(96.0, foot(2.34, d)) - uTravel * 1.12);
@@ -367,6 +369,20 @@ void main() {
     seamLight += (0.21 + 0.64 * apron.g) * exp(-squared((d.y - underside - 0.013) * 31.0));
     float breadth = 0.077 + 0.172 * ridge.g + 0.060 * (mass.b - 0.44);
     riftLight = exp(-squared((d.y - breadth) * (18.0 + 9.0 * apron.r))) * smoothstep(0.30, 0.68, 0.53 * apron.b + 0.47 * mass.g);
+    if (uClosedDeck > 0.0 && uLunarMeter < 0.5) {
+      // Reuse the advecting banks' own scales: a wide belly, the folds
+      // that hang from it, and the small tears along its lower edge.
+      float belly = smoothstep(0.29, 0.67, 0.59 * mass.r + 0.31 * apron.r + 0.10 * ridge.r);
+      float folds = smoothstep(0.32, 0.65, 0.50 * apron.r + 0.31 * ridge.g + 0.19 * mass.g);
+      float drop = smoothstep(0.40, 0.65, 0.72 * heads.g + 0.28 * scallops.b);
+      float lip = 0.119 - 0.083 * drop + 0.070 * (scallops.r - 0.53) + 0.030 * (scallops.g - 0.52) + 0.041 * (heads.b - 0.55);
+      float edge = smoothstep(lip - 0.009, lip + 0.016 + 0.026 * scallops.a, d.y);
+      float baseFace = 0.53 + 0.30 * belly + 0.17 * folds;
+      float roof = smoothstep(0.36, 0.56, 0.62 * ridge.r + 0.25 * mass.g + 0.13 * apron.b);
+      float upperFace = 0.05 + 0.91 * roof;
+      closedShadow = edge * mix(baseFace, upperFace, smoothstep(0.13, 0.275, d.y))
+        * smoothstep(0.015, 0.037, d.y);
+    }
   }
   vec3 sky = thinClouds(d, air, mu);
   float sheetTransmission = 1.0;
@@ -575,6 +591,12 @@ void main() {
   // well as the cloud's own light. Preserve the separate lightning spill.
   float bankMask = st * (1.0 - 0.90 * sunBreak) * (1.0 - 0.82 * uEffects.z);
   result *= 1.0 - bankMask * ((0.25 + 0.12 * (1.0 - riftLight)) * lowBank + 0.16 * clamp(stacked, 0.0, 1.0));
+  // Only the visible, closed underside is shaded; the ray's transmission
+  // below remains the same for the sun, the lens, and the held opening.
+  if (closedShadow > 0.0) {
+    float face = uClosedDeck * closedShadow * smoothstep(0.58, 0.94, st);
+    result *= mix(vec3(1.0), vec3(0.12, 0.19, 0.29), face);
+  }
   float openPaths = 0.0;
   if (uTearAttack > 0.0 && 1.0 - dot(d, STORM_GAP) < 0.045 && span > 0.0) {
     // Resolve partially open paths in parallel with the obscured volume.
