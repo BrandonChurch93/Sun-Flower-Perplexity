@@ -95,23 +95,45 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   }
   vec2 cell = (atan(st) / Q * 0.5 + 0.5) * N;
   ivec2 c = clamp(ivec2(floor(cell)), ivec2(0), ivec2(int(N) - 1));
-  ivec2 origin = ivec2(face - (face / 3) * 3, face / 3) * int(N);
   float px = uPixelAngle;
   float lens = min(blur, 2.6 * px);
   float base = 0.58 * px;
   vec3 stars = vec3(0.0);
   for (int y = -1; y <= 1; y++) {
     for (int x = -1; x <= 1; x++) {
+      int f = face;
       ivec2 k = c + ivec2(x, y);
-      if (k.x < 0 || k.y < 0 || k.x >= int(N) || k.y >= int(N)) continue;
-      vec4 s = texelFetch(tStars, origin + k, 0);
+      if (k.x < 0 || k.y < 0 || k.x >= int(N) || k.y >= int(N)) {
+        vec2 o = tan(((vec2(k) + 0.5) / N * 2.0 - 1.0) * Q);
+        vec3 q = face == 0 ? vec3(1.0, o.y, -o.x)
+          : face == 1 ? vec3(-1.0, o.y, o.x)
+          : face == 2 ? vec3(o.x, 1.0, -o.y)
+          : face == 3 ? vec3(o.x, -1.0, o.y)
+          : face == 4 ? vec3(o.x, o.y, 1.0)
+          : vec3(-o.x, o.y, -1.0);
+        vec3 b = abs(q);
+        vec2 r;
+        if (b.x >= b.y && b.x >= b.z) {
+          f = q.x > 0.0 ? 0 : 1;
+          r = vec2(q.x > 0.0 ? -q.z : q.z, q.y) / b.x;
+        } else if (b.y >= b.z) {
+          f = q.y > 0.0 ? 2 : 3;
+          r = vec2(q.x, q.y > 0.0 ? -q.z : q.z) / b.y;
+        } else {
+          f = q.z > 0.0 ? 4 : 5;
+          r = vec2(q.z > 0.0 ? q.x : -q.x, q.y) / b.z;
+        }
+        if (f == face) continue;
+        k = clamp(ivec2(floor((atan(r) / Q * 0.5 + 0.5) * N)), ivec2(0), ivec2(int(N) - 1));
+      }
+      vec4 s = texelFetch(tStars, ivec2(f - (f / 3) * 3, f / 3) * int(N) + k, 0);
       if (s.b <= 0.0) continue;
       vec2 uv = tan(((vec2(k) + s.rg) / N * 2.0 - 1.0) * Q);
-      vec3 p = face == 0 ? vec3(1.0, uv.y, -uv.x)
-        : face == 1 ? vec3(-1.0, uv.y, uv.x)
-        : face == 2 ? vec3(uv.x, 1.0, -uv.y)
-        : face == 3 ? vec3(uv.x, -1.0, uv.y)
-        : face == 4 ? vec3(uv.x, uv.y, 1.0)
+      vec3 p = f == 0 ? vec3(1.0, uv.y, -uv.x)
+        : f == 1 ? vec3(-1.0, uv.y, uv.x)
+        : f == 2 ? vec3(uv.x, 1.0, -uv.y)
+        : f == 3 ? vec3(uv.x, -1.0, uv.y)
+        : f == 4 ? vec3(uv.x, uv.y, 1.0)
         : vec3(-uv.x, uv.y, -1.0);
       vec3 e = w - normalize(p);
       float flux = exp2(-9.83 * (1.0 - s.b));
@@ -135,9 +157,9 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   float bulge = exp(-(lon * lon * 7.0 + pow(lat - spine * 0.4, 2.0) * 120.0));
   float clouds = 0.42 * valueNoise(g * 9.0 + 1.3) + 0.26 * valueNoise(g * 23.0 + 4.7)
     + 0.18 * valueNoise(g * 61.0 + 2.9) + 0.14 * valueNoise(g * 157.0 + 8.3);
-  float grain = 0.6 * valueNoise(g * 420.0 + 3.1) + 0.4 * valueNoise(r * 230.0 + 8.8);
-  float lumps = smoothstep(0.36, 0.8, clouds);
+  float lumps = smoothstep(0.42, 0.78, clouds);
   vec2 r = mat2(0.82, 0.57, -0.57, 0.82) * g;
+  float grain = 0.6 * valueNoise(g * 420.0 + 3.1) + 0.4 * valueNoise(r * 230.0 + 8.8);
   float ragged = 0.012 * (valueNoise(r * vec2(55.0, 110.0) + 1.7) - 0.5) + 0.006 * (valueNoise(r * vec2(140.0, 280.0) + 6.6) - 0.5);
   float laneAt = spine + 0.012 * sin(5.0 * lon) + 0.04 * (valueNoise(g * vec2(5.0, 1.5) + 12.4) - 0.5) + 0.016 * (valueNoise(g * vec2(17.0, 5.0) + 2.2) - 0.5);
   float laneWidth = (0.012 + 0.02 * valueNoise(g * vec2(6.0, 3.0) + 5.5)) * (0.6 + 0.9 * core);
@@ -148,14 +170,14 @@ vec3 starsAt(vec3 d, vec3 air, float visible, float blur) {
   float branch = (1.0 - smoothstep(0.3 * laneWidth, 0.8 * laneWidth, abs(lat - branchAt - ragged))) * split;
   float knots = smoothstep(0.58, 0.78, 0.7 * valueNoise(r * vec2(14.0, 30.0) + 9.2) + 0.3 * valueNoise(r * vec2(37.0, 61.0) + 2.4)) * body;
   float dust = clamp(max(rift, branch) + 0.8 * knots, 0.0, 1.0);
-  float clump = body * (0.25 + 0.75 * core) * lumps * sqrt(lumps) * (0.35 + 1.3 * grain * grain);
+  float clump = body * (0.25 + 0.75 * core) * lumps * lumps * (0.3 + 1.5 * grain * grain);
   float heart = 1.7 * bulge * (0.45 + 0.9 * clouds);
   float light = (clump + heart) * (1.0 - 0.95 * dust) + 0.08 * exp(-lat * lat * 30.0) * (0.4 + 0.6 * core) * (1.0 - 0.5 * dust);
-  float warm = clamp(1.5 * bulge + 0.25 * core * (1.0 - lumps) + 0.4 * dust * core, 0.0, 1.0);
-  vec3 milkyTone = mix(vec3(0.62, 0.76, 1.0), vec3(1.0, 0.72, 0.48), warm);
+  float warm = clamp(1.3 * bulge + 0.3 * dust * core, 0.0, 1.0) * (1.0 - 0.5 * lumps * (1.0 - bulge));
+  vec3 milkyTone = mix(vec3(0.70, 0.80, 1.0), vec3(1.0, 0.70, 0.45), warm);
   float faint = 0.3 + 0.7 * (1.0 - dust);
   float extinction = exp(-0.03 / max(0.016, d.y)) * smoothstep(0.0, 0.035, d.y);
   float wash = 1.0 - smoothstep(0.006, 0.05, dot(air, vec3(0.21, 0.72, 0.07)));
-  return (stars * 0.75 * faint + 0.022 * light * milkyTone) * extinction * wash * visible * uNight;
+  return (stars * 0.75 * faint + 0.027 * light * milkyTone) * extinction * wash * visible * uNight;
 }
 `
