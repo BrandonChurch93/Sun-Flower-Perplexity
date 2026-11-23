@@ -19,9 +19,9 @@ const PICTURE_UNDER = 0.94
 // How much of its light a far leaf keeps when nothing but the sky lights it.
 const UNLIT = 0.3
 // How much of the sky behind it the far crop takes by 220 m, how much at its very end, and from where that comes in.
-const FAR_AIR = 0.2
-const END_AIR = 0.5
-const END_AIR_FROM_M = 170
+const FAR_AIR = 0.1
+const END_AIR = 0.3
+const END_AIR_FROM_M = 210
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -226,7 +226,11 @@ void main() {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
     float clump = 0.25 * valueNoise(p * 3.1) + 0.35 * valueNoise(p * 7.7) + 0.4 * valueNoise(p * 17.0);
-    float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach) * (1.0 - smoothstep(0.5, 1.0, uAbove));
+    // A layer ends in no straight line: it thins to nothing toward where it starts and toward the sides of the field.
+    float alongL = -dot(at, uToward);
+    float acrossL = at.x * uToward.y - at.y * uToward.x;
+    float edge = min(uWedge.x + uWedge.y * alongL + acrossL, uWedge.z + uWedge.w * alongL - acrossL);
+    float share = uCover * (0.95 - 0.22 * uLevel) * reach * smoothstep(0.0, 4.0, edge) * (1.0 - smoothstep(0.5, 1.0, uAbove));
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
