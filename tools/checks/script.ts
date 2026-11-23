@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
+import { nothingMade, type Made } from '../../src/v2/counter.ts'
 import type { Args } from '../lib/args.ts'
 import { flag, num, str } from '../lib/args.ts'
 import { at } from '../lib/paths.ts'
@@ -25,10 +26,11 @@ const SENTENCE = "whenever there's a scene change we have a huge frame rate drop
 
 interface Share { name: string; parts: string[]; meanMs: number }
 interface Limits { meanMs: number; worstMs: number; shares: Share[]; everyOtherPartMeanMs: number; first: string[]; windows: string[]; allEvery: number }
-interface Row { frame: number; cost: Record<string, number> }
+interface Row { frame: number; cost: Record<string, number>; made?: string; first?: Record<string, number>; firstLap?: string }
 interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; busy: number; rows: Row[] }
 interface Hitch { frame: number; ms: number; around: number; parts: string }
-interface Judged { hitches: Hitch[]; from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
+interface Behind { frame: number; firstMs: number; lap: string; againMs: number }
+interface Judged { behind: Behind[]; hitches: Hitch[]; from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
 
 const LIMITS = at('tools', 'checks', 'limits.json')
 const NOT_PARTS = new Set(['script', 'wait'])
@@ -55,7 +57,7 @@ export function hitchesOf(rows: Row[], limits: Limits): Hitch[] {
     const around = near[Math.floor(near.length / 2)]
     if (r.cost.script <= Math.max(limits.worstMs, TIMES * around)) return []
     const parts = Object.entries(r.cost).filter(([key, v]) => !NOT_PARTS.has(key) && v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-    return [{ frame: r.frame, ms: r.cost.script, around, parts }]
+    return [{ frame: r.frame, ms: r.cost.script, around, parts: r.made ? `${parts}; made in it: ${r.made}` : parts }]
   })
 }
 
@@ -80,7 +82,7 @@ export function judge(k: Kept, limits: Limits): Judged {
     if (shares[p] > limits.everyOtherPartMeanMs) over.push(`${p} ${shares[p].toFixed(1)} over ${limits.everyOtherPartMeanMs}`)
   }
   const top = Object.entries(worstRow.cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-  return { hitches: hitchesOf(rows, limits), from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
+  return { behind: rows.filter((r) => r.first).map((r) => ({ frame: r.frame, firstMs: (r.first as Record<string, number>).script, lap: r.firstLap ?? '', againMs: r.cost.script })), hitches: hitchesOf(rows, limits), from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
 }
 
 const dirOf = (run: string): string => path.join(OUT, 'script', run)
@@ -101,15 +103,46 @@ function othersDrawing(): number {
 const ALONE = 'this check has to run alone: its numbers are wall time, and another page drawing or a build beside it makes them larger'
 
 // Draws one window in a row and keeps the film's laps of every frame but the first after a jump.
+// A frame far over its neighbours in which nothing was made may be the machine and not the film: the film waits for the drawing at the end of every frame,
+// but the browser shows the canvas after it, and when the graphics process is still at that, the first call of the next frame that needs room waits, in whichever lap issues it.
+// Such a frame is drawn once more after a pause, in a row with the two frames before it. Slow again, it is the film's and stays. Else the second number counts and the first is kept beside it.
+const BEHIND_TIMES = 10
+const PAUSE_MS = 1500
+const AGAIN_MOST = 6
+const largest = (cost: Record<string, number>): string => Object.entries(cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 1).map(([key, v]) => `${key} ${v.toFixed(1)}`)[0] ?? ''
+const madeText = (m: Made): string => (nothingMade(m) ? '' : (Object.entries(m) as [string, number][]).filter(([key, v]) => v > 0 && !/pdate|Bytes/.test(key)).map(([key, v]) => `${v} ${key}`).join(', '))
+
 async function measure(session: Session, run: string, from: number, to: number, tier: string, only: string, jump: boolean, upTo: number, busy = 0): Promise<Kept> {
   const rows: Row[] = []
   const last = Math.min(to, from + (jump ? upTo : upTo - 1))
   const t0 = Date.now()
   for (let f = from; f <= last; f++) {
-    await session.draw(f, tier, false)
+    const d = await session.draw(f, tier, false)
     const cost = await session.cost()
-    if (f > from || !jump) rows.push({ frame: f, cost })
+    const made = madeText(d.made)
+    if (f > from || !jump) rows.push(made ? { frame: f, cost, made } : { frame: f, cost })
   }
+  const limits = limitsOf()
+  const suspects = rows.filter((r, i) => {
+    const near = rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).map((x) => x.cost.script).sort((x, y) => x - y)
+    return !r.made && r.cost.script > Math.max(limits.worstMs, BEHIND_TIMES * near[Math.floor(near.length / 2)])
+  })
+  for (const r of suspects.slice(0, AGAIN_MOST)) {
+    const i = rows.indexOf(r)
+    const near = rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).map((x) => x.cost.script).sort((x, y) => x - y)
+    const around = near[Math.floor(near.length / 2)]
+    for (let f = Math.max(0, r.frame - 2); f < r.frame; f++) await session.draw(f, tier, false)
+    await new Promise((done) => setTimeout(done, PAUSE_MS))
+    await session.draw(r.frame, tier, false)
+    const second = await session.cost()
+    const slowAgain = second.script > Math.max(limits.worstMs, BEHIND_TIMES * around)
+    console.log(`script · frame ${r.frame} cost ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it with nothing made (${largest(r.cost)}); drawn again after a pause: ${second.script.toFixed(1)} ms${slowAgain ? ', slow again: it is the film' : ': the graphics process was behind the first time'}`)
+    if (slowAgain) continue
+    r.first = r.cost
+    r.firstLap = largest(r.cost)
+    r.cost = second
+  }
+  if (suspects.length) for (let f = Math.max(0, last - 1); f <= last; f++) await session.draw(f, tier, false)
   const k: Kept = { hash: engineHash(), from, to, whole: last === to, jump, width: session.info.width, height: session.info.height, tier, only, busy, rows }
   fs.mkdirSync(dirOf(run), { recursive: true })
   fs.writeFileSync(fileOf(run, from, to), JSON.stringify(k) + '\n')
@@ -274,6 +307,11 @@ export async function run(args: Args): Promise<void> {
     findings.push({ ok: hitches.length === 0, what: hitches.length === 0 ? `no hitch: no frame is over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around it` : `${hitches.length} hitches, frames over ${limits.worstMs} ms and over ${TIMES} times the median of the ${2 * AROUND} frames around them: ${hitches.slice(0, 12).map((h) => `${h.frame} (${h.ms.toFixed(0)} ms against ${h.around.toFixed(0)}: ${h.parts})`).join('; ')}${hitches.length > 12 ? ` and ${hitches.length - 12} more` : ''}` })
     if (hitches.length) console.log(`script · every hitch, the dearest first\n${table(['frame', 'bar', 'ms', 'median around', 'times', 'its parts over 1 ms'], hitches.map((h) => [h.frame, barText(secondsOf(h.frame)).slice(4), h.ms.toFixed(1), h.around.toFixed(1), (h.ms / Math.max(0.1, h.around)).toFixed(1), h.parts]))}\n`)
   }
+  const behind = judged.flatMap((j) => j.behind)
+  if (behind.length) {
+    findings.push({ ok: true, expected: true, what: `the graphics process was behind in ${behind.length} ${behind.length === 1 ? 'frame' : 'frames'}: over ${BEHIND_TIMES} times the frames around with nothing made, and not slow when drawn again after a pause, so the first number is the machine's and the second is judged: ${behind.map((b) => `${b.frame} (${b.firstMs.toFixed(0)} ms the first time, in ${b.lap}; ${b.againMs.toFixed(1)} ms again)`).join('; ')}` })
+    console.log(`script · the graphics process was behind: not counted as hitches\n${table(['frame', 'bar', 'ms the first time', 'the lap it landed in', 'ms drawn again after a pause'], behind.map((b) => [b.frame, barText(secondsOf(b.frame)).slice(4), b.firstMs.toFixed(1), b.lap, b.againMs.toFixed(1)]))}\n`)
+  }
   if (missing > 0) findings.push({ ok: true, expected: true, what: `${missing} of ${spans.length} windows are not measured yet on this film` })
   if (partly > 0) findings.push({ ok: true, expected: true, what: `${partly} windows are measured only in their first frames` })
   const notAlone = judged.filter((j) => j.busy).length
@@ -291,6 +329,6 @@ export async function run(args: Args): Promise<void> {
     complete: missing === 0 && partly === 0 && notAlone === 0,
     findings,
     table: judged.length ? tableOf(judged) : undefined,
-    data: { run, limits, windows: judged, hitches },
+    data: { run, limits, windows: judged, hitches, behind },
   })
 }

@@ -48,6 +48,8 @@ The numbers are wall time on this machine, so the check has to run alone: anothe
 
 Besides the level it names every hitch: a frame over 25 ms that is also over three times the median of the sixteen frames around it, with its parts. That is the stutter a viewer sees whatever the level, and the rule is the one of `tools/costs.ts`.
 
+The film waits for the drawing at the end of every frame (`stage.finish()`, the lap `wait`, which is not in the number), and the check starts the next frame only after that. The browser still shows the canvas afterwards, and on a machine that draws on the processor the first call of the next frame that needs room can wait for it, in whichever lap issues that call. So a frame over ten times the frames around it, in which nothing was made, is drawn once more after a pause, in a row with the two frames before it. Slow again, it is the film's and stays a hitch. Else the second number is judged, the first is kept beside it in the window's file (`first`, `firstLap`), and the frame is listed under "the graphics process was behind".
+
 The windows under `first` in the limit file (840-880, 1250-1290, 1660-1700, 2070-2110) hold the frames where a hold starts or ends, the worst frames found so far (860, 1260, 1665, 2083, where the boom of the music lands). They are measured whole in every run, whatever `--window` or `--frames` says, and printed first.
 
 ## The whole film in one go
