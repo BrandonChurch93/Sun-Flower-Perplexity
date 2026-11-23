@@ -64,6 +64,9 @@ const FPS = config.film.fps
 const GUST_LEAN = 0.2
 const GUST_SPRING = 0.5
 const GUST_ACROSS = 0.025
+// How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.
+const HEAD_NOD = 0.5
+const HEAD_LATE_S = 0.3
 const RAD = Math.PI / 180
 const heightCurve = new Monotone(config.plant.heightM)
 
@@ -621,17 +624,22 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const slender = smoothstep(0.04, 0.5, h)
   let blow = 0
   let across = 0
+  let nod = 0
   if (standsAt && (steady > 0 || (inputs.gust ?? 0) > 0)) {
     // In real time the stem rides the swell. In a time lapse each frame catches it somewhere else on that swell.
     const swell = lapse < 1 ? sway(real, standsAt.x, standsAt.z) : 0
     const caught = lapse > 0 ? restless(real, Math.floor(real * FPS + 1e-6), 0.37 + 0.11 * variant) : 0
     blow = steady * (STEM_LEAN + STEM_SWING * lerp(swell, 0.5 * caught, lapse))
+    // A bud or a head has weight: it comes after the stem that carries it and passes it on the way back.
+    const heavy = smoothstep(bud0 + 6, bloom1, time)
+    if (heavy > 0 && lapse < 1) nod = HEAD_NOD * heavy * steady * (1 - lapse) * (sway(real - HEAD_LATE_S, standsAt.x, standsAt.z) - swell)
     const gust = inputs.gust ?? 0
     if (gust > 0) {
       const push = squall(real, standsAt.x, standsAt.z)
       // The stem gives to a gust, swings back past its rest and whips a little across the wind.
       blow += gust * slender * (GUST_LEAN * push + GUST_SPRING * (squall(real - 0.35, standsAt.x, standsAt.z) - push))
       across = gust * slender * GUST_ACROSS * Math.sin(real * 3.9 + 1.7 * push + rnd(4) * TAU) * (0.3 + 0.7 * push)
+      nod += gust * HEAD_NOD * smoothstep(bud0 + 2, bloom0, time) * (squall(real - HEAD_LATE_S, standsAt.x, standsAt.z) - push)
     }
   }
   // A seedling's tip also turns a quicker, smaller circle of its own. A plant half a meter tall no longer does.
@@ -643,8 +651,8 @@ export function stemBend(time: number, inputs: PlantInputs): StemBend {
     hook: hookAngle(time),
     hookShare: hookShare(time),
     back: HOOK_BACK * (hookAngle(time) / HOOK_MAX),
-    tiltX: Math.sin(az) * tilt,
-    tiltZ: Math.cos(az) * tilt,
+    tiltX: Math.sin(az) * tilt + windToward.x * nod,
+    tiltZ: Math.cos(az) * tilt + windToward.z * nod,
     neckShare: h > 0 ? clamp(neckLength.at(time) / h, 0, 0.5) : 0.5,
   }
 }
