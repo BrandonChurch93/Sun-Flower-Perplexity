@@ -39,6 +39,7 @@ const filmTime = (frame: number): string => {
 }
 const took = (ms: number): string => {
   const seconds = Math.round(ms / 1000)
+  if (ms < 1000) return 'under a second'
   return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`
 }
 const momentText = (index: number): string => `Warming the film, ${index + 1} of ${frames.length}: the picture at ${filmTime(frames[index])}`
@@ -202,7 +203,7 @@ export function showLoading(host: HTMLElement, film: Film): Loading {
       state.textContent = `${reason ? `${reason}. Building its programs` : 'Building the programs of the film'}. ${how}`
       build = { from: performance.now(), was: film.built }
       stepAt = build.from
-      warmCount.textContent = 'building the programs, 0 s'
+      warmCount.textContent = 'building the programs'
       log.steps.push({ atMs: Math.round(build.from), what: 'programs asked for', beside })
       return paint()
     },

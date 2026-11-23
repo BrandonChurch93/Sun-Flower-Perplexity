@@ -2,6 +2,7 @@ import type * as THREE from 'three'
 import { config } from '../config.ts'
 import { cocScalePx, type CameraPose } from '../core/lens.ts'
 import { later, now, shutterSeconds } from '../v2/now.ts'
+import { sound } from './fill.ts'
 
 const clampTo = (v: number, most: number): number => Math.min(most, Math.max(-most, v))
 
@@ -59,6 +60,7 @@ uniform float uDisc;
 uniform float uRim;
 uniform float uFar;
 layout(location = 0) out vec4 outColor;
+${sound}
 float openAt(vec2 uv) {
   float a = texture(tRaw, clamp(uv, 0.002, 0.998)).a;
   return uFar > 0.0 ? 1.0 - smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) : 0.0;
@@ -87,7 +89,7 @@ void main() {
       vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * uDisc;
       vec2 p = uSunAt + vec2(o.x, o.y * uAspect);
       float here = openAt(p);
-      face += here * texture(tRaw, clamp(p, 0.002, 0.998)).rgb;
+      face += here * sound(texture(tRaw, clamp(p, 0.002, 0.998)).rgb);
       shows += here;
     }
     outColor = vec4(shows > 0.0 ? face / shows : vec3(0.0), shows / 16.0);

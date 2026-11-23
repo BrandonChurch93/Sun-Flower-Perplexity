@@ -20,6 +20,7 @@ const LAST: Knots = [[-3, 0.3], [0, 0.357], [1.1, 0.476], [2.04, 0.874], [3, 1]]
 const LAST_LIGHT = 0.7
 
 const SOIL: RGB = [0.2, 0.15, 0.1]
+const RIMED: RGB = [0.38, 0.55, 0.76]
 const lum = (c: RGB): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
 type Knots = readonly (readonly [number, number])[]
@@ -49,6 +50,8 @@ const FILL_FROST = { low: 0.3, high: 0.22 }
 const FLASH = { key: 2.4, fill: 1.2, color: [0.86, 0.94, 1.22] as RGB }
 // A sun that comes through a tear in a deck lights from behind and the lens holds the sky: this much of it is lost on the plant under a full deck.
 const UNDER_DECK = 0.6
+// A low sun behind what is left of a deck does not reach the plant: the first evening after the storm is a dull one.
+const LOW_VEIL = { cover: [0.3, 0.6], sun: [4, 12], lost: 0.75 } as const
 // The redder the sun, the less a green leaf has to give back: the key keeps at least this much green and blue beside its red.
 const KEY_FLOOR = { green: 0.45, blue: 0.14 }
 // How clear the key stands over the sky above it, as the plant's skin weighs the two lights.
@@ -118,7 +121,8 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   const exposure = level / Math.max(meter, 1e-5)
 
   const closed = d.overcast * (1 - d.sunThrough)
-  const open = d.sunThrough * (1 - UNDER_DECK * d.overcast)
+  const sunk = LOW_VEIL.lost * smoothstep(LOW_VEIL.cover[0], LOW_VEIL.cover[1], d.cover) * (1 - smoothstep(LOW_VEIL.sun[0], LOW_VEIL.sun[1], el))
+  const open = d.sunThrough * (1 - UNDER_DECK * d.overcast) * (1 - sunk)
   const through = Math.max(open, FILL_STORM.key * closed)
   const key = (now.lightKind === 'sun' ? along(KEY, el) * through : MOON_KEY * smoothstep(5, 9, -el) * (1 - 0.85 * d.overcast)) * dim * (shot?.key ?? 1)
   const flash = d.flash
@@ -150,7 +154,7 @@ export function lookAt(now: Moment, sky: SkyLight, out: WorldDef): WorldDef {
   for (let i = 0; i < 3; i++) {
     out.sky.zenith[i] = (lerp(1, sky.zenith[i] / zenithLum, along(FILL_COLOUR, el)) * high) / exposure
     out.sky.horizon[i] = ((round[i] / roundLum) * low) / exposure
-    out.sky.bounce[i] = SOIL[i] * (0.5 * (out.sky.horizon[i] + out.sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
+    out.sky.bounce[i] = lerp(SOIL[i], RIMED[i], d.frost) * (0.5 * (out.sky.horizon[i] + out.sky.zenith[i]) + (out.sun.color[i] * Math.max(now.light.y, 0)) / Math.PI)
   }
   out.sky.ambient = 1
   const above = Math.max(seen(out.sky.zenith), 1e-4)

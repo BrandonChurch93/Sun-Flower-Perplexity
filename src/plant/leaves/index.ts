@@ -5,7 +5,7 @@ import type { Assets } from '../../core/assets.ts'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../core/random.ts'
-import { bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
+import { RAIN_WEIGHT, bodyHalfDepth, bodyRadius, bractLength, heightAt, leafAge, leafBirth, leafBroadening, leafCount, leafAzimuth, leafDroop, leafElevation, leafFold, leafFoldScale, leafLength, leafRoll, leafSeed, leafStemFraction, plantVariant, realOf, stemRadius, usePlant } from '../growth.ts'
 import { createBristles } from '../bristles/index.ts'
 import { createHairs, type HairSet } from '../hairs/index.ts'
 import { filling, makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../part.ts'
@@ -154,7 +154,6 @@ function ownAt(own: number[], k: number, t: number): number {
 
 // How far a storm's gust throws a leaf, in radians: up or down by how it points to the wind, and round its stalk.
 const THROW_UP = 0.5
-const RAIN_WEIGHT = 0.14
 const THROW_ROUND = 0.42
 // How far a leaf twitches from frame to frame in the fastest time lapse, in radians, and how much of that its tip adds.
 const TWITCH = 0.04
