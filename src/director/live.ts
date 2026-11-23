@@ -6,6 +6,7 @@ import type { Loading } from '../player/loading.ts'
 import { reportText, type Report, type RunFacts } from '../player/pacing.ts'
 import { filmPlan, play, type Playing } from '../player/play.ts'
 import { check, pictureSize, record, type Deck, type Session } from '../player/session.ts'
+import { stateRun, type StateReport } from '../player/state.ts'
 import { EXPORT_NOTE, readTrack, trackLine, type Track } from '../player/track.ts'
 import type { Quality } from '../v2/api.ts'
 import { barAt, hitFrame } from '../v2/clock.ts'
@@ -32,6 +33,8 @@ export interface PlayerState {
   range(first: number, last: number): Promise<Report | null>
   // Draws every frame from `first` to `last` in order through the same loop, one at each animation frame, with no clock to keep. Only for measuring what a frame costs.
   every(first: number, last: number): Promise<Report | null>
+  // Sets the film to every frame from `first` to `last` in a row and draws nothing: what the page's own work costs, by owner.
+  script(first: number, last: number): Promise<StateReport | null>
 }
 
 declare global {
@@ -111,7 +114,7 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
   let seekTo: number | null = null
   let again = false
 
-  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every }
+  const state: PlayerState = { activity, frame, shown: -1, quality, track: null, picture: { width: 0, height: 0, exact: false }, report: null, advice: null, error: null, sky: film.skyName, range, every, script }
   window.player = state
   window.showcase.pacing = () => playing?.soFar() ?? state.report
 
@@ -495,6 +498,22 @@ export function startLive(film: Film, options: Options, host: HTMLElement, loadi
       return null
     } finally {
       become('ready', 'Ready')
+    }
+  }
+
+  async function script(first: number, last: number): Promise<StateReport | null> {
+    if (activity !== 'ready' || dead) return null
+    become('check', 'Measuring')
+    try {
+      await drawing
+      filmView()
+      return await stateRun(film, clampFrame(first), clampFrame(last), tier)
+    } catch (error) {
+      fail(error)
+      return null
+    } finally {
+      become('ready', 'Ready')
+      touch()
     }
   }
 
