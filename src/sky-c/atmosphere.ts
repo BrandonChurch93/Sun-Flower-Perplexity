@@ -10,17 +10,17 @@ export const R_OBS = R_BOTTOM + 0.02
 
 export const BETA_R: RGB = [0.005802, 0.013558, 0.0331]
 export const H_RAYLEIGH = 8.0
-export const BETA_M_SCA: RGB = [0.0165, 0.0165, 0.0165]
-export const BETA_M_EXT: RGB = [0.0192, 0.0192, 0.0192]
+export const BETA_M_SCA: RGB = [0.0155, 0.0155, 0.0155]
+export const BETA_M_EXT: RGB = [0.0182, 0.0182, 0.0182]
 export const H_MIE = 1.2
-export const BETA_O3: RGB = [0.00088, 0.00254, 0.000115]
-export const GROUND_ALBEDO: RGB = [0.12, 0.1, 0.07]
+export const BETA_O3: RGB = [0.00145, 0.0041, 0.00017]
+export const GROUND_ALBEDO: RGB = [0.11, 0.09, 0.065]
 
-export const SUN_IRRADIANCE: RGB = [9.85, 9.8, 9.6]
-export const SKY_RADIANCE_SCALE: RGB = [2.75, 2.78, 2.85]
+export const SUN_IRRADIANCE: RGB = [9.9, 9.82, 9.6]
+export const SKY_RADIANCE_SCALE: RGB = [2.72, 2.76, 2.86]
 export const MOON_DIRECT: RGB = [0.19, 0.2, 0.23]
-export const NIGHT_ZENITH: RGB = [0.0019, 0.0034, 0.0062]
-export const NIGHT_HORIZON: RGB = [0.0038, 0.0063, 0.0108]
+export const NIGHT_ZENITH: RGB = [0.0014, 0.0028, 0.0068]
+export const NIGHT_HORIZON: RGB = [0.0026, 0.0048, 0.0102]
 
 export const TRANS_W = 256
 export const TRANS_H = 64
@@ -162,7 +162,7 @@ export function buildAtmosphereTables(renderer: THREE.WebGLRenderer): Atmosphere
       let limb = 1
       if (mu < 0) {
         const rMin = r * Math.sqrt(Math.max(0, 1 - mu * mu))
-        limb = smoothstep(R_BOTTOM - 2.4, R_BOTTOM + 0.6, rMin)
+        limb = smoothstep(R_BOTTOM - 2.0, R_BOTTOM + 0.5, rMin)
       }
       const steps = 40
       const dt = dTop / steps
@@ -302,15 +302,20 @@ export function buildAtmosphereTables(renderer: THREE.WebGLRenderer): Atmosphere
     const sy = Math.sin(el)
     const sx = Math.cos(el)
     const nightW = smoothstep(-2, -13, elDeg)
+    // Hulburt ozone-filtered second-order twilight blue keeps blue hour cobalt rather than pink
+    const twiBlue = smoothstep(1.5, -3.5, elDeg) * smoothstep(-12.5, -5.0, elDeg)
+    const twiZen: RGB = [0.022, 0.068, 0.195]
+    const twiHor: RGB = [0.038, 0.095, 0.235]
+    const twiSun: RGB = [0.165, 0.098, 0.115]
 
     integrateSkyRay(0, 1, 0, sx, sy, 0, tmp)
-    for (let c = 0; c < 3; c++) zenithTable[i * 3 + c] = tmp[c] + NIGHT_ZENITH[c] * nightW
+    for (let c = 0; c < 3; c++) zenithTable[i * 3 + c] = tmp[c] + twiZen[c] * twiBlue + NIGHT_ZENITH[c] * nightW
 
     integrateSkyRay(Math.cos(awayAz) * cosH, sinH, Math.sin(awayAz) * cosH, sx, sy, 0, tmp)
-    for (let c = 0; c < 3; c++) horizonTable[i * 3 + c] = tmp[c] + NIGHT_HORIZON[c] * nightW
+    for (let c = 0; c < 3; c++) horizonTable[i * 3 + c] = tmp[c] + twiHor[c] * twiBlue + NIGHT_HORIZON[c] * nightW
 
     integrateSkyRay(cosH, sinH, 0, sx, sy, 0, tmp)
-    for (let c = 0; c < 3; c++) horizonSunTable[i * 3 + c] = tmp[c] + NIGHT_HORIZON[c] * nightW
+    for (let c = 0; c < 3; c++) horizonSunTable[i * 3 + c] = tmp[c] + twiSun[c] * twiBlue + NIGHT_HORIZON[c] * nightW
 
     const refractedEl = elDeg + 0.35 * Math.exp(-Math.max(0, elDeg + 1.5) * 0.4)
     const muDir = Math.sin(refractedEl * RAD)
@@ -368,33 +373,27 @@ export function evaluateSkyLight(tables: AtmosphereTables, m: Moment, out: SkyLi
     readCurve(tables.directTable, e, out.direct)
   }
 
-  const skyMeanLum =
-    0.2126 * (0.4 * out.zenith[0] + 0.6 * out.horizon[0]) +
-    0.7152 * (0.4 * out.zenith[1] + 0.6 * out.horizon[1]) +
-    0.0722 * (0.4 * out.zenith[2] + 0.6 * out.horizon[2])
-  const sunHorizLum =
-    (0.2126 * out.direct[0] + 0.7152 * out.direct[1] + 0.0722 * out.direct[2]) * Math.max(0, Math.sin(Math.max(0, e) * RAD))
-  const totalTop = skyMeanLum + 0.22 * sunHorizLum
-
-  const stormAtten = lerp(0.62, 0.14, d.overcast)
-  const deckBase = totalTop * stormAtten
-  const closed = clamp(d.cover * 1.12 - 0.1) * lerp(0.45, 1.0, d.overcast)
+  const horizLum = 0.2126 * out.horizon[0] + 0.7152 * out.horizon[1] + 0.0722 * out.horizon[2]
+  const stormW = smoothstep(0.12, 0.65, d.overcast)
+  const stormAtten = lerp(0.56, 0.24, stormW)
+  const deckBase = horizLum * stormAtten
+  const closed = clamp(d.cover * 1.15 - 0.12) * lerp(0.45, 1.0, stormW)
   const veil = clamp(d.fog)
-  const flashLift = d.flash * 0.08 * Math.max(0.05, totalTop)
+  const flashLift = d.flash * 0.035 * Math.max(0.05, horizLum)
 
   for (let i = 0; i < 3; i++) {
-    const stormTint = i === 0 ? 0.88 : i === 1 ? 0.99 : 1.16
-    const flashTint = i === 0 ? 0.72 : i === 1 ? 0.92 : 1.35
-    out.zenith[i] = lerp(out.zenith[i], deckBase * stormTint * 0.88, closed) + flashLift * flashTint * 0.7
-    out.horizon[i] = lerp(out.horizon[i], deckBase * stormTint * 1.24, closed * 0.88) + flashLift * flashTint * 0.45
-    const breakWarm = d.burst * out.direct[i] * 0.22
-    out.horizonSun[i] = lerp(out.horizonSun[i], deckBase * stormTint * 1.32, closed * (1 - 0.55 * d.burst)) + breakWarm + flashLift * flashTint * 0.6
+    const stormTint = i === 0 ? 0.72 : i === 1 ? 0.92 : 1.18
+    const flashTint = i === 0 ? 0.68 : i === 1 ? 0.88 : 1.42
+    out.zenith[i] = lerp(out.zenith[i], deckBase * stormTint * 0.72, closed) + flashLift * flashTint * 0.65
+    out.horizon[i] = lerp(out.horizon[i], deckBase * stormTint * 1.18, closed * 0.85) + flashLift * flashTint * 0.4
+    const breakWarm = d.burst * out.direct[i] * 0.12
+    out.horizonSun[i] = lerp(out.horizonSun[i], deckBase * stormTint * 1.22, closed * (1 - 0.45 * d.burst)) + breakWarm + flashLift * flashTint * 0.55
 
     const mistEven = 0.45 * out.zenith[i] + 0.55 * out.horizon[i]
-    const mistSun = mistEven + 0.18 * out.direct[i] * veil
-    out.zenith[i] = lerp(out.zenith[i], mistEven * 1.05, veil * 0.88)
-    out.horizon[i] = lerp(out.horizon[i], mistEven * 1.12, veil * 0.76)
-    out.horizonSun[i] = lerp(out.horizonSun[i], mistSun, veil * 0.68)
+    const mistSun = mistEven + 0.16 * out.direct[i] * veil
+    out.zenith[i] = lerp(out.zenith[i], mistEven * 1.04, veil * 0.86)
+    out.horizon[i] = lerp(out.horizon[i], mistEven * 1.1, veil * 0.74)
+    out.horizonSun[i] = lerp(out.horizonSun[i], mistSun, veil * 0.66)
   }
 
   return out

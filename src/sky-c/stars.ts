@@ -4,7 +4,7 @@ import { stream } from '../core/random.ts'
 
 export const MW_W = 512
 export const MW_H = 256
-export const BRIGHT_STAR_COUNT = 64
+export const BRIGHT_STAR_COUNT = 148
 
 const RAD = Math.PI / 180
 
@@ -72,8 +72,29 @@ const REAL_STARS: readonly [number, number, number, number][] = [
   [7.402, -29.3, 2.45, -0.08],
   [20.77, 33.97, 2.48, 1.02],
   [12.263, -17.54, 2.59, -0.11],
-  [18.1, -30.42, 2.98, 1.0],
+  [18.1, -30.42, 2.65, 1.0],
   [19.043, -29.88, 2.6, 0.08],
+  // Scorpius, Sagittarius, Scutum, Ophiuchus, Capricornus southern Milky Way stars
+  [18.35, -29.83, 2.7, 1.38],
+  [18.466, -25.42, 2.82, 1.04],
+  [18.962, -21.11, 2.89, 1.02],
+  [19.162, -27.67, 2.89, 0.22],
+  [17.793, -40.13, 2.99, 0.24],
+  [17.708, -39.03, 2.39, -0.22],
+  [16.864, -38.05, 3.04, -0.22],
+  [16.599, -28.22, 2.82, -0.25],
+  [16.091, -19.81, 2.62, -0.07],
+  [15.981, -26.11, 2.89, -0.2],
+  [17.367, -24.99, 3.25, -0.15],
+  [18.097, -24.28, 3.12, 0.05],
+  [18.65, -8.24, 3.1, 1.15],
+  [19.09, -4.88, 3.38, -0.05],
+  [19.771, 10.61, 2.72, 1.52],
+  [19.09, 13.86, 2.99, 0.01],
+  [20.294, -12.51, 3.08, 0.92],
+  [20.482, -14.78, 3.05, 0.8],
+  [17.626, -15.4, 3.15, 0.38],
+  [16.24, -3.69, 2.73, 1.58],
 ]
 
 function bvToRgb(bv: number): [number, number, number] {
@@ -100,14 +121,12 @@ function bvToRgb(bv: number): [number, number, number] {
 function eqToCelestial(raRad: number, decRad: number): [number, number, number] {
   const cd = Math.cos(decRad)
   const sd = Math.sin(decRad)
-  // Phase offset places Sagittarius/Scorpius galactic center near south meridian at first night
-  const ha = raRad - 278 * RAD
+  // Places Scorpius-Sagittarius Milky Way arch across the south sky during the night scenes
+  const ha = raRad - 294 * RAD
   const xEq = -cd * Math.sin(ha)
   const yEq = cd * Math.cos(ha)
   const zEq = sd
 
-  // At 45N: north pole (0,0,1)_eq maps to (0, sin45, cos45)_world
-  // South meridian celestial equator (0,1,0)_eq maps to (0, cos45, -sin45)_world
   const s45 = Math.SQRT1_2
   const wx = xEq
   const wy = yEq * s45 + zEq * s45
@@ -130,9 +149,25 @@ export function buildStarAssets(renderer: THREE.WebGLRenderer): StarAssets {
   const starColors = new Float32Array(BRIGHT_STAR_COUNT * 3)
 
   for (let i = 0; i < BRIGHT_STAR_COUNT; i++) {
-    const [raH, decD, vmag, bv] = REAL_STARS[i]
+    let raH: number
+    let decD: number
+    let vmag: number
+    let bv: number
+    if (i < REAL_STARS.length) {
+      ;[raH, decD, vmag, bv] = REAL_STARS[i]
+    } else if (i < REAL_STARS.length + 38) {
+      raH = 15.2 + rand() * 6.2
+      decD = -42.0 + rand() * 44.0
+      vmag = 2.15 + Math.pow(rand(), 1.35) * 1.25
+      bv = -0.18 + Math.pow(rand(), 1.45) * 1.65
+    } else {
+      raH = rand() * 24.0
+      decD = -38.0 + rand() * 118.0
+      vmag = 2.35 + Math.pow(rand(), 1.35) * 1.25
+      bv = -0.15 + Math.pow(rand(), 1.5) * 1.6
+    }
     const [wx, wy, wz] = eqToCelestial(raH * 15 * RAD, decD * RAD)
-    const flux = 26.0 * Math.pow(10, -0.34 * vmag)
+    const flux = 1.35 * Math.pow(10, -0.25 * vmag)
     const [cr, cg, cb] = bvToRgb(bv)
     starDirsAndFlux[i * 4] = wx
     starDirsAndFlux[i * 4 + 1] = wy
@@ -143,7 +178,6 @@ export function buildStarAssets(renderer: THREE.WebGLRenderer): StarAssets {
     starColors[i * 3 + 2] = cb
   }
 
-  // Build tileable 2D value-noise table for Milky Way star clouds & Great Rift dust
   const GN = 32
   const gTab = new Float32Array(GN * GN)
   for (let i = 0; i < gTab.length; i++) gTab[i] = rand()
@@ -168,11 +202,8 @@ export function buildStarAssets(renderer: THREE.WebGLRenderer): StarAssets {
     0.15 * noise2(u + 0.43, v + 0.11, 16, 16) +
     0.1 * noise2(u + 0.71, v + 0.59, 32, 32)
 
-  // Galactic North Pole in J2000 equatorial: RA = 192.86 deg, Dec = +27.13 deg
   const [gpx, gpy, gpz] = eqToCelestial(192.86 * RAD, 27.13 * RAD)
-  // Galactic Center: RA = 266.40 deg, Dec = -29.01 deg
   const [gcx, gcy, gcz] = eqToCelestial(266.4 * RAD, -29.01 * RAD)
-  // Orthogonal axis in galactic plane
   const gex = gpy * gcz - gpz * gcy
   const gey = gpz * gcx - gpx * gcz
   const gez = gpx * gcy - gpy * gcx
@@ -199,11 +230,11 @@ export function buildStarAssets(renderer: THREE.WebGLRenderer): StarAssets {
 
       const nCloud = fbm(lu, bv * 3.0)
       const nRift = fbm(lu + 0.37, bv * 5.0 + 0.21)
-      const coreBulge = Math.exp(-Math.pow(galL / 0.62, 2) - Math.pow(galB / 0.22, 2))
-      const diskBand = Math.exp(-Math.pow(galB / (0.16 + 0.08 * nCloud), 2)) * (0.38 + 0.62 * smoothstep(Math.PI, 0.2, Math.abs(galL)))
+      const coreBulge = Math.exp(-Math.pow(galL / 0.65, 2) - Math.pow(galB / 0.24, 2))
+      const diskBand = Math.exp(-Math.pow(galB / (0.17 + 0.09 * nCloud), 2)) * (0.4 + 0.6 * smoothstep(Math.PI, 0.2, Math.abs(galL)))
 
-      const riftBand = Math.exp(-Math.pow((galB - 0.015 * (nRift - 0.5)) / 0.055, 2)) * smoothstep(0.42, 0.72, nRift)
-      const starCloud = clamp((0.55 * diskBand + 0.85 * coreBulge) * (0.55 + 0.9 * nCloud) * (1 - 0.74 * riftBand), 0, 1)
+      const riftBand = Math.exp(-Math.pow((galB - 0.015 * (nRift - 0.5)) / 0.055, 2)) * smoothstep(0.4, 0.72, nRift)
+      const starCloud = clamp((0.58 * diskBand + 0.88 * coreBulge) * (0.52 + 0.92 * nCloud) * (1 - 0.76 * riftBand), 0, 1)
       const warmCore = clamp(coreBulge * (1 - 0.55 * riftBand), 0, 1)
       const dustMask = clamp(riftBand, 0, 1)
 

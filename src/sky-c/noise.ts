@@ -271,19 +271,19 @@ export function buildCloudTextures(renderer: THREE.WebGLRenderer): CloudTextures
       const wx = ((ux + warpX) % 1 + 1) % 1
       const wy = ((uy + warpY) % 1 + 1) % 1
 
-      const pMacro = 0.5 + 0.68 * (0.6 * w3.perlin(wx, wy) + 0.28 * w6.perlin(wx, wy) + 0.12 * w12.perlin(wx, wy))
-      const wMacro = 0.65 * w3.worley(wx, wy) + 0.35 * w6.worley(wx, wy)
-      const cov = clamp(0.58 * pMacro + 0.42 * wMacro, 0, 1)
+      const pMacro = 0.5 + 0.72 * (0.56 * w3.perlin(wx, wy) + 0.3 * w6.perlin(wx, wy) + 0.14 * w12.perlin(wx, wy))
+      const wMacro = 0.58 * w3.worley(wx, wy) + 0.42 * w6.worley(wx, wy)
+      const cov = remap(0.52 * pMacro + 0.48 * wMacro, 0.27, 0.81)
 
-      const heightMod = clamp(0.5 + 0.75 * (0.6 * w6.perlin(wx + 0.31, wy + 0.63) + 0.4 * w12.worley(wx, wy) - 0.18), 0.15, 1)
-      const stormRidge = clamp(
-        0.52 * w6.worley(wx + 0.44, wy + 0.17) +
+      const heightMod = clamp(0.25 + 0.88 * remap(0.55 * w6.worley(wx + 0.31, wy + 0.63) + 0.45 * (0.5 + 0.7 * w6.perlin(wx + 0.12, wy + 0.48)), 0.3, 0.82), 0.2, 1)
+      const stormRidge = remap(
+        0.5 * w6.worley(wx + 0.44, wy + 0.17) +
           0.32 * w12.worley(wx, wy) +
-          0.16 * w24.worley(wx, wy),
-        0,
-        1,
+          0.18 * w24.worley(wx, wy),
+        0.24,
+        0.84,
       )
-      const rainBand = clamp(0.5 + 0.85 * (0.7 * w6.perlin(wx * 1.0, wy) + 0.3 * w12.perlin(wx, wy)), 0, 1)
+      const rainBand = remap(0.5 + 0.85 * (0.65 * w6.perlin(wx, wy) + 0.35 * w12.perlin(wx, wy)), 0.22, 0.82)
 
       weatherBytes[ptr++] = Math.round(cov * 255)
       weatherBytes[ptr++] = Math.round(heightMod * 255)
@@ -292,29 +292,30 @@ export function buildCloudTextures(renderer: THREE.WebGLRenderer): CloudTextures
     }
   }
 
-  const c4 = new TileGrid2D(4, 14, rand)
-  const c8 = new TileGrid2D(8, 28, rand)
-  const c16 = new TileGrid2D(16, 56, rand)
+  const c6 = new TileGrid2D(6, 32, rand)
+  const c12 = new TileGrid2D(12, 64, rand)
+  const c24 = new TileGrid2D(24, 96, rand)
   const cWarp = new TileGrid2D(5, 5, rand)
+  const cPatch = new TileGrid2D(4, 4, rand)
   const cirrusBytes = new Uint8Array(CIRRUS_W * CIRRUS_H * 4)
   ptr = 0
   for (let y = 0; y < CIRRUS_H; y++) {
     const uy = (y + 0.5) / CIRRUS_H
     for (let x = 0; x < CIRRUS_W; x++) {
       const ux = (x + 0.5) / CIRRUS_W
-      const curlX = 0.08 * cWarp.perlin(ux, uy)
-      const curlY = 0.11 * cWarp.perlin(ux + 0.41, uy + 0.23)
+      const curlX = 0.045 * cWarp.perlin(ux, uy) + 0.018 * c6.perlin(ux, uy * 0.25)
+      const curlY = 0.035 * cWarp.perlin(ux + 0.41, uy + 0.23)
       const sx = ((ux + curlX) % 1 + 1) % 1
-      const sy = ((uy + curlY + 0.14 * Math.sin(ux * Math.PI * 2)) % 1 + 1) % 1
-      const streak =
+      const sy = ((uy + curlY) % 1 + 1) % 1
+      const fiber =
         0.5 +
-        0.78 *
-          (0.55 * c4.perlin(sx, sy) +
-            0.3 * c8.perlin(sx, sy) +
-            0.15 * c16.perlin(sx, sy))
-      const patch = clamp(0.5 + 0.85 * cWarp.perlin(ux * 1.0 + 0.7, uy * 1.0 + 0.2), 0, 1)
-      const wisp = clamp(remap(streak, 0.42, 0.92) * remap(patch, 0.28, 0.82), 0, 1)
-      const fine = clamp(0.5 + 0.8 * c16.perlin(sx + 0.13, sy + 0.29), 0, 1)
+        0.82 *
+          (0.45 * c6.perlin(sx, sy) +
+            0.35 * c12.perlin(sx, sy) +
+            0.2 * c24.perlin(sx, sy))
+      const patch = remap(0.55 * (0.5 + 0.75 * cPatch.perlin(ux + 0.7, uy + 0.2)) + 0.45 * cPatch.worley(ux + 0.2, uy + 0.6), 0.38, 0.84)
+      const wisp = clamp(remap(fiber, 0.48, 0.88) * patch, 0, 1)
+      const fine = clamp(0.5 + 0.85 * c24.perlin(sx + 0.13, sy + 0.29), 0, 1)
 
       cirrusBytes[ptr++] = Math.round(wisp * 255)
       cirrusBytes[ptr++] = Math.round(fine * 255)

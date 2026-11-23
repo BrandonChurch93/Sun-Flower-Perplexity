@@ -132,6 +132,7 @@ class VolumetricSky implements Sky {
       uMaxSteps: { value: 48 },
       uLightSteps: { value: 5 },
       uShutterTaps: { value: 1 },
+      uShaftSteps: { value: 8 },
     })
 
     this.mipDownPass = new FullscreenPass(mipDownFragment, {
@@ -165,6 +166,7 @@ class VolumetricSky implements Sky {
       uMoonVis: { value: 0 },
       uSunVis: { value: 1 },
       uSunThrough: { value: 1 },
+      uOvercast: { value: 0 },
       uBurst: { value: 0 },
       uFog: { value: 0 },
       uStarPosFlux: { value: starPosVecs },
@@ -286,9 +288,10 @@ class VolumetricSky implements Sky {
     cpu.uEvening.value = d.evening
     cpu.uNight.value = now.night
 
-    cpu.uMaxSteps.value = q === 'film' ? 64 : q === 'high' ? 44 : 26
+    cpu.uMaxSteps.value = q === 'film' ? 64 : q === 'high' ? 48 : 28
     cpu.uLightSteps.value = q === 'film' ? 6 : q === 'high' ? 5 : 4
     cpu.uShutterTaps.value = q === 'film' ? 3 : q === 'high' ? 2 : 1
+    cpu.uShaftSteps.value = q === 'film' ? 10 : q === 'high' ? 8 : 4
 
     this.cloudPreparePass.render(renderer, prepTarget)
 
@@ -307,11 +310,12 @@ class VolumetricSky implements Sky {
     sru.uMoon.value.copy(now.moon)
     sru.uStarTurn.value = midStarTurn
 
-    // Stars emerge through civil-to-nautical twilight; moon visible through deep twilight and night
-    sru.uNightVis.value = smoothstep(-3.2, -11.0, now.sunElevationDeg)
-    sru.uMoonVis.value = smoothstep(-0.5, -6.5, now.sunElevationDeg)
+    const nightCurve = smoothstep(-3.6, -11.5, now.sunElevationDeg)
+    sru.uNightVis.value = nightCurve * nightCurve
+    sru.uMoonVis.value = smoothstep(-5.4, -10.8, now.sunElevationDeg)
     sru.uSunVis.value = smoothstep(-0.95, 0.15, now.sunElevationDeg)
     sru.uSunThrough.value = d.sunThrough
+    sru.uOvercast.value = d.overcast
     sru.uBurst.value = d.burst
     sru.uFog.value = d.fog
 

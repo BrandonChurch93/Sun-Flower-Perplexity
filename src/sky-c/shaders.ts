@@ -12,12 +12,12 @@ const float R_OBS = 6360.02;
 
 const vec3 BETA_R = vec3(0.005802, 0.013558, 0.033100);
 const float H_RAYLEIGH = 8.0;
-const vec3 BETA_M_SCA = vec3(0.0165, 0.0165, 0.0165);
-const vec3 BETA_M_EXT = vec3(0.0192, 0.0192, 0.0192);
+const vec3 BETA_M_SCA = vec3(0.0155, 0.0155, 0.0155);
+const vec3 BETA_M_EXT = vec3(0.0182, 0.0182, 0.0182);
 const float H_MIE = 1.2;
-const vec3 BETA_O3 = vec3(0.00088, 0.00254, 0.000115);
-const vec3 SKY_SCALE = vec3(2.75, 2.78, 2.85);
-const vec3 SUN_IRRAD = vec3(9.85, 9.80, 9.60);
+const vec3 BETA_O3 = vec3(0.00145, 0.00410, 0.00017);
+const vec3 SKY_SCALE = vec3(2.72, 2.76, 2.86);
+const vec3 SUN_IRRAD = vec3(9.90, 9.82, 9.60);
 
 vec2 transRMuToUv(float r, float mu) {
   float v = sqrt(clamp((r - R_BOTTOM) / ATM_H, 0.0, 1.0));
@@ -134,6 +134,11 @@ void main() {
     }
   }
 
+  float sunElDeg = asin(clamp(uSun.y, -1.0, 1.0)) * (180.0 / PI);
+  float twilightOzone = 1.0 + 1.45 * smoothstep(4.0, -5.5, sunElDeg);
+  float lowAerosolMask = mix(1.0, smoothstep(0.16, 0.008, max(0.0, rd.y)), smoothstep(2.5, -2.5, sunElDeg));
+  float upperTwilightDamp = mix(1.0, smoothstep(0.14, 0.01, max(0.0, rd.y)), smoothstep(0.8, -2.8, sunElDeg));
+
   int steps = max(12, uSkySteps);
   float invSteps = 1.0 / float(steps);
   vec3 trans = vec3(1.0);
@@ -141,12 +146,12 @@ void main() {
 
   float cosSun = dot(rd, uSun);
   float pr = phaseRayleigh(cosSun);
-  float pm = mix(phaseCornette(cosSun, 0.78), phaseHG(cosSun, 0.62), 0.35 * uFog);
+  float pm = mix(phaseCornette(cosSun, 0.79), phaseHG(cosSun, 0.62), 0.35 * uFog) * lowAerosolMask;
   float pmMist = 0.6 * phaseHG(cosSun, 0.76) + 0.4 * phaseHG(cosSun, 0.32);
 
   float cosMoon = dot(rd, uMoon);
   float prMoon = phaseRayleigh(cosMoon);
-  float pmMoon = phaseCornette(cosMoon, 0.76);
+  float pmMoon = phaseCornette(cosMoon, 0.78);
 
   float prevT = 0.0;
   for (int s = 0; s < 40; s++) {
@@ -162,9 +167,9 @@ void main() {
     float h = max(0.0, rs - R_BOTTOM);
 
     float dr = exp(-h / H_RAYLEIGH);
-    float dm = exp(-h / H_MIE) + 0.018 * exp(-h / 5.5);
+    float dm = exp(-h / H_MIE) + 0.0014 * exp(-h / 3.6);
     float dMist = uFog * 6.5 * exp(-h / 0.32);
-    float do3 = max(0.0, 1.0 - abs(h - 25.0) / 15.0);
+    float do3 = max(0.0, 1.0 - abs(h - 25.0) / 15.0) * twilightOzone;
 
     vec3 scaR = BETA_R * dr;
     vec3 scaM = BETA_M_SCA * dm;
@@ -179,14 +184,14 @@ void main() {
     vec3 stepT = exp(-ext * dt);
     vec3 sint = (vec3(1.0) - stepT) / max(ext, vec3(1e-6));
 
-    vec3 single = (scaR * pr + scaM * pm + scaMist * pmMist) * tSun;
-    vec3 multi = (scaR + scaM + scaMist * 0.85) * ms;
+    vec3 single = (scaR * pr + scaM * pm + scaMist * pmMist) * tSun * upperTwilightDamp;
+    vec3 multi = (scaR + scaM * lowAerosolMask + scaMist * 0.85) * ms * mix(0.35, 1.0, upperTwilightDamp);
     vec3 scatter = (single + multi) * SKY_SCALE;
 
     if (uNight > 0.001) {
       float muMoon = dot(upDir, uMoon);
       vec3 tMoon = sampleTransmittance(tTrans, rs, muMoon);
-      vec3 moonSca = (scaR * prMoon + (scaM + scaMist * 0.4) * pmMoon) * tMoon * vec3(0.048, 0.055, 0.072);
+      vec3 moonSca = (scaR * prMoon + (scaM + scaMist * 0.4) * pmMoon) * tMoon * vec3(0.036, 0.052, 0.088);
       scatter += moonSca * uNight;
     }
 
@@ -194,11 +199,38 @@ void main() {
     trans *= stepT;
   }
 
-  float nightFloorW = smoothstep(-1.5, -12.5, asin(clamp(uSun.y, -1.0, 1.0)) * (180.0 / PI));
-  vec3 nightSky = mix(vec3(0.0038, 0.0063, 0.0108), vec3(0.0019, 0.0034, 0.0062), pow(clamp(d.y, 0.0, 1.0), 0.55));
+  float twiBlue = smoothstep(1.5, -3.5, sunElDeg) * smoothstep(-12.5, -5.0, sunElDeg);
+  if (twiBlue > 0.001) {
+    vec2 flatD = normalize(rd.xz + vec2(1e-6));
+    vec2 flatS = normalize(uSun.xz + vec2(1e-6));
+    float sunDot = dot(flatD, flatS);
+    float azToward = clamp(sunDot * 0.5 + 0.5, 0.0, 1.0);
+    vec3 cobaltDome = mix(vec3(0.036, 0.095, 0.235), vec3(0.017, 0.058, 0.185), pow(clamp(d.y, 0.0, 1.0), 0.38));
+    cobaltDome *= mix(0.72, 1.16, azToward);
+    lum += cobaltDome * twiBlue * mix(vec3(0.55), vec3(1.0), trans);
+
+    float azGlow = pow(azToward, 4.2);
+    float horWedge = exp(-max(0.0, d.y) * 28.0) * smoothstep(-0.035, 0.004, d.y);
+    vec3 warmAfterglow = mix(vec3(0.068, 0.034, 0.026), vec3(0.32, 0.098, 0.028), smoothstep(-5.2, -1.0, sunElDeg));
+    lum += warmAfterglow * twiBlue * azGlow * horWedge;
+  }
+
+  float beltW = smoothstep(4.5, -0.5, sunElDeg) * smoothstep(-7.5, -2.0, sunElDeg);
+  if (beltW > 0.001) {
+    vec2 flatD = normalize(rd.xz + vec2(1e-6));
+    vec2 flatS = normalize(uSun.xz + vec2(1e-6));
+    float antiSun = pow(clamp(-dot(flatD, flatS) * 0.5 + 0.5, 0.0, 1.0), 2.4);
+    float shadowEdge = smoothstep(-3.0, 2.5, sunElDeg) * 0.02 + smoothstep(2.5, -5.0, sunElDeg) * 0.09;
+    float beltBand = exp(-pow((d.y - shadowEdge - 0.035) / 0.045, 2.0));
+    float earthShadow = 1.0 - 0.42 * beltW * antiSun * smoothstep(shadowEdge + 0.03, shadowEdge - 0.01, d.y);
+    lum *= earthShadow;
+    lum += vec3(0.052, 0.026, 0.044) * beltW * antiSun * beltBand;
+  }
+
+  float nightFloorW = smoothstep(-2.0, -12.5, sunElDeg);
+  vec3 nightSky = mix(vec3(0.0024, 0.0046, 0.0102), vec3(0.0013, 0.0027, 0.0068), pow(clamp(d.y, 0.0, 1.0), 0.5));
   lum += nightSky * nightFloorW * trans;
 
-  // Smooth ground-limb continuation when looking slightly below mathematical horizon
   float belowFade = smoothstep(-0.18, 0.0, d.y);
   lum *= mix(0.72, 1.0, belowFade);
 
@@ -247,6 +279,7 @@ uniform float uNight;
 uniform int uMaxSteps;
 uniform int uLightSteps;
 uniform int uShutterTaps;
+uniform int uShaftSteps;
 
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
@@ -256,88 +289,114 @@ float remap01(float v, float lo, float hi) {
 }
 
 float cloudHeightSignal(float hFrac, float heightMod, float overcast) {
-  float top = mix(0.32 + 0.68 * heightMod, 0.96, overcast * 0.8);
-  float baseRound = smoothstep(0.0, mix(0.14, 0.07, overcast), hFrac);
-  float topRound = 1.0 - smoothstep(top * 0.62, top, hFrac);
+  float top = mix(0.36 + 0.64 * heightMod, 0.98, overcast * 0.85);
+  float baseRound = smoothstep(0.0, mix(0.13, 0.06, overcast), hFrac);
+  float topRound = 1.0 - smoothstep(top * 0.58, top, hFrac);
   return baseRound * topRound;
 }
 
-float evalCloudDensityAt(vec3 worldKm, float hBase, float hThickness, vec2 shiftKm, float evolve, vec3 rayDir, bool detailed) {
+float computeBreakMask(vec2 xz, float evolve, vec3 rayDir, float weatherB, out float sunBlockBoost) {
+  sunBlockBoost = 0.0;
+  float cosToSun = dot(rayDir, uSun);
+  if (cosToSun < 0.72) return 0.0;
+
+  vec3 sRight = normalize(cross(vec3(0.0, 1.0, 0.0), uSun));
+  vec3 sUp = cross(uSun, sRight);
+  vec2 sunPlane = vec2(dot(rayDir, sRight), dot(rayDir, sUp));
+  vec2 rotPlane = vec2(sunPlane.x * 0.82 - sunPlane.y * 0.57, (sunPlane.x * 0.57 + sunPlane.y * 0.82) * 1.48);
+  float anisoAng = length(rotPlane);
+
+  vec4 bn1 = texture(tShape3D, vec3(xz * 0.14, evolve * 0.03));
+  vec4 bn2 = texture(tShape3D, vec3(xz * 0.31 + 0.37, evolve * 0.05));
+  float warp = (bn1.r - 0.5) * 0.14 + (bn2.g - 0.5) * 0.09 + (weatherB - 0.5) * 0.07;
+  float warpedAng = anisoAng + warp;
+
+  if (uSunThrough < 0.55 && uBurst < 0.1 && uCover > 0.06) {
+    sunBlockBoost = (1.0 - smoothstep(0.04, 0.16, warpedAng)) * clamp((0.55 - uSunThrough) * 1.8, 0.0, 1.0);
+  }
+
+  float burstRift = (1.0 - smoothstep(0.012, 0.18 + 0.05 * uBurst, warpedAng)) * uBurst;
+  float throughRift = (1.0 - smoothstep(0.020, 0.12, warpedAng)) * smoothstep(0.45, 1.0, uSunThrough) * (1.0 - 0.82 * uOvercast + 0.82 * uBurst);
+  return clamp(max(burstRift, throughRift * 0.82), 0.0, 1.0);
+}
+
+float evalCloudDensityAt(vec3 worldKm, float hBase, float hThickness, vec2 shiftKm, float evolve, vec3 rayDir, bool detailed, out float outBreak) {
+  outBreak = 0.0;
   float r = length(worldKm + vec3(0.0, R_BOTTOM, 0.0));
   float h = r - R_BOTTOM;
   float hFrac = (h - hBase) / hThickness;
   if (hFrac <= 0.0 || hFrac >= 1.0) return 0.0;
 
-  // Wind shear tilts cumulus tops forward along drift track
+  float stormW = smoothstep(0.12, 0.62, uOvercast);
   vec2 driftDir = vec2(0.66913, 0.74314);
-  vec2 shear = driftDir * (hFrac * hFrac * 0.55);
+  vec2 shear = driftDir * (hFrac * hFrac * 0.48);
   vec2 xz = worldKm.xz - shiftKm + shear;
 
-  vec4 weather = texture(tWeather2D, xz * 0.022 + vec2(evolve * 0.004, -evolve * 0.003));
-  float localCov = mix(weather.r, mix(0.76, 0.96, weather.b), uOvercast * 0.82);
+  vec4 weather = texture(tWeather2D, xz * 0.062 + vec2(evolve * 0.005, -evolve * 0.004));
+  float sunBlockBoost;
+  float breakMask = computeBreakMask(xz, evolve, rayDir, weather.b, sunBlockBoost);
+  outBreak = breakMask;
 
-  // Ragged cloud break around the sun during burst, plus sunThrough tunnel clearing
-  float cosToSun = dot(rayDir, uSun);
-  if (uBurst > 0.001 || (uCover > 0.2 && uSunThrough > 0.02)) {
-    vec4 breakNoise = texture(tShape3D, vec3(xz * 0.11, evolve * 0.03));
-    float warp = (breakNoise.r - 0.5) * 0.14 + (weather.b - 0.5) * 0.09;
-    float ang = acos(clamp(cosToSun, -1.0, 1.0)) + warp;
-    float burstHole = (1.0 - smoothstep(0.08, 0.30 + 0.12 * uBurst, ang)) * uBurst;
-    float throughHole = (1.0 - smoothstep(0.015, 0.075, ang)) * uSunThrough * (1.0 - 0.55 * uOvercast + 0.55 * uBurst);
-    localCov *= (1.0 - 0.92 * max(burstHole, throughHole * 0.72));
-  }
+  float fairWeatherCov = clamp(weather.r + sunBlockBoost * 0.42, 0.0, 1.0);
+  float localCov = mix(fairWeatherCov, mix(0.82, 0.99, weather.b), stormW * 0.92);
+  localCov *= (1.0 - 0.95 * breakMask);
 
-  float coverageTarget = clamp(uCover * 1.18, 0.0, 1.0);
-  float basePresence = remap01(localCov, 1.0 - coverageTarget * 0.92, 1.0);
+  float covFade = smoothstep(0.01, 0.07, uCover);
+  float coverageTarget = covFade * clamp(0.28 + pow(uCover, 0.78) * 0.72, 0.0, 1.0);
+  float thresh = 1.0 - coverageTarget * 0.90;
+  float basePresence = remap01(localCov, thresh, 1.0);
   if (basePresence <= 0.001) return 0.0;
 
-  float hProf = cloudHeightSignal(hFrac, weather.g, uOvercast);
+  float hProf = cloudHeightSignal(hFrac, weather.g, stormW);
   if (hProf <= 0.001) return 0.0;
 
-  vec3 shapeUvw = vec3(xz * 0.135, (h - hBase) * 0.16 + evolve * 0.055);
+  vec3 shapeUvw = vec3(xz * 0.22, (h - hBase) * 0.24 + evolve * 0.05);
   vec4 shape = texture(tShape3D, shapeUvw);
-  float shapeFbm = 0.60 * shape.g + 0.28 * shape.b + 0.12 * shape.a;
-  float baseCloud = remap01(shape.r * hProf, (1.0 - shapeFbm) * 0.48, 1.0);
-  float dens = remap01(baseCloud, 1.0 - basePresence, 1.0);
+  float shapeFbm = 0.58 * shape.g + 0.28 * shape.b + 0.14 * shape.a;
+  float billow = remap01(shape.r * hProf, (1.0 - shapeFbm) * 0.50, 1.0);
+  float dens = remap01(billow, 1.0 - basePresence, 1.0);
 
-  // Low dark storm scud pockets under heavy overcast
-  if (uOvercast > 0.25 && hFrac < 0.32) {
-    float scudMask = (1.0 - hFrac / 0.32) * uOvercast;
-    float scud = remap01(weather.b * shape.g, 0.28, 0.82);
-    dens = max(dens, scud * scudMask * 0.65);
+  if (stormW > 0.15 && hFrac < 0.42) {
+    float scudMask = (1.0 - hFrac / 0.42) * stormW * (1.0 - breakMask);
+    float scud = remap01(weather.b * (0.55 * shape.g + 0.45 * shape.b), 0.22, 0.76);
+    dens = max(dens, scud * scudMask * 0.85);
   }
 
   if (dens <= 0.001) return 0.0;
 
   if (detailed) {
-    vec3 detUvw = vec3(xz * 0.68 + vec2(evolve * 0.09, -evolve * 0.07), h * 0.72);
+    vec3 detUvw = vec3(xz * 0.92 + vec2(evolve * 0.08, -evolve * 0.06), h * 0.88);
     vec4 det = texture(tDetail3D, detUvw);
     float detFbm = 0.625 * det.r + 0.25 * det.g + 0.125 * det.b;
-    float erode = mix(detFbm, 1.0 - detFbm, clamp(hFrac * 1.8, 0.0, 1.0));
-    dens = remap01(dens, 0.30 * erode * (1.0 - 0.45 * uOvercast), 1.0);
+    float cauliflower = mix(detFbm, 1.0 - detFbm, clamp(hFrac * 1.6, 0.0, 1.0));
+    dens = remap01(dens, 0.34 * cauliflower * (1.0 - 0.45 * stormW), 1.0);
   }
 
-  float extScale = mix(2.6, 4.2, uOvercast) * (1.0 - 0.55 * uFog);
+  float extScale = mix(4.2, 8.6, stormW) * (1.0 - 0.58 * uFog);
   return dens * extScale;
 }
 
-float sampleCloudDensity(vec3 worldKm, float hBase, float hThickness, vec3 rayDir, bool detailed) {
+float sampleCloudDensity(vec3 worldKm, float hBase, float hThickness, vec3 rayDir, bool detailed, out float outBreak) {
   vec2 deltaShift = uCloudShiftLater - uCloudShiftNow;
   float deltaLen = length(deltaShift);
   if (uShutterTaps <= 1 || deltaLen < 0.003 || !detailed) {
     vec2 midShift = 0.5 * (uCloudShiftNow + uCloudShiftLater);
     float midEv = 0.5 * (uCloudEvolveNow + uCloudEvolveLater);
-    return evalCloudDensityAt(worldKm, hBase, hThickness, midShift, midEv, rayDir, detailed);
+    return evalCloudDensityAt(worldKm, hBase, hThickness, midShift, midEv, rayDir, detailed, outBreak);
   }
   float sum = 0.0;
+  float bSum = 0.0;
   float inv = 1.0 / float(uShutterTaps);
   for (int k = 0; k < 4; k++) {
     if (k >= uShutterTaps) break;
     float fk = (float(k) + 0.5) * inv;
     vec2 sh = mix(uCloudShiftNow, uCloudShiftLater, fk);
     float ev = mix(uCloudEvolveNow, uCloudEvolveLater, fk);
-    sum += evalCloudDensityAt(worldKm, hBase, hThickness, sh, ev, rayDir, true);
+    float bk;
+    sum += evalCloudDensityAt(worldKm, hBase, hThickness, sh, ev, rayDir, true, bk);
+    bSum += bk;
   }
+  outBreak = bSum * inv;
   return sum * inv;
 }
 
@@ -347,7 +406,6 @@ void main() {
 
   vec3 clearSky = texture(tSkyView, dirToSkyViewUv(d)).rgb;
 
-  // Above-horizon check; rays aimed into ground still return clean horizon air + cloudT=1
   if (d.y < -0.04) {
     outColor = vec4(clearSky, 1.0);
     return;
@@ -356,28 +414,28 @@ void main() {
   float marchDy = max(d.y, 0.008);
   vec3 rd = normalize(vec3(d.x, marchDy, d.z));
 
-  float hBase = mix(1.52, 1.02, uOvercast);
-  float hTop = mix(3.25, 5.65, uOvercast);
+  float hBase = mix(1.48, 0.98, uOvercast);
+  float hTop = mix(3.15, 5.60, uOvercast);
   float hThickness = hTop - hBase;
 
   vec3 cloudInscatter = vec3(0.0);
   float cloudTrans = 1.0;
 
-  // High altitude cirrus layer at 8.6 km (amplified in evening and fair transitions)
-  float cirrusWeight = clamp(0.18 + 0.82 * uEvening + 0.22 * uCover * (1.0 - uOvercast), 0.0, 1.0) * (1.0 - 0.85 * uFog);
+  // Delicate feathered high-altitude ice cirrus at 8.7 km
+  float cirrusWeight = clamp(0.06 * smoothstep(0.04, 0.3, uCover) * (1.0 - uOvercast) + 0.68 * uEvening, 0.0, 0.85) * (1.0 - 0.85 * uFog);
   float cirrusT0, cirrusT1;
   vec3 cirrusLum = vec3(0.0);
   float cirrusTrans = 1.0;
-  if (cirrusWeight > 0.01 && rayShellInterval(R_OBS, rd.y, R_BOTTOM + 8.5, R_BOTTOM + 9.1, cirrusT0, cirrusT1)) {
+  if (cirrusWeight > 0.01 && rayShellInterval(R_OBS, rd.y, R_BOTTOM + 8.6, R_BOTTOM + 9.0, cirrusT0, cirrusT1)) {
     float tc = 0.5 * (cirrusT0 + cirrusT1);
     vec3 pc = rd * tc;
     vec2 midShift = 0.5 * (uCloudShiftNow + uCloudShiftLater);
-    vec2 cuv = pc.xz * 0.016 - midShift * 0.005;
+    vec2 cuv = pc.xz * 0.029 - midShift * 0.004;
     vec4 cir = texture(tCirrus2D, cuv);
-    float cDens = cir.r * (0.65 + 0.35 * cir.g) * cirrusWeight * smoothstep(0.01, 0.12, rd.y);
+    float cDens = cir.r * smoothstep(0.25, 0.85, cir.g) * cirrusWeight * smoothstep(0.015, 0.14, rd.y);
     if (cDens > 0.002) {
-      float pathLen = min(3.8, (cirrusT1 - cirrusT0));
-      float tauC = cDens * 0.55 * pathLen;
+      float pathLen = min(2.4, cirrusT1 - cirrusT0);
+      float tauC = cDens * 0.24 * pathLen;
       cirrusTrans = exp(-tauC);
 
       vec3 pSph = vec3(0.0, R_OBS, 0.0) + pc;
@@ -386,122 +444,131 @@ void main() {
       vec3 sunAtCir = SUN_IRRAD * sampleTransmittance(tTrans, rCir, muSunCir);
 
       float cosSun = dot(rd, uSun);
-      float hgCir = 0.68 * phaseHG(cosSun, 0.74) + 0.32 * phaseHG(cosSun, -0.25);
-      vec3 ambCir = mix(uSkyHor, uSkyZen, 0.45) * 0.55;
-      vec3 cScatter = (sunAtCir * hgCir * 2.1 + ambCir) * (1.0 - cirrusTrans);
+      float hgCir = 0.65 * phaseHG(cosSun, 0.72) + 0.35 * phaseHG(cosSun, -0.22);
+      vec3 ambCir = mix(uSkyHor, uSkyZen, 0.5) * 0.45;
+      vec3 cScatter = (sunAtCir * hgCir * 1.85 + ambCir) * (1.0 - cirrusTrans);
 
-      float distFade = exp(-tc * 0.012);
+      float distFade = exp(-tc * 0.015);
       cirrusLum = mix(clearSky * (1.0 - cirrusTrans), cScatter, distFade);
     }
   }
 
-  // Main 3D volumetric cumulus and storm layer
+  float stormW = smoothstep(0.12, 0.62, uOvercast);
   float t0, t1;
   bool hitShell = (uCover > 0.01 || uOvercast > 0.01) && rayShellInterval(R_OBS, rd.y, R_BOTTOM + hBase, R_BOTTOM + hTop, t0, t1);
-  if (hitShell) {
-    t1 = min(t1, 48.0);
+  if (hitShell && t0 < 52.0) {
+    float maxSpanKm = mix(26.0, 18.0, stormW);
+    t1 = min(t1, min(56.0, t0 + maxSpanKm));
     if (t1 > t0) {
       int steps = uMaxSteps;
-      float dtBase = (t1 - t0) / float(steps);
+      float dt = (t1 - t0) / float(steps);
 
-      // Interleaved blue-like jitter only at tiny amplitude to avoid banding without visible stipple
       uvec2 pix = uvec2(gl_FragCoord.xy);
       float ign = fract(52.9829189 * fract(0.06711056 * float(pix.x) + 0.00583715 * float(pix.y)));
 
       float cosSun = dot(rd, uSun);
-      float hgFront = phaseHG(cosSun, 0.78);
-      float hgMid = phaseHG(cosSun, 0.38);
+      float hgSilver = phaseHG(cosSun, 0.80);
+      float hgForward = phaseHG(cosSun, 0.38);
       float hgBack = phaseHG(cosSun, -0.28);
-      float phase0 = 0.52 * hgFront + 0.33 * hgMid + 0.15 * hgBack;
-      float phase1 = 0.45 * phaseHG(cosSun, 0.32) + 0.55 / (4.0 * PI);
+      float phase0 = 0.36 * hgSilver + 0.36 * hgForward + 0.28 * hgBack;
+      float phase1 = 0.38 * phaseHG(cosSun, 0.26) + 0.62 / (4.0 * PI);
 
       float cosMoon = dot(rd, uMoon);
-      float phaseMoon = 0.6 * phaseHG(cosMoon, 0.70) + 0.4 / (4.0 * PI);
+      float phaseMoon = 0.58 * phaseHG(cosMoon, 0.72) + 0.42 / (4.0 * PI);
 
-      // 3D intra-cloud lightning core position inside storm deck along uFlashDir
-      float flashDistKm = 5.4;
-      vec3 flashCenter = uFlashDir * flashDistKm;
+      vec3 flashCenter = uFlashDir * 4.8;
 
       for (int i = 0; i < 72; i++) {
-        if (i >= steps || cloudTrans < 0.008) break;
-        float fi = (float(i) + 0.2 + 0.6 * ign) / float(steps);
-        // Slightly denser steps near camera, stretched far away
+        if (i >= steps || cloudTrans < 0.005) break;
+        float fi = (float(i) + 0.25 + 0.50 * ign) / float(steps);
         float t = mix(t0, t1, fi);
-        float dt = dtBase;
 
         vec3 worldKm = rd * t;
-        float sigmaE = sampleCloudDensity(worldKm, hBase, hTop - hBase, d, true);
+        float localBreak;
+        float sigmaE = sampleCloudDensity(worldKm, hBase, hThickness, d, true, localBreak);
 
         if (sigmaE > 0.002) {
           vec3 pSph = vec3(0.0, R_OBS, 0.0) + worldKm;
           float rSample = length(pSph);
           float hFrac = clamp((rSample - R_BOTTOM - hBase) / hThickness, 0.0, 1.0);
 
-          // March toward sun for optical depth (direct + multi-scattering)
           float tauSun = 0.0;
-          float sunStepKm = mix(0.20, 0.38, uOvercast);
+          float sunStepKm = mix(0.28, 0.45, stormW);
           for (int ls = 0; ls < 6; ls++) {
             if (ls >= uLightSteps) break;
-            float lt = (float(ls) + 0.6) * sunStepKm * (1.0 + 0.45 * float(ls));
+            float stepScale = 1.0 + 0.55 * float(ls);
+            float lt = (float(ls) + 0.55) * sunStepKm * stepScale;
             vec3 lp = worldKm + uSun * lt;
-            tauSun += sampleCloudDensity(lp, hBase, hTop - hBase, d, false) * sunStepKm * (1.0 + 0.45 * float(ls));
+            float dummyB;
+            tauSun += sampleCloudDensity(lp, hBase, hThickness, normalize(d + uSun * 0.15), false, dummyB) * sunStepKm * stepScale;
           }
 
-          // Directed sunThrough clears excessive shadow along the sun cone during breaks
-          float sunAlign = smoothstep(0.92, 0.998, cosSun);
-          tauSun *= mix(1.0, 0.28, sunAlign * uSunThrough * (0.35 + 0.65 * uBurst));
+          float anvilOpticalDepth = stormW * pow(1.0 - hFrac, 0.95) * 14.5 * (1.0 - 0.92 * localBreak);
+          tauSun += anvilOpticalDepth;
 
           float muSunP = dot(pSph / rSample, uSun);
           vec3 sunIrrad = SUN_IRRAD * sampleTransmittance(tTrans, rSample, muSunP);
 
-          // Schneider powder + dual-octave multiple scattering approximation
-          float powder = 1.0 - 0.58 * exp(-sigmaE * 1.6) * (1.0 - 0.7 * clamp(cosSun, 0.0, 1.0));
+          float powder = 1.0 - 0.65 * exp(-sigmaE * 1.4) * (1.0 - 0.82 * clamp(cosSun, 0.0, 1.0));
           float beers0 = exp(-tauSun);
-          float beers1 = exp(-tauSun * 0.26) * 0.68;
-          float beers2 = exp(-tauSun * 0.08) * 0.28;
+          float beers1 = exp(-tauSun * 0.34) * 0.38 * (1.0 - 0.82 * stormW * (1.0 - localBreak));
+          float beers2 = exp(-tauSun * 0.14) * 0.11 * (1.0 - 0.90 * stormW * (1.0 - localBreak));
 
-          vec3 directSca = sunIrrad * (beers0 * phase0 * powder + beers1 * phase1 + beers2 * (0.25 / PI)) * 3.1;
+          vec3 directSca = sunIrrad * (beers0 * phase0 * powder + beers1 * phase1 + beers2 * (0.25 / PI)) * 1.42;
 
-          // Ambient sky dome + warm sunset underside & ground bounce
-          float stormDark = mix(1.0, 0.26, uOvercast);
-          vec3 topAmb = mix(uSkyZen, uSkyHor, 0.38) * (0.35 + 0.75 * hFrac) * stormDark;
-          // Under heavy storm deck, thin vaults transmit cool pewter upper skylight while ridges stay dark charcoal
-          float vaultTrans = exp(-sigmaE * 0.55) * (0.35 + 0.65 * hFrac);
-          vec3 stormStructure = mix(uSkyHor, uSkyZen, 0.5) * uOvercast * vaultTrans * 0.42;
+          if (uBurst > 0.01) {
+            float rimGlow = smoothstep(0.968, 0.999, cosSun) * exp(-sigmaE * 0.55) * localBreak * uBurst;
+            directSca += sunIrrad * rimGlow * 0.95;
+          }
 
-          // Low sun illuminates cloud bellies from below; ground bounce warms bases by day
-          float lowSunBelly = smoothstep(0.28, -0.02, uSun.y) * smoothstep(-0.08, 0.02, uSun.y);
-          vec3 bellyWarm = sunIrrad * (1.0 - hFrac) * exp(-tauSun * 0.32) * lowSunBelly * 0.42;
-          vec3 groundAmb = uGroundBounceCol * (1.0 - hFrac) * 0.85;
+          float vertAmb = smoothstep(0.04, 0.82, hFrac);
+          vec3 shadowBellyCol = (uSkyZen * 0.34 + uSkyHor * 0.16) * vec3(0.84, 0.92, 1.08);
+          vec3 litTopAmb = uSkyZen * 0.68 + uSkyHor * 0.42;
+          vec3 fairAmb = mix(shadowBellyCol, litTopAmb, vertAmb);
 
-          // Lunar cloud lighting at night
+          vec4 stormMod = texture(tShape3D, vec3(worldKm.xz * 0.14, hFrac * 0.6));
+          float billowDark = mix(0.14, 0.68, stormMod.g * exp(-sigmaE * 0.22)) * (0.32 + 0.68 * hFrac);
+          vec3 stormTint = vec3(0.62, 0.86, 1.12);
+          vec3 stormAmb = mix(uSkyZen, uSkyHor, 0.30) * stormTint * billowDark * 0.64;
+          vec3 ambientSca = mix(fairAmb, stormAmb, stormW * (1.0 - 0.30 * localBreak));
+
+          float lowSunBelly = smoothstep(0.22, -0.04, uSun.y) * smoothstep(-0.10, -0.012, uSun.y);
+          vec3 coralTint = mix(vec3(1.05, 0.68, 0.42), vec3(1.85, 0.48, 0.34), smoothstep(0.04, -0.025, uSun.y));
+          float sunSide = pow(clamp(cosSun * 0.5 + 0.5, 0.0, 1.0), 1.6);
+          vec3 bellyWarm = sunIrrad * coralTint * (1.0 - hFrac * 0.78) * exp(-tauSun * 0.32) * lowSunBelly * (0.35 + 0.65 * sunSide) * 0.58 * (1.0 - 0.88 * stormW);
+          vec3 groundAmb = uGroundBounceCol * (1.0 - hFrac) * 0.55 * (1.0 - 0.75 * stormW);
+
           vec3 moonSca = vec3(0.0);
           if (uNight > 0.01) {
             float muMoonP = dot(pSph / rSample, uMoon);
-            vec3 moonIrrad = vec3(0.24, 0.26, 0.32) * sampleTransmittance(tTrans, rSample, muMoonP) * uNight;
-            moonSca = moonIrrad * (exp(-sigmaE * 0.8) * phaseMoon * 2.4 + 0.14 * hFrac);
+            vec3 moonIrrad = vec3(0.006, 0.009, 0.015) * sampleTransmittance(tTrans, rSample, muMoonP) * uNight;
+            moonSca = moonIrrad * (exp(-sigmaE * 0.75) * phaseMoon * 1.8 + 0.12 * hFrac);
           }
 
-          // Internal 3D lightning discharge inside the storm cloud
           vec3 flashEmit = vec3(0.0);
           if (uFlash > 0.001) {
             vec3 dp = worldKm - flashCenter;
-            // Branching modulation from 3D cloud shape
-            vec4 fn = texture(tShape3D, worldKm * 0.18);
-            float dCore = length(dp + (fn.rgb - 0.5) * 1.35);
-            float coreGlow = exp(-dCore * 0.62) + 0.28 * exp(-dCore * 0.18);
-            float internalTrans = exp(-sigmaE * 0.42);
-            flashEmit = vec3(0.68, 0.86, 1.42) * uFlash * coreGlow * internalTrans * 7.5;
+            vec4 fn = texture(tShape3D, worldKm * 0.26);
+            vec4 fn2 = texture(tDetail3D, worldKm * 0.58);
+            vec3 boltWarp = (fn.rgb - 0.5) * 1.15 + (fn2.rgb - 0.5) * 0.42;
+            vec3 warpedDp = dp + boltWarp;
+            warpedDp.y *= 0.68;
+            float dBolt = length(warpedDp);
+            float hotChannel = exp(-dBolt * 1.95);
+            float vaultGlow = 0.34 * exp(-dBolt * 0.72);
+            float fgScudShadow = mix(0.18, 1.0, exp(-sigmaE * 0.32));
+            flashEmit = (vec3(1.15, 1.42, 1.98) * hotChannel + vec3(0.52, 0.78, 1.38) * vaultGlow) * uFlash * fgScudShadow * 5.4;
           }
 
-          vec3 totalSca = directSca + topAmb + stormStructure + bellyWarm + groundAmb + moonSca + flashEmit;
+          vec3 totalSca = directSca + ambientSca + bellyWarm + groundAmb + moonSca + flashEmit;
 
-          // Aerial perspective between cloud sample at distance t and observer
-          float airFade = exp(-t * (0.022 + 0.16 * uFog + 0.045 * uRain));
-          vec3 stepScatter = mix(clearSky, totalSca, airFade);
+          float airRate = mix(0.018, 0.032, stormW) + 0.16 * uFog + 0.032 * uRain;
+          float airFade = exp(-t * airRate);
+          vec3 horizonAir = mix(clearSky, mix(uSkyHor, uSkyZen, 0.18) * vec3(0.86, 0.96, 1.08) * 1.18, stormW);
+          vec3 stepScatter = mix(horizonAir, totalSca, airFade);
 
           float stepT = exp(-sigmaE * dt);
-          float sint = (1.0 - stepT);
+          float sint = 1.0 - stepT;
           cloudInscatter += cloudTrans * stepScatter * sint;
           cloudTrans *= stepT;
         }
@@ -509,59 +576,67 @@ void main() {
     }
   }
 
-  // Sub-cloud crepuscular shafts & distant rain curtains
   vec3 subCloudAdd = vec3(0.0);
   float subCloudTrans = 1.0;
 
-  // Distant rain curtains (virga/rain shafts beneath storm base)
-  if (uRain > 0.01 && d.y < 0.26) {
+  if (stormW > 0.2 && d.y < 0.16) {
+    float band = smoothstep(0.12, 0.012, d.y) * smoothstep(-0.02, 0.005, d.y) * stormW;
+    vec3 pewterGap = mix(uSkyHor, uSkyZen, 0.18) * vec3(0.92, 1.02, 1.10) * 1.55;
+    float gapMix = band * 0.62 * (1.0 - 0.32 * uRain);
+    cloudInscatter = mix(cloudInscatter, pewterGap * (1.0 - cloudTrans), gapMix);
+  }
+
+  float rainActive = max(uRain, uBurst * 0.55);
+  if (rainActive > 0.01 && d.y < 0.22) {
     vec2 midShift = 0.5 * (uCloudShiftNow + uCloudShiftLater);
-    float rainDist = 4.2 / max(0.08, length(d.xz));
-    vec2 rPos = d.xz * rainDist - midShift * 0.45;
-    // Vertically sheared curtain streaks
-    vec2 rUv = vec2(rPos.x * 0.055 + d.y * 0.18, rPos.y * 0.055);
-    float curtain = texture(tWeather2D, rUv).a;
-    float fineStreak = texture(tCirrus2D, vec2(rUv.x * 3.2, d.y * 0.8)).g;
-    float vertMask = smoothstep(0.25, 0.04, d.y) * smoothstep(-0.02, 0.01, d.y);
-    float rDens = uRain * vertMask * smoothstep(0.32, 0.85, curtain) * (0.65 + 0.35 * fineStreak) * 0.58;
+    float rainDist = 4.6 / max(0.09, length(d.xz));
+    vec2 rPos = d.xz * rainDist - midShift * 0.38;
+    vec2 rUv = vec2(rPos.x * 0.058 - d.y * 0.30, rPos.y * 0.058);
+    float macroShaft = texture(tWeather2D, rUv).a;
+    float fineShaft = texture(tCirrus2D, vec2(rUv.x * 4.8, d.y * 0.55)).r;
+    float vertMask = smoothstep(0.20, 0.035, d.y) * smoothstep(-0.015, 0.006, d.y);
+    float rDens = rainActive * vertMask * smoothstep(0.36, 0.86, macroShaft) * (0.55 + 0.45 * fineShaft) * 0.48;
     float rTrans = exp(-rDens);
-    vec3 rainCol = mix(uSkyHor, uSkyZen, 0.35) * 0.82 + vec3(0.55, 0.72, 1.15) * uFlash * 0.25;
+    vec3 rainCol = mix(uSkyHor, uSkyZen, 0.35) * vec3(0.80, 0.92, 1.06) * 0.62 + vec3(0.50, 0.72, 1.18) * uFlash * 0.18;
     subCloudAdd += rainCol * (1.0 - rTrans);
     subCloudTrans *= rTrans;
   }
 
-  // Crepuscular god rays when sun shines through broken clouds or burst gap
-  float rayStrength = clamp((uBurst * 1.15 + uCover * (1.0 - 0.65 * uOvercast) * 0.55) * smoothstep(0.0, 0.06, uSun.y), 0.0, 1.2) * (1.0 - 0.7 * uFog);
-  if (rayStrength > 0.02 && uSun.y > 0.01) {
+  float rayStrength = clamp(uCover * (1.0 - 0.85 * stormW) * 0.28 * smoothstep(0.01, 0.06, uSun.y) * smoothstep(0.32, 0.08, uSun.y), 0.0, 0.4) * (1.0 - 0.8 * uFog);
+  if (rayStrength > 0.015 && uSun.y > 0.01 && uShaftSteps > 0) {
+    uvec2 spix = uvec2(gl_FragCoord.xy);
+    float sIgn = fract(52.9829189 * fract(0.06711056 * float(spix.x) + 0.00583715 * float(spix.y)));
     float cosSun = dot(rd, uSun);
-    float shaftPhase = phaseHG(cosSun, 0.76);
-    if (shaftPhase > 0.08) {
+    float shaftCone = smoothstep(0.84, 0.995, cosSun);
+    if (shaftCone > 0.005) {
       float litSum = 0.0;
-      const int SHAFT_STEPS = 6;
-      float maxShaftKm = min(7.0, hBase / max(0.06, rd.y));
+      int sSteps = uShaftSteps;
+      float maxShaftKm = min(6.5, (hBase * 1.05) / max(0.06, rd.y));
       vec2 midShift = 0.5 * (uCloudShiftNow + uCloudShiftLater);
       float midEv = 0.5 * (uCloudEvolveNow + uCloudEvolveLater);
-      for (int rs = 0; rs < SHAFT_STEPS; rs++) {
-        float st = maxShaftKm * ((float(rs) + 0.5) / float(SHAFT_STEPS));
+      for (int rs = 0; rs < 12; rs++) {
+        if (rs >= sSteps) break;
+        float st = maxShaftKm * ((float(rs) + sIgn) / float(sSteps));
         vec3 sp = rd * st;
-        float tToCloud = (hBase + 0.35 * hThickness - sp.y) / max(0.04, uSun.y);
+        float tToCloud = max(0.0, (hBase + 0.25 * hThickness - sp.y) / max(0.04, uSun.y));
         vec3 cHit = sp + uSun * tToCloud;
-        float cShadowDens = evalCloudDensityAt(cHit, hBase, hThickness, midShift, midEv, normalize(cHit), false);
+        float bk;
+        float cShadowDens = evalCloudDensityAt(cHit, hBase, hThickness, midShift, midEv, normalize(cHit), false, bk);
         litSum += exp(-cShadowDens * 0.85);
       }
-      float shaftLit = litSum / float(SHAFT_STEPS);
-      vec3 sunLow = SUN_IRRAD * sampleTransmittance(tTrans, R_OBS + 0.3, uSun.y);
-      subCloudAdd += sunLow * shaftPhase * shaftLit * rayStrength * 0.075;
+      float shaftLit = litSum / float(sSteps);
+      vec3 sunLow = SUN_IRRAD * sampleTransmittance(tTrans, R_OBS + 0.25, max(0.02, uSun.y));
+      subCloudAdd += sunLow * shaftCone * shaftLit * rayStrength * 0.028;
     }
   }
 
-  // Smooth horizon softening so far clouds blend cleanly into distant air
-  float horAir = smoothstep(0.004, 0.065, d.y);
-  cloudInscatter = mix(clearSky * (1.0 - cloudTrans), cloudInscatter, horAir);
-  cloudTrans = mix(1.0, cloudTrans, smoothstep(-0.002, 0.028, d.y));
+  float horAir = smoothstep(0.002, 0.042, d.y);
+  vec3 distHorizon = mix(clearSky, mix(uSkyHor, uSkyZen, 0.18) * vec3(0.90, 1.0, 1.08) * 1.25, stormW);
+  cloudInscatter = mix(distHorizon * (1.0 - cloudTrans), cloudInscatter, horAir);
+  cloudTrans = mix(1.0, cloudTrans, smoothstep(-0.002, 0.020, d.y));
 
-  // Composite: high cirrus behind main cloud deck, then sub-cloud rain/shafts in front
-  vec3 bgAfterCirrus = clearSky * cirrusTrans + cirrusLum;
+  vec3 skyBehind = mix(clearSky, mix(uSkyZen, uSkyHor, 0.42) * vec3(0.72, 0.88, 1.12) * 0.72, stormW * (1.0 - 0.80 * uBurst));
+  vec3 bgAfterCirrus = skyBehind * cirrusTrans + cirrusLum;
   vec3 skyWithClouds = bgAfterCirrus * cloudTrans + cloudInscatter;
   vec3 finalRgb = skyWithClouds * subCloudTrans + subCloudAdd;
   float totalTrans = cirrusTrans * cloudTrans * subCloudTrans;
@@ -621,6 +696,7 @@ uniform float uNightVis;
 uniform float uMoonVis;
 uniform float uSunVis;
 uniform float uSunThrough;
+uniform float uOvercast;
 uniform float uBurst;
 uniform float uFog;
 
@@ -630,7 +706,7 @@ uniform vec3 uStarColors[${BRIGHT_STAR_COUNT}];
 in vec2 vUv;
 layout(location = 0) out vec4 outColor;
 
-const float SUN_RADIUS = 0.0052;
+const float SUN_RADIUS = 0.0062;
 const float MOON_RADIUS = 0.0064;
 
 vec3 rotateAroundAxis(vec3 v, vec3 axis, float angle) {
@@ -659,28 +735,34 @@ vec3 hash33(uvec3 q) {
   return vec3(r & uvec3(0xffffffU)) / float(0xffffffU);
 }
 
-vec3 evalProceduralFaintStars(vec3 celDir, float rStar, float blurRad, float mwBoost) {
-  float rRef = 0.00105;
-  float rEff = sqrt(rRef * rRef + blurRad * blurRad);
-  float areaDilute = (rRef * rRef) / (rEff * rEff);
-  // When blurred heavily, faint stars merge smoothly into Milky Way glow
-  if (areaDilute < 0.015) return vec3(0.0);
+vec3 evalProceduralFaintStars(vec3 celDir, float blurRad, float mwBoost) {
+  float sharpFade = 1.0 - smoothstep(0.0015, 0.0065, blurRad);
+  if (sharpFade <= 0.005) return vec3(0.0);
 
-  vec3 scaled = celDir * 88.0;
-  ivec3 cell = ivec3(floor(scaled));
-  vec3 h = hash33(uvec3(cell + ivec3(1024)));
-  float prob = mix(0.24, 0.58, mwBoost);
+  float phi = atan(celDir.x, celDir.z) * INV_TAU + 0.5;
+  float decUv = clamp(celDir.y * 0.5 + 0.5, 0.001, 0.999);
+  vec2 gridSize = vec2(360.0, 180.0);
+  vec2 gPos = vec2(phi, decUv) * gridSize;
+  ivec2 cell = ivec2(floor(gPos));
+  vec2 f = fract(gPos);
+
+  vec3 h = hash33(uvec3(uint(cell.x + 512), uint(cell.y + 512), 17U));
+  float prob = mix(0.26, 0.72, mwBoost);
   if (h.x > prob) return vec3(0.0);
 
-  vec3 starCenter = normalize(vec3(cell) + 0.18 + 0.64 * hash33(uvec3(cell + ivec3(4096))));
-  float ang = acos(clamp(dot(celDir, starCenter), -1.0, 1.0));
-  float rDraw = max(rEff, 1.35 * uPixelAngle);
+  vec3 h2 = hash33(uvec3(uint(cell.x + 2048), uint(cell.y + 2048), 53U));
+  vec2 center = vec2(0.24 + 0.52 * h2.x, 0.24 + 0.52 * h2.y);
+  float cosLat = sqrt(max(0.06, 1.0 - celDir.y * celDir.y));
+  vec2 diffRad = vec2((f.x - center.x) * (TAU / gridSize.x) * cosLat, (f.y - center.y) * (2.0 / gridSize.y));
+  float ang = length(diffRad);
+
+  float rDraw = clamp(max(0.0011, 1.25 * uPixelAngle + blurRad), 0.0011, 0.0028);
   if (ang > rDraw * 2.4) return vec3(0.0);
 
-  float magCurve = pow(h.y, 4.2);
-  float flux = (0.04 + 0.95 * magCurve) * (rRef * rRef) / (rDraw * rDraw);
-  float prof = exp(-2.2 * (ang * ang) / (rDraw * rDraw));
-  vec3 tint = mix(vec3(1.22, 0.92, 0.68), vec3(0.78, 0.92, 1.25), h.z);
+  float magCurve = pow(h.y, 3.2);
+  float flux = (0.004 + 0.036 * magCurve) * sharpFade;
+  float prof = exp(-2.6 * (ang * ang) / (rDraw * rDraw)) * smoothstep(rDraw * 2.4, rDraw * 1.1, ang);
+  vec3 tint = mix(vec3(1.18, 0.94, 0.74), vec3(0.76, 0.92, 1.26), h.z);
   return tint * flux * prof;
 }
 
@@ -688,37 +770,34 @@ vec3 evalMoonSurface(vec3 d, vec3 moonDir, float blurRad) {
   float cosM = dot(d, moonDir);
   float ang = acos(clamp(cosM, -1.0, 1.0));
 
-  // Soft atmospheric lunar aureole around the moon
-  float aureole = 0.032 * exp(-ang * 24.0) + 0.0085 * exp(-ang * 6.5);
-  vec3 glow = vec3(0.16, 0.21, 0.30) * aureole;
+  // Cool silvery-blue atmospheric lunar aureole
+  float aureole = 0.048 * exp(-ang * 20.0) + 0.014 * exp(-ang * 5.2);
+  vec3 glow = vec3(0.15, 0.22, 0.34) * aureole;
 
   float rEff = sqrt(MOON_RADIUS * MOON_RADIUS + blurRad * blurRad);
   if (ang > rEff * 1.35 + 2.0 * uPixelAngle) return glow;
 
-  // Orthonormal frame on lunar disc for Mare surface pattern
   vec3 mRight = normalize(cross(vec3(0.0, 1.0, 0.0), moonDir));
   vec3 mUp = cross(moonDir, mRight);
   vec2 diskPt = vec2(dot(d, mRight), dot(d, mUp)) / max(rEff, 1e-5);
   float rad2 = dot(diskPt, diskPt);
 
-  // Subtle lunar maria shading (softened naturally as blurRad grows)
-  float detailSharp = MOON_RADIUS / rEff;
+  float detailSharp = mix(0.35, 1.0, MOON_RADIUS / rEff);
   float m1 = exp(-dot(diskPt - vec2(-0.24, 0.22), diskPt - vec2(-0.24, 0.22)) * 5.5);
   float m2 = exp(-dot(diskPt - vec2(0.18, 0.12), diskPt - vec2(0.18, 0.12)) * 7.0);
   float m3 = exp(-dot(diskPt - vec2(0.32, -0.08), diskPt - vec2(0.32, -0.08)) * 8.5);
   float m4 = exp(-dot(diskPt - vec2(-0.12, -0.26), diskPt - vec2(-0.12, -0.26)) * 6.0);
-  float maria = clamp(0.42 * m1 + 0.35 * m2 + 0.28 * m3 + 0.25 * m4, 0.0, 0.55) * detailSharp;
+  float maria = clamp(0.45 * m1 + 0.38 * m2 + 0.30 * m3 + 0.28 * m4, 0.0, 0.58) * detailSharp;
 
-  // Gibbous phase illumination + subtle limb softening
   float muDisk = sqrt(max(0.0, 1.0 - min(1.0, rad2)));
-  float limb = mix(1.0, 0.72 + 0.28 * pow(muDisk, 0.45), detailSharp);
-  float phaseShade = mix(1.0, smoothstep(-0.65, 0.35, diskPt.x * 0.85 + muDisk * 0.55), 0.32 * detailSharp);
+  float limb = mix(1.0, 0.70 + 0.30 * pow(muDisk, 0.45), detailSharp);
+  float phaseShade = mix(1.0, smoothstep(-0.65, 0.35, diskPt.x * 0.85 + muDisk * 0.55), 0.30 * detailSharp);
 
-  float edgeSoft = max(uPixelAngle * 1.2, blurRad * 0.28 + MOON_RADIUS * 0.06);
+  float edgeSoft = max(uPixelAngle * 1.2, blurRad * 0.22 + MOON_RADIUS * 0.06);
   float discMask = 1.0 - smoothstep(rEff - edgeSoft, rEff + edgeSoft, ang);
 
   float energyScale = (MOON_RADIUS * MOON_RADIUS) / (rEff * rEff);
-  vec3 moonAlbedo = mix(vec3(2.85, 2.78, 2.58), vec3(1.65, 1.66, 1.62), maria);
+  vec3 moonAlbedo = mix(vec3(2.65, 2.68, 2.62), vec3(1.48, 1.54, 1.58), maria);
   vec3 disc = moonAlbedo * limb * phaseShade * discMask * energyScale;
   return glow + disc;
 }
@@ -736,7 +815,6 @@ void main() {
   float coc = min(uCocScale / uFocusM, 2048.0);
   float blurRad = 0.5 * coc * uPixelAngle;
 
-  // Project sample ray onto prepared sky-cloud frustum
   float denom = dot(d, uPrepForward);
   vec3 color;
   float cloudT = 1.0;
@@ -758,34 +836,34 @@ void main() {
     color = texture(tSkyView, dirToSkyViewUv(d)).rgb;
   }
 
-  float horClip = smoothstep(-0.005, 0.006, d.y);
-  vec3 viewAtmTrans = d.y > -0.05 ? sampleTransmittance(tTrans, R_OBS, max(d.y, 0.005)) : vec3(0.0);
+  float horClip = smoothstep(-0.005, 0.008, d.y);
+  vec3 viewAtmTrans = d.y > -0.05 ? sampleTransmittance(tTrans, R_OBS, max(d.y, 0.025)) : vec3(0.0);
 
-  // Stars, Milky Way, and Moon
-  if ((uNightVis > 0.001 || uMoonVis > 0.001) && d.y > -0.01) {
-    // Rotate celestial dome around 45N celestial pole: (0, sin45, cos45)
+  if (d.y > -0.01 && cloudT > 0.002) {
     const vec3 POLE = vec3(0.0, 0.70710678, 0.70710678);
-    // Negative rotation moves stars East (+x) to West (-x) across the southern sky as starTurn advances
     vec3 celDir = rotateAroundAxis(d, POLE, -uStarTurn);
 
+    float skyLum = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    float skyVeil = exp(-skyLum * 68.0);
+
     vec3 nightAdd = vec3(0.0);
-    if (uNightVis > 0.001) {
+    if (skyVeil > 0.003) {
       float mwU = atan(celDir.x, celDir.z) * INV_TAU + 0.5;
       float mwV = asin(clamp(celDir.y, -1.0, 1.0)) / PI + 0.5;
       vec3 mwTex = texture(tMilkyWay, vec2(mwU, mwV)).rgb;
 
-      vec3 mwCol = mix(vec3(0.0024, 0.0034, 0.0056), vec3(0.0058, 0.0050, 0.0046), mwTex.g) * mwTex.r;
-      nightAdd += mwCol * uNightVis;
+      float mwVeil = exp(-skyLum * 220.0);
+      vec3 mwCol = mix(vec3(0.0038, 0.0056, 0.0098), vec3(0.0086, 0.0076, 0.0074), mwTex.g) * mwTex.r;
+      nightAdd += mwCol * mwVeil;
 
-      // Procedural faint star field
-      nightAdd += evalProceduralFaintStars(celDir, uPixelAngle, blurRad, mwTex.r) * uNightVis;
+      nightAdd += evalProceduralFaintStars(celDir, blurRad, mwTex.r) * mwVeil;
 
-      // 64 real catalog bright stars with exact circular optical bokeh / Airy profile
-      float rRef = 0.00115;
-      float rStar = max(sqrt(rRef * rRef + blurRad * blurRad), 1.35 * uPixelAngle);
+      float rRef = 0.0056;
+      float rStar = max(sqrt(0.0014 * 0.0014 + blurRad * blurRad), 1.35 * uPixelAngle);
       float cosCutoff = cos(min(0.35, rStar * 1.45 + 2.0 * uPixelAngle));
-      float areaScale = (rRef * rRef) / (rStar * rStar);
+      float areaScale = min((rRef * rRef) / (rStar * rStar), 0.16);
       float bokehBlend = clamp(blurRad / (blurRad + 0.0025), 0.0, 1.0);
+      float moonKeepout = smoothstep(0.018, 0.055, acos(clamp(dot(d, uMoon), -1.0, 1.0)));
 
       for (int i = 0; i < ${BRIGHT_STAR_COUNT}; i++) {
         vec4 sp = uStarPosFlux[i];
@@ -793,12 +871,11 @@ void main() {
         if (cs > cosCutoff) {
           float ang = acos(clamp(cs, -1.0, 1.0));
           float uNorm = ang / rStar;
-          // Sharp view: crisp Gaussian-Airy jewel; blurred macro view: soft-rimmed optical bokeh disc
           float airy = exp(-2.4 * uNorm * uNorm);
-          float discEdge = max(0.08, (1.4 * uPixelAngle) / rStar);
-          float bokehDisc = (1.0 - smoothstep(1.0 - discEdge, 1.0 + discEdge, uNorm)) * (0.86 + 0.24 * smoothstep(0.55, 0.95, uNorm));
+          float discEdge = max(0.12, (1.6 * uPixelAngle) / rStar);
+          float bokehDisc = (1.0 - smoothstep(0.86 - discEdge * 0.5, 1.0 + discEdge, uNorm)) * (1.08 - 0.26 * uNorm * uNorm);
           float prof = mix(airy, bokehDisc, bokehBlend);
-          nightAdd += uStarColors[i] * (sp.w * areaScale * prof) * uNightVis;
+          nightAdd += uStarColors[i] * (sp.w * areaScale * prof * mix(1.0, moonKeepout, uMoonVis)) * skyVeil;
         }
       }
     }
@@ -807,58 +884,54 @@ void main() {
       nightAdd += evalMoonSurface(d, uMoon, blurRad) * uMoonVis;
     }
 
-    color += nightAdd * viewAtmTrans * cloudT * horClip;
+    vec3 nightTrans = mix(vec3(0.58, 0.66, 0.78), vec3(1.0), viewAtmTrans);
+    color += nightAdd * nightTrans * cloudT * horClip;
   }
 
-  // Limb-darkened, horizon-refraction-flattened Sun disc + misty solar aureole
   if (uSunVis > 0.001 && d.y > -0.015) {
-    // Horizon atmospheric refraction compresses vertical apparent solar disc near horizon
-    float lowEl = clamp(uSun.y, 0.0, 0.25);
-    float vertFlatten = mix(1.24, 1.0, smoothstep(0.0, 0.14, lowEl));
+    float stormBlock = 1.0 - 0.99 * smoothstep(0.58, 0.92, uOvercast) * (1.0 - uBurst);
+    float effCloudT = smoothstep(0.02, 0.62, cloudT) * stormBlock;
 
-    vec3 sRight = normalize(cross(vec3(0.0, 1.0, 0.0), uSun));
-    vec3 sUp = cross(uSun, sRight);
     float cosS = dot(d, uSun);
-    if (cosS > 0.85) {
+    if (cosS > 0.50 && (effCloudT > 0.001 || uFog > 0.05)) {
+      float lowEl = clamp(uSun.y, 0.0, 0.25);
+      float vertFlatten = mix(1.24, 1.0, smoothstep(0.0, 0.14, lowEl));
+
+      vec3 sRight = normalize(cross(vec3(0.0, 1.0, 0.0), uSun));
+      vec3 sUp = cross(uSun, sRight);
       vec2 off = vec2(dot(d, sRight), dot(d, sUp) * vertFlatten);
       float ang = length(off);
       float rEff = sqrt(SUN_RADIUS * SUN_RADIUS + blurRad * blurRad);
 
-      float edgeW = max(uPixelAngle * 1.15, rEff * 0.08);
+      float refractedMu = max(0.004, uSun.y + 0.006 * exp(-max(0.0, uSun.y) * 22.0));
+      vec3 sunAtmT = sampleTransmittance(tTrans, R_OBS, refractedMu);
+      float mistAtten = exp(-1.62 * uFog);
+
+      float edgeW = max(uPixelAngle * 1.15, rEff * 0.09);
       float discMask = 1.0 - smoothstep(rEff - edgeW, rEff + edgeW, ang);
-      if (discMask > 0.0005) {
+      if (discMask > 0.0005 && effCloudT > 0.001) {
         float uLimb = clamp(ang / rEff, 0.0, 1.0);
         float muLimb = sqrt(max(0.0, 1.0 - uLimb * uLimb));
-        // Wavelength-dependent solar limb darkening: redder toward the solar limb
         vec3 limbDark = vec3(
           0.42 + 0.58 * pow(muLimb, 0.42),
           0.30 + 0.70 * pow(muLimb, 0.58),
           0.18 + 0.82 * pow(muLimb, 0.78)
         );
-        float detailFade = SUN_RADIUS / rEff;
-        limbDark = mix(vec3(0.76), limbDark, detailFade);
-
-        float refractedMu = max(0.004, uSun.y + 0.006 * exp(-max(0.0, uSun.y) * 22.0));
-        vec3 sunAtmT = sampleTransmittance(tTrans, R_OBS, refractedMu);
-        float mistAtten = exp(-2.2 * uFog);
-        float effCloudT = mix(cloudT, max(cloudT, uSunThrough * 0.82), 0.45 + 0.55 * uBurst);
+        limbDark = mix(vec3(0.76), limbDark, SUN_RADIUS / rEff);
         float energyConserve = (SUN_RADIUS * SUN_RADIUS) / (rEff * rEff);
-
-        vec3 sunRad = SUN_IRRAD * sunAtmT * 86.0 * limbDark * discMask * energyConserve * effCloudT * mistAtten * uSunVis * horClip;
+        vec3 sunRad = SUN_IRRAD * sunAtmT * 82.0 * limbDark * discMask * energyConserve * effCloudT * mistAtten * uSunVis * horClip;
         color += sunRad;
       }
 
-      // Soft warm solar halo in thick morning frost mist
-      if (uFog > 0.02) {
-        float realAng = acos(clamp(cosS, -1.0, 1.0));
-        float mistHalo = uFog * (0.55 * exp(-realAng * 9.5) + 0.18 * exp(-realAng * 3.2));
-        vec3 sunHaloTint = SUN_IRRAD * sampleTransmittance(tTrans, R_OBS, max(0.015, uSun.y));
-        color += sunHaloTint * mistHalo * mix(0.35, 1.0, cloudT) * uSunVis * horClip;
-      }
+      float realAng = acos(clamp(cosS, -1.0, 1.0));
+      float coneFade = smoothstep(0.52, 0.88, cosS);
+      float clearCorona = 0.24 * exp(-realAng * 48.0) * (1.0 - 0.65 * uFog) * coneFade;
+      float mistHalo = uFog * (0.48 * exp(-realAng * 9.5) + 0.16 * exp(-realAng * 3.4)) * coneFade;
+      vec3 coronaTint = SUN_IRRAD * sampleTransmittance(tTrans, R_OBS, max(0.015, uSun.y));
+      color += coronaTint * (clearCorona * effCloudT + mistHalo * mix(0.35, 1.0, effCloudT)) * uSunVis * horClip;
     }
   }
 
-  // Shared ground fog at end so land and sky meet cleanly at the horizon
   float aFog = uFogDensity * exp(-uFogFalloff * max(uCamPos.y, 0.0));
   float fogDepth = d.y > 1e-3 ? aFog / (uFogFalloff * d.y) : 1e6;
   float fog = 1.0 - exp(-fogDepth);
