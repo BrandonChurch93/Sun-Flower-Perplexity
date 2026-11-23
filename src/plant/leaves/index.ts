@@ -408,8 +408,8 @@ export function create(options: PartOptions): PlantPart {
     uDetailSize: { value: new THREE.Vector2(1, 1) },
     uVeinPad: { value: VEIN_PAD },
     // The neighbor's blades stand between the lens and the sun, where the approved frames keep them a deep green.
-    uGlow: { value: options.variant === 0 ? 1 : 0.1 },
-    uWarm: { value: options.variant === 0 ? 0 : 0.7 },
+    uGlow: { value: options.places ? 0.1 : 1 },
+    uWarm: { value: options.places ? 0.7 : 0 },
     uFresh: { value: 0 },
   }
   const surface = makePartSurface(options, { name: 'leaves', vertex: bladeVertex, fragment: bladeFragment, side: THREE.DoubleSide, uniforms, depthFragment: options.places ? undefined : bladeDepth })
@@ -1122,7 +1122,7 @@ export function create(options: PartOptions): PlantPart {
     fill(slot, pose) {
       if (slot === 1 && !positionB) return
       // The low sun of the dawn shines through the first pair. From the rain to the bloom the approved blades stay a deep green against the light.
-      if (slot === 0) uniforms.uGlow.value = (options.variant === 0 ? 1 : 0.1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
+      if (slot === 0) uniforms.uGlow.value = (options.places ? 0.1 : 1) * lerp(lerp(lerp(lerp(DAWN_GLOW, RAIN_GLOW, smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)), NIGHT_GLOW, smoothstep(SET_S - 0.5, SET_S + 0.5, pose.time)), 0.2, smoothstep(BUDDED_S - 0.5, BUDDED_S + 0.5, pose.time)), 1, smoothstep(STOUT_S, BLOOM, pose.time))
       if (slot === 0) uniforms.uFresh.value = 1 - smoothstep(PAIR_OPENS_S - 0.5, PAIR_OPENS_S + 0.5, pose.time)
       for (const leaf of leaves) fillLeaf(leaf, slot, pose)
       fillHairs(slot, pose)

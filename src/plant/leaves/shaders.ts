@@ -163,9 +163,9 @@ void main() {
   float taper = mix(0.2, 2.4, smoothstep(0.35, 0.95, vUv.y + 0.25 * abs(vUv.x) + 0.12 * (mark.g - 0.5)));
   float sheer = smoothstep(0.5, 0.92, mark.g);
   // A young blade lets the light through evenly: the thin patches come with age.
-  float thin = (0.3 + mix(0.3, smoothstep(0.35, 0.85, mark.g), vRipe) + 1.3 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
+  float thin = (0.36 + mix(0.3, 0.2 + 0.6 * smoothstep(0.35, 0.85, mark.g), vRipe) + 0.7 * sheer * (0.15 + 0.85 * vRipe)) * taper * uGlow;
   // A leaf holds back red: what comes through is a fresh green, yellower where the blade is thinnest and against the low sun.
-  vec3 through = mix(mix(vec3(0.255, 0.27, 0.105), vec3(0.25, 0.27, 0.09), uFresh), vec3(0.3, 0.265, 0.1), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.9 - 1.6 * thick);
+  vec3 through = mix(mix(vec3(0.15, 0.185, 0.062), vec3(0.16, 0.2, 0.06), uFresh), vec3(0.2, 0.185, 0.066), max(0.8 * sheer, uWarm)) * thin * (0.5 + 0.5 * pow(lum, 1.7)) * (1.0 - 0.75 * net) * (1.0 - 0.7 * cells) * (1.6 - 1.1 * thick);
   // From far off a blade glows as the field's blades do: its patches are too small to tell.
   through = mix(through, vec3(0.045, 0.071, 0.016) * mix(0.3, 1.2, smoothstep(0.2, 0.8, vUv.y)) * (0.8 + 0.4 * vLeaf.z), smoothstep(1.6, 4.0, vDepth));
   through *= 1.0 - 0.88 * vein.r * (0.5 + 0.5 * vRipe) * (1.0 - 0.7 * uFresh);
