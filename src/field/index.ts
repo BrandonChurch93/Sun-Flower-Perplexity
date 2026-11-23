@@ -135,7 +135,7 @@ export class Field {
     fieldUniforms.uHang.value = hangAt(timeOpen)
     fieldUniforms.uWide.value = wideAt(timeOpen)
     fieldUniforms.uLate.value = lateAt(timeOpen)
-    fieldUniforms.uMoon.value = now.lightKind === 'sun' ? 0 : now.night
+    fieldUniforms.uMoon.value = now.night * THREE.MathUtils.smoothstep(-now.sunElevationDeg, 5, 9)
     fieldUniforms.uDark.value = 0
     fieldUniforms.uEarly.value = earlyAt(timeOpen)
     fieldUniforms.uCanopy.value = canopy

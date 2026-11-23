@@ -6,6 +6,7 @@ import { makeSurface, shared, type Surface } from '../core/shading.ts'
 import { bodyRadius, headOpen, heightAt, leafCount, leafLength, rayLength, usePlant, type PlantInputs } from '../plant/growth.ts'
 import { headAt } from '../plant/model.ts'
 import { Plant } from '../plant/index.ts'
+import { airUniforms } from '../place/air.ts'
 import { fieldUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
@@ -17,6 +18,10 @@ const TILE_W = 64
 const PICTURE_UNDER = 0.94
 // How much of its light a far leaf keeps when nothing but the sky lights it.
 const UNLIT = 0.3
+// How much of the sky behind it the far crop takes by 220 m, how much at its very end, and from where that comes in.
+const FAR_AIR = 0.2
+const END_AIR = 0.5
+const END_AIR_FROM_M = 170
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -36,13 +41,25 @@ const EARLY_CODE = earlyCode({ turn: 0, tall: 1, head: 1, nod: 0, low: 0, young:
 // The carpet comes in under the last of the real plants, so there is crop under every picture.
 const CARPET_FROM_M = fieldFarM - 8
 
-// Far off the crop goes by degrees into the air that lies on the land past it, so it ends in no line.
+// Far off the crop goes by degrees into the sky behind the land, through the same air as the land past it, and at its far end all the way: it ends in no line.
 const farAirGlsl = /* glsl */ `
+uniform float uAir;
+uniform float uAirToSun;
+uniform float uAirRain;
+uniform float uMist;
+uniform float uMistTopM;
+uniform vec3 uTrueSun;
 vec3 farAir(vec3 color, vec3 world) {
   vec3 v = world - uCamPos;
   float d = length(v);
-  float lit = smoothstep(0.0, 0.6, dot(uSunColor, vec3(0.3, 0.6, 0.1)));
-  return mix(color, uFogColor + uFogSunTint * (lit * pow(saturate(dot(v / max(d, 1e-5), uSunDir)), 6.0)), mix(0.22, 0.6, lit) * smoothstep(40.0, 220.0, d));
+  float toSun = pow(saturate(0.5 + 0.5 * dot(normalize(v.xz + vec2(1e-6)), normalize(uTrueSun.xz + vec2(1e-6)))), 6.0) * uAirToSun;
+  vec3 behind = mix(mix(uAirHorizon, uSkyHorizonSun, toSun), uFogColor + uFogSunTint * toSun, uAirRain);
+  float k = v.y / uMistTopM;
+  float mist = uMist * exp(-max(uCamPos.y, 0.0) / uMistTopM) * d * (abs(k) > 1e-3 ? (1.0 - exp(-k)) / k : 1.0);
+  float land = 1.0 - exp(-d * uAir - mist);
+  float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
+  float last = ${END_AIR.toFixed(2)} * smoothstep(${END_AIR_FROM_M.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, length(world.xz));
+  return mix(color, behind, max(land, max(own, last)));
 }
 `
 
@@ -358,6 +375,12 @@ export class FarField {
     uLag: { value: 0 },
     uThrough: { value: 1 },
     uSquat: fieldUniforms.uSquat,
+    uAir: airUniforms.uAir,
+    uAirToSun: airUniforms.uAirToSun,
+    uAirRain: airUniforms.uAirRain,
+    uMist: airUniforms.uMist,
+    uMistTopM: airUniforms.uMistTopM,
+    uTrueSun: airUniforms.uTrueSun,
   }
   private readonly carpetHeight = { value: 0 }
   private readonly underHeights = UNDER_LEVELS.map(() => ({ value: 0 }))
@@ -437,7 +460,7 @@ export class FarField {
     this.uniforms.uStand.value = stand
     this.uniforms.uLag.value = lagAt(timeOpen)
     // Moonlight does not glow green through a leaf; the sun does.
-    this.uniforms.uThrough.value = now.lightKind === 'sun' ? 1 - now.night : 0
+    this.uniforms.uThrough.value = (1 - now.night) * THREE.MathUtils.smoothstep(now.sunElevationDeg, -5, 0)
     this.uniforms.uOpen.value = headOpen(kindTime(timeOpen, 1, 'pictures'))
     const head = bodyRadius(timeOpen) + rayLength(0, timeOpen) + 0.14
     this.uniforms.uTile.value.set(2 * (0.03 + Math.max(maxLeaf(timeOpen) * 1.3, head)), Math.max(0.01, heightAt(timeOpen) * 1.04 + 0.005))
