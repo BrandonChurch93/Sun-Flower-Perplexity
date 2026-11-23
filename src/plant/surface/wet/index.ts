@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
-import { barTime, rainAtBar } from '../../../v2/clock.ts'
+import { barTime, hitTime, rainAtBar } from '../../../v2/clock.ts'
 import { shared, type Surface } from '../../../core/shading.ts'
 import { makePartSurface, partMesh, stateUniforms, type PartOptions } from '../../part.ts'
 import { wetUniforms } from './film.ts'
@@ -11,7 +11,7 @@ export const real = true
 export const BEAD_ORDER = 19
 
 // How far the rain has thinned the beads on the side of a part turned from the light: 0 before it rains to 1 in the rain, and back after it.
-const beadUniforms = { uBeadRain: { value: 0 }, ...wetUniforms }
+const beadUniforms = { uBeadRain: { value: 0 }, uBeadDrop: { value: new THREE.Vector4(0, 0, 0, 0) }, ...wetUniforms }
 
 const G = 9.81
 const SIT = 0.4
@@ -24,6 +24,24 @@ const REACH = 0.4
 // The share of a blade's dew that gathers at its margin through a dry night, and the share that hangs from its tip.
 const DEW_MARGIN = 0.4
 const DEW_TIP = 0.035
+
+// The thaw: on the one blade the film looks at closely, beads stand where ice stood. This many of a set's last beads are theirs; the first two are the tip, which carries the one drop and the drop that fell from it.
+export const THAW_BEADS = 180
+const THAW_EDGE = 64
+const THAW_RIB = 28
+const THAW_VEIN = 48
+const THAW_ALONE = 3
+const THAW_RUNS = 4
+const THAW_TAKES = 5
+const THAW_DROP = 6
+const THAW_FELL = 7
+// No bead of the thaw stands before the frost has come.
+const THAW_FROM_S = barTime(17)
+const THAW_FROM_GLSL = THAW_FROM_S.toFixed(4)
+// The film second the drop at the tip lets go.
+const DROP_GOES_GLSL = (hitTime(24, 3) - 1e-4).toFixed(4)
+// Half the width of the drop when it hangs full, in meters.
+const DROP_R_GLSL = '0.002'
 
 function own2(own: number, k: number): number {
   const x = Math.sin(own * k + k * 0.37) * 43758.5453
@@ -59,6 +77,35 @@ vec4 keyed(vec4 a, vec4 b) {
 }
 `
 
+// The thaw as the bead and the light it throws both need it.
+const THAW = /* glsl */ `
+uniform float uPlantFrost;
+// How far the ice at a place has gone to water, by the rule shared with the frost: the front runs from the tip (along 1) back to the stalk (along 0) as the frost goes. Ice only at 0 and under, water only from 0.2.
+float thawFront(float along) {
+  return smoothstep(0.0, 0.15, uPlantDew) * (1.0 - uPlantFrost) - 0.05 - 0.75 * (1.0 - along);
+}
+// A bead of the thaw is no wider than half a millimeter while ice still stands at its place, then swells to its own size.
+float thawRadius(float full, float front) {
+  float small = min(full, 0.00025);
+  float t = saturate((front - 0.2) / 0.25);
+  return small * pow(saturate(front / 0.2), 0.7) + (full - small) * t * t * (3.0 - 2.0 * t);
+}
+// Where a bead of the thaw stands and how wide, in the plant's own space. Two neighbours that grow until they touch run together: one takes the other.
+vec4 thawBead(vec4 form, vec4 gather, float across) {
+  float kind = floor(gather.w + 1e-3);
+  float front = thawFront((fract(gather.w + 1e-3) - 1e-3) / 0.4);
+  float edge = step(0.95, abs(across));
+  float rib = 1.0 - step(0.05, abs(across));
+  float full = mix(mix(mix(0.0003, 0.00085, form.w * form.w), mix(0.00035, 0.0009, form.w * form.w), rib), mix(0.0004, 0.0011, form.w * form.w), edge);
+  if (kind < ${THAW_RUNS}.0) return vec4(form.xyz, thawRadius(full, front));
+  float taker = thawRadius(full, front);
+  float runner = thawRadius(full * (0.55 + 0.35 * hash11(form.w * 61.7 + 5.0)), front);
+  float met = smoothstep(0.9, 1.08, (taker + runner) / max(length(form.xyz - gather.xyz), 1e-6));
+  if (kind > ${THAW_RUNS}.5) return vec4(form.xyz, pow(taker * taker * taker + met * runner * runner * runner, 1.0 / 3.0));
+  return vec4(mix(form.xyz, gather.xyz, met), runner * sqrt(1.0 - met));
+}
+`
+
 const vertex = /* glsl */ `
 in vec2 aCorner;
 in vec4 aSeatA;
@@ -78,7 +125,10 @@ in vec3 aTint;
 uniform vec4 uBeadWetTint;
 uniform float uBeadPaths;
 uniform float uBeadKeys;
+uniform vec4 uBeadDrop;
+uniform vec4 uBeadTip;
 ${KEYED}
+float beadThaw;
 vec4 kForm;
 vec4 kFormUp;
 vec4 kMid;
@@ -87,6 +137,7 @@ vec4 kEndUp;
 vec4 kGather;
 uniform float uPlantWet;
 uniform float uPlantDew;
+${THAW}
 float own2(float own, float k) {
   return hash11(own * 61.7 + k);
 }
@@ -101,7 +152,18 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
   vec3 up = kFormUp.xyz;
   float r = 0.0;
   float hang = 0.0;
-  if (since >= 0.0 && uPlantWet > 0.0) {
+  float scale = kFormUp.w;
+  if (kGather.w > 2.5) {
+    // A bead of the thaw stands in the thaw only, at its true size on any blade that is open.
+    beadThaw = 1.0;
+    scale = min(1.0, kFormUp.w / 0.195);
+    if (real > ${THAW_FROM_GLSL} && since < 0.0 && kGather.w < ${THAW_DROP}.0) {
+      vec4 bead = thawBead(kForm, kGather, across);
+      at = bead.xyz;
+      r = bead.w;
+      hang = 0.7 * step(0.95, abs(across));
+    }
+  } else if (since >= 0.0 && uPlantWet > 0.0) {
     float wet = sqrt(uPlantWet);
     if (own2(own, 53.3) < ${STAY}) {
       // A small bead forms and stays: most are fine, few are not.
@@ -152,9 +214,16 @@ void beadOnPath(float real, out vec4 seat, out vec4 rest) {
       at = mix(kForm.xyz, kGather.xyz, dry);
       hang = (tip ? 1.0 : 0.75) * dry;
       r = mix(r, (tip ? 0.0028 + 0.001 * fine : 0.0016 + 0.0014 * fine) * deep, dry);
+      // The tip that carries the one drop of the thaw carries no other.
+      if (tip && uBeadTip.w > 0.0 && distance(kGather.xyz, uBeadTip.xyz) < uBeadTip.w) r = 0.0;
+    }
+    if (real > ${THAW_FROM_GLSL}) {
+      // The dew of the thaw is the water of the ice: it stands where the ice has gone, and round on the hairs as the beads beside it.
+      beadThaw = 1.0;
+      r = thawRadius(r, thawFront(fract(kGather.w) / 0.4));
     }
   }
-  r *= kFormUp.w;
+  r *= scale;
   // A part can say how large a bead may stand on it: on a stem, never wider than a share of the stem there.
   float most = mix(aLimit.y, aLimit.x, smoothstep(0.3, 0.9, uPlantWet));
   if (aLimit.x > 0.0 && aLimit.y > 0.0) r = min(r, most);
@@ -171,7 +240,68 @@ out vec3 vShape;
 out float vHang;
 out float vDepth;
 out float vWide;
+out float vKind;
+
+// The one drop at the tip of the thawing blade, and the one that fell from it: a ball under the tip, a pear as it fills, a neck in its last tenth, round again as it falls.
+void dropVertex() {
+  bool fell = kGather.w > ${THAW_FELL}.0;
+  // The shutter never stands open across the moment the drop lets go.
+  vec4 dials = uBeadDrop.z < uBeadDrop.x - 0.3 ? uBeadDrop.xyxy : uBeadDrop;
+  vec2 dial = mix(dials.xy, dials.zw, uShutter);
+  float after = uReal + ${SHUTTER_GLSL} * uShutter - ${DROP_GOES_GLSL};
+  float full = ${DROP_R_GLSL} * plantSize() * min(1.0, kFormUp.w / 0.195) * step(${THAW_FROM_GLSL}, uReal);
+  vec3 tip = plantWorld(kForm.xyz);
+  float front = thawFront(1.0);
+  float r;
+  float neck = 0.0;
+  float drawn = 1.0;
+  vec3 middle;
+  // What the full drop was as it let go: its neck drawn out to this many of its radius.
+  const float DRAWN = 2.0;
+  if (fell) {
+    r = after >= 0.0 ? 0.93 * full : 0.0;
+    // It leaves drawn out and rounds up in the first centimeter.
+    drawn = 1.0 + 0.55 * exp(-dial.y / 0.003);
+    r *= pow(drawn, -1.0 / 3.0);
+    middle = tip - vec3(0.0, full * DRAWN + dial.y, 0.0);
+  } else {
+    float want = full * pow(dial.x, 1.0 / 3.0);
+    float small = min(want, 0.00025);
+    float t = saturate((front - 0.2) / 0.12);
+    r = small * pow(saturate(front / 0.2), 0.7) + (want - small) * t * t * (3.0 - 2.0 * t);
+    neck = after < 0.0 ? smoothstep(0.9, 1.0, dial.x) : 0.0;
+    // What is left at the tip springs back and comes to rest.
+    float spring = after < 0.0 ? 0.0 : 0.6 * exp(-after / 0.07) * cos(55.0 * after);
+    middle = tip - vec3(0.0, r * (mix(1.0, DRAWN, neck * neck) + spring), 0.0);
+  }
+  float top = fell ? r : r * mix(0.55, 0.42, neck);
+  float waist = r * mix(0.7, 0.07, neck);
+  vec3 hold = fell ? middle : tip;
+  float high = hold.y + top;
+  float low = middle.y - r * drawn;
+  vec3 center = vec3(middle.x, 0.5 * (high + low), middle.z);
+  vec3 toEye = normalize(uCamPos - center);
+  vec3 side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye) + vec3(1e-6, 0.0, 0.0));
+  vec3 rise = cross(toEye, side);
+  vec3 world = center + side * (aCorner.x * 1.15 * r) + rise * (aCorner.y * 0.6 * (high - low)) + toEye * r;
+  vec4 view = viewMatrix * vec4(world, 1.0);
+  vWorld = world;
+  vMiddle = middle;
+  vBase = hold;
+  vUp = vec3(neck, 1.0, 0.0);
+  vDown = vec3(r * mix(0.5, 0.14, neck), drawn, fell ? 1.0 : 0.0);
+  vTint = aTint;
+  vShape = vec3(r, top, waist);
+  vHang = 1.0;
+  vDepth = -view.z;
+  vWide = 2.0 * r * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(-view.z, 1e-4);
+  vKind = kGather.w;
+  gl_Position = r > 0.0 && low > 0.0 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
+}
+
 void main() {
+  beadThaw = 0.0;
+  kGather = vec4(0.0);
   vec4 seatA = aSeatA;
   vec4 seatB = aSeatB;
   vec4 restA = aRestA;
@@ -187,6 +317,10 @@ void main() {
     kEndUp = keyed(aEndUp, aEndUpB);
     kGather = keyed(aGather, aGatherB);
     share = uShutter;
+    if (kGather.w >= ${THAW_DROP}.0) {
+      dropVertex();
+      return;
+    }
     beadOnPath(uReal, seatA, restA);
     beadOnPath(uReal + ${SHUTTER_GLSL}, seatB, restB);
   }
@@ -204,10 +338,10 @@ void main() {
   float slope = length(fall);
   vec3 down = slope > 1e-3 ? fall / slope : normalize(cross(up, vec3(1.0, 0.0, 0.0)));
   float run = length(plantWorld(seatB.xyz) - plantWorld(seatA.xyz)) / max(r, 1e-6);
-  float longM = 1.0 + (1.0 - hang) * ((0.1 + 0.5 * own) * slope * smoothstep(0.0002, 0.0012, r) + min(0.5 * run, 1.2));
-  // A bead that sits is a low cap, each to its own height; one that hangs is whole and under its hold.
-  float high = mix(mix(0.5, 0.85, hash11(own + 3.1)), 1.0, hang);
-  vec3 middle = base + mix(up * (-0.25 * high * r) + down * (0.35 * (longM - 1.0) * r), vec3(0.0, -0.9 * r, 0.0), hang);
+  float longM = 1.0 + (1.0 - hang) * ((0.1 + 0.5 * own) * (1.0 - 0.7 * beadThaw) * slope * smoothstep(0.0002, 0.0012, r) + min(0.5 * run, 1.2));
+  // A bead that sits is a low cap, each to its own height; one that hangs is whole and under its hold. On the hairs of a thawing blade it stands nearly round.
+  float high = mix(mix(mix(0.5, 0.85, hash11(own + 3.1)), mix(0.8, 0.95, hash11(own + 3.1)), beadThaw), 1.0, hang);
+  vec3 middle = base + mix(up * (mix(-0.25, 0.3, beadThaw) * high * r) + down * (0.35 * (longM - 1.0) * r), vec3(0.0, -0.9 * r, 0.0), hang);
   vec3 toEye = normalize(uCamPos - middle);
   vec3 side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye) + vec3(1e-6, 0.0, 0.0));
   vec3 rise = cross(toEye, side);
@@ -222,6 +356,7 @@ void main() {
   vShape = vec3(r, high * r, longM * r);
   vHang = hang;
   vDepth = -view.z;
+  vKind = max(kGather.w, ${THAW_ALONE}.0 * beadThaw);
   // A bead narrower than three pixels of the finished frame is no bead to the eye: the damp sheen of the skin stands for it.
   vWide = 2.0 * r * projectionMatrix[1][1] * ${MASTER_HALF_HEIGHT_PX} / max(-view.z, 1e-4);
   gl_Position = vWide >= 3.0 ? projectionMatrix * view : vec4(2.0, 2.0, 2.0, 1.0);
@@ -240,6 +375,7 @@ in vec3 vShape;
 in float vHang;
 in float vDepth;
 in float vWide;
+in float vKind;
 
 const float BEAD_LENS = 1.5;
 
@@ -252,26 +388,99 @@ vec3 beadSky(vec3 d) {
   return dome + uAirHorizon * (1.2 * band);
 }
 
+// The world a bead of the thaw stands in, as its lens turns it over: the frozen field under the horizon, dark with the frost on it lit in soft discs, the mist bright over it, the sky above.
+vec3 thawWorld(vec3 d) {
+  float discs = smoothstep(0.42, 0.68, valueNoise(vec2(atan(d.z, d.x) * 7.0, d.y * 19.0) + 3.0));
+  vec3 field = mix(0.16 * uAirHorizon, 0.85 * uAirHorizon, max(discs * smoothstep(-0.7, -0.04, d.y), smoothstep(-0.22, -0.02, d.y)));
+  vec3 sky = mix(0.7 * uAirHorizon, uAirZenith, smoothstep(0.0, 0.35, d.y));
+  float mist = exp(-(d.y - 0.04) * (d.y - 0.04) * 90.0);
+  return mix(field, sky, smoothstep(-0.03, 0.03, d.y)) + uAirHorizon * (0.2 * mist);
+}
+
+// A round cone from the origin, where its radius is r1, to b, where it is r2.
+float roundCone(vec3 p, vec3 b, float r1, float r2) {
+  float l2 = dot(b, b);
+  float rr = r1 - r2;
+  float a2 = l2 - rr * rr;
+  float il2 = 1.0 / l2;
+  float y = dot(p, b);
+  float z = y - l2;
+  vec3 xv = p * l2 - b * y;
+  float x2 = dot(xv, xv);
+  float y2 = y * y * l2;
+  float z2 = z * z * l2;
+  float k = sign(rr) * rr * rr * x2;
+  if (sign(z) * a2 * z2 > k) return sqrt(x2 + z2) * il2 - r2;
+  if (sign(y) * a2 * y2 < k) return sqrt(x2 + y2) * il2 - r1;
+  return (sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
+}
+
+// How far a place is from the skin of the one drop, in its own radius, from its middle: the ball, and the water that holds it to the tip.
+float dropField(vec3 q) {
+  if (vDown.z > 0.5) return length(q * vec3(1.0, 1.0 / vDown.y, 1.0)) - 1.0;
+  float ball = length(q) - 1.0;
+  vec3 top = (vBase - vMiddle) / vShape.x;
+  // As the neck draws out the water at the tip ends in a thread over the top of the ball.
+  float neck = roundCone(q - top, vec3(0.0, 0.92 * vUp.x, 0.0) - top, vShape.y / vShape.x, vShape.z / vShape.x);
+  float k = vDown.x / vShape.x;
+  float m = saturate(0.5 + 0.5 * (neck - ball) / k);
+  return mix(neck, ball, m) - k * m * (1.0 - m);
+}
+
 void main() {
   vec3 ray = normalize(vWorld - uCamPos);
-  vec3 up = normalize(vUp);
-  vec3 down = normalize(vDown - up * dot(vDown, up));
-  vec3 side = cross(up, down);
-  // The bead is a ball pressed low and drawn out down the slope: the ray is met in the space where it is round.
-  vec3 scale = 1.0 / vShape;
-  vec3 from = uCamPos - vMiddle;
-  vec3 o = vec3(dot(from, side), dot(from, up), dot(from, down)) * scale;
-  vec3 d = vec3(dot(ray, side), dot(ray, up), dot(ray, down)) * scale;
-  float a = dot(d, d);
-  float b = dot(o, d);
-  float under = b * b - a * (dot(o, o) - 1.0);
-  if (under < 0.0) discard;
-  float reach = (-b - sqrt(under)) / a;
-  vec3 p = uCamPos + ray * reach;
-  if (dot(p - vBase, up) < -2.0 * vShape.x * vHang) discard;
-  vec3 q = o + d * reach;
-  vec3 g = q * scale;
-  vec3 n = normalize(side * g.x + up * g.y + down * g.z);
+  bool thaw = vKind > 2.5;
+  bool drop = vKind > ${THAW_DROP}.0 - 0.01;
+  vec3 up = vec3(0.0, 1.0, 0.0);
+  vec3 down = vec3(0.0, 0.0, 1.0);
+  vec3 side = vec3(1.0, 0.0, 0.0);
+  vec3 p;
+  vec3 n;
+  vec3 q;
+  vec3 d;
+  if (drop) {
+    // The drop is no ball: the ray is walked to its skin.
+    vec3 o = (uCamPos - vMiddle) / vShape.x;
+    float span = length(vBase - vMiddle) / vShape.x + 2.5;
+    float t = max(0.0, -dot(o, ray) - span);
+    float most = t + 2.0 * span;
+    bool met = false;
+    for (int i = 0; i < 56; i++) {
+      float gap = dropField(o + ray * t);
+      if (gap < 0.002) {
+        met = true;
+        break;
+      }
+      t += gap;
+      if (t > most) break;
+    }
+    if (!met) discard;
+    vec3 at = o + ray * t;
+    vec2 e = vec2(0.01, -0.01);
+    n = normalize(e.xyy * dropField(at + e.xyy) + e.yyx * dropField(at + e.yyx) + e.yxy * dropField(at + e.yxy) + e.xxx * dropField(at + e.xxx));
+    p = vMiddle + at * vShape.x;
+    q = n;
+    d = ray;
+  } else {
+    up = normalize(vUp);
+    down = normalize(vDown - up * dot(vDown, up));
+    side = cross(up, down);
+    // The bead is a ball pressed low and drawn out down the slope: the ray is met in the space where it is round.
+    vec3 scale = 1.0 / vShape;
+    vec3 from = uCamPos - vMiddle;
+    vec3 o = vec3(dot(from, side), dot(from, up), dot(from, down)) * scale;
+    d = vec3(dot(ray, side), dot(ray, up), dot(ray, down)) * scale;
+    float a = dot(d, d);
+    float b = dot(o, d);
+    float under = b * b - a * (dot(o, o) - 1.0);
+    if (under < 0.0) discard;
+    float reach = (-b - sqrt(under)) / a;
+    p = uCamPos + ray * reach;
+    if (dot(p - vBase, up) < -2.0 * vShape.x * vHang) discard;
+    q = o + d * reach;
+    vec3 g = q * scale;
+    n = normalize(side * g.x + up * g.y + down * g.z);
+  }
   vec3 view = -ray;
   float ndv = saturate(dot(n, view));
   float f = 1.0 - ndv;
@@ -289,6 +498,10 @@ void main() {
   a32 *= a32;
   // A highlight smaller than a pixel is spread over the pixel, not left to flash.
   float glint = mix(0.6 * a32 * a8 * a8, 40.0 * min(vWide * vWide / 256.0, 1.0) * a32 * a32 * a32, clear);
+  // The blade is thin and the bead stands clear of it on its hairs: in the thaw the low sun reaches it through and over the blade.
+  float key = thaw ? max(sun, 0.45) : sun;
+  // Seen this near the sun in a bead is the sun, dim as the mist leaves it: one hard point, the harder the larger the bead stands in the frame.
+  if (thaw) glint = 30.0 * pow(aim, clamp(8.0 * vWide, 96.0, 1024.0));
   vec3 sky = beadSky(mirror);
 
   // The light that enters a bead is gathered on its far side: bright where the ball turns away from the light, dark where it faces it.
@@ -301,6 +514,8 @@ void main() {
   vec3 lit = uSunColor * (sun * (saturate(dot(up, uSunDir)) * (0.3 + 2.6 * farSun * farSun) + 0.3 * saturate(-dot(up, uSunDir)))) + skyAmbient(up) * (0.5 + 5.0 * farSky * farSky);
   // Clear water shows the skin under it: darkest round the foot of the bead, where the light that enters is thrown to the far side.
   vec3 body = vTint * lit * mix(0.45, 1.0, smoothstep(0.0, 0.35, ndv));
+  // Seen this near the water is clear: the blade under it stands as bright as the blade beside it, lit through, and darker round the foot.
+  if (thaw) body = vTint * (uSunColor * (0.6 * key) + 1.3 * skyAmbient(up)) * mix(0.3, 1.0, smoothstep(0.0, 0.6, ndv));
   // The ray is bent on its way in and again on its way out. Where it leaves the bead above the skin it shows the world behind, upside down; where it does not, the skin under the water. A drop that hangs free has no skin behind it.
   vec3 qn = normalize(q);
   vec3 dn = normalize(d);
@@ -310,14 +525,25 @@ void main() {
   if (dot(out3, out3) < 0.5) out3 = reflect(inside, -leave);
   vec3 beyond = normalize(side * out3.x + up * out3.y + down * out3.z);
   float clearOfSkin = smoothstep(0.0, 0.6, leave.y - mix(0.3, -2.0, vHang)) * smoothstep(-0.1, 0.25, dot(beyond, up) + vHang);
-  body = mix(body, beadSky(beyond) * 0.9, mix(0.35, 0.92, vHang) * clearOfSkin);
+  // A bead that stands round on the hairs is clear of the skin down to its foot.
+  if (thaw) clearOfSkin = smoothstep(0.0, 0.3, leave.y - mix(-0.3, -2.0, vHang)) * smoothstep(-0.05, 0.15, dot(beyond, up) + vHang);
+  body = mix(body, (thaw ? thawWorld(beyond) : beadSky(beyond)) * 0.9, mix(thaw ? 0.85 : 0.35, 0.92, vHang) * clearOfSkin);
   // A clear sun behind a bead is seen through it, bent to one small bright place on the side away from the sun.
   float lens = saturate(dot(beyond, uSunDir));
   lens *= lens;
   lens *= lens;
   lens *= lens;
   lens *= lens;
-  body += uSunColor * (BEAD_LENS * clear * sun * clearOfSkin * lens * lens);
+  body += uSunColor * ((thaw ? 0.0 : BEAD_LENS) * clear * sun * clearOfSkin * lens * lens);
+  if (thaw) {
+    // At this distance the bead is a lens to the eye: the sun through it is one small star with a little glow round it, and the light it gathers leaves by the rim turned from the sun.
+    float aimed = saturate(dot(beyond, uSunDir));
+    body += uSunColor * (key * clearOfSkin * (60.0 * pow(aimed, clamp(24.0 * vWide, 128.0, 2048.0)) + 1.2 * pow(aimed, 96.0)));
+    vec3 toSun = uSunDir - ray * dot(uSunDir, ray);
+    float away = saturate(-dot(n, toSun / max(length(toSun), 1e-4)));
+    float rim = smoothstep(0.35, 0.8, f) * (1.0 - smoothstep(0.92, 1.0, f));
+    body += (1.2 * key * uSunColor + 0.5 * uAirHorizon) * (away * away * rim);
+  }
 
   // Under a closed sky the bead's one highlight is the sky itself over the lens: a small soft window near its top.
   float window = saturate(dot(mirror, normalize(vec3(0.0, 0.8, 0.0) - 0.6 * normalize(vec3(ray.x, 0.0, ray.z)))));
@@ -327,7 +553,7 @@ void main() {
   // Water on a hairy skin rests on air held between the hairs, and that floor is a mirror from inside: the bead is silver on the side away from the light.
   vec3 closed = (uAirHorizon + uAirZenith) * smoothstep(0.0, 0.5, uPlantWet);
   body += closed * (0.3 * farSky * (1.0 - vHang));
-  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (sun * glint * (1.0 - 0.75 * uWetMoon)) + closed * (1.2 * window);
+  vec3 color = body * (1.0 - fresnel) + sky * fresnel + uSunColor * (key * glint * (1.0 - 0.75 * uWetMoon)) + closed * (1.2 * window);
   outColor = finish(color, p, vDepth, -1.0);
 }
 `
@@ -347,10 +573,14 @@ in vec4 aSeatA;
 in vec4 aSeatB;
 in vec4 aRestA;
 in vec4 aRestB;
+in vec4 aGather;
+in vec4 aGatherB;
 uniform float uBeadRain;
 uniform float uBeadKeys;
 uniform float uPlantWet;
+uniform float uPlantDew;
 ${KEYED}
+${THAW}
 out vec2 vAt;
 out vec3 vWorld;
 out float vAge;
@@ -360,6 +590,30 @@ void main() {
   vec4 kFormUp = keyed(aFormUp, aSeatB);
   vec4 kMid = keyed(aMid, aRestA);
   vec4 kEnd = keyed(aEnd, aRestB);
+  vec4 kGather = keyed(aGather, aGatherB);
+  if (kGather.w > 2.5) {
+    // A bead of the thaw on the face of a blade gathers the low sun to a small bright patch on the skin beside it, on the side away from the sun.
+    vec4 bead = thawBead(kForm, kGather, kEnd.w);
+    float r = bead.w * min(1.0, kFormUp.w / 0.195) * plantSize();
+    vec3 base = plantWorld(bead.xyz);
+    vec3 up = plantDirection(normalize(kFormUp.xyz + vec3(0.0, 1e-6, 0.0)));
+    float facing = dot(up, uSunDir);
+    vec3 lying = uSunDir - up * facing;
+    float low = length(lying);
+    vec3 away = -lying / max(low, 1e-4);
+    vec3 across = cross(up, away);
+    float wide = 0.7 * r;
+    vec3 middle = base + away * (clamp(0.45 * low / max(facing, 0.02), 0.95, 1.7) * r + 0.5 * wide);
+    vec3 toEye = normalize(uCamPos - middle);
+    vec3 world = middle + (away * aCorner.x + across * (0.55 * aCorner.y)) * wide + toEye * (0.25 * r);
+    bool lit = kGather.w < ${THAW_DROP}.0 && floor(kGather.w + 1e-3) != ${THAW_RUNS}.0 && uReal > ${THAW_FROM_GLSL} && uPlantDew > 0.0 && kFormUp.w > 0.0 && abs(kEnd.w) > 0.0 && abs(kEnd.w) < 0.72 && fract(kGather.w) < 0.36;
+    vAt = aCorner;
+    vWorld = world;
+    vAge = smoothstep(-0.35, 0.05, facing) * smoothstep(0.00028, 0.0004, r);
+    vSeed = -1.0;
+    gl_Position = lit && vAge > 0.0 ? projectionMatrix * viewMatrix * vec4(world, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   float own = aForm.w;
   float every = 1.3 + 2.6 * hash11(own * 61.7 + 201.3);
   float t = (uReal + ${SHUTTER_GLSL} * uShutter - ${RAIN_FROM_GLSL}) / every + hash11(own * 61.7 + 77.1);
@@ -396,6 +650,12 @@ void main() {
   if (uDiag > 1) discard;
   float far = length(vAt);
   if (far > 1.0) discard;
+  if (vSeed < -0.5) {
+    float sun = max(sunShadow(vWorld, vec3(0.0, 1.0, 0.0), uShadowTexelM * 2.5), 0.45);
+    float core = (1.0 - far * far) * (1.0 - far * far);
+    outColor = vec4(applyFog(uSunColor * vec3(0.5, 0.62, 0.2), vWorld), 0.85 * core * sun * vAge);
+    return;
+  }
   float turn = atan(vAt.y, vAt.x);
   // The crown breaks into a few jets of spray and fine drops thrown clear of them.
   float jets = smoothstep(0.45, 0.8, valueNoise(vec2(turn * 1.9 + vSeed * 31.0, vSeed * 7.0)));
@@ -416,10 +676,14 @@ void main() {
 const bursts: THREE.InstancedBufferGeometry[] = []
 
 // Called by the rain once a frame with how hard it falls and how far the moon has taken over from the sun: the bursts on the blades follow the rain and are not drawn when none falls.
-export function rainOnBeads(rain: number, moon = 0): void {
+// With them, for the thaw: the film second, how much dew stands, and the one drop as the shutter opens and as it closes (how full it hangs, how far the one that let go has fallen).
+export function rainOnBeads(rain: number, moon = 0, second = 0, dew = 0, drop = 0, fall = 0, dropLater = drop, fallLater = fall): void {
   beadUniforms.uBeadRain.value = rain
+  beadUniforms.uBeadDrop.value.set(drop, fall, dropLater, fallLater)
   wetUniforms.uWetMoon.value = moon
-  for (const g of bursts) g.instanceCount = rain > 0 && g.userData.paths.value > 0 ? g.userData.count : 0
+  // In the thaw the same quads carry the light the beads gather, on the one set that has beads of the thaw.
+  const thaw = dew > 0 && second > THAW_FROM_S && second < RAIN_FROM_S
+  for (const g of bursts) g.instanceCount = (rain > 0 || (thaw && g.userData.thaw > 0)) && g.userData.paths.value > 0 ? g.userData.count : 0
 }
 
 // Small clear beads. The part that wears them gives each bead its seat on the skin at both ends of the shutter, as it gives a hair its root.
@@ -435,10 +699,12 @@ export class BeadSet {
   private readonly onPaths = { value: 0 }
   private readonly keys = { value: 0 }
   private readonly rained = { value: new THREE.Vector4(0, 0, 0, 0) }
+  private readonly tipAt = { value: new THREE.Vector4(0, 0, 0, 0) }
   private readonly geometry = new THREE.InstancedBufferGeometry()
   private readonly sent: THREE.InstancedBufferAttribute[]
 
-  constructor(options: PartOptions, readonly count: number, name: string) {
+  // `thaw` is how many of the set's last beads are the beads of the thaw, laid by `thawSpot`: `THAW_BEADS` on the one blade that carries them, 0 on any other set.
+  constructor(options: PartOptions, readonly count: number, name: string, private readonly thaw = 0) {
     if (options.places) throw new Error('beads are worn by the plant and the companion only')
     this.seats = [new Float32Array(count * 4), new Float32Array(count * 4)]
     this.rests = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -456,15 +722,15 @@ export class BeadSet {
     const names = ['aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aTint', ...PATH_NAMES, ...SECOND_NAMES]
     names.forEach((n, i) => this.geometry.setAttribute(n, this.sent[i]))
     this.geometry.instanceCount = 0
-    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths, uBeadKeys: this.keys, uBeadWetTint: this.rained } })
+    this.surface = makePartSurface(options, { name, vertex, fragment, side: THREE.DoubleSide, castShadow: false, uniforms: { ...beadUniforms, uBeadPaths: this.onPaths, uBeadKeys: this.keys, uBeadWetTint: this.rained, uBeadTip: this.tipAt } })
     const mesh = partMesh(this.geometry, this.surface)
     mesh.renderOrder = BEAD_ORDER
     const struck = new THREE.InstancedBufferGeometry()
     struck.setAttribute('aCorner', this.geometry.getAttribute('aCorner'))
     struck.setIndex(this.geometry.getIndex())
-    for (const n of ['aForm', 'aFormUp', 'aMid', 'aEnd', 'aSeatA', 'aSeatB', 'aRestA', 'aRestB']) struck.setAttribute(n, this.geometry.getAttribute(n))
+    for (const n of ['aForm', 'aFormUp', 'aMid', 'aEnd', 'aSeatA', 'aSeatB', 'aRestA', 'aRestB', 'aGather', 'aGatherB']) struck.setAttribute(n, this.geometry.getAttribute(n))
     struck.instanceCount = 0
-    struck.userData = { paths: this.onPaths, count }
+    struck.userData = { paths: this.onPaths, count, thaw }
     bursts.push(struck)
     const spray = makePartSurface(options, { name: `${name} bursts`, vertex: burstVertex, fragment: burstFragment, side: THREE.DoubleSide, transparent: true, depthWrite: false, castShadow: false, uniforms: { ...beadUniforms, uBeadKeys: this.keys } })
     const burst = partMesh(struck, spray)
@@ -534,6 +800,11 @@ export class BeadSet {
   // How many of the beads are drawn. Called once a frame after both fills.
   finish(shown = this.count): void {
     this.geometry.instanceCount = Math.max(0, Math.min(shown, this.count))
+    if (this.thaw > 0) {
+      // The tip that carries the one drop: no other bead hangs within a few millimeters of it.
+      const o = (this.count - this.thaw) * 4
+      this.tipAt.value.set(this.paths[0][o], this.paths[0][o + 1], this.paths[0][o + 2], 0.004)
+    }
     // Only what the part fills is sent: the paths of a set that runs by itself, the two seats of one that is placed.
     const paths = this.onPaths.value > 0
     const keys = this.keys.value > 0
@@ -543,8 +814,8 @@ export class BeadSet {
   }
 }
 
-export function createBeads(options: PartOptions, count: number, name: string): BeadSet | null {
-  return options.places ? null : new BeadSet(options, count, name)
+export function createBeads(options: PartOptions, count: number, name: string, thaw = 0): BeadSet | null {
+  return options.places ? null : new BeadSet(options, count, name, thaw)
 }
 
 export interface Bead {
@@ -582,18 +853,96 @@ export function beadPlan(own: number, along: number, across: number, out: BeadPl
   out.reaches = 1 - along <= REACH ? 1 : 0
   out.dewAlong = along
   out.dewAcross = across
-  out.dewKind = 0
+  // The kind is the whole part; the rest is how far along the part the dew stands, for the order of the thaw.
+  out.dewKind = 0.4 * Math.min(1, Math.max(0, along))
   if (across === 0) return out
   const where = own2(own, 91.7)
   if (where < DEW_MARGIN) {
     out.dewAcross = (across < 0 ? -1 : 1) * (0.82 + 0.15 * own2(own, 17.3))
-    out.dewKind = 1
+    out.dewKind += 1
   } else if (where > 1 - DEW_TIP && along > 0.45) {
     out.dewAlong = 1
     out.dewAcross = 0
-    out.dewKind = 2
+    out.dewKind = 2.4
   }
   return out
+}
+
+export interface ThawSpot {
+  own: number
+  along: number
+  across: number
+  plan: BeadPlan
+}
+
+function thawHash(k: number, c: number): number {
+  const x = Math.sin(k * 127.1 + c * 311.7 + 1.3) * 43758.5453
+  return x - Math.floor(x)
+}
+
+// Where bead `k` of the thaw stands on its blade (0 to `THAW_BEADS` - 1): the tip twice, then the margin, the midrib, the side veins and the face between them, where the hairs stand.
+// `veinAlong(vein, across)` is the blade's own: how far along the midrib side vein `vein` (0 to 7 from the base) runs at `across`, whose sign is the side.
+// The part lays each as any other bead of the set, on blade 0, with `own`, `along`, `across` and `plan` as given here.
+export function thawSpot(k: number, veinAlong: (vein: number, across: number) => number): ThawSpot {
+  const plan: BeadPlan = { midAlong: 0, midAcross: 0, endAlong: 0, endAcross: 0, reaches: 0, dewAlong: 0, dewAcross: 0, dewKind: 0 }
+  const spot: ThawSpot = { own: thawHash(k, 0), along: 1, across: 0, plan }
+  const lay = (along: number, across: number, kind: number, toAlong = along, toAcross = across): ThawSpot => {
+    spot.along = along
+    spot.across = across
+    plan.midAlong = plan.endAlong = along
+    plan.midAcross = plan.endAcross = across
+    plan.dewAlong = toAlong
+    plan.dewAcross = toAcross
+    // The kind, and with it how far along the blade the bead stands, for the order of the thaw.
+    plan.dewKind = kind + 0.4 * Math.min(1, Math.max(0, kind === THAW_RUNS ? toAlong : along))
+    return spot
+  }
+  if (k < 2) {
+    lay(1, 0, k === 0 ? THAW_DROP : THAW_FELL)
+    plan.midAlong = 0.93
+    plan.reaches = 1
+    return spot
+  }
+  let j = k - 2
+  if (j < THAW_EDGE) {
+    const side = j % 2 === 0 ? -1 : 1
+    const row = j >> 1
+    return lay(0.05 + 0.93 * (row + 0.15 + 0.7 * thawHash(k, 1)) / (THAW_EDGE / 2), side, THAW_ALONE)
+  }
+  j -= THAW_EDGE
+  // Off the margin the beads come two by two: most pairs stand close enough to touch as they grow, and then the one runs into the other.
+  const pair = j >> 1
+  const second = (j & 1) === 1
+  const first = k - (second ? 1 : 0)
+  const close = thawHash(first, 2) < 0.65
+  const h = (c: number) => thawHash(close || !second ? first : k, c)
+  spot.own = thawHash(close ? first : k, 0)
+  const side = h(3) < 0.5 ? -1 : 1
+  let along: number
+  let across: number
+  let nextAlong: number
+  let nextAcross: number
+  if (j < THAW_RIB) {
+    along = 0.06 + 0.9 * ((pair + h(4)) / (THAW_RIB / 2))
+    across = side * 0.03 * h(5)
+    nextAlong = along + (0.012 + 0.02 * h(6)) * (h(7) < 0.5 ? -1 : 1)
+    nextAcross = across
+  } else if (j < THAW_RIB + THAW_VEIN) {
+    const vein = 2 + ((pair - THAW_RIB / 2) % 6)
+    across = side * (0.14 + 0.7 * h(4))
+    along = veinAlong(vein, across)
+    nextAcross = across + side * (0.03 + 0.05 * h(6))
+    nextAlong = veinAlong(vein, nextAcross)
+  } else {
+    along = 0.08 + 0.84 * h(4)
+    across = side * (0.08 + 0.78 * h(5))
+    nextAlong = along + 0.03 * (h(6) - 0.5)
+    nextAcross = across + side * (0.03 + 0.04 * h(7))
+  }
+  along = Math.min(0.97, along)
+  nextAlong = Math.min(0.97, nextAlong)
+  if (!close) return lay(along, across, THAW_ALONE)
+  return second ? lay(nextAlong, nextAcross, THAW_RUNS, along, across) : lay(along, across, THAW_TAKES, nextAlong, nextAcross)
 }
 
 // Rain: `since` is the time the rain has fallen.
