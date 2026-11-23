@@ -1,8 +1,9 @@
 # Looks of post
 
-2026-11-23 01:30 UTC, at commit 64a7963 of agent/post.
+2026-11-23 01:40 UTC, at commit 406e941 of agent/post.
 
-after merging v2 b587656, sky-b, draft: the sun at the lens from def.air.sun
+sky-b, draft, lens alone (only sky,ground,plant,field,place)
 
-- `01-lens-alone-on-the-real-sky-only-sky-ground-plant.jpg`: lens alone on the real sky (only sky,ground,plant,field,place), bars 1.25 21 29.29 35 37.02 41.25 47 50.42 57 61 69
-- `02-the-same-bars-with-everything-on-the-white-at-1-.jpg`: the same bars with everything on: the white at 1.25, 21, 35, 37.02, 41.25 is the veil of mist and rain, not the lens
+- `01-eleven-bars.jpg`: eleven bars
+- `02-bar-41-25-a-fan-of-shafts-under-the-gap-the-deck.jpg`: bar 41.25: a fan of shafts under the gap, the deck dark beside it, cut by the plant
+- `03-bar-61-disc-glow-and-cloud-edges-readable.jpg`: bar 61: disc, glow and cloud edges readable
