@@ -278,7 +278,7 @@ void main() {
   float lobe = pow(saturate(dot(-v, uSunDir)), 3.0);
   float farOff = 1.0 - smoothstep(300.0, 1400.0, dist);
   // The sunflowers stand upright: a low sun lights their sides wherever the lens looks, and least where it looks into the sun, at their shaded sides.
-  float upright = (0.33 - 0.07 * lobe) * (0.25 + 0.75 * farOff);
+  float upright = (0.35 - 0.12 * lobe) * (0.25 + 0.75 * farOff);
   float through = uThrough * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * mix(lobe * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * farOff, upright, crop * (1.0 - wood));
   vec3 color = albedo * (uSunColor * sunOnLand(vWorld) * (ndl * shade + through) + skyAmbient(n) * nook);
   outColor = landFinish(color, vWorld, vDepth);

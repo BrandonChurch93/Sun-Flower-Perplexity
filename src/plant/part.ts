@@ -43,6 +43,8 @@ export interface PlantPart {
   finish(time: number, inputs: PlantInputs): void
   // True when nothing of the part exists at that time: it is then neither filled nor drawn.
   absent?(time: number): boolean
+  // Sets what the part keeps once for a moment and not for each vertex, as the mix of what its two slots were filled with: the share is the second slot's.
+  settle?(share: number): void
 }
 
 export type PartMaker = (options: PartOptions) => PlantPart | null
@@ -57,7 +59,7 @@ export const fieldUniforms = { uCanopy: { value: 0 }, uClosed: { value: 0 }, uDe
 // The state of the plant's skin: 0 to 1 each.
 export const stateUniforms = { uPlantWet: { value: 0 }, uPlantFrost: { value: 0 }, uPlantDew: { value: 0 } }
 // How far the plant being filled stands in a hold, 0 to 1.
-// 'lead' is true while the shape being filled is the one that also carries what a part keeps once and not for each slot: its normals, its skin, its numbers.
+// 'lead' is true while the shape being filled also takes its own normals, skin and numbers: the first slot always does, the second when both slots are keys.
 export const filling = { held: 0, lead: true }
 const WET_STEPS = 16
 // How wet the beads are laid: while the plant's clock stands, in steps, so the shape is not laid again on every frame of the rain.
@@ -106,6 +108,8 @@ uniform vec4 uOwnAir;
 uniform vec3 uOwnTip;
 // How much of the second slot of the shape is drawn when the shutter opens, and how much more when it closes.
 uniform vec2 uOwnMix;
+// 1 when both slots carry their own normals and skin numbers, 0 when only the first does.
+uniform float uOwnKeys;
 // What a time lapse does to it: x how fast the days run, y where this frame catches the stem on its swing, z how far a leaf twitches in radians, w where this frame catches the leaves.
 uniform vec4 uOwnLapse;
 #endif
@@ -115,6 +119,14 @@ float plantBlend() {
   return 0.0;
 #else
   return uOwnMix.x + uOwnMix.y * uShutter;
+#endif
+}
+// The share of the second slot in what a slot carries beside the shape: its normals and skin numbers.
+float plantLead() {
+#ifdef PLANT_FIELD
+  return 0.0;
+#else
+  return uOwnKeys * plantBlend();
 #endif
 }
 ${swayGlsl}

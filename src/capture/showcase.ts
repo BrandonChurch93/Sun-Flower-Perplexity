@@ -7,7 +7,7 @@ import { formatById, isAssetSet, isTier } from '../core/tiers.ts'
 import type { Film, FrameCheck, FrameState, TexelCheck } from '../director/film.ts'
 import type { Report } from '../player/pacing.ts'
 import { madeSoFar, type Made } from '../v2/counter.ts'
-import { views, type ViewName } from '../v2/shots.ts'
+import { viewNamed } from '../v2/shots.ts'
 
 declare const __ENGINE_HASH__: string
 declare const __UNIT_HASHES__: Record<string, string>
@@ -91,8 +91,7 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
     },
     made: () => madeSoFar(),
     setView: (name) => {
-      if (name !== 'film' && !(name in views)) throw new Error(`unknown view "${name}"`)
-      film.view.fixed = name === 'film' ? null : views[name as Exclude<ViewName, 'film'>]
+      film.view.fixed = name === 'film' ? null : viewNamed(name)
     },
     setStill: (on) => film.setStill(on),
     sky: () => film.skyName,

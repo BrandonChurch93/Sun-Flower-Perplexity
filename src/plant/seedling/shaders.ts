@@ -6,6 +6,8 @@ export const vertex = /* glsl */ `
 in vec3 position;
 #ifndef PLANT_FIELD
 in vec3 positionB;
+in vec3 normalB;
+in vec4 aStateB;
 #endif
 in vec3 normal;
 in vec4 aCoord;
@@ -24,9 +26,14 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
+#ifdef PLANT_FIELD
   vNormal = plantDirection(normal);
-  vCoord = aCoord;
   vState = aState;
+#else
+  vNormal = plantDirection(mix(normal, normalB, plantLead()));
+  vState = mix(aState, aStateB, plantLead());
+#endif
+  vCoord = aCoord;
   vDepth = -view.z;
   gl_Position = projectionMatrix * view;
 }
