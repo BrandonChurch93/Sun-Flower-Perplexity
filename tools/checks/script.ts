@@ -28,7 +28,7 @@ const SENTENCE = "whenever there's a scene change we have a huge frame rate drop
 // A window that has been measured is kept until the film changes, so the check can be run in parts.
 
 interface Share { name: string; parts: string[]; meanMs: number }
-interface Limits { meanMs: number; worstMs: number; shares: Share[]; everyOtherPartMeanMs: number; first: string[]; windows: string[]; allEvery: number }
+interface Limits { meanMs: number; worstMs: number; cutOverMs: number; shares: Share[]; everyOtherPartMeanMs: number; first: string[]; windows: string[]; allEvery: number }
 interface Row { frame: number; cost: Record<string, number>; made?: string; first?: Record<string, number>; firstLap?: string }
 interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; busy: number; rows: Row[] }
 interface Hitch { frame: number; ms: number; around: number; parts: string }
@@ -113,9 +113,10 @@ const ALONE = 'this check has to run alone: its numbers are wall time, and anoth
 // A frame far over its neighbours in which nothing was made may be the machine and not the film: the film waits for the drawing at the end of every frame,
 // but the browser shows the canvas after it, and when the graphics process is still at that, the first call of the next frame that needs room waits, in whichever lap issues it.
 // Such a frame is drawn once more after a pause, in a row with the two frames before it. Slow again, it is the film's and stays. Else the second number counts and the first is kept beside it.
-const BEHIND_TIMES = 10
+const BEHIND_TIMES = 2
+const FILM_TIMES = 1.5
+const AGAIN_MOST = 12
 const PAUSE_MS = 1500
-const AGAIN_MOST = 6
 const largest = (cost: Record<string, number>): string => Object.entries(cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 1).map(([key, v]) => `${key} ${v.toFixed(1)}`)[0] ?? ''
 const madeText = (m: Made): string => (nothingMade(m) ? '' : (Object.entries(m) as [string, number][]).filter(([key, v]) => v > 0 && !/pdate|Bytes/.test(key)).map(([key, v]) => `${v} ${key}`).join(', '))
 
@@ -144,8 +145,8 @@ async function measure(session: Session, run: string, from: number, to: number, 
     await new Promise((done) => setTimeout(done, PAUSE_MS))
     await session.draw(r.frame, tier, false)
     const second = await session.cost()
-    const slowAgain = second.script > Math.max(limits.worstMs, BEHIND_TIMES * around)
-    console.log(`script · frame ${r.frame} cost ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it with nothing made (${largest(r.cost)}); drawn again after a pause: ${second.script.toFixed(1)} ms${slowAgain ? ', slow again: it is the film' : ': the graphics process was behind the first time'}`)
+    const slowAgain = second.script > Math.max(limits.worstMs, FILM_TIMES * around)
+    console.log(`script · frame ${r.frame} cost ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it with nothing made (${largest(r.cost)}); drawn again after a pause: ${second.script.toFixed(1)} ms${slowAgain ? ', slow again: it is the film' : ': the machine was behind the first time'}`)
     if (slowAgain) continue
     r.first = r.cost
     r.firstLap = largest(r.cost)
@@ -335,13 +336,13 @@ export async function run(args: Args): Promise<void> {
     const near = k.rows.slice(Math.max(0, i - AROUND), i + AROUND + 1).filter((r) => r.frame !== c).map((r) => r.cost.script).sort((x, y) => x - y)
     const around = near[Math.floor(near.length / 2)]
     const r = k.rows[i]
-    const long = r.cost.script > Math.max(limits.worstMs, TIMES * around)
-    findings.push({ ok: !long && !r.made, what: `a cut must cost nothing: the cut into frame ${c} (${barText(secondsOf(c))}) costs ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it${long ? `, a long frame (${largest(r.cost)})` : ''}, and ${r.made ? `makes ${r.made}` : 'makes nothing'}` })
+    const long = r.cost.script > limits.worstMs || r.cost.script > around + limits.cutOverMs
+    findings.push({ ok: !long && !r.made, what: `a cut must cost nothing: the cut into frame ${c} (${barText(secondsOf(c))}) costs ${r.cost.script.toFixed(1)} ms against ${around.toFixed(1)} around it${long ? `, over the ${limits.worstMs} ms of any frame or over the frames around by more than ${limits.cutOverMs} ms (${largest(r.cost)})` : ''}, and ${r.made ? `makes ${r.made}` : 'makes nothing'}` })
   }
   const behind = judged.flatMap((j) => j.behind)
   if (behind.length) {
-    findings.push({ ok: true, expected: true, what: `the graphics process was behind in ${behind.length} ${behind.length === 1 ? 'frame' : 'frames'}: over ${BEHIND_TIMES} times the frames around with nothing made, and not slow when drawn again after a pause, so the first number is the machine's and the second is judged: ${behind.map((b) => `${b.frame} (${b.firstMs.toFixed(0)} ms the first time, in ${b.lap}; ${b.againMs.toFixed(1)} ms again)`).join('; ')}` })
-    console.log(`script · the graphics process was behind: not counted as hitches\n${table(['frame', 'bar', 'ms the first time', 'the lap it landed in', 'ms drawn again after a pause'], behind.map((b) => [b.frame, barText(secondsOf(b.frame)).slice(4), b.firstMs.toFixed(1), b.lap, b.againMs.toFixed(1)]))}\n`)
+    findings.push({ ok: true, expected: true, what: `the machine was behind in ${behind.length} ${behind.length === 1 ? 'frame' : 'frames'}: over ${BEHIND_TIMES} times the frames around with nothing made, and under ${FILM_TIMES} times them when drawn again after a pause, so the first number is the machine's and the second is judged: ${behind.map((b) => `${b.frame} (${b.firstMs.toFixed(0)} ms the first time, in ${b.lap}; ${b.againMs.toFixed(1)} ms again)`).join('; ')}` })
+    console.log(`script · the machine was behind: not counted as hitches\n${table(['frame', 'bar', 'ms the first time', 'the lap it landed in', 'ms drawn again after a pause'], behind.map((b) => [b.frame, barText(secondsOf(b.frame)).slice(4), b.firstMs.toFixed(1), b.lap, b.againMs.toFixed(1)]))}\n`)
   }
   if (missing > 0) findings.push({ ok: true, expected: true, what: `${missing} of ${spans.length} windows are not measured yet on this film` })
   if (partly > 0) findings.push({ ok: true, expected: true, what: `${partly} windows are measured only in their first frames` })

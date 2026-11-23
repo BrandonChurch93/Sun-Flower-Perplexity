@@ -17,6 +17,7 @@ const OBJECTS = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', '
 // every call that makes an object is noted with its stack, and the stack is read back to the film's own files: the nearest one is the maker.
 // A program, and the program a vertex array is made under, is named by its uniforms too: the file of src/ that holds the most of them wrote the shader.
 //   npm run checks -- made --trace --from 300 --to 640            after the film's own warming, frames in a row
+//   npm run checks -- made --trace --from 3106 --to 3108 --width 1920 --height 1080    at the film's own size: a set chosen by the picture's size shows only there
 //   npm run checks -- made --trace --from 318 --to 640 --cold     with no warming, as a runner that skips it starts: the first frame makes the film and is listed apart
 //   npm run checks -- made --trace --cold --break made --at 302 --from 300 --to 304    a texture and a program made by the checks' own page at frame 302: must fail and name tools/checks/page/main.ts
 
@@ -68,7 +69,7 @@ export async function run(args: Args): Promise<void> {
   const name = `made.trace-${from}-${to}${cold ? '.cold' : ''}`
   if (broken && broken !== 'made') throw new Error('made --trace can break the film with --break made --at <frame>')
   const progress = path.join(OUT, `${name}.progress.txt`)
-  const session = await openSession({ trace: true, sky: typeof args.sky === 'string' ? args.sky : undefined })
+  const session = await openSession({ trace: true, sky: typeof args.sky === 'string' ? args.sky : undefined, width: num(args, 'width', 320), height: num(args, 'height', 180) })
   const things: Thing[] = []
   const counted = new Map<number, Record<string, number>>()
   let loading: MadeThing[] = []

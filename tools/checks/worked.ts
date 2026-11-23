@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process'
 import type { Args } from '../lib/args.ts'
-import { str } from '../lib/args.ts'
+import { flag, str } from '../lib/args.ts'
 import { barText, FRAMES, secondsOf } from './lib/film.ts'
+import { run as inside } from './inside.ts'
 import { finish, table, type Finding } from './lib/report.ts'
 import { openSession } from './lib/session.ts'
 import type { Worked } from './page/main.ts'
@@ -51,6 +52,7 @@ interface Read { frame: number; label: string; script: number; scene: number; sh
 const PARTS_OUT = new Set(['script', 'wait', 'draw', 'drawScene', 'drawShadow'])
 
 export async function run(args: Args): Promise<void> {
+  if (flag(args, 'inside')) return inside(args)
   const at = str(args, 'at', '849,1260,3318').split(',').filter(Boolean).map(Number).filter((f) => Number.isInteger(f) && f >= 3 && f < FRAMES - 1)
   const tier = str(args, 'tier', 'draft')
   const busy = Number(spawnSync('pgrep', ['-c', '-f', 'type=gpu-process'], { encoding: 'utf8' }).stdout.trim()) || 0

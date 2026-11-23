@@ -104,6 +104,9 @@ export interface Session {
   spot(x: number, y: number, r: number, fail: number): Promise<Spot>
   only(names: string[]): Promise<void>
   worked(): Promise<Worked>
+  loop(work: number): Promise<number>
+  loopAt(work: number, call: number): Promise<void>
+  loopRead(): Promise<{ ms: number; calls: number }>
   close(): Promise<void>
 }
 
@@ -170,6 +173,9 @@ export async function openSession(options: SessionOptions = {}): Promise<Session
       spot: (x, y, r, fail) => page.evaluate(([a, b, c, d]) => window.checks.spot(a, b, c, d), [x, y, r, fail] as const),
       only: (names) => page.evaluate((n) => window.checks.only(n), names),
       worked: () => page.evaluate(() => window.checks.worked()),
+      loop: (work) => page.evaluate((w) => window.checks.loop(w), work),
+      loopAt: (work, call) => page.evaluate(([w, c]) => window.checks.loopAt(w, c), [work, call] as const),
+      loopRead: () => page.evaluate(() => window.checks.loopRead()),
       fault: (kind, a = 0, b = 0) => page.evaluate(([k, x, y]) => window.checks.fault(k as string, x as number, y as number), [kind, a, b] as const),
       async close() {
         await theBrowser.close().catch(() => undefined)
