@@ -1,10 +1,10 @@
 # Looks of plant
 
-2026-11-23 07:25 UTC, at commit 8a84e63 of agent/plant.
+2026-11-23 07:42 UTC, at commit 588c6ed1 of agent/plant.
 
-Present state before the bristles (0aa8f1d): the stem and stalks are smooth tubes at the close lens, the leaf edge is a paper cut. Frost roots are laid (8a84e63); bristles as shapes are being built now.
+Bristles as shapes (588c6ed): the stem and the stalks now wear 3200 and 1600 true bristles at the close lens, one list with the ice's roots. Still wrong: they are thin beside the reference's furred halo until the frost owner sleeves each; leaf edge still a paper cut (A2), apex unchanged (A3).
 
-- `01-frame-1003-shot-margin-present-edge-of-leaf-5-is.jpg`: frame 1003 shot margin, present: edge of leaf 5 is a paper cut, no cilia, stalk smooth
-- `02-frame-1106-shot-tip-present-stem-a-smooth-pale-t.jpg`: frame 1106 shot tip, present: stem a smooth pale tube, no bristles, apex is a plain folded leaf
-- `03-frame-1208-shot-thaw-present-leaf-0-with-sparse-.jpg`: frame 1208 shot thaw, present: leaf 0 with sparse hairs, edge without thickness
-- `04-bloom-frames-2916-to-2975-keys-off-left-and-on-r.mp4`: bloom frames 2916 to 2975, keys off left and on right: the head's nod with keys on is still in question
+- `01-frame-1106-shot-tip-draft-bristles-stand-along-t.jpg`: frame 1106 shot tip, draft: bristles stand along the stem's outline, lit against the sun; the white stars are the ice's present crystals on the same roots
+- `02-frame-1106-review-tier-three-times-enlarged-crop.jpg`: frame 1106 review tier, three times enlarged crop of the stem: each bristle a tapering spike, 15 to 25 px long here; still too sparse and too fine beside the reference
+- `03-frame-1003-shot-margin-draft-stem-out-of-focus-a.jpg`: frame 1003 shot margin, draft: stem out of focus at left wears the bristles; edge of leaf 5 unchanged
+- `04-frame-1208-shot-thaw-draft-no-stem-in-view-leaf-.jpg`: frame 1208 shot thaw, draft: no stem in view, leaf 0 unchanged
