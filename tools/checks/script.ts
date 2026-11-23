@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
@@ -23,10 +24,10 @@ const SENTENCE = "whenever there's a scene change we have a huge frame rate drop
 // A window that has been measured is kept until the film changes, so the check can be run in parts.
 
 interface Share { name: string; parts: string[]; meanMs: number }
-interface Limits { meanMs: number; worstMs: number; shares: Share[]; everyOtherPartMeanMs: number; windows: string[]; allEvery: number }
+interface Limits { meanMs: number; worstMs: number; shares: Share[]; everyOtherPartMeanMs: number; first: string[]; windows: string[]; allEvery: number }
 interface Row { frame: number; cost: Record<string, number> }
-interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; rows: Row[] }
-interface Judged { from: number; to: number; frames: number; whole: boolean; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
+interface Kept { hash: string; from: number; to: number; whole: boolean; jump: boolean; width: number; height: number; tier: string; only: string; busy: number; rows: Row[] }
+interface Judged { from: number; to: number; frames: number; whole: boolean; busy: number; mean: number; worst: number; worstAt: number; top: string; over: string[]; ok: boolean; shares: Record<string, number> }
 
 const LIMITS = at('tools', 'checks', 'limits.json')
 const NOT_PARTS = new Set(['script', 'wait'])
@@ -64,7 +65,7 @@ export function judge(k: Kept, limits: Limits): Judged {
     if (shares[p] > limits.everyOtherPartMeanMs) over.push(`${p} ${shares[p].toFixed(1)} over ${limits.everyOtherPartMeanMs}`)
   }
   const top = Object.entries(worstRow.cost).filter(([key]) => !NOT_PARTS.has(key)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key, v]) => `${key} ${v.toFixed(1)}`).join(', ')
-  return { from: k.from, to: k.to, frames: rows.length, whole: k.whole, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
+  return { from: k.from, to: k.to, frames: rows.length, whole: k.whole, busy: k.busy ?? 0, mean, worst: worstRow.cost.script, worstAt: worstRow.frame, top, over, ok: over.length === 0, shares }
 }
 
 const dirOf = (run: string): string => path.join(OUT, 'script', run)
@@ -77,8 +78,15 @@ function kept(run: string, from: number, to: number): Kept | null {
   return k.hash === engineHash() ? k : null
 }
 
+// The numbers are wall time, so the check has to run alone. How many browsers are already drawing on this machine: each of them makes every number larger.
+function othersDrawing(): number {
+  const r = spawnSync('pgrep', ['-c', '-f', 'type=gpu-process'], { encoding: 'utf8' })
+  return Number(r.stdout.trim()) || 0
+}
+const ALONE = 'this check has to run alone: its numbers are wall time, and another page drawing or a build beside it makes them larger'
+
 // Draws one window in a row and keeps the film's laps of every frame but the first after a jump.
-async function measure(session: Session, run: string, from: number, to: number, tier: string, only: string, jump: boolean, upTo: number): Promise<Kept> {
+async function measure(session: Session, run: string, from: number, to: number, tier: string, only: string, jump: boolean, upTo: number, busy = 0): Promise<Kept> {
   const rows: Row[] = []
   const last = Math.min(to, from + (jump ? upTo : upTo - 1))
   const t0 = Date.now()
@@ -87,17 +95,17 @@ async function measure(session: Session, run: string, from: number, to: number, 
     const cost = await session.cost()
     if (f > from || !jump) rows.push({ frame: f, cost })
   }
-  const k: Kept = { hash: engineHash(), from, to, whole: last === to, jump, width: session.info.width, height: session.info.height, tier, only, rows }
+  const k: Kept = { hash: engineHash(), from, to, whole: last === to, jump, width: session.info.width, height: session.info.height, tier, only, busy, rows }
   fs.mkdirSync(dirOf(run), { recursive: true })
   fs.writeFileSync(fileOf(run, from, to), JSON.stringify(k) + '\n')
   const j = judge(k, limitsOf())
-  console.log(`script · frames ${from} to ${last} · ${rows.length} counted · mean ${j.mean.toFixed(1)} ms, worst ${j.worst.toFixed(1)} ms at frame ${j.worstAt} (${j.top}) · drawn in ${((Date.now() - t0) / 1000).toFixed(0)} s`)
+  console.log(`script · frames ${from} to ${last} · ${rows.length} counted${busy ? ` beside ${busy} other pages drawing` : ''} · mean ${j.mean.toFixed(1)} ms, worst ${j.worst.toFixed(1)} ms at frame ${j.worstAt} (${j.top}) · drawn in ${((Date.now() - t0) / 1000).toFixed(0)} s`)
   return k
 }
 
 const tableOf = (judged: Judged[]): { head: string[]; rows: (string | number)[][] } => ({
   head: ['window', 'bar', 'frames counted', 'mean ms', 'worst ms', 'worst frame', 'the three largest parts there', 'over its limit', 'verdict'],
-  rows: judged.map((j) => [`${j.from}-${j.to}`, barText(secondsOf(j.from)).slice(4), `${j.frames}${j.whole ? '' : ' (not whole)'}`, j.mean.toFixed(1), j.worst.toFixed(1), j.worstAt, j.top, j.over.length ? j.over.join('; ') : 'nothing', j.ok ? 'PASS' : 'FAIL']),
+  rows: judged.map((j) => [`${j.from}-${j.to}`, barText(secondsOf(j.from)).slice(4), `${j.frames}${j.whole ? '' : ' (not whole)'}`, j.mean.toFixed(1), j.worst.toFixed(1), j.worstAt, j.top, j.over.length ? j.over.join('; ') : 'nothing', `${j.ok ? 'PASS' : 'FAIL'}${j.busy ? ', not alone' : ''}`]),
 })
 
 const COLOURS = ['#3f8f4f', '#c9a227', '#3b78c2', '#8a8f98', '#b4532a']
@@ -188,13 +196,20 @@ export async function run(args: Args): Promise<void> {
   const run = only ? `only-${only.replace(/,/g, '-')}` : 'film'
   const upTo = num(args, 'frames', FRAMES)
   const every = Math.max(8, limits.allEvery)
-  const spans: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]) : limits.windows.map(span)
-  const have = (a: number, b: number): Kept | null => {
-    const k = kept(run, a, b)
-    return k && !flag(args, 'again') && (k.whole || k.rows.length >= Math.min(upTo, b - a)) ? k : null
+  // The windows where a hold starts or ends come first in every run and are always measured whole.
+  const first = limits.first.map(span)
+  const isFirst = ([a, b]: [number, number]): boolean => first.some(([x, y]) => x === a && y === b)
+  const rest: [number, number][] = typeof args.window === 'string' ? args.window.split(',').map(span) : all ? Array.from({ length: Math.ceil(FRAMES / every) }, (_, i): [number, number] => [i * every, Math.min(FRAMES - 1, (i + 1) * every - 1)]) : limits.windows.map(span)
+  const spans: [number, number][] = [...first, ...rest.filter((w) => !isFirst(w))]
+  const have = (w: [number, number]): Kept | null => {
+    const k = kept(run, w[0], w[1])
+    return k && !flag(args, 'again') && (k.whole || (!isFirst(w) && k.rows.length >= Math.min(upTo, w[1] - w[0]))) ? k : null
   }
-  const todo = flag(args, 'table') ? [] : spans.filter(([a, b]) => !have(a, b))
+  const todo = flag(args, 'table') ? [] : spans.filter((w) => !have(w))
+  console.log(`script · ${ALONE}`)
   if (todo.length) {
+    const busy = othersDrawing()
+    if (busy) console.log(`script · NOT ALONE: ${busy} other pages are drawing on this machine now. What is measured in this run is marked "not alone" and is too large`)
     const session = await openSession({ only: only || undefined })
     try {
       const t0 = Date.now()
@@ -202,9 +217,11 @@ export async function run(args: Args): Promise<void> {
       await session.cost()
       console.log(`script · ${session.info.width} x ${session.info.height} · ${tier} · ${only || 'everything'} · ${todo.length} of ${spans.length} windows to measure · loaded in ${session.startSeconds.toFixed(1)} s, warmed in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
       let before = -2
-      for (const [a, b] of todo) {
-        await measure(session, run, a, b, tier, only, !(all && a === before + 1), upTo)
-        before = upTo >= b - a ? b : -2
+      for (const w of todo) {
+        const [a, b] = w
+        const frames = isFirst(w) ? FRAMES : upTo
+        await measure(session, run, a, b, tier, only, !(all && !isFirst(w) && a === before + 1), frames, busy)
+        before = frames >= b - a && !isFirst(w) ? b : -2
       }
     } finally {
       await session.close()
@@ -226,6 +243,9 @@ export async function run(args: Args): Promise<void> {
   }
   if (missing > 0) findings.push({ ok: true, expected: true, what: `${missing} of ${spans.length} windows are not measured yet on this film` })
   if (partly > 0) findings.push({ ok: true, expected: true, what: `${partly} windows are measured only in their first frames` })
+  const notAlone = judged.filter((j) => j.busy).length
+  if (notAlone > 0) findings.push({ ok: true, expected: true, what: `${notAlone} windows were measured while other pages were drawing on the machine: their numbers are too large. ${ALONE}. Measure them again with --again` })
+  else if (judged.length) findings.push({ ok: true, what: `measured alone: no other page was drawing when a run began. ${ALONE}` })
   const sheet = path.join(dirOf(run), all ? 'script-all.jpg' : 'script.jpg')
   if (judged.length) await picture(judged, limits, sheet)
   finish({
@@ -235,7 +255,7 @@ export async function run(args: Args): Promise<void> {
     sentence: SENTENCE,
     subject: only ? `the film drawn with ${only} alone` : 'the film',
     broken: null,
-    complete: missing === 0 && partly === 0,
+    complete: missing === 0 && partly === 0 && notAlone === 0,
     findings,
     table: judged.length ? tableOf(judged) : undefined,
     data: { run, limits, windows: judged },
