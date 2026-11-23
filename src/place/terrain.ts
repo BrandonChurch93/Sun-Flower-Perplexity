@@ -199,6 +199,9 @@ ${fieldsGlsl}
 
 const vec3 CROPS[${CROPS.length}] = vec3[${CROPS.length}](${CROPS.map((c) => `vec3(${c.join(', ')})`).join(', ')});
 
+// What the shaded sides of the far crop give back to the sky's light.
+const vec3 CROP_SHADE = vec3(0.05, 0.09, 0.105);
+
 float cropAt(vec2 p, float px) {
   float depth = dot(p, vec2(${CROP_AXES.depth.x.toFixed(6)}, ${CROP_AXES.depth.z.toFixed(6)}));
   float across = dot(p, vec2(${CROP_AXES.across.x.toFixed(6)}, ${CROP_AXES.across.z.toFixed(6)}));
@@ -238,7 +241,10 @@ void main() {
   float headland = (1.0 - crop) * (1.0 - smoothstep(86.0, 104.0, r));
   albedo = mix(albedo, vec3(0.05, 0.066, 0.03), headland);
   // Toward the ridge the crop is seen flatter, its shaded sides more than its lit tops: it darkens with distance.
-  albedo = mix(albedo, uLandCrop * (0.85 + 0.3 * mix(tone, 0.5, wide)) * mix(1.0, 0.32, smoothstep(300.0, 1300.0, r)), crop);
+  // And it is not one sheet: it stands thicker here and thinner there, in drifts a few hundred metres across.
+  float drift = 0.6 * valueNoise(p / 260.0 + 11.0) + 0.4 * valueNoise(p / 95.0 + 5.0);
+  float stand = mix(1.0, 0.4 + 1.5 * smoothstep(0.28, 0.72, drift), smoothstep(330.0, 700.0, r));
+  albedo = mix(albedo, uLandCrop * (0.85 + 0.3 * mix(tone, 0.5, wide)) * mix(1.0, 0.32, smoothstep(300.0, 1300.0, r)) * stand, crop);
   float tilled = kind == 4 ? (1.0 - headland) * (1.0 - crop) : 0.0;
   float standing = max(crop, (kind == 1 || kind == 2 || kind == 5) ? 1.0 - headland : 0.0);
   float mottle = 0.55 * valueNoise(p / 37.0 + 3.0) + 0.3 * valueNoise(p / 9.0 + 7.0) + 0.15 * valueNoise(p / 2.3);
@@ -280,8 +286,12 @@ void main() {
   // The sunflowers stand upright: a low sun lights their sides wherever the lens looks, and least where it looks into the sun, at their shaded sides.
   float upright = (0.35 - 0.12 * lobe) * (0.25 + 0.75 * farOff);
   float through = uThrough * (1.0 - smoothstep(0.25, 0.6, uSunDir.y)) * mix(lobe * (0.1 * (1.0 - tilled) + 0.2 * standing + 0.3 * wood * (1.0 - bump * c0)) * farOff, upright, crop * (1.0 - wood));
-  vec3 color = albedo * (uSunColor * sunOnLand(vWorld) * (ndl * shade + through) + landAmbient(n, vWorld) * nook);
-  outColor = landFinish(color, vWorld, vDepth);
+  // From over its tops the far crop shows its lit heads toward the sun and its shaded sides away from it, and the sky lights the shade.
+  float over = uLandOver * crop * (1.0 - wood);
+  float toward = pow(0.5 + 0.5 * dot(normalize(-v.xz), normalize(uTrueSun.xz + vec2(1e-6))), 4.0);
+  vec3 shaded = mix(albedo, CROP_SHADE * (0.72 + 0.56 * mottle), over);
+  vec3 color = albedo * uSunColor * sunOnLand(vWorld) * (ndl * shade + through) * mix(1.0, toward, over) + shaded * landAmbient(n, vWorld) * nook;
+  outColor = landFinish(color, vWorld + vec3(0.0, uLandCropTopM * crop * (1.0 - wood), 0.0), vDepth);
 }
 `
 

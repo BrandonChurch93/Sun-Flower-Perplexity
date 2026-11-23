@@ -1,7 +1,10 @@
+import * as THREE from 'three'
+import { eyeOf } from '../director/pose.ts'
 import { blankMoment, momentAt } from '../v2/now.ts'
+import { rigAtFilm } from '../v2/rig.ts'
 import { LAND_FROM_M, LAND_TO_M, cellAt, fromFields, landAt, plantedAt, toFields } from './land.ts'
 import { terrainGeometry, woodMapMegabytes } from './terrain.ts'
-import { atlasMegabytes, makeTrees } from './trees.ts'
+import { atlasMegabytes, makeTrees, plantList } from './trees.ts'
 import { pathToFileURL } from 'node:url'
 
 // Run with: npx tsx src/place/check.ts, or call checkPlace() from a test and expect every rule to be ok.
@@ -10,19 +13,43 @@ export interface Rule { name: string; ok: boolean; detail: string }
 const RAD = Math.PI / 180
 const at = { height: 0, wood: 0, hill: 0 }
 
-let skylineWood = 0
-
 function skylineDeg(azDeg: number): number {
   let best = -90
   for (let r = LAND_FROM_M + 6; r < LAND_TO_M; r *= 1.015) {
     landAt(Math.sin(azDeg * RAD) * r, Math.cos(azDeg * RAD) * r, at)
     const e = Math.atan2(at.height, r) / RAD
-    if (e > best) {
-      best = e
-      skylineWood = at.wood
-    }
+    if (e > best) best = e
   }
   return best
+}
+
+// The land's top and the tallest tree's top on one bearing, in degrees over the level, as the film's lens sees them on one bar.
+const lens = new THREE.Vector3()
+function fromLens(bar: number, azDeg: number, trees: ReturnType<typeof plantList>): { land: number; wood: number; card: number } {
+  eyeOf(rigAtFilm(((bar - 0.48) * 12) / 7), lens)
+  const dx = Math.sin(azDeg * RAD)
+  const dz = Math.cos(azDeg * RAD)
+  const seen = { land: -90, wood: 0, card: -90 }
+  for (let r = 80; r < LAND_TO_M - 20; r += 8) {
+    const x = lens.x + dx * r
+    const z = lens.z + dz * r
+    if (Math.hypot(x, z) < LAND_FROM_M + 6) continue
+    landAt(x, z, at)
+    const e = Math.atan2(at.height - lens.y, r) / RAD
+    if (e > seen.land) {
+      seen.land = e
+      seen.wood = at.wood
+    }
+  }
+  for (const t of trees) {
+    const x = t.x - lens.x
+    const z = t.z - lens.z
+    const r = Math.hypot(x, z)
+    const off = Math.abs((((Math.atan2(x, z) / RAD - azDeg) % 360) + 540) % 360 - 180)
+    if (off > 0.25 + Math.atan2(0.3 * t.w, r) / RAD) continue
+    seen.card = Math.max(seen.card, Math.atan2(t.y + 0.96 * t.h - lens.y, r) / RAD)
+  }
+  return seen
 }
 
 // The sun rises over low land and sets on the low wooded line of the ridge. The ridge is one long low line that wanders, with one hill at the left of the storm's frame.
@@ -33,19 +60,25 @@ export function checkPlace(): Rule[] {
   }
   const moment = blankMoment()
   let morning = 0
-  let evening = 0
-  let eveningLow = 90
-  let eveningWood = 1
   for (let s = 0; s <= 127; s += 0.25) {
     momentAt(s, moment)
     if (moment.sunElevationDeg < -1 || moment.sunElevationDeg > 2.5) continue
     const az = (Math.atan2(moment.sun.x, moment.sun.z) / RAD + 360) % 360
     if (az < 190) morning = Math.max(morning, skylineDeg(az))
-    if (az > 220) {
-      const e = skylineDeg(az)
-      evening = Math.max(evening, e)
-      eveningLow = Math.min(eveningLow, e)
-      eveningWood = Math.min(eveningWood, skylineWood)
+  }
+  // The last sun stands on the ridge: from the crane's lens the line is 0.75 degrees up for three degrees either side of bearing 226, wooded, and no tree stands over it.
+  const trees = plantList()
+  let evening = 0
+  let eveningLow = 90
+  let eveningWood = 1
+  let eveningCard = -90
+  for (const bar of [73, 74.5]) {
+    for (let az = 223; az <= 229; az += 0.25) {
+      const seen = fromLens(bar, az, trees)
+      evening = Math.max(evening, seen.land)
+      eveningLow = Math.min(eveningLow, seen.land)
+      eveningWood = Math.min(eveningWood, seen.wood)
+      eveningCard = Math.max(eveningCard, seen.card - seen.land)
     }
   }
   const line: number[] = []
@@ -66,7 +99,7 @@ export function checkPlace(): Rule[] {
     flattest = Math.min(flattest, Math.max(...span) - Math.min(...span))
   }
   rule('the mornings', morning < 0.95, `the land under the rising sun stands ${morning.toFixed(2)} degrees at most`)
-  rule('the last evening', eveningLow > 0.5 && evening < 0.8 && eveningWood > 0.5, `the line the last sun sets on stands ${eveningLow.toFixed(2)} to ${evening.toFixed(2)} degrees and is wooded (${eveningWood.toFixed(2)})`)
+  rule('the last evening', eveningLow > 0.7 && evening < 0.8 && eveningWood > 0.5 && eveningCard < 0, `from the crane's lens at bars 73 and 74.5 the line the last sun stands on is ${eveningLow.toFixed(3)} to ${evening.toFixed(3)} degrees up from bearing 223 to 229, wooded (${eveningWood.toFixed(2)}), the tallest tree ${(-eveningCard).toFixed(3)} degrees under it`)
   rule('one long low line', lineLow > 0.7 && lineHigh < 1.7, `beside the hill the ridge stands ${lineLow.toFixed(2)} to ${lineHigh.toFixed(2)} degrees from bearing 190 to 240`)
   rule('the hill at the left of the storm', hill > 1.8 && hill < 2.3, `it stands ${hill.toFixed(2)} degrees`)
   rule('a line that wanders', flattest > 0.08, `over any 10 degrees of bearing from 165 to 245 the skyline moves by ${flattest.toFixed(2)} degrees or more`)
