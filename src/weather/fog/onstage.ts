@@ -34,13 +34,13 @@ class Banks implements Part {
       const r = NEAR_M * Math.exp(step * i)
       const far = i / (count - 1)
       // A bank is deeper the farther off it lies: seen from the soil its top stands a degree or two over the horizon.
-      const height = (0.1 + 0.011 * r) * lerp(1, 1.9, air.lifted)
+      const height = (0.14 + 0.017 * r) * lerp(1, 1.9, air.lifted)
       const last = i === count - 1
       s.place.set(r, last ? r * 0.6 : height * 6, -1, 0)
       s.high.set(last ? 0.75 * air.amount * lerp(1, 0.5, air.lifted) : 0, 0.16)
       s.center.set(0, 0)
-      s.air.set(r * (Math.exp(step) - 1), height, lerp(0.16, 0.05, far) * air.amount * lerp(1, 0.45, air.lifted), lerp(5, 40, far))
-      s.look.set(lerp(0.75, 0.5, far), air.glow, air.shafts, (last ? 0.9 : 0.12) * air.glow)
+      s.air.set(r * (Math.exp(step) - 1), height, lerp(0.3, 0.08, far) * air.amount * lerp(1, 0.45, air.lifted), lerp(5, 40, far))
+      s.look.set(lerp(0.75, 0.5, far), air.glow, last ? 0 : air.shafts, (last ? 4 : 0.2) * air.glow)
       s.mesh.renderOrder = ORDER + (count - i) * 0.1
     }
   }

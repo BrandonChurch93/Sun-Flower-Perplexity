@@ -3,6 +3,7 @@ import { fieldUniforms, makePartSurface, partMesh, stateUniforms, type PartOptio
 import { shared, type Surface } from '../../core/shading.ts'
 import { windToward } from '../../plant/wind.ts'
 import { ball } from '../../plant/hairs/index.ts'
+import { config } from '../../config.ts'
 
 // Crystals are see-through at their edges and are drawn after the bodies they grow on and before the hairs (20).
 export const CRYSTAL_ORDER = 18
@@ -10,6 +11,7 @@ export const CRYSTAL_ORDER = 18
 const ROW = 512
 const NEEDLES = 5
 const REGATHER_M = 0.03
+const SHUTTER_SECONDS = config.film.shutterDegrees / 360 / config.film.fps
 const fract = (x: number): number => x - Math.floor(x)
 
 // A crystal of hoarfrost is a few flat needles of ice. Each needle is one facet: matt white from most sides, a hard flash from the one side where it mirrors the sun.
@@ -19,6 +21,7 @@ uniform float uPlantFrost;
 uniform float uPlantDew;
 uniform float uPlantHeight;
 uniform float uMelts;
+uniform float uDewToo;
 out vec3 vWorld;
 out vec3 vLitAt;
 out float vDepth;
@@ -41,7 +44,10 @@ const float SKY = 1.6;
 const vec3 AIR_FROM = vec3(${(-windToward.x).toFixed(4)}, 0.0, ${(-windToward.z).toFixed(4)});
 // Of the crystals that melt, the share whose water is seen as a bead, and of those the share that take the water of their neighbors, grow heavy and fall.
 const float BEAD_SHARE = 0.34;
-const float HEAVY_SHARE = 0.16;
+const float HEAVY_SHARE = 0.07;
+// And the share that stay where they formed, as the dew of the morning: many fine and a few big.
+const float STAY_SHARE = 0.45;
+const float BIG_SHARE = 0.08;
 // The film seconds one whole thaw takes, for the fall of a drop.
 const float THAW_S = 4.5;
 const float NEEDLE_PX = 0.7;
@@ -162,10 +168,14 @@ void main() {
   float pick = hash(own, 19.0) / BEAD_SHARE;
   if (needle == 4 && melt > 0.0 && pick < 1.0) {
     bool heavy = pick < HEAVY_SHARE;
+    bool stays = pick > 1.0 - STAY_SHARE;
+    float h21 = hash(own, 21.0);
     float fed = smoothstep(turn6 + 0.2, turn6 + 0.45, thaw);
-    float lets = turn6 + 0.5 + 0.12 * hash(own, 20.0);
-    float fallen = heavy ? max(thaw - lets, 0.0) * THAW_S : 0.0;
-    float radius = (heavy ? (0.00055 + 0.0004 * hash(own, 21.0)) * (0.55 + 0.45 * fed) : (0.0002 + 0.00028 * hash(own, 21.0)) * (1.0 - fed)) * plantSize() * melt * smoothstep(0.0, 0.15, uPlantFrost);
+    float lets = 0.3 + 0.6 * turn6 + 0.1 * hash(own, 20.0);
+    float fallen = heavy && thaw > lets ? (thaw - lets) * THAW_S + uShutter * ${SHUTTER_SECONDS.toFixed(6)} : 0.0;
+    float radius = heavy ? (0.00055 + 0.0004 * h21) * (0.55 + 0.45 * fed) : stays ? (hash(own, 25.0) < BIG_SHARE ? 0.0005 + 0.0004 * h21 : 0.00014 + 0.0002 * h21) : (0.0002 + 0.00028 * h21) * (1.0 - fed);
+    // A wearer that goes on wearing its set in the dew keeps the beads that stay. One that puts the set away with the frost loses them as the frost goes.
+    radius *= plantSize() * melt * (stays ? mix(smoothstep(0.0, 0.15, uPlantFrost), smoothstep(0.0, 0.5, uPlantDew), uDewToo) : smoothstep(0.0, 0.15, uPlantFrost));
     float hangs = heavy ? smoothstep(lets - 0.2, lets, thaw) : 0.0;
     vec3 center = root - vec3(0.0, radius * (0.7 + 0.9 * hangs) + 4.905 * fallen * fallen, 0.0);
     if (center.y < 0.0) radius = 0.0;
@@ -235,7 +245,7 @@ export class CrystalSet {
   private readonly seen = new THREE.Vector3()
   private readonly clip = new THREE.Matrix4()
 
-  constructor(options: PartOptions, readonly count: number, name: string, melts = true) {
+  constructor(options: PartOptions, readonly count: number, name: string, melts = true, private readonly dewToo = false) {
     if (options.places) throw new Error('crystals are worn by the plant, the companion and the ground only')
     this.shown = count
     this.roots = [new Float32Array(count * 4), new Float32Array(count * 4)]
@@ -254,7 +264,7 @@ export class CrystalSet {
       index.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], k * 6)
     }
     this.geometry.setIndex(new THREE.BufferAttribute(index, 1))
-    const uniforms = { uCrystals: { value: this.texture }, uPlantHeight: fieldUniforms.uPlantHeight, uMelts: { value: melts ? 1 : 0 } }
+    const uniforms = { uCrystals: { value: this.texture }, uPlantHeight: fieldUniforms.uPlantHeight, uMelts: { value: melts ? 1 : 0 }, uDewToo: { value: dewToo ? 1 : 0 } }
     this.surface = makePartSurface(options, { name, vertex: crystal, fragment, side: THREE.DoubleSide, transparent: true, castShadow: false, uniforms })
     const sharp = makePartSurface(options, { name: `${name} blur circle`, vertex: crystal, fragment: `#define BLUR_CIRCLE 1\n${fragment}`, side: THREE.DoubleSide, transparent: true, cocOnly: true, castShadow: false, uniforms })
     const drawn = partMesh(this.geometry, this.surface)
@@ -327,8 +337,8 @@ export class CrystalSet {
   }
 
   private choose(camera: THREE.Camera, object: THREE.Object3D): void {
-    const frost = stateUniforms.uPlantFrost.value
-    if (frost <= 0 || shared.uDiag.value >= 4) {
+    const worn = stateUniforms.uPlantFrost.value > 0 || (this.dewToo && stateUniforms.uPlantDew.value > 0)
+    if (!worn || shared.uDiag.value >= 4) {
       this.geometry.setDrawRange(0, 0)
       return
     }
@@ -358,7 +368,7 @@ export class CrystalSet {
   }
 }
 
-// A wearer whose crystals outlast the frost (the bud, the ground) passes melts as false.
-export function createCrystals(options: PartOptions, count: number, name: string, melts = true): CrystalSet | null {
-  return options.places || count <= 0 ? null : new CrystalSet(options, count, name, melts)
+// A wearer whose crystals outlast the frost (the bud, the ground) passes melts as false. One that fills its set whenever there is frost or dew, and not in frost alone, passes dewToo as true and keeps the beads of the thaw as its dew.
+export function createCrystals(options: PartOptions, count: number, name: string, melts = true, dewToo = false): CrystalSet | null {
+  return options.places || count <= 0 ? null : new CrystalSet(options, count, name, melts, dewToo)
 }

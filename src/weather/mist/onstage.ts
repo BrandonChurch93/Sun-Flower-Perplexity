@@ -8,9 +8,9 @@ const MOST = 12
 const NEAR_M = 0.24
 const FAR_M = 14
 const BEHIND_M = 0.12
-const HEIGHT_M = 0.085
+const HEIGHT_M = 0.1
 const HEIGHT_LIFTED_M = 0.34
-const PER_M = 0.5
+const PER_M = 0.85
 const PER_M_LIFTED = 0.1
 const BANK_M = 1.5
 // Before the hairs and crystals of the plant (18 to 21), and after them.

@@ -79,7 +79,7 @@ void main() {
   vec3 air = 0.62 * uSkyHorizon + 0.42 * uSkyZenith;
   air = mix(air, vec3(dot(air, vec3(0.2126, 0.7152, 0.0722))), 0.6) * 1.08;
   vec3 warm = max(uSkyHorizonSun - uSkyHorizon, vec3(0.0));
-  vec3 color = air + (warm * (uLook.y * wide) + uSunColor * (uLook.w * (exp(-theta / 0.035) + 0.35 * exp(-theta / 0.16)))) * max(shafts, 0.0);
+  vec3 color = air + (warm * (uLook.y * wide) + uSunColor * (uLook.w * (exp(-theta / 0.05) + 0.4 * exp(-theta / 0.2)))) * max(shafts, 0.0);
   // The top of a bank sees the whole sky and its foot only the bank above it.
   color *= 0.82 + 0.3 * saturate(lift);
   outColor = vec4(color, alpha);
