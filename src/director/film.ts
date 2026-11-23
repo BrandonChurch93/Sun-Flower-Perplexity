@@ -135,22 +135,26 @@ export class Film {
         const { renderer } = this.stage
         const of = 5 + this.parts.length
         let done = 0
-        const step = (what: string): void => onStep?.(++done, of, what)
+        // After each part the page gets a turn, so the loading screen can paint the step.
+        const step = async (what: string): Promise<void> => {
+          onStep?.(++done, of, what)
+          await breathe()
+        }
         await this.ground.load(this.assets)
-        step('ground')
+        await step('ground')
         await this.plant.load(this.assets)
-        step('plant')
+        await step('plant')
         await this.companion.load(this.assets)
-        step('companion')
+        await step('companion')
         await this.field.load(this.assets)
-        step('field')
+        await step('field')
         const module = await skyModules[`../${this.skyName}/index.ts`]()
         this.sky = module.make()
         await this.sky.load(renderer, this.assets)
-        step('sky')
+        await step('sky')
         for (const { name, part } of this.parts) {
           await part.load?.(renderer, this.assets)
-          step(name)
+          await step(name)
         }
         const total = this.assets.megabytes() + this.sky.megabytes()
         if (total > this.assets.limitMb()) throw new Error(`the ${this.assets.set} asset set needs ${total.toFixed(0)} MB of textures, over its limit`)

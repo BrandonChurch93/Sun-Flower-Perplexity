@@ -13,12 +13,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Last push: `18743d8` to `v2`, 2026-11-23 03:16 UTC
-- Last status: 08 · 2026-11-23 03:15 UTC · Phase 2
+- Last status: 09 · 2026-11-23 03:47 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 03:47 UTC · status 09 · Phase 3 · `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain); `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain); `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft); `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
 - 2026-11-23 03:15 UTC · status 08 · Phase 2 · `status-1.jpg`: The storm: reference, an hour ago, now (draft tier); `status-2.jpg`: Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; `status-3.jpg`: One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; `status-4.jpg`: Frost hold: reference left, the film right (review tier)
 - 2026-11-23 02:38 UTC · status 07 · Phase 2 · `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier); `status-2.jpg`: Sky candidate A in the jury's ten film frames; `status-3.jpg`: Sky candidate C in the jury's ten film frames; `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
 - 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
@@ -37,11 +38,11 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
 | 2 | 3.50 h | 3.88 h |
-| 3 | 9.00 h | 0.06 h |
+| 3 | 9.00 h | 0.53 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 5.32 h |
+| Whole build | 30.00 h | 5.79 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -207,3 +208,6 @@ None yet.
 - Status 08, 2026-11-23 03:15 UTC, Phase 2. The sky is chosen: three blind critics all ranked candidate B first, and it is now the film's sky. The storm hold was the weakest picture, so the plant now stands at 61 cm there (was 90 cm) with the lens closer, as in the reference. The moon no longer lights the leaves brighter at midnight than at dusk. Rain, frost, player, checks and plant merged; 168 tests pass. Next: Phase 3, look lock: every builder has its notes against the references (storm sky, break, suns, rain on the leaves, wet soil, frost glow, field at the crane). A first whole watch of the film at two frames a second is being drawn. Time used: 5.3 h of 30 h.
   Pictures: The storm: reference, an hour ago, now (draft tier); Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; Frost hold: reference left, the film right (review tier).
 - 2026-11-23 02:38 to 03:18 UTC. Jury, sky B chosen and moved to `src/sky/`. Moon light fixed and measured. Rain, frost and the sky's first storm patch merged. The storm hold moved to a 61 cm plant with a closer lens (`81e961b`). Phase 2 closed, phase 3 opened.
+- Status 09, 2026-11-23 03:47 UTC, Phase 3. First whole watch read against the nine keys. The deck now stays over the break and the sun lights through its tear, the frost hold has a lower sun, the crane ends closer, the film ends 3 degrees after sunset. A new counter measures the page's own time in a frame by part: 70 to 210 ms where the plant grows against a budget of 33 ms, so growth moves into the shaders next. Next: round notes to every owner from the watch, the processor work in plant, field and rain, the new night sky wired in, then the whole film in parts. Time used: 5.8 h of 30 h.
+  Pictures: Break at bar 41.25: key left, film right (draft, before the newest rain); Storm hold at bar 35: key left, film right (draft, before the newest rain); Bloom at bar 61: approved reference left, film right (draft); Last bars at bar 73 with the closer crane: key left, film right (draft).
+
