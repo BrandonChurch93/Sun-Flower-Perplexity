@@ -126,7 +126,6 @@ export class Ground {
     }
     const add = (mesh: THREE.Mesh, surface: Surface, casts: boolean): void => {
       mesh.material = surface.main
-      mesh.frustumCulled = false
       this.mesh.add(mesh)
       if (casts) this.cast.push({ mesh, surface })
     }
