@@ -183,6 +183,8 @@ void main() {
   // The skin's states stand thickest at the margin, the tip and along the veins.
   float brim = max(max(smoothstep(0.55, 1.0, abs(vUv.x)), smoothstep(0.85, 1.0, vUv.y)), 0.7 * vein.r);
   frostAlong = vUv.y;
+  frostAcross = abs(vUv.x);
+  frostVein = thick;
   vec4 shaded = finish(shadeTissueAt(t, vWorld, view, vPlane, brim), vWorld, vDepth, texels);
   // A hole is cut last: a slope taken across pixels is not defined once a neighbor of the pixel has been thrown away.
   if (hole > 0.0 || tear > 0.0) discard;
