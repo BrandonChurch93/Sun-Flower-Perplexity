@@ -10,6 +10,8 @@ import { openSession, TRACED } from './lib/session.ts'
 import { startTracing, stopTracing, type MadeThing } from './lib/tracer.ts'
 
 const SENTENCE = 'nothing may be created on the graphics card after loading'
+// What the film's counter counts as made: the same list its own verdict sums (src/v2/counter.ts). What is written into things that exist is not in it.
+const OBJECTS = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads', 'vertexArrays']
 
 // Names what a frame makes on the graphics card and who makes it. The page is built with its names kept and a map back to the sources,
 // every call that makes an object is noted with its stack, and the stack is read back to the film's own files: the nearest one is the maker.
@@ -115,7 +117,7 @@ export async function run(args: Args): Promise<void> {
       const made = await session.page.evaluate(stopTracing)
       drawn++
       const count: Record<string, number> = {}
-      for (const [k, v] of Object.entries(d.made as unknown as Record<string, number>)) if (v > 0 && !/^update/.test(k)) count[k] = v
+      for (const [k, v] of Object.entries(d.made as unknown as Record<string, number>)) if (v > 0 && OBJECTS.includes(k)) count[k] = v
       if (cold && f === from) loading = made
       else if (made.length || Object.keys(count).length) {
         counted.set(f, count)
