@@ -595,9 +595,9 @@ export function leafLift(i: number, time: number, inputs: PlantInputs): number {
   return lerp(inputs.lift, low, down)
 }
 
-// From the thaw until it blooms the plant stands open, 0 to 1: its older leaves settle less far, hang less in the dark and their blades fall less from their stalks.
+// From the thaw on the plant stands open, 0 to 1: its older leaves settle less far, hang less in the dark and their blades fall less from their stalks. A neighbor, staged for the bloom's frames, closes before it blooms.
 export function leafOpen(time: number): number {
-  return smoothstep(config.growth.frostHold + 0.1, LEAFY_S + 2, time) * (1 - smoothstep(STOUT_S, BLOOM_S, time))
+  return smoothstep(config.growth.frostHold + 0.1, LEAFY_S + 2, time) * (variant === 0 ? 1 : 1 - smoothstep(STOUT_S, BLOOM_S, time))
 }
 
 // How far the open plant holds a blade above where it would have settled, in radians, and how much less it droops along its length.
