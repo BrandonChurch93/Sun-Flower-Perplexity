@@ -72,6 +72,8 @@ export class Post {
   private nearTarget: THREE.WebGLRenderTarget | null = null
   private quality: Quality | null = null
   private held = false
+  // For the bench: `nolens` in the list of what is shown leaves the glass out (bloom, the sun in the lens, shafts), so a frame can be seen with and without it.
+  private readonly bare = typeof location !== 'undefined' && (new URLSearchParams(location.search).get('only') ?? '').split(',').includes('nolens')
   private warmed = false
   private readonly look: LensLook = blankLens()
   private readonly sunTarget = halfTarget(2, 2)
@@ -305,6 +307,7 @@ export class Post {
       const toSun = shared.uSkyHorizonSun.value
       const skyLevel = Math.max(lum([toSun.x, toSun.y, toSun.z]) * grade.exposure, 1e-4)
       const bloom = this.scatter(renderer, source, grade, skyLevel)
+      if (this.bare) look.sun[0] = look.sun[1] = look.sun[2] = 0
       const light = lum(look.sun)
       const at = sun ?? { x: 0.5, y: 0.5, weight: 0, farCircle: 0 }
       const disc = at.disc ?? 0.005
@@ -327,7 +330,7 @@ export class Post {
       g.tShafts.value = shafts
       g.tOpen.value = this.down[OPEN_LEVEL].texture
       g.tSun.value = this.sunTarget.texture
-      g.uBloom.value = grade.bloom * look.bloom
+      g.uBloom.value = this.bare ? 0 : grade.bloom * look.bloom
       g.uExposure.value = grade.exposure
       g.uGain.value.fromArray(grade.gain)
       g.uLift.value.fromArray(grade.lift)

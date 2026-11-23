@@ -98,7 +98,9 @@ vec3 sunGlare(vec2 px) {
   glow += uMist * (0.3 * exp(-r / 0.03) + 0.07 * exp(-r / 0.09)) + uWarm * (0.1 * exp(-r / 0.045) + 0.03 * exp(-r / 0.2));
   float veil = uVeilSun * (0.003 + 0.006 * uHaze) * (0.35 + 0.65 * exp(-r / 0.5));
   vec3 air = mix(uSunLight, peak * uSunAir, 0.3);
-  vec3 glass = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm) * (uSunHot * core * seen.a * (1.0 - 0.7 * uFan)) + air * ((glow + veil) * seen.r);
+  vec3 glass = mix(uSunLight, vec3(peak), 0.5 - 0.3 * uWarm) * (uSunHot * core * seen.a) + air * ((glow + veil) * seen.r);
+  // Under a deck that has just torn the sun is the tear itself, ragged and already in the sky's picture: the glass adds no disc and no veil of its own there, only the beams.
+  glass *= 1.0 - smoothstep(0.0, 0.35, uFan);
   float open = texture(tShafts, vUv).r;
   // Under a deck that has just torn the beams start where the tear is brightest, and they stand in the air behind the plant: what is in focus in front of them takes almost none.
   vec2 off = away - uFan * texelFetch(tSun, ivec2(1, 0), 0).xy;
