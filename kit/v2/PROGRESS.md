@@ -31,12 +31,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 1.47 h |
+| 2 | 3.50 h | 1.69 h |
 | 3 | 9.00 h | 0.00 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 2.85 h |
+| Whole build | 30.00 h | 3.07 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -112,6 +112,10 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 00:46 UTC. The neighbours of the field are to stay at 35 to 45 percent of the hero through the climb and the storm and below the camera's eye level through the ascent, so that the far land and every sunrise are seen over them; full size at the bloom.
 - 2026-11-23 00:46 UTC. `kit/v2/briefs/CHANGES.md` is the one place where agents read what changed on `v2` after their brief. The ground agent pushes to `agent/ground-v2` (the name `agent/ground` is version 1's). The player agent also owns `src/player/`, `tests/modes.test.ts` and `tests/player*.test.ts`. The field agent's change to `tests/field.test.ts` is accepted.
 - 2026-11-23 00:50 UTC. Sky candidate A reported (`agent/sky-a` at `b03c5f0`): the atmosphere, disc, stars and moon are there, the clouds are dark unlit masses and the storm is flat. Sent back with six points. Candidate B reported complete at `337380f` and is sent a second round for the new nights and its smooth storm. Candidate C has not reported.
+- 2026-11-23 00:53 UTC. The three sky candidates are merged into their own folders on `v2` (`src/sky-a/`, `src/sky-b/`, `src/sky-c/`) so that one bench draws all three in the film's own frames. The two that lose are removed at cleanup.
+- 2026-11-23 00:56 UTC. The cue sheet is written in bars and beats (`config/music/cues.json`, table in `kit/v2/CUES.md`): 43 cues, none off the map. The film is written down in words in `kit/v2/FILM.md`. The slow sunsets of the first sixteen bars fall up to a tenth of a second before a beat and carry no cue.
+- 2026-11-23 01:03 UTC. The look sets how bright the light lands on the plant and the sky gives its colour (`src/v2/look.ts`). With the sky's own levels a low sun was a weak lamp beside its sky and the storm had no key at all: the plant stood as a cut-out. Now the key has a level on screen by the sun's height, a closed deck still gives a soft key from its bright gap, lightning swings the key to the strike, and the fill follows the sun's height.
+- 2026-11-23 01:08 UTC. The place, the ground, the field, the plant, the rain, the frost and the lens are merged into `v2` as they stand after their first round of notes, so that every part is judged in one picture from now on. The frame's quality is passed to the ground, the field and the lens.
 
 ## Notes from Brandon
 
@@ -119,10 +123,9 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-- The camera of the scaffold is version 1's path on the plant's clock: it stands still in the two holds. The film time path comes with the blockout.
-- The stand-in sky (`src/sky-0/`) has no clouds and no stars.
-- The plant's sway still runs on the plant's clock and so stops in a hold.
-- Version 1's rain, frost and night stages are no longer drawn. Their folders stay until the new parts replace them.
+- The sky is not chosen: three candidates, judged blind once all three have reported.
+- The storm foreground, the neighbours' height and the leaf highlights are being reworked by their owners.
+- Version 1's folders that nothing draws any more stay until the cleanup.
 
 ## Running jobs
 

@@ -256,6 +256,9 @@ export class Film {
     shared.uWorldTime.value = now.world
     shared.uDiag.value = DIAG[this.diag]
     shared.uSkyHorizonSun.value.fromArray(this.skyLight.horizonSun)
+    const quality: Quality = this.quality ?? (count > 1 ? 'film' : 'high')
+    this.ground.setQuality(quality)
+    this.post.setQuality(quality)
     this.ground.setState(def.ground, smoothstep(0.25, 1.1, heightAt(tau)))
     this.ground.show(!alone && this.shows('ground'))
     stateUniforms.uPlantWet.value = def.ground.plantWet ?? def.ground.wet
@@ -288,10 +291,9 @@ export class Film {
     const fieldOn = !alone && this.shows('field')
     if (fieldOn) {
       this.field.prepare(tau, tauClose, inputs, inputsClose, heightM)
-      this.field.look(first, tanX, stage.width / stage.height)
+      this.field.look(first, tanX, stage.width / stage.height, quality)
     }
     this.field.show(fieldOn)
-    const quality: Quality = this.quality ?? (count > 1 ? 'film' : 'high')
     const view: View = { pose: first, width: stage.width, height: stage.height, quality, samples: count, light: this.skyLight }
     for (const { name, part } of this.parts) {
       if (alone || !this.shows(name)) {
