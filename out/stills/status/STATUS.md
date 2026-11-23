@@ -1,12 +1,12 @@
-# Status 48
+# Status 49
 
-2026-11-23 20:33 UTC
+2026-11-23 20:47 UTC
 
-- Status 48 · Phase 6. Every critic of the record round has answered (17 cards with the replacement of the one that was late; the late one scored 4, its replacement 5, the lower counts) and the jury is complete: FAIL, 16 of 70 against the controls' 38 of 65. Six of the fourteen judged frames are now also drawn at the export look (48 samples a frame, 7 to 12 minutes a frame here). It is plainly cleaner on clouds, leaf edges, hairs and lens blur. One fault found in it: in the rain every drop that is out of focus breaks into a cluster of specks. The rain owner is finding the cause and a cure that leaves the drawn film as it is. The crane and dusk (492 frames in a row): nothing made on the graphics card, no hard cut, no wild pixel.
-- Next: The other eight export look frames, then a second jury on those fourteen. The rain cure on a side branch with proof. The summary of the round. The last two play ranges, then nights, cuts and made for the whole film on the review page. Time used: 22.6 h of 30 h.
-- Review page: not published yet.
+- Status 49 · Phase 6. Round 27 is closed and written up: the jury failed the film 16 of 70 times against 38 of 65 for the controls, and the critics stay under the bar of 9. The private preview was opened in a browser: the film plays and a jump lands on the right frame. Seven frames at 1920 x 1080 hash the same at the head and at the frozen commit. The export look is in for 12 of the 14 judged frames; at that look falling rain breaks into specks, and its owner is building the cure.
+- Next: The rain cure with its proof that the drawn film stays the same to the pixel; the supplement jury on the export look; the holds run again under the new rule; nights, cuts and made over the whole film; the export page proof; the page rebuilt; the wrap. Time used: 22.8 h of 30 h.
+- Review page, private preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 
-- `status-1.jpg`: Frame 1479, the film as drawn here against the export look
-- `status-2.jpg`: Frame 2957, the opening head
-- `status-3.jpg`: Frame 2096 at twice size: rain breaks into specks at the export look (a fault, being cured)
-- `status-4.jpg`: Frame 3755, the last frame
+- `status-1.jpg`: Frame 3112, the open flower: the film as drawn here against the export look
+- `status-2.jpg`: Frame 60, the sprout: the film as drawn here against the export look
+- `status-3.jpg`: Frame 2880, the bud before the bloom: the film as drawn here against the export look
+- `status-4.jpg`: The private preview open in a browser, the film at frame 3000
