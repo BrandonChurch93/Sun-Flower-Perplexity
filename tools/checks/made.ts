@@ -1,10 +1,14 @@
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
 import { nothingMade, type Made } from '../../src/v2/counter.ts'
 import type { Args } from '../lib/args.ts'
-import { num } from '../lib/args.ts'
+import { flag, num } from '../lib/args.ts'
+import { at } from '../lib/paths.ts'
 import { barText, FRAMES, holds, secondsOf } from './lib/film.ts'
 import { olderFilm, readLines, readStamp, runName } from './lib/play.ts'
 import { strideFrames } from './lib/stride.ts'
-import { finish, type Finding } from './lib/report.ts'
+import { finish, OUT, type Finding } from './lib/report.ts'
 
 const SENTENCE = "whenever there's a scene change we have a huge frame rate drop ... we need to make sure that doesn't happen"
 const NAMES: Partial<Record<keyof Made, string>> = { vertexArrays: 'vertex arrays' }
@@ -15,6 +19,46 @@ const KINDS: (keyof Made)[] = ['programs', 'shaders', 'textures', 'buffers', 'fr
 // the Builder's goal is 12 MB a frame. The check called writes says whose the bytes are.
 // It is a goal and is reported, not a rule: `--hold-mb 12 --strict` makes it one.
 const HOLD_MB = 12
+
+// For a vertex array or a program, the Builder's tool draws the frame again on a page of its own after the film's warming and names the program it was made for and the first draw with it.
+// Uniforms every program has say nothing about which one it is and are left out.
+const WHERE_MOST = 6
+const COMMON = new Set(['modelMatrix', 'modelViewMatrix', 'projectionMatrix', 'viewMatrix', 'normalMatrix', 'cameraPosition', 'isOrthographic', 'toneMappingExposure'])
+interface Where { attributes: string[]; uniforms: string[]; draw: string }
+
+function madeWhere(frames: number[]): Map<number, Where[]> {
+  const out = new Map<number, Where[]>()
+  const dir = path.join(OUT, 'made-where')
+  fs.rmSync(dir, { recursive: true, force: true })
+  fs.mkdirSync(dir, { recursive: true })
+  const r = spawnSync(process.execPath, ['--import', 'tsx', at('tools', 'made-where.mts'), frames.join(','), path.join(dir, 'made')], { cwd: at(), encoding: 'utf8', maxBuffer: 64 * 1048576 })
+  fs.writeFileSync(path.join(dir, 'log.txt'), `${r.stdout ?? ''}\n${r.stderr ?? ''}`)
+  let frame = -1
+  let last: Where | null = null
+  for (const text of (r.stdout ?? '').split('\n')) {
+    const head = /^frame (\d+) · vertex arrays made (\d+)/.exec(text)
+    if (head) {
+      frame = Number(head[1])
+      out.set(frame, [])
+      continue
+    }
+    const line = text.trim()
+    if (frame < 0) continue
+    if (line.startsWith('attributes')) {
+      last = { attributes: line.split(' ').slice(1).filter(Boolean), uniforms: [], draw: '' }
+      out.get(frame)!.push(last)
+    } else if (last && line.startsWith('uniforms')) last.uniforms = line.split(' ').slice(1).filter((u) => u && !COMMON.has(u))
+    else if (last && line.startsWith('first draw')) {
+      try {
+        const draws = JSON.parse(line.slice('first draw'.length)) as { name: string; args: number[] }[]
+        last.draw = draws.length ? `${draws[0].name}(${draws[0].args.join(', ')})` : 'never drawn in that frame'
+      } catch {
+        last.draw = line
+      }
+    }
+  }
+  return out
+}
 
 // Reads what `play` noted on every frame it drew after loading and warming, and fails if any frame made anything, and says what each frame of a hold wrote against the goal.
 export async function run(args: Args): Promise<void> {
@@ -65,6 +109,20 @@ export async function run(args: Args): Promise<void> {
   if (have === 0) findings.push({ ok: false, what: `no frame of "${run}" has been drawn yet: run "npm run checks -- play" first` })
   else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer, renderbuffer or vertex array was created and nothing was given new storage on any of them` })
   else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}. By kind: ${[...byKind].map(([k, v]) => `${named(k, v.count)} in ${v.frames} ${v.frames === 1 ? 'frame' : 'frames'}, first at frame ${v.first}`).join('; ')}. A vertex array made after loading means something was drawn for the first time while the film runs` })
+  const shaped = guilty.filter((f) => (lines.get(f)!.made.vertexArrays ?? 0) > 0 || lines.get(f)!.made.programs > 0)
+  let where: Record<string, Where[]> = {}
+  if (shaped.length && !broken && !flag(args, 'no-where')) {
+    const asked = shaped.slice(0, WHERE_MOST)
+    const found = madeWhere(asked)
+    where = Object.fromEntries(found)
+    for (const f of asked) {
+      const list = found.get(f)
+      if (!list) findings.push({ ok: true, expected: true, what: `frame ${f}: tools/made-where.mts did not get to it (out/work/checks/made-where/log.txt)` })
+      else if (list.length === 0) findings.push({ ok: true, expected: true, what: `frame ${f}: drawn again alone after the film's warming it makes no vertex array, so what it made in the film's own order depends on the frames drawn before it` })
+      else for (const w of list) findings.push({ ok: false, what: `frame ${f}: a vertex array for the program with attributes ${w.attributes.join(' ')} and uniforms ${w.uniforms.slice(0, 14).join(' ')}${w.uniforms.length > 14 ? ` and ${w.uniforms.length - 14} more` : ''}; first drawn with ${w.draw}. Its shaders and the call stack are in out/work/checks/made-where/` })
+    }
+    if (shaped.length > asked.length) findings.push({ ok: true, expected: true, what: `tools/made-where.mts was asked about the first ${asked.length} of ${shaped.length} frames that made a vertex array or a program` })
+  }
   if (uncounted > 0) findings.push({ ok: true, expected: true, what: `${uncounted} of ${have} frames were drawn before vertex arrays were counted: draw them again` })
   if (have > 0) findings.push({ ok: true, what: `allowed, and listed for its cost: every frame writes into buffers and textures that already exist, ${(updates / have).toFixed(0)} writes and ${(updateBytes / have / 1048576).toFixed(1)} MB a frame on average, the most ${(mostBytes / 1048576).toFixed(1)} MB at frame ${mostAt}${bufferBytes + textureBytes > 0 ? ` (${(bufferBytes / have / 1048576).toFixed(1)} MB into buffers, ${(textureBytes / have / 1048576).toFixed(1)} MB into textures)` : ''}. The megabytes are the film's own count (src/v2/counter.ts), by the bytes that are sent; the check called writes says whose they are` })
   const holdMb = num(args, 'hold-mb', HOLD_MB)
@@ -87,6 +145,6 @@ export async function run(args: Args): Promise<void> {
     complete,
     findings,
     table: rows.length ? { head: ['frame', 'second', 'bar', 'made', 'uploaded', 'where in its run'], rows: rows.slice(0, 60) } : undefined,
-    data: { run, stamp, from, to, frames: have, guilty, byKind: Object.fromEntries(byKind), meanUpdateMb: have ? updateBytes / have / 1048576 : 0, holdMb, held },
+    data: { run, stamp, from, to, frames: have, guilty, where, byKind: Object.fromEntries(byKind), meanUpdateMb: have ? updateBytes / have / 1048576 : 0, holdMb, held },
   })
 }

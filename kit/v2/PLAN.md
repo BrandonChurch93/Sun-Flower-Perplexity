@@ -2,6 +2,14 @@
 
 22 November 2026. Plan only. Nothing in the repository or on the published site has changed (`main` is still `9325cc4`), and version 1 stays live until you approve a swap.
 
+## Changes since approval
+
+23 November 2026, from Brandon's note of that morning (in full in `kit/v2/NOTES-FROM-BRANDON.md`): close shots of the frost, and the camera going in on the bloom and backing out for the last shot. He left the choice between a camera move and hard cuts in the frost part to the Builder and leaned to cuts on the music.
+
+- The frost hold cuts four times, on the downbeats of bars 19, 21, 23 and 25: to three close shots of the frozen seedling and back to the wide shot. These are the only cuts of the film. Where this plan says "no cuts" below, read: no cuts but these four. The first film's cuts changed the world; these change the camera only.
+- The camera goes in on the bud from bar 55, is half a metre from the head when it opens on bar 57, and backs out from bar 65 into the crane over the field.
+- The film as it now stands is in `kit/v2/FILM.md`; the reasons are in `kit/v2/briefs/CHANGES.md` items 14 to 16.
+
 Labels used below: MEASURED means I ran it and a script printed the number. STATED means it comes from you, from a file in the kit or from a web page. UNKNOWN means not tested yet, with what would test it.
 
 Attached with this plan: the timeline picture, a two-minute timing sketch with your track (flat shapes, timing only, not the look), a click track to check the beat grid by ear, and the raw map of the track.

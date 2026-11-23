@@ -177,16 +177,19 @@ void main() {
       vec3 inside = refract(-v, n, 0.75);
       vec3 leaves = refract(inside, 2.0 * dot(n, inside) * inside - n, 1.333);
       alpha = saturate(mirror + 0.92) * vTop;
-      color = mix(seen(leaves), seen(reflect(-v, n)), mirror);
+      // A bead in flight is a lens with the world upside down in it: drawn out along its path it shows the sky it gathers, not the ground.
+      color = mix(seen(vec3(leaves.x, abs(leaves.y), leaves.z)) * 0.7, seen(reflect(-v, n)), mirror);
     } else {
       vec3 round = cross(vec3(0.0, 1.0, 0.0), n);
       n = normalize(n + round * 0.7 * sin(6.2831853 * vFlute) + vec3(0.0, 1.0, 0.0) * (1.0 - vMud) * (0.35 * smoothstep(0.5, 1.0, vTop) + 0.5 * sin(17.0 * vTop + 2.3 * vFlute)));
       float one = mix(0.03, 0.04, vMud) + 0.93 * pow(1.0 - max(dot(n, v), 0.0), mix(5.0, 4.0, vMud));
       float mirror = 2.0 * one / (1.0 + one) * (1.0 - 0.6 * vMud);
       float lip = smoothstep(0.6, 1.0, vTop) * (1.0 - vMud);
-      float silt = mix(1.0 - 0.2 * vTop, 1.0, vMud);
-      vec3 through = mix(seen(refract(-v, n, 0.75)) * (0.1 + 0.15 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.014, 0.012, 0.01), vMud) * skyAmbient(n), silt);
-      alpha = mirror + (1.0 - mirror) * mix(0.75, 0.95, silt);
+      // A crown on water is a thin sheet of it: what stands behind shows through, the puddle with the sky in it, and only its foot carries the mud. On mud the crown is mud.
+      float silt = mix(0.5 - 0.35 * vTop, 1.0, vMud);
+      vec3 behind = refract(-v, n, 0.75);
+      vec3 through = mix(seen(vec3(behind.x, abs(behind.y), behind.z)) * (0.55 + 0.25 * lip), mix(vec3(0.04, 0.034, 0.028), vec3(0.014, 0.012, 0.01), vMud) * skyAmbient(n), silt);
+      alpha = mirror + (1.0 - mirror) * mix(0.3, 0.95, silt);
       color = mix(through, seen(reflect(-v, n)), mirror);
     }
   }
