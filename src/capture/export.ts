@@ -7,7 +7,7 @@ import type { Options } from '../director/modes.ts'
 import { clampFrame, keys, segments } from '../director/timeline.ts'
 import { EXPORT_NOTE, fileOf, readTrack, trackLine, type Track } from '../player/track.ts'
 import css from './export.module.css'
-import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
+import { addSound, checkSound, decodeSound, makeSound, pickSound, SOUND_NEEDS_SECONDS, SOUND_PASS_MS, SOUND_RATE, type SoundCheck, type SoundKind } from './sound.ts'
 import { describe as describeBytes, Store, storeId, undescribe, type StoredChunk } from './store.ts'
 
 declare const __ENGINE_HASH__: string
@@ -652,7 +652,9 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
         const mended = made.mendedMs !== 0 ? ` The encoder had moved the sound by ${made.mendedMs.toFixed(1)} ms. It was encoded again, moved back.` : ''
         soundLine.textContent = soundCheck
           ? `Sound against the track: ${soundCheck.ms >= 0 ? '+' : ''}${soundCheck.ms.toFixed(1)} ms. ${soundCheck.pass ? 'PASS' : 'FAIL'}: ${soundCheck.pass ? 'within' : 'more than'} ${SOUND_PASS_MS} ms.${mended}`
-          : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
+          : n / fps < SOUND_NEEDS_SECONDS
+            ? `Sound against the track: not measured. The file is shorter than ${SOUND_NEEDS_SECONDS} seconds, too short to measure.`
+            : 'Sound against the track: could not be measured. This stretch of the track is silent or the browser could not read the file back.'
         soundLine.dataset.pass = soundCheck ? (soundCheck.pass ? 'yes' : 'no') : 'unknown'
         soundLine.hidden = false
       } else muxer.finalize()
@@ -715,7 +717,7 @@ export function startExport(film: Film, options: Options, host: HTMLElement): vo
     withLabel.hidden = !can
     withSound.checked = can
     if (track && !sound) trackText.textContent += ' This browser cannot encode sound, so the file is made without it.'
-    else if (track) trackText.textContent += ` It goes into the file as ${sound?.label}, its second zero on frame 0 of the film.`
+    else if (track) trackText.textContent += ` It goes into the file as ${sound?.label}, its start on the first frame of the film.`
     describe()
   }
 

@@ -131,8 +131,8 @@ export function createMenu(host: HTMLElement, actions: MenuActions): Menu {
       return
     }
     text.value = report
+    text.hidden = false
     const shown = () => {
-      text.hidden = false
       text.focus()
       text.select()
       copied.textContent = 'The browser did not allow the copy. The report is selected below: copy it by hand.'
