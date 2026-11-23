@@ -1,201 +1,264 @@
 {
-  "tool": "generate_image",
-  "model": "seedream_5",
-  "aspect_ratio": "16:9",
-  "root": "references",
-  "takes": [
-    {
-      "name": "open",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/dawn-sprout.png",
-        "v2/layouts/open.jpg"
-      ],
-      "prompt": "v2/prompts/open-take1.txt",
-      "output": "v2/takes/open-take1.jpg",
-      "pick": false
-    },
-    {
-      "name": "frost",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/frost.png",
-        "approved/dawn-seedling.png",
-        "cache/03-young-plant-1-crop.jpg",
-        "cache/09-hoarfrost-on-leaves-2-crop.jpg",
-        "cache/09-hoarfrost-on-leaves-6.jpg",
-        "v2/layouts/frost.jpg"
-      ],
-      "prompt": "v2/prompts/frost-take1.txt",
-      "output": "v2/takes/frost-take1.jpg",
-      "pick": false
-    },
-    {
-      "name": "climb",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/night.png",
-        "cache/03-young-plant-5-crop.jpg",
-        "v2/layouts/climb.jpg"
-      ],
-      "prompt": "v2/prompts/climb-take1.txt",
-      "output": "v2/keys/climb-fair.png",
-      "pick": true
-    },
-    {
-      "name": "climb",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/night.png",
-        "cache/03-young-plant-5-crop.jpg",
-        "v2/layouts/climb.jpg"
-      ],
-      "prompt": "v2/prompts/climb-take2.txt",
-      "output": "v2/keys/climb.png",
-      "pick": true
-    },
-    {
-      "name": "storm",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/rain.png",
-        "approved/night.png",
-        "cache/10-plant-in-heavy-rain-2.jpg",
-        "v2/layouts/storm.jpg"
-      ],
-      "prompt": "v2/prompts/storm-take1.txt",
-      "output": "v2/takes/storm-take1.jpg",
-      "pick": false
-    },
-    {
-      "name": "storm-flash",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/rain.png",
-        "approved/night.png",
-        "cache/10-plant-in-heavy-rain-2.jpg",
-        "v2/layouts/storm.jpg"
-      ],
-      "prompt": "v2/prompts/storm-flash-take1.txt",
-      "output": "v2/keys/storm-flash.png",
-      "pick": true
-    },
-    {
-      "name": "break",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/rain.png",
-        "approved/night.png",
-        "v2/layouts/break.jpg"
-      ],
-      "prompt": "v2/prompts/break-take1.txt",
-      "output": "v2/keys/break.png",
-      "pick": true
-    },
-    {
-      "name": "break",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/rain.png",
-        "approved/night.png",
-        "v2/layouts/break.jpg"
-      ],
-      "prompt": "v2/prompts/break-take2.txt",
-      "output": "v2/takes/break-take2.jpg",
-      "pick": false
-    },
-    {
-      "name": "late",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/bloom-opening.png",
-        "approved/frost.png",
-        "cache/04-bud-6.jpg",
-        "v2/layouts/late.jpg"
-      ],
-      "prompt": "v2/prompts/late-take1.txt",
-      "output": "v2/keys/late.png",
-      "pick": true
-    },
-    {
-      "name": "last",
-      "take": 1,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/field.png",
-        "v2/layouts/last.jpg"
-      ],
-      "prompt": "v2/prompts/last-take1.txt",
-      "output": "v2/keys/last.png",
-      "pick": true
-    },
-    {
-      "name": "frost",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/frost.png",
-        "approved/dawn-seedling.png",
-        "cache/03-young-plant-1-crop.jpg",
-        "cache/09-hoarfrost-on-leaves-2-crop.jpg",
-        "cache/09-hoarfrost-on-leaves-6.jpg",
-        "v2/layouts/frost.jpg",
-        "v2/takes/frost-take1.jpg"
-      ],
-      "prompt": "v2/prompts/frost-take2.txt",
-      "output": "v2/keys/frost.png",
-      "pick": true
-    },
-    {
-      "name": "last",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/field.png",
-        "v2/layouts/last.jpg",
-        "v2/keys/last.png"
-      ],
-      "prompt": "v2/prompts/last-take2.txt",
-      "output": "v2/takes/last-take2.jpg",
-      "pick": false
-    },
-    {
-      "name": "storm",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/rain.png",
-        "approved/night.png",
-        "cache/10-plant-in-heavy-rain-2.jpg",
-        "v2/layouts/storm.jpg",
-        "v2/takes/storm-take1.jpg"
-      ],
-      "prompt": "v2/prompts/storm-take2.txt",
-      "output": "v2/keys/storm.png",
-      "pick": true
-    },
-    {
-      "name": "open",
-      "take": 2,
-      "images": [
-        "approved/bloom-hero.png",
-        "approved/dawn-sprout.png",
-        "v2/layouts/open.jpg",
-        "v2/takes/open-take1.jpg"
-      ],
-      "prompt": "v2/prompts/open-take2.txt",
-      "output": "v2/keys/open.png",
-      "pick": true
-    }
-  ],
-  "note": "Paths are relative to references/. The tool returns JPEG bytes under a .png name at 2816 x 1584; each pick was saved again as a true PNG with the same pixels, each other take as a JPEG at quality 92. An image under cache/ is a photograph from the web used as a reference only; that folder is not in the repository (the list of sources is in references/BOARD.md)."
+ "tool": "generate_image",
+ "model": "seedream_5",
+ "aspect_ratio": "16:9",
+ "root": "references",
+ "takes": [
+  {
+   "name": "open",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/dawn-sprout.png",
+    "v2/layouts/open.jpg"
+   ],
+   "prompt": "v2/prompts/open-take1.txt",
+   "output": "v2/takes/open-take1.jpg",
+   "pick": false
+  },
+  {
+   "name": "frost",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/frost.png",
+    "approved/dawn-seedling.png",
+    "cache/03-young-plant-1-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-2-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-6.jpg",
+    "v2/layouts/frost.jpg"
+   ],
+   "prompt": "v2/prompts/frost-take1.txt",
+   "output": "v2/takes/frost-take1.jpg",
+   "pick": false
+  },
+  {
+   "name": "climb",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/night.png",
+    "cache/03-young-plant-5-crop.jpg",
+    "v2/layouts/climb.jpg"
+   ],
+   "prompt": "v2/prompts/climb-take1.txt",
+   "output": "v2/keys/climb-fair.png",
+   "pick": true
+  },
+  {
+   "name": "climb",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/night.png",
+    "cache/03-young-plant-5-crop.jpg",
+    "v2/layouts/climb.jpg"
+   ],
+   "prompt": "v2/prompts/climb-take2.txt",
+   "output": "v2/keys/climb.png",
+   "pick": true
+  },
+  {
+   "name": "storm",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/rain.png",
+    "approved/night.png",
+    "cache/10-plant-in-heavy-rain-2.jpg",
+    "v2/layouts/storm.jpg"
+   ],
+   "prompt": "v2/prompts/storm-take1.txt",
+   "output": "v2/takes/storm-take1.jpg",
+   "pick": false
+  },
+  {
+   "name": "storm-flash",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/rain.png",
+    "approved/night.png",
+    "cache/10-plant-in-heavy-rain-2.jpg",
+    "v2/layouts/storm.jpg"
+   ],
+   "prompt": "v2/prompts/storm-flash-take1.txt",
+   "output": "v2/keys/storm-flash.png",
+   "pick": true
+  },
+  {
+   "name": "break",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/rain.png",
+    "approved/night.png",
+    "v2/layouts/break.jpg"
+   ],
+   "prompt": "v2/prompts/break-take1.txt",
+   "output": "v2/keys/break.png",
+   "pick": true
+  },
+  {
+   "name": "break",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/rain.png",
+    "approved/night.png",
+    "v2/layouts/break.jpg"
+   ],
+   "prompt": "v2/prompts/break-take2.txt",
+   "output": "v2/takes/break-take2.jpg",
+   "pick": false
+  },
+  {
+   "name": "late",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/bloom-opening.png",
+    "approved/frost.png",
+    "cache/04-bud-6.jpg",
+    "v2/layouts/late.jpg"
+   ],
+   "prompt": "v2/prompts/late-take1.txt",
+   "output": "v2/keys/late.png",
+   "pick": true
+  },
+  {
+   "name": "last",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/field.png",
+    "v2/layouts/last.jpg"
+   ],
+   "prompt": "v2/prompts/last-take1.txt",
+   "output": "v2/keys/last.png",
+   "pick": true
+  },
+  {
+   "name": "frost",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/frost.png",
+    "approved/dawn-seedling.png",
+    "cache/03-young-plant-1-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-2-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-6.jpg",
+    "v2/layouts/frost.jpg",
+    "v2/takes/frost-take1.jpg"
+   ],
+   "prompt": "v2/prompts/frost-take2.txt",
+   "output": "v2/keys/frost.png",
+   "pick": true
+  },
+  {
+   "name": "last",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/field.png",
+    "v2/layouts/last.jpg",
+    "v2/keys/last.png"
+   ],
+   "prompt": "v2/prompts/last-take2.txt",
+   "output": "v2/takes/last-take2.jpg",
+   "pick": false
+  },
+  {
+   "name": "storm",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/rain.png",
+    "approved/night.png",
+    "cache/10-plant-in-heavy-rain-2.jpg",
+    "v2/layouts/storm.jpg",
+    "v2/takes/storm-take1.jpg"
+   ],
+   "prompt": "v2/prompts/storm-take2.txt",
+   "output": "v2/keys/storm.png",
+   "pick": true
+  },
+  {
+   "name": "open",
+   "take": 2,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/dawn-sprout.png",
+    "v2/layouts/open.jpg",
+    "v2/takes/open-take1.jpg"
+   ],
+   "prompt": "v2/prompts/open-take2.txt",
+   "output": "v2/keys/open.png",
+   "pick": true
+  },
+  {
+   "name": "frost-margin",
+   "take": 1,
+   "images": [
+    "v2/keys/frost.png",
+    "approved/bloom-hero.png",
+    "cache/09-hoarfrost-on-leaves-2-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-6.jpg"
+   ],
+   "prompt": "v2/prompts/frost-margin-take1.txt",
+   "output": "v2/keys/frost-margin.png",
+   "pick": true
+  },
+  {
+   "name": "frost-sun",
+   "take": 1,
+   "images": [
+    "v2/keys/frost.png",
+    "approved/bloom-hero.png",
+    "cache/09-hoarfrost-on-leaves-2-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-6.jpg"
+   ],
+   "prompt": "v2/prompts/frost-sun-take1.txt",
+   "output": "v2/keys/frost-sun.png",
+   "pick": true
+  },
+  {
+   "name": "frost-thaw",
+   "take": 1,
+   "images": [
+    "v2/keys/frost.png",
+    "approved/bloom-hero.png",
+    "cache/09-hoarfrost-on-leaves-2-crop.jpg",
+    "cache/09-hoarfrost-on-leaves-6.jpg"
+   ],
+   "prompt": "v2/prompts/frost-thaw-take1.txt",
+   "output": "v2/keys/frost-thaw.png",
+   "pick": true
+  },
+  {
+   "name": "bloom-close-opening",
+   "take": 1,
+   "images": [
+    "approved/bloom-opening.png",
+    "approved/bloom-hero.png",
+    "v2/layouts/bloom-close-opening.jpg"
+   ],
+   "prompt": "v2/prompts/bloom-close-opening-take1.txt",
+   "output": "v2/keys/bloom-close-opening.png",
+   "pick": true
+  },
+  {
+   "name": "bloom-close",
+   "take": 1,
+   "images": [
+    "approved/bloom-hero.png",
+    "approved/bloom-opening.png",
+    "v2/layouts/bloom-close.jpg"
+   ],
+   "prompt": "v2/prompts/bloom-close-take1.txt",
+   "output": "v2/keys/bloom-close.png",
+   "pick": true
+  }
+ ],
+ "note": "Paths are relative to references/. The tool returns JPEG bytes under a .png name at 2816 x 1584; each pick was saved again as a true PNG with the same pixels, each other take as a JPEG at quality 92. An image under cache/ is a photograph from the web used as a reference only; that folder is not in the repository (the list of sources is in references/BOARD.md)."
 }
