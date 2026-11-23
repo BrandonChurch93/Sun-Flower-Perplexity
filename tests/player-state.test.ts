@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stateText, summarize, type StateRow } from '../src/player/state.ts'
+import { inOrder, stateText, summarize, type StateRow } from '../src/player/state.ts'
 
 const row = (frame: number, plant: number, field: number, bytes: number): StateRow => ({
   frame,
@@ -35,7 +35,27 @@ describe('the script cost of a stretch with nothing drawn', () => {
   it('reads as a table with one line for each owner', () => {
     const lines = stateText(report).split('\n')
     expect(lines[0]).toContain('frames 10 to 12')
-    expect(lines.filter((l) => /^(script|plant|field|director) /.test(l))).toHaveLength(4)
-    expect(lines[lines.length - 1]).toContain('1 of 3 frames')
+    expect(lines.filter((l) => /^(script|plant|field|director) +\d/.test(l))).toHaveLength(4)
+    expect(lines.some((l) => l.includes('1 of 3 frames'))).toBe(true)
+    expect(report.stretches).toHaveLength(1)
+    expect(report.stretches[0]).toMatchObject({ from: 0, to: 29, frames: 3, worstAtFrame: 11 })
+    expect(lines[lines.length - 1]).toContain('frames 0 to 29')
+  })
+
+  it('keeps the owners in one order whatever they cost, so two runs lie side by side', () => {
+    expect(inOrder(['director', 'rain', 'sending', 'field', 'plant', 'fog', 'renderer', 'companion'])).toEqual(['plant', 'companion', 'field', 'fog', 'rain', 'renderer', 'sending', 'director'])
+    const lines = stateText(report).split('\n')
+    const at = (name: string): number => lines.findIndex((l) => l.startsWith(name))
+    expect(at('plant')).toBeLessThan(at('field'))
+    expect(at('field')).toBeLessThan(at('director'))
+  })
+
+  it('says what the run made and keeps really drawn pictures out of the script', () => {
+    expect(stateText(report)).toContain('made on the graphics card during the run: nothing')
+    const drawn = summarize([{ ...row(10, 4, 2, 0), drawnMs: 6 }, { ...row(11, 4, 2, 0), drawnMs: 2 }], { from: 10, to: 11, tier: 'draft', format: '1920 x 1080', quality: 'high' }, true, 3)
+    expect(drawn.drawnMs).toEqual({ mean: 4, worst: 6, worstAtFrame: 10 })
+    expect(drawn.script.worstMs).toBe(7)
+    expect(stateText(drawn)).toContain('made on the graphics card during the run: 3 things')
+    expect(stateText(drawn)).toContain('not in the sums')
   })
 })
