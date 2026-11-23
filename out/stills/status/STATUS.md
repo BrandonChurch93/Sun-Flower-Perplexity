@@ -1,12 +1,12 @@
-# Status 31
+# Status 33
 
-2026-11-23 14:08 UTC
+2026-11-23 14:52 UTC
 
-- Status 31 · Phase 4. On v2 b9c889d, merged and proven (204 tests, 16 frames drawn and seen): the lens no longer takes a broken pixel for a light; the wide frost hold shows frost on the whole plant before the first cut; the frosted ground throws a cool light up into the close shots; a low sun behind the last storm cloud no longer lights the leaves lemon yellow (leaf p90 at 2150, 2156, 2160 from 148, 144, 102 down to 98, 86, 68 of 255, MEASURED). The checks read every 24th frame of the film: no pixel without a number, but wild pixels in the flower's disc on four frames, now first on the head owner's list. Six of twelve watch parts read.
-- Next: The other six watch parts, then the first whole film at 640 by 360 on the music; the disc's wild pixels; live play cost on the merged tree (five spans being measured now); the pose of the storm leaves; then the whole film at 1920. Time used: 16.1 h of 30 h.
+- Status 33 · Phase 4. Frost section read in motion at 640 x 360: the three close shots cut on bars 19, 21, 23 and the cut back on bar 25 hold, no jump. The thaw drop now falls for six frames, it used to vanish in two. Stem hairs back on the far rim of the crane. Field bloom plan and the older leaves' open pose judged and accepted, merging next. Eleven of thirteen watch parts are in and read.
+- Next: Merge plant pose, field bloom, sprout stem colour and prove them; last two watch parts (rain 318 to 635, climb 1272 to 1430); join the whole film at 640 x 360 on the track; then the cures for live play cost at the bloom and the crane. Time used: 16.9 h of 30 h.
 - Review page: not published yet.
 
-- `status-1.jpg`: Frame 60. The sprout with the merged leaf look
-- `status-2.jpg`: Frame 951. Wide frost hold, the last frame before the first cut
-- `status-3.jpg`: Frame 1106. Frost close shot, the right leaf now cool grey
-- `status-4.jpg`: Frame 2156. Dusk after the storm, the leaves no longer outshine the sky
+- `status-1.jpg`: Frost close shots as drawn in the watch part: leaf margin, tip against the sun, the frosted blade, the thaw with its drop
+- `status-2.jpg`: Thaw drop, frames 1234 to 1243: it lets go on 1235 and is out by 1241
+- `status-3.jpg`: Bloom, frames 2934 to 3318: the field opens behind the hero, a few beats after it
+- `status-4.jpg`: Older leaves open up through the climb, before and after pairs
