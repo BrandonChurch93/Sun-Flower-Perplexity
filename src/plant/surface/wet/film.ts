@@ -3,8 +3,8 @@ export const wetGlsl = /* glsl */ `
 const float WET_SHEET_M = 0.006;
 const float WET_ROUGH_THIN = 0.3;
 const float WET_ROUGH_DEEP = 0.08;
-const float WET_WAX = 0.4;
-const float WET_DARK = 0.3;
+const float WET_WAX = 0.8;
+const float WET_DARK = 0.5;
 const float WET_SHEER = 1.0;
 // How far the water levels the relief under it: little where the skin is damp, more under a standing sheet.
 const float WET_LEVEL_THIN = 0.25;

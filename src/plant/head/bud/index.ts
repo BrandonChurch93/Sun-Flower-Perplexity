@@ -1,3 +1,4 @@
+import { norm } from '../../norm.ts'
 import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
@@ -406,7 +407,7 @@ export function create(options: PartOptions): PlantPart | null {
         let x = vy * uz - vz * uy
         let y = vz * ux - vx * uz
         let z = vx * uy - vy * ux
-        const l = Math.hypot(x, y, z)
+        const l = norm(x, y, z)
         if (l > 1e-14) {
           x /= l
           y /= l
@@ -430,8 +431,8 @@ export function create(options: PartOptions): PlantPart | null {
     const time = pose.time
     const head = pose.head
     const lone = loneAt(time)
-    const R = lone > 0 ? Math.hypot(head.radius, lone) : head.radius
-    const D = lone > 0 ? Math.hypot(head.depth, WRAP_DEEP * lone) : head.depth
+    const R = lone > 0 ? norm(head.radius, lone) : head.radius
+    const D = lone > 0 ? norm(head.depth, WRAP_DEEP * lone) : head.depth
     const { ax, ay, az, px, py, pz, qx, qy, qz } = head
     const cx = head.cx + ax * (D - head.depth) * SEAT
     const cy = head.cy + ay * (D - head.depth) * SEAT
@@ -653,7 +654,7 @@ export function create(options: PartOptions): PlantPart | null {
         }
         r += Math.sin(theta) * ds
         h += Math.cos(theta) * ds
-        if (psi < Math.PI / 2) psi = Math.min(Math.PI / 2, psi + ds / Math.hypot(Rw * Math.cos(psi), Hb * Math.sin(psi)))
+        if (psi < Math.PI / 2) psi = Math.min(Math.PI / 2, psi + ds / norm(Rw * Math.cos(psi), Hb * Math.sin(psi)))
       }
 
       const base = bodyCount + i * perBract
@@ -727,7 +728,7 @@ export function create(options: PartOptions): PlantPart | null {
     const downRoot = down ? down.root(slot) : hairRoot
     const downLean = down ? down.lean(slot) : hairLean
     const lone = loneAt(pose.time)
-    const R = lone > 0 ? Math.hypot(pose.head.radius, lone) : pose.head.radius
+    const R = lone > 0 ? norm(pose.head.radius, lone) : pose.head.radius
     const scale = clamp(R / 0.012) * lerp(0.7, 1, smoothstep(0.015, 0.05, R))
     const h = pose.head
     const tight = 1 - smoothstep(bloom0 - 4, bloom0 - 0.7, pose.time)
@@ -781,12 +782,12 @@ export function create(options: PartOptions): PlantPart | null {
         let ux = pos[v10] - pos[v00]
         let uy = pos[v10 + 1] - pos[v00 + 1]
         let uz = pos[v10 + 2] - pos[v00 + 2]
-        const ul = Math.hypot(ux, uy, uz) || 1
+        const ul = norm(ux, uy, uz) || 1
         ux /= ul
         uy /= ul
         uz /= ul
         if (kind === 2) {
-          const nl = Math.hypot(nx, ny, nz) || 1
+          const nl = norm(nx, ny, nz) || 1
           nx /= nl
           ny /= nl
           nz /= nl
@@ -797,7 +798,7 @@ export function create(options: PartOptions): PlantPart | null {
           let ex = (pos[v01] - pos[v00]) * kind
           let ey = (pos[v01 + 1] - pos[v00 + 1]) * kind
           let ez = (pos[v01 + 2] - pos[v00 + 2]) * kind
-          const el = Math.hypot(ex, ey, ez) || 1
+          const el = norm(ex, ey, ez) || 1
           ex /= el
           ey /= el
           ez /= el

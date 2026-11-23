@@ -1,3 +1,4 @@
+import { norm } from '../norm.ts'
 import * as THREE from 'three'
 import { config } from '../../config.ts'
 import { clamp, lerp, smoothstep } from '../../core/curves.ts'
@@ -23,7 +24,7 @@ const REST_SIDE = unit(1, 0, 0.12)
 // How far past the end of the stem the mouth of the husk sits, and how far short of its blunt end the folded tips stop.
 const LEAF_TURN = -0.85
 const CRUMB_MIN_M = 0.00018
-const CRUMB_MAX_M = 0.0006
+const CRUMB_MAX_M = 0.00095
 const HUSK_ON_SOIL_M = -0.0012
 // The approved frames show a shorter, broader seed leaf than the growth curve gives: drawn at this share until the curve follows.
 const LEAF_DRAWN = 0.86
@@ -91,7 +92,7 @@ interface Crumbs {
 }
 
 function unit(x: number, y: number, z: number): [number, number, number] {
-  const l = Math.hypot(x, y, z) || 1
+  const l = norm(x, y, z) || 1
   return [x / l, y / l, z / l]
 }
 
@@ -99,7 +100,7 @@ function shapeOf(options: PartOptions): Shape | null {
   if (options.detail === 'far') return null
   if (options.detail === 'near') return { leafRings: 6, leafLoop: 6, huskRings: 0, huskLoop: 0, stemCrumbs: 0, huskCrumbs: 0, beads: 0 }
   if (options.variant !== 0) return { leafRings: 22, leafLoop: 18, huskRings: 18, huskLoop: 20, stemCrumbs: 6, huskCrumbs: 3, beads: 36 }
-  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 15, huskCrumbs: 8, beads: 100 }
+  return { leafRings: 36, leafLoop: 30, huskRings: 30, huskLoop: 36, stemCrumbs: 24, huskCrumbs: 16, beads: 100 }
 }
 
 // A plump oval on a short broad foot, widest a little past the middle, with a round tip.
@@ -186,12 +187,12 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       let ux = y * 0 - z * 1
       let uy = z * 0 - x * 0
       let uz = x * 1 - y * 0
-      if (Math.hypot(ux, uy, uz) < 0.3) {
+      if (norm(ux, uy, uz) < 0.3) {
         ux = 0
         uy = -z
         uz = y
       }
-      const ul = Math.hypot(ux, uy, uz)
+      const ul = norm(ux, uy, uz)
       ux /= ul
       uy /= ul
       uz /= ul
@@ -199,8 +200,8 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       const wy = z * ux - x * uz
       const wz = x * uy - y * ux
       const h = 0.09
-      const n1 = Math.hypot(x + ux * h, y + uy * h, z + uz * h)
-      const n2 = Math.hypot(x + wx * h, y + wy * h, z + wz * h)
+      const n1 = norm(x + ux * h, y + uy * h, z + uz * h)
+      const n2 = norm(x + wx * h, y + wy * h, z + wz * h)
       lump(own, (x + ux * h) / n1, (y + uy * h) / n1, (z + uz * h) / n1, p, 0, size)
       lump(own, (x + wx * h) / n2, (y + wy * h) / n2, (z + wz * h) / n2, p, 3, size)
       const ax = p[0] - local[at]
@@ -212,7 +213,7 @@ function makeCrumbs(options: PartOptions, shape: Shape): Crumbs | null {
       let nx = ay * bz - az2 * by
       let ny = az2 * bx - ax * bz
       let nz = ax * by - ay * bx
-      const nl = Math.hypot(nx, ny, nz)
+      const nl = norm(nx, ny, nz)
       if (nl < 1e-18 || nx * x + ny * y + nz * z < 0) {
         nx = -nx
         ny = -ny
@@ -413,7 +414,7 @@ export function create(options: PartOptions): PlantPart | null {
     let ax = -ty * REST_AXIS[2] + tz * REST_AXIS[1]
     let ay = -tz * REST_AXIS[0] + tx * REST_AXIS[2]
     let az = -tx * REST_AXIS[1] + ty * REST_AXIS[0]
-    const al = Math.hypot(ax, ay, az)
+    const al = norm(ax, ay, az)
     if (al > 1e-6) {
       ax /= al
       ay /= al
@@ -439,7 +440,7 @@ export function create(options: PartOptions): PlantPart | null {
     px -= B[0] * pb
     py -= B[1] * pb
     pz -= B[2] * pb
-    const pl = Math.hypot(px, py, pz) || 1
+    const pl = norm(px, py, pz) || 1
     px /= pl
     py /= pl
     pz /= pl
@@ -558,7 +559,7 @@ export function create(options: PartOptions): PlantPart | null {
             let nx = uy * vz - uz * vy
             let ny = uz * vx - ux * vz
             let nz = ux * vy - uy * vx
-            const l = Math.hypot(nx, ny, nz)
+            const l = norm(nx, ny, nz)
             if (l > 1e-16) {
               nx /= l
               ny /= l
@@ -667,7 +668,7 @@ export function create(options: PartOptions): PlantPart | null {
         let ux = qx * st * dp + ox * ct * hw
         let uy = qy * st * dp + oy * ct * hw
         let uz = qz * st * dp + oz * ct * hw
-        const ul = Math.hypot(ux, uy, uz) || 1
+        const ul = norm(ux, uy, uz) || 1
         ux /= ul
         uy /= ul
         uz /= ul
