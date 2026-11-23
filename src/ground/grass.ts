@@ -313,7 +313,7 @@ void main() {
   color *= shut * edgeShade(-dot(p, uToward));
   vec3 hv = normalize(v + uSunDir);
   color += uSunColor * pow(max(dot(n, hv), 0.0), 30.0) * (0.06 + 0.3 * saturate(uWet + uDew)) * lit;
-  color += skyAmbient(reflect(-v, n)) * (0.05 * rained * deep);
+  color += mix(uAirHorizon, uAirZenith, saturate(reflect(-v, n).y)) * (0.05 * rained * deep);
   float bead = step(0.9, hash31(floor(vWorld * 700.0))) * uDew * (1.0 - smoothstep(0.25, 0.9, vDepth));
   color += bead * (uSunColor * 1.2 * lit + skyAmbient(vec3(0.0, 1.0, 0.0)) * 0.4);
   outColor = finish(color, vWorld, vDepth, -1.0);
