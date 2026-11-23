@@ -72,7 +72,7 @@ void main() {
   float t2 = toSun * toSun;
   light += uAirSun * (0.002 + 0.01 * t2 + 0.05 * t2 * t2 * t2 * t2 * (0.5 + uSpark));
   // The far rain shows the strike only round the strike.
-  light += uFlash * (0.25 * pow(saturate(dot(ray, uFlashAt)), 6.0));
+  light += uFlash * (0.12 * pow(saturate(dot(ray, uFlashAt)), 24.0));
   outColor = vec4(light, cover);
 }
 `

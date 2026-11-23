@@ -8,6 +8,7 @@ declare module '*/tools/beat/sync-mark.js' {
     markAt?: number
     markHoldMs?: number
     blipHz?: number
+    blips?: boolean
     avMs?: number
   }
   export interface FilmClock {

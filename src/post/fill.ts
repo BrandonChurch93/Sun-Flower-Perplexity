@@ -114,9 +114,9 @@ void main() {
   bool held = c.a < 0.0;
   if (radius < 0.6) { outColor = c; return; }
   mat2 turn = mat2(radius, 0.0, 0.0, radius);
-  if (radius > 12.0) {
-    // Past this size the taps stand pixels apart: turning them per pixel trades their pattern for fine noise the next pass smooths.
-    float a = hash31(vec3(gl_FragCoord.xy, uSeed)) * 6.2831853 * smoothstep(12.0, 20.0, radius);
+  if (radius > 2.5) {
+    // Past this size the taps stand more than a pixel apart, and a small light would be drawn as a lattice of its copies: turning them per pixel trades the lattice for fine noise the next pass smooths.
+    float a = hash31(vec3(gl_FragCoord.xy, uSeed)) * 6.2831853 * smoothstep(2.5, 5.0, radius);
     float cs = cos(a) * radius;
     float sn = sin(a) * radius;
     turn = mat2(cs, sn, -sn, cs);

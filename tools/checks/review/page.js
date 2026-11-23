@@ -67,6 +67,36 @@ for (const l of D.looks) {
 const head = svg('line', { x1: 0, x2: 0, y1: 0, y2: H, stroke: '#fff', 'stroke-width': 1.5 })
 timeline.append(head)
 
+// The frame whose picture stands in for frame f: f itself when it is drawn, else the last drawn one before it, else the first drawn one. -1: none.
+const DRAWN = D.drawn || []
+function pictureOf(f) {
+  let lo = 0
+  let hi = DRAWN.length - 1
+  let at = -1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if (DRAWN[mid][0] <= f) {
+      at = mid
+      lo = mid + 1
+    } else hi = mid - 1
+  }
+  if (at < 0) return DRAWN.length ? DRAWN[0][0] : -1
+  return Math.min(f, DRAWN[at][1])
+}
+// Stretches of more than half a second without a drawn frame are marked on the timeline.
+const hatch = svg('pattern', { id: 'undrawn', width: 6, height: 6, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' })
+hatch.append(svg('rect', { width: 6, height: 6, fill: '#101112', 'fill-opacity': 0.85 }), svg('rect', { width: 2, height: 6, fill: '#d9b45a', 'fill-opacity': 0.8 }))
+const defs = svg('defs', {})
+defs.append(hatch)
+timeline.append(defs)
+for (let i = 0; i <= DRAWN.length; i++) {
+  const from = i === 0 ? 0 : DRAWN[i - 1][1] + 1
+  const to = i === DRAWN.length ? D.frames - 1 : DRAWN[i][0] - 1
+  if (!D.film || to - from + 1 <= D.fps / 2) continue
+  const m = svg('rect', { x: x(from / D.fps), y: 44, width: Math.max(2, x((to + 1) / D.fps) - x(from / D.fps)), height: 8, fill: 'url(#undrawn)' })
+  m.append(svg('title', {}, `frames ${from} to ${to} are not drawn`))
+  timeline.append(m)
+}
 let shown = -1
 function show() {
   const t = video.currentTime || 0
@@ -76,7 +106,10 @@ function show() {
   if (f === shown) return
   shown = f
   const s = sectionAt(f)
-  $('readout').textContent = `${place(t)} · ${t.toFixed(3)} s · frame ${f} · ${s.name}${s.kind === 'hold' ? ' (hold: nothing grows)' : ''}`
+  const p = pictureOf(f)
+  const which = !D.film || p === f ? `frame ${f}` : `frame ${f} is not drawn: the picture is frame ${p}`
+  $('readout').textContent = `${place(t)} · ${t.toFixed(3)} s · ${which} · ${s.name}${s.kind === 'hold' ? ' (hold: nothing grows)' : ''}`
+  $('readout').classList.toggle('stand-in', Boolean(D.film) && p !== f)
   timeline.setAttribute('aria-valuenow', String(f))
   timeline.setAttribute('aria-valuetext', `${place(t)}, ${s.name}`)
 }
@@ -199,7 +232,7 @@ for (const s of D.sections) {
   const words = el('div', 'words')
   const h = el('h3', '', s.name)
   h.append(el('span', `kind ${s.kind}`, s.kind))
-  words.append(h, el('div', 'mono quiet', `bars ${s.fromBar} to ${s.toBar} · ${s.start.toFixed(2)} to ${s.end.toFixed(2)} s · frames ${s.firstFrame} to ${s.lastFrame} · ${s.drawn} of ${s.frames} drawn`))
+  words.append(h, el('div', 'mono quiet', `bars ${s.fromBar} to ${s.toBar} · ${s.start.toFixed(2)} to ${s.end.toFixed(2)} s · frames ${s.firstFrame} to ${s.lastFrame} · ${s.drawn} of ${s.frames} drawn${s.clip && s.drawn < s.frames ? ': a frame that is not drawn shows the last drawn one before it' : ''}`))
   card.append(words)
   $('section-list').append(card)
 }

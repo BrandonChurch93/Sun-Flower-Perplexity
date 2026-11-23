@@ -5,20 +5,22 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 ## Status
 
 - Build: in progress
-- Current phase: 2 · Sky and blockout
+- Current phase: 3 · Look lock
 - Current unit: none (the whole film)
 - Blocked: no
 - Budget: running
 - Continuations: 0
 - Extensions: 0
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
-- Last push: none yet
-- Last status: 07 · 2026-11-23 02:38 UTC · Phase 2
+- Last push: `e5958d2` to `v2`, 2026-11-23 03:57 UTC
+- Last status: 09 · 2026-11-23 03:47 UTC · Phase 3
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-23 03:47 UTC · status 09 · Phase 3 · `status-1.jpg`: Break at bar 41.25: key left, film right (draft, before the newest rain); `status-2.jpg`: Storm hold at bar 35: key left, film right (draft, before the newest rain); `status-3.jpg`: Bloom at bar 61: approved reference left, film right (draft); `status-4.jpg`: Last bars at bar 73 with the closer crane: key left, film right (draft)
+- 2026-11-23 03:15 UTC · status 08 · Phase 2 · `status-1.jpg`: The storm: reference, an hour ago, now (draft tier); `status-2.jpg`: Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; `status-3.jpg`: One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; `status-4.jpg`: Frost hold: reference left, the film right (review tier)
 - 2026-11-23 02:38 UTC · status 07 · Phase 2 · `status-1.jpg`: The merged film at twelve moments under sky candidate B (draft tier); `status-2.jpg`: Sky candidate A in the jury's ten film frames; `status-3.jpg`: Sky candidate C in the jury's ten film frames; `status-4.jpg`: Sky candidate B through the jury's wide camera (not a film view, it shows more sky)
 - 2026-11-23 02:11 UTC · status 06 · Phase 2 · `status-1.jpg`: The merged film at sixteen moments, sky B; `status-2.jpg`: A sunset of the time lapse, thirteen frames in a row; `status-3.jpg`: Frost hold beside its reference key
 - 2026-11-23 01:41 UTC · status 05 · Phase 2 · `status-1.jpg`: All parts together under sky candidate B, sixteen moments through the film camera (draft tier). Frames 4 and 5, the frost hold, are still washed; `status-2.jpg`: The lightning frame at bar 37 (draft tier, one sample a pixel); `status-3.jpg`: The open flower at bar 61 (draft tier); `status-4.jpg`: Opening frame: reference left, the film right
@@ -35,12 +37,12 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | --- | --- | --- |
 | 0 | 1.50 h | 0.62 h |
 | 1 | 0.50 h | 0.77 h |
-| 2 | 3.50 h | 3.26 h |
-| 3 | 9.00 h | 0.00 h |
+| 2 | 3.50 h | 3.88 h |
+| 3 | 9.00 h | 0.53 h |
 | 4 | 8.50 h | 0.00 h |
 | 5 | 3.00 h | 0.00 h |
 | 6 | 4.00 h | 0.00 h |
-| Whole build | 30.00 h | 4.64 h |
+| Whole build | 30.00 h | 5.79 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -50,8 +52,8 @@ Continuations and extensions are listed under this table with their own hours.
 | --- | --- | --- | --- |
 | 0 · Foundation | done | film clock on the track, sun, dials, sections and looks in the config; 144 of 144 tests | `00f5b62` |
 | 1 · References | done | nine picks for the seven new states under `references/v2/keys/`, approved by the Builder as Brandon's message 6 allows | `268c4b4` |
-| 2 · Sky and blockout | in progress | | |
-| 3 · Look lock | not started | | |
+| 2 · Sky and blockout | done | every part merged on one draw path under the chosen sky; three blind critics unanimous for sky candidate B; dusk and dawn measured inside the limits; 168 of 168 tests. The first whole film in parts is drawn in phase 3, on the chosen sky | `81e961b` |
+| 3 · Look lock | in progress | | |
 | 4 · Full build | not started | | |
 | 5 · Whole film | not started | | |
 | 6 · Proof and deliver | not started | | |
@@ -134,6 +136,20 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 02:12 UTC. All three sky candidates stand at their final round on `v2` (`7242e56`, `c465921`, `a1f5343`). The jury's frames are drawn from one build of everything else.
 - 2026-11-23 02:14 UTC. A gust ends where it starts, so a hold with wind can loop without a jump. A third less of the dome's colour in the fill: under a deep blue zenith the shaded faces went blue grey.
 - 2026-11-23 02:15 UTC. The place's own rules run with the tests (`tests/place.test.ts`). The far land's light through crops and trees follows the sun's height, not the kind of light. Stated by the place agent, not yet measured here: the land's largest step at the sunsets of bars 43.5 to 50.5 is 13.8 of 255 a frame (it was 29.5), and the sky beside it falls by the same amount, so what remains is the speed of dusk itself.
+- 2026-11-23 02:40 UTC. The jury. The same twenty frames (ten through the film camera, ten through a wide camera) were drawn once for each sky candidate from one build of everything else and named P, W and K (P is A, W is B, K is C). Three fresh critics (`reviewer_506` to `reviewer_508`) got the pictures and the nine keys as attachments and nothing else. All three ranked W first. All three also said every moment is still below the references. Candidate B is the film's sky and lives in `src/sky/`. The other two stay in `src/sky-a/` and `src/sky-c/` until the cleanup. Their builders now work for the chosen sky: A builds the night in `src/sky/night/`, C draws clips and watch sheets and changes no code.
+- 2026-11-23 02:57 UTC. The moon is a rim and no more (`MOON_KEY` 0.55, cold through `MOON_CAST`, night fill 0.17 low and 0.095 high in `src/v2/look.ts`). Measured on frames 1438 to 1468: the largest step of the frame's mean is 13.1 of 255 (limit 14), the largest move the wrong way in a part of 20 by 20 is 5.4 (it was 18.9), and the plant alone falls from 29.6 at the handover to 23.2 at midnight.
+- 2026-11-23 03:00 UTC. More limits for the checks. A part of the frame may move the wrong way by at most 8 of 255 between neighbours in a dusk or a dawn. On frames of the plant alone the mean may not rise toward midnight, and the 90th percentile at midnight may not exceed the handover's.
+- 2026-11-23 03:05 UTC. The lattice of dots on some sheets is not in the pixels. The spectrum of soft areas at draft and review tier has no peak, only grain (1.5 to 3 of 255). It comes from the viewer scaling a large sheet. The pale box upper left at bar 1.25 is real and is the sky's to fix.
+- 2026-11-23 03:10 UTC. The storm stands at a younger plant. `config.growth.stormHold` is 23 (it was 28.3), so the plant is 61 cm in the storm where the approved plan says 90. Why: beside the storm key and beside version 1's rain shot, a thin plant seen from 2.45 m was the weakest picture of the film, and the key shows a young plant with broad leaves close to the lens. The storm lens stands 1.66 m back creeping to 1.48 m, 0.27 m up, 38 mm, f/5.6. The ascent starts lower (0.74 m at bar 43) and ends where it did (1.71 m at bar 57). This departs from the plan Brandon approved and is named in the final message. `kit/v2/PLAN.md` stays as approved; `kit/v2/FILM.md` carries the film as built.
+- 2026-11-23 03:25 UTC. The deck stays over the break. `overcastAtBar` is 0.74 at bar 41 and 0.58 at 42.3 and is gone by 42.92, the sun under a deck is scaled by `UNDER_DECK` 0.6: the sun shines through a tear in a dark deck from the boom of bar 41 to the sunset, as the key shows, and the night takes the deck away.
+- 2026-11-23 03:35 UTC. The frost hold has a lower sun (0 degrees at bar 17, 1.6 at 17.2, 2.4 at 18, 3.6 at 21, 6.5 at 25), so the rime is lit from behind and from the side. The crane ends 6.0 m back and 3.4 m up (it ended further out and the plant was small). The film ends with the sun 2.9 degrees under the horizon (it was 5), so the field can still be read in the last frame.
+- 2026-11-23 03:40 UTC. Rows turn: a row runs away from the lens, a lane lies on the plant's axis, row ends stand 1.5 m behind the plant. The field and the ground's ridges turn together. Neighbours may stand at up to 50 percent of the plant in the storm.
+- 2026-11-23 03:45 UTC. The page's own time in a frame is measured by part (`film.cost`, `npm run bench -- --cost`, `window.showcase.cost()`). MEASURED on this machine at preview, draft, frames in a row: frost hold 19 to 40 ms, time lapse 70 to 147, storm hold 39 to 66, after the break 133 to 145, ascent 162 to 226, bloom 172 to 212, crane 167 to 175, against 33 ms for a whole frame. The largest shares are the plant's fill of every part twice a frame (26 to 128 ms), the companion (20 to 38), the field (28 to 52), the puddles' drop lookup (18 to 43) and the buffer uploads inside the draw (13 to 40). Nothing is made after loading, so version 1's stall at a scene change is gone, but this would still drop frames on a slower machine wherever the plant grows.
+- 2026-11-23 03:50 UTC. The budget for the script time of a frame on this machine: 16 ms in the mean and 25 ms in the worst frame; plant and companion 5 ms, field 3, rain and puddles 2, every other part 1, the scene's draw 6. The way there: key shapes. The plant is filled only at key frames at most 8 frames apart, the shader mixes the two keys round a frame, the next key is filled part by part while the others play, wind and rain weight live in the shader, holds stand on keys. A new check `script` enforces it and goes into the proof.
+- 2026-11-23 03:52 UTC. `Film.load` gives the page a turn after every part, so the loading screen paints its steps (the player measured freezes of about 40 s between steps on this machine).
+- 2026-11-23 03:56 UTC. Rime arrives where it can be seen: `frostAtBar` rises from bar 16.9 to 18 (it rose from 16.4 to 17, in the dark). The frost test now asks for more than 12 s of frost (it asked for 13).
+- 2026-11-23 03:58 UTC. The plant alone check judges a frame only while the frost and the wet on the plant are under 0.02: rime and water may brighten the plant, the moon may not.
+- 2026-11-23 03:58 UTC. Under the moon the wet ground's glints are at most about a seventh of the day's and follow the moon's own strength. A cloud hides the stars behind it. A star is never drawn wider than about 2.5 pixels at 1920 wide.
 
 ## Notes from Brandon
 
@@ -141,8 +157,21 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 
 ## Open items
 
-- The sky is not chosen: three candidates, judged blind once all three have reported.
-- The storm foreground, the neighbours' height and the leaf highlights are being reworked by their owners.
+In the order they cost the film (from the first whole watch beside the keys, 03:33 to 03:50 UTC):
+
+- The processor: script time 2 to 6 times the frame's budget wherever something grows. With the plant (key shapes), the field, the rain (puddles) and the checks (`script` check).
+- pure fails at frame 1700 (the plant's tip differs when the frame is drawn first on a page) and the plant is sent again on some frames of the storm hold (12.4 MB). With the plant.
+- Low sun in the first half is murky brown and beige (bars 1.5, 9.2, 13, 29.1). With the sky and the lens.
+- Midday soil is pale tan (bar 29.7: 135, 110, 75). With the ground.
+- The opening is too bright and pink, with pale caps on the clods, a pale green arch and a black hole. With the sky, the ground and the plant.
+- The frost hold is one flat picture for 13.7 s. With frost (events on bars) and the ground (rime on crests).
+- The end is too magenta. With the sky; the evening's cover is the Builder's.
+- Stars are discs and shine through clouds; the Milky Way is wired in next. With sky B and sky A.
+- The break: the disc shows through the deck one frame early and the tear opens in one frame; beams too clean; the puddle is a white slab. With the sky, the lens and the rain.
+- Storm: leaves hang like sheets, the strike of bar 37 is small, the flash has a hard round edge, wet rims on leaves before the rain. With the plant, the sky and the rain.
+- Night after the storm: glitter under the moon, leaves stepping at frame 2166. With the ground, the rain and the plant.
+- The Builder's own: nights of bars 8.65 and 12.73 near black, saturation at the break, the evening's cover, the flash as a cold rim.
+- The first whole film in parts with the music (private) has not been drawn yet.
 - Version 1's folders that nothing draws any more stay until the cleanup.
 
 ## Running jobs
@@ -151,26 +180,30 @@ None.
 
 ## Running agents
 
-| Agent | Folder | Branch | Family | Started | Limit | State |
-| --- | --- | --- | --- | --- | --- | --- |
-| `sky_a_builder` | `src/sky-a/` | `agent/sky-a`, looks `agent/sky-a-looks` | Claude | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | reported at `b03c5f0`, sent back with six points 00:52 UTC |
-| `sky_b_builder` | `src/sky-b/` | `agent/sky-b`, looks `agent/sky-b-looks` | GPT | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | reported at `337380f`, second round sent 00:52 UTC |
-| `sky_c_builder` | `src/sky-c/` | `agent/sky-c`, looks `agent/sky-c-looks` | Gemini | 23:41 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `place_builder` | `src/place/` | `agent/place`, looks `agent/place-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 120 min | running |
-| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2`, looks `agent/ground-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, and `src/v2/inputs.ts` | `agent/plant`, looks `agent/plant-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | merged at `f05ace8`, second round sent 00:52 UTC |
-| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain`, looks `agent/rain-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost`, looks `agent/frost-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `rows_v2_builder` | `src/field/` | `agent/field`, looks `agent/field-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `optics_v2_builder` | `src/post/` | `agent/post`, looks `agent/post-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/` | `agent/player`, looks `agent/player-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 150 min | running |
-| `checks_builder` | `tools/checks/` | `agent/checks`, looks `agent/checks-looks` | default | 23:57 UTC 22 Nov | heartbeat 30 min, report at 120 min | running |
+All in sandboxes on a shallow clone, heartbeat at most 30 minutes, no agents of their own. Round 4 notes went out between 03:52 and 04:00 UTC with the pair pictures; all know `v2` stands at `e5958d2`; reports are due 04:35, heartbeats 04:20.
+
+| Agent | Folder | Branch | State at 04:00 UTC 23 Nov |
+| --- | --- | --- | --- |
+| `sky_b_builder` | `src/sky/` | `agent/sky-b` | merged at `b7f7517`; wiring the night; low sun murk, opening, end, deck, strike, break frames, stars behind clouds |
+| `sky_a_builder` | `src/sky/night/` | `agent/sky-a` | merged at `806c873`; dust lane, clean points |
+| `sky_c_builder` | none (draws only) | `agent/sky-c` | clips of the storm's two ends delivered; standing by |
+| `place_builder` | `src/place/` | `agent/place` | ridge and hills against the keys; report due 04:05 |
+| `soil_v2_builder` | `src/ground/` without `puddles/` | `agent/ground-v2` | merged at `4480f36`; dark midday soil, ridges turned with the field, opening caps, frost rime, moon glints |
+| `plant_builder` | `src/plant/` without `surface/{wet,frost,dew}/`, `src/v2/inputs.ts` | `agent/plant` | merged at `3b3bc70`; key shapes first, then frame 0, storm leaves, light through blades |
+| `rain_builder` | `src/weather/rain/`, `src/ground/puddles/`, `src/plant/surface/wet/` | `agent/rain` | merged at `27c822c`; puddles' script time first, then the puddle as water, beads, bursts |
+| `frost_builder` | `src/weather/{frost,fog,mist}/`, `src/plant/surface/{frost,dew}/` | `agent/frost` | merged at `5fcf1f2`; the hold as events on bars, rim light, the melt |
+| `rows_v2_builder` | `src/field/` | `agent/field` | merged at `25cc992`; rows turned, storm stature, far crop, script time; report due 04:25 |
+| `optics_v2_builder` | `src/post/` | `agent/post` | merged at `0e6bd9b`; beams, compact glow, stars, flash |
+| `player_builder` | `src/main.ts`, `index.html`, `src/director/{live,autopilot,modes,menu}.ts`, `src/capture/`, `src/player/` | `agent/player` | merged at `6700678`; one cost counter, pacing meter, loading freezes |
+| `checks_builder` | `tools/checks/` | `agent/checks` | merged at `b59de7d`; the `script` check, whole film nights and made |
 
 ## Rounds
 
 None yet.
 
 ## Push log
+
+- 2026-11-23 03:57 UTC. `e5958d2` to `v2` (the brief of 04:00, rime's arrival). Earlier pushes of this branch are in `git log origin/v2`.
 
 ## Session log
 
@@ -191,4 +224,9 @@ None yet.
   Pictures: The merged film at sixteen moments, sky B; A sunset of the time lapse, thirteen frames in a row; Frost hold beside its reference key.
 - Status 07, 2026-11-23 02:38 UTC, Phase 2. Every builder's second round is merged and the whole film draws as one picture again. The opening is clear (the fog banks are gone), the soil carries hoar in the frost hold, the storm has soft streaks and a puddle, and the break of bar 41 comes up over five frames instead of one. The three sky candidates were drawn in the same twenty frames and went to three blind critics: the first verdict is in (B first, A second, C third), two are pending. The counter for bytes written per frame overcounted textures and is corrected. Next: Take the other two verdicts and move the winning sky to its place, then draw the whole film in parts and join it under the music for the first full watch. Time used: 4.6 h of 30 h.
   Pictures: The merged film at twelve moments under sky candidate B (draft tier); Sky candidate A in the jury's ten film frames; Sky candidate C in the jury's ten film frames; Sky candidate B through the jury's wide camera (not a film view, it shows more sky).
-
+- Status 08, 2026-11-23 03:15 UTC, Phase 2. The sky is chosen: three blind critics all ranked candidate B first, and it is now the film's sky. The storm hold was the weakest picture, so the plant now stands at 61 cm there (was 90 cm) with the lens closer, as in the reference. The moon no longer lights the leaves brighter at midnight than at dusk. Rain, frost, player, checks and plant merged; 168 tests pass. Next: Phase 3, look lock: every builder has its notes against the references (storm sky, break, suns, rain on the leaves, wet soil, frost glow, field at the crane). A first whole watch of the film at two frames a second is being drawn. Time used: 5.3 h of 30 h.
+  Pictures: The storm: reference, an hour ago, now (draft tier); Into the storm and out: bars 31 to 43 through the film camera (draft tier). The break at 41.25 and 42 is still a sepia wash with a white disc: sent back to sky and lens; One night of the time lapse frame by frame, bars 28.4 to 29.0 (31 frames, one second), with the new moonlight; Frost hold: reference left, the film right (review tier).
+- 2026-11-23 02:38 to 03:18 UTC. Jury, sky B chosen and moved to `src/sky/`. Moon light fixed and measured. Rain, frost and the sky's first storm patch merged. The storm hold moved to a 61 cm plant with a closer lens (`81e961b`). Phase 2 closed, phase 3 opened.
+- Status 09, 2026-11-23 03:47 UTC, Phase 3. First whole watch read against the nine keys. The deck now stays over the break and the sun lights through its tear, the frost hold has a lower sun, the crane ends closer, the film ends 3 degrees after sunset. A new counter measures the page's own time in a frame by part: 70 to 210 ms where the plant grows against a budget of 33 ms, so growth moves into the shaders next. Next: round notes to every owner from the watch, the processor work in plant, field and rain, the new night sky wired in, then the whole film in parts. Time used: 5.8 h of 30 h.
+  Pictures: Break at bar 41.25: key left, film right (draft, before the newest rain); Storm hold at bar 35: key left, film right (draft, before the newest rain); Bloom at bar 61: approved reference left, film right (draft); Last bars at bar 73 with the closer crane: key left, film right (draft).
+- 2026-11-23 03:18 to 04:00 UTC. First whole watch read beside the keys. Deck held over the break, frost sun, crane and film end retuned. Rain `27c822c`, frost `5fcf1f2`, field `25cc992`, lens `0e6bd9b`, ground `4480f36`, plant `3b3bc70`, sky `b7f7517`, night `806c873`, player `6700678`, checks `b59de7d` merged. Script time measured by part: 2 to 6 times the budget where something grows. Budget set, key shapes asked of the plant, round 4 notes to every owner (`e5958d2`).

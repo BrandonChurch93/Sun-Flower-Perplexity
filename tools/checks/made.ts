@@ -10,7 +10,7 @@ const SENTENCE = "whenever there's a scene change we have a huge frame rate drop
 const KINDS: (keyof Made)[] = ['programs', 'shaders', 'textures', 'buffers', 'framebuffers', 'renderbuffers', 'uploads']
 
 // In a hold the plant does not grow, so nothing that follows growth has to be written again. What is left is the geometry posed by the wind:
-// measured on sky-0, 6.3 MB a frame in the frost hold and 10.1 MB in the storm hold. The goal leaves room for that and none for the hair and frost textures, 19 to 25 MB a frame.
+// the Builder's goal is 12 MB a frame. The check called writes says whose the bytes are.
 // It is a goal and is reported, not a rule: `--hold-mb 12 --strict` makes it one.
 const HOLD_MB = 12
 
@@ -27,6 +27,8 @@ export async function run(args: Args): Promise<void> {
   let have = 0
   let updates = 0
   let updateBytes = 0
+  let bufferBytes = 0
+  let textureBytes = 0
   let mostBytes = 0
   let mostAt = -1
   const guilty: number[] = []
@@ -38,6 +40,8 @@ export async function run(args: Args): Promise<void> {
     sessions.add(line.session)
     updates += line.made.updates
     updateBytes += line.made.updateBytes
+    bufferBytes += line.made.bufferUpdateBytes ?? 0
+    textureBytes += line.made.textureUpdateBytes ?? 0
     if (line.made.updateBytes > mostBytes) {
       mostBytes = line.made.updateBytes
       mostAt = f
@@ -55,7 +59,7 @@ export async function run(args: Args): Promise<void> {
   if (have === 0) findings.push({ ok: false, what: `no frame of "${run}" has been drawn yet: run "npm run checks -- play" first` })
   else if (guilty.length === 0) findings.push({ ok: true, what: `${have} of ${wanted} frames drawn after loading and warming (${stamp?.width} x ${stamp?.height}, ${stamp?.tier}, sky ${stamp?.sky}, in ${sessions.size} runs): no program, shader, texture, buffer, framebuffer or renderbuffer was created and nothing was given new storage on any of them` })
   else findings.push({ ok: false, what: `${guilty.length} of ${have} frames made something on the graphics card after loading: frames ${guilty.slice(0, 20).join(', ')}${guilty.length > 20 ? ' and more' : ''}` })
-  if (have > 0) findings.push({ ok: true, what: `allowed, and listed for its cost: every frame writes into buffers and textures that already exist, ${(updates / have).toFixed(0)} writes and ${(updateBytes / have / 1048576).toFixed(1)} MB a frame on average, the most ${(mostBytes / 1048576).toFixed(1)} MB at frame ${mostAt}. The megabytes are the film's own count (src/v2/counter.ts), which adds the whole array when only a part of it is written: an upper bound where a part sends its changes alone, and the check called writes has the true bytes` })
+  if (have > 0) findings.push({ ok: true, what: `allowed, and listed for its cost: every frame writes into buffers and textures that already exist, ${(updates / have).toFixed(0)} writes and ${(updateBytes / have / 1048576).toFixed(1)} MB a frame on average, the most ${(mostBytes / 1048576).toFixed(1)} MB at frame ${mostAt}${bufferBytes + textureBytes > 0 ? ` (${(bufferBytes / have / 1048576).toFixed(1)} MB into buffers, ${(textureBytes / have / 1048576).toFixed(1)} MB into textures)` : ''}. The megabytes are the film's own count (src/v2/counter.ts), by the bytes that are sent; the check called writes says whose they are` })
   const holdMb = num(args, 'hold-mb', HOLD_MB)
   const held: { name: string; frames: number; mean: number; most: number; mostAt: number }[] = []
   for (const h of holds) {
