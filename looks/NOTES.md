@@ -1,13 +1,8 @@
 # Looks of plant
 
-2026-11-23 09:03 UTC, at commit f111a454 of agent/plant.
+2026-11-23 10:01 UTC, at commit 4435c274 of agent/plant.
 
-Leaf 3 under the new close lens (952 to 1054) on f111a454, and the neck with the head turned 15 degrees farther round
+The stem's length at rest is a smooth curve along the clock (1543af3): the head rises without corners through the bloom
 
-- `01-frame-952-at-1920-leaf-3-from-above-outline-smoo.jpg`: Frame 952 at 1920, leaf 3 from above. Outline smooth, no facets seen; teeth only a faint scallop (young blade, cut 3 percent deep); a few long ice spikes at the tip; about twenty rimed hair picks lie on the face as pale slivers, too few to read as a coat; the face is frost's coat of grains with green blotches and shows no pillows or grooves
-- `02-frame-952-tip-and-lower-margin-at-twice-size-dar.jpg`: Frame 952, tip and lower margin at twice size. Dark tooth shaped shadows on the face near the margin are the blade's own cut teeth under a grazing sun; slivers on the face are hair picks
-- `03-frame-952-base-of-the-blade-at-full-size-veins-r.jpg`: Frame 952, base of the blade at full size. Veins read as pale flat lines, no relief; a round disc at the stalk shows sharp dark hairs inside it, owner not known
-- `04-frame-1003-tip-at-twice-size-outline-holds-face-.jpg`: Frame 1003, tip at twice size. Outline holds; face evenly grey under the coat, side veins faint and flat
-- `05-frame-1054-at-1920-margin-steps-are-the-teeth-on.jpg`: Frame 1054 at 1920. Margin steps are the teeth; one thick blurred spike; face flat grey
-- `06-frame-1003-v2-d77cd8b0-above-my-tree-before-fros.jpg`: Frame 1003, v2 d77cd8b0 above, my tree before frost's coat came in below: the green face and white vein bands went with frost's commits, not with the hair sets
-- `07-frames-2760-2850-3000-3300-with-the-head-facing-.jpg`: Frames 2760, 2850, 3000, 3300 with the head facing 15 degrees farther round (growth.ts line 234): neck upright under the bud, head faces the lens when open; nothing wrong seen at this size
+- `01-bloom-frames-2925-to-2970-at-the-film-s-lens-thr.mp4`: Bloom, frames 2925 to 2970 at the film's lens, three times over: left v2 bf55bd1, right the smooth length. Before, the head's rise went 3.4, -0.9, -1.5, 0.2 px a frame at 2939 to 2942 and again at 2956 to 2960; after it falls evenly from 3.1 to 1.7. Still wrong: preview size only, and the leaves are still laid whole on every frame
+- `02-frame-2940-of-the-same-before-and-after-side-by-.jpg`: Frame 2940 of the same, before and after side by side: the picture is the same to the eye, the difference is in the motion only
