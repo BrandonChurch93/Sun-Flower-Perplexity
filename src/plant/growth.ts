@@ -1,18 +1,38 @@
-import { config, keyTime, segmentStart } from '../config.ts'
+import { config } from '../config.ts'
 import { Monotone, clamp, lerp, smootherstep, smoothstep } from '../core/curves.ts'
 import { combine, hash01, streamSeed } from '../core/random.ts'
-import { STEM_LEAN, STEM_SWING, sway, windToward } from './wind.ts'
+import { STEM_LEAN, STEM_SWING, restless, squall, sway, windToward } from './wind.ts'
 
 // What the world asks of the plant. The plant never knows which world it is in.
 export interface PlantInputs {
+  // Where the growing tip leans: the level part of the direction to the sun a moment ago, times how hard the plant follows it.
   leanX: number
   leanZ: number
+  // The light the top leaves feel, 0 to 1: they stand in it and hang without it.
   lift: number
   // How hard the air moves the light parts, the leaves and the rays. 0 is still air.
   wind: number
   // The steady wind the heavy parts follow, the stem and the far rows. Left out, or more than `wind`, it is `wind`.
   calm?: number
+  // The film second. Wind, drops and twitches run on it and never on the plant's clock. Left out, the air stands still.
+  real?: number
+  // The light the lowest leaves feel: the same as `lift`, a moment later, so a change runs down the plant.
+  liftLow?: number
+  // How fast the days run, 0 real time to 1 the fastest time lapse: the leaves are restless in a time lapse.
+  lapse?: number
+  // 0 to 1: frost in the tissue. The leaves stand lower, cupped and stiff.
+  cold?: number
+  // 0 to 1: drops falling on the leaves.
+  rain?: number
+  // 0 to 1: a storm's gusts, over and above the steady wind.
+  gust?: number
+  // The stem is measured and the lens is aimed on the plant at rest, so the lean and the air move it inside a frame that holds still.
+  steady?: boolean
 }
+
+// The film second the air moves by, and the inputs of still air and even light, which the stem is measured in and the lens is aimed by.
+export const realOf = (inputs: PlantInputs, time: number): number => inputs.real ?? time
+export const REST: PlantInputs = { leanX: 0, leanZ: 0, lift: 1, wind: 0 }
 
 export interface Vec3 { x: number; y: number; z: number }
 
@@ -39,6 +59,14 @@ export function plantVariant(): number {
 
 const rnd = (i: number, j = 0): number => hash01(seedNow, i, j)
 const TAU = Math.PI * 2
+const FPS = config.film.fps
+// How far a storm's gust bends the stem at its top, in radians: with the wind, the spring back, and across the wind.
+const GUST_LEAN = 0.2
+const GUST_SPRING = 0.5
+const GUST_ACROSS = 0.025
+// How far a head hangs back behind its stem in moving air, in radians for each unit of the stem's swing, and how late it is, in seconds.
+const HEAD_NOD = 0.5
+const HEAD_LATE_S = 0.3
 const RAD = Math.PI / 180
 const heightCurve = new Monotone(config.plant.heightM)
 
@@ -48,12 +76,14 @@ const [leaves0, leaves1] = config.plant.stages.leaves
 const [bud0, bud1] = config.plant.stages.bud
 const [bloom0, bloom1] = config.plant.stages.bloom
 const inStage = (a: number, b: number, f: number) => a + (b - a) * f
-// The film's own times, read from the config: where the night, the frost and the bloom start, and where the rain's and the frost's keys stand.
-const NIGHT_S = segmentStart('night')
-const FROST_S = segmentStart('frost')
-const BLOOM_S = segmentStart('bloom')
-const RAIN_KEY_S = keyTime('rain')
-const FROST_KEY_S = keyTime('frost')
+// Marks on the plant's own clock: the plant is set from SET_S, its bud is formed at BUDDED_S and it begins to open at BLOOM_S. LEAFY_S and STOUT_S are where the young plant is leafy and where its shoot is stoutest.
+const SET_S = 20
+const BUDDED_S = 30
+const BLOOM_S = 40
+const LEAFY_S = 14
+const STOUT_S = 36
+// From here the open head only settles.
+const SETTLE_S = config.growth.crane
 
 export const leafCount = config.plant.leafCount
 export const rayCount = config.plant.rayFlorets
@@ -66,7 +96,7 @@ const DANCE_PHASE = 0.4
 const INTERNODE_SECONDS = 4
 const OPPOSITE_LEAVES = 6
 const STACK_SECONDS = 5.5
-const CROWD_START = NIGHT_S
+const CROWD_START = SET_S
 const CROWD_END = BLOOM_S
 const CROWD_SECONDS = 1.5
 const CROWD_TIP = 0.006
@@ -90,7 +120,7 @@ export function heightAt(time: number): number {
 export function stemBaseRadius(time: number): number {
   const h = heightAt(time)
   const full = 0.0016 + 0.0145 * Math.pow(smoothstep(0.03, 1.7, h), 0.8)
-  const settled = smoothstep(FROST_S, 40.3, time)
+  const settled = smoothstep(BUDDED_S, 40.3, time)
   if (settled >= 1) return full
   const lean = 1 - 0.14 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
   return lerp(0.0012 + 0.0149 * Math.pow(smoothstep(0.05, 1.7, h), 0.45), full, settled) * lean
@@ -98,9 +128,18 @@ export function stemBaseRadius(time: number): number {
 
 export function stemRadius(time: number, u: number): number {
   // Until the head is set the top of the stem is a slender shoot: it fills out under the bud in the last days before the bloom.
-  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(RAIN_KEY_S, FROST_KEY_S, time) * (1 - smoothstep(36.5, 40.3, time))
+  const taper = 0.12 + 0.16 * smoothstep(0.05, 0.6, heightAt(time)) + 0.36 * smoothstep(LEAFY_S, STOUT_S, time) * (1 - smoothstep(36.5, 40.3, time))
   const slim = 0.18 * smoothstep(15, 24, time) * (1 - smoothstep(28, 36.5, time))
   return stemBaseRadius(time) * (1 - taper * Math.pow(u, 1.5)) * (1 - slim * smoothstep(0.67, 0.78, u))
+}
+
+// How much of the stem is still under the soil, in meters. The arch is as large under the ground as over it: it comes up through the soil in three heaves, held and let go, and does not grow from a small arch into a large one.
+const SUNK_M = 0.011
+const HEAVES = [[0, 0.24, 0.3], [0.34, 0.6, 0.3], [0.7, 1.02, 0.4]]
+export function stemSunk(time: number): number {
+  let up = 0
+  for (const [from, to, share] of HEAVES) up += share * smoothstep(from, to, time)
+  return SUNK_M * (1 - up)
 }
 
 // The seedling comes up as an arch and straightens once it is in the light.
@@ -134,7 +173,7 @@ const bodyCurve = new Monotone([
 // A neighbor carries a smaller head than the plant. Its bud swells like the plant's until it has the size its own head starts the bloom's unit with, and waits there.
 const NEIGHBOR_HEAD = 0.7
 const headScale = (): number => (variant === 0 ? 1 : NEIGHBOR_HEAD)
-const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(config.segments.find((s) => s.id === 'bloom')!.start)
+const NEIGHBOR_HELD = NEIGHBOR_HEAD * bodyCurve.at(BLOOM_S)
 
 export function bodyRadius(time: number): number {
   const body = bodyCurve.at(time)
@@ -251,8 +290,8 @@ export function rayLength(k: number, time: number): number {
 // Whatever a ray had done by `RAY_HELD` it keeps.
 const RAY_SECONDS = 3
 const RAY_NEAR = 95 * RAD
-const RAY_HELD = config.keys.find((key) => key.id === 'bloom-opening')!.time + config.film.shutterDegrees / 360 / config.film.fps
-const RAY_FLAT = config.keys.find((key) => key.id === 'field')!.time - 0.2
+const RAY_HELD = 45 + 1 / 60
+const RAY_FLAT = 58.3
 const RAY_CUP = 32
 const GOLDEN = (Math.sqrt(5) - 1) / 2
 const frontCurve = new Monotone([
@@ -365,8 +404,9 @@ export function huskSize(time: number): number {
 export const huskRest: Vec3 = { x: -0.0095, y: 0.0028, z: 0.006 }
 
 // When a leaf leaves the tip for good and grows at its own pace.
+const leafStarts = Float64Array.from({ length: leafCount }, (_, i) => leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6))
 function leafStart(i: number): number {
-  return leaves0 + (leaves1 - leaves0) * Math.pow(i / (leafCount - 1), 1.6)
+  return leafStarts[i]
 }
 
 // The first pair shows early, small and upright between the seed leaves, and waits there for the rain.
@@ -410,9 +450,9 @@ export function leafAzimuth(i: number, time?: number): number {
 
 export function leafAge(i: number, time: number): number {
   const start = leafStart(i)
-  if (i >= 2 || time >= NIGHT_S) return time - start
+  if (i >= 2 || time >= SET_S) return time - start
   const head = PAIR_PACE * PAIR_EARLY_S
-  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, NIGHT_S, time))
+  return time < start ? PAIR_PACE * (time - start + PAIR_EARLY_S) : time - start + head * (1 - smoothstep(start, SET_S, time))
 }
 
 function jointFraction(i: number, time: number): number {
@@ -423,7 +463,7 @@ function jointFraction(i: number, time: number): number {
   const seconds = INTERNODE_SECONDS + 26 * rank * rank * rank
   const settled = heightAt(leafStart(i) + seconds * (1 - Math.exp(-age / seconds)))
   const grown = lerp(0.992 - 0.004 * Math.min(age, 6), Math.min(0.975, ((0.9 + 0.075 * rank * rank + (variant === 0 ? 0.042 * smoothstep(0.85, 0.93, rank) * (1 - 0.85 * smoothstep(0.93, 1, rank)) * (1 - smoothstep(inStage(bloom0, bloom1, 0.25), bloom1, time)) : 0)) * settled) / h), smoothstep(1.5, 7, age))
-  const late = smoothstep(NIGHT_S, BLOOM_S, time)
+  const late = smoothstep(SET_S, BLOOM_S, time)
   if (late >= 1) return grown
   // The first joints of the young plant stop rising early, so in the rain it is leafy from low on the stem.
   // From the night on a joint under the tip stretches late, so the youngest leaves stand crowded round the bud.
@@ -438,7 +478,21 @@ function jointFraction(i: number, time: number): number {
 }
 
 // From the night to the frost the plant's upper internodes stay short: a joint rides close under the tip, the leaves above it crowded round the bud, until it reaches the height it will have at the bloom.
+// Every part asks for the same joints at the same few moments of a frame: they are worked out once for each.
+interface Joints { variant: number; time: number; at: Float64Array }
+const joints: Joints[] = Array.from({ length: 6 }, () => ({ variant: -1, time: NaN, at: new Float64Array(leafCount) }))
+let jointsNext = 0
 export function leafStemFraction(i: number, time: number): number {
+  for (const j of joints) if (j.variant === variant && j.time === time) return Number.isNaN(j.at[i]) ? (j.at[i] = jointAt(i, time)) : j.at[i]
+  const j = joints[jointsNext]
+  jointsNext = (jointsNext + 1) % joints.length
+  j.variant = variant
+  j.time = time
+  j.at.fill(NaN)
+  return (j.at[i] = jointAt(i, time))
+}
+
+function jointAt(i: number, time: number): number {
   const fraction = jointFraction(i, time)
   if (variant !== 0 || time <= CROWD_START || time >= CROWD_END || leafAge(i, time) <= 0) return fraction
   const h = heightAt(time)
@@ -453,7 +507,7 @@ export function leafStemFraction(i: number, time: number): number {
 }
 
 // In the wide shot the leaves go on growing, each in its own two and a half seconds. On the plant the upper ones go first, where the lens sees them against the sky; on its neighbors the lower ones.
-const LATE_START = config.segments[config.segments.length - 1].start
+const LATE_START = SETTLE_S
 export function leafLateGrowth(i: number, time: number, lag = 0): number {
   // A time past the film's end asks what a leaf was planned to be: the parts size their grids by it.
   if (time <= LATE_START || time > config.growth.seconds) return 0
@@ -476,7 +530,7 @@ export function leafLength(i: number, time: number): number {
   const rank = i / (leafCount - 1)
   const full = (0.135 + 0.095 * Math.sin(Math.PI * Math.pow(rank, 0.85)) + 0.045 * smoothstep(0.6, 1, rank)) * (1 + 0.25 * smoothstep(0.7, 0.83, rank) * smoothstep(bloom0 - 7, bloom0 + 1, time)) * (1 - 0.5 * smoothstep(0.92, 1, rank)) * (0.88 + 0.24 * rnd(10, i))
   const slow = lerp(7, 3.6, smoothstep(0.45, 0.8, rank))
-  const late = smoothstep(NIGHT_S, BLOOM_S, time)
+  const late = smoothstep(SET_S, BLOOM_S, time)
   const share = (seconds: number): number => 1 - Math.exp(-Math.pow(age / seconds, 1.1))
   // The first leaves of the young plant fill out fast: in the rain the largest is a third of the plant's height.
   const length = full * (late >= 1 ? share(slow) : lerp(share(Math.min(slow, 4.6)), share(slow), late))
@@ -485,11 +539,32 @@ export function leafLength(i: number, time: number): number {
   return time <= LATE_START || time > config.growth.seconds ? held : held * (1 + (0.3 + 0.3 * Math.sin(Math.PI * rank)) * lateShare() * leafLateGrowth(i, time))
 }
 
-// Leaves open upward, settle outward and hang when the light is gone.
+// How many leaves have left the tip.
+let bornFor = { variant: -1, time: NaN, count: 0 }
+function leavesBorn(time: number): number {
+  if (bornFor.variant === variant && bornFor.time === time) return bornFor.count
+  let count = 0
+  while (count < leafCount && leafAge(count, time) > 0) count++
+  bornFor = { variant, time, count }
+  return count
+}
+
+// The light a leaf feels. A change reaches the youngest leaves first and runs down the plant, each leaf a little early or late.
+export function leafLift(i: number, time: number, inputs: PlantInputs): number {
+  const low = inputs.liftLow
+  if (low === undefined) return inputs.lift
+  const born = leavesBorn(time)
+  const down = born > 1 ? clamp((born - 1 - i) / (born - 1) + 0.3 * (rnd(14, i) - 0.5)) : 0
+  return lerp(inputs.lift, low, down)
+}
+
+// Leaves open upward, settle outward and hang when the light is gone or the cold is in them.
 export function leafElevation(i: number, time: number, inputs: PlantInputs): number {
   const age = Math.max(0, leafAge(i, time))
   const open = smoothstep(0, 5.5, age)
-  const hang = (1 - inputs.lift) * (4 + 9 * smoothstep(2, 14, age))
+  const grown = smoothstep(2, 14, age)
+  const deep = inputs.liftLow === undefined ? 4 + 9 * grown : 5 + (13 + 8 * rnd(15, i)) * grown
+  const hang = (1 - leafLift(i, time, inputs)) * deep + (inputs.cold ?? 0) * (4 + 9 * grown) * smoothstep(0.5, 3, age)
   const settled = 24 - 26 * smoothstep(5, 30, age) + (rnd(11, i) - 0.5) * 16 - hang
   // A leaf that fills out lifts as it stretches and settles lower than it began.
   const late = leafLateGrowth(i, time)
@@ -519,7 +594,7 @@ export function leafFoldScale(i: number, time: number): number {
 }
 
 export function leafDroop(i: number, inputs: PlantInputs, time: number): number {
-  const droop = 0.22 + 0.4 * rnd(22, i) + 0.22 * (1 - inputs.lift)
+  const droop = 0.22 + 0.4 * rnd(22, i) + (inputs.liftLow === undefined ? 0.22 : 0.3) * (1 - leafLift(i, time, inputs)) + 0.12 * (inputs.cold ?? 0)
   const hold = heldLeaf(i)
   return hold?.droop === undefined ? droop : lerp(droop, hold.droop, holdAt(time))
 }
@@ -537,24 +612,47 @@ const NECK_TILT = 0.78
 export function stemBend(time: number, inputs: PlantInputs): StemBend {
   const h = heightAt(time)
   const young = 1 - smoothstep(0.25, 1.3, h)
-  const lean = 0.07 + 0.16 * young
+  // A young plant follows the sun with its whole top. Once the bud leans over to face east the head stays where it is.
+  const lean = (0.1 + 0.2 * young) * smoothstep(seed0, seed1, time) * (1 - 0.85 * smoothstep(STOUT_S, bloom0 + 1, time)) + 0.07 * (1 - smoothstep(seed0, seed1, time))
   const circle = 0.016 + 0.085 * young * smoothstep(seed0, seed1, time)
   const phase = TAU * (time / NUTATION_SECONDS + rnd(1))
   const tilt = Math.PI / 2 - headElevation(time)
   const az = headAzimuth(time)
   const steady = Math.min(inputs.calm ?? inputs.wind, inputs.wind)
-  const blow = standsAt && steady > 0 ? steady * (STEM_LEAN + STEM_SWING * sway(time, standsAt.x, standsAt.z)) : 0
+  const real = realOf(inputs, time)
+  const lapse = inputs.lapse ?? 0
+  const slender = smoothstep(0.04, 0.5, h)
+  let blow = 0
+  let across = 0
+  let nod = 0
+  if (standsAt && (steady > 0 || (inputs.gust ?? 0) > 0)) {
+    // In real time the stem rides the swell. In a time lapse each frame catches it somewhere else on that swell.
+    const swell = lapse < 1 ? sway(real, standsAt.x, standsAt.z) : 0
+    const caught = lapse > 0 ? restless(real, Math.floor(real * FPS + 1e-6), 0.37 + 0.11 * variant) : 0
+    blow = steady * (STEM_LEAN + STEM_SWING * lerp(swell, 0.5 * caught, lapse))
+    // A bud or a head has weight: it comes after the stem that carries it and passes it on the way back.
+    const heavy = smoothstep(bud0 + 6, bloom1, time)
+    if (heavy > 0 && lapse < 1) nod = HEAD_NOD * heavy * steady * (1 - lapse) * (sway(real - HEAD_LATE_S, standsAt.x, standsAt.z) - swell)
+    const gust = inputs.gust ?? 0
+    if (gust > 0) {
+      const push = squall(real, standsAt.x, standsAt.z)
+      // The stem gives to a gust, swings back past its rest and whips a little across the wind.
+      blow += gust * slender * (GUST_LEAN * push + GUST_SPRING * (squall(real - 0.35, standsAt.x, standsAt.z) - push))
+      across = gust * slender * GUST_ACROSS * Math.sin(real * 3.9 + 1.7 * push + rnd(4) * TAU) * (0.3 + 0.7 * push)
+      nod += gust * HEAD_NOD * smoothstep(bud0 + 2, bloom0, time) * (squall(real - HEAD_LATE_S, standsAt.x, standsAt.z) - push)
+    }
+  }
   // A seedling's tip also turns a quicker, smaller circle of its own. A plant half a meter tall no longer does.
   const dance = h < 0.5 ? (0.012 + 0.058 * (1 - smoothstep(0.03, 0.3, h))) * (1 - smoothstep(0.3, 0.5, h)) : 0
   const turn = dance > 0 ? TAU * (time / DANCE_SECONDS + (variant === 0 ? DANCE_PHASE : rnd(3))) : 0
   return {
-    leanX: inputs.leanX * lean + Math.sin(phase) * circle + windToward.x * blow + (dance > 0 ? Math.sin(turn) * dance : 0),
-    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle + windToward.z * blow + (dance > 0 ? 0.5 * Math.cos(turn) * dance : 0),
+    leanX: inputs.leanX * lean + Math.sin(phase) * circle + windToward.x * blow - windToward.z * across + (dance > 0 ? Math.sin(turn) * dance : 0),
+    leanZ: inputs.leanZ * lean + Math.cos(phase) * circle + windToward.z * blow + windToward.x * across + (dance > 0 ? 0.5 * Math.cos(turn) * dance : 0),
     hook: hookAngle(time),
     hookShare: hookShare(time),
     back: HOOK_BACK * (hookAngle(time) / HOOK_MAX),
-    tiltX: Math.sin(az) * tilt,
-    tiltZ: Math.cos(az) * tilt,
+    tiltX: Math.sin(az) * tilt + windToward.x * nod,
+    tiltZ: Math.cos(az) * tilt + windToward.z * nod,
     neckShare: h > 0 ? clamp(neckLength.at(time) / h, 0, 0.5) : 0.5,
   }
 }

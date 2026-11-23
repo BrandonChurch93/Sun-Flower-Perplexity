@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { config } from '../../../config.ts'
 import { clamp, lerp, smoothstep } from '../../../core/curves.ts'
 import { combine, hash01, streamSeed } from '../../../core/random.ts'
-import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, stemRadius } from '../../growth.ts'
+import { bractAngle, bractCurl, bractLength, headOpen, heightAt, rayAngle, rayCount, rayLength, rayOpen, realOf, stemRadius } from '../../growth.ts'
 import { createHairs, type HairSet } from '../../hairs/index.ts'
 import { makePartSurface, partGeometry, partMesh, stateUniforms, type PartDetail, type PartOptions, type PlantPart } from '../../part.ts'
 import { FLOOR_DOME, FLOOR_RIM, NECK_FLARE, SEAT, floorAt, stemAt, type FloorPoint, type Pose } from '../../skeleton.ts'
@@ -585,7 +585,7 @@ export function create(options: PartOptions): PlantPart | null {
       const rayC = Math.cos(behind - RAY_CLEAR)
       const pushed = smoothstep(0, 0.008, rayLong)
       const gap = RAY_GAP * pushed
-      const sway = wind * 0.05 * flutter(time, k.seed)
+      const sway = wind * 0.05 * flutter(realOf(pose.inputs, time), k.seed)
       const tx = qx * co - px * so
       const ty = qy * co - py * so
       const tz = qz * co - pz * so
