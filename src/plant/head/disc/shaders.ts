@@ -77,7 +77,7 @@ void main() {
   float lip = rho + 0.012 * sin(aFloret.y * 5.0 + 1.0) + 0.009 * sin(aFloret.y * 11.0 + 2.3) + 0.016 * (h3 - 0.5);
   float under = smoothstep(RING_SHARE - 0.005, RING_SHARE + 0.025, lip);
   float tuck = (1.0 - smoothstep(SHOWN_FROM + 6.5, SHOWN_FROM + 9.5, f.time)) * smoothstep(0.76, 0.90, rho) * (0.75 + 0.25 * h1);
-  float phase = (f.time - aFloret.z) / aFloret.w;
+  float phase = (f.time - aFloret.z) / max(aFloret.w, 1e-4);
   float open = smoothstep(0.0, 1.0, phase) * (1.0 - under);
   float lobes = smoothstep(0.1, 0.75, phase) * (1.0 - under);
   float rise = smoothstep(0.18, 1.0, phase) * (1.0 - under);
@@ -88,7 +88,8 @@ void main() {
 
   float tilt = aSeed.w * 6.2832;
   vec3 axis = normalize(f.normal + f.outward * (0.04 + open * (0.07 + 0.24 * rim)) + (f.outward * cos(tilt) + f.tangent * sin(tilt)) * (0.06 + 0.18 * open) * aSeed.x);
-  vec3 fx = normalize(f.outward - axis * dot(f.outward, axis));
+  vec3 perp = f.outward - axis * dot(f.outward, axis);
+  vec3 fx = length(perp) > 1e-6 ? normalize(perp) : f.tangent;
   vec3 fy = cross(axis, fx);
   float ct = cos(aSeed.y);
   float st = sin(aSeed.y);
@@ -202,7 +203,7 @@ void main() {
   vec4 world = vec4(plantWorld(local), 1.0);
   vec4 view = viewMatrix * world;
   vWorld = world.xyz;
-  vNormal = plantDirection(normalize(normal));
+  vNormal = plantDirection(length(normal) > 1e-6 ? normalize(normal) : axis);
   vDepth = -view.z;
   vInfo = vec4(piece, along, around, occ);
   vState = vec4(state, rho, aSeed.x, swell);
@@ -215,7 +216,7 @@ void main() {
   float beside = exp(-max(0.90 - rho, 0.0) / 0.14);
   vRays = vec4(normalize(outW * 0.92 + axW * 0.38), beside * smoothstep(-0.25, 0.95, sunSide) * (1.0 - uCover) * smoothstep(0.0, 0.35, -dot(axW, uSunDir)));
   vRing = vec4(open, rise * (1.0 - style), style, clamp(phase, -8.0, 8.0));
-  vMore = vec4(style, -view.z * 2.0 / (projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6)), aSeed.w, blotch);
+  vMore = vec4(style, -view.z * 2.0 / max(projectionMatrix[1][1] * uSize.y * max(plantSize(), 1e-6), 1e-5), aSeed.w, blotch);
   gl_Position = projectionMatrix * view;
 }
 `
@@ -267,10 +268,11 @@ uniform float uYoung;
 uniform float uCover;
 
 void main() {
-  vec3 view = normalize(uCamPos - vWorld);
-  vec3 face = normalize(vNormal);
+  vec3 toCam = uCamPos - vWorld;
+  vec3 view = length(toCam) > 1e-6 ? normalize(toCam) : vec3(0.0, 0.0, 1.0);
+  vec3 face = length(vNormal) > 1e-6 ? normalize(vNormal) : view;
   if (dot(face, view) < 0.0) face = -face;
-  float rho = vDome.x * 0.95;
+  float rho = saturate(vDome.x) * 0.95;
   float arms = sin(vDome.y * 21.0 + rho * 38.0) * sin(vDome.y * 13.0 - rho * 46.0);
   float centre = 1.0 - smoothstep(0.22, 0.62, rho);
   vec3 closed = mix(vec3(0.11, 0.062, 0.016), vec3(0.12, 0.175, 0.048), centre);
@@ -280,14 +282,14 @@ void main() {
   vec3 albedo = mix(closed, opening, smoothstep(uFront.x - 0.05, uFront.x + 0.05, rho));
   albedo = mix(albedo, flower, smoothstep(uFront.y - 0.06, uFront.y + 0.06, rho));
   Tissue t;
-  t.albedo = albedo * (0.82 + 0.28 * arms);
+  t.albedo = clamp(albedo * (0.82 + 0.28 * arms), vec3(0.0), vec3(1.0));
   t.through = vec3(0.03, 0.04, 0.01) * centre;
   t.face = face;
   t.normal = face;
   t.rough = 0.72;
   t.wax = 0.12;
   t.sheen = 0.06;
-  t.occlusion = (0.58 + 0.26 * arms) * mix(1.0, 0.42, uCover);
-  outColor = finish(shadeTissue(t, vWorld, view), vWorld, vDepth, -1.0);
+  t.occlusion = saturate((0.58 + 0.26 * arms) * mix(1.0, 0.42, uCover));
+  outColor = finish(shadeTissue(t, vWorld, view), vWorld, max(vDepth, 1e-4), -1.0);
 }
 `
