@@ -144,6 +144,7 @@ class PhysicalSky implements Sky {
       uGain: { value: GAIN },
       uAmbTop: { value: new THREE.Vector3() },
       uAmbBottom: { value: new THREE.Vector3() },
+      uUnder: { value: new THREE.Vector3() },
       uSteps: { value: 48 },
       uLightSteps: { value: 5 },
     })
@@ -280,6 +281,7 @@ class PhysicalSky implements Sky {
       ground * (clear.direct[2] * sunY / Math.PI + lit.horizon[2]),
     )
     u.uGain.value = g
+    u.uUnder.value.fromArray(lit.horizon)
     u.uSteps.value = plan.steps
     u.uLightSteps.value = plan.light
     ;(this.cloudPass as FullscreenPass).render(renderer, cloudTarget)
