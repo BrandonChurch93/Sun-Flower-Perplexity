@@ -1,11 +1,6 @@
 # Looks of leaf-look
 
-2026-11-23 06:17 UTC, at commit 6a32ddc of agent/leaf-look.
+2026-11-23 07:13 UTC, at commit 45c9be2 of agent/leaf-look.
 
-- `01-29-7-v2-mine-key.jpg`: 29.7 v2 mine key
-- `02-47-75-v2-mine-key.jpg`: 47.75 v2 mine key
-- `03-69-v2-mine-key.jpg`: 69 v2 mine key
-- `04-73-v2-mine-key.jpg`: 73 v2 mine key
-- `05-41-25-43-75-45-v2-mine.jpg`: 41.25 43.75 45 v2 mine
-- `06-21-35-53-61-v2-mine.jpg`: 21 35 53 61 v2 mine
-- `07-frames-2170-2180-v2-mine.jpg`: frames 2170 2180 v2 mine
+- `01-318-cotyledon-v2-vs-relief-faded-by-footprint.jpg`: 318 cotyledon v2 vs relief faded by footprint
+- `02-1240-thaw-leaf-v2-vs-warmer-glow-and-margin-line.jpg`: 1240 thaw leaf v2 vs warmer glow and margin line too wide
