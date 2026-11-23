@@ -1,8 +1,9 @@
 # Looks of player
 
-2026-11-23 12:15 UTC, at commit 8791884d of agent/player.
+2026-11-23 12:59 UTC, at commit c8061a9d of agent/player.
 
-The report page after the real click on Pacing report for the whole film, with the slow frames line, on 7187cb0f at 480 x 270 under software rendering
+Timing at loading says which half is slow, and the export page with no encoder
 
-- `01-report-page-whole-film.jpg`: report-page-whole-film
-- `02-measuring-live-half.jpg`: measuring-live-half
+- `01-loading-high-did-not-hold-the-script-is-set-alon.jpg`: Loading, high did not hold, the script is set alone to see which half is slow
+- `02-desk-after-the-timing-the-script-is-the-slow-hal.jpg`: Desk after the timing, the script is the slow half, export named
+- `03-export-page-in-a-browser-with-no-video-encoder.jpg`: Export page in a browser with no video encoder
