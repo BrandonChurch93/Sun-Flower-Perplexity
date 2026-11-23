@@ -15,7 +15,7 @@ const NIGHT: Grade = { exposure: 1, contrast: 1.4, white: 5, saturation: 0.92, g
 const LEVEL = { day: 0.38, warm: 0.42, storm: 0.26, frost: 0.52, night: 0.05 }
 
 // The last evening is watched in real time: the lens stays as it was set for the bloom, and the picture goes down with the sun. By how high the sun stands: the share of the level that is left, and how much of that fall the light on the plant and the field follows.
-const LAST: Knots = [[-3, 0.3], [0, 0.48], [3, 1]]
+const LAST: Knots = [[-3, 0.3], [0, 0.357], [1.1, 0.476], [2.04, 0.874], [3, 1]]
 const LAST_LIGHT = 0.7
 
 const SOIL: RGB = [0.2, 0.15, 0.1]

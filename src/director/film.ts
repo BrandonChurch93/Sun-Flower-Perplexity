@@ -23,7 +23,7 @@ import { tauAt } from '../v2/clock.ts'
 import { plantInputsOf } from '../v2/inputs.ts'
 import { blankLook, lookAt } from '../v2/look.ts'
 import { blankMoment, later, momentAt, now, setNow, setStill, shutterSeconds } from '../v2/now.ts'
-import { closeAt, closeFrames } from '../v2/cuts.ts'
+import { closeAt, closeFrames, cutFrames } from '../v2/cuts.ts'
 import { fixedPose, rigAtFilm } from '../v2/rig.ts'
 import { views, type FixedView, type ViewName } from '../v2/shots.ts'
 import { companionInView, companionMatrix, companionRatio } from './companion.ts'
@@ -513,12 +513,13 @@ export class Film {
   }
 }
 
-// The frames drawn before the film starts: every look of the film and the turns between them.
+// The frames drawn before the film starts: every look of the film and the turns between them, one frame of each close shot and the first frame of every shot.
 export function warmFrames(): number[] {
   const fps = config.film.fps
   const frames = new Set<number>()
   for (const s of [0, 2, 7.2, 12, 28.5, 30.5, 42.2, 49.5, 56.0, 57.5, 62.6, 63.2, 69.5, 70.2, 80, 97, 99, 104, 118, 126]) frames.add(clampFrame(Math.round(s * fps)))
   for (const f of closeFrames) frames.add(f)
+  for (const f of cutFrames) frames.add(f)
   return [...frames].sort((a, b) => a - b)
 }
 

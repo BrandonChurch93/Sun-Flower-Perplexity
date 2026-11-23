@@ -32,8 +32,8 @@ export const floretMain = /* glsl */ `void main() {
   if (piece < 0.5) {
     // A shut bud is pale on its crown and dark down its sides, so each one reads as a round bead.
     float ridge = (0.5 + 0.5 * around * around) * smoothstep(mix(0.3, 0.18, ripe), mix(0.85, 0.75, ripe), along);
-    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.16, 0.165, 0.02), centre);
-    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.22, 0.27, 0.04), centre);
+    vec3 dark = mix(vec3(0.3, 0.08, 0.008), vec3(0.2, 0.22, 0.03), centre);
+    vec3 pale = mix(vec3(0.29, 0.128, 0.018), vec3(0.28, 0.32, 0.05), centre);
     float olive = 4.0 * centre * (1.0 - centre);
     dark += vec3(0.03, 0.01, 0.0) * olive;
     pale += vec3(0.06, 0.02, 0.0) * olive;
