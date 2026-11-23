@@ -56,6 +56,8 @@ export interface FilmOptions {
   quality?: Quality | null
   // The world at rest, for the checks: no weather, no wind, one fixed sun. Only growth and the camera still change.
   still?: boolean
+  // False draws a high frame of one sample at one place in each pixel, for the checks that read script time and megabytes only.
+  smooth?: boolean
 }
 
 export class Film {
@@ -80,6 +82,7 @@ export class Film {
   lastTier: TierId = 'draft'
   lastFrame = -1
   quality: Quality | null
+  private readonly smoothing: boolean
   // What the live mode may change: the camera turned about the plant.
   readonly view: FilmView = { azimuthDeg: 0, elevationDeg: 0, dolly: 1, fixed: null }
   private readonly heldPoses: (CameraPose | null)[] = heldFrames.map(() => null)
@@ -107,6 +110,7 @@ export class Film {
     this.companion.place(companionMatrix())
     this.only = new Set(options.only ?? [])
     this.quality = options.quality ?? null
+    this.smoothing = options.smooth ?? true
     if (options.still) {
       setStill(true)
       this.post.setStill(true)
@@ -456,7 +460,7 @@ export class Film {
     stage.accumulator.reset()
     const samples = frameSamples(frame, count)
     // A frame of one sample has no other samples to smooth its edges: at high quality it is drawn at four places in each pixel.
-    const smooth = count === 1 && quality === 'high'
+    const smooth = this.smoothing && count === 1 && quality === 'high'
     const into = smooth ? stage.smooth : stage.sample
     // A picture sharp over a range of depths is drawn through the middle of the lens and blurred by the lens pass, at every tier as in live play.
     const deep = ranged(first)
