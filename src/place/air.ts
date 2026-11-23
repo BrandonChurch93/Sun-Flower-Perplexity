@@ -67,8 +67,13 @@ vec3 skyBehind(vec3 dir) {
   // At dusk the air before the high land lies in that land's shadow: the sky lights it from above, not the sun from behind.
   float toSun = pow(saturate(0.5 + 0.5 * dot(h, s)), 12.0) * uAirToSun * (1.0 - 0.9 * uDusk);
   float up = saturate(dir.y / (length(dir) * mix(0.07, 0.03, uVeil)));
-  vec3 clear = mix(mix(uAirHorizon, uAirZenith, mix(0.6, 1.0, uVeil) * up), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
+  vec3 clear = mix(mix(uAirHorizon, uAirZenith, max(mix(0.6, 1.0, uVeil) * up, uDusk)), uSkyHorizonSun, toSun * (1.0 - 0.7 * uVeil * up));
   return mix(clear, uFogColor + uFogSunTint * toSun, uAirRain);
+}
+
+// At dusk the faces of the high land look at the dark land before them, not at the band of light on the horizon: the dome lights them from above.
+vec3 landAmbient(vec3 n, vec3 worldPos) {
+  return skyAmbient(normalize(mix(n, vec3(0.0, 1.0, 0.0), uDusk * smoothstep(2.0, 16.0, worldPos.y))));
 }
 
 float sunOnLand(vec3 worldPos) {
@@ -85,6 +90,15 @@ vec3 throughAir(vec3 color, vec3 worldPos) {
   return mix(color, skyBehind(v), f);
 }
 
+// The evening's mist lies on the low land to the south west and stands as high as the fog on the field at its foot. Its top rises and falls from bank to bank, sinks to the ground to either side, and thins out upward.
+float eveningMist(vec3 worldPos) {
+  vec2 p = worldPos.xz;
+  float side = smoothstep(0.866, 0.9945, dot(normalize(p + vec2(1e-6)), vec2(-0.5446, -0.8387)));
+  float bank = 0.5 + 0.5 * sin(p.x * 0.0046 + 1.9 * sin(p.y * 0.0027 + 0.6));
+  float top = mix(5.0, 16.0, bank) * (0.2 + 0.8 * side);
+  return max(exp(-max(worldPos.y - 1.5, 0.0) / top), 1.0 - smoothstep(290.0, 700.0, length(p)));
+}
+
 // The land's last step: its own air, then the shared ground fog and the blur circle. Away from the field the land takes only a share of the ground fog.
 vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
   vec3 aired = throughAir(color, worldPos);
@@ -95,7 +109,7 @@ vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
     // The field's far crop stands in the ground fog to its end, and the land past it takes the same.
     float near = mix(smoothstep(150.0, 290.0, r), 1.0, uFogNear);
     float high = 1.0 - exp(-max(worldPos.y, 0.0) / 30.0);
-    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * (1.0 - max(uFogLow * high, 0.85 * uDusk * smoothstep(2.0, 16.0, worldPos.y))));
+    done.rgb = mix(aired, done.rgb, near * mix(1.0, uFogShare, smoothstep(80.0, 320.0, r)) * mix(1.0 - uFogLow * high, eveningMist(worldPos), uDusk));
   }
   return done;
 }

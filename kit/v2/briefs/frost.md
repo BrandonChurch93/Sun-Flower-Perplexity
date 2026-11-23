@@ -26,3 +26,32 @@ Version 1's critic: "the thick white frost rim and the frost crystals that cover
 4. The line of `COMMON.md` prints nothing for your folders.
 
 A first heartbeat with pictures within 30 minutes. Your report goes to `/root` 150 minutes after you start, or sooner if you are done.
+
+## The close shots (23 November)
+
+Brandon: "I think it would look really good if we got some zoomed in shots of our sunflowers showing the crystallization on various parts of it ... make sure that the camera angles on frost are really good and show the best parts of the flower. You want to see like frost glistening in the sunlight and just the high detail on it."
+
+The hold now cuts to three close shots (see `CHANGES.md` 14 and 15, and `src/v2/cuts.ts`). At 100 mm and 17 to 23 cm the frame is 6 to 8 cm wide: one needle of ice is 20 to 60 pixels long at film size. What was made for the wide shot does not hold there. Your own findings, which I share: the needles are flat blades of one tone, the fringe is separate tufts 3 to 6 mm apart with bare margin between, the vein ridges carry chips, the leaf face is dust, the cotyledons carry dots, and out of focus the tufts are flat white blobs.
+
+The three reference pictures are `references/v2/keys/frost-margin.png`, `frost-sun.png` and `frost-thaw.png`. They are the bar. The plant in them is not ours; take the ice, the light and the depth of field.
+
+### What to build
+
+1. Crystals with form. Hoar grows as feathers and plates: a spine with side blades at 60 degrees, thin, clear at the root and white at the edges. In focus a crystal must show facets: some faces bright, some grey, one or two throwing the sun back as a hard point, and light passing through the thin ones. No crystal may read as a flat white paper spike.
+2. A closed fringe. Along a margin the crystals stand shoulder to shoulder, largest on the teeth and at the tip, and between the large ones stand small ones and grains, so that no bare margin shows at full frost. The same on the vein ridges of the upper face, lower and denser, and on the stalks.
+3. Sugar on the blade. The face of a leaf carries a crust of fine grains with relief: it follows the veins, lies thickest beside them and at the margin, thins toward the middle of each field between veins where the green shows through. In the close shots single grains must be seen and must glint.
+4. Rime on the hairs. Every hair of the stem and the stalks wears a sleeve of ice two to three times its own width, rough, white, with a bright edge against the sun. A hair must not turn into a smooth white line.
+5. Glints. Points that flash as the lens drifts: chosen by a hash of the crystal and the angle between the lens, the facet and the sun, never by time. In focus a glint is a hard point with a little star; out of focus it must open into a soft round disc of the lens's blur size (ask the post owner how to hand it the brightness; it is building that for these shots now). The frozen field behind shot `tip` should be a dark band full of such discs.
+6. Growth, in shot `margin`. The dial runs 0.70 to 1 there (bars 19 to 20.5). What the wide shot can see must all be there at 0.70: the white fringe, the sugar, the frozen clods. From 0.70 to 1 the crystals gain what only the close shot sees: each feather lengthens by about half, its side blades come out one after another from the root to the tip, and new small crystals appear between the large. Nothing may pop: a crystal grows from nothing by scale along its spine.
+7. The sun in the mist. In shot `margin` the sun must be seen as a pale soft disc in the mist at the upper left, about one and a third times as bright as the mist round it, with a wide glow; at fog 0.8 there is only an even pale sky there now. On the cut of bar 21 the mist steps thinner and the sun comes through: the disc brightens and warms through shot `tip`, and the glints with it. The disc is the sky owner's; the mist in front of it is yours. Tell `/root` what you need from the sky.
+8. The thaw, in shot `thaw` (bars 23 to 25). From bar 22.7 the dial falls. A crystal does not fade: it rounds off, goes glassy and clear from the tip down, slumps, and is a bead of water where it stood. The sugar on the blade goes dark and wet in patches that spread from the lit side. At bar 24 about half of the margin still carries ice, near the stalk; toward the tip it is beads. The beads themselves, and the one drop at the tip of leaf 0 that hangs and falls (dials `drop`, `dropFall`), are the rain owner's bead set in `src/plant/surface/wet/`: agree with it where ice ends and water begins, so that one never stands inside the other.
+9. Cost. Everything is made at loading. The close shots are in the film's warming (`closeFrames`); a cut may make nothing and may not cost a long frame. Say what the crystals cost in triangles and draw calls at the three close shots and in the wide shot, and keep the wide shot's frame time where it is.
+
+### What is judged
+
+- The film's own frames, at draft and at review tier: 952, 975, 1003, 1054 (shot `margin`), 1055, 1106, 1156 (`tip`), 1157, 1190, 1208, 1240, 1259 (`thaw`), and the wide shot at 940 and 1262. `npm run bench -- --only all --frames 952,975,1003,1054 --name margin --cols 4`.
+- Each close shot beside its reference picture, at film size. Send the pairs.
+- Clips of each close shot (`--clip` with the film's seconds: 31.73 to 35.13, 35.17 to 38.53, 38.57 to 41.97): growth without a pop, glints that come and go as the lens drifts, the thaw.
+- `--count` prints PASS on frames 940 to 1270, and the cost line above.
+
+Order: 1, 2 and 5 first (they carry shots `margin` and `tip`), a heartbeat with pairs after each. Then 3, 4, 6, 7. Then 8.
