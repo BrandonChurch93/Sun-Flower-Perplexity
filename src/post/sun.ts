@@ -46,6 +46,7 @@ export function outside(x: number, y: number, aspect: number): number {
 // A point that has left the frame is tested at the frame's edge nearest to it.
 export const sunReadFragment = /* glsl */ `
 uniform sampler2D tRaw;
+uniform sampler2D tBright;
 uniform vec2 uSunAt;
 uniform vec2 uTrack;
 uniform float uAspect;
@@ -57,6 +58,24 @@ float openAt(vec2 uv) {
   return uFar > 0.0 ? 1.0 - smoothstep(0.0006, 0.0012, abs(a / uFar - 1.0)) : 0.0;
 }
 void main() {
+  if (gl_FragCoord.x > 1.0) {
+    // The second column: where the sky is brightest round the sun, as an offset from the sun in frame widths. Under a torn deck that is the tear, and the beams start there.
+    vec2 base = clamp(uSunAt, 0.03, 0.97);
+    vec2 sum = vec2(0.0);
+    float total = 1e-5;
+    for (int i = 0; i < 48; i++) {
+      float k = (float(i) + 0.5) / 48.0;
+      float a = float(i) * 2.3999632;
+      vec2 o = vec2(cos(a), sin(a)) * sqrt(k) * 0.2 / uAspect;
+      vec3 c = texture(tBright, base + vec2(o.x, o.y * uAspect)).rgb;
+      float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      float w = l * l * (1.0 - k);
+      sum += w * o;
+      total += w;
+    }
+    outColor = vec4(vec2(base.x - uSunAt.x, (base.y - uSunAt.y) / uAspect) + sum / total, 0.0, 1.0);
+    return;
+  }
   float clear = 0.0;
   float around = 0.0;
   float weights = 0.0;

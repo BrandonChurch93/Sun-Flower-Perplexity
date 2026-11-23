@@ -53,7 +53,7 @@ class GroundMist implements Part {
       s.center.set(eye.x, eye.z)
       // The air just before the lens is clear: the veils lie out on the soil, beyond the plant.
       s.air.set(slab, height, perM * smoothstep(NEAR_M, CLEAR_TO_M, r), BANK_M)
-      s.look.set(0.85, air.glow, air.shafts, 0.1 * air.glow)
+      s.look.set(0.85, air.glow, air.shafts, 0.8 * air.amount * air.glow)
       s.dawn.set(air.dawn, DAWN_DEPTH / count)
       s.mesh.renderOrder = i >= nearest ? ORDER_BEHIND + (count - i) * 0.1 : ORDER_BEFORE + (count - i) * 0.1
     }

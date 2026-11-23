@@ -44,6 +44,7 @@ export interface Showcase {
   // The world at rest: no weather, no wind, one fixed sun. For the checks that look for growth.
   setStill(on: boolean): void
   sky(): string
+  cost(): Record<string, number>
 }
 
 declare global {
@@ -92,6 +93,10 @@ export function installShowcase(film: Film, ready: Promise<void>): Showcase {
     },
     setStill: (on) => film.setStill(on),
     sky: () => film.skyName,
+    cost: () => {
+      if (!film.clock) film.clock = () => performance.now()
+      return { ...film.cost }
+    },
     requirements: () => ({
       extensions: REQUIRED_EXTENSIONS.slice(),
       limits: {

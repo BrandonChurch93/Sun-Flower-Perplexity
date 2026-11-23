@@ -84,10 +84,17 @@ export async function run(args: Args): Promise<void> {
   const stamp = readStamp('film')
   const drawn = [...lines.keys()].sort((a, b) => a - b)
   const missing: string[] = []
+  // The frames that are drawn, as stretches of neighbours: [first, last].
+  const ranges: [number, number][] = []
+  for (const f of drawn) {
+    const last = ranges[ranges.length - 1]
+    if (last && f === last[1] + 1) last[1] = f
+    else ranges.push([f, f])
+  }
 
   let film: { file: string; note: string } | null = null
   if (filmOf(drawn, 0, frameCount - 1, path.join(SITE, 'film.mp4'))) {
-    film = { file: 'film.mp4', note: `${drawn.length} of ${frameCount} frames drawn at ${stamp?.width} x ${stamp?.height}, one sample a frame${drawn.length < frameCount ? '. A frame that is not drawn yet shows the last one before it' : ''}` }
+    film = { file: 'film.mp4', note: `${drawn.length} of ${frameCount} frames drawn at ${stamp?.width} x ${stamp?.height}, one sample a frame${drawn.length < frameCount ? '. A frame that is not drawn yet shows the last drawn one before it, and the line under the film names the frame you see' : ''}` }
   } else missing.push('the whole film: no frames drawn yet. Run "npm run checks -- play"')
 
   const sections = []
@@ -160,6 +167,7 @@ export async function run(args: Args): Promise<void> {
     track: config.music.title,
     holds: holds.map((h) => ({ name: h.name, first: h.first, last: h.last, from: secondsOf(h.first), to: secondsOf(h.last + 1) })),
     film,
+    drawn: ranges,
     sections,
     looks,
     checks,

@@ -19,9 +19,9 @@ const PICTURE_UNDER = 0.94
 // How much of its light a far leaf keeps when nothing but the sky lights it.
 const UNLIT = 0.3
 // How much of the sky behind it the far crop takes by 220 m, how much at its very end, and from where that comes in.
-const FAR_AIR = 0.2
-const END_AIR = 0.5
-const END_AIR_FROM_M = 170
+const FAR_AIR = 0.1
+const END_AIR = 0.3
+const END_AIR_FROM_M = 210
 const TILE_H = 128
 // Where the dark layer under the far plants begins, and over how many meters it comes in.
 const UNDER_FROM_M = 3
@@ -59,7 +59,8 @@ vec3 farAir(vec3 color, vec3 world) {
   float land = 1.0 - exp(-d * uAir - mist);
   float own = ${FAR_AIR.toFixed(2)} * smoothstep(40.0, 220.0, d);
   float last = ${END_AIR.toFixed(2)} * smoothstep(${END_AIR_FROM_M.toFixed(1)}, ${fieldEndM[1].toFixed(1)}, length(world.xz));
-  return mix(color, behind, max(land, max(own, last)));
+  // Near, the crop has the air its neighbors have. The land's own air comes in toward the far end, where the crop meets the land.
+  return mix(color, behind, max(land * smoothstep(100.0, 290.0, length(world.xz)), max(own, last)));
 }
 `
 
@@ -226,7 +227,11 @@ void main() {
     // A layer of leaves under the tops: clumps with holes between them, fewer toward the front of the field, darker toward the edge of a clump.
     vec2 p = at + uLevel * 37.0;
     float clump = 0.25 * valueNoise(p * 3.1) + 0.35 * valueNoise(p * 7.7) + 0.4 * valueNoise(p * 17.0);
-    float share = uCover * (0.95 - 0.22 * uLevel) * (0.25 + 0.75 * reach) * (1.0 - smoothstep(0.5, 1.0, uAbove));
+    // A layer ends in no straight line: it thins to nothing toward where it starts and toward the sides of the field.
+    float alongL = -dot(at, uToward);
+    float acrossL = at.x * uToward.y - at.y * uToward.x;
+    float edge = min(uWedge.x + uWedge.y * alongL + acrossL, uWedge.z + uWedge.w * alongL - acrossL);
+    float share = uCover * (0.95 - 0.22 * uLevel) * reach * smoothstep(0.0, 4.0, edge) * (1.0 - smoothstep(0.5, 1.0, uAbove));
     if (clump > share) discard;
     float inside = (share - clump) / max(share, 0.01);
     float lift = inside * uLevel / ${UNDER_LEVELS[UNDER_LEVELS.length - 1].toFixed(2)};
@@ -265,10 +270,12 @@ void main() {
     // The heads. Near, one to a plant. Far off the eye skims the crop and meets head behind head: they are a share of every pixel, larger the lower the eye.
     vec2 f = vec2(across / ${config.field.plantSpacingM.toFixed(3)}, along / ${config.field.rowSpacingM.toFixed(3)});
     float skim = 1.0 - smoothstep(0.02, 0.3, abs(normalize(vWorld - uCamPos).y));
-    float share = mix(0.03, 0.12, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
+    float share = mix(0.04, 0.26, skim) * (0.55 + 0.9 * valueNoise(vec2(across * 1.9, along * 0.22)));
     float tone;
     float disc = headsAt(f, tone);
-    vec3 gold = vHead * vec3(1.25, 1.0, 0.55);
+    // The pictures give the head with its dark disc and the leaves round it: the petals alone are brighter, and brighter still with the low sun behind them.
+    float into = smoothstep(0.2, 0.9, dot(normalize(vWorld.xz - uCamPos.xz), normalize(uSunDir.xz + vec2(1e-5, 0.0))));
+    vec3 gold = vHead * vec3(1.25, 1.0, 0.55) * (1.6 + 0.8 * into * uThrough);
     color = mix(color, gold, uOpen * share);
     color = mix(color, gold * (0.9 + 0.6 * tone), uOpen * disc);
     // The rows, as far as the eye can part them: the tops in light and the dark between.
