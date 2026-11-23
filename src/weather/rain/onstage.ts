@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { config } from '../../config.ts'
 import type { Moment, Part, Quality, View } from '../../v2/api.ts'
 import { AirLayer, HeavyLayer, type LayerSpec } from './air.ts'
+import { rainOnBeads } from '../../plant/surface/wet/index.ts'
 import { Veil } from './veil.ts'
 
 const QUALITY: Record<Quality, number> = { film: 0, high: 1, low: 2 }
@@ -50,6 +51,7 @@ class Rain implements Part {
   prepare(now: Moment, later: Moment, view: View): void {
     const rain = now.dials.rain
     const on = rain > 0
+    rainOnBeads(rain)
     const quality = QUALITY[view.quality]
     this.veil.show(on, quality)
     for (const layer of this.layers) layer.place(view.pose.position, view.pose.forward, quality, view.samples, on)
