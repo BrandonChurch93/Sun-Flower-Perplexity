@@ -66,8 +66,8 @@ export function gateAt(azDeg: number): number {
   return 1 - smooth(0.26, 0.8, crestDeg(azDeg))
 }
 
-// The sill the last sun stands on. Seen from the crane's lens the top of the ridge lies at one height across these bearings, so the disc rests on it and sinks behind it. eyeM is how high that lens stands.
-export const SILL = { fromDeg: 222.6, toDeg: 229.4, easeDeg: 2.4, deg: 0.75, wanderDeg: 0.015, eyeM: 2.72, fromM: 1700, onM: 2250, toM: 2600, goneM: 3400 }
+// The sill the last sun stands on. Seen from the crane's lens the top of the ridge is a shallow saddle across these bearings, lowest where the last sun stands, so the disc rests on it and sinks behind it. eyeM is how high that lens stands.
+export const SILL = { fromDeg: 222.6, toDeg: 229.4, easeDeg: 2.4, sunDeg: 225.9, lowDeg: 0.703, highDeg: 0.765, halfDeg: 3, wanderDeg: 0.03, wasDeg: 0.75, wasWanderDeg: 0.015, wasFromDeg: 229.6, wasToDeg: 230.9, eyeM: 2.72, fromM: 1700, onM: 2250, toM: 2600, goneM: 3400 }
 
 // One where the sill lies, nothing where the ridge is its own.
 export function sillAt(azDeg: number): number {
@@ -76,8 +76,20 @@ export function sillAt(azDeg: number): number {
 
 // The height of the line of sight that grazes the sill, at a distance from the plant.
 export function sillLineM(r: number, azDeg: number): number {
-  const deg = SILL.deg + SILL.wanderDeg * (0.6 * Math.sin(azDeg * RAD * 47 + 0.8) + 0.4 * Math.sin(azDeg * RAD * 113 + 2.1))
+  const off = Math.abs(azDeg - SILL.sunDeg)
+  const waves = 0.6 * Math.sin(azDeg * RAD * 47 + 0.8) + 0.4 * Math.sin(azDeg * RAD * 113 + 2.1)
+  const saddle = SILL.lowDeg + (SILL.highDeg - SILL.lowDeg) * smooth(0, SILL.halfDeg, off) + SILL.wanderDeg * smooth(0.3, 1.4, off) * waves
+  // At its right end the line is the one the trees there were cut to, so none of them moves.
+  const was = smooth(SILL.wasFromDeg, SILL.wasToDeg, azDeg)
+  const deg = was * (SILL.wasDeg + SILL.wasWanderDeg * waves) + (1 - was) * saddle
   return SILL.eyeM + r * Math.tan(deg * RAD)
+}
+
+// How far the crowns of the sill's wood stand over that line: uneven, and lowest where the last sun stands.
+export function sillCrownM(r: number, azDeg: number): number {
+  const wide = smooth(0.3, 1.4, Math.abs(azDeg - SILL.sunDeg))
+  const uneven = 0.6 * noise2(azDeg / 0.42, r / 90, 83) + 0.4 * noise2(azDeg / 0.17, r / 60, 84)
+  return r * Math.tan((0.005 + 0.005 * wide + (0.02 + 0.01 * wide) * uneven) * RAD)
 }
 
 // The nearest range is the dark ridge behind the field: it stands highest and most even, the two behind it show over its dips.
@@ -198,7 +210,7 @@ export function landAt(x: number, z: number, out: LandAt = scratch): LandAt {
   if (r > SILL.fromM) {
     const az = (Math.atan2(x, z) / RAD + 360) % 360
     const sill = sillAt(az)
-    if (sill > 0) out.height += (Math.min(out.height, sillLineM(r, az)) - out.height) * sill
+    if (sill > 0) out.height += (Math.min(out.height, sillLineM(r, az) + sillCrownM(r, az)) - out.height) * sill
   }
   return out
 }
