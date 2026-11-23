@@ -1,8 +1,6 @@
 # Looks of frost
 
-2026-11-23 00:19 UTC, at commit ee55ef8 of agent/frost.
+2026-11-23 00:39 UTC, at commit c97fefa of agent/frost.
 
-- `01-bar-21-plant-after-the-first-frost-pass.jpg`: bar 21 plant after the first frost pass
-- `02-bar-21-full-frame-review.jpg`: bar 21 full frame review
-- `03-frame-0-draft-with-mist.jpg`: frame 0 draft with mist
-- `04-bar-25-draft.jpg`: bar 25 draft
+- `01-six-moments-draft-frame-0-bar-17-bar-21-bar-23-t.jpg`: six moments draft: frame 0, bar 17, bar 21, bar 23, thaw at 41.5 s, 42.4 s
+- `02-bar-21-plant-at-review-size.jpg`: bar 21 plant at review size
