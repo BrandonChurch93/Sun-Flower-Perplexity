@@ -1,7 +1,10 @@
 # Looks of plant
 
-2026-11-23 13:01 UTC, at commit 0ddb3830 of agent/plant.
+2026-11-23 14:07 UTC, at commit a7caea39 of agent/plant.
 
-Twitch of the time lapse drawn by the shader, so every carried frame is laid once. Code for this is not pushed yet.
+Storm hold droop: rain weight on a blade 0.14 to 0.07 rad and the light under the storm's cloud 0.75 to 0.875. Code is pushed.
 
-- `01-frames-1398-to-1401-top-row-is-the-pushed-build-.jpg`: Frames 1398 to 1401. Top row is the pushed build, twitch laid in the keys, two layings a frame. Bottom row has the twitch drawn by the shader, one laying a frame, another throw of the dice of the same size. Still wrong: motion not yet judged on a clip, handover strips at 1266, 1671, 2120, 2904 not drawn yet
+- `01-frame-1830-at-1920-crop-of-the-plant-before-on-t.jpg`: Frame 1830 at 1920, crop of the plant, before on the left and after on the right. The blades stand a little higher, not half as far below their stalks: most of the hang is the plant's own pose at this age, which this does not touch
+- `02-frame-2000-at-1920-crop-before-and-after-same-fi.jpg`: Frame 2000 at 1920, crop, before and after. Same finding
+- `03-every-sixth-frame-of-1640-to-1700-and-2076-to-21.jpg`: Every sixth frame of 1640 to 1700 and 2076 to 2130 after the change, preview size, crop. The way into the hold and out of it. Judge the motion on a clip, these are stills
+- `04-the-same-frames-before-the-change.jpg`: The same frames before the change
