@@ -126,7 +126,7 @@ class Puddles implements Part {
     const rain = now.dials.rain
     const quality = QUALITY[view.quality]
     const eye = view.pose.position
-    const flash = 0.5 * (d.flash + later.dials.flash) * Math.max(lum(view.light.horizon), lum(view.light.zenith), 1e-4)
+    const flash = 0.5 * (d.flash + later.dials.flash) * Math.max(lum(view.light.band ?? view.light.horizon), lum(view.light.zenith), 1e-4)
     const lit = this.lit
     lit.uMirrorFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * 3)
     lit.uMirrorFlashAt.value.copy(now.flashAt)
