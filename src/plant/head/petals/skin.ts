@@ -95,7 +95,7 @@ void main() {
   body = mix(body, vec3(1.0, 0.62, 0.1), 0.12 * pale * (1.0 - fresh));
   vec3 albedo = mix(body, vec3(0.5, 0.26, 0.012), 0.6 * foot);
   albedo = mix(albedo, vec3(0.30, 0.32, 0.05), claw);
-  vec3 through = mix(vec3(0.5, 0.44, 0.015), vec3(1.25, 0.78, 0.12), smoothstep(0.1, 0.8, u));
+  vec3 through = mix(vec3(0.5, 0.44, 0.015), vec3(1.25, 0.86, 0.16), smoothstep(0.1, 0.8, u));
   through.g *= 0.9 + 0.2 * own;
   through = mix(through, vec3(1.4, 0.78, 0.8), 0.5 * pale);
   // A ray still folded is several layers thick: less light comes through, and it comes out deeper.
@@ -136,8 +136,9 @@ void main() {
   rel.b = mix(1.0, rel.b, 0.3);
   albedo *= mix(vec3(1.0), rel, 0.6);
   float vein = data.b;
-  through *= (0.45 + 0.75 * data.g) * (1.0 - 0.18 * vein);
-  through.g *= 1.0 - 0.15 * vein;
+  // Against the sun an open ray is a lamp: thin between its veins, which stand in it as darker, deeper lines.
+  through *= (0.45 + 0.75 * data.g) * (1.0 - 0.42 * vein) * mix(1.0, 3.2, unfolded * (1.0 - fresh));
+  through.g *= 1.0 - 0.28 * vein;
   float texels = texelDensity(m, uRaySize);
   // The slopes are taken in the map and by formula: screen differences of a fine height break into blocks on a steep fold.
   vec2 step = max(texels, 1.5) / uRaySize;

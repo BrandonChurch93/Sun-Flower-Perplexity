@@ -73,7 +73,8 @@ vec3 throughAir(vec3 color, vec3 worldPos) {
 // The land's last step: its own air, then the shared ground fog and the blur circle. Away from the field the land takes only a share of the ground fog.
 vec4 landFinish(vec3 color, vec3 worldPos, float viewDepth) {
   vec3 aired = throughAir(color, worldPos);
-  vec4 done = finish(aired, worldPos, viewDepth, -1.0);
+  // The lens takes a blur circle within a third of a percent of the circle of infinity for sky and leaves it sharp: the land stays just short of that.
+  vec4 done = finish(aired, worldPos, min(viewDepth, uFocusM / 0.0036), -1.0);
   if (uDiag == 0) done.rgb = mix(aired, done.rgb, mix(1.0, uFogShare, smoothstep(80.0, 320.0, length(worldPos.xz))));
   return done;
 }

@@ -159,6 +159,10 @@ export class Plant {
   private readonly b: THREE.BufferAttribute | null
   private readonly n: THREE.BufferAttribute
   private readonly hide: number
+  private on = true
+  private readonly live: PlantPart[] = []
+  private readonly drawn = new Set<PlantPart>()
+  private readonly away = new Set<PlantPart>()
   // Null when the shape is drawn once per neighbor: the field sways each of those where it stands.
   private readonly at: Place | null
 
@@ -221,7 +225,9 @@ export class Plant {
   }
 
   set visible(on: boolean) {
+    this.on = on
     for (const m of this.meshes) m.visible = on && (m !== this.mesh || this.hide !== ALL)
+    for (const part of this.away) for (const m of part.meshes) m.visible = false
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs): void {
@@ -234,11 +240,24 @@ export class Plant {
       this.n.needsUpdate = true
     }
     if (this.parts.length) {
+      // A part that does not exist yet, or no longer, is not filled and not drawn. Each is drawn once first, so the graphics card has all of it from the start.
+      const live = this.live
+      live.length = 0
+      for (const part of this.parts) {
+        const away = this.at !== null && this.drawn.has(part) && part.absent?.(timeOpen) === true && part.absent(timeClose) === true
+        if (away) this.away.add(part)
+        else {
+          this.away.delete(part)
+          this.drawn.add(part)
+          live.push(part)
+        }
+        if (this.at !== null) for (const m of part.meshes) m.visible = this.on && !away
+      }
       const first = poseAt(timeOpen, open)
-      for (const part of this.parts) part.fill(0, first)
+      for (const part of live) part.fill(0, first)
       const second = poseAt(timeClose, close)
-      for (const part of this.parts) part.fill(1, second)
-      for (const part of this.parts) part.finish(timeOpen, open)
+      for (const part of live) part.fill(1, second)
+      for (const part of live) part.finish(timeOpen, open)
     }
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)

@@ -107,7 +107,7 @@ export class Film {
     for (const [path, module] of Object.entries(partModules)) {
       for (const part of module.make()) {
         for (const o of part.objects) o.visible = false
-        this.scene.add(...part.objects)
+        if (part.objects.length) this.scene.add(...part.objects)
         this.parts.push({ name: partName(path), part })
       }
     }
