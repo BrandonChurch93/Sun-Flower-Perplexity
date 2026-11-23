@@ -121,7 +121,7 @@ const SHUTTER_SHARE = config.film.shutterDegrees / 360
 export const KEY_EVERY = 8
 // The parts drawn from keys while the plant grows, each on its own switch. A part that is off has a key on every frame, so it is true to each frame and still moves in the same air as the parts that are on. With none on, a growing plant is laid whole for every frame. In the two holds the keys are one shape, and they are always on.
 export const keyed: Record<string, boolean> = { stem: false, leaves: false, seedling: false, bud: false, disc: false, petals: false }
-// One laying a frame: every part is drawn from the frame's own shape toward the next frame's, so a growing frame lays one slot and not both ends of the shutter.
+// One laying a frame: every part is laid as it stands when the shutter opens, in the film's own air, and is drawn from there toward the next frame's laying. A growing frame then lays one slot and not both ends of the shutter. It gives way to the keys of a part that is switched on above, which are laid in still air.
 export const once = { on: false }
 // The key frames of the film, in order.
 export function keyFrames(every: number): number[] {
@@ -270,23 +270,26 @@ export interface KeySkin { real: number; wet: number; frost: number; dew: number
 const KEY_SIGNED = 12
 const newKey = (): Key => ({ serial: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }, real: 0, wet: 0, frost: 0, dew: 0, tip: new THREE.Vector3(), sign: new Float64Array(KEY_SIGNED).fill(NaN) })
 // A key frame of the film: the plant's clock there, what the plant feels there and the state of its skin.
-interface FilmKey extends KeySkin { frame: number; time: number; inputs: PlantInputs }
+// `air` says the key carries the air of its own frame, as far as the plant's clock runs there, and `held` how far that clock stands.
+interface FilmKey extends KeySkin { frame: number; time: number; inputs: PlantInputs; air: boolean; held: number }
 const scratch = blankMoment()
-function keyAt(frame: number, out: FilmKey): FilmKey {
-  if (out.frame === frame) return out
+function keyAt(frame: number, out: FilmKey, air = false): FilmKey {
+  if (out.frame === frame && out.air === air) return out
   const m = momentAt(frame / FPS, scratch)
   const felt = plantInputsOf(m)
   out.frame = frame
   out.time = m.tau
-  // A key is laid in still air: the air moves the plant where it is drawn.
-  out.inputs = { leanX: felt.leanX, leanZ: felt.leanZ, lift: felt.lift, liftLow: felt.liftLow, cold: felt.cold, real: felt.real, held: felt.held, stood: felt.stood, steady: felt.steady, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
-  out.real = felt.stood ?? m.t
+  out.air = air
+  out.held = air ? (felt.held ?? 0) : 1
+  // A key is laid in still air: the air moves the plant where it is drawn. A laying of every frame carries the air of its own frame.
+  out.inputs = air ? { ...stilled(felt) } : { leanX: felt.leanX, leanZ: felt.leanZ, lift: felt.lift, liftLow: felt.liftLow, cold: felt.cold, real: felt.real, held: felt.held, stood: felt.stood, steady: felt.steady, wind: 0, calm: 0, gust: 0, rain: 0, lapse: 0 }
+  out.real = air && out.held < 1 ? m.t : (felt.stood ?? m.t)
   out.wet = m.dials.wet
   out.frost = m.dials.frost
   out.dew = m.dials.dew
   return out
 }
-const newFilmKey = (): FilmKey => ({ frame: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, real: 0, wet: 0, frost: 0, dew: 0 })
+const newFilmKey = (): FilmKey => ({ frame: -1, time: 0, inputs: { leanX: 0, leanZ: 0, lift: 1, wind: 0 }, real: 0, wet: 0, frost: 0, dew: 0, air: false, held: 1 })
 // What a part plays the film from: its turn, the two keys round the frame, and its own mix of its two slots.
 // `next` is the key after those two and `ahead` how much of it lies in the part's spare shape: the key it is, 0 for none, and the share of it laid.
 interface Play { turn: Turn; film: [FilmKey, FilmKey]; mix: THREE.Vector2; next: FilmKey; ahead: { of: number; done: number }; spread: boolean }
@@ -350,6 +353,9 @@ export class Plant {
   private readonly tipOf = [-1, -1]
   private serial = 0
   private readonly growsByKeys = once.on || Object.values(keyed).some((on) => on)
+  private readonly airInKeys = once.on && !Object.values(keyed).some((on) => on)
+  // How much of the way to the next laying the shutter's close is drawn.
+  private blur = 1
   private readonly signing = new Float64Array(KEY_SIGNED)
   private readonly now = blankMoment()
   private readonly laid: PlantPart[] = []
@@ -373,7 +379,7 @@ export class Plant {
     const who = places ? 'neighbors' : 'plant'
     let hide = 0
     const turned = this.variant === 0 ? 0 : 1
-    this.plays.set(null, { turn: turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
+    this.plays.set(null, { turn: this.airInKeys ? turnOf(0, null, 1) : turnOf(turned, null), film: [newFilmKey(), newFilmKey()], mix: this.own.uOwnMix.value, next: newFilmKey(), ahead: { of: 0, done: 0 }, spread: false })
     for (const slot of SLOTS) {
       // Each part mixes its two slots by its own share, since each is laid on its own turn.
       const mix = new THREE.Vector2(0, 1)
@@ -591,7 +597,7 @@ export class Plant {
     stateUniforms.uPlantWet.value = key.wet
     stateUniforms.uPlantFrost.value = key.frost
     stateUniforms.uPlantDew.value = key.dew
-    filling.held = 1
+    filling.held = key.held
     filling.lead = true
   }
   private leave(): void {
@@ -633,7 +639,7 @@ export class Plant {
     const due = t.at[k + 1]
     const over = Math.min(due - t.at[k], KEY_EVERY)
     if (frame < due - over) return
-    const key = keyAt(t.of[k + 2], play.next)
+    const key = keyAt(t.of[k + 2], play.next, this.airInKeys)
     if (part.absent?.(key.time) === true) return
     const id = -2 - key.frame
     if (play.ahead.of !== id) {
@@ -656,8 +662,8 @@ export class Plant {
     // Key n lies in slot n mod 2, so the second slot holds the later key of one stretch and the earlier key of the next.
     const slot = (k & 1) as 0 | 1
     const other = (1 - slot) as 0 | 1
-    const first = keyAt(t.of[k], play.film[slot])
-    const second = keyAt(t.of[k + 1], play.film[other])
+    const first = keyAt(t.of[k], play.film[slot], this.airInKeys)
+    const second = keyAt(t.of[k + 1], play.film[other], this.airInKeys)
     let w = 0
     let dw = 0
     if (t.held[k]) {
@@ -675,7 +681,7 @@ export class Plant {
     } else {
       const span = t.at[k + 1] - t.at[k]
       w = (frame - t.at[k]) / span
-      dw = SHUTTER_SHARE / span
+      dw = (SHUTTER_SHARE * this.blur) / span
     }
     const share = slot === 0 ? w : 1 - w
     play.mix.set(share, slot === 0 ? dw : -dw)
@@ -704,23 +710,31 @@ export class Plant {
   }
 
   // The film's own schedule of keys: every part is drawn as a mix of the two keys of its own turn round the frame, when it is a frame of the film and the plant feels what the film says it feels there. The shape then depends on the frame's number and on nothing drawn before it.
-  private play(timeOpen: number, felt: PlantInputs): boolean {
+  private play(timeOpen: number, felt: PlantInputs, feltClose: PlantInputs): boolean {
     const frame = shared.uFrame.value
     if (this.at === null || !this.b || !(frame >= 0 && frame < frameCount)) return false
-    if (!this.growsByKeys && !HOLD_FRAMES.some(([from, to]) => frame >= from && frame <= to)) return false
+    const inHold = HOLD_FRAMES.some(([from, to]) => frame >= from && frame <= to)
+    if (!this.growsByKeys && !inHold) return false
     const m = momentAt(frame / FPS, this.now)
     if (m.tau !== timeOpen) return false
     const here = plantInputsOf(m)
     if (here.leanX !== felt.leanX || here.leanZ !== felt.leanZ || here.lift !== felt.lift || here.wind !== felt.wind || here.real !== felt.real || here.cold !== felt.cold) return false
     usePlant(this.variant, this.at)
     this.own.uOwnKeys.value = 1
-    this.own.uOwnAir.value.set(Math.min(felt.calm ?? felt.wind, felt.wind), felt.wind, felt.gust ?? 0, felt.rain ?? 0)
-    const lapse = (felt.lapse ?? 0) * (1 - (felt.held ?? 0))
+    // Where every laying carries its own air, the shader moves the plant only as far as its clock stands, and a time lapse is in the laying.
+    const carried = this.airInKeys && !inHold
+    const held = felt.held ?? 0
+    const stood = carried ? held : 1
+    this.own.uOwnAir.value.set(stood * Math.min(felt.calm ?? felt.wind, felt.wind), stood * felt.wind, stood * (felt.gust ?? 0), stood * (felt.rain ?? 0))
+    const lapse = carried ? 0 : (felt.lapse ?? 0) * (1 - held)
     const real = felt.real ?? timeOpen
     this.own.uOwnLapse.value.set(lapse, lapse > 0 ? 0.5 * restless(real, frame, 0.37 + 0.11 * this.variant) : 0, lapse * TWITCH * (1 - 0.7 * (felt.cold ?? 0)) * (1 + 2 * felt.wind), TAU * cell(frame, 0.61 + 0.11 * this.variant))
-    this.stands.held = 1
+    this.stands.held = carried ? Math.min(held, feltClose.held ?? 0) : 1
+    // In a time lapse every frame is a moment minutes from the last and the plant sits differently in each: the way to the next laying is no motion of the open shutter there.
+    this.blur = carried ? 1 - (felt.lapse ?? 0) * (1 - held) : 1
     this.filled.fill(NaN)
     this.turnTo(null, frame, m.dials)
+    if (carried && held > 0) tipAt(timeOpen, { ...stilled(felt), steady: false }, this.own.uOwnTip.value)
     for (const part of this.parts) this.turnTo(part, frame, m.dials)
     usePlant(0)
     this.surface.main.uniforms.uPale.value = paleness(timeOpen)
@@ -729,7 +743,7 @@ export class Plant {
   }
 
   prepare(timeOpen: number, timeClose: number, feltOpen: PlantInputs, feltClose: PlantInputs): void {
-    if (this.play(timeOpen, feltOpen)) return
+    if (this.play(timeOpen, feltOpen, feltClose)) return
     for (const held of this.holds.values()) held.fill(-1)
     for (const play of this.plays.values()) play.mix.set(0, 1)
     this.own.uOwnKeys.value = 0
