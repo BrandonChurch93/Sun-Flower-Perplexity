@@ -277,7 +277,7 @@ The film now cuts four times, and only there: on frames 952, 1055, 1157 and 1260
 
 | Shot | Bars | Frames | What it shows |
 |---|---|---|---|
-| `margin` | 19 to 21 | 952 to 1054 | The edge of leaf 5 in profile, rising to the upper right, the youngest leaf soft behind it, the dim sun as a soft disc in the mist at the upper left. The ice is still growing |
+| `margin` | 19 to 21 | 952 to 1054 | Changed, see item 17: leaf 3 from above, its tip to the left, the frozen ground soft behind it, no sun in the frame. The ice is still growing |
 | `tip` | 21 to 23 | 1055 to 1156 | The growing tip and the furred stem, a leaf on each side, the sun coming through at the upper left, the frozen field below as a dark band of soft discs |
 | `thaw` | 23 to 25 | 1157 to 1259 | Leaf 0 in profile sloping down to its tip at the right, the ice going to water: beads, and one drop at the tip that falls |
 
@@ -290,3 +290,24 @@ The wide shot stands before and after, unchanged. Each close shot's lens drifts 
 ### 16. The camera goes in for the bloom
 
 Brandon: "on the scene before the last one, when the bloom happens, it would be awesome if the camera zooms in on the actual sunflower, showing the bloom happen, and then it will start backing out for the final shot, revealing the whole field". One unbroken move at 35 mm, in `src/v2/rig.ts` (`BLOOM`): from bar 55 the lens closes from 0.77 m to 0.50 m off the stem at bar 57, holds the head at about a third of the frame's width while it opens (bars 57 to 60), and is back at 0.80 m by bar 65, where the crane begins as before. The sun stays in the frame on the left. Aperture f/5.6 from bar 57 to 65. Reference pictures `references/v2/keys/bloom-close-opening.png` and `bloom-close.png`.
+
+### 17. The first close shot looks down on a leaf
+
+The first angle of `margin` saw the leaf edge on, with the sun hidden behind another leaf and half the frame empty. Twenty two angles were drawn and judged at bar 20. The shot is now this (metres, in `src/v2/cuts.ts`):
+
+| | Frame 952 | Frame 1054 |
+|---|---|---|
+| Lens at | (-0.0972, 0.1951, 0.2256) | (-0.0759, 0.1753, 0.2159) |
+| Looks at | (-0.058, 0.103, 0.041) | (-0.064, 0.103, 0.046) |
+
+100 mm at f/16. In the frame: the upper face of leaf 3 from three quarters above, its tip to the left at about a third of the width, the midrib and the side veins, the whole fringe of the near edge; the stem at the right edge on the first frames, a seed leaf soft at the bottom right, the frozen ground 20 to 40 cm behind as soft discs. No sun and no sky in the frame: the sun stands in front of the lens above the frame, so the fringe is lit from behind and the face is in cold sky light. The sun comes into the close shots on the cut of bar 21.
+
+The frames to judge are 952, 1003 and 1054. The shot is the film's one look at the ice on a leaf's face: `frost` goes from 0.70 to 1 while it stands, so the coat on the face and the needles along the edge are seen growing. The target for the ice itself is still `references/v2/keys/frost-margin.png` (the cold blue grey face with fine crystals all over it and feathers standing along the edge), not its framing.
+
+The three close lenses are stopped down: `margin` f/16, `tip` f/32, `thaw` f/32, not f/8 as item 14 says.
+
+### 18. One lens for each held shot
+
+`src/v2/held.ts`. While the plant's clock stands, every frame belongs to one of five held lenses: the film's own camera in the frost hold (frames 849 to 951 and frame 1260), `margin` (952 to 1054), `tip` (1055 to 1156), `thaw` (1157 to 1259), and the storm hold (1672 to 2083). `heldLensAt(frame)` gives the number, -1 where the plant grows; `heldFrames[i]` lists the frames of each.
+
+Before anything is drawn the film sets `held`: `lens` (the number, or -1), `eye` and `forward` (world), `perTan` (pixels for a tangent of one), `focusM`, `cocScale` (the same units as `shared.uCocScale`). They are the pose of that shot which shows the plant largest (greatest focal length over focus distance among its frames), and are the same on every frame of the shot. What is thinned or chosen by the lens while the plant stands is thinned once for each held lens from these numbers, kept, and switched on the cut: a cut frame writes nothing. On the bench, with a camera of its own, the numbers are that camera's: choose again when they differ from the ones a set was made for.

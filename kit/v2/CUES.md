@@ -13,7 +13,7 @@ Compiled from bars and beats against the map. 47 cues, 0 mismatches.
 | 1 | 13.1 | 21.455 | 643 | kick | kick | Sunrise of day 4: the first true leaves |
 | 2 | 17.1 | 28.312 | 849 | none | nothing new | Sunrise into mist |
 | 2 | 17.1 | 28.312 | 849 | none | nothing new | The frost hold begins: the plant stops growing |
-| 2 | 19.1 | 31.740 | 952 | none | nothing new | Cut to the first close shot: the edge of a leaf, the ice still growing |
+| 2 | 19.1 | 31.740 | 952 | none | nothing new | Cut to the first close shot: a leaf from above, the ice on its face and edge still growing |
 | 2 | 21.1 | 35.169 | 1055 | soft | soft low hit | Cut to the growing tip: the mist thins and the sun comes through |
 | 2 | 22.4 | 38.169 | 1145 | none | nothing new | The frost starts to melt |
 | 2 | 23.1 | 38.597 | 1157 | none | nothing new | Cut to the lowest leaf: the ice goes to water |

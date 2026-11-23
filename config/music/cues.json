@@ -56,7 +56,7 @@
         {
           "id": "cut-margin",
           "at": "19.1",
-          "do": "Cut to the first close shot: the edge of a leaf, the ice still growing",
+          "do": "Cut to the first close shot: a leaf from above, the ice on its face and edge still growing",
           "expect": "none"
         },
         {

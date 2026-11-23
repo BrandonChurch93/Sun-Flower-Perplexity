@@ -65,7 +65,7 @@ class Rain implements Part {
     u.uSamples.value = view.samples
     u.uLeast.value = Math.max(0.75, (1.1 * view.width) / MASTER_WIDTH)
     const flash = 0.5 * (now.dials.flash + later.dials.flash)
-    const sky = Math.max(lum(view.light.horizon), lum(view.light.zenith), 1e-4)
+    const sky = Math.max(lum(view.light.band ?? view.light.horizon), lum(view.light.zenith), 1e-4)
     u.uFlash.value.fromArray(FLASH_TINT).multiplyScalar(flash * sky * 5)
     u.uFlashAt.value.copy(now.flashAt)
     u.uStrike.value = Math.min(1, flash)
