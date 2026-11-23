@@ -193,7 +193,8 @@ void main() {
   coverHere = mix(0.26, 1.08, pow(uCover, 0.75));
   coverHere = mix(coverHere, mix(coverHere, 0.7 + 0.4 * (1.0 - uSunThrough), closing) * (1.0 - open * 0.85), nearSun);
   float rag2 = textureLod(uShape, vec3(d.x * 9.0 + 0.3, d.y * 9.0, d.z * 9.0 + uEvolve * 0.08), 0.0).g;
-  coverHere *= 1.0 - uBurst * 0.68 * smoothstep(cos(radians(9.0)), cos(radians(1.2)), toward + (rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003);
+  float tear = mix(1.6, 9.0, smoothstep(0.0, 0.04, 1.0 - uBurst));
+  coverHere *= 1.0 - uBurst * 0.68 * smoothstep(cos(radians(tear)), cos(radians(tear * 0.13)), toward + ((rag - 0.5) * 0.012 + (rag2 - 0.5) * 0.003) * (1.0 - cos(radians(tear))) / 0.0123);
 
   vec3 o = vec3(0.0, RG + CAM_KM, 0.0);
   vec2 hb = sphere(o, d, RG + cloudBase - 0.3);
