@@ -10,13 +10,14 @@ import { parseArgs } from '../lib/args.ts'
 //   npm run checks -- pure              any frame drawn twice gives the same pixels, and no clock or dice in src
 //   npm run checks -- script            the page's own script time in a frame, by part, against tools/checks/limits.json
 //   npm run checks -- writes            what one frame writes into buffers and textures that exist, and whose they are
+//   npm run checks -- owners            for a list of spans, one line an owner and a span: script time in a frame, mean and worst, and megabytes written a frame
 //   npm run checks -- film              the whole film small in one go: draws it on three pages, then nights, cuts and made in one table
 //   npm run checks -- all               every check that does not draw, then what the drawn ones have so far
 //   npm run checks -- proof             every check run on a film broken on purpose: each has to fail
 //   npm run checks -- review            builds the review page from what is in out/
 // --break <name> puts a film broken on purpose in the film's place, to show that the check fails. tools/checks/README.md lists them.
 
-const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'script', 'writes', 'film', 'all', 'proof', 'review'] as const
+const NAMES = ['nights', 'holds', 'cues', 'play', 'cuts', 'made', 'pure', 'script', 'writes', 'owners', 'film', 'all', 'proof', 'review'] as const
 
 // What each check needs and what it costs, measured on four cores without a graphics card, four pages drawing at once.
 const HELP: [string, string, string, string][] = [
@@ -30,6 +31,7 @@ const HELP: [string, string, string, string][] = [
   ['pure', 'a frame drawn again, in another order, on a fresh page, gives the same bytes', 'draws 12 frames three times on two pages at 960 x 540 (--frames a,b,c)', '10 to 12 min'],
   ['script', 'the page keeps the frame rate: its own script time in a frame, by part, inside tools/checks/limits.json', 'draws 13 windows of 20 to 40 frames in a row itself (--window a-b, --frames 8, --all, --table)', 'about 30 min, 17 min with --frames 20; run it alone'],
   ['writes', 'what one frame writes into what exists, by owner', 'draws 8 frames itself', '6 min'],
+  ['owners', 'who costs what: one line an owner and a span, script time in a frame (mean, worst) and megabytes written a frame', 'draws every frame of --spans a-b,c-d twice in a row itself; run it alone', '5 min and 8 to 20 s a frame'],
   ['film', 'the whole film in one go: nights by the picture, cuts and made in one table, a row a night and a row a day', 'draws about 1,430 frames at 320 x 180 on 3 pages (--pages, --stride 1 for every frame, --no-draw)', '80 to 100 min'],
   ['all', 'every check that does not draw, then what the drawn ones have so far', 'nothing', '1 min'],
   ['proof', 'every check on a film broken on purpose: each has to fail', 'nothing for the clock breaks; reads the last run of the drawn ones', '30 s'],

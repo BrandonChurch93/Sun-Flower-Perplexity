@@ -39,7 +39,7 @@ export function owned(owner: string): { object: string; part: string } {
 }
 
 // The first name on the path, and the second inside the plant, its companion and the ground: plant leaves, plant casters, companion stem, field, parts[rain].
-const top = (owner: string): string => {
+export const top = (owner: string): string => {
   if (owner.startsWith('a ')) return 'not named: this checkout has no list of owners'
   const object = owned(owner).object
   const inside = /^(plant|companion|ground)[ .]([\w-]+)/.exec(object)
