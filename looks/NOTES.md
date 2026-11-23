@@ -1,5 +1,7 @@
 # Looks of rain
 
-2026-11-23 07:22 UTC, at commit 4aac1bc of agent/rain.
+2026-11-23 07:50 UTC, at commit 779dac60 of agent/rain.
 
-- `01-thaw-shot-as-it-stands-today-on-4aac1bc-before-m.jpg`: Thaw shot as it stands today on 4aac1bc before my work, draft 960: frames 1157 1190 1208 1225 1234 1240
+- `01-thaw-1175-1208-1234-1240-draft-plant-lines-local.jpg`: thaw-1175-1208-1234-1240-draft-plant-lines-local
+- `02-thaw-1234-crop.jpg`: thaw-1234-crop
+- `03-thaw-1208-crop.jpg`: thaw-1208-crop
