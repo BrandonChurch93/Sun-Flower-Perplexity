@@ -44,6 +44,12 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
 
 > Don’t stop working, but you have been working for quite a few hours now. All I asked you to do was invoke a skill to add an intro to one video, and then make a looping video in a screenshot. Seems like you’ve been taking way too long on that. Again, don’t stop working or change your plans, just update me on where you are in the current process and let me know what’s still left to do
 
+## 24 November 2026, about 00:15 UTC (asks again where the work stands, and what the agents do)
+
+> Can you please update me? Don't change anything but update me here and text so I can read it and it won't just disappear the next time you do something. Again, I don't want you to stop what you're doing or change the plan in anyway I'm just curious on what you're doing?
+>
+> As far as I know, the video is completely done now I see you having agents doing a bunch of stuff? I just asked you to add an opening prompt, the generation screen to the beginning of the video with no audio and export the one with that and the one without it and then I asked you to take a screenshot and make a looping video of the Budd opening and closing. You've been working for quite a few hours now and you haven't given me an update that seems like an enormous amount of time for what I asked for so I'm just curious on what exactly is left and what are all these agents doing and why?
+
 ## How these were read
 
 - "The timing looks great" settles the timing of `kit/v2/PLAN.md`, the 140 BPM grid and its click track included.
@@ -72,3 +78,8 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
   - "Don't stop working or change your plans": the clean frames keep drawing. So that he does not wait for them, the same still and clip are cut out of the film he signed off and handed to him at once; the clean ones replace them when the last frame is in.
   - "A looping video": the clip runs from the bud to the open flower, as his message of 21:19 says. Played as a loop it jumps from the open flower back to the bud. So a second cut of the same frames is handed over beside it: the same 208 frames and a dissolve of 20 frames from the open flower back to the bud, 7.6 s, which repeats without a jump. It is made from frames that exist and costs no waiting. Which one the card uses is his choice.
   - Nothing else is started. What is left is only what he asked for: the clean still and clip, the last merge, the final summary.
+- The message of 24 November, 00:15 UTC, asks again where the work stands and what the agents are doing. It was read like this:
+  - He wants the answer as text in the reply itself, because what is written between two steps does not stay on his screen. The answer is given as the last message of the turn, in plain words, with times in his own time zone.
+  - "Don't change anything": the redraw goes on and nothing is stopped. The answer says plainly that the film is done and untouched, that everything he asked for is with him in a first version since 22:27 and 23:35 UTC, and that the agents only draw the card's 208 frames again at 48 samples, which was the Builder's choice and is the whole reason for the hours.
+  - "With no audio and export the one with that and the one without it": the copy with the silent opening and the film without the opening are the two he names. The copy with typing and click sounds is the extra his message of 21:19 left to the Builder.
+  - "A looping video of the bud opening and closing": he means a loop in which the flower closes again. The loop made so far fades back to the bud. So a second loop is cut from the same frames in which the flower closes by playing backward at double speed; it needs no new frame and no waiting. Both are handed over and the one that closes is named first.

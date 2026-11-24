@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 3.63 h |
-| Whole build | 30.00 h | 26.02 h |
+| 6 | 4.00 h | 3.82 h |
+| Whole build | 30.00 h | 26.20 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -367,6 +367,7 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 23:32 UTC. The live version at 320 x 180 on this machine (MEASURED, headless Chrome, software renderer, four cores, other jobs running; `out/work/checks/live-320-load.log`): it loads to Ready in 11 min 28 s. The sandbox's desktop browser stopped answering at 4 of 27 moments at the same address, so there it is not confirmed; the open item says so.
 - 2026-11-23 23:40 UTC. He wrote "a looping video". The clip he described on 21:19 runs from the bud to the open flower, so as a loop it would jump. Decided: both are delivered. The play once clip stays as he described it (208 frames, 6.93 s, ends on the open flower). Beside it a loop cut of the same frames: 208 frames and a smoothstep dissolve of 20 frames from the open flower back to the bud, 228 frames, 7.6 s; the last frame is 99.3 percent the bud, so the step back to the first frame is not seen. `tools/card.py` makes the still, both clips and both loop cuts in one pass and writes `card-proof.json`; it replaces the trial script. The interim files cut from the film were attached at 23:35.
 - 2026-11-24 00:01 UTC. Two checks on the card while the frames come in. MEASURED on the 107 clean frames that are in without a gap (2905 to 3011): the twelve machines leave no flicker; the second difference of the frame's mean level is 0.08 levels (rms) against 0.13 in the film's own frames, and a frame's deviation from the mean of its neighbours shows the same pattern in both. The clean frames are 1.1 levels darker in the mean than the film's (1.8 at frame 2905); the still and the clip are both cut from the clean frames, so they agree with each other. MEASURED in headless Chrome on the interim files (`out/work/card/hover/check.mjs`): the still as a picture and the clip paused on its first frame are 43.0 dB apart (1.2 levels of 255, 0.9 percent of the pixels over 8 levels), the clip plays to its end and no error is logged.
+- 2026-11-24 00:16 UTC. Brandon asks again where the work stands, what the agents do and why, and wants the answer as text that stays (his words and the reading are in `kit/v2/NOTES-FROM-BRANDON.md`). Answered in the turn's last message: the film is done and untouched; the opening, the still, the clip and the loop are with him in a first version; the twelve agents only draw the card's 208 frames again at 48 samples (138 in at 00:16), which was the Builder's choice. He writes "opening and closing" for the loop, so a second loop is cut from the same frames in which the flower closes by playing backward. Nothing is stopped and nothing else is added.
 
 ## Notes from Brandon
 
