@@ -34,10 +34,13 @@ export function sway(time: number, x: number, z: number): number {
   const patchy = patchyAt(time)
   const one = patchy < 1 ? 2 * front(HEAVY_LAGS, time, x, z) - 1 : 0
   if (patchy <= 0) return one
-  // In the last shot it gives to the gusts that reach it and swings on a note of its own, as its neighbors do.
+  // In the last shot it gives to the gusts that reach it and swings on a note of its own, as its neighbors do. It stands a little short of the middle at rest, as it did between two fronts.
   const bent = bentBy(own(x, z, 0.13), own(x, z, 0.47), own(x, z, 0.71), x, z, time)
-  return one + (2 * (bent.x * TOWARD.x + bent.z * TOWARD.z) - 1 - one) * patchy
+  const given = Math.min(1, Math.max(-1, (bent.x * TOWARD.x + bent.z * TOWARD.z - REST) / (1 - REST / 2)))
+  return one + (given - one) * patchy
 }
+// How far downwind a stem that has given this much of a full gust stands at the middle of its swing.
+const REST = 0.35
 
 // The swell of the first film, for inputs that carry no film second. The checks in `tests/` still pose the plant with those.
 export const firstWay = { x: 0.92, z: 0.39 }

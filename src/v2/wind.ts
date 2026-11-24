@@ -39,9 +39,10 @@ export function patchyAt(seconds: number): number {
 
 // The sizes of gust: how far off the wind's way each travels in radians, how fast in meters a second, how long and wide its ground is in meters, how hard its strongest pushes, and how many of them back a plant still feels.
 const SIZES = [
-  { turn: -0.1, speed: 7.5, long: 42, wide: 26, strength: 2.81, back: 1 },
-  { turn: 0.16, speed: 6.4, long: 23, wide: 15, strength: 2.5, back: 2 },
-  { turn: -0.3, speed: 5.4, long: 12.5, wide: 8.5, strength: 1.94, back: 3 },
+  { turn: -0.1, speed: 7.5, long: 42, wide: 26, strength: 3.65, back: 1 },
+  { turn: 0.16, speed: 6.4, long: 23, wide: 15, strength: 3.25, back: 2 },
+  { turn: -0.3, speed: 5.4, long: 12.5, wide: 8.5, strength: 2.5, back: 3 },
+  { turn: 0.26, speed: 4.6, long: 6.5, wide: 4.5, strength: 2.1, back: 3 },
 ]
 // Of the grounds, the share with no gust on them, and how weak the weakest gust is beside the strongest.
 const EMPTY = 0.2
@@ -61,16 +62,41 @@ const EDGE = 0.12
 const FADES_S = 1.2
 // A plant's own note in turns a second, how fast its swing dies as a share of critical, and how far apart its two axes ring.
 const NOTE_HZ = [0.5, 0.85]
-const DAMPING = [0.06, 0.12]
+const DAMPING = [0.08, 0.18]
 const SPLIT = [0.04, 0.13]
 // Its first axis lies within this many radians of the wind's way.
 const AXIS_OFF = 0.6
 // It never stands still: it swings this far on its own in the calmest air, as a share of a full gust, and this much more for each gust that lies on it. Across the wind it swings this share as far.
-const OWN_CALM = 0.053
-const OWN_GUST = 0.118
+const OWN_CALM = 0.044
+const OWN_GUST = 0.098
 const OWN_ACROSS = 0.6
+// That swing is the small eddies no neighbor shares, heard through the plant's note: five tones round it, each this far off as a share of the note and this strong, so it swells and fades and never repeats.
+const OWN_TONES = [
+  [-0.33, 0.5],
+  [-0.15, 0.8],
+  [0, 1],
+  [0.19, 0.75],
+  [0.41, 0.45],
+]
+// Where each tone starts, from the plant's three numbers, along the wind and across it.
+const OWN_STARTS = [
+  [
+    [0, 0, 3.1],
+    [5.3, 0, 0],
+    [0, 7.7, 0],
+    [4.3, 0, 4.3],
+    [6.1, 6.1, 0],
+  ],
+  [
+    [9.1, 0, 0],
+    [0, 3.7, 0],
+    [0, 0, 5.9],
+    [0, 8.3, 8.3],
+    [2.9, 0, 2.9],
+  ],
+]
 // No stalk bends further than this many gusts, and no gust pushes harder than this many.
-const MOST = 1.15
+const MOST = 1
 // A head is heavy: it comes this many seconds after its stalk.
 const HEAD_LATE_S = 0.15
 
@@ -189,10 +215,14 @@ export function bentBy(a: number, b: number, c: number, x: number, z: number, se
     }
   }
   const k = 0.6 + 0.8 * b
-  const turns = 2 * Math.PI
   const own = OWN_CALM + OWN_GUST * push
-  x1 += own * (0.7 * Math.sin(w1 * (1 - 0.13 * k) * seconds + turns * c * 3.1) + Math.sin(w1 * seconds + turns * a * 5.3) + 0.6 * Math.sin(w1 * (1 + 0.17 * k) * seconds + turns * b * 7.7))
-  x2 += own * OWN_ACROSS * (0.7 * Math.sin(w2 * (1 - 0.15 * k) * seconds + turns * a * 9.1) + Math.sin(w2 * seconds + turns * b * 3.7) + 0.6 * Math.sin(w2 * (1 + 0.12 * k) * seconds + turns * c * 5.9))
+  for (let i = 0; i < OWN_TONES.length; i++) {
+    const [off, loud] = OWN_TONES[i]
+    const s1 = OWN_STARTS[0][i]
+    const s2 = OWN_STARTS[1][i]
+    x1 += own * loud * Math.sin(w1 * (1 + off * k) * seconds + 2 * Math.PI * (a * s1[0] + b * s1[1] + c * s1[2]))
+    x2 += own * OWN_ACROSS * loud * Math.sin(w2 * (1 - off * k) * seconds + 2 * Math.PI * (a * s2[0] + b * s2[1] + c * s2[2]))
+  }
   const px = x1 * ex - x2 * ez
   const pz = x1 * ez + x2 * ex
   const most = 1 / Math.sqrt(1 + (px * px + pz * pz) / (MOST * MOST))
@@ -334,8 +364,7 @@ vec4 windBent(highp vec2 at, highp float seconds, highp vec3 own) {
 ${puffCalls('windStruck(hit, way, e, w, dies, wd, x, v, push);')}
   highp float k = 0.6 + 0.8 * own.y;
   highp float swing = ${g(OWN_CALM)} + ${g(OWN_GUST)} * push;
-  x.x += swing * (0.7 * sin(w1 * (1.0 - 0.13 * k) * seconds + 6.2831853 * own.z * 3.1) + sin(w1 * seconds + 6.2831853 * own.x * 5.3) + 0.6 * sin(w1 * (1.0 + 0.17 * k) * seconds + 6.2831853 * own.y * 7.7));
-  x.y += swing * ${g(OWN_ACROSS)} * (0.7 * sin(w2 * (1.0 - 0.15 * k) * seconds + 6.2831853 * own.x * 9.1) + sin(w2 * seconds + 6.2831853 * own.y * 3.7) + 0.6 * sin(w2 * (1.0 + 0.12 * k) * seconds + 6.2831853 * own.z * 5.9));
+${OWN_TONES.map(([off, loud], i) => `  x += swing * ${g(loud)} * vec2(sin(w1 * (1.0 + ${g(off)} * k) * seconds + 6.2831853 * dot(own, vec3(${OWN_STARTS[0][i].map((n) => g(n, 1)).join(', ')}))), ${g(OWN_ACROSS)} * sin(w2 * (1.0 - ${g(off)} * k) * seconds + 6.2831853 * dot(own, vec3(${OWN_STARTS[1][i].map((n) => g(n, 1)).join(', ')}))));`).join('\n')}
   highp vec2 top = vec2(x.x * e.x - x.y * e.y, x.x * e.y + x.y * e.x);
   highp float most = inversesqrt(1.0 + dot(top, top) * ${g(1 / (MOST * MOST), 6)});
   top *= most;
