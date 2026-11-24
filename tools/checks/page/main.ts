@@ -88,7 +88,8 @@ const quality = (q.get('quality') as Quality | null) ?? null
 const canvas = document.getElementById('film') as HTMLCanvasElement
 
 installCounter()
-const film = new Film(canvas, format, 'full', { sky: q.get('sky') ?? undefined, only, view, quality, smooth: q.get('plain') !== '1' })
+// The checks measure the film as the page plays it.
+const film = new Film(canvas, format, 'full', { sky: q.get('sky') ?? undefined, only, view, quality, smooth: q.get('plain') !== '1', live: true })
 const ready = film.load()
 
 let grow: { from: number; to: number; rate: number } | null = null

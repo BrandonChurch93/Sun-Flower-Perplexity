@@ -32,8 +32,9 @@ export const fieldPlaceUniforms = {
 
 export interface KindUniforms {
   uFieldData: { value: THREE.DataTexture }
-  // What the gusts of the last shot do to each neighbor in this frame.
-  uFieldBent: { value: THREE.DataTexture }
+  // What the gusts of the last shot do to each neighbor in this frame, and the row of that texture the kind's first neighbor lies in.
+  uFieldBent: { value: THREE.Texture }
+  uFieldBentRow: { value: number }
   // The kind's clock, its height at that clock, whether it opens early, which way its head points in its own frame.
   uFieldKind: { value: THREE.Vector4 }
   // How far ahead the kind is, what its size is multiplied by, the farthest it is drawn, the share of it that is drawn far off.
@@ -119,6 +120,7 @@ const f = (v: number, digits = 4): string => v.toFixed(digits)
 export const fieldPlaceGlsl = /* glsl */ `
 uniform sampler2D uFieldData;
 uniform sampler2D uFieldBent;
+uniform int uFieldBentRow;
 uniform vec4 uFieldKind;
 uniform vec4 uFieldDraw;
 uniform float uFieldLeaf;
@@ -188,8 +190,8 @@ Place fieldPlace() {
       twist = uFieldLeaf > 0.5 ? uFieldAir.z * (more.w < 0.5 ? -1.0 : 1.0) * (0.75 * g + 0.15 * quick * (0.4 + g)) : uFieldAir.y * (more.z < 0.5 ? -1.0 : 1.0) * (0.6 * g + 0.12 * shake);
     }
     if (patchy > 0.0) {
-      // In the last shot it gives to each gust that reaches it and swings on a note of its own: what that comes to is worked out in script for the frame.
-      vec4 bent = texelFetch(uFieldBent, ivec2(k % ${WIDE}, k / ${WIDE}), 0);
+      // In the last shot it gives to each gust that reaches it and swings on a note of its own: what that comes to is worked out once for the frame, a texel a neighbor.
+      vec4 bent = texelFetch(uFieldBent, ivec2(k % ${WIDE}, k / ${WIDE} + uFieldBentRow), 0);
       over = mix(over, uFieldAir.y * (${f(OWN_LEAST)} + ${f(OWN_MORE)} * more.w) * (${f(LEAN_STEADY)} * fieldSpun(vec2(${f(windWay.x, 6)}, ${f(windWay.z, 6)}), (last.x - 0.5) * 0.5) + ${f(LEAN_GUST)} * bent.xy), patchy);
       nod = mix(nod, uFieldAir.y * ${f(HEAD_NODS)} * bent.w, patchy);
       twist = mix(twist, uFieldLeaf > 0.5 ? uFieldAir.z * (more.w < 0.5 ? -1.0 : 1.0) * (0.75 * bent.z + 0.15 * quick * (0.4 + bent.z)) : uFieldAir.y * (more.z < 0.5 ? -1.0 : 1.0) * ${f(HEAD_TURNS)} * bent.w, patchy);
