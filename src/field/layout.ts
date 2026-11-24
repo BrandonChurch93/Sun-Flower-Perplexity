@@ -1,7 +1,7 @@
 import { config } from '../config.ts'
 import { hash01, streamSeed } from '../core/random.ts'
 import { barAt, tauAtBar } from '../v2/clock.ts'
-import { gustAt, windWay } from '../v2/wind.ts'
+import { bentBy, frontAt, patchyAt, windWay } from '../v2/wind.ts'
 import { heightAt, setLeafHold, setLeafTurn } from '../plant/growth.ts'
 import { PLACE } from '../plant/part.ts'
 
@@ -278,22 +278,44 @@ export const blownOf = (id: number, x: number, z: number, seconds: number, wind:
 // A neighbor's three numbers for the wind: they never change, so they are worked out once.
 export const windOf = (id: number, which: number): number => hash01(SEED, 141 + which, id)
 export function blownBy(a: number, b: number, c: number, x: number, z: number, seconds: number, wind: number, leafWind: number): Blown {
-  const g = gustAt(x, z, seconds - 0.25 * a)
+  const patchy = patchyAt(seconds)
   const turn = 2 * Math.PI
-  const shake = Math.sin(turn * (seconds / (0.9 + 0.8 * b) + c))
   const quick = Math.sin(turn * (seconds / (0.31 + 0.2 * c) + a))
-  const lean = wind * (0.7 + 0.6 * b) * (LEAN_STEADY + LEAN_GUST * g + 0.045 * shake * (0.35 + g))
-  const way = (c - 0.5) * 0.5 + 0.25 * shake * g
-  const cw = Math.cos(way)
-  const sw = Math.sin(way)
   const side = a < 0.5 ? -1 : 1
-  blown.x = (cw * windWay.x - sw * windWay.z) * lean
-  blown.z = (sw * windWay.x + cw * windWay.z) * lean
-  blown.head = wind * side * (0.6 * g + 0.12 * shake)
-  blown.leaves = leafWind * (b < 0.5 ? -1 : 1) * (0.75 * g + 0.15 * quick * (0.4 + g))
-  blown.nod = wind * (0.3 * g + 0.06 * shake)
+  blown.x = blown.z = blown.head = blown.leaves = blown.nod = 0
+  if (patchy < 1) {
+    const g = frontAt(x, z, seconds - 0.25 * a)
+    const shake = Math.sin(turn * (seconds / (0.9 + 0.8 * b) + c))
+    const lean = wind * (0.7 + 0.6 * b) * (LEAN_STEADY + LEAN_GUST * g + 0.045 * shake * (0.35 + g))
+    const way = (c - 0.5) * 0.5 + 0.25 * shake * g
+    const cw = Math.cos(way)
+    const sw = Math.sin(way)
+    blown.x = (cw * windWay.x - sw * windWay.z) * lean
+    blown.z = (sw * windWay.x + cw * windWay.z) * lean
+    blown.head = wind * side * (0.6 * g + 0.12 * shake)
+    blown.leaves = leafWind * (b < 0.5 ? -1 : 1) * (0.75 * g + 0.15 * quick * (0.4 + g))
+    blown.nod = wind * (0.3 * g + 0.06 * shake)
+  }
+  if (patchy > 0) {
+    // In the last shot it gives to each gust that reaches it and swings on a note of its own.
+    const bent = bentBy(a, b, c, x, z, seconds)
+    const way = (c - 0.5) * 0.5
+    const most = wind * (OWN_LEAST + OWN_MORE * b)
+    const nx = most * (LEAN_STEADY * (Math.cos(way) * windWay.x - Math.sin(way) * windWay.z) + LEAN_GUST * bent.x)
+    const nz = most * (LEAN_STEADY * (Math.sin(way) * windWay.x + Math.cos(way) * windWay.z) + LEAN_GUST * bent.z)
+    blown.x += (nx - blown.x) * patchy
+    blown.z += (nz - blown.z) * patchy
+    blown.head += (wind * side * HEAD_TURNS * bent.head - blown.head) * patchy
+    blown.leaves += (leafWind * (b < 0.5 ? -1 : 1) * (0.75 * bent.push + 0.15 * quick * (0.4 + bent.push)) - blown.leaves) * patchy
+    blown.nod += (wind * HEAD_NODS * bent.head - blown.nod) * patchy
+  }
   return blown
 }
+// In the last shot no two neighbors give alike: the stiffest takes this share of the lean and the limpest this much more, and a head turns and nods this far for each gust its stalk has given.
+export const OWN_LEAST = 0.6
+export const OWN_MORE = 0.8
+export const HEAD_TURNS = 0.6
+export const HEAD_NODS = 0.3
 
 // Full plants to here, simpler ones to the next, pictures of plants to the last row, where the field ends on a straight edge.
 // A carpet closes the tops over the last rows.

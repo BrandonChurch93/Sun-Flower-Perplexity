@@ -401,3 +401,17 @@ At the `high` level a frame of one sample is drawn at four places in each pixel.
 So in every fragment shader: a value from the vertex shader is held to its honest range before it goes into `pow`, `sqrt`, `log`, `inversesqrt`, `normalize`, a division, or the edge of a `smoothstep`. No `centroid` on a value whose derivative is used. Each owner reads through its own fragment shaders once for this and proves it with `npm run checks -- numbers --frames a,b,c` on three frames of its own at the default quality: no pixel without a number, none over the limit, no spark, and the worst ratio it printed.
 
 The lens takes a channel that is not a number or is infinite as nothing, so on any card the worst such fault is one black pixel. It has no ceiling: a wild value that is still a number is caught by the `numbers` check and by reading the drawn film, not hidden.
+
+## 24 Nov, 05:20 UTC: branch `last-shot-wind`, the wind of the last shot
+
+### 32. Gusts in the last shot, and who works them out
+
+Brandon's word of 24 Nov, about 01:50 UTC (`kit/v2/NOTES-FROM-BRANDON.md`): in the last shot the field swayed as one, in rows, and came back together. "One wind for everything that bends" (entry 7 of 23 Nov, 00:55 UTC) holds until bar 65 and no longer after it.
+
+- `src/v2/wind.ts`. `frontAt` is the old front, unchanged. From bar 65 (`PATCHY_FROM_S`, frame 3318) to bar 66.75 (`PATCHY_BY_S`, frame 3408) `patchyAt` goes from 0 to 1 and the front gives way to gusts: patches of four sizes, from 42 by 26 m at 7.5 m a second down to 6.5 by 4.5 m at 4.6 m a second, each with a bowed front, a push a little off the wind's way, a strength and a short life. A plant feels up to 13 of them at once. `gustAt` is the front before bar 65 and the gusts after it.
+- `bentBy(a, b, c, x, z, seconds)` is what those gusts do to one plant whose three own numbers are `a`, `b` and `c`: a weight on a spring with two axes (0.5 to 0.85 Hz, damped at 0.08 to 0.18), struck by each gust that reaches it, and a small swing of its own in five tones. All of it is a closed form of the place and the film second. Nothing is carried from frame to frame, so a frame is the same picture whenever it is drawn.
+- The field (`src/field/place.ts`, `index.ts`, `layout.ts`): each neighbour reads its lean, the push on it and how far its head has come from one texel of `uFieldBent`, written once a frame. The far pictures (`far.ts`) work the same numbers out in their vertex shader (`windBent`). The plant and its companion take the same gusts through `sway` in `src/plant/wind.ts`.
+- Who writes that texel. A frame that is recorded has it from script (`bendKind`), the same to the last digit on every machine. A film that is played (`FilmOptions.live`, set by `src/main.ts` and by the checks page) has it from one pass on the graphics card into a float texture (`src/field/bent.ts`), made when the field is built and drawn once at load, because in script it costs about 18 ms a frame for 5,408 neighbours against the field's limit of 3. Where the card cannot draw into float textures (`EXT_color_buffer_float`), the played film falls back to script. MEASURED: card against script on the film's 6,869 neighbours at 9 instants, worst difference 2.7e-4 at the top and 4.7e-4 at the head.
+- Do not build anything new on `gustAt` after bar 65 that expects a front. The old wave there is `frontAt` and `frontGlsl`.
+- `tests/wind.test.ts` holds the last shot to four rules: the one front until bar 65, the reach, the same numbers whenever a plant is asked, and no row moving as one.
+

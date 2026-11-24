@@ -8,9 +8,11 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
+import { PATCHY_BY_S, patchyAt } from '../v2/wind.ts'
+import { Bent } from './bent.ts'
 import { FarField } from './far.ts'
 import { Keyed, keyGlsl, keyUniforms, keysOn, turnOf } from './keys.ts'
-import { type KindUniforms, fieldPlaceGlsl, fieldPlaceUniforms, kindData, kindList } from './place.ts'
+import { type KindUniforms, bendKind, fieldPlaceGlsl, fieldPlaceUniforms, kindBent, kindData, kindList } from './place.ts'
 import { Rime } from './rime.ts'
 import { ROOM_M, bySeen, filmLens, frameOf, lensOf, needed } from './seen.ts'
 import { Shaped, shapeInputs } from './turn.ts'
@@ -30,14 +32,16 @@ const BEHIND = { tone: 0.75, from: 53.6, full: 55.5 }
 const RIME_FROM = 0.1
 const RIME_FULL = 0.7
 
-interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; rime: Rime | null; keyed: Keyed; kind: KindUniforms; shaped: Shaped; places: Float32Array; need: Uint16Array; drawn: THREE.InstancedBufferGeometry[]; count: number; index: number; tier: Tier; plant: Plant }
+interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vector4 }; leafOwn: { value: number }; axis: { value: THREE.Vector3 }; grow: { value: number }; bare: boolean; rime: Rime | null; keyed: Keyed; kind: KindUniforms; own: THREE.DataTexture; shaped: Shaped; places: Float32Array; need: Uint16Array; drawn: THREE.InstancedBufferGeometry[]; count: number; index: number; tier: Tier; plant: Plant }
 
 // One kind of neighbor, drawn once for every place of its share. Its list is written here and never again, in the order the film first sees its neighbors:
 // where each one stands in a frame is worked out as it is drawn, and a frame draws only the front part of the list that it can see.
 function group(detail: 'near' | 'far', variant: number, share: Float32Array, index: number, lens: Float32Array, turn: number, bare = false): Group {
   const places = bySeen(share, lens)
   const list = new THREE.InstancedInterleavedBuffer(kindList(places), PLACE)
-  const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
+  // What the gusts do to this kind as the script works it out, in a texture of its own.
+  const own = kindBent(places.length / PLACE)
+  const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldBent: { value: own }, uFieldBentRow: { value: 0 }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
   const key = keyUniforms()
   const options = { detail, variant, places: list, place: { glsl: fieldPlaceGlsl + keyGlsl, uniforms: { ...fieldPlaceUniforms, ...kind, ...key } } }
   const plant = new Plant(options)
@@ -64,7 +68,7 @@ function group(detail: 'near' | 'far', variant: number, share: Float32Array, ind
   const blades = plant.parts.find((part) => part.name === 'leaves')?.meshes.find((m) => m.geometry.getAttribute('aLeaf'))?.geometry
   const rime = detail === 'near' && !bare && blades ? new Rime(options, blades, { uHeadAt: leafHead, uHeadGrow: grow, uHeadAxis: axis, uEarly: leafOwn, uFieldLeaf: { value: 1 } }) : null
   if (rime) drawn.push(rime.geometry)
-  return { head, leafHead, leafOwn, axis, grow, bare, rime, keyed, plant, kind, shaped: new Shaped(), places, need: needed(places, lens), drawn, count, index, tier: detail }
+  return { head, leafHead, leafOwn, axis, grow, bare, rime, keyed, plant, kind, own, shaped: new Shaped(), places, need: needed(places, lens), drawn, count, index, tier: detail }
 }
 
 // The neighbors: the same kind of plant at nearly the same age, in rows behind the plant. Full plants near, simpler ones behind them,
@@ -72,6 +76,10 @@ function group(detail: 'near' | 'far', variant: number, share: Float32Array, ind
 export class Field {
   readonly groups: Group[]
   readonly far: FarField
+  // What the gusts of the last shot do to every neighbor, from the graphics card, for a film that is played.
+  private readonly bent: Bent
+  // Set by a film that is played and not recorded.
+  live = false
   readonly meshes: THREE.Object3D[]
   // Set by the field's own stage part before the frame is drawn, from the frame's view.
   quality: Quality = 'high'
@@ -111,6 +119,7 @@ export class Field {
       ...farVariants.map((v, i) => group('far', v, shareOf(places.far, i, farVariants.length), i, this.lens, next())),
       ...UNDER_KINDS.map((k, i) => group('near', nearVariants[k], shareOf(places.under, i, UNDER_KINDS.length), k, this.lens, next(), true)),
     ]
+    this.bent = new Bent(this.groups.map((g) => g.places))
     this.far = new FarField(places.pictures, farVariants.map(() => next()))
     this.meshes = [...this.groups.flatMap((g) => (g.rime ? [...g.plant.meshes, g.rime.points] : g.plant.meshes)), ...this.far.meshes]
     this.shown = this.groups.reduce((sum, g) => sum + g.count, 0)
@@ -125,6 +134,16 @@ export class Field {
   async load(assets: Assets): Promise<void> {
     for (const g of this.groups) await g.plant.load(assets)
     await this.far.load(assets)
+  }
+
+  // A film that is played has the gusts of the last shot worked out on the graphics card: the renderer it draws with.
+  card(renderer: THREE.WebGLRenderer): void {
+    if (this.live) this.bent.on(renderer)
+  }
+
+  // Draws them once, so that nothing is made when they first blow.
+  warm(): void {
+    if (this.live) this.bent.draw(PATCHY_BY_S)
   }
 
   prepare(timeOpen: number, timeClose: number, open: PlantInputs, close: PlantInputs, eyeHeightM: number): void {
@@ -258,10 +277,20 @@ export class Field {
     }
     lensOf(pose, this.tanHalfWidth, this.aspect, this.mine)
     const frame = frameOf(this.lens, this.seconds, this.mine)
+    // In the last shot the gusts reach each neighbor in their own time: what they do to the ones this frame draws is worked out here.
+    // A film that is played has it from the graphics card, drawn once for the frame. A recorded frame has the script's numbers, and so has a card that cannot draw them.
+    const gusts = patchyAt(this.seconds) > 0 && (this.wind > 0 || this.leafWind > 0)
+    const drawn = gusts && this.live && this.bent.draw(this.seconds)
     let shown = 0
-    for (const g of this.groups) {
+    for (let i = 0; i < this.groups.length; i++) {
+      const g = this.groups[i]
       const count = frame < 0 ? g.count : g.need[frame]
       for (const geometry of g.drawn) geometry.instanceCount = count
+      if (gusts) {
+        g.kind.uFieldBent.value = drawn ? this.bent.texture : g.own
+        g.kind.uFieldBentRow.value = drawn ? this.bent.rows[i] : 0
+        if (!drawn && count > 0) bendKind(g.own, g.places, count, this.seconds)
+      }
       shown += count
     }
     this.shown = shown

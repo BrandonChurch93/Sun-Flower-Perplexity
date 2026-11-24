@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { config } from '../config.ts'
-import { gustGlsl, windWay } from '../v2/wind.ts'
-import { LEAN_GUST, LEAN_STEADY, PLACE, STIFF_LEAF, SHARE_LOW, SIZE_KNEE, companionPlace, faceAt, faceToward, lateLeafCode, lateLean, leafShort, leafSpin, ownOf, right, settleOf, thinOrder, toward, windOf } from './layout.ts'
+import { PATCHY_GLSL, bentBy, frontGlsl, windWay } from '../v2/wind.ts'
+import { HEAD_NODS, HEAD_TURNS, LEAN_GUST, LEAN_STEADY, OWN_LEAST, OWN_MORE, PLACE, STIFF_LEAF, SHARE_LOW, SIZE_KNEE, companionPlace, faceAt, faceToward, lateLeafCode, lateLean, leafShort, leafSpin, ownOf, right, settleOf, thinOrder, toward, windOf } from './layout.ts'
 
 // What a neighbor carries for good, six texels of four numbers each, in a texture made once when the field is built.
 const ROWS = 6
@@ -32,6 +32,9 @@ export const fieldPlaceUniforms = {
 
 export interface KindUniforms {
   uFieldData: { value: THREE.DataTexture }
+  // What the gusts of the last shot do to each neighbor in this frame, and the row of that texture the kind's first neighbor lies in.
+  uFieldBent: { value: THREE.Texture }
+  uFieldBentRow: { value: number }
   // The kind's clock, its height at that clock, whether it opens early, which way its head points in its own frame.
   uFieldKind: { value: THREE.Vector4 }
   // How far ahead the kind is, what its size is multiplied by, the farthest it is drawn, the share of it that is drawn far off.
@@ -78,6 +81,32 @@ export function kindData(places: Float32Array): THREE.DataTexture {
   return texture
 }
 
+// What the gusts of the last shot do to every neighbor of one kind, a texel each in the order of its list:
+// how far its top is carried, how hard the air pushes on it, how far its head has come along the wind.
+export function kindBent(count: number): THREE.DataTexture {
+  const high = Math.max(1, Math.ceil(count / WIDE))
+  const texture = new THREE.DataTexture(new Float32Array(WIDE * high * 4), WIDE, high, THREE.RGBAFormat, THREE.FloatType)
+  texture.minFilter = THREE.NearestFilter
+  texture.magFilter = THREE.NearestFilter
+  texture.generateMipmaps = false
+  texture.needsUpdate = true
+  return texture
+}
+
+// Written again for a frame of that shot, for the neighbors the frame draws.
+export function bendKind(texture: THREE.DataTexture, places: Float32Array, count: number, seconds: number): void {
+  const data = texture.image.data as Float32Array
+  for (let k = 0; k < count; k++) {
+    const id = places[k * PLACE + 7]
+    const bent = bentBy(windOf(id, 0), windOf(id, 1), windOf(id, 2), places[k * PLACE], places[k * PLACE + 1], seconds)
+    data[k * 4] = bent.x
+    data[k * 4 + 1] = bent.z
+    data[k * 4 + 2] = bent.push
+    data[k * 4 + 3] = bent.head
+  }
+  texture.needsUpdate = true
+}
+
 // The list a kind is drawn from, written once: where each neighbor stands, its turn, its size, its lean, its tone and its number in the list.
 export function kindList(places: Float32Array): Float32Array {
   const list = new Float32Array(places)
@@ -90,6 +119,8 @@ const f = (v: number, digits = 4): string => v.toFixed(digits)
 // Where a neighbor stands in this frame, worked out for each vertex from what it carries for good and the frame's few numbers.
 export const fieldPlaceGlsl = /* glsl */ `
 uniform sampler2D uFieldData;
+uniform sampler2D uFieldBent;
+uniform int uFieldBentRow;
 uniform vec4 uFieldKind;
 uniform vec4 uFieldDraw;
 uniform float uFieldLeaf;
@@ -99,7 +130,7 @@ uniform vec4 uFieldPhase;
 uniform vec4 uFieldAir;
 uniform vec4 uFieldLens;
 uniform vec4 uFieldGate;
-${gustGlsl.replace(/gustPulse/g, 'fieldGustPulse').replace(/gustAt/g, 'fieldGust')}
+${frontGlsl.replace(/gustPulse/g, 'fieldGustPulse').replace(/gustAt/g, 'fieldGust')}
 float fieldSoftMin(float a, float b) { return -log(exp(-${f(SIZE_KNEE, 1)} * a) + exp(-${f(SIZE_KNEE, 1)} * b)) / ${f(SIZE_KNEE, 1)}; }
 float fieldSteps(float v, float from, float to) { return clamp(floor((v - from) / (to - from) * 31.0 + 0.5), 0.0, 31.0); }
 vec2 fieldSpun(vec2 lean, float turn) {
@@ -147,13 +178,26 @@ Place fieldPlace() {
   float spin = uFieldLeaf > 0.5 ? ways.w : 0.0;
   if (uFieldAir.y > 0.0 || uFieldAir.z > 0.0) {
     float seconds = uFieldAir.x;
-    float g = fieldGust(at, seconds - 0.25 * more.z);
-    float shake = sin(6.2831853 * (seconds / (0.9 + 0.8 * more.w) + last.x));
+    float patchy = ${PATCHY_GLSL}seconds);
     float quick = sin(6.2831853 * (seconds / (0.31 + 0.2 * last.x) + more.z));
-    float over = uFieldAir.y * (0.7 + 0.6 * more.w) * (${f(LEAN_STEADY)} + ${f(LEAN_GUST)} * g + 0.045 * shake * (0.35 + g));
-    push += fieldSpun(vec2(${f(windWay.x, 6)}, ${f(windWay.z, 6)}), (last.x - 0.5) * 0.5 + 0.25 * shake * g) * over;
-    nod = uFieldAir.y * (0.3 * g + 0.06 * shake);
-    spin += uFieldLeaf > 0.5 ? uFieldAir.z * (more.w < 0.5 ? -1.0 : 1.0) * (0.75 * g + 0.15 * quick * (0.4 + g)) : uFieldAir.y * (more.z < 0.5 ? -1.0 : 1.0) * (0.6 * g + 0.12 * shake);
+    vec2 over = vec2(0.0);
+    float twist = 0.0;
+    if (patchy < 1.0) {
+      float g = fieldGust(at, seconds - 0.25 * more.z);
+      float shake = sin(6.2831853 * (seconds / (0.9 + 0.8 * more.w) + last.x));
+      over = fieldSpun(vec2(${f(windWay.x, 6)}, ${f(windWay.z, 6)}), (last.x - 0.5) * 0.5 + 0.25 * shake * g) * (uFieldAir.y * (0.7 + 0.6 * more.w) * (${f(LEAN_STEADY)} + ${f(LEAN_GUST)} * g + 0.045 * shake * (0.35 + g)));
+      nod = uFieldAir.y * (0.3 * g + 0.06 * shake);
+      twist = uFieldLeaf > 0.5 ? uFieldAir.z * (more.w < 0.5 ? -1.0 : 1.0) * (0.75 * g + 0.15 * quick * (0.4 + g)) : uFieldAir.y * (more.z < 0.5 ? -1.0 : 1.0) * (0.6 * g + 0.12 * shake);
+    }
+    if (patchy > 0.0) {
+      // In the last shot it gives to each gust that reaches it and swings on a note of its own: what that comes to is worked out once for the frame, a texel a neighbor.
+      vec4 bent = texelFetch(uFieldBent, ivec2(k % ${WIDE}, k / ${WIDE} + uFieldBentRow), 0);
+      over = mix(over, uFieldAir.y * (${f(OWN_LEAST)} + ${f(OWN_MORE)} * more.w) * (${f(LEAN_STEADY)} * fieldSpun(vec2(${f(windWay.x, 6)}, ${f(windWay.z, 6)}), (last.x - 0.5) * 0.5) + ${f(LEAN_GUST)} * bent.xy), patchy);
+      nod = mix(nod, uFieldAir.y * ${f(HEAD_NODS)} * bent.w, patchy);
+      twist = mix(twist, uFieldLeaf > 0.5 ? uFieldAir.z * (more.w < 0.5 ? -1.0 : 1.0) * (0.75 * bent.z + 0.15 * quick * (0.4 + bent.z)) : uFieldAir.y * (more.z < 0.5 ? -1.0 : 1.0) * ${f(HEAD_TURNS)} * bent.w, patchy);
+    }
+    push += over;
+    spin += twist;
   }
   if (spin != 0.0) {
     turn += spin;

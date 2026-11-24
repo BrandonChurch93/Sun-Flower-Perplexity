@@ -46,7 +46,7 @@ function painted(): Promise<void> {
 function start(): void {
   try {
     const quality = options.quality ?? (played ? 'high' : null)
-    const film = new Film(canvas, options.format, options.assets, { sky: options.sky ?? undefined, only: options.only, view: options.view ?? undefined, quality })
+    const film = new Film(canvas, options.format, options.assets, { sky: options.sky ?? undefined, only: options.only, view: options.view ?? undefined, quality, live: played })
     film.diag = options.diag
     film.view.azimuthDeg = options.az
     film.view.elevationDeg = options.el
