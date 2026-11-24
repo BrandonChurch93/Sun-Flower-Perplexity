@@ -58,6 +58,9 @@ export interface FilmOptions {
   still?: boolean
   // False draws a high frame of one sample at one place in each pixel, for the checks that read script time and megabytes only.
   smooth?: boolean
+  // True for a film that is played. What the gusts of the last shot do to the field then comes from the graphics card, where it costs the page next to nothing.
+  // A frame that is recorded has it from script, the same to the last digit on every card.
+  live?: boolean
 }
 
 export class Film {
@@ -111,6 +114,7 @@ export class Film {
     this.only = new Set(options.only ?? [])
     this.quality = options.quality ?? null
     this.smoothing = options.smooth ?? true
+    this.field.live = options.live === true
     if (options.still) {
       setStill(true)
       this.post.setStill(true)
