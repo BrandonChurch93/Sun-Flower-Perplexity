@@ -74,6 +74,24 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
 
 > Good word, yes, get the repository up-to-date
 
+## 24 November 2026, about 01:50 UTC (one fix: the wind in the last shot)
+
+> One fix to the sunflower film: the wind in the final zoomed out shot of the field.
+>
+> What is wrong
+> Right now it looks like a single gust passes through the field and every flower sways the same way, in rows, then returns to the same spot together. Real wind does not move a field like that. The uniform motion reads as fake, and it is the last thing the viewer sees.
+>
+> What I want
+> The field should move the way a real field of sunflowers moves in wind. Flowers respond differently depending on how the wind reaches them. There should be variety across the field, with nothing moving in lockstep and no visible rows swaying as one. It has to look ultra realistic. Aim for pixel perfect.
+>
+> How to do it
+> Research how wind actually moves through a field of tall flowers, and study real footage. Work out your own plan from that research, then build it start to finish. The approach and every technical decision are yours. Do not ask me questions and do not wait for my approval.
+>
+> Limits
+> - Change only the wind motion in that final shot. The rest of the film, the look of the flowers, the camera and the timing stay exactly as they are.
+> - Motion cannot be judged from one still, so check your work across a sequence of frames.
+> - Post a status with inline pictures at least every 30 minutes, and finish with a before and after of the shot.
+
 ## How these were read
 
 - "The timing looks great" settles the timing of `kit/v2/PLAN.md`, the 140 BPM grid and its click track included.
@@ -117,3 +135,12 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
   - "Stop all agents": no agent draws anything more. The four frames in hand came in between 00:40 and 00:42; nothing is asked of any agent after that and none is running.
   - "Get the repository up-to-date": the still and the loop go into `out/card/`, the log is closed and `v2` is merged into `main` (pull request 2).
   - "The live link to the artifact": the page the repository builds, the one that plays the film, is put up as a private preview and its link is given beside the repository's. Publishing was not asked for in these words, so nothing is published: https://sunflower-film.pplx.app still plays version 1, and he is told so in one line.
+- The message of 24 November, about 01:50 UTC, opens the closed project for one fix. It was read like this:
+  - "The final zoomed out shot of the field": the film has no cut after the frost hold, so the shot is the crane that starts on the kick of bar 65 (110.6 s, frame 3318) and runs to the last frame, 3809. The field is seen wide from about frame 3440.
+  - "A single gust passes through the field": that is what the code did. One front, 27 m from crest to crest, crossed the whole land at 7.5 m a second about every 3.6 s, and every neighbour leaned to it and came back with it (`frontAt` in `src/v2/wind.ts`).
+  - "Change only the wind motion in that final shot": his sign off of 23 November said that no pixel changes after it. This message changes that for the frames of this shot and for nothing else. Frames 0 to 3312 are not drawn again, and in the master their packets are the old ones byte for byte. The wind of the storm and of the days before stays the one front. The plants, the light, the lens, the camera and the cue sheet are not touched: what changes is how far and which way each plant leans in a frame.
+  - "Research how wind actually moves ... and study real footage": the papers and the clips are named in `kit/v2/PROGRESS.md` (decisions of 24 November from 01:50 UTC).
+  - "Check your work across a sequence of frames": every judgement is made on a run of 120 frames or more: single flowers followed through the frames, how alike two flowers move by how far apart they stand, and maps of which way each part of the field moves.
+  - "Do not ask me questions and do not wait for my approval": nothing is asked. The new film takes the old one's place in the repository, on the site and in the portfolio folder, and the pull request is merged without a review stop. He is told that the merge puts the new film on his site.
+  - "Finish with a before and after of the shot": a video of the shot, the old wind on top and the new below, in step, at true pixel size and then enlarged 2 times.
+  - "Stop all agents" was said at the close, before this message. The builders' machines are used again for this fix, by message, because `AGENTS.md` has frames drawn on them. None is started new, and all are told to stop when the fix is in.
