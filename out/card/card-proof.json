@@ -1,0 +1,100 @@
+{
+ "firstFrame": 2905,
+ "lastFrame": 3075,
+ "frames": 171,
+ "seconds": 5.7,
+ "framesASecond": 30,
+ "files": {
+  "sunflower-card-loop-open-close-1080p.mp4": {
+   "bytes": 20609176,
+   "streams": 1,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "codec_type": "video",
+    "width": 1920,
+    "height": 1080,
+    "pix_fmt": "yuv420p",
+    "level": 50,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "r_frame_rate": "30/1",
+    "nb_read_frames": "255"
+   },
+   "seconds": 8.5,
+   "frames": 255,
+   "framesMeant": 255,
+   "firstFrameIsAKeyFrame": true,
+   "firstFrameAgainstTheStill": {
+    "psnr": 44.66,
+    "meanLevels": 0.967,
+    "shareOver8Levels": 0.00279
+   },
+   "everyFrameAgainstItsSource": {
+    "meanPsnr": 41.38,
+    "worstPsnr": 38.7,
+    "worstFrame": 3058
+   },
+   "lastFrameAgainstTheFirst": {
+    "psnr": 29.43,
+    "meanLevels": 2.911
+   }
+  },
+  "sunflower-card-loop-open-close-720p.mp4": {
+   "bytes": 5996777,
+   "streams": 1,
+   "video": {
+    "codec_name": "h264",
+    "profile": "High",
+    "codec_type": "video",
+    "width": 1280,
+    "height": 720,
+    "pix_fmt": "yuv420p",
+    "level": 31,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "r_frame_rate": "30/1",
+    "nb_read_frames": "255"
+   },
+   "seconds": 8.5,
+   "frames": 255,
+   "framesMeant": 255,
+   "firstFrameIsAKeyFrame": true,
+   "firstFrameAgainstTheStill": {
+    "psnr": 42.15,
+    "meanLevels": 1.297,
+    "shareOver8Levels": 0.01405
+   },
+   "everyFrameAgainstItsSource": {
+    "meanPsnr": 38.4,
+    "worstPsnr": 35.68,
+    "worstFrame": 3074
+   },
+   "lastFrameAgainstTheFirst": {
+    "psnr": 29.86,
+    "meanLevels": 2.943
+   }
+  }
+ },
+ "still": {
+  "frame": 2905,
+  "sha256OfTheSourceFramesPixels": "5bb8d6946e6e928d9513c750f420ba7ddf35d6b5f468587121fe64f9ea24d391",
+  "everySourceFrameIsOpaque": true,
+  "pngEqualsTheSourceFrame": true,
+  "files": {
+   "sunflower-card-still-1920x1080.png": 1885062,
+   "sunflower-card-still-1920x1080.jpg": 358386,
+   "sunflower-card-still-1280x720.jpg": 165168
+  },
+  "jpgPsnr": 46.38
+ },
+ "loopOpenClose": {
+  "forwardFrames": 171,
+  "turnsAtFrame": 3075,
+  "backwardFrames": 84,
+  "backwardStep": 2,
+  "lastSourceFrame": 2907,
+  "frames": 255,
+  "seconds": 8.5
+ }
+}

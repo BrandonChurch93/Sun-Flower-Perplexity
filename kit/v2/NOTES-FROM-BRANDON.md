@@ -66,6 +66,14 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
 >
 > This shouldn't take you, but just a few moments
 
+## 24 November 2026, about 00:40 UTC (stop the agents; the project is done; the two links)
+
+> Please stop all agents. This project is done. Please output the GitHub as well as the live link to the artifact.
+
+## 24 November 2026, about 00:43 UTC (bring the repository up to date)
+
+> Good word, yes, get the repository up-to-date
+
 ## How these were read
 
 - "The timing looks great" settles the timing of `kit/v2/PLAN.md`, the 140 BPM grid and its click track included.
@@ -105,3 +113,7 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
   - "The highest quality" is read as 1920 x 1080 and not the smaller copies. The film without the prompt is the file he watched and signed off. A less compressed master of it exists and is offered in one line.
   - "No more testing or anything like that": the redraw of the card frames at 48 samples is no longer a deliverable. The loop is cut from the film's own frames, so it looks like the film he signed off and its first frame is the still he already has. The agents finish the frame in hand and stop.
   - "In your next message": the three are attached in his order. He cannot see file names, so the message tells them apart by length: 2:24, 2:07 and 0:08.
+- The two messages of 24 November, about 00:40 and 00:43 UTC, close the project. They were read like this:
+  - "Stop all agents": no agent draws anything more. The four frames in hand came in between 00:40 and 00:42; nothing is asked of any agent after that and none is running.
+  - "Get the repository up-to-date": the still and the loop go into `out/card/`, the log is closed and `v2` is merged into `main` (pull request 2).
+  - "The live link to the artifact": the page the repository builds, the one that plays the film, is put up as a private preview and its link is given beside the repository's. Publishing was not asked for in these words, so nothing is published: https://sunflower-film.pplx.app still plays version 1, and he is told so in one line.
