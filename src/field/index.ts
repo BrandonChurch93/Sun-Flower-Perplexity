@@ -8,9 +8,10 @@ import { Plant } from '../plant/index.ts'
 import { fieldUniforms, stateUniforms } from '../plant/part.ts'
 import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
+import { patchyAt } from '../v2/wind.ts'
 import { FarField } from './far.ts'
 import { Keyed, keyGlsl, keyUniforms, keysOn, turnOf } from './keys.ts'
-import { type KindUniforms, fieldPlaceGlsl, fieldPlaceUniforms, kindData, kindList } from './place.ts'
+import { type KindUniforms, bendKind, fieldPlaceGlsl, fieldPlaceUniforms, kindBent, kindData, kindList } from './place.ts'
 import { Rime } from './rime.ts'
 import { ROOM_M, bySeen, filmLens, frameOf, lensOf, needed } from './seen.ts'
 import { Shaped, shapeInputs } from './turn.ts'
@@ -37,7 +38,7 @@ interface Group { head: { value: THREE.Vector4 }; leafHead: { value: THREE.Vecto
 function group(detail: 'near' | 'far', variant: number, share: Float32Array, index: number, lens: Float32Array, turn: number, bare = false): Group {
   const places = bySeen(share, lens)
   const list = new THREE.InstancedInterleavedBuffer(kindList(places), PLACE)
-  const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
+  const kind: KindUniforms = { uFieldData: { value: kindData(places) }, uFieldBent: { value: kindBent(places.length / PLACE) }, uFieldKind: { value: new THREE.Vector4(0, 1, 0, 0) }, uFieldDraw: { value: new THREE.Vector4(1, 1, 1000, 1) }, uFieldLeaf: { value: 0 } }
   const key = keyUniforms()
   const options = { detail, variant, places: list, place: { glsl: fieldPlaceGlsl + keyGlsl, uniforms: { ...fieldPlaceUniforms, ...kind, ...key } } }
   const plant = new Plant(options)
@@ -258,10 +259,13 @@ export class Field {
     }
     lensOf(pose, this.tanHalfWidth, this.aspect, this.mine)
     const frame = frameOf(this.lens, this.seconds, this.mine)
+    // In the last shot the gusts reach each neighbor in their own time: what they do to the ones this frame draws is worked out here.
+    const gusts = patchyAt(this.seconds) > 0 && (this.wind > 0 || this.leafWind > 0)
     let shown = 0
     for (const g of this.groups) {
       const count = frame < 0 ? g.count : g.need[frame]
       for (const geometry of g.drawn) geometry.instanceCount = count
+      if (gusts && count > 0) bendKind(g.kind.uFieldBent.value, g.places, count, this.seconds)
       shown += count
     }
     this.shown = shown

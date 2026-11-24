@@ -1,4 +1,4 @@
-import { gustAt, gustGlsl, windWay } from '../v2/wind.ts'
+import { bentBy, frontGlsl, gustAt, patchyAt, windWay } from '../v2/wind.ts'
 
 // The wind as a closed-form function of time and place. Film seconds are real seconds for the weather.
 // A part scales what it does with these by `pose.inputs.wind`, which is 0 in still air.
@@ -9,6 +9,12 @@ const SPEED_M_PER_S = 1.6
 const HEAVY_LAGS = [0.05, 0.15, 0.25, 0.35, 0.45]
 // A leaf is light and answers sooner.
 const LIGHT_LAGS = [0.04, 0.12, 0.2]
+
+// Three numbers that are a plant's own, each 0 to 1, from where it stands.
+const own = (x: number, z: number, which: number): number => {
+  const v = Math.sin(x * 12.9898 + z * 78.233 + which * 37.719) * 43758.5453
+  return v - Math.floor(v)
+}
 
 const front = (lags: number[], time: number, x: number, z: number): number => {
   let sum = 0
@@ -25,7 +31,12 @@ export function gust(time: number, x: number, z: number): number {
 
 // The part of that wave a whole plant follows, about -1 to 1: its slowest swell alone, because a stem with a head on it is too heavy for the rest.
 export function sway(time: number, x: number, z: number): number {
-  return 2 * front(HEAVY_LAGS, time, x, z) - 1
+  const patchy = patchyAt(time)
+  const one = patchy < 1 ? 2 * front(HEAVY_LAGS, time, x, z) - 1 : 0
+  if (patchy <= 0) return one
+  // In the last shot it gives to the gusts that reach it and swings on a note of its own, as its neighbors do.
+  const bent = bentBy(own(x, z, 0.13), own(x, z, 0.47), own(x, z, 0.71), x, z, time)
+  return one + (2 * (bent.x * TOWARD.x + bent.z * TOWARD.z) - 1 - one) * patchy
 }
 
 // The swell of the first film, for inputs that carry no film second. The checks in `tests/` still pose the plant with those.
@@ -41,7 +52,7 @@ export const STEM_LEAN = 0.03
 export const STEM_SWING = 0.05
 
 // The same swell for a shader, as `plantSway(time, place)`.
-export const swayGlsl = /* glsl */ `${gustGlsl.replace(/gustPulse/g, 'plantGustPulse').replace(/gustAt/g, 'plantGust')}
+export const swayGlsl = /* glsl */ `${frontGlsl.replace(/gustPulse/g, 'plantGustPulse').replace(/gustAt/g, 'plantGust')}
 float plantSway(float time, vec2 at) {
   return 2.0 * (${HEAVY_LAGS.map((lag) => `plantGust(at, time - ${lag.toFixed(2)})`).join(' + ')}) / ${HEAVY_LAGS.length.toFixed(1)} - 1.0;
 }

@@ -12,8 +12,8 @@ import type { Quality } from '../v2/api.ts'
 import { now } from '../v2/now.ts'
 import { Shaped, leavesApart, placeTurned, send } from './turn.ts'
 import { Keyed, keyGlsl, keyUniforms } from './keys.ts'
-import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
-import { gustGlsl, windWay } from '../v2/wind.ts'
+import { CANOPY_SIZE, LEAN_GUST, LEAN_STEADY, OWN_LEAST, OWN_MORE, PLACE, carpetBandM, earlyAt, earlyCode, farVariants, fieldEast, fieldEndM, fieldFarM, fieldPicturesM, fieldWest, kindTime, lagAt, pictureCount, pictureFace, pictureTurns, plantAhead, right, settled, shortWay, sizeGlsl, toward } from './layout.ts'
+import { PATCHY_GLSL, gustGlsl, windWay } from '../v2/wind.ts'
 
 const TILE_W = 64
 const PICTURE_UNDER = 0.94
@@ -121,8 +121,15 @@ void main() {
   vec3 world = vec3(aPlace.x, h, aPlace.y) + uRight * off.x;
   world.xz += aVary.xy * h;
   // The lean a real neighbor takes under the gust, so the wave crosses the pictures as it crosses the rows.
-  float blow = uWind * (0.7 + 0.6 * fract(draw * 29.0)) * (${LEAN_STEADY.toFixed(3)} + ${LEAN_GUST.toFixed(3)} * gustAt(aPlace.xy, uReal - 0.25 * fract(draw * 17.0)));
-  world.xz += vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)}) * (blow * h);
+  float patchy = ${PATCHY_GLSL}uReal);
+  vec2 carried = vec2(0.0);
+  if (patchy < 1.0) {
+    float blow = uWind * (0.7 + 0.6 * fract(draw * 29.0)) * (${LEAN_STEADY.toFixed(3)} + ${LEAN_GUST.toFixed(3)} * gustAtFront(aPlace.xy, uReal - 0.25 * fract(draw * 17.0)));
+    carried = vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)}) * (blow * h);
+  }
+  // In the last shot each gives to the gusts that reach it and swings on its own note, as a real neighbor does.
+  if (patchy > 0.0) carried = mix(carried, (uWind * (${OWN_LEAST.toFixed(3)} + ${OWN_MORE.toFixed(3)} * fract(draw * 29.0)) * h) * (${LEAN_STEADY.toFixed(3)} * vec2(${windWay.x.toFixed(4)}, ${windWay.z.toFixed(4)}) + ${LEAN_GUST.toFixed(3)} * windBent(aPlace.xy, uReal, vec3(fract(draw * 17.0), fract(draw * 29.0), fract(draw * 41.0))).xy), patchy);
+  world.xz += carried;
   if (length(aPlace.xy) > uFarthest) world.y = -1000.0;
   vec4 view = viewMatrix * vec4(world, 1.0);
   float inset = 0.5 / ${TILE_W.toFixed(1)};
