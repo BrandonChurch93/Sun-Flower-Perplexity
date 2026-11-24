@@ -50,6 +50,22 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
 >
 > As far as I know, the video is completely done now I see you having agents doing a bunch of stuff? I just asked you to add an opening prompt, the generation screen to the beginning of the video with no audio and export the one with that and the one without it and then I asked you to take a screenshot and make a looping video of the Budd opening and closing. You've been working for quite a few hours now and you haven't given me an update that seems like an enormous amount of time for what I asked for so I'm just curious on what exactly is left and what are all these agents doing and why?
 
+## 24 November 2026, about 00:21 UTC (three videos only, the best version of each)
+
+> So you output a lot of videos there I don't need the card video. I just need the highest quality looped video, the highest quality video without the prompt, and then the highest quality video with the prompt. I can't see the video names unfortunately so I don't know which one's the high-quality which one's the low quality and all I care about are the high-quality ones can you re-output those three videos again please
+
+## 24 November 2026, about 00:25 UTC (the prompt must not name the music)
+
+> Hope, we have a major update. I apologize. I just read the prompt that you wrote in. We should not say time to my music track. Let's cut that out in the videos that you're outputting now.
+
+## 24 November 2026, about 00:28 UTC (no more testing; the prompt is its first sentence; three videos in the next message)
+
+> I see you just compacted. Let me be clear. I don't need you to do any more testing or anything like that I just need you to update the prompt text to not mention anything about the music. It should only say the first sentence.
+>
+> And then in your next message, attach the highest quality video with the prompt and generation the highest quality video without it, and then the highest quality looping video please
+>
+> This shouldn't take you, but just a few moments
+
 ## How these were read
 
 - "The timing looks great" settles the timing of `kit/v2/PLAN.md`, the 140 BPM grid and its click track included.
@@ -83,3 +99,9 @@ His words, exactly as he wrote them in the task thread. They beat the kit on the
   - "Don't change anything": the redraw goes on and nothing is stopped. The answer says plainly that the film is done and untouched, that everything he asked for is with him in a first version since 22:27 and 23:35 UTC, and that the agents only draw the card's 208 frames again at 48 samples, which was the Builder's choice and is the whole reason for the hours.
   - "With no audio and export the one with that and the one without it": the copy with the silent opening and the film without the opening are the two he names. The copy with typing and click sounds is the extra his message of 21:19 left to the Builder.
   - "A looping video of the bud opening and closing": he means a loop in which the flower closes again. The loop made so far fades back to the bud. So a second loop is cut from the same frames in which the flower closes by playing backward at double speed; it needs no new frame and no waiting. Both are handed over and the one that closes is named first.
+- The three messages of 24 November, 00:21 to 00:28 UTC, ask for three videos and nothing else, and change the prompt. They were read like this:
+  - Three videos, each in its best version only: the film with the prompt and the generation, the film without it, and the loop. The 720p copies, the play once clip, the fade loop and the copy with typing sounds are not handed over again.
+  - "It should only say the first sentence": the prompt on screen is now "Build me a cinematic sunflower time lapse in three.js, from seed to full bloom". "Not mention anything about the music" is read for the whole opening, so the first build step, which said "Mapping the music track", now says "Planning the time lapse". He is told so in one line.
+  - "The highest quality" is read as 1920 x 1080 and not the smaller copies. The film without the prompt is the file he watched and signed off. A less compressed master of it exists and is offered in one line.
+  - "No more testing or anything like that": the redraw of the card frames at 48 samples is no longer a deliverable. The loop is cut from the film's own frames, so it looks like the film he signed off and its first frame is the still he already has. The agents finish the frame in hand and stop.
+  - "In your next message": the three are attached in his order. He cannot see file names, so the message tells them apart by length: 2:24, 2:07 and 0:08.

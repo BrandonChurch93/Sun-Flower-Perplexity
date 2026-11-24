@@ -93,7 +93,10 @@ def main():
     ap.add_argument('--last', type=int, default=3112)
     ap.add_argument('--crf1080', type=int, default=15)
     ap.add_argument('--crf720', type=int, default=18)
-    ap.add_argument('--loop', type=int, default=20)
+    ap.add_argument('--fade', type=int, default=0)
+    ap.add_argument('--clip', action='store_true')
+    ap.add_argument('--turn', type=int, default=3075)
+    ap.add_argument('--back', type=int, default=2)
     ap.add_argument('--tag', default='')
     a = ap.parse_args()
     count = a.last - a.first + 1
@@ -130,29 +133,46 @@ def main():
         'jpgPsnr': round(psnr(np.asarray(Image.open(jpg).convert('RGB')), np.asarray(still)), 2),
     }
 
-    for label, size in SIZES.items():
-        file = f'{a.out}/{name}-clip-{label}.mp4'
-        encode(a.frames, a.first, count, size, a.crf1080 if label == '1080p' else a.crf720, file)
-        report['files'][os.path.basename(file)] = check(file, size, a.frames, a.first, count, still)
+    if a.clip:
+        for label, size in SIZES.items():
+            file = f'{a.out}/{name}-clip-{label}.mp4'
+            encode(a.frames, a.first, count, size, a.crf1080 if label == '1080p' else a.crf720, file)
+            report['files'][os.path.basename(file)] = check(file, size, a.frames, a.first, count, still)
 
-    if a.loop > 0:
-        work = f'{a.out}/.loop'
+    work = f'{a.out}/.loop'
+    if a.turn > a.first:
+        there = list(range(a.first, a.turn + 1))
+        back = list(range(a.turn - a.back, a.first, -a.back))
+        order = there + back
+        shutil.rmtree(work, ignore_errors=True)
+        os.makedirs(work)
+        for i, f in enumerate(order):
+            os.symlink(os.path.abspath(f'{a.frames}/f{f:05d}.png'), f'{work}/f{a.first + i:05d}.png')
+        for label, size in SIZES.items():
+            file = f'{a.out}/{name}-loop-open-close-{label}.mp4'
+            encode(work, a.first, len(order), size, a.crf1080 if label == '1080p' else a.crf720, file)
+            report['files'][os.path.basename(file)] = check(file, size, work, a.first, len(order), still)
+        shutil.rmtree(work, ignore_errors=True)
+        report['loopOpenClose'] = {'forwardFrames': len(there), 'turnsAtFrame': a.turn, 'backwardFrames': len(back), 'backwardStep': a.back, 'lastSourceFrame': back[-1],
+                                   'frames': len(order), 'seconds': round(len(order) / FPS, 4)}
+
+    if a.fade > 0:
         shutil.rmtree(work, ignore_errors=True)
         os.makedirs(work)
         for f in range(a.first, a.last + 1):
             os.symlink(os.path.abspath(f'{a.frames}/f{f:05d}.png'), f'{work}/f{f:05d}.png')
         head = np.asarray(still).astype(np.float64)
         tail = np.asarray(Image.open(f'{a.frames}/f{a.last:05d}.png').convert('RGB')).astype(np.float64)
-        for k in range(1, a.loop + 1):
-            t = k / (a.loop + 1)
+        for k in range(1, a.fade + 1):
+            t = k / (a.fade + 1)
             t = t * t * (3 - 2 * t)
             Image.fromarray(np.clip(np.rint(tail * (1 - t) + head * t), 0, 255).astype(np.uint8)).save(f'{work}/f{a.last + k:05d}.png', compress_level=1)
         for label, size in SIZES.items():
-            file = f'{a.out}/{name}-loop-{label}.mp4'
-            encode(work, a.first, count + a.loop, size, a.crf1080 if label == '1080p' else a.crf720, file)
-            report['files'][os.path.basename(file)] = check(file, size, work, a.first, count + a.loop, still)
+            file = f'{a.out}/{name}-loop-fade-{label}.mp4'
+            encode(work, a.first, count + a.fade, size, a.crf1080 if label == '1080p' else a.crf720, file)
+            report['files'][os.path.basename(file)] = check(file, size, work, a.first, count + a.fade, still)
         shutil.rmtree(work, ignore_errors=True)
-        report['loop'] = {'dissolveFrames': a.loop, 'frames': count + a.loop, 'seconds': round((count + a.loop) / FPS, 4)}
+        report['loopFade'] = {'dissolveFrames': a.fade, 'frames': count + a.fade, 'seconds': round((count + a.fade) / FPS, 4)}
 
     json.dump(report, open(f'{a.out}/card-proof.json', 'w'), indent=1)
     print(json.dumps(report, indent=1))
