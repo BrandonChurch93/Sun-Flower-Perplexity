@@ -34,7 +34,7 @@ A visitor whose system asks for less motion gets the cover picture and a "Play t
 
 Open the live version. It loads the film and says what it is doing, then shows a desk with three steps: load the film, drop the track, check and record.
 
-The track is not in this repository. Press "Choose the track" or drop your copy anywhere on the page, and the page says whether it is the file the film was built to. Without the track the film plays silent.
+The track is not in this repository as a file of its own: it is only heard inside `portfolio/sunflower-video.mp4`. Press "Choose the track" or drop your copy anywhere on the page, and the page says whether it is the file the film was built to. Without the track the film plays silent.
 
 | Do this | What happens |
 | --- | --- |
@@ -104,6 +104,7 @@ Live play has one open item of its own. On the machine this was built on, which 
 | `ASSETS.md` | The ledger of third party files |
 | `out/` | The kept stills and the status pictures. `out/preview.mp4`, `out/roughcut.mp4` and `out/clips/` are version 1's |
 | `out/card/` | The still and the loop for a project card: the bud right before it opens, and 8.5 s in which it opens and closes again. `tools/card.py` cuts and checks them |
+| `portfolio/` | The files for a portfolio page: the film with its music, the card picture and its loop, a poster, five stills and the words in `SUNFLOWER-ENTRY.md` |
 | `cut/` | Version 1's shot list and sound cues |
 | `AGENTS.md` | Rules for the Builder |
 
@@ -115,4 +116,4 @@ The 60 second film is at the tag `v1`, with its own README, and is still publish
 
 For the picture, none are required. The one third party file in it is a soil scan under CC0 1.0, which asks for no credit: Brown Mud Dry by Rob Tuytel, Poly Haven (https://polyhaven.com/a/brown_mud_dry). Everything else in the picture is drawn by the code in this repository or read from maps and skies generated for this film, each with its recipe in `assets-src/`.
 
-The music track is Brandon's own choice and is not part of this repository. Whoever posts the film with it follows the licence the track came with.
+The music track is Brandon's own choice. It is in this repository only as the sound of `portfolio/sunflower-video.mp4`, never as a file of its own, and its row is in `ASSETS.md`. Whoever posts the film with it follows the licence the track came with.
