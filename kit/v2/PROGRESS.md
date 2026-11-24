@@ -14,12 +14,13 @@ The Builder's memory for version 2. Read this first in every task, then `kit/v2/
 - App URL: not published (version 1 stays at https://sunflower-film.pplx.app until Brandon approves a swap)
 - Review preview: https://www.perplexity.ai/computer/a/sunflower-v2-review-4.i_CrGQQwCwaHeXEoIGIg
 - Last push: see `git log origin/v2`; one push with every status
-- Last status: 58 · 2026-11-23 23:44 UTC · Phase 6
+- Last status: 59 · 2026-11-24 00:00 UTC · Phase 6
 
 ## Latest pictures
 
 Newest first. Each line names the pictures of one status in `out/stills/status/`, with the time and the caption, so this page shows where the film is.
 
+- 2026-11-24 00:00 UTC · status 59 · Phase 6 · `status-1.jpg`: Clean redraw so far, 16 frames from 2905 to 3037: the bud opens; `status-2.jpg`: Clean redraw, frame 3037: the flower open; `status-3.jpg`: The clean still (frame 2905), a crop at full size
 - 2026-11-23 23:44 UTC · status 58 · Phase 6 · `status-1.jpg`: The loop cut: its last 16 of 22 frames, the open flower dissolves back to the bud; `status-2.jpg`: Frame 3009 at full size: left the film at one sample, right the clean redraw at 48 samples; `status-3.jpg`: Clean redraw, frame 3013: the flower nearly open
 - 2026-11-23 23:35 UTC · status 57 · Phase 6 · `status-1.jpg`: The card still, cut from the signed off film (frame 2905); `status-2.jpg`: The card clip, nine of its 208 frames, cut from the signed off film; `status-3.jpg`: The site built from a fresh clone of main, playing by itself; `status-4.jpg`: A frame of the clean redraw at 48 samples (3006)
 - 2026-11-23 23:09 UTC · status 56 · Phase 6 · `status-1.jpg`: Card clip at the export tier, twelve of the 82 frames that are in (2905 is the still); `status-2.jpg`: Card frame 2987 at the export tier, 48 samples a frame; `status-3.jpg`: Card frame 2952 at the export tier: the rays open from the left; `status-4.jpg`: The review page, rebuilt with the film's last checks
@@ -31,7 +32,6 @@ Newest first. Each line names the pictures of one status in `out/stills/status/`
 - 2026-11-23 20:59 UTC · status 50 · Phase 6 · `status-1.jpg`: Frame 1055, a frost close shot. Left the film as drawn here at one sample a frame, right the export look at 48 samples; `status-2.jpg`: Frame 236, the seedling at sunrise. Left the film as drawn here, right the export look; `status-3.jpg`: Frame 2780, the bud at dusk. Left the film as drawn here, right the export look; `status-4.jpg`: Frame 0, the opening. Left the film as drawn here, right the export look
 - 2026-11-23 20:47 UTC · status 49 · Phase 6 · `status-1.jpg`: Frame 3112, the open flower: the film as drawn here against the export look; `status-2.jpg`: Frame 60, the sprout: the film as drawn here against the export look; `status-3.jpg`: Frame 2880, the bud before the bloom: the film as drawn here against the export look; `status-4.jpg`: The private preview open in a browser, the film at frame 3000
 - 2026-11-23 20:33 UTC · status 48 · Phase 6 · `status-1.jpg`: Frame 1479, the film as drawn here against the export look; `status-2.jpg`: Frame 2957, the opening head; `status-3.jpg`: Frame 2096 at twice size: rain breaks into specks at the export look (a fault, being cured); `status-4.jpg`: Frame 3755, the last frame
-- 2026-11-23 20:16 UTC · status 47 · Phase 5 · `status-1.jpg`: Review page with the drawn film, the bar clock and the check results (built, not yet a link); `status-2.jpg`: Frost hold from a fixed camera, one row a shot (first, middle, last frame), then 45 frames after the hold; `status-3.jpg`: Clouds at frame 1479, three crops at full size, the film on the left and the cure on a side branch on the right
 
 ## Clock
 
@@ -45,8 +45,8 @@ Copied from the output of `npm run clock` at every status. Working time only.
 | 3 | 9.00 h | 9.17 h |
 | 4 | 8.50 h | 4.88 h |
 | 5 | 3.00 h | 3.08 h |
-| 6 | 4.00 h | 3.36 h |
-| Whole build | 30.00 h | 25.74 h |
+| 6 | 4.00 h | 3.63 h |
+| Whole build | 30.00 h | 26.02 h |
 
 Continuations and extensions are listed under this table with their own hours.
 
@@ -366,6 +366,7 @@ The thirteen looks of `config/showcase.json` and the frame each is judged at are
 - 2026-11-23 23:28 UTC. Brandon asks where the work stands and says the two things he asked for are taking too long (his words and how they were read are in `kit/v2/NOTES-FROM-BRANDON.md`). He is right about the time: the opening was with him at 22:27, and what is slow is the redraw of the card's 208 frames at 48 samples, which was the Builder's choice. He says not to change the plan, so the redraw goes on (100 of 208 in at 23:32). So that he does not wait, the still and the clip are cut out of the film he signed off (frames 2905 to 3112 of `out/work/film-16x9-draft.mp4`) and handed to him now; the clean ones replace them under the same names. Nothing new is started from here.
 - 2026-11-23 23:32 UTC. The live version at 320 x 180 on this machine (MEASURED, headless Chrome, software renderer, four cores, other jobs running; `out/work/checks/live-320-load.log`): it loads to Ready in 11 min 28 s. The sandbox's desktop browser stopped answering at 4 of 27 moments at the same address, so there it is not confirmed; the open item says so.
 - 2026-11-23 23:40 UTC. He wrote "a looping video". The clip he described on 21:19 runs from the bud to the open flower, so as a loop it would jump. Decided: both are delivered. The play once clip stays as he described it (208 frames, 6.93 s, ends on the open flower). Beside it a loop cut of the same frames: 208 frames and a smoothstep dissolve of 20 frames from the open flower back to the bud, 228 frames, 7.6 s; the last frame is 99.3 percent the bud, so the step back to the first frame is not seen. `tools/card.py` makes the still, both clips and both loop cuts in one pass and writes `card-proof.json`; it replaces the trial script. The interim files cut from the film were attached at 23:35.
+- 2026-11-24 00:01 UTC. Two checks on the card while the frames come in. MEASURED on the 107 clean frames that are in without a gap (2905 to 3011): the twelve machines leave no flicker; the second difference of the frame's mean level is 0.08 levels (rms) against 0.13 in the film's own frames, and a frame's deviation from the mean of its neighbours shows the same pattern in both. The clean frames are 1.1 levels darker in the mean than the film's (1.8 at frame 2905); the still and the clip are both cut from the clean frames, so they agree with each other. MEASURED in headless Chrome on the interim files (`out/work/card/hover/check.mjs`): the still as a picture and the clip paused on its first frame are 43.0 dB apart (1.2 levels of 255, 0.9 percent of the pixels over 8 levels), the clip plays to its end and no error is logged.
 
 ## Notes from Brandon
 
@@ -555,4 +556,6 @@ Rounds 1 to 26 belong to version 1 (`kit/PROGRESS.md`). Round 26, its record: R1
   Pictures: The card still, cut from the signed off film (frame 2905); The card clip, nine of its 208 frames, cut from the signed off film; The site built from a fresh clone of main, playing by itself; A frame of the clean redraw at 48 samples (3006).
 - Status 58, 2026-11-23 23:44 UTC, Phase 6. A loop version of the card clip is made and attached beside the play once clip: the same 208 frames and a dissolve of 20 frames from the open flower back to the bud, 228 frames, 7.6 s. MEASURED: its last frame stands at 42.0 dB against its first (1.3 levels of 255), so the repeat is not seen. One script now makes the still, both clips and both loop cuts and checks them (tools/card.py); it ran on the film's frames in 4 min. Clean redraw: 106 of 208 frames in, none bad, 700 s a frame, last one expected about 01:20 UTC. Frames drawn for this status: 0. Next: Take in the clean frames as they arrive. When all 208 are in: encode the still, the clips and the loop cuts from them, check them, replace the interim files under the same names, commit them, merge into main, final summary. Time used: 25.7 h of 30 h.
   Pictures: The loop cut: its last 16 of 22 frames, the open flower dissolves back to the bud; Frame 3009 at full size: left the film at one sample, right the clean redraw at 48 samples; Clean redraw, frame 3013: the flower nearly open.
+- Status 59, 2026-11-24 00:00 UTC, Phase 6. Clean redraw: 130 of 208 frames in, none bad, 703 s a frame; every machine has sent its eleventh frame and the last one is expected about 01:20 UTC. MEASURED on the 107 clean frames that are in without a gap (2905 to 3011): no flicker between the twelve machines (the mean level changes more evenly from frame to frame than in the film, 0.08 against 0.13 levels). MEASURED in a browser on the interim files: the clip paused on its first frame and the still are 43.0 dB apart (1.2 levels of 255), so the swap on hover is not seen. Frames drawn for this status: 0. Next: Take in the last 78 clean frames. Then encode the still, the clips and the loop cuts from them, check them, replace the interim files under the same names, commit them, merge into main, final summary. Time used: 26.0 h of 30 h.
+  Pictures: Clean redraw so far, 16 frames from 2905 to 3037: the bud opens; Clean redraw, frame 3037: the flower open; The clean still (frame 2905), a crop at full size.
 
