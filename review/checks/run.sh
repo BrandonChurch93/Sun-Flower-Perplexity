@@ -43,7 +43,7 @@ ranges="http://127.0.0.1:$b/"
 
 run "files"          python3 "$here/files.py" "$page"
 run "links"          python3 "$here/links.py" "$page"
-run "copy"           python3 "$here/copy.py" "$page"
+run "words"          python3 "$here/words.py" "$page"
 run "film: stream"   node "$here/film.cjs" "$host" stream
 run "film: phone"    node "$here/film.cjs" "$host" phone
 run "film: refused"  node "$here/film.cjs" "$host" refused

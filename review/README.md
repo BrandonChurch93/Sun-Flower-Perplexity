@@ -74,7 +74,7 @@ sh review/checks/run.sh
 | `publish.sh` | Both film files are the ones the public page plays |
 | `files.py` | Every file the page names is in the folder, and the folder holds nothing else |
 | `links.py` | The 7 links: 3 inside the page, 3 that leave it and open in a new tab, 1 to the film file |
-| `copy.py` | The rules for the words: no em or en dash, no exclamation point, no word about who or what made the film, no address off a short list |
+| `words.py` | The rules for the words: no em or en dash, no exclamation point, no word about who or what made the film, no address off a short list |
 | `film.cjs stream` | 16 lines. The film starts by itself, muted, in 1080p; the page's own position line; a jump on a host without byte ranges; the Right key; sound; pause and play; the two short videos |
 | `film.cjs phone` | 15 lines. The same at 375 px under a finger, in 720p |
 | `film.cjs refused` | 6 lines. A browser that refuses the plain file gets the film whole |

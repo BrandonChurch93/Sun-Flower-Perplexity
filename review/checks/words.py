@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The rules for the words of the review page: python3 review/checks/copy.py [folder of the page]
+"""The rules for the words of the review page: python3 review/checks/words.py [folder of the page]
 
 Reads index.html, review.css and review.js and fails on:
 
