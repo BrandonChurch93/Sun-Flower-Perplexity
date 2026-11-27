@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Life of a Sunflower</title>
+    <meta name="description" content="A film of 2 minutes 7 seconds in which one sunflower grows from bare soil to an open flower while fifteen days cross the sky, with the process behind it." />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0d0f0e" />
+    <link rel="icon" href="data:," />
+    <link rel="preload" href="assets/fonts/Fraunces-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/WorkSans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body>
+    <a class="skip" href="#process">Skip to the process</a>
+
+    <header class="film" aria-label="The film">
+      <div class="film-frame">
+        <video
+          id="film"
+          class="film-video"
+          poster="assets/media/poster-open-flower.jpg"
+          controls
+          muted
+          playsinline
+          preload="metadata"
+          width="1920"
+          height="1080"
+          aria-label="Life of a Sunflower, the finished film, 2 minutes 7 seconds, with music"
+        >
+          <source src="assets/film/life-of-a-sunflower-1080p.mp4" media="(min-width: 1000px)" type="video/mp4" data-bytes="98989933" />
+          <source src="assets/film/life-of-a-sunflower-720p.mp4" type="video/mp4" data-bytes="49140328" />
+          <p>Your browser cannot play this video. <a href="assets/film/life-of-a-sunflower-1080p.mp4">Open the film file (1080p, MP4)</a>.</p>
+        </video>
+        <canvas class="film-hold" id="hold" hidden aria-hidden="true"></canvas>
+      </div>
+
+      <div class="film-bar">
+        <div class="film-scrub wrap" id="scrub-row" hidden>
+          <span class="film-time" id="now" aria-hidden="true">0:00</span>
+          <div class="scrub-track" id="scrub-track">
+            <input type="range" class="scrub" id="scrub" min="0" max="127" step="0.25" value="0" aria-label="Position in the film" aria-controls="film" />
+          </div>
+          <span class="film-time" id="total" aria-hidden="true">2:07</span>
+        </div>
+        <div class="film-bar-in wrap">
+        <div class="film-buttons">
+          <button type="button" class="btn btn-play" id="play" aria-controls="film">Play</button>
+          <button type="button" class="btn btn-sound" id="sound" aria-controls="film" aria-pressed="false">Sound off</button>
+          <span class="film-rung" id="rung" aria-live="polite"></span>
+          <span class="film-part" id="part" aria-hidden="true"></span>
+          <span class="film-note" id="note" aria-hidden="true"></span>
+          <span class="sr-only" id="film-live" role="status"></span>
+        </div>
+        <a class="live-link" href="https://sun-flower-perplexity.vercel.app/live/" target="_blank" rel="noopener noreferrer">Open the live version <span aria-hidden="true">&rarr;</span></a>
+        </div>
+      </div>
+
+      <div class="intro">
+        <div class="wrap">
+        <h1 class="title">Life of a <span>Sunflower</span></h1>
+        <p class="lede">One sunflower grows from bare soil to an open flower while the sky runs through fifteen days. Twice the time lapse stops and the plant stands still in real time, once under frost and once in a storm. Nothing is filmed: each of the 3,810 frames is computed from its frame number, and every sunrise lands on a bar line of the music.</p>
+        <dl class="facts">
+          <div><dt>Length</dt><dd>2 min 7 s</dd></div>
+          <div><dt>Picture</dt><dd>1920 x 1080</dd></div>
+          <div><dt>Frame rate</dt><dd>30 a second</dd></div>
+          <div><dt>Frames</dt><dd>3,810</dd></div>
+        </dl>
+        <p class="note">The live version draws the film in your browser as it plays. On a machine with four cores and no graphics card its script ran over its time limit in 11 of 16 measured stretches of the film; on a graphics card it has not been measured.</p>
+        </div>
+      </div>
+    </header>
+
+    <main id="process" tabindex="-1">
+      <section class="section wrap" aria-labelledby="h-still">
+        <p class="kicker">01</p>
+        <h2 id="h-still">The still and the loop</h2>
+        <p class="section-lede">Two pieces were asked for beside the film: a still of the bud right before it opens, and a short loop in which it opens.</p>
+        <div class="pair">
+          <figure>
+            <img src="assets/media/still-bud-frame-2905.jpg" width="1920" height="1080" loading="lazy" decoding="async" alt="A closed sunflower bud ringed by pointed green bracts stands against a low, hazy sun and a blurred field." />
+            <figcaption>The still, 1920 x 1080. It is frame 2905 of the film, the last frame before the bud begins to open on bar 57.</figcaption>
+          </figure>
+          <figure>
+            <video id="loop" class="lazy-video" muted loop playsinline controls preload="none" poster="assets/media/still-bud-frame-2905.jpg" width="1280" height="720" aria-label="The closed bud opens into a sunflower in evening light and folds back into the bud, in a silent loop of 8.5 seconds">
+              <source src="assets/media/loop-bud-opens-and-closes.mp4" type="video/mp4" />
+            </video>
+            <figcaption>The 8.5 second loop, cut from the film's own frames. The bud opens over 171 frames, then folds back at double speed, so the end runs into the start. Its first frame is the still.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-target">
+        <p class="kicker">02</p>
+        <h2 id="h-target">Target and result</h2>
+        <p class="section-lede">Target pictures set the look before anything was built. The owner chose eight for the first version, and eight more were made for the second. Fourteen frames of the film were then judged, each against its own target picture.</p>
+        <div class="pair">
+          <figure>
+            <img src="assets/media/target-bloom.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The target picture: an open sunflower seen from the front against a low sun, with a field of sunflowers out of focus behind it." />
+            <figcaption><span class="tag tag-gold">Target</span> The target picture for the open flower.</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/media/film-bloom-3112.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The finished film at the same moment: the sunflower fully open and facing the camera, its petals lit from behind by a low sun, a field of sunflowers blurred behind it." />
+            <figcaption><span class="tag tag-leaf">Film</span> The same moment in the finished film: the flower fully open on bar 61.</figcaption>
+          </figure>
+        </div>
+        <div class="duos">
+          <figure class="duo">
+            <div class="duo-pics">
+              <img src="assets/media/target-sprout.webp" width="800" height="450" loading="lazy" decoding="async" alt="Target: a hooked sprout lifts its seed husk out of dark soil in front of a low sun." />
+              <img src="assets/media/film-sprout-0060.webp" width="800" height="450" loading="lazy" decoding="async" alt="Film: the hooked sprout with its husk on crumbly soil, a low sun behind cloud." />
+            </div>
+            <figcaption>The sprout, two seconds in. Target on the left, film on the right.</figcaption>
+          </figure>
+          <figure class="duo">
+            <div class="duo-pics">
+              <img src="assets/media/target-storm.webp" width="800" height="450" loading="lazy" decoding="async" alt="Target: a young sunflower in heavy rain under a dark sky, a puddle on the soil in front of it." />
+              <img src="assets/media/film-storm-1775.webp" width="800" height="450" loading="lazy" decoding="async" alt="Film: the young plant and a smaller neighbor in rain under a closed sky, a puddle on the wet soil." />
+            </div>
+            <figcaption>The storm hold on bar 35. Target on the left, film on the right.</figcaption>
+          </figure>
+          <figure class="duo">
+            <div class="duo-pics">
+              <img src="assets/media/target-dusk-bud.webp" width="800" height="450" loading="lazy" decoding="async" alt="Target: a closed bud on a tall stem against a purple and red dusk sky." />
+              <img src="assets/media/film-dusk-bud-2780.webp" width="800" height="450" loading="lazy" decoding="async" alt="Film: the closed bud against a violet dusk sky above a dark field." />
+            </div>
+            <figcaption>The closed bud against a dusk sky. Target on the left, film on the right.</figcaption>
+          </figure>
+          <figure class="duo">
+            <div class="duo-pics">
+              <img src="assets/media/target-last.webp" width="800" height="450" loading="lazy" decoding="async" alt="Target: a field of sunflowers seen from above at sunset, the sun on the far horizon." />
+              <img src="assets/media/film-last-3755.webp" width="800" height="450" loading="lazy" decoding="async" alt="Film: the field of sunflowers from above, running to a ridge where the sun is setting." />
+            </div>
+            <figcaption>The last shot, the field at sunset. Target on the left, film on the right.</figcaption>
+          </figure>
+        </div>
+        <p class="aside">The film does not match its targets exactly. How close it came is in <a href="#h-check">How it was checked</a>, and where it fell short is in <a href="#h-limits">Known limits</a>.</p>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-iter">
+        <p class="kicker">03</p>
+        <h2 id="h-iter">Iterations</h2>
+        <p class="section-lede">From a first version of 60 seconds to a film built on its music.</p>
+        <ol class="grid">
+          <li class="full">
+            <figure>
+              <div class="quad">
+                <img src="assets/media/v1-rain.webp" width="640" height="360" loading="lazy" decoding="async" alt="First version: a young sunflower in driving rain under a dark sky." />
+                <img src="assets/media/v1-night.webp" width="640" height="360" loading="lazy" decoding="async" alt="First version: the plant under a night sky full of stars." />
+                <img src="assets/media/v1-frost.webp" width="640" height="360" loading="lazy" decoding="async" alt="First version: the budding plant in pale, frosty mist." />
+                <img src="assets/media/v1-bloom.webp" width="640" height="360" loading="lazy" decoding="async" alt="First version: the open sunflower in golden evening light." />
+              </div>
+              <figcaption>The first version, a film of 60 seconds. The plant never stopped growing while the world cut round it four times: dawn, rain, night, frost, then one golden evening. Shown here are the rain, the night, the frost and the bloom. The owner asked for a second version in which the plant stands still in the frost and the rain, the days and nights pass as a time lapse with no hard cuts, and no night runs long.</figcaption>
+            </figure>
+          </li>
+          <li class="full">
+            <div class="ba">
+              <figure>
+                <img src="assets/media/sketch-storm-1877.webp" width="960" height="540" loading="lazy" decoding="async" alt="The timing sketch: a flat gray storm with a lightning bolt, a simple green plant in a puddle, and a colored bar of the film's parts along the bottom." />
+                <figcaption><span class="tag tag-rose">Sketch</span> The timing sketch at the lightning of bar 37: flat shapes laid on the track, timing only. The owner accepted the timing from it before the look was built.</figcaption>
+              </figure>
+              <figure>
+                <img src="assets/media/film-storm-flash-1877.webp" width="960" height="540" loading="lazy" decoding="async" alt="The same frame in the finished film: the young plant lit by lightning in heavy rain, standing in a puddle on wet soil." />
+                <figcaption><span class="tag tag-leaf">Film</span> The same frame in the finished film. In the sketch the plant stood 90 cm tall in the storm; in the film it stands 61 cm.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li class="full">
+            <div class="ba">
+              <figure>
+                <video id="sketch" class="lazy-video" muted loop playsinline controls preload="none" poster="assets/media/sketch-poster.jpg" width="960" height="540" aria-label="A silent stretch of the timing sketch: flat sunflowers under a sky whose days fly past, then the flower opens">
+                  <source src="assets/media/timing-sketch-excerpt.mp4" type="video/mp4" />
+                </video>
+                <figcaption><span class="tag tag-rose">Sketch</span> A stretch of the timing sketch in motion, from the last sunrises to the open flower. It is silent here.</figcaption>
+              </figure>
+              <figure>
+                <img src="assets/media/plant-alone-bud-opening.webp" width="1600" height="900" loading="lazy" decoding="async" alt="Sixteen small frames of a sunflower bud opening into a flower on an empty, flat stage with a plain sky." />
+                <figcaption><span class="tag tag-gold">Plant alone</span> The bud opening in sixteen frames, drawn by the plant alone on an empty stage, before the place, the field and the lens were joined to it. The rays were still a flat orange.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li class="full">
+            <div class="ba">
+              <figure>
+                <img src="assets/media/frost-early-wide-bar-21.webp" width="796" height="448" loading="lazy" decoding="async" alt="Before: the frosted seedling seen whole from a low, wide camera, a pale sun in the mist behind it." />
+                <figcaption><span class="tag tag-gold">Before</span> Bar 21 in an early draw, seen from the wide camera.</figcaption>
+              </figure>
+              <figure>
+                <img src="assets/media/film-frost-close-1055.webp" width="960" height="540" loading="lazy" decoding="async" alt="After: a close shot of the growing tip, its leaves rimmed with ice crystals, against a pale sun." />
+                <figcaption><span class="tag tag-leaf">After</span> Bar 21 in the film. The owner asked for close shots of the ice, so the frost hold now cuts to three of them, stopped down to f/16 and f/32. This one is the growing tip as the sun comes through.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li class="full">
+            <div class="ba">
+              <figure>
+                <img src="assets/media/crop-2907-one-sample.webp" width="1280" height="720" loading="lazy" decoding="async" alt="An enlarged crop of the bud's pointed bracts as the film shows them: the fine hairs along their edges are crisp and broken into bright speckles." />
+                <figcaption><span class="tag tag-leaf">Film</span> A crop of frame 2907 as the film shows it, drawn at one sample a frame and enlarged two times.</figcaption>
+              </figure>
+              <figure>
+                <img src="assets/media/crop-2907-48-samples.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The same crop drawn again at 48 samples: the hairs and edges are smoother and softer." />
+                <figcaption><span class="tag tag-gold">Redraw, not used</span> The same crop drawn again at 48 samples a frame: smoother, where the film's frame is crisper. The whole film at 48 samples would have taken about sixty hours on the twelve machines that drew it in two and a half, so the film, the still and the loop all stay at one sample.</figcaption>
+              </figure>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-why">
+        <p class="kicker">04</p>
+        <h2 id="h-why">Why it was made this way</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Bars and beats, not seconds</h3>
+            <p>Every event is placed as a bar and a beat of the track, at 140 beats a minute, and compiled to frames. All 15 sunrises cross the horizon on a bar line, and the bud begins to open on bar 57, the loudest bar of the track.</p>
+          </article>
+          <article class="card">
+            <h3>Growth stops in the weather</h3>
+            <p>In the frost and in the storm, 8 bars each, the plant's clock stands still to the frame while the sky runs on. Frost and rain arrive and leave inside their holds, so the time lapse never shows them.</p>
+          </article>
+          <article class="card">
+            <h3>One camera move, four cuts</h3>
+            <p>The film cuts four times, on the downbeats of bars 19, 21, 23 and 25, to three close shots of the frozen seedling and back. Everywhere else the camera is one unbroken move, from the soil to above the field.</p>
+          </article>
+          <article class="card">
+            <h3>Nights shorter than a second</h3>
+            <p>Each of the 14 nights lasts 0.86 to 0.96 seconds and the sun goes no deeper than 14 degrees, so a glow always stays on the horizon and the plant is never lost in the dark.</p>
+          </article>
+          <article class="card">
+            <h3>A frame is a function of its number</h3>
+            <p>Any frame can be drawn alone and gives the same pixels, so the film was drawn in parts on 12 machines side by side and joined. Nothing is made after loading: every program, texture and buffer exists before frame 0.</p>
+          </article>
+          <article class="card">
+            <h3>Rules as commands</h3>
+            <p>Each rule of the film is a command that measures the film and fails when the rule is broken: nothing grows in a hold, no night runs long, every sunrise sits on its bar line, the film cuts only on its four frames.</p>
+          </article>
+
+          <article class="card card-wide" aria-labelledby="h-music">
+            <h3 id="h-music">The film laid on its music</h3>
+            <div class="ruler" aria-hidden="true">
+              <div class="ruler-parts">
+                <span class="rp rp-grow" style="--a: 0; --b: 28.312"><b>Germination</b></span>
+                <span class="rp rp-frost" style="--a: 28.312; --b: 42.026"><b>Frost</b></span>
+                <span class="rp rp-grow" style="--a: 42.026; --b: 55.74"><b>First climb</b></span>
+                <span class="rp rp-storm" style="--a: 55.74; --b: 69.455"><b>Storm</b></span>
+                <span class="rp rp-grow" style="--a: 69.455; --b: 96.883"><b>The great climb</b></span>
+                <span class="rp rp-bloom" style="--a: 96.883; --b: 110.597"><b>Bloom</b></span>
+                <span class="rp rp-field" style="--a: 110.597; --b: 124.312"><b>Field</b></span>
+                <span class="rp rp-last" style="--a: 124.312; --b: 127"></span>
+              </div>
+              <div class="ruler-marks">
+                <i class="sun" style="--a: 0.883"></i><i class="sun" style="--a: 7.74"></i><i class="sun" style="--a: 14.597"></i><i class="sun" style="--a: 21.455"></i><i class="sun" style="--a: 28.312"></i>
+                <i class="cut" style="--a: 31.74"></i><i class="cut" style="--a: 35.169"></i><i class="cut" style="--a: 38.597"></i><i class="cut" style="--a: 42.026"></i>
+                <i class="sun" style="--a: 45.455"></i><i class="sun" style="--a: 48.883"></i><i class="sun" style="--a: 52.312"></i>
+                <i class="sun" style="--a: 72.883"></i><i class="sun" style="--a: 76.312"></i><i class="sun" style="--a: 79.74"></i><i class="sun" style="--a: 83.169"></i><i class="sun" style="--a: 86.597"></i><i class="sun" style="--a: 90.026"></i><i class="sun" style="--a: 93.455"></i>
+              </div>
+              <div class="ruler-axis">
+                <span style="--a: 0.883">1</span><span style="--a: 28.312">17</span><span style="--a: 42.026">25</span><span style="--a: 55.74">33</span><span style="--a: 69.455">41</span><span style="--a: 96.883">57</span><span style="--a: 110.597">65</span><span style="--a: 124.312">73</span>
+              </div>
+            </div>
+            <p class="ruler-key"><span class="key"><span class="key-sun"></span>A sunrise</span> <span class="key"><span class="key-cut"></span>A cut</span> <span class="key"><span class="key-num">17</span>The bar a part begins on</span></p>
+            <ol class="parts" aria-label="The eight parts of the film">
+              <li class="k-grow"><b>Germination</b>Bars 1 to 17. Time lapse, four days.</li>
+              <li class="k-frost"><b>Frost</b>Bars 17 to 25. A hold: no growth.</li>
+              <li class="k-grow"><b>First climb</b>Bars 25 to 33. Time lapse.</li>
+              <li class="k-storm"><b>Storm</b>Bars 33 to 41. A hold: no growth.</li>
+              <li class="k-grow"><b>The great climb</b>Bars 41 to 57. Time lapse.</li>
+              <li class="k-bloom"><b>Bloom</b>Bars 57 to 65. One evening in real time.</li>
+              <li class="k-field"><b>Field</b>Bars 65 to 73. The camera pulls back.</li>
+              <li class="k-last"><b>Last light</b>Bar 73 to the end.</li>
+            </ol>
+            <div class="wide-cols">
+              <div class="wide-text">
+                <p>The track was mapped to bars and beats before the picture was planned. Bar n begins at 0.883143 + (n - 1) x 1.714286 seconds, and every event of the film is written as a bar and a beat in a cue sheet that is compiled against that map.</p>
+                <p><b>Sunrises.</b> There are 15, on bars 1, 5, 9, 13, 17, 27, 29, 31, 43, 45, 47, 49, 51, 53 and 55. In the fast time lapse every sunset falls on beat 3 of the bar before.</p>
+                <p><b>Holds.</b> The frost takes bars 17 to 25 and the storm bars 33 to 41. The plant's clock stands on all 822 frames of the two.</p>
+                <p><b>Cuts.</b> Frames 952, 1055, 1157 and 1260, which hold the downbeats of bars 19, 21, 23 and 25. They sit on the odd bars, the louder ones, of a passage whose only drum is a soft low hit on bar 21.</p>
+                <p><b>The bloom.</b> The camera is half a meter from the head when the bud begins to open on bar 57, and the flower is fully open on bar 61.</p>
+              </div>
+              <div class="wide-tables">
+                <table class="mini">
+                  <caption>What lands on the music</caption>
+                  <thead><tr><th scope="col">Bar</th><th scope="col">The music</th><th scope="col">The picture</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">17</th><td>The loudest bar so far</td><td>Sunrise into mist; the plant stops; frost</td></tr>
+                    <tr><th scope="row">21</th><td>A soft low hit</td><td>Cut to the growing tip; the sun comes through</td></tr>
+                    <tr><th scope="row">33</th><td>The loudest bar so far</td><td>Lightning; the plant stops; the rain begins</td></tr>
+                    <tr><th scope="row">41</th><td>The full entry of the track</td><td>The sun breaks through; the plant grows again</td></tr>
+                    <tr><th scope="row">57</th><td>The loudest bar of the track</td><td>The bud begins to open</td></tr>
+                    <tr><th scope="row">73</th><td>The drums drop out</td><td>The sun's lower edge stands on the far ridge</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <figure class="wide-pics">
+              <img src="assets/media/one-night-five-frames.webp" width="1936" height="216" loading="lazy" decoding="async" alt="Five frames of the young plant in a row: evening light, a red sunset, a dark blue night with the moon, a pink sunrise, and daylight again." />
+              <figcaption>One night of the fast time lapse in five frames: evening, the sunset on beat 3 of bar 26, the moon, the sunrise on bar 27, and the new day.</figcaption>
+            </figure>
+          </article>
+
+        </div>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-design">
+        <p class="kicker">05</p>
+        <h2 id="h-design">Design system</h2>
+        <p class="section-lede">Dark soil and one gold. The film carries its color in its light, so everything around it stays quiet: six colors taken from the film's live page, two typefaces and no decoration. A leaf green and a rose mark the labels.</p>
+        <ul class="swatches" aria-label="Palette">
+          <li style="--c: #0d0f0e"><span class="chip"></span><b>Ground</b><code>#0d0f0e</code></li>
+          <li style="--c: #14130f"><span class="chip"></span><b>Panel</b><code>#14130f</code></li>
+          <li style="--c: #3a362b"><span class="chip"></span><b>Line</b><code>#3a362b</code></li>
+          <li style="--c: #ece7db"><span class="chip"></span><b>Text</b><code>#ece7db</code></li>
+          <li style="--c: #a8a290"><span class="chip"></span><b>Quiet</b><code>#a8a290</code></li>
+          <li style="--c: #e2b23a"><span class="chip"></span><b>Gold</b><code>#e2b23a</code></li>
+        </ul>
+        <div class="type">
+          <div class="type-sample">
+            <p class="type-display" aria-hidden="true">Fifteen sunrises</p>
+            <p class="type-name">Fraunces, a soft old style serif, for the title and the headings</p>
+          </div>
+          <div class="type-sample">
+            <p class="type-text" aria-hidden="true">Bar 57 &middot; the bud opens</p>
+            <p class="type-name">Work Sans, a plain grotesque, for the reading text and the labels</p>
+          </div>
+        </div>
+        <figure class="lights">
+          <div class="six">
+            <img src="assets/media/light-dawn.webp" width="640" height="360" loading="lazy" decoding="async" alt="Dawn: a seedling with two seed leaves beside its split husk on dark soil under a low sun." />
+            <img src="assets/media/light-frost.webp" width="640" height="360" loading="lazy" decoding="async" alt="Frost: ice crystals on the tip and leaves of the young plant against a pale sun in the mist." />
+            <img src="assets/media/light-night.webp" width="640" height="360" loading="lazy" decoding="async" alt="Night: the young plant as a dark shape under a deep blue sky with the moon." />
+            <img src="assets/media/light-storm.webp" width="640" height="360" loading="lazy" decoding="async" alt="Storm: the plant in a puddle on wet soil in heavy rain, lit for a moment by lightning." />
+            <img src="assets/media/light-evening.webp" width="640" height="360" loading="lazy" decoding="async" alt="Evening: the open sunflower with its petals lit from behind by a low golden sun." />
+            <img src="assets/media/light-dusk.webp" width="640" height="360" loading="lazy" decoding="async" alt="Dusk: the field of sunflowers from above, the sun setting on a far ridge." />
+          </div>
+          <figcaption>The film's own palette is its light. Six of its skies, in film order: dawn, frost, night, storm, evening and dusk. The sun, the moon, the stars and the clouds all follow one clock.</figcaption>
+        </figure>
+        <div class="cards cards-3">
+          <article class="card">
+            <h3>One lens, real stops</h3>
+            <p>The flower is shot at 35 mm and f/5.6 with the sun in the left of the frame. The frost close shots are stopped down to f/16 and f/32. The shutter is 180 degrees, and focus, glare and the grade belong to the lens, not to the scene.</p>
+          </article>
+          <article class="card">
+            <h3>Grown, not placed</h3>
+            <p>The plant grows along a skeleton: a stem, 24 leaves, hairs, a bud, 34 ray florets and 1,500 disc florets set out by the golden angle, 137.508 degrees. Its growth has a clock of its own.</p>
+          </article>
+          <article class="card">
+            <h3>One scan, the rest drawn</h3>
+            <p>The one third party file in the picture is a soil scan under CC0. Everything else is drawn by the code or read from maps made for the film: the plant, the field, the far land, the sky, the rain, the mist and the frost.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-check">
+        <p class="kicker">06</p>
+        <h2 id="h-check">How it was checked</h2>
+        <p class="section-lede">The film's rules were checked by commands that measure it. It was also judged once, in a record round, by reviewers who had not seen it before. The pass bar of 9 out of 10 was not reached. The owner watched the film with its track and signed it off on 23 November 2026.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>The film's own rule checks</caption>
+            <thead>
+              <tr><th scope="col">Check</th><th scope="col">What it measured</th><th scope="col">Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Cues</th><td data-label="What it measured">The cue sheet compiles against the map of the track with 47 cues and 0 mismatches.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+              <tr><th scope="row">Holds</th><td data-label="What it measured">The plant's clock stands on all 822 frames of the two holds.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+              <tr><th scope="row">Cuts</th><td data-label="What it measured">On 1,402 steps from one frame to the next, taken from 1,816 frames spread over the whole film: the four meant cuts and no other.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+              <tr><th scope="row">Made</th><td data-label="What it measured">Nothing is made on the graphics card on any frame after loading.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+              <tr><th scope="row">Pure</th><td data-label="What it measured">18 frames, each drawn again in two ways: 36 of 36 give the same bytes.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+              <tr><th scope="row">Nights</th><td data-label="What it measured">By the clock, fourteen nights of 0.86 to 0.96 s against a limit of 1.2 s. The proof by the picture was not run.</td><td data-label="Result"><span class="res res-part">Pass so far</span></td></tr>
+              <tr><th scope="row">Script</th><td data-label="What it measured">Live play only: the page's own script is over its limit in 11 of 16 measured stretches, 20.1 ms a frame in the mean where a frame has 33.3 ms. The film file is drawn frame by frame, so it is not touched by this.</td><td data-label="Result"><span class="res res-fail">Fail</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="checks">
+          <li>In the record round the match to the target pictures scored 3 to 4 out of 10, surface and detail 4 to 6, motion 4 and 8, the whole film 6, the first two seconds at phone size 7, and compression 7.</li>
+          <li>In the jury each juror saw one picture and said what kind of picture it was. The frames of the film got 16 of 70 votes for a frame from a top budget film, a AAA game cinematic or a cinema nature documentary, against 38 of 65 for their target pictures. 8 of the 14 judged frames failed.</li>
+          <li>Frames 60, 1055 and 3523, taken out of the joined film, match the lossless frames they were joined from.</li>
+          <li>The sound is the track from its first sample: its lag against the picture measured 0 samples at 5, 60 and 105 seconds.</li>
+          <li>The film file, life-of-a-sunflower-1080p.mp4, is 99.0 MB. Its SHA-256 is <code class="hash">3259d4024c46b2b7c68064463f931e4edc96c45d499e913983cf39eaa3c71c69</code>.</li>
+        </ul>
+      </section>
+
+      <section class="section wrap" aria-labelledby="h-limits">
+        <p class="kicker">07</p>
+        <h2 id="h-limits">Known limits</h2>
+        <p class="section-lede">What the film does not do, said plainly.</p>
+        <ul class="limits">
+          <li><b>One sample a frame.</b> The film was drawn at one sample a frame, which is also the look of live play. Its edges are stair stepped and its clouds carry a fine stipple. A frame drawn at 48 samples is cleaner on clouds, leaf edges, hairs and lens blur.</li>
+          <li><b>What the reviewers named.</b> Most often: soil that reads as glossy rounded clods, frost as white tufts laid on, leaves of one outline, and rain as thick pale streaks. The jurors named stair stepped edges, repeated shapes in the grass blades, the frost needles and the heads in the field, and smooth, simple geometry. A second jury saw the same fourteen frames drawn at 48 samples and gave 14 of 70 votes, so more samples alone would not have changed the verdict.</li>
+          <li><b>The wind in the last shot.</b> A single gust passes through the field, and every flower sways the same way, in rows, and returns to the same spot together.</li>
+          <li><b>The pass bar.</b> No look of the film, and not the film as a whole, reached the pass bar of 9 out of 10.</li>
+          <li><b>The nights.</b> The length of the nights is proved by the film's clock. The check that proves it from the picture itself was not run.</li>
+          <li><b>The live version.</b> On a machine with four cores and no graphics card its script is over its time limit in 11 of 16 measured stretches of the film. On a machine with a graphics card it has not been measured.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="foot wrap">
+      <p class="foot-name">Life of a Sunflower.</p>
+      <p><a href="https://sun-flower-perplexity.vercel.app/live/" target="_blank" rel="noopener noreferrer">Open the live version</a></p>
+      <p>Music: Wonders of the Earth, by Grand_Project. Typefaces: Fraunces and Work Sans, each under the <a href="https://openfontlicense.org/open-font-license-official-text/" target="_blank" rel="noopener noreferrer">SIL Open Font License</a>.</p>
+    </footer>
+
+    <script src="review.js" defer></script>
+  </body>
+</html>

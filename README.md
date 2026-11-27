@@ -105,6 +105,7 @@ Live play has one open item of its own. On the machine this was built on, which 
 | `out/` | The kept stills and the status pictures. `out/preview.mp4`, `out/roughcut.mp4` and `out/clips/` are version 1's |
 | `out/card/` | The still and the loop for a project card: the bud right before it opens, and 8.5 s in which it opens and closes again. `tools/card.py` cuts and checks them |
 | `portfolio/` | The files for a portfolio page: the film with its music, the card picture and its loop, a poster, five stills and the words in `SUNFLOWER-ENTRY.md` |
+| `review/` | The public review page: its source, the script that puts it together with the film, and its checks. Start at `review/README.md` |
 | `cut/` | Version 1's shot list and sound cues |
 | `AGENTS.md` | Rules for the Builder |
 
