@@ -1,0 +1,230 @@
+--- a/review/index.html
++++ b/review/index.html
+@@ -55,6 +55,7 @@
+           <span class="film-note" id="note" aria-hidden="true"></span>
+           <span class="sr-only" id="film-live" role="status"></span>
+         </div>
++        <a class="live-link" href="https://sun-flower-perplexity.vercel.app/live/" target="_blank" rel="noopener noreferrer">Open the live version</a>
+         </div>
+       </div>
+ 
+@@ -74,6 +75,7 @@
+           <div><dt>Frame rate</dt><dd>30 a second</dd></div>
+           <div><dt>Frames</dt><dd>3,810</dd></div>
+         </dl>
++        <p class="note">The live version draws the film in your browser as it plays. On a machine with four cores and no graphics card its script ran over its time limit in 11 of 16 measured stretches of the film; on a graphics card it has not been measured.</p>
+         </div>
+       </div>
+     </header>
+@@ -303,7 +305,7 @@
+       <section class="section wrap" aria-labelledby="h-design">
+         <p class="kicker">05<svg class="arc" viewBox="0 0 48 20" width="48" height="20" aria-hidden="true" focusable="false"><path class="arc-sky" d="M3 18.5A21 14 0 0 1 45 18.5" /><path class="arc-land" d="M0 18.5H48" /><circle class="arc-sun" cx="32.0" cy="5.6" r="2.75" /></svg></p>
+         <h2 id="h-design">Design system</h2>
+-        <p class="section-lede">Dark soil and one gold. The film carries its color in its light, so everything around it stays quiet. The nine colors all come from the project: six from the film's own page, and three from its live player, where they mark a result. There are two typefaces, and the two marks are made from the film itself.</p>
++        <p class="section-lede">Dark soil and one gold. The film carries its color in its light, so everything around it stays quiet. The nine colors all come from the project: six from the film's own page, and three from the live version, where they mark a result. There are two typefaces, and the two marks are made from the film itself.</p>
+         <ul class="swatches" aria-label="Palette">
+           <li style="--c: #0d0f0e"><span class="chip"></span><b>Ground</b><code>#0d0f0e</code></li>
+           <li style="--c: #14130f"><span class="chip"></span><b>Panel</b><code>#14130f</code></li>
+@@ -383,7 +385,7 @@
+               <tr><th scope="row">Made</th><td data-label="What it measured">Nothing is made on the graphics card on any frame after loading.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+               <tr><th scope="row">Pure</th><td data-label="What it measured">18 frames, each drawn again in two ways: 36 of 36 give the same bytes.</td><td data-label="Result"><span class="res res-pass">Pass</span></td></tr>
+               <tr><th scope="row">Nights</th><td data-label="What it measured">By the clock, fourteen nights of 0.86 to 0.96 s against a limit of 1.2 s. The proof by the picture was not run.</td><td data-label="Result"><span class="res res-part">Pass so far</span></td></tr>
+-              <tr><th scope="row">Script</th><td data-label="What it measured">Live play only: the script that draws each frame is over its limit in 11 of 16 measured stretches, 20.1 ms a frame in the mean where a frame has 33.3 ms. The film file is drawn frame by frame, so it is not touched by this.</td><td data-label="Result"><span class="res res-fail">Fail</span></td></tr>
++              <tr><th scope="row">Script</th><td data-label="What it measured">Live play only: the page's own script is over its limit in 11 of 16 measured stretches, 20.1 ms a frame in the mean where a frame has 33.3 ms. The film file is drawn frame by frame, so it is not touched by this.</td><td data-label="Result"><span class="res res-fail">Fail</span></td></tr>
+             </tbody>
+           </table>
+         </div>
+@@ -406,7 +408,7 @@
+           <li><b>The wind in the last shot.</b> A single gust passes through the field, and every flower sways the same way, in rows, and returns to the same spot together.</li>
+           <li><b>The pass bar.</b> No look of the film, and not the film as a whole, reached the pass bar of 9 out of 10.</li>
+           <li><b>The nights.</b> The length of the nights is proved by the film's clock. The check that proves it from the picture itself was not run.</li>
+-          <li><b>Live play.</b> When the film is drawn as it plays, on a machine with four cores and no graphics card the script that draws each frame is over its time limit in 11 of 16 measured stretches of the film. On a machine with a graphics card it has not been measured.</li>
++          <li><b>The live version.</b> On a machine with four cores and no graphics card its script is over its time limit in 11 of 16 measured stretches of the film. On a machine with a graphics card it has not been measured.</li>
+         </ul>
+       </section>
+     </main>
+@@ -414,6 +416,7 @@
+     <footer class="foot">
+       <div class="wrap">
+       <p class="foot-name">Life of a <span>Sunflower</span>.</p>
++      <p><a href="https://sun-flower-perplexity.vercel.app/live/" target="_blank" rel="noopener noreferrer">Open the live version</a></p>
+       <p>Music: Wonders of the Earth, by Grand_Project. Typefaces: Fraunces and Work Sans, each under the <a href="https://openfontlicense.org/open-font-license-official-text/" target="_blank" rel="noopener noreferrer">SIL Open Font License</a>.</p>
+       </div>
+       <svg class="disc foot-sun" viewBox="0 0 1000 1000" aria-hidden="true" focusable="false"><use href="#disc" /></svg>
+--- a/review/review.css
++++ b/review/review.css
+@@ -32,7 +32,7 @@
+   --text: #ece7db;
+   --quiet: #a8a290;
+   --gold: #e2b23a;
+-  /* Three from the live player, where they mark a result. */
++  /* Three from the live version, where they mark a result. */
+   --leaf: #b9d18b;
+   --amber: #e8b77a;
+   --rose: #e8a08c;
+@@ -191,9 +191,10 @@
+ }
+ 
+ .film-buttons { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
++.live-link { flex: 0 0 auto; }
+ 
+ /* The film page's pills, with the words the film page uses. */
+-.btn {
++.btn, .live-link {
+   appearance: none;
+   display: inline-flex;
+   align-items: center;
+@@ -213,9 +214,9 @@
+   cursor: pointer;
+   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+ }
+-.btn:hover { border-color: var(--gold); color: var(--text); }
+-.btn-play { border-color: var(--gold); }
+-.btn-play:hover { background: rgba(226, 178, 58, 0.14); }
++.btn:hover, .live-link:hover { border-color: var(--gold); color: var(--text); }
++.btn-play, .live-link { border-color: var(--gold); }
++.btn-play:hover, .live-link:hover { background: rgba(226, 178, 58, 0.14); }
+ /* Each button is as wide as its longest label, so nothing beside it moves when its words change. */
+ .btn-play { min-width: 150px; justify-content: center; padding-left: 17px; font-weight: 600; }
+ .btn-sound { min-width: 176px; justify-content: center; }
+@@ -232,7 +233,7 @@
+ 
+ .film-rung, .film-part { color: var(--quiet); font-size: 13.5px; font-weight: 500; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+ .film-rung:not(:empty) { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; }
+-/* The part of the film in its own name, then the bar and the beat as the live player writes them. */
++/* The part of the film in its own name, then the bar and the beat as the live version writes them. */
+ .film-part { display: inline-flex; align-items: baseline; gap: 10px; min-width: 22ch; white-space: nowrap; }
+ .film-part i { font-size: 18px; line-height: 1; letter-spacing: 0; color: var(--gold); }
+ /* A word about loading takes the readout's place for as long as it stands, and wraps inside the room it has,
+@@ -288,6 +289,8 @@
+ .facts dt { color: var(--quiet); font-size: 12.5px; font-weight: 550; letter-spacing: 0.16em; text-transform: uppercase; }
+ .facts dd { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-variation-settings: 'SOFT' 100; font-size: clamp(20px, 1.9vw, 28px); line-height: 1.15; color: var(--text); font-variant-numeric: lining-nums; white-space: nowrap; }
+ 
++.note { grid-column: 1 / -1; max-width: 74ch; margin: 18px 0 0; color: var(--quiet); font-size: 15px; }
++
+ /* Sections */
+ 
+ .section { padding: clamp(56px, 8.4vw, 124px) 0 0; }
+@@ -427,7 +430,7 @@
+ table.mini th, table.mini td { padding: 10px 12px; }
+ table.mini tbody th { font-variant-numeric: lining-nums tabular-nums; }
+ 
+-/* A result, in the three colors the live player uses for one. */
++/* A result, in the three colors the live version uses for one. */
+ .res { display: inline-block; padding: 1px 10px 0; border: 1px solid currentColor; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.75; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+ .res-pass { color: var(--leaf); }
+ .res-part { color: var(--amber); }
+@@ -537,15 +540,16 @@
+   .film-part, .film-note { grid-column: 1 / -1; justify-self: center; min-width: 0; min-height: 21px; margin-inline: 6ch; text-align: center; }
+   /* The film's name is set larger than the words beside it. A shorter line box puts both on one baseline inside the same 20 px, so the row is as tall with the name in it as with a word about loading. */
+   .film-part i { line-height: 16px; }
+-  .btn, .film-rung { grid-row: 3; margin-top: 8px; }
++  .btn, .film-rung, .live-link { grid-row: 3; margin-top: 8px; }
+   .btn-play { grid-column: 1; }
+   .btn-sound { grid-column: 2; }
+   .film-rung { grid-column: 3; justify-self: start; }
++  .live-link { grid-column: 5; justify-self: end; }
+ }
+ 
+ @media (max-width: 700px) {
+   .film-bar { column-gap: 10px; }
+-  .btn { padding: 0 14px; }
++  .btn, .live-link { padding: 0 14px; }
+   .btn-play { min-width: 141px; padding-left: 13px; }
+   .btn-sound { min-width: 166px; }
+ }
+@@ -571,10 +575,12 @@
+   .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+   .facts div:nth-child(3) { padding-left: 0; border-left: 0; }
+   .facts div:nth-child(n + 3) { border-top: 1px solid var(--line); }
++  /* Here the way to the live version takes a row of its own under the buttons. */
+   .film-bar { padding-bottom: 12px; }
+   .film-scrub { --band: 32px; }
+   .film-part, .film-note { margin-inline: 5ch; }
+   .film-part i { font-size: 17px; }
++  .live-link { grid-column: 1 / -1; grid-row: 4; justify-self: start; margin-top: 10px; }
+   .ruler-strip { height: 56px; }
+   .ruler-marks .sun { width: 7px; height: 7px; margin-left: -3.5px; top: 10px; }
+   table.mini th, table.mini td { padding: 9px 9px; font-size: 14px; }
+@@ -592,13 +598,13 @@
+   .foot-sun { right: 50%; transform: translate(50%, 50%); }
+ }
+ 
+-/* On a phone held upright the two buttons share the width. The size of the file has no room beside them,
+-   and a row of its own would hold nothing else, so here it is kept for screen readers and not shown. */
++/* On a phone held upright the two buttons share the width, and the size of the file stands beside the way to the live version. */
+ @media (max-width: 439px) {
+   .film-bar { grid-template-columns: minmax(min-content, 1fr) minmax(min-content, 1fr); }
+   .film-time:last-child { grid-column: 2; }
+   .btn-play, .btn-sound { justify-self: stretch; }
+-  .film-rung, .film-rung:not(:empty) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
++  .film-rung { grid-column: 1; grid-row: 4; margin-top: 10px; }
++  .live-link { grid-column: 2; justify-self: stretch; justify-content: center; }
+ }
+ 
+ /* A word about loading needs the whole line here, so the two times step aside for as long as it stands. */
+@@ -609,7 +615,7 @@
+ 
+ /* From 355 to 371 pixels the two columns fit with the words a little smaller. */
+ @media (min-width: 355px) and (max-width: 371px) {
+-  .btn { padding: 0 13px; font-size: 13.5px; }
++  .btn, .live-link { padding: 0 13px; font-size: 13.5px; }
+   .btn-play { min-width: 133px; padding-left: 12px; }
+   .btn-sound { min-width: 155px; }
+ }
+@@ -619,6 +625,8 @@
+   .film-bar { grid-template-columns: auto minmax(0, 1fr); }
+   .btn-play { grid-column: 1 / -1; }
+   .btn-sound { grid-column: 1 / -1; grid-row: 4; }
++  .film-rung, .live-link { grid-row: 5; }
++  .live-link { grid-column: 1 / -1; justify-self: end; }
+ }
+ 
+ @media (prefers-reduced-motion: reduce) {
+--- a/review/review.js
++++ b/review/review.js
+@@ -1,6 +1,6 @@
+ // Review page: the film's buttons, its position line, the bar readout and the two short videos further down.
+ // The words on the buttons are the ones the film's own page uses, and the bar readout is written the way
+-// the live player writes it. No dependencies.
++// the live version writes it. No dependencies.
+ ;(function () {
+   'use strict'
+ 
+@@ -136,7 +136,7 @@
+     var paint = function () {
+       var d = dur()
+       var t = Math.min(shown(), d)
+-      // The readout is written as the live player writes it: bar 61.3 is the third beat of bar 61.
++      // The readout is written as the live version writes it: bar 61.3 is the third beat of bar 61.
+       var code = beatAt(t)
+       var barNo = Math.floor(code / 10)
+       var beat = code % 10
+@@ -354,23 +354,16 @@
+     film.addEventListener('loadedmetadata', showRung)
+     film.addEventListener('loadeddata', showRung)
+     // Has the film given up on its files? An error on the film itself, or every file tried and none taken.
+-    // A film the browser has not begun on yet reads the same as one whose files were all turned down: nothing
+-    // loaded and no file. So that reading counts only with one thing more. An error was just heard; or the browser
+-    // names a file, which it does once it has tried one; or the page has finished loading, which a browser holds
+-    // back until the film has begun.
+     var NO_FILE = 3 // HTMLMediaElement.NETWORK_NO_SOURCE
+-    var lookAgain = function (heard) {
+-      if (film.error) return refused()
+-      if (film.readyState !== 0 || film.networkState !== NO_FILE) return
+-      if (heard === true || film.currentSrc || document.readyState === 'complete') refused()
++    var lookAgain = function () {
++      if (film.error || (film.readyState === 0 && film.networkState === NO_FILE)) refused()
+     }
+     // An error on one of the film's files does not bubble, so it is heard on its way down to the file. Every file's
+     // error is heard, not only the last one's: a browser can give up after the first file without trying the second.
+-    film.addEventListener('error', function () { setTimeout(function () { lookAgain(true) }, 0) }, true)
++    film.addEventListener('error', function () { setTimeout(lookAgain, 0) }, true)
+     // The browser may also have given up before this script began to listen. Then no error comes again, so the
+-    // film's state is read once here, and once more when the page has finished loading.
++    // film's state is read once here.
+     lookAgain()
+-    window.addEventListener('load', lookAgain)
+     // A browser that neither loads the file nor says so: twelve seconds after play was asked for, fetch it whole.
+     film.addEventListener('play', function () {
+       setTimeout(function () {

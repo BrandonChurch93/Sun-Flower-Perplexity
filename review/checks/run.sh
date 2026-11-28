@@ -4,8 +4,10 @@
 # Without a folder it first puts the page and the film together in review/checks/out/page with publish.sh, the
 # way the page is deployed, and checks that. With a folder it checks the page in that folder.
 #
-# Needs node, python3, ffmpeg, the repository's dev dependencies (npm ci) and a Chromium for them
-# (npx playwright-core install chromium).
+# Needs node, python3 with numpy and Pillow, ffmpeg with ffprobe, the repository's dev dependencies (npm ci)
+# and a Chromium for them (npx playwright-core install chromium). The whole run takes about five and a half
+# minutes. Five of its checks time the page (follow, cost, refusal race, late script, false alarm), so run it
+# alone on the machine.
 #
 # It starts two local servers and stops them at the end. One answers like the public host, which hands out
 # no part of a file, so a film cannot jump until the whole file is in. The other hands out parts, like most hosts.
@@ -44,6 +46,7 @@ ranges="http://127.0.0.1:$b/"
 run "files"          python3 "$here/files.py" "$page"
 run "links"          python3 "$here/links.py" "$page"
 run "words"          python3 "$here/words.py" "$page"
+run "marks"          python3 "$here/marks.py" "$page"
 run "film: stream"   node "$here/film.cjs" "$host" stream
 run "film: phone"    node "$here/film.cjs" "$host" phone
 run "film: refused"  node "$here/film.cjs" "$host" refused
@@ -53,6 +56,13 @@ run "text size"      node "$here/text-size.cjs" "$host"
 run "ruler"          node "$here/ruler.cjs" "$host"
 run "page"           node "$here/page.cjs" "$host"
 run "hit area"       node "$here/hit-area.cjs" "$host"
+run "flows"          node "$here/flows.cjs" "$ranges" "$host"
+run "widths"         node "$here/widths.cjs" "$host"
+run "follow"         node "$here/follow.cjs" "$host"
+run "cost"           node "$here/cost.cjs" "$host"
+run "refusal race"   node "$here/race-trace.cjs" "$host" 40
+run "late script"    node "$here/late-script.cjs" "$host"
+run "false alarm"    node "$here/false-alarm.cjs" "$host"
 
 echo
 if [ -z "$failed" ]; then

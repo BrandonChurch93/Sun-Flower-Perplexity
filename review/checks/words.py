@@ -8,6 +8,7 @@ Reads index.html, review.css and review.js and fails on:
     labels and descriptions, and the words the script writes into the page
   - a word about who or what made the film
   - an address that is not on the short list of public links below
+  - a way to a live version of the film: the page is where the film is watched, so it names no other place
 
 Two rules this script cannot check, and a reader has to: the page gives no family
 name of a reviewer, and it names no other film, game or product.
@@ -20,9 +21,10 @@ import sys
 folder = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 FILES = ['index.html', 'review.css', 'review.js']
 LINKS = {
-    'https://sun-flower-perplexity.vercel.app/live/',  # the live version
     'https://openfontlicense.org/open-font-license-official-text/',  # the license of the two typefaces
 }
+# The page once led to a second place where the film is drawn as it plays. That way was taken out on the owner's word.
+ELSEWHERE = re.compile(r'live version|vercel\.app|live-link', re.I)
 MAKERS = re.compile(
     r'\b(AI|A\.I\.)\b|\b(artificial intelligence|machine learning|language model|LLM|chatbot|agents?|prompt(s|ed)?|'
     r'generated|generative|Builder|Claude|Anthropic|GPT|ChatGPT|OpenAI|Perplexity|Gemini|Copilot|Midjourney|ElevenLabs)\b',
@@ -71,6 +73,11 @@ for f, s in text.items():
         if url not in LINKS and not url.startswith('http://www.w3.org/'):
             fault(f, 'a link that is not on the list', url)
 
+# 4. No way to a live version, in any of the three files.
+for f, s in text.items():
+    for m in ELSEWHERE.finditer(s):
+        fault(f, f'a way to a live version ({m.group(0)})', s[max(0, m.start() - 40):m.end() + 30])
+
 found = sorted({u for s in text.values() for u in re.findall(r'https?://[^\s"\'<>)]+', s)})
 print('files:', ', '.join(f'{f} {len(s.encode("utf-8")):,} bytes' for f, s in text.items()))
 print('words read:', ', '.join(f'{k} {len(v.split()):,}' for k, v in words.items()))
@@ -80,4 +87,4 @@ if faults:
     for x in faults:
         print('  ' + x)
     sys.exit(1)
-print('ALL PASS: no dashes, no exclamation points, no word about the maker, no address off the list')
+print('ALL PASS: no dashes, no exclamation points, no word about the maker, no address off the list, no way to a live version')

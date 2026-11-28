@@ -28,14 +28,14 @@ const say = (pass, what) => { if (!pass) failed++; console.log((pass ? 'PASS ' :
       }
       const imgs = [...document.images]
       const hs = [...document.querySelectorAll('h1, h2, h3, h4')].map((h) => +h.tagName[1]); let skips = 0; for (let i = 1; i < hs.length; i++) if (hs[i] - hs[i - 1] > 1) skips++
-      const touch = [...document.querySelectorAll('button, .film-bar a, #scrub')].map((e) => { const b = e.getBoundingClientRect(); return { el: e.id || e.textContent.trim().slice(0, 16), w: Math.round(b.width), h: Math.round(b.height) } })
+      const touch = [...document.querySelectorAll('button, #scrub')].map((e) => { const b = e.getBoundingClientRect(); return { el: e.id || e.textContent.trim().slice(0, 16), w: Math.round(b.width), h: Math.round(b.height) } })
       return { low, pictures: imgs.length, noAlt: imgs.filter((i) => !(i.getAttribute('alt') || '').trim()).length, shortAlt: imgs.filter((i) => (i.getAttribute('alt') || '').trim().length < 12).length, h1: document.querySelectorAll('h1').length, headingSkips: skips, lang: document.documentElement.lang, title: document.title, desc: (document.querySelector('meta[name=description]') || {}).content, viewport: (document.querySelector('meta[name=viewport]') || {}).content, touch, videoLabels: [...document.querySelectorAll('video')].filter((v) => !v.getAttribute('aria-label')).length }
     })
     console.log(size, JSON.stringify(r))
     say(r.low.length === 0, size + ': no text below the contrast floor (4.5 to 1, or 3 to 1 for large text)')
     say(r.noAlt === 0 && r.shortAlt === 0 && r.videoLabels === 0, size + ': all ' + r.pictures + ' pictures and every video carry a description')
     say(r.h1 === 1 && r.headingSkips === 0 && r.lang === 'en', size + ': one main heading, no heading level skipped, language set')
-    say(r.touch.filter((t) => t.el !== 'scrub').every((t) => t.h >= 44) && r.touch.filter((t) => t.el === 'scrub').every((t) => t.h >= (phone ? 40 : 24)), size + ': the buttons and the live link are at least 44 px high, the position line at least ' + (phone ? 40 : 24))
+    say(r.touch.filter((t) => t.el !== 'scrub').every((t) => t.h >= 44) && r.touch.filter((t) => t.el === 'scrub').every((t) => t.h >= (phone ? 40 : 24)), size + ': the buttons are at least 44 px high, the position line at least ' + (phone ? 40 : 24))
     // keyboard: tab through the first controls and read the outline
     if (!phone) {
       const f = []

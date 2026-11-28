@@ -1,5 +1,6 @@
 // Review page: the film's buttons, its position line, the bar readout and the two short videos further down.
-// No dependencies.
+// The words on the buttons are the ones the film's own page uses, and the bar readout is written the way
+// the live player writes it. No dependencies.
 ;(function () {
   'use strict'
 
@@ -60,6 +61,9 @@
     [73, 'Last light']
   ]
   var LENGTH = 127 // seconds, used until the file states its own length
+  var BEATS = 4 // beats in a bar
+  // Where a part begins, as a share of the film. The first part takes the lead-in before bar 1 as well.
+  var partAt = function (k) { return k === 0 ? 0 : (FIRST + (PARTS[k][0] - 1) * BAR) / LENGTH }
 
   if (film && play && sound) {
     var rungName = ''
@@ -77,7 +81,12 @@
       t = Math.max(0, Math.floor(t))
       return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2)
     }
-    var say = function (msg) { if (note) note.textContent = msg }
+    // A word about loading. While it stands, the page shows it in place of the bar readout.
+    var filmBar = note && note.closest ? note.closest('.film-bar') : null
+    var say = function (msg) {
+      if (note) note.textContent = msg
+      if (filmBar) filmBar.setAttribute('data-note', msg ? 'yes' : 'no')
+    }
     var announce = function (msg) { if (live) live.textContent = msg }
 
     // The 1080p file carries media="(min-width: 1000px)", so a narrow window takes the 720p file and never fetches both.
@@ -96,36 +105,107 @@
       return film.currentTime || 0
     }
 
+    var names = [] // the part names under the position line
+    var partName = null // the two halves of the readout: the part, then the bar and the beat
+    var partBar = null
+    var shownPart = -1
+    // What the page shows now. paint runs on every frame while the film plays, and writes only what has changed.
+    var seen = {}
+    var put = function (key, value, write) {
+      if (seen[key] === value) return
+      seen[key] = value
+      write(value)
+    }
+    // The line moves in whole screen pixels, so the lit edge of the picture and the flower head stay sharp and the
+    // page has nothing to redraw between two steps. steps is the width of the picture in screen pixels.
+    var steps = 0
+    var strip = track ? track.querySelector('.strip') : null
+    var measure = function () {
+      var w = strip ? strip.getBoundingClientRect().width : 0
+      steps = w > 0 ? Math.max(1, Math.round(w * (window.devicePixelRatio || 1))) : 0
+    }
+
+    // The bar and the beat at a time, counted from 1 and held as one number: 613 is the third beat of bar 61.
+    // Before bar 1 the number is under 10.
+    var beatAt = function (t) {
+      var bar = (t - FIRST) / BAR + 1
+      var barNo = Math.floor(bar + 1e-6)
+      return barNo * 10 + Math.floor((bar - barNo) * BEATS + 1e-6) + 1
+    }
+
     var paint = function () {
       var d = dur()
       var t = Math.min(shown(), d)
+      // The readout is written as the live player writes it: bar 61.3 is the third beat of bar 61.
+      var code = beatAt(t)
+      var barNo = Math.floor(code / 10)
+      var beat = code % 10
+      var at = 0
+      for (var i = 0; i < PARTS.length; i++) if (barNo >= PARTS[i][0]) at = i
       if (part) {
-        var bar = Math.floor((t - FIRST) / BAR) + 1
-        var name = PARTS[0][1]
-        for (var i = 0; i < PARTS.length; i++) if (bar >= PARTS[i][0]) name = PARTS[i][1]
-        part.textContent = bar >= 1 ? 'Bar ' + bar + ' \u00b7 ' + name : name
+        if (!partName) {
+          part.textContent = ''
+          partName = part.appendChild(document.createElement('i'))
+          partBar = part.appendChild(document.createElement('span'))
+        }
+        put('name', PARTS[at][1], function (v) { partName.textContent = v })
+        put('bar', barNo >= 1 ? 'bar ' + barNo + '.' + beat : 'before bar 1', function (v) { partBar.textContent = v })
+      }
+      if (at !== shownPart) {
+        shownPart = at
+        for (var n = 0; n < names.length; n++) names[n].setAttribute('data-current', n === at ? 'yes' : 'no')
       }
       if (!scrub) return
-      if (!dragging) scrub.value = t
+      // The flower head stands where the film is, to the nearest screen pixel of the line.
+      var share = steps ? Math.round(t / d * steps) / steps : t / d
+      var place = +(share * d).toFixed(2)
+      if (!dragging && Math.abs(+scrub.value - place) > 0.006) scrub.value = place
       var got = onWhole ? d : film.buffered.length ? film.buffered.end(film.buffered.length - 1) : 0
-      scrub.style.setProperty('--at', (t / d * 100).toFixed(2) + '%')
-      scrub.style.setProperty('--got', (Math.max(t, got) / d * 100).toFixed(2) + '%')
-      scrub.setAttribute('aria-valuetext', clock(t) + ' of ' + clock(d))
-      if (now) now.textContent = clock(t)
-      if (total) total.textContent = clock(d)
+      var line = track || scrub
+      put('at', share.toFixed(5), function (v) { line.style.setProperty('--at', v) })
+      put('got', (Math.max(t, got) / d).toFixed(4), function (v) { line.style.setProperty('--got', v) })
+      put('says', clock(t) + ' of ' + clock(d) + ', ' + PARTS[at][1], function (v) { scrub.setAttribute('aria-valuetext', v) })
+      if (now) put('now', clock(t), function (v) { now.textContent = v })
+      if (total) put('total', clock(d), function (v) { total.textContent = v })
+    }
+
+    // While the film runs, the page looks at its time on every frame, so the beat turns over on the beat and the
+    // flower head glides. A browser reports the time only about four times a second on its own. A frame on which
+    // the beat, the second and the pixel of the line are all the same as on the last one is left alone.
+    var following = false
+    var lastBeat = -1
+    var lastStep = -1
+    var lastSecond = -1
+    var follow = function () {
+      if (film.paused || film.ended) { following = false; return }
+      var t = film.currentTime
+      var b = beatAt(t)
+      var p = steps ? Math.round(t / dur() * steps) : -1
+      var sec = Math.floor(t)
+      if (b !== lastBeat || p !== lastStep || sec !== lastSecond) {
+        lastBeat = b
+        lastStep = p
+        lastSecond = sec
+        paint()
+      }
+      window.requestAnimationFrame(follow)
+    }
+    var followFilm = function () {
+      if (following || !window.requestAnimationFrame) return
+      following = true
+      window.requestAnimationFrame(follow)
     }
 
     var sync = function () {
       if (changing) return
       var ended = film.ended
       var paused = film.paused || ended
-      play.textContent = ended ? 'Play again' : paused ? 'Play' : 'Pause'
-      play.setAttribute('aria-label', ended ? 'Play the film again' : paused ? 'Play the film' : 'Pause the film')
+      play.textContent = ended ? 'Play it again' : paused ? 'Play the film' : 'Pause'
       play.setAttribute('data-state', paused ? 'paused' : 'playing')
+      // The sound button says what a press will do, so its words carry its state and it is not marked as pressed.
       var on = !film.muted && film.volume > 0
-      sound.textContent = on ? 'Sound on' : 'Sound off'
-      sound.setAttribute('aria-pressed', on ? 'true' : 'false')
-      sound.setAttribute('aria-label', on ? 'Sound is on. Mute the film' : 'Sound is off. Turn the sound on')
+      sound.textContent = on ? 'Turn the sound off' : 'Turn the sound on'
+      sound.setAttribute('data-on', on ? 'yes' : 'no')
     }
 
     var start = function () {
@@ -255,6 +335,8 @@
       if (refusedPlain && !onWhole) { wantPlay = true; loadWhole(); return }
       if (film.paused || film.ended) start()
       else film.pause()
+      // The film says it has paused or started a moment after it has; the button does not wait for that.
+      sync()
     })
 
     sound.addEventListener('click', function () {
@@ -266,13 +348,29 @@
       sync()
     })
 
-    ;['play', 'playing', 'pause', 'ended', 'volumechange', 'emptied'].forEach(function (e) { film.addEventListener(e, sync) })
+    ;['play', 'playing', 'pause', 'ended', 'seeked', 'volumechange', 'emptied'].forEach(function (e) { film.addEventListener(e, sync) })
     ;['timeupdate', 'seeked', 'loadedmetadata', 'durationchange', 'progress', 'ended'].forEach(function (e) { film.addEventListener(e, paint) })
+    ;['play', 'playing'].forEach(function (e) { film.addEventListener(e, followFilm) })
     film.addEventListener('loadedmetadata', showRung)
     film.addEventListener('loadeddata', showRung)
-    film.addEventListener('error', refused)
-    var sources = film.querySelectorAll('source')
-    if (sources.length) sources[sources.length - 1].addEventListener('error', refused)
+    // Has the film given up on its files? An error on the film itself, or every file tried and none taken.
+    // A film the browser has not begun on yet reads the same as one whose files were all turned down: nothing
+    // loaded and no file. So that reading counts only with one thing more. An error was just heard; or the browser
+    // names a file, which it does once it has tried one; or the page has finished loading, which a browser holds
+    // back until the film has begun.
+    var NO_FILE = 3 // HTMLMediaElement.NETWORK_NO_SOURCE
+    var lookAgain = function (heard) {
+      if (film.error) return refused()
+      if (film.readyState !== 0 || film.networkState !== NO_FILE) return
+      if (heard === true || film.currentSrc || document.readyState === 'complete') refused()
+    }
+    // An error on one of the film's files does not bubble, so it is heard on its way down to the file. Every file's
+    // error is heard, not only the last one's: a browser can give up after the first file without trying the second.
+    film.addEventListener('error', function () { setTimeout(function () { lookAgain(true) }, 0) }, true)
+    // The browser may also have given up before this script began to listen. Then no error comes again, so the
+    // film's state is read once here, and once more when the page has finished loading.
+    lookAgain()
+    window.addEventListener('load', lookAgain)
     // A browser that neither loads the file nor says so: twelve seconds after play was asked for, fetch it whole.
     film.addEventListener('play', function () {
       setTimeout(function () {
@@ -287,13 +385,24 @@
       row.hidden = false
       film.addEventListener('click', function () { play.click() })
 
+      // The line is the film itself, cut where its eight parts meet, with the name of each part under it.
       if (track) {
-        for (var k = 1; k < PARTS.length; k++) {
-          var tick = document.createElement('i')
-          var at = (FIRST + (PARTS[k][0] - 1) * BAR) / LENGTH
-          tick.style.left = 'calc(7px + (100% - 14px) * ' + at.toFixed(5) + ')'
-          track.insertBefore(tick, scrub)
+        var list = document.createElement('ol')
+        list.className = 'scrub-names'
+        list.setAttribute('aria-hidden', 'true')
+        for (var k = 0; k < PARTS.length; k++) {
+          if (k > 0) {
+            var tick = document.createElement('i')
+            tick.style.setProperty('--a', partAt(k).toFixed(5))
+            track.insertBefore(tick, scrub)
+          }
+          var item = document.createElement('li')
+          item.textContent = PARTS[k][1]
+          item.style.setProperty('--a', partAt(k).toFixed(5))
+          if (k === PARTS.length - 1) item.className = 'is-last'
+          names.push(list.appendChild(item))
         }
+        track.appendChild(list)
       }
 
       scrub.addEventListener('input', function () {
@@ -321,6 +430,9 @@
       })
     }
 
+    measure()
+    if (strip && window.ResizeObserver) new ResizeObserver(function () { measure(); paint() }).observe(strip)
+    window.addEventListener('resize', function () { measure(); paint() })
     sync()
     showRung()
     paint()

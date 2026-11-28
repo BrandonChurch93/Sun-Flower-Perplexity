@@ -1,8 +1,19 @@
+/* Life of a Sunflower: the review page.
+   The look is taken from the project. The colors are the ones its own pages use, the buttons are the film page's
+   pills, the position line is the film itself as one picture, and the mark is the disc of the flower. */
+
 @font-face {
   font-family: 'Fraunces';
-  src: url('assets/fonts/Fraunces-latin.woff2') format('woff2');
-  font-weight: 300 600;
+  src: url('assets/fonts/Fraunces-roman.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Fraunces';
+  src: url('assets/fonts/Fraunces-italic.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
   font-display: swap;
 }
 @font-face {
@@ -14,20 +25,30 @@
 }
 
 :root {
+  /* Six colors from the film's own page. */
   --ground: #0d0f0e;
   --panel: #14130f;
   --line: #3a362b;
   --text: #ece7db;
   --quiet: #a8a290;
   --gold: #e2b23a;
-  --bright: #f6f1e4;
+  /* Three from the live player, where they mark a result. */
+  --leaf: #b9d18b;
+  --amber: #e8b77a;
+  --rose: #e8a08c;
+  /* The text color one step quieter, for long reading text. */
   --soft: #d3cdbe;
-  --leaf: #a9c77c;
-  --rose: #e59f80;
+  /* The fill of the film page's buttons. */
+  --pill: rgba(29, 27, 22, 0.9);
   --display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
   --body: 'Work Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* The film as one picture: one column for each of its 3,810 frames. */
+  --film: url('assets/media/film-strip.webp');
   --wrap: 1240px;
   --gutter: clamp(18px, 4vw, 48px);
+  /* The width of the disc where it stands as the page's mark, and the height of the bar under the film. */
+  --mark: clamp(230px, 28vw, 410px);
+  --bar: 142px;
   color-scheme: dark;
 }
 
@@ -44,7 +65,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-::selection { background: rgba(226, 178, 58, 0.35); color: var(--bright); }
+::selection { background: rgba(226, 178, 58, 0.35); color: var(--text); }
 
 img, video { display: block; max-width: 100%; height: auto; }
 
@@ -53,6 +74,14 @@ a:hover { color: #f2cf73; }
 
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 3px; }
 main:focus { outline: none; }
+
+/* The film's own names, wherever they stand: its title and its eight parts. */
+.title span, .foot-name span, .film-part i, .scrub-names li, .ruler-axis i, .parts b, .type-italic {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+}
 
 .skip {
   position: absolute;
@@ -78,7 +107,7 @@ main:focus { outline: none; }
 .film-frame {
   position: relative;
   width: 100%;
-  max-width: calc((100svh - 106px) * 16 / 9);
+  max-width: calc((100svh - var(--bar)) * 16 / 9);
   margin-inline: auto;
   aspect-ratio: 16 / 9;
   background: #000;
@@ -95,74 +124,101 @@ main:focus { outline: none; }
 
 .film-bar { background: var(--panel); border-top: 1px solid rgba(58, 54, 43, 0.7); border-bottom: 1px solid var(--line); }
 
-/* The film's own position line. The seven ticks are where its eight parts begin. */
-.film-scrub { display: flex; align-items: center; gap: 14px; padding-top: 12px; }
+/* The film's position line is the film itself: one column of color for each frame, cut where its eight parts meet.
+   What has played is lit, the rest waits in the dark, and a flower head on its stalk marks the place. */
+.film-scrub { display: flex; align-items: flex-start; gap: 14px; padding-top: 6px; --head: 13px; --band: 34px; --thumb: 16px; }
 .film-scrub[hidden] { display: none; }
-.film-time { flex: 0 0 auto; min-width: 4ch; color: var(--quiet); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
-.film-time:last-child { text-align: right; }
-.scrub-track { position: relative; flex: 1 1 auto; min-width: 0; height: 24px; }
-.scrub-track i { position: absolute; top: 5px; width: 1px; height: 14px; background: rgba(246, 241, 228, 0.3); pointer-events: none; }
+.film-time { flex: 0 0 auto; display: flex; align-items: center; min-width: 4ch; height: var(--band); margin-top: var(--head); color: var(--quiet); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.film-time:last-child { justify-content: flex-end; }
+
+.scrub-track { position: relative; flex: 1 1 auto; min-width: 0; height: calc(var(--head) + var(--band) + 26px); --at: 0; --got: 0; }
+.strip { position: absolute; left: calc(var(--thumb) / 2); right: calc(var(--thumb) / 2); top: var(--head); height: var(--band); overflow: hidden; border-radius: 3px 3px 0 0; background: #000; }
+.strip::before, .strip span { content: ''; position: absolute; inset: 0; background: var(--film) 0 0 / 100% 100% no-repeat; }
+.strip::before { opacity: 0.5; }
+.strip span { clip-path: inset(0 calc(100% - var(--at) * 100%) 0 0); }
+/* The ground under it: gold as far as the film has played, pale as far as it has loaded. */
+.scrub-track::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--thumb) / 2);
+  right: calc(var(--thumb) / 2);
+  top: calc(var(--head) + var(--band));
+  height: 2px;
+  background: linear-gradient(to right, var(--gold) 0, var(--gold) calc(var(--at) * 100%), rgba(236, 231, 219, 0.42) calc(var(--at) * 100%), rgba(236, 231, 219, 0.42) calc(var(--got) * 100%), var(--line) calc(var(--got) * 100%), var(--line) 100%);
+  pointer-events: none;
+}
+/* The seven places where one part of the film gives way to the next. A night is a dark line inside the picture;
+   a new part cuts the picture and the ground under it. */
+.scrub-track > i { position: absolute; z-index: 1; top: var(--head); left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--a)); width: 2px; height: calc(var(--band) + 2px); margin-left: -1px; background: var(--panel); pointer-events: none; }
+.scrub-names { position: absolute; left: calc(var(--thumb) / 2); right: calc(var(--thumb) / 2); top: calc(var(--head) + var(--band) + 7px); height: 17px; margin: 0; padding: 0; list-style: none; pointer-events: none; }
+.scrub-names li { position: absolute; left: calc(var(--a) * 100%); padding-left: 1px; font-size: 13.5px; line-height: 17px; color: var(--quiet); white-space: nowrap; transition: color 0.2s ease; }
+.scrub-names li.is-last { left: auto; right: 0; }
+.scrub-names li[data-current='yes'] { color: var(--gold); }
+
 .scrub {
   -webkit-appearance: none;
   appearance: none;
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 0;
   display: block;
   width: 100%;
-  height: 24px;
+  height: calc(var(--head) + var(--band) + 2px);
   margin: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
   touch-action: none;
-  --at: 0%;
-  --got: 0%;
-  --fill: linear-gradient(to right, var(--gold) 0, var(--gold) var(--at), rgba(246, 241, 228, 0.36) var(--at), rgba(246, 241, 228, 0.36) var(--got), rgba(246, 241, 228, 0.15) var(--got), rgba(246, 241, 228, 0.15) 100%);
+  /* The place in the film: a flower head on its stalk. */
+  --flower:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.6' fill='%230d0f0e'/%3E%3Ccircle cx='8' cy='8' r='5.6' fill='%23e2b23a'/%3E%3Ccircle cx='8' cy='8' r='2.3' fill='%2314130f'/%3E%3C/svg%3E") center top / 16px 16px no-repeat,
+    linear-gradient(var(--text), var(--text)) center 14px / 2px calc(100% - 14px) no-repeat,
+    linear-gradient(rgba(13, 15, 14, 0.62), rgba(13, 15, 14, 0.62)) center 14px / 4px calc(100% - 14px) no-repeat;
 }
-.scrub::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--fill); }
-.scrub::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(226, 178, 58, 0.16); }
-.scrub::-moz-range-track { height: 4px; border-radius: 2px; background: var(--fill); }
-.scrub::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(226, 178, 58, 0.16); }
-.scrub:hover::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(226, 178, 58, 0.22); }
-.scrub:hover::-moz-range-thumb { box-shadow: 0 0 0 6px rgba(226, 178, 58, 0.22); }
+.scrub::-webkit-slider-runnable-track { height: calc(var(--head) + var(--band) + 2px); background: transparent; }
+.scrub::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: var(--thumb); height: calc(var(--head) + var(--band) + 2px); border: 0; border-radius: 0; background: var(--flower); }
+.scrub::-moz-range-track { height: calc(var(--head) + var(--band) + 2px); background: transparent; }
+.scrub::-moz-range-thumb { width: var(--thumb); height: calc(var(--head) + var(--band) + 2px); border: 0; border-radius: 0; background: var(--flower); }
 .scrub:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
-/* Under a finger the line takes a taller touch area. Its look and the space it takes stay the same. */
-@media (pointer: coarse) {
-  .scrub { height: 40px; margin: -8px 0; }
-}
 
 .film-bar-in {
-  min-height: 64px;
-  padding: 8px 0 12px;
+  min-height: 60px;
+  padding: 4px 0 12px;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px 24px;
 }
 
-.film-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.film-buttons { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
 
+/* The film page's pills, with the words the film page uses. */
 .btn {
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   min-height: 44px;
-  padding: 0 20px;
+  padding: 0 19px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(29, 27, 22, 0.9);
+  background: var(--pill);
   color: var(--text);
   font: inherit;
   font-size: 14.5px;
   font-weight: 550;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
-.btn:hover { border-color: var(--gold); }
-.btn-play { border-color: var(--gold); padding-left: 17px; }
+.btn:hover { border-color: var(--gold); color: var(--text); }
+.btn-play { border-color: var(--gold); }
+.btn-play:hover { background: rgba(226, 178, 58, 0.14); }
+/* Each button is as wide as its longest label, so nothing beside it moves when its words change. */
+.btn-play { min-width: 150px; justify-content: center; padding-left: 17px; font-weight: 600; }
+.btn-sound { min-width: 176px; justify-content: center; }
 .btn-play::before {
   content: '';
   width: 0;
@@ -172,71 +228,76 @@ main:focus { outline: none; }
   border-color: transparent transparent transparent var(--gold);
 }
 .btn-play[data-state='playing']::before { width: 10px; height: 12px; border: 0; border-left: 3px solid var(--gold); border-right: 3px solid var(--gold); }
-.btn-sound[aria-pressed='true'] { border-color: var(--gold); background: rgba(226, 178, 58, 0.14); color: var(--bright); }
+.btn-sound[data-on='yes'] { border-color: var(--gold); color: var(--gold); }
 
 .film-rung, .film-part { color: var(--quiet); font-size: 13.5px; font-weight: 500; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .film-rung:not(:empty) { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; }
-.film-part { min-width: 14ch; color: var(--soft); }
-.film-note { color: var(--gold); font-size: 13.5px; font-weight: 500; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
-.film-note:empty { display: none; }
+/* The part of the film in its own name, then the bar and the beat as the live player writes them. */
+.film-part { display: inline-flex; align-items: baseline; gap: 10px; min-width: 22ch; white-space: nowrap; }
+.film-part i { font-size: 18px; line-height: 1; letter-spacing: 0; color: var(--gold); }
+/* A word about loading takes the readout's place for as long as it stands, and wraps inside the room it has,
+   so the row keeps its height. */
+.film-note { flex: 1 1 0; min-width: 14ch; color: var(--gold); font-size: 13.5px; font-weight: 500; line-height: 1.3; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.film-note:empty, .film-part:empty { display: none; }
+.film-bar[data-note='yes'] .film-part { display: none; }
 
-.live-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 4px;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 550;
-  text-decoration: none;
-  border-bottom: 1px solid var(--gold);
-}
-.live-link:hover { color: var(--gold); }
-
+/* First light: the page opens where the film does. */
 .intro {
+  overflow: hidden;
   background:
-    radial-gradient(ellipse 62% 92% at 10% 0%, rgba(226, 178, 58, 0.15), rgba(226, 178, 58, 0.05) 46%, rgba(226, 178, 58, 0) 72%),
+    radial-gradient(ellipse 62% 92% at 10% 0%, rgba(226, 178, 58, 0.12), rgba(226, 178, 58, 0.04) 46%, rgba(226, 178, 58, 0) 72%),
     var(--ground);
-  padding: clamp(40px, 6.4vw, 92px) 0 clamp(28px, 4vw, 52px);
+  padding: clamp(40px, 6vw, 88px) 0 clamp(28px, 4vw, 52px);
 }
+.intro-in { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: clamp(28px, 5vw, 84px); }
+.intro-text { min-width: 0; }
 
 .title {
   margin: 0;
   font-family: var(--display);
-  font-weight: 300;
+  font-weight: 400;
   font-variation-settings: 'SOFT' 100;
-  font-size: clamp(42px, 7.6vw, 112px);
-  line-height: 0.98;
+  font-size: clamp(52px, 8.4vw, 124px);
+  line-height: 0.96;
   letter-spacing: -0.022em;
-  color: var(--bright);
-  text-wrap: balance;
+  color: var(--text);
 }
-.title span { color: var(--gold); text-shadow: 0 0 46px rgba(226, 178, 58, 0.28); }
+.title span { display: block; padding-bottom: 0.08em; letter-spacing: -0.012em; color: var(--gold); text-shadow: 0 0 46px rgba(226, 178, 58, 0.28); }
 
-.lede { max-width: 58ch; margin: clamp(20px, 2.4vw, 30px) 0 0; font-size: clamp(18px, 0.9vw + 14.6px, 23px); line-height: 1.5; color: var(--text); }
+.lede { max-width: 58ch; margin: clamp(18px, 2.2vw, 28px) 0 0; font-size: clamp(18px, 0.9vw + 14.6px, 23px); line-height: 1.5; color: var(--text); }
+
+/* The page's mark: the disc of the flower, one dot for each floret. */
+.disc { display: block; width: 100%; height: auto; aspect-ratio: 1; color: var(--gold); }
+.mark { position: relative; width: var(--mark); }
+/* It stands in the page as the sun does in the film: whole here, and going down at the end of the page. */
+.mark::before { content: ''; position: absolute; left: 50%; top: 0; width: 190%; aspect-ratio: 1; transform: translate(-50%, -24%); background: radial-gradient(closest-side, rgba(226, 178, 58, 0.13), rgba(226, 178, 58, 0.05) 52%, rgba(226, 178, 58, 0)); pointer-events: none; }
+.mark > * { position: relative; }
+.mark figcaption { max-width: 34ch; margin: 16px auto 0; text-align: center; font-size: 13.5px; }
 
 .facts {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
-  margin: clamp(28px, 3.4vw, 40px) 0 0;
+  margin: clamp(28px, 3.4vw, 44px) 0 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 .facts div { padding: 16px 16px 18px 0; }
 .facts div + div { padding-left: 18px; border-left: 1px solid var(--line); }
 .facts dt { color: var(--quiet); font-size: 12.5px; font-weight: 550; letter-spacing: 0.16em; text-transform: uppercase; }
-.facts dd { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-variation-settings: 'SOFT' 100; font-size: clamp(20px, 1.9vw, 28px); line-height: 1.15; color: var(--bright); font-variant-numeric: lining-nums; white-space: nowrap; }
-
-.note { max-width: 74ch; margin: 18px 0 0; color: var(--quiet); font-size: 15px; }
+.facts dd { margin: 6px 0 0; font-family: var(--display); font-weight: 400; font-variation-settings: 'SOFT' 100; font-size: clamp(20px, 1.9vw, 28px); line-height: 1.15; color: var(--text); font-variant-numeric: lining-nums; white-space: nowrap; }
 
 /* Sections */
 
 .section { padding: clamp(56px, 8.4vw, 124px) 0 0; }
 
-.kicker { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.22em; color: var(--gold); font-variant-numeric: tabular-nums; }
-.kicker::after { content: ''; width: 44px; height: 1px; background: var(--line); }
+/* The number of the section, and the sun on its way across the page: low in the morning at 01, low in the evening at 07. */
+.kicker { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.22em; color: var(--gold); font-variant-numeric: tabular-nums; }
+.arc { flex: none; width: 60px; height: 25px; overflow: visible; }
+.arc-sky { fill: none; stroke: var(--quiet); stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 0.01 3.3; }
+.arc-land { fill: none; stroke: var(--line); stroke-width: 1; }
+.arc-sun { fill: var(--gold); }
 
 h2 {
   margin: 0;
@@ -246,11 +307,11 @@ h2 {
   font-size: clamp(30px, 3.7vw, 54px);
   line-height: 1.06;
   letter-spacing: -0.012em;
-  color: var(--bright);
+  color: var(--text);
   text-wrap: balance;
 }
 
-h3 { margin: 0 0 9px; font-family: var(--display); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: clamp(19px, 0.5vw + 17px, 22px); line-height: 1.25; color: var(--bright); }
+h3 { margin: 0 0 9px; font-family: var(--display); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: clamp(19px, 0.5vw + 17px, 22px); line-height: 1.25; color: var(--text); }
 
 .section-lede { max-width: 68ch; margin: 16px 0 30px; color: var(--soft); font-size: 1.04em; }
 h2 + .cards { margin-top: 30px; }
@@ -307,60 +368,48 @@ figcaption { margin-top: 10px; color: var(--quiet); font-size: 14.5px; line-heig
 .card h3::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 11px; border-radius: 50%; vertical-align: 0.16em; background: var(--gold); box-shadow: 0 0 10px rgba(226, 178, 58, 0.55); }
 .card-wide, .card-open { grid-column: 1 / -1; }
 .card-wide { background: var(--panel); }
-.card-open h3::before { background: var(--rose); box-shadow: 0 0 10px rgba(229, 159, 128, 0.5); }
+.card-open h3::before { background: var(--rose); box-shadow: 0 0 10px rgba(232, 160, 140, 0.5); }
 .card-open p { max-width: 86ch; }
 
-/* The ruler: the film on its music */
+/* The ruler: the film laid on its music. The band is the film itself, with a sunrise or a cut marked above it
+   and, under it, the bar each part begins on. */
 
-.ruler { margin-top: 18px; }
-.ruler-parts { position: relative; height: 46px; border-radius: 4px; overflow: hidden; background: #070807; }
-.rp {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--a) * 100% / 127);
-  width: calc((var(--b) - var(--a)) * 100% / 127);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-right: 1px solid var(--panel);
-}
-.rp b { font-size: 12.5px; font-weight: 600; letter-spacing: 0.03em; white-space: nowrap; color: #0d0f0e; }
-.rp-grow { background: #86a960; }
-.rp-frost { background: #bcd0da; }
-.rp-storm { background: #4e5a73; }
-.rp-storm b { color: #f1ede2; }
-.rp-bloom { background: #e2b23a; }
-.rp-field { background: #d08b3c; }
-.rp-last { background: #8f4f3c; border-right: 0; }
-.ruler-marks { position: relative; height: 28px; }
+.ruler { margin-top: 20px; }
+.ruler-marks { position: relative; height: 24px; }
 .ruler-marks i { position: absolute; left: calc(var(--a) * 100% / 127); }
-.ruler-marks .sun { top: 10px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 9px rgba(226, 178, 58, 0.6); }
-.ruler-marks .cut { top: 5px; width: 2px; height: 18px; margin-left: -1px; background: var(--text); }
-.ruler-axis { position: relative; height: 22px; border-top: 1px solid var(--line); }
-.ruler-axis span { position: absolute; top: 7px; left: calc(var(--a) * 100% / 127); transform: translateX(-50%); color: var(--quiet); font-size: 12px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
-.ruler-axis span::before { content: ''; position: absolute; left: 50%; top: -7px; width: 1px; height: 4px; background: var(--quiet); }
+.ruler-marks .sun { top: 8px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 9px rgba(226, 178, 58, 0.6); }
+.ruler-marks .cut { top: 4px; width: 2px; height: 20px; margin-left: -1px; background: var(--text); }
+.ruler-strip { position: relative; height: clamp(64px, 7vw, 92px); overflow: hidden; border-radius: 3px; background: #000 var(--film) 0 0 / 100% 100% no-repeat; }
+.ruler-strip i { position: absolute; top: 0; bottom: 0; left: calc(var(--a) * 100% / 127); width: 2px; margin-left: -1px; background: var(--panel); }
+.ruler-axis { position: relative; height: 50px; }
+.ruler-axis span { position: absolute; top: 0; left: calc(var(--a) * 100% / 127); padding: 9px 0 0 7px; border-left: 1px solid var(--quiet); color: var(--quiet); font-size: 12.5px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ruler-axis i { display: block; margin-top: 6px; font-size: 16px; line-height: 1.1; color: var(--text); }
+/* The last part is too short for its name, which is set to end with the film. */
+.ruler-axis .is-last { width: calc(100% - var(--a) * 100% / 127); }
+.ruler-axis .is-last i { position: absolute; right: 0; }
 
-.ruler-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; margin: 8px 0 0 !important; color: var(--quiet) !important; font-size: 13.5px; }
+.ruler-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; margin: 10px 0 0 !important; color: var(--quiet) !important; font-size: 13.5px; }
 .ruler-key .key { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .key-sun { width: 9px; height: 9px; border-radius: 50%; background: var(--gold); }
 .key-cut { width: 2px; height: 14px; background: var(--text); }
-.key-num { color: var(--quiet); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.key-num { color: var(--quiet); font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.ruler-note { max-width: 96ch; margin: 10px 0 0 !important; color: var(--quiet) !important; font-size: 14.5px; }
 
-.parts { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 22px; color: var(--quiet); font-size: 14.5px; line-height: 1.45; }
-.parts b { display: block; color: var(--text); font-weight: 550; }
-.parts b::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 2px; background: var(--k); }
-.k-grow { --k: #86a960; }
-.k-frost { --k: #bcd0da; }
-.k-storm { --k: #4e5a73; }
-.k-bloom { --k: #e2b23a; }
-.k-field { --k: #d08b3c; }
-.k-last { --k: #8f4f3c; }
+/* The eight parts, each under its own piece of the film. */
+.parts { list-style: none; margin: 22px 0 0; padding: 20px 0 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 22px; color: var(--quiet); font-size: 14.5px; line-height: 1.45; }
+.parts li::before {
+  content: '';
+  display: block;
+  height: 14px;
+  margin-bottom: 10px;
+  border-radius: 2px;
+  background: #000 var(--film) calc(var(--a) / (127 - (var(--b) - var(--a))) * 100%) 0 / calc(127 / (var(--b) - var(--a)) * 100%) 100% no-repeat;
+}
+.parts b { display: block; margin-bottom: 1px; font-size: 19px; line-height: 1.25; color: var(--text); }
 
 .wide-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(22px, 3vw, 46px); margin-top: clamp(22px, 2.6vw, 32px); }
 .wide-text p + p { margin-top: 12px; }
-.wide-text b { color: var(--bright); font-weight: 600; }
+.wide-text b { color: var(--text); font-weight: 600; }
 .wide-tables { display: grid; gap: 20px; align-content: start; }
 .wide-pics { margin-top: clamp(22px, 3vw, 34px); }
 
@@ -378,9 +427,10 @@ table.mini { font-size: 14.5px; border: 1px solid var(--line); border-radius: 4p
 table.mini th, table.mini td { padding: 10px 12px; }
 table.mini tbody th { font-variant-numeric: lining-nums tabular-nums; }
 
+/* A result, in the three colors the live player uses for one. */
 .res { display: inline-block; padding: 1px 10px 0; border: 1px solid currentColor; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.75; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
 .res-pass { color: var(--leaf); }
-.res-part { color: var(--gold); }
+.res-part { color: var(--amber); }
 .res-fail { color: var(--rose); }
 
 .checks { max-width: 76ch; margin: 26px 0 0; padding-left: 1.15em; color: var(--soft); }
@@ -393,53 +443,140 @@ code.hash { overflow-wrap: anywhere; color: var(--text); }
 
 .limits { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .limits li { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 6px clamp(18px, 3vw, 48px); padding: 18px 0 19px; border-bottom: 1px solid var(--line); color: var(--soft); }
-.limits b { position: relative; padding-left: 18px; font-family: var(--display); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: clamp(19px, 0.5vw + 17px, 22px); line-height: 1.25; color: var(--bright); }
-.limits b::before { content: ''; position: absolute; left: 0; top: 0.5em; width: 7px; height: 7px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 10px rgba(229, 159, 128, 0.5); }
+.limits b { position: relative; padding-left: 18px; font-family: var(--display); font-weight: 500; font-variation-settings: 'SOFT' 100; font-size: clamp(19px, 0.5vw + 17px, 22px); line-height: 1.25; color: var(--text); }
+.limits b::before { content: ''; position: absolute; left: 0; top: 0.5em; width: 7px; height: 7px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 10px rgba(232, 160, 140, 0.5); }
 
 /* Design system */
 
-.swatches { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+.swatches { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 12px; }
 .swatches li { display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; }
 .swatches .chip { display: block; aspect-ratio: 4 / 3; background: var(--c); border: 1px solid #4a4538; border-radius: 4px; }
 .swatches b { margin-top: 9px; font-weight: 550; color: var(--text); line-height: 1.25; }
 .swatches code { color: var(--quiet); font-size: 13px; letter-spacing: 0.02em; }
 
-.type { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin-top: 28px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-.type-sample { padding: clamp(20px, 2.6vw, 34px); background: var(--panel); }
-.type-display, .type-text { margin: 0; line-height: 1.05; overflow-wrap: anywhere; }
-.type-display { font-family: var(--display); font-weight: 300; font-variation-settings: 'SOFT' 100; font-size: clamp(34px, 4.6vw, 68px); letter-spacing: -0.02em; color: var(--gold); }
-.type-text { font-family: var(--body); font-weight: 500; font-size: clamp(22px, 2.5vw, 36px); letter-spacing: -0.005em; color: var(--bright); line-height: 1.2; }
+.type, .marks { display: grid; gap: 1px; margin-top: 28px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.type { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.type-sample { display: flex; flex-direction: column; justify-content: space-between; padding: clamp(20px, 2.4vw, 32px); background: var(--panel); }
+.type-display, .type-italic, .type-text { margin: 0; overflow-wrap: anywhere; }
+.type-display { font-family: var(--display); font-weight: 400; font-variation-settings: 'SOFT' 100; font-size: clamp(30px, 3.5vw, 52px); line-height: 1.05; letter-spacing: -0.02em; color: var(--text); }
+.type-italic { font-size: clamp(30px, 3.5vw, 52px); line-height: 1.05; letter-spacing: -0.012em; color: var(--gold); }
+.type-text { font-family: var(--body); font-weight: 500; font-size: clamp(21px, 2.2vw, 32px); letter-spacing: -0.005em; color: var(--text); line-height: 1.2; }
 .type-name { margin: 16px 0 0; color: var(--quiet); font-size: 14.5px; }
 
-/* Footer */
+/* The two marks made from the film. */
+.marks { grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr); }
+.marks figure { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; padding: clamp(20px, 2.4vw, 32px); background: var(--panel); }
+.marks figcaption { margin: 0; }
+.marks figcaption b { color: var(--text); font-weight: 600; }
+.marks-disc .disc { width: min(100%, 210px); margin-inline: auto; }
+.marks-line img { height: clamp(64px, 7vw, 92px); margin-block: auto; border: 0; border-radius: 3px; }
 
-.foot { margin-top: clamp(64px, 8.4vw, 124px); padding: 30px 0 44px; border-top: 1px solid var(--line); color: var(--quiet); font-size: 15px; }
-.foot p { margin: 0 0 8px; }
-.foot-name { font-family: var(--display); font-variation-settings: 'SOFT' 100; font-size: 21px; color: var(--text); }
+/* Last light: the page ends where the film does, with the disc going down. */
+
+.foot {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(280px, 26vw, 340px);
+  margin-top: clamp(64px, 8.4vw, 124px);
+  padding: clamp(36px, 4.6vw, 60px) 0 44px;
+  border-top: 1px solid var(--line);
+  background: var(--ground);
+  color: var(--quiet);
+  font-size: 15px;
+  --sun-right: max(var(--gutter), calc((100% - var(--wrap)) / 2));
+}
+/* The last light, in the rose of the film's last sky, behind the disc as it goes down. */
+.foot::before {
+  content: '';
+  position: absolute;
+  right: calc(var(--sun-right) + var(--mark) / 2);
+  bottom: 0;
+  width: calc(var(--mark) * 3.6);
+  height: 100%;
+  transform: translateX(50%);
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(232, 160, 140, 0.26), rgba(232, 160, 140, 0.1) 48%, rgba(232, 160, 140, 0) 100%);
+  pointer-events: none;
+}
+.foot-sun {
+  position: absolute;
+  right: var(--sun-right);
+  bottom: 0;
+  width: var(--mark);
+  transform: translateY(50%);
+  pointer-events: none;
+}
+.foot .wrap { position: relative; z-index: 1; }
+.foot p { max-width: 62ch; margin: 0 0 8px; }
+.foot-name { margin-bottom: 14px !important; font-family: var(--display); font-weight: 400; font-variation-settings: 'SOFT' 100; font-size: clamp(30px, 3.4vw, 46px); line-height: 1.1; letter-spacing: -0.012em; color: var(--text); }
+.foot-name span { color: var(--gold); }
 
 @media (max-width: 1100px) {
   .wide-cols { grid-template-columns: 1fr; }
   .six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .swatches { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  /* Where the ruler is too short for the names of its last two parts, the names go,
+     and each bar number stands under its own tick. The list under the ruler still names every part. */
+  .ruler-axis { height: 30px; }
+  .ruler-axis span, .ruler-axis .is-last { width: auto; padding: 12px 0 0; border-left: 0; transform: translateX(-50%); }
+  .ruler-axis span::before { content: ''; position: absolute; left: 50%; top: 0; width: 1px; height: 7px; background: var(--quiet); }
+  .ruler-axis i { display: none; }
+}
+
+/* The same holds for the names under the film's line. In a narrower window the strip takes the whole width,
+   the two times stand under its ends, and between them stands the part the film is in, with its bar and beat. */
+@media (max-width: 1000px) {
+  :root { --bar: 145px; }
+  .film-bar { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr) auto; align-items: center; column-gap: 12px; padding: 6px var(--gutter) 10px; }
+  .film-scrub:not([hidden]), .film-bar-in, .film-buttons { display: contents; }
+  .scrub-track { grid-column: 1 / -1; grid-row: 1; height: calc(var(--head) + var(--band) + 2px); }
+  .scrub-names { display: none; }
+  .film-time, .film-part, .film-note { grid-row: 2; align-self: baseline; margin-top: 3px; line-height: 20px; }
+  .film-time { display: block; height: auto; min-width: 0; }
+  .film-time:first-child { grid-column: 1; justify-self: start; }
+  .film-time:last-child { grid-column: 5; justify-self: end; }
+  .film-part, .film-note { grid-column: 1 / -1; justify-self: center; min-width: 0; min-height: 21px; margin-inline: 6ch; text-align: center; }
+  /* The film's name is set larger than the words beside it. A shorter line box puts both on one baseline inside the same 20 px, so the row is as tall with the name in it as with a word about loading. */
+  .film-part i { line-height: 16px; }
+  .btn, .film-rung { grid-row: 3; margin-top: 8px; }
+  .btn-play { grid-column: 1; }
+  .btn-sound { grid-column: 2; }
+  .film-rung { grid-column: 3; justify-self: start; }
+}
+
+@media (max-width: 700px) {
+  .film-bar { column-gap: 10px; }
+  .btn { padding: 0 14px; }
+  .btn-play { min-width: 141px; padding-left: 13px; }
+  .btn-sound { min-width: 166px; }
 }
 
 @media (max-width: 900px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row dense; }
-  .cards-3 { grid-template-columns: 1fr; }
-  .rp b { display: none; }
+  .cards-3, .type, .marks { grid-template-columns: 1fr; }
   .parts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .foot p { max-width: 46ch; }
+}
+
+@media (max-width: 760px) {
+  .intro-in { grid-template-columns: minmax(0, 1fr); }
+  .mark { width: min(100%, 260px); margin: clamp(28px, 6vw, 40px) auto 0; }
+  .mark::before { width: 150%; transform: translate(-50%, -17%); }
 }
 
 @media (max-width: 640px) {
-  .pair, .grid, .cards, .type, .ba, .duos, .limits li { grid-template-columns: 1fr; }
+  .pair, .grid, .cards, .ba, .duos, .limits li { grid-template-columns: 1fr; }
   .grid .span-2, .grid .full { grid-column: auto; }
   .quad, .six { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .facts div:nth-child(3) { padding-left: 0; border-left: 0; }
   .facts div:nth-child(n + 3) { border-top: 1px solid var(--line); }
-  .film-bar-in { flex-direction: column; align-items: flex-start; }
-  .ruler-parts { height: 34px; }
-  .ruler-marks .sun { width: 7px; height: 7px; margin-left: -3.5px; top: 11px; }
+  .film-bar { padding-bottom: 12px; }
+  .film-scrub { --band: 32px; }
+  .film-part, .film-note { margin-inline: 5ch; }
+  .film-part i { font-size: 17px; }
+  .ruler-strip { height: 56px; }
+  .ruler-marks .sun { width: 7px; height: 7px; margin-left: -3.5px; top: 10px; }
   table.mini th, table.mini td { padding: 9px 9px; font-size: 14px; }
   table.mini thead th { font-size: 12px; letter-spacing: 0.06em; }
   .table-wrap :is(table, caption, tbody, tr, th, td) { display: block; }
@@ -449,6 +586,39 @@ code.hash { overflow-wrap: anywhere; color: var(--text); }
   .table-wrap tbody th { grid-row: 1 / span 2; padding: 0; border: 0; white-space: normal; overflow-wrap: anywhere; }
   .table-wrap td { grid-column: 2; padding: 0; border: 0; font-size: 15.5px; }
   .table-wrap td::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--quiet); font-size: 12px; font-weight: 550; letter-spacing: 0.13em; text-transform: uppercase; }
+  /* The disc goes down under the last lines, in the middle of the page. */
+  .foot { padding-bottom: 190px; --mark: 280px; }
+  .foot::before { right: 50%; }
+  .foot-sun { right: 50%; transform: translate(50%, 50%); }
+}
+
+/* On a phone held upright the two buttons share the width. The size of the file has no room beside them,
+   and a row of its own would hold nothing else, so here it is kept for screen readers and not shown. */
+@media (max-width: 439px) {
+  .film-bar { grid-template-columns: minmax(min-content, 1fr) minmax(min-content, 1fr); }
+  .film-time:last-child { grid-column: 2; }
+  .btn-play, .btn-sound { justify-self: stretch; }
+  .film-rung, .film-rung:not(:empty) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* A word about loading needs the whole line here, so the two times step aside for as long as it stands. */
+@media (max-width: 389px) {
+  .film-bar[data-note='yes'] .film-time { visibility: hidden; }
+  .film-bar[data-note='yes'] .film-note { margin-inline: 0; }
+}
+
+/* From 355 to 371 pixels the two columns fit with the words a little smaller. */
+@media (min-width: 355px) and (max-width: 371px) {
+  .btn { padding: 0 13px; font-size: 13.5px; }
+  .btn-play { min-width: 133px; padding-left: 12px; }
+  .btn-sound { min-width: 155px; }
+}
+
+/* Under 355 pixels the two buttons no longer fit side by side, so each takes a row of its own. */
+@media (max-width: 354px) {
+  .film-bar { grid-template-columns: auto minmax(0, 1fr); }
+  .btn-play { grid-column: 1 / -1; }
+  .btn-sound { grid-column: 1 / -1; grid-row: 4; }
 }
 
 @media (prefers-reduced-motion: reduce) {
