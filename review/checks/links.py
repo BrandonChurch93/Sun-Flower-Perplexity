@@ -14,7 +14,6 @@ from html.parser import HTMLParser
 
 folder = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 OUTSIDE = {
-    'https://sun-flower-perplexity.vercel.app/live/': 2,  # the live version: once under the film, once in the footer
     'https://openfontlicense.org/open-font-license-official-text/': 1,  # the license of the two typefaces
 }
 
